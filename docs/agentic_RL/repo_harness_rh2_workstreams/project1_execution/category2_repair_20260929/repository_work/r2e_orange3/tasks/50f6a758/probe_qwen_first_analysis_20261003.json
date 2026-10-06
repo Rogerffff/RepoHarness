@@ -1,0 +1,247 @@
+{
+  "schema_id": "category2.orange.qwen_first_owner_analysis.v1",
+  "created_at": "2026-10-03T03:33:15.628550+00:00",
+  "owner_thread_id": "01a0fd63-ef54-7691-87db-e5124474f714",
+  "task_id": "r2e_gym_subset::orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e",
+  "job_id": "gpu1003-orange50-qwen36-a1",
+  "model": "Qwen/Qwen3.6-35B-A3B",
+  "request_id": "r2e-orange50-r090091-cpu-sysconfig-v1-20261003",
+  "author_complete": true,
+  "new_behavior_independent_review_complete": false,
+  "reused_original_execution_and_semantic_review": true,
+  "required_new_material_or_consumer_fixes": [],
+  "seven_dimensions": {
+    "method": {
+      "verdict": "source_mechanism_and_original_formal_score_support_public_requirement",
+      "only_source_edit_count": 1,
+      "evidence_lines": [
+        44,
+        104,
+        108
+      ]
+    },
+    "localization": {
+      "prompt_already_provides_location_and_development_hints": true,
+      "earliest_source_grounded_hypothesis_line": 44,
+      "earliest_reproduction_result_line": 90,
+      "corrective_feedback": "baseline_requirement_failure_then_candidate_same_case_pass",
+      "event_times_are_generation_plus_tool_roundtrip": true
+    },
+    "tools": {
+      "count": 15,
+      "by_name": {
+        "Read": 3,
+        "Bash": 11,
+        "Edit": 1
+      },
+      "tool_errors": [
+        {
+          "call": 86,
+          "result": 90
+        },
+        {
+          "call": 158,
+          "result": 162
+        }
+      ],
+      "observed_hidden_or_network_channel": false,
+      "test_or_control_modification": false
+    },
+    "parallel": {
+      "max_tools_per_assistant_message": 2,
+      "first_batch_two_independent_tools": true,
+      "actual_overlap_observed": null,
+      "parallel_ability_evaluated": false,
+      "reason": "call timestamps absent; result timestamps alone do not establish overlap"
+    },
+    "validation": {
+      "original_frozen_patch_scored": true,
+      "formal_score": {
+        "reward": 1,
+        "expected_matched": 48,
+        "expected_total": 48,
+        "test_rc": 0
+      },
+      "installation_skipped": true,
+      "installation_rc": null,
+      "extension_path_directly_printed": null,
+      "independent_source_only_rebuild": false,
+      "model_custom_tests": "8PASS is 5 new methods plus 3 inherited fixture checks; old888 conflict expected and preserved;176 only warning-text assert,194 includes actual rename assert",
+      "pipefail_missing_for_piped_pytest": true
+    },
+    "efficiency": {
+      "timing_and_usage": {
+        "solve_seconds": 65.689,
+        "CC_total_seconds": 62.223,
+        "CC_API_seconds": 37.825,
+        "CC_turns": 16,
+        "gateway_generations": 15,
+        "all_http_requests": 17,
+        "usage": {
+          "input_tokens": 400073,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "output_tokens": 5814,
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "",
+          "iterations": [],
+          "speed": "standard"
+        },
+        "actor_preparation_timings": {
+          "image_ready": 0.02,
+          "network_and_container": 1.243,
+          "git_sanitize": 13.227,
+          "trusted_init": 221.011,
+          "baseline_census": 1.433,
+          "quiescence": 3.111
+        },
+        "formal_grader_timings": {
+          "schema_id": "rh2.grading_timing_record.v1",
+          "record_id": "timing_c9c754c5",
+          "trajectory_id": "gpu1003-orange50-qwen36-a1",
+          "task_id": "r2e_gym_subset::orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e",
+          "image_pull_seconds": 0.0,
+          "env_reset_seconds": 13.879,
+          "prep_seconds": 1.559,
+          "test_seconds": 5.001,
+          "total_grading_seconds": 252.068,
+          "queue_wait_seconds": 0.0,
+          "container_peak_memory_mb": 2234.578,
+          "queue_depth_at_enqueue": null,
+          "backpressure_triggered": false
+        },
+        "formal_grader_phases": null,
+        "whole_dispatched_job_seconds": 579.587722,
+        "queue_wait_before_dispatch": null,
+        "first_generation_request_unix": 1790994798.2205942
+      },
+      "single_generation_max_input": 33774,
+      "single_generation_max_output": 1139,
+      "pure_tool_seconds": null,
+      "observed_redundancy": "three runs of five public selectors; final source read and post-cleanup repeat without source change",
+      "estimated_saved_seconds": null
+    },
+    "termination_and_stability": {
+      "termination": "completed",
+      "budget_truncation_observed": false,
+      "qwen_completion": {
+        "completed": 1,
+        "attempted": 1
+      },
+      "qwen_semantic_supported": {
+        "supported": 1,
+        "completed": 1
+      },
+      "coder": {
+        "completed": 0,
+        "planned": 1,
+        "status": "pending_not_failed"
+      },
+      "stable_ability_evaluated": false,
+      "paired_first_round_complete": false
+    }
+  },
+  "evidence_refs": {
+    "author_md": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/50f6a758/probe_qwen_first_analysis_20261003.md",
+      "sha256": "sha256:7add6cb374875f5daa7fa7f8082913bf67eeaac7a49af1c6f2707291b23fc05b",
+      "bytes": 10865
+    },
+    "author_evidence": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/q15_orange50_4014_qwen_first_author_evidence_v1.json",
+      "sha256": "sha256:a128bdc798a59159fadd1b7b4965ca4add9a2c7cd96598986e05da354cd440f2",
+      "bytes": 334065
+    },
+    "original_independent_review": {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/q15_orange50_qwen36_a1_execution_semantic_review_v1.json",
+      "sha256": "sha256:e76588ce04a4da831ce5c9a88eaa3e8426f143865e2c052c6a98e249da7b8d1d",
+      "bytes": 190070
+    },
+    "closed_manifest": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/gpu1003-orange50-qwen36-a1_closed_manifest_v1.json",
+      "sha256": "sha256:5311428f72196818973d8a99d17b3b086d2961949b878b162950d05e798da944",
+      "bytes": 15302
+    },
+    "attempt": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v15/results/gpu1003-orange50-qwen36-a1/attempt/attempt.json",
+      "sha256": "sha256:db4607a4a2da6a68f9a7bfafe673b5c54cd658d6a56b8df925b69c9d6edd0a0d",
+      "bytes": 18015
+    },
+    "trajectory": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v15/results/gpu1003-orange50-qwen36-a1/attempt/harness/trajectory.jsonl",
+      "sha256": "sha256:89206ddcb5a4edc2b5334a87f587530c89dcab5fcfa60a9d6d15c2c1a28af250",
+      "bytes": 320884
+    },
+    "frozen_patch": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v15/results/gpu1003-orange50-qwen36-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "sha256:e7080b83a7cce9291281aa8eb19a0a6956436096e01104aa794677367aec7db5",
+      "bytes": 37749
+    },
+    "baseline_tar": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v15/results/gpu1003-orange50-qwen36-a1/attempt/frozen/baseline.tar",
+      "sha256": "sha256:4e150d52913703084a3d910096b87bceac81a13435b77df7daf5a77ba356269f",
+      "bytes": 71198720
+    },
+    "result": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v15/results/gpu1003-orange50-qwen36-a1/result.json",
+      "sha256": "sha256:7139eddd1ce8743f0e19f25fd2a61336b1127b87c0de1f13a9b75ac2444d26d4",
+      "bytes": 2689
+    },
+    "prompt": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v15/results/gpu1003-orange50-qwen36-a1/solver_prompt.txt",
+      "sha256": "sha256:14db55eb6c630d01e5debb0df4ab47f983e79c493313d8b6f2775b7d23ae9371",
+      "bytes": 3641
+    },
+    "gateway": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v13/qwen36/gateway/gpu1003-orange50-qwen36-a1/requests.jsonl",
+      "sha256": "sha256:0f9dcc283e7e80333d007abc5763e6f2c2e7664c408039ce70f4eae517e9edd8",
+      "bytes": 1586099
+    },
+    "terminal_snapshot": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/gpu1003-orange50-qwen36-a1_terminal_snapshot_v1.json",
+      "sha256": "sha256:30848bd486f28980fed49d1b3fbf2b86b860982655fe56b3f4d7551066526b9e",
+      "bytes": 13440
+    }
+  },
+  "verified_closed_file_count": 77,
+  "verified_closed_bytes": 81282549,
+  "actual_source_binding": {
+    "code_manifest_sha256": "sha256:e3a33fd824021b75c9ed32fe7a82800f4158bfcf5d5a9d0ca8a8329380716469",
+    "entry_sha256": "sha256:a1efff44dc2cbedfc81d93b2da8d84a92f6c9c88b15c2a10bf96db2026a4e82c",
+    "actor_actual_id": "sha256:dc5a3d833584373f64a1f562bffba612d6d9285699d04bcd4732abc44e2c3330",
+    "source_actual_id": "sha256:c69f160f5f6dcf44b596ab62f833445a11e5d5d26aa9961f9e566c00a59a0436",
+    "grader_pinned_identity": "local_build:sha256:dc5a3d833584373f64a1f562bffba612d6d9285699d04bcd4732abc44e2c3330",
+    "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+    "revision": [
+      "r2e-mr-090",
+      "r2e-mr-091"
+    ]
+  },
+  "actual_budget": {
+    "version": "probe-wide-v1",
+    "max_context_len": 196608,
+    "max_new_tokens": 65536,
+    "max_turns": 240,
+    "wall_seconds": 10800,
+    "max_requests_per_session": 1024,
+    "first_byte_timeout_seconds": 1800,
+    "adapter_idle_drop_seconds": 14400
+  },
+  "limits": [
+    "Qwen来源绑定沿本次作业前实际capture、固定revision `995ad96eacd98c81ed38be0c5b274b04031597b0`、只读模型mount及下载manifest（SHA `32bd30f61860366b3783eabc9d75bee0cd28c474d9c07de8be8d9ae60a4552ab`），不是物理GPU权重证明。HTTP revision/checksum为null、weight_version默认，无逐POST engine/权重attestation；manifest宣称40但列37文件的局限保留。",
+    "资源只有约15秒有限宿主样本，有CPU throttle，不证明完整峰值、最低内存或全程无干扰；退出容器的无效内存样本不能读作0。原schema的env_qualification缺失、material identity/revision部分为null，本轮用外部固定材料/运行证据关联，不能冒称typed训练合同已接通。gateway first-byte 1800与common.py sock_read 900不同，不证明全链1800边界。本次用途为题目/环境和基座修法诊断，不授予训练或留出资格。"
+  ],
+  "paired_request_complete": false,
+  "request_should_remain_claimed": true,
+  "active_request_should_remain": true,
+  "training_or_holdout_qualification_granted": false,
+  "no_new_project_or_model_execution": true
+}

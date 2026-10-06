@@ -1,0 +1,114 @@
+{
+  "as_of": "2026-10-03",
+  "scope": "候选补丁可应用性与stdlib函数切片；不是DVC环境、pytest或正式评分",
+  "candidate_patches": {
+    "iterative__dvc-4166": [
+      {
+        "candidate": "gold",
+        "git_apply_check": true,
+        "python_syntax": true
+      },
+      {
+        "candidate": "noop",
+        "git_apply_check": true,
+        "python_syntax": true
+      },
+      {
+        "candidate": "strip_positive_trailing_slash",
+        "git_apply_check": true,
+        "python_syntax": true
+      }
+    ],
+    "iterative__dvc-5839": [
+      {
+        "candidate": "gold",
+        "git_apply_check": true,
+        "python_syntax": true
+      },
+      {
+        "candidate": "hardcoded_precision8",
+        "git_apply_check": true,
+        "python_syntax": true
+      },
+      {
+        "candidate": "noop",
+        "git_apply_check": true,
+        "python_syntax": true
+      }
+    ],
+    "iterative__dvc-6954": [
+      {
+        "candidate": "gold",
+        "git_apply_check": true,
+        "python_syntax": true,
+        "private_function_slice": {
+          "original_negative_int": {
+            "UNARY_OP": -1
+          },
+          "negative_float_and_containers": {
+            "rate": -0.25,
+            "values": [
+              -2,
+              -0.75
+            ],
+            "config": {
+              "shift": -3.5
+            }
+          }
+        }
+      },
+      {
+        "candidate": "negative_int_only",
+        "git_apply_check": true,
+        "python_syntax": true,
+        "private_function_slice": {
+          "original_negative_int": {
+            "UNARY_OP": -1
+          },
+          "negative_float_and_containers": {}
+        }
+      },
+      {
+        "candidate": "noop",
+        "git_apply_check": true,
+        "python_syntax": true,
+        "private_function_slice": {
+          "original_negative_int": {},
+          "negative_float_and_containers": {}
+        }
+      }
+    ],
+    "iterative__dvc-9395": [
+      {
+        "candidate": "c3_frozenfix",
+        "git_apply_check": true,
+        "python_syntax": true
+      },
+      {
+        "candidate": "c3_missing_only",
+        "git_apply_check": true,
+        "python_syntax": true
+      },
+      {
+        "candidate": "gold",
+        "git_apply_check": true,
+        "python_syntax": true
+      },
+      {
+        "candidate": "noop",
+        "git_apply_check": true,
+        "python_syntax": true
+      },
+      {
+        "candidate": "up351_port",
+        "git_apply_check": true,
+        "python_syntax": true
+      },
+      {
+        "candidate": "w_swallow3",
+        "git_apply_check": true,
+        "python_syntax": true
+      }
+    ]
+  }
+}

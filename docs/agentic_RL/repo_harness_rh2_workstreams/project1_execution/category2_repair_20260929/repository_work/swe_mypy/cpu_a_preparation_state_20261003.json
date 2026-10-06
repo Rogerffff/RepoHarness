@@ -1,0 +1,454 @@
+{
+  "as_of": "2026-10-03 21:33",
+  "host_alias": "cpu-a",
+  "package_id": "swe_mypy",
+  "state": "both_CPU_and_two_model_first_rounds_accepted_with_limits",
+  "input_archive_sha256": "sha256:431f730f84bd561e7b35922a3b3d7383334a4f4c355e37fe972d38125c094912",
+  "input_verification": {
+    "status": "input_verified",
+    "files": 43,
+    "archive_sha256": "sha256:431f730f84bd561e7b35922a3b3d7383334a4f4c355e37fe972d38125c094912",
+    "root": "/work/rh2-category2-20261003/packages/swe_mypy/input_v1"
+  },
+  "slot_attempts": [
+    {
+      "job_id": "mypy10174-image-r1-20261002T165647Z-b723eb",
+      "admitted": false,
+      "reason": "image_preparation_busy",
+      "actual_process_exit_code": null,
+      "evidence": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/progress_latest.json"
+    },
+    {
+      "job_id": "mypy10174-image-r2-20261002T170715Z-9fed27",
+      "admitted": true,
+      "actual_process_exit_code": 0,
+      "evidence": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-image-r2-20261002T170715Z-9fed27.progress.json"
+    },
+    {
+      "job_id": "mypy15184-image-r1-20261002T170855Z-d21f39",
+      "admitted": true,
+      "actual_process_exit_code": 0,
+      "evidence": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy15184-image-r1-20261002T170855Z-d21f39/slot_status.json"
+    }
+  ],
+  "images": {
+    "python__mypy-10174": {
+      "state": "image_prepared",
+      "actual_image_id": "sha256:9d63f1ddcbd277fa62d49e10d800908cfec54544e890fc5fe741d2101ca8eb7e",
+      "base_digest": "xingyaoww/sweb.eval.x86_64.python_s_mypy-10174@sha256:ede92a3c5637b159fa7bbcf7f2ea29e44bd774435fcefd6b5845fdce81f691a6",
+      "recipe_sha256": "sha256:352caaf2eae8dc6fdb3291e9afaf85281a0b0199d6b3ee091d9e3d3247d44993",
+      "wheel_count": 3,
+      "evidence": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-image-r2-20261002T170715Z-9fed27.progress.json"
+    },
+    "python__mypy-15184": {
+      "state": "image_prepared",
+      "actual_image_id": "sha256:76b5b2646a9eb134e6349ee8e214bb84eb6030c34a234e167351acdec5dd8c54",
+      "base_digest": "xingyaoww/sweb.eval.x86_64.python_s_mypy-15184@sha256:affb925329f2dfb2173482c64a1b65648b250777b66b0d7417ee5340fce74835",
+      "recipe_sha256": "sha256:352caaf2eae8dc6fdb3291e9afaf85281a0b0199d6b3ee091d9e3d3247d44993",
+      "wheel_count": 9,
+      "evidence": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy15184-image-r1-20261002T170855Z-d21f39/image_prepare.json"
+    }
+  },
+  "formal_cpu_attempts": [
+    {
+      "instance_id": "python__mypy-10174",
+      "job_id": "mypy10174-revised-r3-20261002T182535Z-f641d8",
+      "release_id": "cat2-cpu-r2e080087-swe8-git-20261003-v1",
+      "actual_rewards": {
+        "noop": 0,
+        "gold": 1,
+        "bad": 0
+      },
+      "reference_keys": 4,
+      "status": "cpu_probe_conditions_accepted",
+      "evidence": "python__mypy-10174/cpu_probe_acceptance_20261003.json"
+    },
+    {
+      "instance_id": "python__mypy-15184",
+      "job_id": "mypy15184-revised-r1-20261002T214419Z-e743aa",
+      "release_id": "cat2-cpu-r2e089092-swe14-preflight-20261003-v1",
+      "actual_rewards": {
+        "noop": 0,
+        "gold": 1,
+        "bad": 0,
+        "top_only": 0
+      },
+      "reference_keys": 5,
+      "status": "cpu_probe_conditions_accepted",
+      "evidence": "python__mypy-15184/revised_cpu_readback_20261003.json"
+    }
+  ],
+  "production_release": null,
+  "notes": [
+    "原镜像准备阶段并不表示安装/actor/grader验收；当前两题正式矩阵和非作者核查均完成，见各题收口记录。",
+    "input_v1的旧15184五项草案只作历史上传记录；正式新增P2P为一个。",
+    "15184旧CPU/单臂JSON与旧model_first_arm_15184字段保留当时快照；当前完成事实由model_pair_15184及总账revision13承接。"
+  ],
+  "baseline_diagnostic_release": {
+    "release_id": "cat2-cpu-r2e064065-swe5-20261003-v1",
+    "manifest_sha256": "282021962a92b510f077385660ac56acedcd7fac1d97e63db3baa98e4dcc057f",
+    "scope": "原登记材料／私有诊断；不包含本包新增修订"
+  },
+  "baseline_diagnostic_jobs": [
+    {
+      "job_id": "mypy10174-original-r2-20261002T171442Z-f5b43f",
+      "instance_id": "python__mypy-10174",
+      "status": "author_readback_completed",
+      "evidence": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-original-r2-20261002T171442Z-f5b43f/baseline_matrix.json",
+      "original_rewards": {
+        "noop": 0,
+        "gold": 1,
+        "bad": 1
+      }
+    }
+  ],
+  "orchestration_incidents": [
+    {
+      "stage": "first_baseline_launch_before_admission",
+      "kind": "remote_launch_code_quoting_syntax_error",
+      "outcome": "corrected_local_payload_serialization_then_new_job",
+      "scope": "无题级实验、无候选reward",
+      "evidence": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-original-r1-20261002T171349Z-e01122.launch.stderr"
+    }
+  ],
+  "actor_ports": {
+    "gateway": 18198,
+    "stub": 18199,
+    "supersedes_old_port": 18307
+  },
+  "private_diagnostic_jobs": [
+    {
+      "job_id": "mypy-private-controls-r1-20261002T172733Z-146faf",
+      "state": "not_admitted_cpu_slots_busy",
+      "scope": "冻结private_behavior的root窄诊断，不是正式新评分",
+      "evidence": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy-private-controls-r1-20261002T172733Z-146faf/launch.receipt.json",
+      "wrapper_returncode": 75
+    },
+    {
+      "job_id": "mypy-private-controls-r2-20261002T173025Z-f0ab67",
+      "state": "not_admitted_cpu_slots_busy",
+      "evidence": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy-private-controls-r2-20261002T173025Z-f0ab67/launch.receipt.json",
+      "wrapper_returncode": 75
+    },
+    {
+      "job_id": "mypy-private-controls-r3-20261002T173657Z-cdd6d3",
+      "state": "completed_author_readback_passed",
+      "wrapper_returncode": 0,
+      "host_runtime": "runtime_cpu_v2/rh2/.venv/bin/python",
+      "evidence": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy-private-controls-r3-20261002T173657Z-cdd6d3/slot_status.json"
+    }
+  ],
+  "actor_runtime": {
+    "state": "actual_actor_commands_author_audited",
+    "path": "/work/rh2-category2-20261003/runtime_cpu_v2/rh2/.venv/bin/python",
+    "actor_started": true,
+    "prior_inflight_jobs_keep_original_runtime": true
+  },
+  "mypy15184_original_matrix": {
+    "job": "mypy15184-original-r1-20261002T174349Z-51ce62",
+    "status": "author_readback_and_non_author_raw_review_completed_original_material_only",
+    "rewards": {
+      "noop": 0,
+      "gold": 1,
+      "bad": 1,
+      "top_only": 1
+    },
+    "evidence": "python__mypy-15184/original_cpu_readback_20261003.json"
+  },
+  "mypy15184_nested_private": {
+    "job": "mypy15184-nested-r2-20261002T175739Z-090d84",
+    "status": "author_case_validation_and_non_author_review_completed_private_only",
+    "formal_reward": null,
+    "evidence": "python__mypy-15184/nested_guard_cpu_readback_20261003.json"
+  },
+  "actor_checks_v1": {
+    "job": "mypy-actor-r1-20261002T180207Z-3a9dcf",
+    "status": "non_author_actor_command_scope_reviewed",
+    "release_id": "cat2-cpu-r2e078079-swe7-git-20261003-v1",
+    "release_manifest_sha256": "80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9",
+    "host_runtime": "runtime_cpu_v2/rh2/.venv/bin/python",
+    "evidence": [
+      "python__mypy-10174/actor_cpu_readback_20261003.json",
+      "python__mypy-15184/actor_cpu_readback_20261003.json"
+    ]
+  },
+  "mypy10174_revised_matrix": {
+    "job": "mypy10174-revised-r3-20261002T182535Z-f641d8",
+    "status": "formal_cpu_and_non_author_review_accepted",
+    "release_id": "cat2-cpu-r2e080087-swe8-git-20261003-v1",
+    "release_manifest_sha256": "ab0a3a13fd65e0ea4cd60541ea3b37b01196170477e25832df246f33ea208828",
+    "binding_sha256": "e00b74789c7b7588a17e3f1d4d06bd87ff03db7d26588c55558de7b9cf8a9c02",
+    "actual_rewards": {
+      "noop": 0,
+      "gold": 1,
+      "bad": 0
+    },
+    "evidence": "python__mypy-10174/revised_cpu_readback_20261003.json"
+  },
+  "probe_submission": "probe_submission_10174_20261003.json",
+  "administrative_pause": "resumed_by_user_approved_three_party_workflow_20261003",
+  "resume_checkpoint": "resume_checkpoint_20261003.md",
+  "current_publication_request_id": null,
+  "cpu_dispatch_gate": {
+    "status": "open",
+    "released_at_sgt": "2026-10-03 04:32",
+    "owner_read_at_sgt": "2026-10-03 04:37",
+    "evidence": "../../cpu_resources_20261003.md",
+    "task15184_formal_material_still_blocked": false,
+    "new_job_started_after_resume": true,
+    "task15184_cpu_acceptance_still_blocked": false
+  },
+  "mypy15184_revised_matrix": {
+    "job": "mypy15184-revised-r1-20261002T214419Z-e743aa",
+    "status": "formal_cpu_and_non_author_review_accepted",
+    "release_id": "cat2-cpu-r2e089092-swe14-preflight-20261003-v1",
+    "release_manifest_sha256": "00ac5c375629f59543f548fbc7b0cb3cbe7d1418f7a956d9deebcefab2e8a87c",
+    "binding_sha256": "a3d4a085a8d3f28db88f1184025d54018d3874bb95a2b37f9a6ca57495786bef",
+    "actual_rewards": {
+      "noop": 0,
+      "gold": 1,
+      "bad": 0,
+      "top_only": 0
+    },
+    "evidence": "python__mypy-15184/revised_cpu_readback_20261003.json",
+    "accepted_evidence": "python__mypy-15184/cpu_probe_acceptance_20261003.json"
+  },
+  "current_resource_dependency": {
+    "needs_cpu_now": false,
+    "needs_gpu": false,
+    "known_pending_cpu_jobs": [],
+    "known_pending_gpu_jobs": [],
+    "current_admitted_jobs": [],
+    "reason": "两题CPU及两模型各一次首轮均已验收；无本包运行待办，普通追加采样暂停，不按旧退租规则操作。"
+  },
+  "probe_submission_15184": {
+    "request_id": "swe-mypy15184-nested-nominal-v2-20261003",
+    "request_ref": "python__mypy-15184/probe_request_20261003.json",
+    "input_sha256": "623bc39612a9812e92b3c5ec218480e916e3c4dae219c4e4f17d7e85056e993e",
+    "notification_recorded": true,
+    "status_at_last_owner_read": "returned",
+    "request_revision_at_last_owner_read": 5,
+    "acknowledged": true,
+    "task_progress_revision": 13,
+    "active_request_id": null
+  },
+  "gpu_original_regrade": {
+    "state": "narrow_cpu_accepted",
+    "binding_sha256": "6bbcb0ea7d151a92e19a86f6294d25a4e6d9c30e40b4efa620cf60d4b19147cd",
+    "worker_sha256": "2dd00b90921ff0ff13e97237db2816ef5dc8d93d5ccdb7b2532a3fc063cb9a67",
+    "actual_job_id": "mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3",
+    "actual_slot": 0,
+    "actual_reward": 1,
+    "formal_references_passed": 4,
+    "preinstall_command_rcs": [
+      0,
+      0,
+      0
+    ],
+    "formal_install_failed_commands": [],
+    "cleanup_ok": true,
+    "actual_status_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/slot/status.json",
+    "r16_priority_window": false,
+    "busy_attempts": 12,
+    "owner_stopped_attempts": [
+      3,
+      8,
+      15
+    ],
+    "candidate_scoring_runs": 1,
+    "readback_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-10174/gpu_install_revalidation_readback_20261003.json",
+    "acceptance_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-10174/gpu_install_revalidation_acceptance_20261003.json",
+    "acceptance_sha256": "c43bb03fd9b2a6222d59711a916845a1b9a808d15f63dc73bb846ad0a1be4a9b",
+    "all_attempts": [
+      {
+        "round": 1,
+        "job": "mypy10174-gpu-original-regrade-r1-20261002T233957Z-086f5b",
+        "wrapper_rc": 75,
+        "candidate_scoring_ran": false,
+        "status": "slot_busy",
+        "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r1-20261002T233957Z-086f5b/launch/receipt.json"
+      },
+      {
+        "round": 2,
+        "job": "mypy10174-gpu-original-regrade-r2-20261002T234409Z-d4fdea",
+        "wrapper_rc": 75,
+        "candidate_scoring_ran": false,
+        "status": "slot_busy",
+        "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r2-20261002T234409Z-d4fdea/launch/receipt.json"
+      },
+      {
+        "round": 3,
+        "job": "mypy10174-gpu-original-regrade-r3-20261002T235343Z-c0d3fd",
+        "wrapper_rc": 1,
+        "candidate_scoring_ran": false,
+        "status": "prepare_timestamp_assertion",
+        "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r3-20261002T235343Z-c0d3fd/launch/receipt.json"
+      },
+      {
+        "round": 4,
+        "job": "mypy10174-gpu-original-regrade-r4-20261002T235603Z-a2a8f9",
+        "wrapper_rc": 75,
+        "candidate_scoring_ran": false,
+        "status": "slot_busy",
+        "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r4-20261002T235603Z-a2a8f9/launch/receipt.json"
+      },
+      {
+        "round": 5,
+        "job": "mypy10174-gpu-original-regrade-r5-20261002T235826Z-a7beb8",
+        "wrapper_rc": 75,
+        "candidate_scoring_ran": false,
+        "status": "slot_busy",
+        "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r5-20261002T235826Z-a7beb8/launch/receipt.json"
+      },
+      {
+        "round": 6,
+        "job": "mypy10174-gpu-original-regrade-r6-20261003T000159Z-5a26d7",
+        "wrapper_rc": 75,
+        "candidate_scoring_ran": false,
+        "status": "slot_busy",
+        "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r6-20261003T000159Z-5a26d7/launch/receipt.json"
+      },
+      {
+        "round": 7,
+        "job": "mypy10174-gpu-original-regrade-r7-20261003T000554Z-60f384",
+        "wrapper_rc": 75,
+        "candidate_scoring_ran": false,
+        "status": "slot_busy",
+        "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r7-20261003T000554Z-60f384/launch/receipt.json"
+      },
+      {
+        "round": 8,
+        "job": "mypy10174-gpu-original-regrade-r8-20261003T000817Z-cca2a8",
+        "wrapper_rc": 1,
+        "candidate_scoring_ran": false,
+        "status": "owner_metadata_null_error",
+        "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r8-20261003T000817Z-cca2a8/launch/receipt.json"
+      },
+      {
+        "round": 9,
+        "job": "mypy10174-gpu-original-regrade-r9-20261003T001303Z-3787b9",
+        "wrapper_rc": 75,
+        "candidate_scoring_ran": false,
+        "status": "slot_busy",
+        "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r9-20261003T001303Z-3787b9/launch/receipt.json"
+      },
+      {
+        "round": 10,
+        "job": "mypy10174-gpu-original-regrade-r10-20261003T001657Z-1dac88",
+        "wrapper_rc": 75,
+        "candidate_scoring_ran": false,
+        "status": "slot_busy",
+        "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r10-20261003T001657Z-1dac88/launch/receipt.json"
+      },
+      {
+        "round": 11,
+        "job": "mypy10174-gpu-original-regrade-r11-20261003T001933Z-82839b",
+        "wrapper_rc": 75,
+        "candidate_scoring_ran": false,
+        "status": "slot_busy",
+        "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r11-20261003T001933Z-82839b/launch/receipt.json"
+      },
+      {
+        "round": 12,
+        "job": "mypy10174-gpu-original-regrade-r12-20261003T002323Z-6d5788",
+        "wrapper_rc": 75,
+        "candidate_scoring_ran": false,
+        "status": "slot_busy",
+        "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r12-20261003T002323Z-6d5788/launch/receipt.json"
+      },
+      {
+        "round": 13,
+        "job": "mypy10174-gpu-original-regrade-r13-20261003T002448Z-557786",
+        "wrapper_rc": 75,
+        "candidate_scoring_ran": false,
+        "status": "slot_busy",
+        "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r13-20261003T002448Z-557786/launch/receipt.json"
+      },
+      {
+        "round": 14,
+        "job": "mypy10174-gpu-original-regrade-r14-20261003T002800Z-8082f6",
+        "wrapper_rc": 75,
+        "candidate_scoring_ran": false,
+        "status": "slot_busy",
+        "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r14-20261003T002800Z-8082f6/launch/receipt.json"
+      },
+      {
+        "round": 15,
+        "job": "mypy10174-gpu-original-regrade-r15-20261003T003159Z-762691",
+        "wrapper_rc": 1,
+        "candidate_scoring_ran": false,
+        "status": "owner_metadata_finder_error",
+        "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r15-20261003T003159Z-762691/launch/receipt.json"
+      },
+      {
+        "round": 16,
+        "job": "mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3",
+        "wrapper_rc": 0,
+        "candidate_scoring_ran": true,
+        "status": "formal_regrade_completed",
+        "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/launch/receipt.json"
+      }
+    ],
+    "historical_resource_supports": [
+      {
+        "request_id": "swe-mypy10174-cpu-slot-support-20261003",
+        "supported_actual_attempt": "r8",
+        "resource_scope_acknowledged": true
+      },
+      {
+        "request_id": "swe-mypy10174-cpu-formal-regrade-slot-20261003",
+        "supported_actual_attempt": "r15",
+        "resource_scope_acknowledged": true
+      }
+    ],
+    "scope": "r16为普通公平槽实际作业；两次旧支持回执仅负责当时r8/r15名额，不代表题级验收。"
+  },
+  "model_first_arm_15184": {
+    "job": "gpu1003-mypy15184-qwen36-a1",
+    "acceptance_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/qwen36_first_arm_acceptance_20261003.json",
+    "acceptance_sha256": "01c10ea111153e13df73c2601e55a859a5c90c1ea7e905c09d4fbed8ae81b7de",
+    "formal_reward": 1,
+    "reference_count": 5,
+    "semantic_and_execution_observation_accepted": true,
+    "actual_model_checkpoint_verified": false,
+    "new_cpu_required": false,
+    "request_status": "claimed_partial_only"
+  },
+  "gpu_supplement_10174": {
+    "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-10174/gpu_identity_and_wheel_supplement_20261003.json",
+    "sha256": "4a6630f407cde6f31e23eeb1cbd1f7076d2a74985ec4a5817fbe9470af972989",
+    "scope": "指定GPU权限层及Q12有限运营来源的历史补证；其后新GPU安装/四参考完成事实由new_GPU_regrade_10174承接。"
+  },
+  "model_pair_15184": {
+    "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/two_model_first_round_acceptance_20261003.json",
+    "sha256": "a7b15e173df1d2044f309f17cbf01689711de12ddf2d6497e9bfdf9058792793",
+    "scope": "正式CPU及两模型各一次有限语义/执行观察已收口；身份仅有限运营归因，稳定性未知，训练/留出false。",
+    "request_status": "returned_acknowledged",
+    "active_request_id": null,
+    "new_CPU_required": false,
+    "new_GPU_compute_required": false,
+    "training_eligible": false,
+    "holdout_eligible": false
+  },
+  "new_GPU_regrade_10174": {
+    "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-10174/new_GPU_regrade_acceptance_20261003.json",
+    "sha256": "5689bf5a295b6d8adbb578664d38453dbe48d16914517c8910e9e24b62ffe282",
+    "job": "gpu1003-mypy10174-qwen36-originalfp-80418df-regrade-a1",
+    "actual_GPU_image": "sha256:80418df01e0544855bbba9d858a53e45089320ed650bc4b1eb05e91bbf33880f",
+    "reward": 1,
+    "formal_references_passed": 4,
+    "new_model_sample_count": 0,
+    "scope": "原Qwen FP新GPU安装/四参考窄增量，语义按原候选/R6参考范围；原raw1/installRC1与CPU r16身份分别保留。"
+  },
+  "model_pair_10174": {
+    "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-10174/two_model_first_round_acceptance_20261003.json",
+    "sha256": "1e34c9bb7c6b655b14151f3117efb2e02650cacb668ffdde4264bd1f192b6fd1",
+    "scope": "两模型各一次有限语义/执行观察已收口；旧Qwen安装失败和原FP新GPU恢复分列，训练/留出false、稳定性未知。",
+    "request_status": "returned_acknowledged",
+    "active_request_id": null,
+    "new_CPU_required": false,
+    "new_GPU_compute_required": false,
+    "training_eligible": false,
+    "holdout_eligible": false
+  }
+}

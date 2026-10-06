@@ -1,0 +1,5548 @@
+{
+ "fork_head": "275e31eb21ecceeb27cb0d1a522c6a59f348dc2e",
+ "fork_worktree_clean": true,
+ "source_sha256": {
+  "reference/miles-rh2-integration/miles/backends/megatron_utils/actor.py": "daaa4bd9e5fe38a37960480f6daf7be1822af5a511cbfa29615f192df0b70210",
+  "reference/miles-rh2-integration/miles/backends/megatron_utils/model.py": "7541f501ca2ac76bfd9a89664d3df3af32950ce57ec8f21deb866df56439d95f",
+  "reference/miles-rh2-integration/miles/utils/arguments.py": "0ddc6dcc19c34dbc121664edf392e91ca394fadd7a03e6315692ab6c304c5616",
+  "reference/miles-rh2-integration/miles/backends/training_utils/loss.py": "6e287b92373826dca5b8e24c98c63478ab2be2992968169e7dcc40dd03879511",
+  "rh2/src/repoharness2/adapters/miles/faithful_dis_loss.py": "a20e61dc9c3937bb90c44fe0861903a9a330c7900ef5e2586c08c70bdc0572e7",
+  "rh2/src/repoharness2/adapters/miles/forward_profile.py": "7fdca222ebf976f217bbfb88f9eb8d5d1ba4bd04c9767424603aad8bd34c99aa",
+  "rh2/experiments/miles_gpu_spike/launch.sh": "596b641d1a666333bcc8d1beae8149f7ca97f446d530814cfdb0f32640a6333a"
+ },
+ "stub_boundary": [
+  "Megatron 模型前向/反向 = 2 维 logit 参数 theta；优化器 = SGD(lr=1)；流水线调度只在末级 stage 调 loss（Megatron schedules 通常语义，本机无源码）",
+  "单进程：无集合通信；非末级 stage 的 step outcome 取末级结果（真实系统经 all-reduce 对齐）",
+  "torch.cuda.current_device → 'cpu'；router 钩子按 replay_base.py 的 stage 分派替身调用 pop_forward/pop_backward",
+  "不覆盖：GPU 数值、Megatron forward-only 是否改动 MoE router 内部状态、真实显存/时长、CP>1/TP>1"
+ ],
+ "A_baseline_0906_rerun": {
+  "probe": "docs/agentic_RL/repo_harness_rh2_workstreams/miles_spike/external_infra_review_crosscheck_20260906/extra_actor_zero_probe.py",
+  "returncode": 0,
+  "nonzero_gradients": [
+   [
+    -0.5,
+    0.5
+   ],
+   [
+    -0.5,
+    0.5
+   ]
+  ],
+  "cancel_case_losses_equal": true,
+  "actor_calls": {
+   "use_rollout_logprobs=False,get_mismatch_metrics=False": [
+    [
+     "fill",
+     "init"
+    ],
+    [
+     "compute_log_prob",
+     "replay_forward"
+    ],
+    [
+     "logprob_compare",
+     "replay_forward"
+    ],
+    [
+     "train",
+     "replay_backward"
+    ]
+   ],
+   "use_rollout_logprobs=True,get_mismatch_metrics=False": [
+    [
+     "fill",
+     "init"
+    ],
+    [
+     "train",
+     "replay_backward"
+    ]
+   ],
+   "use_rollout_logprobs=True,get_mismatch_metrics=True": [
+    [
+     "fill",
+     "init"
+    ],
+    [
+     "compute_log_prob",
+     "replay_forward"
+    ],
+    [
+     "logprob_compare",
+     "replay_forward"
+    ],
+    [
+     "train",
+     "replay_backward"
+    ]
+   ]
+  }
+ },
+ "BC_two_step_pp_equivalence": {
+  "reward_columns": {
+   "raw": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
+   ],
+   "normalized": [
+    0.935412585735321,
+    0.935412585735321,
+    0.935412585735321,
+    0.935412585735321,
+    -0.935412585735321,
+    -0.935412585735321,
+    -0.935412585735321,
+    -0.935412585735321,
+    -0.935412585735321,
+    -0.935412585735321,
+    -0.935412585735321,
+    -0.935412585735321,
+    0.935412585735321,
+    0.935412585735321,
+    0.935412585735321,
+    0.935412585735321
+   ]
+  },
+  "checks": {
+   "rewards_column_is_group_normalized_not_raw": true,
+   "advantages_equal_normalized_column_both_profiles": true,
+   "two_optimizer_steps_each_profile": true,
+   "per_step_losses_identical": true,
+   "per_step_gradients_identical": true,
+   "per_step_theta_identical": true,
+   "step1_gradient_depends_on_step0_update": true,
+   "dis_metrics_identical": true,
+   "gradients_nonzero": true,
+   "negative_control_detects_different_update": true,
+   "poisoned_forward_values_change_no_training_quantity": true,
+   "poisoned_forward_values_only_reach_logprob_compare": true,
+   "diag_calls_compute_log_prob_under_replay_forward": true,
+   "eff_no_compute_log_prob": true,
+   "diag_emits_logprob_forward_consume_and_compare_on_last": true,
+   "diag_non_last_emits_logprob_forward_consume_but_no_compare": true,
+   "eff_event_sequence_equals_diag_minus_two_vanishing": true,
+   "eff_keeps_fill_train_step_consume_exhausted": true,
+   "exhausted_true_both_profiles_both_stages": true,
+   "training_replay_pops_identical_both_stages": true,
+   "train_enters_replay_backward": true,
+   "diag_clears_forward_counters_before_training": true,
+   "train_step_consumed_identical": true,
+   "non_last_diag_has_no_advantages": true,
+   "non_last_eff_computes_advantages": true,
+   "non_last_only_difference_is_unused_advantages_column": true
+  },
+  "all_checks_pass": true,
+  "runs": {
+   "diagnostic/last": {
+    "profile": "diagnostic",
+    "last_stage": true,
+    "poison_forward": false,
+    "outcome": "normal",
+    "applied_optimizer_steps": 2,
+    "calls": [
+     [
+      "compute_log_prob",
+      "replay_forward",
+      ""
+     ],
+     [
+      "log_rollout_data",
+      [
+       "advantages",
+       "log_probs"
+      ]
+     ],
+     [
+      "weights_backup",
+      "actor"
+     ]
+    ],
+    "replay_calls": [
+     "clear_all_forward",
+     "clear_all"
+    ],
+    "events": [
+     {
+      "event": "train_rollout"
+     },
+     {
+      "event": "replay_fill",
+      "records_min": 4,
+      "expected_records": 4,
+      "sample_indices": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ]
+     },
+     {
+      "event": "replay_consume",
+      "phase": "logprob_forward",
+      "forward_pops_min": 4,
+      "forward_pops_max": 4,
+      "queue_len_min": 4,
+      "queue_len_max": 4
+     },
+     {
+      "event": "logprob_compare"
+     },
+     {
+      "event": "train_step",
+      "step_id": 0,
+      "optimizer_step_applied": true
+     },
+     {
+      "event": "train_step_consumed",
+      "step_id": 0,
+      "sample_indices": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ]
+     },
+     {
+      "event": "replay_consume",
+      "phase": "train_step",
+      "step_id": 0,
+      "forward_pops_min": 2,
+      "forward_pops_max": 2,
+      "backward_pops_min": 2,
+      "backward_pops_max": 2,
+      "queue_len_min": 4,
+      "queue_len_max": 4
+     },
+     {
+      "event": "train_step",
+      "step_id": 1,
+      "optimizer_step_applied": true
+     },
+     {
+      "event": "train_step_consumed",
+      "step_id": 1,
+      "sample_indices": [
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ]
+     },
+     {
+      "event": "replay_consume",
+      "phase": "train_step",
+      "step_id": 1,
+      "forward_pops_min": 2,
+      "forward_pops_max": 2,
+      "backward_pops_min": 2,
+      "backward_pops_max": 2,
+      "queue_len_min": 4,
+      "queue_len_max": 4
+     },
+     {
+      "event": "replay_exhausted",
+      "queue_len_min": 4,
+      "queue_len_max": 4,
+      "forward_pops_min": 4,
+      "forward_pops_max": 4,
+      "backward_pops_min": 4,
+      "backward_pops_max": 4,
+      "exhausted": true
+     }
+    ],
+    "logprob_compare_entries": [
+     [
+      {
+       "sample_index": 0,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": 0.0
+      },
+      {
+       "sample_index": 1,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": 0.0
+      },
+      {
+       "sample_index": 2,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": 0.0
+      },
+      {
+       "sample_index": 3,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": 0.0
+      },
+      {
+       "sample_index": 4,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": 0.0
+      },
+      {
+       "sample_index": 5,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": 0.0
+      },
+      {
+       "sample_index": 6,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": 0.0
+      },
+      {
+       "sample_index": 7,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": 0.0
+      },
+      {
+       "sample_index": 8,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": 0.0
+      },
+      {
+       "sample_index": 9,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": 0.0
+      },
+      {
+       "sample_index": 10,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": 0.0
+      },
+      {
+       "sample_index": 11,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": 0.0
+      },
+      {
+       "sample_index": 12,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": 0.0
+      },
+      {
+       "sample_index": 13,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": 0.0
+      },
+      {
+       "sample_index": 14,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": 0.0
+      },
+      {
+       "sample_index": 15,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": 0.0
+      }
+     ]
+    ],
+    "replay_trace": [
+     [
+      "logprob_forward",
+      "fwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "logprob_forward",
+      "fwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "logprob_forward",
+      "fwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "logprob_forward",
+      "fwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "logprob_forward",
+      "fwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "logprob_forward",
+      "fwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "logprob_forward",
+      "fwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "logprob_forward",
+      "fwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ]
+    ],
+    "train_replay_trace": [
+     [
+      "train_step0",
+      "fwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ]
+    ],
+    "advantages": [
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321
+    ],
+    "rewards_column": [
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321
+    ],
+    "fetched_training_batches": [
+     {
+      "step_id": 0,
+      "sample_indices": [
+       0,
+       1,
+       2,
+       3
+      ],
+      "advantages_in_batch": true,
+      "log_probs_in_batch": true
+     },
+     {
+      "step_id": 0,
+      "sample_indices": [
+       4,
+       5,
+       6,
+       7
+      ],
+      "advantages_in_batch": true,
+      "log_probs_in_batch": true
+     },
+     {
+      "step_id": 1,
+      "sample_indices": [
+       8,
+       9,
+       10,
+       11
+      ],
+      "advantages_in_batch": true,
+      "log_probs_in_batch": true
+     },
+     {
+      "step_id": 1,
+      "sample_indices": [
+       12,
+       13,
+       14,
+       15
+      ],
+      "advantages_in_batch": true,
+      "log_probs_in_batch": true
+     }
+    ],
+    "steps": [
+     {
+      "step_id": 0,
+      "losses": [
+       0.648378597697663,
+       -0.648378597697663
+      ],
+      "gradient": [
+       -0.4677062937584794,
+       0.4677062937584794
+      ],
+      "applied": true,
+      "theta_after": [
+       0.4677062937584794,
+       -0.4677062937584794
+      ],
+      "dis_metrics": [
+       {
+        "loss": 2.593514390790652,
+        "dis_microbatch_provenance_tokens": 4.0,
+        "dis_accepted_tokens": 4.0,
+        "dis_rejected_tokens": 0.0,
+        "dis_zero_contribution_microbatch": 0.0,
+        "dis_nonsingleton_provenance_tokens": 4.0,
+        "dis_singleton_accepted_tokens": 0.0,
+        "dis_candidate_signal_tokens": 4.0,
+        "dis_zero_advantage_accepted_tokens": 0.0,
+        "dis_rejected_low_tokens": 0.0,
+        "dis_rejected_high_tokens": 0.0,
+        "dis_support_size_1": 0.0,
+        "dis_support_size_2_3": 4.0,
+        "dis_support_size_4_7": 0.0,
+        "dis_support_size_8_15": 0.0,
+        "dis_support_size_16_plus": 0.0
+       },
+       {
+        "loss": -2.593514390790652,
+        "dis_microbatch_provenance_tokens": 4.0,
+        "dis_accepted_tokens": 4.0,
+        "dis_rejected_tokens": 0.0,
+        "dis_zero_contribution_microbatch": 0.0,
+        "dis_nonsingleton_provenance_tokens": 4.0,
+        "dis_singleton_accepted_tokens": 0.0,
+        "dis_candidate_signal_tokens": 4.0,
+        "dis_zero_advantage_accepted_tokens": 0.0,
+        "dis_rejected_low_tokens": 0.0,
+        "dis_rejected_high_tokens": 0.0,
+        "dis_support_size_1": 0.0,
+        "dis_support_size_2_3": 4.0,
+        "dis_support_size_4_7": 0.0,
+        "dis_support_size_8_15": 0.0,
+        "dis_support_size_16_plus": 0.0
+       }
+      ]
+     },
+     {
+      "step_id": 1,
+      "losses": [
+       -0.4447850176737059,
+       0.6677412675318709
+      ],
+      "gradient": [
+       0.3786567717494865,
+       -0.37865677174948653
+      ],
+      "applied": true,
+      "theta_after": [
+       0.08904952200899291,
+       -0.08904952200899285
+      ],
+      "dis_metrics": [
+       {
+        "loss": -1.7791400706948235,
+        "dis_microbatch_provenance_tokens": 4.0,
+        "dis_accepted_tokens": 4.0,
+        "dis_rejected_tokens": 0.0,
+        "dis_zero_contribution_microbatch": 0.0,
+        "dis_nonsingleton_provenance_tokens": 4.0,
+        "dis_singleton_accepted_tokens": 0.0,
+        "dis_candidate_signal_tokens": 4.0,
+        "dis_zero_advantage_accepted_tokens": 0.0,
+        "dis_rejected_low_tokens": 0.0,
+        "dis_rejected_high_tokens": 0.0,
+        "dis_support_size_1": 0.0,
+        "dis_support_size_2_3": 4.0,
+        "dis_support_size_4_7": 0.0,
+        "dis_support_size_8_15": 0.0,
+        "dis_support_size_16_plus": 0.0
+       },
+       {
+        "loss": 2.6709650701274836,
+        "dis_microbatch_provenance_tokens": 4.0,
+        "dis_accepted_tokens": 4.0,
+        "dis_rejected_tokens": 0.0,
+        "dis_zero_contribution_microbatch": 0.0,
+        "dis_nonsingleton_provenance_tokens": 4.0,
+        "dis_singleton_accepted_tokens": 0.0,
+        "dis_candidate_signal_tokens": 4.0,
+        "dis_zero_advantage_accepted_tokens": 0.0,
+        "dis_rejected_low_tokens": 0.0,
+        "dis_rejected_high_tokens": 0.0,
+        "dis_support_size_1": 0.0,
+        "dis_support_size_2_3": 4.0,
+        "dis_support_size_4_7": 0.0,
+        "dis_support_size_8_15": 0.0,
+        "dis_support_size_16_plus": 0.0
+       }
+      ]
+     }
+    ],
+    "theta_final": [
+     0.08904952200899291,
+     -0.08904952200899285
+    ]
+   },
+   "efficiency/last": {
+    "profile": "efficiency",
+    "last_stage": true,
+    "poison_forward": false,
+    "outcome": "normal",
+    "applied_optimizer_steps": 2,
+    "calls": [
+     [
+      "log_rollout_data",
+      [
+       "advantages"
+      ]
+     ],
+     [
+      "weights_backup",
+      "actor"
+     ]
+    ],
+    "replay_calls": [
+     "clear_all"
+    ],
+    "events": [
+     {
+      "event": "train_rollout"
+     },
+     {
+      "event": "replay_fill",
+      "records_min": 4,
+      "expected_records": 4,
+      "sample_indices": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ]
+     },
+     {
+      "event": "train_step",
+      "step_id": 0,
+      "optimizer_step_applied": true
+     },
+     {
+      "event": "train_step_consumed",
+      "step_id": 0,
+      "sample_indices": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ]
+     },
+     {
+      "event": "replay_consume",
+      "phase": "train_step",
+      "step_id": 0,
+      "forward_pops_min": 2,
+      "forward_pops_max": 2,
+      "backward_pops_min": 2,
+      "backward_pops_max": 2,
+      "queue_len_min": 4,
+      "queue_len_max": 4
+     },
+     {
+      "event": "train_step",
+      "step_id": 1,
+      "optimizer_step_applied": true
+     },
+     {
+      "event": "train_step_consumed",
+      "step_id": 1,
+      "sample_indices": [
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ]
+     },
+     {
+      "event": "replay_consume",
+      "phase": "train_step",
+      "step_id": 1,
+      "forward_pops_min": 2,
+      "forward_pops_max": 2,
+      "backward_pops_min": 2,
+      "backward_pops_max": 2,
+      "queue_len_min": 4,
+      "queue_len_max": 4
+     },
+     {
+      "event": "replay_exhausted",
+      "queue_len_min": 4,
+      "queue_len_max": 4,
+      "forward_pops_min": 4,
+      "forward_pops_max": 4,
+      "backward_pops_min": 4,
+      "backward_pops_max": 4,
+      "exhausted": true
+     }
+    ],
+    "logprob_compare_entries": [],
+    "replay_trace": [
+     [
+      "train_step0",
+      "fwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ]
+    ],
+    "train_replay_trace": [
+     [
+      "train_step0",
+      "fwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ]
+    ],
+    "advantages": [
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321
+    ],
+    "rewards_column": [
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321
+    ],
+    "fetched_training_batches": [
+     {
+      "step_id": 0,
+      "sample_indices": [
+       0,
+       1,
+       2,
+       3
+      ],
+      "advantages_in_batch": true,
+      "log_probs_in_batch": false
+     },
+     {
+      "step_id": 0,
+      "sample_indices": [
+       4,
+       5,
+       6,
+       7
+      ],
+      "advantages_in_batch": true,
+      "log_probs_in_batch": false
+     },
+     {
+      "step_id": 1,
+      "sample_indices": [
+       8,
+       9,
+       10,
+       11
+      ],
+      "advantages_in_batch": true,
+      "log_probs_in_batch": false
+     },
+     {
+      "step_id": 1,
+      "sample_indices": [
+       12,
+       13,
+       14,
+       15
+      ],
+      "advantages_in_batch": true,
+      "log_probs_in_batch": false
+     }
+    ],
+    "steps": [
+     {
+      "step_id": 0,
+      "losses": [
+       0.648378597697663,
+       -0.648378597697663
+      ],
+      "gradient": [
+       -0.4677062937584794,
+       0.4677062937584794
+      ],
+      "applied": true,
+      "theta_after": [
+       0.4677062937584794,
+       -0.4677062937584794
+      ],
+      "dis_metrics": [
+       {
+        "loss": 2.593514390790652,
+        "dis_microbatch_provenance_tokens": 4.0,
+        "dis_accepted_tokens": 4.0,
+        "dis_rejected_tokens": 0.0,
+        "dis_zero_contribution_microbatch": 0.0,
+        "dis_nonsingleton_provenance_tokens": 4.0,
+        "dis_singleton_accepted_tokens": 0.0,
+        "dis_candidate_signal_tokens": 4.0,
+        "dis_zero_advantage_accepted_tokens": 0.0,
+        "dis_rejected_low_tokens": 0.0,
+        "dis_rejected_high_tokens": 0.0,
+        "dis_support_size_1": 0.0,
+        "dis_support_size_2_3": 4.0,
+        "dis_support_size_4_7": 0.0,
+        "dis_support_size_8_15": 0.0,
+        "dis_support_size_16_plus": 0.0
+       },
+       {
+        "loss": -2.593514390790652,
+        "dis_microbatch_provenance_tokens": 4.0,
+        "dis_accepted_tokens": 4.0,
+        "dis_rejected_tokens": 0.0,
+        "dis_zero_contribution_microbatch": 0.0,
+        "dis_nonsingleton_provenance_tokens": 4.0,
+        "dis_singleton_accepted_tokens": 0.0,
+        "dis_candidate_signal_tokens": 4.0,
+        "dis_zero_advantage_accepted_tokens": 0.0,
+        "dis_rejected_low_tokens": 0.0,
+        "dis_rejected_high_tokens": 0.0,
+        "dis_support_size_1": 0.0,
+        "dis_support_size_2_3": 4.0,
+        "dis_support_size_4_7": 0.0,
+        "dis_support_size_8_15": 0.0,
+        "dis_support_size_16_plus": 0.0
+       }
+      ]
+     },
+     {
+      "step_id": 1,
+      "losses": [
+       -0.4447850176737059,
+       0.6677412675318709
+      ],
+      "gradient": [
+       0.3786567717494865,
+       -0.37865677174948653
+      ],
+      "applied": true,
+      "theta_after": [
+       0.08904952200899291,
+       -0.08904952200899285
+      ],
+      "dis_metrics": [
+       {
+        "loss": -1.7791400706948235,
+        "dis_microbatch_provenance_tokens": 4.0,
+        "dis_accepted_tokens": 4.0,
+        "dis_rejected_tokens": 0.0,
+        "dis_zero_contribution_microbatch": 0.0,
+        "dis_nonsingleton_provenance_tokens": 4.0,
+        "dis_singleton_accepted_tokens": 0.0,
+        "dis_candidate_signal_tokens": 4.0,
+        "dis_zero_advantage_accepted_tokens": 0.0,
+        "dis_rejected_low_tokens": 0.0,
+        "dis_rejected_high_tokens": 0.0,
+        "dis_support_size_1": 0.0,
+        "dis_support_size_2_3": 4.0,
+        "dis_support_size_4_7": 0.0,
+        "dis_support_size_8_15": 0.0,
+        "dis_support_size_16_plus": 0.0
+       },
+       {
+        "loss": 2.6709650701274836,
+        "dis_microbatch_provenance_tokens": 4.0,
+        "dis_accepted_tokens": 4.0,
+        "dis_rejected_tokens": 0.0,
+        "dis_zero_contribution_microbatch": 0.0,
+        "dis_nonsingleton_provenance_tokens": 4.0,
+        "dis_singleton_accepted_tokens": 0.0,
+        "dis_candidate_signal_tokens": 4.0,
+        "dis_zero_advantage_accepted_tokens": 0.0,
+        "dis_rejected_low_tokens": 0.0,
+        "dis_rejected_high_tokens": 0.0,
+        "dis_support_size_1": 0.0,
+        "dis_support_size_2_3": 4.0,
+        "dis_support_size_4_7": 0.0,
+        "dis_support_size_8_15": 0.0,
+        "dis_support_size_16_plus": 0.0
+       }
+      ]
+     }
+    ],
+    "theta_final": [
+     0.08904952200899291,
+     -0.08904952200899285
+    ]
+   },
+   "diagnostic/last/poisoned_forward": {
+    "profile": "diagnostic",
+    "last_stage": true,
+    "poison_forward": true,
+    "outcome": "normal",
+    "applied_optimizer_steps": 2,
+    "calls": [
+     [
+      "compute_log_prob",
+      "replay_forward",
+      ""
+     ],
+     [
+      "log_rollout_data",
+      [
+       "advantages",
+       "log_probs"
+      ]
+     ],
+     [
+      "weights_backup",
+      "actor"
+     ]
+    ],
+    "replay_calls": [
+     "clear_all_forward",
+     "clear_all"
+    ],
+    "events": [
+     {
+      "event": "train_rollout"
+     },
+     {
+      "event": "replay_fill",
+      "records_min": 4,
+      "expected_records": 4,
+      "sample_indices": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ]
+     },
+     {
+      "event": "replay_consume",
+      "phase": "logprob_forward",
+      "forward_pops_min": 4,
+      "forward_pops_max": 4,
+      "queue_len_min": 4,
+      "queue_len_max": 4
+     },
+     {
+      "event": "logprob_compare"
+     },
+     {
+      "event": "train_step",
+      "step_id": 0,
+      "optimizer_step_applied": true
+     },
+     {
+      "event": "train_step_consumed",
+      "step_id": 0,
+      "sample_indices": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ]
+     },
+     {
+      "event": "replay_consume",
+      "phase": "train_step",
+      "step_id": 0,
+      "forward_pops_min": 2,
+      "forward_pops_max": 2,
+      "backward_pops_min": 2,
+      "backward_pops_max": 2,
+      "queue_len_min": 4,
+      "queue_len_max": 4
+     },
+     {
+      "event": "train_step",
+      "step_id": 1,
+      "optimizer_step_applied": true
+     },
+     {
+      "event": "train_step_consumed",
+      "step_id": 1,
+      "sample_indices": [
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ]
+     },
+     {
+      "event": "replay_consume",
+      "phase": "train_step",
+      "step_id": 1,
+      "forward_pops_min": 2,
+      "forward_pops_max": 2,
+      "backward_pops_min": 2,
+      "backward_pops_max": 2,
+      "queue_len_min": 4,
+      "queue_len_max": 4
+     },
+     {
+      "event": "replay_exhausted",
+      "queue_len_min": 4,
+      "queue_len_max": 4,
+      "forward_pops_min": 4,
+      "forward_pops_max": 4,
+      "backward_pops_min": 4,
+      "backward_pops_max": 4,
+      "exhausted": true
+     }
+    ],
+    "logprob_compare_entries": [
+     [
+      {
+       "sample_index": 0,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": NaN
+      },
+      {
+       "sample_index": 1,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": NaN
+      },
+      {
+       "sample_index": 2,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": NaN
+      },
+      {
+       "sample_index": 3,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": NaN
+      },
+      {
+       "sample_index": 4,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": NaN
+      },
+      {
+       "sample_index": 5,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": NaN
+      },
+      {
+       "sample_index": 6,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": NaN
+      },
+      {
+       "sample_index": 7,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": NaN
+      },
+      {
+       "sample_index": 8,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": NaN
+      },
+      {
+       "sample_index": 9,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": NaN
+      },
+      {
+       "sample_index": 10,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": NaN
+      },
+      {
+       "sample_index": 11,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": NaN
+      },
+      {
+       "sample_index": 12,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": NaN
+      },
+      {
+       "sample_index": 13,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": NaN
+      },
+      {
+       "sample_index": 14,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": NaN
+      },
+      {
+       "sample_index": 15,
+       "leaf_ordinal": 0,
+       "same_version": true,
+       "length_mismatch": false,
+       "num_tokens": 1,
+       "total_tokens": 1,
+       "mean_abs_diff": NaN
+      }
+     ]
+    ],
+    "replay_trace": [
+     [
+      "logprob_forward",
+      "fwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "logprob_forward",
+      "fwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "logprob_forward",
+      "fwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "logprob_forward",
+      "fwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "logprob_forward",
+      "fwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "logprob_forward",
+      "fwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "logprob_forward",
+      "fwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "logprob_forward",
+      "fwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ]
+    ],
+    "train_replay_trace": [
+     [
+      "train_step0",
+      "fwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ]
+    ],
+    "advantages": [
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321
+    ],
+    "rewards_column": [
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321
+    ],
+    "fetched_training_batches": [
+     {
+      "step_id": 0,
+      "sample_indices": [
+       0,
+       1,
+       2,
+       3
+      ],
+      "advantages_in_batch": true,
+      "log_probs_in_batch": true
+     },
+     {
+      "step_id": 0,
+      "sample_indices": [
+       4,
+       5,
+       6,
+       7
+      ],
+      "advantages_in_batch": true,
+      "log_probs_in_batch": true
+     },
+     {
+      "step_id": 1,
+      "sample_indices": [
+       8,
+       9,
+       10,
+       11
+      ],
+      "advantages_in_batch": true,
+      "log_probs_in_batch": true
+     },
+     {
+      "step_id": 1,
+      "sample_indices": [
+       12,
+       13,
+       14,
+       15
+      ],
+      "advantages_in_batch": true,
+      "log_probs_in_batch": true
+     }
+    ],
+    "steps": [
+     {
+      "step_id": 0,
+      "losses": [
+       0.648378597697663,
+       -0.648378597697663
+      ],
+      "gradient": [
+       -0.4677062937584794,
+       0.4677062937584794
+      ],
+      "applied": true,
+      "theta_after": [
+       0.4677062937584794,
+       -0.4677062937584794
+      ],
+      "dis_metrics": [
+       {
+        "loss": 2.593514390790652,
+        "dis_microbatch_provenance_tokens": 4.0,
+        "dis_accepted_tokens": 4.0,
+        "dis_rejected_tokens": 0.0,
+        "dis_zero_contribution_microbatch": 0.0,
+        "dis_nonsingleton_provenance_tokens": 4.0,
+        "dis_singleton_accepted_tokens": 0.0,
+        "dis_candidate_signal_tokens": 4.0,
+        "dis_zero_advantage_accepted_tokens": 0.0,
+        "dis_rejected_low_tokens": 0.0,
+        "dis_rejected_high_tokens": 0.0,
+        "dis_support_size_1": 0.0,
+        "dis_support_size_2_3": 4.0,
+        "dis_support_size_4_7": 0.0,
+        "dis_support_size_8_15": 0.0,
+        "dis_support_size_16_plus": 0.0
+       },
+       {
+        "loss": -2.593514390790652,
+        "dis_microbatch_provenance_tokens": 4.0,
+        "dis_accepted_tokens": 4.0,
+        "dis_rejected_tokens": 0.0,
+        "dis_zero_contribution_microbatch": 0.0,
+        "dis_nonsingleton_provenance_tokens": 4.0,
+        "dis_singleton_accepted_tokens": 0.0,
+        "dis_candidate_signal_tokens": 4.0,
+        "dis_zero_advantage_accepted_tokens": 0.0,
+        "dis_rejected_low_tokens": 0.0,
+        "dis_rejected_high_tokens": 0.0,
+        "dis_support_size_1": 0.0,
+        "dis_support_size_2_3": 4.0,
+        "dis_support_size_4_7": 0.0,
+        "dis_support_size_8_15": 0.0,
+        "dis_support_size_16_plus": 0.0
+       }
+      ]
+     },
+     {
+      "step_id": 1,
+      "losses": [
+       -0.4447850176737059,
+       0.6677412675318709
+      ],
+      "gradient": [
+       0.3786567717494865,
+       -0.37865677174948653
+      ],
+      "applied": true,
+      "theta_after": [
+       0.08904952200899291,
+       -0.08904952200899285
+      ],
+      "dis_metrics": [
+       {
+        "loss": -1.7791400706948235,
+        "dis_microbatch_provenance_tokens": 4.0,
+        "dis_accepted_tokens": 4.0,
+        "dis_rejected_tokens": 0.0,
+        "dis_zero_contribution_microbatch": 0.0,
+        "dis_nonsingleton_provenance_tokens": 4.0,
+        "dis_singleton_accepted_tokens": 0.0,
+        "dis_candidate_signal_tokens": 4.0,
+        "dis_zero_advantage_accepted_tokens": 0.0,
+        "dis_rejected_low_tokens": 0.0,
+        "dis_rejected_high_tokens": 0.0,
+        "dis_support_size_1": 0.0,
+        "dis_support_size_2_3": 4.0,
+        "dis_support_size_4_7": 0.0,
+        "dis_support_size_8_15": 0.0,
+        "dis_support_size_16_plus": 0.0
+       },
+       {
+        "loss": 2.6709650701274836,
+        "dis_microbatch_provenance_tokens": 4.0,
+        "dis_accepted_tokens": 4.0,
+        "dis_rejected_tokens": 0.0,
+        "dis_zero_contribution_microbatch": 0.0,
+        "dis_nonsingleton_provenance_tokens": 4.0,
+        "dis_singleton_accepted_tokens": 0.0,
+        "dis_candidate_signal_tokens": 4.0,
+        "dis_zero_advantage_accepted_tokens": 0.0,
+        "dis_rejected_low_tokens": 0.0,
+        "dis_rejected_high_tokens": 0.0,
+        "dis_support_size_1": 0.0,
+        "dis_support_size_2_3": 4.0,
+        "dis_support_size_4_7": 0.0,
+        "dis_support_size_8_15": 0.0,
+        "dis_support_size_16_plus": 0.0
+       }
+      ]
+     }
+    ],
+    "theta_final": [
+     0.08904952200899291,
+     -0.08904952200899285
+    ]
+   },
+   "diagnostic/non_last": {
+    "profile": "diagnostic",
+    "last_stage": false,
+    "poison_forward": false,
+    "outcome": "normal",
+    "applied_optimizer_steps": 2,
+    "calls": [
+     [
+      "compute_log_prob",
+      "replay_forward",
+      ""
+     ],
+     [
+      "log_rollout_data",
+      []
+     ],
+     [
+      "weights_backup",
+      "actor"
+     ]
+    ],
+    "replay_calls": [
+     "clear_all_forward",
+     "clear_all"
+    ],
+    "events": [
+     {
+      "event": "train_rollout"
+     },
+     {
+      "event": "replay_fill",
+      "records_min": 4,
+      "expected_records": 4,
+      "sample_indices": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ]
+     },
+     {
+      "event": "replay_consume",
+      "phase": "logprob_forward",
+      "forward_pops_min": 4,
+      "forward_pops_max": 4,
+      "queue_len_min": 4,
+      "queue_len_max": 4
+     },
+     {
+      "event": "train_step",
+      "step_id": 0,
+      "optimizer_step_applied": true
+     },
+     {
+      "event": "train_step_consumed",
+      "step_id": 0,
+      "sample_indices": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ]
+     },
+     {
+      "event": "replay_consume",
+      "phase": "train_step",
+      "step_id": 0,
+      "forward_pops_min": 2,
+      "forward_pops_max": 2,
+      "backward_pops_min": 2,
+      "backward_pops_max": 2,
+      "queue_len_min": 4,
+      "queue_len_max": 4
+     },
+     {
+      "event": "train_step",
+      "step_id": 1,
+      "optimizer_step_applied": true
+     },
+     {
+      "event": "train_step_consumed",
+      "step_id": 1,
+      "sample_indices": [
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ]
+     },
+     {
+      "event": "replay_consume",
+      "phase": "train_step",
+      "step_id": 1,
+      "forward_pops_min": 2,
+      "forward_pops_max": 2,
+      "backward_pops_min": 2,
+      "backward_pops_max": 2,
+      "queue_len_min": 4,
+      "queue_len_max": 4
+     },
+     {
+      "event": "replay_exhausted",
+      "queue_len_min": 4,
+      "queue_len_max": 4,
+      "forward_pops_min": 4,
+      "forward_pops_max": 4,
+      "backward_pops_min": 4,
+      "backward_pops_max": 4,
+      "exhausted": true
+     }
+    ],
+    "logprob_compare_entries": [],
+    "replay_trace": [
+     [
+      "logprob_forward",
+      "fwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "logprob_forward",
+      "fwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "logprob_forward",
+      "fwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "logprob_forward",
+      "fwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "logprob_forward",
+      "fwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "logprob_forward",
+      "fwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "logprob_forward",
+      "fwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "logprob_forward",
+      "fwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ]
+    ],
+    "train_replay_trace": [
+     [
+      "train_step0",
+      "fwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ]
+    ],
+    "advantages": null,
+    "rewards_column": [
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321
+    ],
+    "fetched_training_batches": [
+     {
+      "step_id": 0,
+      "sample_indices": [
+       0,
+       1,
+       2,
+       3
+      ],
+      "advantages_in_batch": false,
+      "log_probs_in_batch": false
+     },
+     {
+      "step_id": 0,
+      "sample_indices": [
+       4,
+       5,
+       6,
+       7
+      ],
+      "advantages_in_batch": false,
+      "log_probs_in_batch": false
+     },
+     {
+      "step_id": 1,
+      "sample_indices": [
+       8,
+       9,
+       10,
+       11
+      ],
+      "advantages_in_batch": false,
+      "log_probs_in_batch": false
+     },
+     {
+      "step_id": 1,
+      "sample_indices": [
+       12,
+       13,
+       14,
+       15
+      ],
+      "advantages_in_batch": false,
+      "log_probs_in_batch": false
+     }
+    ],
+    "steps": [
+     {
+      "step_id": 0,
+      "losses": [],
+      "gradient": [
+       0.0,
+       0.0
+      ],
+      "applied": true,
+      "theta_after": [
+       0.0,
+       0.0
+      ],
+      "dis_metrics": []
+     },
+     {
+      "step_id": 1,
+      "losses": [],
+      "gradient": [
+       0.0,
+       0.0
+      ],
+      "applied": true,
+      "theta_after": [
+       0.0,
+       0.0
+      ],
+      "dis_metrics": []
+     }
+    ],
+    "theta_final": [
+     0.0,
+     0.0
+    ]
+   },
+   "efficiency/non_last": {
+    "profile": "efficiency",
+    "last_stage": false,
+    "poison_forward": false,
+    "outcome": "normal",
+    "applied_optimizer_steps": 2,
+    "calls": [
+     [
+      "log_rollout_data",
+      [
+       "advantages"
+      ]
+     ],
+     [
+      "weights_backup",
+      "actor"
+     ]
+    ],
+    "replay_calls": [
+     "clear_all"
+    ],
+    "events": [
+     {
+      "event": "train_rollout"
+     },
+     {
+      "event": "replay_fill",
+      "records_min": 4,
+      "expected_records": 4,
+      "sample_indices": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ]
+     },
+     {
+      "event": "train_step",
+      "step_id": 0,
+      "optimizer_step_applied": true
+     },
+     {
+      "event": "train_step_consumed",
+      "step_id": 0,
+      "sample_indices": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ]
+     },
+     {
+      "event": "replay_consume",
+      "phase": "train_step",
+      "step_id": 0,
+      "forward_pops_min": 2,
+      "forward_pops_max": 2,
+      "backward_pops_min": 2,
+      "backward_pops_max": 2,
+      "queue_len_min": 4,
+      "queue_len_max": 4
+     },
+     {
+      "event": "train_step",
+      "step_id": 1,
+      "optimizer_step_applied": true
+     },
+     {
+      "event": "train_step_consumed",
+      "step_id": 1,
+      "sample_indices": [
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ]
+     },
+     {
+      "event": "replay_consume",
+      "phase": "train_step",
+      "step_id": 1,
+      "forward_pops_min": 2,
+      "forward_pops_max": 2,
+      "backward_pops_min": 2,
+      "backward_pops_max": 2,
+      "queue_len_min": 4,
+      "queue_len_max": 4
+     },
+     {
+      "event": "replay_exhausted",
+      "queue_len_min": 4,
+      "queue_len_max": 4,
+      "forward_pops_min": 4,
+      "forward_pops_max": 4,
+      "backward_pops_min": 4,
+      "backward_pops_max": 4,
+      "exhausted": true
+     }
+    ],
+    "logprob_compare_entries": [],
+    "replay_trace": [
+     [
+      "train_step0",
+      "fwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ]
+    ],
+    "train_replay_trace": [
+     [
+      "train_step0",
+      "fwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ]
+    ],
+    "advantages": [
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321
+    ],
+    "rewards_column": [
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321
+    ],
+    "fetched_training_batches": [
+     {
+      "step_id": 0,
+      "sample_indices": [
+       0,
+       1,
+       2,
+       3
+      ],
+      "advantages_in_batch": true,
+      "log_probs_in_batch": false
+     },
+     {
+      "step_id": 0,
+      "sample_indices": [
+       4,
+       5,
+       6,
+       7
+      ],
+      "advantages_in_batch": true,
+      "log_probs_in_batch": false
+     },
+     {
+      "step_id": 1,
+      "sample_indices": [
+       8,
+       9,
+       10,
+       11
+      ],
+      "advantages_in_batch": true,
+      "log_probs_in_batch": false
+     },
+     {
+      "step_id": 1,
+      "sample_indices": [
+       12,
+       13,
+       14,
+       15
+      ],
+      "advantages_in_batch": true,
+      "log_probs_in_batch": false
+     }
+    ],
+    "steps": [
+     {
+      "step_id": 0,
+      "losses": [],
+      "gradient": [
+       0.0,
+       0.0
+      ],
+      "applied": true,
+      "theta_after": [
+       0.0,
+       0.0
+      ],
+      "dis_metrics": []
+     },
+     {
+      "step_id": 1,
+      "losses": [],
+      "gradient": [
+       0.0,
+       0.0
+      ],
+      "applied": true,
+      "theta_after": [
+       0.0,
+       0.0
+      ],
+      "dis_metrics": []
+     }
+    ],
+    "theta_final": [
+     0.0,
+     0.0
+    ]
+   },
+   "efficiency/last/negative_control_lr0.5": {
+    "profile": "efficiency",
+    "last_stage": true,
+    "poison_forward": false,
+    "outcome": "normal",
+    "applied_optimizer_steps": 2,
+    "calls": [
+     [
+      "log_rollout_data",
+      [
+       "advantages"
+      ]
+     ],
+     [
+      "weights_backup",
+      "actor"
+     ]
+    ],
+    "replay_calls": [
+     "clear_all"
+    ],
+    "events": [
+     {
+      "event": "train_rollout"
+     },
+     {
+      "event": "replay_fill",
+      "records_min": 4,
+      "expected_records": 4,
+      "sample_indices": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7,
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ]
+     },
+     {
+      "event": "train_step",
+      "step_id": 0,
+      "optimizer_step_applied": true
+     },
+     {
+      "event": "train_step_consumed",
+      "step_id": 0,
+      "sample_indices": [
+       0,
+       1,
+       2,
+       3,
+       4,
+       5,
+       6,
+       7
+      ]
+     },
+     {
+      "event": "replay_consume",
+      "phase": "train_step",
+      "step_id": 0,
+      "forward_pops_min": 2,
+      "forward_pops_max": 2,
+      "backward_pops_min": 2,
+      "backward_pops_max": 2,
+      "queue_len_min": 4,
+      "queue_len_max": 4
+     },
+     {
+      "event": "train_step",
+      "step_id": 1,
+      "optimizer_step_applied": true
+     },
+     {
+      "event": "train_step_consumed",
+      "step_id": 1,
+      "sample_indices": [
+       8,
+       9,
+       10,
+       11,
+       12,
+       13,
+       14,
+       15
+      ]
+     },
+     {
+      "event": "replay_consume",
+      "phase": "train_step",
+      "step_id": 1,
+      "forward_pops_min": 2,
+      "forward_pops_max": 2,
+      "backward_pops_min": 2,
+      "backward_pops_max": 2,
+      "queue_len_min": 4,
+      "queue_len_max": 4
+     },
+     {
+      "event": "replay_exhausted",
+      "queue_len_min": 4,
+      "queue_len_max": 4,
+      "forward_pops_min": 4,
+      "forward_pops_max": 4,
+      "backward_pops_min": 4,
+      "backward_pops_max": 4,
+      "exhausted": true
+     }
+    ],
+    "logprob_compare_entries": [],
+    "replay_trace": [
+     [
+      "train_step0",
+      "fwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ]
+    ],
+    "train_replay_trace": [
+     [
+      "train_step0",
+      "fwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      0,
+      [
+       0,
+       -1,
+       10,
+       -1,
+       20,
+       -1,
+       30,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      1,
+      [
+       1,
+       -1,
+       11,
+       -1,
+       21,
+       -1,
+       31,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "fwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      0,
+      [
+       40,
+       -1,
+       50,
+       -1,
+       60,
+       -1,
+       70,
+       -1
+      ]
+     ],
+     [
+      "train_step0",
+      "bwd",
+      1,
+      [
+       41,
+       -1,
+       51,
+       -1,
+       61,
+       -1,
+       71,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      0,
+      [
+       80,
+       -1,
+       90,
+       -1,
+       100,
+       -1,
+       110,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      1,
+      [
+       81,
+       -1,
+       91,
+       -1,
+       101,
+       -1,
+       111,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "fwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      0,
+      [
+       120,
+       -1,
+       130,
+       -1,
+       140,
+       -1,
+       150,
+       -1
+      ]
+     ],
+     [
+      "train_step1",
+      "bwd",
+      1,
+      [
+       121,
+       -1,
+       131,
+       -1,
+       141,
+       -1,
+       151,
+       -1
+      ]
+     ]
+    ],
+    "advantages": [
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321
+    ],
+    "rewards_column": [
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     -0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321,
+     0.935412585735321
+    ],
+    "fetched_training_batches": [
+     {
+      "step_id": 0,
+      "sample_indices": [
+       0,
+       1,
+       2,
+       3
+      ],
+      "advantages_in_batch": true,
+      "log_probs_in_batch": false
+     },
+     {
+      "step_id": 0,
+      "sample_indices": [
+       4,
+       5,
+       6,
+       7
+      ],
+      "advantages_in_batch": true,
+      "log_probs_in_batch": false
+     },
+     {
+      "step_id": 1,
+      "sample_indices": [
+       8,
+       9,
+       10,
+       11
+      ],
+      "advantages_in_batch": true,
+      "log_probs_in_batch": false
+     },
+     {
+      "step_id": 1,
+      "sample_indices": [
+       12,
+       13,
+       14,
+       15
+      ],
+      "advantages_in_batch": true,
+      "log_probs_in_batch": false
+     }
+    ],
+    "steps": [
+     {
+      "step_id": 0,
+      "losses": [
+       0.648378597697663,
+       -0.648378597697663
+      ],
+      "gradient": [
+       -0.4677062937584794,
+       0.4677062937584794
+      ],
+      "applied": true,
+      "theta_after": [
+       0.2338531468792397,
+       -0.2338531468792397
+      ],
+      "dis_metrics": [
+       {
+        "loss": 2.593514390790652,
+        "dis_microbatch_provenance_tokens": 4.0,
+        "dis_accepted_tokens": 4.0,
+        "dis_rejected_tokens": 0.0,
+        "dis_zero_contribution_microbatch": 0.0,
+        "dis_nonsingleton_provenance_tokens": 4.0,
+        "dis_singleton_accepted_tokens": 0.0,
+        "dis_candidate_signal_tokens": 4.0,
+        "dis_zero_advantage_accepted_tokens": 0.0,
+        "dis_rejected_low_tokens": 0.0,
+        "dis_rejected_high_tokens": 0.0,
+        "dis_support_size_1": 0.0,
+        "dis_support_size_2_3": 4.0,
+        "dis_support_size_4_7": 0.0,
+        "dis_support_size_8_15": 0.0,
+        "dis_support_size_16_plus": 0.0
+       },
+       {
+        "loss": -2.593514390790652,
+        "dis_microbatch_provenance_tokens": 4.0,
+        "dis_accepted_tokens": 4.0,
+        "dis_rejected_tokens": 0.0,
+        "dis_zero_contribution_microbatch": 0.0,
+        "dis_nonsingleton_provenance_tokens": 4.0,
+        "dis_singleton_accepted_tokens": 0.0,
+        "dis_candidate_signal_tokens": 4.0,
+        "dis_zero_advantage_accepted_tokens": 0.0,
+        "dis_rejected_low_tokens": 0.0,
+        "dis_rejected_high_tokens": 0.0,
+        "dis_support_size_1": 0.0,
+        "dis_support_size_2_3": 4.0,
+        "dis_support_size_4_7": 0.0,
+        "dis_support_size_8_15": 0.0,
+        "dis_support_size_16_plus": 0.0
+       }
+      ]
+     },
+     {
+      "step_id": 1,
+      "losses": [
+       -0.5594770563772867,
+       0.6874904996628044
+      ],
+      "gradient": [
+       0.443033118449787,
+       -0.44303311844978693
+      ],
+      "applied": true,
+      "theta_after": [
+       0.012336587654346198,
+       -0.012336587654346226
+      ],
+      "dis_metrics": [
+       {
+        "loss": -2.237908225509147,
+        "dis_microbatch_provenance_tokens": 4.0,
+        "dis_accepted_tokens": 4.0,
+        "dis_rejected_tokens": 0.0,
+        "dis_zero_contribution_microbatch": 0.0,
+        "dis_nonsingleton_provenance_tokens": 4.0,
+        "dis_singleton_accepted_tokens": 0.0,
+        "dis_candidate_signal_tokens": 4.0,
+        "dis_zero_advantage_accepted_tokens": 0.0,
+        "dis_rejected_low_tokens": 0.0,
+        "dis_rejected_high_tokens": 0.0,
+        "dis_support_size_1": 0.0,
+        "dis_support_size_2_3": 4.0,
+        "dis_support_size_4_7": 0.0,
+        "dis_support_size_8_15": 0.0,
+        "dis_support_size_16_plus": 0.0
+       },
+       {
+        "loss": 2.7499619986512176,
+        "dis_microbatch_provenance_tokens": 4.0,
+        "dis_accepted_tokens": 4.0,
+        "dis_rejected_tokens": 0.0,
+        "dis_zero_contribution_microbatch": 0.0,
+        "dis_nonsingleton_provenance_tokens": 4.0,
+        "dis_singleton_accepted_tokens": 0.0,
+        "dis_candidate_signal_tokens": 4.0,
+        "dis_zero_advantage_accepted_tokens": 0.0,
+        "dis_rejected_low_tokens": 0.0,
+        "dis_rejected_high_tokens": 0.0,
+        "dis_support_size_1": 0.0,
+        "dis_support_size_2_3": 4.0,
+        "dis_support_size_4_7": 0.0,
+        "dis_support_size_8_15": 0.0,
+        "dis_support_size_16_plus": 0.0
+       }
+      ]
+     }
+    ],
+    "theta_final": [
+     0.012336587654346198,
+     -0.012336587654346226
+    ]
+   }
+  }
+ },
+ "D_parser_counterexample": {
+  "launch_recipe": {
+   "rollout_batch_size": 8,
+   "n_samples_per_prompt": 8,
+   "global_batch_size": 32
+  },
+  "fork_validator": {
+   "recipe_custom_loss_2_steps": {
+    "raised": true,
+    "message": "--skip-actor-forward-only only supports --loss-type policy_loss"
+   },
+   "policy_loss_2_steps": {
+    "raised": true,
+    "message": "--skip-actor-forward-only requires exactly one optimizer step for 64 rollout samples; got --global-batch-size 32"
+   },
+   "policy_loss_1_step_positive_control": {
+    "raised": false
+   }
+  },
+  "rh2_forward_profile": {
+   "recipe_plus_skip": "unsupported",
+   "recipe_plus_rollout_logprobs_plus_skip": "unsupported",
+   "recipe_plus_get_mismatch_metrics": "unsupported",
+   "recipe": "diagnostic",
+   "recipe_plus_rollout_logprobs": "efficiency"
+  },
+  "checks": {
+   "recipe_with_skip_asserts_on_loss_type": true,
+   "policy_loss_with_recipe_batch_asserts_on_step_count": true,
+   "positive_control_policy_loss_one_step_passes": true,
+   "rh2_forward_profile_rejects_skip_and_mismatch": true,
+   "rh2_forward_profile_accepts_two_profiles": true
+  },
+  "all_checks_pass": true
+ },
+ "E_launch_dry_run": {
+  "extra_tokens_in_efficiency": [
+   "--use-rollout-logprobs"
+  ],
+  "token_counts": {
+   "default": 119,
+   "efficiency": 120,
+   "invalid_knob": null
+  },
+  "forward_profiles": {
+   "default": "diagnostic",
+   "efficiency": "efficiency",
+   "invalid_knob": null
+  },
+  "outputs": {
+   "default": "launch_dryrun_default.txt（路径已脱敏）",
+   "efficiency": "launch_dryrun_efficiency.txt（路径已脱敏）",
+   "invalid_knob": "launch_dryrun_invalid_knob.txt（路径已脱敏）"
+  },
+  "checks": {
+   "default_and_efficiency_dry_run_pass": true,
+   "efficiency_args_equal_default_plus_exactly_one_token": true,
+   "default_knob_derives_diagnostic": true,
+   "efficiency_knob_derives_efficiency": true,
+   "invalid_knob_refused_before_ray": true
+  },
+  "all_checks_pass": true
+ },
+ "all_checks_pass": true
+}

@@ -1,0 +1,429 @@
+{
+ "schema_id": "rh2.r2e_env_facts.v1",
+ "generated_at_utc": "2026-09-23T19:41:12Z",
+ "generator": {
+  "script": "rh2/scripts/r2e_env/collate_facts.py",
+  "sha256": "e21d4465331c7ed02c9ae9918894231324009cb9b220da5f6efd53809098d1fc"
+ },
+ "evidence_roots": [
+  "runs/r2e_rf_20260923",
+  "runs/r2e_env_repair_20260924/_rerun2"
+ ],
+ "m3_root": "runs/env_overnight_20260916/M3",
+ "identity": {
+  "task_id": "r2e_gym_subset::pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b",
+  "instance_id": "pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b",
+  "repo": "pandas",
+  "module": "pandas",
+  "base_commit": "13df3ec070e8f0f7a53476ff60fa8d0174978376",
+  "source_commit_hash": "294cbc8d1faa15ba245391c5624752ecebd7f63b",
+  "base_image_ref": "namanjain12/pandas_final:294cbc8d1faa15ba245391c5624752ecebd7f63b",
+  "base_image_manifest_digest": "sha256:c15cf2173260819285c385862e1373e7820c018a2694f42a16eb3a0048d2637f",
+  "derived_image_ref": "rh2-r2e-derived/pandas:294cbc8d1faa-r2e_derive_v1",
+  "derived_image_id": "sha256:81417457a3ab5192d0a9130f662fc4608586ef7b22f9a24309794c977324135d",
+  "recipe_id": "r2e_derive_v1",
+  "recipe_sha256": "sha256:0da821a15fa389289f524c60d3a421bc940cce753e4ecf3d53560b7ab6b31df9",
+  "hidden_tests_tree_sha256": "sha256:05ea614bfbb24794563e16660ca9f3261a24b2b1f931b5ea628a9a4be0be6a0d",
+  "run_tests_sh_sha256": "sha256:8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+  "head_commit_m3": "13df3ec070e8f0f7a53476ff60fa8d0174978376",
+  "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe"
+ },
+ "source": {
+  "expected_total": 21,
+  "expected_status_counts": {
+   "PASSED": 20,
+   "ERROR": 1
+  },
+  "expected_non_passed": {
+   "test_info": "ERROR"
+  },
+  "hidden_test_files": [
+   "test_1.py"
+  ],
+  "runner_kind": "pytest",
+  "runner_prefix": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning'",
+  "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+  "problem_statement_chars": 1094,
+  "problem_statement_has_code_block": true,
+  "public_prompt_chars": 1196,
+  "public_hints_mention_conda": true
+ },
+ "environment": {
+  "python_version": "3.7.9",
+  "interpreter_source_path": "/root/.local/share/uv/python/cpython-3.7.9-linux-x86_64-gnu/bin/python3.7m",
+  "interpreter_derived_path": "/opt/py/cpython-3.7.9-linux-x86_64-gnu/bin/python3.7m",
+  "install_mode_m3": "path_entry",
+  "pth_line_m3": "/testbed",
+  "import_outside_testbed_ok_m3": true,
+  "import_path_grader": "/testbed/pandas/__init__.py",
+  "pkg_version_grader": "0+untagged.24509.g13df3ec.dirty",
+  "dirty_tree_lines": [
+   "M  pandas/__init__.py",
+   "M  pandas/_version.py",
+   " D pyproject.toml",
+   " M setup.cfg",
+   "M  versioneer.py",
+   "?? install.sh",
+   "?? run_tests.sh"
+  ],
+  "testbed_owner_derived": "root",
+  "metacopy": "N"
+ },
+ "derived_image": {
+  "ok": true,
+  "failures": [],
+  "checks_total": 20,
+  "checks_failed": [],
+  "build_seconds": 27.5,
+  "base_size_bytes": 2351588953,
+  "derived_size_bytes": 2967895421,
+  "built_at_utc": "2026-09-23T14:04:57.110832Z",
+  "preflight_stdout": [
+   "RH2_PREFLIGHT_INTERPRETER=ok",
+   "RH2_PREFLIGHT_HIDDEN_TESTS=ok",
+   "RH2_PREFLIGHT_GIT_HISTORY=ok"
+  ]
+ },
+ "rh2_runs": [
+  {
+   "run_id": "r2e-rf-all-gold",
+   "ledger": "ledger_r2e_all_gold.jsonl",
+   "kind": "gold",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T15:30:59.260473+00:00",
+   "stage_error": null,
+   "reward": 1.0,
+   "outcome": "resolved",
+   "failure_category": null,
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 21,
+   "expected_total": 21,
+   "num_parsed_tests": 21,
+   "resolution": "RESOLVED_FULL",
+   "mismatched": [],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 1,
+   "test_seconds": 3.066,
+   "setup_seconds": 28.757104,
+   "grader_seconds_total": 44.978,
+   "mem_peak_mb": 738.922,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:81417457a3ab5192d0a9130f662fc4608586ef7b22f9a24309794c977324135d",
+   "import_path_grader": "/testbed/pandas/__init__.py",
+   "pkg_version_grader": "0+untagged.24509.g13df3ec.dirty",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_aa73a0d2.eval.log",
+   "diagnostics": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_aa73a0d2.diagnostics.json",
+   "non_passed_reasons": {
+    "test_info": "ERROR"
+   },
+   "dirty_tree_lines": [
+    "M  pandas/__init__.py",
+    "M  pandas/_version.py",
+    " M pandas/io/formats/info.py",
+    " D pyproject.toml",
+    " M setup.cfg",
+    "M  versioneer.py",
+    "?? install.sh",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": [
+    "pandas/io/formats/info.py"
+   ]
+  },
+  {
+   "run_id": "r2e-rf-all-noop",
+   "ledger": "ledger_r2e_all_noop.jsonl",
+   "kind": "noop",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T15:31:01.462028+00:00",
+   "stage_error": null,
+   "reward": 0.0,
+   "outcome": "unresolved",
+   "failure_category": "tests_failed",
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 20,
+   "expected_total": 21,
+   "num_parsed_tests": 21,
+   "resolution": "RESOLVED_NO",
+   "mismatched": [
+    "test_info_int_columns"
+   ],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 1,
+   "test_seconds": 3.103,
+   "setup_seconds": 28.91542,
+   "grader_seconds_total": 45.138,
+   "mem_peak_mb": 738.504,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:81417457a3ab5192d0a9130f662fc4608586ef7b22f9a24309794c977324135d",
+   "import_path_grader": "/testbed/pandas/__init__.py",
+   "pkg_version_grader": "0+untagged.24509.g13df3ec.dirty",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_26e130c1.eval.log",
+   "diagnostics": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_26e130c1.diagnostics.json",
+   "non_passed_reasons": {
+    "test_info": "ERROR",
+    "test_info_int_columns": "FAILED: KeyError: 0"
+   },
+   "dirty_tree_lines": [
+    "M  pandas/__init__.py",
+    "M  pandas/_version.py",
+    " D pyproject.toml",
+    " M setup.cfg",
+    "M  versioneer.py",
+    "?? install.sh",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": []
+  },
+  {
+   "run_id": "r2e-envrepair-rerun-gold",
+   "ledger": "ledger_gold.jsonl",
+   "kind": "gold",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T19:18:28.599054+00:00",
+   "stage_error": null,
+   "reward": 1.0,
+   "outcome": "resolved",
+   "failure_category": null,
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 21,
+   "expected_total": 21,
+   "num_parsed_tests": 21,
+   "resolution": "RESOLVED_FULL",
+   "mismatched": [],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 1,
+   "test_seconds": 3.208,
+   "setup_seconds": 34.581771,
+   "grader_seconds_total": 48.359,
+   "mem_peak_mb": 738.789,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:81417457a3ab5192d0a9130f662fc4608586ef7b22f9a24309794c977324135d",
+   "import_path_grader": "/testbed/pandas/__init__.py",
+   "pkg_version_grader": "0+untagged.24509.g13df3ec.dirty",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_a6a80313.eval.log",
+   "diagnostics": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_a6a80313.diagnostics.json",
+   "non_passed_reasons": {
+    "test_info": "ERROR"
+   },
+   "dirty_tree_lines": [
+    "M  pandas/__init__.py",
+    "M  pandas/_version.py",
+    " M pandas/io/formats/info.py",
+    " D pyproject.toml",
+    " M setup.cfg",
+    "M  versioneer.py",
+    "?? install.sh",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": [
+    "pandas/io/formats/info.py"
+   ]
+  },
+  {
+   "run_id": "r2e-envrepair-rerun-noop",
+   "ledger": "ledger_noop.jsonl",
+   "kind": "noop",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T19:18:31.537380+00:00",
+   "stage_error": null,
+   "reward": 0.0,
+   "outcome": "unresolved",
+   "failure_category": "tests_failed",
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 20,
+   "expected_total": 21,
+   "num_parsed_tests": 21,
+   "resolution": "RESOLVED_NO",
+   "mismatched": [
+    "test_info_int_columns"
+   ],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 1,
+   "test_seconds": 3.463,
+   "setup_seconds": 35.211937,
+   "grader_seconds_total": 49.145,
+   "mem_peak_mb": 738.57,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:81417457a3ab5192d0a9130f662fc4608586ef7b22f9a24309794c977324135d",
+   "import_path_grader": "/testbed/pandas/__init__.py",
+   "pkg_version_grader": "0+untagged.24509.g13df3ec.dirty",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_35aa807f.eval.log",
+   "diagnostics": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_35aa807f.diagnostics.json",
+   "non_passed_reasons": {
+    "test_info": "ERROR",
+    "test_info_int_columns": "FAILED: KeyError: 0"
+   },
+   "dirty_tree_lines": [
+    "M  pandas/__init__.py",
+    "M  pandas/_version.py",
+    " D pyproject.toml",
+    " M setup.cfg",
+    "M  versioneer.py",
+    "?? install.sh",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": []
+  }
+ ],
+ "latest_default_profile": {
+  "noop": "r2e-rf-all-noop",
+  "gold": "r2e-rf-all-gold"
+ },
+ "reference": {
+  "m3_facts_available": true,
+  "reconcile": [
+   {
+    "kind": "noop",
+    "ledger": "ledger_r2e_all_noop_local.jsonl",
+    "agree": true,
+    "reward_equal": true,
+    "diff_sets_equal": true,
+    "observed_maps_equal": true,
+    "reference_ledger_consistent": null,
+    "reference_log_count": 5,
+    "notes": null,
+    "reference_prime_rewards": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "ref": "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   },
+   {
+    "kind": "gold",
+    "ledger": "ledger_r2e_all_gold_local.jsonl",
+    "agree": true,
+    "reward_equal": true,
+    "diff_sets_equal": true,
+    "observed_maps_equal": true,
+    "reference_ledger_consistent": true,
+    "reference_log_count": 5,
+    "notes": null,
+    "reference_prime_rewards": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "ref": "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   }
+  ]
+ },
+ "auto_checks": {
+  "R01_identity": {
+   "status": "pass",
+   "note": "派生镜像 21 项复核通过；覆盖表 / 隐藏测试树 / 入口脚本 / HEAD 与评分面一致",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b/facts.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R02_noop_shows_problem": {
+   "status": "pass",
+   "note": "noop 0 来自 1 个 mismatched 键（无 missing、无零解析）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_26e130c1.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R08_candidate_code_effective": {
+   "status": "pass",
+   "note": "导入 /testbed/pandas/__init__.py；gold 21/21",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_aa73a0d2.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R12_resources": {
+   "status": "pass",
+   "note": "峰值 739 MB / 限额 4 GiB = 0.18; setup 29s test 3s",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_aa73a0d2.diagnostics.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R13_repeat_noop": {
+   "status": "pass",
+   "note": "noop 同条件 2 次 reward 与差异集合一致",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_26e130c1.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_35aa807f.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R13_repeat_gold": {
+   "status": "pass",
+   "note": "gold 同条件 2 次 reward 与差异集合一致",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_aa73a0d2.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_a6a80313.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R15_reference_parse": {
+   "status": "pass",
+   "note": "2 行 agree（reward、差异集合、观测映射逐键相同）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R16_f2p_keys": {
+   "status": "pass",
+   "note": "目标键 1：['test_info_int_columns']",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_26e130c1.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_aa73a0d2.eval.log"
+   ],
+   "by": "collate_facts.py"
+  }
+ },
+ "flags": [
+  "dirty_tree_gt2",
+  "expected_has_non_passed_keys"
+ ]
+}

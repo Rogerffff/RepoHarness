@@ -1,0 +1,349 @@
+{
+  "schema": "monai.probe_first_attempt_owner_analysis.v1",
+  "as_of": "2026-10-03T11:21:28.200272+00:00",
+  "task_id": "swe_gym_lite::Project-MONAI__MONAI-2446",
+  "request_id": "swe-monai2446-r15-shuffle-cache-nib4-20261003-v1",
+  "owner_input_sha256": "22aea4dfe7a04e2f8f7b5669a8fb1bdf70137537941cc8a251cb3f0113d88cd2",
+  "job_id": "gpu1003-monai2446-coder-a1",
+  "model": "Qwen3-Coder-30B-A3B-Instruct",
+  "runtime": "code_v8",
+  "raw_reward": 1,
+  "status": "first_coder_owner_semantics_analyzed_other_model_and_execution_non_author_pending",
+  "candidate_semantics": "shuffle=True时复制外层为list，再走原随机化与缓存；公开list[np.ndarray]目标、顺序/缓存参考通过，未深拷贝元素也无必要",
+  "full_FP_paths": [
+    "comprehensive_test.py",
+    "monai/data/dataset.py",
+    "reproduce_issue.py"
+  ],
+  "production_source_changes": [
+    "monai/data/dataset.py"
+  ],
+  "frozen_patch_digest": "sha256:fecb884bfb7ed20ca06329b90347962777ab9d79b642b9d24547127729165a24",
+  "baseline_manifest_digest": "sha256:8de0d2139b533d32fce8238e98e9aa8680f773611e6988d1b036cd83e8b8e570",
+  "material_revision_id": "monai2446-ndarray-shuffle-cache-cpu-v1",
+  "grading_materials_identity": "sha256:7b12ba8af3b62aee6ceba5d5d94255efabd68614dc91514994b22bfcdc87752a",
+  "actor_image_recorded": "sha256:28959a332c8a17ebfb2db681d3afaf79f8fd6e845ba51406fc7772f32453bcdd",
+  "formal_references_all_passed": [
+    "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_shuffle_ndarray_list_and_cache_cpu",
+    "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_datalist",
+    "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_shuffle",
+    "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_update_cache"
+  ],
+  "formal_module_test_count": 9,
+  "formal_install_test_complete": true,
+  "trajectory_event_count": 175,
+  "calls": [
+    {
+      "event_line": 10,
+      "id": "toolu_9c271732be56d38d",
+      "tool": "Bash",
+      "input": {
+        "command": "find /testbed -name \"*.py\" -type f | xargs grep -l \"SmartCacheDataset\" | head -5",
+        "description": "Find files containing SmartCacheDataset"
+      },
+      "result_event_line": 14,
+      "is_error": false,
+      "result_sha256": "82e8fb1d74954ab73cd4646c76ceb0c34aef5ca2dd308e527eaf053e09a092aa"
+    },
+    {
+      "event_line": 23,
+      "id": "toolu_ad805c506426eb0b",
+      "tool": "Read",
+      "input": {
+        "file_path": "/testbed/monai/data/dataset.py"
+      },
+      "result_event_line": 27,
+      "is_error": false,
+      "result_sha256": "6379a6c790aa716b3c6a2ff10b57af3298d05b57a95c722ed5d989876b030028"
+    },
+    {
+      "event_line": 36,
+      "id": "toolu_24673a53bf3b505f",
+      "tool": "Write",
+      "input": {
+        "file_path": "/testbed/reproduce_issue.py",
+        "content": "import numpy as np\nfrom monai.data import SmartCacheDataset\n\n# Reproduce the bug reported by the internal user\ndata_list = list(np.array([i]) for i in range(5))\nprint(\"original datalist:\", data_list)\nSmartCacheDataset(\n    data=data_list,\n    transform=None,\n    cache_rate=0.5,\n    replace_rate=0.4,\n    shuffle=True,\n)\nprint(\"datalist after dataset:\", data_list)"
+      },
+      "result_event_line": 40,
+      "is_error": false,
+      "result_sha256": "46c438afa3202ad6bc3d9e32b15716d91d5ba1096d1b6ff1cfa0cd18179ebe78"
+    },
+    {
+      "event_line": 45,
+      "id": "toolu_58c6c06ce43e880c",
+      "tool": "Bash",
+      "input": {
+        "command": "python reproduce_issue.py",
+        "description": "Run the script to reproduce the issue"
+      },
+      "result_event_line": 49,
+      "is_error": false,
+      "result_sha256": "edb786177d2b7bf5c94884269b2b1e906d330a97ff69c0fff59b7669348f2157"
+    },
+    {
+      "event_line": 58,
+      "id": "toolu_59750fb86b0abe36",
+      "tool": "Edit",
+      "input": {
+        "replace_all": false,
+        "file_path": "/testbed/monai/data/dataset.py",
+        "old_string": "    def __init__(\n        self,\n        data: Sequence,\n        transform: Union[Sequence[Callable], Callable],\n        replace_rate: float,\n        cache_num: int = sys.maxsize,\n        cache_rate: float = 1.0,\n        num_init_workers: Optional[int] = None,\n        num_replace_workers: Optional[int] = None,\n        progress: bool = True,\n        shuffle: bool = True,\n        seed: int = 0,\n    ) -> None:\n        if shuffle:\n            self.set_random_state(seed=seed)\n            self.randomize(data)\n\n        super().__init__(data, transform, cache_num, cache_rate, num_init_workers, progress)",
+        "new_string": "    def __init__(\n        self,\n        data: Sequence,\n        transform: Union[Sequence[Callable], Callable],\n        replace_rate: float,\n        cache_num: int = sys.maxsize,\n        cache_rate: float = 1.0,\n        num_init_workers: Optional[int] = None,\n        num_replace_workers: Optional[int] = None,\n        progress: bool = True,\n        shuffle: bool = True,\n        seed: int = 0,\n    ) -> None:\n        if shuffle:\n            self.set_random_state(seed=seed)\n            # Create a copy of data to avoid modifying the original input list\n            data = list(data)\n            self.randomize(data)\n\n        super().__init__(data, transform, cache_num, cache_rate, num_init_workers, progress)"
+      },
+      "result_event_line": 62,
+      "is_error": false,
+      "result_sha256": "07ac1d11c09c54a1d45efee87970cdc53ed37335d27a09aa8d6ab8cd89087452"
+    },
+    {
+      "event_line": 71,
+      "id": "toolu_ad84589678a2ef67",
+      "tool": "Bash",
+      "input": {
+        "command": "python reproduce_issue.py",
+        "description": "Test the fix with our reproduction script"
+      },
+      "result_event_line": 75,
+      "is_error": false,
+      "result_sha256": "bbc4cd387678b7222c31ed27972bbacc44d2378a455d310ad0b3863365f84f75"
+    },
+    {
+      "event_line": 84,
+      "id": "toolu_293bec8bcdb2201f",
+      "tool": "Write",
+      "input": {
+        "file_path": "/testbed/comprehensive_test.py",
+        "content": "import numpy as np\nfrom monai.data import SmartCacheDataset\n\ndef test_smartcache_shuffle_fix():\n    \"\"\"Test that SmartCacheDataset doesn't modify input data when shuffle=True\"\"\"\n\n    # Test 1: Original bug reproduction\n    print(\"=== Test 1: Original Bug Reproduction ===\")\n    data_list = list(np.array([i]) for i in range(5))\n    original_data = [item.copy() for item in data_list]  # Make a copy for comparison\n    print(\"original datalist:\", data_list)\n\n    dataset = SmartCacheDataset(\n        data=data_list,\n        transform=None,\n        cache_rate=0.5,\n        replace_rate=0.4,\n        shuffle=True,\n    )\n\n    print(\"datalist after dataset:\", data_list)\n\n    # Check if original data is preserved\n    data_preserved = all(np.array_equal(a, b) for a, b in zip(data_list, original_data))\n    print(f\"Original data preserved: {data_preserved}\")\n\n    # Test 2: Verify dataset still works correctly with shuffling\n    print(\"\\n=== Test 2: Dataset Functionality ===\")\n    data_list2 = list(range(10))\n    original_data2 = data_list2.copy()\n\n    dataset2 = SmartCacheDataset(\n        data=data_list2,\n        transform=None,\n        cache_rate=0.5,\n        replace_rate=0.4,\n        shuffle=True,\n        seed=42  # Fixed seed for reproducible results\n    )\n\n    print(f\"Original data: {original_data2}\")\n    print(f\"Data after dataset creation: {data_list2}\")\n    print(f\"Original data preserved: {data_list2 == original_data2}\")\n\n    # Test 3: Test without shuffle (should work as before)\n    print(\"\\n=== Test 3: Shuffle=False ===\")\n    data_list3 = list(range(5))\n    original_data3 = data_list3.copy()\n\n    dataset3 = SmartCacheDataset(\n        data=data_list3,\n        transform=None,\n        cache_rate=0.5,\n        replace_rate=0.4,\n        shuffle=False,\n    )\n\n    print(f\"Original data: {original_data3}\")\n    print(f\"Data after dataset creation: {data_list3}\")\n    print(f\"Original data preserved: {data_list3 == original_data3}\")\n\n    print(\"\\n=== All tests completed ===\")\n\nif __name__ == \"__main__\":\n    test_smartcache_shuffle_fix()"
+      },
+      "result_event_line": 88,
+      "is_error": false,
+      "result_sha256": "82c15213210067a3ca057fb23d84fd05460c389e4f033f70d8edccf79aa008c6"
+    },
+    {
+      "event_line": 93,
+      "id": "toolu_1425484c59b77aef",
+      "tool": "Bash",
+      "input": {
+        "command": "python comprehensive_test.py",
+        "description": "Run comprehensive tests for the fix"
+      },
+      "result_event_line": 97,
+      "is_error": false,
+      "result_sha256": "730c53db039f359e8f6590bff96ed157de5e9314cfd101c0e056f9755fb62084"
+    },
+    {
+      "event_line": 106,
+      "id": "toolu_e65cc206b7b9e6b0",
+      "tool": "Bash",
+      "input": {
+        "command": "python -m pytest tests/test_smartcachedataset.py -v",
+        "description": "Run the SmartCacheDataset specific tests"
+      },
+      "result_event_line": 112,
+      "is_error": false,
+      "result_sha256": "3bf3b2efc70ee24ea090ed32fdf07c2d347c39059f30dc33698e68a43112ec13"
+    },
+    {
+      "event_line": 121,
+      "id": "toolu_f72a9e59c0f62fa8",
+      "tool": "Bash",
+      "input": {
+        "command": "python -m pytest tests/test_cachedataset.py -v",
+        "description": "Run CacheDataset tests to ensure we didn't break anything"
+      },
+      "result_event_line": 127,
+      "is_error": false,
+      "result_sha256": "ab230a2f183c197a2f259274bb20bbd87af30e8d8efe4ab958dbe0c2beaae4c2"
+    },
+    {
+      "event_line": 136,
+      "id": "toolu_3dcabb62906315d8",
+      "tool": "Read",
+      "input": {
+        "file_path": "/testbed/tests/test_smartcachedataset.py"
+      },
+      "result_event_line": 140,
+      "is_error": false,
+      "result_sha256": "1b4097518f7238140dc7435fcfc8208fe7f5b7e94aea0b600d05e7cbf35c2dde"
+    },
+    {
+      "event_line": 149,
+      "id": "toolu_7c4fa59fd0781a1d",
+      "tool": "Bash",
+      "input": {
+        "command": "python -c \"\nfrom monai.data import SmartCacheDataset\nimport numpy as np\n\n# Test that shuffling still works correctly internally\ndata = list(range(10))\nprint('Original data:', data)\n\n# Create dataset with shuffle=True\ndataset = SmartCacheDataset(\n    data=data,\n    transform=None,\n    cache_rate=0.5,\n    replace_rate=0.4,\n    shuffle=True,\n    seed=42\n)\n\nprint('Data after creating dataset:', data)\nprint('Dataset length:', len(dataset))\nprint('First few items from dataset:', [dataset[i] for i in range(min(3, len(dataset)))])\nprint('Original data preserved:', data == list(range(10)))\n\"",
+        "description": "Test that our fix maintains internal functionality while preserving input data"
+      },
+      "result_event_line": 153,
+      "is_error": false,
+      "result_sha256": "c6fd7729957fa5a0391757ffca0c2858dd33969deb905c489e8e5b63dc00cad5"
+    },
+    {
+      "event_line": 162,
+      "id": "toolu_c6a6e7a2ed349e00",
+      "tool": "Bash",
+      "input": {
+        "command": "git diff",
+        "description": "Show the exact changes made"
+      },
+      "result_event_line": 166,
+      "is_error": false,
+      "result_sha256": "9cdd4018fd266699e816ce65d3feada7537476b982d28c524ec0ff39eb25e2cf"
+    }
+  ],
+  "first_precise_localization_event_line": 32,
+  "edit_event_line": 58,
+  "patch_revisions": 1,
+  "pre_edit_reproduction_event_lines": [
+    45,
+    49
+  ],
+  "post_edit_reproduction_event_lines": [
+    71,
+    75
+  ],
+  "model_verification": {
+    "public_smartcache_tests": 7,
+    "public_cache_tests": 17,
+    "self_script_has_assertions": false,
+    "self_script_only_prints_booleans": true,
+    "internal_shuffled_values_visible": [
+      8,
+      1,
+      5
+    ],
+    "official_private_tests_in_actor_context": false,
+    "formal_new_node_top_level_ndarray_input": false
+  },
+  "metrics": {
+    "CC_turns": 14,
+    "tool_calls": 13,
+    "model_generations": 14,
+    "HTTP_requests": 15,
+    "count_tokens_requests": 1,
+    "input_tokens_sum": 263780,
+    "output_tokens_sum": 2736,
+    "max_single_input_tokens": 25648,
+    "max_single_output_tokens": 601,
+    "CC_duration_seconds": 49.199,
+    "CC_API_seconds": 23.317,
+    "entry_solve_seconds": 52.755,
+    "grading_total_seconds": 420.102,
+    "trusted_setup_seconds": 386.660709,
+    "candidate_install_seconds": 14.574,
+    "candidate_test_seconds": 7.213
+  },
+  "parallel_conclusion": "本次单一tool_use/串行；未验证执行器并行支持，模型能力不可判断。",
+  "budget": {
+    "context_limit": 196608,
+    "actual_HTTP_max_tokens": [
+      65536
+    ],
+    "turns_limit": 240,
+    "solve_seconds_limit": 10800,
+    "CC_display_maxOutputTokens": 32000,
+    "display_mismatch_retained": true,
+    "length_truncation_observed": false
+  },
+  "new_task_environment_blocker_found": false,
+  "training_or_holdout_qualified": false,
+  "limits": [
+    "未重复核636成员全封包或GPU运输/模型身份全部细节；核本题18件绑定，GPU另安排执行非作者审查待补。",
+    "新增节点验证的是list[np.ndarray]，不是直接以顶层np.ndarray输入的完整容器兼容验收；原CPU/当前正式结果不扩称后者。",
+    "两个根目录复现/打印测试脚本保留在完整FP并实际投影，未改受信tests；模型git diff仅显示tracked生产文件，不代表FP仅一文件。",
+    "累计输入为多轮之和，不是一次上下文占用；评分/准备耗时与模型求解分开；高水位4GiB不是测试最低内存。",
+    "单模型一次成功，另一模型与整项回执待；普通env_qualification=absent，长上下文压缩/训练接线未覆盖。"
+  ],
+  "next_action": "独立候选语义窄核，等待另一模型及独立执行核查；原请求保持claimed，不追加普通采样或重跑CPU。",
+  "evidence": [
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-coder-a1/queue_v28/results/gpu1003-monai2446-coder-a1/attempt/harness/trajectory.jsonl",
+      "sha256": "e755221ac6dd1237fa911e0704f5d38705c71cd4bd9afc3f75e72a6a0b35cbaa",
+      "bytes": 272704
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-coder-a1/queue_v28/results/gpu1003-monai2446-coder-a1/attempt/attempt.json",
+      "sha256": "50bb47a801bae9df99f37064fa0fd173a059e0ca09e4e2ae6655b78204d8cad3",
+      "bytes": 16450
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-coder-a1/queue_v28/results/gpu1003-monai2446-coder-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "ce3a1756c629edd59a23b7cd3ffd5934ab9b2831bb8b22b810b545cd2eb144e3",
+      "bytes": 70842
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-coder-a1/queue_v28/results/gpu1003-monai2446-coder-a1/attempt/frozen/baseline_manifest.json",
+      "sha256": "e62ca9ede9d4e8434de91684fd7a84830e85f44f92475d149540a7ece7d8c578",
+      "bytes": 171976
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-coder-a1/queue_v28/results/gpu1003-monai2446-coder-a1/attempt/frozen/baseline.tar",
+      "sha256": "02f9dbee13b5f7494952e5dfd9e3f5d1ec1cf7fa642c8aac4cc61284fa232424",
+      "bytes": 16609280
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-coder-a1/queue_v28/results/gpu1003-monai2446-coder-a1/attempt/candidate/Project-MONAI__MONAI-2446.diff",
+      "sha256": "0ca582ffa42c569174d9da6ecfeff57ddb1a9a47ada53911bcaabaf07fbee1cc",
+      "bytes": 3609
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-coder-a1/queue_v28/results/gpu1003-monai2446-coder-a1/grading/projection.json",
+      "sha256": "37337ba9840c152c9b8d8fdbbf65946f4a5eb1acf111cfea7f88d72a439c961e",
+      "bytes": 380
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-coder-a1/queue_v28/results/gpu1003-monai2446-coder-a1/result.json",
+      "sha256": "34fe2181882d964ea65146014249d1e72b20837219172415a3086bcd1040e294",
+      "bytes": 2650
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-coder-a1/queue_v28/results/gpu1003-monai2446-coder-a1/solver_prompt.txt",
+      "sha256": "bcb23d41674d879b5f36f6a42d002f27aec3a7441268cb86eb9fba3b34d16c5a",
+      "bytes": 1135
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-coder-a1/queue_v28/results/gpu1003-monai2446-coder-a1/grading/eval_logs/evallog_gpu1003-monai2446-coder-_448376de.diagnostics.json",
+      "sha256": "3c86e1ae85556ce5add0d818a209f4f97a9bf71ea25e710036063c2b70b7b49b",
+      "bytes": 6072
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-coder-a1/queue_v28/results/gpu1003-monai2446-coder-a1/grading/eval_logs/evallog_gpu1003-monai2446-coder-_448376de.eval.log",
+      "sha256": "b5af702dcc931017475747bfd3cb417994580ddb3c8e930490ffeab819adf03e",
+      "bytes": 49434
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-coder-a1/prepared_remaining_eight_code8_v1/monai2446/host_evidence/owner_request.json",
+      "sha256": "22aea4dfe7a04e2f8f7b5669a8fb1bdf70137537941cc8a251cb3f0113d88cd2",
+      "bytes": 15482
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-coder-a1/services_v26/coder/gateway/gpu1003-monai2446-coder-a1/usage.json",
+      "sha256": "cfa168e402ef1523fca75760216ea8642344cb30336039f2900bb6df3b9d5bd7",
+      "bytes": 89
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-coder-a1/services_v26/coder/gateway/gpu1003-monai2446-coder-a1/requests.jsonl",
+      "sha256": "4fc3b0d0085d0861553c4e232b813e421e70c21e1ac1f9d5e822a5efc639f816",
+      "bytes": 1096829
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-coder-a1/services_v26/coder/gateway/gpu1003-monai2446-coder-a1/responses.jsonl",
+      "sha256": "5100d4a4e6724bcc5d97374d4a0528bbd3aa8c11d1101112c5c17605766eb72a",
+      "bytes": 4646
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-coder-a1/gpu1003-monai2446-coder-a1_terminal_snapshot_v1.json",
+      "sha256": "5ab59d0f588a207554ba16ad81ad4ca0a5ccfbc1ba5eaaafb66a3a5d6511b367",
+      "bytes": 66754
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-coder-a1/gpu1003-monai2446-coder-a1_closed_manifest_v1.json",
+      "sha256": "58d981055f5c5d14e6ac8fb07266b3ca5ddc5ea57b5b3a5b375bb9c555b211cf",
+      "bytes": 130564
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/monai2446_first_coder_execution_receipt_v1.json",
+      "sha256": "ca1a1b8b8cf024c5ec01e9985dea1f90f1217f05c094246f1261fcb38c984c11",
+      "bytes": 1574
+    }
+  ]
+}

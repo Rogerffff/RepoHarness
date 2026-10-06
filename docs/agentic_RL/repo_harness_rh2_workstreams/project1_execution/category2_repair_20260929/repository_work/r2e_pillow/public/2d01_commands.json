@@ -1,0 +1,44 @@
+[
+  {
+    "id": "env_import",
+    "timeout_s": 120,
+    "expect": "zero",
+    "purpose": "核对开发条件：python 是否为 /testbed/.venv 的 3.9.21；PIL 是否从 /testbed/src/PIL 导入（可编辑安装，改源码才生效）；C 扩展 _imaging 能否加载及其位置；libtiff 是否可用；pytest 版本。预计 PIL 8.4.0.dev0，PIL.__file__ 与 TiffImagePlugin.__file__ 都在 /testbed/src/PIL/ 下；libtiff 结果未知。修复前后输出相同。若 PIL 不在 /testbed/src，改源码不影响测试，属于开发阻塞。",
+    "cmd": "cd /testbed && PYTHONDONTWRITEBYTECODE=1 python -c \"import sys, PIL, pytest; from PIL import Image, TiffImagePlugin, features; print(sys.executable, sys.version.split()[0]); print('PIL', PIL.__version__, PIL.__file__); print('TiffImagePlugin', TiffImagePlugin.__file__); print('core', Image.core.__file__); print('libtiff', features.check('libtiff'), features.version('libtiff')); print('pytest', pytest.__version__)\""
+  },
+  {
+    "id": "repro_issue_mode_l",
+    "timeout_s": 120,
+    "expect": "nonzero",
+    "purpose": "题面示例（'L' 模式、默认未压缩、tiffinfo={262: 0}），文件写 /tmp。修复前预计打印 tag262 1 mode L pixel00 0，随后 AssertionError: PhotometricInterpretation not kept（退出码非 0）。修复后预计 tag262 0、退出码 0；pixel00 取决于实现，题面未规定：只改标签时为 255（读取端对 photometric 0 用 L;I 反相），写入时同步反相像素则为 0。",
+    "cmd": "cd /testbed && PYTHONDONTWRITEBYTECODE=1 python -c \"from PIL import Image; p='/tmp/r2e_pi_L.tif'; Image.new('L', (100, 100)).save(p, tiffinfo={262: 0}); r=Image.open(p); print('tag262', r.tag_v2[262], 'mode', r.mode, 'pixel00', r.getpixel((0, 0))); assert r.tag_v2[262] == 0, 'PhotometricInterpretation not kept'\""
+  },
+  {
+    "id": "repro_mode_1",
+    "timeout_s": 120,
+    "expect": "nonzero",
+    "purpose": "题面标题和描述提到、但示例没覆盖的 '1' 模式，同样 tiffinfo={262: 0}、未压缩，文件写 /tmp。修复前预计打印 tag262 1 mode 1 pixel00 0，随后 AssertionError（退出码非 0）。修复后预计 tag262 0、退出码 0；pixel00 只改标签时为 255（读取端用 1;I），用 1;I 反相写出时为 0。",
+    "cmd": "cd /testbed && PYTHONDONTWRITEBYTECODE=1 python -c \"from PIL import Image; p='/tmp/r2e_pi_1.tif'; Image.new('1', (100, 100)).save(p, tiffinfo={262: 0}); r=Image.open(p); print('tag262', r.tag_v2[262], 'mode', r.mode, 'pixel00', r.getpixel((0, 0))); assert r.tag_v2[262] == 0, 'PhotometricInterpretation not kept'\""
+  },
+  {
+    "id": "default_photometric_kept",
+    "timeout_s": 120,
+    "expect": "zero",
+    "purpose": "回归检查旧行为：不传 tiffinfo 时 'L'、'1'、'RGB' 分别写 262=1、1、2，且像素原样往返。修复前后都预计打印 L 1 77 | 1 1 255 | RGB 2 (1, 2, 3) 并退出 0；若修复改了默认 photometric 或破坏像素往返，会 AssertionError。",
+    "cmd": "cd /testbed && PYTHONDONTWRITEBYTECODE=1 python -c \"from PIL import Image; a=Image.new('L', (8, 8), 77); b=Image.new('1', (8, 8), 255); c=Image.new('RGB', (8, 8), (1, 2, 3)); a.save('/tmp/r2e_pi_def_L.tif'); b.save('/tmp/r2e_pi_def_1.tif'); c.save('/tmp/r2e_pi_def_RGB.tif'); ra=Image.open('/tmp/r2e_pi_def_L.tif'); rb=Image.open('/tmp/r2e_pi_def_1.tif'); rc=Image.open('/tmp/r2e_pi_def_RGB.tif'); print('L', ra.tag_v2[262], ra.getpixel((0, 0)), '| 1', rb.tag_v2[262], rb.getpixel((0, 0)), '| RGB', rc.tag_v2[262], rc.getpixel((0, 0))); assert (ra.tag_v2[262], rb.tag_v2[262], rc.tag_v2[262]) == (1, 1, 2); assert ra.tobytes() == a.tobytes() and rb.tobytes() == b.tobytes() and rc.tobytes() == c.tobytes()\""
+  },
+  {
+    "id": "public_tiff_tests_pytest8_compat",
+    "timeout_s": 900,
+    "expect": "zero",
+    "purpose": "保留原 TIFF、TIFF metadata 与 libtiff metadata 公开测试及全部原断言；临时副本只将两个 pytest.warns(None) 改为标准库警告记录，仍拒绝任何实际警告。base 与正确修复预期均退出 0。该命令不读取、修改或替代私有评分材料。",
+    "cmd": "cd /testbed && PYTHONDONTWRITEBYTECODE=1 python - <<'PY'\n\"\"\"运行公开 TIFF 测试的临时兼容副本，保留“不产生警告”的原断言。\"\"\"\n\nimport argparse\nimport ast\nimport hashlib\nimport json\nfrom pathlib import Path\nimport tempfile\n\n\ndef compatible_source(source):\n    tree = ast.parse(source)\n    matches = []\n    for node in ast.walk(tree):\n        if not isinstance(node, ast.FunctionDef):\n            continue\n        for child in ast.walk(node):\n            if (\n                isinstance(child, ast.Call)\n                and isinstance(child.func, ast.Attribute)\n                and isinstance(child.func.value, ast.Name)\n                and child.func.value.id == \"pytest\"\n                and child.func.attr == \"warns\"\n                and len(child.args) == 1\n                and isinstance(child.args[0], ast.Constant)\n                and child.args[0].value is None\n                and not child.keywords\n            ):\n                matches.append(node.name)\n    if sorted(matches) != [\"test_closed_file\", \"test_context_manager\"]:\n        raise ValueError(\"公开测试的兼容点已变化，需先重新核对\")\n\n    old = \"        with pytest.warns(None) as record:\\n\"\n    new = (\n        \"        with warnings.catch_warnings(record=True) as record:\\n\"\n        '            warnings.simplefilter(\"always\")\\n'\n    )\n    if source.count(old) != 2 or source.count(\"import os\\n\") != 1:\n        raise ValueError(\"公开测试原文与兼容方案不符\")\n    revised = source.replace(\"import os\\n\", \"import os\\nimport warnings\\n\", 1)\n    revised = revised.replace(old, new)\n    ast.parse(revised)\n    return revised\n\n\ndef main():\n    parser = argparse.ArgumentParser(description=__doc__)\n    parser.add_argument(\"--check-only\", action=\"store_true\")\n    parser.add_argument(\"--testbed\", type=Path, default=Path.cwd())\n    args = parser.parse_args()\n    testbed = args.testbed.resolve()\n    original_path = testbed / \"Tests/test_file_tiff.py\"\n    original = original_path.read_bytes()\n    revised = compatible_source(original.decode(\"utf-8\"))\n    print(json.dumps({\n        \"original_sha256\": hashlib.sha256(original).hexdigest(),\n        \"compatible_copy_sha256\": hashlib.sha256(revised.encode()).hexdigest(),\n        \"compatibility_points\": [\"test_closed_file\", \"test_context_manager\"],\n        \"original_assertions_preserved\": True,\n        \"scope\": \"public_development_only\",\n    }))\n    if args.check_only:\n        return 0\n    if Path.cwd().resolve() != testbed:\n        raise ValueError(\"请在工作树根目录运行，保证公开图片与配置按原路径加载\")\n\n    import pytest\n\n    temporary_path = None\n    try:\n        # 保持 Tests 包、公开 helper 和 conftest 的加载方式；原文件不改。\n        with tempfile.NamedTemporaryFile(\n            mode=\"w\", encoding=\"utf-8\", dir=testbed / \"Tests\",\n            prefix=\"test_file_tiff_compat_\", suffix=\".py\", delete=False,\n        ) as temporary:\n            temporary.write(revised)\n            temporary_path = Path(temporary.name)\n        return int(pytest.main([\n            \"-q\", \"-p\", \"no:cacheprovider\", str(temporary_path),\n            \"Tests/test_file_tiff_metadata.py\",\n            \"Tests/test_file_libtiff.py::TestFileLibTiff::test_write_metadata\",\n        ]))\n    finally:\n        if temporary_path is not None:\n            temporary_path.unlink(missing_ok=True)\n        if original_path.read_bytes() != original:\n            raise RuntimeError(\"原公开测试文件发生变化，不能按本次兼容验收收口\")\n\n\nif __name__ == \"__main__\":\n    raise SystemExit(main())\n\nPY"
+  },
+  {
+    "id": "compressed_path_observe",
+    "timeout_s": 120,
+    "expect": "any",
+    "purpose": "观察压缩（libtiff）写出路径是否也保留 262=0，文件写 /tmp。libtiff 可用时，修复前预计打印 libtiff True 与 tag262 1 compression tiff_lzw pixel00 0；修复覆盖压缩路径后为 tag262 0（pixel00 同样取决于是否反相）。libtiff 不可用时先打印 libtiff False，再在 save 处抛 OSError: encoder libtiff not available，只说明环境没有压缩路径。",
+    "cmd": "cd /testbed && PYTHONDONTWRITEBYTECODE=1 python -c \"from PIL import Image, features; print('libtiff', features.check('libtiff')); p='/tmp/r2e_pi_lzw.tif'; Image.new('L', (100, 100)).save(p, tiffinfo={262: 0}, compression='tiff_lzw'); r=Image.open(p); print('tag262', r.tag_v2[262], 'compression', r.info.get('compression'), 'pixel00', r.getpixel((0, 0)))\""
+  }
+]

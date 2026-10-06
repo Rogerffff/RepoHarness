@@ -1,0 +1,368 @@
+{
+ "instance_id": "numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd",
+ "template": "R-c + R-b",
+ "round": 2,
+ "items": [
+  {
+   "id": "R-c1",
+   "template": "R-c",
+   "fixes": "T2b（§4 第 3 步）：所有密度用例都没有区间外样本；DEG（用含离群格的总数归一）当前材料正式评分 1.0",
+   "new_keys": [
+    "TestHistogram2d.test_density_outliers",
+    "TestHistogramdd.test_density_outliers"
+   ],
+   "basis": "题面明示（integral over the range is 1）加 2D 文档"
+  },
+  {
+   "id": "R-c2",
+   "template": "R-c",
+   "fixes": "§4 第 4 步 S1：隐藏测试不再调用 2D/ND 的 normed；REN（normed 改名为 density、删掉 normed）当前材料正式评分 1.0",
+   "new_keys": [
+    "TestHistogram2d.test_normed_still_accepted",
+    "TestHistogramdd.test_normed_still_accepted"
+   ],
+   "note": "两个 normed 调用各自包在 suppress_warnings 里，只放行 Warning（任何告警类别）；不断言有无告警，不测 normed 与 density 同传。第 1 轮草案只放行四类弃用告警，Codex 复核指出这是新增的实现约束，第 2 轮改为 sup.filter(Warning)",
+   "basis": "base 文档与公开测试（行为要求）；告警类别没有公开规定，所以不限定"
+  },
+  {
+   "id": "R-b",
+   "template": "R-b",
+   "fixes": "T1：test_density_non_uniform_1d 要求 ND 密度与一维逐位相等；ORD 只差 1 ulp 被判 0（当前材料正式评分 77/78）",
+   "changed_key": "TestHistogramdd.test_density_non_uniform_1d",
+   "change": "assert_equal(hist, hist_dd) -> assert_allclose(hist, hist_dd)；assert_equal(edges, edges_dd[0]) 保持精确",
+   "basis": "逐位相等只是运算顺序带来的约束，没有公开依据"
+  },
+  {
+   "id": "R-c3",
+   "template": "R-c",
+   "fixes": "T2b（§4 第 3 步）：没有 density=False 用例；D1（显式传 density 就归一化）当前材料正式评分 1.0",
+   "new_keys": [
+    "TestHistogram2d.test_density_false",
+    "TestHistogramdd.test_density_false"
+   ],
+   "basis": "公开 API 先例推知（一维 histogram 的 density 文档与公开测试、base 中 normed=False 的文档），不是题面明示"
+  }
+ ],
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "    def test_all_outliers(self):\n",
+     "new": "    def test_density_false(self):\n        # density=False returns the plain counts, as the default does\n        x = array([1, 2, 3, 1, 2, 3, 1, 2, 3])\n        y = array([1, 1, 1, 2, 2, 2, 3, 3, 3])\n        bins = [[1, 2, 3, 5], [1, 2, 3, 5]]\n        H, xed, yed = histogram2d(x, y, bins, density=False)\n        assert_array_equal(H, np.ones((3, 3)))\n\n    def test_all_outliers(self):\n"
+    },
+    {
+     "old": "        assert_array_equal(xe, array([0., 0.25, 0.5, 0.75, 1]))\n\n\nclass TestTri(object):\n",
+     "new": "        assert_array_equal(xe, array([0., 0.25, 0.5, 0.75, 1]))\n\n    def test_density_outliers(self):\n        # Values outside the bins are not tallied; density=True still makes\n        # the integral over the binned range equal to 1.\n        x = array([0.5, 1.5, 1.5, 2.5, 10.0, -3.0])\n        y = array([0.5, 0.5, 2.5, 2.5, 10.0, 1.0])\n        bins = [[0, 1, 3], [0, 2, 3]]\n        H, xed, yed = histogram2d(x, y, bins, density=True)\n        area = np.outer(np.diff(xed), np.diff(yed))\n        assert_array_almost_equal((H * area).sum(), 1.0)\n        counts = histogram2d(x, y, bins)[0]\n        assert_array_almost_equal(H, counts / counts.sum() / area)\n\n    def test_normed_still_accepted(self):\n        # The documented `normed` keyword keeps returning the density\n        # (a deprecation warning is acceptable).\n        x = array([1, 2, 3, 1, 2, 3, 1, 2, 3])\n        y = array([1, 1, 1, 2, 2, 2, 3, 3, 3])\n        bins = [[1, 2, 3, 5], [1, 2, 3, 5]]\n        with np.testing.suppress_warnings() as sup:\n            sup.filter(Warning)\n            H = histogram2d(x, y, bins, normed=True)[0]\n        answer = array([[1, 1, .5],\n                        [1, 1, .5],\n                        [.5, .5, .25]])/9.\n        assert_array_almost_equal(H, answer, 3)\n\n\nclass TestTri(object):\n"
+    }
+   ]
+  },
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_2.py",
+   "edits": [
+    {
+     "old": "    def test_density_non_uniform_1d(self):\n",
+     "new": "    def test_density_false(self):\n        # density=False returns the plain counts, as the default does\n        x_edges = np.array([0, 2, 8])\n        y_edges = np.array([0, 6, 8])\n        x = np.array([1] + [1]*3 + [7]*3 + [7]*9)\n        y = np.array([7] + [1]*3 + [7]*3 + [1]*9)\n        hist, edges = histogramdd((y, x), bins=(y_edges, x_edges),\n                                  density=False)\n        assert_equal(hist, np.array([[3, 9], [1, 3]]))\n\n    def test_density_non_uniform_1d(self):\n"
+    },
+    {
+     "old": "        assert_equal(hist, hist_dd)\n",
+     "new": "        assert_allclose(hist, hist_dd)\n"
+    },
+    {
+     "old": "        assert_equal(edges, edges_dd[0])\n",
+     "new": "        assert_equal(edges, edges_dd[0])\n\n    def test_density_outliers(self):\n        # Values outside the bins are not tallied; density=True still makes\n        # the integral over the binned region equal to 1, with and without\n        # weights.\n        x = np.array([0.5, 1.5, 1.5, 3.0, -1.0, 0.5, 9.0])\n        y = np.array([0.5, 0.5, 2.5, 2.5, 0.5, -2.0, 9.0])\n        w = np.array([1.0, 2.0, 1.0, 3.0, 4.0, 5.0, 6.0])\n        bins = ([0, 1, 4], [0, 2, 3])\n        area = np.outer(np.diff(bins[0]), np.diff(bins[1]))\n        for weights in (None, w):\n            counts, _ = histogramdd((x, y), bins=bins, weights=weights)\n            hist, _ = histogramdd((x, y), bins=bins, weights=weights,\n                                  density=True)\n            assert_almost_equal((hist * area).sum(), 1)\n            assert_allclose(hist, counts / counts.sum() / area)\n\n    def test_normed_still_accepted(self):\n        # The documented `normed` keyword keeps returning the same density\n        # as `density=True` (a deprecation warning is acceptable).\n        v = np.arange(10)\n        bins = np.array([0, 1, 3, 6, 10])\n        with suppress_warnings() as sup:\n            sup.filter(Warning)\n            hist_normed, edges = histogramdd((v,), (bins,), normed=True)\n        hist, _ = histogram(v, bins, density=True)\n        assert_allclose(hist_normed, hist)\n        assert_equal(edges[0], bins)\n"
+    }
+   ]
+  }
+ ],
+ "revision_edit_map": {
+  "test_1.py": [
+   "edits[0] = R-c3（2D test_density_false，插在 test_all_outliers 之前）",
+   "edits[1] = R-c1 + R-c2（2D test_density_outliers、test_normed_still_accepted，追加在 TestHistogram2d 末尾；两项同一插入点）"
+  ],
+  "test_2.py": [
+   "edits[0] = R-c3（ND test_density_false，插在 test_density_non_uniform_1d 之前）",
+   "edits[1] = R-b（test_density_non_uniform_1d 的逐位比较改为 assert_allclose）",
+   "edits[2] = R-c1 + R-c2（ND test_density_outliers、test_normed_still_accepted，追加在文件末尾；两项同一插入点）"
+  ]
+ },
+ "expected_after": {
+  "TestEye.test_basic": "PASSED",
+  "TestEye.test_diag": "PASSED",
+  "TestEye.test_2d": "PASSED",
+  "TestEye.test_diag2d": "PASSED",
+  "TestEye.test_eye_bounds": "PASSED",
+  "TestEye.test_strings": "PASSED",
+  "TestEye.test_bool": "PASSED",
+  "TestEye.test_order": "PASSED",
+  "TestDiag.test_vector": "PASSED",
+  "TestDiag.test_matrix": "PASSED",
+  "TestDiag.test_fortran_order": "PASSED",
+  "TestDiag.test_diag_bounds": "PASSED",
+  "TestDiag.test_failure": "PASSED",
+  "TestFliplr.test_basic": "PASSED",
+  "TestFlipud.test_basic": "PASSED",
+  "TestHistogram2d.test_simple": "PASSED",
+  "TestHistogram2d.test_asym": "PASSED",
+  "TestHistogram2d.test_density": "PASSED",
+  "TestHistogram2d.test_density_false": "PASSED",
+  "TestHistogram2d.test_all_outliers": "PASSED",
+  "TestHistogram2d.test_empty": "PASSED",
+  "TestHistogram2d.test_binparameter_combination": "PASSED",
+  "TestHistogram2d.test_density_outliers": "PASSED",
+  "TestHistogram2d.test_normed_still_accepted": "PASSED",
+  "TestTri.test_dtype": "PASSED",
+  "test_tril_triu_ndim2": "PASSED",
+  "test_tril_triu_ndim3": "PASSED",
+  "test_tril_triu_with_inf": "PASSED",
+  "test_tril_triu_dtype": "PASSED",
+  "test_mask_indices": "PASSED",
+  "test_tril_indices": "PASSED",
+  "TestTriuIndices.test_triu_indices": "PASSED",
+  "TestTrilIndicesFrom.test_exceptions": "PASSED",
+  "TestTriuIndicesFrom.test_exceptions": "PASSED",
+  "TestVander.test_basic": "PASSED",
+  "TestVander.test_dtypes": "PASSED",
+  "TestHistogram.test_simple": "PASSED",
+  "TestHistogram.test_one_bin": "PASSED",
+  "TestHistogram.test_normed": "PASSED",
+  "TestHistogram.test_density": "PASSED",
+  "TestHistogram.test_outliers": "PASSED",
+  "TestHistogram.test_type": "PASSED",
+  "TestHistogram.test_f32_rounding": "PASSED",
+  "TestHistogram.test_weights": "PASSED",
+  "TestHistogram.test_exotic_weights": "PASSED",
+  "TestHistogram.test_no_side_effects": "PASSED",
+  "TestHistogram.test_empty": "PASSED",
+  "TestHistogram.test_error_binnum_type": "PASSED",
+  "TestHistogram.test_finite_range": "PASSED",
+  "TestHistogram.test_bin_edge_cases": "PASSED",
+  "TestHistogram.test_last_bin_inclusive_range": "PASSED",
+  "TestHistogram.test_unsigned_monotonicity_check": "PASSED",
+  "TestHistogram.test_object_array_of_0d": "PASSED",
+  "TestHistogram.test_some_nan_values": "PASSED",
+  "TestHistogram.test_datetime": "PASSED",
+  "TestHistogram.test_precision": "PASSED",
+  "TestHistogram.test_histogram_bin_edges": "PASSED",
+  "TestHistogramOptimBinNums.test_empty": "PASSED",
+  "TestHistogramOptimBinNums.test_simple": "PASSED",
+  "TestHistogramOptimBinNums.test_small": "PASSED",
+  "TestHistogramOptimBinNums.test_incorrect_methods": "PASSED",
+  "TestHistogramOptimBinNums.test_novariance": "PASSED",
+  "TestHistogramOptimBinNums.test_limited_variance": "PASSED",
+  "TestHistogramOptimBinNums.test_outlier": "PASSED",
+  "TestHistogramOptimBinNums.test_simple_range": "PASSED",
+  "TestHistogramOptimBinNums.test_simple_weighted": "PASSED",
+  "TestHistogramdd.test_simple": "PASSED",
+  "TestHistogramdd.test_shape_3d": "PASSED",
+  "TestHistogramdd.test_shape_4d": "PASSED",
+  "TestHistogramdd.test_weights": "PASSED",
+  "TestHistogramdd.test_identical_samples": "PASSED",
+  "TestHistogramdd.test_empty": "PASSED",
+  "TestHistogramdd.test_bins_errors": "PASSED",
+  "TestHistogramdd.test_inf_edges": "PASSED",
+  "TestHistogramdd.test_rightmost_binedge": "PASSED",
+  "TestHistogramdd.test_finite_range": "PASSED",
+  "TestHistogramdd.test_equal_edges": "PASSED",
+  "TestHistogramdd.test_edge_dtype": "PASSED",
+  "TestHistogramdd.test_large_integers": "PASSED",
+  "TestHistogramdd.test_density_non_uniform_2d": "PASSED",
+  "TestHistogramdd.test_density_false": "PASSED",
+  "TestHistogramdd.test_density_non_uniform_1d": "PASSED",
+  "TestHistogramdd.test_density_outliers": "PASSED",
+  "TestHistogramdd.test_normed_still_accepted": "PASSED"
+ },
+ "expected_change": {
+  "changed": {},
+  "added": {
+   "TestHistogram2d.test_density_false": "PASSED",
+   "TestHistogram2d.test_density_outliers": "PASSED",
+   "TestHistogram2d.test_normed_still_accepted": "PASSED",
+   "TestHistogramdd.test_density_false": "PASSED",
+   "TestHistogramdd.test_density_outliers": "PASSED",
+   "TestHistogramdd.test_normed_still_accepted": "PASSED"
+  },
+  "removed": []
+ },
+ "positive_control": "gold",
+ "acceptance": {
+  "gold": {
+   "expected_score": 1,
+   "role": "正对照",
+   "expected_fail_keys": [],
+   "trial": "trials/rev2_gold.json",
+   "trial_verdict": "match 84/84",
+   "patch": "runs/r2e_static_prep_20260924/v3/private/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd/gold.patch",
+   "draft": "draft_v2.json（第 2 轮）",
+   "round1_trial": "trials/rev_gold.json"
+  },
+  "noop": {
+   "expected_score": 0,
+   "role": "负对照",
+   "expected_fail_keys": [
+    "TestHistogram2d.test_asym",
+    "TestHistogram2d.test_density",
+    "TestHistogram2d.test_density_false",
+    "TestHistogram2d.test_density_outliers",
+    "TestHistogramdd.test_density_false",
+    "TestHistogramdd.test_density_non_uniform_1d",
+    "TestHistogramdd.test_density_non_uniform_2d",
+    "TestHistogramdd.test_density_outliers",
+    "TestHistogramdd.test_simple",
+    "TestHistogramdd.test_weights"
+   ],
+   "trial": "trials/rev_noop.json",
+   "trial_verdict": "mismatch: 74/84 keys equal; FAILED=TestHistogram2d.test_asym, TestHistogram2d.test_density, TestHistogram2d.test_density_false, TestHistogram2d.test_density_outliers, TestHistogramdd.test_density_false, TestHistogramdd.test_density_non_uniform_1d, TestHistogramdd.test_density_non_uniform_2d, TestHistogramdd.test_density_outliers, TestHistogramdd.test_simple, TestHistogramdd.test_weights",
+   "patch": "none",
+   "draft": "draft.json（第 1 轮）",
+   "note": "沿用第 1 轮草案的试跑：第 2 轮只改 R-c2 两处过滤块，本候选不发任何告警，其余 82 个测试逐字节未变（revision_plan.md §5.5）"
+  },
+  "DEG": {
+   "expected_score": 0,
+   "role": "R-c1 的触发反例（§4 第 3 步退化候选，当前材料正式评分 1.0）",
+   "expected_fail_keys": [
+    "TestHistogram2d.test_density_outliers",
+    "TestHistogramdd.test_density_outliers"
+   ],
+   "trial": "trials/rev_DEG.json",
+   "trial_verdict": "mismatch: 82/84 keys equal; FAILED=TestHistogram2d.test_density_outliers, TestHistogramdd.test_density_outliers",
+   "patch": "cands/numpy_d89b_DEG.patch",
+   "draft": "draft.json（第 1 轮）",
+   "note": "沿用第 1 轮草案的试跑：第 2 轮只改 R-c2 两处过滤块，本候选不发任何告警，其余 82 个测试逐字节未变（revision_plan.md §5.5）"
+  },
+  "REN": {
+   "expected_score": 0,
+   "role": "R-c2 的触发反例（§4 第 4 步构造候选，当前材料正式评分 1.0）",
+   "expected_fail_keys": [
+    "TestHistogram2d.test_normed_still_accepted",
+    "TestHistogramdd.test_normed_still_accepted"
+   ],
+   "trial": "trials/rev2_REN.json",
+   "trial_verdict": "mismatch: 82/84 keys equal; FAILED=TestHistogram2d.test_normed_still_accepted, TestHistogramdd.test_normed_still_accepted",
+   "patch": "cands/numpy_d89b_REN.patch",
+   "draft": "draft_v2.json（第 2 轮）",
+   "round1_trial": "trials/rev_REN.json"
+  },
+  "ORD": {
+   "expected_score": 1,
+   "role": "R-b 的触发反例（合理替代解，当前材料正式评分 0.0，77/78）",
+   "expected_fail_keys": [],
+   "trial": "trials/rev_ORD.json",
+   "trial_verdict": "match 84/84",
+   "patch": "cands/numpy_d89b_ORD.patch",
+   "draft": "draft.json（第 1 轮）",
+   "note": "沿用第 1 轮草案的试跑：第 2 轮只改 R-c2 两处过滤块，本候选不发任何告警，其余 82 个测试逐字节未变（revision_plan.md §5.5）"
+  },
+  "DEP": {
+   "expected_score": 1,
+   "role": "合理替代解：沿一维先例弃用 normed（DeprecationWarning）",
+   "expected_fail_keys": [],
+   "trial": "trials/rev2_DEP.json",
+   "trial_verdict": "match 84/84",
+   "patch": "cands/numpy_d89b_DEP.patch",
+   "draft": "draft_v2.json（第 2 轮）",
+   "round1_trial": "trials/rev_DEP.json"
+  },
+  "D1": {
+   "expected_score": 0,
+   "role": "R-c3 的触发反例（§4 第 3 步退化候选，当前材料正式评分 1.0）",
+   "expected_fail_keys": [
+    "TestHistogram2d.test_density_false",
+    "TestHistogramdd.test_density_false"
+   ],
+   "trial": "trials/rev_D1.json",
+   "trial_verdict": "mismatch: 82/84 keys equal; FAILED=TestHistogram2d.test_density_false, TestHistogramdd.test_density_false",
+   "patch": "cands/numpy_d89b_revD1.patch",
+   "draft": "draft.json（第 1 轮）",
+   "note": "沿用第 1 轮草案的试跑：第 2 轮只改 R-c2 两处过滤块，本候选不发任何告警，其余 82 个测试逐字节未变（revision_plan.md §5.5）"
+  },
+  "C1": {
+   "expected_score": 1,
+   "role": "合理替代解（可选）：density 为 None 时取 normed，静默别名",
+   "expected_fail_keys": [],
+   "trial": "trials/rev_C1.json",
+   "trial_verdict": "match 84/84",
+   "patch": "cands/numpy_d89b_C1.patch",
+   "draft": "draft.json（第 1 轮）",
+   "note": "沿用第 1 轮草案的试跑：第 2 轮只改 R-c2 两处过滤块，本候选不发任何告警，其余 82 个测试逐字节未变（revision_plan.md §5.5）"
+  },
+  "DEPFW": {
+   "expected_score": 1,
+   "role": "合理替代解（可选）：DEP 的两处告警换成 FutureWarning",
+   "expected_fail_keys": [],
+   "trial": "trials/rev2_DEPFW.json",
+   "trial_verdict": "match 84/84",
+   "patch": "cands/numpy_d89b_DEPFW.patch",
+   "draft": "draft_v2.json（第 2 轮）",
+   "round1_trial": "trials/rev_DEPFW.json"
+  },
+  "DEPUW": {
+   "expected_score": 1,
+   "role": "合理替代解：用不带类别的 warnings.warn（即 UserWarning）弃用 normed，其它与 DEP 相同；检验放行 Warning 生效",
+   "expected_fail_keys": [],
+   "trial": "trials/rev2_DEPUW.json",
+   "trial_verdict": "match 84/84",
+   "patch": "cands/numpy_d89b_DEPUW.patch",
+   "draft": "draft_v2.json（第 2 轮）"
+  }
+ },
+ "controls_note": "不进 acceptance 的对照：当前材料 noop / gold（trials/env_*_current.json）；第 1 轮草案去掉 FutureWarning 一行的消融（trials/ablation_noFW_DEPFW.json）；第 1 轮草案（四类名单）下的 DEPUW（trials/ctrl_draft1_DEPUW.json，得 0，UserWarning 被当成错误），即第 2 轮要纠正的误拒",
+ "paths_note": "trials/ 与 cands/ 相对本题目录；runs/ 开头的路径相对仓库根。acceptance 只含修订版试跑；当前材料对照、消融对照与第 1 轮草案下的 DEPUW 对照见 revision_plan.md §5.1、§5.3、§5.5",
+ "candidate_patch_sha256": {
+  "gold": "sha256:b00869e783b50fe3677273d5dbb545e951508d28f119d83656deefa7e51fd7bf",
+  "DEG": "sha256:59b72fc01054af836017273211e698b86179d34230dbd4079a22c778afd53101",
+  "REN": "sha256:021f87daae92415b16f460e794a4d3d8950d6ae9a48e0e65cbabd8db4145db43",
+  "ORD": "sha256:fe60bdb9c376aa72f2f96282f2467ff43a1ccc848a953ca090033103cb1ad321",
+  "DEP": "sha256:ba35cc03b1cc14fef4337889fa9ec85c3df3ae4a6748b9e04b196bba8e1532f9",
+  "D1": "sha256:68dc43f42404294fc763a3f6b45ea87a98a32f2791b90dc05224208b2857668f",
+  "C1": "sha256:f36d27052e59385a3cefc8bdf97571533fd50ccd8b1b51169a4459aad0cf9cd9",
+  "DEPFW": "sha256:f1a667783c38a8079fc03b881184fba53909fff93c29c4b2eb683688817e9bcb",
+  "DEPUW": "sha256:cfe08fecce0be55088f66c2d26cec9dc9bf36a3769fbb8fb8cec7f6f546b605c"
+ },
+ "parent_material": {
+  "hidden_test_files": {
+   "test_1.py": "sha256:b680bb7938c4b99c72809c10b9bd2d0bbfee182b4b5553021df6ba114906254e",
+   "test_2.py": "sha256:1d485d6e379c7351563138c1e91beff88451f97d934deacdef9c550ce47d5fe4",
+   "__init__.py": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "hidden_tests_tree_sha256": "sha256:b55abfbe649c29fec6d295c4320780689f5d751261c49d65f8ebbe58430d9032",
+  "expected_output_sha256": "sha256:f7c02eef293092275b65c75b540a2d9f231baa4eab964fbf3a58726725ae7b40",
+  "expected_n": 78,
+  "material_revisions": [],
+  "formal_source": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl:22"
+ },
+ "revised_test_file_sha256": {
+  "test_1.py": "sha256:cf992ee47d40965e9dc29a182ab91110e29856bf401eb4a54e7f45c0ab135d3f",
+  "test_2.py": "sha256:e0b2dd5f1442c13acad28478d606b9afc7858281578d04fdb33d03694d5e7054"
+ },
+ "revised_test_file_lines": {
+  "test_1.py": 544,
+  "test_2.py": 783
+ },
+ "round1": {
+  "draft.json": "sha256:a87a119e4f2cc70a588181c316dcdf653e75d56fb4ecbc7ea0812ef18bb89489",
+  "revised_test_file_sha256": {
+   "test_1.py": "sha256:0f31279d447683ba4f53d5dd5e76236353438d0237eb891b4b68f37085570188",
+   "test_2.py": "sha256:d99e2c94e79ec194dafe2441ed1596defb1e951cb800544cff48bd1bac3f9915"
+  },
+  "revised_test_file_lines": {
+   "test_1.py": 547,
+   "test_2.py": 786
+  },
+  "change_to_round2": "两个 test_normed_still_accepted 的四行 sup.filter(DeprecationWarning / PendingDeprecationWarning / FutureWarning / np.VisibleDeprecationWarning) 换成一行 sup.filter(Warning)；其它文本不变",
+  "review": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_numpy_d89b.md"
+ },
+ "trial_image": {
+  "image_id": "sha256:ea786809c49d091eee03032bf590c8aa411dea2bbd961cacef6e723e5fdf57f9",
+  "recipe_id": "r2e_derive_v1+sysconfig_v1"
+ },
+ "trial_draft_sha256": {
+  "draft_v2.json（第 2 轮，定稿）": "sha256:1cf7b26bdb6e8c7b03434f222d2ad4cb17ff44010dc85ed90cbf1e129ae40b90",
+  "draft.json（第 1 轮）": "sha256:a87a119e4f2cc70a588181c316dcdf653e75d56fb4ecbc7ea0812ef18bb89489",
+  "expected_after.json（两轮共用）": "sha256:b9c1d0e0c8839fcd772a17ce2c5e9833ed2ecf8812483f3107a314a8fd725626",
+  "draft_noFW.json（第 1 轮消融对照，不是修订）": "sha256:73909332eefec8980455b9388ae1d0dde46a72836bf07fb6f5acd4619cba874e"
+ },
+ "trial_remote_dir": "/work/r2e/trials/lc_numpy_d89b/d89bc4bb/"
+}

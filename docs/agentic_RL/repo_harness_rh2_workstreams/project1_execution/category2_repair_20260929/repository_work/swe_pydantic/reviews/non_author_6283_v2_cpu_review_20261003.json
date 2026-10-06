@@ -1,0 +1,2188 @@
+{
+  "schema": "rh2.non_author_6283_v2_cpu_review.v1",
+  "as_of": "2026-10-03",
+  "reviewer_role": "非材料/runner作者；已接触私有上下文，非fresh公开读者",
+  "private_context_exposure": true,
+  "fresh_public_reader": false,
+  "scope": "仅 R19 6283 v2 四行正式 CPU 原件、必要 source 公开 actor 身份有限复用。",
+  "job": "pyd6283-formal-20261003033613-v2-b5f3a",
+  "source_release": "cat2-cpu-r2e093-swe40-pyd6283-moto6114-20261003-v1",
+  "manifest_sha256": "2cfdd9b4f1134c0915346b727b729665482c4c1121b550764833f16f2982402e",
+  "namespace": "formal_6283_privateattr_v2",
+  "cpu_review_passed": true,
+  "ordinary_gpu_probe_ready_within_review_scope": true,
+  "ordinary_gpu_scope": "受信四行 CPU及原source/base公开CC开发诊断允许进入普通GPU事实收集；GPU actual image_override/UID/install/core/service/checkpoint/cleanup须由该探针自身核验。",
+  "training_eligibility_asserted": false,
+  "typed_training_lease_asserted": false,
+  "actual_new_gpu_probe_completed": false,
+  "gpu_request_submitted_by_this_review": false,
+  "old_gpu_original_frozen_patch_actually_regraded": false,
+  "old_gpu_raw_reward_preserved": true,
+  "source_equivalent_new_cpu_control_is_not_old_gpu_fp_regrade": true,
+  "blocking_findings_within_review_scope": [],
+  "input_sha256": "4d50c69969e883e48f919ac1221594d88665e409a720f67b9a16952c393b4640",
+  "wrapper_sha256": "40b0460b70c2890a1eb3fbbf2474e10bee906125e3068868079370044d875805",
+  "archive_sha256": "a58348d8af6e6d0e4bb9d9d215cc9162c915a7a4ba9d87dad2743ea36facea11",
+  "archived_evidence_files_verified": 498,
+  "all_evidence_sizes_sha_exact_set_and_tar_member_bytes_verified": true,
+  "release_full_1476_member_review_reused": true,
+  "release_full_rehashed_this_review": false,
+  "selected_frozen_source_member_bindings_checked": 6,
+  "runtime": "/work/rh2-category2-20261003/runtime_cpu_v2/rh2/.venv/bin/python",
+  "slot": 1,
+  "slot_started_at_utc": "2026-10-03T03:36:16Z",
+  "slot_finished_at_utc": "2026-10-03T03:48:52Z",
+  "slot_returncode": 0,
+  "wall_seconds": 755.7913382053375,
+  "reference_counts": {
+    "f2p": 2,
+    "p2p": 39,
+    "total": 41
+  },
+  "candidate_order": [
+    "noop",
+    "gold",
+    "validate_construct",
+    "qwen36_a1_pop_private"
+  ],
+  "rows": [
+    {
+      "candidate": "noop",
+      "reward": 0,
+      "f2p_pass": 0,
+      "p2p_fail": 0,
+      "test_rc": 1,
+      "reference_states": {
+        "tests/test_root_model.py::test_root_model_equality": "FAILED",
+        "tests/test_root_model.py::test_root_model_construct_equality_nonexample": "FAILED",
+        "tests/test_root_model.py::test_root_model_specialized[list[int]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_base_model_equality": "PASSED",
+        "tests/test_root_model.py::test_construct": "PASSED",
+        "tests/test_root_model.py::test_assignment": "PASSED",
+        "tests/test_root_model.py::test_validate_assignment_false": "PASSED",
+        "tests/test_root_model.py::test_validate_assignment_true": "PASSED",
+        "tests/test_root_model.py::test_root_model_nested": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[InnerModel]": "PASSED",
+        "tests/test_root_model.py::test_root_model_in_root_model_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_wrong_default_value_without_validate_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_as_attr_with_validate_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_nested_equality": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value": "PASSED",
+        "tests/test_root_model.py::test_root_model_repr": "PASSED",
+        "tests/test_root_model.py::test_construct_nested": "PASSED",
+        "tests/test_root_model.py::test_v1_compatibility_serializer": "PASSED",
+        "tests/test_root_model.py::test_root_model_as_field": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[str]": "PASSED",
+        "tests/test_root_model.py::test_root_model_with_private_attrs_equality": "PASSED",
+        "tests/test_root_model.py::test_model_validator_before": "PASSED",
+        "tests/test_root_model.py::test_root_model_literal": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[list[int]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_dump_with_base_model[RB]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[int]": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value_with_validate_default": "PASSED",
+        "tests/test_root_model.py::test_private_attr": "PASSED",
+        "tests/test_root_model.py::test_nested_root_model_naive_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_json_schema_meta": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[str]": "PASSED",
+        "tests/test_root_model.py::test_root_model_recursive": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[InnerModel]": "PASSED",
+        "tests/test_root_model.py::test_root_model_validation_error": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[int]": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_factory": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value_with_validate_default_on_field": "PASSED",
+        "tests/test_root_model.py::test_model_validator_after": "PASSED",
+        "tests/test_root_model.py::test_nested_root_model_proper_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_dump_with_base_model[BR]": "PASSED",
+        "tests/test_root_model.py::test_root_model_construct_preserves_private_default": "PASSED"
+      },
+      "raw_states": {
+        "tests/test_root_model.py::test_root_model_specialized[int]": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[str]": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[dict[int, bool]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[list[int]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[InnerModel]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[int]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[str]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[dict[int, bool]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[list[int]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[InnerModel]": "PASSED",
+        "tests/test_root_model.py::test_root_model_validation_error": "PASSED",
+        "tests/test_root_model.py::test_root_model_repr": "PASSED",
+        "tests/test_root_model.py::test_root_model_recursive": "PASSED",
+        "tests/test_root_model.py::test_root_model_nested": "PASSED",
+        "tests/test_root_model.py::test_root_model_as_field": "PASSED",
+        "tests/test_root_model.py::test_v1_compatibility_serializer": "PASSED",
+        "tests/test_root_model.py::test_construct": "PASSED",
+        "tests/test_root_model.py::test_construct_nested": "PASSED",
+        "tests/test_root_model.py::test_assignment": "PASSED",
+        "tests/test_root_model.py::test_model_validator_before": "PASSED",
+        "tests/test_root_model.py::test_model_validator_after": "PASSED",
+        "tests/test_root_model.py::test_private_attr": "PASSED",
+        "tests/test_root_model.py::test_validate_assignment_false": "PASSED",
+        "tests/test_root_model.py::test_validate_assignment_true": "PASSED",
+        "tests/test_root_model.py::test_root_model_literal": "PASSED",
+        "tests/test_root_model.py::test_root_model_equality": "FAILED",
+        "tests/test_root_model.py::test_root_model_with_private_attrs_equality": "PASSED",
+        "tests/test_root_model.py::test_root_model_nested_equality": "PASSED",
+        "tests/test_root_model.py::test_root_model_base_model_equality": "PASSED",
+        "tests/test_root_model.py::test_extra_error[ignore]": "XFAIL",
+        "tests/test_root_model.py::test_extra_error[allow]": "XFAIL",
+        "tests/test_root_model.py::test_extra_error[forbid]": "XFAIL",
+        "tests/test_root_model.py::test_root_model_default_value": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_factory": "PASSED",
+        "tests/test_root_model.py::test_root_model_wrong_default_value_without_validate_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value_with_validate_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value_with_validate_default_on_field": "PASSED",
+        "tests/test_root_model.py::test_root_model_as_attr_with_validate_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_in_root_model_default": "PASSED",
+        "tests/test_root_model.py::test_nested_root_model_naive_default": "PASSED",
+        "tests/test_root_model.py::test_nested_root_model_proper_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_json_schema_meta": "PASSED",
+        "tests/test_root_model.py::test_root_model_dump_with_base_model[BR]": "PASSED",
+        "tests/test_root_model.py::test_root_model_dump_with_base_model[RB]": "PASSED",
+        "tests/test_root_model.py::test_root_model_construct_equality_nonexample": "FAILED",
+        "tests/test_root_model.py::test_root_model_construct_preserves_private_default": "PASSED"
+      },
+      "raw_status_counts": {
+        "PASSED": 41,
+        "FAILED": 2,
+        "XFAIL": 3
+      },
+      "failure_refs": [
+        "tests/test_root_model.py::test_root_model_equality",
+        "tests/test_root_model.py::test_root_model_construct_equality_nonexample"
+      ],
+      "parser_key_count": 43,
+      "baseline_digest": "sha256:0143226df9f52b56a3921127ed7ef0cb3b56c11b3eea232418cfffc9ab35e0ef",
+      "baseline_entries": 391,
+      "baseline_environment_package_digest": null,
+      "census_checks": [
+        {
+          "call": "0009",
+          "entries": 391,
+          "excluded_count": 25,
+          "comparison": "baseline"
+        },
+        {
+          "call": "0010",
+          "entries": 391,
+          "excluded_count": 25,
+          "comparison": "candidate_post"
+        },
+        {
+          "call": "0020",
+          "entries": 391,
+          "excluded_count": 25,
+          "comparison": "baseline"
+        }
+      ],
+      "frozen_digest": "sha256:243a202d72b75fc57ef351b3d753589ddd8ac267fc0169d3fa89ea7c61cf1369",
+      "delta_paths": [],
+      "candidate_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "physical_attempt_id": "replay-pyd6283-formal-20261003033613-v2-b5f3a-swe_gym_lite--pydantic__pydantic-6283-15c23148",
+      "rollout_execution_id": "replay-pyd6283-formal-20261003033613-v2-b5f3a-swe_gym_lite--pydantic__pydantic-6283",
+      "log_path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/eval_logs/evallog_replay-pyd6283-formal-20_3a3c1dc7.eval.log",
+      "log_sha256": "d89d32cc9449e1163e80266f4a64602d26101ff46ed04ac945a3584b3bd738f2",
+      "log_bytes": 369169,
+      "actual_audit": {
+        "uid": 54322,
+        "python": "/opt/miniconda3/envs/testbed/bin/python",
+        "version": [
+          3,
+          8,
+          19
+        ],
+        "core": "0.42.0",
+        "pydantic_file": "/testbed/pydantic/__init__.py",
+        "files": {
+          "pydantic/_internal/_model_construction.py": "842abbb842a2ad3e00e266f3f143d1873812b100bb2ab3181600fa894ba799a3",
+          "pydantic/main.py": "627bf18d6c5b6b7d204c4a97fc70316c7290aeda77d2984ab9e19005f1bc261d",
+          "pydantic/root_model.py": "d1cdddb080df67eae718e31ea89c56e1ccf76bd7ca5e3cd1a6f5ab878691309d"
+        },
+        "modules": {
+          "pydantic.main": {
+            "path": "/testbed/pydantic/main.py",
+            "sha256": "627bf18d6c5b6b7d204c4a97fc70316c7290aeda77d2984ab9e19005f1bc261d"
+          },
+          "pydantic.root_model": {
+            "path": "/testbed/pydantic/root_model.py",
+            "sha256": "d1cdddb080df67eae718e31ea89c56e1ccf76bd7ca5e3cd1a6f5ab878691309d"
+          },
+          "pydantic._internal._model_construction": {
+            "path": "/testbed/pydantic/_internal/_model_construction.py",
+            "sha256": "842abbb842a2ad3e00e266f3f143d1873812b100bb2ab3181600fa894ba799a3"
+          }
+        },
+        "privateattr": {
+          "normal_value": "abc",
+          "construct_value": "abc",
+          "construct_error": null
+        },
+        "test": {
+          "path": "tests/test_root_model.py",
+          "sha256": "6bb8bce7277436102efc2bb43a61dcddd2ccf9830730b7e3026b7add680129e8",
+          "uid": 0,
+          "writable": false
+        },
+        "cgroup": {
+          "cpu.max": "200000 100000",
+          "memory.max": "4294967296",
+          "pids.max": "512"
+        }
+      },
+      "partition_results": {
+        "added_f2p": {
+          "references": [
+            "tests/test_root_model.py::test_root_model_construct_equality_nonexample"
+          ],
+          "result": {
+            "failure": [
+              "tests/test_root_model.py::test_root_model_construct_equality_nonexample"
+            ],
+            "missing": [],
+            "skipped": [],
+            "success": [],
+            "unaccounted": []
+          }
+        },
+        "added_p2p": {
+          "references": [
+            "tests/test_root_model.py::test_root_model_construct_preserves_private_default"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "tests/test_root_model.py::test_root_model_construct_preserves_private_default"
+            ],
+            "unaccounted": []
+          }
+        },
+        "original_f2p": {
+          "references": [
+            "tests/test_root_model.py::test_root_model_equality"
+          ],
+          "result": {
+            "failure": [
+              "tests/test_root_model.py::test_root_model_equality"
+            ],
+            "missing": [],
+            "skipped": [],
+            "success": [],
+            "unaccounted": []
+          }
+        },
+        "original_p2p": {
+          "references": [
+            "tests/test_root_model.py::test_root_model_specialized[list[int]]",
+            "tests/test_root_model.py::test_root_model_base_model_equality",
+            "tests/test_root_model.py::test_construct",
+            "tests/test_root_model.py::test_assignment",
+            "tests/test_root_model.py::test_validate_assignment_false",
+            "tests/test_root_model.py::test_validate_assignment_true",
+            "tests/test_root_model.py::test_root_model_nested",
+            "tests/test_root_model.py::test_root_model_inherited[InnerModel]",
+            "tests/test_root_model.py::test_root_model_in_root_model_default",
+            "tests/test_root_model.py::test_root_model_wrong_default_value_without_validate_default",
+            "tests/test_root_model.py::test_root_model_as_attr_with_validate_default",
+            "tests/test_root_model.py::test_root_model_nested_equality",
+            "tests/test_root_model.py::test_root_model_default_value",
+            "tests/test_root_model.py::test_root_model_repr",
+            "tests/test_root_model.py::test_construct_nested",
+            "tests/test_root_model.py::test_v1_compatibility_serializer",
+            "tests/test_root_model.py::test_root_model_as_field",
+            "tests/test_root_model.py::test_root_model_specialized[str]",
+            "tests/test_root_model.py::test_root_model_with_private_attrs_equality",
+            "tests/test_root_model.py::test_model_validator_before",
+            "tests/test_root_model.py::test_root_model_literal",
+            "tests/test_root_model.py::test_root_model_inherited[list[int]]",
+            "tests/test_root_model.py::test_root_model_dump_with_base_model[RB]",
+            "tests/test_root_model.py::test_root_model_inherited[int]",
+            "tests/test_root_model.py::test_root_model_default_value_with_validate_default",
+            "tests/test_root_model.py::test_private_attr",
+            "tests/test_root_model.py::test_nested_root_model_naive_default",
+            "tests/test_root_model.py::test_root_model_json_schema_meta",
+            "tests/test_root_model.py::test_root_model_inherited[str]",
+            "tests/test_root_model.py::test_root_model_recursive",
+            "tests/test_root_model.py::test_root_model_specialized[InnerModel]",
+            "tests/test_root_model.py::test_root_model_validation_error",
+            "tests/test_root_model.py::test_root_model_specialized[int]",
+            "tests/test_root_model.py::test_root_model_default_factory",
+            "tests/test_root_model.py::test_root_model_default_value_with_validate_default_on_field",
+            "tests/test_root_model.py::test_model_validator_after",
+            "tests/test_root_model.py::test_nested_root_model_proper_default",
+            "tests/test_root_model.py::test_root_model_dump_with_base_model[BR]"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "tests/test_root_model.py::test_root_model_specialized[list[int]]",
+              "tests/test_root_model.py::test_root_model_base_model_equality",
+              "tests/test_root_model.py::test_construct",
+              "tests/test_root_model.py::test_assignment",
+              "tests/test_root_model.py::test_validate_assignment_false",
+              "tests/test_root_model.py::test_validate_assignment_true",
+              "tests/test_root_model.py::test_root_model_nested",
+              "tests/test_root_model.py::test_root_model_inherited[InnerModel]",
+              "tests/test_root_model.py::test_root_model_in_root_model_default",
+              "tests/test_root_model.py::test_root_model_wrong_default_value_without_validate_default",
+              "tests/test_root_model.py::test_root_model_as_attr_with_validate_default",
+              "tests/test_root_model.py::test_root_model_nested_equality",
+              "tests/test_root_model.py::test_root_model_default_value",
+              "tests/test_root_model.py::test_root_model_repr",
+              "tests/test_root_model.py::test_construct_nested",
+              "tests/test_root_model.py::test_v1_compatibility_serializer",
+              "tests/test_root_model.py::test_root_model_as_field",
+              "tests/test_root_model.py::test_root_model_specialized[str]",
+              "tests/test_root_model.py::test_root_model_with_private_attrs_equality",
+              "tests/test_root_model.py::test_model_validator_before",
+              "tests/test_root_model.py::test_root_model_literal",
+              "tests/test_root_model.py::test_root_model_inherited[list[int]]",
+              "tests/test_root_model.py::test_root_model_dump_with_base_model[RB]",
+              "tests/test_root_model.py::test_root_model_inherited[int]",
+              "tests/test_root_model.py::test_root_model_default_value_with_validate_default",
+              "tests/test_root_model.py::test_private_attr",
+              "tests/test_root_model.py::test_nested_root_model_naive_default",
+              "tests/test_root_model.py::test_root_model_json_schema_meta",
+              "tests/test_root_model.py::test_root_model_inherited[str]",
+              "tests/test_root_model.py::test_root_model_recursive",
+              "tests/test_root_model.py::test_root_model_specialized[InnerModel]",
+              "tests/test_root_model.py::test_root_model_validation_error",
+              "tests/test_root_model.py::test_root_model_specialized[int]",
+              "tests/test_root_model.py::test_root_model_default_factory",
+              "tests/test_root_model.py::test_root_model_default_value_with_validate_default_on_field",
+              "tests/test_root_model.py::test_model_validator_after",
+              "tests/test_root_model.py::test_nested_root_model_proper_default",
+              "tests/test_root_model.py::test_root_model_dump_with_base_model[BR]"
+            ],
+            "unaccounted": []
+          }
+        }
+      },
+      "source_and_frozen_transport_verified": true,
+      "env_qualification": "absent",
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 4.848,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 2.134
+      },
+      "report_timings": {
+        "schema_id": "rh2.grading_timing_record.v1",
+        "record_id": "timing_3a3c1dc7",
+        "trajectory_id": "replay-pyd6283-formal-20261003033613-v2-b5f3a-pydantic__pydantic-6283-a1-15c23148",
+        "task_id": "swe_gym_lite::pydantic__pydantic-6283",
+        "image_pull_seconds": 0.0,
+        "env_reset_seconds": 12.338,
+        "prep_seconds": 0.567,
+        "test_seconds": 9.331,
+        "total_grading_seconds": 162.648,
+        "queue_wait_seconds": 0.0,
+        "container_peak_memory_mb": 533.531,
+        "queue_depth_at_enqueue": null,
+        "backpressure_triggered": false
+      }
+    },
+    {
+      "candidate": "gold",
+      "reward": 1,
+      "f2p_pass": 2,
+      "p2p_fail": 0,
+      "test_rc": 0,
+      "reference_states": {
+        "tests/test_root_model.py::test_root_model_equality": "PASSED",
+        "tests/test_root_model.py::test_root_model_construct_equality_nonexample": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[list[int]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_base_model_equality": "PASSED",
+        "tests/test_root_model.py::test_construct": "PASSED",
+        "tests/test_root_model.py::test_assignment": "PASSED",
+        "tests/test_root_model.py::test_validate_assignment_false": "PASSED",
+        "tests/test_root_model.py::test_validate_assignment_true": "PASSED",
+        "tests/test_root_model.py::test_root_model_nested": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[InnerModel]": "PASSED",
+        "tests/test_root_model.py::test_root_model_in_root_model_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_wrong_default_value_without_validate_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_as_attr_with_validate_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_nested_equality": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value": "PASSED",
+        "tests/test_root_model.py::test_root_model_repr": "PASSED",
+        "tests/test_root_model.py::test_construct_nested": "PASSED",
+        "tests/test_root_model.py::test_v1_compatibility_serializer": "PASSED",
+        "tests/test_root_model.py::test_root_model_as_field": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[str]": "PASSED",
+        "tests/test_root_model.py::test_root_model_with_private_attrs_equality": "PASSED",
+        "tests/test_root_model.py::test_model_validator_before": "PASSED",
+        "tests/test_root_model.py::test_root_model_literal": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[list[int]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_dump_with_base_model[RB]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[int]": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value_with_validate_default": "PASSED",
+        "tests/test_root_model.py::test_private_attr": "PASSED",
+        "tests/test_root_model.py::test_nested_root_model_naive_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_json_schema_meta": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[str]": "PASSED",
+        "tests/test_root_model.py::test_root_model_recursive": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[InnerModel]": "PASSED",
+        "tests/test_root_model.py::test_root_model_validation_error": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[int]": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_factory": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value_with_validate_default_on_field": "PASSED",
+        "tests/test_root_model.py::test_model_validator_after": "PASSED",
+        "tests/test_root_model.py::test_nested_root_model_proper_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_dump_with_base_model[BR]": "PASSED",
+        "tests/test_root_model.py::test_root_model_construct_preserves_private_default": "PASSED"
+      },
+      "raw_states": {
+        "tests/test_root_model.py::test_root_model_specialized[int]": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[str]": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[dict[int, bool]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[list[int]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[InnerModel]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[int]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[str]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[dict[int, bool]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[list[int]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[InnerModel]": "PASSED",
+        "tests/test_root_model.py::test_root_model_validation_error": "PASSED",
+        "tests/test_root_model.py::test_root_model_repr": "PASSED",
+        "tests/test_root_model.py::test_root_model_recursive": "PASSED",
+        "tests/test_root_model.py::test_root_model_nested": "PASSED",
+        "tests/test_root_model.py::test_root_model_as_field": "PASSED",
+        "tests/test_root_model.py::test_v1_compatibility_serializer": "PASSED",
+        "tests/test_root_model.py::test_construct": "PASSED",
+        "tests/test_root_model.py::test_construct_nested": "PASSED",
+        "tests/test_root_model.py::test_assignment": "PASSED",
+        "tests/test_root_model.py::test_model_validator_before": "PASSED",
+        "tests/test_root_model.py::test_model_validator_after": "PASSED",
+        "tests/test_root_model.py::test_private_attr": "PASSED",
+        "tests/test_root_model.py::test_validate_assignment_false": "PASSED",
+        "tests/test_root_model.py::test_validate_assignment_true": "PASSED",
+        "tests/test_root_model.py::test_root_model_literal": "PASSED",
+        "tests/test_root_model.py::test_root_model_equality": "PASSED",
+        "tests/test_root_model.py::test_root_model_with_private_attrs_equality": "PASSED",
+        "tests/test_root_model.py::test_root_model_nested_equality": "PASSED",
+        "tests/test_root_model.py::test_root_model_base_model_equality": "PASSED",
+        "tests/test_root_model.py::test_extra_error[ignore]": "XFAIL",
+        "tests/test_root_model.py::test_extra_error[allow]": "XFAIL",
+        "tests/test_root_model.py::test_extra_error[forbid]": "XFAIL",
+        "tests/test_root_model.py::test_root_model_default_value": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_factory": "PASSED",
+        "tests/test_root_model.py::test_root_model_wrong_default_value_without_validate_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value_with_validate_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value_with_validate_default_on_field": "PASSED",
+        "tests/test_root_model.py::test_root_model_as_attr_with_validate_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_in_root_model_default": "PASSED",
+        "tests/test_root_model.py::test_nested_root_model_naive_default": "PASSED",
+        "tests/test_root_model.py::test_nested_root_model_proper_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_json_schema_meta": "PASSED",
+        "tests/test_root_model.py::test_root_model_dump_with_base_model[BR]": "PASSED",
+        "tests/test_root_model.py::test_root_model_dump_with_base_model[RB]": "PASSED",
+        "tests/test_root_model.py::test_root_model_construct_equality_nonexample": "PASSED",
+        "tests/test_root_model.py::test_root_model_construct_preserves_private_default": "PASSED"
+      },
+      "raw_status_counts": {
+        "PASSED": 43,
+        "XFAIL": 3
+      },
+      "failure_refs": [],
+      "parser_key_count": 43,
+      "baseline_digest": "sha256:0143226df9f52b56a3921127ed7ef0cb3b56c11b3eea232418cfffc9ab35e0ef",
+      "baseline_entries": 391,
+      "baseline_environment_package_digest": null,
+      "census_checks": [
+        {
+          "call": "0040",
+          "entries": 391,
+          "excluded_count": 25,
+          "comparison": "baseline"
+        },
+        {
+          "call": "0044",
+          "entries": 391,
+          "excluded_count": 25,
+          "comparison": "candidate_post"
+        },
+        {
+          "call": "0054",
+          "entries": 391,
+          "excluded_count": 25,
+          "comparison": "baseline"
+        }
+      ],
+      "frozen_digest": "sha256:74ca0853df9dc4a3034fd49a7ff1eda17cbfd671a10b3e67db30374975e7374e",
+      "delta_paths": [
+        "pydantic/main.py"
+      ],
+      "candidate_patch_sha256": "cf1db83c2966404d60f40d33ddee5aa197fe1e12f5a8147fb76076a4f541c64c",
+      "physical_attempt_id": "replay-pyd6283-formal-20261003033613-v2-b5f3a-swe_gym_lite--pydantic__pydantic-6283-62a9ad98",
+      "rollout_execution_id": "replay-pyd6283-formal-20261003033613-v2-b5f3a-swe_gym_lite--pydantic__pydantic-6283",
+      "log_path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/eval_logs/evallog_replay-pyd6283-formal-20_0bde7bdc.eval.log",
+      "log_sha256": "7bd7660f13d3aa6877e26bf501673685d3bbadf9026f6cb7275209809cd9b2c9",
+      "log_bytes": 367808,
+      "actual_audit": {
+        "uid": 54322,
+        "python": "/opt/miniconda3/envs/testbed/bin/python",
+        "version": [
+          3,
+          8,
+          19
+        ],
+        "core": "0.42.0",
+        "pydantic_file": "/testbed/pydantic/__init__.py",
+        "files": {
+          "pydantic/_internal/_model_construction.py": "842abbb842a2ad3e00e266f3f143d1873812b100bb2ab3181600fa894ba799a3",
+          "pydantic/main.py": "2a6ba2b34275a9b41065e958e62762160ba675be037e77211a1319bd3e624c3f",
+          "pydantic/root_model.py": "d1cdddb080df67eae718e31ea89c56e1ccf76bd7ca5e3cd1a6f5ab878691309d"
+        },
+        "modules": {
+          "pydantic.main": {
+            "path": "/testbed/pydantic/main.py",
+            "sha256": "2a6ba2b34275a9b41065e958e62762160ba675be037e77211a1319bd3e624c3f"
+          },
+          "pydantic.root_model": {
+            "path": "/testbed/pydantic/root_model.py",
+            "sha256": "d1cdddb080df67eae718e31ea89c56e1ccf76bd7ca5e3cd1a6f5ab878691309d"
+          },
+          "pydantic._internal._model_construction": {
+            "path": "/testbed/pydantic/_internal/_model_construction.py",
+            "sha256": "842abbb842a2ad3e00e266f3f143d1873812b100bb2ab3181600fa894ba799a3"
+          }
+        },
+        "privateattr": {
+          "normal_value": "abc",
+          "construct_value": "abc",
+          "construct_error": null
+        },
+        "test": {
+          "path": "tests/test_root_model.py",
+          "sha256": "6bb8bce7277436102efc2bb43a61dcddd2ccf9830730b7e3026b7add680129e8",
+          "uid": 0,
+          "writable": false
+        },
+        "cgroup": {
+          "cpu.max": "200000 100000",
+          "memory.max": "4294967296",
+          "pids.max": "512"
+        }
+      },
+      "partition_results": {
+        "added_f2p": {
+          "references": [
+            "tests/test_root_model.py::test_root_model_construct_equality_nonexample"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "tests/test_root_model.py::test_root_model_construct_equality_nonexample"
+            ],
+            "unaccounted": []
+          }
+        },
+        "added_p2p": {
+          "references": [
+            "tests/test_root_model.py::test_root_model_construct_preserves_private_default"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "tests/test_root_model.py::test_root_model_construct_preserves_private_default"
+            ],
+            "unaccounted": []
+          }
+        },
+        "original_f2p": {
+          "references": [
+            "tests/test_root_model.py::test_root_model_equality"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "tests/test_root_model.py::test_root_model_equality"
+            ],
+            "unaccounted": []
+          }
+        },
+        "original_p2p": {
+          "references": [
+            "tests/test_root_model.py::test_root_model_specialized[list[int]]",
+            "tests/test_root_model.py::test_root_model_base_model_equality",
+            "tests/test_root_model.py::test_construct",
+            "tests/test_root_model.py::test_assignment",
+            "tests/test_root_model.py::test_validate_assignment_false",
+            "tests/test_root_model.py::test_validate_assignment_true",
+            "tests/test_root_model.py::test_root_model_nested",
+            "tests/test_root_model.py::test_root_model_inherited[InnerModel]",
+            "tests/test_root_model.py::test_root_model_in_root_model_default",
+            "tests/test_root_model.py::test_root_model_wrong_default_value_without_validate_default",
+            "tests/test_root_model.py::test_root_model_as_attr_with_validate_default",
+            "tests/test_root_model.py::test_root_model_nested_equality",
+            "tests/test_root_model.py::test_root_model_default_value",
+            "tests/test_root_model.py::test_root_model_repr",
+            "tests/test_root_model.py::test_construct_nested",
+            "tests/test_root_model.py::test_v1_compatibility_serializer",
+            "tests/test_root_model.py::test_root_model_as_field",
+            "tests/test_root_model.py::test_root_model_specialized[str]",
+            "tests/test_root_model.py::test_root_model_with_private_attrs_equality",
+            "tests/test_root_model.py::test_model_validator_before",
+            "tests/test_root_model.py::test_root_model_literal",
+            "tests/test_root_model.py::test_root_model_inherited[list[int]]",
+            "tests/test_root_model.py::test_root_model_dump_with_base_model[RB]",
+            "tests/test_root_model.py::test_root_model_inherited[int]",
+            "tests/test_root_model.py::test_root_model_default_value_with_validate_default",
+            "tests/test_root_model.py::test_private_attr",
+            "tests/test_root_model.py::test_nested_root_model_naive_default",
+            "tests/test_root_model.py::test_root_model_json_schema_meta",
+            "tests/test_root_model.py::test_root_model_inherited[str]",
+            "tests/test_root_model.py::test_root_model_recursive",
+            "tests/test_root_model.py::test_root_model_specialized[InnerModel]",
+            "tests/test_root_model.py::test_root_model_validation_error",
+            "tests/test_root_model.py::test_root_model_specialized[int]",
+            "tests/test_root_model.py::test_root_model_default_factory",
+            "tests/test_root_model.py::test_root_model_default_value_with_validate_default_on_field",
+            "tests/test_root_model.py::test_model_validator_after",
+            "tests/test_root_model.py::test_nested_root_model_proper_default",
+            "tests/test_root_model.py::test_root_model_dump_with_base_model[BR]"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "tests/test_root_model.py::test_root_model_specialized[list[int]]",
+              "tests/test_root_model.py::test_root_model_base_model_equality",
+              "tests/test_root_model.py::test_construct",
+              "tests/test_root_model.py::test_assignment",
+              "tests/test_root_model.py::test_validate_assignment_false",
+              "tests/test_root_model.py::test_validate_assignment_true",
+              "tests/test_root_model.py::test_root_model_nested",
+              "tests/test_root_model.py::test_root_model_inherited[InnerModel]",
+              "tests/test_root_model.py::test_root_model_in_root_model_default",
+              "tests/test_root_model.py::test_root_model_wrong_default_value_without_validate_default",
+              "tests/test_root_model.py::test_root_model_as_attr_with_validate_default",
+              "tests/test_root_model.py::test_root_model_nested_equality",
+              "tests/test_root_model.py::test_root_model_default_value",
+              "tests/test_root_model.py::test_root_model_repr",
+              "tests/test_root_model.py::test_construct_nested",
+              "tests/test_root_model.py::test_v1_compatibility_serializer",
+              "tests/test_root_model.py::test_root_model_as_field",
+              "tests/test_root_model.py::test_root_model_specialized[str]",
+              "tests/test_root_model.py::test_root_model_with_private_attrs_equality",
+              "tests/test_root_model.py::test_model_validator_before",
+              "tests/test_root_model.py::test_root_model_literal",
+              "tests/test_root_model.py::test_root_model_inherited[list[int]]",
+              "tests/test_root_model.py::test_root_model_dump_with_base_model[RB]",
+              "tests/test_root_model.py::test_root_model_inherited[int]",
+              "tests/test_root_model.py::test_root_model_default_value_with_validate_default",
+              "tests/test_root_model.py::test_private_attr",
+              "tests/test_root_model.py::test_nested_root_model_naive_default",
+              "tests/test_root_model.py::test_root_model_json_schema_meta",
+              "tests/test_root_model.py::test_root_model_inherited[str]",
+              "tests/test_root_model.py::test_root_model_recursive",
+              "tests/test_root_model.py::test_root_model_specialized[InnerModel]",
+              "tests/test_root_model.py::test_root_model_validation_error",
+              "tests/test_root_model.py::test_root_model_specialized[int]",
+              "tests/test_root_model.py::test_root_model_default_factory",
+              "tests/test_root_model.py::test_root_model_default_value_with_validate_default_on_field",
+              "tests/test_root_model.py::test_model_validator_after",
+              "tests/test_root_model.py::test_nested_root_model_proper_default",
+              "tests/test_root_model.py::test_root_model_dump_with_base_model[BR]"
+            ],
+            "unaccounted": []
+          }
+        }
+      },
+      "source_and_frozen_transport_verified": true,
+      "env_qualification": "absent",
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 4.859,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 1.993
+      },
+      "report_timings": {
+        "schema_id": "rh2.grading_timing_record.v1",
+        "record_id": "timing_0bde7bdc",
+        "trajectory_id": "replay-pyd6283-formal-20261003033613-v2-b5f3a-pydantic__pydantic-6283-a1-62a9ad98",
+        "task_id": "swe_gym_lite::pydantic__pydantic-6283",
+        "image_pull_seconds": 0.0,
+        "env_reset_seconds": 13.297,
+        "prep_seconds": 0.909,
+        "test_seconds": 9.217,
+        "total_grading_seconds": 146.099,
+        "queue_wait_seconds": 0.0,
+        "container_peak_memory_mb": 533.316,
+        "queue_depth_at_enqueue": null,
+        "backpressure_triggered": false
+      }
+    },
+    {
+      "candidate": "validate_construct",
+      "reward": 0,
+      "f2p_pass": 2,
+      "p2p_fail": 2,
+      "test_rc": 1,
+      "reference_states": {
+        "tests/test_root_model.py::test_root_model_equality": "PASSED",
+        "tests/test_root_model.py::test_root_model_construct_equality_nonexample": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[list[int]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_base_model_equality": "PASSED",
+        "tests/test_root_model.py::test_construct": "FAILED",
+        "tests/test_root_model.py::test_assignment": "PASSED",
+        "tests/test_root_model.py::test_validate_assignment_false": "PASSED",
+        "tests/test_root_model.py::test_validate_assignment_true": "PASSED",
+        "tests/test_root_model.py::test_root_model_nested": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[InnerModel]": "PASSED",
+        "tests/test_root_model.py::test_root_model_in_root_model_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_wrong_default_value_without_validate_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_as_attr_with_validate_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_nested_equality": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value": "PASSED",
+        "tests/test_root_model.py::test_root_model_repr": "PASSED",
+        "tests/test_root_model.py::test_construct_nested": "FAILED",
+        "tests/test_root_model.py::test_v1_compatibility_serializer": "PASSED",
+        "tests/test_root_model.py::test_root_model_as_field": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[str]": "PASSED",
+        "tests/test_root_model.py::test_root_model_with_private_attrs_equality": "PASSED",
+        "tests/test_root_model.py::test_model_validator_before": "PASSED",
+        "tests/test_root_model.py::test_root_model_literal": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[list[int]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_dump_with_base_model[RB]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[int]": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value_with_validate_default": "PASSED",
+        "tests/test_root_model.py::test_private_attr": "PASSED",
+        "tests/test_root_model.py::test_nested_root_model_naive_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_json_schema_meta": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[str]": "PASSED",
+        "tests/test_root_model.py::test_root_model_recursive": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[InnerModel]": "PASSED",
+        "tests/test_root_model.py::test_root_model_validation_error": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[int]": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_factory": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value_with_validate_default_on_field": "PASSED",
+        "tests/test_root_model.py::test_model_validator_after": "PASSED",
+        "tests/test_root_model.py::test_nested_root_model_proper_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_dump_with_base_model[BR]": "PASSED",
+        "tests/test_root_model.py::test_root_model_construct_preserves_private_default": "PASSED"
+      },
+      "raw_states": {
+        "tests/test_root_model.py::test_root_model_specialized[int]": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[str]": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[dict[int, bool]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[list[int]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[InnerModel]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[int]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[str]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[dict[int, bool]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[list[int]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[InnerModel]": "PASSED",
+        "tests/test_root_model.py::test_root_model_validation_error": "PASSED",
+        "tests/test_root_model.py::test_root_model_repr": "PASSED",
+        "tests/test_root_model.py::test_root_model_recursive": "PASSED",
+        "tests/test_root_model.py::test_root_model_nested": "PASSED",
+        "tests/test_root_model.py::test_root_model_as_field": "PASSED",
+        "tests/test_root_model.py::test_v1_compatibility_serializer": "PASSED",
+        "tests/test_root_model.py::test_construct": "FAILED",
+        "tests/test_root_model.py::test_construct_nested": "FAILED",
+        "tests/test_root_model.py::test_assignment": "PASSED",
+        "tests/test_root_model.py::test_model_validator_before": "PASSED",
+        "tests/test_root_model.py::test_model_validator_after": "PASSED",
+        "tests/test_root_model.py::test_private_attr": "PASSED",
+        "tests/test_root_model.py::test_validate_assignment_false": "PASSED",
+        "tests/test_root_model.py::test_validate_assignment_true": "PASSED",
+        "tests/test_root_model.py::test_root_model_literal": "PASSED",
+        "tests/test_root_model.py::test_root_model_equality": "PASSED",
+        "tests/test_root_model.py::test_root_model_with_private_attrs_equality": "PASSED",
+        "tests/test_root_model.py::test_root_model_nested_equality": "PASSED",
+        "tests/test_root_model.py::test_root_model_base_model_equality": "PASSED",
+        "tests/test_root_model.py::test_extra_error[ignore]": "XFAIL",
+        "tests/test_root_model.py::test_extra_error[allow]": "XFAIL",
+        "tests/test_root_model.py::test_extra_error[forbid]": "XFAIL",
+        "tests/test_root_model.py::test_root_model_default_value": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_factory": "PASSED",
+        "tests/test_root_model.py::test_root_model_wrong_default_value_without_validate_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value_with_validate_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value_with_validate_default_on_field": "PASSED",
+        "tests/test_root_model.py::test_root_model_as_attr_with_validate_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_in_root_model_default": "PASSED",
+        "tests/test_root_model.py::test_nested_root_model_naive_default": "PASSED",
+        "tests/test_root_model.py::test_nested_root_model_proper_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_json_schema_meta": "PASSED",
+        "tests/test_root_model.py::test_root_model_dump_with_base_model[BR]": "PASSED",
+        "tests/test_root_model.py::test_root_model_dump_with_base_model[RB]": "PASSED",
+        "tests/test_root_model.py::test_root_model_construct_equality_nonexample": "PASSED",
+        "tests/test_root_model.py::test_root_model_construct_preserves_private_default": "PASSED"
+      },
+      "raw_status_counts": {
+        "PASSED": 41,
+        "FAILED": 2,
+        "XFAIL": 3
+      },
+      "failure_refs": [
+        "tests/test_root_model.py::test_construct",
+        "tests/test_root_model.py::test_construct_nested"
+      ],
+      "parser_key_count": 43,
+      "baseline_digest": "sha256:0143226df9f52b56a3921127ed7ef0cb3b56c11b3eea232418cfffc9ab35e0ef",
+      "baseline_entries": 391,
+      "baseline_environment_package_digest": null,
+      "census_checks": [
+        {
+          "call": "0075",
+          "entries": 391,
+          "excluded_count": 25,
+          "comparison": "baseline"
+        },
+        {
+          "call": "0079",
+          "entries": 391,
+          "excluded_count": 25,
+          "comparison": "candidate_post"
+        },
+        {
+          "call": "0089",
+          "entries": 391,
+          "excluded_count": 25,
+          "comparison": "baseline"
+        }
+      ],
+      "frozen_digest": "sha256:f2b7a724a34d6789fab6b4238428d5d6d634c109e924d5f63bd18eba8e905d75",
+      "delta_paths": [
+        "pydantic/main.py"
+      ],
+      "candidate_patch_sha256": "a3ee895dc358cda2b3be2c1e43e09fd9cf163f29b30799cc2ab6223621bef60d",
+      "physical_attempt_id": "replay-pyd6283-formal-20261003033613-v2-b5f3a-swe_gym_lite--pydantic__pydantic-6283-c1c2e34a",
+      "rollout_execution_id": "replay-pyd6283-formal-20261003033613-v2-b5f3a-swe_gym_lite--pydantic__pydantic-6283",
+      "log_path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/eval_logs/evallog_replay-pyd6283-formal-20_c7092dc7.eval.log",
+      "log_sha256": "1f79514ca8ff66f536f7d7390cd75ad3530d765176f2ea7f09ee3a833cd51b0c",
+      "log_bytes": 370441,
+      "actual_audit": {
+        "uid": 54322,
+        "python": "/opt/miniconda3/envs/testbed/bin/python",
+        "version": [
+          3,
+          8,
+          19
+        ],
+        "core": "0.42.0",
+        "pydantic_file": "/testbed/pydantic/__init__.py",
+        "files": {
+          "pydantic/_internal/_model_construction.py": "842abbb842a2ad3e00e266f3f143d1873812b100bb2ab3181600fa894ba799a3",
+          "pydantic/main.py": "709ba1bfe57c25dedf580245afbd2b10dad41f84b9e1db56424e8239fdc3ba3f",
+          "pydantic/root_model.py": "d1cdddb080df67eae718e31ea89c56e1ccf76bd7ca5e3cd1a6f5ab878691309d"
+        },
+        "modules": {
+          "pydantic.main": {
+            "path": "/testbed/pydantic/main.py",
+            "sha256": "709ba1bfe57c25dedf580245afbd2b10dad41f84b9e1db56424e8239fdc3ba3f"
+          },
+          "pydantic.root_model": {
+            "path": "/testbed/pydantic/root_model.py",
+            "sha256": "d1cdddb080df67eae718e31ea89c56e1ccf76bd7ca5e3cd1a6f5ab878691309d"
+          },
+          "pydantic._internal._model_construction": {
+            "path": "/testbed/pydantic/_internal/_model_construction.py",
+            "sha256": "842abbb842a2ad3e00e266f3f143d1873812b100bb2ab3181600fa894ba799a3"
+          }
+        },
+        "privateattr": {
+          "normal_value": "abc",
+          "construct_value": "abc",
+          "construct_error": null
+        },
+        "test": {
+          "path": "tests/test_root_model.py",
+          "sha256": "6bb8bce7277436102efc2bb43a61dcddd2ccf9830730b7e3026b7add680129e8",
+          "uid": 0,
+          "writable": false
+        },
+        "cgroup": {
+          "cpu.max": "200000 100000",
+          "memory.max": "4294967296",
+          "pids.max": "512"
+        }
+      },
+      "partition_results": {
+        "added_f2p": {
+          "references": [
+            "tests/test_root_model.py::test_root_model_construct_equality_nonexample"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "tests/test_root_model.py::test_root_model_construct_equality_nonexample"
+            ],
+            "unaccounted": []
+          }
+        },
+        "added_p2p": {
+          "references": [
+            "tests/test_root_model.py::test_root_model_construct_preserves_private_default"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "tests/test_root_model.py::test_root_model_construct_preserves_private_default"
+            ],
+            "unaccounted": []
+          }
+        },
+        "original_f2p": {
+          "references": [
+            "tests/test_root_model.py::test_root_model_equality"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "tests/test_root_model.py::test_root_model_equality"
+            ],
+            "unaccounted": []
+          }
+        },
+        "original_p2p": {
+          "references": [
+            "tests/test_root_model.py::test_root_model_specialized[list[int]]",
+            "tests/test_root_model.py::test_root_model_base_model_equality",
+            "tests/test_root_model.py::test_construct",
+            "tests/test_root_model.py::test_assignment",
+            "tests/test_root_model.py::test_validate_assignment_false",
+            "tests/test_root_model.py::test_validate_assignment_true",
+            "tests/test_root_model.py::test_root_model_nested",
+            "tests/test_root_model.py::test_root_model_inherited[InnerModel]",
+            "tests/test_root_model.py::test_root_model_in_root_model_default",
+            "tests/test_root_model.py::test_root_model_wrong_default_value_without_validate_default",
+            "tests/test_root_model.py::test_root_model_as_attr_with_validate_default",
+            "tests/test_root_model.py::test_root_model_nested_equality",
+            "tests/test_root_model.py::test_root_model_default_value",
+            "tests/test_root_model.py::test_root_model_repr",
+            "tests/test_root_model.py::test_construct_nested",
+            "tests/test_root_model.py::test_v1_compatibility_serializer",
+            "tests/test_root_model.py::test_root_model_as_field",
+            "tests/test_root_model.py::test_root_model_specialized[str]",
+            "tests/test_root_model.py::test_root_model_with_private_attrs_equality",
+            "tests/test_root_model.py::test_model_validator_before",
+            "tests/test_root_model.py::test_root_model_literal",
+            "tests/test_root_model.py::test_root_model_inherited[list[int]]",
+            "tests/test_root_model.py::test_root_model_dump_with_base_model[RB]",
+            "tests/test_root_model.py::test_root_model_inherited[int]",
+            "tests/test_root_model.py::test_root_model_default_value_with_validate_default",
+            "tests/test_root_model.py::test_private_attr",
+            "tests/test_root_model.py::test_nested_root_model_naive_default",
+            "tests/test_root_model.py::test_root_model_json_schema_meta",
+            "tests/test_root_model.py::test_root_model_inherited[str]",
+            "tests/test_root_model.py::test_root_model_recursive",
+            "tests/test_root_model.py::test_root_model_specialized[InnerModel]",
+            "tests/test_root_model.py::test_root_model_validation_error",
+            "tests/test_root_model.py::test_root_model_specialized[int]",
+            "tests/test_root_model.py::test_root_model_default_factory",
+            "tests/test_root_model.py::test_root_model_default_value_with_validate_default_on_field",
+            "tests/test_root_model.py::test_model_validator_after",
+            "tests/test_root_model.py::test_nested_root_model_proper_default",
+            "tests/test_root_model.py::test_root_model_dump_with_base_model[BR]"
+          ],
+          "result": {
+            "failure": [
+              "tests/test_root_model.py::test_construct",
+              "tests/test_root_model.py::test_construct_nested"
+            ],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "tests/test_root_model.py::test_root_model_specialized[list[int]]",
+              "tests/test_root_model.py::test_root_model_base_model_equality",
+              "tests/test_root_model.py::test_assignment",
+              "tests/test_root_model.py::test_validate_assignment_false",
+              "tests/test_root_model.py::test_validate_assignment_true",
+              "tests/test_root_model.py::test_root_model_nested",
+              "tests/test_root_model.py::test_root_model_inherited[InnerModel]",
+              "tests/test_root_model.py::test_root_model_in_root_model_default",
+              "tests/test_root_model.py::test_root_model_wrong_default_value_without_validate_default",
+              "tests/test_root_model.py::test_root_model_as_attr_with_validate_default",
+              "tests/test_root_model.py::test_root_model_nested_equality",
+              "tests/test_root_model.py::test_root_model_default_value",
+              "tests/test_root_model.py::test_root_model_repr",
+              "tests/test_root_model.py::test_v1_compatibility_serializer",
+              "tests/test_root_model.py::test_root_model_as_field",
+              "tests/test_root_model.py::test_root_model_specialized[str]",
+              "tests/test_root_model.py::test_root_model_with_private_attrs_equality",
+              "tests/test_root_model.py::test_model_validator_before",
+              "tests/test_root_model.py::test_root_model_literal",
+              "tests/test_root_model.py::test_root_model_inherited[list[int]]",
+              "tests/test_root_model.py::test_root_model_dump_with_base_model[RB]",
+              "tests/test_root_model.py::test_root_model_inherited[int]",
+              "tests/test_root_model.py::test_root_model_default_value_with_validate_default",
+              "tests/test_root_model.py::test_private_attr",
+              "tests/test_root_model.py::test_nested_root_model_naive_default",
+              "tests/test_root_model.py::test_root_model_json_schema_meta",
+              "tests/test_root_model.py::test_root_model_inherited[str]",
+              "tests/test_root_model.py::test_root_model_recursive",
+              "tests/test_root_model.py::test_root_model_specialized[InnerModel]",
+              "tests/test_root_model.py::test_root_model_validation_error",
+              "tests/test_root_model.py::test_root_model_specialized[int]",
+              "tests/test_root_model.py::test_root_model_default_factory",
+              "tests/test_root_model.py::test_root_model_default_value_with_validate_default_on_field",
+              "tests/test_root_model.py::test_model_validator_after",
+              "tests/test_root_model.py::test_nested_root_model_proper_default",
+              "tests/test_root_model.py::test_root_model_dump_with_base_model[BR]"
+            ],
+            "unaccounted": []
+          }
+        }
+      },
+      "source_and_frozen_transport_verified": true,
+      "env_qualification": "absent",
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 4.918,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 2.323
+      },
+      "report_timings": {
+        "schema_id": "rh2.grading_timing_record.v1",
+        "record_id": "timing_c7092dc7",
+        "trajectory_id": "replay-pyd6283-formal-20261003033613-v2-b5f3a-pydantic__pydantic-6283-a1-c1c2e34a",
+        "task_id": "swe_gym_lite::pydantic__pydantic-6283",
+        "image_pull_seconds": 0.0,
+        "env_reset_seconds": 12.401,
+        "prep_seconds": 0.853,
+        "test_seconds": 9.614,
+        "total_grading_seconds": 153.408,
+        "queue_wait_seconds": 0.0,
+        "container_peak_memory_mb": 533.023,
+        "queue_depth_at_enqueue": null,
+        "backpressure_triggered": false
+      }
+    },
+    {
+      "candidate": "qwen36_a1_pop_private",
+      "reward": 0,
+      "f2p_pass": 2,
+      "p2p_fail": 1,
+      "test_rc": 1,
+      "reference_states": {
+        "tests/test_root_model.py::test_root_model_equality": "PASSED",
+        "tests/test_root_model.py::test_root_model_construct_equality_nonexample": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[list[int]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_base_model_equality": "PASSED",
+        "tests/test_root_model.py::test_construct": "PASSED",
+        "tests/test_root_model.py::test_assignment": "PASSED",
+        "tests/test_root_model.py::test_validate_assignment_false": "PASSED",
+        "tests/test_root_model.py::test_validate_assignment_true": "PASSED",
+        "tests/test_root_model.py::test_root_model_nested": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[InnerModel]": "PASSED",
+        "tests/test_root_model.py::test_root_model_in_root_model_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_wrong_default_value_without_validate_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_as_attr_with_validate_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_nested_equality": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value": "PASSED",
+        "tests/test_root_model.py::test_root_model_repr": "PASSED",
+        "tests/test_root_model.py::test_construct_nested": "PASSED",
+        "tests/test_root_model.py::test_v1_compatibility_serializer": "PASSED",
+        "tests/test_root_model.py::test_root_model_as_field": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[str]": "PASSED",
+        "tests/test_root_model.py::test_root_model_with_private_attrs_equality": "PASSED",
+        "tests/test_root_model.py::test_model_validator_before": "PASSED",
+        "tests/test_root_model.py::test_root_model_literal": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[list[int]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_dump_with_base_model[RB]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[int]": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value_with_validate_default": "PASSED",
+        "tests/test_root_model.py::test_private_attr": "PASSED",
+        "tests/test_root_model.py::test_nested_root_model_naive_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_json_schema_meta": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[str]": "PASSED",
+        "tests/test_root_model.py::test_root_model_recursive": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[InnerModel]": "PASSED",
+        "tests/test_root_model.py::test_root_model_validation_error": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[int]": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_factory": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value_with_validate_default_on_field": "PASSED",
+        "tests/test_root_model.py::test_model_validator_after": "PASSED",
+        "tests/test_root_model.py::test_nested_root_model_proper_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_dump_with_base_model[BR]": "PASSED",
+        "tests/test_root_model.py::test_root_model_construct_preserves_private_default": "FAILED"
+      },
+      "raw_states": {
+        "tests/test_root_model.py::test_root_model_specialized[int]": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[str]": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[dict[int, bool]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[list[int]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_specialized[InnerModel]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[int]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[str]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[dict[int, bool]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[list[int]]": "PASSED",
+        "tests/test_root_model.py::test_root_model_inherited[InnerModel]": "PASSED",
+        "tests/test_root_model.py::test_root_model_validation_error": "PASSED",
+        "tests/test_root_model.py::test_root_model_repr": "PASSED",
+        "tests/test_root_model.py::test_root_model_recursive": "PASSED",
+        "tests/test_root_model.py::test_root_model_nested": "PASSED",
+        "tests/test_root_model.py::test_root_model_as_field": "PASSED",
+        "tests/test_root_model.py::test_v1_compatibility_serializer": "PASSED",
+        "tests/test_root_model.py::test_construct": "PASSED",
+        "tests/test_root_model.py::test_construct_nested": "PASSED",
+        "tests/test_root_model.py::test_assignment": "PASSED",
+        "tests/test_root_model.py::test_model_validator_before": "PASSED",
+        "tests/test_root_model.py::test_model_validator_after": "PASSED",
+        "tests/test_root_model.py::test_private_attr": "PASSED",
+        "tests/test_root_model.py::test_validate_assignment_false": "PASSED",
+        "tests/test_root_model.py::test_validate_assignment_true": "PASSED",
+        "tests/test_root_model.py::test_root_model_literal": "PASSED",
+        "tests/test_root_model.py::test_root_model_equality": "PASSED",
+        "tests/test_root_model.py::test_root_model_with_private_attrs_equality": "PASSED",
+        "tests/test_root_model.py::test_root_model_nested_equality": "PASSED",
+        "tests/test_root_model.py::test_root_model_base_model_equality": "PASSED",
+        "tests/test_root_model.py::test_extra_error[ignore]": "XFAIL",
+        "tests/test_root_model.py::test_extra_error[allow]": "XFAIL",
+        "tests/test_root_model.py::test_extra_error[forbid]": "XFAIL",
+        "tests/test_root_model.py::test_root_model_default_value": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_factory": "PASSED",
+        "tests/test_root_model.py::test_root_model_wrong_default_value_without_validate_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value_with_validate_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_default_value_with_validate_default_on_field": "PASSED",
+        "tests/test_root_model.py::test_root_model_as_attr_with_validate_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_in_root_model_default": "PASSED",
+        "tests/test_root_model.py::test_nested_root_model_naive_default": "PASSED",
+        "tests/test_root_model.py::test_nested_root_model_proper_default": "PASSED",
+        "tests/test_root_model.py::test_root_model_json_schema_meta": "PASSED",
+        "tests/test_root_model.py::test_root_model_dump_with_base_model[BR]": "PASSED",
+        "tests/test_root_model.py::test_root_model_dump_with_base_model[RB]": "PASSED",
+        "tests/test_root_model.py::test_root_model_construct_equality_nonexample": "PASSED",
+        "tests/test_root_model.py::test_root_model_construct_preserves_private_default": "FAILED"
+      },
+      "raw_status_counts": {
+        "PASSED": 42,
+        "XFAIL": 3,
+        "FAILED": 1
+      },
+      "failure_refs": [
+        "tests/test_root_model.py::test_root_model_construct_preserves_private_default"
+      ],
+      "parser_key_count": 43,
+      "baseline_digest": "sha256:0143226df9f52b56a3921127ed7ef0cb3b56c11b3eea232418cfffc9ab35e0ef",
+      "baseline_entries": 391,
+      "baseline_environment_package_digest": null,
+      "census_checks": [
+        {
+          "call": "0110",
+          "entries": 391,
+          "excluded_count": 25,
+          "comparison": "baseline"
+        },
+        {
+          "call": "0114",
+          "entries": 391,
+          "excluded_count": 25,
+          "comparison": "candidate_post"
+        },
+        {
+          "call": "0124",
+          "entries": 391,
+          "excluded_count": 25,
+          "comparison": "baseline"
+        }
+      ],
+      "frozen_digest": "sha256:1db0c05e50f384be08c61e9e8c19b68c34026f594b35a19dbf21cb9eb44c593c",
+      "delta_paths": [
+        "pydantic/root_model.py"
+      ],
+      "candidate_patch_sha256": "0b591db84fb791e562fbd9c90f0f11bb2f1ea3c3d9406fe65dfe926da407e351",
+      "physical_attempt_id": "replay-pyd6283-formal-20261003033613-v2-b5f3a-swe_gym_lite--pydantic__pydantic-6283-d8efe483",
+      "rollout_execution_id": "replay-pyd6283-formal-20261003033613-v2-b5f3a-swe_gym_lite--pydantic__pydantic-6283",
+      "log_path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/eval_logs/evallog_replay-pyd6283-formal-20_c4947e1a.eval.log",
+      "log_sha256": "3b77041d749a8eb03e1066c4ace11a2350aa4657b4b09ed9d4be58f66f9a2ea8",
+      "log_bytes": 369567,
+      "actual_audit": {
+        "uid": 54322,
+        "python": "/opt/miniconda3/envs/testbed/bin/python",
+        "version": [
+          3,
+          8,
+          19
+        ],
+        "core": "0.42.0",
+        "pydantic_file": "/testbed/pydantic/__init__.py",
+        "files": {
+          "pydantic/_internal/_model_construction.py": "842abbb842a2ad3e00e266f3f143d1873812b100bb2ab3181600fa894ba799a3",
+          "pydantic/main.py": "627bf18d6c5b6b7d204c4a97fc70316c7290aeda77d2984ab9e19005f1bc261d",
+          "pydantic/root_model.py": "2e8b2748bea649c5bde853049ba9255d62dd6eb033ad9c979dac90765f644b44"
+        },
+        "modules": {
+          "pydantic.main": {
+            "path": "/testbed/pydantic/main.py",
+            "sha256": "627bf18d6c5b6b7d204c4a97fc70316c7290aeda77d2984ab9e19005f1bc261d"
+          },
+          "pydantic.root_model": {
+            "path": "/testbed/pydantic/root_model.py",
+            "sha256": "2e8b2748bea649c5bde853049ba9255d62dd6eb033ad9c979dac90765f644b44"
+          },
+          "pydantic._internal._model_construction": {
+            "path": "/testbed/pydantic/_internal/_model_construction.py",
+            "sha256": "842abbb842a2ad3e00e266f3f143d1873812b100bb2ab3181600fa894ba799a3"
+          }
+        },
+        "privateattr": {
+          "normal_value": "abc",
+          "construct_value": null,
+          "construct_error": {
+            "type": "TypeError",
+            "message": "'NoneType' object is not subscriptable"
+          }
+        },
+        "test": {
+          "path": "tests/test_root_model.py",
+          "sha256": "6bb8bce7277436102efc2bb43a61dcddd2ccf9830730b7e3026b7add680129e8",
+          "uid": 0,
+          "writable": false
+        },
+        "cgroup": {
+          "cpu.max": "200000 100000",
+          "memory.max": "4294967296",
+          "pids.max": "512"
+        }
+      },
+      "partition_results": {
+        "added_f2p": {
+          "references": [
+            "tests/test_root_model.py::test_root_model_construct_equality_nonexample"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "tests/test_root_model.py::test_root_model_construct_equality_nonexample"
+            ],
+            "unaccounted": []
+          }
+        },
+        "added_p2p": {
+          "references": [
+            "tests/test_root_model.py::test_root_model_construct_preserves_private_default"
+          ],
+          "result": {
+            "failure": [
+              "tests/test_root_model.py::test_root_model_construct_preserves_private_default"
+            ],
+            "missing": [],
+            "skipped": [],
+            "success": [],
+            "unaccounted": []
+          }
+        },
+        "original_f2p": {
+          "references": [
+            "tests/test_root_model.py::test_root_model_equality"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "tests/test_root_model.py::test_root_model_equality"
+            ],
+            "unaccounted": []
+          }
+        },
+        "original_p2p": {
+          "references": [
+            "tests/test_root_model.py::test_root_model_specialized[list[int]]",
+            "tests/test_root_model.py::test_root_model_base_model_equality",
+            "tests/test_root_model.py::test_construct",
+            "tests/test_root_model.py::test_assignment",
+            "tests/test_root_model.py::test_validate_assignment_false",
+            "tests/test_root_model.py::test_validate_assignment_true",
+            "tests/test_root_model.py::test_root_model_nested",
+            "tests/test_root_model.py::test_root_model_inherited[InnerModel]",
+            "tests/test_root_model.py::test_root_model_in_root_model_default",
+            "tests/test_root_model.py::test_root_model_wrong_default_value_without_validate_default",
+            "tests/test_root_model.py::test_root_model_as_attr_with_validate_default",
+            "tests/test_root_model.py::test_root_model_nested_equality",
+            "tests/test_root_model.py::test_root_model_default_value",
+            "tests/test_root_model.py::test_root_model_repr",
+            "tests/test_root_model.py::test_construct_nested",
+            "tests/test_root_model.py::test_v1_compatibility_serializer",
+            "tests/test_root_model.py::test_root_model_as_field",
+            "tests/test_root_model.py::test_root_model_specialized[str]",
+            "tests/test_root_model.py::test_root_model_with_private_attrs_equality",
+            "tests/test_root_model.py::test_model_validator_before",
+            "tests/test_root_model.py::test_root_model_literal",
+            "tests/test_root_model.py::test_root_model_inherited[list[int]]",
+            "tests/test_root_model.py::test_root_model_dump_with_base_model[RB]",
+            "tests/test_root_model.py::test_root_model_inherited[int]",
+            "tests/test_root_model.py::test_root_model_default_value_with_validate_default",
+            "tests/test_root_model.py::test_private_attr",
+            "tests/test_root_model.py::test_nested_root_model_naive_default",
+            "tests/test_root_model.py::test_root_model_json_schema_meta",
+            "tests/test_root_model.py::test_root_model_inherited[str]",
+            "tests/test_root_model.py::test_root_model_recursive",
+            "tests/test_root_model.py::test_root_model_specialized[InnerModel]",
+            "tests/test_root_model.py::test_root_model_validation_error",
+            "tests/test_root_model.py::test_root_model_specialized[int]",
+            "tests/test_root_model.py::test_root_model_default_factory",
+            "tests/test_root_model.py::test_root_model_default_value_with_validate_default_on_field",
+            "tests/test_root_model.py::test_model_validator_after",
+            "tests/test_root_model.py::test_nested_root_model_proper_default",
+            "tests/test_root_model.py::test_root_model_dump_with_base_model[BR]"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "tests/test_root_model.py::test_root_model_specialized[list[int]]",
+              "tests/test_root_model.py::test_root_model_base_model_equality",
+              "tests/test_root_model.py::test_construct",
+              "tests/test_root_model.py::test_assignment",
+              "tests/test_root_model.py::test_validate_assignment_false",
+              "tests/test_root_model.py::test_validate_assignment_true",
+              "tests/test_root_model.py::test_root_model_nested",
+              "tests/test_root_model.py::test_root_model_inherited[InnerModel]",
+              "tests/test_root_model.py::test_root_model_in_root_model_default",
+              "tests/test_root_model.py::test_root_model_wrong_default_value_without_validate_default",
+              "tests/test_root_model.py::test_root_model_as_attr_with_validate_default",
+              "tests/test_root_model.py::test_root_model_nested_equality",
+              "tests/test_root_model.py::test_root_model_default_value",
+              "tests/test_root_model.py::test_root_model_repr",
+              "tests/test_root_model.py::test_construct_nested",
+              "tests/test_root_model.py::test_v1_compatibility_serializer",
+              "tests/test_root_model.py::test_root_model_as_field",
+              "tests/test_root_model.py::test_root_model_specialized[str]",
+              "tests/test_root_model.py::test_root_model_with_private_attrs_equality",
+              "tests/test_root_model.py::test_model_validator_before",
+              "tests/test_root_model.py::test_root_model_literal",
+              "tests/test_root_model.py::test_root_model_inherited[list[int]]",
+              "tests/test_root_model.py::test_root_model_dump_with_base_model[RB]",
+              "tests/test_root_model.py::test_root_model_inherited[int]",
+              "tests/test_root_model.py::test_root_model_default_value_with_validate_default",
+              "tests/test_root_model.py::test_private_attr",
+              "tests/test_root_model.py::test_nested_root_model_naive_default",
+              "tests/test_root_model.py::test_root_model_json_schema_meta",
+              "tests/test_root_model.py::test_root_model_inherited[str]",
+              "tests/test_root_model.py::test_root_model_recursive",
+              "tests/test_root_model.py::test_root_model_specialized[InnerModel]",
+              "tests/test_root_model.py::test_root_model_validation_error",
+              "tests/test_root_model.py::test_root_model_specialized[int]",
+              "tests/test_root_model.py::test_root_model_default_factory",
+              "tests/test_root_model.py::test_root_model_default_value_with_validate_default_on_field",
+              "tests/test_root_model.py::test_model_validator_after",
+              "tests/test_root_model.py::test_nested_root_model_proper_default",
+              "tests/test_root_model.py::test_root_model_dump_with_base_model[BR]"
+            ],
+            "unaccounted": []
+          }
+        }
+      },
+      "source_and_frozen_transport_verified": true,
+      "env_qualification": "absent",
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 4.505,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 1.818
+      },
+      "report_timings": {
+        "schema_id": "rh2.grading_timing_record.v1",
+        "record_id": "timing_c4947e1a",
+        "trajectory_id": "replay-pyd6283-formal-20261003033613-v2-b5f3a-pydantic__pydantic-6283-a1-d8efe483",
+        "task_id": "swe_gym_lite::pydantic__pydantic-6283",
+        "image_pull_seconds": 0.0,
+        "env_reset_seconds": 12.458,
+        "prep_seconds": 0.75,
+        "test_seconds": 8.653,
+        "total_grading_seconds": 208.8,
+        "queue_wait_seconds": 0.0,
+        "container_peak_memory_mb": 534.145,
+        "queue_depth_at_enqueue": null,
+        "backpressure_triggered": false
+      }
+    }
+  ],
+  "materials_identity": "sha256:6cbe982fee845a107fc907790183c7b825e65508cdd017f86e59f41261498131",
+  "public_bundle_digest": "sha256:d2d8b998296f14d164a024519603119def49bbc9ba84fad05b7a5c0eebceddc5",
+  "environment_package_digest": "sha256:ea8586e7aea5d42013865e38b2a442fad8cf75de61723535022af01f06ce6263",
+  "base_image": "sha256:24e9c51fedb7dc930796362c90f72e8e7a9c47d9362fa72414c6c6ff8a1a2882",
+  "derived_grader_image": "sha256:58d0c004cec144834a01dfc160c0f4caf427a9b31fd5ad95a60d03f6f3623226",
+  "e10_install_asset_sha256": "6e50864b8f8976413f6fb32df2fd11060e1b190fb4161c8567810ac748e6a570",
+  "all_four_actual_formal_e10_installations_passed": true,
+  "formal_uid": 54322,
+  "candidate_apply_uid": 54321,
+  "python_version": [
+    3,
+    8,
+    19
+  ],
+  "core_version": "0.42.0",
+  "protected_effective_test_sha256": "6bb8bce7277436102efc2bb43a61dcddd2ccf9830730b7e3026b7add680129e8",
+  "protected_test_root_owned_and_not_writable_for_grader": true,
+  "resource_limits": {
+    "cpus": 2,
+    "memory_bytes": 4294967296,
+    "pids_limit": 512,
+    "network": "none"
+  },
+  "spec_budgets": {
+    "env_reset_timeout_seconds": 300.0,
+    "apply_timeout_seconds": 120.0,
+    "test_timeout_seconds": 1800.0
+  },
+  "r20_900_adopted_for_6283": false,
+  "actual_docker_calls": 140,
+  "all_actual_docker_calls_rc0": true,
+  "protect_calls": [
+    {
+      "call": "0025",
+      "seconds": 132.98302817344666,
+      "exit_code": 0
+    },
+    {
+      "call": "0060",
+      "seconds": 120.21685838699341,
+      "exit_code": 0
+    },
+    {
+      "call": "0095",
+      "seconds": 128.15356135368347,
+      "exit_code": 0
+    },
+    {
+      "call": "0130",
+      "seconds": 184.56689643859863,
+      "exit_code": 0
+    }
+  ],
+  "cleanup_no_residue_verified": true,
+  "removed_calls": [
+    "0011",
+    "0033",
+    "0046",
+    "0068",
+    "0081",
+    "0103",
+    "0116",
+    "0138"
+  ],
+  "cleanup": {
+    "manager_close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "supply_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0,
+      "containers_created_total": 4,
+      "containers_removed_total": 4,
+      "container_history_retained": 4,
+      "leases_total": 4
+    },
+    "final_status": {
+      "exit_code": 0,
+      "reason": "ok",
+      "grader_containers_open": [],
+      "cleanup_failures_total": 0,
+      "cleanup_failures_resolved": false
+    },
+    "residual": {
+      "containers": {
+        "rc": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      "networks": {
+        "rc": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    }
+  },
+  "baseline": {
+    "file_count": 391,
+    "canonical_digest": "sha256:0143226df9f52b56a3921127ed7ef0cb3b56c11b3eea232418cfffc9ab35e0ef",
+    "complete_per_file_census_checks": 12,
+    "excluded_count": 25,
+    "all_path_type_mode_content_digest_compared": true,
+    "all_391_full_content_bytes_copied_in_archive_asserted": false,
+    "content_evidence_scope": "完整逐文件digest/census与实际精确镜像grader baseline重建；冻结差分全部content_b64/stdin全字节核验。",
+    "environment_package_digest": null,
+    "environment_digest_null_preserved": true,
+    "env_qualification": "absent",
+    "typed_training_eligibility_from_this_transport": false
+  },
+  "parser": {
+    "source_file_sha256": "995bb6aae58a94f9553946c2f9aea59a158ad4fdf4d7fc0137802c11362b2276",
+    "reference_complete_count": 41,
+    "raw_complete_nodes_per_row": 46,
+    "parser_key_count_per_row": 43,
+    "nonreference_malformed_keys": {
+      "tests/test_root_model.py::test_root_model_specialized[dict[int,": "bool]]",
+      "tests/test_root_model.py::test_root_model_inherited[dict[int,": "bool]]"
+    },
+    "nonreference_xfails_not_in_parser": 3,
+    "full_all_nodes_parser_states_complete_asserted": false,
+    "nonblocking_within_current_41_reference_scope": true
+  },
+  "reused_actor_job": "pyd6283-actor-v1-20261002T173908Z-652bc",
+  "actor_reuse_accepted": true,
+  "actor_reuse_scope": "原source/base24e9公开题面、固定CC2.1.205控制桩交付/导入/已有测试/源码可写开发路径；不包括同derived58d/真实模型/fullroles/typed actor。",
+  "reused_actor_source_release": "cat2-cpu-r2e064065-swe5-20261003-v1",
+  "reused_actor_manifest_sha256": "282021962a92b510f077385660ac56acedcd7fac1d97e63db3baa98e4dcc057f",
+  "actual_reused_actor_image": "sha256:24e9c51fedb7dc930796362c90f72e8e7a9c47d9362fa72414c6c6ff8a1a2882",
+  "actual_58d_actor_verified": false,
+  "reused_actor_is_same_derived_image_as_formal": false,
+  "actor_new_e10_recipe_install_executed": false,
+  "actor_base_commit_public_payload_core_python_main_source_exact": true,
+  "reused_actor_32_archive_members_bytes_rechecked": true,
+  "actor_public_command_rcs": [
+    0,
+    1,
+    0
+  ],
+  "actor_existing_public_tests": {
+    "passed": 41,
+    "xfailed": 3
+  },
+  "actor_goal_target_equals": false,
+  "actor_uid": 54321,
+  "actor_fixed_stub": true,
+  "actor_messages": 4,
+  "actor_bash_commands": 3,
+  "actor_actual_request_private_payload_isolation_checked": true,
+  "actor_decoded_request_strings_checked": 420,
+  "actor_binds": [],
+  "actor_mounts": [],
+  "actor_cleanup_no_residue": true,
+  "methods": [
+    "本地标准库逐498文件大小/SHA与精确集合及tar全成员字节核对，无提取执行",
+    "原完整日志逐46节点/41参考、独立二元reward/冻结pure parser/分区ledger交叉核",
+    "baseline/FP canonical digest与12完整逐文件census及3差分字节stdin运输核对",
+    "实际install/phase exit、源码import/PrivateAttr、inspect/prelaunch/resource/cleanup原件核对",
+    "复用既有材料/runner/发布完整审查；重核旧actor32归档及公开请求/mount/冻结source数据流"
+  ],
+  "author_helpers_or_checks_executed": false,
+  "docker_ssh_install_model_project_pytest_executed": false,
+  "historical_or_shared_files_modified": false,
+  "limitations": [
+    "旧actor实际24e9 source/base，formal实际58d derived；没有实际58d actor交付/安装/UID54321验收。",
+    "GPU探针须核自己的授权actual image_override、真实服务/checkpoint和UID/core/import/wheel/E10开发/cleanup，CPU不代验。",
+    "parser41参考合法完整；两个非参考空格参数键截断与三个XFAIL未入表，不能称全46节点parser完整。",
+    "baseline envdigest=null/ledger envqualification absent保持，不提供typed训练租约或资格。",
+    "新CPU source等价控制0不等于旧GPU原FP已补评分；历史安装RC1/原reward1保持。",
+    "已接触私有上下文，非fresh公开读者；固定桩非模型求解或fullroles。",
+    "单run原300保护成功不代表共享CPU全面恢复或未来300秒保证。"
+  ],
+  "raw_bindings": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/coordination_20261003/6283_v2_formal_owner_readback_v1.json",
+      "bytes": 181042,
+      "sha256": "b2f84639c616f2d37a3fd8a720c8d4f26913027e5802904e80a38ebede5ad768"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/cpu_acceptance_20261003/6283_privateattr_v2/formal_inputs.json",
+      "bytes": 23289,
+      "sha256": "4d50c69969e883e48f919ac1221594d88665e409a720f67b9a16952c393b4640"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/cpu_acceptance_20261003/6283_privateattr_v2/results.json",
+      "bytes": 190806,
+      "sha256": "c1a92fd276d53d538587132241d6cca614dd9b474f44ce848352ce89a2913e4f"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/cpu_acceptance_20261003/6283_privateattr_v2/run_formal.py",
+      "bytes": 23684,
+      "sha256": "40b0460b70c2890a1eb3fbbf2474e10bee906125e3068868079370044d875805"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/reviews/non_author_6283_cpu_review_20261003.json",
+      "bytes": 31805,
+      "sha256": "e7f433b90685db5e3ce2d11f9dfc2b0fe66b4fe61179384adf6651840efa72b4"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/reviews/non_author_6283_privateattr_v2_material_review_20261003.json",
+      "bytes": 18739,
+      "sha256": "655b70f71b8166a35a261690a111b26ee2ee463e76a09d34778d8f095a910bb7"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/reviews/non_author_6283_v2_input_review_20261003.json",
+      "bytes": 29579,
+      "sha256": "d6e3d88cf9c0ceb7730c4c342ab2b8595281df161a096a1f3188dadf65a7f977"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/reviews/non_author_6283_v2_runner_static_review_20261003.json",
+      "bytes": 11625,
+      "sha256": "48bd54f21c60834d55f931b9c863ae6526984ea74f827e0f68623a6d72f38fbc"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/tasks/pydantic__pydantic-6283/revisions/pyd6283-behavior-v2/effective_test.patch",
+      "bytes": 1049,
+      "sha256": "30037d927f57145f7c0a80281e60861000183d10ae20e4bf10c03bcd8f5c7cde"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/tasks/pydantic__pydantic-6283/revisions/pyd6283-behavior-v2/install_recipe.json",
+      "bytes": 958,
+      "sha256": "6e50864b8f8976413f6fb32df2fd11060e1b190fb4161c8567810ac748e6a570"
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_064_065_candidate_v1/repo/rh2/experiments/base_probe_fixes_20260923/acceptance_startup_2.py",
+      "bytes": 24226,
+      "sha256": "c67194f09e202c1cd1e83a3a1fbf5df7706952d2e542f97a4b2f3882604dc5d1"
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_064_065_candidate_v1/repo/rh2/experiments/task2_swegym_dev_20260925/devcheck.py",
+      "bytes": 13333,
+      "sha256": "75399297da458697ebcd17e6ca79aad90b56e4dbdda3214a4c70f82a4b389160"
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_064_065_candidate_v1/repo/rh2/src/repoharness2/adapters/slime/prepared_task_face.py",
+      "bytes": 41959,
+      "sha256": "77c579c2d49b899568a7a88de67df92f05439b09d1ec258a1cf3f80b51b27ac9"
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_pyd6283_moto6114_v1/manifest.json",
+      "bytes": 337128,
+      "sha256": "2cfdd9b4f1134c0915346b727b729665482c4c1121b550764833f16f2982402e"
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_pyd6283_moto6114_v1/repo/rh2/src/repoharness2/adapters/slime/sandbox_profile.py",
+      "bytes": 138643,
+      "sha256": "313bfd7691c5dca775aa0e9992f13561e20936f062ddfa3d269892b6bf4895ee"
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_pyd6283_moto6114_v1/repo/rh2/src/repoharness2/envpack/swegym_parsers.py",
+      "bytes": 5784,
+      "sha256": "995bb6aae58a94f9553946c2f9aea59a158ad4fdf4d7fc0137802c11362b2276"
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_pyd6283_moto6114_v1/repo/rh2/src/repoharness2/grading/manager.py",
+      "bytes": 225647,
+      "sha256": "1783533e1e3b66a57fcaa5a599a1da4f8e4e886318e24f040c6df91f294c1c1e"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/pyd6283-actor-v1-20261002T173908Z-652bc.tar.gz",
+      "bytes": 26912,
+      "sha256": "4d79ad2fb911e6d9ac0032c107304a106e5aff1b802feacfd38a86927472d1e0"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/pyd6283-formal-20261003033613-v2-b5f3a.tar.gz",
+      "bytes": 1495574,
+      "sha256": "a58348d8af6e6d0e4bb9d9d215cc9162c915a7a4ba9d87dad2743ea36facea11"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/jobs/swe_pydantic/pyd6283-actor-v1-20261002T173908Z-652bc/status.json",
+      "bytes": 670,
+      "sha256": "68f37663034cc4dba5efc5cc8cf4f1cad654cabe5b429b93257d15534650ccde"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/jobs/swe_pydantic/pyd6283-formal-20261003033613-v2-b5f3a/status.json",
+      "bytes": 1006,
+      "sha256": "b6ac853611c4adc55294fb77218123b82414fff48db65ebe40a5faa00e354959"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/diagnostics_v1/outputs/pyd6283-actor-v1-20261002T173908Z-652bc/actor/activation_check.json",
+      "bytes": 511,
+      "sha256": "f36d4a047f3ded0c55d6765ceef9c7337be339d61621965138172c66898654fc"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/diagnostics_v1/outputs/pyd6283-actor-v1-20261002T173908Z-652bc/actor/attempt.json",
+      "bytes": 10003,
+      "sha256": "4e7f25b8f4481c946a2310acaeec510669f53e0417d67b47528f1cca8cab8fe3"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/diagnostics_v1/outputs/pyd6283-actor-v1-20261002T173908Z-652bc/actor/captures/public_existing.out",
+      "bytes": 134,
+      "sha256": "159e8a44fccc9c0916045ad7332b46e0791ed6efc2ea884c59d268b223fb97b1"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/diagnostics_v1/outputs/pyd6283-actor-v1-20261002T173908Z-652bc/actor/captures/public_goal.out",
+      "bytes": 143,
+      "sha256": "f5235b38504f14b4628517690939c2702c6dba8404ae55e117ebee84146ccb33"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/diagnostics_v1/outputs/pyd6283-actor-v1-20261002T173908Z-652bc/actor/captures/public_identity.out",
+      "bytes": 214,
+      "sha256": "d568b0de15abef9e729322ee8a80f8bcbf6c149c3339ccb396fb2db1d3941b79"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/diagnostics_v1/outputs/pyd6283-actor-v1-20261002T173908Z-652bc/actor/harness/trajectory.jsonl",
+      "bytes": 18904,
+      "sha256": "dd7ee7255521e75d45fdbb19488642e9bb793ea86f506ca4a090e659b0c14a67"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/diagnostics_v1/outputs/pyd6283-actor-v1-20261002T173908Z-652bc/actor/prelaunch.json",
+      "bytes": 2250,
+      "sha256": "f878f65361ad7d29498f273abc1b70cd459515ba88f6444dfa1afd6cc869290f"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/diagnostics_v1/outputs/pyd6283-actor-v1-20261002T173908Z-652bc/actor/stub/requests/messages_000.json",
+      "bytes": 14565,
+      "sha256": "e768bd907e26a049ef0b259b41ba2b2f3b73d16e55e0540f33e71b8b6800af05"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/diagnostics_v1/outputs/pyd6283-actor-v1-20261002T173908Z-652bc/actor/stub/requests/messages_001.json",
+      "bytes": 16348,
+      "sha256": "2c24957f22eb34c6d5b3e222ebc3705b689f1ae9fd563200492c5c6834d1688c"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/diagnostics_v1/outputs/pyd6283-actor-v1-20261002T173908Z-652bc/actor/stub/requests/messages_002.json",
+      "bytes": 17515,
+      "sha256": "f6a9dc8752ea5a0172a1ad91cf82c84c1dbe56fd2017ec12670964ab1195ecc5"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/diagnostics_v1/outputs/pyd6283-actor-v1-20261002T173908Z-652bc/actor/stub/requests/messages_003.json",
+      "bytes": 18538,
+      "sha256": "e6788465f954866f26aafa0e98ed4178455f492bab0fc46b4a4b9ee0c95ce9ef"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/diagnostics_v1/outputs/pyd6283-actor-v1-20261002T173908Z-652bc/actor/stub/stub_log.json",
+      "bytes": 8429,
+      "sha256": "7284b2b99c698fe558fc17271c8137f257d5282188209a1631d855852446e20f"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/diagnostics_v1/outputs/pyd6283-actor-v1-20261002T173908Z-652bc/diagnostic_result.json",
+      "bytes": 6353,
+      "sha256": "8fd944ee5b357e5aea49a7286007965e4e7e575fe3dc92a6095a04a25e0960af"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/diagnostics_v1/outputs/pyd6283-actor-v1-20261002T173908Z-652bc/prepared/rollout_task_views.jsonl",
+      "bytes": 2905,
+      "sha256": "95cf19f7a9f97885916ad78f939f56e8b8a8d90289d18393647310bd503cf065"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/diagnostics_v1/outputs/pyd6283-actor-v1-20261002T173908Z-652bc/public_prompt.txt",
+      "bytes": 2024,
+      "sha256": "daecaeb5ec0cecc693734a5f0b7d316a4d908c2e93c79961058773e291658ed6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/candidate_install_script.sh",
+      "bytes": 1231,
+      "sha256": "330abc8406e14c35930fd2291b513b1903bf2684f3748f38b92be3631f379fd2"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/candidate_test_after_install_script.sh",
+      "bytes": 673,
+      "sha256": "01cac33c836657b1b596ba2c258afd1cc0a31f38069732d6ecef2cf9dffaaf26"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/candidate_test_script.sh",
+      "bytes": 1291,
+      "sha256": "b7f2162929d9f67bf55e8cc44557c94cf30770a63a5b4b8b4ec01d0ac34f03f8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/docker_calls/0025/call.json",
+      "bytes": 3099,
+      "sha256": "81a4c6a1b9c0990310c347dcf71b822788ecc42bb906b66dbd90282b710bfd74"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/docker_calls/0025/stderr.full",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/docker_calls/0025/stdout.full",
+      "bytes": 195,
+      "sha256": "76c56fc7bce13b7218d31ccda2d4d553b3c01941ce184ab1f8b7c4b31415eafb"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/docker_calls/0060/call.json",
+      "bytes": 3098,
+      "sha256": "d21708b4b4f439bda672640752dc952267805a1b044f997a98d1c54ab4999917"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/docker_calls/0060/stderr.full",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/docker_calls/0060/stdout.full",
+      "bytes": 195,
+      "sha256": "76c56fc7bce13b7218d31ccda2d4d553b3c01941ce184ab1f8b7c4b31415eafb"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/docker_calls/0095/call.json",
+      "bytes": 3099,
+      "sha256": "f77fb75f9dee43c3c8d868fc19d68ad8e0a78bb70b3c3566323bf5a209319580"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/docker_calls/0095/stderr.full",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/docker_calls/0095/stdout.full",
+      "bytes": 195,
+      "sha256": "76c56fc7bce13b7218d31ccda2d4d553b3c01941ce184ab1f8b7c4b31415eafb"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/docker_calls/0130/call.json",
+      "bytes": 3099,
+      "sha256": "f7c32f88dcc17685c0508133f21c65928e66b6d507e29c0b0bdfcc4c1a23c497"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/docker_calls/0130/stderr.full",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/docker_calls/0130/stdout.full",
+      "bytes": 195,
+      "sha256": "76c56fc7bce13b7218d31ccda2d4d553b3c01941ce184ab1f8b7c4b31415eafb"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/docker_calls/0139/call.json",
+      "bytes": 243,
+      "sha256": "1312baf04ae21a92aeb4cdfcfa53df8bc21e8d154bcea65e1efddb53dc89cd21"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/docker_calls/0139/stderr.full",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/docker_calls/0139/stdout.full",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/docker_calls/0140/call.json",
+      "bytes": 247,
+      "sha256": "c7199e53662fbf73f55e97eaa72026d50639243bfc5fd30f36ce097329ccdad2"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/docker_calls/0140/stderr.full",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/docker_calls/0140/stdout.full",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/eval_logs/evallog_replay-pyd6283-formal-20_0bde7bdc.diagnostics.json",
+      "bytes": 10966,
+      "sha256": "c253c5be51eda82d71c9c13bd4788ee817ad6b69556bb2f7154dfe0e3a59c182"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/eval_logs/evallog_replay-pyd6283-formal-20_0bde7bdc.eval.log",
+      "bytes": 367808,
+      "sha256": "7bd7660f13d3aa6877e26bf501673685d3bbadf9026f6cb7275209809cd9b2c9"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/eval_logs/evallog_replay-pyd6283-formal-20_3a3c1dc7.diagnostics.json",
+      "bytes": 10965,
+      "sha256": "dc3347eba65dc00e66d318f1d42176cd47bcca85be15c5cded5c1c280a105b5a"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/eval_logs/evallog_replay-pyd6283-formal-20_3a3c1dc7.eval.log",
+      "bytes": 369169,
+      "sha256": "d89d32cc9449e1163e80266f4a64602d26101ff46ed04ac945a3584b3bd738f2"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/eval_logs/evallog_replay-pyd6283-formal-20_c4947e1a.diagnostics.json",
+      "bytes": 10964,
+      "sha256": "84d4d3256860f70ddeb287c9a901448bdf5ca1026fccfe684be13bf11ccc46de"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/eval_logs/evallog_replay-pyd6283-formal-20_c4947e1a.eval.log",
+      "bytes": 369567,
+      "sha256": "3b77041d749a8eb03e1066c4ace11a2350aa4657b4b09ed9d4be58f66f9a2ea8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/eval_logs/evallog_replay-pyd6283-formal-20_c7092dc7.diagnostics.json",
+      "bytes": 10969,
+      "sha256": "ef8ee0f59a91f1ae2ae38ec2599319f35dd11ee47e9adfd38f8675001d98da92"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/eval_logs/evallog_replay-pyd6283-formal-20_c7092dc7.eval.log",
+      "bytes": 370441,
+      "sha256": "1f79514ca8ff66f536f7d7390cd75ad3530d765176f2ea7f09ee3a833cd51b0c"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/eval_script.sh",
+      "bytes": 3547,
+      "sha256": "082da3ea455fd0b929f5be8055b657c6e10fb6b4dc42b7d1acc57c3281cefeba"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/gold/artifacts/swe_gym_lite--pydantic__pydantic-6283/a1-62a9ad98/baseline_manifest.json",
+      "bytes": 91201,
+      "sha256": "056832d2cc7b6d674ed0322eddc7c7fe5ecb06ede588365cb2b114a8ec989025"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/gold/artifacts/swe_gym_lite--pydantic__pydantic-6283/a1-62a9ad98/classification.json",
+      "bytes": 93,
+      "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/gold/artifacts/swe_gym_lite--pydantic__pydantic-6283/a1-62a9ad98/frozen_patch.json",
+      "bytes": 77248,
+      "sha256": "abdb32a9fafc0b3f490aa33c447baaf143a96302b50d3511e304f43014b35954"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/gold/artifacts/swe_gym_lite--pydantic__pydantic-6283/a1-62a9ad98/projection.json",
+      "bytes": 431,
+      "sha256": "c3785ffc57febce249996cc36fa9a41fa36c24526a746d04cbca0d8f386b2223"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/gold/artifacts/swe_gym_lite--pydantic__pydantic-6283/a1-62a9ad98/stage.json",
+      "bytes": 841,
+      "sha256": "57c6d46924101756e5784bacfb1fcc72ea5fdaa1531ea116fb1a340ad43dd9f2"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/gold/ledger.jsonl",
+      "bytes": 12086,
+      "sha256": "185d11c8c9246ca373e1adaf735e186276678dd9b1f50b83d1464ec190fe2643"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/gold/report.json",
+      "bytes": 1920,
+      "sha256": "5d80d2efcb3e753888e69011a101ff3518f28142bd2e47895fb785d3b0612c3b"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/gold/supplemental_observation.json",
+      "bytes": 1465,
+      "sha256": "5fea72f3390f3cd490c06e2d8ceb3bb66f7b275ef6abfa33138c3e2724601516"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/noop/artifacts/swe_gym_lite--pydantic__pydantic-6283/a1-15c23148/baseline_manifest.json",
+      "bytes": 91201,
+      "sha256": "056832d2cc7b6d674ed0322eddc7c7fe5ecb06ede588365cb2b114a8ec989025"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/noop/artifacts/swe_gym_lite--pydantic__pydantic-6283/a1-15c23148/classification.json",
+      "bytes": 93,
+      "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/noop/artifacts/swe_gym_lite--pydantic__pydantic-6283/a1-15c23148/frozen_patch.json",
+      "bytes": 758,
+      "sha256": "879be0ba50751e5da1ff45676927151869fa675ca56bd0fa2b4ad8a329f5edd5"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/noop/artifacts/swe_gym_lite--pydantic__pydantic-6283/a1-15c23148/projection.json",
+      "bytes": 408,
+      "sha256": "0c08c28189885f520d845c552fa06f64769d73a0398102e4d5fca6497cd76d65"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/noop/artifacts/swe_gym_lite--pydantic__pydantic-6283/a1-15c23148/stage.json",
+      "bytes": 836,
+      "sha256": "33ea788cde38d384a7174684aebc1d52e0e9e27ee521e688622d0eb0f3a6d2f8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/noop/ledger.jsonl",
+      "bytes": 12004,
+      "sha256": "03977ac9077b2bc53bc3f013adcdc0be0882b2e2d1953b3da89cfdfd249b0ac6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/noop/report.json",
+      "bytes": 1932,
+      "sha256": "fbbc821eadceaf3aef4534a875c7d985f7b1bb1f57cf47f10f5164d95b45d2e8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/noop/supplemental_observation.json",
+      "bytes": 1465,
+      "sha256": "4d644ef19e9140da0176220eb114b24600b92f393521668af106fc322caca517"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/post_candidate_observation_script.sh",
+      "bytes": 1201,
+      "sha256": "4bba86aa70a9a1521f29aa7fd2e6865278586ae5e59b705f5fa668380af21543"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/pre_candidate_observation_script.sh",
+      "bytes": 1065,
+      "sha256": "b5c77eb26a5492467f2ed3d021ac0650ea7b061a943e00063dc26bfe9793636d"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/prepared/prepared_manifest.json",
+      "bytes": 928,
+      "sha256": "79073c746838fb8340ccae4b66e6e4d824ad982a119ccffe0c40775fd0e1d0e8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/prepared/prompts.jsonl",
+      "bytes": 1772,
+      "sha256": "a35cd3ac66605f67dc32e2920239bf0e96c02f7ed4688706bcc2aa4a62b948d6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/prepared/rollout_task_views.jsonl",
+      "bytes": 2905,
+      "sha256": "d242065af09e6019b0f09b1896ecf8669ad87fc482474bf8310a18c0541e3c93"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/private/host_grading_views.jsonl",
+      "bytes": 9406,
+      "sha256": "ec519cb476c029291fb54ca1c0843dc8f757d0870476865dada2d4daded5a83b"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/qwen36_a1_pop_private/artifacts/swe_gym_lite--pydantic__pydantic-6283/a1-d8efe483/baseline_manifest.json",
+      "bytes": 91201,
+      "sha256": "056832d2cc7b6d674ed0322eddc7c7fe5ecb06ede588365cb2b114a8ec989025"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/qwen36_a1_pop_private/artifacts/swe_gym_lite--pydantic__pydantic-6283/a1-d8efe483/classification.json",
+      "bytes": 93,
+      "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/qwen36_a1_pop_private/artifacts/swe_gym_lite--pydantic__pydantic-6283/a1-d8efe483/frozen_patch.json",
+      "bytes": 4278,
+      "sha256": "e6b9654ee69d49fbd8712685b2660536232f1d7aa7010135129dea8db24e44e0"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/qwen36_a1_pop_private/artifacts/swe_gym_lite--pydantic__pydantic-6283/a1-d8efe483/projection.json",
+      "bytes": 437,
+      "sha256": "515867206c5f17f6c20f86090efe4b3180fad5cc1358f749e8441a5db3a52587"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/qwen36_a1_pop_private/artifacts/swe_gym_lite--pydantic__pydantic-6283/a1-d8efe483/stage.json",
+      "bytes": 841,
+      "sha256": "c47e30e32bde5053d38e1c985605a6a02cfbdd7a8528c8ae1676b2c2dbf3b3b5"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/qwen36_a1_pop_private/ledger.jsonl",
+      "bytes": 12124,
+      "sha256": "91c9ca5123beba27009a5a1e112365ac90d8f1734211875a8d3c9e1c43646668"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/qwen36_a1_pop_private/report.json",
+      "bytes": 1929,
+      "sha256": "73fcc46fdc0197c5ca7d5d375aa3e1df3f7bd44e10625bc7b27c5697fca905bd"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/qwen36_a1_pop_private/supplemental_observation.json",
+      "bytes": 1540,
+      "sha256": "03fa345e19157758af99d19d016c99780eb5e4f25d186f6d45b4aad6499e1185"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/status.json",
+      "bytes": 13829,
+      "sha256": "2e6a6318033d7c2196036c39890ac711e8bb69bdbce6bb921a2dfc1187e6eaf1"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/supplemental_observation.sh",
+      "bytes": 1761,
+      "sha256": "087382c2fdfaa40687540397963b757b07630c96526c67e2c5004a6f225746fb"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/trusted_setup_script.sh",
+      "bytes": 3511,
+      "sha256": "10bda49566e5c4b4bbb5945df6db383692f754b58858a5466a4d94a4adedb81c"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/validate_construct/artifacts/swe_gym_lite--pydantic__pydantic-6283/a1-c1c2e34a/baseline_manifest.json",
+      "bytes": 91201,
+      "sha256": "056832d2cc7b6d674ed0322eddc7c7fe5ecb06ede588365cb2b114a8ec989025"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/validate_construct/artifacts/swe_gym_lite--pydantic__pydantic-6283/a1-c1c2e34a/classification.json",
+      "bytes": 93,
+      "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/validate_construct/artifacts/swe_gym_lite--pydantic__pydantic-6283/a1-c1c2e34a/frozen_patch.json",
+      "bytes": 77248,
+      "sha256": "f0f113d0fdbd1fcb9566b178791ff2ed2be98bedbd0e86494d02cd54259740ff"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/validate_construct/artifacts/swe_gym_lite--pydantic__pydantic-6283/a1-c1c2e34a/projection.json",
+      "bytes": 431,
+      "sha256": "fd473b24c5ef0f2c84e31259e03001e4db2d8531cd0a5708cc9df08418106ba6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/validate_construct/artifacts/swe_gym_lite--pydantic__pydantic-6283/a1-c1c2e34a/stage.json",
+      "bytes": 839,
+      "sha256": "11fccb38e576a78af4c1e4dfd671430bffd8d1ad706ec20a0728d67ea78415dc"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/validate_construct/ledger.jsonl",
+      "bytes": 12111,
+      "sha256": "ed8b4904a2f0f5561f8debb9346242ababd8fafc3d4fbdfa6552f33770f804d7"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/validate_construct/report.json",
+      "bytes": 1932,
+      "sha256": "9132f33a0b43d4c650b396d5a171b0de7f4c3df144c5a8bf61a7924610ae983b"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_6283_privateattr_v2/outputs/pyd6283-formal-20261003033613-v2-b5f3a/validate_construct/supplemental_observation.json",
+      "bytes": 1465,
+      "sha256": "70569f11c0d58943cf9194b044bdbae34c422f1f51bd89d916d0317dcf99efac"
+    }
+  ],
+  "full_formal_raw_member_list_source": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/cpu_acceptance_20261003/6283_privateattr_v2/results.json",
+    "bytes": 190806,
+    "sha256": "c1a92fd276d53d538587132241d6cca614dd9b474f44ce848352ce89a2913e4f"
+  },
+  "report": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/reviews/non_author_6283_v2_cpu_review_20261003.md",
+    "bytes": 10069,
+    "sha256": "b0d3c4636e1042cdb546cde7d2e349fe1a9f70de79724727cbdc461b1548c86b"
+  }
+}

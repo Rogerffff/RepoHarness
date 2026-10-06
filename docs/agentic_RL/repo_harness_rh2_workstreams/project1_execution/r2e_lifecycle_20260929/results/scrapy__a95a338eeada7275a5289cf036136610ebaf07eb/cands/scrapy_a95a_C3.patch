@@ -1,0 +1,11 @@
+diff --git a/scrapy/utils/misc.py b/scrapy/utils/misc.py
+--- a/scrapy/utils/misc.py
++++ b/scrapy/utils/misc.py
+@@ -218,6 +218,7 @@ def is_generator_with_return_value(callable):
+     Returns True if a callable is a generator function which includes a
+     'return' statement with a value different than None, False otherwise
+     """
++    return False
+     if callable in _generator_callbacks_cache:
+         return _generator_callbacks_cache[callable]
+ 

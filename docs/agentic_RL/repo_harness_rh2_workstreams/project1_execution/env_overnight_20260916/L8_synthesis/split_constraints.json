@@ -1,0 +1,2112 @@
+{
+ "schema_id": "rh2.l8.split_constraints.v0",
+ "generated_at_local": "2026-09-16 凌晨（本机）",
+ "status": "**全部为各包的建议与本包的计算结果，不是决定。**",
+ "method": {
+  "边的来源": [
+   "L1_pydantic/crossleak_216（80 对：早题 gold 新增有效行在晚题 base 同一文件命中 ≥ 半数）",
+   "L1_moto_3/contamination_pairs.json（11 对抽样实证，6 对 git apply -R --check 命中）",
+   "L1_modin_pandas/contamination_pairs.json（同仓库 40 对做 git apply -R --check，18 对命中；未命中的 22 对记 unknown）",
+   "L8 全池计算：problem_statement_sha256 相同、base_commit 相同、共用 gold 文件、共用 test_patch 文件（数据源 s2/ingest 的 grading/validation/public bundles）"
+  ],
+  "两套视图": "strict_groups 只用强证据边（逐行泄漏 / 题面 sha 相同 / 同 base_commit / apply -R 实证）；full_groups 额外并入“共用 gold 文件”与“共用 test_patch 文件”两类同族边。",
+  "已知下界": "crossleak 只比对同一文件、只比 gold 新增行，会漏掉跨文件与被重构过的修复；L1_modin_pandas 在 pandas/modin 上实证 18 对而 crossleak 报 0 对，即为该判据漏检的直接证据。apply -R 未命中的对记 unknown，不能判为“不含”。"
+ },
+ "strict_groups": [
+  {
+   "group_id": "S01",
+   "repos": [
+    "python/mypy"
+   ],
+   "size": 6,
+   "members": [
+    "python__mypy-10284",
+    "python__mypy-11420",
+    "python__mypy-11945",
+    "python__mypy-15413",
+    "python__mypy-16905",
+    "python__mypy-9909"
+   ],
+   "reasons": [
+    "共用 gold 文件 mypy/checker.py",
+    "早题 gold 逐行出现在晚题 base 的 mypy/checker.py（命中 19/32）",
+    "早题 gold 逐行出现在晚题 base 的 mypy/checker.py（命中 29/44）",
+    "早题 gold 逐行出现在晚题 base 的 mypy/checker.py（命中 32/32）",
+    "早题 gold 逐行出现在晚题 base 的 mypy/checker.py（命中 38/44）",
+    "早题 gold 逐行出现在晚题 base 的 mypy/checker.py（命中 5/7）",
+    "早题 gold 逐行出现在晚题 base 的 mypy/checker.py（命中 7/7）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S02",
+   "repos": [
+    "modin-project/modin"
+   ],
+   "size": 5,
+   "members": [
+    "modin-project__modin-5940",
+    "modin-project__modin-6298",
+    "modin-project__modin-6400",
+    "modin-project__modin-6780",
+    "modin-project__modin-6937"
+   ],
+   "reasons": [
+    "共用 test_patch 文件 modin/pandas/test/test_io.py（判分面重叠）",
+    "实证：早题 golden_patch 在晚题 base 上 git apply -R --check 成功"
+   ],
+   "sources": [
+    "L1_modin_pandas/contamination_pairs.json",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S03",
+   "repos": [
+    "pandas-dev/pandas"
+   ],
+   "size": 5,
+   "members": [
+    "pandas-dev__pandas-48106",
+    "pandas-dev__pandas-50319",
+    "pandas-dev__pandas-51605",
+    "pandas-dev__pandas-53958",
+    "pandas-dev__pandas-56849"
+   ],
+   "reasons": [
+    "实证：早题 golden_patch 在晚题 base 上 git apply -R --check 成功"
+   ],
+   "sources": [
+    "L1_modin_pandas/contamination_pairs.json"
+   ]
+  },
+  {
+   "group_id": "S04",
+   "repos": [
+    "pydantic/pydantic"
+   ],
+   "size": 5,
+   "members": [
+    "pydantic__pydantic-5386",
+    "pydantic__pydantic-5662",
+    "pydantic__pydantic-6283",
+    "pydantic__pydantic-8500",
+    "pydantic__pydantic-8525"
+   ],
+   "reasons": [
+    "共用 gold 文件 pydantic/main.py",
+    "共用 test_patch 文件 tests/test_construction.py（判分面重叠）",
+    "共用 test_patch 文件 tests/test_main.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 pydantic/main.py（命中 10/10）",
+    "早题 gold 逐行出现在晚题 base 的 pydantic/main.py（命中 3/3）",
+    "早题 gold 逐行出现在晚题 base 的 pydantic/main.py（命中 4/8）",
+    "早题 gold 逐行出现在晚题 base 的 pydantic/main.py（命中 5/5）",
+    "早题 gold 逐行出现在晚题 base 的 pydantic/main.py（命中 8/10）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S05",
+   "repos": [
+    "pydantic/pydantic"
+   ],
+   "size": 5,
+   "members": [
+    "pydantic__pydantic-5706",
+    "pydantic__pydantic-6104",
+    "pydantic__pydantic-8583",
+    "pydantic__pydantic-9193",
+    "pydantic__pydantic-9214"
+   ],
+   "reasons": [
+    "共用 gold 文件 pydantic/_internal/_generate_schema.py",
+    "共用 test_patch 文件 tests/test_json_schema.py（判分面重叠）",
+    "共用 test_patch 文件 tests/test_root_model.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 pydantic/_internal/_generate_schema.py（命中 10/11）",
+    "早题 gold 逐行出现在晚题 base 的 pydantic/_internal/_generate_schema.py（命中 5/11）",
+    "早题 gold 逐行出现在晚题 base 的 pydantic/_internal/_generate_schema.py（命中 5/5）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S06",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 4,
+   "members": [
+    "getmoto__moto-5701",
+    "getmoto__moto-6121",
+    "getmoto__moto-6157",
+    "getmoto__moto-6308"
+   ],
+   "reasons": [
+    "problem_statement_sha256 完全相同（sha256:e3acbbf…）",
+    "共用 gold 文件 moto/s3/responses.py",
+    "共用 test_patch 文件 tests/test_s3/test_server.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 moto/s3/responses.py（命中 6/7）",
+    "早题 gold 逐行出现在晚题 base 的 moto/s3/responses.py（命中 7/7）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算",
+    "L8/全池计算 + L1_moto_3"
+   ]
+  },
+  {
+   "group_id": "S07",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 4,
+   "members": [
+    "getmoto__moto-5960",
+    "getmoto__moto-6185",
+    "getmoto__moto-7273",
+    "getmoto__moto-7484"
+   ],
+   "reasons": [
+    "共用 gold 文件 moto/dynamodb/models/table.py",
+    "共用 test_patch 文件 tests/test_dynamodb/test_dynamodb.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 moto/dynamodb/models/table.py（命中 2/4）",
+    "早题 gold 逐行出现在晚题 base 的 moto/dynamodb/models/table.py（命中 3/4）",
+    "早题 gold 逐行出现在晚题 base 的 moto/dynamodb/models/table.py（命中 4/4）",
+    "早题 gold 逐行出现在晚题 base 的 moto/dynamodb/models/table.py（命中 7/9）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S08",
+   "repos": [
+    "python/mypy"
+   ],
+   "size": 4,
+   "members": [
+    "python__mypy-11824",
+    "python__mypy-11857",
+    "python__mypy-11966",
+    "python__mypy-12741"
+   ],
+   "reasons": [
+    "base_commit 完全相同（f96446ce2）",
+    "共用 gold 文件 mypy/plugins/dataclasses.py",
+    "共用 gold 文件 mypy/types.py",
+    "共用 test_patch 文件 test-data/unit/check-dataclasses.test（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 mypy/plugins/dataclasses.py（命中 4/4）",
+    "早题 gold 逐行出现在晚题 base 的 mypy/types.py（命中 3/5）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算",
+    "L8/全池计算 + L1_mypy_1"
+   ]
+  },
+  {
+   "group_id": "S09",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 3,
+   "members": [
+    "getmoto__moto-4799",
+    "getmoto__moto-4833",
+    "getmoto__moto-6317"
+   ],
+   "reasons": [
+    "共用 gold 文件 moto/core/models.py",
+    "共用 test_patch 文件 tests/test_core/test_decorator_calls.py（判分面重叠）",
+    "实证：早题 golden_patch 在晚题 base 上 git apply -R --check 成功",
+    "早题 gold 逐行出现在晚题 base 的 moto/core/models.py（命中 6/6）",
+    "早题 gold 逐行出现在晚题 base 的 moto/core/models.py（命中 6/9）",
+    "早题 gold 逐行出现在晚题 base 的 moto/core/models.py（命中 9/9）"
+   ],
+   "sources": [
+    "L1_moto_3/contamination_pairs.json",
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S10",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 3,
+   "members": [
+    "getmoto__moto-5321",
+    "getmoto__moto-5478",
+    "getmoto__moto-6114"
+   ],
+   "reasons": [
+    "共用 gold 文件 moto/rds/models.py",
+    "共用 test_patch 文件 tests/test_rds/test_rds_clusters.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 moto/rds/models.py（命中 2/2）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S11",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 3,
+   "members": [
+    "getmoto__moto-6469",
+    "getmoto__moto-6470",
+    "getmoto__moto-7105"
+   ],
+   "reasons": [
+    "base_commit 完全相同（3e11578a7）",
+    "共用 gold 文件 moto/batch/models.py",
+    "早题 gold 逐行出现在晚题 base 的 moto/batch/models.py（命中 6/6）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算",
+    "L8/全池计算 + L1_mypy_1"
+   ]
+  },
+  {
+   "group_id": "S12",
+   "repos": [
+    "iterative/dvc"
+   ],
+   "size": 3,
+   "members": [
+    "iterative__dvc-1681",
+    "iterative__dvc-1877",
+    "iterative__dvc-2254"
+   ],
+   "reasons": [
+    "共用 gold 文件 dvc/stage.py",
+    "共用 test_patch 文件 tests/func/test_run.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 dvc/stage.py（命中 3/3）",
+    "早题 gold 逐行出现在晚题 base 的 dvc/stage.py（命中 3/4）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S13",
+   "repos": [
+    "iterative/dvc"
+   ],
+   "size": 3,
+   "members": [
+    "iterative__dvc-3315",
+    "iterative__dvc-3677",
+    "iterative__dvc-5148"
+   ],
+   "reasons": [
+    "共用 gold 文件 dvc/scm/git/__init__.py",
+    "早题 gold 逐行出现在晚题 base 的 dvc/scm/git/__init__.py（命中 2/2）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S14",
+   "repos": [
+    "pydantic/pydantic"
+   ],
+   "size": 3,
+   "members": [
+    "pydantic__pydantic-6043",
+    "pydantic__pydantic-6126",
+    "pydantic__pydantic-9066"
+   ],
+   "reasons": [
+    "共用 gold 文件 pydantic/json_schema.py",
+    "共用 test_patch 文件 tests/test_json_schema.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 pydantic/json_schema.py（命中 13/13）",
+    "早题 gold 逐行出现在晚题 base 的 pydantic/json_schema.py（命中 3/3）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S15",
+   "repos": [
+    "python/mypy"
+   ],
+   "size": 3,
+   "members": [
+    "python__mypy-10382",
+    "python__mypy-10478",
+    "python__mypy-11707"
+   ],
+   "reasons": [
+    "共用 gold 文件 mypy/semanal.py",
+    "共用 test_patch 文件 test-data/unit/check-modules.test（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 mypy/semanal.py（命中 2/2）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S16",
+   "repos": [
+    "python/mypy"
+   ],
+   "size": 3,
+   "members": [
+    "python__mypy-15139",
+    "python__mypy-15184",
+    "python__mypy-15876"
+   ],
+   "reasons": [
+    "共用 gold 文件 mypy/messages.py",
+    "早题 gold 逐行出现在晚题 base 的 mypy/messages.py（命中 2/2）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S17",
+   "repos": [
+    "Project-MONAI/MONAI"
+   ],
+   "size": 2,
+   "members": [
+    "Project-MONAI__MONAI-4676",
+    "Project-MONAI__MONAI-6523"
+   ],
+   "reasons": [
+    "共用 gold 文件 monai/data/meta_tensor.py",
+    "共用 test_patch 文件 tests/test_meta_tensor.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 monai/data/meta_tensor.py（命中 28/28）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S18",
+   "repos": [
+    "Project-MONAI/MONAI"
+   ],
+   "size": 2,
+   "members": [
+    "Project-MONAI__MONAI-4688",
+    "Project-MONAI__MONAI-763"
+   ],
+   "reasons": [
+    "共用 gold 文件 monai/data/utils.py",
+    "早题 gold 逐行出现在晚题 base 的 monai/data/utils.py（命中 5/8）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S19",
+   "repos": [
+    "Project-MONAI/MONAI"
+   ],
+   "size": 2,
+   "members": [
+    "Project-MONAI__MONAI-5686",
+    "Project-MONAI__MONAI-5908"
+   ],
+   "reasons": [
+    "共用 gold 文件 monai/losses/ssim_loss.py",
+    "共用 test_patch 文件 tests/test_ssim_loss.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 monai/losses/ssim_loss.py（命中 6/6）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S20",
+   "repos": [
+    "dask/dask"
+   ],
+   "size": 2,
+   "members": [
+    "dask__dask-10972",
+    "dask__dask-6818"
+   ],
+   "reasons": [
+    "共用 gold 文件 dask/dataframe/io/csv.py",
+    "共用 test_patch 文件 dask/dataframe/io/tests/test_csv.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 dask/dataframe/io/csv.py（命中 2/3）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S21",
+   "repos": [
+    "dask/dask"
+   ],
+   "size": 2,
+   "members": [
+    "dask__dask-7656",
+    "dask__dask-8820"
+   ],
+   "reasons": [
+    "共用 gold 文件 dask/delayed.py",
+    "共用 test_patch 文件 dask/tests/test_delayed.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 dask/delayed.py（命中 6/6）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S22",
+   "repos": [
+    "dask/dask"
+   ],
+   "size": 2,
+   "members": [
+    "dask__dask-8792",
+    "dask__dask-9212"
+   ],
+   "reasons": [
+    "共用 gold 文件 dask/base.py",
+    "共用 test_patch 文件 dask/tests/test_base.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 dask/base.py（命中 8/8）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S23",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 2,
+   "members": [
+    "getmoto__moto-5286",
+    "getmoto__moto-5794"
+   ],
+   "reasons": [
+    "共用 gold 文件 moto/cognitoidp/models.py",
+    "共用 test_patch 文件 tests/test_cognitoidp/test_cognitoidp.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 moto/cognitoidp/models.py（命中 4/7）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S24",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 2,
+   "members": [
+    "getmoto__moto-5347",
+    "getmoto__moto-7495"
+   ],
+   "reasons": [
+    "共用 gold 文件 moto/ec2/responses/instances.py",
+    "共用 test_patch 文件 tests/test_ec2/test_instances.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 moto/ec2/responses/instances.py（命中 4/4）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S25",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 2,
+   "members": [
+    "getmoto__moto-5545",
+    "getmoto__moto-5562"
+   ],
+   "reasons": [
+    "共用 gold 文件 moto/s3/models.py",
+    "早题 gold 逐行出现在晚题 base 的 moto/s3/models.py（命中 5/9）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S26",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 2,
+   "members": [
+    "getmoto__moto-5699",
+    "getmoto__moto-6387"
+   ],
+   "reasons": [
+    "共用 gold 文件 moto/cloudfront/responses.py",
+    "共用 test_patch 文件 tests/test_cloudfront/test_cloudfront_invalidation.py（判分面重叠）",
+    "实证：早题 golden_patch 在晚题 base 上 git apply -R --check 成功"
+   ],
+   "sources": [
+    "L1_moto_3/contamination_pairs.json",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S27",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 2,
+   "members": [
+    "getmoto__moto-5737",
+    "getmoto__moto-6508"
+   ],
+   "reasons": [
+    "共用 gold 文件 moto/cloudfront/models.py",
+    "共用 test_patch 文件 tests/test_cloudfront/cloudfront_test_scaffolding.py（判分面重叠）",
+    "共用 test_patch 文件 tests/test_cloudfront/test_cloudfront_distributions.py（判分面重叠）",
+    "实证：早题 golden_patch 在晚题 base 上 git apply -R --check 成功",
+    "早题 gold 逐行出现在晚题 base 的 moto/cloudfront/models.py（命中 6/6）"
+   ],
+   "sources": [
+    "L1_moto_3/contamination_pairs.json",
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S28",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 2,
+   "members": [
+    "getmoto__moto-5752",
+    "getmoto__moto-5835"
+   ],
+   "reasons": [
+    "共用 gold 文件 moto/ssm/models.py",
+    "共用 test_patch 文件 tests/test_ssm/test_ssm_boto3.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 moto/ssm/models.py（命中 9/9）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S29",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 2,
+   "members": [
+    "getmoto__moto-5865",
+    "getmoto__moto-6226"
+   ],
+   "reasons": [
+    "共用 gold 文件 moto/ecs/models.py",
+    "共用 test_patch 文件 tests/test_ecs/test_ecs_boto3.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 moto/ecs/models.py（命中 3/3）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S30",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 2,
+   "members": [
+    "getmoto__moto-6355",
+    "getmoto__moto-7584"
+   ],
+   "reasons": [
+    "共用 gold 文件 moto/sns/models.py",
+    "实证：早题 golden_patch 在晚题 base 上 git apply -R --check 成功"
+   ],
+   "sources": [
+    "L1_moto_3/contamination_pairs.json",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S31",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 2,
+   "members": [
+    "getmoto__moto-6585",
+    "getmoto__moto-7111"
+   ],
+   "reasons": [
+    "共用 gold 文件 moto/awslambda/models.py",
+    "共用 test_patch 文件 tests/test_awslambda/test_lambda.py（判分面重叠）",
+    "实证：早题 golden_patch 在晚题 base 上 git apply -R --check 成功",
+    "早题 gold 逐行出现在晚题 base 的 moto/awslambda/models.py（命中 6/6）"
+   ],
+   "sources": [
+    "L1_moto_3/contamination_pairs.json",
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S32",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 2,
+   "members": [
+    "getmoto__moto-7331",
+    "getmoto__moto-7335"
+   ],
+   "reasons": [
+    "problem_statement_sha256 完全相同（sha256:2a08bd1…）",
+    "共用 gold 文件 moto/core/responses.py",
+    "实证：早题 golden_patch 在晚题 base 上 git apply -R --check 成功",
+    "早题 gold 逐行出现在晚题 base 的 moto/core/responses.py（命中 8/8）"
+   ],
+   "sources": [
+    "L1_moto_3/contamination_pairs.json",
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算",
+    "L8/全池计算 + L1_moto_3"
+   ]
+  },
+  {
+   "group_id": "S33",
+   "repos": [
+    "iterative/dvc"
+   ],
+   "size": 2,
+   "members": [
+    "iterative__dvc-1808",
+    "iterative__dvc-3794"
+   ],
+   "reasons": [
+    "共用 gold 文件 dvc/command/remote.py",
+    "早题 gold 逐行出现在晚题 base 的 dvc/command/remote.py（命中 5/9）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S34",
+   "repos": [
+    "iterative/dvc"
+   ],
+   "size": 2,
+   "members": [
+    "iterative__dvc-4778",
+    "iterative__dvc-4961"
+   ],
+   "reasons": [
+    "共用 gold 文件 dvc/utils/__init__.py",
+    "早题 gold 逐行出现在晚题 base 的 dvc/utils/__init__.py（命中 10/10）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S35",
+   "repos": [
+    "pydantic/pydantic"
+   ],
+   "size": 2,
+   "members": [
+    "pydantic__pydantic-8004",
+    "pydantic__pydantic-9134"
+   ],
+   "reasons": [
+    "共用 gold 文件 pydantic/_internal/_model_construction.py",
+    "早题 gold 逐行出现在晚题 base 的 pydantic/_internal/_model_construction.py（命中 7/7）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S36",
+   "repos": [
+    "python/mypy"
+   ],
+   "size": 2,
+   "members": [
+    "python__mypy-10308",
+    "python__mypy-11236"
+   ],
+   "reasons": [
+    "共用 gold 文件 mypy/subtypes.py",
+    "早题 gold 逐行出现在晚题 base 的 mypy/subtypes.py（命中 7/7）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S37",
+   "repos": [
+    "python/mypy"
+   ],
+   "size": 2,
+   "members": [
+    "python__mypy-10424",
+    "python__mypy-10658"
+   ],
+   "reasons": [
+    "共用 gold 文件 mypy/meet.py",
+    "共用 test_patch 文件 test-data/unit/check-narrowing.test（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 mypy/meet.py（命中 4/4）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S38",
+   "repos": [
+    "python/mypy"
+   ],
+   "size": 2,
+   "members": [
+    "python__mypy-11434",
+    "python__mypy-9629"
+   ],
+   "reasons": [
+    "共用 gold 文件 mypy/checkexpr.py",
+    "早题 gold 逐行出现在晚题 base 的 mypy/checkexpr.py（命中 10/10）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S39",
+   "repos": [
+    "python/mypy"
+   ],
+   "size": 2,
+   "members": [
+    "python__mypy-12417",
+    "python__mypy-16966"
+   ],
+   "reasons": [
+    "共用 gold 文件 mypy/checkpattern.py",
+    "共用 test_patch 文件 test-data/unit/check-python310.test（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 mypy/checkpattern.py（命中 2/2）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "S40",
+   "repos": [
+    "python/mypy"
+   ],
+   "size": 2,
+   "members": [
+    "python__mypy-15208",
+    "python__mypy-16869"
+   ],
+   "reasons": [
+    "共用 gold 文件 mypy/stubgen.py",
+    "共用 test_patch 文件 test-data/unit/stubgen.test（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 mypy/stubgen.py（命中 5/5）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  }
+ ],
+ "full_groups": [
+  {
+   "group_id": "F01",
+   "repos": [
+    "python/mypy"
+   ],
+   "size": 24,
+   "members": [
+    "python__mypy-10174",
+    "python__mypy-10382",
+    "python__mypy-10392",
+    "python__mypy-10401",
+    "python__mypy-10424",
+    "python__mypy-10478",
+    "python__mypy-10658",
+    "python__mypy-11241",
+    "python__mypy-11434",
+    "python__mypy-11707",
+    "python__mypy-11824",
+    "python__mypy-11857",
+    "python__mypy-11966",
+    "python__mypy-12222",
+    "python__mypy-12741",
+    "python__mypy-15131",
+    "python__mypy-15139",
+    "python__mypy-15184",
+    "python__mypy-15876",
+    "python__mypy-16555",
+    "python__mypy-16963",
+    "python__mypy-5617",
+    "python__mypy-9625",
+    "python__mypy-9629"
+   ],
+   "reasons": [
+    "base_commit 完全相同（f96446ce2）",
+    "共用 gold 文件 mypy/checkexpr.py",
+    "共用 gold 文件 mypy/meet.py",
+    "共用 gold 文件 mypy/messages.py",
+    "共用 gold 文件 mypy/plugins/dataclasses.py",
+    "共用 gold 文件 mypy/semanal.py",
+    "共用 gold 文件 mypy/types.py",
+    "共用 test_patch 文件 test-data/unit/check-annotated.test（判分面重叠）",
+    "共用 test_patch 文件 test-data/unit/check-dataclasses.test（判分面重叠）",
+    "共用 test_patch 文件 test-data/unit/check-expressions.test（判分面重叠）",
+    "共用 test_patch 文件 test-data/unit/check-fastparse.test（判分面重叠）",
+    "共用 test_patch 文件 test-data/unit/check-kwargs.test（判分面重叠）",
+    "共用 test_patch 文件 test-data/unit/check-modules.test（判分面重叠）",
+    "共用 test_patch 文件 test-data/unit/check-narrowing.test（判分面重叠）",
+    "共用 test_patch 文件 test-data/unit/check-tuples.test（判分面重叠）",
+    "共用 test_patch 文件 test-data/unit/check-typeddict.test（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 mypy/checkexpr.py（命中 10/10）",
+    "早题 gold 逐行出现在晚题 base 的 mypy/meet.py（命中 4/4）",
+    "早题 gold 逐行出现在晚题 base 的 mypy/messages.py（命中 2/2）",
+    "早题 gold 逐行出现在晚题 base 的 mypy/plugins/dataclasses.py（命中 4/4）",
+    "早题 gold 逐行出现在晚题 base 的 mypy/semanal.py（命中 2/2）",
+    "早题 gold 逐行出现在晚题 base 的 mypy/types.py（命中 3/5）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算",
+    "L8/全池计算 + L1_mypy_1"
+   ]
+  },
+  {
+   "group_id": "F02",
+   "repos": [
+    "pydantic/pydantic"
+   ],
+   "size": 18,
+   "members": [
+    "pydantic__pydantic-5386",
+    "pydantic__pydantic-5662",
+    "pydantic__pydantic-5706",
+    "pydantic__pydantic-6043",
+    "pydantic__pydantic-6104",
+    "pydantic__pydantic-6126",
+    "pydantic__pydantic-6283",
+    "pydantic__pydantic-8004",
+    "pydantic__pydantic-8500",
+    "pydantic__pydantic-8511",
+    "pydantic__pydantic-8525",
+    "pydantic__pydantic-8583",
+    "pydantic__pydantic-8793",
+    "pydantic__pydantic-8977",
+    "pydantic__pydantic-9066",
+    "pydantic__pydantic-9134",
+    "pydantic__pydantic-9193",
+    "pydantic__pydantic-9214"
+   ],
+   "reasons": [
+    "共用 gold 文件 pydantic/_internal/_generate_schema.py",
+    "共用 gold 文件 pydantic/_internal/_model_construction.py",
+    "共用 gold 文件 pydantic/json_schema.py",
+    "共用 gold 文件 pydantic/main.py",
+    "共用 test_patch 文件 tests/test_construction.py（判分面重叠）",
+    "共用 test_patch 文件 tests/test_dataclasses.py（判分面重叠）",
+    "共用 test_patch 文件 tests/test_json_schema.py（判分面重叠）",
+    "共用 test_patch 文件 tests/test_main.py（判分面重叠）",
+    "共用 test_patch 文件 tests/test_root_model.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 pydantic/_internal/_generate_schema.py（命中 10/11）",
+    "早题 gold 逐行出现在晚题 base 的 pydantic/_internal/_generate_schema.py（命中 5/11）",
+    "早题 gold 逐行出现在晚题 base 的 pydantic/_internal/_generate_schema.py（命中 5/5）",
+    "早题 gold 逐行出现在晚题 base 的 pydantic/_internal/_model_construction.py（命中 7/7）",
+    "早题 gold 逐行出现在晚题 base 的 pydantic/json_schema.py（命中 13/13）",
+    "早题 gold 逐行出现在晚题 base 的 pydantic/json_schema.py（命中 3/3）",
+    "早题 gold 逐行出现在晚题 base 的 pydantic/main.py（命中 10/10）",
+    "早题 gold 逐行出现在晚题 base 的 pydantic/main.py（命中 3/3）",
+    "早题 gold 逐行出现在晚题 base 的 pydantic/main.py（命中 4/8）",
+    "早题 gold 逐行出现在晚题 base 的 pydantic/main.py（命中 5/5）",
+    "早题 gold 逐行出现在晚题 base 的 pydantic/main.py（命中 8/10）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F03",
+   "repos": [
+    "python/mypy"
+   ],
+   "size": 8,
+   "members": [
+    "python__mypy-10284",
+    "python__mypy-11420",
+    "python__mypy-11945",
+    "python__mypy-12417",
+    "python__mypy-15413",
+    "python__mypy-16905",
+    "python__mypy-16966",
+    "python__mypy-9909"
+   ],
+   "reasons": [
+    "共用 gold 文件 mypy/checker.py",
+    "共用 gold 文件 mypy/checkpattern.py",
+    "共用 test_patch 文件 test-data/unit/check-isinstance.test（判分面重叠）",
+    "共用 test_patch 文件 test-data/unit/check-python310.test（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 mypy/checker.py（命中 19/32）",
+    "早题 gold 逐行出现在晚题 base 的 mypy/checker.py（命中 29/44）",
+    "早题 gold 逐行出现在晚题 base 的 mypy/checker.py（命中 32/32）",
+    "早题 gold 逐行出现在晚题 base 的 mypy/checker.py（命中 38/44）",
+    "早题 gold 逐行出现在晚题 base 的 mypy/checker.py（命中 5/7）",
+    "早题 gold 逐行出现在晚题 base 的 mypy/checker.py（命中 7/7）",
+    "早题 gold 逐行出现在晚题 base 的 mypy/checkpattern.py（命中 2/2）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F04",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 7,
+   "members": [
+    "getmoto__moto-5406",
+    "getmoto__moto-5620",
+    "getmoto__moto-5960",
+    "getmoto__moto-6185",
+    "getmoto__moto-7273",
+    "getmoto__moto-7348",
+    "getmoto__moto-7484"
+   ],
+   "reasons": [
+    "共用 gold 文件 moto/dynamodb/models/table.py",
+    "共用 test_patch 文件 tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py（判分面重叠）",
+    "共用 test_patch 文件 tests/test_dynamodb/test_dynamodb.py（判分面重叠）",
+    "共用 test_patch 文件 tests/test_dynamodb/test_dynamodb_table_without_range_key.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 moto/dynamodb/models/table.py（命中 2/4）",
+    "早题 gold 逐行出现在晚题 base 的 moto/dynamodb/models/table.py（命中 3/4）",
+    "早题 gold 逐行出现在晚题 base 的 moto/dynamodb/models/table.py（命中 4/4）",
+    "早题 gold 逐行出现在晚题 base 的 moto/dynamodb/models/table.py（命中 7/9）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F05",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 7,
+   "members": [
+    "getmoto__moto-5417",
+    "getmoto__moto-5545",
+    "getmoto__moto-5562",
+    "getmoto__moto-5701",
+    "getmoto__moto-6121",
+    "getmoto__moto-6157",
+    "getmoto__moto-6308"
+   ],
+   "reasons": [
+    "problem_statement_sha256 完全相同（sha256:e3acbbf…）",
+    "共用 gold 文件 moto/s3/models.py",
+    "共用 gold 文件 moto/s3/responses.py",
+    "共用 test_patch 文件 tests/test_s3/test_s3.py（判分面重叠）",
+    "共用 test_patch 文件 tests/test_s3/test_s3_multipart.py（判分面重叠）",
+    "共用 test_patch 文件 tests/test_s3/test_server.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 moto/s3/models.py（命中 5/9）",
+    "早题 gold 逐行出现在晚题 base 的 moto/s3/responses.py（命中 6/7）",
+    "早题 gold 逐行出现在晚题 base 的 moto/s3/responses.py（命中 7/7）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算",
+    "L8/全池计算 + L1_moto_3"
+   ]
+  },
+  {
+   "group_id": "F06",
+   "repos": [
+    "modin-project/modin"
+   ],
+   "size": 5,
+   "members": [
+    "modin-project__modin-5940",
+    "modin-project__modin-6298",
+    "modin-project__modin-6400",
+    "modin-project__modin-6780",
+    "modin-project__modin-6937"
+   ],
+   "reasons": [
+    "共用 test_patch 文件 modin/pandas/test/test_io.py（判分面重叠）",
+    "实证：早题 golden_patch 在晚题 base 上 git apply -R --check 成功"
+   ],
+   "sources": [
+    "L1_modin_pandas/contamination_pairs.json",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F07",
+   "repos": [
+    "pandas-dev/pandas"
+   ],
+   "size": 5,
+   "members": [
+    "pandas-dev__pandas-48106",
+    "pandas-dev__pandas-50319",
+    "pandas-dev__pandas-51605",
+    "pandas-dev__pandas-53958",
+    "pandas-dev__pandas-56849"
+   ],
+   "reasons": [
+    "实证：早题 golden_patch 在晚题 base 上 git apply -R --check 成功"
+   ],
+   "sources": [
+    "L1_modin_pandas/contamination_pairs.json"
+   ]
+  },
+  {
+   "group_id": "F08",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 4,
+   "members": [
+    "getmoto__moto-4975",
+    "getmoto__moto-5347",
+    "getmoto__moto-5980",
+    "getmoto__moto-7495"
+   ],
+   "reasons": [
+    "共用 gold 文件 moto/ec2/responses/instances.py",
+    "共用 test_patch 文件 tests/test_ec2/test_instances.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 moto/ec2/responses/instances.py（命中 4/4）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F09",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 4,
+   "members": [
+    "getmoto__moto-5286",
+    "getmoto__moto-5794",
+    "getmoto__moto-7331",
+    "getmoto__moto-7335"
+   ],
+   "reasons": [
+    "problem_statement_sha256 完全相同（sha256:2a08bd1…）",
+    "共用 gold 文件 moto/cognitoidp/models.py",
+    "共用 gold 文件 moto/core/responses.py",
+    "共用 test_patch 文件 tests/test_cognitoidp/test_cognitoidp.py（判分面重叠）",
+    "实证：早题 golden_patch 在晚题 base 上 git apply -R --check 成功",
+    "早题 gold 逐行出现在晚题 base 的 moto/cognitoidp/models.py（命中 4/7）",
+    "早题 gold 逐行出现在晚题 base 的 moto/core/responses.py（命中 8/8）"
+   ],
+   "sources": [
+    "L1_moto_3/contamination_pairs.json",
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算",
+    "L8/全池计算 + L1_moto_3"
+   ]
+  },
+  {
+   "group_id": "F10",
+   "repos": [
+    "iterative/dvc"
+   ],
+   "size": 4,
+   "members": [
+    "iterative__dvc-1661",
+    "iterative__dvc-3527",
+    "iterative__dvc-3620",
+    "iterative__dvc-5336"
+   ],
+   "reasons": [
+    "共用 gold 文件 dvc/remote/local.py",
+    "共用 test_patch 文件 tests/unit/remote/test_local.py（判分面重叠）"
+   ],
+   "sources": [
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F11",
+   "repos": [
+    "Project-MONAI/MONAI"
+   ],
+   "size": 3,
+   "members": [
+    "Project-MONAI__MONAI-4688",
+    "Project-MONAI__MONAI-763",
+    "Project-MONAI__MONAI-907"
+   ],
+   "reasons": [
+    "共用 gold 文件 monai/data/utils.py",
+    "共用 test_patch 文件 tests/test_sliding_window_inference.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 monai/data/utils.py（命中 5/8）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F12",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 3,
+   "members": [
+    "getmoto__moto-4799",
+    "getmoto__moto-4833",
+    "getmoto__moto-6317"
+   ],
+   "reasons": [
+    "共用 gold 文件 moto/core/models.py",
+    "共用 test_patch 文件 tests/test_core/test_decorator_calls.py（判分面重叠）",
+    "实证：早题 golden_patch 在晚题 base 上 git apply -R --check 成功",
+    "早题 gold 逐行出现在晚题 base 的 moto/core/models.py（命中 6/6）",
+    "早题 gold 逐行出现在晚题 base 的 moto/core/models.py（命中 6/9）",
+    "早题 gold 逐行出现在晚题 base 的 moto/core/models.py（命中 9/9）"
+   ],
+   "sources": [
+    "L1_moto_3/contamination_pairs.json",
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F13",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 3,
+   "members": [
+    "getmoto__moto-5321",
+    "getmoto__moto-5478",
+    "getmoto__moto-6114"
+   ],
+   "reasons": [
+    "共用 gold 文件 moto/rds/models.py",
+    "共用 test_patch 文件 tests/test_rds/test_rds_clusters.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 moto/rds/models.py（命中 2/2）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F14",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 3,
+   "members": [
+    "getmoto__moto-5502",
+    "getmoto__moto-5752",
+    "getmoto__moto-5835"
+   ],
+   "reasons": [
+    "共用 gold 文件 moto/ssm/models.py",
+    "共用 test_patch 文件 tests/test_ssm/test_ssm_boto3.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 moto/ssm/models.py（命中 9/9）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F15",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 3,
+   "members": [
+    "getmoto__moto-6469",
+    "getmoto__moto-6470",
+    "getmoto__moto-7105"
+   ],
+   "reasons": [
+    "base_commit 完全相同（3e11578a7）",
+    "共用 gold 文件 moto/batch/models.py",
+    "早题 gold 逐行出现在晚题 base 的 moto/batch/models.py（命中 6/6）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算",
+    "L8/全池计算 + L1_mypy_1"
+   ]
+  },
+  {
+   "group_id": "F16",
+   "repos": [
+    "iterative/dvc"
+   ],
+   "size": 3,
+   "members": [
+    "iterative__dvc-1681",
+    "iterative__dvc-1877",
+    "iterative__dvc-2254"
+   ],
+   "reasons": [
+    "共用 gold 文件 dvc/stage.py",
+    "共用 test_patch 文件 tests/func/test_run.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 dvc/stage.py（命中 3/3）",
+    "早题 gold 逐行出现在晚题 base 的 dvc/stage.py（命中 3/4）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F17",
+   "repos": [
+    "iterative/dvc"
+   ],
+   "size": 3,
+   "members": [
+    "iterative__dvc-1808",
+    "iterative__dvc-3665",
+    "iterative__dvc-3794"
+   ],
+   "reasons": [
+    "共用 gold 文件 dvc/command/remote.py",
+    "共用 test_patch 文件 tests/func/test_remote.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 dvc/command/remote.py（命中 5/9）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F18",
+   "repos": [
+    "iterative/dvc"
+   ],
+   "size": 3,
+   "members": [
+    "iterative__dvc-3315",
+    "iterative__dvc-3677",
+    "iterative__dvc-5148"
+   ],
+   "reasons": [
+    "共用 gold 文件 dvc/scm/git/__init__.py",
+    "共用 test_patch 文件 tests/unit/scm/test_git.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 dvc/scm/git/__init__.py（命中 2/2）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F19",
+   "repos": [
+    "iterative/dvc"
+   ],
+   "size": 3,
+   "members": [
+    "iterative__dvc-3576",
+    "iterative__dvc-4124",
+    "iterative__dvc-5839"
+   ],
+   "reasons": [
+    "共用 gold 文件 dvc/command/metrics.py",
+    "共用 test_patch 文件 tests/unit/command/test_metrics.py（判分面重叠）"
+   ],
+   "sources": [
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F20",
+   "repos": [
+    "iterative/dvc"
+   ],
+   "size": 3,
+   "members": [
+    "iterative__dvc-4066",
+    "iterative__dvc-4125",
+    "iterative__dvc-4166"
+   ],
+   "reasons": [
+    "共用 gold 文件 dvc/ignore.py",
+    "共用 test_patch 文件 tests/func/test_ignore.py（判分面重叠）"
+   ],
+   "sources": [
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F21",
+   "repos": [
+    "Project-MONAI/MONAI"
+   ],
+   "size": 2,
+   "members": [
+    "Project-MONAI__MONAI-3690",
+    "Project-MONAI__MONAI-3715"
+   ],
+   "reasons": [
+    "共用 test_patch 文件 tests/test_prepare_batch_default.py（判分面重叠）"
+   ],
+   "sources": [
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F22",
+   "repos": [
+    "Project-MONAI/MONAI"
+   ],
+   "size": 2,
+   "members": [
+    "Project-MONAI__MONAI-4676",
+    "Project-MONAI__MONAI-6523"
+   ],
+   "reasons": [
+    "共用 gold 文件 monai/data/meta_tensor.py",
+    "共用 test_patch 文件 tests/test_meta_tensor.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 monai/data/meta_tensor.py（命中 28/28）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F23",
+   "repos": [
+    "Project-MONAI/MONAI"
+   ],
+   "size": 2,
+   "members": [
+    "Project-MONAI__MONAI-5686",
+    "Project-MONAI__MONAI-5908"
+   ],
+   "reasons": [
+    "共用 gold 文件 monai/losses/ssim_loss.py",
+    "共用 test_patch 文件 tests/test_ssim_loss.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 monai/losses/ssim_loss.py（命中 6/6）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F24",
+   "repos": [
+    "Project-MONAI/MONAI"
+   ],
+   "size": 2,
+   "members": [
+    "Project-MONAI__MONAI-5932",
+    "Project-MONAI__MONAI-6756"
+   ],
+   "reasons": [
+    "共用 gold 文件 monai/bundle/reference_resolver.py",
+    "共用 test_patch 文件 tests/test_config_parser.py（判分面重叠）"
+   ],
+   "sources": [
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F25",
+   "repos": [
+    "conan-io/conan"
+   ],
+   "size": 2,
+   "members": [
+    "conan-io__conan-14296",
+    "conan-io__conan-15422"
+   ],
+   "reasons": [
+    "共用 gold 文件 conan/tools/cmake/presets.py",
+    "共用 test_patch 文件 conans/test/integration/toolchains/cmake/test_cmaketoolchain.py（判分面重叠）"
+   ],
+   "sources": [
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F26",
+   "repos": [
+    "dask/dask"
+   ],
+   "size": 2,
+   "members": [
+    "dask__dask-10972",
+    "dask__dask-6818"
+   ],
+   "reasons": [
+    "共用 gold 文件 dask/dataframe/io/csv.py",
+    "共用 test_patch 文件 dask/dataframe/io/tests/test_csv.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 dask/dataframe/io/csv.py（命中 2/3）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F27",
+   "repos": [
+    "dask/dask"
+   ],
+   "size": 2,
+   "members": [
+    "dask__dask-7656",
+    "dask__dask-8820"
+   ],
+   "reasons": [
+    "共用 gold 文件 dask/delayed.py",
+    "共用 test_patch 文件 dask/tests/test_delayed.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 dask/delayed.py（命中 6/6）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F28",
+   "repos": [
+    "dask/dask"
+   ],
+   "size": 2,
+   "members": [
+    "dask__dask-8792",
+    "dask__dask-9212"
+   ],
+   "reasons": [
+    "共用 gold 文件 dask/base.py",
+    "共用 test_patch 文件 dask/tests/test_base.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 dask/base.py（命中 8/8）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F29",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 2,
+   "members": [
+    "getmoto__moto-5699",
+    "getmoto__moto-6387"
+   ],
+   "reasons": [
+    "共用 gold 文件 moto/cloudfront/responses.py",
+    "共用 test_patch 文件 tests/test_cloudfront/test_cloudfront_invalidation.py（判分面重叠）",
+    "实证：早题 golden_patch 在晚题 base 上 git apply -R --check 成功"
+   ],
+   "sources": [
+    "L1_moto_3/contamination_pairs.json",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F30",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 2,
+   "members": [
+    "getmoto__moto-5737",
+    "getmoto__moto-6508"
+   ],
+   "reasons": [
+    "共用 gold 文件 moto/cloudfront/models.py",
+    "共用 test_patch 文件 tests/test_cloudfront/cloudfront_test_scaffolding.py（判分面重叠）",
+    "共用 test_patch 文件 tests/test_cloudfront/test_cloudfront_distributions.py（判分面重叠）",
+    "实证：早题 golden_patch 在晚题 base 上 git apply -R --check 成功",
+    "早题 gold 逐行出现在晚题 base 的 moto/cloudfront/models.py（命中 6/6）"
+   ],
+   "sources": [
+    "L1_moto_3/contamination_pairs.json",
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F31",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 2,
+   "members": [
+    "getmoto__moto-5865",
+    "getmoto__moto-6226"
+   ],
+   "reasons": [
+    "共用 gold 文件 moto/ecs/models.py",
+    "共用 test_patch 文件 tests/test_ecs/test_ecs_boto3.py（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 moto/ecs/models.py（命中 3/3）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F32",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 2,
+   "members": [
+    "getmoto__moto-6355",
+    "getmoto__moto-7584"
+   ],
+   "reasons": [
+    "共用 gold 文件 moto/sns/models.py",
+    "实证：早题 golden_patch 在晚题 base 上 git apply -R --check 成功"
+   ],
+   "sources": [
+    "L1_moto_3/contamination_pairs.json",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F33",
+   "repos": [
+    "getmoto/moto"
+   ],
+   "size": 2,
+   "members": [
+    "getmoto__moto-6585",
+    "getmoto__moto-7111"
+   ],
+   "reasons": [
+    "共用 gold 文件 moto/awslambda/models.py",
+    "共用 test_patch 文件 tests/test_awslambda/test_lambda.py（判分面重叠）",
+    "实证：早题 golden_patch 在晚题 base 上 git apply -R --check 成功",
+    "早题 gold 逐行出现在晚题 base 的 moto/awslambda/models.py（命中 6/6）"
+   ],
+   "sources": [
+    "L1_moto_3/contamination_pairs.json",
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F34",
+   "repos": [
+    "iterative/dvc"
+   ],
+   "size": 2,
+   "members": [
+    "iterative__dvc-4778",
+    "iterative__dvc-4961"
+   ],
+   "reasons": [
+    "共用 gold 文件 dvc/utils/__init__.py",
+    "早题 gold 逐行出现在晚题 base 的 dvc/utils/__init__.py（命中 10/10）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F35",
+   "repos": [
+    "python/mypy"
+   ],
+   "size": 2,
+   "members": [
+    "python__mypy-10308",
+    "python__mypy-11236"
+   ],
+   "reasons": [
+    "共用 gold 文件 mypy/subtypes.py",
+    "早题 gold 逐行出现在晚题 base 的 mypy/subtypes.py（命中 7/7）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  },
+  {
+   "group_id": "F36",
+   "repos": [
+    "python/mypy"
+   ],
+   "size": 2,
+   "members": [
+    "python__mypy-15208",
+    "python__mypy-16869"
+   ],
+   "reasons": [
+    "共用 gold 文件 mypy/stubgen.py",
+    "共用 test_patch 文件 test-data/unit/stubgen.test（判分面重叠）",
+    "早题 gold 逐行出现在晚题 base 的 mypy/stubgen.py（命中 5/5）"
+   ],
+   "sources": [
+    "L1_pydantic/crossleak_216",
+    "L8/全池计算"
+   ]
+  }
+ ],
+ "stats": {
+  "strict": {
+   "groups": 40,
+   "tasks": 110
+  },
+  "full": {
+   "groups": 36,
+   "tasks": 148
+  },
+  "注": "full 视图下 python/mypy 塌成 24 题 + 8 题两大组、pydantic 20 题里 18 题落进同一组、modin 5 题与 pandas 5 题各自整仓落进一组——采纳 full 口径后 mypy / pydantic / modin / pandas 基本无法在仓库内做训练/评测切分，只能整仓切。"
+ },
+ "duplicate_task_pairs": {
+  "problem_statement_sha256_相同": [
+   [
+    "getmoto__moto-6121",
+    "getmoto__moto-6157"
+   ],
+   [
+    "getmoto__moto-7331",
+    "getmoto__moto-7335"
+   ]
+  ],
+  "base_commit_相同": [
+   [
+    "getmoto__moto-6469",
+    "getmoto__moto-6470"
+   ],
+   [
+    "python__mypy-11824",
+    "python__mypy-11857"
+   ]
+  ],
+  "备注": "L6 的 C12 确认 s2/ingest/duplicate_clusters_v0.json 的分组键是 (repo_key_lower, base_commit)，只有 2 个簇且 classification 全是 distinct_tasks_shared_environment；题面 sha 相同的两组四题全部不在其中。把去重判据扩到 problem_statement_sha256 是零成本动作。"
+ },
+ "disposition_sets": {
+  "说明": "以下四组来自 13 个 L1 包 records/*.json 的 disposition_hint，是**包的建议**而非决定；ready_for_probe 的语义是“可进入能力探针”，不等于“批准训练使用”。",
+  "reject_revision_建议剔除或修订后再入": [
+   {
+    "task_id": "dask__dask-10972",
+    "pkg": "L1_dask",
+    "reason": "链路本身正常（判据可区分、P2P 划分合理），但题面与评分目标不是同一个问题，且题面字面方案只能改被禁止的测试文件、所述现象在 x86_64 镜像上不可复现。不改题面就不该进训练或评测集。"
+   },
+   {
+    "task_id": "dask__dask-7305",
+    "pkg": "L1_dask",
+    "reason": "唯一的 F2P 是修法副作用（小整数 divisions 从 {1,2,3,4} 变 {1,2,4}），公开材料推不出；hints 里维护者自己倾向的另一种正确修法会被判 0；而真正复现题面 bug 的新增用例在 base 上就通过、零判别力。不改题面与参考集不建议使用。"
+   },
+   {
+    "task_id": "dask__dask-8801",
+    "pkg": "L1_dask",
+    "reason": "题面是一篇没有任务的求助帖（7784 字符里 ~90% 是 conda 回显），要做什么只存在于不可见的 hints；F2P 又把三段英文错误文案固化成验收标准。此外 gold 的“忽略权限错误”分支因容器以 root 运行而零保护。需重写题面并放宽断言后再用。"
+   },
+   {
+    "task_id": "iterative__dvc-2126",
+    "pkg": "L1_dvc_1",
+    "reason": "题面（\"提议新增 dvc version 命令\"）与 base（命令已存在）、gold（只加 Binary 字段）三者不是同一任务版本，F2P 要求的字段在任何可见材料里都没有依据；加上 P2P=0、断言可被硬编码通过。除非重写题面，否则不适合入题。"
+   },
+   {
+    "task_id": "Project-MONAI__MONAI-4925",
+    "pkg": "L1_monai_2",
+    "reason": "题面只有一句『不要显示空字典』，F2P 却逐字匹配一个含 torchvision/torch 内部条目数的精确字符串；要求既不可推断也强制唯一实现。除非改题面给出格式约定或放宽断言，否则不适合入池。"
+   },
+   {
+    "task_id": "python__mypy-11241",
+    "pkg": "L1_mypy_1",
+    "reason": "评分要求是逐字匹配一条题面里从未出现的新错误消息 'Slice usage in type annotation is invalid'，而题面表达的诉求（希望该写法可用或可 ignore）与 gold 的实际交付（只换措辞）不是一回事。不改题面的话，本题对诚实求解者是不可完成的。"
+   },
+   {
+    "task_id": "python__mypy-11707",
+    "pkg": "L1_mypy_1",
+    "reason": "题面明确要求'两种情形都应被接受'，F2P 要求的却是新增一条错误；决定方向的唯一依据（维护者按 PEP 484 的裁定）只存在于不可见的 hints 里。不改题面则对诚实求解者不可完成；另外题面复现（普通 .py 包）与 F2P 复现（stub 包）不是同一组文件，对应关系也需实跑确认。"
+   },
+   {
+    "task_id": "python__mypy-15131",
+    "pkg": "L1_mypy_2",
+    "reason": "gold 只有一行纯文本替换，而题面不含任何措辞线索，F2P 逐字匹配——公开材料到 F2P 之间没有可推理的路径，作为 RL 任务只奖励记忆。若要保留必须改题面或放宽断言。"
+   },
+   {
+    "task_id": "python__mypy-15413",
+    "pkg": "L1_mypy_2",
+    "reason": "题面是一份明确写着'我也不确定该不该改'的 bug report，评分方向只存在于 PR 里；加上 F2P 纯负向 + P2P=0，删掉整条检查即可满分。要保留必须同时改题面与补 P2P。"
+   },
+   {
+    "task_id": "pydantic__pydantic-6043",
+    "pkg": "L1_pydantic",
+    "reason": "题面是一段无验收标准的散文诉求，F2P 是改写既有断言得到的单条 key 顺序检查，最小 hack 即可满分，且题面与 gold 对 'items' 的处理不一致。作为 RL 样本信噪比过低，建议本修订版本剔除或重写题面+扩判分面后再入。"
+   }
+  ],
+  "needs_repair_修复待验": [
+   "conan-io__conan-11560",
+   "conan-io__conan-13610",
+   "conan-io__conan-13788",
+   "conan-io__conan-14177",
+   "dask__dask-6801",
+   "dask__dask-8792",
+   "iterative__dvc-1808",
+   "iterative__dvc-1877",
+   "iterative__dvc-2141",
+   "iterative__dvc-2231",
+   "iterative__dvc-3576",
+   "iterative__dvc-3620",
+   "iterative__dvc-3665",
+   "iterative__dvc-4185",
+   "iterative__dvc-5822",
+   "iterative__dvc-9395",
+   "iterative__dvc-3677",
+   "iterative__dvc-3794",
+   "iterative__dvc-4125",
+   "iterative__dvc-4166",
+   "iterative__dvc-4719",
+   "iterative__dvc-4778",
+   "iterative__dvc-4785",
+   "iterative__dvc-5148",
+   "iterative__dvc-5336",
+   "iterative__dvc-9212",
+   "iterative__dvc-9391",
+   "modin-project__modin-5940",
+   "modin-project__modin-6780",
+   "pandas-dev__pandas-48106",
+   "pandas-dev__pandas-50319",
+   "Project-MONAI__MONAI-1121",
+   "Project-MONAI__MONAI-2061",
+   "Project-MONAI__MONAI-3205",
+   "Project-MONAI__MONAI-3403",
+   "Project-MONAI__MONAI-3547",
+   "Project-MONAI__MONAI-3566",
+   "Project-MONAI__MONAI-3715",
+   "Project-MONAI__MONAI-763",
+   "Project-MONAI__MONAI-4159",
+   "Project-MONAI__MONAI-4688",
+   "Project-MONAI__MONAI-6775",
+   "getmoto__moto-4799",
+   "getmoto__moto-4833",
+   "getmoto__moto-5417",
+   "getmoto__moto-5545",
+   "getmoto__moto-5562",
+   "getmoto__moto-5701",
+   "getmoto__moto-6308",
+   "getmoto__moto-6470",
+   "getmoto__moto-7105",
+   "getmoto__moto-6022",
+   "getmoto__moto-6317",
+   "getmoto__moto-7331",
+   "getmoto__moto-7335",
+   "python__mypy-10174",
+   "python__mypy-10308",
+   "python__mypy-10382",
+   "python__mypy-10401",
+   "python__mypy-10424",
+   "python__mypy-10658",
+   "python__mypy-11236",
+   "python__mypy-11352",
+   "python__mypy-11420",
+   "python__mypy-12741",
+   "python__mypy-11857",
+   "python__mypy-11945",
+   "python__mypy-11966",
+   "python__mypy-15139",
+   "python__mypy-15208",
+   "python__mypy-15876",
+   "python__mypy-5617",
+   "python__mypy-9625",
+   "python__mypy-9629",
+   "python__mypy-9909",
+   "pydantic__pydantic-5386",
+   "pydantic__pydantic-8583",
+   "pydantic__pydantic-8977",
+   "pydantic__pydantic-9193",
+   "pydantic__pydantic-9214"
+  ],
+  "needs_review_待核": [
+   "conan-io__conan-11594",
+   "conan-io__conan-13326",
+   "conan-io__conan-13403",
+   "conan-io__conan-14296",
+   "dask__dask-6626",
+   "dask__dask-7656",
+   "iterative__dvc-1661",
+   "iterative__dvc-1681",
+   "iterative__dvc-3315",
+   "iterative__dvc-3527",
+   "iterative__dvc-5004",
+   "modin-project__modin-6937",
+   "pandas-dev__pandas-53958",
+   "pandas-dev__pandas-56849",
+   "Project-MONAI__MONAI-2454",
+   "Project-MONAI__MONAI-3690",
+   "Project-MONAI__MONAI-6756",
+   "getmoto__moto-4847",
+   "getmoto__moto-5321",
+   "getmoto__moto-6913",
+   "getmoto__moto-5737",
+   "getmoto__moto-5752",
+   "getmoto__moto-5885",
+   "getmoto__moto-6041",
+   "getmoto__moto-6121",
+   "getmoto__moto-6157",
+   "getmoto__moto-6178",
+   "getmoto__moto-6226",
+   "getmoto__moto-6508",
+   "getmoto__moto-7111",
+   "getmoto__moto-7273",
+   "getmoto__moto-7348",
+   "getmoto__moto-7361",
+   "getmoto__moto-7484",
+   "getmoto__moto-7584",
+   "getmoto__moto-7607",
+   "python__mypy-10284",
+   "python__mypy-12222",
+   "python__mypy-15184",
+   "python__mypy-16963",
+   "pydantic__pydantic-5706",
+   "pydantic__pydantic-6104",
+   "pydantic__pydantic-8004",
+   "pydantic__pydantic-8316",
+   "pydantic__pydantic-8500",
+   "pydantic__pydantic-8525",
+   "pydantic__pydantic-8567"
+  ],
+  "ready_for_probe_可进探针": [
+   "conan-io__conan-12397",
+   "conan-io__conan-13230",
+   "conan-io__conan-13721",
+   "conan-io__conan-15422",
+   "dask__dask-6818",
+   "dask__dask-7138",
+   "dask__dask-7894",
+   "dask__dask-8597",
+   "dask__dask-8820",
+   "dask__dask-9212",
+   "dask__dask-9378",
+   "iterative__dvc-1712",
+   "iterative__dvc-2254",
+   "iterative__dvc-4066",
+   "iterative__dvc-4124",
+   "iterative__dvc-4961",
+   "iterative__dvc-5188",
+   "iterative__dvc-5839",
+   "iterative__dvc-6954",
+   "modin-project__modin-6298",
+   "modin-project__modin-6400",
+   "pandas-dev__pandas-51605",
+   "Project-MONAI__MONAI-2446",
+   "Project-MONAI__MONAI-4109",
+   "Project-MONAI__MONAI-6975",
+   "Project-MONAI__MONAI-4583",
+   "Project-MONAI__MONAI-4676",
+   "Project-MONAI__MONAI-4775",
+   "Project-MONAI__MONAI-5686",
+   "Project-MONAI__MONAI-5908",
+   "Project-MONAI__MONAI-5932",
+   "Project-MONAI__MONAI-6523",
+   "Project-MONAI__MONAI-907",
+   "getmoto__moto-4975",
+   "getmoto__moto-4990",
+   "getmoto__moto-5020",
+   "getmoto__moto-5134",
+   "getmoto__moto-5286",
+   "getmoto__moto-5347",
+   "getmoto__moto-5899",
+   "getmoto__moto-5406",
+   "getmoto__moto-5478",
+   "getmoto__moto-5502",
+   "getmoto__moto-5620",
+   "getmoto__moto-5699",
+   "getmoto__moto-5794",
+   "getmoto__moto-5835",
+   "getmoto__moto-5865",
+   "getmoto__moto-5960",
+   "getmoto__moto-5980",
+   "getmoto__moto-6114",
+   "getmoto__moto-6185",
+   "getmoto__moto-6212",
+   "getmoto__moto-6355",
+   "getmoto__moto-6387",
+   "getmoto__moto-6408",
+   "getmoto__moto-6469",
+   "getmoto__moto-6585",
+   "getmoto__moto-6701",
+   "getmoto__moto-7495",
+   "python__mypy-10392",
+   "python__mypy-10430",
+   "python__mypy-10478",
+   "python__mypy-11434",
+   "python__mypy-11567",
+   "python__mypy-11824",
+   "python__mypy-16869",
+   "python__mypy-12417",
+   "python__mypy-16555",
+   "python__mypy-16905",
+   "python__mypy-16966",
+   "python__mypy-17071",
+   "pydantic__pydantic-5662",
+   "pydantic__pydantic-6126",
+   "pydantic__pydantic-6283",
+   "pydantic__pydantic-8511",
+   "pydantic__pydantic-8793",
+   "pydantic__pydantic-9066",
+   "pydantic__pydantic-9134"
+  ]
+ },
+ "evaluation_only_suggestions": [
+  {
+   "scope": "python/mypy 全部 40 题",
+   "suggested_by": "L1_mypy_1（待裁定 3）",
+   "reason": "测试全部是逐字比对期望输出的数据驱动用例，“强制唯一实现”是结构性的；优点是判分确定、无网络、无外部资产、单题秒级，适合评测。",
+   "status": "建议"
+  },
+  {
+   "scope": "题面即答案的题（moto-6913/5321/5545、mypy-5617、pydantic-5662、dask-7138/9212、pandas-53958、modin-6937 等）",
+   "suggested_by": "L1_moto_1（待裁定 3）、L1_modin_pandas",
+   "reason": "gold 与候选都容易 FULL，适合做流水线冒烟/最低难度档，但作为训练样本奖励的是“照抄题面”。",
+   "status": "建议"
+  },
+  {
+   "scope": "记忆污染题 conan-14296、moto-5701、pydantic-8500、moto-6913",
+   "suggested_by": "L1_conan（§9 memcheck.py）",
+   "reason": "候选逐字复现不可见的官方 test_patch（14296 实质行 19/20），RESOLVED_FULL 不能计为解题能力。",
+   "status": "建议（阈值未校准；moto-6913 另有题面泄漏，可能被误判）"
+  }
+ ],
+ "blocked_until_fixed": {
+  "说明": "各包明确写“修好前不应进训练集”的题。",
+  "items": [
+   {
+    "tasks": [
+     "iterative__dvc-4778",
+     "iterative__dvc-9391",
+     "iterative__dvc-4719",
+     "iterative__dvc-5336"
+    ],
+    "by": "L1_dvc_2 仓库级 5",
+    "reason": "一行假修复即 RESOLVED_FULL"
+   },
+   {
+    "tasks": [
+     "getmoto__moto-5417",
+     "getmoto__moto-5545",
+     "getmoto__moto-5562",
+     "getmoto__moto-5701",
+     "getmoto__moto-6308",
+     "iterative__dvc-4185",
+     "modin-project__modin-6780",
+     "pandas-dev__pandas-48106",
+     "pandas-dev__pandas-50319",
+     "pydantic__pydantic-8977"
+    ],
+    "by": "L2 / L1_pydantic / L1_dvc_1 / L1_modin_pandas",
+    "reason": "参考 ID 转义不一致，gold 恒判 RESOLVED_NO（RL 里恒定 0 奖励）"
+   },
+   {
+    "tasks": [
+     "modin-project__modin-5940"
+    ],
+    "by": "L1_modin_pandas",
+    "reason": "P2P 里 1 条 s3 用例直连真实 AWS，离线两侧 FAILED ⇒ gold 恒 RESOLVED_NO；另 18 条靠 eval_general 空洞通过"
+   },
+   {
+    "tasks": [
+     "getmoto__moto-4799",
+     "getmoto__moto-4833"
+    ],
+    "by": "L1_moto_1 / M2 §3.1",
+    "reason": "两条 @pytest.mark.network P2P 在 deny_all 下必 FAIL，gold 上限 17/19"
+   },
+   {
+    "tasks": [
+     "Project-MONAI__MONAI-1121",
+     "Project-MONAI__MONAI-3205"
+    ],
+    "by": "L1_monai_1 / M2 §2",
+    "reason": "需要预置下载资产；M2 已验证预置后全断网可 RESOLVED_FULL"
+   },
+   {
+    "tasks": [
+     "Project-MONAI__MONAI-4676",
+     "Project-MONAI__MONAI-6523"
+    ],
+    "by": "L1_monai_2",
+    "reason": "评分机有 CUDA 时各 72 条参考 ID 失配、gold 拿 0；须固定 CUDA_VISIBLE_DEVICES=\"\""
+   },
+   {
+    "tasks": [
+     "getmoto__moto-7105"
+    ],
+    "by": "L1_moto_1",
+    "reason": "4 条 F2P 带 @requires_docker，无 docker.sock 时 gold 只能 RESOLVED_PARTIAL"
+   }
+  ]
+ }
+}

@@ -1,0 +1,474 @@
+{
+  "schema": "swe_moto.fixed_publication_input.v1",
+  "request_id": "swe-moto7584-publish-58875207adea-20261003-v1",
+  "task_key": "swe_gym_lite::getmoto__moto-7584",
+  "package_id": "swe_moto",
+  "cpu_host": "cpu-a",
+  "material_version": "moto7584-endpoint-v3@sha256:58875207adea3feddb71bb0b04bfd47423f0663ac79b9be54f402e815f144fd3",
+  "scope": "正式材料登记、生产consumer与CPU部署；不是题级语义终审或GPU实验请求",
+  "revision_request": {
+    "schema": "moto.revision_request.draft.v1",
+    "as_of": "2026-10-03",
+    "status": "prepared_not_published",
+    "instance_id": "getmoto__moto-7584",
+    "owner": {
+      "thread_id": "01a0fd61-fbf9-7d83-860e-c6627bcd3d7f",
+      "thread_title": "SWE | Moto 题目修订",
+      "host_id": "local"
+    },
+    "shared_maintainer_thread_id": "01a08bd3-b639-7c71-a1ee-f3f4d05b3a0e",
+    "formal_revision_activated": false,
+    "cpu_validation": "not_run",
+    "solver_visibility": "private_only",
+    "proposed_revision_id": "moto7584-endpoint-v3",
+    "requested_capability": "采用既有 v3，修原例遗漏、正文误拒与 application 协议外回归",
+    "base_commit": "cc1193076090f9daf90970db286b6b41581dd8bc",
+    "source_grading": {
+      "path": "runs/swegym_quality_batch02_20260921_v1/private/getmoto__moto-7584/grading.json",
+      "sha256": "93e779c37c1c7ad4906e606592dca4d9ed5b51c3140bf122ef313b483cfec54c",
+      "bytes": 4126
+    },
+    "parent_grading_digest": "sha256:c53354c19ee9945d8f9792267de22ec961f6eec92e4a3cb8e5d774ff6d0fa2fd",
+    "source_public": {
+      "path": "runs/swegym_quality_batch02_20260921_v1/public/getmoto__moto-7584/public_bundle.json",
+      "sha256": "3f8e76968c45fcd16bd3ffe132ab7ee891c645cfbc8467b16b2d2ea32ba7d586",
+      "bytes": 2771
+    },
+    "source_public_digest": "sha256:976e9bbcb91bb027e9fc4888e0d3b21db02695c6639a75174f3a326c36e269b8",
+    "public_change": false,
+    "original_test_patch": {
+      "path": "runs/swegym_quality_batch02_20260921_v1/private/getmoto__moto-7584/test.patch",
+      "sha256": "5b1c7b7a6b655d9d226d72f899f76c761e41c4430c81b4c09e809e670500f99f",
+      "bytes": 2041
+    },
+    "effective_test_patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto7584/revised_test_v3.patch",
+      "sha256": "58875207adea3feddb71bb0b04bfd47423f0663ac79b9be54f402e815f144fd3",
+      "bytes": 4042
+    },
+    "source_base_identity": {
+      "path": "runs/swegym_quality_batch02_20260921_v1/public/getmoto__moto-7584/base_identity.json",
+      "sha256": "8db6e2b4806495e2d7c0c1ea432c1ef85834bbea56bfcc4dcd154ccee38ea487",
+      "bytes": 355
+    },
+    "base_test_file": {
+      "path": "runs/swegym_quality_batch02_20260921_v1/public/getmoto__moto-7584/base/tests/test_sns/test_application_boto3.py",
+      "sha256": "5bf39b9069d7d1dc291369528ea5afadd79bf8e24c567cdfc59bda35e0dbb964",
+      "bytes": 17305
+    },
+    "test_file_exists_in_base": true,
+    "original_fail_to_pass": [
+      "tests/test_sns/test_application_boto3.py::test_publish_to_deleted_platform_endpoint"
+    ],
+    "original_pass_to_pass": [
+      "tests/test_sns/test_application_boto3.py::test_delete_platform_application",
+      "tests/test_sns/test_application_boto3.py::test_publish_to_disabled_platform_endpoint",
+      "tests/test_sns/test_application_boto3.py::test_get_list_endpoints_by_platform_application",
+      "tests/test_sns/test_application_boto3.py::test_set_sms_attributes",
+      "tests/test_sns/test_application_boto3.py::test_get_sms_attributes_filtered",
+      "tests/test_sns/test_application_boto3.py::test_delete_endpoints_of_delete_app",
+      "tests/test_sns/test_application_boto3.py::test_list_platform_applications",
+      "tests/test_sns/test_application_boto3.py::test_get_endpoint_attributes",
+      "tests/test_sns/test_application_boto3.py::test_create_duplicate_platform_endpoint",
+      "tests/test_sns/test_application_boto3.py::test_create_platform_application",
+      "tests/test_sns/test_application_boto3.py::test_get_non_existent_endpoint_attributes",
+      "tests/test_sns/test_application_boto3.py::test_delete_endpoint",
+      "tests/test_sns/test_application_boto3.py::test_get_missing_endpoint_attributes",
+      "tests/test_sns/test_application_boto3.py::test_set_platform_application_attributes",
+      "tests/test_sns/test_application_boto3.py::test_set_endpoint_attributes",
+      "tests/test_sns/test_application_boto3.py::test_get_platform_application_attributes",
+      "tests/test_sns/test_application_boto3.py::test_get_missing_platform_application_attributes",
+      "tests/test_sns/test_application_boto3.py::test_publish_to_platform_endpoint",
+      "tests/test_sns/test_application_boto3.py::test_create_platform_endpoint"
+    ],
+    "proposed_fail_to_pass": [
+      "tests/test_sns/test_application_boto3.py::test_publish_to_deleted_platform_endpoint"
+    ],
+    "proposed_pass_to_pass": [
+      "tests/test_sns/test_application_boto3.py::test_delete_platform_application",
+      "tests/test_sns/test_application_boto3.py::test_publish_to_disabled_platform_endpoint",
+      "tests/test_sns/test_application_boto3.py::test_get_list_endpoints_by_platform_application",
+      "tests/test_sns/test_application_boto3.py::test_set_sms_attributes",
+      "tests/test_sns/test_application_boto3.py::test_get_sms_attributes_filtered",
+      "tests/test_sns/test_application_boto3.py::test_delete_endpoints_of_delete_app",
+      "tests/test_sns/test_application_boto3.py::test_list_platform_applications",
+      "tests/test_sns/test_application_boto3.py::test_get_endpoint_attributes",
+      "tests/test_sns/test_application_boto3.py::test_create_duplicate_platform_endpoint",
+      "tests/test_sns/test_application_boto3.py::test_create_platform_application",
+      "tests/test_sns/test_application_boto3.py::test_get_non_existent_endpoint_attributes",
+      "tests/test_sns/test_application_boto3.py::test_delete_endpoint",
+      "tests/test_sns/test_application_boto3.py::test_get_missing_endpoint_attributes",
+      "tests/test_sns/test_application_boto3.py::test_set_platform_application_attributes",
+      "tests/test_sns/test_application_boto3.py::test_set_endpoint_attributes",
+      "tests/test_sns/test_application_boto3.py::test_get_platform_application_attributes",
+      "tests/test_sns/test_application_boto3.py::test_get_missing_platform_application_attributes",
+      "tests/test_sns/test_application_boto3.py::test_publish_to_platform_endpoint",
+      "tests/test_sns/test_application_boto3.py::test_create_platform_endpoint"
+    ],
+    "added_fail_to_pass": [],
+    "added_pass_to_pass": [],
+    "source_test_command": "pytest -n0 -rA tests/test_sns/test_application_boto3.py",
+    "proposed_test_command": "pytest -n0 -rA tests/test_sns/test_application_boto3.py",
+    "selection_derivation": "spec_vendor.py derive_test_command 的当前源码路径；未执行新版正式消费",
+    "changed_functions": [
+      "test_publish_to_deleted_platform_endpoint"
+    ],
+    "added_functions": [
+      "_assert_endpoint_does_not_exist"
+    ],
+    "identity_note": "canonical digest 按源模型导出的完整 JSON 重算；由发布者在实际模型消费时再核",
+    "independent_review": "reuse_cloud_review_stop_condition",
+    "release_remaining": [
+      "受限登记与材料身份／恢复／保护接入",
+      "冻结的实际命令／安装／镜像／配方",
+      "CPU正式评分与相应actor验证"
+    ],
+    "aws_marker_note": "保留历史v3字节；仅mock且无AWS验证证据。移除标记时另核元数据，不改旧证据。",
+    "source_refs": {
+      "path": "runs/swegym_quality_batch02_20260921_v1/private/getmoto__moto-7584/source_refs.json",
+      "sha256": "be72d0f715cb6b35dc87ae9706872a57ffb16272a59bf29914b673e4a41734cb",
+      "bytes": 403
+    }
+  },
+  "acceptance_matrix": {
+    "schema": "moto.acceptance_matrix.plan.v1",
+    "as_of": "2026-10-03",
+    "instance_id": "getmoto__moto-7584",
+    "status": "not_run",
+    "material_request": "revision_request.json",
+    "reference_counts": {
+      "fail_to_pass": 1,
+      "pass_to_pass": 19
+    },
+    "controls": [
+      {
+        "name": "noop",
+        "role": "noop",
+        "patch": null,
+        "expected_reward": 0
+      },
+      {
+        "name": "gold",
+        "role": "gold_known_incomplete",
+        "patch": {
+          "path": "runs/swegym_quality_batch02_20260921_v1/private/getmoto__moto-7584/gold.patch",
+          "sha256": "4259577987a8f90d16046a73060c2d3f5b3c8a7d19ace77c2a7b1c6104e7bbea",
+          "bytes": 1091
+        },
+        "expected_reward": 0,
+        "expected_reward_evidence": "云端 v3 正式诊断；非当前正式接入验收"
+      },
+      {
+        "name": "all_protocols",
+        "role": "known_wrong",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto7584/all_protocols.patch",
+          "sha256": "a51c86d39c0a9bfaff103a3399a14a910950373d711fc35728e333f565c780a9",
+          "bytes": 722
+        },
+        "expected_reward": 0,
+        "expected_reward_evidence": "云端 v3 正式诊断；非当前正式接入验收"
+      },
+      {
+        "name": "arn_form",
+        "role": "known_wrong",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto7584/arn_form.patch",
+          "sha256": "0230ae299a252744699315536948fa6bcadadd3a505c3c9231b32ced1b8a5848",
+          "bytes": 787
+        },
+        "expected_reward": 0,
+        "expected_reward_evidence": "云端 v3 正式诊断；非当前正式接入验收"
+      },
+      {
+        "name": "deleted_set",
+        "role": "known_wrong",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto7584/deleted_set.patch",
+          "sha256": "d442b9c3a283ea666df456ab9e25d1a2ed7bfa2f396b8ea69f8c34e92d4b5ee5",
+          "bytes": 1085
+        },
+        "expected_reward": 0,
+        "expected_reward_evidence": "云端 v3 正式诊断；非当前正式接入验收"
+      },
+      {
+        "name": "gold_order_stmtmsg",
+        "role": "known_wrong",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto7584/gold_order_stmtmsg.patch",
+          "sha256": "280e6469c2689091ed6f1f0671cc13d4928aaf59dddb2091e8887c9c1f4090a9",
+          "bytes": 802
+        },
+        "expected_reward": 0,
+        "expected_reward_evidence": "云端 v3 正式诊断；非当前正式接入验收"
+      },
+      {
+        "name": "reject_all_application",
+        "role": "known_wrong",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto7584/reject_all_application.patch",
+          "sha256": "3cd3591bfd921faa6e7373afb0f45316380ef1a0ad27d2d689f28c453c248636",
+          "bytes": 672
+        },
+        "expected_reward": 0,
+        "expected_reward_evidence": "云端 v3 正式诊断；非当前正式接入验收"
+      },
+      {
+        "name": "reject_all_arnmsg",
+        "role": "known_wrong",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto7584/reject_all_arnmsg.patch",
+          "sha256": "6b03ee4913c2c2b3103d9eb2f69927c496d0fbc654f90bfbe06c11f6f9064a70",
+          "bytes": 675
+        },
+        "expected_reward": 0,
+        "expected_reward_evidence": "云端 v3 正式诊断；非当前正式接入验收"
+      },
+      {
+        "name": "stmt",
+        "role": "positive",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto7584/stmt.patch",
+          "sha256": "65211e6203215ad6272d3718c12d8c27dfbdd16ecbd1280efb86a1b1638e319f",
+          "bytes": 785
+        },
+        "expected_reward": 1,
+        "expected_reward_evidence": "云端 v3 正式诊断；非当前正式接入验收"
+      },
+      {
+        "name": "stmt_arnmsg",
+        "role": "positive",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto7584/stmt_arnmsg.patch",
+          "sha256": "08a85d529384eb538ad0584e3c34dccf722e94753c27d4b81577c6dd639017f8",
+          "bytes": 788
+        },
+        "expected_reward": 1,
+        "expected_reward_evidence": "云端 v3 正式诊断；非当前正式接入验收"
+      },
+      {
+        "name": "wrong_code",
+        "role": "known_wrong",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto7584/wrong_code.patch",
+          "sha256": "b2d691d4d2b07ab16ffde783a4ff393f20cebafa45c85eacac57db7d92bb0037",
+          "bytes": 553
+        },
+        "expected_reward": 0,
+        "expected_reward_evidence": "云端 v3 正式诊断；非当前正式接入验收"
+      }
+    ],
+    "formal_run_count": 11,
+    "new_host_identity_check": true,
+    "shared_code_snapshot": null,
+    "cpu_host": null,
+    "resource_limits": "按本题既有配方和总协调全机名额落实，不使用旧SSH或无约束并发",
+    "required_evidence": [
+      "实际固定材料／镜像／代码／配方",
+      "安装与测试完整执行／逐参考状态／退出码",
+      "新增或修正断言的真实执行与目标失败位置",
+      "完整日志、工件、异常及两层清理",
+      "有效正对照与非作者核查"
+    ],
+    "reuse_or_targeted_actor_validation": "5406修订公开消息及原例；6185/7584补缺失actor命令；其余只补新宿主身份和受影响路径",
+    "never_send_to_solver": [
+      "gold",
+      "负对照",
+      "私有测试断言",
+      "题主分析"
+    ],
+    "probe_submission": "not_submitted"
+  },
+  "source_and_candidate_refs": {
+    "runs/swegym_quality_batch02_20260921_v1/private/getmoto__moto-7584/grading.json": {
+      "path": "runs/swegym_quality_batch02_20260921_v1/private/getmoto__moto-7584/grading.json",
+      "sha256": "93e779c37c1c7ad4906e606592dca4d9ed5b51c3140bf122ef313b483cfec54c",
+      "bytes": 4126
+    },
+    "runs/swegym_quality_batch02_20260921_v1/public/getmoto__moto-7584/public_bundle.json": {
+      "path": "runs/swegym_quality_batch02_20260921_v1/public/getmoto__moto-7584/public_bundle.json",
+      "sha256": "3f8e76968c45fcd16bd3ffe132ab7ee891c645cfbc8467b16b2d2ea32ba7d586",
+      "bytes": 2771
+    },
+    "runs/swegym_quality_batch02_20260921_v1/private/getmoto__moto-7584/test.patch": {
+      "path": "runs/swegym_quality_batch02_20260921_v1/private/getmoto__moto-7584/test.patch",
+      "sha256": "5b1c7b7a6b655d9d226d72f899f76c761e41c4430c81b4c09e809e670500f99f",
+      "bytes": 2041
+    },
+    "rh2/experiments/category3_cloud_20260929/moto7584/revised_test_v3.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto7584/revised_test_v3.patch",
+      "sha256": "58875207adea3feddb71bb0b04bfd47423f0663ac79b9be54f402e815f144fd3",
+      "bytes": 4042
+    },
+    "runs/swegym_quality_batch02_20260921_v1/public/getmoto__moto-7584/base_identity.json": {
+      "path": "runs/swegym_quality_batch02_20260921_v1/public/getmoto__moto-7584/base_identity.json",
+      "sha256": "8db6e2b4806495e2d7c0c1ea432c1ef85834bbea56bfcc4dcd154ccee38ea487",
+      "bytes": 355
+    },
+    "runs/swegym_quality_batch02_20260921_v1/public/getmoto__moto-7584/base/tests/test_sns/test_application_boto3.py": {
+      "path": "runs/swegym_quality_batch02_20260921_v1/public/getmoto__moto-7584/base/tests/test_sns/test_application_boto3.py",
+      "sha256": "5bf39b9069d7d1dc291369528ea5afadd79bf8e24c567cdfc59bda35e0dbb964",
+      "bytes": 17305
+    },
+    "runs/swegym_quality_batch02_20260921_v1/private/getmoto__moto-7584/source_refs.json": {
+      "path": "runs/swegym_quality_batch02_20260921_v1/private/getmoto__moto-7584/source_refs.json",
+      "sha256": "be72d0f715cb6b35dc87ae9706872a57ffb16272a59bf29914b673e4a41734cb",
+      "bytes": 403
+    },
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-7584/revision_request.json": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-7584/revision_request.json",
+      "sha256": "386efb7e5e7416a95927fbc72e02b962ae70768ac81317fe3392db0c45255a44",
+      "bytes": 7078
+    },
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-7584/acceptance_matrix.json": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-7584/acceptance_matrix.json",
+      "sha256": "8704f116be2f30b00caefdb21780c49ab7a5b86a11e1351863d9579ad8dc1902",
+      "bytes": 5334
+    },
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-7584/card.md": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-7584/card.md",
+      "sha256": "ae5f713737f366d84eb8f6ff83056a1d7fd8c04bad3854ed83f27f273be265f1",
+      "bytes": 1447
+    },
+    "runs/swegym_quality_batch02_20260921_v1/private/getmoto__moto-7584/gold.patch": {
+      "path": "runs/swegym_quality_batch02_20260921_v1/private/getmoto__moto-7584/gold.patch",
+      "sha256": "4259577987a8f90d16046a73060c2d3f5b3c8a7d19ace77c2a7b1c6104e7bbea",
+      "bytes": 1091
+    },
+    "rh2/experiments/category3_cloud_20260929/moto7584/all_protocols.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto7584/all_protocols.patch",
+      "sha256": "a51c86d39c0a9bfaff103a3399a14a910950373d711fc35728e333f565c780a9",
+      "bytes": 722
+    },
+    "rh2/experiments/category3_cloud_20260929/moto7584/arn_form.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto7584/arn_form.patch",
+      "sha256": "0230ae299a252744699315536948fa6bcadadd3a505c3c9231b32ced1b8a5848",
+      "bytes": 787
+    },
+    "rh2/experiments/category3_cloud_20260929/moto7584/deleted_set.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto7584/deleted_set.patch",
+      "sha256": "d442b9c3a283ea666df456ab9e25d1a2ed7bfa2f396b8ea69f8c34e92d4b5ee5",
+      "bytes": 1085
+    },
+    "rh2/experiments/category3_cloud_20260929/moto7584/gold_order_stmtmsg.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto7584/gold_order_stmtmsg.patch",
+      "sha256": "280e6469c2689091ed6f1f0671cc13d4928aaf59dddb2091e8887c9c1f4090a9",
+      "bytes": 802
+    },
+    "rh2/experiments/category3_cloud_20260929/moto7584/reject_all_application.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto7584/reject_all_application.patch",
+      "sha256": "3cd3591bfd921faa6e7373afb0f45316380ef1a0ad27d2d689f28c453c248636",
+      "bytes": 672
+    },
+    "rh2/experiments/category3_cloud_20260929/moto7584/reject_all_arnmsg.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto7584/reject_all_arnmsg.patch",
+      "sha256": "6b03ee4913c2c2b3103d9eb2f69927c496d0fbc654f90bfbe06c11f6f9064a70",
+      "bytes": 675
+    },
+    "rh2/experiments/category3_cloud_20260929/moto7584/stmt.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto7584/stmt.patch",
+      "sha256": "65211e6203215ad6272d3718c12d8c27dfbdd16ecbd1280efb86a1b1638e319f",
+      "bytes": 785
+    },
+    "rh2/experiments/category3_cloud_20260929/moto7584/stmt_arnmsg.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto7584/stmt_arnmsg.patch",
+      "sha256": "08a85d529384eb538ad0584e3c34dccf722e94753c27d4b81577c6dd639017f8",
+      "bytes": 788
+    },
+    "rh2/experiments/category3_cloud_20260929/moto7584/wrong_code.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto7584/wrong_code.patch",
+      "sha256": "b2d691d4d2b07ab16ffde783a4ff393f20cebafa45c85eacac57db7d92bb0037",
+      "bytes": 553
+    }
+  },
+  "actual_image_preparation": {
+    "source": {
+      "ref": {
+        "path": "runs/category2_repair_20260929/moto_cpu_20261003/image7584_source_receipt.json",
+        "sha256": "3228275d95ec05765bbf9dd8c92eed3960461489b4f42692f52c600e97e18fe4",
+        "bytes": 765
+      },
+      "contents": {
+        "instance_id": "getmoto__moto-7584",
+        "requested_image": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7584@sha256:3b263c0c4745d890400b7beaf08c10b5413f86ae7983dd4bf14d93e43cd2fbf9",
+        "started_at_utc": "2026-10-02T17:35:18.223569+00:00",
+        "scope": "image_preparation_only",
+        "formal_cpu_accepted": false,
+        "pull_returncode": 0,
+        "actual_image_id": "sha256:437ec771611180d48f01985f1faaac352bae045c7f3db7c3582298b937252f5d",
+        "repo_digests": [
+          "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7584@sha256:3b263c0c4745d890400b7beaf08c10b5413f86ae7983dd4bf14d93e43cd2fbf9"
+        ],
+        "architecture": "amd64",
+        "os": "linux",
+        "size_bytes": 2844830242,
+        "layer_count": 13,
+        "manifest_digest_matches": true,
+        "finished_at_utc": "2026-10-02T17:35:49.302255+00:00"
+      }
+    },
+    "derived": {
+      "ref": {
+        "path": "runs/category2_repair_20260929/moto_cpu_20261003/image7584_derived_receipt.json",
+        "sha256": "d7f21a2e6802d2266fbd05722b34a502e8f10b5f6e0c945078b424a92c379b27",
+        "bytes": 1439
+      },
+      "contents": {
+        "instance_id": "getmoto__moto-7584",
+        "scope": "image_preparation_only",
+        "formal_cpu_accepted": false,
+        "started_at_utc": "2026-10-02T17:35:49.502860+00:00",
+        "returncode": 0,
+        "base_digest": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7584@sha256:3b263c0c4745d890400b7beaf08c10b5413f86ae7983dd4bf14d93e43cd2fbf9",
+        "base_id": "sha256:437ec771611180d48f01985f1faaac352bae045c7f3db7c3582298b937252f5d",
+        "derived_tag": "rh2-swe-moto-20261003/moto7584:733b8c560fdd",
+        "dockerfile_sha256": "352caaf2eae8dc6fdb3291e9afaf85281a0b0199d6b3ee091d9e3d3247d44993",
+        "wheel_manifest_sha256": "660fa7aa83d8c3cedeb5e188ef7a4de0621e6011a37be48958813a6c50425a55",
+        "wheels": [
+          {
+            "name": "packaging-24.1-py3-none-any.whl",
+            "sha256": "5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124",
+            "bytes": 53985
+          },
+          {
+            "name": "wheel-0.43.0-py3-none-any.whl",
+            "sha256": "55c570405f142630c6b9f72fe09d9b67cf1477fcf543ae5b8dcb1f5b7377da81",
+            "bytes": 65775
+          },
+          {
+            "name": "setuptools-72.1.0-py3-none-any.whl",
+            "sha256": "5a03e1860cf56bb6ef48ce186b0e557fdba433237481a9a625176c2831be15d1",
+            "bytes": 2337965
+          }
+        ],
+        "original_vendor_install": "make init",
+        "derived_id": "sha256:990e0e91a190f85426e6900828cf758c30f389c927f6c1d0cd1ed8c68b902f96",
+        "base_layers_preserved": true,
+        "offline_env_present": true,
+        "finished_at_utc": "2026-10-02T17:35:51.119622+00:00"
+      }
+    }
+  },
+  "independent_material_evidence": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-7584/card.md",
+      "sha256": "ae5f713737f366d84eb8f6ff83056a1d7fd8c04bad3854ed83f27f273be265f1",
+      "bytes": 1447
+    }
+  ],
+  "requested_consumer": "replace_test_patch_preserve_refs",
+  "public_change": false,
+  "formal_revised_cpu_accepted": false,
+  "required_delivery": [
+    "冻结producer／registry与有效public/env/grading/material身份",
+    "原参考不删不换；5960只追加明确F2P，35/96/20题保持原分区",
+    "固定原安装与完整选择器、恢复/保护集合和实际镜像/配方",
+    "在cpu-a部署读回与正式prepare入口",
+    "5960/6185实际collection、参数合键和参考绑定仍须题主CPU核验，不私改parser掩盖问题"
+  ],
+  "boundaries": [
+    "沿用已有审查，云端v3诊断不冒称正式CPU",
+    "gold或已知漏洞候选满分不等于合法正对照；以既定矩阵实际判断",
+    "gold、负对照和私有断言不进入solver"
+  ]
+}

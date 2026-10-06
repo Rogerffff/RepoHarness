@@ -1,0 +1,88 @@
+{
+  "schema": "dask8801_semantic_judge_provenance.v1",
+  "batch": "calibration_v3",
+  "scope": "独立语义裁决：只评判受信事实与可见异常诊断的文件定位和内容解释；不是 CPU 评分、候选源码验收或训练 reward 授权。",
+  "independent_judge": {
+    "material_author": false,
+    "fresh_subagent": true,
+    "parent_history_used": false,
+    "subagents_spawned": false
+  },
+  "read_files": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/semantic_judge_prompt_v3.txt",
+      "sha256": "9d49671b56ae155f9183d8a0280ff7e779959de2697cdf3887ba4f558f2c19c1"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/semantic_controls/judge_config_v3.json",
+      "sha256": "64dd5644ccc59364b0eeb19d653695be7a7d3c985882c648f4319b820e8a041f"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/semantic_controls/calibration_inputs_v3.json",
+      "sha256": "37377d98995c6f21d624d6404658299f659d11c673bc91f2de2f2c09e7ccb8a0"
+    }
+  ],
+  "actual_prompt_binding": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/semantic_judge_prompt_v3.txt",
+    "sha256": "9d49671b56ae155f9183d8a0280ff7e779959de2697cdf3887ba4f558f2c19c1",
+    "binding_source": "任务明确指定的实际 v3 文件路径与 SHA；整批保持同一固定 prompt。",
+    "config_prompt_path_is_stale": true,
+    "config_documented_prompt_path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/semantic_judge_prompt_v2.txt",
+    "config_documented_prompt_sha256": "9d49671b56ae155f9183d8a0280ff7e779959de2697cdf3887ba4f558f2c19c1",
+    "stale_path_note": "配置文档路径字段仍写 semantic_judge_prompt_v2.txt；实际只读取 semantic_judge_prompt_v3.txt，未读取 v2。该字段未被修改，指定 SHA 与实际 v3 文件一致。"
+  },
+  "actual_session_configuration": {
+    "model": "same_parent_session_inherited_no_override",
+    "reasoning_effort": "same_parent_session_inherited_no_override",
+    "context": "fresh_subagent_no_parent_history_requested",
+    "model_override_applied": false,
+    "reasoning_effort_override_applied": false,
+    "session_setting_changes_applied": false,
+    "exact_backend_model": "not_exposed",
+    "exact_backend_reasoning_effort": "not_exposed",
+    "backend_snapshot_verified": false,
+    "configuration_limit": "执行工具和 App API 不提供实际 backend 模型与 reasoning effort 的精确快照；本次继承会话配置且未施加覆盖，不宣称固定后端版本。"
+  },
+  "access_limits": {
+    "candidate_labels_read": false,
+    "expected_labels_or_private_bindings_read": false,
+    "candidate_source_or_patch_read": false,
+    "traceback_frames_or_hidden_context_read": false,
+    "other_reports_read": false,
+    "network_or_external_api_calls": false,
+    "external_paid_service_calls": false,
+    "diagnostic_instructions_executed": false,
+    "only_specified_input_materials_read": true
+  },
+  "method": "逐条基于该输入自身受信事实和可见 message、displayed_type、notes、可见原因链做模型语义裁决；不以重复次数或其他输入猜测标签。Python 仅负责按显式逐条裁决组装结果、检查 id 覆盖和引用、计算 SHA。",
+  "coverage": {
+    "input_count": 321,
+    "result_count": 321,
+    "unique_result_ids": 321,
+    "missing_ids": [],
+    "extra_ids": [],
+    "duplicates": []
+  },
+  "verdict_counts": {
+    "pass": 226,
+    "fail": 95,
+    "uncertain": 0
+  },
+  "validation": {
+    "schema_matches_prompt": true,
+    "six_fields_per_result": true,
+    "all_quoted_fragments_exist_in_same_input_visible_diagnostic": true,
+    "quoted_fragment_count": 631,
+    "input_hashes_match_task_binding": true
+  },
+  "output": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/semantic_controls/calibration_verdicts_v3.json",
+    "sha256": "67156f28db65ac02a65972ae19a069632f246ff204fb111548e9357757a022e7"
+  },
+  "training_reward_authorized": false,
+  "limitations": [
+    "本批独立语义裁决不证明未来所有措辞都能被正确判断。",
+    "未执行 CPU 测试或候选评分；不据此新增训练资格。",
+    "exact backend model/effort 不可见，不能提供超出 inherited/no_override 的模型配置可复现性保证。"
+  ]
+}

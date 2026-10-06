@@ -1,0 +1,525 @@
+{
+  "schema": "mypy_gpu_install_narrow_cpu_readback.v1",
+  "as_of": "2026-10-03",
+  "task_id": "swe_gym_lite::python__mypy-10174",
+  "author": "01a0fd63-1eba-7133-951d-7dd3475840a4",
+  "actual_job": "mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3",
+  "scope": "原GPU候选CPU窄重评分；非模型重解，非原矩阵重跑",
+  "status": "root_raw_readback_passed_pending_final_peer_reconciliation",
+  "binding_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/gpu_install_revalidation_20261003/binding_v2.json",
+  "binding_sha256": "6bbcb0ea7d151a92e19a86f6294d25a4e6d9c30e40b4efa620cf60d4b19147cd",
+  "worker_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/gpu_original_regrade.py",
+  "worker_sha256": "2dd00b90921ff0ff13e97237db2816ef5dc8d93d5ccdb7b2532a3fc063cb9a67",
+  "originals": [
+    {
+      "name": "frozen_patch.json",
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-mypy10174-qwen36-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "d72699b958fc0f688d5e6c4d4fd5e93006bd18c4a4ea86a2f76c998a4bbeae07",
+      "bytes": 3717637
+    },
+    {
+      "name": "baseline_manifest.json",
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-mypy10174-qwen36-a1/attempt/frozen/baseline_manifest.json",
+      "sha256": "5fab6a0f7932073ac2f47d0c69e950c8e0e64949c4d043da4227918395b2a958",
+      "bytes": 352300
+    },
+    {
+      "name": "baseline.tar",
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-mypy10174-qwen36-a1/attempt/frozen/baseline.tar",
+      "sha256": "714753b01aff10c04468da922f8e9e6bccb3e02223de96209cd9f532d7688437",
+      "bytes": 14807040
+    },
+    {
+      "name": "projection.json",
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-mypy10174-qwen36-a1/grading/projection.json",
+      "sha256": "8d61762ccbf5de9a0a3667d7e1cac48cd81d686b0246298843118d4133f8c77d",
+      "bytes": 2430
+    },
+    {
+      "name": "prepared_manifest.json",
+      "path": "runs/ordinary_gpu_probe_20261002/remote/prepared_swe_four_v1/mypy10174/prepared/prepared_manifest.json",
+      "sha256": "54ddb36d25290e1daa12a0dfc8e5f58e71ce3b6c3ce8af9f14ca0c5831aa0ffe",
+      "bytes": 918
+    }
+  ],
+  "canonical_frozen_patch_digest": "sha256:5772af211384a9828c83dd61c60c96a6447475e34c4b2bfb891f584ac4304664",
+  "canonical_baseline_digest": "sha256:337be5fc6ed9a5013249a17bcfb9e48cf7dce2aa3ca27cb4b8b9fd9f0efb7172",
+  "old_gpu_image": "sha256:32f313c82fd4f065517b8fd1faff22b79a8c1c8e108200c85c8de8188191baad",
+  "actual_cpu_image": "sha256:9d63f1ddcbd277fa62d49e10d800908cfec54544e890fc5fe741d2101ca8eb7e",
+  "baseline": {
+    "entries": 1472,
+    "full_rows_equal": true,
+    "excluded_paths_count": 24,
+    "excluded_census_digest": "sha256:c2ec9029875c58f17b227cfd5499c1d9133ae529c952c0fcecaad5934a368e62",
+    "omitted_cache_counts": {
+      "CACHE_OMITTED_DIRS": 1,
+      "CACHE_OMITTED_FILES": 3
+    }
+  },
+  "projection": {
+    "byte_identity_equal": true,
+    "paths": 50,
+    "cache_paths": 49,
+    "test_modification_excluded": true
+  },
+  "prepared": {
+    "old_sha256": "54ddb36d25290e1daa12a0dfc8e5f58e71ce3b6c3ce8af9f14ca0c5831aa0ffe",
+    "fresh_sha256": "9712a5c400a73c731a02d6fd8c314f90212706a6ed0231404c92bb7819309831",
+    "only_changed_field": [
+      "prepared_at_utc"
+    ],
+    "old_timestamp": "2026-10-02T18:25:52.104300Z",
+    "fresh_timestamp": "2026-10-03T00:38:47.786292Z",
+    "members_and_private_exact_identity": true
+  },
+  "scripts_digest": "sha256:f111e77dbc1a70b7d469cdb656034aa59c701e9ead3b2ef31e7fa0bd3a45d4ed",
+  "grading_materials_identity": "sha256:dca86b80c83f2e2e9c4eee8c4375952adef834008ad4cb7006ac60abeca58065",
+  "preinstall_steps": [
+    {
+      "index": 1,
+      "command": "python -m pip install -r test-requirements.txt",
+      "exit_code": 0,
+      "ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/install_step_1.json"
+    },
+    {
+      "index": 2,
+      "command": "python -m pip install -e .",
+      "exit_code": 0,
+      "ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/install_step_2.json"
+    },
+    {
+      "index": 3,
+      "command": "pip install pytest pytest-xdist",
+      "exit_code": 0,
+      "ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/install_step_3.json"
+    }
+  ],
+  "official_install": {
+    "candidate_exec_exit_code": 0,
+    "candidate_segment_completed": true,
+    "install_failed_commands": [],
+    "install_rc_last_command": 0,
+    "install_seconds": 6.194,
+    "install_skipped": false,
+    "log_partial": false,
+    "markers_seen": [
+      "RH2_INSTALL_RC",
+      "RH2_TEST_RC",
+      "RH2_TS_INSTALL_END",
+      "RH2_TS_INSTALL_START",
+      "RH2_TS_TEST_END",
+      "RH2_TS_TEST_START"
+    ],
+    "test_rc": 0,
+    "test_seconds": 3.384
+  },
+  "references": [
+    {
+      "reference": "mypy/test/testcheck.py::TypeCheckSuite::testOverlappingAnyTypeWithoutStrictOptional",
+      "status": "PASSED"
+    },
+    {
+      "reference": "mypy/test/testcheck.py::TypeCheckSuite::testUnimportedHintAnyLower",
+      "status": "PASSED"
+    },
+    {
+      "reference": "mypy/test/testcheck.py::TypeCheckSuite::testUnimportedHintAny",
+      "status": "PASSED"
+    },
+    {
+      "reference": "mypy/test/testcheck.py::TypeCheckSuite::testStrictEqualityWithFixedLengthTupleInCheckWithoutStrictOptional",
+      "status": "PASSED"
+    }
+  ],
+  "reward": 1,
+  "report_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/report.json",
+  "diagnostics_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/eval_logs/evallog_mypy10174-gpu-original-r_218c88d8.diagnostics.json",
+  "eval_log": {
+    "ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/eval_logs/evallog_mypy10174-gpu-original-r_218c88d8.eval.log",
+    "sha256": "6361be301a3e3d50c92e42024b64c654b363c31e9a35c2eb9f9fa2be670a8d29",
+    "bytes": 28740
+  },
+  "source_probes": {
+    "uid": 54322,
+    "gid": 54322,
+    "modules": {
+      "mypy": {
+        "file": "/testbed/mypy/__init__.py",
+        "loader": "SourceFileLoader",
+        "sha256": "e32a78dea340659d15881a559f9e8173b300e07d943177b459354f7643833fa9"
+      },
+      "mypy.build": {
+        "file": "/testbed/mypy/build.py",
+        "loader": "SourceFileLoader",
+        "sha256": "24b5aa12e8f65e38f386af201f7cb4aaa4844e9dcbdd409048b6dea6dd938f4e"
+      },
+      "mypy.checkexpr": {
+        "file": "/testbed/mypy/checkexpr.py",
+        "loader": "SourceFileLoader",
+        "sha256": "7489e688d1168dfde2c522a0cc70ccaf52c744f3f80940f081e2dd2217b76321"
+      },
+      "mypy.meet": {
+        "file": "/testbed/mypy/meet.py",
+        "loader": "SourceFileLoader",
+        "sha256": "fda3ae751b225a484400198ff560bbaab9ec56d0dc5f54e3b2846a85c103a0a7"
+      }
+    },
+    "three_stages_modules_equal": true,
+    "three_stages_wheels_equal": true,
+    "wheels": [
+      {
+        "bytes": 53985,
+        "gid": 0,
+        "mode": "0o644",
+        "name": "packaging-24.1-py3-none-any.whl",
+        "sha256": "5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124",
+        "uid": 0
+      },
+      {
+        "bytes": 1248506,
+        "gid": 0,
+        "mode": "0o644",
+        "name": "setuptools-75.1.0-py3-none-any.whl",
+        "sha256": "35ab7fd3bcd95e6b7fd704e4a1539513edad446c097797f2985e0e4b960772f2",
+        "uid": 0
+      },
+      {
+        "bytes": 67059,
+        "gid": 0,
+        "mode": "0o644",
+        "name": "wheel-0.44.0-py3-none-any.whl",
+        "sha256": "2376a90c98cc337d18623527a97c31797bd02bad0033d41547043a1cbfbe448f",
+        "uid": 0
+      }
+    ],
+    "editable_metadata": [
+      {
+        "direct_url": "{\"dir_info\": {\"editable\": true}, \"url\": \"file:///testbed\"}",
+        "direct_url_sha256": "de2b6e0a1ac8d8f84fbdd1ce6de99a1e5fcb79e0addc7679266ebf7967f6bc9a",
+        "metadata_sha256": "7a8616acf4fe9884678b43a8369e02b3a42427d68411571b4d0358588dcaadb6",
+        "path": "/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/mypy-0.820+dev.c8bae06919674b9846e3ff864b0a44592db888eb.dirty.dist-info"
+      }
+    ],
+    "metadata_already_existed_before_preinstall": true
+  },
+  "runner_sha256": "2f4655b6933a219bb88c823bdc724ed84e84c89a2a23b39c1f399cb1da2b61c4",
+  "trusted_setup": {
+    "RH2_SETUP_ABSENT_TEST_FILES": "0",
+    "RH2_SETUP_APPLY_RC": "0",
+    "RH2_SETUP_EXPECTED_TEST_FILES": "1",
+    "RH2_SETUP_IRREGULAR_TEST_FILES": "",
+    "RH2_SETUP_OK": "1",
+    "RH2_SETUP_RESTORED": "1",
+    "RH2_SETUP_TEST_FILES": "1"
+  },
+  "wrapper_rc": 0,
+  "slot": 0,
+  "slot_rc": 0,
+  "cleanup": {
+    "prepare_cancelled": 0,
+    "containers_removed": [],
+    "containers_open": [],
+    "supply_open": [],
+    "cleanup_failures": [],
+    "regrade_events": 0,
+    "regrade_total": 0,
+    "regrade_declined": 0,
+    "containers_created_total": 1,
+    "containers_removed_total": 1,
+    "container_history_retained": 1,
+    "leases_total": 1
+  },
+  "attempts": [
+    {
+      "round": 1,
+      "job": "mypy10174-gpu-original-regrade-r1-20261002T233957Z-086f5b",
+      "wrapper_rc": 75,
+      "candidate_scoring_ran": false,
+      "status": "slot_busy",
+      "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r1-20261002T233957Z-086f5b/launch/receipt.json"
+    },
+    {
+      "round": 2,
+      "job": "mypy10174-gpu-original-regrade-r2-20261002T234409Z-d4fdea",
+      "wrapper_rc": 75,
+      "candidate_scoring_ran": false,
+      "status": "slot_busy",
+      "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r2-20261002T234409Z-d4fdea/launch/receipt.json"
+    },
+    {
+      "round": 3,
+      "job": "mypy10174-gpu-original-regrade-r3-20261002T235343Z-c0d3fd",
+      "wrapper_rc": 1,
+      "candidate_scoring_ran": false,
+      "status": "prepare_timestamp_assertion",
+      "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r3-20261002T235343Z-c0d3fd/launch/receipt.json"
+    },
+    {
+      "round": 4,
+      "job": "mypy10174-gpu-original-regrade-r4-20261002T235603Z-a2a8f9",
+      "wrapper_rc": 75,
+      "candidate_scoring_ran": false,
+      "status": "slot_busy",
+      "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r4-20261002T235603Z-a2a8f9/launch/receipt.json"
+    },
+    {
+      "round": 5,
+      "job": "mypy10174-gpu-original-regrade-r5-20261002T235826Z-a7beb8",
+      "wrapper_rc": 75,
+      "candidate_scoring_ran": false,
+      "status": "slot_busy",
+      "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r5-20261002T235826Z-a7beb8/launch/receipt.json"
+    },
+    {
+      "round": 6,
+      "job": "mypy10174-gpu-original-regrade-r6-20261003T000159Z-5a26d7",
+      "wrapper_rc": 75,
+      "candidate_scoring_ran": false,
+      "status": "slot_busy",
+      "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r6-20261003T000159Z-5a26d7/launch/receipt.json"
+    },
+    {
+      "round": 7,
+      "job": "mypy10174-gpu-original-regrade-r7-20261003T000554Z-60f384",
+      "wrapper_rc": 75,
+      "candidate_scoring_ran": false,
+      "status": "slot_busy",
+      "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r7-20261003T000554Z-60f384/launch/receipt.json"
+    },
+    {
+      "round": 8,
+      "job": "mypy10174-gpu-original-regrade-r8-20261003T000817Z-cca2a8",
+      "wrapper_rc": 1,
+      "candidate_scoring_ran": false,
+      "status": "owner_metadata_null_error",
+      "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r8-20261003T000817Z-cca2a8/launch/receipt.json"
+    },
+    {
+      "round": 9,
+      "job": "mypy10174-gpu-original-regrade-r9-20261003T001303Z-3787b9",
+      "wrapper_rc": 75,
+      "candidate_scoring_ran": false,
+      "status": "slot_busy",
+      "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r9-20261003T001303Z-3787b9/launch/receipt.json"
+    },
+    {
+      "round": 10,
+      "job": "mypy10174-gpu-original-regrade-r10-20261003T001657Z-1dac88",
+      "wrapper_rc": 75,
+      "candidate_scoring_ran": false,
+      "status": "slot_busy",
+      "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r10-20261003T001657Z-1dac88/launch/receipt.json"
+    },
+    {
+      "round": 11,
+      "job": "mypy10174-gpu-original-regrade-r11-20261003T001933Z-82839b",
+      "wrapper_rc": 75,
+      "candidate_scoring_ran": false,
+      "status": "slot_busy",
+      "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r11-20261003T001933Z-82839b/launch/receipt.json"
+    },
+    {
+      "round": 12,
+      "job": "mypy10174-gpu-original-regrade-r12-20261003T002323Z-6d5788",
+      "wrapper_rc": 75,
+      "candidate_scoring_ran": false,
+      "status": "slot_busy",
+      "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r12-20261003T002323Z-6d5788/launch/receipt.json"
+    },
+    {
+      "round": 13,
+      "job": "mypy10174-gpu-original-regrade-r13-20261003T002448Z-557786",
+      "wrapper_rc": 75,
+      "candidate_scoring_ran": false,
+      "status": "slot_busy",
+      "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r13-20261003T002448Z-557786/launch/receipt.json"
+    },
+    {
+      "round": 14,
+      "job": "mypy10174-gpu-original-regrade-r14-20261003T002800Z-8082f6",
+      "wrapper_rc": 75,
+      "candidate_scoring_ran": false,
+      "status": "slot_busy",
+      "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r14-20261003T002800Z-8082f6/launch/receipt.json"
+    },
+    {
+      "round": 15,
+      "job": "mypy10174-gpu-original-regrade-r15-20261003T003159Z-762691",
+      "wrapper_rc": 1,
+      "candidate_scoring_ran": false,
+      "status": "owner_metadata_finder_error",
+      "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r15-20261003T003159Z-762691/launch/receipt.json"
+    },
+    {
+      "round": 16,
+      "job": "mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3",
+      "wrapper_rc": 0,
+      "candidate_scoring_ran": true,
+      "status": "formal_regrade_completed",
+      "receipt_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/launch/receipt.json"
+    }
+  ],
+  "busy_attempts": 12,
+  "owner_failed_attempts": [
+    3,
+    8,
+    15
+  ],
+  "false_r13_notice_correction_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/gpu_install_revalidation_20261003/incorrect_admission_notice_and_correction.json",
+  "incident_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-10174/owner_regrade_incidents_20261003.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-10174/owner_regrade_incident_clarification_20261003.json"
+  ],
+  "evidence_archive": {
+    "ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3.evidence.tgz",
+    "sha256": "e99e28b328b77da775c1271e270a6fb1633fd4a2fea2cb298e52086af506fb19",
+    "bytes": 84502,
+    "members_verified": 27
+  },
+  "raw_file_inventory": [
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/baseline_rebuild_census.txt",
+      "sha256": "67c508e55dd3aa024a3e1f1c9c2f5e5e09b370ea02757740724344978a19bcf7",
+      "bytes": 172674
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/candidate_after_formal_tests.exec.json",
+      "sha256": "edb6899abe2840f569f6217c3e2c74bbe67566142cec4de7269b19c26bbc8440",
+      "bytes": 2179
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/candidate_after_formal_tests.json",
+      "sha256": "170595489eac00c09f3c089744f9da83f83c8f45b33f624373131bb7b742f7c5",
+      "bytes": 2271
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/candidate_after_install.exec.json",
+      "sha256": "edb6899abe2840f569f6217c3e2c74bbe67566142cec4de7269b19c26bbc8440",
+      "bytes": 2179
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/candidate_after_install.json",
+      "sha256": "170595489eac00c09f3c089744f9da83f83c8f45b33f624373131bb7b742f7c5",
+      "bytes": 2271
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/candidate_before_install.exec.json",
+      "sha256": "edb6899abe2840f569f6217c3e2c74bbe67566142cec4de7269b19c26bbc8440",
+      "bytes": 2179
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/candidate_before_install.json",
+      "sha256": "170595489eac00c09f3c089744f9da83f83c8f45b33f624373131bb7b742f7c5",
+      "bytes": 2271
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/eval_logs/evallog_mypy10174-gpu-original-r_218c88d8.diagnostics.json",
+      "sha256": "fa7567d35a777f4f8013e8c82b4e7e55e8934e7f62d7049c4bdb2a9aa1304874",
+      "bytes": 5881
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/eval_logs/evallog_mypy10174-gpu-original-r_218c88d8.eval.log",
+      "sha256": "6361be301a3e3d50c92e42024b64c654b363c31e9a35c2eb9f9fa2be670a8d29",
+      "bytes": 28740
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/install_step_1.json",
+      "sha256": "58c92216a8ec3d2c56117c2ec2878f21e643a0f0aa5a92ebd30d758889c9d77e",
+      "bytes": 5718
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/install_step_2.json",
+      "sha256": "4627ea85c7adc68be8f72a6e3ba7702bc0826350b85bf3192d5af846c76ff847",
+      "bytes": 2819
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/install_step_3.json",
+      "sha256": "bd30d6b9a62a255154b25eee238d80fc8e503944c50027e94533a728f7558361",
+      "bytes": 1523
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/prepared/prepared_manifest.json",
+      "sha256": "9712a5c400a73c731a02d6fd8c314f90212706a6ed0231404c92bb7819309831",
+      "bytes": 918
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/prepared/prompts.jsonl",
+      "sha256": "568c6a2a38530a94f23f2fa6aa8fdc63d12a83d69a40ccc9049976251c1318c4",
+      "bytes": 902
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/prepared/replay_summary.json",
+      "sha256": "c276f523c2098b12825328e28e01cc1a20476ec2192d413cf4335ece320456d3",
+      "bytes": 542
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/prepared/rollout_task_views.jsonl",
+      "sha256": "e8271cd66d4ee280c1b508f6672cbf8e1bfea27646778b352774c1167e444318",
+      "bytes": 2030
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/private/host_grading_views.jsonl",
+      "sha256": "a9e4d375a3f127a53944f92b4badb48d9a1834e5bd455ac36ff8416ea61f5ea8",
+      "bytes": 4197
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/projection.json",
+      "sha256": "8d61762ccbf5de9a0a3667d7e1cac48cd81d686b0246298843118d4133f8c77d",
+      "bytes": 2430
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/regrade_state.json",
+      "sha256": "2d5d775b16764cbcc3436a41753077a4864ff62d80e11488f14dd2eecc3a8bf2",
+      "bytes": 7056
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/report.json",
+      "sha256": "4a88bcec9c5bdf8f69cd9d059eff8944c29e111488cc68dffc77dcf49d6c5c7e",
+      "bytes": 1872
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/launch/py",
+      "sha256": "b7a8632db53ad6c1c7d8eeead0eddc5f4ad76187f9620ea39c07ec75b373da8b",
+      "bytes": 901
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/launch/receipt.json",
+      "sha256": "e398bbb14e963f0ccc60fc6be89258f0b91b8ced8d091fe7572422f1937802bc",
+      "bytes": 61
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/launch/stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/launch/stdout",
+      "sha256": "1b4b72e2fa7f8cc47746800fd99fc4db9767badaad71baea6dec2a218ecad71b",
+      "bytes": 102
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/slot/status.json",
+      "sha256": "f57e9164b9d0a58fa73e69ce568f57472742f1e4c34ecc77d20f67c3f64dfeb5",
+      "bytes": 771
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/slot/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/slot/stdout.log",
+      "sha256": "2579c7a10e50508aac779cc624c76d3e9c1b5778083afc177a98cc6d34c53193",
+      "bytes": 117
+    }
+  ],
+  "limits": [
+    "三条安装命令先单独运行，再由未改正式脚本重复，属于预热条件。",
+    "模块probe为独立Python进程，不是pytest内部加载跟踪；不追溯证明旧GPU实际加载。",
+    "site-packages editable元数据在前置安装前已存在；成功安装依据真实RC和pip build/install日志。",
+    "resource_facts为null、env_qualification为absent，包版本观测为?；未新增HostConfig实测。",
+    "R6 manager与GPU逐字相同，三个兼容消费者有差异；本题材料与脚本一致。",
+    "CPU新镜像可读不证明GPU新镜像已修；GPU实际checkpoint读回缺口另交执行者。",
+    "旧raw1、原FP/runtime、旧验收、请求和历史异常均未改写；不增加训练或留出资格。"
+  ]
+}

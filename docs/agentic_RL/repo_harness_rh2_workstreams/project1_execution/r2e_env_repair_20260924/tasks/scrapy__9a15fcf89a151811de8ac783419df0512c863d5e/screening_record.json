@@ -1,0 +1,315 @@
+{
+ "schema_id": "rh2.r2e_screening_record.v1",
+ "task_id": "r2e_gym_subset::scrapy__9a15fcf89a151811de8ac783419df0512c863d5e",
+ "instance_id": "scrapy__9a15fcf89a151811de8ac783419df0512c863d5e",
+ "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0",
+ "source_adapter_ref": "s2_r2e ingest_manifest_v0 (pin ea567fec…)",
+ "recipe_ref": {
+  "derived_image": "r2e_derive_v1",
+  "resources": "default"
+ },
+ "code_snapshot_ref": "runs/r2e_snapshot_20260923.sha256 (388 files) + r2e_env_tools.sha256（远端 run_dev_probe.py / dev_probe_agent.sh sha 与本地一致）",
+ "facts_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/facts.json",
+ "dev_probe_ref": "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/dev_probe.json",
+ "checks": {
+  "R01": {
+   "status": "pass",
+   "note": "派生镜像 21 项复核通过；覆盖表 / 隐藏测试树 / 入口脚本 / HEAD 与评分面一致；探针复核：容器镜像 = 派生镜像 sha256:fe908bed0003…，GIT_HEAD = base_commit 3fc4e0b319fc",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/facts.json",
+    "runs/r2e_rf_20260923/remote/r2e_derived/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/facts.json",
+    "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/dev_probe.json"
+   ],
+   "by": "collate_facts.py + P4 探针复核"
+  },
+  "R02": {
+   "status": "pass",
+   "note": "noop 0 来自 1 个 mismatched 键（无 missing、无零解析）（num_parsed_tests=7）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-s_49e74388.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-s_49e74388.diagnostics.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R03": {
+   "status": "pass",
+   "note": "题面 988 字符、示例可直接运行（responsetypes.from_content_type(str)），公开复现在 base 上复现（返回 Response）。conda 提示为全局 E09；install.sh 无修复内容。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/prepared_r2e/prompts.jsonl",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e.py",
+    "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p4/image_readout/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e.txt"
+   ],
+   "by": "P4 sub-agent"
+  },
+  "R04": {
+   "status": "pass",
+   "note": "hygiene test_files = r2e_tests/{__init__.py, test_1.py} + run_tests.sh（rh2/src/repoharness2/adapters/slime/r2e_grading_scripts.py 的 official 文件清单；日志 RH2_SETUP_EXPECTED_TEST_FILES=3）；gold 触碰 ['scrapy/responsetypes.py']，都是库源码、与之不相交；解题不需要改 r2e_tests 以外的测试辅助文件。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/facts.json",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_798f95c6.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_798f95c6.diagnostics.json",
+    "rh2/src/repoharness2/adapters/slime/r2e_grading_scripts.py"
+   ],
+   "by": "P4 sub-agent"
+  },
+  "R05": {
+   "status": "pass",
+   "note": "python → /testbed/.venv/bin/python 3.9.21 /testbed/.venv /opt/py/cpython-3.9.21-linux-x86_64-gnu（PATH 首项 /testbed/.venv/bin）；pytest 8.3.4；pip 缺失（PIP_VERSION=“/testbed/.venv/bin/python: No module named pip”，原始日志 WHICH_pip / pip3 / uv = MISSING；注意 dev_probe.json 的 derived.pip_ok=true 是工具误判，见包 README）；导入方式 editable finder，cwd=/testbed 与 cwd=/tmp 都导入 /testbed/scrapy/__init__.py；gcc / make / git 在（原始日志 WHICH_*）。Scrapy 1.1.0dev1 在镜像依赖（Twisted 24.11、新版 zope.interface）下 HTTP 下载处理器加载失败（`cannot import name 'implements' from 'zope.interface'` 等），依赖 mockserver 抓取的公开测试恒失败（tests/test_closespider.py 4/4 failed）；本题目标路径（responsetypes）不经过下载器，不受影响。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log",
+    "runs/r2e_env_repair_20260924/p4/image_readout/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e.txt"
+   ],
+   "by": "run_dev_probe.py + P4 sub-agent"
+  },
+  "R06": {
+   "status": "issue",
+   "note": "期望 2 个 FAILED 键 ResponseTypesTest.test_from_args / test_from_headers：gold 与 noop 原因行都是 from_content_type 里 `TypeError: a bytes-like object is required, not 'str'`（Headers 值在 py3 是 bytes，代码用 str 切分）→ 上游该提交在 Python 3 下本就失败（py3 移植未完成）。不涉及资产 / 网络；但这两个键能被合法源码改动翻成 PASSED：P4 实测候选“gold + from_content_type / from_content_disposition 先把 bytes 解码”→ 隐藏测试 7/7 PASSED、reward 0（mismatched 恰为这两个键）。公开 tests/test_responsetypes.py 在 base 上同样 2 例失败，求解者看得到 → 顺手修掉会被判 0。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_798f95c6.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-s_49e74388.eval.log",
+    "runs/r2e_env_repair_20260924/p4/targeted_public_tests/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log",
+    "runs/r2e_env_repair_20260924/p4/targeted2_cmds/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log"
+   ],
+   "by": "P4 sub-agent"
+  },
+  "R07": {
+   "status": "pass",
+   "note": "派生镜像 facts：agent / grader uid 解释器可执行、私有目录 ls / cat 均 denied；探针（agent/54321，chown 后）：/testbed=ok、site-packages=ok、.venv/bin=ok、home=ok、/tmp=ok、/usr/local=denied（site-packages 在 /testbed/.venv 内，chown 后 agent 可写——反作弊面另议）。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/facts.json",
+    "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/dev_probe.json"
+   ],
+   "by": "collate_facts.py + run_dev_probe.py + P4 sub-agent"
+  },
+  "R08": {
+   "status": "pass",
+   "note": "导入 /testbed/scrapy/__init__.py；gold 7/7",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_798f95c6.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_798f95c6.diagnostics.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R09": {
+   "status": "pass",
+   "note": "探针公开文件 tests/test_closespider.py collect rc 0、run rc 1（Twisted 不兼容，见 R05，与本题无关）；相关文件 tests/test_responsetypes.py 5 passed / 2 failed（同 R06 两例）；公开复现 REPRO_OBSERVED=1（str → Response；bytes → TypeError）。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p4/targeted_public_tests/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e.py",
+    "runs/r2e_env_repair_20260924/p4/targeted2_cmds/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log"
+   ],
+   "by": "run_dev_probe.py + P4 sub-agent"
+  },
+  "R10": {
+   "status": "pass",
+   "note": "NET_CONNECT_RC=1、NET_DNS_RC=2（无出网；评分容器同为 --network none）；期望非 PASSED 键无一与网络有关；解题 / 测试不需要下载。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/dev_probe.json",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_798f95c6.eval.log"
+   ],
+   "by": "run_dev_probe.py + P4 sub-agent"
+  },
+  "R11": {
+   "status": "pass",
+   "note": "不依赖外部服务；非 PASSED 键（若有）原因见 R06，均非服务不可达。scrapy 测试的 mockserver 在 loopback。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_798f95c6.eval.log"
+   ],
+   "by": "P4 sub-agent"
+  },
+  "R12": {
+   "status": "pass",
+   "note": "峰值 205 MB / 限额 4 GiB = 0.05; setup 14s test 1s；探针 chown -R /testbed 18.14 s（与其它包、中央复跑并行，耗时不作校准，E08）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_798f95c6.diagnostics.json",
+    "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/root_init.log"
+   ],
+   "by": "collate_facts.py + run_dev_probe.py + P4 sub-agent"
+  },
+  "R13": {
+   "status": "pass",
+   "note": "noop: noop 同条件 2 次 reward 与差异集合一致; gold: gold 同条件 2 次 reward 与差异集合一致",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_14d83f49.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_92f27267.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_798f95c6.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-s_49e74388.eval.log"
+   ],
+   "by": "collate_facts.py（中央复跑并入）"
+  },
+  "R14": {
+   "status": "pass",
+   "note": "每次评分都是 fresh 容器（replay_grade）；omitted_cache_count：0；探针与定向运行前后 git status 行数 2→2（复现脚本与公开测试未弄脏工作区）；并发只记录：本轮 4 包 + 中央复跑并行。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl",
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl",
+    "runs/r2e_env_repair_20260924/p4/image_readout/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e.txt",
+    "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p4/targeted_public_tests/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log"
+   ],
+   "by": "P4 sub-agent"
+  },
+  "R15": {
+   "status": "pass",
+   "note": "2 行 agree（reward、差异集合、观测映射逐键相同）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.json",
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.md"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R16": {
+   "status": "pass",
+   "note": "目标键 1：ResponseTypesTest.test_from_content_type（noop 原因 AssertionError：x-json → Response ≠ TextResponse）与题面一致；gold 后无残留不符键。注意：R06 两个 FAILED 键是“必须保持失败”的键，见 R06。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-s_49e74388.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_798f95c6.eval.log",
+    "runs/r2e_rf_20260923/remote/prepared_r2e/prompts.jsonl"
+   ],
+   "by": "collate_facts.py + P4 sub-agent"
+  },
+  "R17": {
+   "status": "pass",
+   "note": "派生镜像：fix_present=no、私有目录 700 root、HEAD 无子提交；探针：GIT_HEAD_CHILDREN_WORDS=1、refs=0、reflog=0、stash=0、remotes=“”、无 *.orig/*.rej/*.patch/*.diff 残留；`?? install.sh` 是通用安装脚本（uv venv + uv pip install，全文见 image_readout），不含修复；run_tests.sh 只泄漏隐藏目录名与入口命令。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/facts.json",
+    "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p4/image_readout/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e.txt"
+   ],
+   "by": "run_dev_probe.py + P4 sub-agent"
+  },
+  "R18": {
+   "status": "pass",
+   "note": "本题记录的处置类别：material、solver_condition；材料修订只出提案，未改 expected / 隐藏测试 / gold / 题面；无资源配方。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/packages/p4/README.md"
+   ],
+   "by": "P4 sub-agent"
+  },
+  "R19": {
+   "status": "pass",
+   "note": "命令与证据：探针 unit r2e-p4-probe-1825（run_dev_probe.py --activation none --repro-dir）、定向公开测试 r2e-p4-probe-1832、跟进 r2e-p4-probe-1841、over-fix 复跑 r2e-p4-rerun-1848（run_id r2e-envrepair-p4-overfix）；R-f 账本 run_id r2e-rf-all-noop / r2e-rf-all-gold；复现脚本 sha 见 repros.sha256。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/probe_1825.log",
+    "runs/r2e_env_repair_20260924/p4/targeted_1832.log",
+    "runs/r2e_env_repair_20260924/p4/followup_1841.log",
+    "runs/r2e_env_repair_20260924/p4/repros.sha256",
+    "runs/r2e_env_repair_20260924/p4/rerun_overfix_1848.log",
+    "runs/r2e_env_repair_20260924/p4/ledger_overfix.jsonl"
+   ],
+   "by": "P4 sub-agent"
+  },
+  "R20": {
+   "status": "pass",
+   "note": "无资源配方；提案只针对本题。同族现象（pytest.warns(None) 死键、入口 -W ignore 死键、Scrapy 1.1 与 Twisted 不兼容、venv 无 pip）按题记录，同仓不同版本不自动继承。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/packages/p4/README.md"
+   ],
+   "by": "P4 sub-agent"
+  }
+ },
+ "issues": [
+  {
+   "category": "material",
+   "scope": "task",
+   "summary": "期望 FAILED 键 test_from_args / test_from_headers 可被更完整的 py3 修复翻成 PASSED → 正确且更完整的解被判 0（已实测：候选 7/7 PASSED、reward 0）",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/ledger_overfix.jsonl",
+    "runs/r2e_env_repair_20260924/p4/eval_logs/evallog_replay-r2e-envrepair-p4-_1acaf88b.eval.log",
+    "runs/r2e_env_repair_20260924/p4/eval_logs/evallog_replay-r2e-envrepair-p4-_1acaf88b.diagnostics.json",
+    "runs/r2e_env_repair_20260924/p4/overfix/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e.diff",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_798f95c6.eval.log",
+    "runs/r2e_env_repair_20260924/p4/targeted_public_tests/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log"
+   ],
+   "proposed_action": "材料修订提案（T0）：docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e.md",
+   "status": "open",
+   "deferred_to": "题意与评分质量筛查（用户 09-24 晚决定）"
+  },
+  {
+   "category": "solver_condition",
+   "scope": "repo:scrapy",
+   "summary": "venv 无 pip（install.sh 用 `uv venv` + `uv pip`；`python -m pip` → No module named pip；pip / pip3 / uv 均不在 PATH），而公开提示写“`python`, `pip` and the repo's test tools already point at it”（另有 conda 措辞，全局 E09）",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log",
+    "runs/r2e_env_repair_20260924/p4/image_readout/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e.txt",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl"
+   ],
+   "proposed_action": "任务面 / 系统提示声明“无 pip、无网络、不需要安装依赖”（与 E09 conda 措辞一并修）；本题解题不需要装包",
+   "status": "open"
+  },
+  {
+   "category": "solver_condition",
+   "scope": "repo:scrapy@1.1.0dev1（9a15fcf8 / cfed9b66 / e9387529）",
+   "summary": "Scrapy 1.1.0dev1 与镜像内 Twisted 24.11 / zope.interface 不兼容：HTTP 下载处理器加载失败，抓取类公开测试恒失败（与本题无关）",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/targeted2_cmds/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log",
+    "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log"
+   ],
+   "proposed_action": "写入 solver_conditions；不改依赖（会改变评分环境）",
+   "status": "open"
+  }
+ ],
+ "solver_conditions": {
+  "cwd_required": "none（cwd=/tmp 也导入 /testbed 下的包）",
+  "interpreter": "/testbed/.venv/bin/python 3.9.21（PATH 首项；docker exec 继承镜像 ENV）",
+  "pip": "absent（uv venv；pip / pip3 / uv 均不可用）",
+  "network": "none（NET_CONNECT_RC=1、DNS 失败）；loopback 可用",
+  "public_tests": "tests/test_closespider.py：collect rc 0 / run rc 1（4/4 失败：Twisted / zope.interface 不兼容）；tests/test_responsetypes.py：2 failed（py3 bytes，预存）/ 5 passed",
+  "repro": "REPRO_OBSERVED=1（FROM_CONTENT_TYPE_STR=scrapy.http.response.Response；FROM_CONTENT_TYPE_BYTES=raised TypeError）",
+  "notes": "Scrapy 1.1.0dev1（2015 年代码）跑在 Python 3.9；公开 tests/test_responsetypes.py 的 2 个预存失败正是期望里要求保持 FAILED 的键——修掉它们会被判 0"
+ },
+ "classification": "material",
+ "revision_refs": [
+  "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e.md"
+ ],
+ "disposition": {
+  "state": "grading_ok_open_items",
+  "scope": "期望映射（2 个 FAILED 键）会惩罚更完整的 py3 修复；环境本身无缺口",
+  "reason": "环境层 R01/R02/R08/R15 pass、探针最小条件满足；实测“gold + bytes 处理”候选 7/7 PASSED 却 reward 0，已写材料修订提案（T0）；R13 待中央复跑并入（记录时 unknown），若复跑与 R-f 不一致则需重判 用户 09-24 晚决定 T0-4 留给后续题意与评分质量筛查：来源评分可复现（两轮一致、与参考逐键一致），未完成项不在环境阶段处理。",
+  "evidence_refs": [
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/facts.json",
+   "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/dev_probe.json",
+   "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_798f95c6.eval.log",
+   "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-s_49e74388.eval.log",
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e.md"
+  ],
+  "reviewer": null,
+  "pending_checks": [],
+  "open_items": [
+   {
+    "kind": "expected_penalizes_better_fix",
+    "decision_ref": "T0-4",
+    "summary": "环境层 R01/R02/R08/R15 pass、探针最小条件满足；实测“gold + bytes 处理”候选 7/7 PASSED 却 reward 0，已写材料修订提案（T0）；R13 待中央复跑并入（记录时 unknown），若复跑与 R-f 不一致则需重判",
+    "evidence_refs": [
+     "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e.md"
+    ],
+    "next": "T0-4：用户 09-24 晚决定留给后续题意与评分质量筛查；环境阶段不改材料。",
+    "deferred_to": "题意与评分质量筛查",
+    "decided_by": "用户 09-24 晚"
+   }
+  ],
+  "previous_state": "needs_decision"
+ },
+ "costs": {
+  "probe_seconds": 26.6,
+  "targeted_seconds": 46.63,
+  "rerun_attempts": 1,
+  "rerun_seconds": 25.9
+ },
+ "review_notes": [
+  {
+   "by": "Claude（验收，apply_r13.py）",
+   "at": "2026-09-23",
+   "change": "R13 由中央复跑并入：pass；disposition.state 'needs_decision' → 'needs_decision'"
+  },
+  {
+   "by": "Claude（B 线，批次二验收）",
+   "at": "2026-09-24",
+   "change": "disposition needs_decision → grading_ok_open_items：用户决定 T0-4 交后续题意与评分质量筛查，未完成项带 deferred_to"
+  }
+ ]
+}

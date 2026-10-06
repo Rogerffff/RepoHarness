@@ -1,0 +1,214 @@
+{
+ "task_id": "dask__dask-8801",
+ "source": "SWE-Gym lite (dask/dask 2022.02)",
+ "task_revision": "upstream",
+ "materials_refs": [
+  "s2/ingest/public_bundles_v0.jsonl (problem_statement 7784 字符，本包最长)",
+  "s2/ingest/grading_bundles_v2_v0.jsonl (F2P=2; P2P=41)",
+  "s2/ingest/validation_bundles_v0.jsonl (golden_patch)",
+  "s2/raw/swe_gym_lite_full_f70b1a29.jsonl (hints_text 1319 字符)",
+  "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/dask__dask-8801/{gold,empty}/offline/a1/"
+ ],
+ "public_view": {
+  "goal": "题面字面内容：用户在干净 conda 环境里 `import dask` 失败，末尾 traceback 是 `AttributeError: 'str' object has no attribute 'items'`（来自 config.py 的 merge/update）。用户问“发生了什么”。",
+  "constraints": [
+   "题面 7784 字符里约 7000 字符是 conda 安装终端回显（包名列表），真正有用的只有末尾的 12 行 traceback。",
+   "题面没有提出任何修复要求 —— 它是一个求助帖，不是缺陷报告。"
+  ],
+  "unknown_from_public": [
+   "**该做什么完全不在题面里**：维护者的裁定“we should provide a better error message if a config file doesn't load properly or is malformed in this way”只出现在不可见的 hints 里，而且帖子最后用户自己说 'feel free to close this issue'（问题出在他本机的配置文件）。",
+   "F2P 逐字断言的错误文案（`is malformed`、`original error message`、`must have a dict`）在公开材料里一个字都没有。"
+  ],
+  "by": "L1_dask"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "9634da11a5a6e5eb64cf941d2088aabffe504adb:dask/config.py:177-190",
+    "9634da11a5a6e5eb64cf941d2088aabffe504adb:dask/tests/test_config.py:120-140"
+   ],
+   "note": "test_patch 只改 dask/tests/test_config.py，gold 只改 dask/config.py，base 均存在。无二进制/LFS/子模块。",
+   "by": "L1_dask"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "9634da11a5a6e5eb64cf941d2088aabffe504adb:dask/config.py:180-186"
+   ],
+   "note": "base 的 collect_yaml 对 `yaml.safe_load` 结果不做类型检查（`data = yaml.safe_load(...) or {}` 后直接 append），非 dict 的顶层对象会一路传到 update() 才炸；题面 traceback 与之吻合。empty 侧 2 条 F2P FAILED。",
+   "by": "L1_dask"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-8801.problem_statement",
+    "s2/raw/...:dask__dask-8801.hints_text"
+   ],
+   "note": "题面**信噪比极低**（7784 字符里 ~90% 是 conda 包列表回显），且**不含任务**：它是求助帖，结尾是用户自己解决并说可以关闭。要做什么、做成什么样，完全只存在于不可见的 hints。这是本包“hints 独有关键信息”最严重的一题。",
+   "by": "L1_dask"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-8801.test_patch"
+   ],
+   "note": "test_patch 仅碰测试文件；gold 仅碰源码。",
+   "by": "L1_dask"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "同上"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "L1_dask"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dask/prescan.json"
+   ],
+   "note": "本包内唯一改 dask/config.py / test_config.py 的题。",
+   "by": "L1_dask"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-8801.test_patch"
+   ],
+   "note": "**公开材料完全推不出 F2P**。F2P 要求：对 `{`（畸形 YAML）与 `[1234]`（顶层非 dict）分别抛 ValueError，且消息里必须同时含 `repr(路径)`、`is malformed`、`original error message`（第一条）/`must have a dict`（第二条）。题面既没有要求抛异常（相反，用户的困扰是它抛了异常），也没有给出任何文案。",
+   "by": "L1_dask"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-8801.test_patch"
+   ],
+   "note": "**把英文错误文案固化成验收标准**（与 L1_moto_2 记录的 moto-6022/5737 同型）。即使模型正确判断“应当给出更好的报错”，也几乎不可能同时写出这三个子串。另一方面它不锁实现位置：在 collect_yaml 内联判断或抽 helper 都行。",
+   "by": "L1_dask"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-8801/gold/offline/a1/test_output.txt:1382-1383,1424-1436"
+   ],
+   "note": "**gold 的另一半行为完全没有保护**：gold 的 `except OSError: return None`（继续忽略权限错误）对应的既有用例 `test_collect_yaml_permission_errors[directory]/[file]` 在镜像里**恒 FAILED**——容器以 root 运行（日志里 `tmpdir = local('/tmp/pytest-of-root/...')`），chmod 去权限对 root 无效，于是这两条被排除出 P2P。结果：把 `except OSError` 整段删掉（让不可读的配置文件直接让 `import dask` 崩溃）的候选仍能拿满分。",
+   "by": "L1_dask"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "9634da11a5a6e5eb64cf941d2088aabffe504adb:dask/tests/test_config.py"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_dask"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "validation_bundles_v0.jsonl:dask__dask-8801.golden_patch"
+   ],
+   "note": "gold 抽出 `_load_config_file` helper，行为覆盖：OSError 忽略、其它异常转 ValueError、顶层非 dict 转 ValueError、None 视为空。无与题无关的改动，不依赖未交付改动。",
+   "by": "L1_dask"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-8801.problem_statement"
+   ],
+   "note": "题面不含修复代码、无 PR/commit 号（本题的问题相反：题面信息太少）。",
+   "by": "L1_dask"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-8801/gold/offline/a1/test_output.txt (install rc=0)"
+   ],
+   "note": "安装 rc=0；Python 3.9.19 + pytest-8.3.2。",
+   "by": "L1_dask"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "9634da11a5a6e5eb64cf941d2088aabffe504adb:dask/tests/test_config.py"
+   ],
+   "note": "无 mark.network / URL / requests / boto3；唯一 importorskip 是 jsonschema。",
+   "by": "L1_dask"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-8801/gold/offline/a1/test_output.txt:1382-1383"
+   ],
+   "note": "gold 侧 45 条结果行、0 SKIPPED、0 伪键，依赖齐备。但有 **2 条容器环境导致的恒失败**（以 root 运行使权限测试失效），见检查 25。这是本包唯一一处“失败源于容器以 root 运行”而非工具链版本的例子。",
+   "by": "L1_dask"
+  },
+  "9": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-8801/{gold,empty}/offline/a1/status_map.json"
+   ],
+   "note": "empty→2 条 F2P FAILED，gold→PASSED，41 条 P2P 两侧全 PASSED。",
+   "by": "L1_dask"
+  }
+ },
+ "issues": [
+  {
+   "category": "题面不含任务",
+   "severity": "P1",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-8801.problem_statement",
+    "s2/raw/...:dask__dask-8801.hints_text"
+   ],
+   "proposed_action": "reject_revision 或重写题面：必须把维护者的裁定（“配置文件畸形或顶层非 dict 时要给出可定位的报错”）写进题面，并删掉 ~7000 字符的 conda 回显。",
+   "next_experiment": "把题面原样给基座跑 3 次，统计有几次改到 dask/config.py 的 collect_yaml（预期极低）。"
+  },
+  {
+   "category": "错误文案固化为验收标准",
+   "severity": "P1",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-8801.test_patch"
+   ],
+   "proposed_action": "与 moto 侧同类问题合并处置：要么放宽为“抛 ValueError 且消息含文件路径”，要么把期望文案写进题面。",
+   "next_experiment": "写一个语义正确但文案不同的修复（例如 'invalid dask config file'），跑 F2P，预期 FAILED。"
+  },
+  {
+   "category": "gold 行为的一半无保护",
+   "severity": "P2",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-8801/gold/offline/a1/test_output.txt:1382-1383"
+   ],
+   "proposed_action": "权限测试因容器以 root 运行而恒失败；可在评分容器里用非 root 用户跑测试，或把该用例改成用 mock 触发 OSError。",
+   "next_experiment": "以非 root 用户在同镜像里跑 `test_collect_yaml_permission_errors`，确认恢复通过后纳入 P2P。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰测试文件，gold 只碰源码；按第四组 B 默认保持空。",
+  "evidence_refs": [
+   "grading_bundles_v2_v0.jsonl:dask__dask-8801.test_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "dask/tests/test_config.py::test_collect_yaml_permission_errors[directory] / [file]",
+   "reason": "直接保护 gold 的 `except OSError: return None` 分支；当前因容器以 root 运行恒失败被排除，是本题最该补回的一条。"
+  },
+  {
+   "id": "dask/tests/test_config.py::test_collect_yaml_paths / test_collect_yaml_dir",
+   "reason": "已在 P2P；保证重构 collect_yaml 后正常配置文件仍被正确收集与合并。"
+  },
+  {
+   "id": "dask/tests/test_config.py::test_refresh / test_collect",
+   "reason": "collect_yaml 的上游调用者，能拦住“抛异常抛得太宽”导致 import dask 直接崩溃的过度修复。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "reject_revision",
+  "reason": "题面是一篇没有任务的求助帖（7784 字符里 ~90% 是 conda 回显），要做什么只存在于不可见的 hints；F2P 又把三段英文错误文案固化成验收标准。此外 gold 的“忽略权限错误”分支因容器以 root 运行而零保护。需重写题面并放宽断言后再用。"
+ },
+ "costs": {
+  "minutes": 22
+ }
+}

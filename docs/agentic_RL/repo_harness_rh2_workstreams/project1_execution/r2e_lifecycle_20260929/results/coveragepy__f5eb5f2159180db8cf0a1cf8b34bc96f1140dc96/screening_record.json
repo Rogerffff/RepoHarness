@@ -1,0 +1,154 @@
+{
+  "schema_id": "rh2.r2e_screening_record.v1",
+  "record_kind": "static_review",
+  "task_id": "r2e_gym_subset::coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96",
+  "instance_id": "coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96",
+  "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0（材料 v3–v5 对本题逐字相同；无材料修订）",
+  "source_adapter_ref": {
+    "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl:10（line_sha256 e08a763d70366cda…）",
+    "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl（line_sha256 c60e3c11a67007b0…）",
+    "spec_vendor_id": "r2e_gym_subset_e8b9fcbc",
+    "parser_id": "r2e_prime_pytest_v1",
+    "rule_source_id": "prime_envs_c4d04dfe",
+    "expected_sha256": "sha256:9e555e5145c096ac323d33fdd3d22d7b769a4b3a34c3cc9b92ba70c1949a384c",
+    "hidden_tests_tree_sha256": "sha256:d03ee4ffb0204204cf875db18b6fe452351263cfcb6241dc07718c0161ae963c",
+    "gold_patch_sha256": "sha256:c8fa460d421020f5230fcf5c776bd85f449bb2d8bbfc4b37d98fa3eff1250e59"
+  },
+  "recipe_ref": {
+    "current": {
+      "recipe_id": "r2e_derive_v1+sysconfig_v1",
+      "recipe_sha256": "sha256:e2e17bf12b0edf5d1f77eb315a7c8cd91e36dde70b6a272c81b04976b98a7270",
+      "derived_image_ref": "rh2-r2e-derived/coveragepy:f5eb5f215918-r2e_derive_v1s",
+      "derived_image_id": "sha256:98b19b5a2ce42f98230caf958b852d58bcf898a01c61604ab93fd506caafe19c",
+      "base_image_digest": "sha256:fb0335af8820e2f5cda1cc4ed82380546ed36fbd485da4181b8de9ef74b9ae28",
+      "resources": "default：2 CPU / 4 GiB / tmpfs 1 GiB；网络 deny_all",
+      "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94"
+    },
+    "historical_reference": {
+      "recipe_id": "r2e_derive_v1",
+      "recipe_sha256": "sha256:0da821a15fa389289f524c60d3a421bc940cce753e4ecf3d53560b7ab6b31df9",
+      "derived_image_id": "sha256:1a2107883a20450d7f88480bedd19100f7c5ac2def38c81805f4732437cd1303",
+      "note": "旧机器；noop / gold 各 2 次，与新镜像逐键一致，只作对照"
+    }
+  },
+  "code_snapshot_ref": {
+    "value": null,
+    "note": "本审未核对代码快照；账本 grader_version = r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe；请协调者按 runs/r2e_lifecycle_20260929/code_snapshots/ 补填"
+  },
+  "facts_ref": [
+    {"role": "新镜像 noop（正式 profile，缺省预算）", "ref": "runs/r2e_lifecycle_20260929/env_verify/ledger_l1_noop.jsonl:2"},
+    {"role": "新镜像 gold", "ref": "runs/r2e_lifecycle_20260929/env_verify/ledger_l1_gold.jsonl:2"},
+    {"role": "解题侧开发核对（agent 身份，真实 CC 2.1.205 + 桩，正式启动路径）", "ref": "runs/r2e_lifecycle_20260929/devcheck/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/"},
+    {"role": "候选正式评分 D0 / C1 / C2 / C3", "ref": "runs/r2e_lifecycle_20260929/inv/coveragepy_f5eb/ledger_{D0,C1,C2,C3}.jsonl 与 logs_*/"},
+    {"role": "私有行为核对 P-1 / P-2 / P-3", "ref": "runs/r2e_lifecycle_20260929/inv/coveragepy_f5eb/pcheck_*.json"},
+    {"role": "旧镜像与来源镜像的运行证据", "ref": "runs/r2e_static_prep_20260924/v3/private/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/run_refs.json"},
+    {"role": "历史环境审查事实", "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/facts.json"}
+  ],
+  "checks": {
+    "1": {"status": "pass", "note": "题面、base、隐藏测试、期望、gold、镜像对应同一任务版本：两个 bundle 的 base_commit 都是 17204597；隐藏测试树与期望的摘要与账本中的 RH2_SETUP_HIDDEN_TESTS_TREE 一致；gold 摘要与账本中的 candidate.patch_sha256 一致；base 是修复提交的父提交（M3 facts）", "evidence_refs": ["runs/r2e_static_prep_20260924/v3/private/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/grading_bundle.json", "runs/r2e_lifecycle_20260929/env_verify/ledger_l1_gold.jsonl:2", "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl:45"]},
+    "2": {"status": "pass", "note": "初态确实有问题：noop 在 r2e_tests/test_1.py:35 失败，差异项只有 totals；devcheck 的 repro_api_totals 在初态退出码 1（BUG PRESENT）；初始 diff 为 0 字节", "evidence_refs": ["runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-c_d76ba3af.eval.log", "runs/r2e_lifecycle_20260929/devcheck/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/orig/captures/repro_api_totals.out"]},
+    "3": {"status": "unknown", "note": "静态渲染与公开包一致；模型实际收到的完整消息、public_hints 是否送达模型，都未验证（环境卡 §2）", "evidence_refs": ["runs/r2e_static_prep_20260924/v3/public/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/user_prompt.txt"]},
+    "4": {"status": "pass", "note": "合法修复只需改 coverage/jsonreport.py；gold 与四个候选都完整投影（included_paths = [coverage/jsonreport.py]）；没有额外排除规则", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/coveragepy_f5eb/ledger_D0.jsonl"]},
+    "5": {"status": "issue", "note": "X1，登记，不阻断：ea6906b0 的初态含本题 gold（2/2 行）；97997d2c 与本题 base 相同，公开工作树逐字节相同；本题初态已含 016af5f6、5dbbe143 的修复。按 D3 以仓库划分时同侧；训练时控制同一初态的重复采样", "evidence_refs": ["runs/r2e_static_prep_20260924/cross_task_gold_scan.json", "runs/r2e_static_prep_20260924/v3/public/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/worktree/coverage/jsonreport.py"]},
+    "6": {"status": "pass", "note": "解题侧与评分侧用同一镜像：python 3.7.9；pytest 4.6.6 + xdist 1.30.0 + flaky 3.6.1；unittest-mixins；pip 20.0.2。目标调用链只涉及工作树里的 coverage 与标准库 json", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/orig/captures/pytest_version.out", "runs/r2e_lifecycle_20260929/devcheck/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/orig/captures/env.out"]},
+    "7": {"status": "not_applicable", "note": "没有权重、数据或外部资产"},
+    "8": {"status": "pass", "note": "agent（uid 54321）身份下 8 条公开命令都按预期完成；评分用户 uid 54322 下 noop、gold 与候选都完整执行", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/devcheck.log"]},
+    "9": {"status": "pass", "note": "导入的是 /testbed/coverage/__init__.py（评分侧 observations；P-1 以 agent 身份在 cwd=/ 下核对，/testbed 外没有另装一份）；gold 与候选确实改变了评分结果", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/coveragepy_f5eb/pcheck_P1_agent_cwd_root.json"]},
+    "10": {"status": "pass", "note": "repro_api_totals 能区分修复前后：初态退出码 1，gold 下退出码 0（private_control）；公开测试 test_json.py（base 4 passed）与 test_results.py（35 passed）可以跑；8 条命令约 23 秒", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/orig/captures/", "runs/r2e_lifecycle_20260929/devcheck/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/private_control.json"]},
+    "11": {"status": "pass", "note": "准备、解题、安装、测试四个阶段都不需要网络；解题容器的外部 DNS 与禁止目的地被拒，评分侧为 deny_all", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/orig/prelaunch.json"]},
+    "12": {"status": "not_applicable", "note": "不依赖外部服务"},
+    "13": {"status": "pass", "note": "内存峰值约 272 MB / 4 GiB；新机器上 trusted setup 约 68 秒，测试阶段 5.6–7.4 秒；/tmp 用量很小", "evidence_refs": ["runs/r2e_lifecycle_20260929/env_verify/ledger_l1_gold.jsonl:2"]},
+    "14": {"status": "pass", "note": "同条件下 noop 与 gold 结果一致：旧镜像各 2 次、新镜像各 1 次，逐键相同；时间戳断言（要求 10 秒内、带微秒）没有观察到抖动，E5 未触发", "evidence_refs": ["runs/r2e_static_prep_20260924/v3/private/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/run_refs.json", "runs/r2e_lifecycle_20260929/env_verify/ledger_l1_noop.jsonl:2"]},
+    "15": {"status": "not_checked", "note": "没有做连续复用与并发对照"},
+    "16": {"status": "pass", "note": "正式导出后投影的是 coverage/jsonreport.py，评分日志第 1 行为 ` M coverage/jsonreport.py`，说明候选确实被应用", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/coveragepy_f5eb/logs_D0/evallog_replay-r2e-inv-f5eb-D0-0_16189261.eval.log"]},
+    "17": {"status": "pass", "note": "RH2_SETUP_OK=1，RESTORED=2；隐藏测试只放进 r2e_tests，不覆盖源码"},
+    "18": {"status": "pass", "note": "4 个键全部解析，测试段完整；隐藏测试确实执行，日志里有断言回溯"},
+    "19": {"status": "pass", "note": "keys_equal=true；没有 ANSI 码；只有一个隐藏测试文件，键不会撞"},
+    "20": {"status": "pass", "note": "noop 与 gold 只差目标键，原因是 totals 缺两个键，与题面错误信息逐字一致"},
+    "21": {"status": "pass", "note": "失败原因在日志里可见；没有 infra 失败，也没有提前返回"},
+    "22": {"status": "pass", "note": "M3 独立 runner 在来源镜像上跑 gold 两次都是 4/4；新旧镜像上的 RH2 结果一致", "evidence_refs": ["runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl:45", "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl:91"]},
+    "23": {"status": "issue", "note": "题面只点名 totals，每文件 summary 能否加键没有公开规定（C1 争议，见 I5）；题面把一个功能补充说成测试失败，示例也不含被测代码（P4，见 I7）"},
+    "24": {"status": "issue", "note": "C1（把两键也对称加进每文件 summary，即上游后来的形态）判 0：疑似误拒，待用户裁定（R-b / R-f / 维持原样）", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/coveragepy_f5eb/ledger_C1.jsonl", "runs/r2e_lifecycle_20260929/inv/coveragepy_f5eb/logs_C1/evallog_replay-r2e-inv-f5eb-C1-0_61e26907.eval.log"]},
+    "25": {"status": "issue", "note": "S1：D0（硬编码 1/1）、C2（把部分弧计数当未执行弧数）、C3（按配置 branch 门控）都得 1", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/coveragepy_f5eb/ledger_D0.jsonl", "runs/r2e_lifecycle_20260929/inv/coveragepy_f5eb/ledger_C2.jsonl", "runs/r2e_lifecycle_20260929/inv/coveragepy_f5eb/ledger_C3.jsonl"]},
+    "26": {"status": "pass", "note": "行模式与 contexts 的旧行为由 3 个回归键保护；gold 没有回归。多文件汇总与 report() 返回值没有测，记为 T3（见 I9）"},
+    "27": {"status": "pass", "note": "gold 满足公开要求，口径与 XML 报告一致，并按数据门控（P-2：gold 下 CLI 流程得 1/1）", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/coveragepy_f5eb/pcheck_P2_gold.json"]},
+    "28": {"status": "not_checked", "note": "R-c 草案的每条断言都标了公开依据；还需要独立复核与 Codex 核对"},
+    "29": {"status": "pass", "note": "预检：隐藏测试不可读，HEAD 没有子提交，refs / remotes / reflog 都为 0；/testbed 外没有另装 coverage（P-1）", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/orig/captures/r2e_preflight.out"]},
+    "30": {"status": "pass", "note": "解题容器的外网与禁止目的地都被拒（prelaunch）"},
+    "31": {"status": "not_checked", "note": "共享控制面不逐题复审，交 A 线：根目录 conftest、tests/coveragetest.py 等测试辅助、.venv 对 agent 可写（post_run_facts 显示 agent 往 .venv 的 site-packages 写了 __pycache__）"},
+    "32": {"status": "issue", "note": "verifier 只验证示例字面值，硬编码也能通过（同 #25）"},
+    "33": {"status": "not_checked", "note": "devcheck 是桩驱动的真实 CC，不是模型求解"},
+    "34": {"status": "not_checked"},
+    "35": {"status": "not_checked"},
+    "36": {"status": "not_checked"},
+    "37": {"status": "not_applicable", "note": "还没有实施任何修订；+sysconfig_v1 属于环境配方；R-c 属于测试层修订，实施时另记版本"},
+    "38": {"status": "not_applicable", "note": "修订实施后按 card.md 附录 A 的验收矩阵复验"},
+    "39": {"status": "not_applicable", "note": "批次层面"},
+    "40": {"status": "not_applicable", "note": "批次层面"}
+  },
+  "issues": [
+    {"id": "I1", "code": "T2c", "severity": "S1", "v1_step": 2, "summary": "唯一的分支模式断言只用题面示例值：totals 的 covered_branches=1、missing_branches=1，与题面错误信息逐字相同；这个夹具里未执行弧数 = 部分弧数 = 已执行弧数 = 1，无法区分口径", "evidence_level": "静态 + 历史日志", "evidence_refs": ["runs/r2e_static_prep_20260924/v3/private/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/hidden_tests/test_1.py:61-71", "runs/r2e_static_prep_20260924/v3/public/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/user_prompt.txt:28", "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-c_d76ba3af.eval.log"], "route": "R-c 第 1 项"},
+    {"id": "I2", "code": "T2b", "severity": "S1", "v1_step": 3, "summary": "退化候选 D0（在 gold 的位置把两值硬编码为 1）正式评分得 1.0（4/4）；违反的公开要求：两值要反映被测代码。BRANCHY 夹具上 D0 报 1/1，正确值是 4/2", "evidence_level": "当前 CPU 正式评分 + 私有核对", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/coveragepy_f5eb/ledger_D0.jsonl", "runs/r2e_lifecycle_20260929/inv/coveragepy_f5eb/pcheck_P3_D0.json"], "route": "R-c 第 1 项"},
+    {"id": "I3", "code": "T2", "severity": "S1", "v1_step": 4, "summary": "C2 用 n_branches - n_partial_branches 与 n_partial_branches 作两值，得 1.0；从未执行的分支行被算作已覆盖：BRANCHY 上报 covered 6 / missing 0，XML 给出的 branches-covered 是 4", "evidence_level": "当前 CPU 正式评分 + 私有核对", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/coveragepy_f5eb/ledger_C2.jsonl", "runs/r2e_lifecycle_20260929/inv/coveragepy_f5eb/pcheck_P3_C2.json"], "route": "R-c 第 1 项"},
+    {"id": "I4", "code": "T2", "severity": "S1", "v1_step": 4, "summary": "C3 按配置 branch（而不是数据 has_arcs）门控，得 1.0；在文档写明的流程（先 coverage run --branch，再单独 coverage json）下，以及另起报告对象时，两个键缺失", "evidence_level": "当前 CPU 正式评分 + 私有核对", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/coveragepy_f5eb/ledger_C3.jsonl", "runs/r2e_lifecycle_20260929/inv/coveragepy_f5eb/pcheck_P2_C3.json", "runs/r2e_lifecycle_20260929/inv/coveragepy_f5eb/pcheck_P3_C3.json"], "route": "R-c 第 2 项"},
+    {"id": "I5", "code": "P3", "severity": "pending_user_decision", "summary": "C1 把两键也对称加进每文件 summary（上游后来的形态，见 ea6906b0 公开工作树 jsonreport.py:97-103），得 0.0；差异只在 files，totals 相同。属于疑似规格争议的待复核样本，原始 reward 保留", "evidence_level": "当前 CPU 正式评分", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/coveragepy_f5eb/ledger_C1.jsonl", "runs/r2e_lifecycle_20260929/inv/coveragepy_f5eb/logs_C1/evallog_replay-r2e-inv-f5eb-C1-0_61e26907.eval.log"], "route": "用户三选一：R-b（主审倾向）/ R-f / 维持原样"},
+    {"id": "I6", "code": "P6", "severity": "registered", "summary": "公开 tests/test_json.py::test_branch_coverage 锁定了旧的 totals，任何正确修复都会让它失败；分析探针时不能把这当作模型改错或钻空子", "evidence_level": "当前 CPU", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/private_control.json"]},
+    {"id": "I7", "code": "P4", "severity": "registered", "summary": "题面把一个功能补充说成\"测试断言失败\"，在 base 的公开测试上不出现；示例里的 \"execute some code\" 是占位，什么都没测到时会报 No data to report。替代复现 repro_api_totals 已实测", "evidence_level": "静态 + devcheck", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/orig/captures/repro_api_totals.out"]},
+    {"id": "I8", "code": "X1", "severity": "registered", "summary": "ea6906b0 的初态含本题答案；97997d2c 与本题初态相同，题意无关；本题初态已含 016af5f6、5dbbe143 的修复", "evidence_level": "静态（机械扫描 + 公开包核对）", "evidence_refs": ["runs/r2e_static_prep_20260924/cross_task_gold_scan.json"]},
+    {"id": "I9", "code": "T3", "severity": "registered", "summary": "多文件时 totals 的汇总、report() 返回值（--fail-under 用）都没有测；gold 没改这两处，风险低", "evidence_level": "静态"}
+  ],
+  "file_rules": {"additional_exclusions": []},
+  "revision_refs": [],
+  "disposition": {
+    "scope": "static_review",
+    "state": "needs_repair",
+    "severity": "S1",
+    "reason": "测试层核心判据失效：v1 §4 第 2、3、4 步都命中，其中第 3、4 步有当前 CPU 的正式评分证据，因此 R-c 必做。另有 C1 规格争议待用户裁定。环境与解题侧开发路径已在新镜像上实测，没有缺口",
+    "open_items": [
+      {"type": "test_revision_required", "ref": "card.md 附录 A（R-c 两项）", "owner": "协调者实施；Codex 复核", "acceptance": "gold 为 1；noop、D0、C2、C3 为 0；C1 仍为 0"},
+      {"type": "user_decision", "ref": "C1：R-b / R-f / 维持原样", "owner": "用户", "blocks": ["capability_comparison", "training_candidate"]},
+      {"type": "independent_review", "owner": "reviewer"},
+      {"type": "chain_unverified", "ref": "Qwen adapter 链路、模型实际收到的消息", "owner": "A 线"}
+    ],
+    "proposed_revisions": [
+      {"template": "R-c", "item": 1, "target": "hidden_tests/test_1.py 新增 test_branch_totals_count_branch_arcs；expected_output.json 加对应键（PASSED）", "summary": "非示例夹具 BRANCHY：f、g 两边都走，h 从不执行；断言 totals 为 num_branches 6、num_partial_branches 0、covered_branches 4、missing_branches 2", "public_basis": ["coverage/results.py:36、:201-204", "coverage/xmlreport.py:122-123、:203-205", "coverage/jsonreport.py:51-57"], "prediction_basis": "runs/r2e_lifecycle_20260929/inv/coveragepy_f5eb/pcheck_P3_{gold,D0,C2,C3}.json"},
+      {"template": "R-c", "item": 2, "target": "hidden_tests/test_1.py 新增 test_branch_totals_from_saved_branch_data；expected_output.json 加对应键（PASSED）", "summary": "先以 branch=True 采集并 save，再用不设 branch 的 Coverage 对象 load 后出报告；断言 meta.branch_coverage 为 True，totals 为 4/2", "public_basis": ["doc/branch.rst:38-40、:52-54", "coverage/cmdline.py:374-388、:532-544", "coverage/jsonreport.py:38、:59、:94"], "prediction_basis": "runs/r2e_lifecycle_20260929/inv/coveragepy_f5eb/pcheck_P3_C3.json、pcheck_P2_C3.json"},
+      {"template": "R-b 或 R-f", "status": "待用户决定", "summary": "R-b：每文件 summary 允许出现两键，出现时值必须正确。R-f：题面补一句只改 totals。两者二选一，或维持原样并登记风险"}
+    ],
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/analysis_before_history.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/old_findings_delta.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/card.md"
+    ],
+    "reviewer": null
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "exposure": "主审读过 gold、隐藏测试、期望映射、run_refs 指向的原始日志、历史环境审查记录，以及四个候选的评分结果；本记录与草稿都不提供给 solver",
+    "v1": {
+      "problem_localization": {"value": "yes"},
+      "capability_comparison": {
+        "value": "conditional",
+        "satisfied": ["公开开发路径已实测（devcheck，agent 身份，正式启动路径）", "评分依据已核（新镜像上 noop 0 / gold 1）", "本批运行条件已核（配方 r2e_derive_v1+sysconfig_v1，正式 profile）"],
+        "missing": ["C1 争议的用户裁定（v1 §11 口径：题意争议或误拒尚未消解的题只作问题定位，不进比较分母）", "裁定之后、R-c 验收之前纳入比较时，得 1 的补丁必须按预先登记的三项做事后审计：totals 的值随代码变化；未执行的分支弧计入 missing_branches；按数据门控。原始 reward 与语义结论分开记"],
+        "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/devcheck.log", "runs/r2e_lifecycle_20260929/env_verify/ledger_l1_gold.jsonl:2"]
+      },
+      "training_candidate": {
+        "value": "no",
+        "reason": "当前材料有未处理的 S1（I1–I4）",
+        "path_to_yes": ["按 card.md 附录 A 实施 R-c 并通过验收", "C1 裁定并落实", "Codex 复核"],
+        "positive_coverage_evidence": "核心要求有直接断言；新镜像上 noop 0 / gold 1；v1 §4 第 2、3 步的结果已取得；未查范围见 checks"
+      },
+      "heldout_candidate": {"value": "no", "reason": "原因同 training_candidate；修订之后只能作标明版本的自建题；X1：ea6906b0 的初态含本题答案，按 D3 以仓库划分时两题同侧"}
+    }
+  },
+  "costs": {
+    "tokens": null,
+    "usd": null,
+    "observed_runs": {"formal_grading_new_image": 6, "devcheck": 1, "private_control": 1, "private_checks": 7},
+    "observed_seconds": {"grading_test_phase": "5.6–7.4", "grader_trusted_setup": "约 68", "devcheck_solve": 23.36}
+  },
+  "reviewed_by": "R2E 私有主审（Claude，单题闭环试行 2026-09-29）",
+  "reviewed_at_utc": "2026-09-29",
+  "order_note": "analysis_before_history.md 在读历史前封存；之后读历史引用与第二步实跑，再写 old_findings_delta.md、card.md 与本记录"
+}

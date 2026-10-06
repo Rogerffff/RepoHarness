@@ -1,0 +1,287 @@
+{
+ "task_id": "iterative__dvc-4166",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+  "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+  "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+  "raw": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc",
+  "base_commit": "520e01f11305aba1994df354adef86e6d90180de",
+  "version": "1.1",
+  "python_version": "3.9",
+  "eval_cmd": "pytest -rA",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-4166:latest",
+  "workdir": "/testbed",
+  "test_patch_paths": [
+   "tests/func/test_ignore.py",
+   "tests/unit/test_ignore.py"
+  ],
+  "gold_paths": [
+   "dvc/ignore.py"
+  ],
+  "n_f2p": 1,
+  "n_p2p": 58,
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4166/{gold,empty}/offline/a1/",
+  "signals": {
+   "in_e2": [],
+   "fragile_reference_id": false,
+   "stage1": {
+    "empty": {
+     "verdict": "RESOLVED_NO",
+     "rc_install": 0
+    },
+    "gold": {
+     "verdict": "RESOLVED_FULL",
+     "rc_install": 0,
+     "p2p_missing": 0,
+     "f2p_missing": 0
+    }
+   },
+   "deepseek_candidate_oracle": null
+  }
+ },
+ "public_view": {
+  "目标行为": "`.dvcignore` 在『先全部排除、再白名单放行一部分』时的行为应该正确。题面列了 6 种失败写法（`*`+`!scripts`、`/*`+`!/scripts/`、`/*`+`!/scripts/**` 等）和 1 种有效写法（`/*`+`!/scripts`）。",
+  "约束": "题面没有说正确语义应该是什么，只说『这些都失败了、那个成功了』，最后一句是玩笑（`Why do I feel suddenly the spelling of scripts is wrong?`）。",
+  "公开材料无法确定的点": [
+   "『正确』的判定基准是什么。dvc 的文档目标是对齐 `.gitignore`，而 git 的规则恰恰是『父目录被排除后，其内文件无法再被 `!` 放回来』——也就是说题面列的多数写法**按 git 语义本来就该失败**。这条基准只在测试的注释与不可见 hints 里。",
+   "F2P 具体验什么：交付的 F2P 只有 `[\"subdir/\", \"!should_ignore\"]` 必须得到空集（即带尾斜杠的目录模式要能匹配目录），题面 6 个失败写法一个都没直接出现。",
+   "尾斜杠模式与目录匹配的语义（gold 新增 `is_dir` 参数并额外尝试 `path + \"/\"`）题面完全没提。"
+  ],
+  "base 关键代码": "dvc/ignore.py:46 `dirs = [d for d in dirs if not self.matches(root, d)]` —— 目录与文件走同一条 `matches`，`ignore(path)` 只用不带尾斜杠的 path 去 match，所以 `subdir/` 这种只匹配目录的模式对目录名匹配不上。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "repos/dvc 253a0eae1374ff0bc81046507714353af977d8f3 `Add more tests according to gitignore (#4166)` --stat: dvc/ignore.py 20, tests/func/test_ignore.py 63, tests/unit/test_ignore.py 160"
+   ],
+   "note": "gold+test_patch 与上游一致，无丢件。test_patch 删除了既有的 `test_ignore_from_file_should_filter_dirs_and_files`，由参数化用例取代。",
+   "by": "L1_dvc_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base:dvc/ignore.py:46,49,53",
+    "stage1 empty: F2P FAILED"
+   ],
+   "note": "base 的目录匹配确实不试 `path + \"/\"`。",
+   "by": "L1_dvc_2"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement 543 字符，7 个代码块"
+   ],
+   "note": "题面格式完整，但**没有任何期望行为的陈述**：它只罗列写法并说『失败/成功』，没说正确结果应该是什么，也没说基准是 git。可解性完全依赖解题者自己去查 gitignore 规范。",
+   "by": "L1_dvc_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch: tests/func/test_ignore.py + tests/unit/test_ignore.py",
+    "gold: dvc/ignore.py"
+   ],
+   "note": "两个 test_patch 路径都是纯测试文件，零交集。additional_exclusions 空。",
+   "by": "L1_dvc_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh git checkout 两个测试文件"
+   ],
+   "note": "纯测试恢复。",
+   "by": "L1_dvc_2"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "git merge-base --is-ancestor 3a469f2e9 520e01f113 → true",
+    "4066/4125/4166 共用 tests/func/test_ignore.py，4066 与 4166 共同修改 dvc/ignore.py"
+   ],
+   "note": "本题 base 已含 4066 与 4125 的参考解；P2P 里甚至直接包含 `tests/func/test_ignore.py::test_ignore_blank_line`（4066 的 F2P）。三题必须同侧。",
+   "by": "L1_dvc_2"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "P2P 含键 `'tests/unit/test_ignore.py::test_match_ignore_from_file['`",
+    "stage1 gold test_output.txt:1639-1640：`PASSED ...test_match_ignore_from_file[ to_ignore-patterns5-False]` 与 `PASSED ...[ to_ignore-patterns6-True]`",
+    "scripts/collide.py 输出：graded_collisions=1",
+    "L2_reference_ids/truncation_collisions_summary.json 里 iterative__dvc-4166 collided_keys=2, reference_ids_on_collided_keys=1"
+   ],
+   "note": "**参考 ID 一对多**：这两个参数化用例的 nodeid 以空格开头（参数是 `\" to_ignore\"`），`parse_log_pytest` 按空白切分后两者都截成 `test_match_ignore_from_file[`，dict 后写覆盖先写。日志里 patterns6 在 patterns5 之后，因此 **patterns5-False 的结果永远被丢弃、永不参与判分**。更糟的是这两条是一对相反期望（尾随空格不生效 / 反斜杠转义后生效），正是用来区分空格处理的判别对，合并后判别力归零。与 L2 包的独立扫描结论一致。",
+   "by": "L1_dvc_2"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement 的 6 个失败写法",
+    "F2P `test_ignore_file_in_parent_path[data_struct2-pattern_list2-result_set2]` = `([\"subdir/\", \"!should_ignore\"], set())`",
+    "test_patch 注释：`It is not possible to re-include a file if a parent directory of that file is excluded.`"
+   ],
+   "note": "**题面与评分的方向部分相反**：用户认为 `*` + `!scripts` 应该放行 scripts，测试codify 的是 git 规则『父目录被排除则内部无法再放回』，即用户的写法本来就不该工作。真正被修的是另一件事（尾斜杠目录模式要能匹配目录）。题面里那 6 个写法没有任何一个出现在 F2P/P2P 里，`/*`+`!/scripts` 这个『有效写法』也没被固化成回归。",
+   "by": "L1_dvc_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 给 matches/ignore 加 is_dir 形参",
+    "F2P 断言是 `_files_set(...) == result_set`"
+   ],
+   "note": "F2P 断言对外结果集合，不锁新 helper 名与调用顺序；把目录判断做在别处（例如在 `__call__` 里给目录名补 `/` 再走原 matches）同样能过。",
+   "by": "L1_dvc_2"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "F2P 只有 1 条参数化用例"
+   ],
+   "note": "F2P 唯一一条是 `subdir/` + `!should_ignore` → 空集。一个只在『模式以 `/` 结尾时给候选目录名补一个 `/`』的极窄改动即可满分，且题面列举的 6 个失败场景仍然全都不被检查。另外 58 条 P2P 里绝大多数（41 条）是 test_patch 自己新增的 `test_match_ignore_from_file` 参数化用例，它们在 base 上就通过 —— 属于新增的规范回归，质量好，但它们不是对**本次改动**的保护。",
+   "by": "L1_dvc_2"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "P2P 58 条，横跨 tests/unit/test_ignore.py 的 41 条 gitignore 规范用例与 tests/func/test_ignore.py 的既有行为",
+    "smstat.json: gold real=62 PASSED 59 / FAILED 3"
+   ],
+   "note": "本包 P2P 规模最大、覆盖面最广的一题。缺口是那 3 条坏死用例（见 check 6）与被合并掉的 patterns5。",
+   "by": "L1_dvc_2"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "上游 --stat 三文件"
+   ],
+   "note": "gold 与上游一致，不依赖未交付改动；`is_dir` 默认 False 保持旧调用点兼容。",
+   "by": "L1_dvc_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak.py: gold_added=11 ps_match=0 hints_match=0"
+   ],
+   "note": "题面无修复代码；hints（不可见）含维护者的对比脚本与 python-path-specification issue 链接。",
+   "by": "L1_dvc_2"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "stage1 gold: `FAILED tests/func/test_ignore.py::test_match_nested - re.error: redefinition ...` 与 `test_ignore_external`",
+    "stage1 gold test_output.txt:500-517 `from fractions import gcd` / `ImportError: cannot import name 'gcd' from 'fractions'`，来自 site-packages/networkx/algorithms/dag.py:23（Python 3.9）",
+    "base:setup.py `pathspec>=0.6.0`（无上界）",
+    "runs/env_overnight_20260916/L1_dvc_2/deps_scan2.txt"
+   ],
+   "note": "**两处依赖未按历史锁定**：(a) pathspec 太新 → `re.error: redefinition of group name 'ps_d'`（dvc 池 35 题里 8 题命中）；(b) networkx 太旧、与镜像的 Python 3.9 不兼容 → `from fractions import gcd` ImportError（4 题命中）。两者都让 gold 下就有测试崩溃，这些测试随后被静默排除出 P2P。",
+   "by": "L1_dvc_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 内容"
+   ],
+   "note": "无外部资产。",
+   "by": "L1_dvc_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 无 URL/requests"
+   ],
+   "note": "测试段纯本地。",
+   "by": "L1_dvc_2"
+  },
+  "18": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh 追加两个测试文件；gold real=62 ⊇ F2P 1 + P2P 58"
+   ],
+   "note": "无漏选；过选 3 条坏死用例。注意 real=62 是**截断后**的键数，真实收集数比它多 1（两条 patterns5/6 合成一个键）。",
+   "by": "L1_dvc_2"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "empty 58 PASSED/4 FAILED；gold 59 PASSED/3 FAILED"
+   ],
+   "note": "分差恰为 F2P 一条。",
+   "by": "L1_dvc_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "参考 ID 一对多（判分静默丢失）",
+   "severity": "P1",
+   "evidence_refs": [
+    "P2P 键 `test_match_ignore_from_file[`",
+    "gold log:1639-1640",
+    "L2_reference_ids/truncation_collisions_summary.json"
+   ],
+   "proposed_action": "按镜像实际 nodeid 重生成参考 ID（或在 parser 层改成整行 nodeid 而非按空白切分）。在修好之前，`test_match_ignore_from_file[ to_ignore-patterns5-False]` 事实上不参与判分。",
+   "next_experiment": "在镜像里人为让 patterns5 失败、patterns6 通过，跑真实 grader，确认总分不变（证明遮蔽）。"
+  },
+  {
+   "category": "依赖未锁定",
+   "severity": "P1",
+   "evidence_refs": [
+    "deps_scan2.txt",
+    "base:setup.py pathspec>=0.6.0",
+    "networkx dag.py:23"
+   ],
+   "proposed_action": "仓库级：dvc 1.x 镜像配方补 `pathspec<0.9.0` 与能在 Python 3.9 上工作的 networkx（>=2.4），或改用 base 时间点的 pip freeze 快照；然后重算全部 dvc 题的 P2P。",
+   "next_experiment": "在 4166 镜像里升级 networkx、降级 pathspec 后重跑两个测试文件，统计恢复的用例数。"
+  },
+  {
+   "category": "题意-评分方向部分相反",
+   "severity": "P2",
+   "evidence_refs": [
+    "problem_statement 的 6 个写法",
+    "test_patch 的 git 规则注释"
+   ],
+   "proposed_action": "题面补上维护者的裁定基准（对齐 gitignore，父目录被排除后不可再 `!` 放回），并把题面列的『有效写法 `/*`+`!/scripts`』固化成一条回归。",
+   "next_experiment": "盲解一次，看候选是否试图让 `*`+`!scripts` 生效（那会打挂 P2P 里的 gitignore 规范用例）。"
+  },
+  {
+   "category": "F2P 过窄",
+   "severity": "P2",
+   "evidence_refs": [
+    "F2P 仅 1 条"
+   ],
+   "proposed_action": "把 `test_ignore_file_in_parent_path` 的另外两个参数化与 `test_ignore_sub_directory` / `test_ignore_directory` 一并纳入 F2P 判定（它们在 base 上是否失败需实测确认）。",
+   "next_experiment": "在 base+test_patch 上单跑这几条，确定哪些真正 fail→pass。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 两个文件都在 tests/ 下且为纯测试；gold 只改 dvc/ignore.py。沿用第四组 B 默认空。",
+  "evidence_refs": [
+   "test_patch",
+   "golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/func/test_ignore.py::test_match_nested / test_ignore_external（修好 pathspec 后）",
+   "reason": "它们本来就是 dvcignore 的核心回归，目前因依赖问题坏死而被排除。"
+  },
+  {
+   "id": "把题面的 `/*` + `!/scripts` 与 `*` + `!scripts` 各做成一条显式断言",
+   "reason": "题面给的正反例目前一条都没被固化，日后回归无从判断。"
+  },
+  {
+   "id": "tests/func/test_add.py / tests/func/test_checkout.py 中依赖 dvcignore 过滤的用例",
+   "reason": "gold 改的是 `__call__` 的目录过滤，影响所有 walk 路径。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "两个 P1 同时命中：参考 ID 一对多让一条 P2P 永久失效；镜像 pathspec/networkx 未锁版本让 3 条同族测试在 gold 下崩溃并被静默排除。题意侧还有方向部分相反与 F2P 过窄。修依赖 + 重生成参考 ID 后再看。"
+ },
+ "costs": {
+  "minutes": 24
+ },
+ "by": "L1_dvc_2 (Claude Opus 5, 2026-09-16, 静态审查)"
+}

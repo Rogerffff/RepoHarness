@@ -1,0 +1,227 @@
+{
+ "task_id": "iterative__dvc-3527",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "docs/.../s2/ingest/public_bundles_v0.jsonl#iterative__dvc-3527",
+  "grading": "docs/.../s2/ingest/grading_bundles_v2_v0.jsonl#iterative__dvc-3527",
+  "validation": "docs/.../s2/ingest/validation_bundles_v0.jsonl#iterative__dvc-3527",
+  "raw": "docs/.../s2/raw/swe_gym_lite_full_f70b1a29.jsonl#iterative__dvc-3527",
+  "base_commit": "42e3b8aa2577b7633407cdd17763d72ed7dfc18c",
+  "version": "0.91",
+  "python_version": "3.8",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-3527:latest",
+  "eval_cmd": "pytest -rA",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3527/{gold,empty}/offline/a1/",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc"
+ },
+ "public_view": {
+  "目标行为": "cache 目录位于只读文件系统（NFS 只读挂载）时，`dvc pull/fetch/checkout` 不应因为 `os.chmod` 抛 `[Errno 30] Read-only file system` 而整体失败。",
+  "约束": "base `dvc/remote/local.py:444-457 RemoteLOCAL.protect`：`os.chmod` 失败后只放行 `EPERM`/`EACCES`（共享 cache 场景），其余 errno 一律 `raise`——EROFS(30) 就落在\"一律 raise\"里。文件头已 `import errno` 与 `import stat`（第 1、4 行），无需新增 import。",
+  "公开材料无法确定的点": [
+   "只读文件系统下应该\"静默跳过\"还是\"警告后跳过\"，题面没说；",
+   "除 EROFS 外还有哪些 errno 也该放行（如 ENOSYS、EOPNOTSUPP），题面没说；",
+   "题面完全没提\"已保护判定\"的口径问题（`actual & mode` vs 精确相等），而 gold 顺手改了它。"
+  ],
+  "相关模块": "dvc/remote/local.py（RemoteLOCAL.protect / is_protected / unprotect / CACHE_MODE）。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3527/grading.json#test_patch",
+    "mat/iterative__dvc-3527/validation.json#golden_patch",
+    "git show 42e3b8aa25:dvc/remote/local.py:444"
+   ],
+   "note": "test_patch 只动 tests/unit/remote/test_local.py（base 存在，含 test_is_protected / test_status_download_optimization）；gold 只动 dvc/remote/local.py。同一问题。无二进制/LFS/子模块。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show 42e3b8aa25:dvc/remote/local.py:451-453（`if exc.errno not in [errno.EPERM, errno.EACCES]: raise`）",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3527/empty/offline/a1/status_map.json"
+   ],
+   "note": "base 对 EROFS 直接 raise，与题面报错一致；empty 侧 F2P FAILED。",
+   "by": "static"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3527/public.json#problem_statement"
+   ],
+   "note": "题面 1605 字符，含完整 ERROR 行（带 errno 30）、`.dvc/config` 与 `.dvc/config.local` 内容、部署背景、`dvc version` 输出，渲染完整、无截断、无外链。质量好。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3527/grading.json#test_patch"
+   ],
+   "note": "test_patch 只触碰 tests/unit/remote/test_local.py；gold 不触碰测试样路径。",
+   "by": "static"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3527/grading.json#test_patch"
+   ],
+   "note": "恢复清单 = {tests/unit/remote/test_local.py}，官方测试文件。",
+   "by": "static"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dvc_1/prescan.json"
+   ],
+   "note": "**与 dvc-3620（0.92）紧邻同族**：3620 的 test_patch 也改 `tests/unit/remote/test_local.py`，且改的正是本题 P2P 里的 `test_is_protected[symlink|hardlink]`；3620 的 base 已包含本题的修复。另与 dvc-1661（0.29）同 gold 文件 `dvc/remote/local.py` 但函数无关。划分时 {3527, 3620} 必须同侧。",
+   "by": "static"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3527/grading.json#test_patch"
+   ],
+   "note": "F2P `test_protect_ignore_erofs` 把 `os.chmod` mock 成抛 `OSError(errno.EROFS)`，断言 `remote.protect(foo)` 不抛异常——与题面的 `[Errno 30] Read-only file system` 逐字对应，可从公开材料推出。",
+   "by": "static"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3527/grading.json#test_patch"
+   ],
+   "note": "F2P 只断言\"不抛异常\"且 chmod 确实被调用过，不锁分支写法、不锁日志文本。`if exc.errno == errno.EROFS: return` 与 `if exc.errno in (EROFS, EPERM, EACCES): ...` 等多种写法都能过。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-3527/grading.json#test_patch",
+    "mat/iterative__dvc-3527/grading.json#pass_to_pass"
+   ],
+   "note": "**\"吞掉所有 OSError\" 的错误修复能满分**：把 `except OSError as exc:` 体改成 `return`，F2P（EROFS 不抛）与 P2P 的 `test_protect_ignore_errors[1|13]`（EPERM/EACCES 不抛、chmod 被调用）全部通过；`test_is_protected` 不 mock chmod，也发现不了。而这会让共享 cache 场景下\"文件其实没被保护\"的真实问题被静默。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3527/gold/offline/a1/test_output.txt（6 passed in 0.18s）",
+    "mat/iterative__dvc-3527/validation.json#golden_patch"
+   ],
+   "note": "P2P 5 条 = 整个 tests/unit/remote/test_local.py 除 F2P 外的全部用例，已取满，环境干净。**但 gold 的第二处改动（`actual & mode != mode` → `stat.S_IMODE(actual) != mode`）没有任何用例覆盖**：`test_protect_ignore_errors` 在 mock 之前先真实 `protect` 了一次，此时 `actual == mode`，两种写法结果相同。",
+   "by": "static"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-3527/validation.json#golden_patch",
+    "git show 42e3b8aa25:dvc/remote/local.py:455-457"
+   ],
+   "note": "**gold 含一处范围外的语义收紧**：base 的 `actual & mode != mode` 表示\"只要已有要求的位就算已保护\"，gold 改成 `stat.S_IMODE(actual) != mode` 要求精确相等。举例：CACHE_MODE 为 0o444 而文件实际是 0o644 时，base 判\"已保护、不 raise\"，gold 判\"不匹配、raise\"——共享 cache 场景下从放行变成报错。题面对此只字未提，也没有任何测试覆盖。（该改动本身可能是对的：0o644 确实是可写的，不该算已保护；但它属于另一个缺陷，不该混在本题里。）",
+   "by": "static"
+  },
+  "29": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-3527/raw.json#hints_text"
+   ],
+   "note": "题面不含修复代码、不含 PR 链接。**hints 里维护者直接给出行号级定位**（\"I'm pretty sure it is coming from https://github.com/iterative/dvc/blob/0.90.2/dvc/remote/local.py#L457\"）；hints 不可见，记录以备将来合并题面时注意。",
+   "by": "static"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3527/gold/offline/a1/test_output.txt（6 passed in 0.18s）"
+   ],
+   "note": "安装与测试正常；本题与 dvc-3315 并列为本包最快（0.18 秒）。",
+   "by": "static"
+  },
+  "8": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3527/gold/offline/a1/status_map.json（test_is_protected[symlink|hardlink] 均 PASSED）"
+   ],
+   "note": "值得注意：本题的 `test_is_protected` 在 root 下**能通过**，因为 `is_protected` 读的是 stat 的 mode 位而不是 `os.access`——这与 dvc-1877/2254/3620 里因 `os.access` 而失败的用例形成对照，说明 root 问题只影响 `os.access` 一类判断。",
+   "by": "static"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3527/gold/offline/a1/test_output.txt"
+   ],
+   "note": "纯单元测试（mock os.chmod、本地 tmp_dir），无网络。",
+   "by": "static"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3527/gold/offline/a1/status_map.json"
+   ],
+   "note": "status_map 无污染键，F2P/P2P 全部对上。",
+   "by": "static"
+  },
+  "7": {
+   "status": "not_applicable",
+   "evidence_refs": [],
+   "note": "test_patch 不带外部资产。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "gold 含范围外改动且零覆盖(26/27)",
+   "severity": "P2",
+   "evidence_refs": [
+    "mat/iterative__dvc-3527/validation.json#golden_patch（`actual = stat.S_IMODE(os.stat(path).st_mode)` / `if actual != mode`）",
+    "git show 42e3b8aa25:dvc/remote/local.py:455-457"
+   ],
+   "note": "gold 除了 EROFS 早返回，还把\"已保护\"的判定从按位包含改成精确相等，属于另一个缺陷的修复；题面没提，测试也没覆盖（mock 前先真实 protect 过，两种写法等价）。求解者不做这一步同样能满分，做了也不会被验证。",
+   "proposed_action": "补一条用例：先 `os.chmod(path, 0o644)` 再 mock chmod 抛 EPERM，断言 `protect` 应该 raise（gold 语义）或不 raise（base 语义），由用户裁定取哪一边并写进题面。",
+   "next_experiment": "base/gold 各跑该新用例一次，确认两者结论相反，从而确定这是一处真实语义变更而非等价重写。"
+  },
+  {
+   "category": "测试放过错误修复(25)",
+   "severity": "P2",
+   "evidence_refs": [
+    "mat/iterative__dvc-3527/grading.json#test_patch（三条用例都只断言\"不抛 + chmod 被调用\"）"
+   ],
+   "note": "把整个 `except OSError` 体替换成 `return`（吞掉所有错误）可拿满分，代价是共享 cache 下\"保护失败\"被彻底静默。",
+   "proposed_action": "补一条反向用例：mock chmod 抛 `OSError(errno.ENOSPC)` 时 `protect` 必须 raise。",
+   "next_experiment": "写\"吞掉所有 OSError\"的假修复跑当前 F2P+P2P，预期满分，形成反例。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 tests/unit/remote/test_local.py；gold 不触碰测试样路径。按第四组 B 保持为空。",
+  "evidence_refs": [
+   "mat/iterative__dvc-3527/grading.json#test_patch",
+   "mat/iterative__dvc-3527/validation.json#golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/unit/remote/test_local.py::test_is_protected[hardlink]",
+   "reason": "已在 P2P；protect/unprotect 的真实 round-trip，是 gold 第二处改动最近的覆盖点。"
+  },
+  {
+   "id": "tests/func/test_checkout.py -k relink",
+   "reason": "`protect` 的真实调用方在 checkout/link 路径，题面报告的正是 pull/checkout 失败。"
+  },
+  {
+   "id": "tests/func/test_unprotect.py",
+   "reason": "与 `protect` 对称的功能测试（注意：当前因容器以 root 运行会失败，见 dvc-1877 的 issue）。"
+  },
+  {
+   "id": "（新增）tests/unit/remote/test_local.py::test_protect_reraises_other_errors",
+   "reason": "针对 check 25 的缺口：非 EROFS/EPERM/EACCES 的 OSError 必须继续抛出。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_review",
+  "reason": "题面完整、F2P 行为级且不锁实现、P2P 取满同文件、环境干净且极快；两处需要用户看一眼：gold 捆了一处未覆盖的语义收紧，以及\"吞掉所有 OSError\"的假修复能满分。"
+ },
+ "costs": {
+  "minutes": 18
+ },
+ "by": "L1_dvc_1 (Claude Opus 5, 静态审查)"
+}

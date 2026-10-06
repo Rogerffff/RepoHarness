@@ -1,0 +1,272 @@
+{
+  "schema": "non_author_dask7138_original_fp_cpu_worker_review.v1",
+  "reviewed_at_utc": "2026-10-03T11:22:03.874526+00:00",
+  "reviewer_role": "non-author independent subagent, continuing prior narrow review context",
+  "context": "题主授权的7138构造增量审查；承接已验CPU base，不冒充fresh全题盲审、小阶段集成验收或59矩阵重审。",
+  "scope": [
+    "snapshot_v3新增7138构造适配",
+    "原508闭合/1045code8及四配置SHA绑定",
+    "CPU完整image表示与原GPU摘要范围",
+    "唯一7138派发/统一CPU槽/原base复用边界",
+    "作者纯构造回执只读核验"
+  ],
+  "not_performed": [
+    "SSH",
+    "Docker",
+    "项目源码/候选导入或执行",
+    "CPU/GPU评分",
+    "模型调用",
+    "共享源码修改",
+    "历史报告修改"
+  ],
+  "verdict": {
+    "static_dispatch_blockers": [],
+    "ready_for_authorized_bounded_cpu_slot_dispatch": true,
+    "runtime_environment_recovery_completed": false,
+    "new_candidate_score": null,
+    "training_qualification": null
+  },
+  "preserved_original": {
+    "attempt_id": "gpu1003-dask7138-coder-a1",
+    "FP_canonical_digest": "sha256:451557c761f6f47f984e06695b51f66591f7ecaa8589c1188c1a5e7c6a5365e4",
+    "baseline_digest": "sha256:1bb7df741c80d1271ab92408e0277d129c0b866011b218b79a8295bc38ad49b2",
+    "public_bundle_digest": "sha256:02e3a996c88ecb46121a606d5c910986ad2d22ceec7b4663babaeaf3ad6b8c8b",
+    "scripts_digest": "sha256:6f61a742aacc681b4e07e2b1825cd1d8cba5450da1791e2aae7b9eee659c0d5b",
+    "materials_identity": "sha256:3e94408ef02d1c2fb6c9113a5c86920325280b2a80962bf579d98087e283136e",
+    "test_command": "pytest -n0 -rA  --color=no dask/array/tests/test_routines.py",
+    "original_failure_category": "infra_failure",
+    "original_reward": null,
+    "original_infra_detail": "grading_control_surface_protect_timeout_after_300s",
+    "original_reference_total": 470,
+    "original_single_model_sample": true,
+    "another_model_sample_missing": true
+  },
+  "only_execution_change": {
+    "setup_seconds": {
+      "before": 300,
+      "after": 900
+    },
+    "transport_projection": "原SHA校验后，仅summary prepared/private与task prepared_summary投射至闭合副本及新out；其余固定输入身份、profile、scripts、refs、FP保持。",
+    "extra_DASK_or_BLAS_caps_added": false
+  },
+  "image_binding": {
+    "actual_image_id": "sha256:625b404c6c1c40da31df4edfea6052a10fbd30b7fb49d58072b6ee2b215fab13",
+    "architecture": "amd64",
+    "os": "linux",
+    "CPU_full_Config_keys": 17,
+    "GPU_full_raw_Config_available": false,
+    "original_GPU_Config_canonical_sha256": "0e9fdcf3e818150127174b708f22cf1ab585019f895bc5b46e8b823e2c2744c2",
+    "CPU_selected_Env_Cmd_WorkingDir_Labels_canonical_sha256": "0e9fdcf3e818150127174b708f22cf1ab585019f895bc5b46e8b823e2c2744c2",
+    "original_GPU_and_CPU_RootFS_canonical_sha256": "4800b186f23ea6a55a2beedc7110285599f455fb3d665d78ac22c0824797d439",
+    "CPU_full_representation_independently_frozen": true,
+    "execute_strict_full_CPU_Config_equality": true,
+    "scope": "原GPU仅有完整Config canonical摘要；CPU四字段canonical摘要匹配该值。不可把CPU17键raw表示称作原GPU完整raw inspect。"
+  },
+  "prior_preparation_attempts": [
+    {
+      "version": "snapshot_v1",
+      "state": "作者静态发现不存在的profile.network_mode属性访问后修正；未派发评分；原件保留"
+    },
+    {
+      "version": "snapshot_v2",
+      "state": "原gateway配置选错，纯构造rc1；0候选/0模型，原失败回执保留；不列为可派发输入"
+    },
+    {
+      "version": "snapshot_v3",
+      "state": "改为config_v26/gateway_coder.json，先核四原配置SHA；作者纯构造rc0，但正式grade未执行"
+    }
+  ],
+  "checks": {
+    "snapshot_all_regular_members": {
+      "verified": 1563,
+      "failed": 0,
+      "uncompressed_bytes": 157221954,
+      "archive_bytes": 40446870
+    },
+    "original_closed_members": {
+      "verified": 508,
+      "failed": 0,
+      "bytes": 37710899
+    },
+    "fixed_code8_members": {
+      "verified": 1045,
+      "failed": 0,
+      "source_manifest_matches_original": true,
+      "source_manifest_counted_separately": true
+    },
+    "original_four_config_sha_match": {
+      "tasks_config": "sha256:894aea54b005303cb66e065d36bd07ef51c3e978816d4c5147c233222650b608",
+      "prepared_summary": "sha256:1ffd8d77a9834a5602b3afad64ead56b48c72677fbfdb64d56532a06ea431da7",
+      "gateway_config": "sha256:c97a7bdf244fda04d5da441ab866c60d24d19c50dd7fc71b5024ecb91b1a0850",
+      "adapter_config": "sha256:1568f2e833897101fe16e4184436147663a7a42f153ff18f65d066fe9b83eec4"
+    },
+    "reference_identity": {
+      "original_f2p": 1,
+      "original_p2p": 468,
+      "added_p2p": 1,
+      "total": 470,
+      "original_revision_preserved": true,
+      "observed_new_test_results": null
+    },
+    "actual_pure_runtime_modules": {
+      "verified": 71,
+      "all_paths_under_snapshot_fixed_code8": true,
+      "all_sha_match_local_v3": true
+    },
+    "pure_construct_v3": {
+      "returncode": 0,
+      "stderr": "",
+      "candidate_executed": false,
+      "new_model_calls": 0,
+      "identity_constructed_only": true
+    },
+    "launcher_static": {
+      "instances": [
+        "7138"
+      ],
+      "slot_mode": "run",
+      "package": "swe_dask",
+      "max_slot_attempts": 15,
+      "slot_busy_returncode": 75,
+      "retry_interval_seconds": 120,
+      "nonbusy_returncode_stops": true,
+      "stop_on_nonzero": true,
+      "fresh_remote_serial_and_job_directories_required": true,
+      "actual_launch_verified": false
+    }
+  },
+  "source_anchors": {
+    "author_closed_binding": "L39–75",
+    "author_sole_budget_and_projection": "L76–90",
+    "author_fixed_inputs_scripts_modules": "L91–127",
+    "author_base_and_fresh_output": "L150–170",
+    "base_slot_and_mode_and_image": "L111–138",
+    "base_refs_resource_cleanup_final_sources": "L237–309",
+    "launcher_single_input_and_precondition": "L9–28",
+    "launcher_snapshot_slot_and_fresh_outputs": "L32–49",
+    "wait_only_busy75_retry": "L41–68",
+    "serial_stop_nonzero": "L59–78",
+    "candidate_ravel_parameter_unchanged": "candidate diff L71–74"
+  },
+  "pending_acceptance": [
+    "owner通过统一CPU槽实际派发，只占一配置；核actual childPID/父PID/run/package/wrapper SHA，与完整foreground命令一致。",
+    "同image完整CPU表示、candidate UID54322、NetworkMode none、2CPU/4GiB/pids512、原baseline rebuild、single-shell supply=None及原完整scripts digest。",
+    "原FP同test_routines.py模块470参考(1+468+1)正式结果逐项完整，无missing/skipped/unaccounted/重复、无infra或parse失败；success/failure必须按实际观测，环境恢复不要求模型470全过。",
+    "resource监测及precleanup读回：pids.events max0、OOMKilled=false、memory.events oom/oom_kill均0；监测/清理读回无异常。",
+    "原base cleanup结束、own容器0、manager开口/失败均空、created=removed=1、末次snapshot全部SHA不变；失败保留新目录，不自动重跑grader。"
+  ],
+  "candidate_boundary": "原候选diff仍将ravel参数array改名array_like；本次只补评原FP，不修模型、不以纯构造宣称候选语义通过。",
+  "dimensions": {
+    "A": "新构造fail-closed/新目录和slot入口；base收口字节复用，不重验运行异常。",
+    "B": "无新模型/无训练消费；单样本与缺另一模型保留。",
+    "C": "固化snapshot/FP/SHA挡板保留，失败归owner诊断，无自动重评分。",
+    "D": "owner仅新增adapter/launcher，四实际原config SHA后投射。",
+    "E": "作者pure验证身份构造，不能替正式470；本审查不运行测试。",
+    "F": "仅setup300→900，原materials/profile/scripts/refs一致。",
+    "G": "launcher→serial→wait→统一slot→adapter→已验base，actual admission需现场。",
+    "H": "原closed508与固定code8，输入revision逐字相等，当前唯一v3。",
+    "I": "无静态派发阻断，正式评分/资源/清理列owner后验。",
+    "J": "adapter为短构造层复用base；旧两处准备错误已留痕。",
+    "K": "仅7138专用窄适配，不扩成新通用恢复协议。",
+    "L": "15×120s busy退让；实际2CPU/4GiB/512pids仍待验。",
+    "M": "原None与新pure rc0分开，new out/receipt/SHA及待验清晰。",
+    "N": "原GPU摘要范围与CPU17键raw边界清晰，代码8/执行base逐字固定。"
+  },
+  "evidence": {
+    "author_worker": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tools/cpu_dask7138_original_fp_setup900_v1.py",
+      "sha256": "bfe59992559f9108869cb763b2a6a8f7dc547cb01533d0b1227fcb042e262219",
+      "bytes": 10669
+    },
+    "snapshot_manifest": {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask7138_same_fp_cpu_c_v1/snapshot_v3/snapshot_manifest.json",
+      "sha256": "833d863329e908ffddb287edd1d80e4b3e0f9995122e13cf492955a662115118",
+      "bytes": 389424
+    },
+    "inputs": {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask7138_same_fp_cpu_c_v1/snapshot_v3/source/inputs_7138.json",
+      "sha256": "2a8b2a9a39a43a2cd907d08d916dcec19eb0043e8958e5c6a8bdc89933ffde97",
+      "bytes": 45382
+    },
+    "execution_base": {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask7138_same_fp_cpu_c_v1/snapshot_v3/validated_execution_base.py",
+      "sha256": "3086fb2e63fdd6c984baf717c1525ce2bdf7f8693ca9954d8cc815cb817f4312",
+      "bytes": 21449
+    },
+    "launch": {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask7138_same_fp_cpu_c_v1/launch_cpu_recovery_v1.py",
+      "sha256": "e7110232e3c7c2f892dfe527c793238d0628f41d66d94d673cc26783183b2c20",
+      "bytes": 4767
+    },
+    "pure_v3_receipt": {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask7138_same_fp_cpu_c_v1/deploy_and_pure_receipt_v3.json",
+      "sha256": "df66e16b3c999fd4583f981d16e46d3f32fedf016fb9f7dc8cb9bc2ea3dcc2c7",
+      "bytes": 29775
+    },
+    "pure_v2_failed_receipt": {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask7138_same_fp_cpu_c_v1/deploy_and_pure_receipt_v2.json",
+      "sha256": "4dc24d80c9947fdad516f04f3f909a9ba6689c732d300a88abd8c1a9d4ed7841",
+      "bytes": 2432
+    },
+    "cpu_image_readback": {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask7138_same_fp_cpu_c_v1/cpu_image_readback_v1.json",
+      "sha256": "28ef712b76736c2f8d7b531c4acd2f2077a7a0332ff466b69e3c3e11ed66c23a",
+      "bytes": 2189
+    },
+    "original_GPU_image_summary": {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask7138_same_fp_cpu_c_v1/snapshot_v3/source/closed/q26_binder_image_readback_merge_v1/actual_image_readback.json",
+      "sha256": "a551f7ef9b0d2d2157fa53174495800bea9930df33b1568e4135f77fed4ef88a",
+      "bytes": 22740
+    },
+    "original_closed_manifest": {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask7138_same_fp_cpu_c_v1/snapshot_v3/source/closed/gpu1003-dask7138-coder-a1_closed_manifest_v1.json",
+      "sha256": "8df01ab39be672264d938cccd1679121d20dda8a6be3f1af822b59db004d05ab",
+      "bytes": 96249
+    },
+    "original_sync_receipt": {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask7138_same_fp_cpu_c_v1/snapshot_v3/source/closed/sync_receipt_v3.json",
+      "sha256": "7810ca6f7920f0abb37dfc8d6aff147ccde59d78cade61ffb54115940f82a247",
+      "bytes": 327727
+    },
+    "code8_source_manifest": {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask7138_same_fp_cpu_c_v1/snapshot_v3/source/frozen_code_v8/source_manifest.json",
+      "sha256": "09ddb8bfdeecd3ffaa38c1048a574161ef6fa6053b2855da50166e8e8677899d",
+      "bytes": 504439
+    },
+    "cpu_wait_for_slot": {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask7138_same_fp_cpu_c_v1/snapshot_v3/cpu_wait_for_slot.py",
+      "sha256": "b78f5a14382f9d2ca165fe2613d933b55397bfe9edcea856fc7f425e890dd942",
+      "bytes": 3016
+    },
+    "cpu_serial_queues": {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask7138_same_fp_cpu_c_v1/snapshot_v3/cpu_serial_queues.py",
+      "sha256": "b4e5254555f51cba3b0dc55f66bce07f2f08ee6528a1b99e7df412df8b6a98ee",
+      "bytes": 3281
+    },
+    "original_input_check": {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask7138_same_fp_cpu_c_v1/snapshot_v3/source/closed/queue_v26/results/gpu1003-dask7138-coder-a1/input_check.json",
+      "sha256": "55f26069c4718b1780ced6ee80b43d237c6b3b6c0282742d0e26eba4099b0e00",
+      "bytes": 43716
+    },
+    "original_result": {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask7138_same_fp_cpu_c_v1/snapshot_v3/source/closed/queue_v26/results/gpu1003-dask7138-coder-a1/result.json",
+      "sha256": "b0ab30e96395ae96a4cb0f6304f993ee58eaad3de7a043691fb2ef0bc21bf3fb",
+      "bytes": 2694
+    },
+    "original_FrozenPatch_json": {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask7138_same_fp_cpu_c_v1/snapshot_v3/source/closed/queue_v26/results/gpu1003-dask7138-coder-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "e18d7c5d01354d64d05832def64d9b29b4f282070f50d9b30b3f4794f522c09e",
+      "bytes": 148315
+    },
+    "original_candidate_diff": {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask7138_same_fp_cpu_c_v1/snapshot_v3/source/closed/queue_v26/results/gpu1003-dask7138-coder-a1/attempt/candidate/dask__dask-7138.diff",
+      "sha256": "48c7e17fb7888272c10900f265a78f1d9c170b736cd52096d522426dc053c93d",
+      "bytes": 5635
+    },
+    "snapshot_archive": {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask7138_same_fp_cpu_c_v1/snapshot_v3.tar.gz",
+      "sha256": "b4e988fa0eb654a7acd8ed567bff84a9402a95fe8ba057e90eff20d0031133e9",
+      "bytes": 40446870
+    }
+  }
+}

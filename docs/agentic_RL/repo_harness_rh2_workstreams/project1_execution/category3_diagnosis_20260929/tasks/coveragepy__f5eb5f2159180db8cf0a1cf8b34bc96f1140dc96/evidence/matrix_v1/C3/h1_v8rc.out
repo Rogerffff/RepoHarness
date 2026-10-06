@@ -1,0 +1,29 @@
+73ad2f277dea8a447d1f3da58016937ea47d3bf7d3523cbe39394313f8c05d3d  /testbed/r2e_tests/test_1.py
+bringing up nodes...
+bringing up nodes...
+
+.F....                                                                   [100%]
+=================================== FAILURES ===================================
+___________ JsonReportTest.test_branch_totals_from_saved_branch_data ___________
+[gw2] linux -- Python 3.7.9 /testbed/.venv/bin/python
+
+self = <r2e_tests.test_1.JsonReportTest testMethod=test_branch_totals_from_saved_branch_data>
+
+    def test_branch_totals_from_saved_branch_data(self):
+        # R2E revision (2026-09-29, R-c): the report follows the measured data,
+        # as the other reporters do, not the reporting object's own settings.
+        report = self._branchy_report("branchy_saved", report_from_saved_data=True)
+        assert report['meta']['branch_coverage'] is True
+>       assert report['totals']['covered_branches'] == 4
+E       KeyError: 'covered_branches'
+
+r2e_tests/test_1.py:219: KeyError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_coverage
+PASSED r2e_tests/test_1.py::JsonReportTest::test_context_non_relative
+PASSED r2e_tests/test_1.py::JsonReportTest::test_simple_line_coverage
+PASSED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_count_branch_arcs
+PASSED r2e_tests/test_1.py::JsonReportTest::test_context_relative
+FAILED r2e_tests/test_1.py::JsonReportTest::test_branch_totals_from_saved_branch_data
+1 failed, 5 passed in 0.72 seconds

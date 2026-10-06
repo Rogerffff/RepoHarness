@@ -1,0 +1,59 @@
+{
+  "schema": "dask8801_semantic_judge_provenance.v1",
+  "judge_version": "codex-fresh-local-session-v2",
+  "batch": "heldout_validation_v2",
+  "role": "fresh_non_author_semantic_judge",
+  "configuration": {
+    "model": "same_parent_session_inherited_no_override",
+    "reasoning_effort": "same_parent_session_inherited_no_override",
+    "backend_snapshot": "not_exposed_not_independently_verified",
+    "configuration_limit": "配置记录继承父 session 且未指定 model/effort override；没有可验证的精确后端型号、版本或 effort 快照，不自报这些未知信息。"
+  },
+  "inputs": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/semantic_judge_prompt_v2.txt",
+      "sha256": "9e731b309de2545c6dfc69e7772ab14bcb4b049ca15b6cf6d8ca077124edb3e3"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/semantic_controls/judge_config_v2.json",
+      "sha256": "017e22cd7d37ffa53c0855216f07a37bdfff78b0b5db9e3f57a8318eee31d646"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/semantic_controls/heldout_validation_inputs_v2.json",
+      "sha256": "9809106061d21723ccc4a017d7f91d91c635fe59608ad903b1ce4fa050977e12"
+    }
+  ],
+  "scope": {
+    "input_count": 24,
+    "judged_count": 24,
+    "allowed_material": "固定 prompt、配置，以及各匿名输入自有的 trusted_facts 和 visible_diagnostic。",
+    "excluded_material_not_read": [
+      "expected labels and bindings",
+      "calibration and v1 verdicts",
+      "candidate names, source, patches, reviews and gold material",
+      "parent conversation history",
+      "traceback frames, local variables and hidden context"
+    ],
+    "diagnostic_instructions_treated_as_data": true,
+    "missing_displayed_types_not_invented": true,
+    "ambiguous_items_retained": true,
+    "label_comparison_performed": false,
+    "external_service_calls": false,
+    "network_calls": false,
+    "cpu_or_ssh_workload_calls": false,
+    "local_operations": "仅进行指定输入及本次输出的文件读取、结果及来源记录写入、文件 SHA256 计算，以及结果 JSON 完整性和逐条引用检查；未运行候选或测试作业。"
+  },
+  "counts": {
+    "pass": 9,
+    "fail": 13,
+    "uncertain": 2
+  },
+  "limits": [
+    "结论仅适用于这 24 份匿名输入及所列输入 SHA；不能证明未来所有诊断措辞均可正确裁定。",
+    "两份可见诊断存在无法可靠消除的语义歧义，保留 uncertain，没有删除或补造内容。",
+    "文件身份只依据输入明确提供的可见关联，不从未匹配 token、隐藏绑定或未读取材料补全。",
+    "本裁决不比较预期标签，不授权自动训练 reward，也不授予任何训练资格。"
+  ],
+  "training_reward_authorized": false,
+  "training_eligibility_granted": false
+}

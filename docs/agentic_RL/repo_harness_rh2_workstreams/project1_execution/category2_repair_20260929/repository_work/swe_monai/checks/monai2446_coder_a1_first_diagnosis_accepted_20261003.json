@@ -1,0 +1,93 @@
+{
+  "schema": "monai.first_attempt_diagnosis_acceptance.v1",
+  "as_of": "2026-10-03T19:31:43.445143+08:00",
+  "task_id": "swe_gym_lite::Project-MONAI__MONAI-2446",
+  "request_id": "swe-monai2446-r15-shuffle-cache-nib4-20261003-v1",
+  "owner_input_sha256": "22aea4dfe7a04e2f8f7b5669a8fb1bdf70137537941cc8a251cb3f0113d88cd2",
+  "job_id": "gpu1003-monai2446-coder-a1",
+  "scope": "首Coder单次实际候选：完整轨迹、语义、正式参考及已有独立执行核查；不是双模型收口或训练准入",
+  "status": "accepted_no_new_task_blocker_other_model_pending",
+  "raw_reward": 1,
+  "formal_references_all_passed": [
+    "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_shuffle_ndarray_list_and_cache_cpu",
+    "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_datalist",
+    "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_shuffle",
+    "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_update_cache"
+  ],
+  "formal_module_footer": {
+    "passed": 9,
+    "warnings": 20
+  },
+  "candidate_semantics": "shuffle=True时先复制外层list，再沿用原seed、shuffle和cache；公开目标及4正式参考支持，非深拷贝要求",
+  "owner_seven_dimension_analysis_complete": true,
+  "independent_candidate_semantics_supported": true,
+  "independent_execution_supported": true,
+  "independent_execution_review_job_scope": "gpu1003-monai2446-coder-a1",
+  "historical_author_and_machine_pending_labels_preserved": true,
+  "model_verification": {
+    "before_after_reproduction_executed": true,
+    "public_old_pytest_modules_passed": [
+      7,
+      17
+    ],
+    "self_scripts_have_assertions": false
+  },
+  "limits": [
+    "自写综合与focused脚本只打印结果；已观察值正确，但False不会自动导致失败，full backward compatibility宣称过宽。",
+    "新增正式节点实际输入为list[np.ndarray]，没有顶层ndarray容器的运行检查。",
+    "完整FP三项均评分，不能用末次tracked git diff抹去两个根目录诊断脚本。",
+    "执行核查复用GPU报告的本job arm；engine/adapter code_v4、solve code_v8，null environment谱系、36有限资源样本与scripts_digest未独立重算边界保持。",
+    "原题主check的actor私有测试可见性字段仅指首prompt和两次Read观察；没有扩大为全文件可见性新审计。",
+    "单次模型成功不证明稳定能力、普通环境资格、训练或留出资格。"
+  ],
+  "new_task_environment_blocker_found": false,
+  "other_model_pending": true,
+  "request_still_claimed_at_acceptance": true,
+  "paired_request_closed": false,
+  "training_or_holdout_qualified": false,
+  "ordinary_additional_sampling_requested": false,
+  "new_cpu_jobs": 0,
+  "next_action": "等待同一原请求的另一模型完整回执；不重提、不重跑已验CPU或成功首Coder，不发普通结论ACK消息。",
+  "evidence": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_monai/probe_analysis_2446_coder_a1_20261003.md",
+      "sha256": "f08f1a916434457c80f8db825e49f27d9cfe9d20d6c881a9f7aded54810d0c1e",
+      "bytes": 5766
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_monai/checks/monai2446_coder_a1_owner_analysis_20261003.json",
+      "sha256": "44690de40799fdb8f5a7022679572ddfc489ce96117ff33629571f0104032afd",
+      "bytes": 19000
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_monai/checks/monai2446_coder_a1_execution_review_readback_20261003.json",
+      "sha256": "17aa83d27d333cad56e19ce96471dffaf18471b7a88ac9725ebfbc01d88c7b55",
+      "bytes": 2605
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_monai/reviews/non_author_monai2446_coder_semantics_20261003.md",
+      "sha256": "93a58a6982617610f4a5891e4d578c53c35394cdeae95270a89e66d02c409f5c",
+      "bytes": 15381
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_monai/materials/2446/probe_request_r15_v1.json",
+      "sha256": "22aea4dfe7a04e2f8f7b5669a8fb1bdf70137537941cc8a251cb3f0113d88cd2",
+      "bytes": 15482
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/closed_four_execution_non_author_20261003_v1.json",
+      "sha256": "52f447ad6c7dde3aca1f31da54b2c26d35e8e3aa6a661758dcaf05d9315db661",
+      "bytes": 90373
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/monai2446_first_coder_execution_receipt_v1.json",
+      "sha256": "ca1a1b8b8cf024c5ec01e9985dea1f90f1217f05c094246f1261fcb38c984c11",
+      "bytes": 1574
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-coder-a1/gpu1003-monai2446-coder-a1_closed_manifest_v1.json",
+      "sha256": "58d981055f5c5d14e6ac8fb07266b3ca5ddc5ea57b5b3a5b375bb9c555b211cf",
+      "bytes": 130564
+    }
+  ]
+}

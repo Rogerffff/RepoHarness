@@ -1,0 +1,253 @@
+{
+ "task_id": "conan-io__conan-14296",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "a26104a90c1d683956982ede2e6a481e5dbde5e4",
+  "version": "2.1",
+  "image": "xingyaoww/sweb.eval.x86_64.conan-io_s_conan-14296:latest",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/conan-io__conan-14296/{gold,empty}/offline/a1/",
+  "deepseek_candidate": "runs/env_probe_20260909_final_sync/ledger/logs_cc/conan-io__conan-14296/candidate.diff",
+  "pkg_scans": "runs/env_overnight_20260916/L1_conan/{prescan2,envscan,collide}.json",
+  "memcheck": "docs/.../env_overnight_20260916/L1_conan/scripts/memcheck.py"
+ },
+ "public_view": {
+  "目标行为": "题面是一个标题为 [question] 的用户求助帖：在 examples2 仓库的 extend_own_cmake_presets 例子里把 CMakeToolchain 的 generator 换成 Ninja Multi-Config / Ninja 后，cmake --list-presets 报 Duplicate Presets；ConanPresets.json 里出现重复的 conan-debug；Windows 与 Linux 行为不一致；还问了是不是必须先 install 所有 build_type。求解者能从 conan/tools/cmake/presets.py 找到 _IncludingPresets._collect_user_inherits：它对用户 CMakePresets.json 里每个 preset 单独算 conan_inherits 并 extend 进 collected_targets，同一个 conan- preset 被多个用户 preset 继承时就会被重复收集。",
+  "约束": "只能改非测试源码；ConanPresets.json 由 conan 生成，用户 CMakePresets.json 由项目提供。",
+  "公开材料无法确定的点": [
+   "题面引用的 examples2 仓库与 extend_own_cmake_presets 例子没有随题提供，agent 看不到触发问题的 CMakePresets.json 与 conanfile.py（题面说的 line 29 无从对照）。",
+   "题面把症状归因到 Ninja / Ninja Multi-Config 生成器，而真正被判分的根因与生成器无关（是多个用户 preset 继承同一个 conan- preset）。",
+   "题面同时提出至少 3 个问题（重复 preset、生成器未被尊重、必须先 install 全部配置），公开材料没有说明哪一个是本题要修的。",
+   "去重后剩余项的期望顺序、期望条数没有任何公开说明。"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 唯一路径 conans/test/integration/toolchains/cmake/test_cmaketoolchain.py 在 base 存在（1013 行）",
+    "gold 唯一路径 conan/tools/cmake/presets.py 在 base 存在"
+   ],
+   "note": "gold 与 test_patch 严格对应（同一 PR）；与题面只是部分对应，见 27。无二进制/LFS/子模块。",
+   "by": "L1_conan"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show a26104a9:conan/tools/cmake/presets.py L259-277：conan_inherits 在内层循环里重算并逐 preset extend，无去重",
+    "stage1 empty：test_cmake_presets_shared_preset FAILED"
+   ],
+   "note": "base 确有缺陷。",
+   "by": "L1_conan"
+  },
+  "3": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "public.problem_statement 提到 the extend_own_cmake_presets example / examples2 repo / conanfile.py on line 29，但这些文件不在 /testbed 里",
+    "raw.hints_text 6695 字符（不可见），里面是维护者逐步定位的讨论"
+   ],
+   "note": "实际输入不完整：复现路径依赖一个未随题提供的外部示例仓库；关键的根因定位信息只在不可见的 hints 里。",
+   "by": "L1_conan"
+  },
+  "4_17": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan2.json: test_patch_nontest=[]、gold_touches_test=[]"
+   ],
+   "note": "test_patch 只碰一个测试文件。",
+   "by": "L1_conan"
+  },
+  "5": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "本包 15422 的 gold 也只改 conan/tools/cmake/presets.py，test_patch 也只改 conans/test/integration/toolchains/cmake/test_cmaketoolchain.py",
+    "14296 base=a26104a9(2.1)，15422 base=f08b9924(2.1)"
+   ],
+   "note": "与 conan-15422 同文件、同模块、同测试文件的近邻题；不是同一 PR，但共用大量 P2P（两题 P2P 都取自 test_cmaketoolchain.py）。拆 train/eval 时应视为同族，不要一题进训练一题进评测。",
+   "by": "L1_conan"
+  },
+  "23": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "F2P test_cmake_presets_shared_preset 断言 len(conan_presets['configurePresets'])==1 且 name=='conan-release'",
+    "problem_statement 通篇没有提到 shared preset / 多个用户 preset 继承同一个 conan preset 的场景"
+   ],
+   "note": "公开材料推不出 F2P 检查的行为。求解者要先自行把用户求助里的 Duplicate Presets 抽象成这个根因，再猜出去重后的期望条数。未说明的接口：ConanPresets.json 的期望结构、哪些 conan- preset 应被 _clean_user_inherits 清掉。",
+   "by": "L1_conan"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 只断言最终 ConanPresets.json 的内容，不断言 _collect_user_inherits 的内部返回或调用顺序"
+   ],
+   "note": "任何能去重的实现都能过（用 set、用 dict.fromkeys、在 _clean_user_inherits 里去重都行），不强制 gold 的写法。",
+   "by": "L1_conan"
+  },
+  "25": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "F2P 只跑 conan install . -s build_type=Debug 一次，只检查 configurePresets"
+   ],
+   "note": "buildPresets / testPresets 的同类重复不被检查；题面报的 Ninja Multi-Config 场景、Windows/Linux 差异、跨两次 install 的 include 累积都没有检查。只去重 configurePresets 的半截修复能通过。",
+   "by": "L1_conan"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "P2P 32 条覆盖同文件的 presets / cross_build / android / user_presets_custom_location 家族"
+   ],
+   "note": "扩展建议见 proposed_regression_tests。",
+   "by": "L1_conan"
+  },
+  "27": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "golden_patch 只有 4 行新增，全在 _collect_user_inherits"
+   ],
+   "note": "gold 只回答了题面三个问题里的一个（重复 preset）；generator 未被尊重、必须 install 全部配置这两问没有改动。gold 引入 list(set(conan_inherits))，输出顺序随 PYTHONHASHSEED 变化——本题因 _clean_user_inherits 只剩 1 项而不受影响，但这是 gold 自身的一个潜在不确定性。",
+   "by": "L1_conan"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "scripts/leak.py: gold_added_lines=4, matched_in_statement=0/4",
+    "题面无 PR/commit 指针"
+   ],
+   "note": "静态材料无泄漏。真正的泄漏风险来自模型预训练，见 30。",
+   "by": "L1_conan"
+  },
+  "30": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "scripts/memcheck.py 输出：conan-14296 的候选逐字复现 gold 源码改动 7/7 行（含不地道的 if len(conan_inherits): 与 list(set(...)))",
+    "候选复现官方隐藏 test_patch 新增行 60/61（实质行 19/20），唯一差异是注释里的一个空格：\"\" })  #File must exist vs \"\"})  # File must exist"
+   ],
+   "note": "隐藏 test_patch 对求解者不可见，其内容是一段 60 行、包含 debug1/debug2/release1/release2 与特定 docstring 的全新 fixture，没有同文件样板可抄。逐字复现只能解释为预训练记忆了 conan PR #14296。该题的 DeepSeek RESOLVED_FULL 不能计为独立解题能力。",
+   "by": "L1_conan"
+  },
+  "6_7_11": {
+   "status": "pass",
+   "evidence_refs": [
+    "envscan.json: 该测试文件无 @pytest.mark.tool，http 命中 6 条全是注释里的 GitHub issue 链接",
+    "stage1 gold：33 PASSED + 3 SKIPPED（均为 Only OSX / Only Windows 的 skipif）"
+   ],
+   "note": "TestClient 用临时 cache，不装 cmake 也能跑；不访问 conancenter；无家目录写入线索。",
+   "by": "L1_conan"
+  },
+  "19": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "stage1 gold status_map 有一个键 '[1]' 值 SKIPPED，它不在 F2P/P2P 里",
+    "test_output.txt L417-419 是三行 SKIPPED [1] conans/test/.../test_cmaketoolchain.py:288: Only OSX 形态"
+   ],
+   "note": "pytest -rA 的 SKIPPED 摘要行是 SKIPPED [计数] 文件:行号: 原因，不含 nodeid。parse_log_pytest 取 split()[1] 得到 '[1]'，三条 skip 折叠成同一个假键。后果：被 skip 的测试 ID 永远进不了 status_map，scoring 的 reference_skipped 对 conan 形同虚设；若某个 P2P 被 skip，会按缺席记 FAILED。本题的 3 条 skip 都不在参考清单内，暂无判分影响。",
+   "by": "L1_conan"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan2.json: gold 33 PASSED + 1 假键 SKIPPED；empty 32 PASSED + 1 FAILED(F2P) + 1 假键"
+   ],
+   "note": "分差来自目标行为。",
+   "by": "L1_conan"
+  },
+  "31": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "conans/test/.gitignore 第 1 行就是 conftest_user.py（1.51/1.54/1.60/2.0/2.1 五个 base 一致）",
+    "conans/test/conftest.py 用 from conans.test.conftest_user import tools_locations（1.x）/ tools_locations + default_profiles（2.x）并 merge 覆盖默认值",
+    "scripts 补扫：本题目标测试文件里无模块级 pytestmark、无 pytest.mark.tool、无 pytest.skip(、无 sys.exit/os._exit、无 conftest_user 引用"
+   ],
+   "note": "发现一个仓库级控制面：候选可以在 /testbed 新建 conans/test/conftest_user.py，它被官方 conftest 无条件 import 并 merge，而且它在 conans/test/.gitignore 里、也不在 test_patch 路径内，所以既不会被 git checkout <base> -- <path> 恢复，也不会被不带 -x 的 git clean 删掉；文件里的任意代码会在 pytest 收集阶段执行。本题是 conan 2.x：conans/test/utils/tools.py 从 conftest import default_profiles 并在 TestClient 里用作默认 host profile，所以改 conftest_user.py 能直接改变 TestClient 的 settings。 本题用 TestClient 跑集成测试，受 default_profiles 影响面更大。 本题的 F2P/P2P 本身没有可被跳过或提前退出的入口（见上条补扫）。按第四组 B，未发现依据前不新增排除清单，只记录观测。",
+   "by": "L1_conan"
+  }
+ },
+ "issues": [
+  {
+   "category": "pretrain_contamination",
+   "severity": "P1",
+   "evidence_refs": [
+    "scripts/memcheck.py",
+    "runs/env_probe_20260909_final_sync/ledger/logs_cc/conan-io__conan-14296/candidate.diff"
+   ],
+   "proposed_action": "把本题标为受污染样本：不能用它衡量基座解题能力，也不适合进评测集；若进训练集需明确它奖励的是记忆而非推理。同一探针在 24 条 DeepSeek 轨迹里还点亮 getmoto__moto-5701(13/13)、pydantic__pydantic-8500(4/4)、getmoto__moto-6913(4/5)，建议交由对应包与 L3 复核。",
+   "next_experiment": "对候选基座做一次 no-context 探针：只给 instance_id 或 PR 标题，要求写出该 PR 的测试函数名与断言；逐题统计复现率，作为污染筛的量化口径。"
+  },
+  {
+   "category": "requirement_underspecified",
+   "severity": "P1",
+   "evidence_refs": [
+    "public.problem_statement",
+    "grading.test_patch"
+   ],
+   "proposed_action": "若要保留本题，题面需补一句最小复现（多个用户 preset 继承同一个 conan- preset 时 ConanPresets.json 出现重复项），并去掉与判分无关的另外两问。",
+   "next_experiment": "用改写后的题面做一次盲解，对比原题面的盲解成功率。"
+  },
+  {
+   "category": "gold_nondeterminism",
+   "severity": "P3",
+   "evidence_refs": [
+    "golden_patch 引入 list(set(conan_inherits))"
+   ],
+   "proposed_action": "记录为观察项；本题不受影响。",
+   "next_experiment": "在 14296 镜像里用 5 个不同 PYTHONHASHSEED 各跑一次 F2P+P2P，确认无顺序相关的 flaky。"
+  },
+  {
+   "category": "parser_skip_identity",
+   "severity": "P2",
+   "evidence_refs": [
+    "stage1 gold status_map 的 '[1]' 键",
+    "rh2/src/repoharness2/envpack/swegym_parsers.py::parse_log_pytest"
+   ],
+   "proposed_action": "仓库级问题，详见 repo_level_findings.md §2。",
+   "next_experiment": "构造一个把某条 P2P 变成 skip 的候选补丁，确认 RH2 是把它记成 reference_missing 还是 reference_skipped。"
+  },
+  {
+   "category": "control_surface_conftest_user",
+   "severity": "P2",
+   "evidence_refs": [
+    "conans/test/.gitignore:1",
+    "conans/test/conftest.py 的 conftest_user import 段",
+    "conans/test/utils/tools.py 的 from conans.test.conftest import default_profiles（仅 2.x）"
+   ],
+   "proposed_action": "仓库级处置，见 repo_level_findings.md §10：建议在 conan 的评分配方里，在可信 setup 阶段删除 /testbed/conans/test/conftest_user.py（或对整个 conans/test/ 做 git clean -xfd 后再 checkout），而不是逐题加 additional_exclusions。",
+   "next_experiment": "在 conan 镜像里写一个 conftest_user.py（例如 tools_locations={'cmake':{'disabled':True}} 或 2.x 下改 default_profiles['Linux'] 的 compiler），跑本题官方 eval，确认它是否改变逐 ID 结果；同时确认 RH2 的恢复步骤之后该文件是否仍在。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰一个纯测试文件，gold 不碰测试路径。",
+  "evidence_refs": [
+   "runs/env_overnight_20260916/L1_conan/prescan2.json"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_user_presets_custom_location",
+   "reason": "_collect_user_inherits 的直接调用路径就是 user_presets_path 非 CMakeUserPresets.json 的情形，这两个参数化用例覆盖自定义位置，能抓到去重改动误伤正常单继承场景。已在 P2P 内，建议在 candidate 上单独对照。"
+  },
+  {
+   "id": "conans/test/integration/toolchains/cmake/test_cmake_presets_build_test.py",
+   "reason": "buildPresets/testPresets 与 configurePresets 走同一段 types 循环，F2P 只检查 configurePresets；用这个文件覆盖另两类 preset 的去重。"
+  },
+  {
+   "id": "conans/test/integration/layout/test_layout_autopackage.py",
+   "reason": "不建议（与 preset 无关），仅作为反例说明扩展回归应沿调用者而不是同目录。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_review",
+  "reason": "机制干净且 gold/no-op 分差正确，但有两处硬伤：题面与判分目标只部分对应（外部示例仓库未提供、三问只修一问），以及候选逐字复现隐藏测试的强污染证据。"
+ },
+ "costs": {
+  "minutes": 45
+ }
+}

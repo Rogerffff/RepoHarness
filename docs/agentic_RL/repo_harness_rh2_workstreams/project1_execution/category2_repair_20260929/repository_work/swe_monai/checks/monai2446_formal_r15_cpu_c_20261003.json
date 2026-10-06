@@ -1,0 +1,484 @@
+{
+  "schema": "monai.formal_cpu_owner_readback.r15.v1",
+  "as_of": "2026-10-03",
+  "task_id": "swe_gym_lite::Project-MONAI__MONAI-2446",
+  "host_alias": "cpu-c",
+  "job": "monai-2446-formal-r15-20261003-d5aae6a8",
+  "status": "owner_original_evidence_checks_passed_pending_non_author_review",
+  "release_manifest_sha256": "2b788d1ce84228a27894e04886ade347e91993f48ddc9bdeeb8f92de4aa92917",
+  "prepared_job": "monai-r15-prepared-20261003-df08dee4",
+  "actual_image_id": "sha256:28959a332c8a17ebfb2db681d3afaf79f8fd6e845ba51406fc7772f32453bcdd",
+  "evidence_root": "runs/category2_repair_20260929/repository_work/swe_monai/cpu_c_20261003/monai-2446-formal-r15-20261003-d5aae6a8",
+  "outer_status_evidence": {
+    "path": "runs/category2_repair_20260929/repository_work/swe_monai/cpu_c_20261003/monai-2446-formal-r15-20261003-d5aae6a8.snapshot-b745af06.json",
+    "sha256": "fb5caf42c76a10e3a40c20bf60d7c7e79f1adec78ea8f1ce9cff3fc0f68e996f",
+    "cpu_slot_rc": 0,
+    "launcher_exit_rc": 0
+  },
+  "rows": [
+    {
+      "control": "noop",
+      "reward": 0,
+      "install_rc": 0,
+      "test_rc": 1,
+      "candidate_prerequisite": {
+        "exit_code": 0,
+        "home": "/home/rh2grader",
+        "script_sha256": "sha256:28810f676f5957e89dc24cf5658fdadf044d35b3b6e4236f4a694b0e6a3f2de2",
+        "state": "verified",
+        "stderr": "",
+        "stdout": "RH2_MONAI_FIXED_UID54322_ASSET_OK=1\n",
+        "user": "54322"
+      },
+      "reference_states": {
+        "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_datalist": "FAILED",
+        "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_shuffle": "PASSED",
+        "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_update_cache": "PASSED",
+        "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_shuffle_ndarray_list_and_cache_cpu": "PASSED"
+      },
+      "references_per_row": 4,
+      "frozen_patch_digest": "sha256:080afbe2e97e0f43b9937e60ea4ac344ad6ec9eafe83b1326ccb4119b691abfd",
+      "source_changes": {},
+      "grading_materials_identity": "sha256:7b12ba8af3b62aee6ceba5d5d94255efabd68614dc91514994b22bfcdc87752a",
+      "actual_image_id": "sha256:28959a332c8a17ebfb2db681d3afaf79f8fd6e845ba51406fc7772f32453bcdd",
+      "actual_container_observations": {
+        "a746023183da": {
+          "name": "/rh2-replay-cand-Project-MONAI__MONAI-244-53b51168",
+          "image_id_actual": "sha256:28959a332c8a17ebfb2db681d3afaf79f8fd6e845ba51406fc7772f32453bcdd",
+          "config_user": "",
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "PidsLimit": 512,
+          "inspect_sha256": "f3fdd482d383ad3f8c3a6fe1915faf4a24bc6925c6bb46e1f663608c014af0c6",
+          "observed_at": 1790992742.858164,
+          "file": "container_a746023183da.json"
+        },
+        "7e4c3aeeb1f3": {
+          "name": "/rh2-grading-replay-monai-2446-formal-3d630e1e",
+          "image_id_actual": "sha256:28959a332c8a17ebfb2db681d3afaf79f8fd6e845ba51406fc7772f32453bcdd",
+          "config_user": "",
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "PidsLimit": 512,
+          "inspect_sha256": "3aaeb308314e96cf797917ca2ad620ea9bcee358b277ba6c4eed00e5325e4ce7",
+          "observed_at": 1790992761.3729894,
+          "file": "container_7e4c3aeeb1f3.json"
+        }
+      },
+      "cleanup_complete": true,
+      "installation_warning_lines": [],
+      "assertion_lines": [
+        "E           AssertionError: ",
+        "E           Not equal to tolerance rtol=1e-07, atol=0",
+        "E           ",
+        "E           Mismatched elements: 3 / 5 (60%)",
+        "E           Max absolute difference: 2",
+        "E           Max relative difference: 1.",
+        "E            x: array([[2],",
+        "E                  [0],",
+        "E                  [1],...",
+        "E            y: array([[0],",
+        "E                  [1],",
+        "E                  [2],..."
+      ]
+    },
+    {
+      "control": "gold",
+      "reward": 1,
+      "install_rc": 0,
+      "test_rc": 0,
+      "candidate_prerequisite": {
+        "exit_code": 0,
+        "home": "/home/rh2grader",
+        "script_sha256": "sha256:28810f676f5957e89dc24cf5658fdadf044d35b3b6e4236f4a694b0e6a3f2de2",
+        "state": "verified",
+        "stderr": "",
+        "stdout": "RH2_MONAI_FIXED_UID54322_ASSET_OK=1\n",
+        "user": "54322"
+      },
+      "reference_states": {
+        "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_datalist": "PASSED",
+        "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_shuffle": "PASSED",
+        "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_update_cache": "PASSED",
+        "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_shuffle_ndarray_list_and_cache_cpu": "PASSED"
+      },
+      "references_per_row": 4,
+      "frozen_patch_digest": "sha256:008b8adb07737d23376f28e838149768ec39d036649e80790507042cf8dc9714",
+      "source_changes": {
+        "monai/data/dataset.py": "sha256:f29bf46a6bc40e9d4e09ac1e94e46513fcec160c860ca87cbe6633f01b4e301b"
+      },
+      "grading_materials_identity": "sha256:7b12ba8af3b62aee6ceba5d5d94255efabd68614dc91514994b22bfcdc87752a",
+      "actual_image_id": "sha256:28959a332c8a17ebfb2db681d3afaf79f8fd6e845ba51406fc7772f32453bcdd",
+      "actual_container_observations": {
+        "3fcb69bfa1bd": {
+          "name": "/rh2-replay-cand-Project-MONAI__MONAI-244-badb71c6",
+          "image_id_actual": "sha256:28959a332c8a17ebfb2db681d3afaf79f8fd6e845ba51406fc7772f32453bcdd",
+          "config_user": "",
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "PidsLimit": 512,
+          "inspect_sha256": "368845d962f03c0bac3a0a1e8d29454e93420073c0192d3900e1dd0099926f27",
+          "observed_at": 1790992983.3343215,
+          "file": "container_3fcb69bfa1bd.json"
+        },
+        "33fe144d0a32": {
+          "name": "/rh2-grading-replay-monai-2446-formal-64e310e2",
+          "image_id_actual": "sha256:28959a332c8a17ebfb2db681d3afaf79f8fd6e845ba51406fc7772f32453bcdd",
+          "config_user": "",
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "PidsLimit": 512,
+          "inspect_sha256": "f9d1846cd7e11cf98dac69c5d71223464900219a4b30e3f5f54862b89571c937",
+          "observed_at": 1790993001.8437958,
+          "file": "container_33fe144d0a32.json"
+        }
+      },
+      "cleanup_complete": true,
+      "installation_warning_lines": [],
+      "assertion_lines": []
+    },
+    {
+      "control": "array_no_shuffle",
+      "reward": 0,
+      "install_rc": 0,
+      "test_rc": 1,
+      "candidate_prerequisite": {
+        "exit_code": 0,
+        "home": "/home/rh2grader",
+        "script_sha256": "sha256:28810f676f5957e89dc24cf5658fdadf044d35b3b6e4236f4a694b0e6a3f2de2",
+        "state": "verified",
+        "stderr": "",
+        "stdout": "RH2_MONAI_FIXED_UID54322_ASSET_OK=1\n",
+        "user": "54322"
+      },
+      "reference_states": {
+        "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_datalist": "PASSED",
+        "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_shuffle": "PASSED",
+        "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_update_cache": "PASSED",
+        "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_shuffle_ndarray_list_and_cache_cpu": "FAILED"
+      },
+      "references_per_row": 4,
+      "frozen_patch_digest": "sha256:38d1034e36316bc4e333296232cd94fcd69c99cbd558956fdfb26c32ba85742e",
+      "source_changes": {
+        "monai/data/dataset.py": "sha256:1653727e6f823ad96967d6f717d8a49db05b2f136e782a4f3df73f16c1ea811b"
+      },
+      "grading_materials_identity": "sha256:7b12ba8af3b62aee6ceba5d5d94255efabd68614dc91514994b22bfcdc87752a",
+      "actual_image_id": "sha256:28959a332c8a17ebfb2db681d3afaf79f8fd6e845ba51406fc7772f32453bcdd",
+      "actual_container_observations": {
+        "c2b2e9fbf3d7": {
+          "name": "/rh2-replay-cand-Project-MONAI__MONAI-244-aad561bc",
+          "image_id_actual": "sha256:28959a332c8a17ebfb2db681d3afaf79f8fd6e845ba51406fc7772f32453bcdd",
+          "config_user": "",
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "PidsLimit": 512,
+          "inspect_sha256": "6ce77f7fddb18bde63373a86011365041ad0427836b5ab485a5aab9fcb5857ae",
+          "observed_at": 1790993239.6876152,
+          "file": "container_c2b2e9fbf3d7.json"
+        },
+        "03e189d4307a": {
+          "name": "/rh2-grading-replay-monai-2446-formal-5bfa5a4b",
+          "image_id_actual": "sha256:28959a332c8a17ebfb2db681d3afaf79f8fd6e845ba51406fc7772f32453bcdd",
+          "config_user": "",
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "PidsLimit": 512,
+          "inspect_sha256": "c11ba16bd3b0df0e1bc1f3651153851b7180666ac6286e309a29280a4efe0792",
+          "observed_at": 1790993258.1930432,
+          "file": "container_03e189d4307a.json"
+        }
+      },
+      "cleanup_complete": true,
+      "installation_warning_lines": [],
+      "assertion_lines": [
+        "E           AssertionError: ",
+        "E           Arrays are not equal",
+        "E           ",
+        "E           Mismatched elements: 3 / 5 (60%)",
+        "E           Max absolute difference: 2",
+        "E           Max relative difference: 1.",
+        "E            x: array([[0],",
+        "E                  [1],",
+        "E                  [2],...",
+        "E            y: array([[2],",
+        "E                  [0],",
+        "E                  [1],..."
+      ]
+    },
+    {
+      "control": "alternative_list_copy",
+      "reward": 1,
+      "install_rc": 0,
+      "test_rc": 0,
+      "candidate_prerequisite": {
+        "exit_code": 0,
+        "home": "/home/rh2grader",
+        "script_sha256": "sha256:28810f676f5957e89dc24cf5658fdadf044d35b3b6e4236f4a694b0e6a3f2de2",
+        "state": "verified",
+        "stderr": "",
+        "stdout": "RH2_MONAI_FIXED_UID54322_ASSET_OK=1\n",
+        "user": "54322"
+      },
+      "reference_states": {
+        "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_datalist": "PASSED",
+        "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_shuffle": "PASSED",
+        "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_update_cache": "PASSED",
+        "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_shuffle_ndarray_list_and_cache_cpu": "PASSED"
+      },
+      "references_per_row": 4,
+      "frozen_patch_digest": "sha256:89d47002bd88f5443bab59392a90782929fcd311e680f4e529c9b4f13349d25b",
+      "source_changes": {
+        "monai/data/dataset.py": "sha256:2a2d2283b58328f143dfc1d226b4ddf3e132bbc68d107aa77db2f6f72ffea4bb"
+      },
+      "grading_materials_identity": "sha256:7b12ba8af3b62aee6ceba5d5d94255efabd68614dc91514994b22bfcdc87752a",
+      "actual_image_id": "sha256:28959a332c8a17ebfb2db681d3afaf79f8fd6e845ba51406fc7772f32453bcdd",
+      "actual_container_observations": {
+        "9102a72714b2": {
+          "name": "/rh2-replay-cand-Project-MONAI__MONAI-244-71697d6a",
+          "image_id_actual": "sha256:28959a332c8a17ebfb2db681d3afaf79f8fd6e845ba51406fc7772f32453bcdd",
+          "config_user": "",
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "PidsLimit": 512,
+          "inspect_sha256": "16e7b8ee93fa0491ec679e551d1bab19e59276fb18a07e03349668e6ec7835ac",
+          "observed_at": 1790993476.4732454,
+          "file": "container_9102a72714b2.json"
+        },
+        "02f6c316944a": {
+          "name": "/rh2-grading-replay-monai-2446-formal-987c6999",
+          "image_id_actual": "sha256:28959a332c8a17ebfb2db681d3afaf79f8fd6e845ba51406fc7772f32453bcdd",
+          "config_user": "",
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "PidsLimit": 512,
+          "inspect_sha256": "b92bc7d3d66d37e31bbb5cc3813981ef34de3142a4a0c58422b1d4f18e530303",
+          "observed_at": 1790993494.9678686,
+          "file": "container_02f6c316944a.json"
+        }
+      },
+      "cleanup_complete": true,
+      "installation_warning_lines": [],
+      "assertion_lines": []
+    }
+  ],
+  "artifact_sha256": {
+    "campaign.json": {
+      "sha256": "a6f4b18246271d8e1a0c5601eed02f133f59ffa50239290516e828877832ec74",
+      "bytes": 20390
+    },
+    "image_inspect.json": {
+      "sha256": "c2e63fc00e3d24a79c494d3650e375df3dc3396809657c0bd05439c9101a9d10",
+      "bytes": 4099
+    },
+    "noop/runner.log": {
+      "sha256": "27ed0db824d64e6f51cb87fa5c70a7c64494a14b822743dd5f2a634ae8d0da88",
+      "bytes": 863
+    },
+    "noop/ledger.jsonl": {
+      "sha256": "283a531c4f19a21772b3837caf4d472deb1fe745f77d17c1bdd9f2afe32b4188",
+      "bytes": 7296
+    },
+    "noop/container_7e4c3aeeb1f3.json": {
+      "sha256": "3aaeb308314e96cf797917ca2ad620ea9bcee358b277ba6c4eed00e5325e4ce7",
+      "bytes": 7917
+    },
+    "noop/container_a746023183da.json": {
+      "sha256": "f3fdd482d383ad3f8c3a6fe1915faf4a24bc6925c6bb46e1f663608c014af0c6",
+      "bytes": 7789
+    },
+    "array_no_shuffle/runner.log": {
+      "sha256": "a3ab139688b631d6d200fecc98c8e8356d40cfa1814f90cb9395da5a01be15f7",
+      "bytes": 995
+    },
+    "array_no_shuffle/ledger.jsonl": {
+      "sha256": "3d0674a58c503849a48a0693a5a4d2100908c796a340e27eb9fd4e3a3e4081e6",
+      "bytes": 7595
+    },
+    "array_no_shuffle/container_03e189d4307a.json": {
+      "sha256": "c11ba16bd3b0df0e1bc1f3651153851b7180666ac6286e309a29280a4efe0792",
+      "bytes": 7868
+    },
+    "array_no_shuffle/container_c2b2e9fbf3d7.json": {
+      "sha256": "6ce77f7fddb18bde63373a86011365041ad0427836b5ab485a5aab9fcb5857ae",
+      "bytes": 7801
+    },
+    "gold/runner.log": {
+      "sha256": "eeb14c1255529edf0c2d3006aa56aeb13dab1a0bd60b02886985da4b43197d63",
+      "bytes": 981
+    },
+    "gold/container_33fe144d0a32.json": {
+      "sha256": "f9d1846cd7e11cf98dac69c5d71223464900219a4b30e3f5f54862b89571c937",
+      "bytes": 7917
+    },
+    "gold/ledger.jsonl": {
+      "sha256": "994ae6e3b4c1b3c29d1c222a6452760952c693d7c5e849511b0ab86c2ec71ed1",
+      "bytes": 7535
+    },
+    "gold/container_3fcb69bfa1bd.json": {
+      "sha256": "368845d962f03c0bac3a0a1e8d29454e93420073c0192d3900e1dd0099926f27",
+      "bytes": 7716
+    },
+    "alternative_list_copy/runner.log": {
+      "sha256": "72bdc5b7bd198ca1ef14040415a9c6b65cf522e23fda5c60a0e093fbccc442e9",
+      "bytes": 998
+    },
+    "alternative_list_copy/ledger.jsonl": {
+      "sha256": "038ff45b4dcd64447fc5cec338df75a3a02e094fc24a140ff100e9873f50cc55",
+      "bytes": 7605
+    },
+    "alternative_list_copy/container_02f6c316944a.json": {
+      "sha256": "b92bc7d3d66d37e31bbb5cc3813981ef34de3142a4a0c58422b1d4f18e530303",
+      "bytes": 7950
+    },
+    "alternative_list_copy/container_9102a72714b2.json": {
+      "sha256": "16e7b8ee93fa0491ec679e551d1bab19e59276fb18a07e03349668e6ec7835ac",
+      "bytes": 7806
+    },
+    "noop/eval_logs/evallog_replay-monai-2446-formal_3d630e1e.eval.log": {
+      "sha256": "70c56c634daa304ba815d249a30a58036d4cc0b6d748d79ec1ff4c76364f502f",
+      "bytes": 50324
+    },
+    "noop/eval_logs/evallog_replay-monai-2446-formal_3d630e1e.diagnostics.json": {
+      "sha256": "829bf5049060b9c8c48914fe563ecefac8862494d1f4ed3a8c2ece756bba38ca",
+      "bytes": 6106
+    },
+    "noop/budget/Project-MONAI__MONAI-2446.json": {
+      "sha256": "15888e1c3e0b1ffeee10229fc8aa6b591d752f62af23e6e258fe89d2afbf5d77",
+      "bytes": 336
+    },
+    "noop/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-53b51168/baseline_manifest.json": {
+      "sha256": "e62ca9ede9d4e8434de91684fd7a84830e85f44f92475d149540a7ece7d8c578",
+      "bytes": 171976
+    },
+    "noop/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-53b51168/projection.json": {
+      "sha256": "6d870964ec6caa686ff89e91cc5ae3d6533a735eb743ead0a40c588fe5377111",
+      "bytes": 424
+    },
+    "noop/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-53b51168/frozen_patch.json": {
+      "sha256": "13e3fa3b7ce07c090df6fe85d974e680e19086ec319177050ef2c6879d0c95c6",
+      "bytes": 776
+    },
+    "noop/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-53b51168/classification.json": {
+      "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6",
+      "bytes": 93
+    },
+    "noop/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-53b51168/stage.json": {
+      "sha256": "4236f3d5c438ec5f9872a9a8e005cf0ba37a88e6ee86062956c16211ea299d62",
+      "bytes": 836
+    },
+    "array_no_shuffle/eval_logs/evallog_replay-monai-2446-formal_5bfa5a4b.diagnostics.json": {
+      "sha256": "7551db9c9ddc8cee428e640d4e057fb5cb9d679f52784cf9951660d9965ae24e",
+      "bytes": 6149
+    },
+    "array_no_shuffle/eval_logs/evallog_replay-monai-2446-formal_5bfa5a4b.eval.log": {
+      "sha256": "d0aab971a0ed04fa69496c566bbb6de117c210d48e104df70635146472acc1e1",
+      "bytes": 51609
+    },
+    "array_no_shuffle/budget/Project-MONAI__MONAI-2446.json": {
+      "sha256": "15888e1c3e0b1ffeee10229fc8aa6b591d752f62af23e6e258fe89d2afbf5d77",
+      "bytes": 336
+    },
+    "array_no_shuffle/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-aad561bc/candidate.patch": {
+      "sha256": "91bcb98b33149e93606f2e42d48de5a08fd735a4e4e1c54da0f84d04933024e0",
+      "bytes": 451
+    },
+    "array_no_shuffle/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-aad561bc/baseline_manifest.json": {
+      "sha256": "e62ca9ede9d4e8434de91684fd7a84830e85f44f92475d149540a7ece7d8c578",
+      "bytes": 171976
+    },
+    "array_no_shuffle/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-aad561bc/projection.json": {
+      "sha256": "9608b2ba59cb77920d768ff0cd154c1007db751a14ea482dd51622a8cfa61be0",
+      "bytes": 476
+    },
+    "array_no_shuffle/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-aad561bc/frozen_patch.json": {
+      "sha256": "b5379b3c9105b37de8627d6fe734d9048c258f6f794fbc2d51459c28a479134d",
+      "bytes": 67287
+    },
+    "array_no_shuffle/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-aad561bc/classification.json": {
+      "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6",
+      "bytes": 93
+    },
+    "array_no_shuffle/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-aad561bc/stage.json": {
+      "sha256": "7938e9a457efc0081a7ffad3c4f8c78aff962f767f30ee3c52bf20fd6b0f85ce",
+      "bytes": 838
+    },
+    "gold/eval_logs/evallog_replay-monai-2446-formal_64e310e2.diagnostics.json": {
+      "sha256": "2dbbd1cf77aacdabe28e07c1715fc2d43ebbcea2a1db7f432d347b85ace2cb21",
+      "bytes": 6136
+    },
+    "gold/eval_logs/evallog_replay-monai-2446-formal_64e310e2.eval.log": {
+      "sha256": "c0546dfe109f0ab2135ae58a44ea530c6b09fe04595619147c0b2aca172c2c74",
+      "bytes": 50359
+    },
+    "gold/budget/Project-MONAI__MONAI-2446.json": {
+      "sha256": "15888e1c3e0b1ffeee10229fc8aa6b591d752f62af23e6e258fe89d2afbf5d77",
+      "bytes": 336
+    },
+    "gold/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-badb71c6/candidate.patch": {
+      "sha256": "0c0e9e07a3d8195c75cebdac933cb628fef3425e2721f99087fea2ced6fc9f1a",
+      "bytes": 1198
+    },
+    "gold/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-badb71c6/baseline_manifest.json": {
+      "sha256": "e62ca9ede9d4e8434de91684fd7a84830e85f44f92475d149540a7ece7d8c578",
+      "bytes": 171976
+    },
+    "gold/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-badb71c6/projection.json": {
+      "sha256": "9abbfe522ee2e98ff618f13cdcfa67bc04d49241af7b271eaff73c92c1631fd4",
+      "bytes": 452
+    },
+    "gold/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-badb71c6/frozen_patch.json": {
+      "sha256": "37751d00e1f69d4bc3665ad825c9ae99355f058832838f851345d406896404e3",
+      "bytes": 67287
+    },
+    "gold/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-badb71c6/classification.json": {
+      "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6",
+      "bytes": 93
+    },
+    "gold/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-badb71c6/stage.json": {
+      "sha256": "050f88ee2ac89057eb87398179a30c80a208c413aa8455d2f29118bcea559fc8",
+      "bytes": 839
+    },
+    "alternative_list_copy/eval_logs/evallog_replay-monai-2446-formal_987c6999.diagnostics.json": {
+      "sha256": "e1a03eb6feb5139e84c648053c627246bbcd995a547950df985850e6f9fe4d55",
+      "bytes": 6153
+    },
+    "alternative_list_copy/eval_logs/evallog_replay-monai-2446-formal_987c6999.eval.log": {
+      "sha256": "77c9c1ed03143cf587ce89dc4fdf30fb1955726a5090c89841e905eea39e66f3",
+      "bytes": 49445
+    },
+    "alternative_list_copy/budget/Project-MONAI__MONAI-2446.json": {
+      "sha256": "15888e1c3e0b1ffeee10229fc8aa6b591d752f62af23e6e258fe89d2afbf5d77",
+      "bytes": 336
+    },
+    "alternative_list_copy/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-71697d6a/candidate.patch": {
+      "sha256": "f4571b4a1fd55f8047fe5a0f28384f276c2fbefaeb25a34c1cde27a9d77104c4",
+      "bytes": 379
+    },
+    "alternative_list_copy/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-71697d6a/baseline_manifest.json": {
+      "sha256": "e62ca9ede9d4e8434de91684fd7a84830e85f44f92475d149540a7ece7d8c578",
+      "bytes": 171976
+    },
+    "alternative_list_copy/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-71697d6a/projection.json": {
+      "sha256": "3820cfc9a539fca43d8b370c959efaf00dfd9fc44d1b6de89f5fe3772fdef4df",
+      "bytes": 486
+    },
+    "alternative_list_copy/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-71697d6a/frozen_patch.json": {
+      "sha256": "580892a6e33e04051fc2b3cb1865a0bee9aa4f2e582191b99b1ea4a3787ba231",
+      "bytes": 67213
+    },
+    "alternative_list_copy/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-71697d6a/classification.json": {
+      "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6",
+      "bytes": 93
+    },
+    "alternative_list_copy/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-71697d6a/stage.json": {
+      "sha256": "48a5e56de258b7393652b97363f2fd6ca8e7214412f9e57b4fd51a2e20d9c6c6",
+      "bytes": 841
+    }
+  },
+  "scope_limits": [
+    "作者原件核查，不是独立验收、GPU求解或训练资格",
+    "容器创建时HostConfig观测，不是内存/CPU峰值测量",
+    "CPU actor已有相同镜像/源件的公开操作证据；实际GPU本机actor/提示交付仍待执行者核验",
+    "安装最后RC和逐行警告保持；依赖冲突须按实际相关性核查，不能据安装标记单独通过"
+  ]
+}

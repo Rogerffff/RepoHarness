@@ -1,0 +1,135 @@
+{
+  "schema": "coveragepy.model_first_pair_owner_analysis.v1",
+  "as_of": "2026-10-03",
+  "status": "both_first_arms_analyzed_non_author_semantics_passed",
+  "instance_id": "coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96",
+  "request_id": "r2e-coveragepy-f5eb-r076077-cpu-r6-20261003-v1",
+  "aggregate_receipt": {
+    "path": "runs/ordinary_gpu_probe_20261002/receipts/r2e-coveragepy-f5eb-r076077-cpu-r6-20261003-v1_two_model_v1.json",
+    "sha256": "sha256:5813e392337eac05414173627804feee18764aba10789ced7d1fd486d6375932"
+  },
+  "aggregate_owner_ACK": true,
+  "attempts_per_model": 1,
+  "analysis": {
+    "qwen36": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/model_analysis_qwen36_a1_20261003.json",
+      "sha256": "sha256:d648d04667a49b5117ee339391e7a9caccba37b325aea280c199ab9483553b6f"
+    },
+    "coder": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/model_analysis_coder_a1_20261003.json",
+      "sha256": "sha256:37285b5eba26dc94f550764fcd49733cb4d08522b1f66bf212a2427bf231d778"
+    }
+  },
+  "semantic_reviews": {
+    "qwen36": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/reviews/non_author_f5eb_qwen36_semantic_review_20261003.json",
+      "sha256": "sha256:c1c93b8762b334e699a916af347c20d8fcdfaf4bf5f70c0fcdaa16525579de6c"
+    },
+    "coder": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/reviews/non_author_f5eb_coder_semantic_review_20261003.json",
+      "sha256": "sha256:2d9096f674c4b6a72717c5f14300b3ed1713b64b91ba21dcdb301df0ac08a93e"
+    }
+  },
+  "goal_success": {
+    "qwen36": true,
+    "coder": true
+  },
+  "raw_scores": {
+    "qwen36": {
+      "reward": 1,
+      "match": 8,
+      "total": 8
+    },
+    "coder": {
+      "reward": 1,
+      "match": 8,
+      "total": 8
+    }
+  },
+  "implementation_routes": {
+    "qwen36": "totals plus correct optional per-file pair",
+    "coder": "totals-only, permitted by A"
+  },
+  "code_material_comparability": {
+    "qwen_code": "code_v4",
+    "coder_code": "code_v7",
+    "manifest_sha256": {
+      "code4": "e3a33fd824021b75c9ed32fe7a82800f4158bfcf5d5a9d0ca8a8329380716469",
+      "code7": "be705a777484c70af2afe9a34b6dd288bd85c2b1f536c6d57bd59aecb4eb0352"
+    },
+    "same_critical_entry_solve_frozen_transport": [
+      {
+        "path": "rh2/experiments/ordinary_gpu_probe_20261002/entry.py",
+        "sha256": "a1efff44dc2cbedfc81d93b2da8d84a92f6c9c88b15c2a10bf96db2026a4e82c"
+      },
+      {
+        "path": "rh2/experiments/r2e_lifecycle_20260929/r2e_solve_attempt.py",
+        "sha256": "10a71cca67af24c9ab5a6de09cb1845751c643632559842bb61dbce6ebc01d5a"
+      },
+      {
+        "path": "rh2/experiments/base_probe_20260922/solve_attempt.py",
+        "sha256": "00ca849909150de02769f297374a9bbfacf2746347c425474775d9c3e22a04f9"
+      },
+      {
+        "path": "rh2/experiments/ordinary_probe_20260929/frozen_transport.py",
+        "sha256": "11c3baf1cbd4f8b9191f7825b20fcad14670f9d2309df7850754fd6e45bd3d8a"
+      }
+    ],
+    "different_shared_runtime_members": [
+      {
+        "path": "rh2/src/repoharness2/adapters/slime/prepared_task_face.py",
+        "code4_sha256": "22b854ff239c0809d3063211817bcb45153c3a1638babca093e5e1ee35a3e1e2",
+        "code7_sha256": "2120533bb29ff3fb24df202c436fc48489da123feadf3a9e5abaed63daf304c6"
+      },
+      {
+        "path": "rh2/src/repoharness2/adapters/slime/replay_grade.py",
+        "code4_sha256": "3bd574eed3da9372b8640eac48d5da0b1141375c21b6e492de822d494443ef66",
+        "code7_sha256": "7cb03bfd1a6ddcb4238f54d2a19d30d4e3e93a56ad630b81e8fb05ac031160fb"
+      },
+      {
+        "path": "rh2/src/repoharness2/envpack/bundles_v2.py",
+        "code4_sha256": "c4e0cf33f26fc6dcbee70b904d6bc3bad7834833fd93580a938a78ef947b419c",
+        "code7_sha256": "2b4823633832294a539a682341727430e163c9f4749ade3b62dd09f5e8309b74"
+      },
+      {
+        "path": "rh2/src/repoharness2/envpack/environment_overlay.py",
+        "code4_sha256": "69b519f5163114c037e32f90cb1a470f5d3444627fc86ef1da808f4efc6823a4",
+        "code7_sha256": "d3ebe16b99339264a9a6264359d0198d183ac43e982e6a4074c69f00f68f84bc"
+      },
+      {
+        "path": "rh2/src/repoharness2/envpack/spec_vendor.py",
+        "code4_sha256": "12d95baa184a524167624ac5d36124628991fe7bd24ad555e56773eb4307b06e",
+        "code7_sha256": "6662f4d896cbc034fbc01a43722a1a32f8675744b24037cad885cf047e36bcd4"
+      },
+      {
+        "path": "rh2/src/repoharness2/envpack/swe_material_revisions.py",
+        "code4_sha256": "7b2bd896e2143d459c10632a74af4df2642469d8974a83ecaad4c2513b11cedb",
+        "code7_sha256": "33499ff25067ed7e60f93e1261f77090a1449c3a13b24d4b1534ae9e74763c63"
+      },
+      {
+        "path": "rh2/src/repoharness2/grading/manager.py",
+        "code4_sha256": "b6b10f98bf0e1a7bbe4774ac705ece6bb2746da2b1ac4f20394673293f24bbb0",
+        "code7_sha256": "1783533e1e3b66a57fcaa5a599a1da4f8e4e886318e24f040c6df91f294c1c1e"
+      },
+      {
+        "path": "rh2/src/repoharness2/grading/material_revision.py",
+        "code4_sha256": "070f8f3f15f0e6b9725f78b3b48c189d4cd56b8fc0de0f6ab6210d3113bc29dd",
+        "code7_sha256": "55211aa5341353b932422a899c9d60a9e91439b37e50e93df5c2e8270b5eceda"
+      }
+    ],
+    "same_image_material_expectedmap_prompt_budgets_baseline": true,
+    "grading_scripts_digest_equal": true,
+    "candidate_prerequisite": null,
+    "limit": "共用代码不同；manager新增optional prerequisite（本题null），材料消费者有修订，不能称整棵runtime逐字同版；本题input/expected/scripts/镜像/基线实值相等。",
+    "shared_code_delta_evidence_reuse": {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/scrapya95a_coder_a1_execution_review_v1.json",
+      "sha256": "f28b22fe163718fc12be236336a2a5e967603e55bda3de2f3c8b1a4e65902b62"
+    }
+  },
+  "new_material_blockers": [],
+  "mandatory_CPU": false,
+  "training_qualified": false,
+  "same_condition_repetitions_complete": false,
+  "repeat_status": "held_first_coverage_priority_not_dispatched",
+  "next_action": "After executor lifts ordinary repeat hold, provide two additional independent attempts/model under pinned task/material and corresponding model configuration, retain a1 and all errors."
+}

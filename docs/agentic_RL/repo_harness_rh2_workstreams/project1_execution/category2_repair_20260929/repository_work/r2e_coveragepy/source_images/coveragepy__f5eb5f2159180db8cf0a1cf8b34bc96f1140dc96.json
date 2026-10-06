@@ -1,0 +1,54 @@
+{
+  "source": {
+    "schema": "coveragepy.source_image_preparation.v1",
+    "instance_id": "coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96",
+    "source_reference": "namanjain12/coveragepy_final@sha256:fb0335af8820e2f5cda1cc4ed82380546ed36fbd485da4181b8de9ef74b9ae28",
+    "source_base_commit": "17204597c33db2cc396d32b8f9931c35f2518675",
+    "started_at_utc": "2026-10-02T18:19:33Z",
+    "status": "source_image_ready",
+    "formal_acceptance": false,
+    "already_present": false,
+    "image_id": "sha256:45810d8d008d173b44b7c7394e6ef089ef4aee2b52b690c4532088acb6ad0458",
+    "repository_digests": [
+      "namanjain12/coveragepy_final@sha256:fb0335af8820e2f5cda1cc4ed82380546ed36fbd485da4181b8de9ef74b9ae28"
+    ],
+    "architecture": "amd64",
+    "os": "linux",
+    "size_bytes": 841764566,
+    "rootfs_diff_ids": [
+      "sha256:2573e0d8158209ed54ab25c87bcdcb00bd3d2539246960a3d592a1c599d70465",
+      "sha256:1d25e065ebcc59cdab848a4287ce424e3209f1a51f75e4e4ff84e55206471d3d",
+      "sha256:280f3afe5ce200aa405b53681531d4f737d973b7ac964dae3e504ead124254f8",
+      "sha256:ff8df156b61f55bb0c4d526158850d8e46556e9ff8e3b18dc3eeb938004a74ce",
+      "sha256:bb7e88f912e4ff353ecded75827a1734bac8f383e91172e6f453cc3e6ca55c35",
+      "sha256:c5fddd529bae77b3b984cc89e35e1d1b9355b3e8cecd46d33b83e23e78b55feb",
+      "sha256:842fea71abd3153c53aa579946ca6642779e565dc9c3c2850145469e7a552902",
+      "sha256:87732eb199c8e24c64af1b2c768366ce73b39f05cde63f482cac75f1435304d7",
+      "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+      "sha256:27bf2b8ebc9cbd5f8189639b77ada8cd91e0606b88bb1fe655003d668ab6fe20",
+      "sha256:c8c0d6ef21d2d542cf186b92641d3cf811ecf392557565372921bee94b9f8c33",
+      "sha256:d89fec60350a8095c15afd5f2f5acec0ce1c56bcfeee9382896be780c9d20679",
+      "sha256:8254fc4394bd9d2aade50a1456897e8966befe33c1fdb8d736708e86632b887b",
+      "sha256:75aad39ba0e2efe0847c2413c817e78df1bb99b9e0b69a64ecb27422f59c03e9"
+    ],
+    "finished_at_utc": "2026-10-02T18:20:03Z"
+  },
+  "job": {
+    "package": "r2e_coveragepy",
+    "job": "cov-extra-sources-cpub-20261003-02",
+    "mode": "prepare",
+    "slot": 0,
+    "command": [
+      "python3",
+      "-c",
+      "from pathlib import Path\nimport hashlib,json,subprocess,sys\npkg='/work/rh2-category2-20261003/packages/r2e_coveragepy';helper='/work/rh2-category2-20261003/packages/r2e_coveragepy/prepare_source_image.py';rows=[('coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae', 'sha256:71895ed487c4080a40879049ec72d6eb53daf5356c6a7abb321ba46105a05a39'), ('coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96', 'sha256:fb0335af8820e2f5cda1cc4ed82380546ed36fbd485da4181b8de9ef74b9ae28'), ('coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5', 'sha256:e6069f48a7815401ea56658b9eaeeae97581d0f1c890c31b44b94ca435d34cdf')]\nassert hashlib.sha256(Path(helper).read_bytes()).hexdigest()=='5958e5b8e1067383f70a0f8261fd6e2b1c9e5edbfd6f84c4683e81e72606826c'\nfor iid,digest in rows:\n manifest=Path(pkg)/\"tasks\"/iid/\"results_manifest.json\";d=json.loads(manifest.read_text());assert d[\"source_image_manifest_digest\"]==digest\nfor iid,digest in rows:\n r=subprocess.run([\"python3\",helper,\"--manifest\",str(Path(pkg)/\"tasks\"/iid/\"results_manifest.json\"),\"--output\",str(Path(pkg)/\"source_images\"/(iid+\".json\"))])\n if r.returncode:raise SystemExit(r.returncode)\n"
+    ],
+    "cwd": "/root",
+    "started_at_utc": "2026-10-02T18:19:08Z",
+    "supervisor_pid": 106820,
+    "status": "finished",
+    "child_pid": 106821,
+    "returncode": 0,
+    "finished_at_utc": "2026-10-02T18:20:27Z"
+  }
+}

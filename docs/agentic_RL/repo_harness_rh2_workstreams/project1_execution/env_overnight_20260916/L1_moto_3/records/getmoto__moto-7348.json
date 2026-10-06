@@ -1,0 +1,51 @@
+{
+ "task_id": "getmoto__moto-7348",
+ "source": "SWE-Gym lite (swe_gym_lite_full_f70b1a29)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-7348",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-7348",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-7348",
+  "base_commit": "e6818c3f1d3e8f552e5de736f68029b4efd1994f",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-7348/gold/offline/a1/"
+ },
+ "public_view": {
+  "goal": "题面混杂了三个抱怨：(a) create_table 返回里 LSI/GSI 为空、(b) BillingMode 不对、(c) KeySchema 里放了超过 2 个键时 moto 不报错而真实 AWS 会报错。只有 (c) 是真问题。",
+  "constraints": ["题面的复现代码本身写错了（LocalSecondaryIndexes/GlobalSecondaryIndexes 写成了 4 个各含一个键的 dict 的列表），且调用的 helper 根本没传 Indexes/BillingMode —— 这两点在 hints 里被维护者与报告者澄清为用户错误"],
+  "unknowns_from_public_only": [
+   "题面没有给出 AWS 实际返回的错误消息文本，只说 'AWS will throw an error'",
+   "题面把问题描述成 '不能让 Attributes 多于 keys'，而真正的 AWS 约束是 KeySchema 长度 <= 2；两者不是同一条校验",
+   "题面没说错误的 Code 是 ValidationException"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 只碰 tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py（base 已存在，测试追加在文件末尾）", "golden_patch 只碰 moto/dynamodb/responses.py 的 create_table"], "note": "无二进制/LFS/子模块。材料对应题面的 (c) 部分。", "by": "L1_moto_3"},
+  "2": {"status": "pass", "evidence_refs": ["base moto/dynamodb/responses.py:233-239 只校验每个 KeySchema 元素的 KeyType 属于 HASH/RANGE，没有任何长度校验"], "note": "base 确实允许 3 个 KeySchema 元素通过。", "by": "L1_moto_3"},
+  "3": {"status": "issue", "evidence_refs": ["problem_statement 3982 字符，含大段格式错乱的用户代码；三个抱怨里两个是用户自己的错误（hints 里被澄清）", "hints_text：'The dynamo_createtable never uses the the Indexes or BillingMode … So I'm not surprised that these attributes are also missing from the response.'"], "note": "P2：题面噪声大且有误导——按题面 (a)(b) 去改 moto 是错误方向；把 (c) 表述成“Attributes 不能多于 keys”也与实际被判分的约束（KeySchema 长度 ≤ 2）不同。澄清信息只在不可见的 hints 里。", "by": "L1_moto_3"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 触碰路径全集：tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py"], "note": "无非测试源码路径；gold 触碰 moto/dynamodb/responses.py，非测试样路径。", "by": "L1_moto_3"},
+  "17": {"status": "pass", "evidence_refs": ["同 4"], "note": "additional_exclusions 空。", "by": "L1_moto_3"},
+  "5": {"status": "pass", "evidence_refs": ["全局索引：同测试文件的另两题是 getmoto__moto-5620、getmoto__moto-6185（都不在本包）；gold 文件 moto/dynamodb/responses.py 只本题使用"], "note": "非重复；但 test_dynamodb_exceptions.py 是三题共用的高频测试文件，划分时需注意。", "by": "L1_moto_3"},
+  "23": {"status": "issue", "evidence_refs": ["F2P 断言 err['Message'] 完全等于一段 91 词的 AWS Java 风格消息", "题面没有给出任何错误消息文本"], "note": "P1：要求不充分。题面只说“AWS 会报错”，判分却要求逐字复现 AWS 的消息。", "by": "L1_moto_3"},
+  "24": {"status": "issue", "evidence_refs": ["F2P 要求的消息含 `KeySchemaElement(attributeName=UUID, keyType=HASH)` 这种 Java toString 渲染", "**grep 全仓库 moto/ 下 `KeySchemaElement` 零命中**：这个渲染格式在代码库里没有任何先例可模仿", "对比：`1 validation error detected: ...` 这个外层模板在 moto/kinesis/exceptions.py:67/73/87、moto/ssm/models.py:1767 等处确有先例"], "note": "**P1 测试强制唯一实现**：外层模板可以从仓库里学到，但内层 `KeySchemaElement(attributeName=…, keyType=…)` 的逐字格式（含属性名顺序、逗号空格、括号）既不在题面也不在仓库，只能靠对 AWS Java SDK 报文的记忆猜中。任何语义正确但措辞不同的实现都被判错。", "by": "L1_moto_3"},
+  "25": {"status": "pass", "evidence_refs": ["F2P 用 3 个 KeySchema 元素触发；P2P 里大量 create_table 用例用 1-2 个元素"], "note": "无脑抛异常会被 P2P 拒；判分在“是否触发”这一维上够紧（只是在“消息文本”这一维过紧，见 24）。", "by": "L1_moto_3"},
+  "26": {"status": "issue", "evidence_refs": ["collected 42 items 但 graded 只有 41", "本题 P2P 含一个截断 id：tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_item_with_duplicate_expressions[set（真实是两条参数化用例）"], "note": "跨题问题 A 的受影响样本；两条参数化用例在 status_map 里塌缩成一条。", "by": "L1_moto_3"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 在 responses.py 的 KeyType 校验之后插入 len(key_schema) > 2 的校验"], "note": "正确、最小、对应题面的 (c)。注意它只修 (c)：题面的 (a)(b) 本来就不是缺陷。gold 用 `key.get('AttributeName')` 但 `key['KeyType']`（一个用 get 一个用下标），风格不一致，属微瑕。", "by": "L1_moto_3"},
+  "29": {"status": "pass", "evidence_refs": ["hints 是 issue 里的往返讨论，无修复代码、无 PR/commit 链接"], "note": "无静态泄漏；但 hints 含澄清 (a)(b) 是用户错误的关键判断（见 3）。", "by": "L1_moto_3"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold 42 passed，1.81s"], "note": "纯 mock。", "by": "L1_moto_3"},
+  "7": {"status": "issue", "evidence_refs": ["本包共性 install rc=2"], "note": "见包级 issue。", "by": "L1_moto_3"},
+  "11": {"status": "pass", "evidence_refs": ["DynamoDB 异常测试全部进程内 mock"], "note": "无外部服务。", "by": "L1_moto_3"}
+ },
+ "issues": [
+  {"category": "test_forces_exact_undocumented_string", "severity": "P1", "evidence_refs": ["F2P 的 expected_err 逐字断言；仓库内无 KeySchemaElement 渲染先例；题面无错误文本"], "proposed_action": "两条路：(a) 判为 needs_review，接受“考察模型对 AWS 报文的记忆”；(b) 若目标是“仅凭仓库+题面可解”，应把断言放宽成检查 Code + 关键子串（'Member must have length less than or equal to 2'），这属于修改上游判分，需用户裁定。", "next_experiment": "构造一个语义正确但消息措辞不同的补丁（例如只写 'KeySchema must have length less than or equal to 2'），跑 F2P 确认失败（预期失败），用来量化这条要求的代价。"},
+  {"category": "noisy_misleading_statement", "severity": "P2", "evidence_refs": ["题面三个抱怨里两个是用户错误，且澄清只在 hints 里；题面对真问题的描述（Attributes 不能多于 keys）与被判分的约束（KeySchema ≤ 2）不同"], "proposed_action": "标记为“题面噪声高”样本；用于难度分层时注意它会诱导 agent 去改 LSI/GSI/BillingMode 这些并无缺陷的路径。", "next_experiment": "只给题面跑一次 agent，统计它是否先去改 Indexes/BillingMode。"},
+  {"category": "grading_id_collapse", "severity": "P1", "evidence_refs": ["collected 42 vs graded 41；截断 id ...test_update_item_with_duplicate_expressions[set"], "proposed_action": "见 summary.md 跨题发现 A。", "next_experiment": "同 A。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只含测试文件；沿用默认空排除。", "evidence_refs": ["test_patch 路径全集 = tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_dynamodb/test_dynamodb_create_table.py（若存在）与 test_dynamodb.py 里的 create_table 系列", "reason": "gold 在 create_table 的主校验链里插了一条新校验，最直接的回归面是所有建表用例（含 GSI/LSI 建表，它们的 KeySchema 单独计数）。"},
+  {"id": "新增：GlobalSecondaryIndexes / LocalSecondaryIndexes 内部的 KeySchema 超过 2 个元素", "reason": "gold 只校验顶层 KeySchema；索引内的 KeySchema 同样有 ≤2 的 AWS 约束，当前无覆盖，是明显遗漏面。"},
+  {"id": "新增：KeySchema 恰好 2 个元素、以及只有 1 个 HASH 的边界", "reason": "钉住 `> 2` 而不是 `>= 2` 的边界。"}
+ ],
+ "disposition_hint": {"state": "needs_review", "reason": "base 缺陷真实、gold 最小且正确、文件边界干净；但判分要求逐字复现一段仓库里毫无先例、题面也没给的 AWS Java 风格错误消息，且题面本身噪声大、对真问题的描述与被判分的约束不一致。是否接受这种“考记忆”的判分需要裁定。"},
+ "costs": {"minutes": 16}
+}

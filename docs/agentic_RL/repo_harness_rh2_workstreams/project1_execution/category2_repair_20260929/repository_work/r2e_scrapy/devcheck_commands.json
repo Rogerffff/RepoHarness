@@ -1,0 +1,23 @@
+[
+  {
+    "id": "env_python_scrapy",
+    "timeout_s": 120,
+    "expect": "zero",
+    "purpose": "确认解释器与导入来源：预计打印 /testbed/.venv/bin/python 与 3.9.21、scrapy 2.7.0 且 __file__ 为 /testbed/scrapy/__init__.py，并显示本环境 inspect.isgeneratorfunction 会穿透 functools.partial（True）。修复前后输出应相同；若 scrapy 不是从 /testbed 导入，后面的复现结论不可用。",
+    "cmd": "cd /testbed && PYTHONDONTWRITEBYTECODE=1 python -c \"import sys, functools, inspect, scrapy; print(sys.executable, sys.version.split()[0]); print('scrapy', scrapy.__version__, scrapy.__file__); print('isgeneratorfunction(partial(generator)) =', inspect.isgeneratorfunction(functools.partial(lambda x: (yield x), 1)))\""
+  },
+  {
+    "id": "repro_issue_example",
+    "timeout_s": 120,
+    "expect": "zero",
+    "purpose": "仅在 C1 验收容器内：文件形式复现应打印 False，退出码0；不使用 python -c 定义待检查生成器。",
+    "cmd": "cat > /tmp/r2e_partial_repro.py <<'EOF'\nimport sys\nsys.path.insert(0, \"/testbed\")\nfrom functools import partial\n\nimport scrapy\nfrom scrapy.utils.misc import is_generator_with_return_value\n\n\ndef generator_func(arg1, arg2):\n    yield {}\n\n\npartial_gen = partial(generator_func, arg1=42)\nprint(\"scrapy imported from:\", scrapy.__file__)\nresult = is_generator_with_return_value(partial_gen)\nprint(\"is_generator_with_return_value(partial_gen) ->\", repr(result))\nassert result is False, \"expected False, got %r\" % (result,)\nprint(\"OK: partial of a generator without return value -> False\")\nEOF\ncd /testbed && PYTHONDONTWRITEBYTECODE=1 python /tmp/r2e_partial_repro.py"
+  },
+  {
+    "id": "pytest_generator_return_tests",
+    "timeout_s": 300,
+    "expect": "zero",
+    "purpose": "仓库现有公开测试（4 个用例），作为非 partial 行为的回归护栏：修复前后都应 4 passed。注意 conftest.py 会在 tests/keys/ 下重新生成 git-ignore 的 localhost.key/.crt；tests/__init__.py 导入时会做一次注定失败的 DNS 查询，断网下可能多等几秒。-p no:cacheprovider 只是为了不写 .pytest_cache。",
+    "cmd": "cd /testbed && PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider -rA tests/test_utils_misc/test_return_with_argument_inside_generator.py"
+  }
+]

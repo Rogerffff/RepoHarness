@@ -1,0 +1,37 @@
+[
+ {
+  "id": "env_imports",
+  "timeout_s": 120,
+  "expect": "zero",
+  "purpose": "导入与版本：确认 python 是 /testbed/.venv 的 3.7.9、datalad 从 /testbed/datalad 导入（import 时会调用 git，datalad/__init__.py:17-25、datalad/config.py:189-198），并记录 wrapt / nose / pytest 版本、git 版本以及 git-annex 是否在 PATH。修复前后输出应相同；若 nose 或 pytest 导入失败，后面几条依赖测试模块的命令也会失败，属于环境问题而不是题目 bug。",
+  "cmd": "PYTHONDONTWRITEBYTECODE=1 python -c \"\nimport sys; print('python', sys.executable, sys.version.split()[0])\nimport datalad; print('datalad', datalad.__version__, datalad.__file__)\nimport wrapt, nose, pytest; print('wrapt', wrapt.__version__, 'nose', nose.__version__, 'pytest', pytest.__version__)\n\" && git --version && (command -v git-annex || echo 'git-annex not on PATH')"
+ },
+ {
+  "id": "repro_issue_example",
+  "timeout_s": 180,
+  "expect": "nonzero",
+  "purpose": "题面复现（user_prompt.txt:10-24），经测试模块里的假命令 Test_Utils（datalad/interface/tests/test_utils.py:327-352）走 eval_results 的调用路径。修复前：filter 只收到 res（datalad/interface/utils.py:1030），traceback 结尾是 AssertionError: FILTER_KWARGS={}，退出码 1。修复后：打印 RESULT [0, 1, 2, 3]，退出码 0。若报 ImportError（如缺 nose），是环境问题，不算复现。",
+  "cmd": "PYTHONDONTWRITEBYTECODE=1 python -c \"\nfrom datalad.interface.tests.test_utils import Test_Utils\ndef custom_filter(res, **kwargs):\n    assert 'dataset' in kwargs, 'FILTER_KWARGS=%r' % (kwargs,)\n    return True\nout = Test_Utils().__call__(4, dataset='awesome', result_filter=custom_filter)\nprint('RESULT', [r['somekey'] for r in out])\n\""
+ },
+ {
+  "id": "filters_backcompat",
+  "timeout_s": 180,
+  "expect": "zero",
+  "purpose": "旧行为保留检查，不需要 git-annex：调用带关键字参数（dataset='awesome'，或经 Dataset 方法自动带上 dataset）时，Constraint 型 filter（EnsureKeyChoice 及其 & 组合，对应 Create 的类级默认 filter 与 CLI 的 --report-status/--report-type）和单参数 lambda 仍按原语义过滤，list 与 generator 两种模式都查。修复前：打印 6 行结果和 BACKCOMPAT_OK，退出码 0。兼容的修复后：相同。若修复无条件把关键字参数传给 filter，预计 TypeError ... unexpected keyword argument 'dataset'，退出码非 0。",
+  "cmd": "PYTHONDONTWRITEBYTECODE=1 python -c \"\nfrom datalad.interface.tests.test_utils import Test_Utils\nfrom datalad.distribution.dataset import Dataset\nfrom datalad.support.constraints import EnsureKeyChoice\nkeys = lambda rs: [r['somekey'] for r in rs]\ncall = Test_Utils().__call__\nds = Dataset('/does/not/matter')\nchecks = [\n    ('keychoice', keys(call(4, dataset='awesome', result_filter=EnsureKeyChoice('somekey', (0, 2)))), [0, 2]),\n    ('and_constraints', keys(call(4, dataset='awesome', result_filter=EnsureKeyChoice('status', ('ok',)) & EnsureKeyChoice('somekey', (1, 3)))), [1, 3]),\n    ('one_arg_lambda', keys(call(4, dataset='awesome', result_filter=lambda x: x['somekey'] in (0, 2))), [0, 2]),\n    ('generator_mode', keys(call(4, dataset='awesome', return_type='generator', result_filter=EnsureKeyChoice('somekey', (0, 2)))), [0, 2]),\n    ('dataset_method_constraint', keys(ds.fake_command(4, result_filter=EnsureKeyChoice('somekey', (0, 2)))), [0, 2]),\n    ('dataset_method_lambda', keys(ds.fake_command(4, result_filter=lambda x: x['somekey'] in (0, 2))), [0, 2]),\n]\nfor name, got, want in checks:\n    print(name, got)\n    assert got == want, (name, got, want)\nprint('BACKCOMPAT_OK')\n\""
+ },
+ {
+  "id": "filter_kwargs_probe",
+  "timeout_s": 180,
+  "expect": "any",
+  "purpose": "只看输出：记录 filter 在五种调用下实际收到的关键字参数键名（显式关键字 dataset、generator 模式、按位置传 dataset、不传 dataset、Dataset 方法调用）。修复前：五行都是 []。修复后：kw_dataset 与 kw_dataset_generator 至少含 'dataset'；按与结果渲染器相同的 _kwargs 读法（datalad/interface/utils.py:1046-1050），kw_dataset 为 ['dataset']，dataset_method 为 ['dataset', 'number']（Dataset 方法把位置参数转成关键字，datalad/distribution/dataset.py:441-451），positional_dataset 与 no_dataset 为 []；若实现改传绑定后的全部参数，这几行会多出 'number' 或 'dataset'。用于说明实现对歧义点的选择，不判对错。",
+  "cmd": "PYTHONDONTWRITEBYTECODE=1 python -c \"\nfrom datalad.interface.tests.test_utils import Test_Utils\nfrom datalad.distribution.dataset import Dataset\nseen = {}\ndef spy(tag):\n    def f(res, **kwargs):\n        seen.setdefault(tag, sorted(kwargs))\n        return True\n    return f\ncall = Test_Utils().__call__\ncall(1, dataset='awesome', result_filter=spy('kw_dataset'))\nlist(call(1, dataset='awesome', return_type='generator', result_filter=spy('kw_dataset_generator')))\ncall(1, 'awesome', result_filter=spy('positional_dataset'))\ncall(1, result_filter=spy('no_dataset'))\nDataset('/does/not/matter').fake_command(1, result_filter=spy('dataset_method'))\nfor k in sorted(seen):\n    print(k, seen[k])\n\""
+ },
+ {
+  "id": "public_tests_narrow",
+  "timeout_s": 600,
+  "expect": "zero",
+  "purpose": "相关公开测试，不需要 git-annex：test_result_filter（filter 语义）、test_eval_results_plus_build_doc（eval_results 找类与生成文档，断言 result_filter 等文档子串）和 datalad/tests/test_constraints.py（16 个 Constraint 用例，改 Constraint 签名时相关）。修复前与兼容的修复后都预计 18 passed、退出码 0。-p no:cacheprovider 避免在 /testbed 写 .pytest_cache。",
+  "cmd": "PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider -rA datalad/interface/tests/test_utils.py::test_result_filter datalad/interface/tests/test_utils.py::test_eval_results_plus_build_doc datalad/tests/test_constraints.py"
+ }
+]

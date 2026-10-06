@@ -1,0 +1,34 @@
+{
+  "name": "orange22_statement_delivery_public_actor_v1",
+  "task": "orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237",
+  "scope": "prepared_public_actor_check_not_run_not_model_quality_probe",
+  "public_basis": "既有fresh公开读者提出的helper测试及数字/字符串逐位置还原关系；无源代码修复",
+  "run_note": "固定发布与派生镜像后，用已有r2e_probe_e2e.py --no-grade运行；绑定唯一label、未占用的18190–18199端口及当前作业槽。公开复现中的原缺陷失败单列，不当成基础设施失败。",
+  "steps": [
+    {
+      "kind": "bash_r2e_preflight"
+    },
+    {
+      "kind": "bash",
+      "id": "actor_identity_imports",
+      "command": "id\npwd\npython - <<'PYINFO'\nimport sys\nimport numpy\nimport Orange\nfrom Orange.widgets.data import owcreateclass\nprint(\"interpreter\", sys.executable)\nprint(\"python_version\", sys.version.split()[0])\nprint(\"numpy\", numpy.__version__, numpy.__file__)\nprint(\"Orange\", Orange.__file__)\nprint(\"module\", owcreateclass.__file__)\nPYINFO",
+      "timeout_ms": 120000
+    },
+    {
+      "kind": "bash",
+      "id": "public_helper_test",
+      "command": "QT_QPA_PLATFORM=minimal xvfb-run --auto-servernum python -m pytest -q Orange/widgets/data/tests/test_owcreateclass.py::TestHelpers::test_unique_in_order_mapping",
+      "timeout_ms": 300000
+    },
+    {
+      "kind": "bash",
+      "id": "public_mapping_relation",
+      "command": "QT_QPA_PLATFORM=minimal xvfb-run --auto-servernum python - <<'PYCHECK'\nimport numpy as np\nfrom Orange.widgets.data.owcreateclass import unique_in_order_mapping\nfor values in ([8, 4, 6, 8, 4], [\"zebra\", \"apple\", \"zebra\", \"mint\", \"apple\"]):\n    a = np.asarray(values)\n    unique, mapping = unique_in_order_mapping(a)\n    print(\"input\", a.tolist(), \"unique\", unique.tolist(), \"mapping\", mapping.tolist())\n    assert np.array_equal(unique[mapping], a), \"mapping must reconstruct the input\"\nPYCHECK",
+      "timeout_ms": 120000
+    },
+    {
+      "kind": "text",
+      "text": "Public actor checks completed."
+    }
+  ]
+}

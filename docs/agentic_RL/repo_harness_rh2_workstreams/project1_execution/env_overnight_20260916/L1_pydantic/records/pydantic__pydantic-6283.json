@@ -1,0 +1,201 @@
+{
+ "task_id": "pydantic__pydantic-6283",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_pydantic (Claude Opus 5, 2026-09-16 夜)",
+ "materials_refs": [
+  "s2/ingest/*_bundles_v0.jsonl (pydantic__pydantic-6283)",
+  "repos/pydantic@a2928660(见 grading.base_commit)",
+  "runs/env_probe_stage1_20260910/.../pydantic__pydantic-6283/"
+ ],
+ "public_view": {
+  "目标行为": "`RootModel.model_construct(x)` 的结果应与 `RootModel(x)` 相等（BaseModel 已经如此）。",
+  "约束": "BaseModel 的 model_construct 行为不能变；RootModel 带私有属性时的相等语义不能变。",
+  "公开材料无法确定的点": [
+   "失败是“不相等”还是“直接抛异常”，题面只写了 assert 失败",
+   "根因在 model_construct 写了 RootModel 上被类属性遮蔽的 __pydantic_extra__/__pydantic_private__ 槽，题面不可能推出"
+  ],
+  "base 定位": "pydantic/main.py:213-222 `model_construct` 无条件 `_object_setattr(m,'__pydantic_extra__',_extra)` 与 `_object_setattr(m,'__pydantic_private__',None)`；而 pydantic/root_model.py:35-37 把 `__pydantic_private__`/`__pydantic_extra__` 定义成**类属性**，遮蔽了 BaseModel 的 __slots__ 描述符。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "tests/test_root_model.py、pydantic/main.py 在 base 均存在"
+   ],
+   "note": "对应同一问题。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "main.py:213-222 与 root_model.py:35-37",
+    "stage1 empty：test_root_model_equality FAILED"
+   ],
+   "note": "base 确有缺陷。",
+   "by": "static+stage1log"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 1190 字符，含 BaseModel 对照与 RootModel 复现"
+   ],
+   "note": "输入完整；hints_text 为空。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只碰 tests/test_root_model.py；F2P+P2P 39 条全在该文件；gold 只碰 pydantic/main.py"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "static"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "与 9214 同 test_patch 文件 tests/test_root_model.py；与 5662 同属 __eq__/相等语义主题、gold 同为 pydantic/main.py"
+   ],
+   "note": "P3 同族：5662（BaseModel.__eq__ 返回 NotImplemented）→ 6283（RootModel.model_construct 相等）→ 9214（RootModel json schema description）是一条 RootModel/相等语义的演进链，划分时注意。",
+   "by": "static"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "install rc=2。",
+   "by": "stage1log"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "测试第三方 import：pytest / pydantic_core"
+   ],
+   "note": "无外部资产。",
+   "by": "static"
+  },
+  "10": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "无本题轨迹。",
+   "by": "-"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "R2"
+   ],
+   "note": "只有 install 需要网络。",
+   "by": "stage1log"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 的 assert 与 F2P 新增的断言语义一致"
+   ],
+   "note": "要求充分。注意题面用**子类化**的 `class Model(RootModel): root: int`，F2P 用**参数化**的 `RootModel[int]`；两者走同一条 model_construct 路径，不构成落差。",
+   "by": "static"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 只加一行 `assert RootModel[int](42) == RootModel[int].model_construct(42)`"
+   ],
+   "note": "不强制唯一实现：在 BaseModel.model_construct 里按 __pydantic_root_model__ 分支、或在 RootModel.model_construct 里覆写，都能过。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "F2P 是既有测试 test_root_model_equality **新增一行断言**得到的；test_patch 不新增测试函数",
+    "P2P 只有 38 条，全在 tests/test_root_model.py，是本包判分面第二小的题（仅次于 8004 的 15 条）",
+    "base tests/test_root_model.py:315 test_root_model_with_private_attrs_equality 只测 `Model(42)`，不测 `Model.model_construct(42)`"
+   ],
+   "note": "P2：gold 让 RootModel 的 model_construct 不再设置 `__pydantic_private__`，但**带私有属性的 RootModel 子类走 model_construct** 这条路判分面完全没测（既有测试只走 __init__）。一个只在无私有属性时生效的部分修复能全绿。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "同 25"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "static"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 全文"
+   ],
+   "note": "gold 只加两个 `not cls.__pydantic_root_model__` 条件，无题外改动。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak 扫描 0 命中；题面无 URL；hints 为空"
+   ],
+   "note": "无泄漏。",
+   "by": "static"
+  },
+  "31": {
+   "status": "issue",
+   "evidence_refs": [
+    "R4"
+   ],
+   "note": "静态残余面。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "official_test_coverage_gap",
+   "severity": "P2",
+   "evidence_refs": [
+    "check 25"
+   ],
+   "proposed_action": "补“带 PrivateAttr 的 RootModel 子类 model_construct 后相等且私有属性正确”的断言进 P2P",
+   "next_experiment": "在镜像里只对无私有属性分支生效的部分修复，跑官方 39 条确认全绿"
+  },
+  {
+   "category": "small_oracle_surface",
+   "severity": "P3",
+   "evidence_refs": [
+    "P2P 仅 38 条"
+   ],
+   "proposed_action": "本题判分面小，破坏 RootModel 之外行为的补丁不可见；若入训练集，建议把 tests/test_main.py 的 model_construct 相关条目并入 P2P",
+   "next_experiment": "无"
+  },
+  {
+   "category": "same_family_split",
+   "severity": "P3",
+   "evidence_refs": [
+    "check 5"
+   ],
+   "proposed_action": "5662 / 6283 / 9214 同侧划分",
+   "next_experiment": "无"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 仅纯测试文件、gold 仅生产代码、判分面与恢复面一致。",
+  "evidence_refs": [
+   "grading.json.test_patch",
+   "validation.json.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  "带 PrivateAttr 的 RootModel 子类：`Model.model_construct(42) == Model(42)` 且 `m._private_attr == 'abc'` — 选择依据：gold 改了 `__pydantic_private__` 的设置路径，既有 test_root_model_with_private_attrs_equality 只走 __init__",
+  "tests/test_main.py 里 BaseModel 的 model_construct 条目（含 extra='allow' 场景）— 选择依据：gold 改的是 BaseModel.model_construct 的公共路径，必须确认非 RootModel 分支未受影响；这些条目不在本题 P2P",
+  "`RootModel[int].model_construct(42).__pydantic_fields_set__` 与 `RootModel[int](42)` 一致 — 选择依据：gold 只处理了 extra/private，fields_set 未被断言",
+  "extra='allow' 的普通 BaseModel model_construct 仍设置 __pydantic_extra__ — 选择依据：gold 的第一个条件分支的反面"
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "题面、gold、F2P 三者一致，边界干净；缺口是判分面只有 39 条且不覆盖私有属性走 model_construct 的分支，补一条回归即可。"
+ },
+ "costs": {
+  "minutes": 16
+ }
+}

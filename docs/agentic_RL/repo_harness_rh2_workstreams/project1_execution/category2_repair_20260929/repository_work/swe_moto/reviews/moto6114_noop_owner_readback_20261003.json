@@ -1,0 +1,131 @@
+{
+  "schema": "moto6114.noop_owner_readback.v1",
+  "scope": "v3 completed noop; later gold directory collision preserves this execution, no whole-matrix acceptance",
+  "job_id": "moto6114-cpu-ffe3a2e97334",
+  "parent_job_exit_code": 1,
+  "noop_cli_exit_code": 0,
+  "reward": 0,
+  "formal_revised_cpu_accepted": false,
+  "f2p": {
+    "failed": [
+      "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_after_creation"
+    ],
+    "total": 1
+  },
+  "p2p": {
+    "passed": [
+      "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_initial",
+      "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_fails_for_non_existent_cluster",
+      "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_master_username",
+      "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_master_user_password",
+      "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_long_master_user_password",
+      "tests/test_rds/test_rds_clusters.py::test_modify_db_cluster_needs_long_master_user_password",
+      "tests/test_rds/test_rds_clusters.py::test_modify_db_cluster_new_cluster_identifier",
+      "tests/test_rds/test_rds_clusters.py::test_create_db_cluster__verify_default_properties",
+      "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_database_name",
+      "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_additional_parameters",
+      "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster",
+      "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_do_snapshot",
+      "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_that_is_protected",
+      "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_unknown_cluster",
+      "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_unknown_cluster",
+      "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_after_stopping",
+      "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_without_stopping",
+      "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster",
+      "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster_already_stopped",
+      "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster_unknown_cluster",
+      "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot_fails_for_unknown_cluster",
+      "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot",
+      "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot_copy_tags",
+      "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot_fails_for_unknown_snapshot",
+      "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot",
+      "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot_fails_for_existed_target_snapshot",
+      "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_snapshots",
+      "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_snapshot",
+      "tests/test_rds/test_rds_clusters.py::test_restore_db_cluster_from_snapshot",
+      "tests/test_rds/test_rds_clusters.py::test_restore_db_cluster_from_snapshot_and_override_params",
+      "tests/test_rds/test_rds_clusters.py::test_add_tags_to_cluster",
+      "tests/test_rds/test_rds_clusters.py::test_add_tags_to_cluster_snapshot",
+      "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_enable_http_endpoint_valid",
+      "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_enable_http_endpoint_invalid"
+    ],
+    "total": 34
+  },
+  "reference_missing": [],
+  "reference_skipped": [],
+  "actual_collection_and_parser_count": 35,
+  "target_failure": "original second-cluster ARN query DBClusterNotFoundFault",
+  "install_original_make_init": true,
+  "install_rc": 0,
+  "test_rc": 1,
+  "trusted_test_footer_complete": true,
+  "candidate_cleanup_removed": true,
+  "manager_close": {
+    "prepare_cancelled": 0,
+    "containers_removed": [],
+    "containers_open": [],
+    "supply_open": [],
+    "cleanup_failures": [],
+    "regrade_events": 0,
+    "regrade_total": 0,
+    "regrade_declined": 0,
+    "containers_created_total": 1,
+    "containers_removed_total": 1,
+    "container_history_retained": 1,
+    "leases_total": 1
+  },
+  "final_status": {
+    "exit_code": 0,
+    "reason": "ok",
+    "grader_containers_open": [],
+    "cleanup_failures_total": 0,
+    "cleanup_failures_resolved": false
+  },
+  "own_resources_zero": true,
+  "runtime_inputs_exact_expected": true,
+  "image_id_actual": "sha256:1d8dded2ee5bbe9275514fdc603116ac9f36da5e30c19b2d4ffcba4d4a9f27d5",
+  "baseline_manifest_digest": "sha256:0feb8f20d89376db2c14dc1989f299fb31615d94668c3116d3c1c58a3b899da7",
+  "frozen_patch_digest": "sha256:b166d4a0e769bbd2ddee92672f45183d5476b6bd121147de3b04538d3549d351",
+  "budget_changes": false,
+  "transport": {
+    "archive_path": "/work/rh2-category2-20261003/packages/swe_moto/archives/moto6114-cpu-ffe3a2e97334.transport.tar.gz",
+    "archive_sha256": "81d06afa9f3a446377ae8168df70d67b75865cd228e5e0c498561e0d3b2bc992",
+    "archive_bytes": 116501,
+    "manifest_sha256": "ebd2bbd9499bf4e7b6679ae3f133e0cfafd97dbefbef0107ee4726a8cb9022f3",
+    "file_count": 43,
+    "job_returncode": 1,
+    "local_evidence": "runs/category2_repair_20260929/moto_cpu_20261003/moto6114-cpu-ffe3a2e97334_evidence",
+    "all_sha256_and_length_match": true,
+    "original_files_unmodified": true
+  },
+  "evidence_pins": {
+    "runs/category2_repair_20260929/moto_cpu_20261003/moto6114-cpu-ffe3a2e97334_evidence/output/noop/eval_logs/evallog_replay-moto6114-cpu-ffe3_cee41e24.eval.log": {
+      "sha256": "8517cb5e76350ab9895b76fa50cfed3ded736131f845a23d0286b09b692c4f47",
+      "bytes": 45643
+    },
+    "runs/category2_repair_20260929/moto_cpu_20261003/moto6114-cpu-ffe3a2e97334_evidence/output/noop/ledger.jsonl": {
+      "sha256": "1f6e7089780d1c3097c5efa15987d267f48d9e1954fa344ff6b82812d05f985f",
+      "bytes": 12278
+    },
+    "runs/category2_repair_20260929/moto_cpu_20261003/moto6114-cpu-ffe3a2e97334_evidence/output/noop/artifacts/swe_gym_lite--getmoto__moto-6114/a1-e7b3bcf7/frozen_patch.json": {
+      "sha256": "1150e6c02f065a541ef62c55e9e6eca20e7707aafb774082ea7bb5a323aaf6c8",
+      "bytes": 727
+    },
+    "runs/category2_repair_20260929/moto_cpu_20261003/moto6114-cpu-ffe3a2e97334_evidence/output/run_noop.stdout": {
+      "sha256": "8f2221855669db7adcd4aa2bd5cd3ea1f01f060478c9826b2be4da739e395fe5",
+      "bytes": 845
+    },
+    "runs/category2_repair_20260929/moto_cpu_20261003/moto6114-cpu-ffe3a2e97334_evidence/output/residual_noop.json": {
+      "sha256": "63d5bbc4aad1d186d01425a682037021f16d06701db9e33db4017047f5f8226f",
+      "bytes": 159
+    },
+    "runs/category2_repair_20260929/moto_cpu_20261003/moto6114-cpu-ffe3a2e97334_evidence/output/runtime_inputs.json": {
+      "sha256": "695c258faf988170d593bb36a3a53623ed61a8577da3487b82549680a3936e7f",
+      "bytes": 6528
+    },
+    "runs/category2_repair_20260929/moto_cpu_20261003/moto6114-cpu-ffe3a2e97334_evidence/job/stderr.log": {
+      "sha256": "d91eb3c05366ea2584b89a41399b81b80bc6fdfc634a9eb7050fefdc19f30e44",
+      "bytes": 620
+    }
+  }
+}

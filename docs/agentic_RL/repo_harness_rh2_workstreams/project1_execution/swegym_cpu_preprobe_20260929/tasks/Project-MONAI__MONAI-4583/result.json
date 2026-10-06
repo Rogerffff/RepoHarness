@@ -1,0 +1,1174 @@
+{
+  "task": "Project-MONAI__MONAI-4583",
+  "run": "reserve6-v1",
+  "scope": "CPU actor/private/formal final; historical partial preserved",
+  "actor": {
+    "image": "sha256:8305e1f5f6f13226ef30941433ed794fc294acc62fef85a28bc82131c6f6e0c4",
+    "base_commit": "9c4710199b80178ad11f7dd74925eee3ae921863",
+    "commands_result": [
+      {
+        "id": "identity",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 308,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "确认CPU profile、实际源码/依赖、base及初态；不把预存requirements改动冒称干净"
+      },
+      {
+        "id": "mask_2d",
+        "rc": 1,
+        "status": "nonzero",
+        "expect": "nonzero",
+        "matches_expect": true,
+        "output_bytes": 1280,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "公开同通道真实前景标签机制的2D稀疏数组；同时核box/label值、NumPy/Torch CPU容器、默认及显式dtype/device。非零须精确目标断言"
+      },
+      {
+        "id": "mask_3d",
+        "rc": 1,
+        "status": "nonzero",
+        "expect": "nonzero",
+        "matches_expect": true,
+        "output_bytes": 1360,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "公开同通道真实前景标签机制的3D稀疏数组；同时核box/label值、NumPy/Torch CPU容器、默认及显式dtype/device。非零须精确目标断言"
+      },
+      {
+        "id": "public_regression",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 4262,
+        "output_truncated_to": 200000,
+        "pytest": {
+          "passed": 5,
+          "warning": 22
+        },
+        "purpose": "只运行公开base已有5项矩形往返与box转换用例，不注入隐藏fixture"
+      }
+    ],
+    "cleanup": {
+      "container_rm": 0,
+      "network_failures": [],
+      "relay_failures": [],
+      "stub_rc": 0,
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "residual_after_force": []
+    },
+    "checks": {
+      "interpreter_in_tool_result": false,
+      "host_log_present": true,
+      "no_harness_dir_in_container": true,
+      "no_launcher_or_done_marker": true,
+      "message_start_matches_stub_requests": true,
+      "exit_code_zero": true,
+      "result_event_present": true,
+      "log_complete": true,
+      "bashenv_denied_for_agent": false,
+      "all_commands_ran": true,
+      "all_match_expect": true
+    }
+  },
+  "private": {
+    "base": {
+      "image": "sha256:8305e1f5f6f13226ef30941433ed794fc294acc62fef85a28bc82131c6f6e0c4",
+      "preparation_rc": [
+        0,
+        0,
+        0
+      ],
+      "commands": [
+        {
+          "id": "mask_2d",
+          "rc": 1,
+          "seconds": 5.8150599880009395,
+          "stdout_bytes": 1146,
+          "stderr_bytes": 134
+        },
+        {
+          "id": "mask_3d",
+          "rc": 1,
+          "seconds": 5.1860103650014935,
+          "stdout_bytes": 1226,
+          "stderr_bytes": 134
+        },
+        {
+          "id": "public_regression",
+          "rc": 0,
+          "seconds": 9.792927042000883,
+          "stdout_bytes": 4262,
+          "stderr_bytes": 0
+        }
+      ],
+      "source_sha256": "a439e2cf0de7ac19d715e0fefb5224e96e933d7001b4e554f4fbc5f6090c4f5c",
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      },
+      "actual_observations": {
+        "mask_2d": {
+          "dims": 2,
+          "rows": [
+            {
+              "backend": "numpy",
+              "custom": false,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                -1,
+                -1
+              ],
+              "box_dtype": "float32",
+              "label_dtype": "int64",
+              "device": "numpy/cpu",
+              "ok_box": true,
+              "ok_label": false,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "numpy",
+              "custom": true,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                -1,
+                -1
+              ],
+              "box_dtype": "float64",
+              "label_dtype": "int32",
+              "device": "numpy/cpu",
+              "ok_box": true,
+              "ok_label": false,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "torch",
+              "custom": false,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                -1,
+                -1
+              ],
+              "box_dtype": "torch.float32",
+              "label_dtype": "torch.int64",
+              "device": "cpu",
+              "ok_box": true,
+              "ok_label": false,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "torch",
+              "custom": true,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                -1,
+                -1
+              ],
+              "box_dtype": "torch.float64",
+              "label_dtype": "torch.int32",
+              "device": "cpu",
+              "ok_box": true,
+              "ok_label": false,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            }
+          ]
+        },
+        "mask_3d": {
+          "dims": 3,
+          "rows": [
+            {
+              "backend": "numpy",
+              "custom": false,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                -1,
+                -1
+              ],
+              "box_dtype": "float32",
+              "label_dtype": "int64",
+              "device": "numpy/cpu",
+              "ok_box": true,
+              "ok_label": false,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "numpy",
+              "custom": true,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                -1,
+                -1
+              ],
+              "box_dtype": "float64",
+              "label_dtype": "int32",
+              "device": "numpy/cpu",
+              "ok_box": true,
+              "ok_label": false,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "torch",
+              "custom": false,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                -1,
+                -1
+              ],
+              "box_dtype": "torch.float32",
+              "label_dtype": "torch.int64",
+              "device": "cpu",
+              "ok_box": true,
+              "ok_label": false,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "torch",
+              "custom": true,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                -1,
+                -1
+              ],
+              "box_dtype": "torch.float64",
+              "label_dtype": "torch.int32",
+              "device": "cpu",
+              "ok_box": true,
+              "ok_label": false,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            }
+          ]
+        }
+      }
+    },
+    "gold": {
+      "image": "sha256:8305e1f5f6f13226ef30941433ed794fc294acc62fef85a28bc82131c6f6e0c4",
+      "preparation_rc": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "commands": [
+        {
+          "id": "mask_2d",
+          "rc": 0,
+          "seconds": 5.279444362999129,
+          "stdout_bytes": 1155,
+          "stderr_bytes": 0
+        },
+        {
+          "id": "mask_3d",
+          "rc": 0,
+          "seconds": 5.588921163998748,
+          "stdout_bytes": 1235,
+          "stderr_bytes": 0
+        },
+        {
+          "id": "public_regression",
+          "rc": 0,
+          "seconds": 9.221764050000274,
+          "stdout_bytes": 4262,
+          "stderr_bytes": 0
+        }
+      ],
+      "source_sha256": "ad4fd4db54ee21ce6d2da4e5e707a91f2e3b8e16ca269eaa03b72d3b1460539a",
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      },
+      "actual_observations": {
+        "mask_2d": {
+          "dims": 2,
+          "rows": [
+            {
+              "backend": "numpy",
+              "custom": false,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                0,
+                7
+              ],
+              "box_dtype": "float32",
+              "label_dtype": "int64",
+              "device": "numpy/cpu",
+              "ok_box": true,
+              "ok_label": true,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "numpy",
+              "custom": true,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                0,
+                7
+              ],
+              "box_dtype": "float64",
+              "label_dtype": "int32",
+              "device": "numpy/cpu",
+              "ok_box": true,
+              "ok_label": true,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "torch",
+              "custom": false,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                0,
+                7
+              ],
+              "box_dtype": "torch.float32",
+              "label_dtype": "torch.int64",
+              "device": "cpu",
+              "ok_box": true,
+              "ok_label": true,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "torch",
+              "custom": true,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                0,
+                7
+              ],
+              "box_dtype": "torch.float64",
+              "label_dtype": "torch.int32",
+              "device": "cpu",
+              "ok_box": true,
+              "ok_label": true,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            }
+          ]
+        },
+        "mask_3d": {
+          "dims": 3,
+          "rows": [
+            {
+              "backend": "numpy",
+              "custom": false,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                0,
+                7
+              ],
+              "box_dtype": "float32",
+              "label_dtype": "int64",
+              "device": "numpy/cpu",
+              "ok_box": true,
+              "ok_label": true,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "numpy",
+              "custom": true,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                0,
+                7
+              ],
+              "box_dtype": "float64",
+              "label_dtype": "int32",
+              "device": "numpy/cpu",
+              "ok_box": true,
+              "ok_label": true,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "torch",
+              "custom": false,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                0,
+                7
+              ],
+              "box_dtype": "torch.float32",
+              "label_dtype": "torch.int64",
+              "device": "cpu",
+              "ok_box": true,
+              "ok_label": true,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "torch",
+              "custom": true,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                0,
+                7
+              ],
+              "box_dtype": "torch.float64",
+              "label_dtype": "torch.int32",
+              "device": "cpu",
+              "ok_box": true,
+              "ok_label": true,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            }
+          ]
+        }
+      }
+    },
+    "degenerate": {
+      "image": "sha256:8305e1f5f6f13226ef30941433ed794fc294acc62fef85a28bc82131c6f6e0c4",
+      "preparation_rc": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "commands": [
+        {
+          "id": "mask_2d",
+          "rc": 0,
+          "seconds": 5.08158655599982,
+          "stdout_bytes": 1155,
+          "stderr_bytes": 0
+        },
+        {
+          "id": "mask_3d",
+          "rc": 1,
+          "seconds": 5.353634133000014,
+          "stdout_bytes": 1226,
+          "stderr_bytes": 134
+        },
+        {
+          "id": "public_regression",
+          "rc": 0,
+          "seconds": 10.278326095998636,
+          "stdout_bytes": 4262,
+          "stderr_bytes": 0
+        }
+      ],
+      "source_sha256": "ff73733407f3f1d096331da2c90b289a98fe68b7bd28293f1c4cb9754db700ac",
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      },
+      "actual_observations": {
+        "mask_2d": {
+          "dims": 2,
+          "rows": [
+            {
+              "backend": "numpy",
+              "custom": false,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                0,
+                7
+              ],
+              "box_dtype": "float32",
+              "label_dtype": "int64",
+              "device": "numpy/cpu",
+              "ok_box": true,
+              "ok_label": true,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "numpy",
+              "custom": true,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                0,
+                7
+              ],
+              "box_dtype": "float64",
+              "label_dtype": "int32",
+              "device": "numpy/cpu",
+              "ok_box": true,
+              "ok_label": true,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "torch",
+              "custom": false,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                0,
+                7
+              ],
+              "box_dtype": "torch.float32",
+              "label_dtype": "torch.int64",
+              "device": "cpu",
+              "ok_box": true,
+              "ok_label": true,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "torch",
+              "custom": true,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                0,
+                7
+              ],
+              "box_dtype": "torch.float64",
+              "label_dtype": "torch.int32",
+              "device": "cpu",
+              "ok_box": true,
+              "ok_label": true,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            }
+          ]
+        },
+        "mask_3d": {
+          "dims": 3,
+          "rows": [
+            {
+              "backend": "numpy",
+              "custom": false,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                -1,
+                -1
+              ],
+              "box_dtype": "float32",
+              "label_dtype": "int64",
+              "device": "numpy/cpu",
+              "ok_box": true,
+              "ok_label": false,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "numpy",
+              "custom": true,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                -1,
+                -1
+              ],
+              "box_dtype": "float64",
+              "label_dtype": "int32",
+              "device": "numpy/cpu",
+              "ok_box": true,
+              "ok_label": false,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "torch",
+              "custom": false,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                -1,
+                -1
+              ],
+              "box_dtype": "torch.float32",
+              "label_dtype": "torch.int64",
+              "device": "cpu",
+              "ok_box": true,
+              "ok_label": false,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            },
+            {
+              "backend": "torch",
+              "custom": true,
+              "boxes": [
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ],
+                [
+                  0.0,
+                  0.0,
+                  0.0,
+                  2.0,
+                  2.0,
+                  2.0
+                ]
+              ],
+              "labels": [
+                -1,
+                -1
+              ],
+              "box_dtype": "torch.float64",
+              "label_dtype": "torch.int32",
+              "device": "cpu",
+              "ok_box": true,
+              "ok_label": false,
+              "ok_type": true,
+              "ok_dtype": true,
+              "ok_device": true
+            }
+          ]
+        }
+      }
+    }
+  },
+  "formal": {
+    "attempt": "reserve6-v1",
+    "rewards": {
+      "noop": 0,
+      "gold": 1,
+      "degenerate": 1
+    },
+    "test_rc": {
+      "noop": 1,
+      "gold": 0,
+      "degenerate": 0
+    },
+    "f2p_total": 4,
+    "p2p_total": 5,
+    "audit": "evidence_audit.json",
+    "all_reference_states_and_full_logs_verified": true,
+    "candidate_and_manager_cleanup_verified": true
+  },
+  "remaining": [
+    "D6 versioned coverage correction and revalidation not implemented",
+    "No full lifecycle resource evidence or minimum-memory estimate",
+    "No GPU verification, autonomous-model run, public_hints delivery, training or holdout admission"
+  ],
+  "quality": {
+    "severity": "S1",
+    "failure_type": "T2b",
+    "reason": "Only 2D label lookup fixed; sparse 3D foreground labels remain background yet all original references pass. Public base API supports 3D foreground labels.",
+    "gold_positive_control": "8 CPU dimension/backend/dtype combinations plus original 9 formal tests pass; no general all-input claim",
+    "formal_reference_changed": false
+  },
+  "uses": {
+    "diagnostic": "ready",
+    "unconditional_comparison": false,
+    "training_reward": false,
+    "holdout_admission": false,
+    "D6_implemented": false,
+    "conditional_comparison": "not granted by this CPU batch; requires explicit comparable semantic acceptance and applicable admission decisions"
+  },
+  "review": {
+    "behavior": "../../reviews/reserve6_monai_behavior_review.md",
+    "formal": "../../reviews/reserve6_monai4583_final_review.md",
+    "independent_raw_review": "complete",
+    "final_card_alignment": "complete; independent reviewer receipt and root acceptance",
+    "root_parser": "runs/swegym_cpu_preprobe_20260929/analysis/monai4583_final_v1.json",
+    "transport": {
+      "verified": true,
+      "files": 99,
+      "bytes": 1270496,
+      "local_mismatches": [],
+      "source": "runs/swegym_cpu_preprobe_20260929/analysis/evidence_manifest_monai4583_v1.json"
+    },
+    "root_accepted_at": "2026-09-28T21:53:25.545879+00:00"
+  },
+  "resource_samples": {
+    "source": "runs/swegym_cpu_preprobe_20260929/analysis/resource_monai_reserve_setup900_v1.json",
+    "scope": "15 second grading-container samples; preparation included; missing stays null; no full lifetime inference",
+    "rows": [
+      {
+        "task": "Project-MONAI__MONAI-4583",
+        "ledger": "results/Project-MONAI__MONAI-4583/reserve6-v1/grade_degenerate/ledger.jsonl",
+        "report_id": "rpt_grading_aab01198",
+        "samples": 32,
+        "first": 1790631020.455773,
+        "last": 1790631489.1130981,
+        "max_sample_gap_seconds": 15.14673113822937,
+        "observed_memory_peak_bytes": 4294967296,
+        "observed_pids_peak": 81,
+        "memory.events": {
+          "low": 0,
+          "high": 0,
+          "max": 2934,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "pids.events": {
+          "max": 0
+        },
+        "ledger_resource": {
+          "mem_peak_mb": 4096.0,
+          "mem_peak_unavailable_or_zero": false
+        },
+        "ledger_resource_facts": null,
+        "limits": {
+          "Memory": 4294967296,
+          "NanoCpus": 2000000000,
+          "PidsLimit": 512,
+          "ShmSize": 67108864,
+          "Tmpfs": {
+            "/tmp": "size=1073741824,mode=1777,exec,nosuid,nodev"
+          }
+        }
+      },
+      {
+        "task": "Project-MONAI__MONAI-4583",
+        "ledger": "results/Project-MONAI__MONAI-4583/reserve6-v1/grade_gold/ledger.jsonl",
+        "report_id": "rpt_grading_c4dd58f4",
+        "samples": 36,
+        "first": 1790630460.590785,
+        "last": 1790630990.2254772,
+        "max_sample_gap_seconds": 15.171894550323486,
+        "observed_memory_peak_bytes": 4294967296,
+        "observed_pids_peak": 81,
+        "memory.events": {
+          "low": 0,
+          "high": 0,
+          "max": 2981,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "pids.events": {
+          "max": 0
+        },
+        "ledger_resource": {
+          "mem_peak_mb": 4096.0,
+          "mem_peak_unavailable_or_zero": false
+        },
+        "ledger_resource_facts": null,
+        "limits": {
+          "Memory": 4294967296,
+          "NanoCpus": 2000000000,
+          "PidsLimit": 512,
+          "ShmSize": 67108864,
+          "Tmpfs": {
+            "/tmp": "size=1073741824,mode=1777,exec,nosuid,nodev"
+          }
+        }
+      },
+      {
+        "task": "Project-MONAI__MONAI-4583",
+        "ledger": "results/Project-MONAI__MONAI-4583/reserve6-v1/grade_noop/ledger.jsonl",
+        "report_id": "rpt_grading_34b4b1ea",
+        "samples": 50,
+        "first": 1790629671.8972292,
+        "last": 1790630415.1570961,
+        "max_sample_gap_seconds": 15.201879501342773,
+        "observed_memory_peak_bytes": 4294967296,
+        "observed_pids_peak": 44,
+        "memory.events": {
+          "low": 0,
+          "high": 0,
+          "max": 2976,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "pids.events": {
+          "max": 0
+        },
+        "ledger_resource": {
+          "mem_peak_mb": 4096.0,
+          "mem_peak_unavailable_or_zero": false
+        },
+        "ledger_resource_facts": null,
+        "limits": {
+          "Memory": 4294967296,
+          "NanoCpus": 2000000000,
+          "PidsLimit": 512,
+          "ShmSize": 67108864,
+          "Tmpfs": {
+            "/tmp": "size=1073741824,mode=1777,exec,nosuid,nodev"
+          }
+        }
+      }
+    ],
+    "whole_lifecycle_inference": false
+  }
+}

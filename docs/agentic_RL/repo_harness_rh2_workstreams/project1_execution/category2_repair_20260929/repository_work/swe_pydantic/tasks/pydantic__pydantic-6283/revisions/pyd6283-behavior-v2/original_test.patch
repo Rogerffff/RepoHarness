@@ -1,0 +1,11 @@
+diff --git a/tests/test_root_model.py b/tests/test_root_model.py
+--- a/tests/test_root_model.py
++++ b/tests/test_root_model.py
+@@ -310,6 +310,7 @@ def test_root_model_equality():
+     assert RootModel[int](42) == RootModel[int](42)
+     assert RootModel[int](42) != RootModel[int](7)
+     assert RootModel[int](42) != RootModel[float](42)
++    assert RootModel[int](42) == RootModel[int].model_construct(42)
+ 
+ 
+ def test_root_model_with_private_attrs_equality():

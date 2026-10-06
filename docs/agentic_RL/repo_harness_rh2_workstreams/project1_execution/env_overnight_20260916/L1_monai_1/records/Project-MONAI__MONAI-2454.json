@@ -1,0 +1,76 @@
+{
+ "task_id": "Project-MONAI__MONAI-2454",
+ "source": "SWE-Gym lite / Project-MONAI/MONAI PR 2454 (created_at 2021-06-25)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "eb29e99299ee2fffd2a204dfd5a1dbabfcc830fe",
+  "version": "0.5", "python_version": "3.8",
+  "eval_cmd": "pytest -rA ",
+  "actual_test_cmd": "pytest -rA  tests/test_to_tensor.py",
+  "f2p": ["tests/test_to_tensor.py::TestToTensor::test_single_input"],
+  "p2p": ["tests/test_to_tensor.py::TestToTensor::test_array_input"],
+  "test_patch_paths": ["tests/test_to_tensor.py（new file mode，base 不存在）"],
+  "gold_paths": ["monai/transforms/utility/array.py"],
+  "stage1": "gold=RESOLVED_FULL / empty=RESOLVED_NO，rc_install=0；日志 runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/Project-MONAI__MONAI-2454/",
+  "in_e2": ["B"],
+  "deepseek_trajectory": "runs/env_probe_20260909_final_sync/ledger/logs_cc/Project-MONAI__MONAI-2454/{candidate.diff,stream.jsonl}；既有审查 docs/.../env_probe_20260909/solvability_review_20260909/02_oracle_cases.md §6 与 README.md:90"
+ },
+ "public_view": {
+  "goal": "`ToTensor()` 作用在 0 维 numpy 数组上会多出 1 维。题面直接点出根因：`np.ascontiguousarray(2)` 返回 `[2]`（ndim 从 0 变 1）。要求 0 维输入保持 0 维。",
+  "constraints": [
+   "题面只谈 **numpy 0 维数组**这一种输入",
+   "题面已给出最小复现与根因定位，是本包信息质量最高的题面之一（340 字符）"
+  ],
+  "unknowns_from_public_only": [
+   "Python 标量（`5`）和 0 维 torch.Tensor（`torch.tensor(5)`）要不要一起保形？题面没提，但 F2P 要求",
+   "修好之后还要不要保住 `ascontiguousarray` 原来的连续性语义？题面没提，测试也没查",
+   "list/tuple 这类非 ndarray 序列走哪条路径，题面没说"
+  ],
+  "base_code_evidence": [
+   "eb29e9929:monai/transforms/utility/array.py:318-323 `ToTensor.__call__`：`if isinstance(img, torch.Tensor): return img.contiguous()` / `return torch.as_tensor(np.ascontiguousarray(img))`",
+   "eb29e9929:monai/utils/misc.py `issequenceiterable`：对 0 维 torch.Tensor 返回 False，但对 0 维 np.ndarray 返回 True（ndarray 是 Iterable），这正是 gold 要额外加 `img.ndim == 0` 判断的原因"
+  ]
+ },
+ "checks": {
+  "1": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["test_patch 头部 `new file mode`，tests/test_to_tensor.py 在 base 不存在（git cat-file -e eb29e9929:tests/test_to_tensor.py 失败）"], "note": "材料本身对应（gold 改 ToTensor，测试查 ToTensor），但 **test_patch 是新建文件**，这在评分流程里有额外后果，见检查 17 与 issues。无二进制/LFS/子模块。", "by": "L1_monai_1"},
+  "2": {"status": "pass", "evidence_refs": ["eb29e9929:monai/transforms/utility/array.py:323", "stage1 empty=RESOLVED_NO 实跑"], "note": "base 确含题面所述缺陷。", "by": "L1_monai_1"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 340 字符，含 `>>> a = np.ascontiguousarray(2)` 最小复现", "raw hints_text 为空"], "note": "无外链、无图片、无截断；hints 为空。", "by": "L1_monai_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 只新建 tests/test_to_tensor.py"], "note": "无非测试源码混入；gold 只碰 monai/transforms/utility/array.py。additional_exclusions 保持空。", "by": "L1_monai_1"},
+  "17": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["rh2/src/repoharness2/adapters/slime/prepared_task_face.py:199-210：恢复步骤用 `git cat-file -e <base>:\"$f\"` 判断，base 里不存在的 official test 路径**跳过恢复**，随后直接 `git apply` test_patch", "rh2/src/repoharness2/adapters/slime/sandbox_profile.py:1289 `[ \"$RH2_APPLY_RC\" = \"0\" ] || ... exit 3`（原因码 official_test_patch_apply_failed）", "runs/env_probe_20260909_final_sync/ledger/logs_cc/Project-MONAI__MONAI-2454/candidate.diff：DeepSeek 候选自己新建了同名的 tests/test_to_tensor.py", "既有审查 docs/.../solvability_review_20260909/02_oracle_cases.md:15『原候选与官方新增测试文件冲突』"], "note": "**恢复机制在『test_patch 新建文件』这一形状上失效**：候选若在同一路径写自己的复现测试，恢复步骤不会删它（base 里没有可 checkout 的版本），`git apply` 的 `new file mode` hunk 随即冲突失败，整题按 patch_apply_failed 判 0——候选的源码修复即使完全正确也拿不到分。而『先写一个复现测试』恰恰是 agent 的常见行为，真实 DeepSeek 轨迹就撞上了。", "by": "L1_monai_1"},
+  "5": {"status": "pass", "evidence_refs": ["runs/env_overnight_20260916/L1_monai_1/dupidx.txt：monai/transforms/utility/array.py 与 tests/test_to_tensor.py 在 26 道 MONAI 题里只被本题触碰"], "note": "无重复/派生。", "by": "L1_monai_1"},
+  "23": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["题面只说 numpy 0 维数组", "F2P `test_single_input` 的 for 循环是 `(5, np.asarray(5), torch.tensor(5))`——包含 Python int", "solvability_review_20260909/README.md:90『精确路径投影后真正失败的是 Python int 保形』"], "note": "公开材料推不出『Python 标量也要保形』。这不是假设——DeepSeek 候选只修了 `isinstance(img, np.ndarray) and img.ndim == 0`，对 `5` 仍走 `np.ascontiguousarray(5)`→`array([5])`（ndim 1），F2P 因此真失败。题面写 numpy 而测试查三类输入，是本题最实际的要求缺口。", "by": "L1_monai_1"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 只断言 `result.ndim == 0` 与 assert_allclose，不查实现"], "note": "不强制唯一实现：直接 `return torch.as_tensor(img)`、或按类型分派、或用 `np.asarray(img)` 再判 ndim，都能过。", "by": "L1_monai_1"},
+  "25": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["F2P/P2P 合计只查 3+3 种输入的数值与 shape", "两条测试都没有传入非连续数组（如 np.rot90 的结果），也没有断言 result.is_contiguous()"], "note": "**最省事的假修复 `return torch.as_tensor(img)`（整段删掉 ascontiguousarray）同时通过 F2P 与 P2P**，但它丢掉了 ToTensor docstring 承诺的 'make it contiguous' 语义——这正是这个类存在的理由。有意思的是 DeepSeek 自己写的复现测试里就有 `test_numpy_input` 断言 `result.is_contiguous()`，官方测试反而没有。", "by": "L1_monai_1"},
+  "26": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["P2P 只有 1 条，且和 F2P 同属 test_patch 新建的同一个文件——不是既有回归"], "note": "ToTensor 被 ToTensord、EnsureType 系列、以及大量 transform 组合使用，现有名单对这些调用方零覆盖。见 proposed_regression_tests。", "by": "L1_monai_1"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 两个 hunk：加 issequenceiterable 的 import + 改 __call__"], "note": "改动最小、精确对应、不依赖未交付改动。注意 gold 对 list/tuple 仍走 ascontiguousarray，对 Python 标量走 `torch.as_tensor(img)` 直通。", "by": "L1_monai_1"},
+  "29": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["题面正文『The root cause is `np.ascontiguousarray()` added a dim』并附 REPL 复现"], "note": "题面把根因直接说破（上游是维护者自己提的 issue，末句『I will try to fix it ASAP』）。不算泄漏修复代码，但难度被显著拉低：定位环节基本免除，只剩『在哪加判断』。作为训练题这是好的（信号清晰），作为难度分级要记一笔。", "by": "L1_monai_1"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold/empty rc_install=0"], "note": "安装离线可完成。", "by": "L1_monai_1"},
+  "7": {"status": "pass", "evidence_refs": ["tests/test_to_tensor.py 全文只用 numpy/torch 内存构造，无外部资产"], "note": "无下载/权重/数据依赖。", "by": "L1_monai_1"},
+  "11": {"status": "pass", "evidence_refs": ["同上；stage1 离线两侧都跑完了 2 条用例"], "note": "测试阶段不需要网络。", "by": "L1_monai_1"},
+  "20": {"status": "pass", "evidence_refs": ["stage1 gold=RESOLVED_FULL、empty=RESOLVED_NO"], "note": "no-op 与 gold 有明确分差。", "by": "L1_monai_1"},
+  "10": {"status": "pass", "evidence_refs": ["两条用例纯 CPU 张量、无随机、无并发"], "note": "无 GPU / 多进程 / 共享内存需求；无 flaky 因素。", "by": "L1_monai_1"}
+ },
+ "issues": [
+  {"category": "harness_restore_gap", "severity": "P1",
+   "evidence_refs": ["rh2/src/repoharness2/adapters/slime/prepared_task_face.py:199-210", "rh2/src/repoharness2/adapters/slime/sandbox_profile.py:1289", "logs_cc/Project-MONAI__MONAI-2454/candidate.diff", "solvability_review_20260909/02_oracle_cases.md:15"],
+   "proposed_action": "216 题里 test_patch 含 `new file mode` 的共 8 题（扫描脚本 scripts/newfile_scan，结果见 summary.md 跨题一节）：MONAI-2454、MONAI-3690、conan-11594、moto-5885、moto-7607、dvc-3665、dvc-6954、mypy-15184。建议在恢复步骤里对『base 不存在但 official test_patch 要新建』的路径显式 `rm -f` 再 apply（语义上等价于『恢复到 base 的不存在状态』），而不是跳过。注意这会与当前 §10.2 的『缺失即拒』判据交互：rm 之后 apply 成功即可，ABSENT 仍为 0。",
+   "next_experiment": "在任一新建文件题上构造『候选在同名路径写了自己的测试』的 patch，跑现行 v2 setup，确认落到 official_test_patch_apply_failed；加 rm -f 后重跑，确认转为正常评分。"},
+  {"category": "requirement_gap", "severity": "P2",
+   "evidence_refs": ["problem_statement 只说 numpy 0 维", "F2P 循环含 Python int 5", "DeepSeek 候选对 5 仍返回 ndim 1"],
+   "proposed_action": "题面补一句『Python 标量与 0 维 torch.Tensor 同样应保持 0 维』，或把 F2P 拆成三条分别计分。现状下一个只按题面字面修好的候选会拿 0 分，训练信号与题面不一致。",
+   "next_experiment": "把 DeepSeek 的 candidate.diff（去掉它自建的测试文件）单独 apply 后跑 F2P，确认只有 `5` 这一项失败。"},
+  {"category": "reward_hacking_surface", "severity": "P1",
+   "evidence_refs": ["F2P/P2P 都不查连续性", "eb29e9929:monai/transforms/utility/array.py:320 docstring 'make it contiguous'"],
+   "proposed_action": "补一条断言：对 `np.rot90(np.array([[1,2],[3,4]]))` 这类非 C 连续输入，`ToTensor()(x).is_contiguous()` 必须为真。否则 `return torch.as_tensor(img)` 这一行假修复满分。",
+   "next_experiment": "把 __call__ 整体换成 `return torch.as_tensor(img)` 跑当前 F2P+P2P，预期 RESOLVED_FULL。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只新建 tests/test_to_tensor.py，gold 只改 monai/transforms/utility/array.py，无交集。注意这里的风险不是『排除不够』，而是恢复步骤对新建文件无能为力（检查 17）——那要靠 setup 流程修，不是靠 additional_exclusions。", "evidence_refs": ["grading_bundles_v2_v0:Project-MONAI__MONAI-2454 test_patch", "validation_bundles_v0:Project-MONAI__MONAI-2454 golden_patch"]},
+ "proposed_regression_tests": [
+  {"id": "新增：非 C 连续 numpy 输入的 is_contiguous 断言", "reason": "唯一能区分 gold 与『删掉 ascontiguousarray』假修复的断言。"},
+  {"id": "tests/test_to_tensord.py（字典版 ToTensord）", "reason": "ToTensord 直接委托给 ToTensor，是最近的调用方。"},
+  {"id": "tests/test_compose.py", "reason": "ToTensor 常出现在 Compose 末尾，覆盖『0 维输出被下游 transform 消费』的路径。"},
+  {"id": "新增：list / tuple / Python float / bool 的形状与 dtype 断言", "reason": "gold 用 issequenceiterable 分流，这条分支当前完全没有测试。"}
+ ],
+ "disposition_hint": {"state": "needs_review", "reason": "题目本身干净（题面好、gold 小、stage1 有分差、无网络无 GPU），可以直接用；但两件事需要先定：(a) 新建测试文件与候选自写测试的 apply 冲突是流程级缺陷，影响 8 道题；(b) 题面只说 numpy 而 F2P 要求 Python 标量也保形，会误伤按题面字面修好的候选。"},
+ "costs": {"minutes": 24}
+}

@@ -1,0 +1,228 @@
+{
+ "task_id": "iterative__dvc-1661",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "docs/.../s2/ingest/public_bundles_v0.jsonl#iterative__dvc-1661",
+  "grading": "docs/.../s2/ingest/grading_bundles_v2_v0.jsonl#iterative__dvc-1661",
+  "validation": "docs/.../s2/ingest/validation_bundles_v0.jsonl#iterative__dvc-1661",
+  "raw": "docs/.../s2/raw/swe_gym_lite_full_f70b1a29.jsonl#iterative__dvc-1661",
+  "base_commit": "68603f012e2769ed09db9c9f81f703ee567cc76c",
+  "version": "0.29",
+  "python_version": "3.8",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-1661:latest",
+  "eval_cmd": "pytest -rA",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1661/{gold,empty}/offline/a1/",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc"
+ },
+ "public_view": {
+  "目标行为": "`dvc add <目录>` 之后反复 `dvc status` 不应重新计算该目录的 md5（不应重复走 `collect_dir_cache`）。",
+  "约束": "base `dvc/remote/local.py::_save_dir`（第 394-425 行）已经为目录内每个文件 `self.state.update(p, m)`、为每个缓存对象 `self.state.update(c, m)`、为目录 cache 文件 `self.state.update(cache)`，唯独没有为**目录自身**写 state 记录；`dvc/state.py:420 def update(self, path, known_checksum=None)` 支持带 checksum 写入。",
+  "公开材料无法确定的点": [
+   "**题面是一个提问而不是规格**：结尾是 \"Is this expected?\"、\"Could it be caching file-level md5s and then simply recomputing the directory-level md5?\"，没有给出期望行为、没有 traceback、没有点名文件；",
+   "触发条件（重启后必现）题面自己都说没定位清楚；可复现的 bash 脚本只在不可见的 hints 里；",
+   "\"只算一次\"这个精确口径（而不是\"少算几次\"或\"加个缓存\"）无法从题面推出。"
+  ],
+  "相关模块": "dvc/remote/local.py（_save_dir / collect_dir_cache / _collect_dir）、dvc/state.py（update / update_info / get）。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-1661/grading.json#test_patch",
+    "mat/iterative__dvc-1661/validation.json#golden_patch",
+    "git show 68603f012e:dvc/remote/local.py"
+   ],
+   "note": "test_patch 只动 tests/test_add.py（base 存在）；gold 只动 dvc/remote/local.py。同一问题（目录 md5 重算）。无二进制/LFS/子模块。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show 68603f012e:dvc/remote/local.py:394-425",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1661/empty/offline/a1/status_map.json"
+   ],
+   "note": "base 的 `_save_dir` 确实缺少对目录自身的 `state.update`；empty 侧 F2P FAILED。",
+   "by": "static"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-1661/public.json#problem_statement",
+    "mat/iterative__dvc-1661/raw.json#hints_text"
+   ],
+   "note": "题面 858 字符、纯散文、无代码块、无 traceback。**最关键的可复现脚本（git init / dvc init / 生成 1000 个文件 / add / status / status）只在 hints 里**，题面里完全没有。hints 还给出维护者对 state 机制的解释（\"besides md5 we store modification time and size... for given inode\"），这是理解本题的核心背景。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-1661/grading.json#test_patch"
+   ],
+   "note": "test_patch 只触碰 tests/test_add.py（纯测试文件）；gold 不触碰测试样路径。",
+   "by": "static"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-1661/grading.json#test_patch"
+   ],
+   "note": "恢复清单 = {tests/test_add.py}，全是官方测试。",
+   "by": "static"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dvc_1/prescan.json"
+   ],
+   "note": "本包内 gold 路径 dvc/remote/local.py 与 dvc-3527 重合（3527 改 `protect`），但两者函数、题意、base_commit（0.29 vs 0.91）都不同，不是同一 PR。",
+   "by": "static"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-1661/grading.json#test_patch"
+   ],
+   "note": "F2P 要求 `collect_dir_cache` 在 add + 两次 status 全程只被调用 **1** 次。题面既没说\"只应算一次\"，也没提到任何内部方法名；能从题面推出的只有\"不该反复重算\"这个方向。",
+   "by": "static"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-1661/grading.json#test_patch（`spy(RemoteLOCAL.collect_dir_cache)` + `assertEqual(1, collect_dir_counter.mock.call_count)`）"
+   ],
+   "note": "**F2P 直接对内部方法名和调用次数下断言**：`spy` 替换的是类属性 `RemoteLOCAL.collect_dir_cache`。两类合法替代解会被拒：(a) 在 `collect_dir_cache` 内部做 memoize/短路（实际不再重算，但调用次数仍是 3）；(b) 把逻辑重构到别的方法名下（spy 抓不到，call_count=0 也不等于 1）。只有\"让上层根本不再调用它\"这一种修法能过。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-1661/grading.json#test_patch（`@patch(\"dvc.remote.local.LARGE_DIR_SIZE\", 1)`）"
+   ],
+   "note": "测试把 `LARGE_DIR_SIZE` 打成 1、只造 2 个文件，因此只覆盖\"大目录\"分支，且断言的是调用次数而不是 md5 结果是否正确。一个把 `state.update(path, md5)` 写成 `state.update(path, \"deadbeef\")`（存错 checksum）的实现同样能让 call_count=1 通过——这会让后续 `dvc status` 漏报目录变更。P2P 里 `TestAddModifiedDir::test` 可能拦下一部分，但没有直接断言 state 里存的 checksum。",
+   "by": "static"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1661/gold/offline/a1/test_output.txt（21 passed, 0 failed）"
+   ],
+   "note": "P2P 20 条 = 整个 tests/test_add.py 在 base 通过的全部用例，覆盖 add 文件/目录/递归/外部/已跟踪/unicode/重复 add/修改后 add，且**环境干净（gold 侧 21 passed 无失败无跳过）**——本包回归保护最好的一档。",
+   "by": "static"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-1661/validation.json#golden_patch"
+   ],
+   "note": "gold 一行 `self.state.update(path, md5)`，位置正确（在 `self.state.update(cache)` 之后），无无关改动，不依赖未交付改动。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-1661/public.json#problem_statement",
+    "mat/iterative__dvc-1661/raw.json#hints_text"
+   ],
+   "note": "题面无修复代码、无 commit 链接。hints 提到 \"there is PR trying to tackle this one: #1526\"，但那是另一个未合入的尝试，不是本题 gold；不构成答案泄漏。",
+   "by": "static"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1661/gold/offline/a1/test_output.txt（21 passed, 12 warnings in 30.25s）"
+   ],
+   "note": "安装与测试均正常，无 ImportError、无依赖漂移症状。",
+   "by": "static"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1661/gold/offline/a1/test_output.txt（无 SKIPPED 行）"
+   ],
+   "note": "tests/test_add.py 全部本地文件操作，无网络/外部服务；`TestAddLocalRemoteFile` 用的是本地目录当远端。",
+   "by": "static"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-1661/gold/offline/a1/status_map.json（键 `dvc:logger.py:69` 值 ERROR）"
+   ],
+   "note": "caplog 行被 parser 记进 status_map（见跨题发现 B），未与任何 F2P/P2P id 冲突。",
+   "by": "static"
+  },
+  "7": {
+   "status": "not_applicable",
+   "evidence_refs": [],
+   "note": "test_patch 不带外部资产。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "测试强制唯一实现(24)",
+   "severity": "P2",
+   "evidence_refs": [
+    "mat/iterative__dvc-1661/grading.json#test_patch"
+   ],
+   "note": "`assertEqual(1, collect_dir_counter.mock.call_count)` 把\"不重算\"翻译成\"内部方法恰好被调用一次\"，拒绝 memoize 类与重构类的合法实现。",
+   "proposed_action": "把断言改成行为级：第二次 `dvc status` 的耗时/是否触发进度条，或直接断言 `state` 里目录条目的 checksum 等于第一次 add 得到的 md5。保留 call_count 作为辅助断言即可。",
+   "next_experiment": "写一个\"在 collect_dir_cache 上加 lru_cache\"的替代实现跑当前 F2P，预期 FAILED（call_count=3），形成合法解被拒的反例。"
+  },
+  {
+   "category": "题面信息不足(3/23)",
+   "severity": "P2",
+   "evidence_refs": [
+    "mat/iterative__dvc-1661/public.json#problem_statement",
+    "mat/iterative__dvc-1661/raw.json#hints_text"
+   ],
+   "note": "题面是用户提问（\"Is this expected?\"），复现脚本与 state 机制说明都在不可见的 hints 里。",
+   "proposed_action": "把 hints 里的复现脚本与\"我们按 inode 缓存文件级 md5\"这段机制说明并入题面（它们是维护者对公开 issue 的回复，不含答案）。",
+   "next_experiment": "无需实验；属于题面修订。"
+  },
+  {
+   "category": "测试放过错误修复(25)",
+   "severity": "P3",
+   "evidence_refs": [
+    "mat/iterative__dvc-1661/grading.json#test_patch"
+   ],
+   "note": "只断言调用次数、不断言存进 state 的 checksum 正确；存错值也能满分。",
+   "proposed_action": "补一条断言：add 之后 `state.get(dir_path)` 返回的 checksum 等于 .dvc 文件里记录的 md5。",
+   "next_experiment": "写\"存常量 checksum\"的假修复跑 F2P+P2P，看是否全过。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 tests/test_add.py；gold 不触碰测试样路径。按第四组 B 保持为空。",
+  "evidence_refs": [
+   "mat/iterative__dvc-1661/grading.json#test_patch",
+   "mat/iterative__dvc-1661/validation.json#golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/test_add.py::TestAddModifiedDir::test",
+   "reason": "已在 P2P；直接检验\"目录内容变了要被发现\"，是本改动最可能误伤的行为。"
+  },
+  {
+   "id": "tests/test_status.py",
+   "reason": "gold 改的是 status 的数据来源（state 表），status 的功能测试应整文件纳入。"
+  },
+  {
+   "id": "tests/unit/test_state.py（若 base 存在）",
+   "reason": "`State.update(path, known_checksum)` 的单元测试，能区分\"存了记录\"与\"存了正确的 checksum\"。"
+  },
+  {
+   "id": "tests/test_add.py::TestShouldNotCheckCacheForDirIfCacheMetadataDidNotChange::test",
+   "reason": "已在 P2P；同属\"目录缓存元数据未变就不重查\"的邻近行为，是天然的同族回归。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_review",
+  "reason": "环境干净、P2P 覆盖好、gold 一行且正确；但题面只是一个提问、关键复现只在不可见的 hints 里，且 F2P 用内部方法调用次数锁死修法。补题面 + 改断言后可入题。"
+ },
+ "costs": {
+  "minutes": 20
+ },
+ "by": "L1_dvc_1 (Claude Opus 5, 静态审查)"
+}

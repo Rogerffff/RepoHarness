@@ -1,0 +1,116 @@
+{
+  "schema_id": "category2.orange22.first_round_owner_acceptance.v1",
+  "accepted_at": "2026-10-02T22:15:17.406870+00:00",
+  "owner_thread_id": "01a0fd63-ef54-7691-87db-e5124474f714",
+  "instance_id": "orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237",
+  "request_id": "r2e-orange22-r064-cpu-sysconfig-v1-20261003",
+  "stage": "first_two_arm_semantic_review_complete_repeat_sampling_pending",
+  "material_binding_sha256": "d4be7e425223da91859d87de813714b3672e7b488ab44dcf5ea849a2726c9f4b",
+  "evidence_refs": {
+    "independent_review": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/reviews/orange22_first_probe_semantic_review_20261003.json",
+      "sha256": "sha256:edc3458ce40420143453c25c9af0505d1c9d3973a14c239b2f7500cec8b8d9f8",
+      "bytes": 79474
+    },
+    "author_md": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/22e98f8f/probe_analysis_20261003.md",
+      "sha256": "sha256:9bdf8d6b95741de5452b7034a38446ddd3c15cba9b0e36cadc243973c5662b80",
+      "bytes": 9298
+    },
+    "author_json": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/22e98f8f/probe_analysis_20261003.json",
+      "sha256": "sha256:e5c7b4faeb74f4dbc592620e06042d2adbf1064f213756180542cdcb485e95e4",
+      "bytes": 2238
+    },
+    "author_evidence": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/orange22_first_probe_author_evidence_v1.json",
+      "sha256": "sha256:673343750f0819fba401e6e471915c8f1447b28587ffbac85a186c2ab54fd766",
+      "bytes": 111605
+    },
+    "gpu_result_receipt": {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/receipts/r2e-orange22-r064-cpu-sysconfig-v1-20261003.json",
+      "sha256": "sha256:5affdbc6725ea497584f8b60f3089f38b5dfc21d8736378cafa6cdaa919cd633",
+      "bytes": 23940
+    },
+    "initial_receipt_sha_acceptance": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/orange22_gpu_receipt_acceptance_v1.json",
+      "sha256": "sha256:5cfe966c3335463bbd774231bd8038717af4644b2b6b1078446727effb036f17",
+      "bytes": 8343
+    }
+  },
+  "models": [
+    {
+      "model_key": "coder",
+      "actual_model_name": "Qwen3-Coder-30B-A3B-Instruct",
+      "attempt": "gpu1003-orange322e9-coder-a1",
+      "effective_first_round_samples": 1,
+      "formal_score": {
+        "reward": 1,
+        "expected_match_count": 23,
+        "expected_total_count": 23,
+        "test_rc": 0,
+        "basis": "复用独立执行复核，result report count另核一致"
+      },
+      "semantic_verdict": "correct_root_cause_fix_preserving_public_contract",
+      "termination": "completed"
+    },
+    {
+      "model_key": "qwen36",
+      "actual_model_name": "Qwen3.6-35B-A3B",
+      "attempt": "gpu1003-orange322e9-qwen36-a1",
+      "effective_first_round_samples": 1,
+      "formal_score": {
+        "reward": 1,
+        "expected_match_count": 23,
+        "expected_total_count": 23,
+        "test_rc": 0,
+        "basis": "复用独立执行复核，result report count另核一致"
+      },
+      "semantic_verdict": "correct_root_cause_fix_preserving_public_contract",
+      "termination": "completed"
+    }
+  ],
+  "author_analysis_complete": true,
+  "independent_semantic_review_complete": true,
+  "first_round_complete": true,
+  "request_returned_and_acknowledged": true,
+  "unresolved_required_corrections": [],
+  "observed_process_limitations": [
+    "Coder首Edit语义等价，误归因加载后才纠正，不能用工具层零错误证明过程全正确。",
+    "Qwen thinking多次错算/自相矛盾，最终回复置换方向措辞不准确；实际最终代码与实测正确。",
+    "Qwen自测pytest接head/tail且无pipefail，不能只从成功工具返回认pytestRC；完整摘要和独立正式graderRC0支持本次通过。"
+  ],
+  "semantic_basis": {
+    "definitions": "p=argsort(idx), U=u[p], q=p inverse; np.unique supplies u[inv]=input",
+    "required_inverse_relation": "q[p[j]]=j for every unique position j",
+    "correct_reconstruction": "U[q[inv]]=u[p[q[inv]]]=u[inv]",
+    "coder_construction": "q=empty_like(p); q[p]=arange(k)",
+    "qwen_construction": "q=argsort(p)",
+    "empty_and_single_input": "k=0/1 permutation remains valid; Coder assigns all k entries since p is a permutation",
+    "preserved_contract": "first appearance unique order, original mapping length/integer indices, duplicates/strings within existing public one-dimensional np.unique support",
+    "unclaimed_extensions": [
+      "new NaN equality semantics",
+      "incomparable mixed object input",
+      "new multidimensional contract"
+    ]
+  },
+  "repeat_sampling_pending": true,
+  "gpu_dependency_remaining": true,
+  "task_end_to_end_complete": false,
+  "stable_ability_claimed": false,
+  "parallel_ability_evaluated": false,
+  "general_model_ability_claimed": false,
+  "training_or_holdout_qualification_granted": false,
+  "next_action": "按全批第二阶段固定同材料和实际预算接续小规模重复采样，逐样审语义/七维行为；本轮两份有效首轮不重跑。",
+  "limits": [
+    "每臂仅一次，公开已给模块、函数、失败例和验证入口；不能外推未知仓库定位或稳定能力。",
+    "本轮不运行候选/NumPy/测试/模型/容器，数学证成结合真实历史结果，原正式分与语义结论分列。",
+    "复用既有权重revision/只读mount关联，无本轮全权重重哈希；alias不独立证明checkpoint。",
+    "baseline environment digest null及code3 shared_entry路径/SHA错配外部关联按原执行审查保留，不回写工件。",
+    "资源仅有限采样；采样来自配置+代码派生，非SGLang出站原POST抓包；最大实际上下文远低196K。",
+    "API时间包含服务等待/传输；工具调用事件无timestamp，未伪造逐工具时长；派发前队列时间未知。",
+    "Qwen有thinking而Coder未暴露thinking，采样设置不同；累计输入重复上下文，不将单次token/时长当模型普遍优劣。",
+    "未发现新语义阻断，不等于GPU可退租；重复采样依全批安排，资源收口仍由相应负责人决定。"
+  ],
+  "historical_evidence_policy": "作者分析和初接收JSON中的待独立状态是生成时快照，保留原SHA。本收据接续当前独立完成状态，不回写封存原件。"
+}

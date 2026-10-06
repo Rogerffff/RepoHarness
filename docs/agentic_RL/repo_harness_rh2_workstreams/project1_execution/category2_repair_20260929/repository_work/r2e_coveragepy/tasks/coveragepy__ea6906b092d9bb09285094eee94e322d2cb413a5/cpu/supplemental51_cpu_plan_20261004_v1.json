@@ -1,0 +1,115 @@
+{
+  "schema": "coveragepy.EA69.supplemental51_CPU_plan.v1",
+  "status": "inputs_locally_prepared_publication_binding_not_yet_available_no_job_started",
+  "as_of": "2026-10-04",
+  "publish_request_id": "r2e-coveragepy-ea69-scoring51-publish-20261004-v1",
+  "task_id": "r2e_gym_subset::coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5",
+  "required_release_binding": "actual publication receipt, release manifest and trusted prepared summary/host grading view hashes must be filled from returned evidence before dispatch",
+  "required_public_unchanged": "sha256:53deb1de7539fb7dfb1150fbe52957a29ee0f69d35f68f9796a53aa787ebdcc0",
+  "required_baseline_digest": "sha256:7d9fea8c8926ccc665aa1d9f71cf316338ed712d0277d46efdaf75c2a285385e",
+  "required_base": "7fd1ea39925f0856ff607bb30796bc948a8c829d",
+  "required_actual_grader_image": "sha256:e23fbbed8b6f809347e38ee9684699314fda0e14a948a06b9d368e29c8db38d2",
+  "baseline_files": 360,
+  "expected_total": 51,
+  "candidate_semantics": "models remain original full FrozenPatchs, no rebase/relabel/edit; controls are explicitly synthetic host-private known-delta artifacts, not model solves",
+  "arms": [
+    {
+      "name": "original_coder",
+      "original_job": "gpu1003-coverageea69-r17-coder-a1",
+      "input": "coder_original_frozen_patch.json",
+      "same_original_FP": true,
+      "diagnostic_expectation_only": {
+        "reward": 0,
+        "match": 50,
+        "total": 51,
+        "failed_key": "HtmlGitignoreTest.test_generated_extra_css_literal_names_are_ignored"
+      }
+    },
+    {
+      "name": "original_qwen",
+      "original_job": "gpu1003-coverageea69-r17-qwen36-a1",
+      "input": "qwen_original_frozen_patch.json",
+      "same_original_FP": true,
+      "original_all_entries": [
+        ".coverage",
+        "coverage/html.py"
+      ],
+      "diagnostic_expectation_only": {
+        "reward": 0,
+        "match": 50,
+        "total": 51,
+        "failed_key": "HtmlGitignoreTest.test_existing_patterns_do_not_skip_report_ignore"
+      }
+    },
+    {
+      "name": "safe_append",
+      "input": "safe_append_control_frozen_patch.json",
+      "synthetic_private_control": true,
+      "diagnostic_expectation_only": {
+        "reward": 1,
+        "match": 51,
+        "total": 51
+      }
+    },
+    {
+      "name": "noop",
+      "input": "noop_control_frozen_patch.json",
+      "synthetic_private_control": true,
+      "diagnostic_expectation_only": {
+        "reward": 0,
+        "match": 41,
+        "total": 51
+      }
+    }
+  ],
+  "score_expectations_are_not_results": "actual parser/typed report must be retained; any infra failure remains ungraded, not forced0; unexpected semantic status must be reported and investigated",
+  "resource_admission": "CPU-A official per-job slot, one own job at a time; existing global2/prepare1 rules, exact formal grader profile; do not hold CPU slot while waiting publication",
+  "grading_budget_reference": "reuse original whole3600/setup300/apply120/test1800; outer wrapper must allow whole+cleanup and not silently shorten per-arm budget",
+  "formal_grade_transport": "trusted new published grading spec + original BaselineWorkspaceManifest + FrozenDeltaSource + trusted projection; preserve original identities; verify fresh-baseline digest and actual image; no git-diff reconstruction",
+  "evidence_required": [
+    "new formal grading revision/material identity and exact consumed test2/expected",
+    "original FP file SHA and computed canonical identity",
+    "360 baseline rebuild evidence",
+    "projection includes all original Qwen two entries",
+    "whole raw log/markers/install skip vs RCnull/test RC/formal 51 per-key map",
+    "actual image/profile/container resource restrictions",
+    "timing scopes, termination and own cleanup/no residual"
+  ],
+  "no_solver_or_GPU": true,
+  "old49_scores_rewritten": false,
+  "old_full_matrix_repeated": false,
+  "training_qualification_granted": false,
+  "inputs": {
+    "baseline_manifest.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_supplemental51_inputs_20261004_v1/inputs/baseline_manifest.json",
+      "sha256": "fc422c66fa64f59a4038aa0f2ae76cd1b5b21dcd2176b412d0d501eaa09fe259",
+      "bytes": 83474
+    },
+    "coder_original_frozen_patch.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_supplemental51_inputs_20261004_v1/inputs/coder_original_frozen_patch.json",
+      "sha256": "85c2211228edd88e9012924fc118c7e3cc1e814859a6b3ac2cda26d86367e388",
+      "bytes": 27080
+    },
+    "expected51.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_supplemental51_inputs_20261004_v1/inputs/expected51.json",
+      "sha256": "d766068e50bbeb338cd8a63e80b0c0e97ea9cfc83dde44b5f6e59fc6647e6b2a",
+      "bytes": 2891
+    },
+    "noop_control_frozen_patch.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_supplemental51_inputs_20261004_v1/inputs/noop_control_frozen_patch.json",
+      "sha256": "86be512915ce84ffc9da6c22730a38b0937271582e0217c061089611474fced7",
+      "bytes": 708
+    },
+    "qwen_original_frozen_patch.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_supplemental51_inputs_20261004_v1/inputs/qwen_original_frozen_patch.json",
+      "sha256": "ae3ae46f8abc45f85acacfc1784babf8c9aaddf333ce535d8c6699a325f2f25c",
+      "bytes": 96857
+    },
+    "safe_append_control_frozen_patch.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_supplemental51_inputs_20261004_v1/inputs/safe_append_control_frozen_patch.json",
+      "sha256": "aabc149061704b266be174b4f57668a10ee8b6bdebab361da53a90257d6ae32b",
+      "bytes": 24491
+    }
+  },
+  "private_positive_control_delta_sha256": "fc692f80ab396a633088aea9d7c758f73ec113cc3a32848dab89ae070cf60345"
+}

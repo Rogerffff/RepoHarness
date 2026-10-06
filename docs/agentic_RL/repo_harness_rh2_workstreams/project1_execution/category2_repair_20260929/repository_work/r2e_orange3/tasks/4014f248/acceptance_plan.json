@@ -1,0 +1,104 @@
+{
+  "instance_id": "orange3__4014f2483e3bab0621c9ae0f994947c008183253",
+  "status": "prepared_not_run",
+  "expected_key_count": 27,
+  "fixed_material": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/4014f248/revision_draft.json",
+    "sha256": "sha256:013bbc8b55c11595e47f3d2c5de387c3d936be16b77608615e6fe8c9b9bb89c0"
+  },
+  "env_reset_timeout_seconds": 1200,
+  "budget_note": "这是grader基线重建/控制面准备预算，不是模型求解时限；在最终consumer核实际生效值。",
+  "shared_runner_ref": "rh2/experiments/r2e_lifecycle_20260929/replay_grade_budget.py / rh2/scripts/replay_grade.py",
+  "machine_resource_entry": "由总协调正式入口提供；本文件不含SSH或凭据。",
+  "candidates": [
+    {
+      "candidate": "noop",
+      "patch": null,
+      "expected_score": 0,
+      "purpose": "原缺陷仍应失败",
+      "observed_score": null
+    },
+    {
+      "candidate": "gold",
+      "patch": {
+        "path": "runs/r2e_static_prep_20260924/v3/private/orange3__4014f2483e3bab0621c9ae0f994947c008183253/gold.patch",
+        "sha256": "sha256:431cc37d5563157822ba0ec35b3ace799af5c305a81527f8552f5dae11d18397"
+      },
+      "expected_score": 1,
+      "purpose": "正确去重",
+      "observed_score": null
+    },
+    {
+      "candidate": "C1",
+      "patch": {
+        "path": "runs/r2e_actor_20260925/grader_cands/orange3_4014_C1_dedupe_in_create_var.patch",
+        "sha256": "sha256:e7cf1161cc162928db23099fc9503810281fecc62ade5faf801a622cfe91e748"
+      },
+      "expected_score": 1,
+      "purpose": "不同修改位置的合理解",
+      "observed_score": null
+    },
+    {
+      "candidate": "DG",
+      "patch": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__4014f2483e3bab0621c9ae0f994947c008183253/cands/orange3_4014_DG_dup_to_empty.patch",
+        "sha256": "sha256:06b31ab2801b8a065f25672be92de2adc655b19650c1e8f285ea72abf3aaac4f"
+      },
+      "expected_score": 0,
+      "purpose": "保留057已验非退化保护",
+      "observed_score": null
+    },
+    {
+      "candidate": "C3",
+      "patch": {
+        "path": "runs/r2e_actor_20260925/grader_cands/orange3_4014_C3_round_dedupe.patch",
+        "sha256": "sha256:6f230913d1c1024e04bef131ecbbbc7ade90c36d9a4cd663b2de46f8b01d59cb"
+      },
+      "expected_score": 0,
+      "purpose": "新增小量级保护纠正漏判",
+      "observed_score": null
+    },
+    {
+      "candidate": "C4",
+      "patch": {
+        "path": "runs/r2e_actor_20260925/grader_cands/orange3_4014_C4_unique_only_when_n_ge_len.patch",
+        "sha256": "sha256:eae852458d9f70f6d3b12664af99645f1e4bb87ba9458e9388c3bf553e59aeb4"
+      },
+      "expected_score": 0,
+      "purpose": "保留循环分支原保护",
+      "observed_score": null
+    },
+    {
+      "candidate": "pyx_build",
+      "patch": {
+        "path": "runs/r2e_lifecycle_20260929/probe_proto/runs/orange3_4014_pyx_build/attempt/candidate/orange3__4014f2483e3bab0621c9ae0f994947c008183253.diff",
+        "sha256": "sha256:372f4982da9dedb605a8ac7619a95e238fac8757b9da3e8b4847dcb0f3c6c94b"
+      },
+      "expected_score": 1,
+      "purpose": "历史含真实构建产物的冻结工件",
+      "observed_score": null
+    },
+    {
+      "candidate": "pyx_only",
+      "patch": {
+        "path": "runs/r2e_lifecycle_20260929/probe_proto/runs/orange3_4014_pyx_only/attempt/candidate/orange3__4014f2483e3bab0621c9ae0f994947c008183253.diff",
+        "sha256": "sha256:34624751a646327339e7ca7bd6d37724ac072473a934fcecee0a17a283f43bf6"
+      },
+      "expected_score": 0,
+      "purpose": "源码修改尚未生效",
+      "observed_score": null
+    }
+  ],
+  "acceptance_requires": [
+    "固定新版材料与镜像/配方/consumer",
+    "补丁成功应用和对应源码/产物确被加载",
+    "精确键集与完整日志",
+    "失败来自目标断言而非环境故障",
+    "实际准备预算与清理证据",
+    "非作者修订/证据复核",
+    "受影响公开开发路径与实际题面交付"
+  ],
+  "extra": [
+    "新宿主actor实际重编并导出原冻结工件至新grader，与pyx_only成对；旧原型不替代最终入口。"
+  ]
+}

@@ -1,0 +1,485 @@
+{
+  "review_role": "Production Tracer; read-only extraction of existing local evidence; no rerun or training-contamination claim",
+  "sources": [
+    {
+      "path": "runs/base_probe_20260922/remote/gateway/deepseek/bp22-deepseek-v4-pro-dvc-6954-a1/resp_11.sse",
+      "sha256": "779f2c49a7cd60b208c0ae3b5e8dae2a418a7c0c0bf1f6f91d23091deaf5250b",
+      "bytes": 949,
+      "lines": 18
+    },
+    {
+      "path": "runs/base_probe_20260922/remote/gateway/deepseek/bp22-deepseek-v4-pro-dvc-6954-a1/requests.jsonl",
+      "sha256": "37747c6691aeeae06ccffb92bbad62ab783ff3bef39d06b76356f378565cd390",
+      "bytes": 1049131,
+      "lines": 11
+    },
+    {
+      "path": "runs/base_probe_20260922/remote/gateway/deepseek/bp22-deepseek-v4-pro-dvc-6954-a1/responses.jsonl",
+      "sha256": "56a4f8fa134f4650feda7e4c11cce7654b95391245742537e110648775c7e074",
+      "bytes": 4565,
+      "lines": 11
+    },
+    {
+      "path": "runs/base_probe_20260922/remote/runs/matrix/attempts/iterative__dvc-6954/deepseek-v4-pro/a1/trajectory.jsonl",
+      "sha256": "970418d4ddd4309bf2ee66932f5ff7ef6b61aa043ea6db0cb09467789298985e",
+      "bytes": 616723,
+      "lines": 2346
+    },
+    {
+      "path": "runs/base_probe_20260922/remote/runs/matrix/attempts/iterative__dvc-6954/deepseek-v4-pro/a1/attempt.json",
+      "sha256": "9887184b6b770328d818217cb857f3a97bcbba53566a19e5c383c0e75ce005bf",
+      "bytes": 9769,
+      "lines": 295
+    }
+  ],
+  "old_gateway": {
+    "request_count": 11,
+    "request_sequences": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "response_count": 11,
+    "response_sequences": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "requests_after_seq11": 0,
+    "response11": {
+      "line": 11,
+      "data": {
+        "seq": 11,
+        "attempt": 1,
+        "status": 200,
+        "content_type": "text/event-stream; charset=utf-8",
+        "seconds_total": 1.272,
+        "seconds_to_first_byte": 0.553,
+        "bytes": 949,
+        "stream_error": "ClientPayloadError: Response payload is not completed: <TransferEncodingError: 400, message='Not enough data to satisfy transfer length header.'>. ConnectionResetError(104, 'Connection reset by peer')",
+        "sse_file": "resp_11.sse",
+        "stop_reason": null,
+        "model_reported": "deepseek-v4-pro",
+        "usage": {
+          "input_tokens": 459,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 26368,
+          "output_tokens": 0
+        }
+      }
+    },
+    "response11_sse_events": [
+      {
+        "type": "message_start",
+        "message": {
+          "id": "0d74065c-85e3-4419-9f5f-cd9fe1f33292",
+          "type": "message",
+          "role": "assistant",
+          "model": "deepseek-v4-pro",
+          "content": [],
+          "stop_reason": null,
+          "stop_sequence": null,
+          "usage": {
+            "input_tokens": 459,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 26368,
+            "output_tokens": 0,
+            "service_tier": "standard"
+          }
+        }
+      },
+      {
+        "type": "content_block_start",
+        "index": 0,
+        "content_block": {
+          "type": "thinking",
+          "thinking": "",
+          "signature": ""
+        }
+      },
+      {
+        "type": "ping"
+      },
+      {
+        "type": "content_block_delta",
+        "index": 0,
+        "delta": {
+          "type": "signature_delta",
+          "signature": "0d74065c-85e3-4419-9f5f-cd9fe1f33292"
+        }
+      },
+      {
+        "type": "content_block_stop",
+        "index": 0
+      },
+      {
+        "type": "content_block_start",
+        "index": 1,
+        "content_block": {
+          "type": "tool_use",
+          "id": "call_00_ET_0zPECBtvu9CZe2pVNMfg1381",
+          "name": "Read",
+          "input": {}
+        }
+      }
+    ]
+  },
+  "old_attempt": {
+    "harness_exit_code": 0,
+    "harness_exit_code_source_line": 188,
+    "termination": "completed",
+    "cc_version": "2.1.205 (Claude Code)",
+    "cc_result_summary": {
+      "subtype": "success",
+      "is_error": false,
+      "num_turns": 17,
+      "duration_ms": 28975,
+      "duration_api_ms": 28434,
+      "total_cost_usd": 0.318426,
+      "stop_reason": "tool_use",
+      "usage": {
+        "input_tokens": 32781,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 203392,
+        "output_tokens": 2113,
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "",
+        "iterations": [],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "slime-actor": {
+          "inputTokens": 32781,
+          "outputTokens": 2113,
+          "cacheReadInputTokens": 203392,
+          "cacheCreationInputTokens": 0,
+          "webSearchRequests": 0,
+          "costUSD": 0.318426,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        }
+      }
+    },
+    "cc_result_summary_source_lines": [
+      213,
+      220
+    ],
+    "training_guard_envs": {
+      "BASH_ENV": "/rh2/bash_env",
+      "CLAUDE_CODE_MAX_RETRIES": "0",
+      "CLAUDE_CODE_DISABLE_NONSTREAMING_FALLBACK": "1",
+      "CLAUDE_CODE_UNATTENDED_RETRY": "0"
+    }
+  },
+  "old_trajectory": {
+    "target_tool_id": "call_00_ET_0zPECBtvu9CZe2pVNMfg1381",
+    "target_occurrences": [
+      {
+        "line": 2345,
+        "row": {
+          "type": "stream_event",
+          "event": {
+            "type": "content_block_start",
+            "index": 1,
+            "content_block": {
+              "type": "tool_use",
+              "id": "call_00_ET_0zPECBtvu9CZe2pVNMfg1381",
+              "name": "Read",
+              "input": {}
+            }
+          },
+          "session_id": "f4de3874-4994-4aa1-b645-8afe926752a6",
+          "parent_tool_use_id": null,
+          "uuid": "df7251e8-e5e0-4e58-b77b-ae25604df94c"
+        }
+      }
+    ],
+    "target_completed_tool_use_events": [],
+    "target_tool_result_events": [],
+    "final_result_events": [
+      {
+        "line": 2346,
+        "row": {
+          "type": "result",
+          "subtype": "success",
+          "is_error": false,
+          "api_error_status": null,
+          "duration_ms": 28975,
+          "duration_api_ms": 28434,
+          "ttft_ms": 2772,
+          "ttft_stream_ms": 497,
+          "time_to_request_ms": 29,
+          "num_turns": 17,
+          "result": "",
+          "stop_reason": "tool_use",
+          "session_id": "f4de3874-4994-4aa1-b645-8afe926752a6",
+          "total_cost_usd": 0.318426,
+          "usage": {
+            "input_tokens": 32781,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 203392,
+            "output_tokens": 2113,
+            "server_tool_use": {
+              "web_search_requests": 0,
+              "web_fetch_requests": 0
+            },
+            "service_tier": "standard",
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 0
+            },
+            "inference_geo": "",
+            "iterations": [],
+            "speed": "standard"
+          },
+          "modelUsage": {
+            "slime-actor": {
+              "inputTokens": 32781,
+              "outputTokens": 2113,
+              "cacheReadInputTokens": 203392,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.318426,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "permission_denials": [],
+          "terminal_reason": "completed",
+          "fast_mode_state": "off",
+          "uuid": "814223f9-3ed9-4bd8-9b44-8d9f93b04e9e"
+        }
+      }
+    ],
+    "tail_after_last_request": [
+      {
+        "line": 2339,
+        "row": {
+          "type": "system",
+          "subtype": "status",
+          "status": "requesting",
+          "uuid": "ec5475ee-db12-4ed2-8404-3e0419991f85",
+          "session_id": "f4de3874-4994-4aa1-b645-8afe926752a6"
+        }
+      },
+      {
+        "line": 2340,
+        "row": {
+          "type": "stream_event",
+          "event": {
+            "type": "message_start",
+            "message": {
+              "id": "0d74065c-85e3-4419-9f5f-cd9fe1f33292",
+              "type": "message",
+              "role": "assistant",
+              "model": "deepseek-v4-pro",
+              "content": [],
+              "stop_reason": null,
+              "stop_sequence": null,
+              "usage": {
+                "input_tokens": 459,
+                "cache_creation_input_tokens": 0,
+                "cache_read_input_tokens": 26368,
+                "output_tokens": 0,
+                "service_tier": "standard"
+              }
+            }
+          },
+          "session_id": "f4de3874-4994-4aa1-b645-8afe926752a6",
+          "parent_tool_use_id": null,
+          "uuid": "75d8f036-3f0b-4bad-86e1-c3c78ae0aed1",
+          "ttft_ms": 556
+        }
+      },
+      {
+        "line": 2341,
+        "row": {
+          "type": "stream_event",
+          "event": {
+            "type": "content_block_start",
+            "index": 0,
+            "content_block": {
+              "type": "thinking",
+              "thinking": "",
+              "signature": ""
+            }
+          },
+          "session_id": "f4de3874-4994-4aa1-b645-8afe926752a6",
+          "parent_tool_use_id": null,
+          "uuid": "cc1b6fef-eb40-412e-88ff-f32559f0e681"
+        }
+      },
+      {
+        "line": 2342,
+        "row": {
+          "type": "stream_event",
+          "event": {
+            "type": "content_block_delta",
+            "index": 0,
+            "delta": {
+              "type": "signature_delta",
+              "signature": "0d74065c-85e3-4419-9f5f-cd9fe1f33292"
+            }
+          },
+          "session_id": "f4de3874-4994-4aa1-b645-8afe926752a6",
+          "parent_tool_use_id": null,
+          "uuid": "a87c37a8-9522-48ab-bfcc-e900ce90bf13"
+        }
+      },
+      {
+        "line": 2343,
+        "row": {
+          "type": "assistant",
+          "message": {
+            "id": "0d74065c-85e3-4419-9f5f-cd9fe1f33292",
+            "type": "message",
+            "role": "assistant",
+            "model": "deepseek-v4-pro",
+            "content": [
+              {
+                "type": "thinking",
+                "thinking": "",
+                "signature": "0d74065c-85e3-4419-9f5f-cd9fe1f33292"
+              }
+            ],
+            "stop_reason": null,
+            "stop_sequence": null,
+            "usage": {
+              "input_tokens": 459,
+              "cache_creation_input_tokens": 0,
+              "cache_read_input_tokens": 26368,
+              "output_tokens": 0,
+              "service_tier": "standard"
+            },
+            "context_management": null
+          },
+          "parent_tool_use_id": null,
+          "session_id": "f4de3874-4994-4aa1-b645-8afe926752a6",
+          "uuid": "d7570f4c-dadf-495e-81b9-7c26dfe240bb"
+        }
+      },
+      {
+        "line": 2344,
+        "row": {
+          "type": "stream_event",
+          "event": {
+            "type": "content_block_stop",
+            "index": 0
+          },
+          "session_id": "f4de3874-4994-4aa1-b645-8afe926752a6",
+          "parent_tool_use_id": null,
+          "uuid": "047b0652-91bd-4016-b2ba-f5c562119c1b"
+        }
+      },
+      {
+        "line": 2345,
+        "row": {
+          "type": "stream_event",
+          "event": {
+            "type": "content_block_start",
+            "index": 1,
+            "content_block": {
+              "type": "tool_use",
+              "id": "call_00_ET_0zPECBtvu9CZe2pVNMfg1381",
+              "name": "Read",
+              "input": {}
+            }
+          },
+          "session_id": "f4de3874-4994-4aa1-b645-8afe926752a6",
+          "parent_tool_use_id": null,
+          "uuid": "df7251e8-e5e0-4e58-b77b-ae25604df94c"
+        }
+      },
+      {
+        "line": 2346,
+        "row": {
+          "type": "result",
+          "subtype": "success",
+          "is_error": false,
+          "api_error_status": null,
+          "duration_ms": 28975,
+          "duration_api_ms": 28434,
+          "ttft_ms": 2772,
+          "ttft_stream_ms": 497,
+          "time_to_request_ms": 29,
+          "num_turns": 17,
+          "result": "",
+          "stop_reason": "tool_use",
+          "session_id": "f4de3874-4994-4aa1-b645-8afe926752a6",
+          "total_cost_usd": 0.318426,
+          "usage": {
+            "input_tokens": 32781,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 203392,
+            "output_tokens": 2113,
+            "server_tool_use": {
+              "web_search_requests": 0,
+              "web_fetch_requests": 0
+            },
+            "service_tier": "standard",
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 0
+            },
+            "inference_geo": "",
+            "iterations": [],
+            "speed": "standard"
+          },
+          "modelUsage": {
+            "slime-actor": {
+              "inputTokens": 32781,
+              "outputTokens": 2113,
+              "cacheReadInputTokens": 203392,
+              "cacheCreationInputTokens": 0,
+              "webSearchRequests": 0,
+              "costUSD": 0.318426,
+              "contextWindow": 200000,
+              "maxOutputTokens": 32000
+            }
+          },
+          "permission_denials": [],
+          "terminal_reason": "completed",
+          "fast_mode_state": "off",
+          "uuid": "814223f9-3ed9-4bd8-9b44-8d9f93b04e9e"
+        }
+      }
+    ]
+  },
+  "bounded_interpretation": [
+    "The old artifact records rc=0 and also contains the raw CC result is_error=false. The result discrepancy is not explained solely by the old launcher exit marker.",
+    "The old response completes an empty thinking block with signature_delta, then truncates at Read tool_use start (index=1, input={}); no message_delta or message_stop follows.",
+    "The target Read appears only as stream content_block_start; no completed assistant tool_use event or tool_result, no request seq>11, and the next trajectory row is final result. There is no logged execution/replay evidence; Read has no output artifact that independently proves process execution absence.",
+    "S5 currently truncates the first block (index=0 Bash) without a preceding thinking/text block. It is not the same complete response shape as the old artifact.",
+    "Production _build_blocks emits nonempty reasoning or text before tool_use; this makes completed earlier block followed by truncated tool start production-reachable. It does not emit the old empty-thinking+signature shape exactly.",
+    "A focused additional formal-chain shape is completed thinking (or the closest production reasoning representation) followed by truncation at the subsequent tool start, retaining capture/exit/drain/delivery observations. These old diagnostic artifacts alone do not prove a bad turn entered production loss."
+  ],
+  "current_source_anchors": {
+    "S5_fixture": "rh2/experiments/base_probe_fixes_20260923/stream3_formal_chain.py:64-68,479",
+    "formal_blocks": "rh2/src/slime/agent/adapters/anthropic.py:157-166",
+    "table_overclaim": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/base_probe_chain_fixes_20260923/stream3_repro_20260924.md:34-37,43,47"
+  }
+}

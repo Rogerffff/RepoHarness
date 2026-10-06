@@ -1,0 +1,12 @@
+diff --git a/pandas/core/frame.py b/pandas/core/frame.py
+--- a/pandas/core/frame.py
++++ b/pandas/core/frame.py
+@@ -8325,6 +8325,8 @@
+             out_dtype = "bool" if filter_type == "bool" else None
+ 
+             def blk_func(values):
++                if isinstance(values, ExtensionArray) and name == "mean":
++                    return values._reduce(name, skipna=skipna, **kwds)
+                 if values.ndim == 1 and not isinstance(values, np.ndarray):
+                     # we can't pass axis=1
+                     return op(values, axis=0, skipna=skipna, **kwds)

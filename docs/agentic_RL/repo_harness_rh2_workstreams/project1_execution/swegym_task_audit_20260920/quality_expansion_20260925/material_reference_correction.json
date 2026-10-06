@@ -1,0 +1,468 @@
+{
+  "status": "corrected_and_verified",
+  "reason": "Worker-wide candidate.patch glob incorrectly associated other tasks and gold patches with noop. Correct by exact task directory, attempt, candidate kind/hash and projection identity.",
+  "before_hashes": {
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/prepare_materials.py": "aa0c8f543c7464142ab0acbb4831d39cbc8e9ae324df08ea2a55b0fede993ccb",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/material_check.json": "95c11045964cf90cf66b537bda78b3b9fed562871f1917ae8f0c17393b884549",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/environment_replay_inventory.json": "ac21b0456d5c359bcae632e78208f65e625392103a54454f476c575045646b2e",
+    "runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-2446/run_refs.json": "bf7d4cb12000968b65c023bcc39603331ab6dbac85ed67e480ccb3c29d7be126",
+    "runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-2446/environment_record.json": "e42944c354ade5066d285bfa4d1d37595412932ee3ddc2b89c8bf8589b8facdf",
+    "runs/swegym_quality_expansion_20260925/checks/Project-MONAI__MONAI-2446.json": "2211c3ed8d757d9db44b27e1aa4a626842e7c94a09ab74bacc7c858d54f26ee2",
+    "runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-3715/run_refs.json": "a699939c22453d4d5e166081dde5d0d634890781aef07762567ff35dd0f6b140",
+    "runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-3715/environment_record.json": "3d2af044fcaee633ffa942c21bc3a31f741e7ad70877993854d44863d8b785a3",
+    "runs/swegym_quality_expansion_20260925/checks/Project-MONAI__MONAI-3715.json": "2a8046f3c2b41652b544cacd86b87e58ee538361c9b50f837e0c57fce9ce920c",
+    "runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-5686/run_refs.json": "682c1db2e9c6e90a3521fa62c09cdf7bedd3425d87235d6a26101bb3cf77fd1a",
+    "runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-5686/environment_record.json": "d772fde1d26f488a16b466a0fbab8e329628cda83e8a61c3a42bc24027c8fae2",
+    "runs/swegym_quality_expansion_20260925/checks/Project-MONAI__MONAI-5686.json": "5a22a4fa9e6d2e584877f56da6a9ee9c0d9c6f2a095d27a39491e1ae82f68cf2",
+    "runs/swegym_quality_expansion_20260925/private/conan-io__conan-11594/run_refs.json": "e2ae55e9d2b9f7a64b40c7856b59f617e947f9b9de9e3db36e0fc6b1f3af0047",
+    "runs/swegym_quality_expansion_20260925/private/conan-io__conan-11594/environment_record.json": "2e5e52299f8836a015a459b5856a4d0687db9a5ab2d94b93199fcc80f6a3e575",
+    "runs/swegym_quality_expansion_20260925/checks/conan-io__conan-11594.json": "d2eda2f263224c9c20a423faef98c8b424652afa234d2054ff9bbe8b0fa25792",
+    "runs/swegym_quality_expansion_20260925/private/conan-io__conan-13230/run_refs.json": "41f54e459c3ca9eb498ab6707b66814195eacacc14002bce52b20370d30470bc",
+    "runs/swegym_quality_expansion_20260925/private/conan-io__conan-13230/environment_record.json": "b617bf3e97615b803bf86e259a89277b03c2d4eb2cbd09ff73c22235de7fd097",
+    "runs/swegym_quality_expansion_20260925/checks/conan-io__conan-13230.json": "6ed552421dc500bf7fd5b4d1fc0f47e207e9d725fed75cab8c24a48bfcdcc30c",
+    "runs/swegym_quality_expansion_20260925/private/conan-io__conan-13721/run_refs.json": "10b6d5fbd680500d7c7ce07d8aea3ef4865535f4ba1cf29430af8ef476b47936",
+    "runs/swegym_quality_expansion_20260925/private/conan-io__conan-13721/environment_record.json": "901bed471490d95b83a3ab3305ba03186b7f8157f1360c56fd2d43f05cb8f78b",
+    "runs/swegym_quality_expansion_20260925/checks/conan-io__conan-13721.json": "b6ddac88326ca46a36e539705735a48f5f928bf73c23a7a23fe28a9302c08efc",
+    "runs/swegym_quality_expansion_20260925/private/dask__dask-6626/run_refs.json": "2343e7d8523c607b68eff7dedff51a84833db906792a8662fed1825aa6c72cc7",
+    "runs/swegym_quality_expansion_20260925/private/dask__dask-6626/environment_record.json": "59211812144a1cac4ab94b82163c1cbe8ed2a61ba50f9bf6015251cc92bbe8b8",
+    "runs/swegym_quality_expansion_20260925/checks/dask__dask-6626.json": "aa7e7d5f5cd3a9aa01968cb4b16a8148927a948e7a929930f8512b84951da1ae",
+    "runs/swegym_quality_expansion_20260925/private/dask__dask-7656/run_refs.json": "becb08ec88715462b082b390272757c7180b0cfe98340cd2cce1dfa1262024b4",
+    "runs/swegym_quality_expansion_20260925/private/dask__dask-7656/environment_record.json": "98b6ec5629db8d9f51a656386d594297272534be016e23b2bda56a4e7e8e006c",
+    "runs/swegym_quality_expansion_20260925/checks/dask__dask-7656.json": "c88cb8963ea306c7d15d81963c65b07b65900fe2b7efe23589dfe1188c63740a",
+    "runs/swegym_quality_expansion_20260925/private/dask__dask-9378/run_refs.json": "d98e01d7f156fce184aa081cef3bcf53360a33a97baf1a65a2a807f58969ff67",
+    "runs/swegym_quality_expansion_20260925/private/dask__dask-9378/environment_record.json": "5ccef1c87091a20d93f706b30eab427f0959e693e54e81b7974835105bc1bdc3",
+    "runs/swegym_quality_expansion_20260925/checks/dask__dask-9378.json": "ca1c399f4c5afeb0f09d79bd4c5700d9e9a7948fdff1cfa00646917e6113f009",
+    "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/run_refs.json": "bf3650dd51a7d359eb1c4203bbf8c738e537db833b822ac78272f4871d958979",
+    "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/environment_record.json": "a4657a94662be3023c369c489a1fc9e2ad6d33ef3ba8fda580863775e386129d",
+    "runs/swegym_quality_expansion_20260925/checks/pydantic__pydantic-5386.json": "be79059dd548756328f2545cc47db092f5ed641873124f47864d1bf517bf6277",
+    "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-6283/run_refs.json": "eeab6989d0b26bee9046e77fc8155b85061955122983b9c13ac73f60f9895b19",
+    "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-6283/environment_record.json": "263ee795a7cc8983324054ccce20cf828093eb7ee9b52e14085c1550eeb8891c",
+    "runs/swegym_quality_expansion_20260925/checks/pydantic__pydantic-6283.json": "8579bd22340f4dc7fe0241969a1ae301c5e5862258f86308b5a0ce3eff939196",
+    "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8567/run_refs.json": "9824087b50530d605279446a0e4ebf3abc516a9b8fface735b13251bbe1b04f5",
+    "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8567/environment_record.json": "f0d1cad8d9f31593102d74e0e68277824d0478f4621ce7036d55e175c82277d9",
+    "runs/swegym_quality_expansion_20260925/checks/pydantic__pydantic-8567.json": "f262a446c3c29c2cbc01ac8d58f8fa4c7189c1e74618a4a4158fc61c59b6d0c0"
+  },
+  "frozen_manifest_sha256": "52649a38cadccdeacc2317f8d4fb7beee798247e2c9adbc00a198dea88261c7e",
+  "history_sha256": {
+    "runs/swegym_quality_expansion_20260925/history/Project-MONAI__MONAI-3715/refs.json": "6b49b84bf6d73195e1a80a7abaa9e80303d1e1af24a4b1b06317e7534b02192a",
+    "runs/swegym_quality_expansion_20260925/history/dask__dask-7656/refs.json": "f6f24f351a69204e305fd4a9bf430497a948860b17d2b86490775a1af44bb0c0",
+    "runs/swegym_quality_expansion_20260925/history/dask__dask-9378/refs.json": "f6f3b4a09c5d74a57520cb147271840eae485dd255e2eabf97f04a3bd5e2ebfa",
+    "runs/swegym_quality_expansion_20260925/history/conan-io__conan-11594/refs.json": "6193635b2ac99e71796fd1ede51a8b043f2964802b750df1c2a5b652350c7b6c",
+    "runs/swegym_quality_expansion_20260925/history/conan-io__conan-13230/refs.json": "9c8a47b62c73bb00d4a6d4314df47eb94563fc8d3e2060f84c6cd545f0a1ccf6",
+    "runs/swegym_quality_expansion_20260925/history/Project-MONAI__MONAI-2446/refs.json": "a4b95aebbd07e516bc1598863c2a808e62486eddb55284ef4232ee40c7f46efd",
+    "runs/swegym_quality_expansion_20260925/history/conan-io__conan-13721/refs.json": "26f811d621d2b58cc938ad43b4292736f578713d7fc5b43ff50e4c31db0874fb",
+    "runs/swegym_quality_expansion_20260925/history/pydantic__pydantic-6283/refs.json": "2455016a8072b956f508c27f22759972691d741df5624fbae06c1cb9ad63eff4",
+    "runs/swegym_quality_expansion_20260925/history/dask__dask-6626/refs.json": "955260fae1ad15fe4d6dd173e5e02c21ebfa1b0d41d4e761f5a7dd78116973c1",
+    "runs/swegym_quality_expansion_20260925/history/Project-MONAI__MONAI-5686/refs.json": "a99abab669e952565dc7070e595bbdd307b9fa6899c41368d179a84f4640c376",
+    "runs/swegym_quality_expansion_20260925/history/pydantic__pydantic-8567/refs.json": "015208b844848e92b9c49cc3ab7a97f6fe758bed67c76fe1b625f1bc13ecb112",
+    "runs/swegym_quality_expansion_20260925/history/pydantic__pydantic-5386/refs.json": "7603fdf941991a3b77e57a25e303021f220c9199aedd5dd469074814c320d2e5"
+  },
+  "private_roles_started": false,
+  "public_bytes_writes_authorized": false,
+  "public_tree_sha256_before": "bf117a898ab4d27cac095d3513d8190bcb8cf1d87825ffa0230ac500d1a94cb6",
+  "tasks": [
+    {
+      "instance_id": "Project-MONAI__MONAI-2446",
+      "runs": [
+        {
+          "candidate_kind": "gold",
+          "before_count": 1,
+          "after_count": 1,
+          "removed_count": 0,
+          "cross_task_removed_count": 0,
+          "noop_references_removed": 0,
+          "remaining_paths": [
+            "runs/env_recipe_repair_20260919/compat_v1/tasks/Project-MONAI__MONAI-2446/gold/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-a784460c/candidate.patch"
+          ]
+        },
+        {
+          "candidate_kind": "noop",
+          "before_count": 0,
+          "after_count": 0,
+          "removed_count": 0,
+          "cross_task_removed_count": 0,
+          "noop_references_removed": 0,
+          "remaining_paths": []
+        }
+      ],
+      "cross_task_reference_metadata_scan": "passed: no other task ID anywhere in environment reference JSON"
+    },
+    {
+      "instance_id": "Project-MONAI__MONAI-3715",
+      "runs": [
+        {
+          "candidate_kind": "noop",
+          "before_count": 8,
+          "after_count": 0,
+          "removed_count": 8,
+          "cross_task_removed_count": 7,
+          "noop_references_removed": 8,
+          "remaining_paths": []
+        },
+        {
+          "candidate_kind": "gold",
+          "before_count": 8,
+          "after_count": 1,
+          "removed_count": 7,
+          "cross_task_removed_count": 7,
+          "noop_references_removed": 0,
+          "remaining_paths": [
+            "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w05-1/artifacts/swe_gym_lite--Project-MONAI__MONAI-3715/a1-df4c4d05/candidate.patch"
+          ]
+        }
+      ],
+      "cross_task_reference_metadata_scan": "passed: no other task ID anywhere in environment reference JSON"
+    },
+    {
+      "instance_id": "Project-MONAI__MONAI-5686",
+      "runs": [
+        {
+          "candidate_kind": "noop",
+          "before_count": 6,
+          "after_count": 0,
+          "removed_count": 6,
+          "cross_task_removed_count": 5,
+          "noop_references_removed": 6,
+          "remaining_paths": []
+        },
+        {
+          "candidate_kind": "gold",
+          "before_count": 6,
+          "after_count": 1,
+          "removed_count": 5,
+          "cross_task_removed_count": 5,
+          "noop_references_removed": 0,
+          "remaining_paths": [
+            "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-1/artifacts/swe_gym_lite--Project-MONAI__MONAI-5686/a1-21293b93/candidate.patch"
+          ]
+        }
+      ],
+      "cross_task_reference_metadata_scan": "passed: no other task ID anywhere in environment reference JSON"
+    },
+    {
+      "instance_id": "conan-io__conan-11594",
+      "runs": [
+        {
+          "candidate_kind": "gold",
+          "before_count": 1,
+          "after_count": 1,
+          "removed_count": 0,
+          "cross_task_removed_count": 0,
+          "noop_references_removed": 0,
+          "remaining_paths": [
+            "runs/env_recipe_repair_20260919/reference_v1/runs/conan-io__conan-11594-gold/artifacts/swe_gym_lite--conan-io__conan-11594/a1-95773208/candidate.patch"
+          ]
+        },
+        {
+          "candidate_kind": "noop",
+          "before_count": 0,
+          "after_count": 0,
+          "removed_count": 0,
+          "cross_task_removed_count": 0,
+          "noop_references_removed": 0,
+          "remaining_paths": []
+        }
+      ],
+      "cross_task_reference_metadata_scan": "passed: no other task ID anywhere in environment reference JSON"
+    },
+    {
+      "instance_id": "conan-io__conan-13230",
+      "runs": [
+        {
+          "candidate_kind": "noop",
+          "before_count": 8,
+          "after_count": 0,
+          "removed_count": 8,
+          "cross_task_removed_count": 7,
+          "noop_references_removed": 8,
+          "remaining_paths": []
+        },
+        {
+          "candidate_kind": "gold",
+          "before_count": 8,
+          "after_count": 1,
+          "removed_count": 7,
+          "cross_task_removed_count": 7,
+          "noop_references_removed": 0,
+          "remaining_paths": [
+            "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-1/artifacts/swe_gym_lite--conan-io__conan-13230/a1-944e870c/candidate.patch"
+          ]
+        }
+      ],
+      "cross_task_reference_metadata_scan": "passed: no other task ID anywhere in environment reference JSON"
+    },
+    {
+      "instance_id": "conan-io__conan-13721",
+      "runs": [
+        {
+          "candidate_kind": "noop",
+          "before_count": 8,
+          "after_count": 0,
+          "removed_count": 8,
+          "cross_task_removed_count": 7,
+          "noop_references_removed": 8,
+          "remaining_paths": []
+        },
+        {
+          "candidate_kind": "gold",
+          "before_count": 8,
+          "after_count": 1,
+          "removed_count": 7,
+          "cross_task_removed_count": 7,
+          "noop_references_removed": 0,
+          "remaining_paths": [
+            "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-1/artifacts/swe_gym_lite--conan-io__conan-13721/a1-72f768c1/candidate.patch"
+          ]
+        }
+      ],
+      "cross_task_reference_metadata_scan": "passed: no other task ID anywhere in environment reference JSON"
+    },
+    {
+      "instance_id": "dask__dask-6626",
+      "runs": [
+        {
+          "candidate_kind": "gold",
+          "before_count": 1,
+          "after_count": 1,
+          "removed_count": 0,
+          "cross_task_removed_count": 0,
+          "noop_references_removed": 0,
+          "remaining_paths": [
+            "runs/env_recipe_repair_20260919/compat_v1/tasks/dask__dask-6626/gold/artifacts/swe_gym_lite--dask__dask-6626/a1-b8f577a9/candidate.patch"
+          ]
+        },
+        {
+          "candidate_kind": "noop",
+          "before_count": 0,
+          "after_count": 0,
+          "removed_count": 0,
+          "cross_task_removed_count": 0,
+          "noop_references_removed": 0,
+          "remaining_paths": []
+        }
+      ],
+      "cross_task_reference_metadata_scan": "passed: no other task ID anywhere in environment reference JSON"
+    },
+    {
+      "instance_id": "dask__dask-7656",
+      "runs": [
+        {
+          "candidate_kind": "gold",
+          "before_count": 1,
+          "after_count": 1,
+          "removed_count": 0,
+          "cross_task_removed_count": 0,
+          "noop_references_removed": 0,
+          "remaining_paths": [
+            "runs/env_recipe_repair_20260919/compat_v2b/tasks/dask__dask-7656/gold/artifacts/swe_gym_lite--dask__dask-7656/a1-890a47b2/candidate.patch"
+          ]
+        },
+        {
+          "candidate_kind": "noop",
+          "before_count": 0,
+          "after_count": 0,
+          "removed_count": 0,
+          "cross_task_removed_count": 0,
+          "noop_references_removed": 0,
+          "remaining_paths": []
+        }
+      ],
+      "cross_task_reference_metadata_scan": "passed: no other task ID anywhere in environment reference JSON"
+    },
+    {
+      "instance_id": "dask__dask-9378",
+      "runs": [
+        {
+          "candidate_kind": "noop",
+          "before_count": 8,
+          "after_count": 0,
+          "removed_count": 8,
+          "cross_task_removed_count": 7,
+          "noop_references_removed": 8,
+          "remaining_paths": []
+        },
+        {
+          "candidate_kind": "gold",
+          "before_count": 8,
+          "after_count": 1,
+          "removed_count": 7,
+          "cross_task_removed_count": 7,
+          "noop_references_removed": 0,
+          "remaining_paths": [
+            "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-1/artifacts/swe_gym_lite--dask__dask-9378/a1-71654d45/candidate.patch"
+          ]
+        }
+      ],
+      "cross_task_reference_metadata_scan": "passed: no other task ID anywhere in environment reference JSON"
+    },
+    {
+      "instance_id": "pydantic__pydantic-5386",
+      "runs": [
+        {
+          "candidate_kind": "gold",
+          "before_count": 1,
+          "after_count": 1,
+          "removed_count": 0,
+          "cross_task_removed_count": 0,
+          "noop_references_removed": 0,
+          "remaining_paths": [
+            "runs/env_recipe_repair_20260919/pydantic_v1/tasks/pydantic__pydantic-5386/gold/artifacts/swe_gym_lite--pydantic__pydantic-5386/a1-d96306f6/candidate.patch"
+          ]
+        },
+        {
+          "candidate_kind": "noop",
+          "before_count": 0,
+          "after_count": 0,
+          "removed_count": 0,
+          "cross_task_removed_count": 0,
+          "noop_references_removed": 0,
+          "remaining_paths": []
+        }
+      ],
+      "cross_task_reference_metadata_scan": "passed: no other task ID anywhere in environment reference JSON"
+    },
+    {
+      "instance_id": "pydantic__pydantic-6283",
+      "runs": [
+        {
+          "candidate_kind": "gold",
+          "before_count": 1,
+          "after_count": 1,
+          "removed_count": 0,
+          "cross_task_removed_count": 0,
+          "noop_references_removed": 0,
+          "remaining_paths": [
+            "runs/env_recipe_repair_20260919/pydantic_v1/tasks/pydantic__pydantic-6283/gold/artifacts/swe_gym_lite--pydantic__pydantic-6283/a1-3bfe28fe/candidate.patch"
+          ]
+        },
+        {
+          "candidate_kind": "noop",
+          "before_count": 0,
+          "after_count": 0,
+          "removed_count": 0,
+          "cross_task_removed_count": 0,
+          "noop_references_removed": 0,
+          "remaining_paths": []
+        }
+      ],
+      "cross_task_reference_metadata_scan": "passed: no other task ID anywhere in environment reference JSON"
+    },
+    {
+      "instance_id": "pydantic__pydantic-8567",
+      "runs": [
+        {
+          "candidate_kind": "gold",
+          "before_count": 1,
+          "after_count": 1,
+          "removed_count": 0,
+          "cross_task_removed_count": 0,
+          "noop_references_removed": 0,
+          "remaining_paths": [
+            "runs/env_recipe_repair_20260919/pydantic_v1/tasks/pydantic__pydantic-8567/gold/artifacts/swe_gym_lite--pydantic__pydantic-8567/a1-15a261b2/candidate.patch"
+          ]
+        },
+        {
+          "candidate_kind": "noop",
+          "before_count": 0,
+          "after_count": 0,
+          "removed_count": 0,
+          "cross_task_removed_count": 0,
+          "noop_references_removed": 0,
+          "remaining_paths": []
+        }
+      ],
+      "cross_task_reference_metadata_scan": "passed: no other task ID anywhere in environment reference JSON"
+    }
+  ],
+  "public_tree_sha256_after": "bf117a898ab4d27cac095d3513d8190bcb8cf1d87825ffa0230ac500d1a94cb6",
+  "public_bytes_unchanged": true,
+  "manifest_unchanged": true,
+  "history_refs_unchanged": true,
+  "unrelated_candidate_originals_read_during_correction": false,
+  "after_hashes": {
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/prepare_materials.py": "4c8790d705d7d621ef34d780be2482cfe6c915f0fefbddb820de29ca2a805bf5",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/material_check.json": "c7c92808b15decb72702bc4723fa9e864ead8e0b636bd08f1934ea2c420aff89",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/environment_replay_inventory.json": "d491d2ad3c1fd18af7c1192833262458364253f37636b75e88697d42a518497f",
+    "runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-2446/run_refs.json": "d0539f282267f2275fd61b530ef1b2720d7715b873713d97f274f7b20cc296ae",
+    "runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-2446/environment_record.json": "55bd53cddc6567fd9de127183bfc9c66cb136c89b6e26603417b67c20630abee",
+    "runs/swegym_quality_expansion_20260925/checks/Project-MONAI__MONAI-2446.json": "6541bc9fb1a64a110c19b7c7288fbb5334b43a5f8d6f024dc4f1e664c0670a40",
+    "runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-3715/run_refs.json": "24bac877f1d8020508cef689e0be85c9c958e69125d937224f9d7bb8cc5588d5",
+    "runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-3715/environment_record.json": "3158dde6fb9ac8a34be97076f63013d79335fb4085c69f91d4615051ac1bdef9",
+    "runs/swegym_quality_expansion_20260925/checks/Project-MONAI__MONAI-3715.json": "7820d646fda9b3004d1d83ad579a62bd6ad8e35f531865b1d2933941b02ed457",
+    "runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-5686/run_refs.json": "12f189c98f26cfca13c3c5f25194f8f5abe40be18090dfafae518d69c63b755a",
+    "runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-5686/environment_record.json": "bb16b018d35835fe8dc8d4beaab4171dde4e1a3f9346e0a69eb21048645bca31",
+    "runs/swegym_quality_expansion_20260925/checks/Project-MONAI__MONAI-5686.json": "c0853f56fd5ebe4e350d2a73015ee5e997ee50239113053a564c71011014d103",
+    "runs/swegym_quality_expansion_20260925/private/conan-io__conan-11594/run_refs.json": "201d7744b96c47e1c93858321c59a8d0d0e1eda9015a04de489d83f11f3f4ac3",
+    "runs/swegym_quality_expansion_20260925/private/conan-io__conan-11594/environment_record.json": "76cd2a9ae3f89f214f088401a0c071aa7cd71595625aedc83f7a987baf668c59",
+    "runs/swegym_quality_expansion_20260925/checks/conan-io__conan-11594.json": "1a6603dcee0fc838164aa8e4e55efcd602d77d93714d13a56b3686eeeb5e7bad",
+    "runs/swegym_quality_expansion_20260925/private/conan-io__conan-13230/run_refs.json": "28d5a5f22c2b258e8bc2b6f2c0eb68cfa6e042592cb1b508685949f0a23aa8bd",
+    "runs/swegym_quality_expansion_20260925/private/conan-io__conan-13230/environment_record.json": "f68a82981145d4a0273b284c012d5d4019ed067b1af2a556f22e125dc2bcb54b",
+    "runs/swegym_quality_expansion_20260925/checks/conan-io__conan-13230.json": "d7fc8f107fce32ec4bf6fea20a03391535a89d47fee7746ac8267519fa316e4e",
+    "runs/swegym_quality_expansion_20260925/private/conan-io__conan-13721/run_refs.json": "0d10724310cdfd052ce3504ee17950d62bef02da75a7d405c19528b01dc9663f",
+    "runs/swegym_quality_expansion_20260925/private/conan-io__conan-13721/environment_record.json": "c0c629e41b12586444cbcb231f19a3ba148bff57c450c82f03452223d2728699",
+    "runs/swegym_quality_expansion_20260925/checks/conan-io__conan-13721.json": "5cfe7d0acc171fd0102ef9c79088278e96e480f1dd4374d46eb93432619c20f2",
+    "runs/swegym_quality_expansion_20260925/private/dask__dask-6626/run_refs.json": "166983f4e1781e72937d3c536646b72bf1eaef7b46d3ea84b6b32fe3f84b95db",
+    "runs/swegym_quality_expansion_20260925/private/dask__dask-6626/environment_record.json": "f73fad39092f74eb97f6e607411fa0f48e9752ff5decf3484dd729c4aae68797",
+    "runs/swegym_quality_expansion_20260925/checks/dask__dask-6626.json": "dc0f31778263a99ce22fb9e1b64e2af99e7537dbde0ecf96ef24e3565d561926",
+    "runs/swegym_quality_expansion_20260925/private/dask__dask-7656/run_refs.json": "1eb7d7bcb6705a4c7cbad73aec8082d80a6e5e925c612af5afb72245335a9a75",
+    "runs/swegym_quality_expansion_20260925/private/dask__dask-7656/environment_record.json": "a84ea6d1717a3082d95d8becc890d411abefd57c7bc5c1ee7b9a45c337d9c4f6",
+    "runs/swegym_quality_expansion_20260925/checks/dask__dask-7656.json": "7ee734795bccd441d93d6027202ed6790849d449f44c8c1590740212c3f5d6de",
+    "runs/swegym_quality_expansion_20260925/private/dask__dask-9378/run_refs.json": "59ee2610e1f918c0a8b76459d46e7ff234c59b1425f517d4c07e99b21750d1c0",
+    "runs/swegym_quality_expansion_20260925/private/dask__dask-9378/environment_record.json": "57d3930d23a20a02f28b27945b8f94433b5c08a7cc8559f28ec5fa385f57ac41",
+    "runs/swegym_quality_expansion_20260925/checks/dask__dask-9378.json": "45005fdf1776b6cff185df68ba6e7a07bd1f376b2792820027b1c639277bb037",
+    "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/run_refs.json": "ae107ee478af4720dd997e3191ed4af237792d7e1b1b338433d8503fcb7ff6b4",
+    "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/environment_record.json": "e4acd62c2a80fba3b2f070dbe69523efa468d8be5b8c8250364e304592a3c072",
+    "runs/swegym_quality_expansion_20260925/checks/pydantic__pydantic-5386.json": "350bbb1712c5c5a150a90c72d37974498a133f94f7ba82dfd6fd4e777cdb1cd0",
+    "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-6283/run_refs.json": "da44f72c70a256dd051961dea851c984f8df40aa1d739cef2cedbc49302b9296",
+    "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-6283/environment_record.json": "e8306816d996896ed73f3858bb614d64606209369fed4ed9355c5f556b11a8bf",
+    "runs/swegym_quality_expansion_20260925/checks/pydantic__pydantic-6283.json": "04b173c8b734e5c61bf28175e993135365cf95f0d2492c90832bb3794fd385d3",
+    "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8567/run_refs.json": "ad87de1d334247ac710ab02ec01bb5bb60acfb8c6591b96490a9ebd41b34242d",
+    "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8567/environment_record.json": "9d0fd420b9d4a6e8e103f350a7d2523cc6e9559d37340821ed41825fd94b5295",
+    "runs/swegym_quality_expansion_20260925/checks/pydantic__pydantic-8567.json": "26a3d7b65a46be02c1d4afb7f7ae3d3a059d725b5aa0a2322b0816baf6f5fef1"
+  },
+  "changed_files": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/prepare_materials.py",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/material_check.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/environment_replay_inventory.json",
+    "runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-2446/run_refs.json",
+    "runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-2446/environment_record.json",
+    "runs/swegym_quality_expansion_20260925/checks/Project-MONAI__MONAI-2446.json",
+    "runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-3715/run_refs.json",
+    "runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-3715/environment_record.json",
+    "runs/swegym_quality_expansion_20260925/checks/Project-MONAI__MONAI-3715.json",
+    "runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-5686/run_refs.json",
+    "runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-5686/environment_record.json",
+    "runs/swegym_quality_expansion_20260925/checks/Project-MONAI__MONAI-5686.json",
+    "runs/swegym_quality_expansion_20260925/private/conan-io__conan-11594/run_refs.json",
+    "runs/swegym_quality_expansion_20260925/private/conan-io__conan-11594/environment_record.json",
+    "runs/swegym_quality_expansion_20260925/checks/conan-io__conan-11594.json",
+    "runs/swegym_quality_expansion_20260925/private/conan-io__conan-13230/run_refs.json",
+    "runs/swegym_quality_expansion_20260925/private/conan-io__conan-13230/environment_record.json",
+    "runs/swegym_quality_expansion_20260925/checks/conan-io__conan-13230.json",
+    "runs/swegym_quality_expansion_20260925/private/conan-io__conan-13721/run_refs.json",
+    "runs/swegym_quality_expansion_20260925/private/conan-io__conan-13721/environment_record.json",
+    "runs/swegym_quality_expansion_20260925/checks/conan-io__conan-13721.json",
+    "runs/swegym_quality_expansion_20260925/private/dask__dask-6626/run_refs.json",
+    "runs/swegym_quality_expansion_20260925/private/dask__dask-6626/environment_record.json",
+    "runs/swegym_quality_expansion_20260925/checks/dask__dask-6626.json",
+    "runs/swegym_quality_expansion_20260925/private/dask__dask-7656/run_refs.json",
+    "runs/swegym_quality_expansion_20260925/private/dask__dask-7656/environment_record.json",
+    "runs/swegym_quality_expansion_20260925/checks/dask__dask-7656.json",
+    "runs/swegym_quality_expansion_20260925/private/dask__dask-9378/run_refs.json",
+    "runs/swegym_quality_expansion_20260925/private/dask__dask-9378/environment_record.json",
+    "runs/swegym_quality_expansion_20260925/checks/dask__dask-9378.json",
+    "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/run_refs.json",
+    "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5386/environment_record.json",
+    "runs/swegym_quality_expansion_20260925/checks/pydantic__pydantic-5386.json",
+    "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-6283/run_refs.json",
+    "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-6283/environment_record.json",
+    "runs/swegym_quality_expansion_20260925/checks/pydantic__pydantic-6283.json",
+    "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8567/run_refs.json",
+    "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8567/environment_record.json",
+    "runs/swegym_quality_expansion_20260925/checks/pydantic__pydantic-8567.json"
+  ],
+  "unique_run_reference_removals": 71,
+  "cross_task_reference_removals": 66,
+  "final_candidate_reference_count": 12,
+  "count_note": "Counts are canonical per-run references; same references were duplicated in environment_record and aggregate inventory."
+}

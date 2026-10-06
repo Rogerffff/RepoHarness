@@ -1,0 +1,35 @@
+diff --git a/dvc/repo/reproduce.py b/dvc/repo/reproduce.py
+index 0c33210..ddf36b6 100644
+--- a/dvc/repo/reproduce.py
++++ b/dvc/repo/reproduce.py
+@@ -125,6 +125,9 @@ def reproduce(  # noqa: C901
+                 )
+             )
+ 
++    if kwargs.get("pull", False):
++        self.stage_cache.pull(None)
++
+     return _reproduce_stages(self.index.graph, list(stages), **kwargs)
+ 
+ 
+@@ -190,6 +193,9 @@ def _reproduce_stages(  # noqa: C901
+             )
+ 
+         try:
++            if kwargs.get("pull") and stage.cmd and stage.changed():
++                stage.repo.pull(stage.addressing, allow_missing=True)
++
+             ret = _reproduce_stage(stage, **kwargs)
+ 
+             if len(ret) == 0:
+@@ -220,6 +226,10 @@ def _reproduce_stages(  # noqa: C901
+ 
+             break
+         except Exception as exc:  # noqa: BLE001
++            if kwargs.get("pull"):
++                logger.warning("failed to reproduce '%s': %s", stage.addressing, exc)
++                result.append(stage)
++                continue
+             raise ReproductionError(stage.addressing) from exc
+ 
+     if on_unchanged is not None:

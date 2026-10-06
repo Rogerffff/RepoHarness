@@ -1,0 +1,2743 @@
+{
+  "schema_id": "category2.orange4014.r9_cpu_independent_review.v1",
+  "as_of": "2026-10-03",
+  "stage": "diagnostic_cpu_acceptance_verified",
+  "reviewer_role": "non_author_result_review_subagent",
+  "task_id": "r2e_gym_subset::orange3__4014f2483e3bab0621c9ae0f994947c008183253",
+  "scope": "只读核新R9八方矩阵及实际CC v2开发/构建/原生冻结/新grader链；复用已封公开brief、材料/静态/fresh/common101审查，不运行CPU、候选或模型，不改公用文件。",
+  "full_cpu_acceptance_passed": true,
+  "independent_result_review_complete": true,
+  "matrix_controls_passed": true,
+  "matrix_independent_review_complete": true,
+  "actual_cc_verified": true,
+  "ready_for_probe_request": true,
+  "gpu_probe_admitted": false,
+  "model_results_available": false,
+  "training_qualification_evaluated": false,
+  "acceptance_scope": "固定R9、r2e-mr-089与本次确定性CPU诊断；并不证明基座模型求解能力、重复稳定性或训练资格。",
+  "release_binding": {
+    "task_id": "r2e_gym_subset::orange3__4014f2483e3bab0621c9ae0f994947c008183253",
+    "instance_id": "orange3__4014f2483e3bab0621c9ae0f994947c008183253",
+    "material_revisions": [
+      "r2e-mr-089"
+    ],
+    "public_bundle_digest": "sha256:dc1d8fda79cd3654fc5e1c847caa8d8851b4d90996914112f1bdb27699ad6969",
+    "grading_bundle_digest": "sha256:2ae09a03fd4834db524ddbbf208f156e4792bc8ef200e61b7452cc5e4b6bf55a",
+    "environment_package_digest": "sha256:b82f447e0e1ca5b19c724e5c3938c0a5a1d40d1c69e42fe0caf387fd303e6f17",
+    "problem_statement_sha256": "sha256:efdb68c7ab45c887f0fab1959673885838f6385a37cd7086120841d2b91242df",
+    "hidden_test_files": [
+      {
+        "path": "__init__.py",
+        "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "test_1.py",
+        "sha256": "sha256:ea9b779f3d1f34b31cec43a3b4fd57bf79d8bd19a25c7c4b4153d22659d72b47"
+      }
+    ],
+    "hidden_tests_tree_sha256": "sha256:8261a642a1b5d810afefdcda9f561aa1831b49fcc609772f376e640d5f66c050",
+    "expected_output_json_sha256": "sha256:07f34ad40f871b27517af4fb1bf7939409fcc8ddd303771784e8f8425e5da490",
+    "run_tests_sh_sha256": "sha256:5dee57d9beda24a5401b433fa66b74f423c4ab79eb04046265b0f5447d3b1315",
+    "expected_total": 27,
+    "expected_failed_count": 0,
+    "release_id": "cat2-cpu-r2e089092-swe13-git-20261003-v1",
+    "local_release_dir": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe13_git_candidate_v1",
+    "external_manifest": {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe13_git_candidate_v1/manifest.json",
+      "sha256": "sha256:694a1cd364a4bc3348069bd9dd362c4432fbd25339b192d149a2f29d9a709230"
+    },
+    "registry": {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe13_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v20.json",
+      "sha256": "sha256:5486ec27b805f846a3b8b914ff9804ec569374df34c62f288b9c40a9c78fab79"
+    },
+    "input_pins": {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe13_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/t1_input_pins_r2e_v21.json",
+      "sha256": "sha256:be47a6dc4f2a043d4a72584b710bbb8ccc376ebabad5673001e14fcc327de27b"
+    },
+    "base_commit": "9403704f5b98eb8c96e7fdf3d368fe2c428bd958",
+    "source_image_ref_by_digest": "namanjain12/orange3_final@sha256:dff3656117488d7c06e687804d9f18f2624af82102fb70f482190328012a5154",
+    "reference_binding": {
+      "source_file": {
+        "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe13_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/validation_bundles_v0.jsonl",
+        "sha256": "sha256:763cd1b9e05025cfd0ab6bf1f03dd1536457d4e9283f1b61e56c9abbea447c11"
+      },
+      "task_line_sha256": "sha256:a42c2a5a3c447f44841d00b677c053e404f71b433977c74fdcf79ae91e0b67f0",
+      "golden_patch_sha256": "sha256:431cc37d5563157822ba0ec35b3ace799af5c305a81527f8552f5dae11d18397",
+      "visibility": "private host grading only"
+    },
+    "actual_cpu_image": {
+      "image_id": "sha256:3307167745d3b42a47e7b4f90f144e4ec966930eb3ebcd31dc61d8885b1aaf2c",
+      "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+      "recipe_sha256": "sha256:9cd596e8a72425b2e270cea225eb139460fea3a178943ea85b6e9b07d9fc6045",
+      "base_recipe_id": "r2e_derive_v1+material_v2",
+      "base_recipe_sha256": "sha256:115fa268dbbdd0c5ff15489fd040a07b75a37c4de5a653cd3bdb2182b7d93879",
+      "facts": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_build_readback_v1/derived/orange3__4014f2483e3bab0621c9ae0f994947c008183253/facts.json",
+        "sha256": "sha256:6aa864510bfb252d5896234f3ae72e0596eaa621fda0befd2b314878ec66a7bd"
+      },
+      "integrity_checks_passed": 21
+    },
+    "deployment_receipt": {
+      "path": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r9_publication_receipt.json",
+      "sha256": "sha256:27bfca856a58ad6a0c7f4c7ae90cda09a27f382c8c86a465f6f3d2fab0bd3180"
+    },
+    "qualification_limits": {
+      "task_cpu_matrix_complete": false,
+      "task_independent_result_review_complete": false,
+      "gpu_probe_admitted": false
+    }
+  },
+  "release_binding_source": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/4014f248/r9_cpu_release_binding.json",
+    "sha256": "sha256:a678d6a939ddb78d90086c74b93a708d320619af238d91824d0eec6b98c8c5f1"
+  },
+  "release_binding_snapshot_note": "qualification_limits为初始绑定原文，不回写；当前状态由本报告顶层决定。",
+  "reused_reviews": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/reviews/orange4014_9b_public_briefs_review_20261003.md",
+      "sha256": "sha256:ac41272dda215fa65ea9614f1c08bbffcdef3bc20580a62b43864deb92f24030"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/reviews/orange4014_9b_public_briefs_review_20261003.json",
+      "sha256": "sha256:57f135259e6039265a8b4a5560258aab07f348246dd4688ff92bbbf6a1824416"
+    }
+  ],
+  "reviewed_public_brief": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/4014f248/public_development_brief.md",
+    "sha256": "sha256:a7f74bbe44d82bca2ab0bdfe8b36ac9eabc31bc96a991e1f48c5f69e48c025ab"
+  },
+  "evidence_integrity": {
+    "matrix": {
+      "root": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1",
+      "verified_files": 235,
+      "bad_files": [],
+      "manifest": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/readback_manifest.json",
+        "sha256": "sha256:e9bda1823d8e97e86c287fe49d37cfdafa363b6a314a7787fc62d9102b508b75"
+      },
+      "receipt": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1_readback_receipt.json",
+        "sha256": "sha256:196f57dd0c6160484a3240396e678589c2278a53e38b1eaad79a0b1a564b498a"
+      },
+      "request": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1_fetch_request.json",
+        "sha256": "sha256:f435c954ee31fa5f5acdb8b934d32d1a755032b9d36d33bfacc465310670423e"
+      },
+      "archive": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1.tgz",
+        "sha256": "sha256:d81cc009ccef39dd8309b6866bf63e512f1f7bac901be63049494092efaf9a13"
+      },
+      "all_receipt_hashes_match": true
+    },
+    "actor_v2": {
+      "root": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_actor_complete_v2",
+      "verified_files": 91,
+      "bad_files": [],
+      "manifest": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_actor_complete_v2/readback_manifest.json",
+        "sha256": "sha256:13efc5a06d1d1cba606f33db7c38c9f66f74a32f7974c4d76c9471ec0ce8078c"
+      },
+      "receipt": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_actor_complete_v2_readback_receipt.json",
+        "sha256": "sha256:e676fdaf50969a9b96bd92fe08382052745083e84ad3ca9e92cc53edffd15b73"
+      },
+      "request": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_actor_complete_v2_fetch_request.json",
+        "sha256": "sha256:923c27aa2071c6340f054d64c7c941bb233254ae50ba093f1b9f281d7acfe3b8"
+      },
+      "archive": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_actor_complete_v2.tgz",
+        "sha256": "sha256:fde3176a391cd06f94e8f923438e34e0adf8bec3aa1afabfc54b4e455f9d970b"
+      },
+      "all_receipt_hashes_match": true
+    },
+    "actor_failed_v1": {
+      "root": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_actor_failed_v1",
+      "verified_files": 12,
+      "bad_files": [],
+      "manifest": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_actor_failed_v1/readback_manifest.json",
+        "sha256": "sha256:f4151553492d444a1b485030cd2590a559880c9f5b56ec27751e95a2008b733a"
+      },
+      "receipt": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_actor_failed_v1_readback_receipt.json",
+        "sha256": "sha256:94b8709777ce2dd512c0fee6d1f2ddc7194402b4b2e1c77536592f2fb27ef8d0"
+      },
+      "all_receipt_hashes_match": true
+    }
+  },
+  "expected_reference": {
+    "source": {
+      "path": "runs/r2e_static_prep_20260924/v3/private/orange3__4014f2483e3bab0621c9ae0f994947c008183253/expected_output.json",
+      "sha256": "sha256:07f34ad40f871b27517af4fb1bf7939409fcc8ddd303771784e8f8425e5da490"
+    },
+    "status_map": {
+      "TestEqualFreq.test_below_precision": "PASSED",
+      "TestEqualFreq.test_equifreq_100_to_4": "PASSED",
+      "TestEqualFreq.test_equifreq_with_k_instances": "PASSED",
+      "TestEqualFreq.test_equifreq_with_too_few_values": "PASSED",
+      "TestEqualWidth.test_equalwidth_100_to_4": "PASSED",
+      "TestEqualWidth.test_equalwidth_const_value": "PASSED",
+      "TestEqualWidth.test_equalwidth_on_two_values": "PASSED",
+      "TestEntropyMDL.test_entropy": "PASSED",
+      "TestEntropyMDL.test_entropy_constant": "PASSED",
+      "TestEntropyMDL.test_entropy_with_two_values": "PASSED",
+      "TestEntropyMDL.test_entropy_with_two_values_useless": "PASSED",
+      "TestDiscretizer.test_create_discretized_var": "PASSED",
+      "TestDiscretizer.test_create_discretized_var_formatting": "PASSED",
+      "TestDiscretizer.test_discretize_class": "PASSED",
+      "TestDiscretizer.test_discretize_metas": "PASSED",
+      "TestDiscretizer.test_discretizer_computation": "PASSED",
+      "TestDiscretizer.test_discretizer_computation_sparse": "PASSED",
+      "TestDiscretizer.test_discretizer_computation_sparse_no_points": "PASSED",
+      "TestDiscretizer.test_keep_constant": "PASSED",
+      "TestDiscretizer.test_remove_constant": "PASSED",
+      "TestDiscretizer.test_transform": "PASSED",
+      "TestDiscretizeTable.test_discretize_class": "PASSED",
+      "TestDiscretizeTable.test_discretize_exclude_constant": "PASSED",
+      "TestDiscretizeTable.test_fixed": "PASSED",
+      "TestDiscretizeTable.test_leave_discrete": "PASSED",
+      "TestDiscretizeTable.test_method": "PASSED",
+      "TestInstanceConversion.test_single_instance": "PASSED"
+    },
+    "matches_release_binding_sha256": true,
+    "nonpassed_count": 0
+  },
+  "matrix_job": {
+    "package": "r2e_orange3",
+    "job": "orange-4014f248-r9-matrix-c-20261003-v1",
+    "mode": "run",
+    "slot": 0,
+    "command": [
+      "env",
+      "PYTHONDONTWRITEBYTECODE=1",
+      "PYTHONPATH=/work/rh2-category2-20261003/releases/cat2-cpu-r2e089092-swe13-git-20261003-v1/repo/rh2/src",
+      "/work/rh2-category2-20261003/runtime_cpu_v2/rh2/.venv/bin/python",
+      "-B",
+      "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/scripts_v2/run_task_matrix.py",
+      "--inputs",
+      "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/scripts_v2/matrix_inputs.json",
+      "--task",
+      "orange3__4014f2483e3bab0621c9ae0f994947c008183253",
+      "--attempt",
+      "orange-4014f248-r9-matrix-c-20261003-v1"
+    ],
+    "cwd": "/root",
+    "started_at_utc": "2026-10-02T21:34:27Z",
+    "supervisor_pid": 209809,
+    "status": "finished",
+    "child_pid": 209810,
+    "returncode": 0,
+    "finished_at_utc": "2026-10-02T22:05:02Z"
+  },
+  "matrix_summary": {
+    "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/matrix_result.json",
+    "sha256": "sha256:1f3e2b3f742fcefefdd2abdaf710b172a5b0c8333ae3f52bb5a97f2e102dae83"
+  },
+  "matrix_order": [
+    "noop",
+    "gold",
+    "C1",
+    "DG",
+    "C3",
+    "C4",
+    "pyx_build",
+    "pyx_only"
+  ],
+  "matrix_rewards": [
+    0.0,
+    1.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    0.0
+  ],
+  "controls": [
+    {
+      "candidate": "noop",
+      "expected_reward": 0,
+      "reward": 0.0,
+      "expected_match": 26,
+      "expected_total": 27,
+      "observed_status_map": {
+        "TestEqualFreq.test_equifreq_100_to_4": "PASSED",
+        "TestEqualFreq.test_equifreq_with_k_instances": "PASSED",
+        "TestEqualFreq.test_equifreq_with_too_few_values": "PASSED",
+        "TestEqualWidth.test_equalwidth_100_to_4": "PASSED",
+        "TestEqualWidth.test_equalwidth_const_value": "PASSED",
+        "TestEqualWidth.test_equalwidth_on_two_values": "PASSED",
+        "TestEntropyMDL.test_entropy": "PASSED",
+        "TestEntropyMDL.test_entropy_constant": "PASSED",
+        "TestEntropyMDL.test_entropy_with_two_values": "PASSED",
+        "TestEntropyMDL.test_entropy_with_two_values_useless": "PASSED",
+        "TestDiscretizer.test_create_discretized_var": "PASSED",
+        "TestDiscretizer.test_create_discretized_var_formatting": "PASSED",
+        "TestDiscretizer.test_discretize_class": "PASSED",
+        "TestDiscretizer.test_discretize_metas": "PASSED",
+        "TestDiscretizer.test_discretizer_computation": "PASSED",
+        "TestDiscretizer.test_discretizer_computation_sparse": "PASSED",
+        "TestDiscretizer.test_discretizer_computation_sparse_no_points": "PASSED",
+        "TestDiscretizer.test_keep_constant": "PASSED",
+        "TestDiscretizer.test_remove_constant": "PASSED",
+        "TestDiscretizer.test_transform": "PASSED",
+        "TestDiscretizeTable.test_discretize_class": "PASSED",
+        "TestDiscretizeTable.test_discretize_exclude_constant": "PASSED",
+        "TestDiscretizeTable.test_fixed": "PASSED",
+        "TestDiscretizeTable.test_leave_discrete": "PASSED",
+        "TestDiscretizeTable.test_method": "PASSED",
+        "TestInstanceConversion.test_single_instance": "PASSED",
+        "TestEqualFreq.test_below_precision": "FAILED"
+      },
+      "exact_reference_keys": true,
+      "raw_mismatched_keys": [
+        "TestEqualFreq.test_below_precision"
+      ],
+      "raw_log": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/noop/eval_logs/evallog_replay-orange-4014f248-r_dc75e2b8.eval.log",
+        "sha256": "sha256:fd18ca3babdf8ccbef42142ae4597f1d4d4f58db8e6338107b3adc318c37c222"
+      },
+      "ledger": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/noop/ledger.jsonl",
+        "sha256": "sha256:3bac56920eb6ee164692dd00180e5f4ae991f3beb346c2fb6f540dc33521392a"
+      },
+      "frozen_patch": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/noop/artifacts/r2e_gym_subset--orange3__4014f2483e3bab0621c9ae0f994947c0081/a1-85bbccee/frozen_patch.json",
+        "sha256": "sha256:057b3d6fc222842f64b70b3387b3984a895ece20f6d13b072d13bc51d0eb0287"
+      },
+      "frozen_patch_digest": "sha256:4c9c48347e2cca554c868011d1b251a0b8cf8285c16faef75988c32d85cbf029",
+      "baseline_manifest_digest": "sha256:6a0cc886e386330fd0acd1ca4e74d1b3ae76eb4dbc28a01a36047cdcfa1c57eb",
+      "decoded_entries": [],
+      "candidate_patch": null,
+      "patch_matches_frozen_bytes_in_memory": true,
+      "apply_method": "noop",
+      "stage_error": null,
+      "classification": {
+        "reason_codes": [],
+        "verdict": "projectable"
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 2.938,
+        "segment_completed": true
+      },
+      "budget": {
+        "before": 300.0,
+        "after": 1200.0,
+        "test_seconds": 1800.0,
+        "source": "r2e_gym_subset::orange3__4014f2483e3bab0621c9ae0f994947c008183253"
+      },
+      "config": {
+        "setup_seconds": 1200
+      },
+      "command_entry": "/work/rh2-category2-20261003/releases/cat2-cpu-r2e089092-swe13-git-20261003-v1/repo/rh2/experiments/ordinary_probe_20260929/replay_probe.py",
+      "resource_facts": null,
+      "diagnostics_mem_peak_mb": 2070.324,
+      "candidate_cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "grader_footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/matrices/orange-4014f248-r9-matrix-c-20261003-v1/noop/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "stop_reason": null,
+      "runner_integrity_changed": false,
+      "image_id_actual": "sha256:3307167745d3b42a47e7b4f90f144e4ec966930eb3ebcd31dc61d8885b1aaf2c",
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/Orange/__init__.py",
+        "RH2_OBS_PKG_VERSION": "3.28.0.dev",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d"
+      },
+      "native_excluded_pathset_changed": false
+    },
+    {
+      "candidate": "gold",
+      "expected_reward": 1,
+      "reward": 1.0,
+      "expected_match": 27,
+      "expected_total": 27,
+      "observed_status_map": {
+        "TestEqualFreq.test_below_precision": "PASSED",
+        "TestEqualFreq.test_equifreq_100_to_4": "PASSED",
+        "TestEqualFreq.test_equifreq_with_k_instances": "PASSED",
+        "TestEqualFreq.test_equifreq_with_too_few_values": "PASSED",
+        "TestEqualWidth.test_equalwidth_100_to_4": "PASSED",
+        "TestEqualWidth.test_equalwidth_const_value": "PASSED",
+        "TestEqualWidth.test_equalwidth_on_two_values": "PASSED",
+        "TestEntropyMDL.test_entropy": "PASSED",
+        "TestEntropyMDL.test_entropy_constant": "PASSED",
+        "TestEntropyMDL.test_entropy_with_two_values": "PASSED",
+        "TestEntropyMDL.test_entropy_with_two_values_useless": "PASSED",
+        "TestDiscretizer.test_create_discretized_var": "PASSED",
+        "TestDiscretizer.test_create_discretized_var_formatting": "PASSED",
+        "TestDiscretizer.test_discretize_class": "PASSED",
+        "TestDiscretizer.test_discretize_metas": "PASSED",
+        "TestDiscretizer.test_discretizer_computation": "PASSED",
+        "TestDiscretizer.test_discretizer_computation_sparse": "PASSED",
+        "TestDiscretizer.test_discretizer_computation_sparse_no_points": "PASSED",
+        "TestDiscretizer.test_keep_constant": "PASSED",
+        "TestDiscretizer.test_remove_constant": "PASSED",
+        "TestDiscretizer.test_transform": "PASSED",
+        "TestDiscretizeTable.test_discretize_class": "PASSED",
+        "TestDiscretizeTable.test_discretize_exclude_constant": "PASSED",
+        "TestDiscretizeTable.test_fixed": "PASSED",
+        "TestDiscretizeTable.test_leave_discrete": "PASSED",
+        "TestDiscretizeTable.test_method": "PASSED",
+        "TestInstanceConversion.test_single_instance": "PASSED"
+      },
+      "exact_reference_keys": true,
+      "raw_mismatched_keys": [],
+      "raw_log": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/gold/eval_logs/evallog_replay-orange-4014f248-r_d4dc5c32.eval.log",
+        "sha256": "sha256:b7513f81fecb0babc48dd107f2170937003c1a3797d4e5c0039b50a29ebd2582"
+      },
+      "ledger": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/gold/ledger.jsonl",
+        "sha256": "sha256:872e162466af3d809e718202ad445668f7b120be15082476800650f3df62c40a"
+      },
+      "frozen_patch": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/gold/artifacts/r2e_gym_subset--orange3__4014f2483e3bab0621c9ae0f994947c0081/a1-57ac917f/frozen_patch.json",
+        "sha256": "sha256:23f738e5cdddc54790f505fd85bd04cdfc5ce1824f479ee2806ef1e1440417f5"
+      },
+      "frozen_patch_digest": "sha256:da79ec3b2ed6da059996f901a791c0b145227834bb90fed6c34c8cc1d93cfc5f",
+      "baseline_manifest_digest": "sha256:6a0cc886e386330fd0acd1ca4e74d1b3ae76eb4dbc28a01a36047cdcfa1c57eb",
+      "decoded_entries": [
+        {
+          "path": "Orange/preprocess/discretize.py",
+          "operation": "modify",
+          "mode": "100644",
+          "sha256": "sha256:733be796ddb059a29d95e787e9173e13abc573a7c71ba6ffea6fa89fc2dc7d96"
+        }
+      ],
+      "candidate_patch": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/gold/artifacts/r2e_gym_subset--orange3__4014f2483e3bab0621c9ae0f994947c0081/a1-57ac917f/candidate.patch",
+        "sha256": "sha256:431cc37d5563157822ba0ec35b3ace799af5c305a81527f8552f5dae11d18397"
+      },
+      "patch_matches_frozen_bytes_in_memory": true,
+      "apply_method": "git_apply",
+      "stage_error": null,
+      "classification": {
+        "reason_codes": [],
+        "verdict": "projectable"
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 3.073,
+        "segment_completed": true
+      },
+      "budget": {
+        "before": 300.0,
+        "after": 1200.0,
+        "test_seconds": 1800.0,
+        "source": "r2e_gym_subset::orange3__4014f2483e3bab0621c9ae0f994947c008183253"
+      },
+      "config": {
+        "setup_seconds": 1200
+      },
+      "command_entry": "/work/rh2-category2-20261003/releases/cat2-cpu-r2e089092-swe13-git-20261003-v1/repo/rh2/experiments/ordinary_probe_20260929/replay_probe.py",
+      "resource_facts": null,
+      "diagnostics_mem_peak_mb": 2063.145,
+      "candidate_cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "grader_footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/matrices/orange-4014f248-r9-matrix-c-20261003-v1/gold/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "stop_reason": null,
+      "runner_integrity_changed": false,
+      "image_id_actual": "sha256:3307167745d3b42a47e7b4f90f144e4ec966930eb3ebcd31dc61d8885b1aaf2c",
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/Orange/__init__.py",
+        "RH2_OBS_PKG_VERSION": "3.28.0.dev",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d"
+      },
+      "native_excluded_pathset_changed": false
+    },
+    {
+      "candidate": "C1",
+      "expected_reward": 1,
+      "reward": 1.0,
+      "expected_match": 27,
+      "expected_total": 27,
+      "observed_status_map": {
+        "TestEqualFreq.test_below_precision": "PASSED",
+        "TestEqualFreq.test_equifreq_100_to_4": "PASSED",
+        "TestEqualFreq.test_equifreq_with_k_instances": "PASSED",
+        "TestEqualFreq.test_equifreq_with_too_few_values": "PASSED",
+        "TestEqualWidth.test_equalwidth_100_to_4": "PASSED",
+        "TestEqualWidth.test_equalwidth_const_value": "PASSED",
+        "TestEqualWidth.test_equalwidth_on_two_values": "PASSED",
+        "TestEntropyMDL.test_entropy": "PASSED",
+        "TestEntropyMDL.test_entropy_constant": "PASSED",
+        "TestEntropyMDL.test_entropy_with_two_values": "PASSED",
+        "TestEntropyMDL.test_entropy_with_two_values_useless": "PASSED",
+        "TestDiscretizer.test_create_discretized_var": "PASSED",
+        "TestDiscretizer.test_create_discretized_var_formatting": "PASSED",
+        "TestDiscretizer.test_discretize_class": "PASSED",
+        "TestDiscretizer.test_discretize_metas": "PASSED",
+        "TestDiscretizer.test_discretizer_computation": "PASSED",
+        "TestDiscretizer.test_discretizer_computation_sparse": "PASSED",
+        "TestDiscretizer.test_discretizer_computation_sparse_no_points": "PASSED",
+        "TestDiscretizer.test_keep_constant": "PASSED",
+        "TestDiscretizer.test_remove_constant": "PASSED",
+        "TestDiscretizer.test_transform": "PASSED",
+        "TestDiscretizeTable.test_discretize_class": "PASSED",
+        "TestDiscretizeTable.test_discretize_exclude_constant": "PASSED",
+        "TestDiscretizeTable.test_fixed": "PASSED",
+        "TestDiscretizeTable.test_leave_discrete": "PASSED",
+        "TestDiscretizeTable.test_method": "PASSED",
+        "TestInstanceConversion.test_single_instance": "PASSED"
+      },
+      "exact_reference_keys": true,
+      "raw_mismatched_keys": [],
+      "raw_log": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/C1/eval_logs/evallog_replay-orange-4014f248-r_1e0154f4.eval.log",
+        "sha256": "sha256:9e774309a20c9c3c9577842cf160298acad3a76c4dc986a67388e212e2948b45"
+      },
+      "ledger": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/C1/ledger.jsonl",
+        "sha256": "sha256:0c055a81124d2c99259acd7857bbacc4e5f4973e62df39d0115a8afafd892a34"
+      },
+      "frozen_patch": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/C1/artifacts/r2e_gym_subset--orange3__4014f2483e3bab0621c9ae0f994947c0081/a1-013ed3ca/frozen_patch.json",
+        "sha256": "sha256:6e57e2fb547d20de7eb7da6162bbd35a6eaf30a9086ec99d001a225a41437d9b"
+      },
+      "frozen_patch_digest": "sha256:445e2cba26b6e634f65cd10398a57aab0237b979b65389d841403ea9efbbfe2e",
+      "baseline_manifest_digest": "sha256:6a0cc886e386330fd0acd1ca4e74d1b3ae76eb4dbc28a01a36047cdcfa1c57eb",
+      "decoded_entries": [
+        {
+          "path": "Orange/preprocess/discretize.py",
+          "operation": "modify",
+          "mode": "100644",
+          "sha256": "sha256:6d207b89d9458ff3db2895b8ad982456be4584c33c174d60c0c565e05f4cf48d"
+        }
+      ],
+      "candidate_patch": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/C1/artifacts/r2e_gym_subset--orange3__4014f2483e3bab0621c9ae0f994947c0081/a1-013ed3ca/candidate.patch",
+        "sha256": "sha256:e7cf1161cc162928db23099fc9503810281fecc62ade5faf801a622cfe91e748"
+      },
+      "patch_matches_frozen_bytes_in_memory": true,
+      "apply_method": "git_apply",
+      "stage_error": null,
+      "classification": {
+        "reason_codes": [],
+        "verdict": "projectable"
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 2.996,
+        "segment_completed": true
+      },
+      "budget": {
+        "before": 300.0,
+        "after": 1200.0,
+        "test_seconds": 1800.0,
+        "source": "r2e_gym_subset::orange3__4014f2483e3bab0621c9ae0f994947c008183253"
+      },
+      "config": {
+        "setup_seconds": 1200
+      },
+      "command_entry": "/work/rh2-category2-20261003/releases/cat2-cpu-r2e089092-swe13-git-20261003-v1/repo/rh2/experiments/ordinary_probe_20260929/replay_probe.py",
+      "resource_facts": null,
+      "diagnostics_mem_peak_mb": 2062.215,
+      "candidate_cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "grader_footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/matrices/orange-4014f248-r9-matrix-c-20261003-v1/C1/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "stop_reason": null,
+      "runner_integrity_changed": false,
+      "image_id_actual": "sha256:3307167745d3b42a47e7b4f90f144e4ec966930eb3ebcd31dc61d8885b1aaf2c",
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/Orange/__init__.py",
+        "RH2_OBS_PKG_VERSION": "3.28.0.dev",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d"
+      },
+      "native_excluded_pathset_changed": false
+    },
+    {
+      "candidate": "DG",
+      "expected_reward": 0,
+      "reward": 0.0,
+      "expected_match": 26,
+      "expected_total": 27,
+      "observed_status_map": {
+        "TestEqualFreq.test_equifreq_100_to_4": "PASSED",
+        "TestEqualFreq.test_equifreq_with_k_instances": "PASSED",
+        "TestEqualFreq.test_equifreq_with_too_few_values": "PASSED",
+        "TestEqualWidth.test_equalwidth_100_to_4": "PASSED",
+        "TestEqualWidth.test_equalwidth_const_value": "PASSED",
+        "TestEqualWidth.test_equalwidth_on_two_values": "PASSED",
+        "TestEntropyMDL.test_entropy": "PASSED",
+        "TestEntropyMDL.test_entropy_constant": "PASSED",
+        "TestEntropyMDL.test_entropy_with_two_values": "PASSED",
+        "TestEntropyMDL.test_entropy_with_two_values_useless": "PASSED",
+        "TestDiscretizer.test_create_discretized_var": "PASSED",
+        "TestDiscretizer.test_create_discretized_var_formatting": "PASSED",
+        "TestDiscretizer.test_discretize_class": "PASSED",
+        "TestDiscretizer.test_discretize_metas": "PASSED",
+        "TestDiscretizer.test_discretizer_computation": "PASSED",
+        "TestDiscretizer.test_discretizer_computation_sparse": "PASSED",
+        "TestDiscretizer.test_discretizer_computation_sparse_no_points": "PASSED",
+        "TestDiscretizer.test_keep_constant": "PASSED",
+        "TestDiscretizer.test_remove_constant": "PASSED",
+        "TestDiscretizer.test_transform": "PASSED",
+        "TestDiscretizeTable.test_discretize_class": "PASSED",
+        "TestDiscretizeTable.test_discretize_exclude_constant": "PASSED",
+        "TestDiscretizeTable.test_fixed": "PASSED",
+        "TestDiscretizeTable.test_leave_discrete": "PASSED",
+        "TestDiscretizeTable.test_method": "PASSED",
+        "TestInstanceConversion.test_single_instance": "PASSED",
+        "TestEqualFreq.test_below_precision": "FAILED"
+      },
+      "exact_reference_keys": true,
+      "raw_mismatched_keys": [
+        "TestEqualFreq.test_below_precision"
+      ],
+      "raw_log": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/DG/eval_logs/evallog_replay-orange-4014f248-r_2c39704c.eval.log",
+        "sha256": "sha256:18453f37dfe20f7b237911768391711f0eb3d5964aa92f9d49fabea5ae19f356"
+      },
+      "ledger": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/DG/ledger.jsonl",
+        "sha256": "sha256:d0d11f90a8146616bc433259caccc1da489a6dae8ffb957c9d4603b9ce590030"
+      },
+      "frozen_patch": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/DG/artifacts/r2e_gym_subset--orange3__4014f2483e3bab0621c9ae0f994947c0081/a1-97be29d2/frozen_patch.json",
+        "sha256": "sha256:33b8f1bdf00a14e2d32d07623d8fd70ca1ec00e76814997128e1077f01c7631b"
+      },
+      "frozen_patch_digest": "sha256:4f89ba1af13e48eaf76a57216df4f0ee6eb421f075009533cdf90541f1015526",
+      "baseline_manifest_digest": "sha256:6a0cc886e386330fd0acd1ca4e74d1b3ae76eb4dbc28a01a36047cdcfa1c57eb",
+      "decoded_entries": [
+        {
+          "path": "Orange/preprocess/discretize.py",
+          "operation": "modify",
+          "mode": "100644",
+          "sha256": "sha256:805d1eb366305264d60f4043daec1dee85ebb4e9a68fd042b3a7f35eb6ff6013"
+        }
+      ],
+      "candidate_patch": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/DG/artifacts/r2e_gym_subset--orange3__4014f2483e3bab0621c9ae0f994947c0081/a1-97be29d2/candidate.patch",
+        "sha256": "sha256:06b31ab2801b8a065f25672be92de2adc655b19650c1e8f285ea72abf3aaac4f"
+      },
+      "patch_matches_frozen_bytes_in_memory": true,
+      "apply_method": "git_apply",
+      "stage_error": null,
+      "classification": {
+        "reason_codes": [],
+        "verdict": "projectable"
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 3.262,
+        "segment_completed": true
+      },
+      "budget": {
+        "before": 300.0,
+        "after": 1200.0,
+        "test_seconds": 1800.0,
+        "source": "r2e_gym_subset::orange3__4014f2483e3bab0621c9ae0f994947c008183253"
+      },
+      "config": {
+        "setup_seconds": 1200
+      },
+      "command_entry": "/work/rh2-category2-20261003/releases/cat2-cpu-r2e089092-swe13-git-20261003-v1/repo/rh2/experiments/ordinary_probe_20260929/replay_probe.py",
+      "resource_facts": null,
+      "diagnostics_mem_peak_mb": 2063.996,
+      "candidate_cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "grader_footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/matrices/orange-4014f248-r9-matrix-c-20261003-v1/DG/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "stop_reason": null,
+      "runner_integrity_changed": false,
+      "image_id_actual": "sha256:3307167745d3b42a47e7b4f90f144e4ec966930eb3ebcd31dc61d8885b1aaf2c",
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/Orange/__init__.py",
+        "RH2_OBS_PKG_VERSION": "3.28.0.dev",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d"
+      },
+      "native_excluded_pathset_changed": false
+    },
+    {
+      "candidate": "C3",
+      "expected_reward": 0,
+      "reward": 0.0,
+      "expected_match": 26,
+      "expected_total": 27,
+      "observed_status_map": {
+        "TestEqualFreq.test_equifreq_100_to_4": "PASSED",
+        "TestEqualFreq.test_equifreq_with_k_instances": "PASSED",
+        "TestEqualFreq.test_equifreq_with_too_few_values": "PASSED",
+        "TestEqualWidth.test_equalwidth_100_to_4": "PASSED",
+        "TestEqualWidth.test_equalwidth_const_value": "PASSED",
+        "TestEqualWidth.test_equalwidth_on_two_values": "PASSED",
+        "TestEntropyMDL.test_entropy": "PASSED",
+        "TestEntropyMDL.test_entropy_constant": "PASSED",
+        "TestEntropyMDL.test_entropy_with_two_values": "PASSED",
+        "TestEntropyMDL.test_entropy_with_two_values_useless": "PASSED",
+        "TestDiscretizer.test_create_discretized_var": "PASSED",
+        "TestDiscretizer.test_create_discretized_var_formatting": "PASSED",
+        "TestDiscretizer.test_discretize_class": "PASSED",
+        "TestDiscretizer.test_discretize_metas": "PASSED",
+        "TestDiscretizer.test_discretizer_computation": "PASSED",
+        "TestDiscretizer.test_discretizer_computation_sparse": "PASSED",
+        "TestDiscretizer.test_discretizer_computation_sparse_no_points": "PASSED",
+        "TestDiscretizer.test_keep_constant": "PASSED",
+        "TestDiscretizer.test_remove_constant": "PASSED",
+        "TestDiscretizer.test_transform": "PASSED",
+        "TestDiscretizeTable.test_discretize_class": "PASSED",
+        "TestDiscretizeTable.test_discretize_exclude_constant": "PASSED",
+        "TestDiscretizeTable.test_fixed": "PASSED",
+        "TestDiscretizeTable.test_leave_discrete": "PASSED",
+        "TestDiscretizeTable.test_method": "PASSED",
+        "TestInstanceConversion.test_single_instance": "PASSED",
+        "TestEqualFreq.test_below_precision": "FAILED"
+      },
+      "exact_reference_keys": true,
+      "raw_mismatched_keys": [
+        "TestEqualFreq.test_below_precision"
+      ],
+      "raw_log": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/C3/eval_logs/evallog_replay-orange-4014f248-r_0d7d20e4.eval.log",
+        "sha256": "sha256:2b1a9bd85a38911c644dc3571994a52ad00b0936b2ae0a2241d7a74795db395d"
+      },
+      "ledger": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/C3/ledger.jsonl",
+        "sha256": "sha256:f3599a73ded094661ef7b996c0a19b28ab0e7152551780b8465ef5e9743cb794"
+      },
+      "frozen_patch": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/C3/artifacts/r2e_gym_subset--orange3__4014f2483e3bab0621c9ae0f994947c0081/a1-4f5a3932/frozen_patch.json",
+        "sha256": "sha256:d0cbfe25c1a32056e385f44fd79ee2f347a504ba7e774d595a3f831b9d82b0bb"
+      },
+      "frozen_patch_digest": "sha256:574fbba7ff52d7c0cf42382f162b2620a0ad61a7eb4625c3ea5ed10992bf6c1c",
+      "baseline_manifest_digest": "sha256:6a0cc886e386330fd0acd1ca4e74d1b3ae76eb4dbc28a01a36047cdcfa1c57eb",
+      "decoded_entries": [
+        {
+          "path": "Orange/preprocess/discretize.py",
+          "operation": "modify",
+          "mode": "100644",
+          "sha256": "sha256:cb74220ace3152a5381be02fba3392220bf460ecfff80bd8a35b4db83f0749c2"
+        }
+      ],
+      "candidate_patch": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/C3/artifacts/r2e_gym_subset--orange3__4014f2483e3bab0621c9ae0f994947c0081/a1-4f5a3932/candidate.patch",
+        "sha256": "sha256:6f230913d1c1024e04bef131ecbbbc7ade90c36d9a4cd663b2de46f8b01d59cb"
+      },
+      "patch_matches_frozen_bytes_in_memory": true,
+      "apply_method": "git_apply",
+      "stage_error": null,
+      "classification": {
+        "reason_codes": [],
+        "verdict": "projectable"
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 3.192,
+        "segment_completed": true
+      },
+      "budget": {
+        "before": 300.0,
+        "after": 1200.0,
+        "test_seconds": 1800.0,
+        "source": "r2e_gym_subset::orange3__4014f2483e3bab0621c9ae0f994947c008183253"
+      },
+      "config": {
+        "setup_seconds": 1200
+      },
+      "command_entry": "/work/rh2-category2-20261003/releases/cat2-cpu-r2e089092-swe13-git-20261003-v1/repo/rh2/experiments/ordinary_probe_20260929/replay_probe.py",
+      "resource_facts": null,
+      "diagnostics_mem_peak_mb": 2062.383,
+      "candidate_cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "grader_footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/matrices/orange-4014f248-r9-matrix-c-20261003-v1/C3/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "stop_reason": null,
+      "runner_integrity_changed": false,
+      "image_id_actual": "sha256:3307167745d3b42a47e7b4f90f144e4ec966930eb3ebcd31dc61d8885b1aaf2c",
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/Orange/__init__.py",
+        "RH2_OBS_PKG_VERSION": "3.28.0.dev",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d"
+      },
+      "native_excluded_pathset_changed": false
+    },
+    {
+      "candidate": "C4",
+      "expected_reward": 0,
+      "reward": 0.0,
+      "expected_match": 26,
+      "expected_total": 27,
+      "observed_status_map": {
+        "TestEqualFreq.test_equifreq_100_to_4": "PASSED",
+        "TestEqualFreq.test_equifreq_with_k_instances": "PASSED",
+        "TestEqualFreq.test_equifreq_with_too_few_values": "PASSED",
+        "TestEqualWidth.test_equalwidth_100_to_4": "PASSED",
+        "TestEqualWidth.test_equalwidth_const_value": "PASSED",
+        "TestEqualWidth.test_equalwidth_on_two_values": "PASSED",
+        "TestEntropyMDL.test_entropy": "PASSED",
+        "TestEntropyMDL.test_entropy_constant": "PASSED",
+        "TestEntropyMDL.test_entropy_with_two_values": "PASSED",
+        "TestEntropyMDL.test_entropy_with_two_values_useless": "PASSED",
+        "TestDiscretizer.test_create_discretized_var": "PASSED",
+        "TestDiscretizer.test_create_discretized_var_formatting": "PASSED",
+        "TestDiscretizer.test_discretize_class": "PASSED",
+        "TestDiscretizer.test_discretize_metas": "PASSED",
+        "TestDiscretizer.test_discretizer_computation": "PASSED",
+        "TestDiscretizer.test_discretizer_computation_sparse": "PASSED",
+        "TestDiscretizer.test_discretizer_computation_sparse_no_points": "PASSED",
+        "TestDiscretizer.test_keep_constant": "PASSED",
+        "TestDiscretizer.test_remove_constant": "PASSED",
+        "TestDiscretizer.test_transform": "PASSED",
+        "TestDiscretizeTable.test_discretize_class": "PASSED",
+        "TestDiscretizeTable.test_discretize_exclude_constant": "PASSED",
+        "TestDiscretizeTable.test_fixed": "PASSED",
+        "TestDiscretizeTable.test_leave_discrete": "PASSED",
+        "TestDiscretizeTable.test_method": "PASSED",
+        "TestInstanceConversion.test_single_instance": "PASSED",
+        "TestEqualFreq.test_below_precision": "FAILED"
+      },
+      "exact_reference_keys": true,
+      "raw_mismatched_keys": [
+        "TestEqualFreq.test_below_precision"
+      ],
+      "raw_log": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/C4/eval_logs/evallog_replay-orange-4014f248-r_b3821617.eval.log",
+        "sha256": "sha256:63ad57cb2f379becbc880afe083b952964a5c1071aa2abd8935f4efa8852ad95"
+      },
+      "ledger": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/C4/ledger.jsonl",
+        "sha256": "sha256:de38308a2cbc50ec68c5d7404c49b1b6ef9f6dfe3d5f67d73604ac8c95dc9aa4"
+      },
+      "frozen_patch": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/C4/artifacts/r2e_gym_subset--orange3__4014f2483e3bab0621c9ae0f994947c0081/a1-2c15afea/frozen_patch.json",
+        "sha256": "sha256:886daf2cf667375d9289ed2ed967941201c6fd556af249dcfeb63a433ca752df"
+      },
+      "frozen_patch_digest": "sha256:6cd49eedd6e1d2ecf9d94e7414883621209dcf4a6708b05a74229da330d09a7f",
+      "baseline_manifest_digest": "sha256:6a0cc886e386330fd0acd1ca4e74d1b3ae76eb4dbc28a01a36047cdcfa1c57eb",
+      "decoded_entries": [
+        {
+          "path": "Orange/preprocess/discretize.py",
+          "operation": "modify",
+          "mode": "100644",
+          "sha256": "sha256:7fd4bb2c32822cae3502fe89af03838227f3eb78b4a4cf85b82188191bbd9acc"
+        }
+      ],
+      "candidate_patch": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/C4/artifacts/r2e_gym_subset--orange3__4014f2483e3bab0621c9ae0f994947c0081/a1-2c15afea/candidate.patch",
+        "sha256": "sha256:eae852458d9f70f6d3b12664af99645f1e4bb87ba9458e9388c3bf553e59aeb4"
+      },
+      "patch_matches_frozen_bytes_in_memory": true,
+      "apply_method": "git_apply",
+      "stage_error": null,
+      "classification": {
+        "reason_codes": [],
+        "verdict": "projectable"
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 2.672,
+        "segment_completed": true
+      },
+      "budget": {
+        "before": 300.0,
+        "after": 1200.0,
+        "test_seconds": 1800.0,
+        "source": "r2e_gym_subset::orange3__4014f2483e3bab0621c9ae0f994947c008183253"
+      },
+      "config": {
+        "setup_seconds": 1200
+      },
+      "command_entry": "/work/rh2-category2-20261003/releases/cat2-cpu-r2e089092-swe13-git-20261003-v1/repo/rh2/experiments/ordinary_probe_20260929/replay_probe.py",
+      "resource_facts": null,
+      "diagnostics_mem_peak_mb": 2074.621,
+      "candidate_cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "grader_footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/matrices/orange-4014f248-r9-matrix-c-20261003-v1/C4/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "stop_reason": null,
+      "runner_integrity_changed": false,
+      "image_id_actual": "sha256:3307167745d3b42a47e7b4f90f144e4ec966930eb3ebcd31dc61d8885b1aaf2c",
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/Orange/__init__.py",
+        "RH2_OBS_PKG_VERSION": "3.28.0.dev",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d"
+      },
+      "native_excluded_pathset_changed": false
+    },
+    {
+      "candidate": "pyx_build",
+      "expected_reward": 1,
+      "reward": 1.0,
+      "expected_match": 27,
+      "expected_total": 27,
+      "observed_status_map": {
+        "TestEqualFreq.test_below_precision": "PASSED",
+        "TestEqualFreq.test_equifreq_100_to_4": "PASSED",
+        "TestEqualFreq.test_equifreq_with_k_instances": "PASSED",
+        "TestEqualFreq.test_equifreq_with_too_few_values": "PASSED",
+        "TestEqualWidth.test_equalwidth_100_to_4": "PASSED",
+        "TestEqualWidth.test_equalwidth_const_value": "PASSED",
+        "TestEqualWidth.test_equalwidth_on_two_values": "PASSED",
+        "TestEntropyMDL.test_entropy": "PASSED",
+        "TestEntropyMDL.test_entropy_constant": "PASSED",
+        "TestEntropyMDL.test_entropy_with_two_values": "PASSED",
+        "TestEntropyMDL.test_entropy_with_two_values_useless": "PASSED",
+        "TestDiscretizer.test_create_discretized_var": "PASSED",
+        "TestDiscretizer.test_create_discretized_var_formatting": "PASSED",
+        "TestDiscretizer.test_discretize_class": "PASSED",
+        "TestDiscretizer.test_discretize_metas": "PASSED",
+        "TestDiscretizer.test_discretizer_computation": "PASSED",
+        "TestDiscretizer.test_discretizer_computation_sparse": "PASSED",
+        "TestDiscretizer.test_discretizer_computation_sparse_no_points": "PASSED",
+        "TestDiscretizer.test_keep_constant": "PASSED",
+        "TestDiscretizer.test_remove_constant": "PASSED",
+        "TestDiscretizer.test_transform": "PASSED",
+        "TestDiscretizeTable.test_discretize_class": "PASSED",
+        "TestDiscretizeTable.test_discretize_exclude_constant": "PASSED",
+        "TestDiscretizeTable.test_fixed": "PASSED",
+        "TestDiscretizeTable.test_leave_discrete": "PASSED",
+        "TestDiscretizeTable.test_method": "PASSED",
+        "TestInstanceConversion.test_single_instance": "PASSED"
+      },
+      "exact_reference_keys": true,
+      "raw_mismatched_keys": [],
+      "raw_log": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/pyx_build/eval_logs/evallog_replay-orange-4014f248-r_4532ade4.eval.log",
+        "sha256": "sha256:a270b65625d6f75bf43b335326e3e98dfe6753d185e45bfa4558b688574dd326"
+      },
+      "ledger": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/pyx_build/ledger.jsonl",
+        "sha256": "sha256:d52c973086291b698ebc0bfa9b2ceb79b3a27484d33eee871bacdd8dd1094089"
+      },
+      "frozen_patch": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/pyx_build/artifacts/r2e_gym_subset--orange3__4014f2483e3bab0621c9ae0f994947c0081/a1-a38ff1b4/frozen_patch.json",
+        "sha256": "sha256:0a1b004838a7ce6bb02a321cf3c06b9b2f07c1016dbc6adc0f427aa81e12c2af"
+      },
+      "frozen_patch_digest": "sha256:9fd42a2f9d507a014b016eb988c92493054101c5888e482468d4d67905af68ea",
+      "baseline_manifest_digest": "sha256:6a0cc886e386330fd0acd1ca4e74d1b3ae76eb4dbc28a01a36047cdcfa1c57eb",
+      "decoded_entries": [
+        {
+          "path": "Orange/preprocess/_discretize.c",
+          "operation": "modify",
+          "mode": "100644",
+          "sha256": "sha256:c40d45d68d7018c8828f552e239a3f1236faad40587a3e19cff1b1f57df0bcce"
+        },
+        {
+          "path": "Orange/preprocess/_discretize.cpython-37m-x86_64-linux-gnu.so",
+          "operation": "modify",
+          "mode": "100755",
+          "sha256": "sha256:f1d05c0f51a1f8475fcbb8df200f580ddceb398cb394930cb08bf17d328b3678"
+        },
+        {
+          "path": "Orange/preprocess/_discretize.pyx",
+          "operation": "modify",
+          "mode": "100644",
+          "sha256": "sha256:2da1103793b4dd4dd0849ff313175e1ba2b8bcea33c0644674efec044c4b6bf4"
+        },
+        {
+          "path": "build/lib.linux-x86_64-3.7/Orange/preprocess/_discretize.cpython-37m-x86_64-linux-gnu.so",
+          "operation": "modify",
+          "mode": "100755",
+          "sha256": "sha256:f1d05c0f51a1f8475fcbb8df200f580ddceb398cb394930cb08bf17d328b3678"
+        },
+        {
+          "path": "build/temp.linux-x86_64-3.7/Orange/preprocess/_discretize.o",
+          "operation": "modify",
+          "mode": "100644",
+          "sha256": "sha256:cbe9e179f1a104213e4db600fd32bc562b735bfefbde0a531dbdbe8df6c8a050"
+        }
+      ],
+      "candidate_patch": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/pyx_build/artifacts/r2e_gym_subset--orange3__4014f2483e3bab0621c9ae0f994947c0081/a1-a38ff1b4/candidate.patch",
+        "sha256": "sha256:372f4982da9dedb605a8ac7619a95e238fac8757b9da3e8b4847dcb0f3c6c94b"
+      },
+      "patch_matches_frozen_bytes_in_memory": true,
+      "apply_method": "git_apply",
+      "stage_error": null,
+      "classification": {
+        "reason_codes": [],
+        "verdict": "projectable"
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 2.497,
+        "segment_completed": true
+      },
+      "budget": {
+        "before": 300.0,
+        "after": 1200.0,
+        "test_seconds": 1800.0,
+        "source": "r2e_gym_subset::orange3__4014f2483e3bab0621c9ae0f994947c008183253"
+      },
+      "config": {
+        "setup_seconds": 1200
+      },
+      "command_entry": "/work/rh2-category2-20261003/releases/cat2-cpu-r2e089092-swe13-git-20261003-v1/repo/rh2/experiments/ordinary_probe_20260929/replay_probe.py",
+      "resource_facts": null,
+      "diagnostics_mem_peak_mb": 2064.773,
+      "candidate_cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "grader_footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/matrices/orange-4014f248-r9-matrix-c-20261003-v1/pyx_build/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "stop_reason": null,
+      "runner_integrity_changed": false,
+      "image_id_actual": "sha256:3307167745d3b42a47e7b4f90f144e4ec966930eb3ebcd31dc61d8885b1aaf2c",
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/Orange/__init__.py",
+        "RH2_OBS_PKG_VERSION": "3.28.0.dev",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d"
+      },
+      "native_excluded_pathset_changed": false
+    },
+    {
+      "candidate": "pyx_only",
+      "expected_reward": 0,
+      "reward": 0.0,
+      "expected_match": 26,
+      "expected_total": 27,
+      "observed_status_map": {
+        "TestEqualFreq.test_equifreq_100_to_4": "PASSED",
+        "TestEqualFreq.test_equifreq_with_k_instances": "PASSED",
+        "TestEqualFreq.test_equifreq_with_too_few_values": "PASSED",
+        "TestEqualWidth.test_equalwidth_100_to_4": "PASSED",
+        "TestEqualWidth.test_equalwidth_const_value": "PASSED",
+        "TestEqualWidth.test_equalwidth_on_two_values": "PASSED",
+        "TestEntropyMDL.test_entropy": "PASSED",
+        "TestEntropyMDL.test_entropy_constant": "PASSED",
+        "TestEntropyMDL.test_entropy_with_two_values": "PASSED",
+        "TestEntropyMDL.test_entropy_with_two_values_useless": "PASSED",
+        "TestDiscretizer.test_create_discretized_var": "PASSED",
+        "TestDiscretizer.test_create_discretized_var_formatting": "PASSED",
+        "TestDiscretizer.test_discretize_class": "PASSED",
+        "TestDiscretizer.test_discretize_metas": "PASSED",
+        "TestDiscretizer.test_discretizer_computation": "PASSED",
+        "TestDiscretizer.test_discretizer_computation_sparse": "PASSED",
+        "TestDiscretizer.test_discretizer_computation_sparse_no_points": "PASSED",
+        "TestDiscretizer.test_keep_constant": "PASSED",
+        "TestDiscretizer.test_remove_constant": "PASSED",
+        "TestDiscretizer.test_transform": "PASSED",
+        "TestDiscretizeTable.test_discretize_class": "PASSED",
+        "TestDiscretizeTable.test_discretize_exclude_constant": "PASSED",
+        "TestDiscretizeTable.test_fixed": "PASSED",
+        "TestDiscretizeTable.test_leave_discrete": "PASSED",
+        "TestDiscretizeTable.test_method": "PASSED",
+        "TestInstanceConversion.test_single_instance": "PASSED",
+        "TestEqualFreq.test_below_precision": "FAILED"
+      },
+      "exact_reference_keys": true,
+      "raw_mismatched_keys": [
+        "TestEqualFreq.test_below_precision"
+      ],
+      "raw_log": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/pyx_only/eval_logs/evallog_replay-orange-4014f248-r_591701dd.eval.log",
+        "sha256": "sha256:b2572e34f2d3d8c47e9f298a1a1a5de9e01d8baa777c6fb8920c4a5516b34edc"
+      },
+      "ledger": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/pyx_only/ledger.jsonl",
+        "sha256": "sha256:cf6c47aa016bf5599f9ec168be563dacf6a126bbc5d87f8f57fd1ac14a269ebf"
+      },
+      "frozen_patch": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/pyx_only/artifacts/r2e_gym_subset--orange3__4014f2483e3bab0621c9ae0f994947c0081/a1-e1ccb846/frozen_patch.json",
+        "sha256": "sha256:f83e6d0b8d9632deed4e3918c673ec2ab088ae480b3b0a451cc2f4aece109e7f"
+      },
+      "frozen_patch_digest": "sha256:a36dcad99fa29fed1bff73093728fb177709ea5a6092f5a8fadef608d97244c7",
+      "baseline_manifest_digest": "sha256:6a0cc886e386330fd0acd1ca4e74d1b3ae76eb4dbc28a01a36047cdcfa1c57eb",
+      "decoded_entries": [
+        {
+          "path": "Orange/preprocess/_discretize.pyx",
+          "operation": "modify",
+          "mode": "100644",
+          "sha256": "sha256:2da1103793b4dd4dd0849ff313175e1ba2b8bcea33c0644674efec044c4b6bf4"
+        }
+      ],
+      "candidate_patch": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/matrix/pyx_only/artifacts/r2e_gym_subset--orange3__4014f2483e3bab0621c9ae0f994947c0081/a1-e1ccb846/candidate.patch",
+        "sha256": "sha256:34624751a646327339e7ca7bd6d37724ac072473a934fcecee0a17a283f43bf6"
+      },
+      "patch_matches_frozen_bytes_in_memory": true,
+      "apply_method": "git_apply",
+      "stage_error": null,
+      "classification": {
+        "reason_codes": [],
+        "verdict": "projectable"
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 2.894,
+        "segment_completed": true
+      },
+      "budget": {
+        "before": 300.0,
+        "after": 1200.0,
+        "test_seconds": 1800.0,
+        "source": "r2e_gym_subset::orange3__4014f2483e3bab0621c9ae0f994947c008183253"
+      },
+      "config": {
+        "setup_seconds": 1200
+      },
+      "command_entry": "/work/rh2-category2-20261003/releases/cat2-cpu-r2e089092-swe13-git-20261003-v1/repo/rh2/experiments/ordinary_probe_20260929/replay_probe.py",
+      "resource_facts": null,
+      "diagnostics_mem_peak_mb": 2071.238,
+      "candidate_cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "grader_footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/matrices/orange-4014f248-r9-matrix-c-20261003-v1/pyx_only/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "stop_reason": null,
+      "runner_integrity_changed": false,
+      "image_id_actual": "sha256:3307167745d3b42a47e7b4f90f144e4ec966930eb3ebcd31dc61d8885b1aaf2c",
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/Orange/__init__.py",
+        "RH2_OBS_PKG_VERSION": "3.28.0.dev",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d"
+      },
+      "native_excluded_pathset_changed": false
+    }
+  ],
+  "failure_assertions": {
+    "noop": {
+      "target": "TestEqualFreq.test_below_precision",
+      "test_line": 55,
+      "raw_log_lines": [
+        28,
+        57
+      ],
+      "detail": "n=4首次分支 native _fmt_interval low<high；low=high=1.0000000000000004"
+    },
+    "DG": {
+      "target": "TestEqualFreq.test_below_precision",
+      "test_line": 80,
+      "raw_log_lines": [
+        29,
+        65
+      ],
+      "detail": "原非退化混合值保护：bins[0]应低于中间值，却0.0 not less than0.0"
+    },
+    "C3": {
+      "target": "TestEqualFreq.test_below_precision",
+      "test_line": 90,
+      "raw_log_lines": [
+        29,
+        86
+      ],
+      "detail": "新增1e-12量级等频分区检查，75/100不匹配；x显示bin1，期望0/1/2/3各25；前面057原断言保留且已走过。不能把C3失败写成只检测重复切点。"
+    },
+    "C4": {
+      "target": "TestEqualFreq.test_below_precision",
+      "test_line": 64,
+      "raw_log_lines": [
+        29,
+        67
+      ],
+      "detail": "n=8<10第二分支 native low<high，low=high=1.0000000000000004"
+    },
+    "pyx_only": {
+      "target": "TestEqualFreq.test_below_precision",
+      "test_line": 55,
+      "raw_log_lines": [
+        29,
+        58
+      ],
+      "detail": "只冻结改后.pyx未带重编扩展，仍首次native low<high断言失败"
+    }
+  },
+  "matrix_resource_observer": {
+    "receipt": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/observations/observer_receipt.json",
+      "sha256": "sha256:3533357954089e2488d5a5f7595a27ee3d4de974163b6c71431f28b72041ecf9"
+    },
+    "snapshots": 118,
+    "containers": [
+      {
+        "container_id": "317974473f5159eb18ef48818fcff0aadc255d13b6d842f29f5188bdc7f63849",
+        "name": "/rh2-replay-cand-orange3__4014f2483e3bab0-85bbccee",
+        "run_id": "orange-4014f248-r9-matrix-c-20261003-v1-noop",
+        "role": "candidate",
+        "samples": 3,
+        "cgroup_samples": 3,
+        "first": "20261002T213522.156247Z",
+        "last": "20261002T213552.386922Z",
+        "host_config": {
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "MemorySwap": 4294967296,
+          "PidsLimit": 512,
+          "NetworkMode": "none",
+          "Binds": null
+        },
+        "host_config_equal_all_samples": true,
+        "cgroup_constraints": {
+          "cpu.max": [
+            "200000 100000"
+          ],
+          "memory.max": [
+            "4294967296"
+          ],
+          "memory.swap.max": [
+            "0"
+          ],
+          "pids.max": [
+            "512"
+          ]
+        },
+        "peak_max_observed_bytes": 1958219776,
+        "oomkilled_values": [
+          false
+        ],
+        "exit_code_values": [
+          0
+        ],
+        "exceptional_samples": []
+      },
+      {
+        "container_id": "9ce800afbc79273ee92f184bf73e91292b33817ea9267dbde4bf440b08e2a8c2",
+        "name": "/rh2-grading-replay-orange-4014f248-r-dc75e2b8",
+        "run_id": "orange-4014f248-r9-matrix-c-20261003-v1-noop",
+        "role": "grader",
+        "samples": 7,
+        "cgroup_samples": 7,
+        "first": "20261002T213607.642679Z",
+        "last": "20261002T213738.381619Z",
+        "host_config": {
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "MemorySwap": 4294967296,
+          "PidsLimit": 512,
+          "NetworkMode": "none",
+          "Binds": null
+        },
+        "host_config_equal_all_samples": true,
+        "cgroup_constraints": {
+          "cpu.max": [
+            "200000 100000"
+          ],
+          "memory.max": [
+            "4294967296"
+          ],
+          "memory.swap.max": [
+            "0"
+          ],
+          "pids.max": [
+            "512"
+          ]
+        },
+        "peak_max_observed_bytes": 1878106112,
+        "oomkilled_values": [
+          false
+        ],
+        "exit_code_values": [
+          0
+        ],
+        "exceptional_samples": []
+      },
+      {
+        "container_id": "ecac3ed2e33e72b7c56095438621403dabaf054e1d72c50d228d96232ff7beda",
+        "name": "/rh2-replay-cand-orange3__4014f2483e3bab0-57ac917f",
+        "run_id": "orange-4014f248-r9-matrix-c-20261003-v1-gold",
+        "role": "candidate",
+        "samples": 7,
+        "cgroup_samples": 7,
+        "first": "20261002T213753.518909Z",
+        "last": "20261002T213924.228558Z",
+        "host_config": {
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "MemorySwap": 4294967296,
+          "PidsLimit": 512,
+          "NetworkMode": "none",
+          "Binds": null
+        },
+        "host_config_equal_all_samples": true,
+        "cgroup_constraints": {
+          "cpu.max": [
+            "200000 100000"
+          ],
+          "memory.max": [
+            "4294967296"
+          ],
+          "memory.swap.max": [
+            "0"
+          ],
+          "pids.max": [
+            "512"
+          ]
+        },
+        "peak_max_observed_bytes": 2049085440,
+        "oomkilled_values": [
+          false
+        ],
+        "exit_code_values": [
+          0
+        ],
+        "exceptional_samples": []
+      },
+      {
+        "container_id": "c682c9d3241e1cf64d1e4c8cf589d28adaad864e45d2355d066a649187543c33",
+        "name": "/rh2-grading-replay-orange-4014f248-r-d4dc5c32",
+        "run_id": "orange-4014f248-r9-matrix-c-20261003-v1-gold",
+        "role": "grader",
+        "samples": 7,
+        "cgroup_samples": 7,
+        "first": "20261002T213939.354002Z",
+        "last": "20261002T214110.157125Z",
+        "host_config": {
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "MemorySwap": 4294967296,
+          "PidsLimit": 512,
+          "NetworkMode": "none",
+          "Binds": null
+        },
+        "host_config_equal_all_samples": true,
+        "cgroup_constraints": {
+          "cpu.max": [
+            "200000 100000"
+          ],
+          "memory.max": [
+            "4294967296"
+          ],
+          "memory.swap.max": [
+            "0"
+          ],
+          "pids.max": [
+            "512"
+          ]
+        },
+        "peak_max_observed_bytes": 2163363840,
+        "oomkilled_values": [
+          false
+        ],
+        "exit_code_values": [
+          0
+        ],
+        "exceptional_samples": []
+      },
+      {
+        "container_id": "4e76e24b18b05b72d08e0b07ee9ef0fcd407636f1b99f772c01b0f43afb6dd52",
+        "name": "/rh2-replay-cand-orange3__4014f2483e3bab0-013ed3ca",
+        "run_id": "orange-4014f248-r9-matrix-c-20261003-v1-C1",
+        "role": "candidate",
+        "samples": 7,
+        "cgroup_samples": 7,
+        "first": "20261002T214125.268081Z",
+        "last": "20261002T214256.031585Z",
+        "host_config": {
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "MemorySwap": 4294967296,
+          "PidsLimit": 512,
+          "NetworkMode": "none",
+          "Binds": null
+        },
+        "host_config_equal_all_samples": true,
+        "cgroup_constraints": {
+          "cpu.max": [
+            "200000 100000"
+          ],
+          "memory.max": [
+            "4294967296"
+          ],
+          "memory.swap.max": [
+            "0"
+          ],
+          "pids.max": [
+            "512"
+          ]
+        },
+        "peak_max_observed_bytes": 2053050368,
+        "oomkilled_values": [
+          false
+        ],
+        "exit_code_values": [
+          0
+        ],
+        "exceptional_samples": []
+      },
+      {
+        "container_id": "b6103216e267b4fcadf475b3eb6705f9e979c9f51a4c921ee2c8046ce95d4791",
+        "name": "/rh2-grading-replay-orange-4014f248-r-1e0154f4",
+        "run_id": "orange-4014f248-r9-matrix-c-20261003-v1-C1",
+        "role": "grader",
+        "samples": 8,
+        "cgroup_samples": 8,
+        "first": "20261002T214311.161944Z",
+        "last": "20261002T214457.319843Z",
+        "host_config": {
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "MemorySwap": 4294967296,
+          "PidsLimit": 512,
+          "NetworkMode": "none",
+          "Binds": null
+        },
+        "host_config_equal_all_samples": true,
+        "cgroup_constraints": {
+          "cpu.max": [
+            "200000 100000"
+          ],
+          "memory.max": [
+            "4294967296"
+          ],
+          "memory.swap.max": [
+            "0"
+          ],
+          "pids.max": [
+            "512"
+          ]
+        },
+        "peak_max_observed_bytes": 2162388992,
+        "oomkilled_values": [
+          false
+        ],
+        "exit_code_values": [
+          0
+        ],
+        "exceptional_samples": []
+      },
+      {
+        "container_id": "4866772a35369e30e0dd8f41627cd015b14c26f7c0eb3b958a7e5b007e83c85c",
+        "name": "/rh2-replay-cand-orange3__4014f2483e3bab0-97be29d2",
+        "run_id": "orange-4014f248-r9-matrix-c-20261003-v1-DG",
+        "role": "candidate",
+        "samples": 8,
+        "cgroup_samples": 8,
+        "first": "20261002T214512.442313Z",
+        "last": "20261002T214658.200044Z",
+        "host_config": {
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "MemorySwap": 4294967296,
+          "PidsLimit": 512,
+          "NetworkMode": "none",
+          "Binds": null
+        },
+        "host_config_equal_all_samples": true,
+        "cgroup_constraints": {
+          "cpu.max": [
+            "200000 100000"
+          ],
+          "memory.max": [
+            "4294967296"
+          ],
+          "memory.swap.max": [
+            "0"
+          ],
+          "pids.max": [
+            "512"
+          ]
+        },
+        "peak_max_observed_bytes": 2052763648,
+        "oomkilled_values": [
+          false
+        ],
+        "exit_code_values": [
+          0
+        ],
+        "exceptional_samples": []
+      },
+      {
+        "container_id": "aa7a4bf7ee6b834582df7468ba1127341e5edc798f90bdedae5997b1bfa9168d",
+        "name": "/rh2-grading-replay-orange-4014f248-r-2c39704c",
+        "run_id": "orange-4014f248-r9-matrix-c-20261003-v1-DG",
+        "role": "grader",
+        "samples": 7,
+        "cgroup_samples": 7,
+        "first": "20261002T214713.304865Z",
+        "last": "20261002T214843.945143Z",
+        "host_config": {
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "MemorySwap": 4294967296,
+          "PidsLimit": 512,
+          "NetworkMode": "none",
+          "Binds": null
+        },
+        "host_config_equal_all_samples": true,
+        "cgroup_constraints": {
+          "cpu.max": [
+            "200000 100000"
+          ],
+          "memory.max": [
+            "4294967296"
+          ],
+          "memory.swap.max": [
+            "0"
+          ],
+          "pids.max": [
+            "512"
+          ]
+        },
+        "peak_max_observed_bytes": 1876021248,
+        "oomkilled_values": [
+          false
+        ],
+        "exit_code_values": [
+          0
+        ],
+        "exceptional_samples": []
+      },
+      {
+        "container_id": "e87e46402ae02fb1a969017c49a6faa3b601b383da7651b36b69f0d2b3ade6a0",
+        "name": "/rh2-replay-cand-orange3__4014f2483e3bab0-4f5a3932",
+        "run_id": "orange-4014f248-r9-matrix-c-20261003-v1-C3",
+        "role": "candidate",
+        "samples": 7,
+        "cgroup_samples": 7,
+        "first": "20261002T214859.046375Z",
+        "last": "20261002T215029.690173Z",
+        "host_config": {
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "MemorySwap": 4294967296,
+          "PidsLimit": 512,
+          "NetworkMode": "none",
+          "Binds": null
+        },
+        "host_config_equal_all_samples": true,
+        "cgroup_constraints": {
+          "cpu.max": [
+            "200000 100000"
+          ],
+          "memory.max": [
+            "4294967296"
+          ],
+          "memory.swap.max": [
+            "0"
+          ],
+          "pids.max": [
+            "512"
+          ]
+        },
+        "peak_max_observed_bytes": 1878458368,
+        "oomkilled_values": [
+          false
+        ],
+        "exit_code_values": [
+          0
+        ],
+        "exceptional_samples": []
+      },
+      {
+        "container_id": "33768626a2b92072e30d209c98ca480685fb8e3f44236796bfbdb92e4f08195f",
+        "name": "/rh2-grading-replay-orange-4014f248-r-0d7d20e4",
+        "run_id": "orange-4014f248-r9-matrix-c-20261003-v1-C3",
+        "role": "grader",
+        "samples": 8,
+        "cgroup_samples": 8,
+        "first": "20261002T215044.794312Z",
+        "last": "20261002T215230.545602Z",
+        "host_config": {
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "MemorySwap": 4294967296,
+          "PidsLimit": 512,
+          "NetworkMode": "none",
+          "Binds": null
+        },
+        "host_config_equal_all_samples": true,
+        "cgroup_constraints": {
+          "cpu.max": [
+            "200000 100000"
+          ],
+          "memory.max": [
+            "4294967296"
+          ],
+          "memory.swap.max": [
+            "0"
+          ],
+          "pids.max": [
+            "512"
+          ]
+        },
+        "peak_max_observed_bytes": 2162565120,
+        "oomkilled_values": [
+          false
+        ],
+        "exit_code_values": [
+          0
+        ],
+        "exceptional_samples": []
+      },
+      {
+        "container_id": "47302a700d2b98085a1984c73674025a0f53ea2d3a483e57874b3f352c69f978",
+        "name": "/rh2-replay-cand-orange3__4014f2483e3bab0-2c15afea",
+        "run_id": "orange-4014f248-r9-matrix-c-20261003-v1-C4",
+        "role": "candidate",
+        "samples": 9,
+        "cgroup_samples": 8,
+        "first": "20261002T215245.655889Z",
+        "last": "20261002T215446.522238Z",
+        "host_config": {
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "MemorySwap": 4294967296,
+          "PidsLimit": 512,
+          "NetworkMode": "none",
+          "Binds": null
+        },
+        "host_config_equal_all_samples": true,
+        "cgroup_constraints": {
+          "cpu.max": [
+            "200000 100000"
+          ],
+          "memory.max": [
+            "4294967296"
+          ],
+          "memory.swap.max": [
+            "0"
+          ],
+          "pids.max": [
+            "512"
+          ]
+        },
+        "peak_max_observed_bytes": 1889734656,
+        "oomkilled_values": [
+          false
+        ],
+        "exit_code_values": [
+          0,
+          137
+        ],
+        "exceptional_samples": [
+          {
+            "at": "20261002T215446.522238Z",
+            "file": {
+              "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/observations/20261002T215446.522238Z.json",
+              "sha256": "sha256:d1f4edd2be1db0759b6765aa22e9f03d97cff0d76336410feec8d4cc2936d86b"
+            },
+            "state": {
+              "Status": "removing",
+              "Running": false,
+              "Paused": false,
+              "Restarting": false,
+              "OOMKilled": false,
+              "Dead": true,
+              "Pid": 0,
+              "ExitCode": 137,
+              "Error": "",
+              "StartedAt": "2026-10-02T21:52:34.666962778Z",
+              "FinishedAt": "2026-10-02T21:54:44.824666468Z"
+            },
+            "cgroup": {
+              "unavailable": "container exited or no unified cgroup found"
+            }
+          }
+        ]
+      },
+      {
+        "container_id": "5595d27948edc5d38cf9f4dab4bc4c06365299b3349de6402db663e4eadc1a00",
+        "name": "/rh2-grading-replay-orange-4014f248-r-b3821617",
+        "run_id": "orange-4014f248-r9-matrix-c-20261003-v1-C4",
+        "role": "grader",
+        "samples": 8,
+        "cgroup_samples": 7,
+        "first": "20261002T215501.635033Z",
+        "last": "20261002T215647.351008Z",
+        "host_config": {
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "MemorySwap": 4294967296,
+          "PidsLimit": 512,
+          "NetworkMode": "none",
+          "Binds": null
+        },
+        "host_config_equal_all_samples": true,
+        "cgroup_constraints": {
+          "cpu.max": [
+            "200000 100000"
+          ],
+          "memory.max": [
+            "4294967296"
+          ],
+          "memory.swap.max": [
+            "0"
+          ],
+          "pids.max": [
+            "512"
+          ]
+        },
+        "peak_max_observed_bytes": 1479720960,
+        "oomkilled_values": [
+          false
+        ],
+        "exit_code_values": [
+          0,
+          137
+        ],
+        "exceptional_samples": [
+          {
+            "at": "20261002T215647.351008Z",
+            "file": {
+              "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_complete_v1/observations/20261002T215647.351008Z.json",
+              "sha256": "sha256:edd4bb355f5f995c75c327c15b645d96c501eaa4c5433f002090e4f9acb4a5df"
+            },
+            "state": {
+              "Status": "removing",
+              "Running": false,
+              "Paused": false,
+              "Restarting": false,
+              "OOMKilled": false,
+              "Dead": true,
+              "Pid": 0,
+              "ExitCode": 137,
+              "Error": "",
+              "StartedAt": "2026-10-02T21:54:47.606431474Z",
+              "FinishedAt": "2026-10-02T21:56:46.065979133Z"
+            },
+            "cgroup": {
+              "unavailable": "container exited or no unified cgroup found"
+            }
+          }
+        ]
+      },
+      {
+        "container_id": "6157959c2fec26b39be8a6dff5dc816234f974d2f8e3ab185d68559c5796c420",
+        "name": "/rh2-replay-cand-orange3__4014f2483e3bab0-a38ff1b4",
+        "run_id": "orange-4014f248-r9-matrix-c-20261003-v1-pyx_build",
+        "role": "candidate",
+        "samples": 8,
+        "cgroup_samples": 8,
+        "first": "20261002T215702.460175Z",
+        "last": "20261002T215848.204722Z",
+        "host_config": {
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "MemorySwap": 4294967296,
+          "PidsLimit": 512,
+          "NetworkMode": "none",
+          "Binds": null
+        },
+        "host_config_equal_all_samples": true,
+        "cgroup_constraints": {
+          "cpu.max": [
+            "200000 100000"
+          ],
+          "memory.max": [
+            "4294967296"
+          ],
+          "memory.swap.max": [
+            "0"
+          ],
+          "pids.max": [
+            "512"
+          ]
+        },
+        "peak_max_observed_bytes": 2058248192,
+        "oomkilled_values": [
+          false
+        ],
+        "exit_code_values": [
+          0
+        ],
+        "exceptional_samples": []
+      },
+      {
+        "container_id": "c7e8725c4e70e119eb6a58e82ee55a1769c883763937e7f57be91bf80fe2c1fd",
+        "name": "/rh2-grading-replay-orange-4014f248-r-4532ade4",
+        "run_id": "orange-4014f248-r9-matrix-c-20261003-v1-pyx_build",
+        "role": "grader",
+        "samples": 8,
+        "cgroup_samples": 8,
+        "first": "20261002T215903.355150Z",
+        "last": "20261002T220049.158752Z",
+        "host_config": {
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "MemorySwap": 4294967296,
+          "PidsLimit": 512,
+          "NetworkMode": "none",
+          "Binds": null
+        },
+        "host_config_equal_all_samples": true,
+        "cgroup_constraints": {
+          "cpu.max": [
+            "200000 100000"
+          ],
+          "memory.max": [
+            "4294967296"
+          ],
+          "memory.swap.max": [
+            "0"
+          ],
+          "pids.max": [
+            "512"
+          ]
+        },
+        "peak_max_observed_bytes": 2156994560,
+        "oomkilled_values": [
+          false
+        ],
+        "exit_code_values": [
+          0
+        ],
+        "exceptional_samples": []
+      },
+      {
+        "container_id": "1613906a99a3c092a2ff441ed8404d413625f601507acaf7de1c5875721be1aa",
+        "name": "/rh2-replay-cand-orange3__4014f2483e3bab0-e1ccb846",
+        "run_id": "orange-4014f248-r9-matrix-c-20261003-v1-pyx_only",
+        "role": "candidate",
+        "samples": 8,
+        "cgroup_samples": 8,
+        "first": "20261002T220104.274231Z",
+        "last": "20261002T220250.116844Z",
+        "host_config": {
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "MemorySwap": 4294967296,
+          "PidsLimit": 512,
+          "NetworkMode": "none",
+          "Binds": null
+        },
+        "host_config_equal_all_samples": true,
+        "cgroup_constraints": {
+          "cpu.max": [
+            "200000 100000"
+          ],
+          "memory.max": [
+            "4294967296"
+          ],
+          "memory.swap.max": [
+            "0"
+          ],
+          "pids.max": [
+            "512"
+          ]
+        },
+        "peak_max_observed_bytes": 2058764288,
+        "oomkilled_values": [
+          false
+        ],
+        "exit_code_values": [
+          0
+        ],
+        "exceptional_samples": []
+      },
+      {
+        "container_id": "281615a959899a69872ea51f9b610bec49b7a84064c111e897ca73d693a8ce0f",
+        "name": "/rh2-grading-replay-orange-4014f248-r-591701dd",
+        "run_id": "orange-4014f248-r9-matrix-c-20261003-v1-pyx_only",
+        "role": "grader",
+        "samples": 8,
+        "cgroup_samples": 8,
+        "first": "20261002T220305.252048Z",
+        "last": "20261002T220451.231308Z",
+        "host_config": {
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "MemorySwap": 4294967296,
+          "PidsLimit": 512,
+          "NetworkMode": "none",
+          "Binds": null
+        },
+        "host_config_equal_all_samples": true,
+        "cgroup_constraints": {
+          "cpu.max": [
+            "200000 100000"
+          ],
+          "memory.max": [
+            "4294967296"
+          ],
+          "memory.swap.max": [
+            "0"
+          ],
+          "pids.max": [
+            "512"
+          ]
+        },
+        "peak_max_observed_bytes": 1875996672,
+        "oomkilled_values": [
+          false
+        ],
+        "exit_code_values": [
+          0
+        ],
+        "exceptional_samples": []
+      }
+    ],
+    "container_count": 16,
+    "all_eight_candidate_and_grader_roles_covered": true,
+    "coverage_is_finite_not_continuous": true,
+    "ledger_resource_facts_remains_null": true,
+    "c4_cleanup_boundary": "两次removing/exit137/OOMKilled=false/Pid0；cgroup不可用。candidate在grader创建前删除，grader在完整测试结束后删除；不能写全程OOM0，也不能将137直接称测试OOM。",
+    "cleanup_evidence_source": "各candidate ledger rm:ok与grader CLI manager_close/final_status，非observer receipt。"
+  },
+  "actual_cc": {
+    "job": {
+      "package": "r2e_orange3",
+      "job": "orange-4014f248-r9-actor-c-20261003-v2",
+      "mode": "run",
+      "slot": 0,
+      "command": [
+        "env",
+        "PYTHONDONTWRITEBYTECODE=1",
+        "PYTHONPATH=/work/rh2-category2-20261003/releases/cat2-cpu-r2e089092-swe13-git-20261003-v1/repo/rh2/src",
+        "/work/rh2-category2-20261003/runtime_cpu_v2/rh2/.venv/bin/python",
+        "-B",
+        "/work/rh2-category2-20261003/releases/cat2-cpu-r2e089092-swe13-git-20261003-v1/repo/rh2/experiments/r2e_lifecycle_20260929/r2e_probe_e2e.py",
+        "--scenario",
+        "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/actor_inputs/orange4014_build_scenario_v2.json",
+        "--out-root",
+        "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/actors/orange-4014f248-r9-actor-c-20261003-v2",
+        "--prepared-summary",
+        "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/prepared_replay_v1/replay_summary.json",
+        "--overlays",
+        "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/derived/overlays.jsonl",
+        "--cc-tarball",
+        "/work/rh2-category2-20261003/cc/claude-code-linux-x64-2.1.205.tgz",
+        "--gw-port",
+        "18196",
+        "--stub-port",
+        "18197",
+        "--attempt-id",
+        "orange-4014f248-r9-actor-c-20261003-v2",
+        "--label",
+        "rh2.r2e_lifecycle=orange-4014f248-r9-actor-c-20261003-v2",
+        "--env-reset-timeout",
+        "1200"
+      ],
+      "cwd": "/root",
+      "started_at_utc": "2026-10-02T22:08:40Z",
+      "supervisor_pid": 241332,
+      "status": "finished",
+      "child_pid": 241333,
+      "returncode": 0,
+      "finished_at_utc": "2026-10-02T22:15:00Z"
+    },
+    "summary": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_actor_complete_v2/actor/summary.json",
+      "sha256": "sha256:a5b1ac50f8a3ac8331962e3af124db38bc6f0c05a25b211d283156e3c2090272"
+    },
+    "attempt": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_actor_complete_v2/actor/attempt/attempt.json",
+      "sha256": "sha256:4e719d7031bfe92036379add6dcde6926b7038ac70bde6ae028f8e03d0a1545f"
+    },
+    "scenario_v2": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_actor_inputs/orange4014_build_scenario_v2.json",
+      "sha256": "sha256:4f93d1157fe4e3a1f43a0fd220e8fcee618ef8deec9f17e18575df773e6d22b6"
+    },
+    "trajectory": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_actor_complete_v2/actor/attempt/trajectory.jsonl",
+      "sha256": "sha256:1f090a323b782f9b42c332a0ae8376e6635d9f79c5baa7140cd792d679ec2dd3"
+    },
+    "first_http_request": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_actor_complete_v2/actor/stub/requests/messages_000.json",
+      "sha256": "sha256:4f5f16cc85fcd2c5d8013e6d924902c0962e335a9bc4ddb4e7df909fc62017fc"
+    },
+    "result": "ran",
+    "termination": "completed",
+    "cc_version": "2.1.205",
+    "solver": "stub_script",
+    "six_calls_six_results": true,
+    "tools": [
+      {
+        "line": 6,
+        "tool_id": "toolu_0677bd2015faec6c",
+        "description": "probe_proto r2e_preflight",
+        "command_sha256": "sha256:7c1a7832e8f25012add46ec6316db6098232ec00beff2736509369a9b8247c18",
+        "name": "Bash"
+      },
+      {
+        "line": 15,
+        "tool_id": "toolu_587f28168412d186",
+        "description": "probe_proto so_before",
+        "command_sha256": "sha256:19bf8db15d6709c30b053a8ea977f40b0d7421563fa8ee487a71f89d96979a8e",
+        "name": "Bash"
+      },
+      {
+        "line": 24,
+        "tool_id": "toolu_087feec226565441",
+        "description": "probe_proto edit_pyx",
+        "command_sha256": "sha256:553b4b7dff5de29af6777c34b06baeaf9b3bbf3508f778eea4b771e1d06bee3b",
+        "name": "Bash"
+      },
+      {
+        "line": 33,
+        "tool_id": "toolu_a58b89a90bb4a0fe",
+        "description": "probe_proto build",
+        "command_sha256": "sha256:6c805dac86afa45f4e623b80725b7d6ba6278020a246a8dc334d229e9104ff50",
+        "name": "Bash"
+      },
+      {
+        "line": 44,
+        "tool_id": "toolu_e31912c04ccb65ac",
+        "description": "probe_proto so_after",
+        "command_sha256": "sha256:0e0e5c01451e8f24d717bbe0c4c041decc838210f6cc37c80af793363ef05aa3",
+        "name": "Bash"
+      },
+      {
+        "line": 53,
+        "tool_id": "toolu_fae89c0151e70aa7",
+        "description": "probe_proto repro_after",
+        "command_sha256": "sha256:ad157c50847f5f89916de26fa64c41227c0d7072e936229be1db0d2be3849e52",
+        "name": "Bash"
+      }
+    ],
+    "tool_results": [
+      {
+        "line": 10,
+        "tool_id": "toolu_0677bd2015faec6c",
+        "is_error": false,
+        "content": "RH2_PREFLIGHT_INTERPRETER=ok\nRH2_PREFLIGHT_HIDDEN_TESTS=ok\nRH2_PREFLIGHT_GIT_HISTORY=ok\nRH2_STEP_RC:r2e_preflight=0"
+      },
+      {
+        "line": 19,
+        "tool_id": "toolu_587f28168412d186",
+        "is_error": false,
+        "content": "-rw-r--r-- 1 agent agent 388772 1737121366 Orange/preprocess/_discretize.c\n-rwxr-xr-x 1 agent agent 229096 1737121390 Orange/preprocess/_discretize.cpython-37m-x86_64-linux-gnu.so\n-rw-r--r-- 1 agent agent   2633 1737121304 Orange/preprocess/_discretize.pyx\n9ee458d033a235e8530e828fec9d0722dd8efefdc82662bc79306aa5af022850  Orange/preprocess/_discretize.cpython-37m-x86_64-linux-gnu.so\n!! Orange/preprocess/_discretize.c\n!! Orange/preprocess/_discretize.cpython-37m-x86_64-linux-gnu.so\n!! Orange/preprocess/_relieff.cpp\n!! Orange/preprocess/_relieff.cpython-37m-x86_64-linux-gnu.so\n!! build/\nRH2_STEP_RC:so_before=0"
+      },
+      {
+        "line": 28,
+        "tool_id": "toolu_087feec226565441",
+        "is_error": false,
+        "content": "EDITED\nRH2_STEP_RC:edit_pyx=0"
+      },
+      {
+        "line": 39,
+        "tool_id": "toolu_a58b89a90bb4a0fe",
+        "is_error": false,
+        "content": "running build_ext\nCompiling Orange/preprocess/_discretize.pyx because it changed.\n[1/1] Cythonizing Orange/preprocess/_discretize.pyx\nbuilding 'Orange.preprocess._discretize' extension\ncc -pthread -Wno-unused-result -Wsign-compare -Wunreachable-code -DNDEBUG -g -fwrapv -O3 -Wall -fPIC -I/tools/deps/include -I/tools/deps/include/ncursesw -fPIC -I/testbed/.venv/lib/python3.7/site-packages/numpy/core/include -I/testbed/.venv/include -I/opt/py/cpython-3.7.9-linux-x86_64-gnu/include/python3.7m -c Orange/preprocess/_discretize.c -o build/temp.linux-x86_64-3.7/Orange/preprocess/_discretize.o\nIn file included from /testbed/.venv/lib/python3.7/site-packages/numpy/core/include/numpy/ndarraytypes.h:1830,\n                 from /testbed/.venv/lib/python3.7/site-packages/numpy/core/include/numpy/ndarrayobject.h:12,\n                 from /testbed/.venv/lib/python3.7/site-packages/numpy/core/include/numpy/arrayobject.h:4,\n                 from Orange/preprocess/_discretize.c:774:\n/testbed/.venv/lib/python3.7/site-packages/numpy/core/include/numpy/npy_1_7_deprecated_api.h:17:2: warning: #warning \"Using deprecated NumPy API, disable it with \" \"#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION\" [-Wcpp]\n   17 | #warning \"Using deprecated NumPy API, disable it with \" \\\n      |  ^~~~~~~\ncc -pthread -shared -L/tools/deps/lib build/temp.linux-x86_64-3.7/Orange/preprocess/_discretize.o -L/opt/py/cpython-3.7.9-linux-x86_64-gnu/lib -lm -lpython3.7m -o build/lib.linux-x86_64-3.7/Orange/preprocess/_discretize.cpython-37m-x86_64-linux-gnu.so\ncopying build/lib.linux-x86_64-3.7/Orange/classification/_tree_scorers.cpython-37m-x86_64-linux-gnu.so -> Orange/classification\ncopying build/lib.linux-x86_64-3.7/Orange/data/_contingency.cpython-37m-x86_64-linux-gnu.so -> Orange/data\ncopying build/lib.linux-x86_64-3.7/Orange/data/_io.cpython-37m-x86_64-linux-gnu.so -> Orange/data\ncopying build/lib.linux-x86_64-3.7/Orange/data/_valuecount.cpython-37m-x86_64-linux-gnu.so -> Orange/data\ncopying build/lib.linux-x86_64-3.7/Orange/data/_variable.cpython-37m-x86_64-linux-gnu.so -> Orange/data\ncopying build/lib.linux-x86_64-3.7/Orange/distance/_distance.cpython-37m-x86_64-linux-gnu.so -> Orange/distance\ncopying build/lib.linux-x86_64-3.7/Orange/preprocess/_discretize.cpython-37m-x86_64-linux-gnu.so -> Orange/preprocess\ncopying build/lib.linux-x86_64-3.7/Orange/preprocess/_relieff.cpython-37m-x86_64-linux-gnu.so -> Orange/preprocess\ncopying build/lib.linux-x86_64-3.7/Orange/projection/_som.cpython-37m-x86_64-linux-gnu.so -> Orange/projection\ncopying build/lib.linux-x86_64-3.7/Orange/classification/_simple_tree.cpython-37m-x86_64-linux-gnu.so -> Orange/classification\ncopying build/lib.linux-x86_64-3.7/Orange/widgets/utils/_grid_density.cpython-37m-x86_64-linux-gnu.so -> Orange/widgets/utils\nBUILD_RC=0"
+      },
+      {
+        "line": 48,
+        "tool_id": "toolu_e31912c04ccb65ac",
+        "is_error": false,
+        "content": "-rw-r--r-- 1 agent agent 389921 1790979050 Orange/preprocess/_discretize.c\n-rwxr-xr-x 1 agent agent 229416 1790979052 Orange/preprocess/_discretize.cpython-37m-x86_64-linux-gnu.so\n-rw-r--r-- 1 agent agent   2659 1790979049 Orange/preprocess/_discretize.pyx\nf1d05c0f51a1f8475fcbb8df200f580ddceb398cb394930cb08bf17d328b3678  Orange/preprocess/_discretize.cpython-37m-x86_64-linux-gnu.so\n M Orange/preprocess/_discretize.pyx\n!! Orange/preprocess/_discretize.c\n!! Orange/preprocess/_discretize.cpython-37m-x86_64-linux-gnu.so\n!! Orange/preprocess/_relieff.cpp\n!! Orange/preprocess/_relieff.cpython-37m-x86_64-linux-gnu.so\n!! build/\nRH2_EXT=/testbed/Orange/preprocess/_discretize.cpython-37m-x86_64-linux-gnu.so\nRH2_STEP_RC:so_after=0"
+      },
+      {
+        "line": 57,
+        "tool_id": "toolu_fae89c0151e70aa7",
+        "is_error": false,
+        "content": "m=4: type=list points=['0x1.0000000000000p+0', '0x1.0000000000002p+0'] unique=True increasing=True values=('< 1', '1 - 1', '\\u2265 1')\nm=5: type=list points=['0x1.0000000000000p+0', '0x1.0000000000002p+0'] unique=True increasing=True values=('< 1', '1 - 1', '\\u2265 1')\nRH2_STEP_RC:repro_after=0"
+      }
+    ],
+    "build_result_line": 39,
+    "build_result_tool_id": "toolu_a58b89a90bb4a0fe",
+    "build_rc": 0,
+    "build_is_error": false,
+    "build_full_output_present": true,
+    "build_post_marker_absent_expected": "build命令显式exit \"$orange_build_rc\"，因此外层后置RH2_STEP_RC:build未执行；有完整BUILD_RC=0及工具is_error=false，不是缺失结果。",
+    "actor_uid": 54321,
+    "activation_prefix": "/testbed/.venv",
+    "module_file_after": "/testbed/Orange/preprocess/_discretize.cpython-37m-x86_64-linux-gnu.so",
+    "disk_so_sha256_before": "sha256:9ee458d033a235e8530e828fec9d0722dd8efefdc82662bc79306aa5af022850",
+    "disk_so_sha256_after": "sha256:f1d05c0f51a1f8475fcbb8df200f580ddceb398cb394930cb08bf17d328b3678",
+    "repro_after_line": 57,
+    "repro_m4_m5_both_unique_and_increasing": true,
+    "repro_rc_alone_is_insufficient": true,
+    "native_baseline_entries": 1594,
+    "native_baseline_all_archive_contents_and_git_normalized_modes_verified": true,
+    "native_baseline_digest": "sha256:6a0cc886e386330fd0acd1ca4e74d1b3ae76eb4dbc28a01a36047cdcfa1c57eb",
+    "native_frozen_digest": "sha256:a30f5a6260c3291aa73ddb7d5f45c4b05fd729dbd699bceb04d9aa5fb6159599",
+    "replay_frozen_digest": "sha256:8717cbbae92e7b400d4adb6d21e35166bf6ed749173dd8fbf14340975d0cd712",
+    "frozen_entries": [
+      {
+        "path": "Orange/preprocess/_discretize.c",
+        "operation": "modify",
+        "object_type": "regular",
+        "mode": "100644",
+        "content_digest": "sha256:c40d45d68d7018c8828f552e239a3f1236faad40587a3e19cff1b1f57df0bcce"
+      },
+      {
+        "path": "Orange/preprocess/_discretize.cpython-37m-x86_64-linux-gnu.so",
+        "operation": "modify",
+        "object_type": "regular",
+        "mode": "100755",
+        "content_digest": "sha256:f1d05c0f51a1f8475fcbb8df200f580ddceb398cb394930cb08bf17d328b3678"
+      },
+      {
+        "path": "Orange/preprocess/_discretize.pyx",
+        "operation": "modify",
+        "object_type": "regular",
+        "mode": "100644",
+        "content_digest": "sha256:2da1103793b4dd4dd0849ff313175e1ba2b8bcea33c0644674efec044c4b6bf4"
+      },
+      {
+        "path": "build/lib.linux-x86_64-3.7/Orange/preprocess/_discretize.cpython-37m-x86_64-linux-gnu.so",
+        "operation": "modify",
+        "object_type": "regular",
+        "mode": "100755",
+        "content_digest": "sha256:f1d05c0f51a1f8475fcbb8df200f580ddceb398cb394930cb08bf17d328b3678"
+      },
+      {
+        "path": "build/temp.linux-x86_64-3.7/Orange/preprocess/_discretize.o",
+        "operation": "modify",
+        "object_type": "regular",
+        "mode": "100644",
+        "content_digest": "sha256:cbe9e179f1a104213e4db600fd32bc562b735bfefbde0a531dbdbe8df6c8a050"
+      }
+    ],
+    "frozen_entries_equal_actor_grader_matrix_pyx_build": true,
+    "native_frozen_content_digests_independently_recomputed": true,
+    "transport": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_actor_complete_v2/actor/attempt/candidate/orange3__4014f2483e3bab0621c9ae0f994947c008183253.diff",
+      "sha256": "sha256:372f4982da9dedb605a8ac7619a95e238fac8757b9da3e8b4847dcb0f3c6c94b",
+      "bytes": 909261,
+      "text_entries_verified_in_memory": 2,
+      "binary_entries_forward_and_reverse_literals_verified_in_memory": 3,
+      "blob_ids_and_baseline_context_verified": true,
+      "baseline_source": "actual pre-solver baseline.tar, read only",
+      "equals_matrix_pyx_build_and_grader_transport": true
+    },
+    "roundtrip": {
+      "ok": true,
+      "identity_equal": {
+        "task_id": true,
+        "workdir": true,
+        "public_bundle_digest": true,
+        "materialized_head": true,
+        "task_base_commit": true,
+        "policy": true,
+        "policy_digest": true,
+        "image_ids": true
+      },
+      "image_ids": [
+        "sha256:3307167745d3b42a47e7b4f90f144e4ec966930eb3ebcd31dc61d8885b1aaf2c",
+        "sha256:3307167745d3b42a47e7b4f90f144e4ec966930eb3ebcd31dc61d8885b1aaf2c"
+      ],
+      "baseline_entries_equal": true,
+      "patch_entries_equal": true,
+      "excluded_evidence_matches": true,
+      "excluded_path_differences": [],
+      "excluded_difference_allowed": true,
+      "transport_digest_equal": true,
+      "candidate_excluded_pathset_changed": [
+        true,
+        false
+      ]
+    },
+    "baseline_manifests_actor_grader_equal": true,
+    "baseline_census_actor_grader_equal": true,
+    "native_excluded_pathset_changed": [
+      true,
+      false
+    ],
+    "pip_freeze_changed": false,
+    "trusted_root_exec_rewrites": [],
+    "grade": {
+      "ledger": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_actor_complete_v2/actor/grade_cc/ledger.jsonl",
+        "sha256": "sha256:dfdb6a9537cf12e414ec88a629e6cc46fd023fe8e2d445a3ba061b8102f75c4a"
+      },
+      "raw_log": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_actor_complete_v2/actor/grade_cc/eval_logs/evallog_replay-orange-4014f248-r_41e05082.eval.log",
+        "sha256": "sha256:6907997187082660ac48314f4af92bbc88d5430f68de43bfee9ddcd8785ab07c"
+      },
+      "raw_status_map": {
+        "TestEqualFreq.test_below_precision": "PASSED",
+        "TestEqualFreq.test_equifreq_100_to_4": "PASSED",
+        "TestEqualFreq.test_equifreq_with_k_instances": "PASSED",
+        "TestEqualFreq.test_equifreq_with_too_few_values": "PASSED",
+        "TestEqualWidth.test_equalwidth_100_to_4": "PASSED",
+        "TestEqualWidth.test_equalwidth_const_value": "PASSED",
+        "TestEqualWidth.test_equalwidth_on_two_values": "PASSED",
+        "TestEntropyMDL.test_entropy": "PASSED",
+        "TestEntropyMDL.test_entropy_constant": "PASSED",
+        "TestEntropyMDL.test_entropy_with_two_values": "PASSED",
+        "TestEntropyMDL.test_entropy_with_two_values_useless": "PASSED",
+        "TestDiscretizer.test_create_discretized_var": "PASSED",
+        "TestDiscretizer.test_create_discretized_var_formatting": "PASSED",
+        "TestDiscretizer.test_discretize_class": "PASSED",
+        "TestDiscretizer.test_discretize_metas": "PASSED",
+        "TestDiscretizer.test_discretizer_computation": "PASSED",
+        "TestDiscretizer.test_discretizer_computation_sparse": "PASSED",
+        "TestDiscretizer.test_discretizer_computation_sparse_no_points": "PASSED",
+        "TestDiscretizer.test_keep_constant": "PASSED",
+        "TestDiscretizer.test_remove_constant": "PASSED",
+        "TestDiscretizer.test_transform": "PASSED",
+        "TestDiscretizeTable.test_discretize_class": "PASSED",
+        "TestDiscretizeTable.test_discretize_exclude_constant": "PASSED",
+        "TestDiscretizeTable.test_fixed": "PASSED",
+        "TestDiscretizeTable.test_leave_discrete": "PASSED",
+        "TestDiscretizeTable.test_method": "PASSED",
+        "TestInstanceConversion.test_single_instance": "PASSED"
+      },
+      "expected_match": 27,
+      "expected_total": 27,
+      "reward": 1,
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 2.543,
+        "segment_completed": true
+      },
+      "budget": {
+        "before": 300.0,
+        "after": 1200.0,
+        "test_seconds": 1800.0,
+        "source": "r2e_gym_subset::orange3__4014f2483e3bab0621c9ae0f994947c008183253"
+      },
+      "apply_method": "git_apply",
+      "stage_error": null,
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/Orange/__init__.py",
+        "RH2_OBS_PKG_VERSION": "3.28.0.dev",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d"
+      },
+      "candidate_cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "grader_footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/actors/orange-4014f248-r9-actor-c-20261003-v2/grade_cc/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "diagnostics_mem_peak_mb": 2064.973,
+      "resource_facts": null
+    },
+    "solve_cleanup": {
+      "container_rm": 0,
+      "container_left": "",
+      "network_failures": [],
+      "relay_failures": [],
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "cleanup_ok": true
+    },
+    "gateway_drain": {
+      "session_id": "orange-4014f248-r9-actor-c-20261003-v2",
+      "revoked": true,
+      "active_requests": 0,
+      "drained": true,
+      "ts": 1790979062.9838877
+    },
+    "residuals": {
+      "orange-4014f248-r9-actor-c-20261003-v2": {
+        "containers": [],
+        "networks": []
+      },
+      "orange-4014f248-r9-actor-c-20261003-v2-gcc": {
+        "containers": [],
+        "networks": []
+      },
+      "_clean": true
+    },
+    "endpoints_stopped_rcs": [
+      0,
+      0
+    ],
+    "actual_problem_delivery": {
+      "issue_sha256": "sha256:efdb68c7ab45c887f0fab1959673885838f6385a37cd7086120841d2b91242df",
+      "full_prompt_sha256": "sha256:df2b684d5c3cf81b738ebc3ea3002977e4f2d9648e5bd1a59df1f292d3cc0110",
+      "http_prompt_byte_equal": true,
+      "matches_binding_issue_sha256": true,
+      "independent_public_brief_delivered": false,
+      "note": "实际首HTTP只交付原ISSUE；新独立公开brief的静态事实审查已封，本次不宣称它已交付或fresh读者验证。"
+    }
+  },
+  "actual_cc_resources": {
+    "receipt": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_actor_complete_v2/observations/observer_receipt.json",
+      "sha256": "sha256:d11ed939534da344cd8557186384cab14ba12378a132ffcde9d57e0b4fbb9efa"
+    },
+    "snapshots": 25,
+    "container_count": 4,
+    "containers": [
+      {
+        "container_id": "fbbfe8b6f012e6d320685c577cc23d91a95e7ebf3f077382f351bbdaba72052c",
+        "name": "/rh2-egress-relay-orange-4014f248-r9-actor-c-20261003-v2",
+        "run_id": "orange-4014f248-r9-actor-c-20261003-v2",
+        "role": "relay",
+        "samples": 11,
+        "cgroup_samples": 11,
+        "first": "20261002T220845.591974Z",
+        "last": "20261002T221117.136683Z",
+        "host_config": {
+          "NanoCpus": 0,
+          "Memory": 268435456,
+          "MemorySwap": 268435456,
+          "PidsLimit": 64,
+          "NetworkMode": "bridge",
+          "Binds": null
+        },
+        "host_config_equal_all_samples": true,
+        "cgroup_constraints": {
+          "cpu.max": [
+            "max 100000"
+          ],
+          "memory.max": [
+            "268435456"
+          ],
+          "memory.swap.max": [
+            "0"
+          ],
+          "pids.max": [
+            "64"
+          ]
+        },
+        "peak_max_observed_bytes": 27213824,
+        "oomkilled_values": [
+          false
+        ],
+        "exit_code_values": [
+          0
+        ],
+        "exceptional_samples": []
+      },
+      {
+        "container_id": "137f7322e79dd76fe3d09333e5e9473e7e5608f0dee949c4dfbec766f4452895",
+        "name": "/rh2r2e-orange3-4014f2483e3bab0621-45bde1b4",
+        "run_id": "orange-4014f248-r9-actor-c-20261003-v2",
+        "role": "actor_main",
+        "samples": 10,
+        "cgroup_samples": 10,
+        "first": "20261002T220900.752051Z",
+        "last": "20261002T221117.136683Z",
+        "host_config": {
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "MemorySwap": 4294967296,
+          "PidsLimit": 512,
+          "NetworkMode": "rh2r2e-orange3-4014f2483e3bab0621-45bde1b4-net",
+          "Binds": null
+        },
+        "host_config_equal_all_samples": true,
+        "cgroup_constraints": {
+          "cpu.max": [
+            "200000 100000"
+          ],
+          "memory.max": [
+            "4294967296"
+          ],
+          "memory.swap.max": [
+            "0"
+          ],
+          "pids.max": [
+            "512"
+          ]
+        },
+        "peak_max_observed_bytes": 2968121344,
+        "oomkilled_values": [
+          false
+        ],
+        "exit_code_values": [
+          0
+        ],
+        "exceptional_samples": []
+      },
+      {
+        "container_id": "3e879ce1c48e889ddeb3c575a228d712ba892dfa5322a121ba06dc25c68f83b4",
+        "name": "/rh2-replay-cand-orange3__4014f2483e3bab0-1dd4725b",
+        "run_id": "orange-4014f248-r9-actor-c-20261003-v2-gcc",
+        "role": "candidate",
+        "samples": 7,
+        "cgroup_samples": 7,
+        "first": "20261002T221132.240093Z",
+        "last": "20261002T221302.985021Z",
+        "host_config": {
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "MemorySwap": 4294967296,
+          "PidsLimit": 512,
+          "NetworkMode": "none",
+          "Binds": null
+        },
+        "host_config_equal_all_samples": true,
+        "cgroup_constraints": {
+          "cpu.max": [
+            "200000 100000"
+          ],
+          "memory.max": [
+            "4294967296"
+          ],
+          "memory.swap.max": [
+            "0"
+          ],
+          "pids.max": [
+            "512"
+          ]
+        },
+        "peak_max_observed_bytes": 2052583424,
+        "oomkilled_values": [
+          false
+        ],
+        "exit_code_values": [
+          0
+        ],
+        "exceptional_samples": []
+      },
+      {
+        "container_id": "959de6abb5c6994e14d6424205aa5a9d6a6f9afe255c523d46b47efec998fac7",
+        "name": "/rh2-grading-replay-orange-4014f248-r-41e05082",
+        "run_id": "orange-4014f248-r9-actor-c-20261003-v2-gcc",
+        "role": "grader",
+        "samples": 7,
+        "cgroup_samples": 7,
+        "first": "20261002T221318.120040Z",
+        "last": "20261002T221448.900291Z",
+        "host_config": {
+          "NanoCpus": 2000000000,
+          "Memory": 4294967296,
+          "MemorySwap": 4294967296,
+          "PidsLimit": 512,
+          "NetworkMode": "none",
+          "Binds": null
+        },
+        "host_config_equal_all_samples": true,
+        "cgroup_constraints": {
+          "cpu.max": [
+            "200000 100000"
+          ],
+          "memory.max": [
+            "4294967296"
+          ],
+          "memory.swap.max": [
+            "0"
+          ],
+          "pids.max": [
+            "512"
+          ]
+        },
+        "peak_max_observed_bytes": 1887354880,
+        "oomkilled_values": [
+          false
+        ],
+        "exit_code_values": [
+          0
+        ],
+        "exceptional_samples": []
+      }
+    ],
+    "coverage_is_finite_not_continuous": true,
+    "actor_and_replay_limits": "main/candidate/grader 2CPU/4GiB/512/swap0；relay256MiB/64/swap0、cpu.max=max100000，无2CPU配额。"
+  },
+  "actor_failed_v1": {
+    "job_returncode": 1,
+    "reason": "R9 argparse拒绝live legacy_gitdiff_compare参数，启动前停；摘要stop_reason=solve_cleanup_not_confirmed保留，但不是实际容器残留证明。",
+    "solve_log": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_actor_failed_v1/actor/solve.log",
+      "sha256": "sha256:952e415e3bbd5f5f6504427a09bb66961dabbcbf2cde8b324b1c9cb740d40586"
+    },
+    "summary": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_actor_failed_v1/actor/summary.json",
+      "sha256": "sha256:2bb9b5eb79f75d444e4ae2496de085db1db3620a4a8122bccc15f3f1e0b60ef7"
+    },
+    "zero_cc_tool_calls": true,
+    "zero_candidate_or_grading": true,
+    "observer_samples": 0,
+    "endpoints_stopped_rcs": [
+      0,
+      0
+    ],
+    "scenario_v1": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_actor_inputs/orange4014_build_scenario_v1.json",
+      "sha256": "sha256:4eb6a5f970c30269b18a922b24d5bdc9a5c30ff07885461ab32db593021307a9"
+    },
+    "v2_steps_byte_equal": true,
+    "v2_change": "移除禁用legacy_gitdiff_compare；name和迁移说明/来源SHA相应更新，六步命令不变；不计正式任务失败。"
+  },
+  "author_indexes_only": [
+    {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_author_check.json",
+      "sha256": "sha256:ec0cba6cba4d2a8665c021836e673715704afd5c5b32ae83a3d7aa8d30041808"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_matrix_failure_resource_author_check.json",
+      "sha256": "sha256:85fb2b1eda3af4ec6cfc04daf97e7f03a3790f1eed9b203992951fc56552a62b"
+    }
+  ],
+  "necessary_fixes": [],
+  "limitations": [
+    "矩阵与实际CC新grader观测仅Orange/__init__.py和runner SHA；未直接快照grader进程的_discretize.__file__/SHA。原生导出、逐字transport往返、同镜像fresh grader正式27/27和成对pyx_only0构成间接加载/生效证据，不改写成直接实测。",
+    "有限HostConfig/cgroup旁路样本不证明全时资源状态；C4两次清理137与cgroup消失原样保留。",
+    "本轮CC由确定性端点提供固定修法命令；没有本题真实模型结果，不能称fresh公开阅读或模型能力。",
+    "公开brief建议的pytest selector命令未在本轮CC作为独立公开测试命令执行；其公开源码/环境静态事实沿用已封review。首HTTP仅原ISSUE逐字交付，GPU若交付brief需保留实际HTTP证据。",
+    "本报告只封当前R9题级诊断CPU验收；未批准/派发GPU probe，不审训练资格。"
+  ],
+  "stop_condition": "当前授权题级CPU诊断验收证据已齐并独立核完；不追加实验或旧范围重复检查。"
+}

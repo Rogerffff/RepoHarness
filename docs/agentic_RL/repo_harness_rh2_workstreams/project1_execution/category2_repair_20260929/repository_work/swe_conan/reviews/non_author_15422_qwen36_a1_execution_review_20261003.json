@@ -1,0 +1,438 @@
+{
+  "review_id": "non-author-conan15422-qwen36-a1-execution-20261003",
+  "reviewer": "conan11594_qwen_execution_recover",
+  "review_date": "2026-10-03",
+  "status": "execution_evidence_verified_with_scope_limits",
+  "job_id": "gpu1003-conan15422-qwen36-a1",
+  "owner_request_id": "swe-conan15422-r12-briefv1-20261003-v1",
+  "owner_request_sha256": "c7062edcbdb67ecaa7085099394865578407e83fb8be279969e0d5534ba7da09",
+  "scope": "本次Qwen首臂执行/运输窄核；无候选语义与训练资格结论。只本地标准库读原件，未导入项目代码，未跑CPU/GPU/模型/远端/Docker/项目测试。",
+  "authoritative_bundle": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-conan15422-qwen36-a1",
+  "manifest": {
+    "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-conan15422-qwen36-a1/qwen_first10_closed_v1/gpu1003-conan15422-qwen36-a1/closed_manifest.json",
+    "sha256": "216482c3996d5111c40bbf0aecde197b2fc29c518b2c5c3658f0067da7c11024",
+    "files": 178,
+    "bytes": 18631732,
+    "all_members_size_and_SHA_independently_verified": true
+  },
+  "baseline": {
+    "canonical_digest": "sha256:c041d7fad2f908302f448cbda2ab81b95557b0018b7efe5cdea4b87d51ca50af",
+    "entries": 1002,
+    "tar_bytes": 7311360,
+    "tar_sha256": "c0e9588ca0e5ad5130d954c634764db03b48349ce7237fafbe437e1f2916c9c6",
+    "all_regular_type_git_mode_content_verified": true,
+    "missing": 0,
+    "duplicates": 0,
+    "census_regular_entries_match_manifest": true,
+    "pre_solver_and_grader_rebuild_census_bytes_identical": true,
+    "census_sha256": "02afd6caba22b3c0cecf5d1e985627def65d576b4501940718488645ebb8a9c7",
+    "policy_digest": "sha256:77527b33576220ebe06770f4372eeb400fa5b07d0e1f0aa65804373c37866c27"
+  },
+  "frozen_patch": {
+    "canonical_digest": "sha256:7c2ecd3456098c228d9b82189252fbb0d3f5187f944c8aa1f69b7b18669ef31c",
+    "identity_verified": [
+      "task_id",
+      "rollout_execution_id",
+      "physical_attempt_id",
+      "baseline_manifest_digest",
+      "public_bundle_digest",
+      "runtime_image_digest",
+      "materialized_head"
+    ],
+    "physical_attempt_id": "gpu1003-conan15422-qwen36-a1#p1",
+    "entries": [
+      {
+        "path": "conan/tools/cmake/presets.py",
+        "operation": "modify",
+        "object_type": "regular",
+        "mode": "100644",
+        "content_digest": "sha256:e46cebac1c4982bf03b3e629ff9731d5cbc0f19ac501d45f327d01142fb70c51"
+      },
+      {
+        "path": "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py",
+        "operation": "modify",
+        "object_type": "regular",
+        "mode": "100644",
+        "content_digest": "sha256:47d955bcfbc5f35df792801332decbbbe95c13255786ee498c6a047094ddea1f"
+      }
+    ],
+    "decoded_content_SHA_verified": true,
+    "diff_bytes": 3165,
+    "diff_sha256": "9ab2e85632b10b03923efa531995133756e419258eadcb41d39ade627a60a506",
+    "diff_file_sections": 2,
+    "all_diff_hunks_reconstructed_from_baseline_equal_FP_contents": true,
+    "projection": {
+      "schema_id": "rh2.fa.scoring_projection.v1",
+      "frozen_patch_digest": "sha256:7c2ecd3456098c228d9b82189252fbb0d3f5187f944c8aa1f69b7b18669ef31c",
+      "rollout_execution_id": "gpu1003-conan15422-qwen36-a1",
+      "physical_attempt_id": "gpu1003-conan15422-qwen36-a1#p1",
+      "included_entry_paths": [
+        "conan/tools/cmake/presets.py"
+      ]
+    },
+    "production_entry_included": true,
+    "official_test_entry_excluded": true,
+    "applied_entry_set_digest_recomputed": "sha256:d0b32a48b47f0066f19df242ddcf055d83e40743e33fe4b7ad9b82569a78f694"
+  },
+  "materials": {
+    "all_request_input_files_verified": 48,
+    "fixed_target_material_map_matches_request": true,
+    "fixed_target_material_map_count": 38,
+    "effective_task_config_matches_fixed": true,
+    "effective_expected_record_matches_actual": [
+      "prepared_manifest_sha256",
+      "host_grading_artifact_sha256",
+      "grading_materials_identity",
+      "grading_revision",
+      "grading_budgets",
+      "public_delivery",
+      "assignment",
+      "baseline_policy",
+      "spec_overrides_sha256"
+    ],
+    "prepared_manifest_sha256": "f054e0923e3c9b56b8191ddfec9d4ad9b8a219b9462044e788256ec511d33059",
+    "host_grading_artifact_sha256": "a1a3b4d02aeac573ca8ff4ba62ec892604e7af075db8137792f6db6300c38f58",
+    "grading_materials_identity": "sha256:90aad16e26a29c327e6735755eee37125a885b4051dc5f27a6a9ba1d456f0927",
+    "actual_actor_and_grader_image_id": "sha256:a27936515e625ace25f5d76dcef25566079c7ac355b51bdfc5c3408c26a07ead",
+    "resource_actor_image_observations": 9,
+    "resource_grader_image_observations": 6,
+    "same_Coder_fixed_inputs_assignment_public_delivery_baseline_budget": true,
+    "fresh_prepare_claimed": false,
+    "preparation_budget_policy": null,
+    "profile_difference": "Coder upstream18081 / Qwen18082；实际profile digest不同，不能称全profile相同。",
+    "Coder_profile_digest": "sha256:4a6435bc16d26c517b34eb1a4e40e83cdeef3ef08e813a136e9ae06ed67e22b6",
+    "Qwen_profile_digest": "sha256:c731fff97bcd8ed6be3f31ac2108980dc549f0e5a75403f9738b2b3b2537e500"
+  },
+  "runtime": {
+    "Coder_executor": "code_v7",
+    "Qwen_executor": "code_v8",
+    "code7_source_manifest_sha256": "be705a777484c70af2afe9a34b6dd288bd85c2b1f536c6d57bd59aecb4eb0352",
+    "code8_source_manifest_sha256": "09ddb8bfdeecd3ffaa38c1048a574161ef6fa6053b2855da50166e8e8677899d",
+    "code7_manifest_members": 985,
+    "code8_manifest_members": 1045,
+    "manifest_modified_paths": [
+      "rh2/experiments/ordinary_gpu_probe_20261002/entry.py",
+      "rh2/src/repoharness2/adapters/slime/prepared_task_face.py",
+      "rh2/src/repoharness2/envpack/bundles_v2.py",
+      "rh2/src/repoharness2/envpack/swe_material_revisions.py",
+      "rh2/src/repoharness2/grading/material_revision.py"
+    ],
+    "manifest_added_count": 60,
+    "manifest_deleted_count": 0,
+    "unchanged_key_transport_source_SHA": [
+      "solve_attempt.py",
+      "grading/manager.py",
+      "grading/trusted_projection.py"
+    ],
+    "snapshot_entry_and_dispatcher_SHA_match_source_manifest": true,
+    "remote_whole_source_tree_rehashed": false,
+    "code8_preparation_policy_for_this_task": null
+  },
+  "public_delivery": {
+    "complete_problem_statement_characters": 1375,
+    "complete_problem_statement_sha256": "de837ef1541eb6d79d9d596483b3f85afdcdca99502b57854935c2d59993dd8e",
+    "base_prompt_sha256": "sha256:a41bbc56b0c4926e0baaa875e9e5d8561935b7a5b090c88da2cfe0fbb184b87f",
+    "brief_sha256": "sha256:7d82590d898dda57d0b281eb07e12e154f2f4e66dcb88f026dc3d1d576b47054",
+    "delivered_prompt_sha256": "475fff849ec5f2d04441bcfd4a9b0de9bd5f707a6888c63df36293cc77e6fc92",
+    "solver_prompt_equals_attempt_prompt_and_first_API_text": true,
+    "complete_issue_and_brief_strip_present": true,
+    "raw_byte_newlines_preserved": true
+  },
+  "grading": {
+    "raw_reward": 1.0,
+    "outcome": "resolved",
+    "source": "original_frozen_patch",
+    "eval_log_sha256": "deedb927b5f3a652183ffe9fed169bcda16ec37e2529b32542c0788592749c51",
+    "eval_log_bytes": 52302,
+    "actual_install_RC": 0,
+    "actual_test_RC": 0,
+    "candidate_outer_exec_RC": 0,
+    "install_skipped": false,
+    "full_install_and_test_start_end": true,
+    "formal_references": 45,
+    "formal_reference_map": {
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_presets_jobs_default_matches_public_helper": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_presets_jobs_explicit_values[jobs2]": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_presets_jobs_explicit_values[jobs7]": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_presets_jobs_multiconfig_append_replace": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_presets_njobs": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_extra_flags": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_cross_build_user_toolchain_confs": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_cross_build": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_cross_build_conf": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_test_package_layout": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_set_linker_scripts": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_variables_types": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_recipe_build_folders_vars": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_no_cross_build": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_user_presets_custom_location[False]": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_cmake_presets_singleconfig": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_presets_ninja_msvc[x86_64-x86_64]": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_extra_flags_via_conf": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_user_presets_custom_location[subproject]": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_android_c_library": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_cmake_layout_toolchain_folder": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_avoid_ovewrite_user_cmakepresets": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_cross_build_user_toolchain": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_build_folder_vars_editables": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_presets_ninja_msvc[x86-x86_64]": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_presets_not_found_error_msg": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_cmake_presets_binary_dir_available": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_android_legacy_toolchain_flag[True]": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_presets_ninja_msvc[x86_64-x86]": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_find_builddirs": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_cross_arch": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_cmake_presets_shared_preset[CMakePresets.json]": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_cmake_presets_multiconfig": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_no_cross_build_arch": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_android_legacy_toolchain_flag[False]": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_toolchain_cache_variables": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_cross_build_linux_to_macos": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_android_legacy_toolchain_flag[None]": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_cmake_presets_shared_preset[CMakeUserPresets.json]": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_android_legacy_toolchain_with_compileflags[False]": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_android_legacy_toolchain_with_compileflags[None]": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_presets_ninja_msvc[x86-x86]": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_set_cmake_lang_compilers_and_launchers": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_android_legacy_toolchain_with_compileflags[True]": "PASSED",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_pkg_config_block": "PASSED"
+    },
+    "F2P_pass_total": [
+      5,
+      5
+    ],
+    "P2P_pass_total": [
+      40,
+      40
+    ],
+    "raw_summary": "45 passed, 3 skipped in 3.77s",
+    "nonreference_skip_lines": [
+      "[1] conans/test/integration/toolchains/cmake/test_cmaketoolchain.py:355: Only OSX",
+      "[1] conans/test/integration/toolchains/cmake/test_cmaketoolchain.py:382: Only OSX",
+      "[1] conans/test/integration/toolchains/cmake/test_cmaketoolchain.py:816: Only Windows"
+    ],
+    "parser_num_parsed_tests": 46,
+    "parser_count_explanation": "45完整PASSED键+3非参考SKIPPED摘要按第二token均折叠为同一[1]键；46不是正式参考分母。",
+    "reference_missing": [],
+    "reference_skipped": [],
+    "reference_unaccounted": [],
+    "num_parsed_outside_segment": 0,
+    "trusted_setup": {
+      "RH2_SETUP_ABSENT_TEST_FILES": "0",
+      "RH2_SETUP_APPLY_RC": "0",
+      "RH2_SETUP_EXPECTED_TEST_FILES": "1",
+      "RH2_SETUP_IRREGULAR_TEST_FILES": "",
+      "RH2_SETUP_OK": "1",
+      "RH2_SETUP_RESTORED": "1",
+      "RH2_SETUP_TEST_FILES": "1"
+    },
+    "runner_integrity_changed": false,
+    "candidate_prerequisite": {
+      "exit_code": 0,
+      "home": "/home/rh2grader",
+      "script_sha256": "sha256:ed0834ad7fd732a65083443feb1fbf05e182d9ef9b772d74226913efd683e686",
+      "state": "verified",
+      "stderr": "",
+      "stdout": "RH2_CONAN15422_CMAKE_CONSOLE_PREREQUISITE_OK=1\n",
+      "user": "54322"
+    }
+  },
+  "model_transport": {
+    "gateway_HTTP_rows": 46,
+    "generation_requests": 45,
+    "generation_responses": 45,
+    "SSE_files": 45,
+    "adapter_turn_rows": 45,
+    "generation_seq_exact_1_to_45": true,
+    "count_tokens": {
+      "request_line_ordinal": 13,
+      "request_path": "/v1/messages/count_tokens?beta=true",
+      "stream": false,
+      "model_sequence": null,
+      "response_HTTP": 200,
+      "response_attempt": 1,
+      "response_body": {
+        "input_tokens": 18274
+      },
+      "response_bytes": 23,
+      "included_in_generation_usage": false
+    },
+    "all_generation_HTTP200_attempt1_no_stream_error": true,
+    "generation_stop_reason_counts": {
+      "tool_use": 44,
+      "end_turn": 1
+    },
+    "all_SSE_bytes_model_stop_usage_match_response": true,
+    "adapterparsed_to_SSE_text_thinking_and_tool_arguments_equal": true,
+    "input_tokens": 1761359,
+    "output_tokens": 9008,
+    "maximum_observed_prompt_tokens": 62926,
+    "maximum_observed_output_tokens": 948,
+    "SSE_and_CC_blocks": 110,
+    "SSE_to_CC_blocks_exact": 108,
+    "CC_argument_normalizations": [
+      {
+        "generation_seq": 14,
+        "block_ordinal": 33,
+        "tool": "Edit",
+        "change": "缺省replace_all补false，首API tool schema default false。"
+      },
+      {
+        "generation_seq": 43,
+        "block_ordinal": 106,
+        "tool": "Bash",
+        "change": "cd /testbed && git diff --stat → git diff --stat；CC init cwd=/testbed。"
+      }
+    ],
+    "CC_tool_calls": 46,
+    "CC_tool_results": 46,
+    "tool_use_and_result_ID_sets_equal": true,
+    "multiple_tool_response_seqs": {
+      "1": 2,
+      "10": 2
+    },
+    "tool_names": {
+      "Bash": 29,
+      "Read": 13,
+      "Edit": 4
+    },
+    "CC_num_turns": 47,
+    "CC_version": "2.1.205",
+    "CC_modelUsage_maxOutputTokens": 32000,
+    "actual_request_output_tokens": 65536,
+    "budget": {
+      "context_tokens": 196608,
+      "response_output_tokens": 65536,
+      "CC_turns": 240,
+      "solver_seconds": 10800,
+      "gateway_requests": 1024,
+      "first_byte_timeout_seconds": 1800,
+      "adapter_idle_seconds_minimum": 14400
+    },
+    "actual_adapter_sampling_defaults": {
+      "temperature": 1.0,
+      "top_p": 0.95,
+      "top_k": 20,
+      "max_new_tokens": 65536
+    },
+    "SGLang_context_length": 196608,
+    "SGLang_max_req_input_len": 196602,
+    "SGLang_version": "0.5.20",
+    "current_engine_adapter_before_after_identity_exact": true,
+    "checkpoint_repo": "Qwen/Qwen3.6-35B-A3B",
+    "checkpoint_revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+    "runtime_model_file_sizes_match_download_manifest": 37,
+    "individual_weight_file_hashes_repeated": false,
+    "GPU_memory_weight_hash_attestation": false
+  },
+  "terminal": {
+    "entry_RC": 0,
+    "harness_RC": 0,
+    "termination": "completed",
+    "solve_seconds": 92.61,
+    "harness_log_complete": true,
+    "trajectory_rows": 719,
+    "trajectory_bytes": 749269,
+    "trajectory_pair_bytes_identical": true,
+    "harness_stderr_bytes": 0,
+    "registered_started_at": "2026-10-03T13:49:00.150815+00:00",
+    "registered_ended_at": "2026-10-03T13:52:53.169340+00:00",
+    "exact_PID1_UNIT_success_at": "2026-10-03T13:52:53.195115+00:00",
+    "journal_sha256": "932dd5bfbd2501582293be8afb180635c7e42a81787e148715c5f896dec1e1a7",
+    "journal_query_RC": 0,
+    "retired_unit_not_found_default_ExecMainStatus0_used_as_exit_proof": false
+  },
+  "cleanup": {
+    "actor": {
+      "container_rm": 0,
+      "container_left": "",
+      "network_failures": [],
+      "relay_failures": [],
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "cleanup_ok": true
+    },
+    "gateway_drain": {
+      "session_id": "gpu1003-conan15422-qwen36-a1",
+      "revoked": true,
+      "active_requests": 0,
+      "drained": true,
+      "ts": 1791035476.4946876
+    },
+    "separate_session_close_same": true,
+    "grader": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "supply_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0,
+      "containers_created_total": 1,
+      "containers_removed_total": 1,
+      "container_history_retained": 1,
+      "leases_total": 1
+    },
+    "last_resource_slice_job_containers_empty": true,
+    "shared_model_services_remain_running": true
+  },
+  "resources": {
+    "slices": 17,
+    "first_at": "2026-10-03T13:48:53.732855+00:00",
+    "last_at": "2026-10-03T13:52:54.874402+00:00",
+    "maximum_interval_seconds": 15.080041,
+    "per_container_slice_counts": {
+      "/rh2bp-conan-io-conan-15422-7872f627": 9,
+      "/rh2-egress-relay-gpu1003-conan15422-qwen36-a1": 9,
+      "/rh2-gpu-grade-gpu1003-conan15422-qwen3-f5085a01": 6
+    },
+    "sampled_maxima_only": {
+      "/rh2bp-conan-io-conan-15422-7872f627": {
+        "memory_peak_bytes": 998592512,
+        "pids_peak": 25,
+        "oom_events_observed": 0,
+        "oom_kill_events_observed": 0,
+        "pids_max_events_observed": 0
+      },
+      "/rh2-egress-relay-gpu1003-conan15422-qwen36-a1": {
+        "memory_peak_bytes": 27344896,
+        "pids_peak": 7,
+        "oom_events_observed": 0,
+        "oom_kill_events_observed": 0,
+        "pids_max_events_observed": 0
+      },
+      "/rh2-gpu-grade-gpu1003-conan15422-qwen3-f5085a01": {
+        "memory_peak_bytes": 264310784,
+        "pids_peak": 8,
+        "oom_events_observed": 0,
+        "oom_kill_events_observed": 0,
+        "pids_max_events_observed": 0
+      }
+    },
+    "diagnostics_grader_peak_memory_mb": 344.938,
+    "scope_limit": "非连续资源观察，未完整覆盖终点计数或engine/adapter cgroup；不同peak口径不合并为全程峰值，不推断跨模型效率。"
+  },
+  "receipts": {
+    "execution_receipt": {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/gpu1003-conan15422-qwen36-a1_execution_receipt_v1/execution_receipt.json",
+      "sha256": "454ea90054460b6a14c68a0e7bc52f5709638b86e97c5751848350e25c5bde0a"
+    },
+    "pair_receipt": {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/swe-conan15422-r12-briefv1-20261003-v1_pair_execution_receipt_v1.json",
+      "sha256": "b7f007238f09e0db190b10e6d908a799cc85d090b30f4b8300c9ca400c1983aa"
+    },
+    "Coder_execution_review_reused": {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/conan15422_coder_a1_execution_review_v1.json",
+      "sha256": "387975f1e1f6dfd92c23500bd207b629b209191cbd62c83f22fa76b108f71ea5",
+      "status": "execution_evidence_consistent_complete_test_failure",
+      "raw_reward": 0,
+      "scope": "旧首臂执行/运输；不复用为候选语义成功。"
+    }
+  },
+  "new_blocker_in_scope": false,
+  "semantic_acceptance": null,
+  "training_qualification": null,
+  "whole_request_ACK_performed": false,
+  "stop_condition": "报告与JSON保存并给SHA后停止；不修改冻结产物或共享记录，不发其他Codex线程。"
+}

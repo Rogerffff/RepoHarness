@@ -1,0 +1,15 @@
+# Moto5406：CPU结果统一复核结论
+
+2026-10-03。**限定第五版及工具v3，本题CPU前置验收可收口，负责人可提交既有GPU基座诊断流程。无需新增审批或重复CPU矩阵。** 本结论不授予训练或留出资格，也不把真实CC加桩的操作计作模型求解。
+
+按审查标准§10.4，本批使用一对未参与实现的Production Tracer与Falsifier，分别从实际执行和反证角度审原件；两者均披露公开、私有、gold及作者导航曝光，不是fresh公开读者。总协调已读两份报告，没有实质分歧。本结论依据下列原始证据，不按报告数量投票：
+
+- 总协调独立重算三阶段547成员的SHA与字节数，直接读取三个控制候选及原actor评分报告；结果为0／1／0及原actor0，错误修复的1条P2P失败、正确修复全通过，均无基础设施失败。
+- 独立重算a2g实际消费的33份actor原件及recordmanifest、3项CPU准备输入；重算原FrozenPatch canonical digest为`sha256:6db18cb77ebdf6fb1ef0852e4bfb73ff28388126fb3f276fc0edd2635fa6ee58`，与a2g输入相同，baseline和assignment身份一致。实际只有1次grade、基线重建通过，grader1建1清且本run容器/网络查询为空。
+- 两角色从四份实际评分日志分别重建28条参考节点；新增East1断言准确拒绝常量East2修复，gold通过28条，原actor仅原East2 F2P失败。真实CC的3条公开命令保留0／1／0退出及断言，首请求等于同次prepared prompt；旧R3失败仍单独保留，新尝试未改绑旧工件。
+
+固定release manifest为`80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9`，工具manifest为`09f7b6de626c00fba904137b763c8c4c66777cbe1551fbd41812dbce46d2c86c`，材料manifest为`d5ca5786f42ef1a25463b28e89ba101a7e2062229294fc3e143fe22459f5fb83`。版本、原镜像与逐阶段路径见[固定请求包](moto5406_cpu_actor_review_request_20261003.json)。
+
+推荐直接提交该版本诊断请求，复用已完成的材料、公开阅读和共用机制审查。收益是进入真实模型验证，代价为既定GPU诊断成本；重跑同一CPU只增加成本而不补本轮缺口。未覆盖仍为模型候选的实际语义、GPU侧真实输入与资源、训练capture及未来异常路径；actor没有完整Docker逐调用运输，本轮依靠保存的quiescence/attempt/inspect/trajectory核生命周期，不宣称独立远端观察。它们由后续原流程继续记录，不新增本轮门槛。
+
+证据：总协调离线结果`runs/category2_repair_20260929/moto_cpu_20261003/moto5406_coordinator_key_evidence_20261003.json`；[执行追踪](moto5406_non_author_execution_trace_20261003.md) SHA256 `c473f0c43f6edf9aa326044b642abe344e2c19618bb83a99b1592b9bd56fe070`；[反证审阅](moto5406_non_author_falsifier_20261003.md) SHA256 `f4639e1cc1593d98c8a44306661faf39123068a64335458bc488f739a622f4e1`。一轮限定原件复核已完成，停止本轮审查；题主继续负责探针回传与必要修订。

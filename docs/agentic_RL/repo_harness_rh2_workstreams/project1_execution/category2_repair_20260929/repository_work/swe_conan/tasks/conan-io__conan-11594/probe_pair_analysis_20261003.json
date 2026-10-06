@@ -1,0 +1,132 @@
+{
+  "schema_id": "conan.owner.pair_analysis.v1",
+  "as_of": "2026-10-03T14:31:04.731022+00:00",
+  "request_id": "swe-conan11594-r12-briefv2-20261003-v1",
+  "scope": "two first attempts owner analysis; no stability, real full build or training qualification",
+  "receipt": {
+    "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/swe-conan11594-r12-briefv2-20261003-v1_pair_execution_receipt_v1.json",
+    "sha256": "sha256:2ba6709ce574cd4a19879c5b9378cb26e96abd141d21f1a04486ae1fd1a8d7c6"
+  },
+  "receipt_readback": {
+    "path": "runs/category2_repair_20260929/conan_cpu_20261003/probe_analysis_11594_qwen36_a1_20261003_v1/pair_receipt_readback.json",
+    "sha256": "sha256:37983734357356239c4da4435fca4390e621826b6315487f92f7cc810e338bb8"
+  },
+  "owner_analysis": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-11594/probe_pair_analysis_20261003.md",
+    "sha256": "sha256:89795346c8d9d9180dc6eee1f4c4c05b2d4971042fc6bc3c8bd8999d13dbd46f"
+  },
+  "first_arm_analyses": {
+    "coder": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-11594/probe_coder_a1_analysis_20261003.json",
+      "sha256": "sha256:59dbad59c3f565d9f2b510b95da83dcf200b7419f4e8af971b95276fd68dd0ca"
+    },
+    "qwen36": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-11594/probe_qwen36_a1_analysis_20261003.json",
+      "sha256": "sha256:500eed774361c19fad48d9dd0d469082c6c393ce0dcd06da0716219a56e6b58b"
+    }
+  },
+  "semantic_reviews": {
+    "coder": {
+      "status": "completed_no_blocking_finding",
+      "report": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_11594_coder_a1_semantic_review_20261003.md",
+        "sha256": "sha256:6e27c869397a213f5f0f86c0bc1b67729426732e9e7c906a172b97e536694500"
+      },
+      "reviewer_role": "non_author_semantic_falsifier",
+      "scope": "source target selection/config forwarding and unchanged boundaries, all candidate changes, fixed reference mapping, model selftests/final statements; static readback, no CPU/GPU rerun"
+    },
+    "qwen36": {
+      "status": "completed_no_current_task_material_blocker",
+      "report": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_11594_qwen36_a1_semantic_review_20261003.md",
+        "sha256": "sha256:459af3357d7c745221afc5f97e7e7823997be6b1e9b4e2ebd3e80a972de3b151"
+      },
+      "scope": "complete candidate, projection, current public semantics and exact references; no dynamic rerun; limitations in report"
+    }
+  },
+  "execution_reviews": {
+    "coder": {
+      "status": "execution_evidence_verified_with_scope_limits",
+      "report": {
+        "path": "runs/ordinary_gpu_probe_20261002/reviews/conan11594_coder_a1_execution_review_v1.json",
+        "sha256": "4be7e58d6ace46c3969cb3b001792592b232669985044c672e8324b578ad7275",
+        "bytes": 20124
+      },
+      "scope": "reuse GPU non-author execution audit within recorded identity/transport/cleanup and limited resource scope; no worst-case context capacity or repeated full weight hash claim"
+    },
+    "qwen36": {
+      "status": "execution_evidence_verified_with_scope_limits",
+      "report": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_11594_qwen36_a1_execution_review_20261003.md",
+        "sha256": "sha256:ce42a52d7c1abfc52c0ae601c9317cd8678a629ac42156bf44117baf1bcb803d"
+      },
+      "scope": "current closed execution/transport/full baseline/HTTP/exact references/cleanup; resource and weight limits retained"
+    }
+  },
+  "both_reference_scores": {
+    "coder": {
+      "reward": 1,
+      "f2p": {
+        "passed": 2,
+        "total": 2
+      },
+      "p2p": {
+        "passed": 4,
+        "total": 4
+      },
+      "logical_references": 6,
+      "complete_raw_nodes": 7
+    },
+    "qwen36": {
+      "reward": 1,
+      "f2p": {
+        "passed": 2,
+        "total": 2
+      },
+      "p2p": {
+        "passed": 4,
+        "total": 4
+      },
+      "logical_references": 6,
+      "complete_raw_nodes": 7
+    }
+  },
+  "candidate_findings": {
+    "coder": [],
+    "qwen36": [
+      {
+        "id": "F1",
+        "priority": "P2",
+        "finding": "model final omitted four legacy failures/seven skips and mislabelled 49 selected tests as existing",
+        "disposition": "accepted"
+      },
+      {
+        "id": "F2",
+        "priority": "P2",
+        "finding": "public run-recorder tests use weak substring targets and do not establish real CTest/config forwarding",
+        "disposition": "no_fix_accept_residual_risk"
+      },
+      {
+        "id": "F3",
+        "priority": "P2",
+        "finding": "external null preset conditionally reaches unconditional Ninja substring TypeError; standard producer returns strings; approved null scope unknown",
+        "disposition": "no_fix_accept_residual_risk"
+      }
+    ]
+  },
+  "task_material_findings": [],
+  "runtime_versions": {
+    "coder": "code7",
+    "qwen36": "code8"
+  },
+  "entire_runtime_same": false,
+  "same_material_image_full_baseline_public_prompt_references_budgets": true,
+  "entire_profile_same": false,
+  "prior_first_arm_snapshot_bytes_preserved": true,
+  "owner_request_closeout": "two_model_owner_analysis_complete_returned_ACK_and_active_pointer_cleared",
+  "CPU_or_model_rerun_required": false,
+  "ordinary_additional_samples": "deferred_coverage_first",
+  "paired_request_closed": true,
+  "pending_models": [],
+  "training_eligibility": "not_established"
+}

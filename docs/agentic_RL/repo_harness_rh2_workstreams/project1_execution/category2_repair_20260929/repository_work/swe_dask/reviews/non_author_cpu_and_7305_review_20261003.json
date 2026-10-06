@@ -1,0 +1,2120 @@
+{
+  "schema": "dask_non_author_cpu_and_7305_review.v1",
+  "as_of": "2026-10-03",
+  "state": "narrow_review_complete_formal_acceptance_pending",
+  "reviewer": {
+    "role": "non_author_codex_subagent",
+    "participated_in_author_changes": false,
+    "participated_in_cpu_runs": false,
+    "fresh_public_reader": false,
+    "private_gold_and_author_reports_seen": true,
+    "mode": "只读本地SHA、原日志与静态源码；没有运行CPU、SSH、容器或pytest。"
+  },
+  "qualification": {
+    "formal_reward_granted": false,
+    "gpu_qualification_granted": false,
+    "training_qualification_granted": false
+  },
+  "request": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/cpu_result_review_request_7656_9378_7138_20261003.json",
+    "sha256": "d02811fbddce43bdbdf74b64698202812a8e88e85bd98ba4b8afc180ccecc747"
+  },
+  "reused_static_review": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_7656_9378_7138_material_review_20261003.md",
+    "sha256": "ebb9570116c26762a61f307e855b373ba078acee8b1afeb46497544454e35dae"
+  },
+  "request_bound_items_verified": 31,
+  "blocking_findings_in_review_scope": [],
+  "tasks": [
+    {
+      "instance_id": "dask__dask-7656",
+      "revision_id": "dask7656-dataclass-argument-v1",
+      "conclusion": "actual_cpu_evidence_matches_expected_with_declared_scope",
+      "blocking_findings_in_review_scope": [],
+      "material_assets": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7656/revision.json",
+          "sha256": "0b70310018821b5cff83d81a89bcfdca820a198b85c94d246ed91e37500cfcd3"
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7656/effective_test.patch",
+          "sha256": "d3b711c9eb53cbdb6477314eae82f3ae5ca49e5c052a352c7da3959289c287db"
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7656/effective_test.py",
+          "sha256": "45947718a1d33637e37a61781a80af280910bba53599f0e6de8952a5fd31403d"
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7656/acceptance_matrix.json",
+          "sha256": "5da46b2ddb0407b61492c546a323a12b6b55f6417b48fd91044ff83a3a856f8f"
+        }
+      ],
+      "rows": [
+        {
+          "candidate": "noop",
+          "attempt": "dask7656-cpu-c-20261003-v2",
+          "scope": "private_root_test_diagnostic",
+          "behavior": "rejected",
+          "test_rc": 1,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-cpu-c-20261003-v2/remote/run/private/noop/noop/revised_test_file.out",
+            "sha256": "4824e924b850e61b1c34fb72509e85ab7e0f4c940644b9f2951659d29cdd00f9"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-cpu-c-20261003-v2/remote/run/private/noop/summary.json",
+            "sha256": "3fbae79c3fcf54fa8430e460a8cae68f12a4de347391ad3c498a986ee1e66380"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-cpu-c-20261003-v2/remote/run/private_spec_noop.json",
+            "sha256": "cf16a903a369f4a5201aa14c7de64d525628253ab964cb4c9647f2e98fce9736"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 49,
+          "reference_status_counts": {
+            "FAILED": 1,
+            "PASSED": 48
+          },
+          "reference_missing": [],
+          "f2p_failed": [
+            "dask/tests/test_delayed.py::test_delayed_with_dataclass"
+          ],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 0,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [
+            ">       with_class = dask.delayed({\"a\": ADataClass(a=literal)})",
+            ">       [[f.name, getattr(expr, f.name)] for f in fields(expr)]",
+            "E   AttributeError: 'ADataClass' object has no attribute 'b'"
+          ],
+          "pytest_summary": "=================== 1 failed, 49 passed, 2 xfailed in 2.16s ====================",
+          "formal_reward": null
+        },
+        {
+          "candidate": "gold",
+          "attempt": "dask7656-cpu-c-20261003-v2",
+          "scope": "private_root_test_diagnostic",
+          "behavior": "accepted",
+          "test_rc": 0,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-cpu-c-20261003-v2/remote/run/private/gold/gold/revised_test_file.out",
+            "sha256": "088261970619f7eadbc4f0ca4966464da977362f3152dcc5a6e25f0ee23074af"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-cpu-c-20261003-v2/remote/run/private/gold/summary.json",
+            "sha256": "1f470e9326a946751aa307c318b2153a90e2477ba16419ee8e83e9e8f3aa38e3"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-cpu-c-20261003-v2/remote/run/private_spec_gold.json",
+            "sha256": "f60a8e6bb75cd83557944e713c801c903d4244ae278d35a4eeddac9bf6610625"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 49,
+          "reference_status_counts": {
+            "PASSED": 49
+          },
+          "reference_missing": [],
+          "f2p_failed": [],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 0,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [],
+          "pytest_summary": "======================== 50 passed, 2 xfailed in 1.81s =========================",
+          "formal_reward": null
+        },
+        {
+          "candidate": "wrong_result_type",
+          "attempt": "dask7656-cpu-c-20261003-v2",
+          "scope": "private_root_test_diagnostic",
+          "behavior": "rejected",
+          "test_rc": 1,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-cpu-c-20261003-v2/remote/run/private/wrong_result_type/wrong_result_type/revised_test_file.out",
+            "sha256": "24c93a5303044d295b2f8fbdf7ff8c9cca1d31999dcd4ac9b4df2b4f6e4c1751"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-cpu-c-20261003-v2/remote/run/private/wrong_result_type/summary.json",
+            "sha256": "dc9da8782a3a6128a9f1de00a321ea7d6c86f0809bbc75d0ef97db3e3c187cf1"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-cpu-c-20261003-v2/remote/run/private_spec_wrong_result_type.json",
+            "sha256": "50e06e4dc95b02ad1210008d3cbd8d7b953caf2cb2de06fac95a8b96fd353585"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 49,
+          "reference_status_counts": {
+            "FAILED": 1,
+            "PASSED": 48
+          },
+          "reference_missing": [],
+          "f2p_failed": [
+            "dask/tests/test_delayed.py::test_delayed_with_dataclass"
+          ],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 0,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [
+            ">       assert final.compute(scheduler=\"sync\") == 3",
+            ">       assert isinstance(obj[\"a\"], ADataClass)",
+            "E       AssertionError: assert False",
+            "E        +  where False = isinstance(namespace(a=3), <class 'types.ADataClass'>)"
+          ],
+          "pytest_summary": "=================== 1 failed, 49 passed, 2 xfailed in 2.02s ====================",
+          "formal_reward": null
+        },
+        {
+          "candidate": "opaque",
+          "attempt": "dask7656-cpu-c-20261003-v2",
+          "scope": "private_root_test_diagnostic",
+          "behavior": "rejected",
+          "test_rc": 1,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-cpu-c-20261003-v2/remote/run/private/opaque/opaque/revised_test_file.out",
+            "sha256": "f619062cc5a01de2f9951e664679790be4a7447c3ba91a29be132b3bb6aa53a9"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-cpu-c-20261003-v2/remote/run/private/opaque/summary.json",
+            "sha256": "aba1051dafee8d67180f9324aa28326c3bd0e6221ef87f327c9ee6083588b434"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-cpu-c-20261003-v2/remote/run/private_spec_opaque.json",
+            "sha256": "c84757d76c5c45d0ba397f5480a0d6c5e145f6e4ea0c0b38e8e69f5fc7fa756a"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 49,
+          "reference_status_counts": {
+            "FAILED": 1,
+            "PASSED": 48
+          },
+          "reference_missing": [],
+          "f2p_failed": [
+            "dask/tests/test_delayed.py::test_delayed_with_dataclass"
+          ],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 0,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [
+            ">       assert final.compute(scheduler=\"sync\") == 3",
+            ">       raise TypeError(\"Truth of Delayed objects is not supported\")",
+            "E       TypeError: Truth of Delayed objects is not supported"
+          ],
+          "pytest_summary": "=================== 1 failed, 49 passed, 2 xfailed in 1.62s ====================",
+          "formal_reward": null
+        }
+      ],
+      "formal_reward": null,
+      "open_requirements": [
+        "正式修订登记与material digest",
+        "可信非root正式评分及逐参考读回"
+      ],
+      "attempts": [
+        {
+          "attempt": "dask7656-cpu-c-20261003-v2",
+          "status": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-cpu-c-20261003-v2/remote/run/status.json",
+            "sha256": "edd9d40c6e7c03ed63b4087d203495a4f4ca85f08fccfee6536ee2017552c945"
+          },
+          "release_manifest_sha256": "282021962a92b510f077385660ac56acedcd7fac1d97e63db3baa98e4dcc057f",
+          "runtime": "runtime_cpu_v2",
+          "queue": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-cpu-c-20261003-v2/remote/queue_config.json",
+            "sha256": "3313beb03b53d3d75e7c52b93fcb0108ad65d291f9e42b1c2eea3a5fa55ad2af"
+          },
+          "queue_result": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-cpu-c-20261003-v2/remote/status.json",
+            "sha256": "a58fceac3a06894441d4d78cd7f7d0e5ecafaefe69b0322902d3b0fb4d91228a"
+          },
+          "release_verify_receipt": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-cpu-c-20261003-v2/remote/run/verify_release.log",
+            "sha256": "7309031ad78a82d7a2efb80aa8a79e5111a85d1c2e58ca75fc25a5a1a34f09e5"
+          }
+        }
+      ],
+      "actor": {
+        "attempt": {
+          "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-cpu-c-20261003-v2/remote/run/actor/attempt.json",
+          "sha256": "950e5674a5fc5e744e3bf2230a1844e0bd34b98032993caf7d80287752b8acad"
+        },
+        "first_request": {
+          "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-cpu-c-20261003-v2/remote/run/actor/stub/requests/messages_000.json",
+          "sha256": "ffac0b9a78295407d2d040dd006fcffe339995f9b219b83bb8f37b9e7c7e1f0d"
+        },
+        "trajectory": {
+          "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-cpu-c-20261003-v2/remote/run/actor/harness/trajectory.jsonl",
+          "sha256": "7088c40d7814a2c0f15d9f01ccc3d23fd6bc3d4fb366760f65c928a3de85f883"
+        },
+        "original_public_prompt_exact_match": true,
+        "other_user_text_block": "仅CC日期system-reminder",
+        "scripted_stub_no_model_inference": true,
+        "cc_version": "2.1.205",
+        "base_commit": "07d5ad0ab1bc8903554b37453f02cc8024460f2a",
+        "actor_image_id": "sha256:118f47f67994e4d4df700f427404c7620cd2c9eedf3b818f0e8b21d3276babe3",
+        "prelaunch": {
+          "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-cpu-c-20261003-v2/remote/run/actor/prelaunch.json",
+          "sha256": "011d6e205fc5e10535adfa1fc9e13fe8f49222f88ea51d89151b05472df0eabf"
+        },
+        "activation": {
+          "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-cpu-c-20261003-v2/remote/run/actor/activation_check.json",
+          "sha256": "3de96b37a0667587a019b3160500baf11283cbcf904e297b84eef5b78f4b79e4"
+        },
+        "uid": "54321",
+        "cgroup": {
+          "CG_CPU_MAX": "200000 100000",
+          "CG_MEMORY_MAX": "4294967296",
+          "CG_SWAP_MAX": "0",
+          "CG_PIDS_MAX": "512"
+        },
+        "bind_mounts": [],
+        "activation_write": "DENIED",
+        "all_actual_bash_tools_and_results_checked": true,
+        "commands": [
+          {
+            "id": "identity_import",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 284,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "公开 checkout、身份与导入路径"
+          },
+          {
+            "id": "issue_original",
+            "rc": 1,
+            "status": "nonzero",
+            "expect": "nonzero",
+            "matches_expect": true,
+            "output_bytes": 670,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "未修 base 题面原例：应在建图触发缺失 primary_key；非零须读异常"
+          },
+          {
+            "id": "default_nested",
+            "rc": 1,
+            "status": "nonzero",
+            "expect": "nonzero",
+            "matches_expect": true,
+            "output_bytes": 670,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "公开需求的默认字段及嵌套 Delayed 保持；base 应触发同一缺失属性"
+          },
+          {
+            "id": "public_regression",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 1166,
+            "output_truncated_to": 200000,
+            "pytest": {
+              "passed": 3,
+              "deselected": 49
+            },
+            "purpose": "base 现有公开 dataclass/遍历/兼容入口窄测试，不注入私有测试"
+          },
+          {
+            "id": "compat_environment",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 335,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "新 actor 配方验证：conda 激活钩子实际被正式 BASH_ENV 读取，pandas1.3.5 与 stdlib distutils 生效"
+          }
+        ],
+        "generic_marker_checks": {
+          "interpreter_in_tool_result": false,
+          "bashenv_denied_for_agent": false
+        },
+        "generic_marker_limit": "保留false：本题未输出固定标记；identity/prelaunch/activation确认实际解释器与写权限。",
+        "harness_exit": 0,
+        "termination": "returned",
+        "full_trajectory_bytes_match": true,
+        "cleanup": {
+          "container_rm": 0,
+          "network_failures": [],
+          "relay_failures": [],
+          "stub_rc": 0,
+          "labeled_containers_left": [],
+          "labeled_networks_left": [],
+          "residual_after_force": []
+        }
+      },
+      "limits": [
+        "公开default_nested首对象建图失败，后续nested分支未执行",
+        "root私有actor镜像诊断不代替copy-only grader的setup900及非root正式评分",
+        "原冻结source完成证据不因后续共用Git修复重跑",
+        "pip check历史冲突仍在，验证仅覆盖实际路径"
+      ]
+    },
+    {
+      "instance_id": "dask__dask-9378",
+      "revision_id": "dask9378-mask-route-b-v1",
+      "conclusion": "actual_cpu_evidence_matches_expected_with_declared_scope",
+      "blocking_findings_in_review_scope": [],
+      "material_assets": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-9378/revision.json",
+          "sha256": "2020dc58319e23c27b289cd68b6b7e147b6de736015876e2f16ea53ed8dbf9d5"
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-9378/effective_test.patch",
+          "sha256": "9fc1a9d5ae885d9cc30388a875ab7ed629081de7ba7bdcc8571f3aca604a248a"
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-9378/effective_test.py",
+          "sha256": "c834df1a5aeb1596ff637ab7bcf79f9001d8b5d347023ca1a60f74d1ec3190e9"
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-9378/acceptance_matrix.json",
+          "sha256": "3274063f9713d20982c84ce0f69a72f3fac6dd589c2b7070c92e8589bb58e9d6"
+        }
+      ],
+      "rows": [
+        {
+          "candidate": "noop",
+          "attempt": "dask9378-cpu-c-20261003-v1",
+          "scope": "private_root_test_diagnostic",
+          "behavior": "rejected",
+          "test_rc": 1,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/run/private/noop/noop/revised_test_file.out",
+            "sha256": "91c385cac1c69fca54e1b3e0a46d0a9470f2b773897baf238c02c70d4e932802"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/run/private/noop/summary.json",
+            "sha256": "2ec8b6c833ff63fa5752c8bafdffb68b0721b69da3c120e52179ea9471a87bfb"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/run/private_spec_noop.json",
+            "sha256": "9eb604940c450e54c257295d9ac6ff0f5b9f864b5aa236a78939ae41fc7e1b53"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 137,
+          "reference_status_counts": {
+            "FAILED": 3,
+            "PASSED": 134
+          },
+          "reference_missing": [],
+          "f2p_failed": [
+            "dask/array/tests/test_masked.py::test_like_funcs[empty_like]",
+            "dask/array/tests/test_masked.py::test_like_funcs[zeros_like]",
+            "dask/array/tests/test_masked.py::test_like_funcs[ones_like]"
+          ],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 0,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [
+            ">       assert_eq(da.ma.getmaskarray(res), np.ma.getmaskarray(sol))",
+            ">           assert allclose(a, b, equal_nan=equal_nan, **kwargs), msg",
+            "E           AssertionError: found values in 'a' and 'b' which differ by more than the allowed amount",
+            "E           assert False",
+            "E            +  where False = allclose(array([[False, False],\\n       [False, False],\\n       [False, False]]), array([[ True, False],\\n       [ True,  True],\\n       [False,  True]]), equal_nan=True, **{})",
+            ">       assert_eq(da.ma.getmaskarray(res), np.ma.getmaskarray(sol))",
+            ">           assert allclose(a, b, equal_nan=equal_nan, **kwargs), msg",
+            "E           AssertionError: found values in 'a' and 'b' which differ by more than the allowed amount",
+            "E           assert False",
+            "E            +  where False = allclose(array([[False, False],\\n       [False, False],\\n       [False, False]]), array([[ True, False],\\n       [ True,  True],\\n       [False,  True]]), equal_nan=True, **{})",
+            ">       assert_eq(da.ma.getmaskarray(res), np.ma.getmaskarray(sol))",
+            ">           assert allclose(a, b, equal_nan=equal_nan, **kwargs), msg",
+            "E           AssertionError: found values in 'a' and 'b' which differ by more than the allowed amount",
+            "E           assert False",
+            "E            +  where False = allclose(array([[False, False],\\n       [False, False],\\n       [False, False]]), array([[ True, False],\\n       [ True,  True],\\n       [False,  True]]), equal_nan=True, **{})"
+          ],
+          "pytest_summary": "======================== 3 failed, 134 passed in 12.22s ========================",
+          "formal_reward": null
+        },
+        {
+          "candidate": "gold",
+          "attempt": "dask9378-cpu-c-20261003-v1",
+          "scope": "private_root_test_diagnostic",
+          "behavior": "accepted",
+          "test_rc": 0,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/run/private/gold/gold/revised_test_file.out",
+            "sha256": "d90e8e1208f623462af08e29cb3164953316baf97226899f3eeee4be6db3bb58"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/run/private/gold/summary.json",
+            "sha256": "804ad6fdd0615a36ad9edef0b44206ac9fc472644b92298ee67eeb60babaa0e6"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/run/private_spec_gold.json",
+            "sha256": "e2e97adc43b13a98f426539b46d35dd7640dc57fff941c149fcf17421f52f99d"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 137,
+          "reference_status_counts": {
+            "PASSED": 137
+          },
+          "reference_missing": [],
+          "f2p_failed": [],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 0,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [],
+          "pytest_summary": "============================= 137 passed in 12.79s =============================",
+          "formal_reward": null
+        },
+        {
+          "candidate": "toplevel_only",
+          "attempt": "dask9378-cpu-c-20261003-v1",
+          "scope": "private_root_test_diagnostic",
+          "behavior": "accepted",
+          "test_rc": 0,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/run/private/toplevel_only/toplevel_only/revised_test_file.out",
+            "sha256": "ea46258ea4565af0f0430c1c7bc18257da7227a8a98de7e18a8750f9848477f4"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/run/private/toplevel_only/summary.json",
+            "sha256": "72f0d87c838a744e8da6195dee927dc2f6afb4ccdec73256ae3ca3ea4be84384"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/run/private_spec_toplevel_only.json",
+            "sha256": "7c9d4a59fe5e21594b0f64b04a943bb8f74238cabf832ff942a122194bc809f0"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 137,
+          "reference_status_counts": {
+            "PASSED": 137
+          },
+          "reference_missing": [],
+          "f2p_failed": [],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 0,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [],
+          "pytest_summary": "============================= 137 passed in 11.83s =============================",
+          "formal_reward": null
+        },
+        {
+          "candidate": "ma_mask_none",
+          "attempt": "dask9378-cpu-c-20261003-v1",
+          "scope": "private_root_test_diagnostic",
+          "behavior": "rejected",
+          "test_rc": 1,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/run/private/ma_mask_none/ma_mask_none/revised_test_file.out",
+            "sha256": "5e9e01774324e87cc6ab15bde3d11de1240b6c74ad9a1c33c3babe3f21953b0d"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/run/private/ma_mask_none/summary.json",
+            "sha256": "9fe6d538ad348295ee1aac15193af984ad12a9aa32eab85215016390352baf44"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/run/private_spec_ma_mask_none.json",
+            "sha256": "a853cb293434068516404528d3b6fe2fbf8bf43dcf41851b87936bfa808946c1"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 137,
+          "reference_status_counts": {
+            "PASSED": 135,
+            "FAILED": 2
+          },
+          "reference_missing": [],
+          "f2p_failed": [
+            "dask/array/tests/test_masked.py::test_like_funcs[zeros_like]",
+            "dask/array/tests/test_masked.py::test_like_funcs[ones_like]"
+          ],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 0,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [
+            ">       assert_eq(da.ma.getmaskarray(res), np.ma.getmaskarray(sol))",
+            ">           assert allclose(a, b, equal_nan=equal_nan, **kwargs), msg",
+            "E           AssertionError: found values in 'a' and 'b' which differ by more than the allowed amount",
+            "E           assert False",
+            "E            +  where False = allclose(array([[False, False],\\n       [False, False],\\n       [False, False]]), array([[ True, False],\\n       [ True,  True],\\n       [False,  True]]), equal_nan=True, **{})",
+            ">       assert_eq(da.ma.getmaskarray(res), np.ma.getmaskarray(sol))",
+            ">           assert allclose(a, b, equal_nan=equal_nan, **kwargs), msg",
+            "E           AssertionError: found values in 'a' and 'b' which differ by more than the allowed amount",
+            "E           assert False",
+            "E            +  where False = allclose(array([[False, False],\\n       [False, False],\\n       [False, False]]), array([[ True, False],\\n       [ True,  True],\\n       [False,  True]]), equal_nan=True, **{})"
+          ],
+          "pytest_summary": "======================== 2 failed, 135 passed in 12.55s ========================",
+          "formal_reward": null
+        },
+        {
+          "candidate": "ma_mask_invert",
+          "attempt": "dask9378-cpu-c-20261003-v1",
+          "scope": "private_root_test_diagnostic",
+          "behavior": "rejected",
+          "test_rc": 1,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/run/private/ma_mask_invert/ma_mask_invert/revised_test_file.out",
+            "sha256": "426008a0125086b24a6b2d1222cd30395ae80a376193e53aa26b2992a3847cba"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/run/private/ma_mask_invert/summary.json",
+            "sha256": "427cdd33a136061bee1b6be3dfa6750d78c51a65cb93b5e4a89825f207bcf048"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/run/private_spec_ma_mask_invert.json",
+            "sha256": "e6a79d8d0f24f5ed99f05989d5fdbc93379654f652125c3e80c832e0ce85c1e9"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 137,
+          "reference_status_counts": {
+            "PASSED": 135,
+            "FAILED": 2
+          },
+          "reference_missing": [],
+          "f2p_failed": [
+            "dask/array/tests/test_masked.py::test_like_funcs[zeros_like]",
+            "dask/array/tests/test_masked.py::test_like_funcs[ones_like]"
+          ],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 0,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [
+            ">       assert_eq(da.ma.getmaskarray(res), np.ma.getmaskarray(sol))",
+            ">           assert allclose(a, b, equal_nan=equal_nan, **kwargs), msg",
+            "E           AssertionError: found values in 'a' and 'b' which differ by more than the allowed amount",
+            "E           assert False",
+            "E            +  where False = allclose(array([[False,  True],\\n       [False, False],\\n       [ True, False]]), array([[ True, False],\\n       [ True,  True],\\n       [False,  True]]), equal_nan=True, **{})",
+            ">       assert_eq(da.ma.getmaskarray(res), np.ma.getmaskarray(sol))",
+            ">           assert allclose(a, b, equal_nan=equal_nan, **kwargs), msg",
+            "E           AssertionError: found values in 'a' and 'b' which differ by more than the allowed amount",
+            "E           assert False",
+            "E            +  where False = allclose(array([[False,  True],\\n       [False, False],\\n       [ True, False]]), array([[ True, False],\\n       [ True,  True],\\n       [False,  True]]), equal_nan=True, **{})"
+          ],
+          "pytest_summary": "======================== 2 failed, 135 passed in 13.04s ========================",
+          "formal_reward": null
+        },
+        {
+          "candidate": "wrong_values_seven",
+          "attempt": "dask9378-cpu-c-20261003-v1",
+          "scope": "private_root_test_diagnostic",
+          "behavior": "rejected",
+          "test_rc": 1,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/run/private/wrong_values_seven/wrong_values_seven/revised_test_file.out",
+            "sha256": "da975c7244e71fe35ac50ed714a30d153f98d4c0fe4703b1b6bd3743cab9695c"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/run/private/wrong_values_seven/summary.json",
+            "sha256": "e556c15e9089d4ef585e4ad97c51c4c95a85df30f420faa30c4223d4d4382018"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/run/private_spec_wrong_values_seven.json",
+            "sha256": "bcefa524581f6518450476d7bfeb32d066a551c4ef73d7d60b2c53f83e3527ee"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 137,
+          "reference_status_counts": {
+            "PASSED": 135,
+            "FAILED": 2
+          },
+          "reference_missing": [],
+          "f2p_failed": [
+            "dask/array/tests/test_masked.py::test_like_funcs[zeros_like]",
+            "dask/array/tests/test_masked.py::test_like_funcs[ones_like]"
+          ],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 0,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [
+            ">           assert_eq(res, sol)",
+            ">           assert allclose(a, b, equal_nan=equal_nan, **kwargs), msg",
+            "E           AssertionError: found values in 'a' and 'b' which differ by more than the allowed amount",
+            "E           assert False",
+            "E            +  where False = allclose(masked_array(\\n  data=[[--, 7],\\n        [--, --],\\n        [7, --]],\\n  mask=[[ True, False],\\n        [ True,  True],\\n        [False,  True]],\\n  fill_value=999999), masked_array(\\n  data=[[--, 1],\\n        [--, --],\\n        [1, --]],\\n  mask=[[ True, False],\\n        [ True,  True],\\n        [False,  True]],\\n  fill_value=999999), equal_nan=True, **{})",
+            ">           assert_eq(res, sol)",
+            ">           assert allclose(a, b, equal_nan=equal_nan, **kwargs), msg",
+            "E           AssertionError: found values in 'a' and 'b' which differ by more than the allowed amount",
+            "E           assert False",
+            "E            +  where False = allclose(masked_array(\\n  data=[[--, 7],\\n        [--, --],\\n        [7, --]],\\n  mask=[[ True, False],\\n        [ True,  True],\\n        [False,  True]],\\n  fill_value=999999), masked_array(\\n  data=[[--, 0],\\n        [--, --],\\n        [0, --]],\\n  mask=[[ True, False],\\n        [ True,  True],\\n        [False,  True]],\\n  fill_value=999999), equal_nan=True, **{})"
+          ],
+          "pytest_summary": "======================== 2 failed, 135 passed in 13.38s ========================",
+          "formal_reward": null
+        }
+      ],
+      "formal_reward": null,
+      "open_requirements": [
+        "正式修订登记与material digest",
+        "可信非root正式评分及逐参考读回"
+      ],
+      "attempts": [
+        {
+          "attempt": "dask9378-cpu-c-20261003-v1",
+          "status": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/run/status.json",
+            "sha256": "65fa21e4d8c481db3c658d63d558815a93b860299ffb949b9159a1b2dc7359cf"
+          },
+          "release_manifest_sha256": "80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9",
+          "runtime": "runtime_cpu_v2",
+          "queue": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/queue_config.json",
+            "sha256": "b9bd433765da9a1ba5f6df950c25710851d294d91fb61b3a91fc0d06f369653c"
+          },
+          "queue_result": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/status.json",
+            "sha256": "fc022558209db462c09419ea9130b867bbab171fc5dcb227f1ac1db73b75297e"
+          },
+          "release_verify_receipt": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/run/verify_release.log",
+            "sha256": "62de76bd2578f05da1925cdf1319d2caf87f204a42c4f8150c0db35ce0f57fdd"
+          }
+        }
+      ],
+      "actor": {
+        "attempt": {
+          "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/run/actor/attempt.json",
+          "sha256": "4a50e3c46442c3894923f67b5e405e0dcbf52339c31cfcf916d3feaa9a932aed"
+        },
+        "first_request": {
+          "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/run/actor/stub/requests/messages_000.json",
+          "sha256": "bf2ec2a990522c4afbac8fe1ce9ef70f09233182cb05ea38f8b084c8a158062e"
+        },
+        "trajectory": {
+          "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/run/actor/harness/trajectory.jsonl",
+          "sha256": "a9942c1207ab08e928dfbf27feb2200ded375e308f08814fe44913faca647ea3"
+        },
+        "original_public_prompt_exact_match": true,
+        "other_user_text_block": "仅CC日期system-reminder",
+        "scripted_stub_no_model_inference": true,
+        "cc_version": "2.1.205",
+        "base_commit": "8b95f983c232c1bd628e9cba0695d3ef229d290b",
+        "actor_image_id": "sha256:1e5a0ee850161b35d33d26445f73e872488a45e0e436195af239190b68574096",
+        "prelaunch": {
+          "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/run/actor/prelaunch.json",
+          "sha256": "81998e7c4418364d862947f8648f70eafd18a760b7e7cb54c5a364e64913a484"
+        },
+        "activation": {
+          "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/run/actor/activation_check.json",
+          "sha256": "5e57757a7e109188d3c9bf59b0f0edf66e09adf9ce14dcdcec2be219316d299e"
+        },
+        "uid": "54321",
+        "cgroup": {
+          "CG_CPU_MAX": "200000 100000",
+          "CG_MEMORY_MAX": "4294967296",
+          "CG_SWAP_MAX": "0",
+          "CG_PIDS_MAX": "512"
+        },
+        "bind_mounts": [],
+        "activation_write": "DENIED",
+        "all_actual_bash_tools_and_results_checked": true,
+        "commands": [
+          {
+            "id": "identity_import",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 322,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "公开源码、身份、解释器和 array 必要依赖"
+          },
+          {
+            "id": "issue_public_ones_like",
+            "rc": 1,
+            "status": "nonzero",
+            "expect": "nonzero",
+            "matches_expect": true,
+            "output_bytes": 187,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "原公开题面例子；未修复源码的输出应丢失最后位置 mask，须读异常"
+          },
+          {
+            "id": "public_masked_regression",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 21354,
+            "output_truncated_to": 200000,
+            "pytest": {
+              "passed": 134
+            },
+            "purpose": "base 现有公开 masked 模块；不应用新测试"
+          },
+          {
+            "id": "public_creation_like",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 70916,
+            "output_truncated_to": 200000,
+            "pytest": {
+              "passed": 320,
+              "deselected": 394
+            },
+            "purpose": "既有公开 *_like 创建测试；历史 top-level 修法接受性覆盖"
+          }
+        ],
+        "generic_marker_checks": {
+          "interpreter_in_tool_result": false,
+          "bashenv_denied_for_agent": false
+        },
+        "generic_marker_limit": "保留false：本题未输出固定标记；identity/prelaunch/activation确认实际解释器与写权限。",
+        "harness_exit": 0,
+        "termination": "returned",
+        "full_trajectory_bytes_match": true,
+        "cleanup": {
+          "container_rm": 0,
+          "network_failures": [],
+          "relay_failures": [],
+          "stub_rc": 0,
+          "labeled_containers_left": [],
+          "labeled_networks_left": [],
+          "residual_after_force": []
+        }
+      },
+      "limits": [
+        "B规格：ma存在时核ma，缺失时允许正确顶层路线",
+        "empty仅核mask，不使用未初始化数值oracle",
+        "初版source镜像准备与第五版实际执行分开冻结"
+      ]
+    },
+    {
+      "instance_id": "dask__dask-7138",
+      "revision_id": "dask7138-array-keyword-v1",
+      "conclusion": "actual_cpu_evidence_matches_expected_with_declared_scope",
+      "blocking_findings_in_review_scope": [],
+      "material_assets": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7138/revision.json",
+          "sha256": "fb29e9e0f0a6457d974256b95678b753f9c700e7051c5fb3d8c2dfec61b767cc"
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7138/effective_test.patch",
+          "sha256": "2f3c5c539816149a06b6c460b5d79d6b3223f452cd5862bcdbac41faf76bc44a"
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7138/effective_test.py",
+          "sha256": "70c4e3bbadcdda5e78b624b7c51c49976485a1110f0952558c5c41b0f7231fae"
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7138/acceptance_matrix.json",
+          "sha256": "2e581e4a566d0b909796fa803f5722c166f5714798c041bcb9b2c1fdaf564586"
+        }
+      ],
+      "rows": [
+        {
+          "candidate": "noop",
+          "attempt": "dask7138-cpu-c-20261003-v1",
+          "scope": "private_root_test_diagnostic",
+          "behavior": "rejected",
+          "test_rc": 1,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-cpu-c-20261003-v1/remote/run/private/noop/noop/revised_test_file.out",
+            "sha256": "f2e279b0ae710591fc5b9d6a4efcbe68c1279a214d0f61a50c7c355370ff1877"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-cpu-c-20261003-v1/remote/run/private/noop/summary.json",
+            "sha256": "ce62d4285b793eba934b164b4387f745cf19e6d3ba18925fec7a2dd088149d9d"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-cpu-c-20261003-v1/remote/run/private_spec_noop.json",
+            "sha256": "cc578600055986e7eed22b938687f8d2adec107a4a49ab3b52678ee9d708b5cb"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 470,
+          "reference_status_counts": {
+            "FAILED": 1,
+            "PASSED": 469
+          },
+          "reference_missing": [],
+          "f2p_failed": [
+            "dask/array/tests/test_routines.py::test_ravel_with_array_like"
+          ],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 0,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [
+            ">       assert_eq(np.ravel(0), da.ravel(0))",
+            ">       return array.reshape((-1,))",
+            "E       AttributeError: 'int' object has no attribute 'reshape'"
+          ],
+          "pytest_summary": "================= 1 failed, 561 passed, 92 warnings in 16.15s ==================",
+          "formal_reward": null
+        },
+        {
+          "candidate": "compatible_ravel",
+          "attempt": "dask7138-cpu-c-20261003-v1",
+          "scope": "private_root_test_diagnostic",
+          "behavior": "accepted",
+          "test_rc": 0,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-cpu-c-20261003-v1/remote/run/private/compatible_ravel/compatible_ravel/revised_test_file.out",
+            "sha256": "c8dd808f8c893caf3434b9cb537243ceb33a4debfb91c34b51d74fb22bad1a42"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-cpu-c-20261003-v1/remote/run/private/compatible_ravel/summary.json",
+            "sha256": "1ea1e6898d3b096d382769c5d8eb11f58fd0b0a8b16133beb8f5448e085c695d"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-cpu-c-20261003-v1/remote/run/private_spec_compatible_ravel.json",
+            "sha256": "01787dc7a3f50f60f3f1d163c911ef86079c1c171a1a00b5d4f96be78e5cdb98"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 470,
+          "reference_status_counts": {
+            "PASSED": 470
+          },
+          "reference_missing": [],
+          "f2p_failed": [],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 0,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [],
+          "pytest_summary": "====================== 562 passed, 92 warnings in 15.40s =======================",
+          "formal_reward": null
+        },
+        {
+          "candidate": "gold",
+          "attempt": "dask7138-cpu-c-20261003-v1",
+          "scope": "private_root_test_diagnostic",
+          "behavior": "rejected",
+          "test_rc": 1,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-cpu-c-20261003-v1/remote/run/private/gold/gold/revised_test_file.out",
+            "sha256": "5971f5f826ebf990fb4a08072d390048e7beb39b03f5ed4215c05ceab2d39b61"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-cpu-c-20261003-v1/remote/run/private/gold/summary.json",
+            "sha256": "f04976853bbbeb6bb0474a7f04309ff8cabd1a3a98d64f0957b2f4f71cafa82d"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-cpu-c-20261003-v1/remote/run/private_spec_gold.json",
+            "sha256": "6e56c6ac1b2772d300998a822e066bf2ca06bff7da08818d99dc3ab352ce4290"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 470,
+          "reference_status_counts": {
+            "PASSED": 469,
+            "FAILED": 1
+          },
+          "reference_missing": [],
+          "f2p_failed": [],
+          "p2p_failed": [
+            "dask/array/tests/test_routines.py::test_ravel_keyword_array"
+          ],
+          "original_p2p_unexecuted_count": 0,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [
+            ">       result = da.ravel(array=array)",
+            "E       TypeError: ravel() got an unexpected keyword argument 'array'"
+          ],
+          "pytest_summary": "================= 1 failed, 561 passed, 92 warnings in 13.74s ==================",
+          "formal_reward": null
+        }
+      ],
+      "formal_reward": null,
+      "open_requirements": [
+        "正式修订登记与material digest",
+        "可信非root正式评分及逐参考读回",
+        "正式consumer实际追加登记test_ravel_keyword_array P2P"
+      ],
+      "attempts": [
+        {
+          "attempt": "dask7138-cpu-c-20261003-v1",
+          "status": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-cpu-c-20261003-v1/remote/run/status.json",
+            "sha256": "ea5787fe6c05046daed41186e51f8462545a2ac7a873e243bc231b509b6b7b78"
+          },
+          "release_manifest_sha256": "80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9",
+          "runtime": "runtime_cpu_v2",
+          "queue": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-cpu-c-20261003-v1/remote/queue_config.json",
+            "sha256": "555c020b36ea3b9f8a3eebbaf788223f844b0e5bbdfdd949236be5e6450c1792"
+          },
+          "queue_result": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-cpu-c-20261003-v1/remote/status.json",
+            "sha256": "d1c8f608fd9f89944e4f7e944757624ed618b519e0f65f66f71f7284a390c874"
+          },
+          "release_verify_receipt": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-cpu-c-20261003-v1/remote/run/verify_release.log",
+            "sha256": "62de76bd2578f05da1925cdf1319d2caf87f204a42c4f8150c0db35ce0f57fdd"
+          }
+        }
+      ],
+      "actor": {
+        "attempt": {
+          "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-cpu-c-20261003-v1/remote/run/actor/attempt.json",
+          "sha256": "d77ba66b5ce443b361743d56ccf6467475c9e0aac1993852738044936f7da35d"
+        },
+        "first_request": {
+          "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-cpu-c-20261003-v1/remote/run/actor/stub/requests/messages_000.json",
+          "sha256": "06a1855202b57f3d7e1ca457e2f7eea03dbb47a8baa0aa9b28f94912196fa883"
+        },
+        "trajectory": {
+          "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-cpu-c-20261003-v1/remote/run/actor/harness/trajectory.jsonl",
+          "sha256": "208d8eda20f47d77d823cf406edc54aaf5068de2bba7a0583ceaa54834f76ce5"
+        },
+        "original_public_prompt_exact_match": true,
+        "other_user_text_block": "仅CC日期system-reminder",
+        "scripted_stub_no_model_inference": true,
+        "cc_version": "2.1.205",
+        "base_commit": "9bb586a6b8fac1983b7cea3ab399719f93dbbb29",
+        "actor_image_id": "sha256:fdd298b61309ae2df4cb9f528351526b7b3817c42fc34f47f98152a92a520881",
+        "prelaunch": {
+          "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-cpu-c-20261003-v1/remote/run/actor/prelaunch.json",
+          "sha256": "f12c64018aaca7683082c2a6b196992d1a796492224d45310620652142a6a69e"
+        },
+        "activation": {
+          "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-cpu-c-20261003-v1/remote/run/actor/activation_check.json",
+          "sha256": "aba8b158b134d92113c7c7490a917a69baea5599ca698aed15b7530fbab44215"
+        },
+        "uid": "54321",
+        "cgroup": {
+          "CG_CPU_MAX": "200000 100000",
+          "CG_MEMORY_MAX": "4294967296",
+          "CG_SWAP_MAX": "0",
+          "CG_PIDS_MAX": "512"
+        },
+        "bind_mounts": [],
+        "activation_write": "DENIED",
+        "all_actual_bash_tools_and_results_checked": true,
+        "commands": [
+          {
+            "id": "identity_import",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 312,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "公开源码、身份、解释器与已验证兼容配方"
+          },
+          {
+            "id": "issue_public_list",
+            "rc": 1,
+            "status": "nonzero",
+            "expect": "nonzero",
+            "matches_expect": true,
+            "output_bytes": 236,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "原公开题面例子，未修复的list输入应AttributeError，须读实际异常"
+          },
+          {
+            "id": "public_legacy_keyword",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 26,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "公开base函数的原array=合法调用；不含新测试或gold"
+          },
+          {
+            "id": "public_routines_regression",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 49842,
+            "output_truncated_to": 200000,
+            "pytest": {
+              "passed": 560,
+              "warning": 92
+            },
+            "purpose": "base现有公开routines模块；按历史pytest7.4.4跑，无私有测试"
+          }
+        ],
+        "generic_marker_checks": {
+          "interpreter_in_tool_result": false,
+          "bashenv_denied_for_agent": false
+        },
+        "generic_marker_limit": "保留false：本题未输出固定标记；identity/prelaunch/activation确认实际解释器与写权限。",
+        "harness_exit": 0,
+        "termination": "returned",
+        "full_trajectory_bytes_match": true,
+        "cleanup": {
+          "container_rm": 0,
+          "network_failures": [],
+          "relay_failures": [],
+          "stub_rc": 0,
+          "labeled_containers_left": [],
+          "labeled_networks_left": [],
+          "residual_after_force": []
+        }
+      },
+      "limits": [
+        "新pytest7.4.4配方不等于历史层或wheel逐字复刻",
+        "各候选原468 P2P全过；gold仅失败新增keyword负对照",
+        "pip check历史冲突仍在，验证仅覆盖实际路径"
+      ]
+    },
+    {
+      "instance_id": "dask__dask-7305",
+      "revision_id": "dask7305-exact-ends-auto-v3",
+      "conclusion": "actual_cpu_evidence_matches_expected_with_declared_scope",
+      "blocking_findings_in_review_scope": [],
+      "material_assets": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7305/revision.json",
+          "sha256": "b65bf0af180aa373cc663b401d357dbe51d61036a8f065aabfd1ebde95108270"
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7305/effective_test.patch",
+          "sha256": "4c63d384f1c62eaa019c12bc70ae8b0cab0d7595e719edcc1d5e878feb86c127"
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7305/effective_test.py",
+          "sha256": "025b72244c757ab5ea353ff8bfcfb081ecde9987ccfcde67638f65b2058c58b5"
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7305/acceptance_matrix.json",
+          "sha256": "de3250c854bb6a5b335812070034eeb0261612344876cba6baca9d84241f1c88"
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7305/gold_full_auto.patch",
+          "sha256": "1a249962f60580a4340d6f92a45b414475c0eca86655715abb70229a366b5994"
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7305/acceptance_matrix_initial13_20261003.json",
+          "sha256": "73f3963cf66126e4163ded3f242668b563ee8c790140914fa607b14c27fa0dc2"
+        }
+      ],
+      "rows": [
+        {
+          "candidate": "noop",
+          "attempt": "dask7305-cpu-c-20261003-v1",
+          "scope": "private_root_test_diagnostic",
+          "behavior": "rejected",
+          "test_rc": 1,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/run/private/noop/noop/revised_test_file.out",
+            "sha256": "8378e86c1ebe5d0f22a840527449ec6482a1436e2f9256cfb770b31e22c5efa8"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/run/private/noop/summary.json",
+            "sha256": "52c11ac3fc76d5ef28c22f30ec50bb9a8a872907f793533e06037d6d4a9a8adc"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/run/private_spec_noop.json",
+            "sha256": "de13f626b5591853c9458ba19e5129b207a6f692719d8adc4bfaf4c75baf217a"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 105,
+          "reference_status_counts": {
+            "FAILED": 1,
+            "PASSED": 104
+          },
+          "reference_missing": [],
+          "f2p_failed": [
+            "dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate"
+          ],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 0,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [
+            ">       _assert_exact_int_divisions(issue, \"uint64\", 1, 1)",
+            "npartitions_in = 1, npartitions_out = 1",
+            ">           assert got[0] == lo",
+            "E           assert 612509347682975744 == 612509347682975743"
+          ],
+          "pytest_summary": "======= 1 failed, 104 passed, 3 skipped, 2 warnings in 108.58s (0:01:48) =======",
+          "formal_reward": null
+        },
+        {
+          "candidate": "gold_full_auto",
+          "attempt": "dask7305-cpu-c-20261003-v1",
+          "scope": "private_root_test_diagnostic",
+          "behavior": "accepted",
+          "test_rc": 0,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/run/private/gold_full_auto/gold_full_auto/revised_test_file.out",
+            "sha256": "583c038acb434e2acedd92edf672c040c13afa559f40abc6838344581a71bbdd"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/run/private/gold_full_auto/summary.json",
+            "sha256": "9fbb1d14b0e4f7e9817ff82c4163148ed04503bdd2d2ba1178b8c3cbb43979ae"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/run/private_spec_gold_full_auto.json",
+            "sha256": "aec67323f63269171b06ea1452778cb621fa2a32a6d91bca542257697eaf7306"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 105,
+          "reference_status_counts": {
+            "PASSED": 105
+          },
+          "reference_missing": [],
+          "f2p_failed": [],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 0,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [],
+          "pytest_summary": "============ 105 passed, 3 skipped, 2 warnings in 110.13s (0:01:50) ============",
+          "formal_reward": null
+        },
+        {
+          "candidate": "gold",
+          "attempt": "dask7305-cpu-c-20261003-v1",
+          "scope": "private_root_test_diagnostic",
+          "behavior": "rejected",
+          "test_rc": 1,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/run/private/gold/gold/revised_test_file.out",
+            "sha256": "29c49e05b90c0da2e720789f3501a9f3a5aede03c96623dac6ff5eb7fcc9a1b8"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/run/private/gold/summary.json",
+            "sha256": "db0783c4ec514a129426e718e351caa3d0240d3243821c29268d8d7656082ab8"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/run/private_spec_gold.json",
+            "sha256": "27829fdaf6b8ff32814c5b4eefc5cec04370a02ce67d66e1ce5a1befcd9c5af4"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 105,
+          "reference_status_counts": {
+            "FAILED": 1,
+            "PASSED": 104
+          },
+          "reference_missing": [],
+          "f2p_failed": [
+            "dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate"
+          ],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 0,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [
+            "        _assert_exact_int_divisions(issue, \"uint64\", 1, 1)",
+            ">       _assert_exact_int_divisions(issue, \"uint64\", 1, 3)",
+            "npartitions_in = 1, npartitions_out = 3",
+            ">           assert got[0] == lo",
+            "E           assert 612509347682975744 == 612509347682975743"
+          ],
+          "pytest_summary": "======= 1 failed, 104 passed, 3 skipped, 2 warnings in 109.88s (0:01:49) =======",
+          "formal_reward": null
+        },
+        {
+          "candidate": "gold_full",
+          "attempt": "dask7305-cpu-c-20261003-v1",
+          "scope": "private_root_test_diagnostic",
+          "behavior": "rejected",
+          "test_rc": 1,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/run/private/gold_full/gold_full/revised_test_file.out",
+            "sha256": "8b39bcacdaba5165e638f71fccec3fdf45d86a465bbda83de251d459ee2800ac"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/run/private/gold_full/summary.json",
+            "sha256": "04cb3d0b4bf4996b9e596ec48d24d27bbb224abe41105e70c70f8f4d2f8bcfa4"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/run/private_spec_gold_full.json",
+            "sha256": "72af42506d91bbeb05680cf16e72177d651b3d98587d86e6a3183cea091d1de7"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 105,
+          "reference_status_counts": {
+            "FAILED": 1,
+            "PASSED": 104
+          },
+          "reference_missing": [],
+          "f2p_failed": [
+            "dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate"
+          ],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 0,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [
+            "        _assert_exact_int_divisions(issue, \"uint64\", 1, 1)",
+            "        _assert_exact_int_divisions(issue, \"uint64\", 1, 3)",
+            "        _assert_exact_int_divisions([big + 997 * k for k in order], \"uint64\", 4, 4)",
+            "        _assert_exact_int_divisions([-big + 6125093476829757 * k for k in order], \"int64\", 4, 4)",
+            "        _assert_exact_int_divisions([big + 89000000000000001 * k for k in order], \"uint64\", 4, 4)",
+            "        _assert_exact_int_divisions([big + 99 + j % 3 for j in range(300)], \"uint64\", 3, 5)",
+            "        _assert_exact_int_divisions([-big - 997 * k for k in order], \"int64\", 4, 4)",
+            ">       _assert_exact_int_divisions(auto_values, \"uint64\", 4, \"auto\")",
+            ">       assert divisions[0] == lo",
+            "E       assert 612509347682975744 == 612509347682975743"
+          ],
+          "pytest_summary": "======= 1 failed, 104 passed, 3 skipped, 2 warnings in 112.08s (0:01:52) =======",
+          "formal_reward": null
+        },
+        {
+          "candidate": "exact_full",
+          "attempt": "dask7305-cpu-c-20261003-v1",
+          "scope": "private_root_test_diagnostic",
+          "behavior": "rejected",
+          "test_rc": 1,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/run/private/exact_full/exact_full/revised_test_file.out",
+            "sha256": "4b60c078eae4c31c9ba3a774fd16dab0a8a830472621dbda216df5c0546cdc34"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/run/private/exact_full/summary.json",
+            "sha256": "708775bfa24eab397b33a24c8cbb5f20f5d29cb77eee11bc75c27ff62c2217d4"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/run/private_spec_exact_full.json",
+            "sha256": "199900cd69cf4486f8397c199aa4236091870d590927088b89a9cbd0e5751ea4"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 105,
+          "reference_status_counts": {
+            "FAILED": 1,
+            "PASSED": 104
+          },
+          "reference_missing": [],
+          "f2p_failed": [
+            "dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate"
+          ],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 0,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [
+            "        _assert_exact_int_divisions(issue, \"uint64\", 1, 1)",
+            "        _assert_exact_int_divisions(issue, \"uint64\", 1, 3)",
+            "        _assert_exact_int_divisions([big + 997 * k for k in order], \"uint64\", 4, 4)",
+            "        _assert_exact_int_divisions([-big + 6125093476829757 * k for k in order], \"int64\", 4, 4)",
+            "        _assert_exact_int_divisions([big + 89000000000000001 * k for k in order], \"uint64\", 4, 4)",
+            "        _assert_exact_int_divisions([big + 99 + j % 3 for j in range(300)], \"uint64\", 3, 5)",
+            "        _assert_exact_int_divisions([-big - 997 * k for k in order], \"int64\", 4, 4)",
+            ">       _assert_exact_int_divisions(auto_values, \"uint64\", 4, \"auto\")",
+            ">       assert divisions[0] == lo",
+            "E       assert 612509347682975744 == 612509347682975743"
+          ],
+          "pytest_summary": "======= 1 failed, 104 passed, 3 skipped, 2 warnings in 106.27s (0:01:46) =======",
+          "formal_reward": null
+        },
+        {
+          "candidate": "higher_full",
+          "attempt": "dask7305-cpu-c-20261003-v1",
+          "scope": "private_root_test_diagnostic",
+          "behavior": "rejected",
+          "test_rc": 1,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/run/private/higher_full/higher_full/revised_test_file.out",
+            "sha256": "8149da2dd7ece0ea2de7b87fe3d70ea83087d76ca367ca7eb5508a1e1a6e2be2"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/run/private/higher_full/summary.json",
+            "sha256": "1f9be1849fe95ddbd78b06af6cc3d1df574ae41d401027dca3fc5c2f4fdcd99c"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/run/private_spec_higher_full.json",
+            "sha256": "b10f8978d6b5caf48a907dfc7f08aa33d3042a457a191f1e5e8cb3c4a883cec4"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 105,
+          "reference_status_counts": {
+            "FAILED": 1,
+            "PASSED": 104
+          },
+          "reference_missing": [],
+          "f2p_failed": [
+            "dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate"
+          ],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 0,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [
+            "        _assert_exact_int_divisions(issue, \"uint64\", 1, 1)",
+            "        _assert_exact_int_divisions(issue, \"uint64\", 1, 3)",
+            "        _assert_exact_int_divisions([big + 997 * k for k in order], \"uint64\", 4, 4)",
+            "        _assert_exact_int_divisions([-big + 6125093476829757 * k for k in order], \"int64\", 4, 4)",
+            "        _assert_exact_int_divisions([big + 89000000000000001 * k for k in order], \"uint64\", 4, 4)",
+            "        _assert_exact_int_divisions([big + 99 + j % 3 for j in range(300)], \"uint64\", 3, 5)",
+            "        _assert_exact_int_divisions([-big - 997 * k for k in order], \"int64\", 4, 4)",
+            ">       _assert_exact_int_divisions(auto_values, \"uint64\", 4, \"auto\")",
+            ">       assert divisions[0] == lo",
+            "E       assert 612509347682975744 == 612509347682975743"
+          ],
+          "pytest_summary": "======= 1 failed, 104 passed, 3 skipped, 2 warnings in 105.75s (0:01:45) =======",
+          "formal_reward": null
+        },
+        {
+          "candidate": "nearest_via_float",
+          "attempt": "dask7305-remaining-cpu-c-20261003-v1",
+          "scope": "private_root_test_diagnostic",
+          "behavior": "rejected",
+          "test_rc": 1,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private/nearest_via_float/nearest_via_float/revised_test_file.out",
+            "sha256": "6d0f23345445000dfd58b7c55425c287a7068280e8f06f6a42e9b9cd5f40f9a0"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private/nearest_via_float/summary.json",
+            "sha256": "5b80372583e21b94f3d23f3232890c70251a6b15547951af1eb71748e73cfee6"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private_spec_nearest_via_float.json",
+            "sha256": "2ca78f144b233d2b78d8e91842d237cb43aa7061bb2948e8f98d7ee2e830e945"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 105,
+          "reference_status_counts": {
+            "FAILED": 1,
+            "PASSED": 104
+          },
+          "reference_missing": [],
+          "f2p_failed": [
+            "dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate"
+          ],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 0,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [
+            ">       _assert_exact_int_divisions(issue, \"uint64\", 1, 1)",
+            "npartitions_in = 1, npartitions_out = 1",
+            ">           assert got[0] == lo",
+            "E           assert 612509347682975744 == 612509347682975743"
+          ],
+          "pytest_summary": "======= 1 failed, 104 passed, 3 skipped, 2 warnings in 102.65s (0:01:42) =======",
+          "formal_reward": null
+        },
+        {
+          "candidate": "clip_partition",
+          "attempt": "dask7305-remaining-cpu-c-20261003-v1",
+          "scope": "private_root_test_diagnostic",
+          "behavior": "rejected",
+          "test_rc": 1,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private/clip_partition/clip_partition/revised_test_file.out",
+            "sha256": "912b5c842c788883ad1b59b7f2e45c40953b322d8a8a8bf6f24a09ce87858b3a"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private/clip_partition/summary.json",
+            "sha256": "1ae731a3e88e47af8e6022e029451fcf7d38fdb20a58470614727abf2a076818"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private_spec_clip_partition.json",
+            "sha256": "d5773b506a21fc26e1996127b70c49406b1166c2426f63f0d3581a7976ed2e5c"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 105,
+          "reference_status_counts": {
+            "FAILED": 1,
+            "PASSED": 104
+          },
+          "reference_missing": [],
+          "f2p_failed": [
+            "dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate"
+          ],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 0,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [
+            ">       _assert_exact_int_divisions(issue, \"uint64\", 1, 1)",
+            "npartitions_in = 1, npartitions_out = 1",
+            ">           assert got[0] == lo",
+            "E           assert 612509347682975744 == 612509347682975743"
+          ],
+          "pytest_summary": "======= 1 failed, 104 passed, 3 skipped, 2 warnings in 103.47s (0:01:43) =======",
+          "formal_reward": null
+        },
+        {
+          "candidate": "uint_only",
+          "attempt": "dask7305-remaining-cpu-c-20261003-v1",
+          "scope": "private_root_test_diagnostic",
+          "behavior": "rejected",
+          "test_rc": 1,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private/uint_only/uint_only/revised_test_file.out",
+            "sha256": "80e849b0a54918bab00bcf7aad27f40ffd15ad81f9aaeeb3f99dd5d81bc75edc"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private/uint_only/summary.json",
+            "sha256": "e0428f1751573aeae920fbe1ee039f55075bcb58169491bcac80b515a94e07b0"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private_spec_uint_only.json",
+            "sha256": "4dd83341690bf3bb512690f425519167c124763e4e798694f30da5d034c8feff"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 105,
+          "reference_status_counts": {
+            "FAILED": 1,
+            "PASSED": 104
+          },
+          "reference_missing": [],
+          "f2p_failed": [
+            "dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate"
+          ],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 0,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [
+            "        _assert_exact_int_divisions(issue, \"uint64\", 1, 1)",
+            ">       _assert_exact_int_divisions(issue, \"uint64\", 1, 3)",
+            "npartitions_in = 1, npartitions_out = 3",
+            ">           assert got[0] == lo",
+            "E           assert 612509347682975744 == 612509347682975743"
+          ],
+          "pytest_summary": "======= 1 failed, 104 passed, 3 skipped, 2 warnings in 102.48s (0:01:42) =======",
+          "formal_reward": null
+        },
+        {
+          "candidate": "k1_only",
+          "attempt": "dask7305-remaining-cpu-c-20261003-v1",
+          "scope": "private_root_test_diagnostic",
+          "behavior": "rejected",
+          "test_rc": 1,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private/k1_only/k1_only/revised_test_file.out",
+            "sha256": "fde668956aa080e37ca498b7e853aad1cfd76d8ba4b42d14a7ddd140364db594"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private/k1_only/summary.json",
+            "sha256": "465995140412a584d4f26049fb4fe67c6ac72ce70f7250a69b754220967fb247"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private_spec_k1_only.json",
+            "sha256": "5869e14e51900588fea99ce9759f401b958371056da4a688781ce2bb77421a56"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 105,
+          "reference_status_counts": {
+            "FAILED": 1,
+            "PASSED": 104
+          },
+          "reference_missing": [],
+          "f2p_failed": [
+            "dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate"
+          ],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 0,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [
+            "        _assert_exact_int_divisions(issue, \"uint64\", 1, 1)",
+            ">       _assert_exact_int_divisions(issue, \"uint64\", 1, 3)",
+            "npartitions_in = 1, npartitions_out = 3",
+            ">           assert got[0] == lo",
+            "E           assert 612509347682975744 == 612509347682975743"
+          ],
+          "pytest_summary": "======= 1 failed, 104 passed, 3 skipped, 2 warnings in 105.42s (0:01:45) =======",
+          "formal_reward": null
+        },
+        {
+          "candidate": "first_last",
+          "attempt": "dask7305-remaining-cpu-c-20261003-v1",
+          "scope": "private_root_test_diagnostic",
+          "behavior": "rejected",
+          "test_rc": 1,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private/first_last/first_last/revised_test_file.out",
+            "sha256": "087852d3c0b7b1495296ad270a02402ed417aafe416d5ff8b503f5cb22d9b536"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private/first_last/summary.json",
+            "sha256": "7fa4f096056946766ad4d634cec24b98c3b31f8ba1ced6f6777550fd8c33207c"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private_spec_first_last.json",
+            "sha256": "a75fe8fe175a857364346a5c34ab4344396692c3176c483ba503bdd04a8165bb"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 105,
+          "reference_status_counts": {
+            "FAILED": 3,
+            "PASSED": 102
+          },
+          "reference_missing": [],
+          "f2p_failed": [
+            "dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate"
+          ],
+          "p2p_failed": [
+            "dask/dataframe/tests/test_shuffle.py::test_set_index",
+            "dask/dataframe/tests/test_shuffle.py::test_empty_partitions"
+          ],
+          "original_p2p_unexecuted_count": 0,
+          "known_negative_p2p_expected": [
+            "dask/dataframe/tests/test_shuffle.py::test_set_index",
+            "dask/dataframe/tests/test_shuffle.py::test_empty_partitions"
+          ],
+          "actual_failure_lines": [
+            ">       assert_eq(d2, full.set_index(\"b\"))",
+            ">           assert index(results[-1]).max() <= ddf.divisions[-1]",
+            "E           AssertionError",
+            "        _assert_exact_int_divisions(issue, \"uint64\", 1, 1)",
+            ">       _assert_exact_int_divisions(issue, \"uint64\", 1, 3)",
+            "npartitions_in = 1, npartitions_out = 3",
+            ">           assert got[0] == lo",
+            "E           assert 612509347682975744 == 612509347682975743",
+            ">       assert_eq(ddf, df.set_index(\"b\"))",
+            ">           assert index(results[-1]).max() <= ddf.divisions[-1]",
+            "E           AssertionError"
+          ],
+          "pytest_summary": "======= 3 failed, 102 passed, 3 skipped, 2 warnings in 104.72s (0:01:44) =======",
+          "formal_reward": null
+        },
+        {
+          "candidate": "gold_pin_only",
+          "attempt": "dask7305-remaining-cpu-c-20261003-v1",
+          "scope": "private_root_test_diagnostic",
+          "behavior": "rejected",
+          "test_rc": 1,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private/gold_pin_only/gold_pin_only/revised_test_file.out",
+            "sha256": "1261f117f7fae49426b532ec4765b0ff6f6393339a6b52afb5e141c7e3df89cd"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private/gold_pin_only/summary.json",
+            "sha256": "fd2941fa5f6d82e3aa60aa5d65acf1de158cd66e7218cdbf24985c13c2d0d65d"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private_spec_gold_pin_only.json",
+            "sha256": "ea8a15f325e37d6d80d96b19e9cd51a59fc5eb65668836068ace0531c8ee98fb"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 105,
+          "reference_status_counts": {
+            "FAILED": 1,
+            "PASSED": 104
+          },
+          "reference_missing": [],
+          "f2p_failed": [
+            "dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate"
+          ],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 0,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [
+            "        _assert_exact_int_divisions(issue, \"uint64\", 1, 1)",
+            "        _assert_exact_int_divisions(issue, \"uint64\", 1, 3)",
+            "        _assert_exact_int_divisions([big + 997 * k for k in order], \"uint64\", 4, 4)",
+            "        _assert_exact_int_divisions([-big + 6125093476829757 * k for k in order], \"int64\", 4, 4)",
+            ">       _assert_exact_int_divisions([big + 89000000000000001 * k for k in order], \"uint64\", 4, 4)",
+            ">           assert got[0] == lo",
+            "E           assert 612509347682975744 == 612509347682975743"
+          ],
+          "pytest_summary": "======= 1 failed, 104 passed, 3 skipped, 2 warnings in 104.56s (0:01:44) =======",
+          "formal_reward": null
+        },
+        {
+          "candidate": "gold_typed_only",
+          "attempt": "dask7305-remaining-cpu-c-20261003-v1",
+          "scope": "private_root_test_diagnostic",
+          "behavior": "rejected",
+          "test_rc": 1,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private/gold_typed_only/gold_typed_only/revised_test_file.out",
+            "sha256": "952565e577a87e6c1fc410b9d5233c915b6a74a36562ce77ba27d025a6ec297b"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private/gold_typed_only/summary.json",
+            "sha256": "00c1ea12ea58880353edf29b07aa6a8b85cb438b272cac1bf57003bf6885790c"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private_spec_gold_typed_only.json",
+            "sha256": "b35618d393ce6ce1461bf118168901c81b51383a8517f1113526056506a3256a"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 105,
+          "reference_status_counts": {
+            "FAILED": 1,
+            "PASSED": 104
+          },
+          "reference_missing": [],
+          "f2p_failed": [
+            "dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate"
+          ],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 0,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [
+            "        _assert_exact_int_divisions(issue, \"uint64\", 1, 1)",
+            ">       _assert_exact_int_divisions(issue, \"uint64\", 1, 3)",
+            "npartitions_in = 1, npartitions_out = 3",
+            ">           assert got[0] == lo",
+            "E           assert 612509347682975744 == 612509347682975743"
+          ],
+          "pytest_summary": "======= 1 failed, 104 passed, 3 skipped, 2 warnings in 101.64s (0:01:41) =======",
+          "formal_reward": null
+        },
+        {
+          "candidate": "rv_pin_noclip",
+          "attempt": "dask7305-remaining-cpu-c-20261003-v1",
+          "scope": "private_f2p_only_v2_focus_diagnostic",
+          "behavior": "rejected",
+          "test_rc": 1,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private/rv_pin_noclip/rv_pin_noclip/revised_test_file.out",
+            "sha256": "a0ebb7626494a1463906a1b300b68af32cb99690bc64e836726cc2523e52ea68"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private/rv_pin_noclip/summary.json",
+            "sha256": "8a85b021e35465ced4749096b34a5d9320a105e272ed38ff1024308591defe59"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private_spec_rv_pin_noclip.json",
+            "sha256": "d8e84e68f2be8cf297152980c620b2661475ec2e08155413ae05c0139512b47b"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 1,
+          "reference_status_counts": {
+            "FAILED": 1
+          },
+          "reference_missing": [],
+          "f2p_failed": [
+            "dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate"
+          ],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 104,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [
+            "        _assert_exact_int_divisions(issue, \"uint64\", 1, 1)",
+            "        _assert_exact_int_divisions(issue, \"uint64\", 1, 3)",
+            "        _assert_exact_int_divisions([big + 997 * k for k in order], \"uint64\", 4, 4)",
+            "        _assert_exact_int_divisions([-big + 6125093476829757 * k for k in order], \"int64\", 4, 4)",
+            "        _assert_exact_int_divisions([big + 89000000000000001 * k for k in order], \"uint64\", 4, 4)",
+            ">       _assert_exact_int_divisions([big + 99 + j % 3 for j in range(300)], \"uint64\", 3, 5)",
+            ">           assert got[-1] == hi",
+            "E           assert 612509347682975872 == 612509347682975844"
+          ],
+          "pytest_summary": "========================= 1 failed, 1 warning in 2.93s =========================",
+          "formal_reward": null
+        },
+        {
+          "candidate": "rv_interp_pin_noclip",
+          "attempt": "dask7305-remaining-cpu-c-20261003-v1",
+          "scope": "private_f2p_only_v2_focus_diagnostic",
+          "behavior": "rejected",
+          "test_rc": 1,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private/rv_interp_pin_noclip/rv_interp_pin_noclip/revised_test_file.out",
+            "sha256": "c2cd1ef1dd503923676e4f1f4b4cbc4b09afb311f910a37abeb5fc7d9dbb44ba"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private/rv_interp_pin_noclip/summary.json",
+            "sha256": "d3734e3a01b26a9e960dee05125f4d01ed0120c5f243b8a2b1f3c16ea1bd26e1"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private_spec_rv_interp_pin_noclip.json",
+            "sha256": "863058f8d2df4c132fee3fd9160204a771ef0e6d9f2306d1026b3941528fee35"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 1,
+          "reference_status_counts": {
+            "FAILED": 1
+          },
+          "reference_missing": [],
+          "f2p_failed": [
+            "dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate"
+          ],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 104,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [
+            "        _assert_exact_int_divisions(issue, \"uint64\", 1, 1)",
+            "        _assert_exact_int_divisions(issue, \"uint64\", 1, 3)",
+            "        _assert_exact_int_divisions([big + 997 * k for k in order], \"uint64\", 4, 4)",
+            "        _assert_exact_int_divisions([-big + 6125093476829757 * k for k in order], \"int64\", 4, 4)",
+            "        _assert_exact_int_divisions([big + 89000000000000001 * k for k in order], \"uint64\", 4, 4)",
+            ">       _assert_exact_int_divisions([big + 99 + j % 3 for j in range(300)], \"uint64\", 3, 5)",
+            ">           assert got == sorted(got)",
+            "E           assert [612509347682...9347682975844] == [612509347682...9347682975872]",
+            "E             ",
+            "E             At index 1 diff: 612509347682975872 != 612509347682975844",
+            "E             Use -v to get more diff"
+          ],
+          "pytest_summary": "========================= 1 failed, 1 warning in 2.61s =========================",
+          "formal_reward": null
+        },
+        {
+          "candidate": "rv_maxonly_threshold",
+          "attempt": "dask7305-remaining-cpu-c-20261003-v1",
+          "scope": "private_f2p_only_v2_focus_diagnostic",
+          "behavior": "rejected",
+          "test_rc": 1,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private/rv_maxonly_threshold/rv_maxonly_threshold/revised_test_file.out",
+            "sha256": "51bd6588e5637c8bb6d3582c9aefdb635cbe868a4dbbe0a9476857742dcedc31"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private/rv_maxonly_threshold/summary.json",
+            "sha256": "d883722d465dc1df12c8394a8c88ae7cfec00330066434cecb20ba8b9a680510"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private_spec_rv_maxonly_threshold.json",
+            "sha256": "0f6a691acecae1f1fe769c378160fdb22f14fe287f931fe023cd566e3fae0687"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 1,
+          "reference_status_counts": {
+            "FAILED": 1
+          },
+          "reference_missing": [],
+          "f2p_failed": [
+            "dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate"
+          ],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 104,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [
+            "        _assert_exact_int_divisions(issue, \"uint64\", 1, 1)",
+            "        _assert_exact_int_divisions(issue, \"uint64\", 1, 3)",
+            "        _assert_exact_int_divisions([big + 997 * k for k in order], \"uint64\", 4, 4)",
+            "        _assert_exact_int_divisions([-big + 6125093476829757 * k for k in order], \"int64\", 4, 4)",
+            "        _assert_exact_int_divisions([big + 89000000000000001 * k for k in order], \"uint64\", 4, 4)",
+            "        _assert_exact_int_divisions([big + 99 + j % 3 for j in range(300)], \"uint64\", 3, 5)",
+            ">       _assert_exact_int_divisions([-big - 997 * k for k in order], \"int64\", 4, 4)",
+            ">           assert got[0] == lo",
+            "E           assert -612509347683174144 == -612509347683174146"
+          ],
+          "pytest_summary": "========================= 1 failed, 1 warning in 3.10s =========================",
+          "formal_reward": null
+        },
+        {
+          "candidate": "rv_k_le4",
+          "attempt": "dask7305-remaining-cpu-c-20261003-v1",
+          "scope": "private_f2p_only_v2_focus_diagnostic",
+          "behavior": "rejected",
+          "test_rc": 1,
+          "log": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private/rv_k_le4/rv_k_le4/revised_test_file.out",
+            "sha256": "cba36b2519800640c2f6b31ccef585757737e94e17be93b1f8a87a2ec7fdb130"
+          },
+          "summary": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private/rv_k_le4/summary.json",
+            "sha256": "185d9fc508c3b0b938f8406b14787fde14d9c5d73e1baf3df2193b15193e3b73"
+          },
+          "spec": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/private_spec_rv_k_le4.json",
+            "sha256": "b69a66351217287de394c8bca4163b1d3fb0fd4c0ff885b9adbf65a6313cfe49"
+          },
+          "raw_log_checks": "一对Start/End；SHA/大小/退出匹配；标记内独立逐参考解析与status一致；准备rc0，清理无残留。",
+          "reference_count": 1,
+          "reference_status_counts": {
+            "FAILED": 1
+          },
+          "reference_missing": [],
+          "f2p_failed": [
+            "dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate"
+          ],
+          "p2p_failed": [],
+          "original_p2p_unexecuted_count": 104,
+          "known_negative_p2p_expected": [],
+          "actual_failure_lines": [
+            "        _assert_exact_int_divisions(issue, \"uint64\", 1, 1)",
+            "        _assert_exact_int_divisions(issue, \"uint64\", 1, 3)",
+            "        _assert_exact_int_divisions([big + 997 * k for k in order], \"uint64\", 4, 4)",
+            "        _assert_exact_int_divisions([-big + 6125093476829757 * k for k in order], \"int64\", 4, 4)",
+            "        _assert_exact_int_divisions([big + 89000000000000001 * k for k in order], \"uint64\", 4, 4)",
+            ">       _assert_exact_int_divisions([big + 99 + j % 3 for j in range(300)], \"uint64\", 3, 5)",
+            ">           assert got[0] == lo",
+            "E           assert 612509347682975872 == 612509347682975842"
+          ],
+          "pytest_summary": "========================= 1 failed, 1 warning in 2.62s =========================",
+          "formal_reward": null
+        }
+      ],
+      "formal_reward": null,
+      "open_requirements": [
+        "正式修订登记与material digest",
+        "可信非root正式评分及逐参考读回",
+        "四rv聚焦候选各须完整执行104 P2P正式验收"
+      ],
+      "static_review": {
+        "source_asset_shas_verified": 6,
+        "candidate_patch_shas_verified": 16,
+        "all_candidate_patches_apply_in_memory_and_ast_parse": true,
+        "only_production_files_changed": true,
+        "test_patch_matches_effective_py_and_registered_sha": true,
+        "original_test_ast_changed_only": "test_set_index_interpolate",
+        "new_helper": "_assert_exact_int_divisions",
+        "v2_seven_calls_preserved": true,
+        "v3_eighth_call": "auto",
+        "auto_supported_in_public_base_api": true,
+        "public_rationale": "公开大整数精确端点和乱序set_index行归属要求；auto是公开支持的API路径。",
+        "internal_divisions_not_locked_to_gold": true,
+        "gold_full_partitionquantiles_unchanged_in_gold_full_auto": true,
+        "new_shuffle_integer_branch": "从有序精确整数摘要取值且含首末；非整数保留旧插值。",
+        "initial13_rows_preserved_as_prefix_of_current17": true
+      },
+      "attempts": [
+        {
+          "attempt": "dask7305-cpu-c-20261003-v1",
+          "status": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/run/status.json",
+            "sha256": "a852bfe07404151f2d08d672341a6a4ed268dfe921c1201db8f779fa5ca92dfc"
+          },
+          "release_manifest_sha256": "80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9",
+          "runtime": "runtime_cpu_v2",
+          "queue": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/queue_config.json",
+            "sha256": "924bfaf7ae0509138eaba5f04eca2515c86de799398ee6a388a56adef8b08360"
+          },
+          "queue_result": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/status.json",
+            "sha256": "05d4b95508a96352d7433da1162e7f7501c3ba3ff1ffc0b1efea29a4fdc1efe8"
+          },
+          "release_verify_receipt": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/run/verify_release.log",
+            "sha256": "62de76bd2578f05da1925cdf1319d2caf87f204a42c4f8150c0db35ce0f57fdd"
+          }
+        },
+        {
+          "attempt": "dask7305-remaining-cpu-c-20261003-v1",
+          "status": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/status.json",
+            "sha256": "65f4af52c607c106f97e8cdf2170069f08db3af63257959e0e33204a6adf68fc"
+          },
+          "release_manifest_sha256": "80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9",
+          "runtime": "runtime_cpu_v2",
+          "queue": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/queue_config.json",
+            "sha256": "c99b9ef7cd98249ad0018404b1518d215ec22259f23a48d2e6bc3ed67bab7d68"
+          },
+          "queue_result": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/status.json",
+            "sha256": "9d91882a4ad9eeada5b1427328dc97a39dfc6b1056be5a14f31f46d2bca73f32"
+          },
+          "release_verify_receipt": {
+            "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/run/verify_release.log",
+            "sha256": "62de76bd2578f05da1925cdf1319d2caf87f204a42c4f8150c0db35ce0f57fdd"
+          }
+        }
+      ],
+      "actor": {
+        "attempt": {
+          "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/run/actor/attempt.json",
+          "sha256": "f94d07e5c0b8347eb840081d09e1c91ea09fb8276dc58ded88129a4806c26870"
+        },
+        "first_request": {
+          "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/run/actor/stub/requests/messages_000.json",
+          "sha256": "fd891a9fdc1744c6ea38ab18d5564c924426b183b187f1ac96c1479c490bedfd"
+        },
+        "trajectory": {
+          "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/run/actor/harness/trajectory.jsonl",
+          "sha256": "63ae7f8f9bc6e72cbe13aae9395848c3e36139bdc419a31cadde1aa6b4304a31"
+        },
+        "original_public_prompt_exact_match": true,
+        "other_user_text_block": "仅CC日期system-reminder",
+        "scripted_stub_no_model_inference": true,
+        "cc_version": "2.1.205",
+        "base_commit": "8663c6b7813fbdcaaa85d4fdde04ff42b1bb6ed0",
+        "actor_image_id": "sha256:b4f186ca0a0139f4287b9203a666b9fd009af079ddad700bb2bf8019aede8b99",
+        "prelaunch": {
+          "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/run/actor/prelaunch.json",
+          "sha256": "b9bc495774e1fae8b198dc0600ae89d0728c959672c04465899a462c444d7012"
+        },
+        "activation": {
+          "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/run/actor/activation_check.json",
+          "sha256": "18e2686c8f3d956ed96ac7233bfb03960f6855583d8d0701e2e1da8fab809987"
+        },
+        "uid": "54321",
+        "cgroup": {
+          "CG_CPU_MAX": "200000 100000",
+          "CG_MEMORY_MAX": "4294967296",
+          "CG_SWAP_MAX": "0",
+          "CG_PIDS_MAX": "512"
+        },
+        "bind_mounts": [],
+        "activation_write": "DENIED",
+        "all_actual_bash_tools_and_results_checked": true,
+        "commands": [
+          {
+            "id": "identity_import",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 326,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "原公开dataframe源码、身份、解释器与必要依赖"
+          },
+          {
+            "id": "issue_public_quantiles",
+            "rc": 1,
+            "status": "nonzero",
+            "expect": "nonzero",
+            "matches_expect": true,
+            "output_bytes": 223,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "原题面大uint64例子；base端点+1，应读确切差异"
+          },
+          {
+            "id": "public_shuffle_regression",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 11274,
+            "output_truncated_to": 200000,
+            "pytest": {
+              "passed": 104,
+              "skipped": 3,
+              "warning": 2
+            },
+            "purpose": "base原公开shuffle模块；不应用私有新测试；既有内部分界断言的P6另记"
+          }
+        ],
+        "generic_marker_checks": {
+          "interpreter_in_tool_result": false,
+          "bashenv_denied_for_agent": false
+        },
+        "generic_marker_limit": "保留false：本题未输出固定标记；identity/prelaunch/activation确认实际解释器与写权限。",
+        "harness_exit": 0,
+        "termination": "returned",
+        "full_trajectory_bytes_match": true,
+        "cleanup": {
+          "container_rm": 0,
+          "network_failures": [],
+          "relay_failures": [],
+          "stub_rc": 0,
+          "labeled_containers_left": [],
+          "labeled_networks_left": [],
+          "residual_after_force": []
+        }
+      },
+      "limits": [
+        "13份全模块各105参考；4定向项各1 F2P，104 P2P未执行",
+        "first_last准确失败两个已知旧P2P，不能声称全部P2P通过",
+        "旧gold_full/exact_full/higher_full通过七组v2但失败auto，历史正对照范围保留",
+        "gold_pin_only前四组通过后在跨2**63组失败，非早期原例",
+        "新gold_full_auto仅在所列模块和私有root条件下验证"
+      ]
+    }
+  ],
+  "readback_manifests": [
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/image_preparation/dask7656-cpu-c-20261003-v4/remote/readback_manifest.json",
+      "sha256": "cd58d2d00c599480689940b183eac7cea029fb5965f77165c480721a7ab79b8a",
+      "files": 20,
+      "bytes": 60165,
+      "sha_size_member_set_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/image_preparation/dask9378-cpu-c-20261003-v1/remote/readback_manifest.json",
+      "sha256": "5e1620e0ff0ec1c517c4f504f7966fd251ab49bc391e89081f4418ee35ef8e8b",
+      "files": 18,
+      "bytes": 12080,
+      "sha_size_member_set_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/image_preparation/dask7138-cpu-c-20261003-v1/remote/readback_manifest.json",
+      "sha256": "5f4e80771974668e5fddd233533bfc794a7d6cd859ab714d3c593452e3f41df8",
+      "files": 19,
+      "bytes": 54958,
+      "sha_size_member_set_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/image_preparation/dask7305-cpu-c-20261003-v1/remote/readback_manifest.json",
+      "sha256": "bdb97b6d315af69e6f875df6682a38691484500b528cda5640e4ee3d76096cea",
+      "files": 18,
+      "bytes": 11934,
+      "sha_size_member_set_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-cpu-c-20261003-v2/remote/readback_manifest.json",
+      "sha256": "6edf9659a0513db47312edcb727544b5d2aadbdf4fb22713f9755511be61d53a",
+      "files": 67,
+      "bytes": 304405,
+      "sha_size_member_set_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-cpu-c-20261003-v1/remote/readback_manifest.json",
+      "sha256": "51295b1ba6b84a338dee520857300100d31fc42daf46731782b3a2d4856b30d7",
+      "files": 79,
+      "bytes": 555773,
+      "sha_size_member_set_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-cpu-c-20261003-v1/remote/readback_manifest.json",
+      "sha256": "470df7c38135f0f1a1b7034cd18efa8b005048863e4707841b45394d0dd34b7f",
+      "files": 60,
+      "bytes": 548676,
+      "sha_size_member_set_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-cpu-c-20261003-v1/remote/readback_manifest.json",
+      "sha256": "c853586dd94d85e6f0dd0fd266e133748bdd1a0cf647c239326fda07a4736bfd",
+      "files": 77,
+      "bytes": 344778,
+      "sha_size_member_set_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-remaining-cpu-c-20261003-v1/remote/readback_manifest.json",
+      "sha256": "9a464cc0eab7afad4cf709b6168215d39c18aef577e57785081c5ed88114f461",
+      "files": 89,
+      "bytes": 277502,
+      "sha_size_member_set_verified": true
+    }
+  ],
+  "input_snapshots": [
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/input_snapshots/cd9e9b527da778bd/manifest.json",
+      "sha256": "cd9e9b527da778bde33830cf3109c073688db36826a09ee532dbecdf89b781c6",
+      "id": "cd9e9b527da778bd",
+      "files": 22,
+      "archive": {
+        "path": "runs/category2_repair_20260929/swe_dask/input_snapshots/cd9e9b527da778bd/inputs.tar.gz",
+        "sha256": "4acb473ffa1b36b7ec105048ff4efa385976ca165f02e95ccafa3f283601a771"
+      },
+      "archived_member_sha_and_size_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/input_snapshots/9a984c4ce36a871a/manifest.json",
+      "sha256": "9a984c4ce36a871a75bcceb3d5aed753ca3c3ab962ba123892db7841adf0c42b",
+      "id": "9a984c4ce36a871a",
+      "files": 17,
+      "archive": {
+        "path": "runs/category2_repair_20260929/swe_dask/input_snapshots/9a984c4ce36a871a/inputs.tar.gz",
+        "sha256": "56b24096d2940f0750a74380f9140a309526d08e6b3ff002609fc3d5a67f8f83"
+      },
+      "archived_member_sha_and_size_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/input_snapshots/171ae9861a465328/manifest.json",
+      "sha256": "171ae9861a465328e13d491795c1431e26476a8f6872b81483ec3866e1114497",
+      "id": "171ae9861a465328",
+      "files": 19,
+      "archive": {
+        "path": "runs/category2_repair_20260929/swe_dask/input_snapshots/171ae9861a465328/inputs.tar.gz",
+        "sha256": "7d429c119f967988e0cc1aa7c4a7bc94876d8c562f28dc7c79447e7804dab7d1"
+      },
+      "archived_member_sha_and_size_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/input_snapshots/6ed3228ad3615384/manifest.json",
+      "sha256": "6ed3228ad3615384eab107595bc1422de8441dc3c399f0f5a8fa279780fbf60e",
+      "id": "6ed3228ad3615384",
+      "files": 25,
+      "archive": {
+        "path": "runs/category2_repair_20260929/swe_dask/input_snapshots/6ed3228ad3615384/inputs.tar.gz",
+        "sha256": "f2acd0ce03454597610bf81f28e96655b101b5e42712a219582d7e1b35004608"
+      },
+      "archived_member_sha_and_size_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/input_snapshots/1e59b10771f52f51/manifest.json",
+      "sha256": "1e59b10771f52f516875d8d236c1ca0ab080fdc5ce6560cc6ae70da6fbf81d30",
+      "id": "1e59b10771f52f51",
+      "files": 28,
+      "archive": {
+        "path": "runs/category2_repair_20260929/swe_dask/input_snapshots/1e59b10771f52f51/inputs.tar.gz",
+        "sha256": "9351d2ec7a50a34e36cba1d9eca899e3b0425eceb76d6048bf26ed11edd2c4c5"
+      },
+      "archived_member_sha_and_size_verified": true
+    }
+  ],
+  "record_corrections": [
+    {
+      "issue": "7305摘要scope/state曾滞后写剩余或rv运行待做",
+      "resolution": "已关闭：按追加原件订正并保留更正历史，CPU原件不变。",
+      "current": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7305/results.json",
+        "sha256": "1313b6ed8c9e5c4aa64ce995ec63d21cd02bd86f9f45d88ded104ed830fd0eca"
+      }
+    },
+    {
+      "issue": "7305摘要曾把gold_pin_only写为早期原例失败",
+      "resolution": "已关闭：现段落准确写前四组通过后跨2**63组失败。",
+      "current": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7305/cpu_readback_20261003.md",
+        "sha256": "be78e9ad62a8d2db9f3b5e9f8a52086edce85805467f233593532099a0d2de41"
+      }
+    }
+  ],
+  "stop_condition": "已完成材料／结果窄核，可交正式发布；正式consumer和非root评分交付后按未变SHA补窄核，不机械全题重审或重跑CPU。"
+}

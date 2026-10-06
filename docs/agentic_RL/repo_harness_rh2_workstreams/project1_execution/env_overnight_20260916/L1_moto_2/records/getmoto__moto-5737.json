@@ -1,0 +1,57 @@
+{
+ "task_id": "getmoto__moto-5737",
+ "source": "SWE-Gym lite (s2 ingest v0)",
+ "task_revision": "upstream",
+ "by": "L1_moto_2 (Opus 5, 静态审查, 2026-09-16)",
+ "materials_refs": {
+  "snapshot": "runs/env_overnight_20260916/L1_moto_2/mat/getmoto__moto-5737/",
+  "base_commit": "4ec748542f91c727147390685adf641a29a4e9e4",
+  "version": "4.0",
+  "eval_cmd": "pytest -n0 -rA",
+  "repo_level": "docs/.../env_overnight_20260916/L1_moto_2/repo_level_findings.md"
+ },
+ "public_view": {
+  "目标行为": "CloudFront update_distribution 传入的新增/修改的 origins 要被持久化，后续 get_distribution_config / get_distribution 能看到。",
+  "约束": "只改 moto/ 源码。",
+  "公开材料可推断": "base 的 update_distribution 只更新 config 和 aliases，完全没有处理 Origins（4ec748542f:moto/cloudfront/models.py:330-336）。方向可推断。",
+  "公开材料无法确定的点": [
+   "题面 356 字符、无复现脚本、无期望值、只有一句\"I will submit a PR for this\"。完全没提 OriginPath —— 而三个 F2P 全部围绕 OriginPath 的存取。",
+   "题面没提 Origin 对象需要新增 origin_path 属性来喂模板 `<OriginPath>{{ origin.origin_path }}</OriginPath>`（4ec748542f:moto/cloudfront/responses.py:162）；base 该属性不存在、Jinja Undefined 渲染成空串，所以症状表现为 OriginPath 永远是 \"\"。",
+   "题面完全没有、也无法推出 F2P 对 OriginShield 的新期望 `{\"Enabled\": False, \"OriginShieldRegion\": \"None\"}`（见检查 24）。",
+   "题面没说测试脚手架 example_distribution_config 的默认值要改（OriginAccessIdentity 由 \"\" 改成真实 OAI）——这是判分材料自带的改动，求解者看不到。"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5737/test.patch", "mat/getmoto__moto-5737/gold.patch"], "note": "test_patch 碰 3 个 tests/test_cloudfront/ 下文件（含脚手架 cloudfront_test_scaffolding.py，base 均存在），gold 只碰 moto/cloudfront/models.py（base 存在）。无二进制/LFS。", "by": "static"},
+  "2": {"status": "pass", "evidence_refs": ["4ec748542f:moto/cloudfront/models.py:112-133,330-336"], "note": "base 的 Origin.__init__ 没有 origin_path，update_distribution 不更新 origins；缺陷确在。stage1 empty=RESOLVED_NO 印证。", "by": "static+stage1"},
+  "3": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-5737/problem_statement.txt"], "note": "题面极简（356 字符），无复现、无期望输出、无涉及字段名。这是\"作者自己提 PR\"型 issue，公开信息量远低于 F2P 的检查密度。", "by": "static"},
+  "4": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5737/test.patch"], "note": "合法解在 moto/cloudfront/models.py（或 responses.py 模板），不在恢复范围。", "by": "static"},
+  "5": {"status": "pass", "evidence_refs": ["本包 getmoto__moto-5699 同属 cloudfront"], "note": "与 5699 不同 PR、不同文件、不同判分集合，非派生。", "by": "static"},
+  "11": {"status": "pass", "evidence_refs": ["4ec748542f:tests/test_cloudfront/"], "note": "无 network marker、无真实端点。", "by": "static"},
+  "17": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5737/test.patch", "4ec748542f:tests/test_cloudfront/"], "note": "本题是第四组 B\"按 test_patch 全部触碰路径生成 test_files\"这条规则的正面样例：tests/test_cloudfront/cloudfront_test_scaffolding.py 不叫 test_*.py，却被 4 个测试文件 import（test_cloudfront.py / test_cloudfront_dist_tags.py / test_cloudfront_distributions.py / test_cloudfront_invalidation.py），且 F2P 的期望值直接依赖它的新默认值（OriginPath=\"/example\"）。若恢复规则按文件名筛 test_*，本题三个 F2P 全部无法达成。当前规则正确。该文件职责纯为测试脚手架，不含被修改的产品代码，恢复它不会覆盖合法解答。", "by": "static"},
+  "19": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5737/grading.json"], "note": "本题 F2P/P2P 无参数化 ID，不受 repo_level_findings.md#R8 影响。", "by": "static"},
+  "23": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-5737/problem_statement.txt", "mat/getmoto__moto-5737/test.patch"], "note": "F2P 检查的具体行为（OriginPath 在 create/get/update 三条路径上的值、OriginShield 的精确字典）无法由公开材料推出。题面只给了一句方向性描述。属\"要求不充分\"。", "by": "static"},
+  "24": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-5737/test.patch", "4ec748542f:moto/cloudfront/responses.py:196-205", "4ec748542f:moto/cloudfront/models.py:119"], "note": "**F2P 把一个明显的 bug 固化成验收标准。** test_update_distribution 现在要求 `origin[\"OriginShield\"] == {\"Enabled\": False, \"OriginShieldRegion\": \"None\"}`——注意 \"None\" 是**字符串**。成因：模板 `{% if origin.origin_shield %}` 分支渲染 `{{ origin.origin_shield.get(\"OriginShieldRegion\") }}`，update 往返后 origin_shield 变成解析出来的 `{\"Enabled\": \"false\"}`（非空 dict 为真），`.get` 返回 Python None，Jinja2 把 None 渲染成字面量 \"None\"。任何把它按 AWS 语义修正的合法实现（未设置时省略 OriginShieldRegion，或渲染空串）都会被这个 F2P 否决。这是无依据的唯一实现约束，且方向是错的。", "by": "static"},
+  "25": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5737/grading.json"], "note": "三个 F2P 分别覆盖 create（s3_minimum）、get_config、update 三条路径，36+4 个 P2P 覆盖 cloudfront 其余分发行为；只在 update 里塞一个假 origin_path 之类的局部修复会被 create/get 两条 F2P 打掉。", "by": "static"},
+  "26": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5737/grading.json"], "note": "40 个 P2P 已覆盖 cloudfront 两个主测试文件的绝大部分；仍列出 dist_tags 作为未覆盖的同包文件。", "by": "static"},
+  "27": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-5737/gold.patch", "4ec748542f:moto/cloudfront/models.py:123-131", "4ec748542f:moto/cloudfront/responses.py:172-176", "mat/getmoto__moto-5737/test.patch"], "note": "**gold 不完整，且判分材料改动掩盖了残余缺陷。** Origin.__init__ 在既无 S3OriginConfig 也无 CustomOriginConfig 时抛 InvalidOriginServer（models.py:123-124），而响应模板只在 `{% if origin.s3_access_identity %}` 为真时才渲染 S3OriginConfig（responses.py:172-176）。于是 OriginAccessIdentity 为空串的 S3 origin 在 update_distribution 往返后会丢掉 S3OriginConfig，gold 新加的 `[Origin(o) for o in origin]` 会直接抛 InvalidOriginServer。test_patch 的做法不是修这个，而是把共享脚手架的默认 OriginAccessIdentity 从 \"\" 改成 \"origin-access-identity/cloudfront/00000000000001\"，绕开该路径。AWS 对无 OAI 的 S3 源同样返回 S3OriginConfig（OriginAccessIdentity 为空），所以这是真实残余缺陷。", "by": "static"},
+  "28": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-5737/test.patch"], "note": "test_patch 里 OriginShield 期望值与脚手架 OAI 值两处改动，都不是题面要求，而是为了让参考解通过而配套调整的。记录在案：若后续做任务修订，这两处需要单独判定是\"合理回归依据\"还是\"迁就参考解\"。当前判断是后者。", "by": "static"},
+  "29": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-5737/hints.txt"], "note": "hints_text 为空。题面一句 \"I will submit a PR for this\" 指向上游会有 PR，但没给链接或 commit，不构成可直接取用的答案。", "by": "static"},
+  "6": {"status": "pass", "evidence_refs": ["repo_level_findings.md#R2"], "note": "4.0，离线 rc=0。", "by": "static+stage1"},
+  "7": {"status": "not_applicable", "evidence_refs": [], "note": "无外部资产。", "by": "static"},
+  "9": {"status": "pass", "evidence_refs": ["repo_level_findings.md#R3"], "note": "仓库级共性证据。", "by": "static+stage1"}
+ },
+ "issues": [
+  {"category": "测试强制错误实现", "severity": "P2", "evidence_refs": ["mat/getmoto__moto-5737/test.patch", "4ec748542f:moto/cloudfront/responses.py:196-205"], "proposed_action": "标注该 F2P 断言含已知 bug 固化（OriginShieldRegion 字符串 \"None\"）。不擅自改参考集；若做任务修订，把该断言放宽为不检查 OriginShieldRegion，并按检查 37 单列修订版本、与原版分开计分。", "next_experiment": "构造\"正确\"的替代解（未设置 OriginShield 时不渲染 OriginShieldRegion），在真实 grader 上跑 F2P，预期 test_update_distribution 失败 —— 形成\"过严且错误的测试\"的具体反例。"},
+  {"category": "gold 不完整 / 判分材料掩盖残余缺陷", "severity": "P2", "evidence_refs": ["4ec748542f:moto/cloudfront/models.py:123-131", "4ec748542f:moto/cloudfront/responses.py:172-176", "mat/getmoto__moto-5737/test.patch"], "proposed_action": "记录\"空 OriginAccessIdentity 的 S3 源在 update 往返后抛 InvalidOriginServer\"这一残余缺陷；不因此拒题（gold 仍达成题面目标）。", "next_experiment": "在 gold 之上跑一个用 OriginAccessIdentity=\"\" 建分发再 update_distribution 的最小脚本，预期 InvalidOriginServer。"},
+  {"category": "要求不充分", "severity": "P2", "evidence_refs": ["mat/getmoto__moto-5737/problem_statement.txt"], "proposed_action": "本题公开信息量与判分密度不匹配，适合放进\"欠明确题面\"样本集；若用于训练，考虑补一句 OriginPath 的具体期望。", "next_experiment": "盲解一次，看失败是否集中在 OriginShield 断言与 OriginPath 范围上。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "3 个触碰路径全在 tests/ 下且职责纯为测试（含共享脚手架），恢复它们不会覆盖任何合法解答；反而必须恢复脚手架，F2P 才成立。", "evidence_refs": ["mat/getmoto__moto-5737/test.patch"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_cloudfront/test_cloudfront_dist_tags.py", "reason": "同样 import 共享脚手架 example_distribution_config 却不在判分集合里；脚手架默认值被改后，它是最可能被间接影响、又无人看守的文件。"},
+  {"id": "tests/test_cloudfront/test_cloudfront_invalidation.py", "reason": "第四个使用同一脚手架的文件，验证脚手架改动没有引起连带失败。"},
+  {"id": "tests/test_cloudfront/test_cloudfront_distributions.py::test_create_distribution_with_origins", "reason": "多 origin / CustomOriginConfig 路径，检验 gold 里 `isinstance(origin, list)` 分支两侧都正确。"}
+ ],
+ "disposition_hint": {"state": "needs_review", "reason": "两个 P2 需要裁定：F2P 把 OriginShieldRegion=\"None\" 这个明显 bug 固化成验收标准（合法的正确实现会被否决），且 gold 留有空 OAI 路径的残余缺陷、由判分脚手架改动绕开。环境与材料本身可用，问题在题目公允性。"},
+ "costs": {"minutes": 26}
+}

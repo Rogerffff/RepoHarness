@@ -1,0 +1,22 @@
+diff --git a/coverage/collector.py b/coverage/collector.py
+index a042357f..14c58636 100644
+--- a/coverage/collector.py
++++ b/coverage/collector.py
+@@ -419,10 +419,13 @@ class Collector(object):
+         if not self._activity():
+             return False
+ 
+-        if self.branch:
+-            self.covdata.add_arcs(self.mapped_file_dict(self.data))
+-        else:
+-            self.covdata.add_lines(self.mapped_file_dict(self.data))
++        try:
++            if self.branch:
++                self.covdata.add_arcs(self.mapped_file_dict(self.data))
++            else:
++                self.covdata.add_lines(self.mapped_file_dict(self.data))
++        except UnicodeEncodeError:
++            pass
+         self.covdata.add_file_tracers(self.mapped_file_dict(self.file_tracers))
+ 
+         self._clear_data()

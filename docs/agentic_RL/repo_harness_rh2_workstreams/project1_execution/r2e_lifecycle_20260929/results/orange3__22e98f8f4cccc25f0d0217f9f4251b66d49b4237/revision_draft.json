@@ -1,0 +1,46 @@
+{
+ "instance_id": "orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237",
+ "template": "R-f",
+ "issue": "P1：题面 'Example Buggy Code' 的函数体与 gold 逐行相同（照抄即 23/23），且照字面运行打印的是期望值，与 'Actual Behavior' 自相矛盾",
+ "target": "problem_statement",
+ "sha256_before": "sha256:0d196bc2ef106b2f053da4acdc09718b142561e72c912d9d36f86f98d0296698",
+ "sha256_after": "sha256:f8701d3a4322270fde2618cc7cfc094460c9a5f1ec874e400c5bfaeef9ec7199",
+ "statement_edits": [
+  {
+   "old": "**Example Buggy Code:**\n```python\ndef unique_in_order_mapping(a):\n    first_position = {}\n    unique_in_order = []\n    mapping = []\n    for e in a:\n        if e not in first_position:\n            first_position[e] = len(unique_in_order)\n            unique_in_order.append(e)\n        mapping.append(first_position[e])\n    return unique_in_order, mapping\n\n# Example usage\nunique_elements, mapping = unique_in_order_mapping([2, 3, 1])\nprint(\"Unique Elements:\", unique_elements)\nprint(\"Mapping:\", mapping)\n```",
+   "new": "**Example Code:**\n```python\nfrom Orange.widgets.data.owcreateclass import unique_in_order_mapping\n\nprint(unique_in_order_mapping([2, 3, 1]))\n```"
+  },
+  {
+   "old": "For the input `[2, 3, 1]`, the function should return:\n```\nUnique Elements: [2, 3, 1]\nMapping: [0, 1, 2]\n```\n",
+   "new": "For the input `[2, 3, 1]`, the function should return the unique elements `[2, 3, 1]` and the mapping `[0, 1, 2]`.\n"
+  },
+  {
+   "old": "With the current implementation, the function returns:\n```\nUnique Elements: [2, 3, 1]\nMapping: [2, 0, 1]\n```\nThis incorrect mapping does not accurately represent",
+   "new": "With the current implementation, the example prints:\n```\n(array([2, 3, 1]), array([2, 0, 1]))\n```\nThe unique elements are correct, but the mapping `[2, 0, 1]` does not accurately represent"
+  }
+ ],
+ "statement_after": "[ISSUE]\n\n**Title:** Incorrect Mapping in `unique_in_order_mapping` Function\n\n**Description:**\nThe `unique_in_order_mapping` function is intended to return a list of unique elements from the input while preserving their order of first appearance, along with a mapping that associates each original element to its corresponding unique element index.\n\nHowever, when provided with the input `[2, 3, 1]`, the function incorrectly assigns the mapping indices.\n\n**Example Code:**\n```python\nfrom Orange.widgets.data.owcreateclass import unique_in_order_mapping\n\nprint(unique_in_order_mapping([2, 3, 1]))\n```\n\n**Expected Behavior:**\nFor the input `[2, 3, 1]`, the function should return the unique elements `[2, 3, 1]` and the mapping `[0, 1, 2]`.\nThis mapping correctly associates each element in the original list to its index in the list of unique elements.\n\n**Actual Behavior:**\nWith the current implementation, the example prints:\n```\n(array([2, 3, 1]), array([2, 0, 1]))\n```\nThe unique elements are correct, but the mapping `[2, 0, 1]` does not accurately represent the association between the original elements and their unique indices.\n\n[/ISSUE]",
+ "basis": "R-f 第二种（删除直接给出答案的内容，换成在 base 上核实过的症状描述）加第一种（改正 'Actual Behavior' 对 base 输出格式的错误陈述）。①被删的代码块逐行等于 gold 新增行（gold.patch 的 8 行 '+' 加未改的 return 行；本地逐行比对 8/8 命中），照字面运行打印期望值 [0, 1, 2]（runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/captures/mcve_statement_code.out:1-2）。②新例子调用仓库函数，新 'Actual Behavior' 的输出逐字取自已有运行证据：同一调用在 base 上以 agent 身份打印 '(array([2, 3, 1]), array([2, 0, 1]))'（同目录 captures/mcve_repo_function.out:3；命令见 orig/commands_with_preflight.json 的 mcve_repo_function，镜像 sha256:50fd6e31e77a…，tag rh2-r2e-derived/orange3:22e98f8f4ccc-r2e_derive_v1，uid 54321）。公开依据：base 源码 worktree/Orange/widgets/data/owcreateclass.py:150-158 用 np.unique 返回 ndarray；'unique elements are correct' 与原题面两处 Unique Elements 均为 [2, 3, 1] 一致。③'Expected Behavior' 只改写法不改数值：新例子直接打印返回值，原来按 list 打印格式写的期望块会暗示返回类型，而题面与测试都不约定类型（隐藏测试用 np.testing.assert_equal），改成按值陈述。没有新增要求，没有写入隐藏测试的输入、文案或 helper 名。",
+ "evidence": [
+  "runs/r2e_static_prep_20260924/v3/public/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/public_bundle.json（row.problem_statement，sha256 与 sha256_before 相同）",
+  "runs/r2e_static_prep_20260924/v3/public/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/worktree/Orange/widgets/data/owcreateclass.py:150-158",
+  "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/captures/mcve_repo_function.out:3",
+  "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/captures/mcve_statement_code.out:1-2",
+  "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/commands_with_preflight.json（mcve_repo_function、mcve_statement_code）"
+ ],
+ "grading_materials": "不变（隐藏测试、expected_output.json、run_tests.sh 都不动），按 v1 §5 R-f 不试跑评分",
+ "s1_after_rf": {
+  "conclusion": "题面改完以后，没有已有候选证据的 S1，不需要 R-c",
+  "step1": "不命中：TestHelpers.test_unique_in_order_mapping 直接断言原例与一般规则（hidden_tests/test_1.py:92-100，另含 5 组公开用例 :77-91）",
+  "step2": "不命中：除原例 [2, 3, 1] 外还有 [2, 3, 1, 1]、[2, 3, 1, 2] 两个非示例输入（不同的期望映射），且对合置换的公开用例会拒绝只对三元轮换成立的写法（p[p][inv] 在 :88 失败）。剩余理论缺口：非对合输入都是同一个三元轮换，只对阶数整除 6 的置换成立的写法（如 p^5）能过——不自然，登记为 T3 / S2",
+  "step3": "未做：本题各批只有 noop 与 gold 的评分证据。建议协调者按 v1 §4 第 3 步正式评分 1 次，候选见 revision_plan.md §6；做之前训练候选保持 conditional",
+  "step4": "不命中：已评分的候选只有 gold（旧题面代码块与 gold 相同），没有得 1 却违反公开要求的候选"
+ },
+ "acceptance_plan": {
+  "new_public_reader": "需要一个没看过隐藏测试与 gold 的新会话读修订后题面（本会话已暴露，不能充当）；通过条件：推出的需求 = 原例 [2, 3, 1] → [0, 1, 2] 与一般规则 u[m[i]] == a[i]，不需要猜隐藏细节",
+  "line_check": "已做（revision_plan.md §5）：新题面不含 gold 新增行、不含隐藏测试行、不含隐藏测试的新输入",
+  "grading": "评分材料不变，不需要重跑 noop / gold 验证评分；正式发布后按 Codex 意见捕获一次正式链路的实际题面消息",
+  "versioning": "新增修订单版本（statement_text_replace），同步 pins 与 ingest 产物，保留旧 v3；题卡标'自建修订题 + 版本'",
+  "codex_review": "需要"
+ }
+}

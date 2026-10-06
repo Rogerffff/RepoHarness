@@ -1,0 +1,17 @@
+{
+  "instance_id": "iterative__dvc-5839",
+  "original_install": "python -m pip install --upgrade pip wheel GitPython; python -m pip install \"cython<3.0.0\" && python -m pip install --no-build-isolation pyyaml==5.4.1; python -m pip install git+https://github.com/iterative/mock-ssh-server.git || true; python -m pip install -r tests/requirements.txt || true; python -m pip install -r test-requirements.txt || true; python -m pip install -e \".[tests,dev,all_remotes,all,testing]\"; python -m pip install \"numpy<=1.20\"; python -m pip install \"pytest<8\";",
+  "revised_install": "rh2_recipe_install() {\n  python -m pip install --no-deps pathspec==0.8.1 || return $?\n  python -m pip install -e '.[all,tests]'\n  local install_rc=$?\n  python -I -c 'import importlib.metadata as m,json; print(\"RH2_DVC_DEPS=\"+json.dumps({x:m.version(x) for x in ['\"'\"'dvc'\"'\"']}))'\n  return \"$install_rc\"\n}\nrh2_recipe_install",
+  "extras": [
+    "all",
+    "tests"
+  ],
+  "compat": [
+    "pathspec==0.8.1"
+  ],
+  "decision": "E13",
+  "note": "沿用E13真实extras；补入此题已有公开开发验证的兼容pin。两侧用同一依赖镜像/有效recipe；正式评分待共用发布。",
+  "status": "draft_not_formally_published",
+  "parent_recipe_path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/dvc_install_v1c/recipes/iterative__dvc-5839.json",
+  "parent_recipe_sha256": "sha256:91ec94e374f8df05749e5981f75878bae3e1ed9278fc990b17572b24b92c218e"
+}

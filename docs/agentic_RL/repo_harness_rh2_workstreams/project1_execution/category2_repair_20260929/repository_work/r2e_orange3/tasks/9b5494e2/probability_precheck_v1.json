@@ -1,0 +1,47 @@
+{
+  "schema_id": "rh2.orange3.probability_precheck_receipt.v1",
+  "as_of": "2026-10-03",
+  "instance_id": "orange3__9b5494e26f407b75e79699c9d40be6df1d80a040",
+  "status": "consumer_environment_identity_rejected_before_cc_or_fit",
+  "source_release_id": "cat2-cpu-r2e078079-swe7-git-20261003-v1",
+  "material_scope": "原020 expected-only及原隐藏测试；未用本题新hidden草案",
+  "build": {
+    "returncode": 0,
+    "image_id": "sha256:d14f4ad96e785127f2d03fc4711cbd3c0b66ae19f33c5605f6e49c71627c5dee",
+    "recipe_id": "r2e_derive_v1+env_v2+sysconfig_v1",
+    "recipe_sha256": "sha256:caa2db015bcc36456e14c4ea88a887346f753775bdd8b6e40a4b413d03e971df",
+    "base_recipe_id": "r2e_derive_v1+env_v2",
+    "base_recipe_sha256": "sha256:5122771965c2cb69f748b63f874b514b99b33e731a40d8e568a1af05de9e6fbc",
+    "scipy_pin": "1.5.4",
+    "facts": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/cpu-c_20261003/orange9b_prepublication_derived/facts.json",
+      "sha256": "sha256:e05353a440eb1fc3994c6b0e6dfb80a80fba379605cfb677485eaf3a6c8f051d"
+    },
+    "integrity_checks_all_passed": 22
+  },
+  "attempt": {
+    "returncode": 1,
+    "result": "infra_failed:exception:PreparedTasksError",
+    "exception": "PreparedTasksError: r2e_gym_subset::orange3__9b5494e26f407b75e79699c9d40be6df1d80a040: 覆盖条目与题包不配套（overlay:env_recipe_not_approved:r2e-mr-020:recipe_sha256=sha256:caa2db015bcc36456e14c4ea88a887346f753775bdd8b6e40a4b413d03e971df:approved_pins=scipy==1.5.4），拒绝构造任务面",
+    "stages": {},
+    "cc_launched": false,
+    "model_requests": 0,
+    "probability_fit_executed": false,
+    "formal_grading_executed": false,
+    "cleanup": {
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "cleanup_ok": true
+    },
+    "raw_attempt": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/cpu-c_20261003/orange9b_prepublication_actor_v1_attempt.json",
+      "sha256": "sha256:6d06efa2edf1f84288c0aa07087c179f491c5e24076204358b6565ca7f9e867d"
+    },
+    "readback": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/cpu-c_20261003/orange9b_prepublication_actor_v1_failure_readback.json",
+      "sha256": "sha256:67b9bf228e958566c105eef3367cb09ee01d5ad5552b1088b34e8d826d7f9926"
+    }
+  },
+  "interpretation": "consumer拒绝完整caa2db…而builder核base512277…通过；已交公共维护者处理精确环境组合绑定，不修改批准集合或重写overlay。不是题目失败。",
+  "next": "独立diag在现有批准的完整env_v2/512277配方上验证Python概率关系；省略sysconfig只限此不重编的诊断，不能当最终开发环境/新隐藏矩阵验收。"
+}

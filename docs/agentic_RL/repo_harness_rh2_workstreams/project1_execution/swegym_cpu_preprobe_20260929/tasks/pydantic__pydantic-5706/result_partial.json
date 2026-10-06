@@ -1,0 +1,175 @@
+{
+  "instance_id": "pydantic__pydantic-5706",
+  "date": "2026-09-29",
+  "status": "partial_actor_complete_experiment_matcher_error_private_formal_not_started",
+  "run": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-5706/followup_20260928T200118Z-72c261",
+  "diagnosis": {
+    "classification": "experiment_expected_exception_mismatch_not_observed_environment_failure",
+    "owner_error": "Prepared command assumed original issue core0.25 ValidationError; actual public base pins core0.31 and raises NotImplementedError.",
+    "public_issue_core": "0.25.0",
+    "public_base_core_pin": "0.31.0",
+    "actual_core": "0.31.0",
+    "actual_json_exception": "NotImplementedError",
+    "exact_message": "Cannot check isinstance when validating from json,use a JsonOrPython validator instead.",
+    "old_actor_symptom_rc": 1,
+    "old_symptom_expect": "zero",
+    "runner_action": "stopped_needs_diagnosis; no private/build/grading steps executed"
+  },
+  "actor": {
+    "image": "sha256:3e3b78ae4098882290d0d7b6d544e81816337295d3a7f0245db7ea58355985d4",
+    "base_commit": "70e7e99ca1861ad71520cc8fcf1a2fb913abbc10",
+    "image_facts": {
+      "image": "sha256:3e3b78ae4098882290d0d7b6d544e81816337295d3a7f0245db7ea58355985d4",
+      "inspect": "sha256:3e3b78ae4098882290d0d7b6d544e81816337295d3a7f0245db7ea58355985d4 [\"xingyaoww/sweb.eval.x86_64.pydantic_s_pydantic-5706@sha256:480f09d76fedfdb406fc845aab7d5e539d8af6ee905c562ce5ba7cc01203b86b\"]",
+      "inspect_rc": 0,
+      "initial_worktree": "HEAD=70e7e99ca1861ad71520cc8fcf1a2fb913abbc10\nPORCELAIN_BEGIN\n M pdm.lock\n M pyproject.toml\nPORCELAIN_RC=0\n",
+      "initial_worktree_rc": 0
+    },
+    "commands_result": [
+      {
+        "id": "public_identity",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 472,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "精确base与core0.31.0，实际checkout导入；Python3.8用typing.List。"
+      },
+      {
+        "id": "public_original_symptoms",
+        "rc": 1,
+        "status": "nonzero",
+        "expect": "zero",
+        "matches_expect": false,
+        "output_bytes": 574,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "显式捕获两类题面已知异常并核type/loc；0仅代表base症状复现，不代表正确修复，也不选择支持/拒绝方向。"
+      },
+      {
+        "id": "public_sequence_regression",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 222,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "公开tests/test_types.py:1876–1891明确range成功、tuple/deque保持；base应通过。"
+      },
+      {
+        "id": "public_existing_sequence_tests",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 137,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "实际存在的六参数公开回归；不扩大至有文档冲突generator或版本skip的strings。"
+      }
+    ],
+    "cleanup": {
+      "container_rm": 0,
+      "network_failures": [],
+      "relay_failures": [],
+      "stub_rc": 0,
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "residual_after_force": []
+    },
+    "post_run_facts": {
+      "RH2_HARNESS_DIR": "ABSENT",
+      "RH2_RUN_SH": "ABSENT",
+      "RH2_RUN_DONE": "ABSENT",
+      "RH2_GIT_STATUS_LINES": "2",
+      "RH2_AGENT_PROCS": "0",
+      "RH2_NEWER_FILES": "64"
+    },
+    "container_inspect": "sha256:3e3b78ae4098882290d0d7b6d544e81816337295d3a7f0245db7ea58355985d4 2000000000 4294967296",
+    "checks": {
+      "interpreter_in_tool_result": false,
+      "host_log_present": true,
+      "no_harness_dir_in_container": true,
+      "no_launcher_or_done_marker": true,
+      "message_start_matches_stub_requests": true,
+      "exit_code_zero": true,
+      "result_event_present": true,
+      "log_complete": true,
+      "bashenv_denied_for_agent": false,
+      "all_commands_ran": true,
+      "all_match_expect": false
+    }
+  },
+  "semantic_observations": {
+    "schema": "PydanticInvalidForJsonSchema with IsInstanceSchema typing.Sequence precisely observed",
+    "python_sequence": "list->list; tuple->tuple; range->list correct values; deque->deque",
+    "existing_tests": {
+      "passed": 6,
+      "deselected": 645
+    },
+    "stream": "4 paired Bash tool uses/results; CC2.1.205; UID54321; Python3.8.19; source/testbed; prelaunch and activation good",
+    "initial_dirty_files": [
+      "pdm.lock",
+      "pyproject.toml"
+    ],
+    "not_claimed": [
+      "old actor all_match_expect",
+      "private candidate behavior",
+      "formal no-op/gold/degenerate reward",
+      "full issue/public_hints delivery",
+      "P5 resolution",
+      "training or comparison qualification"
+    ]
+  },
+  "continuation": {
+    "authorized": "new inputs and new runner only; root executes after independent script review",
+    "inputs": "runs/swegym_cpu_preprobe_20260929/inputs_extra/5706_symptom_v2",
+    "script": "rh2/experiments/swegym_cpu_preprobe_20260929/pydantic5706_symptom_followup_v2.py",
+    "script_sha256": "267e440d990309e0a7af7be05732eb3c1d8e8d19634e4309b4ff3601c60f480a",
+    "manifest_sha256": "63bddc4c5bac3ef70a9fc09f533378fb5c2f9e099fb27fb3cdb9afeda74221b0",
+    "actor_command_count": 1,
+    "reused_commands": [
+      "public_identity",
+      "public_sequence_regression",
+      "public_existing_sequence_tests"
+    ],
+    "core_recipe_candidates_references_unchanged": true,
+    "local_validation": "AST and isolated experiment matcher only; no target project execution",
+    "v2_actual_results": "unknown_not_executed"
+  },
+  "remaining": [
+    "Independent narrow review of v2 continuation; root execution after clean queue boundary",
+    "Private base/gold/sequence_list and original formal2F2P273P2P all unexecuted in this run",
+    "Task target ambiguity P5 unresolved, separate from future actual degenerate reward",
+    "D6 not implemented; real input/solver/model/GPU/budget qualifications separate"
+  ],
+  "evidence": [
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-5706/followup_20260928T200118Z-72c261/status.json",
+      "sha256": "89f2a9c8bb56769618a815892f3e206300a235bb669da56e07d150549adb374f"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-5706/followup_20260928T200118Z-72c261/actor_original/attempt.json",
+      "sha256": "fb04a759be3f60c8f0a5aaa28363ceb2f8ad6c5c642945344d75845bd0f05515"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-5706/followup_20260928T200118Z-72c261/actor_original/captures/public_existing_sequence_tests.out",
+      "sha256": "62595e1568acf963f016c01ff927a90ada2243983f2fbc15fc921d79489fefb8"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-5706/followup_20260928T200118Z-72c261/actor_original/captures/public_identity.out",
+      "sha256": "ef5a11782effb883a2814cc78f629c4282fb16728ee3a7132e027d814cb97d7b"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-5706/followup_20260928T200118Z-72c261/actor_original/captures/public_original_symptoms.out",
+      "sha256": "30d0302d3337ff407f4fc24ffd704e296f17927f7b4d724bfa37a346c6aa5871"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-5706/followup_20260928T200118Z-72c261/actor_original/captures/public_sequence_regression.out",
+      "sha256": "94b18ea4bc8f7ca1f7d55044b90aa2e63a743c1eca89e675bc3755ef762ad062"
+    }
+  ]
+}

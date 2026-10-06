@@ -1,0 +1,13 @@
+# 公开依据与现成节点
+
+规范依据为封存原公开问题和base已有test_create_table_standard，不以私有gold输出作为规范。问题描述client指定us-east-2而返回us-east-1的表ARN，已有East1节点验证us-east-1客户端describe_table的完整ARN。两项合并保护“返回所选地区ARN”，不推断真实表存放地区：历史另一地区list为空表明目标错误是ARN字段。
+
+文件tests/test_dynamodb/test_dynamodb_create_table.py的test_create_table_standard是普通顶层函数，只有@mock_dynamodb，无参数、无pytest.mark.parametrize、无fixture参数或独有额外依赖。实际node=tests/test_dynamodb/test_dynamodb_create_table.py::test_create_table_standard。客户端为East1，表名messages，HASH+RANGE schema及吞吐配置为旧公开行为，TableArn断言在43–45行；完整原函数和原文件保留，不拆断言或改命名。原文件另11个test函数不在本题提案。
+
+同目录conftest只有非autouse table fixture，所选函数不使用；tests/__init__.py导入helpers只注册sure辅助断言，test_dynamodb/__init__.py为空。外部模块boto3、botocore、sure、pytest及moto都与原27文件相同，datetime为标准库。Makefile原init执行python setup.py develop和pip install -r requirements-dev.txt，其中-e .[all,server]及requirements-tests含sure/pytest；历史actor已真实执行同节点通过，因此仅此节点不引出新配方或服务依赖。
+
+原test.patch仅触碰test_dynamodb_table_without_range_key.py：East1的test_create_table_boto3改名test_create_table、客户端和ARN断言换East2，另22个含boto3名变更（四原名保留）；它不触碰此East1文件。准确原命令=pytest -n0 -rA tests/test_dynamodb/test_dynamodb_table_without_range_key.py，parser从原完整三方日志只得到其27参考，East1 node不存在。独立私有旧命令运行East1文件的精确节点，collected1；base/gold各1passed，constant_east2在第43行TableArn actual East2、expected East1失败。该同源码错误候选原正式27passed、reward1，属于选择/参考缺口，不能称原East1已被正式执行但漏计。
+
+新增应为P2P：在base既有节点通过；原East2保持F2P。预期noop0/gold1/constant_east2 0只是下一版验收计划。旧actor四命令及原27项属于旧环境与原评分依据；公开actor原例表名笔误已经按实际创建名消解。新版本必须明确显示28个参考真的执行，没有skip/缺席/非目标错误；不能使用旧East1私有后检代替正式评分。
+
+全部公开原件、旧控制、AST/原patch静态应用、完整原日志/ledger/artifact SHA与canonical来源绑定见材料manifest。所有素材已在本机，不缺所需公开文件；没有访问外网或新项目运行。

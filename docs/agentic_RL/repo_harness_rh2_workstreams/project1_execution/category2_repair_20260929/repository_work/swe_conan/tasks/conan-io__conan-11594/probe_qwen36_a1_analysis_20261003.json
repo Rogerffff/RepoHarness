@@ -1,0 +1,215 @@
+{
+  "schema_id": "conan.owner.model_analysis.v1",
+  "as_of": "2026-10-03T14:31:04.731022+00:00",
+  "request_id": "swe-conan11594-r12-briefv2-20261003-v1",
+  "job_id": "gpu1003-conan11594-qwen36-a1",
+  "model": "Qwen/Qwen3.6-35B-A3B",
+  "sample": 1,
+  "material_version": "conan11594-private-test-v1",
+  "budget_version": "probe-wide-v1",
+  "raw_score": {
+    "reward": 1,
+    "f2p": {
+      "passed": 2,
+      "total": 2
+    },
+    "p2p": {
+      "passed": 4,
+      "total": 4
+    },
+    "logical_references": 6,
+    "complete_raw_nodes": 7
+  },
+  "semantic_verdict": "correct_default_target_and_preserved_configuration_with_conditional_null_preset_P2_risk",
+  "candidate_findings": [
+    {
+      "id": "F1",
+      "priority": "P2",
+      "finding": "model final omitted four legacy failures/seven skips and mislabelled 49 selected tests as existing",
+      "disposition": "accepted"
+    },
+    {
+      "id": "F2",
+      "priority": "P2",
+      "finding": "public run-recorder tests use weak substring targets and do not establish real CTest/config forwarding",
+      "disposition": "no_fix_accept_residual_risk"
+    },
+    {
+      "id": "F3",
+      "priority": "P2",
+      "finding": "external null preset conditionally reaches unconditional Ninja substring TypeError; standard producer returns strings; approved null scope unknown",
+      "disposition": "no_fix_accept_residual_risk"
+    }
+  ],
+  "task_material_findings": [],
+  "semantic_independent_review": {
+    "status": "completed_no_current_task_material_blocker",
+    "report": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_11594_qwen36_a1_semantic_review_20261003.md",
+      "sha256": "sha256:459af3357d7c745221afc5f97e7e7823997be6b1e9b4e2ebd3e80a972de3b151"
+    },
+    "scope": "complete candidate, projection, current public semantics and exact references; no dynamic rerun; limitations in report"
+  },
+  "execution_independent_review": {
+    "status": "execution_evidence_verified_with_scope_limits",
+    "report": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_11594_qwen36_a1_execution_review_20261003.md",
+      "sha256": "sha256:ce42a52d7c1abfc52c0ae601c9317cd8678a629ac42156bf44117baf1bcb803d"
+    },
+    "scope": "current closed execution/transport/full baseline/HTTP/exact references/cleanup; resource and weight limits retained"
+  },
+  "owner_analysis": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-11594/probe_qwen36_a1_analysis_20261003.md",
+    "sha256": "sha256:f9a504d8165111ee1cc332bd73d9d528142a5e324d88554c21e764035817a7b1"
+  },
+  "owner_readback": {
+    "path": "runs/category2_repair_20260929/conan_cpu_20261003/probe_analysis_11594_qwen36_a1_20261003_v1/owner_readback.json",
+    "sha256": "sha256:0b4fa50324e2b9106baaebc77733cc1ff3cd0bd407099242485e16c67e7c7dde"
+  },
+  "trajectory": {
+    "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-conan11594-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-conan11594-qwen36-a1/attempt/trajectory.jsonl",
+    "sha256": "c8141296240b1bb71cdd4151c4dd06fc20b72e20fa36d5b4c7905396518b5ed1",
+    "bytes": 591025
+  },
+  "complete_candidate": {
+    "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-conan11594-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-conan11594-qwen36-a1/attempt/candidate/conan-io__conan-11594.diff",
+    "sha256": "2450b9f97dcdb0b970d149bca8a35a8cd99c5096702e40a6331e0ee9c4f9fe16",
+    "bytes": 6803
+  },
+  "frozen_patch": {
+    "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-conan11594-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-conan11594-qwen36-a1/attempt/frozen/frozen_patch.json",
+    "sha256": "cd33658dff8617954ddfccde94aa43c9ebc688ef0700115becdecbc45a91cfdf",
+    "bytes": 17665
+  },
+  "scoring_projection": {
+    "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-conan11594-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-conan11594-qwen36-a1/grading/projection.json",
+    "sha256": "182ca5980f243a959b567cfc7e9ce5600daaf985c407ef094ba66d06c87edad5",
+    "bytes": 401
+  },
+  "dimensions": {
+    "method": {
+      "heading": "方法",
+      "analysis": "行172一次生产编辑：保留`is_multi_configuration()`，另算`is_ninja = \"Ninja\" in self._generator`，仅multi且非Ninja选择`RUN_TESTS`，其余选`test`。当前公开字符串生成器中VS／Xcode维持原目标，Ninja Multi-Config改正确目标；`_build()`的`--config`逻辑未改，skip_test、显式target、build_type、cli_args和build_tool_args转发保持。没有把Ninja伪装成single-config来丢掉配置，也没有识别测试／绕过评分。\n\n与Coder的“multi且Visual／Xcode”条件在当前已知生成器集合下达到相同目标；不是生产文件字节相同或所有任意输入等价。Qwen独立`is_ninja`赋值在`_generator=None`时会TypeError，Coder与base在`is_multi=False`时短路或直接选test。外部null preset可由构造函数读入，属于条件可达输入；标准`CMakeToolchain._get_generator()`当前生成字符串，本臂／公开复现没有实际null，公开支持地位及频率未知。登记非阻断P2残余风险，不把它升级为当前材料误拒或宣称任意输入兼容；以后明确采用该输入范围时，可用局部短路恢复旧边界。"
+    },
+    "localization": {
+      "heading": "定位",
+      "analysis": "首响应先批量核源码导入和CMake／Ninja可执行，再搜索`RUN_TESTS`。工具4读对当前生产源码，首次相关源文件读取距第一模型请求 **7.589秒**；工具5读multi-config helper。行168明确指出“multi-config能力”和“目标名”不等价，在11工具后行172编辑，对应第11次模型响应完成上界 **16.786秒**，不是最早判断生成时刻。\n\n后续无生产回退，但既有legacy helper与公开测试搜索较散。修改前没有实际Ninja Multi-Config失败复现；当前定位证据是源码与公开issue。最后可信grader的真实Release测试补上目标执行证据，不能倒写为模型自己在改前／改后复现。"
+    },
+    "tools": {
+      "heading": "工具与纠错",
+      "analysis": "60次工具：**Bash35、Read18、Edit5、Write2**，其中生产Edit1、临时自测Edit4。3次`is_error=true`为行310／352／520：前两次没有正确设置generators_folder所回退的install_folder，第三次mock缺settings，均在对象构造阶段失败，未触发目标函数。模型读preset／folder属性后修复mock，行548完成八生成器受控调用，没有改生产来迎合错误fixture。\n\n工具42的错误nodeid在行612显示0 collected／not found，经过collect-only找到实际类，再运行工具44通过。原命令`pytest ... | tail -30`没有pipefail，工具报告成功不能证明pytest为0。工具51同样使用tail，行742实际 **4 failed／62 passed／7 skipped**；失败名单是legacy CMake的四个OSX系统版本case，可见mock／parameterized／contextlib的IndexError。失败调用链未经过本次`conan.tools.cmake`改动，但没有基线反事实运行，不能宣称完整环境归因已核销。模型随后仅选两个旧测试通过，未修复或重新通过这四个失败。\n\n两次Read返回`Wasted call`，还有完整生产文件重复读取。临时脚本最终删除，公开新增测试完整保留；不据“添加测试”自动判作弊，也不让投影后的`test_files_modified=false`抹掉完整FP的新增公开文件。"
+    },
+    "parallel": {
+      "heading": "并行",
+      "analysis": "实际 **60次gateway／adapter模型请求**，CC `num_turns=61`是另一口径；首响应包含两项独立Bash，其余58个有工具响应各一工具，最后一次结束，共60工具。首批多工具确实被adapter接受并交付结果，证明本臂支持批量工具；原件没有各Bash执行起止区间，不能据两条结果相差0.119秒断言同时执行或估算并行加速。\n\n读到生产后，helper及测试只读可以批量获取；本次仍串行搜索较多。失败mock修改与重试有顺序依赖。真实Conan功能测试共用工作树／缓存，不能仅凭无逻辑依赖认定可安全并行。"
+    },
+    "verification": {
+      "heading": "验证",
+      "analysis": "| 轨迹行 | 实际结果及范围 |\n| --- | --- |\n| 310／352／520 | 三次临时fixture构造失败，未验证目标；最终548八个字符串生成器调用生产`CMake.test()`／`_build()`，run被record，不运行CMake |\n| 566／580／594 | 参数unit4P、configure integration1P、已有工具unit目录40P；四例包含在40内，不能累加独立覆盖 |\n| 612→626→640 | 首次错误nodeid0 collected，collection-only11例，纠正后legacy generator功能1P；collection不是11P |\n| 682／742／756 | legacy unit1P；广测4F／62P／7skip；之后精选2P与广测有重叠，不恢复四失败 |\n| 770 | legacy`conans.CMake`build-requires功能1P，源码断言真实CTest成功；不是新helper的Ninja Multi-Config目标验证 |\n| 786 | Linux editable三参数None／Ninja／Ninja Multi-Config均P，有Release／Debug真实构建及程序输出；None为未设conf，不等于实际preset generator为None，亦非目标CTest验证 |\n| 832／878 | 新公开八例P；最后49P为40已有unit＋8新增＋1已有integration，八例已在49内 |\n| 可信grader | 六逻辑参考／七完整节点均P；生成器录制与真实CTest Release执行分别成立 |\n\n新增测试确实用生产类而非复制表达式，记录单次run及目标字符串，较Coder打印／表达式模拟更直接。但断言为substring包含／排除，未精确约束完整`--target test`、Release配置、显式target／skip／额外参数；不把它当真实CMake执行或完整兼容性验收。当前可信独立参考使用精确命令及真实Release，评分依据不依赖这八例。\n\n最终行888“49 existing”分母不准确，并省略广测四失败／七skip及收集错误。49是这次有限所选范围全部通过，不能写成49旧例另加8例或全仓通过；临时fixture失败后来已纠正，广测失败仍保留。真实新helper Ninja Multi-Config `test`／Release执行来自可信grader，模型虽有实际CMake构建与legacy CTest，不称其自己复验了该目标。"
+    },
+    "efficiency": {
+      "heading": "效率",
+      "analysis": "求解 **110.811秒**，harness107.818秒；CC107.205秒／API82.473秒，残差24.732秒不是纯工具时间。60实际模型请求累计输入 **1,493,206**／输出 **11,831 tokens**，最大单输入44,424；gateway、adapter和CC总数核一致，CC回合元数据61另列。源码定位后一次生产改动，主要后续开销来自mock folder／settings试错、较散搜索、重复Read及更多验证；不能因开销更大自动判验证更好。\n\nGit清理10.126秒、可信初始化10.051秒等准备单列；评分98.976秒，reset10.834／prep0.380／test2.770秒，队列0，不混入求解。实际60个请求输出上限均65536，CC32000仅汇总元数据；未触及196608上下文、240回合或3小时上限。CC费用7.761805美元为自动估算，非GPU账单。"
+    },
+    "termination_and_stability": {
+      "heading": "结束与稳定性",
+      "analysis": "completed／success／end_turn、harness0，60gateway响应HTTP200且无stream error，没有截断／拒绝。actor／grader清理、gateway revoked／drained／active0及实际PID1成功journal按原件核收；systemd终态not-found不能单独当失败或成功，需和完整退出／journal合读。19个有限资源采样及未知间隙保持，不能推全程峰值或最坏上下文容量。\n\n两模型现各一次原始结果已齐；当前单次成功及对照只建立本题首轮诊断，不建立稳定成功率、模型排名、训练或留出资格。普通追加采样按覆盖优先暂缓。"
+    }
+  },
+  "metrics": {
+    "model_requests": 60,
+    "cc_num_turns_metadata": 61,
+    "tool_calls": 60,
+    "tool_counts": {
+      "Bash": 35,
+      "Read": 18,
+      "Edit": 5,
+      "Write": 2
+    },
+    "reported_tool_errors": 3,
+    "cumulative_input_tokens": 1493206,
+    "cumulative_output_tokens": 11831,
+    "largest_request_input_tokens": 44424,
+    "solve_seconds": 110.811,
+    "harness_exec_seconds": 107.818,
+    "cc_duration_seconds": 107.205,
+    "cc_api_duration_seconds": 82.473,
+    "cc_non_api_residual_seconds_not_pure_tool_time": 24.732,
+    "first_model_request_epoch": 1791034420.6026864,
+    "first_relevant_source_read_result_epoch": 1791034428.192,
+    "correct_diagnosis_response_completion_epoch": 1791034437.3890755,
+    "correct_diagnosis_response_completion_since_first_request_seconds": 16.786389112472534,
+    "first_relevant_source_read_since_first_request_seconds": 7.589313507080078,
+    "environment_preparation_stage_seconds": {
+      "image_ready": 0.02,
+      "network_and_container": 1.257,
+      "git_sanitize": 10.126,
+      "trusted_init": 10.051,
+      "baseline_census": 0.197,
+      "quiescence": 0.445
+    },
+    "grading_timing": {
+      "schema_id": "rh2.grading_timing_record.v1",
+      "record_id": "timing_a990b54f",
+      "trajectory_id": "gpu1003-conan11594-qwen36-a1",
+      "task_id": "swe_gym_lite::conan-io__conan-11594",
+      "image_pull_seconds": 0.0,
+      "env_reset_seconds": 10.834,
+      "prep_seconds": 0.38,
+      "test_seconds": 2.77,
+      "total_grading_seconds": 98.976,
+      "queue_wait_seconds": 0.0,
+      "container_peak_memory_mb": 365.996,
+      "queue_depth_at_enqueue": null,
+      "backpressure_triggered": false
+    },
+    "cc_cost_usd_is_builtin_estimate_not_local_compute_bill": 7.761804999999998
+  },
+  "reference_states": {
+    "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja": {
+      "aggregation": "ALL",
+      "raw_nodes": {
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja Makefiles-test]": "PASSED",
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Ninja Multi-Config-test]": "PASSED"
+      }
+    },
+    "conans/test/unittests/tools/cmake/test_cmake_test.py::test_ninja_multiconfig_executes_requested_release": {
+      "aggregation": "ALL",
+      "raw_nodes": {
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_ninja_multiconfig_executes_requested_release": "PASSED"
+      }
+    },
+    "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[NMake": {
+      "aggregation": "ALL",
+      "raw_nodes": {
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[NMake Makefiles-test]": "PASSED"
+      }
+    },
+    "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Unix": {
+      "aggregation": "ALL",
+      "raw_nodes": {
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Unix Makefiles-test]": "PASSED"
+      }
+    },
+    "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Xcode-RUN_TESTS]": {
+      "aggregation": "ALL",
+      "raw_nodes": {
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Xcode-RUN_TESTS]": "PASSED"
+      }
+    },
+    "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Visual": {
+      "aggregation": "ALL",
+      "raw_nodes": {
+        "conans/test/unittests/tools/cmake/test_cmake_test.py::test_run_tests[Visual Studio 14 2015-RUN_TESTS]": "PASSED"
+      }
+    }
+  },
+  "candidate_repair_required_for_current_scope": false,
+  "task_material_changes_required": false,
+  "CPU_or_model_rerun_required": false,
+  "ordinary_additional_samples": "deferred_coverage_first",
+  "paired_request_closed": true,
+  "pending_models": [],
+  "owner_ACK_pending": false,
+  "training_eligibility": "not_established"
+}

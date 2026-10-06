@@ -1,0 +1,275 @@
+============================= test session starts ==============================
+platform linux -- Python 3.9.19, pytest-7.4.4, pluggy-1.5.0
+rootdir: /testbed
+configfile: setup.cfg
+plugins: rerunfailures-14.0, xdist-3.6.1, cov-5.0.0
+collected 17 items
+
+dask/array/tests/test_c3_rev_cases_tmp.py .......FFF.......              [100%]
+
+=================================== FAILURES ===================================
+__________________ test_case[c3_mid_zero_i4_multichunk-None] ___________________
+IndexError: index 5 is out of bounds for axis 0 with size 2
+
+During handling of the above exception, another exception occurred:
+
+case = 'c3_mid_zero_i4_multichunk', split = None
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+            result = da.from_array(x, chunks=chunks)[index]
+            assert isinstance(result, da.Array)
+>           assert_eq(result, x[index])
+
+dask/array/tests/test_c3_rev_cases_tmp.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/utils.py:279: in assert_eq
+    a, adt, a_meta, a_computed = _get_dt_meta_computed(
+dask/array/utils.py:242: in _get_dt_meta_computed
+    x = _check_chunks(x)
+dask/array/utils.py:218: in _check_chunks
+    x = x.persist(scheduler="sync")
+dask/base.py:261: in persist
+    (result,) = persist(self, traverse=False, **kwargs)
+dask/base.py:833: in persist
+    results = schedule(dsk, keys, **kwargs)
+dask/local.py:553: in get_sync
+    return get_async(
+dask/local.py:496: in get_async
+    for key, res_info, failed in queue_get(queue).result():
+/opt/miniconda3/envs/testbed/lib/python3.9/concurrent/futures/_base.py:439: in result
+    return self.__get_result()
+/opt/miniconda3/envs/testbed/lib/python3.9/concurrent/futures/_base.py:391: in __get_result
+    raise self._exception
+dask/local.py:538: in submit
+    fut.set_result(fn(*args, **kwargs))
+dask/local.py:234: in batch_execute_tasks
+    return [execute_task(*a) for a in it]
+dask/local.py:234: in <listcomp>
+    return [execute_task(*a) for a in it]
+dask/local.py:225: in execute_task
+    result = pack_exception(e, dumps)
+dask/local.py:220: in execute_task
+    result = _execute_task(task, data)
+dask/core.py:119: in _execute_task
+    return func(*(_execute_task(a, cache) for a in args))
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+obj = array([], shape=(2, 0, 2), dtype=int32)
+index = (array([5, 0, 5, 5, 3]), slice(None, None, None), slice(None, None, None))
+
+    def getitem(obj, index):
+        """Getitem function
+    
+        This function creates a copy of the desired selection for array-like
+        inputs when the selection is smaller than half of the original array. This
+        avoids excess memory usage when extracting a small portion from a large array.
+        For more information, see
+        https://numpy.org/doc/stable/reference/arrays.indexing.html#basic-slicing-and-indexing.
+    
+        Parameters
+        ----------
+        obj: ndarray, string, tuple, list
+            Object to get item from.
+        index: int, list[int], slice()
+            Desired selection to extract from obj.
+    
+        Returns
+        -------
+        Selection obj[index]
+    
+        """
+>       result = obj[index]
+E       DeprecationWarning: Out of bound index found. This was previously ignored when the indexing result contained no elements. In the future the index error will be raised. This error occurs either due to an empty slice, or if an array has zero elements even before indexing.
+E       (Use `warnings.simplefilter('error')` to turn this DeprecationWarning into an error and get more details on the invalid index.)
+
+dask/array/chunk.py:422: DeprecationWarning
+__________________ test_case[c3_mid_zero_i4_multichunk-False] __________________
+IndexError: index 5 is out of bounds for axis 0 with size 2
+
+During handling of the above exception, another exception occurred:
+
+case = 'c3_mid_zero_i4_multichunk', split = False
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+            result = da.from_array(x, chunks=chunks)[index]
+            assert isinstance(result, da.Array)
+>           assert_eq(result, x[index])
+
+dask/array/tests/test_c3_rev_cases_tmp.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/utils.py:279: in assert_eq
+    a, adt, a_meta, a_computed = _get_dt_meta_computed(
+dask/array/utils.py:242: in _get_dt_meta_computed
+    x = _check_chunks(x)
+dask/array/utils.py:218: in _check_chunks
+    x = x.persist(scheduler="sync")
+dask/base.py:261: in persist
+    (result,) = persist(self, traverse=False, **kwargs)
+dask/base.py:833: in persist
+    results = schedule(dsk, keys, **kwargs)
+dask/local.py:553: in get_sync
+    return get_async(
+dask/local.py:496: in get_async
+    for key, res_info, failed in queue_get(queue).result():
+/opt/miniconda3/envs/testbed/lib/python3.9/concurrent/futures/_base.py:439: in result
+    return self.__get_result()
+/opt/miniconda3/envs/testbed/lib/python3.9/concurrent/futures/_base.py:391: in __get_result
+    raise self._exception
+dask/local.py:538: in submit
+    fut.set_result(fn(*args, **kwargs))
+dask/local.py:234: in batch_execute_tasks
+    return [execute_task(*a) for a in it]
+dask/local.py:234: in <listcomp>
+    return [execute_task(*a) for a in it]
+dask/local.py:225: in execute_task
+    result = pack_exception(e, dumps)
+dask/local.py:220: in execute_task
+    result = _execute_task(task, data)
+dask/core.py:119: in _execute_task
+    return func(*(_execute_task(a, cache) for a in args))
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+obj = array([], shape=(2, 0, 2), dtype=int32)
+index = (array([5, 0, 5, 5, 3]), slice(None, None, None), slice(None, None, None))
+
+    def getitem(obj, index):
+        """Getitem function
+    
+        This function creates a copy of the desired selection for array-like
+        inputs when the selection is smaller than half of the original array. This
+        avoids excess memory usage when extracting a small portion from a large array.
+        For more information, see
+        https://numpy.org/doc/stable/reference/arrays.indexing.html#basic-slicing-and-indexing.
+    
+        Parameters
+        ----------
+        obj: ndarray, string, tuple, list
+            Object to get item from.
+        index: int, list[int], slice()
+            Desired selection to extract from obj.
+    
+        Returns
+        -------
+        Selection obj[index]
+    
+        """
+>       result = obj[index]
+E       DeprecationWarning: Out of bound index found. This was previously ignored when the indexing result contained no elements. In the future the index error will be raised. This error occurs either due to an empty slice, or if an array has zero elements even before indexing.
+E       (Use `warnings.simplefilter('error')` to turn this DeprecationWarning into an error and get more details on the invalid index.)
+
+dask/array/chunk.py:422: DeprecationWarning
+__________________ test_case[c3_mid_zero_i4_multichunk-True] ___________________
+IndexError: index 5 is out of bounds for axis 0 with size 2
+
+During handling of the above exception, another exception occurred:
+
+case = 'c3_mid_zero_i4_multichunk', split = True
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+            result = da.from_array(x, chunks=chunks)[index]
+            assert isinstance(result, da.Array)
+>           assert_eq(result, x[index])
+
+dask/array/tests/test_c3_rev_cases_tmp.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/utils.py:279: in assert_eq
+    a, adt, a_meta, a_computed = _get_dt_meta_computed(
+dask/array/utils.py:242: in _get_dt_meta_computed
+    x = _check_chunks(x)
+dask/array/utils.py:218: in _check_chunks
+    x = x.persist(scheduler="sync")
+dask/base.py:261: in persist
+    (result,) = persist(self, traverse=False, **kwargs)
+dask/base.py:833: in persist
+    results = schedule(dsk, keys, **kwargs)
+dask/local.py:553: in get_sync
+    return get_async(
+dask/local.py:496: in get_async
+    for key, res_info, failed in queue_get(queue).result():
+/opt/miniconda3/envs/testbed/lib/python3.9/concurrent/futures/_base.py:439: in result
+    return self.__get_result()
+/opt/miniconda3/envs/testbed/lib/python3.9/concurrent/futures/_base.py:391: in __get_result
+    raise self._exception
+dask/local.py:538: in submit
+    fut.set_result(fn(*args, **kwargs))
+dask/local.py:234: in batch_execute_tasks
+    return [execute_task(*a) for a in it]
+dask/local.py:234: in <listcomp>
+    return [execute_task(*a) for a in it]
+dask/local.py:225: in execute_task
+    result = pack_exception(e, dumps)
+dask/local.py:220: in execute_task
+    result = _execute_task(task, data)
+dask/core.py:119: in _execute_task
+    return func(*(_execute_task(a, cache) for a in args))
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+obj = array([], shape=(2, 0, 2), dtype=int32)
+index = (array([5, 0, 5, 5, 3]), slice(None, None, None), slice(None, None, None))
+
+    def getitem(obj, index):
+        """Getitem function
+    
+        This function creates a copy of the desired selection for array-like
+        inputs when the selection is smaller than half of the original array. This
+        avoids excess memory usage when extracting a small portion from a large array.
+        For more information, see
+        https://numpy.org/doc/stable/reference/arrays.indexing.html#basic-slicing-and-indexing.
+    
+        Parameters
+        ----------
+        obj: ndarray, string, tuple, list
+            Object to get item from.
+        index: int, list[int], slice()
+            Desired selection to extract from obj.
+    
+        Returns
+        -------
+        Selection obj[index]
+    
+        """
+>       result = obj[index]
+E       DeprecationWarning: Out of bound index found. This was previously ignored when the indexing result contained no elements. In the future the index error will be raised. This error occurs either due to an empty slice, or if an array has zero elements even before indexing.
+E       (Use `warnings.simplefilter('error')` to turn this DeprecationWarning into an error and get more details on the invalid index.)
+
+dask/array/chunk.py:422: DeprecationWarning
+==================================== PASSES ====================================
+============================= slowest 10 durations =============================
+0.01s call     dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index12000-None]
+0.01s call     dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index12000-False]
+0.01s call     dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index12000-True]
+
+(7 durations < 0.005s hidden.  Use -vv to show these durations.)
+=========================== short test summary info ============================
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_orig
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c1_issue-None]
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c1_issue-False]
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c1_issue-True]
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c2_zero_first_axis1-None]
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c2_zero_first_axis1-False]
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c2_zero_first_axis1-True]
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index120-None]
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index120-False]
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index120-True]
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index12000-None]
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index12000-False]
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index12000-True]
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_default_warning
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c3_mid_zero_i4_multichunk-None]
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c3_mid_zero_i4_multichunk-False]
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c3_mid_zero_i4_multichunk-True]
+========================= 3 failed, 14 passed in 0.67s =========================
+
+

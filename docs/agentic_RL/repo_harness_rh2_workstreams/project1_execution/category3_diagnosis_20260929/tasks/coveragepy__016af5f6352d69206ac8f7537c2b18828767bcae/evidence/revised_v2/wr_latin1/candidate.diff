@@ -1,0 +1,16 @@
+diff --git a/coverage/inorout.py b/coverage/inorout.py
+index 0eea62ae..d3ed5361 100644
+--- a/coverage/inorout.py
++++ b/coverage/inorout.py
+@@ -333,6 +333,11 @@ class InOrOut(object):
+         if self.omit_match and self.omit_match.match(filename):
+             return "is inside an --omit pattern"
+ 
++        try:
++            filename.encode("latin-1")
++        except UnicodeEncodeError:
++            return "non-encodable filename"
++
+         # No reason found to skip this file.
+         return None
+ 

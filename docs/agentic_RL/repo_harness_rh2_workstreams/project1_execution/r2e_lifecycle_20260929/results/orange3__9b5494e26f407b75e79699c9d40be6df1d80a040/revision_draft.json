@@ -1,0 +1,295 @@
+{
+ "instance_id": "orange3__9b5494e26f407b75e79699c9d40be6df1d80a040",
+ "template": "R-b + R-e",
+ "summary": "把 test_auto_solver 从钉接口（'auto' 字面量、私有 _initialize_wrapped()、l1 必须 liblinear、penalty=None 透传）改成拟合后看行为：l1 拟合成功且真的用 l1、所选 solver 支持 l1（在题面原例的多类 iris 与二类 heart_disease 上）；默认 l2 仍用 lbfgs；'none' 仍能拟合。键名、键集合与期望映射都不变。",
+ "parent": {
+  "material_revisions": [
+   "r2e-mr-020"
+  ],
+  "recipe_id": "r2e_derive_v1+env_v2",
+  "hidden_tests_tree_sha256": "sha256:9a87bfe6c587ddeae7aa9eb367413baa2a9a58481d90178c2a842dee45c5cbd6",
+  "test_1.py_sha256": "sha256:99459c0d733eb09bcd58548935857702b15920646a51610722362a948709cb9b",
+  "expected_output_json_sha256": "sha256:cd034086c160e69a531b6d1d74dc5b00734a672e364575c273877515518ff240"
+ },
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "    def test_auto_solver(self):\n        # These defaults are valid as of sklearn v0.23.0\n        # lbfgs is default for l2 penalty\n        lr = LogisticRegressionLearner(penalty=\"l2\", solver=\"auto\")\n        skl_clf = lr._initialize_wrapped()\n        self.assertEqual(skl_clf.solver, \"lbfgs\")\n        self.assertEqual(skl_clf.penalty, \"l2\")\n\n        # lbfgs is default for no penalty\n        lr = LogisticRegressionLearner(penalty=None, solver=\"auto\")\n        skl_clf = lr._initialize_wrapped()\n        self.assertEqual(skl_clf.solver, \"lbfgs\")\n        self.assertEqual(skl_clf.penalty, None)\n\n        # liblinear is default for l2 penalty\n        lr = LogisticRegressionLearner(penalty=\"l1\", solver=\"auto\")\n        skl_clf = lr._initialize_wrapped()\n        self.assertEqual(skl_clf.solver, \"liblinear\")\n        self.assertEqual(skl_clf.penalty, \"l1\")\n",
+     "new": "    def test_auto_solver(self):\n        # Behaviour-level check: the learner has to use a solver that supports\n        # the requested penalty. Where and how the solver is chosen (constructor,\n        # a sentinel value, fitting time) is not prescribed.\n\n        # l1, the reported case: fitting works and the fitted model really uses\n        # l1, on the multiclass data of the report and on binary data\n        for data in (self.iris, self.heart_disease):\n            skl_clf = LogisticRegressionLearner(penalty=\"l1\")(data).skl_model\n            self.assertEqual(skl_clf.penalty, \"l1\")\n            # the scikit-learn 0.22 solvers that support l1\n            self.assertIn(skl_clf.solver, (\"liblinear\", \"saga\"))\n\n        # l2, the default penalty, is supported by the default solver lbfgs:\n        # the default model is unchanged\n        skl_clf = LogisticRegressionLearner()(self.zoo).skl_model\n        self.assertEqual(skl_clf.solver, \"lbfgs\")\n        self.assertEqual(skl_clf.penalty, \"l2\")\n\n        # no penalty is supported by lbfgs as well and keeps working\n        skl_clf = LogisticRegressionLearner(penalty=\"none\")(self.iris).skl_model\n        self.assertEqual(skl_clf.penalty, \"none\")\n"
+    }
+   ]
+  }
+ ],
+ "revised_files_sha256": {
+  "test_1.py": "sha256:f5989a51bd3379a88d507ed54f5fbcf4af42c3b5efb1101706ab602797a6ab32"
+ },
+ "expected_after": {
+  "TestLogisticRegressionLearner.test_LogisticRegressionNormalization_todo": "PASSED",
+  "TestLogisticRegressionLearner.test_auto_solver": "PASSED",
+  "TestLogisticRegressionLearner.test_learner_scorer_feature": "PASSED",
+  "TestLogisticRegressionLearner.test_learner_scorer_multiclass_feature": "PASSED",
+  "TestLogisticRegressionLearner.test_learner_scorer_previous_transformation": "PASSED",
+  "TestLogisticRegressionLearner.test_predict_on_instance": "PASSED",
+  "TestLogisticRegressionLearner.test_probability": "PASSED",
+  "TestLogisticRegressionLearner.test_single_class": "PASSED",
+  "TestLogisticRegressionLearner.test_sklearn_single_class": "PASSED",
+  "TestLogisticRegressionLearner.test_LogisticRegression": "PASSED",
+  "TestLogisticRegressionLearner.test_coefficients": "PASSED",
+  "TestLogisticRegressionLearner.test_learner_scorer": "FAILED",
+  "TestLogisticRegressionLearner.test_learner_scorer_multiclass": "FAILED"
+ },
+ "expected_change": {
+  "changed": {},
+  "added": {},
+  "removed": []
+ },
+ "expected_note": "期望映射不变（13 键）：test_auto_solver 仍是目标键（noop FAILED、gold PASSED）。r2e-mr-020 原样保留，不需要新的期望修订，也不动它的 +env_v2 绑定。",
+ "positive_control": "gold",
+ "trial_conditions": {
+  "tool": "rh2/experiments/r2e_lifecycle_20260929/trial_grade.py（试跑，不是正式评分）",
+  "image": "sha256:c108281a4cacbaac35febeda4e2a57dbee7277daa1d91ac9b98de7a7300141d1",
+  "recipe_id": "r2e_derive_v1+env_v2",
+  "machine_dir": "/work/r2e/trials/orange3/9b5494e2/"
+ },
+ "environment_check": {
+  "noop": {
+   "trial": "trials/env_noop_current.json",
+   "trial_verdict": "mismatch：test_auto_solver、test_probability 为 FAILED（当前材料，符合预期）"
+  },
+  "gold": {
+   "trial": "trials/env_gold_current.json",
+   "trial_verdict": "match（13/13，当前材料）"
+  }
+ },
+ "acceptance": {
+  "gold": {
+   "patch": "runs/r2e_static_prep_20260924/v3/private/orange3__9b5494e26f407b75e79699c9d40be6df1d80a040/gold.patch",
+   "role": "正对照",
+   "expected_score": 1,
+   "trial": "trials/A_gold.json",
+   "trial_verdict": "match"
+  },
+  "noop": {
+   "patch": "none",
+   "role": "空补丁",
+   "expected_score": 0,
+   "trial": "trials/A_noop.json",
+   "trial_verdict": "mismatch：test_auto_solver、test_probability 为 FAILED；test_auto_solver 失败在 l1 拟合（test_1.py:143）抛题面原句 ValueError"
+  },
+  "V1_OR1": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/orange3_9b54_OR1_keep_lbfgs_switch_for_l1.patch",
+   "role": "此前被误拒的合理解（当前材料 0，12/13）：不引入 'auto'",
+   "expected_score": 1,
+   "trial": "trials/A_OR1.json",
+   "trial_verdict": "match（误判已纠正）"
+  },
+  "V3_OR2": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/orange3_9b54_OR2_auto_sentinel_saga_for_l1.patch",
+   "role": "此前被误拒的合理解（当前材料 0）：l1 选 saga",
+   "expected_score": 1,
+   "trial": "trials/A_OR2.json",
+   "trial_verdict": "match（误判已纠正）"
+  },
+  "V4": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/orange3_9b54_V4_resolve_in_fit.patch",
+   "role": "此前被误拒的合理解（当前材料 0）：在 fit 里解析",
+   "expected_score": 1,
+   "trial": "trials/A_V4.json",
+   "trial_verdict": "match（误判已纠正）"
+  },
+  "V5": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/orange3_9b54_V5_mapping_table.patch",
+   "role": "此前被误拒的合理解（当前材料 0）：映射表，只因 penalty=None 查不到而失败",
+   "expected_score": 1,
+   "trial": "trials/A_V5.json",
+   "trial_verdict": "match（误判已纠正）"
+  },
+  "W1": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/orange3_9b54_W1_gold_silently_drop_l1.patch",
+   "role": "已知错误候选：把用户指定的 l1 静默换成 l2",
+   "expected_score": 0,
+   "trial": "trials/A_W1.json",
+   "trial_verdict": "mismatch：只错 test_auto_solver（test_1.py:144，'l2' != 'l1'）"
+  },
+  "V7": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/orange3_9b54_V7_default_liblinear.patch",
+   "role": "已知错误候选：默认 solver 改成 liblinear（不按 penalty 选择，改变默认 l2 模型）",
+   "expected_score": 0,
+   "trial": "trials/A_V7.json",
+   "trial_verdict": "mismatch：test_auto_solver（test_1.py:151，'liblinear' != 'lbfgs'），另两个 scorer 死键翻成 PASSED"
+  },
+  "P1": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/orange3_9b54_P1_resolve_in_init.patch",
+   "role": "修好了题面，但把默认 repr 改成 LogisticRegressionLearner(solver='lbfgs')；见 optional_extra_s1",
+   "expected_score": 1,
+   "trial": "trials/A_P1.json",
+   "trial_verdict": "match（只修主修订时仍为 1；采用 B′ 或 B 后为 0）"
+  },
+  "P2": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/orange3_9b54_P2_gold_plus_elasticnet_saga.patch",
+   "role": "合理解：gold 再加 elasticnet→saga",
+   "expected_score": 1,
+   "trial": "trials/A_P2.json",
+   "trial_verdict": "match"
+  },
+  "G1": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/orange3_9b54_G1_gold_plus_multiclass_ovr.patch",
+   "role": "gold 再把默认 multi_class 改成 ovr：登记为 S2，不修（见 registered_not_fixed）",
+   "expected_score": 1,
+   "trial": "trials/A_G1.json",
+   "trial_verdict": "match（已知缺口，按登记保留）"
+  }
+ },
+ "optional_extra_s1": {
+  "status": "v1 §11 没列、按 §4 第 4 步成立的额外 S1；单列，可单独拿掉。推荐 B′",
+  "issue": "P1 在当前材料与主修订下都得 1（13/13），但它在 __init__ 里解析 'auto'，默认学习器的 repr 从 LogisticRegressionLearner() 变成 LogisticRegressionLearner(solver='lbfgs')，破坏公开回归测试 GH 2275",
+  "public_basis": [
+   "runs/r2e_static_prep_20260924/v3/public/orange3__9b5494e26f407b75e79699c9d40be6df1d80a040/worktree/Orange/tests/test_util.py:57-60（# GH 2275：repr(LogisticRegressionLearner()) 连调两次都等于 'LogisticRegressionLearner()'）",
+   "同一工作树 Orange/util.py 的 Reprable：_reprable_omit_param 只省略与签名默认值相等的参数（文档字符串示例 C(1, 2) → C(a=1)）",
+   "上游在采用 solver=\"auto\" 之后仍保留这条断言：orange3 4014f248 / 50f6a758 / c3fb72ba 的公开工作树 Orange/tests/test_util.py:63-66，与其 logistic_regression.py:39-40 的 solver=\"auto\" 并存",
+   "首批主审已注意到：r2e_static_review_20260925/results/orange3__9b5494e26f407b75e79699c9d40be6df1d80a040/card.md:60（'公开 test_util 的默认 repr 会变，但不计分'）"
+  ],
+  "B_prime": {
+   "how": "把 GH 2275 的断言放进 test_auto_solver（仍是同一条 test_1.py 修订：用下面 A′ 的 new 文本替换主修订的 new 文本）。不加键、期望不变、r2e-mr-020 与 +env_v2 绑定都不动。拿掉 B′ = 用回主修订 A 的文本",
+   "revisions": [
+    {
+     "kind": "hidden_test_text_replace",
+     "target": "test_1.py",
+     "edits": [
+      {
+       "old": "    def test_auto_solver(self):\n        # These defaults are valid as of sklearn v0.23.0\n        # lbfgs is default for l2 penalty\n        lr = LogisticRegressionLearner(penalty=\"l2\", solver=\"auto\")\n        skl_clf = lr._initialize_wrapped()\n        self.assertEqual(skl_clf.solver, \"lbfgs\")\n        self.assertEqual(skl_clf.penalty, \"l2\")\n\n        # lbfgs is default for no penalty\n        lr = LogisticRegressionLearner(penalty=None, solver=\"auto\")\n        skl_clf = lr._initialize_wrapped()\n        self.assertEqual(skl_clf.solver, \"lbfgs\")\n        self.assertEqual(skl_clf.penalty, None)\n\n        # liblinear is default for l2 penalty\n        lr = LogisticRegressionLearner(penalty=\"l1\", solver=\"auto\")\n        skl_clf = lr._initialize_wrapped()\n        self.assertEqual(skl_clf.solver, \"liblinear\")\n        self.assertEqual(skl_clf.penalty, \"l1\")\n",
+       "new": "    def test_auto_solver(self):\n        # Behaviour-level check: the learner has to use a solver that supports\n        # the requested penalty. Where and how the solver is chosen (constructor,\n        # a sentinel value, fitting time) is not prescribed.\n\n        # l1, the reported case: fitting works and the fitted model really uses\n        # l1, on the multiclass data of the report and on binary data\n        for data in (self.iris, self.heart_disease):\n            skl_clf = LogisticRegressionLearner(penalty=\"l1\")(data).skl_model\n            self.assertEqual(skl_clf.penalty, \"l1\")\n            # the scikit-learn 0.22 solvers that support l1\n            self.assertIn(skl_clf.solver, (\"liblinear\", \"saga\"))\n\n        # l2, the default penalty, is supported by the default solver lbfgs:\n        # the default model is unchanged\n        skl_clf = LogisticRegressionLearner()(self.zoo).skl_model\n        self.assertEqual(skl_clf.solver, \"lbfgs\")\n        self.assertEqual(skl_clf.penalty, \"l2\")\n        # the default learner keeps an argument-free repr, also when repr is\n        # called repeatedly (same check as the public Orange/tests/test_util.py,\n        # TestUtil.test_reprable, \"GH 2275\")\n        logit = LogisticRegressionLearner()\n        for _ in range(2):\n            self.assertEqual(repr(logit), 'LogisticRegressionLearner()')\n\n        # no penalty is supported by lbfgs as well and keeps working\n        skl_clf = LogisticRegressionLearner(penalty=\"none\")(self.iris).skl_model\n        self.assertEqual(skl_clf.penalty, \"none\")\n"
+      }
+     ]
+    }
+   ],
+   "revised_files_sha256": {
+    "test_1.py": "sha256:be3b9ff02bf8b2f28371176844d6ff9cce940c1a9e1148406bf80cd7e46c19f4"
+   },
+   "expected_after": "与主修订相同（13 键不变）",
+   "acceptance": {
+    "gold": {
+     "patch": "runs/r2e_static_prep_20260924/v3/private/orange3__9b5494e26f407b75e79699c9d40be6df1d80a040/gold.patch",
+     "role": "正对照",
+     "expected_score": 1,
+     "trial": "trials/A2_gold.json",
+     "trial_verdict": "match"
+    },
+    "noop": {
+     "patch": "none",
+     "role": "空补丁",
+     "expected_score": 0,
+     "trial": "trials/A2_noop.json",
+     "trial_verdict": "mismatch：test_auto_solver、test_probability 为 FAILED"
+    },
+    "P1": {
+     "patch": "runs/r2e_actor_20260925/grader_cands/orange3_9b54_P1_resolve_in_init.patch",
+     "role": "本项要纠正的误判",
+     "expected_score": 0,
+     "trial": "trials/A2_P1.json",
+     "trial_verdict": "mismatch：只错 test_auto_solver（test_1.py:158，\"LogisticRegressionLearner(solver='lbfgs')\" != 'LogisticRegressionLearner()'）"
+    },
+    "V4": {
+     "patch": "runs/r2e_actor_20260925/grader_cands/orange3_9b54_V4_resolve_in_fit.patch",
+     "role": "唯一在拟合时改 params 的合理解，确认新断言不误拒它",
+     "expected_score": 1,
+     "trial": "trials/A2_V4.json",
+     "trial_verdict": "match"
+    }
+   }
+  },
+  "B": {
+   "how": "另加隐藏测试文件 test_2.py（独立一条 hidden_test_file_add 修订）与新键。期望映射要加键：在 r2e-mr-020 基础上合并为一条新修订（expected_file_replace）",
+   "revisions": [
+    {
+     "kind": "hidden_test_text_replace",
+     "target": "test_1.py",
+     "edits": [
+      {
+       "old": "    def test_auto_solver(self):\n        # These defaults are valid as of sklearn v0.23.0\n        # lbfgs is default for l2 penalty\n        lr = LogisticRegressionLearner(penalty=\"l2\", solver=\"auto\")\n        skl_clf = lr._initialize_wrapped()\n        self.assertEqual(skl_clf.solver, \"lbfgs\")\n        self.assertEqual(skl_clf.penalty, \"l2\")\n\n        # lbfgs is default for no penalty\n        lr = LogisticRegressionLearner(penalty=None, solver=\"auto\")\n        skl_clf = lr._initialize_wrapped()\n        self.assertEqual(skl_clf.solver, \"lbfgs\")\n        self.assertEqual(skl_clf.penalty, None)\n\n        # liblinear is default for l2 penalty\n        lr = LogisticRegressionLearner(penalty=\"l1\", solver=\"auto\")\n        skl_clf = lr._initialize_wrapped()\n        self.assertEqual(skl_clf.solver, \"liblinear\")\n        self.assertEqual(skl_clf.penalty, \"l1\")\n",
+       "new": "    def test_auto_solver(self):\n        # Behaviour-level check: the learner has to use a solver that supports\n        # the requested penalty. Where and how the solver is chosen (constructor,\n        # a sentinel value, fitting time) is not prescribed.\n\n        # l1, the reported case: fitting works and the fitted model really uses\n        # l1, on the multiclass data of the report and on binary data\n        for data in (self.iris, self.heart_disease):\n            skl_clf = LogisticRegressionLearner(penalty=\"l1\")(data).skl_model\n            self.assertEqual(skl_clf.penalty, \"l1\")\n            # the scikit-learn 0.22 solvers that support l1\n            self.assertIn(skl_clf.solver, (\"liblinear\", \"saga\"))\n\n        # l2, the default penalty, is supported by the default solver lbfgs:\n        # the default model is unchanged\n        skl_clf = LogisticRegressionLearner()(self.zoo).skl_model\n        self.assertEqual(skl_clf.solver, \"lbfgs\")\n        self.assertEqual(skl_clf.penalty, \"l2\")\n\n        # no penalty is supported by lbfgs as well and keeps working\n        skl_clf = LogisticRegressionLearner(penalty=\"none\")(self.iris).skl_model\n        self.assertEqual(skl_clf.penalty, \"none\")\n"
+      }
+     ]
+    },
+    {
+     "kind": "hidden_test_file_add",
+     "target": "test_2.py",
+     "content": "# Test methods with long descriptive names can omit docstrings\n# pylint: disable=missing-docstring\n\nimport unittest\n\nfrom Orange.classification import LogisticRegressionLearner\n\n\nclass TestLogisticRegressionDefaultRepr(unittest.TestCase):\n    def test_default_learner_repr(self):\n        # Same check as the public Orange/tests/test_util.py\n        # (TestUtil.test_reprable, \"GH 2275\"): the default learner has an\n        # argument-free repr, also when repr is called repeatedly\n        logit = LogisticRegressionLearner()\n        for _ in range(2):\n            self.assertEqual(repr(logit), 'LogisticRegressionLearner()')\n"
+    }
+   ],
+   "revised_files_sha256": {
+    "test_2.py": "sha256:581b71e751dd9df90171f8350d1a1be51082efcd95bf898049e8bd02c09e5a4e"
+   },
+   "expected_after": {
+    "TestLogisticRegressionLearner.test_LogisticRegressionNormalization_todo": "PASSED",
+    "TestLogisticRegressionLearner.test_auto_solver": "PASSED",
+    "TestLogisticRegressionLearner.test_learner_scorer_feature": "PASSED",
+    "TestLogisticRegressionLearner.test_learner_scorer_multiclass_feature": "PASSED",
+    "TestLogisticRegressionLearner.test_learner_scorer_previous_transformation": "PASSED",
+    "TestLogisticRegressionLearner.test_predict_on_instance": "PASSED",
+    "TestLogisticRegressionLearner.test_probability": "PASSED",
+    "TestLogisticRegressionLearner.test_single_class": "PASSED",
+    "TestLogisticRegressionLearner.test_sklearn_single_class": "PASSED",
+    "TestLogisticRegressionLearner.test_LogisticRegression": "PASSED",
+    "TestLogisticRegressionLearner.test_coefficients": "PASSED",
+    "TestLogisticRegressionLearner.test_learner_scorer": "FAILED",
+    "TestLogisticRegressionLearner.test_learner_scorer_multiclass": "FAILED",
+    "TestLogisticRegressionDefaultRepr.test_default_learner_repr": "PASSED"
+   },
+   "formal_expected_revision": {
+    "kind": "expected_file_replace",
+    "note": "在 r2e-mr-020 基础上合并为一条新修订，替代 r2e-mr-020；expected_change 相对来源期望",
+    "expected_change": {
+     "changed": {
+      "TestLogisticRegressionLearner.test_LogisticRegression": [
+       "FAILED",
+       "PASSED"
+      ],
+      "TestLogisticRegressionLearner.test_coefficients": [
+       "FAILED",
+       "PASSED"
+      ]
+     },
+     "added": {
+      "TestLogisticRegressionDefaultRepr.test_default_learner_repr": "PASSED"
+     },
+     "removed": []
+    }
+   },
+   "cost": "新编号替代 r2e-mr-020 后，rh2/src/repoharness2/envpack/environment_overlay.py:55-60 的 REVISION_ENV_REQUIREMENTS 以修订编号为键把本题绑定到 +env_v2，要跟着改键（生产代码，本包不改；该处正在处理 Codex 代码复核的 P1）",
+   "acceptance": {
+    "gold": {
+     "patch": "runs/r2e_static_prep_20260924/v3/private/orange3__9b5494e26f407b75e79699c9d40be6df1d80a040/gold.patch",
+     "role": "正对照",
+     "expected_score": 1,
+     "trial": "trials/AB_gold.json",
+     "trial_verdict": "match（14/14）"
+    },
+    "noop": {
+     "patch": "none",
+     "role": "空补丁",
+     "expected_score": 0,
+     "trial": "trials/AB_noop.json",
+     "trial_verdict": "mismatch：test_auto_solver、test_probability 为 FAILED；新键为 PASSED（回归键）"
+    },
+    "P1": {
+     "patch": "runs/r2e_actor_20260925/grader_cands/orange3_9b54_P1_resolve_in_init.patch",
+     "role": "本项要纠正的误判",
+     "expected_score": 0,
+     "trial": "trials/AB_P1.json",
+     "trial_verdict": "mismatch：只错新键（test_2.py:16）"
+    }
+   }
+  }
+ },
+ "registered_not_fixed": [
+  "G1（gold + 默认 multi_class 改 ovr）主修订下仍得 1：改变多类数据上的默认模型，但 Orange 文档没写多类方式，只经 WrapperMeta 嵌入的 sklearn 文档间接可见；属题外改动，按 S2 / T3 登记。若复核改判 S1，可用的窄断言见 revision_plan.md §8",
+  "把 'auto' 解析写进基类 SklLearner._initialize_wrapped 的候选（首批复核 review.md §3.1，会弄坏 RidgeRegressionLearner）：只有静态推断、没有已评分的补丁，按 v1 §4 第 4 步'只用已有证据'不修",
+  "两个 scorer 死键（期望 FAILED，上游过时期望）不动：主修订后 V7 已由 test_auto_solver 直接拒绝，死键不再是唯一拦住 V7 的地方",
+  "test_probability 的弱断言（hidden_tests/test_1.py:64）不动：L1 要求已由 test_auto_solver 直接断言",
+  "显式 solver 与 penalty 的组合（例如 solver='lbfgs', penalty='l1' 是自动换还是照样报错）题面没规定，新测试有意不测"
+ ]
+}

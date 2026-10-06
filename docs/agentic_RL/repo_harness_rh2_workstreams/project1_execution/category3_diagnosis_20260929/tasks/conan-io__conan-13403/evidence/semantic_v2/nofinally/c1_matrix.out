@@ -1,0 +1,123 @@
+{
+ "default": {
+  "exception": null,
+  "runs": [
+   [
+    "SRC",
+    "autoreconf --verbose"
+   ]
+  ],
+  "cwd_after": "BUILD",
+  "cwd_restored": true,
+  "source_folder_unchanged": true
+ },
+ "args_kw": {
+  "exception": null,
+  "runs": [
+   [
+    "SRC",
+    "autoreconf --verbose --install"
+   ]
+  ],
+  "cwd_after": "BUILD",
+  "cwd_restored": true,
+  "source_folder_unchanged": true
+ },
+ "args_positional": {
+  "exception": null,
+  "runs": [
+   [
+    "SRC",
+    "autoreconf --verbose --install"
+   ]
+  ],
+  "cwd_after": "BUILD",
+  "cwd_restored": true,
+  "source_folder_unchanged": true
+ },
+ "rel_sub": {
+  "exception": null,
+  "runs": [
+   [
+    "SRC/sub",
+    "autoreconf --verbose"
+   ]
+  ],
+  "cwd_after": "BUILD",
+  "cwd_restored": true,
+  "source_folder_unchanged": true
+ },
+ "abs_build": {
+  "exception": null,
+  "runs": [
+   [
+    "BUILD",
+    "autoreconf --verbose"
+   ]
+  ],
+  "cwd_after": "BUILD",
+  "cwd_restored": true,
+  "source_folder_unchanged": true
+ },
+ "abs_build_args": {
+  "exception": null,
+  "runs": [
+   [
+    "BUILD",
+    "autoreconf --verbose --install"
+   ]
+  ],
+  "cwd_after": "BUILD",
+  "cwd_restored": true,
+  "source_folder_unchanged": true
+ },
+ "abs_sub": {
+  "exception": null,
+  "runs": [
+   [
+    "SRC/sub",
+    "autoreconf --verbose"
+   ]
+  ],
+  "cwd_after": "BUILD",
+  "cwd_restored": true,
+  "source_folder_unchanged": true
+ },
+ "missing": {
+  "exception": "FileNotFoundError: [Errno 2] No such file or directory: '/tmp/tmpwrjy22ri/src/missing'",
+  "raised_at": "autotools.py:116",
+  "runs": [],
+  "cwd_after": "BUILD",
+  "cwd_restored": true,
+  "source_folder_unchanged": true
+ },
+ "run_fails_sub": {
+  "exception": "ConanException: simulated autoreconf failure",
+  "raised_at": "matrix.py:31",
+  "runs": [
+   [
+    "SRC/sub",
+    "autoreconf --verbose"
+   ]
+  ],
+  "cwd_after": "SRC/sub",
+  "cwd_restored": false,
+  "source_folder_unchanged": true
+ },
+ "sequence_sub_then_default": {
+  "exception": null,
+  "runs": [
+   [
+    "SRC/sub",
+    "autoreconf --verbose"
+   ],
+   [
+    "SRC",
+    "autoreconf --verbose"
+   ]
+  ],
+  "cwd_after": "BUILD",
+  "cwd_restored": true,
+  "source_folder_unchanged": true
+ }
+}

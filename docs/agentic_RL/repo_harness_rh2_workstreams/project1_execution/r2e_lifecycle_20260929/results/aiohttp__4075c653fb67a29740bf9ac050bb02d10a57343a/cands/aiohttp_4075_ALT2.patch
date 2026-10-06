@@ -1,0 +1,27 @@
+diff --git a/aiohttp/http_parser.py b/aiohttp/http_parser.py
+--- a/aiohttp/http_parser.py
++++ b/aiohttp/http_parser.py
+@@ -65,7 +65,10 @@ ASCIISET: Final[Set[str]] = set(string.printable)
+ #     token = 1*tchar
+ METHRE: Final[Pattern[str]] = re.compile(r"[!#$%&'*+\-.^_`|~0-9A-Za-z]+")
+ VERSRE: Final[Pattern[str]] = re.compile(r"HTTP/(\d).(\d)")
+-HDRRE: Final[Pattern[bytes]] = re.compile(rb"[\x00-\x1F\x7F()<>@,;:\[\]={} \t\"\\]")
++HDRRE: Final[Pattern[bytes]] = re.compile(
++    rb"[\x00-\x1F\x7F-\xFF()<>@,;:\[\]={} \t\"\\]"
++)
++REQUEST_LINE_CTL: Final[Pattern[str]] = re.compile(r"[\x00-\x1f\x7f]")
+ HEXDIGIT = re.compile(rb"[0-9a-fA-F]+")
+ 
+ 
+@@ -546,8 +549,10 @@ class HttpRequestParser(HttpParser[RawRequestMessage]):
+     def parse_message(self, lines: List[bytes]) -> RawRequestMessage:
+         # request line
+         line = lines[0].decode("utf-8", "surrogateescape")
++        if REQUEST_LINE_CTL.search(line):
++            raise BadStatusLine(line)
+         try:
+-            method, path, version = line.split(maxsplit=2)
++            method, path, version = line.split(" ", maxsplit=2)
+         except ValueError:
+             raise BadStatusLine(line) from None
+ 

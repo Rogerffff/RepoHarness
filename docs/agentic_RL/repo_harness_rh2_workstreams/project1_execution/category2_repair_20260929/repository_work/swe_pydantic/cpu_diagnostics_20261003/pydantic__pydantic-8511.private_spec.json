@@ -1,0 +1,52 @@
+{
+  "image": "sha256:df6c3affb7ea6fd826f44863ec92926f7b52558dd0f1b42e05f97aec9fe8ca68",
+  "cpus": 2,
+  "memory": "4g",
+  "python_prefix": "/opt/miniconda3/envs/testbed",
+  "files": {
+    "test.patch": "/work/rh2-category2-20261003/packages/swe_pydantic/preparation_v1/tasks/pydantic__pydantic-8511/effective_test.patch",
+    "gold.patch": "/work/rh2-category2-20261003/packages/swe_pydantic/preparation_v1/tasks/pydantic__pydantic-8511/controls/gold.patch",
+    "narrow.patch": "/work/rh2-category2-20261003/packages/swe_pydantic/preparation_v1/tasks/pydantic__pydantic-8511/controls/narrow.patch"
+  },
+  "variants": {
+    "noop": [
+      "git reset --hard e4fa099d5adde70acc80238ff810c87a5cec7ebf && git clean -fdx",
+      "python - <<'PY'\nimport hashlib,json,pathlib,subprocess\nassert subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()=='e4fa099d5adde70acc80238ff810c87a5cec7ebf'\nexpected={'tests/test_dataclasses.py': 'ca0aeebd83f995c08159e247c6505d54eee75af00b94cb634d5a65b0c043e2a3', 'pyproject.toml': 'bb5a7c138b8eeeec05e24d1cd2824594a476a5d7798eed699cb39036ffcb4b20'}\nfor p,h in expected.items():\n    assert hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()==h,p\nlimits={k:pathlib.Path('/sys/fs/cgroup',k).read_text().strip() for k in ['cpu.max','memory.max','pids.max']}\nprint('PRIVATE_INITIAL_IDENTITY',json.dumps(dict(head='e4fa099d5adde70acc80238ff810c87a5cec7ebf',files=expected,cgroup=limits)))\nquota,period=map(int,limits['cpu.max'].split())\nassert quota==2*period\nassert int(limits['memory.max'])==4294967296\nassert int(limits['pids.max'])==512\nPY",
+      "python -m pip install -e .",
+      "python - <<'PY'\nimport pathlib,tomli\np=tomli.loads(pathlib.Path('/testbed/pyproject.toml').read_text())\ngroups=p.get('tool',{}).get('pdm',{}).get('dev-dependencies',{})\nrequirements=[x for name in ('testing','testing-extra') for x in groups.get(name,[])]\nassert requirements\npathlib.Path('/tmp/rh2-envrepair-testing-reqs.txt').write_text('\\n'.join(requirements)+'\\n')\nprint('PRIVATE_TEST_REQUIREMENTS',repr(requirements))\nPY",
+      "python -m pip install -r /tmp/rh2-envrepair-testing-reqs.txt",
+      "python - <<'PY'\nimport hashlib,json,os,pathlib,sys\nimport pydantic,pydantic_core\nassert os.getuid()==0\nassert sys.version_info[:2]==(3,8)\nassert sys.executable=='/opt/miniconda3/envs/testbed/bin/python'\nassert pathlib.Path(pydantic.__file__).resolve()==pathlib.Path('/testbed/pydantic/__init__.py')\nassert pydantic_core.__version__=='2.14.5'\nexpected={}\nfor p,h in expected.items():\n    assert hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()==h,p\nprint('PRIVATE_RUNTIME_IDENTITY',json.dumps(dict(uid=os.getuid(),python=sys.executable,version=sys.version,source=pydantic.__file__,core=pydantic_core.__version__,files=expected)))\nPY",
+      "git apply --check /in/test.patch && git apply /in/test.patch",
+      "python -m pytest --collect-only -q 'tests/test_dataclasses.py::test_repr_false[Field]' tests/test_dataclasses.py::test_inherited_required_field_without_local_annotations tests/test_dataclasses.py::test_inherited_hidden_field_without_local_annotations tests/test_dataclasses.py::test_inherited_factory_field_without_local_annotations tests/test_dataclasses.py::test_field_default_repr_stays_visible"
+    ],
+    "gold": [
+      "git reset --hard e4fa099d5adde70acc80238ff810c87a5cec7ebf && git clean -fdx",
+      "python - <<'PY'\nimport hashlib,json,pathlib,subprocess\nassert subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()=='e4fa099d5adde70acc80238ff810c87a5cec7ebf'\nexpected={'tests/test_dataclasses.py': 'ca0aeebd83f995c08159e247c6505d54eee75af00b94cb634d5a65b0c043e2a3', 'pyproject.toml': 'bb5a7c138b8eeeec05e24d1cd2824594a476a5d7798eed699cb39036ffcb4b20', 'pydantic/dataclasses.py': '3fd9cc00c536227d63b4232c60e67ce45521b1b7d8473cf7c8bd9866d9a1539f'}\nfor p,h in expected.items():\n    assert hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()==h,p\nlimits={k:pathlib.Path('/sys/fs/cgroup',k).read_text().strip() for k in ['cpu.max','memory.max','pids.max']}\nprint('PRIVATE_INITIAL_IDENTITY',json.dumps(dict(head='e4fa099d5adde70acc80238ff810c87a5cec7ebf',files=expected,cgroup=limits)))\nquota,period=map(int,limits['cpu.max'].split())\nassert quota==2*period\nassert int(limits['memory.max'])==4294967296\nassert int(limits['pids.max'])==512\nPY",
+      "git apply --check /in/gold.patch && git apply /in/gold.patch",
+      "python -m pip install -e .",
+      "python - <<'PY'\nimport pathlib,tomli\np=tomli.loads(pathlib.Path('/testbed/pyproject.toml').read_text())\ngroups=p.get('tool',{}).get('pdm',{}).get('dev-dependencies',{})\nrequirements=[x for name in ('testing','testing-extra') for x in groups.get(name,[])]\nassert requirements\npathlib.Path('/tmp/rh2-envrepair-testing-reqs.txt').write_text('\\n'.join(requirements)+'\\n')\nprint('PRIVATE_TEST_REQUIREMENTS',repr(requirements))\nPY",
+      "python -m pip install -r /tmp/rh2-envrepair-testing-reqs.txt",
+      "python - <<'PY'\nimport hashlib,json,os,pathlib,sys\nimport pydantic,pydantic_core\nassert os.getuid()==0\nassert sys.version_info[:2]==(3,8)\nassert sys.executable=='/opt/miniconda3/envs/testbed/bin/python'\nassert pathlib.Path(pydantic.__file__).resolve()==pathlib.Path('/testbed/pydantic/__init__.py')\nassert pydantic_core.__version__=='2.14.5'\nexpected={'pydantic/dataclasses.py': '3635a04fcb3b3b5a450216a71f3f1477f9e5855ec41e88a275894d4869bcdc6d'}\nfor p,h in expected.items():\n    assert hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()==h,p\nprint('PRIVATE_RUNTIME_IDENTITY',json.dumps(dict(uid=os.getuid(),python=sys.executable,version=sys.version,source=pydantic.__file__,core=pydantic_core.__version__,files=expected)))\nPY",
+      "git apply --check /in/test.patch && git apply /in/test.patch",
+      "python -m pytest --collect-only -q 'tests/test_dataclasses.py::test_repr_false[Field]' tests/test_dataclasses.py::test_inherited_required_field_without_local_annotations tests/test_dataclasses.py::test_inherited_hidden_field_without_local_annotations tests/test_dataclasses.py::test_inherited_factory_field_without_local_annotations tests/test_dataclasses.py::test_field_default_repr_stays_visible"
+    ],
+    "narrow": [
+      "git reset --hard e4fa099d5adde70acc80238ff810c87a5cec7ebf && git clean -fdx",
+      "python - <<'PY'\nimport hashlib,json,pathlib,subprocess\nassert subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()=='e4fa099d5adde70acc80238ff810c87a5cec7ebf'\nexpected={'tests/test_dataclasses.py': 'ca0aeebd83f995c08159e247c6505d54eee75af00b94cb634d5a65b0c043e2a3', 'pyproject.toml': 'bb5a7c138b8eeeec05e24d1cd2824594a476a5d7798eed699cb39036ffcb4b20', 'pydantic/dataclasses.py': '3fd9cc00c536227d63b4232c60e67ce45521b1b7d8473cf7c8bd9866d9a1539f'}\nfor p,h in expected.items():\n    assert hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()==h,p\nlimits={k:pathlib.Path('/sys/fs/cgroup',k).read_text().strip() for k in ['cpu.max','memory.max','pids.max']}\nprint('PRIVATE_INITIAL_IDENTITY',json.dumps(dict(head='e4fa099d5adde70acc80238ff810c87a5cec7ebf',files=expected,cgroup=limits)))\nquota,period=map(int,limits['cpu.max'].split())\nassert quota==2*period\nassert int(limits['memory.max'])==4294967296\nassert int(limits['pids.max'])==512\nPY",
+      "git apply --check /in/narrow.patch && git apply /in/narrow.patch",
+      "python -m pip install -e .",
+      "python - <<'PY'\nimport pathlib,tomli\np=tomli.loads(pathlib.Path('/testbed/pyproject.toml').read_text())\ngroups=p.get('tool',{}).get('pdm',{}).get('dev-dependencies',{})\nrequirements=[x for name in ('testing','testing-extra') for x in groups.get(name,[])]\nassert requirements\npathlib.Path('/tmp/rh2-envrepair-testing-reqs.txt').write_text('\\n'.join(requirements)+'\\n')\nprint('PRIVATE_TEST_REQUIREMENTS',repr(requirements))\nPY",
+      "python -m pip install -r /tmp/rh2-envrepair-testing-reqs.txt",
+      "python - <<'PY'\nimport hashlib,json,os,pathlib,sys\nimport pydantic,pydantic_core\nassert os.getuid()==0\nassert sys.version_info[:2]==(3,8)\nassert sys.executable=='/opt/miniconda3/envs/testbed/bin/python'\nassert pathlib.Path(pydantic.__file__).resolve()==pathlib.Path('/testbed/pydantic/__init__.py')\nassert pydantic_core.__version__=='2.14.5'\nexpected={'pydantic/dataclasses.py': '337e4d552b22aef94960740b385c7ca93cd1b09619997e74e4e93da6427190df'}\nfor p,h in expected.items():\n    assert hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()==h,p\nprint('PRIVATE_RUNTIME_IDENTITY',json.dumps(dict(uid=os.getuid(),python=sys.executable,version=sys.version,source=pydantic.__file__,core=pydantic_core.__version__,files=expected)))\nPY",
+      "git apply --check /in/test.patch && git apply /in/test.patch",
+      "python -m pytest --collect-only -q 'tests/test_dataclasses.py::test_repr_false[Field]' tests/test_dataclasses.py::test_inherited_required_field_without_local_annotations tests/test_dataclasses.py::test_inherited_hidden_field_without_local_annotations tests/test_dataclasses.py::test_inherited_factory_field_without_local_annotations tests/test_dataclasses.py::test_field_default_repr_stays_visible"
+    ]
+  },
+  "commands": [
+    {
+      "id": "selected_nodes",
+      "cmd": "python -m pytest -rA --tb=short -vv -o console_output_style=classic --no-header 'tests/test_dataclasses.py::test_repr_false[Field]' tests/test_dataclasses.py::test_inherited_required_field_without_local_annotations tests/test_dataclasses.py::test_inherited_hidden_field_without_local_annotations tests/test_dataclasses.py::test_inherited_factory_field_without_local_annotations tests/test_dataclasses.py::test_field_default_repr_stays_visible",
+      "timeout_s": 300
+    }
+  ]
+}

@@ -1,0 +1,215 @@
+{
+ "task_id": "dask__dask-7305",
+ "source": "SWE-Gym lite (dask/dask 2021.02)",
+ "task_revision": "upstream",
+ "materials_refs": [
+  "s2/ingest/public_bundles_v0.jsonl (problem_statement 2613 字符)",
+  "s2/ingest/grading_bundles_v2_v0.jsonl (F2P=1; P2P=104)",
+  "s2/ingest/validation_bundles_v0.jsonl (golden_patch)",
+  "s2/raw/swe_gym_lite_full_f70b1a29.jsonl (hints_text 3561 字符)",
+  "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/dask__dask-7305/{gold,empty}/offline/a1/"
+ ],
+ "public_view": {
+  "goal": "`partition_quantiles` 对 uint64 大整数算出的 min/max 比真实值大 1（612509347682975743 → ...744），导致 set_index 的 divisions 把真正的最小值排除在第一个分区之外。期望 min/max 正确。",
+  "constraints": [
+   "题面给出可直接运行的 MCVE（两行 uint64 + partition_quantiles）与完整输出，并附了 set_index 上的连锁症状与各值的 dtype 对比。",
+   "题面自己猜测是 uint 的溢出/强制类型转换问题。"
+  ],
+  "unknown_from_public": [
+   "题面完全没有提到、也无从推出：修复会**改变小整数场景下既有的 divisions**（本题唯一的 F2P 正是断言这一点，见检查 23/24）。",
+   "题面没有指定修法。hints 里维护者列了三条互斥方案（总是 nearest / 先判能否安全转 float64 / 让用户选），并明确说自己倾向方案 2，而 gold 走的是方案 1。"
+  ],
+  "by": "L1_dask"
+ },
+ "checks": {
+  "1": {
+   "status": "issue",
+   "evidence_refs": [
+    "8663c6b7813fbdcaaa85d4fdde04ff42b1bb6ed0:dask/dataframe/partitionquantiles.py:413-419",
+    "8663c6b7813fbdcaaa85d4fdde04ff42b1bb6ed0:dask/dataframe/tests/test_shuffle.py:608-620",
+    "runs/env_probe_stage1_20260910/.../dask__dask-7305/empty/offline/a1/test_output.txt:1570"
+   ],
+   "note": "文件层面对应（test_patch 改 test_shuffle.py，gold 改 partitionquantiles.py，base 均存在）。但**test_patch 新增的复现用例 `test_set_index_interpolate_large_uint` 在 base 上就是 PASSED**（empty 日志 1570 行），因此它落进了 P2P 而不是 F2P —— 即“题面所报 bug 的复现用例”对判分零贡献。最可能的原因（未验证）：该用例用 `set_index('x', npartitions=1)` 且输入只有 1 个分区，走了不经过 partition_quantiles 的快路径，与题面直接调 `partition_quantiles(...)` 的复现形状不同。",
+   "by": "L1_dask"
+  },
+  "2": {
+   "status": "unknown",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-7305/empty/offline/a1/test_output.txt:1570"
+   ],
+   "note": "base 代码确实有 `interpolation == 'linear' and np.issubdtype(data.dtype, np.integer)` 后再 `np.round(vals).astype(data.dtype)` 的写法，符合题面描述的机制。但在本镜像上，**题面缺陷不能通过 test_patch 提供的用例复现**（见检查 1）。是否能通过题面原样的 `partition_quantiles(...)` 调用复现，未实跑，记 unknown。",
+   "by": "L1_dask"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "s2/raw/...:dask__dask-7305.hints_text"
+   ],
+   "note": "题面完整无截断。但 hints（3561 字符，不可见）含**决定性的方案选择讨论**：三条候选修法、维护者对方案 1 的告诫 'may change behavior for existing code in unexpected ways'、以及最终采纳方案 1 的理由。gold 走的正是方案 1，而唯一的 F2P 就是方案 1 的副作用。公开材料里没有任何线索指向“应该选方案 1”。",
+   "by": "L1_dask"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-7305.test_patch"
+   ],
+   "note": "test_patch 仅碰 dask/dataframe/tests/test_shuffle.py；gold 仅碰 dask/dataframe/partitionquantiles.py。",
+   "by": "L1_dask"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "同上"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "L1_dask"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dask/prescan.json"
+   ],
+   "note": "本包内唯一改 partitionquantiles.py / test_shuffle.py 的题。",
+   "by": "L1_dask"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-7305.{test_patch,fail_to_pass}"
+   ],
+   "note": "**唯一的 F2P 是一条副作用断言**：test_patch 把既有用例 `test_set_index_interpolate` 的期望从 `set(d1.divisions) == {1,2,3,4}` 改成 `{1,2,4}`（输入是 `x=[4,1,1,3,3]` 这样的小整数，与 uint64 溢出毫无关系）。从公开题面绝无可能推出“小整数场景的 divisions 应该从 4 个变成 3 个”。",
+   "by": "L1_dask"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "s2/raw/...:dask__dask-7305.hints_text（方案 1/2/3）",
+    "grading_bundles_v2_v0.jsonl:dask__dask-7305.fail_to_pass"
+   ],
+   "note": "**本包强制唯一实现最严重的一题**。hints 里维护者自己倾向的方案 2（先判能否安全转 float64，不安全才退到 nearest）能正确修好 uint64 问题，却**不会**改变小整数场景的 divisions —— 于是 `test_set_index_interpolate` 仍得到 `{1,2,3,4}`，F2P 失败，整题判 0。方案 3 同理。也就是说，判分实际上在检查“你有没有选中维护者最终采纳的那一种实现”，而不是“你有没有修好 bug”。",
+   "by": "L1_dask"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-7305/{empty,gold}/offline/a1/test_output.txt:1570,1575"
+   ],
+   "note": "反向也成立：一个**完全不碰 uint64 溢出**、只把 `percentiles_summary` 的整数分支改成 `interpolation='nearest'` 的改动即可满分；而题面所报的错误值有没有被修好，没有任何 F2P 覆盖（复现用例在两侧都 PASSED）。",
+   "by": "L1_dask"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "8663c6b7813fbdcaaa85d4fdde04ff42b1bb6ed0:dask/dataframe/tests/test_shuffle.py:622-628"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_dask"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "validation_bundles_v0.jsonl:dask__dask-7305.golden_patch"
+   ],
+   "note": "gold 4 行（整数 dtype 走 nearest，并删掉原来的 round+astype 后处理），无无关改动、不依赖未交付改动，与上游采纳的方案 1 一致。",
+   "by": "L1_dask"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-7305.problem_statement"
+   ],
+   "note": "题面不含修复代码，也没有 PR/commit 号（hints 里有一个 PR #1261 的 discussion 链接，但不可见）。",
+   "by": "L1_dask"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-7305/gold/offline/a1/test_output.txt (install rc=0)"
+   ],
+   "note": "安装 rc=0；Python 3.8.19 + pytest-8.3.2（见 #R3）。本题 0 条恒失败用例，是工具链影响最小的题之一。",
+   "by": "L1_dask"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "8663c6b7813fbdcaaa85d4fdde04ff42b1bb6ed0:dask/dataframe/tests/test_shuffle.py"
+   ],
+   "note": "无 mark.network / URL / requests / boto3；有 3 处 `@pytest.mark.slow`（`--runslow` 未传，被跳过，均不在参考集内）。",
+   "by": "L1_dask"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-7305/gold/offline/a1/status_map.json"
+   ],
+   "note": "gold 侧 106 条结果行、1 条 SKIPPED（伪键 `[3]`，来自 `--runslow`），F2P + 104 条 P2P 全 PASSED。无缺可选依赖导致的跳过。",
+   "by": "L1_dask"
+  },
+  "9": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-7305/{gold,empty}/offline/a1/status_map.json"
+   ],
+   "note": "形式上 empty→F2P FAILED / gold→PASSED，判据能区分 gold 与空补丁；但按检查 24/25，它区分的是“是否采用方案 1”，不是“是否修好了题面 bug”。",
+   "by": "L1_dask"
+  }
+ },
+ "issues": [
+  {
+   "category": "测试强制唯一实现",
+   "severity": "P1",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-7305.fail_to_pass",
+    "s2/raw/...:dask__dask-7305.hints_text"
+   ],
+   "proposed_action": "reject_revision 或改题：把 F2P 换成对 uint64 min/max 正确性的断言（用能真正触发 partition_quantiles 的输入），把 `test_set_index_interpolate` 的新期望降级成 P2P 或允许两种取值。",
+   "next_experiment": "在 base 上实现 hints 方案 2（安全转换检查），跑当前 F2P，预期 FAILED（证明合理解答被拒）。"
+  },
+  {
+   "category": "复现用例不复现",
+   "severity": "P1",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-7305/empty/offline/a1/test_output.txt:1570"
+   ],
+   "proposed_action": "重写 `test_set_index_interpolate_large_uint` 使其在 base 上失败（例如直接调用 `partition_quantiles(dask_df.a, npartitions=1).compute()` 断言取值，或让输入有多个分区），再把它放进 F2P。",
+   "next_experiment": "在 base 镜像里分别跑题面原样的 partition_quantiles 调用与该用例，确认前者出错、后者通过，定位快路径。"
+  },
+  {
+   "category": "关键决策只在 hints",
+   "severity": "P2",
+   "evidence_refs": [
+    "s2/raw/...:dask__dask-7305.hints_text"
+   ],
+   "proposed_action": "若保留本题，须把“整数 dtype 一律用 nearest 插值”的裁定写进题面。",
+   "next_experiment": "无。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰测试文件，gold 只碰源码；按第四组 B 默认保持空。",
+  "evidence_refs": [
+   "grading_bundles_v2_v0.jsonl:dask__dask-7305.test_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate_int",
+   "reason": "已在 P2P；断言 divisions 全是整数类型，是对“改插值方式后别把 dtype 改掉”的直接保护。"
+  },
+  {
+   "id": "dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate_large_uint",
+   "reason": "当前在 P2P 且两侧都通过（无判别力）。应改写成真正能在 base 上失败的形状后移入 F2P。"
+  },
+  {
+   "id": "dask/dataframe/tests/test_shuffle.py::test_set_index_general / test_set_index_sorted_true / test_set_index_2",
+   "reason": "partition_quantiles 是 set_index 的核心；插值方式改变会影响所有 divisions 计算，这些用例是最贴近的回归面。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "reject_revision",
+  "reason": "唯一的 F2P 是修法副作用（小整数 divisions 从 {1,2,3,4} 变 {1,2,4}），公开材料推不出；hints 里维护者自己倾向的另一种正确修法会被判 0；而真正复现题面 bug 的新增用例在 base 上就通过、零判别力。不改题面与参考集不建议使用。"
+ },
+ "costs": {
+  "minutes": 24
+ }
+}

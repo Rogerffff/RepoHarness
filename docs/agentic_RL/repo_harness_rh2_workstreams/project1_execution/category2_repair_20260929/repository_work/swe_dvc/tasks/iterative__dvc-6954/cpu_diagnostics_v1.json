@@ -1,0 +1,218 @@
+{
+  "format": "swe_dvc_private_diagnostic.v1",
+  "as_of": "2026-10-03",
+  "instance_id": "iterative__dvc-6954",
+  "kind": "private_pytest_diagnostic",
+  "formal_grading": false,
+  "qualifies_for_probe": false,
+  "image_id": "sha256:083832998996245f4f49eaab3f5f9314fe9fe23bafda7fc9641ae8cec6803c30",
+  "base_id": "sha256:e89b73204cdd3e6635369a72520d7f5d2dea1f22ec96c984c6baadd7b73c2fd1",
+  "pip_check_rc": 0,
+  "image_plan_sha256": "sha256:1c6a414063294ef6bc01cfd9766e2b3fa5f396bffbd821a9a25f3206ab9b15a3",
+  "effective_test_patch_sha256": "sha256:52c6a71bba1b1ca9f067d9846006dc5f2af9ecb0dde107f8a4ee75519c0b33fc",
+  "source_commit": "28dd39a1a0d710585ff21bf66199208b1b83cbde",
+  "results": [
+    {
+      "version": "original",
+      "candidate": "noop",
+      "pytest_rc": 1,
+      "total_executed": 13,
+      "missing_references": [],
+      "observed_reference_nodes": {
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[UNARY_OP": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[UNARY_OP = -1-result9]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[DICT": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[DICT = {'a': 1, 'b': 2}-result4]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[SUM": "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[SUM = 1 + 2]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[SET": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[SET = {1, 2, 3}-result6]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[CONSTRUCTOR": "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[CONSTRUCTOR = dict(a=1, b=2)]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[STR": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[STR = 'abc'-result3]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[LIST": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[LIST = [1, 2, 3]-result5]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[BOOL": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[BOOL = True-result0]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[FLOAT": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[FLOAT = 0.001-result2]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[INT": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[INT = 5-result1]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[class": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[class TrainConfig:\\n\\n            EPOCHS = 70\\n\\n            def __init__(self):\\n                self.layers = 5\\n                self.layers = 9  # TrainConfig.layers param will be 9\\n                bar = 3  # Will NOT be found since it's locally scoped\\n            -result10]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[NONE": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[NONE = None-result8]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[TUPLE": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[TUPLE = (10, 100)-result7]"
+      },
+      "f2p": {
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[UNARY_OP": "FAILED"
+      },
+      "p2p_counts": {
+        "PASSED": 12
+      },
+      "extra_failures": [],
+      "cleanup_removed": true
+    },
+    {
+      "version": "original",
+      "candidate": "gold",
+      "pytest_rc": 0,
+      "total_executed": 13,
+      "missing_references": [],
+      "observed_reference_nodes": {
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[UNARY_OP": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[UNARY_OP = -1-result9]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[DICT": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[DICT = {'a': 1, 'b': 2}-result4]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[SUM": "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[SUM = 1 + 2]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[SET": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[SET = {1, 2, 3}-result6]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[CONSTRUCTOR": "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[CONSTRUCTOR = dict(a=1, b=2)]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[STR": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[STR = 'abc'-result3]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[LIST": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[LIST = [1, 2, 3]-result5]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[BOOL": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[BOOL = True-result0]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[FLOAT": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[FLOAT = 0.001-result2]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[INT": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[INT = 5-result1]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[class": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[class TrainConfig:\\n\\n            EPOCHS = 70\\n\\n            def __init__(self):\\n                self.layers = 5\\n                self.layers = 9  # TrainConfig.layers param will be 9\\n                bar = 3  # Will NOT be found since it's locally scoped\\n            -result10]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[NONE": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[NONE = None-result8]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[TUPLE": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[TUPLE = (10, 100)-result7]"
+      },
+      "f2p": {
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[UNARY_OP": "PASSED"
+      },
+      "p2p_counts": {
+        "PASSED": 12
+      },
+      "extra_failures": [],
+      "cleanup_removed": true
+    },
+    {
+      "version": "original",
+      "candidate": "negative_int_only",
+      "pytest_rc": 0,
+      "total_executed": 13,
+      "missing_references": [],
+      "observed_reference_nodes": {
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[UNARY_OP": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[UNARY_OP = -1-result9]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[DICT": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[DICT = {'a': 1, 'b': 2}-result4]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[SUM": "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[SUM = 1 + 2]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[SET": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[SET = {1, 2, 3}-result6]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[CONSTRUCTOR": "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[CONSTRUCTOR = dict(a=1, b=2)]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[STR": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[STR = 'abc'-result3]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[LIST": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[LIST = [1, 2, 3]-result5]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[BOOL": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[BOOL = True-result0]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[FLOAT": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[FLOAT = 0.001-result2]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[INT": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[INT = 5-result1]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[class": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[class TrainConfig:\\n\\n            EPOCHS = 70\\n\\n            def __init__(self):\\n                self.layers = 5\\n                self.layers = 9  # TrainConfig.layers param will be 9\\n                bar = 3  # Will NOT be found since it's locally scoped\\n            -result10]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[NONE": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[NONE = None-result8]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[TUPLE": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[TUPLE = (10, 100)-result7]"
+      },
+      "f2p": {
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[UNARY_OP": "PASSED"
+      },
+      "p2p_counts": {
+        "PASSED": 12
+      },
+      "extra_failures": [],
+      "cleanup_removed": true
+    },
+    {
+      "version": "effective",
+      "candidate": "noop",
+      "pytest_rc": 1,
+      "total_executed": 26,
+      "missing_references": [],
+      "observed_reference_nodes": {
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[negative_int]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[negative_int]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_negative_float_and_containers": "tests/unit/utils/serialize/test_python.py::test_parse_negative_float_and_containers",
+        "tests/func/params/test_show.py::test_negative_python_params_lock_and_repro": "tests/func/params/test_show.py::test_negative_python_params_lock_and_repro",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[dict]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[dict]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[sum]": "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[sum]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[set]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[set]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[constructor]": "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[constructor]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[str]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[str]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[list]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[list]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[bool]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[bool]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[float]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[float]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[int]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[int]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[class]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[class]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[none]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[none]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[tuple]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[tuple]"
+      },
+      "f2p": {
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[negative_int]": "FAILED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_negative_float_and_containers": "FAILED",
+        "tests/func/params/test_show.py::test_negative_python_params_lock_and_repro": "FAILED"
+      },
+      "p2p_counts": {
+        "PASSED": 12
+      },
+      "extra_failures": [],
+      "cleanup_removed": true
+    },
+    {
+      "version": "effective",
+      "candidate": "gold",
+      "pytest_rc": 0,
+      "total_executed": 26,
+      "missing_references": [],
+      "observed_reference_nodes": {
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[negative_int]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[negative_int]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_negative_float_and_containers": "tests/unit/utils/serialize/test_python.py::test_parse_negative_float_and_containers",
+        "tests/func/params/test_show.py::test_negative_python_params_lock_and_repro": "tests/func/params/test_show.py::test_negative_python_params_lock_and_repro",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[dict]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[dict]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[sum]": "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[sum]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[set]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[set]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[constructor]": "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[constructor]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[str]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[str]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[list]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[list]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[bool]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[bool]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[float]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[float]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[int]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[int]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[class]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[class]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[none]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[none]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[tuple]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[tuple]"
+      },
+      "f2p": {
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[negative_int]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_negative_float_and_containers": "PASSED",
+        "tests/func/params/test_show.py::test_negative_python_params_lock_and_repro": "PASSED"
+      },
+      "p2p_counts": {
+        "PASSED": 12
+      },
+      "extra_failures": [],
+      "cleanup_removed": true
+    },
+    {
+      "version": "effective",
+      "candidate": "negative_int_only",
+      "pytest_rc": 1,
+      "total_executed": 26,
+      "missing_references": [],
+      "observed_reference_nodes": {
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[negative_int]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[negative_int]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_negative_float_and_containers": "tests/unit/utils/serialize/test_python.py::test_parse_negative_float_and_containers",
+        "tests/func/params/test_show.py::test_negative_python_params_lock_and_repro": "tests/func/params/test_show.py::test_negative_python_params_lock_and_repro",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[dict]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[dict]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[sum]": "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[sum]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[set]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[set]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[constructor]": "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[constructor]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[str]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[str]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[list]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[list]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[bool]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[bool]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[float]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[float]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[int]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[int]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[class]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[class]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[none]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[none]",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[tuple]": "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[tuple]"
+      },
+      "f2p": {
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[negative_int]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_negative_float_and_containers": "FAILED",
+        "tests/func/params/test_show.py::test_negative_python_params_lock_and_repro": "FAILED"
+      },
+      "p2p_counts": {
+        "PASSED": 12
+      },
+      "extra_failures": [],
+      "cleanup_removed": true
+    }
+  ],
+  "raw_evidence_root": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001",
+  "raw_summary_sha256": "sha256:ee1fa42c14dc42ed43d6a2b57c9c8ad5df8b87d82db734ac69a4fecb4cc3b2d4",
+  "diagnostic_extraction_note": "原v1轻量行提取遗漏含空白nodeid；本报告按完整pytest.log核全部13原节点。原日志和summary不重写，不替代正式parser/绑定。",
+  "remaining": [
+    "共用正式版本发布",
+    "正式评分/逐参考/安装与资格验收",
+    "actor入口运输核对",
+    "非作者核查",
+    "模型探针"
+  ]
+}

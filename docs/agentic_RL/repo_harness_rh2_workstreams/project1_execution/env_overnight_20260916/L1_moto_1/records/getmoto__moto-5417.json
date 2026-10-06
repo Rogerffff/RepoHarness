@@ -1,0 +1,100 @@
+{
+ "task_id": "getmoto__moto-5417",
+ "source": "swe_gym_lite_full_f70b1a29",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-5417",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-5417",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-5417",
+  "base_commit": "3e6394e68c67f4c9f8f6ae94fcc2701cc98ba6ac",
+  "version": "4.0",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5417/",
+  "other_signals": "in_e2=[]; fragile_reference_id=true; stage1 gold=RESOLVED_NO(p2p_missing=1)"
+ },
+ "public_view": {
+  "goal": "题面：multipart upload 完成后对象没有默认 ACL，用预签名 URL 发 HeadObject 时 moto 抛 `AttributeError: 'NoneType' object has no attribute 'public_read'`。期望预签名 HeadObject 返回成功。",
+  "constraints": [
+   "题面标题与正文都把问题描述为“默认 ACL 没被设置”",
+   "题面给出完整 traceback，精确指向 moto/s3/responses.py 的 `if not key.acl.public_read and not signed_url:`",
+   "题面给出完整可运行复现，并注明“取消注释 ACL='private' 即可规避”"
+  ],
+  "unknowns_from_public_only": [
+   "题面把病因归为“没设默认 ACL”，因此最自然的修法是在 create_multipart_upload/complete 时补一个默认 private ACL；gold 却选择在读路径上把 acl=None 当作“无限制”。两者对未签名请求的行为不同（见 check 25），题面无法区分",
+   "题面没说未签名请求访问 multipart 对象应该是 200 还是 403"
+  ],
+  "base_code_located": [
+   "3e6394e6:moto/s3/responses.py:1159 `if not key.acl.public_read and not signed_url:` —— key.acl 为 None 时 AttributeError",
+   "multipart 完成路径未给 FakeKey 设置 acl（题面的 ACL='private' 规避说明了这一点）"
+  ],
+  "public_view_conclusion": "公开材料足以定位到崩溃行（traceback 直接给出），但不足以确定应该修读路径还是写路径。"
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 只改 tests/test_s3/test_s3_multipart.py（base 存在）", "gold 只改 moto/s3/responses.py（base 存在）"], "note": "目标文件均在 base 存在；与题面同一问题；无二进制/LFS/子模块材料。", "by": "L1_moto_1"},
+  "2": {"status": "pass", "evidence_refs": ["3e6394e6:moto/s3/responses.py:1159", "stage1:5417/empty F2P=FAILED"], "note": "base 确有缺陷。", "by": "L1_moto_1"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 含完整 traceback 与复现脚本，无外链、无图片", "raw.hints_text 只有一句致谢"], "note": "题面自足到能定位崩溃行。", "by": "L1_moto_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch paths = [tests/test_s3/test_s3_multipart.py]", "gold paths = [moto/s3/responses.py]"], "note": "test_patch 只触碰纯测试文件；gold 不触碰测试样路径。additional_exclusions = []。", "by": "L1_moto_1"},
+  "5": {"status": "issue", "evidence_refs": ["本包内 5545 的 test_patch 同样只改 tests/test_s3/test_s3_multipart.py；5562/6308/5701 的 gold 也在 moto/s3/ 下"], "note": "5417 与 5545 共用同一测试文件但修复点不同（5417 改 responses 的 ACL 读路径，5545 改 models 的 multipart 状态）。非同一 PR，但 S3 multipart 主题在本包内重复出现两次，采样时需注意主题集中度。", "by": "L1_moto_1"},
+  "6": {"status": "pass", "evidence_refs": ["stage1:5417 gold rc_install=0"], "note": "本题安装阶段正常（与 5899/6470 等 rc=2 的题不同，说明 rc=2 与镜像内 pip 缓存状态有关，并非全仓库一致）。", "by": "L1_moto_1"},
+  "7": {"status": "pass", "evidence_refs": ["test_patch 用 requests.get(presigned_url)，但整段在 @mock_s3 decorator 下，由 responses 库拦截", "stage1:5417/gold 该 F2P=PASSED（离线环境）"], "note": "表面上有 requests.get 外部调用线索，实际被 mock 拦截，离线可跑。这是“静态 grep 到 requests.get 但不构成外部依赖”的典型反例，值得在筛查规则里记一笔。", "by": "L1_moto_1"},
+  "11": {"status": "pass", "evidence_refs": ["无权重/数据集下载"], "note": "", "by": "L1_moto_1"},
+  "17": {"status": "pass", "evidence_refs": ["同 check 4"], "note": "additional_exclusions = []。", "by": "L1_moto_1"},
+  "23": {"status": "pass", "evidence_refs": ["problem_statement 的 Expected behaviour 三步与 F2P 结构一致", "test_patch 只断言 res.status_code.should.equal(200)"], "note": "公开材料能推出 F2P 检查的行为（预签名 HeadObject 返回 200）。无未说明的接口名/异常类型。", "by": "L1_moto_1"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 只断言 HTTP 200"], "note": "不绑定内部实现；gold 的读路径修法与“补默认 ACL”的写路径修法都能通过。", "by": "L1_moto_1"},
+  "25": {"status": "issue", "evidence_refs": ["validation.golden_patch 把条件改为 `(key.acl and not key.acl.public_read) and not signed_url`", "F2P 只覆盖 signed_url=True 的路径（generate_presigned_url + requests.get）"], "note": "gold 的语义是“acl 为 None 时一律不返回 403”，等于让 multipart 对象对未签名请求也可读；而题面标题所指的修法（补一个默认 private ACL）会让未签名请求得到 403。两种修法在 F2P 下等价，但对未签名访问的行为相反，且 F2P/P2P 没有任何用例覆盖未签名分支。也就是说本题既放过了与 gold 语义相反的修复，也没有任何断言说明哪种才是期望语义。", "by": "L1_moto_1"},
+  "26": {"status": "pass", "evidence_refs": ["见 proposed_regression_tests"], "note": "", "by": "L1_moto_1"},
+  "27": {"status": "issue", "evidence_refs": ["validation.golden_patch 单行改动，只处理读路径"], "note": "gold 相关且最小，不依赖未交付改动；但没有真正“设置默认 ACL”，与题面标题所述的问题描述不完全对应 —— 它修的是崩溃症状，不是题面自述的病因。作为训练 oracle 会把模型往“改读路径容错”而非“补写路径默认值”上引导。", "by": "L1_moto_1"},
+  "29": {"status": "pass", "evidence_refs": ["problem_statement 的 traceback 指到了出错行，但没有给出修复代码，也没有 PR/commit 链接"], "note": "traceback 泄漏了故障位置（这在真实 issue 里是正常且有价值的信息），但不构成答案泄漏。", "by": "L1_moto_1"}
+ },
+ "issues": [
+  {
+   "category": "grading_materials/id_encoding_mismatch",
+   "severity": "P1",
+   "evidence_refs": [
+    "grading.pass_to_pass 含 `tests/test_s3/test_s3_multipart.py::test_multipart_upload_with_copy_key[the-unicode-💩-key]`",
+    "stage1:5417/gold/offline/a1/status_map.json 里没有该 key（p2p_missing=1）",
+    "task_signals_swegym.json getmoto__moto-5417 stage1.gold.verdict = RESOLVED_NO, p2p_missing = 1"
+   ],
+   "proposed_action": "与 getmoto__moto-5701 完全同因：参数化 ID 里的非 ASCII 字符被 pytest 做 ascii_escaped 转义后与常量不等，导致该 P2P 永远缺失、gold 被判 RESOLVED_NO。本包内同因的还有 5545、5562、6308（共 5 题，占本包 26%）。修复应统一在匹配层做 ascii_escaped 归一化，而不是逐题改常量。",
+   "next_experiment": "在容器里 `pytest --collect-only -q tests/test_s3/test_s3_multipart.py | grep unicode` 取运行时 ID 文本；在 RH2 匹配层加归一化后，对这 5 题批量重跑 gold。"
+  },
+  {
+   "category": "grading_materials/fragile_test_id",
+   "severity": "P2",
+   "evidence_refs": [
+    "grading.pass_to_pass 含 `tests/test_s3/test_s3_multipart.py::test_multipart_list_parts_invalid_argument[-42-Argument`（方括号未闭合）",
+    "同上 `...::test_multipart_list_parts_invalid_argument[2147483689-Provided`",
+    "RH2 status_map 以同样方式按空白截断，故当前侥幸匹配上"
+   ],
+   "proposed_action": "同 5701：参数化 ID 含空格被按空白截断。本题的两条截断后仍互不相同，未发生碰撞，但依赖“材料与解析器犯同一个错误”这一巧合。与 ascii_escaped 问题一起在匹配层统一修。",
+   "next_experiment": "见 5701 记录的碰撞验证实验。"
+  },
+  {
+   "category": "underspecified_semantics",
+   "severity": "P2",
+   "evidence_refs": [
+    "problem_statement 标题 'Default ACL not set for multipart upload'",
+    "validation.golden_patch：`if (key.acl and not key.acl.public_read) and not signed_url:`",
+    "test_patch 只断言 `requests.get(presigned_url).status_code == 200`"
+   ],
+   "proposed_action": "题面把病因说成“默认 ACL 没设置”，gold 却在读路径上把 None ACL 当作无限制。两种修法对未签名访问 multipart 对象的结果相反（gold: 200；补默认 private ACL: 403），而 F2P/P2P 完全不覆盖未签名分支。建议补一条未签名访问的断言把语义钉死，否则本题对模型的反馈是“只要不崩就行”，与题面表述不一致。",
+   "next_experiment": "在 gold 与“补默认 private ACL”两种 patch 下分别对 multipart 对象发一个未签名 GET，记录状态码差异；据此决定期望语义并补断言。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 tests/test_s3/test_s3_multipart.py（纯测试文件），gold 只触碰 moto/s3/responses.py，二者不重叠。按第四组 B 默认空即可。",
+  "evidence_refs": ["grading.test_patch", "validation.golden_patch", "docs/.../batch4_scoring_20260910/README.md §0/§6.5"]
+ },
+ "proposed_regression_tests": [
+  {"id": "tests/test_s3/test_s3.py::test_acl_setting", "reason": "ACL 读路径的主用例；gold 改的正是 _key_response 的 ACL 判定，最直接的回归面（不在本题 P2P 内）"},
+  {"id": "tests/test_s3/test_s3.py::test_acl_switching_nonexistent_key", "reason": "ACL 为 None/缺失时的既有边界"},
+  {"id": "tests/test_s3/test_s3_multipart.py::test_multipart_upload", "reason": "multipart 主路径不能被破坏"},
+  {"id": "tests/test_s3/test_s3_multipart.py::test_multipart_upload_with_headers", "reason": "显式带 ACL/头部的 multipart 分支，与本题的默认 ACL 语义互为对照"},
+  {"id": "建议新增：对 multipart 完成的对象发未签名 GET/HEAD", "reason": "唯一能区分 gold 与“补默认 ACL”两种修法的断言，目前完全无覆盖"}
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "阻塞项是材料侧的 P1（非 ASCII 参数化 ID 导致 p2p_missing=1、gold=RESOLVED_NO），与 5701/5545/5562/6308 同因，应统一在匹配层修。题目本身可用，但建议同时补一条未签名访问断言以钉死语义。"
+ },
+ "costs": {"minutes": 21}
+}

@@ -1,0 +1,272 @@
+{
+ "task_id": "python__mypy-11857",
+ "source": "SWE-Gym lite (swe_gym_lite_full_f70b1a29.jsonl) / python/mypy PR 11857",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "docs/.../s2/ingest/public_bundles_v0.jsonl:python__mypy-11857",
+  "grading": "docs/.../s2/ingest/grading_bundles_v2_v0.jsonl:python__mypy-11857",
+  "validation": "docs/.../s2/ingest/validation_bundles_v0.jsonl:python__mypy-11857",
+  "base_commit": "f96446ce2f99a86210b21d39c7aec4b13a8bfc66",
+  "version": "0.940",
+  "python_version": "3.10",
+  "eval_cmd": "pytest -n0 -rA -k",
+  "n_f2p": 12,
+  "n_p2p": 18,
+  "gold_paths": [
+   "mypy/types.py"
+  ],
+  "test_patch_paths_n": 16,
+  "runtime_evidence": "无：本题不在 stage1 182 题样本内、in_e2=[]、无 DeepSeek 候选（task_signals_swegym.json）"
+ },
+ "public_view": {
+  "goal": "reveal_type 对变长元组 Tuple[int, ...] 只显示 builtins.tuple[builtins.int]，看不出是变长；要求输出带 '...'。",
+  "constraints": [
+   "题面给出完整最小复现（fenced code block），无外链、无图片、无截断",
+   "题面明确给了**两种**都可接受的期望输出：builtins.tuple[builtins.int, ...] 或 Tuple[builtins.int, ...]"
+  ],
+  "unknowns_from_public_only": [
+   "改哪一层：TypeStrVisitor（影响所有类型打印，含 semanal/transform/serialize 的 dump）还是只改 reveal_type 的消息构造？题面无线索",
+   "带 erased 标记 '*' 的实例（builtins.int*）应写成 builtins.tuple[builtins.int*, ...] 还是别的，题面无约束",
+   "Tuple[int] 这种定长元组的输出是否也要变（题面说定长显示 Tuple[builtins.int] 是'不同的'但没说要不要改）"
+  ],
+  "base_code_evidence": [
+   "f96446ce2:mypy/types.py:2196-2209 TypeStrVisitor.visit_instance：`if t.args: s += '[{}]'.format(self.list_str(t.args))`，对 builtins.tuple 与其它泛型一视同仁 → 题面缺陷成立",
+   "f96446ce2:mypy/types.py:1485-1492 TupleType 文档串把 fallback 写作 builtins.tuple[Any]"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "`git grep -c -E 'builtins\\.tuple\\[[^]]*\\]' f96446ce2 -- test-data/unit/` 命中 16 个文件，与 test_patch 的 16 个路径**逐一相同**（runs/.../L1_mypy_2/prescan.json:test_patch_paths）",
+    "gold 目标 mypy/types.py 在 base 存在，hunk 上下文与 base 逐行一致"
+   ],
+   "note": "材料对应完整；无二进制/LFS/子模块。test_patch 与 gold 同属 PR 11857（同一改动引发的期望输出批量更新）。",
+   "by": "L1_mypy_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "f96446ce2:mypy/types.py:2203 缺少 builtins.tuple 分支"
+   ],
+   "note": "静态确认 base 含题面缺陷；未实跑（无 Docker 授权，且本题无任何历史实跑证据）。",
+   "by": "L1_mypy_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "public_bundles problem_statement 900 字符，含完整复现与期望/实际输出",
+    "raw hints_text 仅 239 字符，内容是一条 mypy 源码行链接 + '#9459'，未给修法"
+   ],
+   "note": "题面自足；hints 无额外关键信息。",
+   "by": "L1_mypy_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 16 个路径全部是 test-data/unit/*.test（纯测试数据）",
+    "gold 只碰 mypy/types.py"
+   ],
+   "note": "无混合职责路径；默认 additional_exclusions 为空即可满足本题。仓库级隐患见 17。",
+   "by": "L1_mypy_2"
+  },
+  "17": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "rh2/src/repoharness2/grading/manager.py:656 test_files = patch_touched_paths(private.test_patch)；:672 test_globs=()；:581 DEFAULT_SWE_FORBIDDEN_GLOBS=('.rh2*','rh2/*')",
+    "本题 F2P/P2P 的 nodeid 前缀是 mypy/test/testcheck.py / testpep561.py / testsemanal.py / testtransform.py —— 这些**驱动文件都不在 test_patch 里，因此不受保护**"
+   ],
+   "note": "评分靠 pytest 跑 mypy/test/*.py 里的 DataSuite 驱动；这些驱动文件与 test-data/unit/fixtures/*.pyi 都不在 hygiene.test_files 内，agent 改它们不会被判 rejected_test_tampering，也不会被 eval 的 git checkout 还原。这是 mypy 全仓 40 题共有的可利用面。",
+   "by": "L1_mypy_2"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "40 道 mypy 题中只有本题 gold 触碰 mypy/types.py 的 visit_instance",
+    "base_commit f96446ce2 与 python__mypy-11824 相同（见 L1_mypy_1 summary 的 cross_task_leak）"
+   ],
+   "note": "与 11824 共用 base_commit，划分数据集时必须同侧；但两题改动、测试、题面互不重叠，不算重复题。",
+   "by": "L1_mypy_2"
+  },
+  "23": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "题面给出两种可接受输出（builtins.tuple[...] 或 Tuple[...]），F2P 只认第一种",
+    "F2P 含 3 条 pep561 用例（testTypedPkgSimpleEgg / testTypedPkgSimpleEditable / testTypedPkgSimpleEditableEgg），题面完全没提第三方包场景",
+    "F2P testOverloadKwargsSelectionWithDict 等断言的是重载选择的 revealed type 文本，与题面的 reveal_type 场景相隔一层"
+   ],
+   "note": "公开材料推不出必须选 builtins.tuple 形式，也推不出要覆盖 pep561/overload/serialize 场景。",
+   "by": "L1_mypy_2"
+  },
+  "24": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "gold 在 TypeStrVisitor.visit_instance 加 builtins.tuple 分支（mypy/types.py:2206-2210）"
+   ],
+   "note": "只要改在 TypeStrVisitor 就能过；但若按题面另一条允许的输出（Tuple[builtins.int, ...]）实现，12 条 F2P 全挂。实现自由度受期望文本锁死，属 mypy 数据驱动测试通病。",
+   "by": "L1_mypy_2"
+  },
+  "25": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "runs/.../L1_mypy_2/scripts/tpcases.py python__mypy-11857 输出：test_patch 改动覆盖 **45 个 case**，其中 F2P 12 + P2P 14 = 26 个 case 名进入评分，**33 个改了期望却完全不参与评分**",
+    "未评分名单含 testGenericAliasBuiltinsReveal、testTypeAliasWithBuiltinTuple、testSerializeTuple、testTupleJoinIrregular、testNamedTuple_typeinfo、testTypedPkgSimple 等"
+   ],
+   "note": "漏放通道很具体：只要改动让这 26 个 case 的输出正确，其余 33 个 case（包括 merge/serialize 这类跨阶段一致性用例）即使被改坏也不扣分。",
+   "by": "L1_mypy_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "同 25"
+   ],
+   "note": "回归集建议见 proposed_regression_tests。",
+   "by": "L1_mypy_2"
+  },
+  "27": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "golden_patch 第一段只改 TupleType 文档串（builtins.tuple[Any] → builtins.tuple[Any, ...]），与行为无关",
+    "gold 新增 `assert len(t.args) == 1`"
+   ],
+   "note": "gold 与题对应、不依赖未交付改动。两点瑕疵：(a) 含一处纯注释改动；(b) 用 assert 而非防御式分支，若某处构造出 args!=1 的 builtins.tuple，打印类型时会直接 AssertionError（上游后来确有相关修补）。不影响本题判分。",
+   "by": "L1_mypy_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 全文无 PR/commit 链接、无修复代码",
+    "hints_text 只给了一条 typeanal.py 的 blob 链接，不指向修复"
+   ],
+   "note": "无静态泄漏。",
+   "by": "L1_mypy_2"
+  },
+  "6": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "f96446ce2:mypy/test/testpep561.py:33-53 virtualenv()：`subprocess.run([sys.executable,'-m','virtualenv','-p...',venv_dir])`，失败即抛 'Failed to create venv. Do you have virtualenv installed?'",
+    "同文件 :56-82 install_package()：`python -m pip install [-e] .` 或 `python setup.py install/develop`，工作目录 test-data/packages/typedpkg",
+    "f96446ce2:test-requirements.txt 含 `virtualenv>=20.6.0`、`setuptools!=50`、`pytest>=6.2.0,<7.0.0` —— 若镜像按 test-requirements 安装，virtualenv 可用",
+    "f96446ce2:test-data/packages/typedpkg/setup.py 只用 setuptools，且 `git ls-tree -r <base> -- test-data/packages/` 下**没有任何 pyproject.toml**（计数 0）"
+   ],
+   "note": "F2P 的 3 条与 P2P 的 2 条 pep561 用例需要在临时目录建 virtualenv 并安装本地包（testpep561.py:33-82）。已确认：virtualenv 在 test-requirements 里；typedpkg 是纯 setup.py 包、无 pyproject.toml。仍未确认的是 pip 版本与构建隔离行为——现代 pip（21.3+）即使没有 pyproject.toml 也会建隔离构建环境并需要 setuptools/wheel，离线时会失败；testpep561.py 自己的注释也写了 'newer versions of pip (21.3+) don't follow this env variable'。这 5 条是本包最可能在真机上整体失败的评分项。",
+   "by": "L1_mypy_2"
+  },
+  "7": {
+   "status": "unknown",
+   "evidence_refs": [
+    "同 6"
+   ],
+   "note": "安装物料在仓库内（test-data/packages/typedpkg），不需下载权重/数据集；但 pip 构建隔离是否需要外网未验证。",
+   "by": "L1_mypy_2"
+  },
+  "11": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "test_patch 更新了 testTypedPkgSimple 与 testTypedPkgSimple_python2 的期望输出，但这两条**既不在 F2P 也不在 P2P**；而同一 hunk 里 no-pip / editable 的三条进了 F2P",
+    "testTypedPkgSimple 用的正是 `pip install .`（非 editable、非 no-pip）这一条路径"
+   ],
+   "note": "上游数据集构造时 testTypedPkgSimple（走 `pip install .`）与 testTypedPkgSimple_python2 被从 F2P/P2P 里剔除，而留下的三条恰好是 `no-pip`（直接 `python setup.py install`）与 `editable` 变体——这与『需要 pip 构建隔离的那条路径在验证时失败』的假设一致，但属于**旁证而非直接证据**（也可能是 python2 解释器缺失等别的原因）。值得在真机上单独确认这条路径是否联网。",
+   "by": "L1_mypy_2"
+  },
+  "18": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "eval_cmd 'pytest -n0 -rA -k'，选择器不带测试文件（rh2/src/repoharness2/envpack/spec_vendor.py:122）",
+    "runs/.../L1_mypy_2/kscan.json:python__mypy-11857 命中 3 组 -k 子串过选：testTypedPkgSimpleEditable→+EditableEgg、testBaseClassFromIgnoredModule→+UsingImportFrom、testGenericClassMethodAnnotation→+Decorator"
+   ],
+   "note": "过选出的 3 条本来就在 F2P/P2P 内，当前不改判分；但 -k 不带文件意味着 pytest 要先 collect 整个 mypy/test 目录，加上 5 条 venv 用例，本题会是 40 题里最慢的之一。",
+   "by": "L1_mypy_2"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P/P2P 的 nodeid 都是 4 段（file::Suite::datafile.test::case）",
+    "f96446ce2:mypy/test/data.py:618-648 含 DataSuiteCollector→DataFileCollector 两层，确实产出 4 段 nodeid"
+   ],
+   "note": "常量 nodeid 形状与该版本运行时一致（0.800 的 4 题是 3 段、data.py 无 DataFileCollector，也一致）。",
+   "by": "L1_mypy_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "grading_coverage",
+   "severity": "P1",
+   "evidence_refs": [
+    "scripts/tpcases.py python__mypy-11857：45 个被改 case 中 33 个未进 F2P/P2P"
+   ],
+   "proposed_action": "本题 gold 改的是全局类型打印器，波及面极广而评分只覆盖 26/45 个被改 case。采用前应把 test_patch 改过期望的全部 case 纳入 F2P（它们按定义都是 base 失败、gold 通过）。",
+   "next_experiment": "base+test_patch 与 base+test_patch+gold 各跑一次这 45 个 case（按 case 名拼 -k），比对逐 case 状态，把真正 fail→pass 的补进 F2P、pass→pass 的补进 P2P。"
+  },
+  {
+   "category": "environment_dependency",
+   "severity": "P1",
+   "evidence_refs": [
+    "f96446ce2:mypy/test/testpep561.py:33-82",
+    "F2P 含 3 条 pep561 用例"
+   ],
+   "proposed_action": "先确认镜像内 virtualenv 可用且 pip 能离线构建 test-data/packages/typedpkg；若不能，本题 F2P 的 1/4 恒失败，应剔除这 3 条或整题下线。",
+   "next_experiment": "在评分镜像里单跑 `pytest -n0 -rA -k testTypedPkgSimpleEgg` 并记录 rc、耗时与是否出现网络访问。"
+  },
+  {
+   "category": "file_boundary",
+   "severity": "P1",
+   "evidence_refs": [
+    "rh2/src/repoharness2/grading/manager.py:656/672/581"
+   ],
+   "proposed_action": "mypy 全仓 40 题的 gold 都不碰 mypy/test/ 与 test-data/（已核对 validation_bundles 全量），建议把这两处加进 hygiene 保护清单。",
+   "next_experiment": "构造一个只改 mypy/test/helpers.py::assert_string_arrays_equal 让其恒真的候选 patch，走一次完整评分，确认当前会被判满分。"
+  },
+  {
+   "category": "requirement_underspecified",
+   "severity": "P2",
+   "evidence_refs": [
+    "problem_statement 的两种可接受输出"
+   ],
+   "proposed_action": "若保留本题，处置里写明只接受 builtins.tuple[..., ...] 形式；否则把 F2P 的期望文本放宽。",
+   "next_experiment": "按题面第二种形式（Tuple[builtins.int, ...]）实现一版，跑 F2P 确认全挂。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "本题 test_patch 的 16 个路径全在 test-data/unit/ 下，是纯测试数据；gold 只碰 mypy/types.py，两者无交集，按第四组 B 的默认（额外排除为空）即可。仓库级建议（需用户裁定、对 40 题统一生效）：把 'mypy/test/*' 与 'test-data/*' 加入 hygiene.test_globs —— 证据是 40 题 gold 无一触碰这两处，而当前 agent 改 mypy/test/helpers.py 或 test-data/unit/fixtures/*.pyi 既不被还原也不被判篡改。副作用：agent 在 test-data/ 下建临时文件会被判 rejected_test_tampering（整份提交作废），需要一并决定。",
+  "evidence_refs": [
+   "grading_bundles_v2_v0:python__mypy-11857 test_patch",
+   "rh2/src/repoharness2/grading/manager.py:644-676",
+   "rh2/src/repoharness2/contracts/grading.py:118-121"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "test_patch 改过期望的全部 45 个 case（清单见 scripts/tpcases.py 输出）",
+   "reason": "它们都是 gold 行为的直接体现，现在只有 26 个进评分。"
+  },
+  {
+   "id": "mypy/test/testmerge.py::ASTMergeSuite::merge.test::testNamedTuple_typeinfo",
+   "reason": "gold 改的是 TypeStrVisitor，而 merge/serialize 的快照正是用它渲染；本题 test_patch 改了这条却未评分。"
+  },
+  {
+   "id": "mypy/test/testcheck.py::TypeCheckSuite::check-serialize.test 全文件",
+   "reason": "序列化往返一致性最容易被类型打印改动影响。"
+  },
+  {
+   "id": "mypy/test/testcheck.py::TypeCheckSuite::check-tuples.test 全文件（base 有 31 处 builtins.tuple[ 期望）",
+   "reason": "改动的主战场。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "评分覆盖只占被改 case 的 26/45，且 F2P 有 3 条依赖 virtualenv+pip 安装的 pep561 用例、环境可行性未验证；两处都能修（补 F2P / 剔除 pep561 条目），修好后是一道质量不错的题。"
+ },
+ "costs": {
+  "minutes": 52
+ }
+}

@@ -1,0 +1,51 @@
+diff --git a/dvc/repo/reproduce.py b/dvc/repo/reproduce.py
+index 0c33210..1c16c56 100644
+--- a/dvc/repo/reproduce.py
++++ b/dvc/repo/reproduce.py
+@@ -125,9 +125,37 @@ def reproduce(  # noqa: C901
+                 )
+             )
+ 
++    if (
++        kwargs.get("pull", False)
++        and kwargs.get("run_cache", True)
++        and not kwargs.get("dry", False)
++    ):
++        _pull_run_cache(self)
++
+     return _reproduce_stages(self.index.graph, list(stages), **kwargs)
+ 
+ 
++def _pull_run_cache(repo: "Repo") -> None:
++    from dvc.config import NoRemoteError
++    from dvc.stage.cache import RunCacheNotSupported
++
++    logger.debug("Pulling run cache")
++    try:
++        repo.stage_cache.pull(None)
++    except (NoRemoteError, RunCacheNotSupported) as exc:
++        logger.warning("Failed to pull run cache: %s", exc)
++
++
++def _pull_missing_data(stage: "Stage", jobs=None) -> None:
++    """Pull the outputs of a data source that are missing from the workspace."""
++    if stage.cmd and not stage.frozen:
++        return
++    missing = [out.fs_path for out in stage.outs if out.use_cache and not out.exists]
++    if missing:
++        logger.debug("Pulling missing data of %s", stage.addressing)
++        stage.repo.pull(missing, jobs=jobs, allow_missing=True)
++
++
+ def _reproduce_stages(  # noqa: C901
+     graph,
+     stages,
+@@ -190,6 +218,8 @@ def _reproduce_stages(  # noqa: C901
+             )
+ 
+         try:
++            if kwargs.get("pull") and not kwargs.get("dry"):
++                _pull_missing_data(stage, jobs=kwargs.get("jobs"))
+             ret = _reproduce_stage(stage, **kwargs)
+ 
+             if len(ret) == 0:

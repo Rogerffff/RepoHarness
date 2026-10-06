@@ -1,0 +1,11 @@
+diff --git a/pydantic/alias_generators.py b/pydantic/alias_generators.py
+index bbdaaaf12..d1a83fe52 100644
+--- a/pydantic/alias_generators.py
++++ b/pydantic/alias_generators.py
+@@ -41,4 +41,6 @@ def to_snake(camel: str) -> str:
+     """
+     snake = re.sub(r'([a-zA-Z])([0-9])', lambda m: f'{m.group(1)}_{m.group(2)}', camel)
+     snake = re.sub(r'([a-z0-9])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
++    if '_' not in snake.strip('_'):
++        snake = re.sub(r'([A-Z]+)([A-Z][a-z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+     return snake.lower()

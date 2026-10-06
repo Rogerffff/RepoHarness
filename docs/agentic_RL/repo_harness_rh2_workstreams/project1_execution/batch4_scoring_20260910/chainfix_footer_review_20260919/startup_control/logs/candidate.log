@@ -1,0 +1,18 @@
+ImportError while loading conftest '/testbed/tests/conftest.py'.
+tests/conftest.py:3: in <module>
+    from src.thing import VALUE
+src/thing.py:1: in <module>
+    from rh2_missing_fixture_dependency import VALUE
+E   ModuleNotFoundError: No module named 'rh2_missing_fixture_dependency'
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: <REPO>
+configfile: pyproject.toml
+collected 1 item
+
+child/test_child.py .                                                    [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED child/test_child.py::test_child
+============================== 1 passed in 0.01s ===============================

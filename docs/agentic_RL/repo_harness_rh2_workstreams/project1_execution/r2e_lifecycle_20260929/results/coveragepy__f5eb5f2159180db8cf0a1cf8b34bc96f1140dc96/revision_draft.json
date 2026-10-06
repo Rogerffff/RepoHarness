@@ -1,0 +1,160 @@
+{
+ "instance_id": "coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96",
+ "template": "R-c",
+ "status": "R-c 定稿：试跑验收 8 个候选全部与预期一致（试跑，不是正式评分）；待协调者落正式修订单与派生镜像材料、跑正式评分，再送 Codex 复核",
+ "items": [
+  {
+   "id": "R-c-1",
+   "new_key": "JsonReportTest.test_branch_totals_count_branch_arcs",
+   "fixes": "T2c（唯一分支断言只用题面示例值 1/1）+ T2b（D0 硬编码 1/1，正式评分 1.0）+ v1 §4 第 4 步（C2 把部分弧当未执行弧，正式评分 1.0；W2 两值对调，当前材料试跑 1）"
+  },
+  {
+   "id": "R-c-2",
+   "new_key": "JsonReportTest.test_branch_totals_from_saved_branch_data",
+   "fixes": "v1 §4 第 4 步（C3 按配置 branch 门控，正式评分 1.0；文档流程 coverage run --branch 后单独 coverage json 时缺键）"
+  }
+ ],
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "    def test_context_relative(self):\n        self.run_context_test(relative_files=True)\n",
+     "new": "    def test_context_relative(self):\n        self.run_context_test(relative_files=True)\n\n    # R2E revision (2026-09-29, R-c): the issue asks for totals that give\n    # \"detailed branch coverage information\", so the counts are checked on a\n    # program other than the issue's one-branch example.  In BRANCHY, f and g\n    # take both branches of their `if`, and h never runs.\n    BRANCHY = \"\"\"\\\n        def f(x):\n            if x:\n                return 1\n            return 2\n\n        def g(x):\n            if x:\n                return 1\n            return 2\n\n        def h(x):\n            if x:\n                return 1\n            return 2\n\n        f(0)\n        f(1)\n        g(0)\n        g(1)\n        \"\"\"\n\n    def _branchy_report(self, modname, report_from_saved_data=False):\n        \"\"\"Measure BRANCHY with branch=True and return the parsed JSON report.\"\"\"\n        self.make_file(modname + \".py\", self.BRANCHY)\n        data_file = os.path.join(self.temp_dir, modname + \".coverage\")\n        cov = coverage.Coverage(branch=True, data_file=data_file)\n        mod = self.start_import_stop(cov, modname)\n        if report_from_saved_data:\n            # Like `coverage run --branch` followed by a separate `coverage json`:\n            # the reporting object's own config does not set branch.\n            cov.save()\n            cov = coverage.Coverage(data_file=data_file)\n            cov.load()\n        output_path = os.path.join(self.temp_dir, modname + \".json\")\n        cov.json_report(mod, outfile=output_path)\n        with open(output_path) as result_file:\n            return json.load(result_file)\n\n    def test_branch_totals_count_branch_arcs(self):\n        # 6 branch destinations (two per `if`), 4 taken, 2 never taken.  h's `if`\n        # never runs, so it is not a partial branch.\n        report = self._branchy_report(\"branchy\")\n        totals = report['totals']\n        assert totals['num_branches'] == 6\n        assert totals['num_partial_branches'] == 0\n        assert totals['covered_branches'] == 4\n        assert totals['missing_branches'] == 2\n\n    def test_branch_totals_from_saved_branch_data(self):\n        # R2E revision (2026-09-29, R-c): the report follows the measured data,\n        # as the other reporters do, not the reporting object's own settings.\n        report = self._branchy_report(\"branchy_saved\", report_from_saved_data=True)\n        assert report['meta']['branch_coverage'] is True\n        assert report['totals']['covered_branches'] == 4\n        assert report['totals']['missing_branches'] == 2\n"
+    }
+   ]
+  }
+ ],
+ "expected_after": {
+  "JsonReportTest.test_context_relative": "PASSED",
+  "JsonReportTest.test_context_non_relative": "PASSED",
+  "JsonReportTest.test_branch_coverage": "PASSED",
+  "JsonReportTest.test_simple_line_coverage": "PASSED",
+  "JsonReportTest.test_branch_totals_count_branch_arcs": "PASSED",
+  "JsonReportTest.test_branch_totals_from_saved_branch_data": "PASSED"
+ },
+ "formal_expected_change": {
+  "changed": {},
+  "added": {
+   "JsonReportTest.test_branch_totals_count_branch_arcs": "PASSED",
+   "JsonReportTest.test_branch_totals_from_saved_branch_data": "PASSED"
+  },
+  "removed": []
+ },
+ "positive_control": "gold",
+ "acceptance": {
+  "gold": {
+   "role": "正对照",
+   "expected_score": 1,
+   "expected_fail_keys": [],
+   "trial": "trials/rev_gold.json",
+   "trial_verdict": "match 6/6",
+   "patch": "runs/r2e_static_prep_20260924/v3/private/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/gold.patch"
+  },
+  "noop": {
+   "role": "空补丁",
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "JsonReportTest.test_branch_coverage",
+    "JsonReportTest.test_branch_totals_count_branch_arcs",
+    "JsonReportTest.test_branch_totals_from_saved_branch_data"
+   ],
+   "trial": "trials/rev_noop.json",
+   "trial_verdict": "mismatch 6/6; missing=[] extra=[]; JsonReportTest.test_branch_coverage FAILED: AssertionError: assert {'files': {'a...hes': 2, ...}} == {'files': {'a....hes': 1, ...}} (r2e_tests/test_1.py:35); JsonReportTest.test_branch_totals_count_branch_arcs FAILED: KeyError: 'covered_branches' (r2e_tests/test_1.py:211); JsonReportTest.test_branch_totals_from_saved_branch_data FAILED: KeyError: 'covered_branches' (r2e_tests/test_1.py:219)",
+   "patch": "none"
+  },
+  "D0": {
+   "role": "第 3 步退化候选（硬编码 1/1），R-c 1 的触发反例",
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "JsonReportTest.test_branch_totals_count_branch_arcs",
+    "JsonReportTest.test_branch_totals_from_saved_branch_data"
+   ],
+   "trial": "trials/rev_D0.json",
+   "trial_verdict": "mismatch 6/6; missing=[] extra=[]; JsonReportTest.test_branch_totals_count_branch_arcs FAILED: AssertionError: assert 1 == 4 (r2e_tests/test_1.py:211); JsonReportTest.test_branch_totals_from_saved_branch_data FAILED: AssertionError: assert 1 == 4 (r2e_tests/test_1.py:219)",
+   "patch": "cands/coveragepy_f5eb_D0.patch"
+  },
+  "C2": {
+   "role": "第 4 步错误口径（部分弧当未执行弧），R-c 1 的触发反例",
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "JsonReportTest.test_branch_totals_count_branch_arcs",
+    "JsonReportTest.test_branch_totals_from_saved_branch_data"
+   ],
+   "trial": "trials/rev_C2.json",
+   "trial_verdict": "mismatch 6/6; missing=[] extra=[]; JsonReportTest.test_branch_totals_count_branch_arcs FAILED: AssertionError: assert 6 == 4 (r2e_tests/test_1.py:211); JsonReportTest.test_branch_totals_from_saved_branch_data FAILED: AssertionError: assert 6 == 4 (r2e_tests/test_1.py:219)",
+   "patch": "cands/coveragepy_f5eb_C2.patch"
+  },
+  "C3": {
+   "role": "第 4 步按配置门控，R-c 2 的触发反例",
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "JsonReportTest.test_branch_totals_from_saved_branch_data"
+   ],
+   "trial": "trials/rev_C3.json",
+   "trial_verdict": "mismatch 6/6; missing=[] extra=[]; JsonReportTest.test_branch_totals_from_saved_branch_data FAILED: KeyError: 'covered_branches' (r2e_tests/test_1.py:219)",
+   "patch": "cands/coveragepy_f5eb_C3.patch"
+  },
+  "C1": {
+   "role": "每文件 summary 也加两键（争议，R-c 保持中立，见 revision_plan.md §6）",
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "JsonReportTest.test_branch_coverage"
+   ],
+   "trial": "trials/rev_C1.json",
+   "trial_verdict": "mismatch 6/6; missing=[] extra=[]; JsonReportTest.test_branch_coverage FAILED: AssertionError: assert {'files': {'a...hes': 1, ...}} == {'files': {'a....hes': 1, ...}} (r2e_tests/test_1.py:35)",
+   "patch": "cands/coveragepy_f5eb_C1.patch"
+  },
+  "W2": {
+   "role": "两值对调（复核建议的可选负对照；当前材料试跑 1）",
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "JsonReportTest.test_branch_totals_count_branch_arcs",
+    "JsonReportTest.test_branch_totals_from_saved_branch_data"
+   ],
+   "trial": "trials/rev_W2.json",
+   "trial_verdict": "mismatch 6/6; missing=[] extra=[]; JsonReportTest.test_branch_totals_count_branch_arcs FAILED: AssertionError: assert 2 == 4 (r2e_tests/test_1.py:211); JsonReportTest.test_branch_totals_from_saved_branch_data FAILED: AssertionError: assert 2 == 4 (r2e_tests/test_1.py:219)",
+   "patch": "cands/coveragepy_f5eb_W2.patch"
+  },
+  "A1": {
+   "role": "非 gold 的正确写法（按 branch_stats 逐文件累加，复核建议的可选项）",
+   "expected_score": 1,
+   "expected_fail_keys": [],
+   "trial": "trials/rev_A1.json",
+   "trial_verdict": "match 6/6",
+   "patch": "cands/coveragepy_f5eb_A1.patch"
+  }
+ },
+ "paths_note": "trials/ 与 cands/ 相对本题目录；runs/ 开头的路径相对仓库根。acceptance 只含修订版试跑；当前材料上的对照见 revision_plan.md §5.1。试跑工具不是正式评分（rh2/experiments/r2e_lifecycle_20260929/trial_grade.py 文件头）",
+ "candidate_patch_sha256": {
+  "gold": "sha256:c8fa460d421020f5230fcf5c776bd85f449bb2d8bbfc4b37d98fa3eff1250e59",
+  "D0": "sha256:1644ae7c1312a6c6dcba74aacc5e76d41870e8942707fa5cfbcf9e2ce54d7cc9",
+  "C1": "sha256:08b92222ef69517acc0f683513730017e8291ee3b6b26aecc164757a62678be4",
+  "C2": "sha256:85d59dd2b43dee28d2c13134a4732d75190fefac16b3e7b997557d7c86a9e792",
+  "C3": "sha256:55e34064e36ad8804beb5667248f4653f2029eefbab0969ec6b55bf3b2f83d10",
+  "W2": "sha256:5515226b1f44a831dfff52d999249e65c28b086ef7ec8f915d17a0819107e66f",
+  "A1": "sha256:73da109ace36b009eb0b62ae359aaa956b599ebed3d638134f6e8011c044c2fe"
+ },
+ "parent_material": {
+  "hidden_test_file": "runs/r2e_static_prep_20260924/v3/private/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/hidden_tests/test_1.py",
+  "hidden_test_file_sha256": "sha256:ee874f37abb9e6f5307bb02b9b6a3c760218f674d557a51f7f27f5c68298418f",
+  "hidden_test_file_lines": 159,
+  "hidden_tests_tree_sha256": "sha256:d03ee4ffb0204204cf875db18b6fe452351263cfcb6241dc07718c0161ae963c",
+  "expected_output_sha256": "sha256:9e555e5145c096ac323d33fdd3d22d7b769a4b3a34c3cc9b92ba70c1949a384c",
+  "expected_n": 4,
+  "material_revisions": [],
+  "formal_material_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl:10（test_1.py 与 expected 摘要同上；material_revisions_v1–v7 无本题条目）"
+ },
+ "trial_image": {
+  "image_id": "sha256:98b19b5a2ce42f98230caf958b852d58bcf898a01c61604ab93fd506caafe19c",
+  "recipe_id": "r2e_derive_v1+sysconfig_v1",
+  "note": "与 runs/r2e_lifecycle_20260929/inv/coveragepy_f5eb/ledger_{D0,C1,C2,C3}.jsonl 的 image_id_actual 相同"
+ },
+ "trial_draft_sha256": {
+  "draft_rc.json": "sha256:feb3000230d4e43e58fdf986b8866b8da273357b3e86cbad40517d60a981c2d0",
+  "expected_after.json": "sha256:8e622411e3f784f35caf5c9fe76d8b9beb52ac513825d56605bd5388ee3988a3"
+ },
+ "revised_test_file_sha256": "sha256:73ad2f277dea8a447d1f3da58016937ea47d3bf7d3523cbe39394313f8c05d3d",
+ "revised_test_file_lines": 220
+}

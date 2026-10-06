@@ -1,0 +1,247 @@
+{
+ "instance_id": "pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+ "template": "R-c",
+ "round": 1,
+ "items": [
+  {
+   "id": "R-c1",
+   "fixes": "T2b（v1 §4 第 3 步）：默认值与显式 262=1 没有断言；退化候选 D 在当前材料正式评分 1.0（62/62）",
+   "host_test": "test_photometric[1]/[L]",
+   "revised_lines": "HT':470-486（默认 471-477；显式 1 479-486）",
+   "new_keys": []
+  },
+  {
+   "id": "R-c2",
+   "fixes": "v1 §4 第 4 步 S1：libtiff（压缩）写出路径没有断言；C3 在当前材料正式评分 1.0，但两种压缩保存都抛 AttributeError",
+   "host_test": "test_photometric[1]/[L]",
+   "revised_lines": "HT':488-496（'1' 用 group4，'L' 用 tiff_lzw）",
+   "new_keys": []
+  },
+  {
+   "id": "R-c3",
+   "fixes": "T2b（v1 §4 第 3 步，就地改坏被比较的输入）：原断言拿保存之后的 im 作参照；A 在当前材料正式评分 1.0",
+   "host_test": "test_photometric[1]/[L]",
+   "revised_lines": "HT':454 快照；HT':457、474、483、493 保存后源图不变；往返比较改用快照",
+   "new_keys": []
+  },
+  {
+   "id": "R-c4",
+   "fixes": "v1 §4 第 4 步 S1：写入端只借读取端验证；B 改读取端后在当前材料正式评分 1.0",
+   "host_test": "test_photometric[1]/[L]",
+   "revised_lines": "HT':461-468（未压缩条带字节 == 原图逐字节取反）",
+   "new_keys": []
+  }
+ ],
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "    def test_photometric(self, mode, tmp_path):\n        filename = str(tmp_path / \"temp.tif\")\n        im = hopper(mode)\n        im.save(filename, tiffinfo={262: 0})\n        with Image.open(filename) as reloaded:\n            assert reloaded.tag_v2[262] == 0\n            assert_image_equal(im, reloaded)\n",
+     "new": "    def test_photometric(self, mode, tmp_path):\n        filename = str(tmp_path / \"temp.tif\")\n        im = hopper(mode)\n        original = im.copy()\n        im.save(filename, tiffinfo={262: 0})\n        # saving does not modify the image that is saved\n        assert_image_equal(im, original)\n        with Image.open(filename) as reloaded:\n            assert reloaded.tag_v2[262] == 0\n            assert_image_equal(original, reloaded)\n            offsets = reloaded.tag_v2[TiffImagePlugin.STRIPOFFSETS]\n            counts = reloaded.tag_v2[TiffImagePlugin.STRIPBYTECOUNTS]\n        # WhiteIsZero: the stored (uncompressed) samples are the inverse of\n        # the image values; checked on the file bytes, not via the TIFF reader\n        with open(filename, \"rb\") as fp:\n            data = fp.read()\n        stored = b\"\".join(data[o : o + n] for o, n in zip(offsets, counts))\n        assert stored == bytes(b ^ 0xFF for b in original.tobytes())\n\n        # BlackIsZero is still the default\n        filename = str(tmp_path / \"default.tif\")\n        im = hopper(mode)\n        im.save(filename)\n        assert_image_equal(im, original)\n        with Image.open(filename) as reloaded:\n            assert reloaded.tag_v2[262] == 1\n            assert_image_equal(original, reloaded)\n\n        # an explicitly requested BlackIsZero is kept as well\n        filename = str(tmp_path / \"explicit1.tif\")\n        im = hopper(mode)\n        im.save(filename, tiffinfo={262: 1})\n        assert_image_equal(im, original)\n        with Image.open(filename) as reloaded:\n            assert reloaded.tag_v2[262] == 1\n            assert_image_equal(original, reloaded)\n\n        # the requested WhiteIsZero is also kept when libtiff writes the file\n        compression = \"group4\" if mode == \"1\" else \"tiff_lzw\"\n        filename = str(tmp_path / \"compressed.tif\")\n        im = hopper(mode)\n        im.save(filename, tiffinfo={262: 0}, compression=compression)\n        assert_image_equal(im, original)\n        with Image.open(filename) as reloaded:\n            assert reloaded.tag_v2[262] == 0\n            assert_image_equal(original, reloaded)\n"
+    }
+   ]
+  }
+ ],
+ "expected_after": {
+  "\u001b[1mTestFileTiff.test_sanity\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_unclosed_file\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_mac_tiff\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_wrong_bits_per_sample\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_set_legacy_api\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_xyres_tiff\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_xyres_fallback_tiff\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_int_resolution\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_load_float_dpi[None-72.8]\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_load_float_dpi[2-72.8]\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_load_float_dpi[3-184.912]\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_save_float_dpi\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_save_setting_missing_resolution\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_invalid_file\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_bad_exif\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_save_rgba\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_save_unsupported_mode\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_little_endian\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_big_endian\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_16bit_s\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_12bit_rawmode\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_32bit_float\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_unknown_pixel_mode\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_n_frames\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_eoferror\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_multipage\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_multipage_last_frame\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_frame_order\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test___str__\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_dict\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test__delitem__\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_load_byte\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_load_string\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_load_float\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_load_double\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_ifd_tag_type\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_exif\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_exif_frames\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_photometric[1]\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_photometric[L]\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_seek\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_seek_eof\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test__limit_rational_int\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test__limit_rational_float\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_4bit\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_gray_semibyte_per_pixel\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_with_underscores\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_roundtrip_tiff_uint16\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_strip_raw\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_strip_planar_raw\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_strip_planar_raw_with_overviews\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_tiled_planar_raw\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_palette\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_tiff_save_all\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_saving_icc_profile\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_save_icc_profile\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_discard_icc_profile\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_getxmp\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_close_on_load_exclusive\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_close_on_load_nonexclusive\u001b[0m": "PASSED",
+  "\u001b[1mTestFileTiff.test_closed_file\u001b[0m": "FAILED",
+  "\u001b[1mTestFileTiff.test_context_manager\u001b[0m": "FAILED"
+ },
+ "expected_unchanged": true,
+ "positive_control": "gold",
+ "acceptance": {
+  "gold": {
+   "expected_score": 1,
+   "expected_fail_keys": [],
+   "expected_fail_line": null,
+   "trial": "trials/rev_gold.json",
+   "trial_verdict": "match 62/62",
+   "patch": "runs/r2e_static_prep_20260924/v3/private/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/gold.patch",
+   "role": "正对照（gold 本身满足四项公开要求，见 revision_plan.md §5.3）"
+  },
+  "C1": {
+   "expected_score": 1,
+   "expected_fail_keys": [],
+   "expected_fail_line": null,
+   "trial": "trials/rev_C1.json",
+   "trial_verdict": "match 62/62",
+   "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/cands/pillow_2d01_C1.patch",
+   "role": "合理替代解（只对 1/L 且请求 0 时保留；'1' 用 C 层 1;I packer，'L' 用 point 反相）；检查修订未贴合 gold 的实现方式"
+  },
+  "noop": {
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "TestFileTiff.test_photometric[1]",
+    "TestFileTiff.test_photometric[L]"
+   ],
+   "expected_fail_line": "HT':459 assert reloaded.tag_v2[262] == 0（assert 1 == 0）",
+   "trial": "trials/rev_noop.json",
+   "trial_verdict": "mismatch 62/62; FAILED=TestFileTiff.test_photometric[1], TestFileTiff.test_photometric[L]",
+   "patch": "none",
+   "role": "空补丁"
+  },
+  "D": {
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "TestFileTiff.test_photometric[1]",
+    "TestFileTiff.test_photometric[L]"
+   ],
+   "expected_fail_line": "HT':476 默认保存后 assert reloaded.tag_v2[262] == 1（assert 0 == 1）",
+   "trial": "trials/rev_D.json",
+   "trial_verdict": "mismatch 62/62; FAILED=TestFileTiff.test_photometric[1], TestFileTiff.test_photometric[L]",
+   "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/cands/pillow_2d01_D.patch",
+   "role": "R-c1 触发反例（第 3 步退化：1/L 一律写 262=0 并反相）"
+  },
+  "C3": {
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "TestFileTiff.test_photometric[1]",
+    "TestFileTiff.test_photometric[L]"
+   ],
+   "expected_fail_line": "HT':492 压缩保存抛 AttributeError: encoderconfig",
+   "trial": "trials/rev_C3.json",
+   "trial_verdict": "mismatch 62/62; FAILED=TestFileTiff.test_photometric[1], TestFileTiff.test_photometric[L]",
+   "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/cands/pillow_2d01_C3.patch",
+   "role": "R-c2 触发反例（gold 去掉 encoderconfig 提升，libtiff 路径崩溃）"
+  },
+  "C2": {
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "TestFileTiff.test_photometric[1]",
+    "TestFileTiff.test_photometric[L]"
+   ],
+   "expected_fail_line": "HT':460 assert_image_equal(original, reloaded)（got different content）",
+   "trial": "trials/rev_C2.json",
+   "trial_verdict": "mismatch 62/62; FAILED=TestFileTiff.test_photometric[1], TestFileTiff.test_photometric[L]",
+   "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/cands/pillow_2d01_C2.patch",
+   "role": "已知错误候选（只改标签、不反相像素），修订前后都应为 0"
+  },
+  "A": {
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "TestFileTiff.test_photometric[1]",
+    "TestFileTiff.test_photometric[L]"
+   ],
+   "expected_fail_line": "HT':457 保存后 assert_image_equal(im, original)（got different content）",
+   "trial": "trials/rev_A.json",
+   "trial_verdict": "mismatch 62/62; FAILED=TestFileTiff.test_photometric[1], TestFileTiff.test_photometric[L]",
+   "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/cands/pillow_2d01_revA.patch",
+   "role": "R-c3 触发反例（第 3 步退化：写未反相数据并标 0，写完把调用者图像原地反相）"
+  },
+  "B": {
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "TestFileTiff.test_photometric[1]",
+    "TestFileTiff.test_photometric[L]"
+   ],
+   "expected_fail_line": "HT':468 存储字节断言（stored == 原图取反）",
+   "trial": "trials/rev_B.json",
+   "trial_verdict": "mismatch 62/62; FAILED=TestFileTiff.test_photometric[1], TestFileTiff.test_photometric[L]",
+   "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/cands/pillow_2d01_revB.patch",
+   "role": "R-c4 触发反例（第 4 步：只保留标签，同时把读取端 WhiteIsZero 解包改成不反相）"
+  }
+ },
+ "paths_note": "trials/ 相对本题目录；acceptance.*.patch 与 parent_material.* 相对仓库根。HT = 父版本隐藏测试 test_1.py（734 行），HT' = 修订后（773 行）。acceptance 只含修订版试跑（期望取 expected_after，即与当前正式材料相同的 62 键映射）；当前材料上的对照见 revision_plan.md §5.1。试跑工具不是正式评分",
+ "candidate_patch_sha256": {
+  "gold": "sha256:190a8e47712345194ab36111eebae27a7229d79c16db5bb394e158ba596c4702",
+  "C1": "sha256:232924c20e4b21b64ccf0be7c3c09ede1df138b0f1d2f388c34afdf29bdeb1d7",
+  "D": "sha256:b807964db3de4484425a7797541349bd8a942ffe0045403ceb2dbafe3abf63db",
+  "C3": "sha256:26d0fce723f87a118a56171e6305600e2f29eeba976d87c26f5f5579d345db31",
+  "C2": "sha256:33c266300e701ece64525794a4b8b701c7d229c595425e0366f6cb2fd8c2e6c1",
+  "A": "sha256:79613b5e28d513224a549e4e88e6afc5b14dda5f6ad81273585840beba14da24",
+  "B": "sha256:fed050f2604be82c44b17089d0c50b75ac31363cdbd5cf98bd149db25fc1b9b0"
+ },
+ "parent_material": {
+  "source_row": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl:38",
+  "source_row_sha256": "sha256:7fd25db5cb2a9cf4724eb4af360a6791c93be2e876048289dedbff7ff6913129",
+  "hidden_test_file": "runs/r2e_static_prep_20260924/v3/private/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/hidden_tests/test_1.py",
+  "hidden_test_file_sha256": "sha256:3351f53aa3da20717410fa576474b679a626dc902258c1776759c2b126bf3294",
+  "hidden_helper_sha256_unchanged": "sha256:6e00e34c62d81f527f15f356e81fe30613b624222bf5f26f5b96442d24c9103f",
+  "hidden_tests_tree_sha256": "sha256:d1a4b96545e014c490119ec3e6cf2be0330cfbe440b3644717988cb51ababf0c",
+  "expected_output_sha256": "sha256:28da3c259354012c9989afbeb731f9eea95a7913ac43ff8fd8a2a41ebce9df15",
+  "expected_n": 62,
+  "material_revisions": []
+ },
+ "revised_hidden_test_sha256": "sha256:179b8ff3dfbe44abfd6a4ccf2b7c9a6845d1985c3ff41bf99d90d3deaa86e586",
+ "revised_hidden_test_lines": 773,
+ "trial_image": {
+  "image_id": "sha256:2a98172896162bd7da0bd6fa95dacac1d656bbef0d4f54481f8ad2432d8db785",
+  "recipe_id": "r2e_derive_v1+sysconfig_v1",
+  "note": "与 runs/r2e_lifecycle_20260929/inv/pillow_2d01/ 六本正式账本的 image_id_actual 相同"
+ },
+ "trial_draft_sha256": {
+  "draft.json": "sha256:77b524afe129ffbf81720368a37ccfc205d0e7700a4afec0c1c12650e5f8cae6",
+  "expected_after.json": "sha256:ddd8f5215f662d67c2ea256f21dddd9f58cf0f72184a7d594c94b6c66daa0432",
+  "expected_after_note": "内容与父版本期望映射逐键相同（62 键）；文件是重新序列化的副本，字节摘要因此不同于 expected_output.json"
+ },
+ "trial_env_check": {
+  "noop": "trials/env_noop_current.json（当前材料，mismatch 62/62，只差两个目标键）",
+  "gold": "trials/env_gold_current.json（当前材料，match 62/62）"
+ },
+ "formalization_note": {
+  "hidden_test_text_replace": "只有这一条：test_1.py 此前没有修订，old 即父版本 HT:451-457（全文恰好一次）；可用 revised_hidden_test_sha256 核对重算结果",
+  "expected_output_json": "不改。四项断言全部并入已有目标测试 test_photometric，键集与期望映射不变，不需要期望修订",
+  "image_precondition": "HT':492 的压缩保存需要派生镜像带 libtiff（本镜像 4.3.0）；重建后 gold 正对照为 1 即同时确认此前提"
+ }
+}

@@ -1,0 +1,93 @@
+{
+  "instance_id": "pydantic__pydantic-5706",
+  "audit_date": "2026-09-20",
+  "old_record": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_pydantic/records/pydantic__pydantic-5706.json",
+  "source_refs": {
+    "public": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl#pydantic__pydantic-5706",
+    "grading": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl#pydantic__pydantic-5706",
+    "validation_reference_only": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl#pydantic__pydantic-5706",
+    "base_commit": "70e7e99ca1861ad71520cc8fcf1a2fb913abbc10",
+    "F2P": 2,
+    "P2P": 273
+  },
+  "environment": {
+    "catalog_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json#tasks[instance_id=pydantic__pydantic-5706]",
+    "status": "verified_environment_pair",
+    "selected_batch": "pydantic_v1",
+    "recipe": "pydantic-install-v1",
+    "verified_existing_pair": "noop=0 / gold=1；两次安装rc=0，gold测试rc=0；日志SHA256已本轮复算。",
+    "verification_ref": "verification.json#environment.pydantic__pydantic-5706",
+    "boundary": "环境对照有效，不等于题意/评分质量或actor正式准入；选定配方仍需冻结消费。"
+  },
+  "requirements": [
+    "解决 Sequence[int] 的 JSON schema 生成与 JSON 输入验证之间的不一致。",
+    "原题一方面把 schema 抛错称为似乎正确，另一方面提出一致性；官方测试选择生成 integer array schema 并接受 JSON 数组，这个方向并非题面唯一明确承诺。",
+    "针对 JSON 的修复不应无依据改变 Python Sequence 已有的输入范围和容器行为，尤其基线已支持的 range。"
+  ],
+  "old_claim_reviews": [
+    {
+      "original_claim": "题面已充分且唯一地要求与 list[int] 相同的 schema 及 JSON 数组验证成功。",
+      "status": "refuted",
+      "evidence": [
+        "实际题面写 model_json_schema() 抛错 seems as a correct behavior，并留有未勾选的“schema 抛错则 JSON 验证也应抛错”方向；旧记录省略了方向分歧。",
+        "test_patch 新增 4 个参数用例，只有两个 Sequence 参数是 F2P；它们固定 JSON 成功方向。原 solvability_review/02_oracle_cases.md §8 已指出这个歧义。"
+      ]
+    },
+    {
+      "original_claim": "已有候选只将 collections.abc.Sequence 映射到 list，官方通过但破坏原 Python 行为。",
+      "status": "confirmed",
+      "evidence": [
+        "runs/env_probe_20260909_codex_backup/ledger/logs_cc/pydantic__pydantic-5706/candidate.diff 的唯一相关生产改动为 SEQUENCE_ORIGIN_MAP 增加 collections.abc.Sequence: list。",
+        "同目录 stream.jsonl:6905 记 6 failed/10 passed；:8165 直接显示 range 被拒，tuple/deque 变 list；cc_candidate_grading.jsonl:19,44 为 RESOLVED_FULL（独立 swegym_probe，不是最新 RH2）。",
+        "verification.json#historical_runs.L3_5706：读取旧独立脚本原日志，base/gold 的 sequence 用例各16 passed，candidate 6 failed/10 passed；官方完整文件旧日志为277 passed/1 xfailed。",
+        "pydantic@70e7e99ca1861ad71520cc8fcf1a2fb913abbc10:tests/test_types.py:1876-1891,2010-2025 给出可复查输入/输出要求；range 被拒和容器变化不依赖错误文本争议。"
+      ]
+    },
+    {
+      "original_claim": "不同实现路径的候选也获得官方通过，测试没有强制唯一实现（check24）。",
+      "status": "confirmed",
+      "evidence": [
+        "本题参考集合只有 tests/test_json_schema.py；模型改动的 tests/test_types.py/test_edge_cases.py 不在官方执行面。",
+        "失真来自官方覆盖漏掉 Python 行为，不是这些测试修改影响了本题计分；独立脚本 src_only 对照保留原测试也显示同样回归。",
+        "接受一条不同实现路径是事实，但该路径造成已证回归，不能把它当成“正确替代解”的实跑证明。"
+      ]
+    },
+    {
+      "original_claim": "建议直接把test_sequence_generator_fails与test_sequences_str等补入P2P（issues/proposed_regression_tests）。",
+      "status": "unresolved",
+      "evidence": [
+        "pydantic@70e7e99ca1861ad71520cc8fcf1a2fb913abbc10:docs/usage/types/sequence_iterable.md:116-118 却说 generator 会被消费为 list，和基线 test_sequence_generator_fails 相矛盾；应优先用无争议的 range/tuple/deque 反例，不把文档一致性夸大。",
+        "pydantic@70e7e99ca1861ad71520cc8fcf1a2fb913abbc10:tests/test_edge_cases.py:2480 在 Python<3.9 会 skip；M2/results 的该组确为三态3 skipped，不能引用为其自身已运行通过/失败。DeepSeek 轨迹的另一次运行有2条错误类型失败，条件需分开。"
+      ]
+    },
+    {
+      "original_claim": "gold 同时支持裸 Sequence/Any，必然是题外改动。",
+      "status": "unresolved",
+      "evidence": [
+        "题面举 Sequence[int]，gold 将同一 Sequence 抽象的 JSON/Python 分支一并处理；这是合理泛化的候选，未见因此破坏明确需求的证据。",
+        "不能把 gold 每个分支都变成新验收要求，也不能只因超过例子就认定 scope creep。"
+      ]
+    },
+    {
+      "original_claim": "旧记录install rc=2或只有联网才能安装，构成当前环境阻塞。",
+      "status": "superseded_env",
+      "evidence": [
+        "repair_catalog本题选择pydantic_v1/pydantic-install-v1，在deny_all、uid54322、2CPU/4GiB下已有noop/gold成对结果；本轮校验该题两份原始日志SHA256匹配目录。",
+        "这只替代已修的安装结论；旧actor PATH及初始脏树应在真正启动探针时核对，不能由grader对照擅自宣称已修。"
+      ]
+    }
+  ],
+  "recommendation": "needs_revision",
+  "next_action": [
+    "先只澄清外部行为方向：Sequence[int] 应能生成数组 JSON schema 并接受 JSON 数组；不披露 json_or_python_schema 或映射表位置。",
+    "复用已有 src_only 候选，增加 range 成功及 tuple/deque 保持的最小诊断，与 noop/gold/候选在选定新环境作同条件对照；这是覆盖修订建议，本轮不实施。"
+  ],
+  "unknowns": [
+    "旧反例未在20260919选定配方上走最新真实 RH2 重放。",
+    "Sequence 文档与基线测试存在 generator 行为冲突，需先明确取舍。",
+    "旧 probe 运行可联网，不能把历史通过算无答案访问的独立能力测量。"
+  ],
+  "evidence_level": "static_or_existing_run",
+  "verification_scope": "本轮读取精确base源码、实际公开题面/test_patch/gold、已归档运行证据；新增仅本地纯Python探针与日志重解析，未启动Docker/远端/模型/真实RH2。",
+  "formal_admission": false
+}

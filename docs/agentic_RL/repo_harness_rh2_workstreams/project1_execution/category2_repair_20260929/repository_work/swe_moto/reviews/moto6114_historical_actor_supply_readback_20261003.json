@@ -1,0 +1,52 @@
+{
+  "schema": "moto6114.historical_actor_supply_readback.v1",
+  "scope": "historical public actor supply conditions; no fresh execution and no historical frozen rebinding",
+  "checks": {
+    "source_repo_digest_exact_match": true,
+    "source_actual_id_exact_match": true,
+    "dockerfile_bytes_exact_match": true,
+    "wheel_manifest_bytes_exact_match": true,
+    "cc_tarball_digest_exact_match": true,
+    "base_commit_exact_match": true,
+    "ordinary_resource_profile_match": true
+  },
+  "all_supply_conditions_match": true,
+  "historical_actual_image_id": "sha256:aaf97ca9107336dc68a964386be07361bf363f3a4684998d3727d704c20cd5a0",
+  "current_actual_image_id": "sha256:1d8dded2ee5bbe9275514fdc603116ac9f36da5e30c19b2d4ffcba4d4a9f27d5",
+  "same_physical_derived_image": false,
+  "evidence_files": {
+    "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/original_image.json": {
+      "sha256": "9ece462e8edf3254fc522143cc64832d95e6038549c76b07dcf8e91e058caa71",
+      "bytes": 3904
+    },
+    "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/dependency_build/image.json": {
+      "sha256": "b9a7deccac6bde376124f994f65fdb3ecb5250918638dd68f3bb21f572354b93",
+      "bytes": 8384
+    },
+    "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/dependency_build/Dockerfile": {
+      "sha256": "352caaf2eae8dc6fdb3291e9afaf85281a0b0199d6b3ee091d9e3d3247d44993",
+      "bytes": 126
+    },
+    "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/actor_revised/attempt.json": {
+      "sha256": "33d42995eec21a7ee06bfaaa7a899f7c7c1ac621dc38e02565593142fb714856",
+      "bytes": 12840
+    },
+    "runs/category2_repair_20260929/moto_cpu_20261003/image6114_source_receipt.json": {
+      "sha256": "07d55cf5cbe3061449ad69794ddd9735ce743a7479b5294e48001892f539fff0",
+      "bytes": 765
+    },
+    "runs/category2_repair_20260929/moto_cpu_20261003/image6114_derived_receipt.json": {
+      "sha256": "497c0736359dd7964b6db8abaaa26fd4716f366868001ab298459b6da4c8cf47",
+      "bytes": 1439
+    },
+    "runs/swegym_cpu_preprobe_20260929/task_inputs/getmoto__moto-6114/wheel_manifest.json": {
+      "sha256": "660fa7aa83d8c3cedeb5e188ef7a4de0621e6011a37be48958813a6c50425a55",
+      "bytes": 477
+    }
+  },
+  "historical_check_flags_requiring_scope": {
+    "interpreter_in_tool_result": false,
+    "bashenv_denied_for_agent": false
+  },
+  "limits": "false legacy checks preserved; public commands reuse does not attest current full CC path or export. New host UID/activation/import requires own raw evidence; historical actor exported no FrozenPatch. Historical wheel manifest pins reused, not old dependency_build directory binary recollection."
+}

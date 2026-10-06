@@ -1,0 +1,162 @@
+{
+  "checked_at_utc": "2026-10-02T19:01:39.517215+00:00",
+  "status": "actual_public_delivery_grade_roundtrip_checks_passed",
+  "release_id": "cat2-cpu-r2e080087-swe8-git-20261003-v1",
+  "job": {
+    "package": "r2e_coveragepy",
+    "job": "covf5eb-public-r6-cpub-20261003-01",
+    "mode": "run",
+    "slot": 0,
+    "command": [
+      "python3",
+      "-c",
+      "import pathlib,hashlib,subprocess,json,socket,os\nchecks={'/work/rh2-category2-20261003/releases/cat2-cpu-r2e080087-swe8-git-20261003-v1/manifest.json': 'ab0a3a13fd65e0ea4cd60541ea3b37b01196170477e25832df246f33ea208828', '/work/rh2-category2-20261003/packages/r2e_coveragepy/derived/cov_remaining_r6_v1/overlays.jsonl': '3949e42d3bea6f4e46dec287aa360c9b19d370b4816fc95aa7abf1344ee712ac', '/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/prepared/replay_summary.json': 'f28fe916a7744b0332cf0da2d2abb64dd35bb96d83afb35699c2b4f4b9028759', '/work/rh2-category2-20261003/packages/r2e_coveragepy/inputs/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/public_delivery_v1.json': 'c15c0bd383b318196b0be0801b63c3255cbccaefd60fa04df1c8dfcb819484f1'}\nfor p,d in checks.items(): assert hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()==d,p\nassert not pathlib.Path('/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/f5eb_public_e2e01').exists(),'output exists'\nfacts=json.loads(subprocess.check_output(['docker','image','inspect','sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59']))[0]\nassert facts['Id']=='sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59'\nif 'public'=='public':\n sockets=[]\n try:\n  for address in [('172.17.0.1',18190),('127.0.0.1',18191)]:\n   sock=socket.socket();sock.bind(address);sockets.append(sock)\n finally:\n  for sock in sockets:sock.close()\nprint('Fixed inputs and image verified; starting original entry',flush=True)\na=['env', 'PYTHONDONTWRITEBYTECODE=1', 'PYTHONPATH=/work/rh2-category2-20261003/releases/cat2-cpu-r2e080087-swe8-git-20261003-v1/repo/rh2/src', '/work/rh2-category2-20261003/runtime_cpu_v2/rh2/.venv/bin/python', '/work/rh2-category2-20261003/releases/cat2-cpu-r2e080087-swe8-git-20261003-v1/repo/rh2/experiments/r2e_lifecycle_20260929/r2e_probe_e2e.py', '--scenario', '/work/rh2-category2-20261003/packages/r2e_coveragepy/inputs/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/public_delivery_v1.json', '--out-root', '/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/f5eb_public_e2e01', '--prepared-summary', '/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/prepared/replay_summary.json', '--overlays', '/work/rh2-category2-20261003/packages/r2e_coveragepy/derived/cov_remaining_r6_v1/overlays.jsonl', '--cc-tarball', '/work/rh2-category2-20261003/cc/claude-code-linux-x64-2.1.205.tgz', '--gw-port', '18190', '--stub-port', '18191', '--attempt-id', 'covf5eb-r6-public-20261003-01', '--label', 'rh2.coveragepy=covf5eb-r6-public-01']\nos.execvp(a[0],a)\n"
+    ],
+    "cwd": "/root",
+    "started_at_utc": "2026-10-02T18:58:59Z",
+    "supervisor_pid": 201623,
+    "status": "finished",
+    "child_pid": 201624,
+    "returncode": 0,
+    "finished_at_utc": "2026-10-02T19:00:42Z"
+  },
+  "actual_first_request_ref": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/stub/requests/messages_000.json",
+  "actual_first_request_sha256": "sha256:9f467b229321bd260096938b1d5323e4190e07829e07b94fc5bcca4109e17e1d",
+  "rendered_prompt_ref": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/attempt/prompt.txt",
+  "prompt_sha256": "sha256:c9bb55b0f2b1193db573c4bca8904971a1df0b2ea3a2d050347be5087b34cf6a",
+  "statement_sha256": "sha256:6a516854b3c59b686b767267e0fe0a49d828934ccabd1a0e4b7159d9b883a88c",
+  "full_statement_in_rendered_prompt": true,
+  "full_rendered_prompt_in_first_actual_request": true,
+  "solver": "public_stub_no_model",
+  "public_command_rcs": {
+    "r2e_preflight": "0",
+    "environment_probe": "0",
+    "public_branch_report": "0",
+    "public_json_tests": "0"
+  },
+  "public_tool_output_tails": [
+    "RH2_PREFLIGHT_INTERPRETER=ok\nRH2_PREFLIGHT_HIDDEN_TESTS=ok\nRH2_PREFLIGHT_GIT_HISTORY=ok\nRH2_STEP_RC:r2e_preflight=0",
+    "uid=54321(agent) gid=54321(agent) groups=54321(agent)\n/testbed/.venv/bin/python\n3.7.9 (default, Aug 23 2020, 00:57:53) \n[Clang 10.0.1 ]\n/testbed/coverage/__init__.py\n4.6.6\nRH2_STEP_RC:environment_probe=0",
+    "emo.py\": {\"excluded_lines\": [], \"executed_lines\": [1, 2, 3], \"missing_lines\": [5], \"summary\": {\"covered_lines\": 3, \"excluded_lines\": 0, \"missing_lines\": 1, \"num_branches\": 2, \"num_partial_branches\": 1, \"num_statements\": 4, \"percent_covered\": 66.66666666666667}}}, \"meta\": {\"branch_coverage\": true, \"show_contexts\": false, \"timestamp\": \"2026-10-02T18:59:46.298601\", \"version\": \"5.0.5a0\"}, \"totals\": {\"covered_lines\": 3, \"excluded_lines\": 0, \"missing_lines\": 1, \"num_branches\": 2, \"num_partial_branches\": 1, \"num_statements\": 4, \"percent_covered\": 66.66666666666667}}\nRH2_STEP_RC:public_branch_report=0",
+    "============================= test session starts ==============================\nplatform linux -- Python 3.7.9, pytest-4.6.6, py-1.11.0, pluggy-0.13.1\nhypothesis profile 'default' -> database=DirectoryBasedExampleDatabase('/testbed/.hypothesis/examples')\nrootdir: /testbed, inifile: setup.cfg\nplugins: hypothesis-4.41.2, forked-1.6.0, flaky-3.6.1, xdist-1.30.0\ncollected 4 items\n\ntests/test_json.py ....                                                  [100%]\n\n=========================== 4 passed in 0.27 seconds ===========================\nRH2_STEP_RC:public_json_tests=0"
+  ],
+  "formal_actor_grade": {
+    "candidate": "public_actor_artifacts",
+    "reward": 0.0,
+    "match": 3,
+    "total": 8,
+    "mismatched": [
+      "JsonReportTest.test_branch_coverage",
+      "JsonReportTest.test_branch_totals_add_up_across_files",
+      "JsonReportTest.test_branch_totals_count_branch_arcs",
+      "JsonReportTest.test_branch_totals_from_saved_branch_data",
+      "JsonReportTest.test_branch_totals_without_branches"
+    ],
+    "per_key_evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/cpu/public_artifacts_r6_per_key.json",
+    "candidate_patch_sha256": null,
+    "projection_included_paths": [],
+    "test": {
+      "exec_exit_code": 0,
+      "rc": 1,
+      "seconds": 3.716,
+      "segment_completed": true
+    },
+    "cleanup": {
+      "detail": "",
+      "removed": true,
+      "steps": [
+        "rm:ok"
+      ]
+    }
+  },
+  "roundtrip": {
+    "ok": true,
+    "identity_equal": {
+      "task_id": true,
+      "workdir": true,
+      "public_bundle_digest": true,
+      "materialized_head": true,
+      "task_base_commit": true,
+      "policy": true,
+      "policy_digest": true,
+      "image_ids": true
+    },
+    "image_ids": [
+      "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+      "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59"
+    ],
+    "baseline_entries_equal": true,
+    "patch_entries_equal": true,
+    "excluded_evidence_matches": true,
+    "excluded_path_differences": [],
+    "excluded_difference_allowed": true,
+    "transport_digest_equal": true,
+    "candidate_excluded_pathset_changed": [
+      true,
+      false
+    ],
+    "available": true,
+    "baseline": {
+      "entries_equal": true
+    },
+    "frozen_patch": {
+      "entries_equal": true
+    },
+    "ledger_patch_sha256_equals_render": true
+  },
+  "candidate": {
+    "form": "frozen_patch_v1+verified_git_transport",
+    "export_ok": true,
+    "empty": true,
+    "frozen_export_ok": true,
+    "frozen_patch_digest": "sha256:32ae454437008606d3b5e778f1e5251989460e4b80a7903d519096d3f6966904",
+    "baseline_manifest_digest": "sha256:abbe27cfcaf9aa60cf86c623d823093787520ca40d0bfc21df82087e8af43b83",
+    "entry_count": 0,
+    "files": [],
+    "excluded_pathset_changed": true,
+    "classification": {
+      "verdict": "projectable",
+      "reasons": []
+    },
+    "unsafe": false,
+    "export_segments": {
+      "post_census": 0.7815770890001659,
+      "artifact_capture": 0.0010492009996596607
+    },
+    "post_omitted_cache": {
+      "dirs": 2,
+      "files": 42
+    }
+  },
+  "candidate_entries": [],
+  "cleanup": {
+    "actor": {
+      "container_rm": 0,
+      "container_left": "",
+      "network_failures": [],
+      "relay_failures": [],
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "cleanup_ok": true
+    },
+    "grade": {
+      "detail": "",
+      "removed": true,
+      "steps": [
+        "rm:ok"
+      ]
+    },
+    "residuals": {
+      "covf5eb-r6-public-20261003-01": {
+        "containers": [],
+        "networks": []
+      },
+      "covf5eb-r6-public-20261003-01-gcc": {
+        "containers": [],
+        "networks": []
+      },
+      "_clean": true
+    }
+  },
+  "original_evidence_root": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01"
+}

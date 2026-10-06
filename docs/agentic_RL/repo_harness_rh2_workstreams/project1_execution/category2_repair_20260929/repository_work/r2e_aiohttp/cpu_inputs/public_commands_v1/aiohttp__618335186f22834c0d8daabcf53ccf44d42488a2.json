@@ -1,0 +1,30 @@
+[
+  {
+    "id": "public_environment",
+    "timeout_s": 120,
+    "expect": "any",
+    "purpose": "核对公开工作区中的解释器、源码导入和运行身份",
+    "cmd": "PYTHONDONTWRITEBYTECODE=1 python - <<'RH2_AIO_PUBLIC'\nimport json,os,sys,aiohttp\nprint(json.dumps({'uid':os.getuid(),'gid':os.getgid(),'python':sys.version,'executable':sys.executable,'aiohttp':aiohttp.__version__,'source':aiohttp.__file__,'virtual_env':os.environ.get('VIRTUAL_ENV')},sort_keys=True))\nprint('RH2_SYS_EXECUTABLE='+sys.executable)\ntry:\n    fd = os.open('/rh2/bash_env', os.O_WRONLY | os.O_APPEND)\nexcept PermissionError:\n    print('RH2_BASHENV_WRITE=DENIED')\nexcept OSError as exc:\n    print('RH2_BASHENV_WRITE=ERROR', repr(exc))\nelse:\n    os.close(fd)\n    print('RH2_BASHENV_WRITE=WRITABLE')\nRH2_AIO_PUBLIC\n"
+  },
+  {
+    "id": "length_write_example",
+    "timeout_s": 120,
+    "expect": "any",
+    "purpose": "独立执行最终题面的 Content-Length/write 实参检查",
+    "cmd": "PYTHONDONTWRITEBYTECODE=1 python - <<'RH2_AIO_PUBLIC'\nimport zlib\nfrom unittest import mock\nfrom aiohttp import protocol\n\npayload = b'data'\ncompressor = zlib.compressobj(wbits=-zlib.MAX_WBITS)\ncompressed_data = compressor.compress(payload) + compressor.flush()\n\n# 检查传给 write() 的实际字节，而不是 mock.call 对象本身的真值。\ntransport = mock.Mock()\nmsg = protocol.Response(transport, 200)\nmsg.add_headers(('content-length', str(len(compressed_data))))\nmsg.add_chunking_filter(2)\nmsg.add_compression_filter('deflate')\nmsg.send_headers()\nmsg.write(payload)\nmsg.write_eof()\nchunks = [call.args[0] for call in transport.write.call_args_list]\nassert all(chunks), chunks\nRH2_AIO_PUBLIC\n"
+  },
+  {
+    "id": "chunked_wire_example",
+    "timeout_s": 120,
+    "expect": "any",
+    "purpose": "独立执行最终题面的 chunked 终止块与完整载荷检查",
+    "cmd": "PYTHONDONTWRITEBYTECODE=1 python - <<'RH2_AIO_PUBLIC'\nimport zlib\nfrom unittest import mock\nfrom aiohttp import protocol\npayload = b'data'\n\n# HTTP/1.1 chunked 路径：终止块应在末尾，解压后仍有完整载荷。\ntransport = mock.Mock()\nmsg = protocol.Response(transport, 200)\nmsg.add_compression_filter('deflate')\nmsg.send_headers()\nmsg.write(payload)\nmsg.write_eof()\nwire = b''.join(call.args[0] for call in transport.write.call_args_list)\nheaders, rest = wire.split(b'\\r\\n\\r\\n', 1)\nassert b'transfer-encoding: chunked' in headers.lower()\ndata = []\nwhile True:\n    line, separator, rest = rest.partition(b'\\r\\n')\n    assert separator, 'missing chunk size'\n    size = int(line, 16)\n    if size == 0:\n        assert rest == b'\\r\\n', 'data after the terminating chunk'\n        break\n    assert len(rest) >= size + 2 and rest[size:size + 2] == b'\\r\\n'\n    data.append(rest[:size])\n    rest = rest[size + 2:]\nassert zlib.decompress(b''.join(data), -zlib.MAX_WBITS) == payload\nRH2_AIO_PUBLIC\n"
+  },
+  {
+    "id": "public_protocol_tests",
+    "timeout_s": 900,
+    "expect": "any",
+    "purpose": "运行目标相关公开 protocol 回归",
+    "cmd": "PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --color=no -rfE tests/test_http_protocol.py"
+  }
+]

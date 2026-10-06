@@ -1,0 +1,601 @@
+{
+  "schema": "swe_moto.fixed_r13_matrix_config.v1",
+  "release_id": "cat2-cpu-r2e089092-swe27-pandas-moto-20261003-v1",
+  "manifest_sha256": "3fad18daff8db219294e10cbf08d4424d68cf7000d008bb983cba4bdc427b641",
+  "producer_rel": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest_swe27_pandas_moto_combined_20261003_v1",
+  "producer_sha256": "81b82a7083b8348f0c385f1c9b774b4917eb584bf3f93e75c9c04d4a1df16079",
+  "tasks": {
+    "getmoto__moto-5960": {
+      "registry_rel": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/moto5960_fixed_test_patch_v1",
+      "registry_sha256": "24e502bd738d60eee73ccac1a4c859551f59385f30950f6b60518728f664ab89",
+      "environment_recipe_sha256": "ede5fc832b42e541b21758f21b088acf4b5ad08887dcea114431f0d4bc3578da",
+      "environment": {
+        "files": [
+          {
+            "path": "source_image_receipt.json",
+            "sha256": "sha256:82d4fe2eb121b740aac543d1319ad1c92bc92792d535365deb50b9ef12d8d68f"
+          }
+        ],
+        "recipe_id": "moto5960-fixed-environment-v1",
+        "source_config_id": "sha256:c67dbd356fcaa937ebff4b3fe0d78e4ea78211888233a4e5f07da95eddfe079d",
+        "source_image": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5960:latest",
+        "source_image_manifest_digest": "sha256:4b71766331736b51bd74bb86cdb5e4e21040a7816e01fbb5d914526d33ef8944"
+      },
+      "grader_actual_image_id": "sha256:c67dbd356fcaa937ebff4b3fe0d78e4ea78211888233a4e5f07da95eddfe079d",
+      "gold_sha256": "df2af6b800578dc24b6ef33c396677683d766702734f44d506248354147b7af9",
+      "controls": [
+        {
+          "name": "noop",
+          "role": "noop",
+          "expected_reward": 0,
+          "patch": null
+        },
+        {
+          "name": "gold",
+          "role": "positive",
+          "expected_reward": 1,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/gold.patch",
+            "sha256": "df2af6b800578dc24b6ef33c396677683d766702734f44d506248354147b7af9",
+            "bytes": 593
+          }
+        },
+        {
+          "name": "omit_keys_only",
+          "role": "constructed_negative_unrun",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-5960/omit_keys_only.patch",
+            "sha256": "5ddf1b01fdf43ecf0bc1a18e6d20908ff20ae70737d01ea00324f3a52fb1c734",
+            "bytes": 712
+          }
+        }
+      ],
+      "original_actor_image": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5960:latest",
+      "grading_spec_image": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5960:latest",
+      "grading_spec_image_local_build_id": null,
+      "budget": {
+        "setup_seconds": 300.0,
+        "apply_seconds": 120.0,
+        "test_seconds": 1800.0,
+        "candidate_stage_seconds": 900,
+        "whole_grading_seconds": 1800,
+        "cleanup_seconds": 120,
+        "image_pull_seconds": 1800
+      }
+    },
+    "getmoto__moto-6408": {
+      "registry_rel": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/moto6408_fixed_test_patch_v1",
+      "registry_sha256": "ecd9fabb1687571bf07bab35992c39f5f4cada1393bbbe2947612d95c8415fb3",
+      "environment_recipe_sha256": "af5dcce31cef81cbae03732a65d3a221c0220c64841c3e0708d0e649b15fa206",
+      "environment": {
+        "files": [
+          {
+            "path": "source_image_receipt.json",
+            "sha256": "sha256:cd618f417622ff8d40a51d434f7f1dc40c60d403828d44fc83f5b6dbf325d86d"
+          }
+        ],
+        "recipe_id": "moto6408-fixed-environment-v1",
+        "source_config_id": "sha256:a0071858b0bb3a9c316e3c75dd49e9a3a2f8136f7bb4213e1210b44b7de2e689",
+        "source_image": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6408:latest",
+        "source_image_manifest_digest": "sha256:db52bf5253616c8662863703accf3ad9e5c20e809e63f2e5829b48fb1212f8a4"
+      },
+      "grader_actual_image_id": "sha256:a0071858b0bb3a9c316e3c75dd49e9a3a2f8136f7bb4213e1210b44b7de2e689",
+      "gold_sha256": "fa6d9adadc553b4eb713ca3749a90efe7adb572348c837fd2bbf48a3dd95d7dd",
+      "controls": [
+        {
+          "name": "noop",
+          "role": "noop",
+          "expected_reward": 0,
+          "patch": null
+        },
+        {
+          "name": "gold",
+          "role": "positive",
+          "expected_reward": 1,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6408/gold.patch",
+            "sha256": "fa6d9adadc553b4eb713ca3749a90efe7adb572348c837fd2bbf48a3dd95d7dd",
+            "bytes": 993
+          }
+        },
+        {
+          "name": "reorder_only",
+          "role": "constructed_negative_unrun",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-6408/reorder_only.patch",
+            "sha256": "38870a10babbb10239825686c1493cefdff753bf3d7a15db83f217de8321ee8b",
+            "bytes": 290
+          }
+        }
+      ],
+      "original_actor_image": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6408:latest",
+      "grading_spec_image": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6408:latest",
+      "grading_spec_image_local_build_id": null,
+      "budget": {
+        "setup_seconds": 300.0,
+        "apply_seconds": 120.0,
+        "test_seconds": 1800.0,
+        "candidate_stage_seconds": 900,
+        "whole_grading_seconds": 1800,
+        "cleanup_seconds": 120,
+        "image_pull_seconds": 1800
+      }
+    },
+    "getmoto__moto-6185": {
+      "registry_rel": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/moto6185_fixed_test_patch_v1",
+      "registry_sha256": "deb67b2a3b521c29bb1b8c5ca6b7e485c4cae3e6c76336f804da3d533390cf66",
+      "environment_recipe_sha256": "db39d769d399b98bb1728948ea906223145467bb5878659cb6aed8abf7243f36",
+      "environment": {
+        "derived_image_id": "sha256:79d39d611186289b10956c2f845af1272218a1f4cf8fc00382c7c6ab4eced35d",
+        "files": [
+          {
+            "path": "source_image_receipt.json",
+            "sha256": "sha256:a6f559fcd2dc580dc894b0046e6a125416becc2f5d8fe2630831a274382323e0"
+          },
+          {
+            "path": "derived_image_receipt.json",
+            "sha256": "sha256:1a187dafc8e123c0573a68b76b8718eda4f9145502d0cd5a957f41d46980fcf1"
+          },
+          {
+            "path": "environment/Dockerfile",
+            "sha256": "sha256:352caaf2eae8dc6fdb3291e9afaf85281a0b0199d6b3ee091d9e3d3247d44993"
+          },
+          {
+            "path": "environment/wheel_manifest.json",
+            "sha256": "sha256:660fa7aa83d8c3cedeb5e188ef7a4de0621e6011a37be48958813a6c50425a55"
+          },
+          {
+            "path": "environment/packaging-24.1-py3-none-any.whl",
+            "sha256": "sha256:5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124"
+          },
+          {
+            "path": "environment/wheel-0.43.0-py3-none-any.whl",
+            "sha256": "sha256:55c570405f142630c6b9f72fe09d9b67cf1477fcf543ae5b8dcb1f5b7377da81"
+          },
+          {
+            "path": "environment/setuptools-72.1.0-py3-none-any.whl",
+            "sha256": "sha256:5a03e1860cf56bb6ef48ce186b0e557fdba433237481a9a625176c2831be15d1"
+          }
+        ],
+        "recipe_id": "moto6185-fixed-environment-v1",
+        "source_config_id": "sha256:47443b04543c5fa25c85bb4e86c871f1f98ea0df9e254b2ca8fac9f9bdb19325",
+        "source_image": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6185:latest",
+        "source_image_manifest_digest": "sha256:ade7d85a8ef82a6d87940dd9c8d486e50b27dcc33e968e55f50421adf6864eda",
+        "wheel_manifest_sha256": "sha256:660fa7aa83d8c3cedeb5e188ef7a4de0621e6011a37be48958813a6c50425a55",
+        "wheels": [
+          [
+            "packaging-24.1-py3-none-any.whl",
+            "sha256:5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124",
+            53985
+          ],
+          [
+            "wheel-0.43.0-py3-none-any.whl",
+            "sha256:55c570405f142630c6b9f72fe09d9b67cf1477fcf543ae5b8dcb1f5b7377da81",
+            65775
+          ],
+          [
+            "setuptools-72.1.0-py3-none-any.whl",
+            "sha256:5a03e1860cf56bb6ef48ce186b0e557fdba433237481a9a625176c2831be15d1",
+            2337965
+          ]
+        ]
+      },
+      "grader_actual_image_id": "sha256:79d39d611186289b10956c2f845af1272218a1f4cf8fc00382c7c6ab4eced35d",
+      "gold_sha256": "868fd2d166ddc9e3bb4028fe491ef6dbb9b45b160ef53d7d05ed3cc9647979e1",
+      "controls": [
+        {
+          "name": "noop",
+          "role": "noop",
+          "expected_reward": 0,
+          "patch": null
+        },
+        {
+          "name": "gold",
+          "role": "gold_known_incomplete",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/gold.patch",
+            "sha256": "868fd2d166ddc9e3bb4028fe491ef6dbb9b45b160ef53d7d05ed3cc9647979e1",
+            "bytes": 1395
+          }
+        },
+        {
+          "name": "ctx",
+          "role": "positive",
+          "expected_reward": 1,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto6185/ctx.patch",
+            "sha256": "139572e876978ca20c34280a51282364c17505f5746283db1eacb8824ea63c45",
+            "bytes": 1434
+          }
+        },
+        {
+          "name": "ctx_list",
+          "role": "alternative_compatibility",
+          "expected_reward": 1,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto6185/ctx_list.patch",
+            "sha256": "9169306dae030c8ea349e56d39ba92f1bd0483bb87e669a256b6c32155f51c44",
+            "bytes": 1644
+          }
+        },
+        {
+          "name": "depth2",
+          "role": "known_wrong",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto6185/depth2.patch",
+            "sha256": "2bdf47a660368c157e74aaa78601e700c07332933284f7f5a89fdee414c03915",
+            "bytes": 1121
+          }
+        },
+        {
+          "name": "list_as_names",
+          "role": "known_wrong",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto6185/list_as_names.patch",
+            "sha256": "f4a791b589b1a35fceaebec5491b6cdcd88e80c48ac32055653c71b7ece845fb",
+            "bytes": 1639
+          }
+        },
+        {
+          "name": "null_only",
+          "role": "known_wrong",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto6185/null_only.patch",
+            "sha256": "23b58b21a2fb08c734d1d76a8edbb917a4d82478b7cfe0ddaff0856589827066",
+            "bytes": 655
+          }
+        },
+        {
+          "name": "parity",
+          "role": "positive",
+          "expected_reward": 1,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto6185/parity.patch",
+            "sha256": "d7ca0fd9fa09693588cedd9ff4bbc1e58638115c27c0379468cf5428a4e50f9b",
+            "bytes": 1236
+          }
+        },
+        {
+          "name": "rootkey",
+          "role": "known_wrong",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto6185/rootkey.patch",
+            "sha256": "0232a04f17c99ff6038dbb550f19f019b192afdbe97a5246210ff2d40d458b89",
+            "bytes": 1365
+          }
+        },
+        {
+          "name": "shape",
+          "role": "known_wrong",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto6185/shape.patch",
+            "sha256": "36f1b5d72156e2cf084f26ca481c41d988fbe4f623fb9bf6aa2191196a79b025",
+            "bytes": 1084
+          }
+        },
+        {
+          "name": "siblings",
+          "role": "known_wrong",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto6185/siblings.patch",
+            "sha256": "c39acf3b51c4d45e457deee138f104221cce7706113dad884499faf012a9a0af",
+            "bytes": 746
+          }
+        },
+        {
+          "name": "skip_s_subtree",
+          "role": "known_wrong",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto6185/skip_s_subtree.patch",
+            "sha256": "c273d7e372167499b0e80ec57dc484b6b07311f99c1e602f7e0e6a75be768afc",
+            "bytes": 1043
+          }
+        },
+        {
+          "name": "swallow",
+          "role": "known_wrong",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto6185/swallow.patch",
+            "sha256": "35a765d8fca32558922d8e9d06ac9ec13f3849b598a065e9d5935b5002573881",
+            "bytes": 733
+          }
+        },
+        {
+          "name": "top_only",
+          "role": "known_wrong",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto6185/top_only.patch",
+            "sha256": "1d82e10dfce44606dd4a1b369b4e78cce1b58573538088818e78cf8ec1715eed",
+            "bytes": 1157
+          }
+        },
+        {
+          "name": "rv_break_after_s",
+          "role": "known_wrong",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_break_after_s.patch",
+            "sha256": "487023425d882229251de48bc9a5d111d10033f54fbcc8dc3b401727d97cf863",
+            "bytes": 1161
+          }
+        },
+        {
+          "name": "rv_depth4",
+          "role": "known_wrong",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_depth4.patch",
+            "sha256": "ae21146f48d83f6d0acf46546722cd9d75f99d4e7d779890293ff2de392069e4",
+            "bytes": 1175
+          }
+        },
+        {
+          "name": "rv_dynamotype",
+          "role": "observation_not_positive",
+          "expected_reward": 1,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_dynamotype.patch",
+            "sha256": "2d73d9d782eac8c7701ddfd94918f44df0bd12ed3f108a604e173afe367473e7",
+            "bytes": 2495
+          }
+        },
+        {
+          "name": "rv_scalar_s",
+          "role": "known_wrong",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_scalar_s.patch",
+            "sha256": "e068f41a6e9fec5cd43d44d406f25adce7cc9176094af56bb2ae98c5ef86d457",
+            "bytes": 1767
+          }
+        },
+        {
+          "name": "rv_shape_key",
+          "role": "known_wrong",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_shape_key.patch",
+            "sha256": "d0c1275343e37364c2cf498da6873a468574d8c048062a38cdd82c12ccee04c3",
+            "bytes": 1815
+          }
+        },
+        {
+          "name": "rv_swallow_attr",
+          "role": "known_wrong",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_swallow_attr.patch",
+            "sha256": "9d37f01bbaf924417cc7889e2864c4ed1acee834157b39a44dc37e40eb1a4435",
+            "bytes": 792
+          }
+        },
+        {
+          "name": "rv_tagparent",
+          "role": "known_wrong",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_tagparent.patch",
+            "sha256": "9d4c841f0232b34c61ed053d7f79a48bbfe03bdbd3ffed2a7527e8d90af91b40",
+            "bytes": 1429
+          }
+        },
+        {
+          "name": "rv_top_or_null",
+          "role": "known_wrong",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_top_or_null.patch",
+            "sha256": "5d441c3e35d6de99bab5a259b4d229e4eb2b5ba6edf161ee017ad3cbbc26b8e7",
+            "bytes": 1192
+          }
+        }
+      ],
+      "original_actor_image": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6185:latest",
+      "grading_spec_image": "sha256:79d39d611186289b10956c2f845af1272218a1f4cf8fc00382c7c6ab4eced35d",
+      "grading_spec_image_local_build_id": "sha256:79d39d611186289b10956c2f845af1272218a1f4cf8fc00382c7c6ab4eced35d",
+      "budget": {
+        "setup_seconds": 300.0,
+        "apply_seconds": 120.0,
+        "test_seconds": 1800.0,
+        "candidate_stage_seconds": 900,
+        "whole_grading_seconds": 1800,
+        "cleanup_seconds": 120,
+        "image_pull_seconds": 1800
+      }
+    },
+    "getmoto__moto-7584": {
+      "registry_rel": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/moto7584_fixed_test_patch_v1",
+      "registry_sha256": "06f37a85ebffa1ae3441919c1ff1a7a8618eaaccc8b676eb1e492b46921b62b2",
+      "environment_recipe_sha256": "51fde89874658a5285356c29fc2b876658ccb2282a8c67b568287716f0c40afe",
+      "environment": {
+        "derived_image_id": "sha256:990e0e91a190f85426e6900828cf758c30f389c927f6c1d0cd1ed8c68b902f96",
+        "files": [
+          {
+            "path": "source_image_receipt.json",
+            "sha256": "sha256:3228275d95ec05765bbf9dd8c92eed3960461489b4f42692f52c600e97e18fe4"
+          },
+          {
+            "path": "derived_image_receipt.json",
+            "sha256": "sha256:d7f21a2e6802d2266fbd05722b34a502e8f10b5f6e0c945078b424a92c379b27"
+          },
+          {
+            "path": "environment/Dockerfile",
+            "sha256": "sha256:352caaf2eae8dc6fdb3291e9afaf85281a0b0199d6b3ee091d9e3d3247d44993"
+          },
+          {
+            "path": "environment/wheel_manifest.json",
+            "sha256": "sha256:660fa7aa83d8c3cedeb5e188ef7a4de0621e6011a37be48958813a6c50425a55"
+          },
+          {
+            "path": "environment/packaging-24.1-py3-none-any.whl",
+            "sha256": "sha256:5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124"
+          },
+          {
+            "path": "environment/wheel-0.43.0-py3-none-any.whl",
+            "sha256": "sha256:55c570405f142630c6b9f72fe09d9b67cf1477fcf543ae5b8dcb1f5b7377da81"
+          },
+          {
+            "path": "environment/setuptools-72.1.0-py3-none-any.whl",
+            "sha256": "sha256:5a03e1860cf56bb6ef48ce186b0e557fdba433237481a9a625176c2831be15d1"
+          }
+        ],
+        "recipe_id": "moto7584-fixed-environment-v1",
+        "source_config_id": "sha256:437ec771611180d48f01985f1faaac352bae045c7f3db7c3582298b937252f5d",
+        "source_image": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7584:latest",
+        "source_image_manifest_digest": "sha256:3b263c0c4745d890400b7beaf08c10b5413f86ae7983dd4bf14d93e43cd2fbf9",
+        "wheel_manifest_sha256": "sha256:660fa7aa83d8c3cedeb5e188ef7a4de0621e6011a37be48958813a6c50425a55",
+        "wheels": [
+          [
+            "packaging-24.1-py3-none-any.whl",
+            "sha256:5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124",
+            53985
+          ],
+          [
+            "wheel-0.43.0-py3-none-any.whl",
+            "sha256:55c570405f142630c6b9f72fe09d9b67cf1477fcf543ae5b8dcb1f5b7377da81",
+            65775
+          ],
+          [
+            "setuptools-72.1.0-py3-none-any.whl",
+            "sha256:5a03e1860cf56bb6ef48ce186b0e557fdba433237481a9a625176c2831be15d1",
+            2337965
+          ]
+        ]
+      },
+      "grader_actual_image_id": "sha256:990e0e91a190f85426e6900828cf758c30f389c927f6c1d0cd1ed8c68b902f96",
+      "gold_sha256": "4259577987a8f90d16046a73060c2d3f5b3c8a7d19ace77c2a7b1c6104e7bbea",
+      "controls": [
+        {
+          "name": "noop",
+          "role": "noop",
+          "expected_reward": 0,
+          "patch": null
+        },
+        {
+          "name": "gold",
+          "role": "gold_known_incomplete",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/runs/swegym_quality_batch02_20260921_v1/private/getmoto__moto-7584/gold.patch",
+            "sha256": "4259577987a8f90d16046a73060c2d3f5b3c8a7d19ace77c2a7b1c6104e7bbea",
+            "bytes": 1091
+          }
+        },
+        {
+          "name": "all_protocols",
+          "role": "known_wrong",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto7584/all_protocols.patch",
+            "sha256": "a51c86d39c0a9bfaff103a3399a14a910950373d711fc35728e333f565c780a9",
+            "bytes": 722
+          }
+        },
+        {
+          "name": "arn_form",
+          "role": "known_wrong",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto7584/arn_form.patch",
+            "sha256": "0230ae299a252744699315536948fa6bcadadd3a505c3c9231b32ced1b8a5848",
+            "bytes": 787
+          }
+        },
+        {
+          "name": "deleted_set",
+          "role": "known_wrong",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto7584/deleted_set.patch",
+            "sha256": "d442b9c3a283ea666df456ab9e25d1a2ed7bfa2f396b8ea69f8c34e92d4b5ee5",
+            "bytes": 1085
+          }
+        },
+        {
+          "name": "gold_order_stmtmsg",
+          "role": "known_wrong",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto7584/gold_order_stmtmsg.patch",
+            "sha256": "280e6469c2689091ed6f1f0671cc13d4928aaf59dddb2091e8887c9c1f4090a9",
+            "bytes": 802
+          }
+        },
+        {
+          "name": "reject_all_application",
+          "role": "known_wrong",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto7584/reject_all_application.patch",
+            "sha256": "3cd3591bfd921faa6e7373afb0f45316380ef1a0ad27d2d689f28c453c248636",
+            "bytes": 672
+          }
+        },
+        {
+          "name": "reject_all_arnmsg",
+          "role": "known_wrong",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto7584/reject_all_arnmsg.patch",
+            "sha256": "6b03ee4913c2c2b3103d9eb2f69927c496d0fbc654f90bfbe06c11f6f9064a70",
+            "bytes": 675
+          }
+        },
+        {
+          "name": "stmt",
+          "role": "positive",
+          "expected_reward": 1,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto7584/stmt.patch",
+            "sha256": "65211e6203215ad6272d3718c12d8c27dfbdd16ecbd1280efb86a1b1638e319f",
+            "bytes": 785
+          }
+        },
+        {
+          "name": "stmt_arnmsg",
+          "role": "positive",
+          "expected_reward": 1,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto7584/stmt_arnmsg.patch",
+            "sha256": "08a85d529384eb538ad0584e3c34dccf722e94753c27d4b81577c6dd639017f8",
+            "bytes": 788
+          }
+        },
+        {
+          "name": "wrong_code",
+          "role": "known_wrong",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/rh2/experiments/category3_cloud_20260929/moto7584/wrong_code.patch",
+            "sha256": "b2d691d4d2b07ab16ffde783a4ff393f20cebafa45c85eacac57db7d92bb0037",
+            "bytes": 553
+          }
+        }
+      ],
+      "original_actor_image": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7584:latest",
+      "grading_spec_image": "sha256:990e0e91a190f85426e6900828cf758c30f389c927f6c1d0cd1ed8c68b902f96",
+      "grading_spec_image_local_build_id": "sha256:990e0e91a190f85426e6900828cf758c30f389c927f6c1d0cd1ed8c68b902f96",
+      "budget": {
+        "setup_seconds": 300.0,
+        "apply_seconds": 120.0,
+        "test_seconds": 1800.0,
+        "candidate_stage_seconds": 900,
+        "whole_grading_seconds": 1800,
+        "cleanup_seconds": 120,
+        "image_pull_seconds": 1800
+      }
+    }
+  }
+}

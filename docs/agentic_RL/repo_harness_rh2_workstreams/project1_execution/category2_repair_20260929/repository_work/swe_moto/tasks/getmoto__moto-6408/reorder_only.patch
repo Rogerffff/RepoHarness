@@ -1,0 +1,12 @@
+diff --git a/moto/ecr/models.py b/moto/ecr/models.py
+--- a/moto/ecr/models.py
++++ b/moto/ecr/models.py
+@@ -664,6 +664,8 @@
+                 }
+             )
+ 
++        if len(image_ids) == 1:
++            response["images"].reverse()
+         return response
+ 
+     def batch_delete_image(

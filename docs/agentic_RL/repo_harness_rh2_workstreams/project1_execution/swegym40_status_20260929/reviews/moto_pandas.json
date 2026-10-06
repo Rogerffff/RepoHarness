@@ -1,0 +1,1323 @@
+{
+  "as_of": "2026-09-29",
+  "scope": "原09-21已审40题中的Moto8+Pandas5，13题；不含新32题",
+  "path_base": "repository_root",
+  "method": "本地只读静态题卡/review、后续开发与行为原件、模型处置卡及两Moto已验CPU结果；不是fresh盲审。本次不运行项目、SSH、实验或模型，不改生产和原卡。",
+  "standard": "统一标准§2/§10；证据层次与当前用途分开。旧19可进探针不等于训练合格。",
+  "shared_wiring_status": "采用results.md顶部09-25更新：F1–F4修复、真实CC+桩完整链冒烟已有记录；completion_review较早16/2/3分类不覆盖新19/2定案。真实模型解析/窗口及训练链验证仍独立，不能由devcheck代替。",
+  "cross_task_boundary": "Pandas56849 base含48106/53958修法，53958含48106；51605含50319修法。Moto5752/7584/6185/6408有记录的较早修法源码包含关系。它们要求版本与答案隔离，不等于任务重复或实际模型泄漏。",
+  "tasks": [
+    {
+      "instance_id": "getmoto__moto-5752",
+      "original_static_classification": "candidate_ids",
+      "historical_task2_probe_pool": false,
+      "goal": "SSM DescribeParameters 多标签 Equals 过滤满足 AND，结果不受过滤器顺序影响。",
+      "static_findings": [
+        "新增断言还检 tag+BeginsWith；该选项有 API/校验器依据，但是否属于此次必须修复范围未由题面消解。",
+        "79 P2P 不等于全部组合已覆盖；混合字段、多 Values 和对象身份仍有阅读/测试边界。"
+      ],
+      "verified_repairs": [
+        "正式 CC 入口 testbed 激活/checkout 导入和公开命令已实际核验，无本题新增依赖层。",
+        "后续行为对照补齐原样 MWE：6 个模型候选均两顺序1，gold也为1；BeginsWith gold2、全部候选0。"
+      ],
+      "confirmed_open_issues": [
+        "P5目标范围争议保留；09-25 T0明确只诊断，不进入比较分母或训练池，题面和断言均未改。"
+      ],
+      "unexecuted_questions": [
+        "标签与普通字段混合、多 Values OR 未由现有矩阵完整回答。",
+        "新版本若选择补题面或改验收，均未实施/重验；运行分数不能代替范围裁决。"
+      ],
+      "current_use": {
+        "diagnostic": "yes",
+        "comparison": "no",
+        "training": "no",
+        "holdout": "no"
+      },
+      "next_action": "维持诊断旁路；仅在明确任务范围和版本策略后再考虑修订，保留原6次评分。",
+      "conditions": {
+        "diagnostic": "保留原版本、原分、身份及证据级别；不混作正确修复率。",
+        "comparison": "未准入普通比较；先完成所列范围/语义阻断。",
+        "training": "当前未授予训练资格。有未处理质量阻断，先修订/重验；D6未实施。",
+        "holdout": "已参与模型比较或仍有质量阻断，当前不能作最终留出。"
+      },
+      "development_evidence": {
+        "summary": "原公开镜像正式 actor 的题面 MWE 为 hello_second=1、hello_first=2；SSM describe_parameters 28 pass。私有 gold 两顺序均1、28 pass。正式开发路径已验证，旧卡“只在 bash_env_v1 下可用”已过时。",
+        "identity_version_command_scope": "无新记录的项明确unknown；以下机器字段只提取已保存attempt，不执行命令。",
+        "evidence_kind": "真实CC+桩正式actor开发验证，不是模型自主求解",
+        "actor_uid": 54321,
+        "cc_version": "2.1.205 (Claude Code)",
+        "base_commit": "b2300f1eae1323e3e8bc45f97e530ce129dff12e",
+        "image": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5752:latest",
+        "image_override": null,
+        "profile_digest": "sha256:d4a886fbed364aa2dd403dd4c24c3bfacce6d3addc04a707e0cea2ba5d804a41",
+        "interpreter_prefix": "/opt/miniconda3/envs/testbed",
+        "commands": [
+          {
+            "id": "env",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 355,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "解释器、moto 来源、身份"
+          },
+          {
+            "id": "first_round_devsh",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "any",
+            "matches_expect": true,
+            "output_bytes": 485,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "首轮在 bash_env_v1 下用过的同一份开发检查脚本（原样复用），在正式入口下重跑以核对结论能否迁移"
+          },
+          {
+            "id": "mcve",
+            "rc": 1,
+            "status": "nonzero",
+            "expect": "nonzero",
+            "matches_expect": true,
+            "output_bytes": 118,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "题面 MWE 原样（本地 mock SSM，自设区域与假凭据）：两种过滤器顺序都应只返回 1 条"
+          },
+          {
+            "id": "ssm",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 987,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "相关公开测试：SSM describe_parameters（首轮 Coder 选错过测试文件）"
+          },
+          {
+            "id": "tree",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 41,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "运行后工作区改动"
+          }
+        ],
+        "cleanup": {
+          "container_rm": 0,
+          "network_failures": [],
+          "relay_failures": [],
+          "stub_rc": 0,
+          "labeled_containers_left": [],
+          "labeled_networks_left": [],
+          "residual_after_force": []
+        },
+        "private_gold_identity": "独立root/default-user对照，非actor同权限；不能据此作严格单变量补丁归因。"
+      },
+      "model_evidence": {
+        "status": "已执行历史模型探针；本次只读接续",
+        "new_model_run": false,
+        "environment": "09-22 bash_env_v1诊断变体；不能把09-25正式入口/依赖修复追溯成旧模型的条件",
+        "valid_attempts": 6,
+        "reward_by_model": {
+          "deepseek-v4-pro": "0/2",
+          "qwen3.6-35b-a3b": "0/2",
+          "qwen3-coder-30b-a3b-instruct": "0/2"
+        },
+        "interpretation": "6个候选都修复Equals顺序原例，却因BeginsWith断言得0；范围未决，不能用全0比较能力。"
+      },
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/getmoto__moto-5752/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/getmoto__moto-5752/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/getmoto__moto-5752/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+        "runs/task2_swegym_dev_20260925/runs/moto5752/orig/attempt.json",
+        "runs/task2_swegym_dev_20260925/runs/moto5752/orig/captures/env.out",
+        "runs/task2_swegym_dev_20260925/runs/moto5752/orig/stub_script.json",
+        "runs/task2_swegym_dev_20260925/runs/private/getmoto__moto-5752_gold.json",
+        "runs/base_probe_20260922/analysis/getmoto__moto-5752/task_card.md",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5752/summary.json",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5752/base/check.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5752/coder_a1/check.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5752/coder_a2/check.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5752/ds_a1/check.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5752/ds_a2/check.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5752/gold/check.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5752/q36_a1/check.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5752/q36_a2/check.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5752/base/issue_mwe.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5752/coder_a1/issue_mwe.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5752/coder_a2/issue_mwe.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5752/ds_a1/issue_mwe.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5752/ds_a2/issue_mwe.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5752/gold/issue_mwe.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5752/q36_a1/issue_mwe.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5752/q36_a2/issue_mwe.out",
+        "runs/swegym40_status_20260929/root_evidence_check.json"
+      ]
+    },
+    {
+      "instance_id": "getmoto__moto-5134",
+      "original_static_classification": "candidate_ids",
+      "historical_task2_probe_pool": true,
+      "goal": "Events exists:true 应把值为 null 的已有叶子视为存在，区分缺键，并让匹配事件投递 Logs。",
+      "static_findings": [
+        "2 F2P 与12 P2P检 null/缺键及 Logs；17实际执行项另含3个非引用 SQS 测试。",
+        "原选集不含 test_events.py 的 archive/replay 回归；布尔存在性传递是合法非gold路线。"
+      ],
+      "verified_repairs": [
+        "actor_moto5134_v1 实际消费：boto3 1.28.57、botocore 1.31.57、s3transfer 0.7.0、urllib3 1.26.20；base层保留、wheel SHA固定、pip check通过；解决已观测的 SQS 协议依赖噪声。",
+        "14种 exists 输入与评分外103项回归已对gold及12个历史候选运行：8个reward1候选全部对齐gold且103全过；4个Coder原reward0候选均破坏archive。"
+      ],
+      "confirmed_open_issues": [
+        "archive/replay仍未加入正式评分；T0只定低优先级扩选集方向，SWE-Gym版本修订机制/D6未实施。",
+        "目前没有已证reward1语义错误；不能把4个原0分候选的回归算成评分假阳性。",
+        "现CPU宿主没有原actor_moto5134_v1精确镜像ID；历史配方已验不等于当前现成可用，恢复后须核同一wheel/层/入口，未重新构建。"
+      ],
+      "unexecuted_questions": [
+        "父节点缺失/null/标量守卫的规范范围未规定；14叶子矩阵不能外推全部父节点语义。",
+        "按统一标准仍需完成正向覆盖和退化检查的版本化证据，不由8个成功样本直接授予训练资格。"
+      ],
+      "current_use": {
+        "diagnostic": "yes",
+        "comparison": "conditional",
+        "training": "conditional",
+        "holdout": "no"
+      },
+      "next_action": "先按原wheel/hash配方恢复actor_moto5134_v1并核身份；随后沿已定方案预登记14矩阵+103回归审计，再作受限比较。",
+      "conditions": {
+        "diagnostic": "保留原版本、原分、身份及证据级别；不混作正确修复率。",
+        "comparison": "沿09-25已定受限探针方案，使用actor_moto5134_v1并与grader sqs_v1对齐，设置公开区域/假凭据；预登记对reward1候选14矩阵+103回归审计，原分不回写。",
+        "training": "当前未授予训练资格。须补齐§2正向覆盖、§4步骤2/3及剩余质量记录；conditional不是已合格。",
+        "holdout": "已参与模型比较或仍有质量阻断，当前不能作最终留出。"
+      },
+      "development_evidence": {
+        "summary": "原 actor 的 API null/value/missing=[False,True,False]、Logs投递0，另有3个 SQS KeyError QueueUrl；actor_moto5134_v1 对齐 sqs_v1 wheel 后集成4、pattern12、events103全通过，目标失败仍在。私有 gold API=[True,True,False]、投递1、集成和103旧测通过。",
+        "identity_version_command_scope": "无新记录的项明确unknown；以下机器字段只提取已保存attempt，不执行命令。",
+        "evidence_kind": "真实CC+桩正式actor开发验证，不是模型自主求解",
+        "actor_uid": 54321,
+        "cc_version": "2.1.205 (Claude Code)",
+        "base_commit": "0e3ac260682f3354912fe552c61d9b3e590903b8",
+        "image": "rh2-task2/actor_moto5134_v1:20260925",
+        "image_override": "rh2-task2/actor_moto5134_v1:20260925",
+        "profile_digest": "sha256:d4a886fbed364aa2dd403dd4c24c3bfacce6d3addc04a707e0cea2ba5d804a41",
+        "interpreter_prefix": "/opt/miniconda3/envs/testbed",
+        "commands": [
+          {
+            "id": "env",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 200,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "解释器、moto 来源（须为 /testbed）、boto3/botocore 版本、身份与区域变量"
+          },
+          {
+            "id": "mcve_api",
+            "rc": 1,
+            "status": "nonzero",
+            "expect": "nonzero",
+            "matches_expect": true,
+            "output_bytes": 153,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "题面行为（公开 API）：exists:true 应匹配值为 null 的字段；base 应暴露缺陷"
+          },
+          {
+            "id": "mcve_e2e",
+            "rc": 1,
+            "status": "nonzero",
+            "expect": "nonzero",
+            "matches_expect": true,
+            "output_bytes": 398,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "题面端到端（本地 mock，不联网）：Events 规则 → CloudWatch Logs，detail 含 null 的事件应投递"
+          },
+          {
+            "id": "integration",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 5546,
+            "output_truncated_to": 200000,
+            "pytest": {
+              "passed": 4,
+              "warning": 166
+            },
+            "purpose": "相关公开测试（评分执行文件之一，含 3 个 SQS 用例；首轮 actor 下 SQS 失败）"
+          },
+          {
+            "id": "pattern",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "any",
+            "matches_expect": true,
+            "output_bytes": 1929,
+            "output_truncated_to": 200000,
+            "pytest": {
+              "passed": 12
+            },
+            "purpose": "相关公开测试：事件模式（base 上 exists 相关用例预期只因目标缺陷失败）"
+          },
+          {
+            "id": "events_file",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 6458,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "评分选集外的 archive / replay 回归面（首轮 Coder 候选在此引入回归）"
+          },
+          {
+            "id": "tree",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 41,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "运行后工作区改动"
+          }
+        ],
+        "cleanup": {
+          "container_rm": 0,
+          "network_failures": [],
+          "relay_failures": [],
+          "stub_rc": 0,
+          "labeled_containers_left": [],
+          "labeled_networks_left": [],
+          "residual_after_force": []
+        },
+        "private_gold_identity": "独立root/default-user对照，非actor同权限；不能据此作严格单变量补丁归因。",
+        "current_derived_image_available": "no：root本次只读远端inventory确认原6 actor派生镜像精确ID均不在，包含本题；本审读取root报告，未SSH。"
+      },
+      "model_evidence": {
+        "status": "已执行历史模型探针；本次只读接续",
+        "new_model_run": false,
+        "environment": "09-22 bash_env_v1诊断变体；不能把09-25正式入口/依赖修复追溯成旧模型的条件",
+        "valid_attempts": 12,
+        "reward_by_model": {
+          "deepseek-v4-pro": "4/4",
+          "qwen3.6-35b-a3b": "4/4",
+          "qwen3-coder-30b-a3b-instruct": "0/4"
+        },
+        "interpretation": "8个成功候选14矩阵与gold一致且103回归通过；4个失败候选确错，未证reward1假阳性。"
+      },
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/getmoto__moto-5134/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/getmoto__moto-5134/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/getmoto__moto-5134/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+        "runs/task2_swegym_dev_20260925/derived/actor_moto5134_v1/image.json",
+        "runs/task2_swegym_dev_20260925/runs/moto5134/actor_v1/attempt.json",
+        "runs/task2_swegym_dev_20260925/runs/moto5134/actor_v1/captures/env.out",
+        "runs/task2_swegym_dev_20260925/runs/moto5134/actor_v1/stub_script.json",
+        "runs/task2_swegym_dev_20260925/runs/private/moto5134_gold.json",
+        "runs/task2_swegym_dev_20260925/runs/moto5134/orig/attempt.json",
+        "runs/base_probe_20260922/analysis/getmoto__moto-5134/task_card.md",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5134/summary.json",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5134/base/check.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5134/coder_a1/check.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5134/coder_a2/check.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5134/coder_a3/check.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5134/coder_a4/check.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5134/ds_a1/check.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5134/ds_a2/check.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5134/ds_a3/check.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5134/ds_a4/check.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5134/gold/check.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5134/q36_a1/check.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5134/q36_a2/check.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5134/q36_a3/check.out",
+        "runs/task2_swegym_dev_20260925/runs/behavior/moto5134/q36_a4/check.out",
+        "runs/swegym40_status_20260929/root_evidence_check.json"
+      ]
+    },
+    {
+      "instance_id": "getmoto__moto-6408",
+      "original_static_classification": "candidate_ids",
+      "historical_task2_probe_pool": true,
+      "goal": "ECR 已有 tag 移到另一个已创建 manifest 后，按 tag 获取新镜像并保留其它正确关联。",
+      "static_findings": [
+        "F2P只看 batch_get_image 首个返回项，未直接断言唯一性、完整镜像数量及其它tags。",
+        "新目标manifest尚未创建时的append/delete路径有相邻旧缺陷线索，不是已证此次gold新回归。历史noop0/gold1、96参考。"
+      ],
+      "verified_repairs": [
+        "原正式actor工具、checkout与局部开发条件已核；历史actor未知项在这一范围内消解。"
+      ],
+      "confirmed_open_issues": [
+        "首项断言与完整tag归属之间存在已定位观察缺口；尚无错误候选获分实测。"
+      ],
+      "unexecuted_questions": [
+        "仅重排返回值/删除全部旧tags等自然部分实现的实际reward未知。",
+        "目标manifest已存在与新建两种路径的完整数量/tag集合对照未运行。"
+      ],
+      "current_use": {
+        "diagnostic": "yes",
+        "comparison": "conditional",
+        "training": "conditional",
+        "holdout": "conditional"
+      },
+      "next_action": "若继续CPU诊断，优先核两种目标manifest路径的完整对象集合；比较须披露覆盖边界，训练前补§4步骤2/3证据。",
+      "conditions": {
+        "diagnostic": "保留原版本、原分、身份及证据级别；不混作正确修复率。",
+        "comparison": "conditional仅表示满足条件后的受限可能性，不表示本次新增准入。固定任务/环境/预算/有效分母，预登记限制与语义审计；P5须先消解，不能靠事后审计绕过。",
+        "training": "当前未授予训练资格。须补齐§2正向覆盖、§4步骤2/3及剩余质量记录；conditional不是已合格。",
+        "holdout": "在训练级质量完成后另核§9/D3版本关系、答案隔离、未参与模型/提示词/训练配方选择；当前未证符合。"
+      },
+      "development_evidence": {
+        "summary": "原 actor boto3/botocore1.35.9 可运行；公开tag移动例失败于返回旧镜像，ECR put/tag相关29 pass；私有gold原例1 pass、旧组29 pass。无需新增actor配方。",
+        "identity_version_command_scope": "无新记录的项明确unknown；以下机器字段只提取已保存attempt，不执行命令。",
+        "evidence_kind": "真实CC+桩正式actor开发验证，不是模型自主求解",
+        "actor_uid": 54321,
+        "cc_version": "2.1.205 (Claude Code)",
+        "base_commit": "1dfbeed5a72a4bd57361e44441d0d06af6a2e58a",
+        "image": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6408:latest",
+        "image_override": null,
+        "profile_digest": "sha256:d4a886fbed364aa2dd403dd4c24c3bfacce6d3addc04a707e0cea2ba5d804a41",
+        "interpreter_prefix": "/opt/miniconda3/envs/testbed",
+        "commands": [
+          {
+            "id": "env",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 339,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "解释器、moto 来源（须为 /testbed）、版本、身份"
+          },
+          {
+            "id": "mcve",
+            "rc": 1,
+            "status": "nonzero",
+            "expect": "nonzero",
+            "matches_expect": true,
+            "output_bytes": 687,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "题面原例（本地 mock ECR）：已存在的 tag 移到另一镜像后 batch_get_image 应返回新镜像（base 应失败）"
+          },
+          {
+            "id": "ecr",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 1012,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "相关公开测试：ECR put_image / tag"
+          },
+          {
+            "id": "tree",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 41,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "运行后工作区改动"
+          }
+        ],
+        "cleanup": {
+          "container_rm": 0,
+          "network_failures": [],
+          "relay_failures": [],
+          "stub_rc": 0,
+          "labeled_containers_left": [],
+          "labeled_networks_left": [],
+          "residual_after_force": []
+        },
+        "private_gold_identity": "独立root/default-user对照，非actor同权限；不能据此作严格单变量补丁归因。"
+      },
+      "model_evidence": {
+        "status": "未在09-22原范围尝试",
+        "performance": "unknown",
+        "new_model_run": false
+      },
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+        "runs/task2_swegym_dev_20260925/runs/moto6408/orig/attempt.json",
+        "runs/task2_swegym_dev_20260925/runs/moto6408/orig/captures/env.out",
+        "runs/task2_swegym_dev_20260925/runs/moto6408/orig/stub_script.json",
+        "runs/task2_swegym_dev_20260925/runs/private/getmoto__moto-6408_gold.json",
+        "runs/swegym40_status_20260929/root_evidence_check.json"
+      ]
+    },
+    {
+      "instance_id": "getmoto__moto-5960",
+      "original_static_classification": "candidate_ids",
+      "historical_task2_probe_pool": true,
+      "goal": "DynamoDB GSI scan 在 INCLUDE 和 KEYS_ONLY 下只返回投影属性。",
+      "static_findings": [
+        "新增测试覆盖GSI INCLUDE，但所谓KEYS_ONLY新增例实际是LSI；现有GSI KEYS_ONLY旧测只走query。",
+        "直接核心 GSI KEYS_ONLY scan 缺决定性断言；LSI附带范围不自动升级为题面唯一要求。历史noop0/gold1；158实际项与157参考键分开。"
+      ],
+      "verified_repairs": [
+        "正式actor原例可复现、目标失败与工具依赖可区分。"
+      ],
+      "confirmed_open_issues": [
+        "GSI KEYS_ONLY scan核心断言缺失是静态确定覆盖缺口，错误实现获分仍未实测。",
+        "两空白参数节点合键，当前成员均通过，未证因此错分。"
+      ],
+      "unexecuted_questions": [
+        "只漏修GSI KEYS_ONLY的候选得分未运行；投影是否污染存储对象的行为对照未运行。",
+        "LSI范围若成为验收争点，须先澄清公开契约，不能用gold反推。"
+      ],
+      "current_use": {
+        "diagnostic": "yes",
+        "comparison": "conditional",
+        "training": "no",
+        "holdout": "no"
+      },
+      "next_action": "受限比较预登记独立 INCLUDE/KEYS_ONLY 检查；训练前处理核心覆盖缺口并复验退化候选，不直接沿用可进探针标签。",
+      "conditions": {
+        "diagnostic": "保留原版本、原分、身份及证据级别；不混作正确修复率。",
+        "comparison": "conditional仅表示满足条件后的受限可能性，不表示本次新增准入。固定任务/环境/预算/有效分母，预登记限制与语义审计；P5须先消解，不能靠事后审计绕过。",
+        "training": "当前未授予训练资格。有未处理质量阻断，先修订/重验；D6未实施。",
+        "holdout": "已参与模型比较或仍有质量阻断，当前不能作最终留出。"
+      },
+      "development_evidence": {
+        "summary": "原正式actor公开2用例均因scan返回全部属性失败，GSI/scan相关29 pass；私有gold公开2用例和29旧测通过。boto3/botocore1.35.9无需替换。",
+        "identity_version_command_scope": "无新记录的项明确unknown；以下机器字段只提取已保存attempt，不执行命令。",
+        "evidence_kind": "真实CC+桩正式actor开发验证，不是模型自主求解",
+        "actor_uid": 54321,
+        "cc_version": "2.1.205 (Claude Code)",
+        "base_commit": "d1e3f50756fdaaea498e8e47d5dcd56686e6ecdf",
+        "image": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5960:latest",
+        "image_override": null,
+        "profile_digest": "sha256:d4a886fbed364aa2dd403dd4c24c3bfacce6d3addc04a707e0cea2ba5d804a41",
+        "interpreter_prefix": "/opt/miniconda3/envs/testbed",
+        "commands": [
+          {
+            "id": "env",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 339,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "解释器、moto 来源（须为 /testbed）、版本、身份"
+          },
+          {
+            "id": "mcve",
+            "rc": 1,
+            "status": "nonzero",
+            "expect": "nonzero",
+            "matches_expect": true,
+            "output_bytes": 666,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "题面原例（pytest 用例，本地 mock）：GSI INCLUDE / KEYS_ONLY 投影下 scan 只返回投影属性（base 应失败）"
+          },
+          {
+            "id": "ddb",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 1411,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "相关公开测试：DynamoDB GSI / scan"
+          },
+          {
+            "id": "tree",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 41,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "运行后工作区改动"
+          }
+        ],
+        "cleanup": {
+          "container_rm": 0,
+          "network_failures": [],
+          "relay_failures": [],
+          "stub_rc": 0,
+          "labeled_containers_left": [],
+          "labeled_networks_left": [],
+          "residual_after_force": []
+        },
+        "private_gold_identity": "独立root/default-user对照，非actor同权限；不能据此作严格单变量补丁归因。"
+      },
+      "model_evidence": {
+        "status": "未在09-22原范围尝试",
+        "performance": "unknown",
+        "new_model_run": false
+      },
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-5960/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-5960/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-5960/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+        "runs/task2_swegym_dev_20260925/runs/moto5960/orig/attempt.json",
+        "runs/task2_swegym_dev_20260925/runs/moto5960/orig/captures/env.out",
+        "runs/task2_swegym_dev_20260925/runs/moto5960/orig/stub_script.json",
+        "runs/task2_swegym_dev_20260925/runs/private/getmoto__moto-5960_gold.json",
+        "runs/swegym40_status_20260929/root_evidence_check.json"
+      ]
+    },
+    {
+      "instance_id": "getmoto__moto-7584",
+      "original_static_classification": "diagnostic_first_ids",
+      "historical_task2_probe_pool": false,
+      "goal": "SNS application Subscribe 应拒绝不存在或已删除endpoint，含先订阅、删除、再订阅的公开序列。",
+      "static_findings": [
+        "新F2P只在首次订阅前删除endpoint；gold的duplicate早返回先于存在性检查，静态上仍绕过原公开序列。",
+        "精确错误文案带额外arn前缀，可能拒绝公开合理错误信息。历史noop0/gold1、20项，不能消除该范围冲突。"
+      ],
+      "verified_repairs": [],
+      "confirmed_open_issues": [
+        "公开序列与gold/参考覆盖不一致有静态依据；尚无本轮行为反例，不记实测gold失败。"
+      ],
+      "unexecuted_questions": [
+        "base/gold实际执行 subscribe→delete→resubscribe 的结果未知。",
+        "合理错误信息候选的正式得分、当前actor镜像/工具可用性unknown。"
+      ],
+      "current_use": {
+        "diagnostic": "yes",
+        "comparison": "no",
+        "training": "no",
+        "holdout": "no"
+      },
+      "next_action": "先作公开原序列与正式评分的窄对照，再决定质量处置；当前维持诊断优先。",
+      "conditions": {
+        "diagnostic": "保留原版本、原分、身份及证据级别；不混作正确修复率。",
+        "comparison": "未准入普通比较；先完成所列范围/语义阻断。",
+        "training": "当前未授予训练资格。有未处理质量阻断，先修订/重验；D6未实施。",
+        "holdout": "已参与模型比较或仍有质量阻断，当前不能作最终留出。"
+      },
+      "development_evidence": {
+        "summary": "本范围没有正式actor开发/新CPU或模型记录；只有旧grader安装与20节点对照，不等于actor可用。",
+        "identity_version_command_scope": "无新记录的项明确unknown；以下机器字段只提取已保存attempt，不执行命令。",
+        "actor_identity": "unknown",
+        "current_image_available": "unknown",
+        "command_execution": "仅历史grader记录；本次无正式actor/新CPU记录"
+      },
+      "model_evidence": {
+        "status": "未在09-22原范围尝试",
+        "performance": "unknown",
+        "new_model_run": false
+      },
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/getmoto__moto-7584/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/getmoto__moto-7584/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/getmoto__moto-7584/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+        "runs/swegym40_status_20260929/root_evidence_check.json"
+      ]
+    },
+    {
+      "instance_id": "getmoto__moto-6185",
+      "original_static_classification": "diagnostic_first_ids",
+      "historical_task2_probe_pool": false,
+      "goal": "DynamoDB 普通属性名 S 的顶层/深层合法值应被接受，同时保留真实类型错误。",
+      "static_findings": [
+        "新增F2P仅顶层S字符串；deep/NULL没有决定性覆盖。",
+        "gold以父键/表键做启发式区分，HASH名M且嵌套S=None的合法输入仍可能被拒；非法S字典也可能绕过预期类型校验。历史noop0/gold1、36实际项/35键。"
+      ],
+      "verified_repairs": [],
+      "confirmed_open_issues": [
+        "深层合法值和输入验证存在可定位静态风险；没有运行证据证明已错误入库或新gold回归发生。",
+        "空白参数合键当前成员均PASS，不能写已错分。"
+      ],
+      "unexecuted_questions": [
+        "base/gold对M主键+嵌套S=None的真实Put/Get结果与异常unknown。",
+        "当前actor解释器、导入、镜像恢复资产可用性unknown。"
+      ],
+      "current_use": {
+        "diagnostic": "yes",
+        "comparison": "no",
+        "training": "no",
+        "holdout": "no"
+      },
+      "next_action": "先对公开合法深层值作base/gold对照，再按真实异常归因；保持诊断用途。",
+      "conditions": {
+        "diagnostic": "保留原版本、原分、身份及证据级别；不混作正确修复率。",
+        "comparison": "未准入普通比较；先完成所列范围/语义阻断。",
+        "training": "当前未授予训练资格。有未处理质量阻断，先修订/重验；D6未实施。",
+        "holdout": "已参与模型比较或仍有质量阻断，当前不能作最终留出。"
+      },
+      "development_evidence": {
+        "summary": "无此次正式actor或模型证据；旧grader install_wave1及gold36 pass只证明该历史评分路径。",
+        "identity_version_command_scope": "无新记录的项明确unknown；以下机器字段只提取已保存attempt，不执行命令。",
+        "actor_identity": "unknown",
+        "current_image_available": "unknown",
+        "command_execution": "仅历史grader记录；本次无正式actor/新CPU记录"
+      },
+      "model_evidence": {
+        "status": "未在09-22原范围尝试",
+        "performance": "unknown",
+        "new_model_run": false
+      },
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+        "runs/swegym40_status_20260929/root_evidence_check.json"
+      ]
+    },
+    {
+      "instance_id": "getmoto__moto-6114",
+      "original_static_classification": "diagnostic_first_ids",
+      "historical_task2_probe_pool": false,
+      "goal": "RDS 按已存在集群ARN检索时应返回同一目标集群，而非任意一个对象。",
+      "static_findings": [
+        "唯一新增ARN断言只查length=1，未核Identifier/ARN；名称/不存在等旧行为另受保护。",
+        "原例cluster-0/1笔误不当作不存在输入；使用创建时实际ARN消除歧义。"
+      ],
+      "verified_repairs": [
+        "恢复旧install_wave1资产：COPY setuptools72.1.0/wheel0.43.0/packaging24.1 wheel及离线环境，未预先RUN安装；不是已观测actor故障修复。",
+        "派生层三方原make init真实完成，noop/gold/wrong_first=0/1/1，35参考×3完整；完整投影源码与私有字节一致，安装/两层清理完成。"
+      ],
+      "confirmed_open_issues": [
+        "S1/T2b已实测：wrong_first按B ARN返回数量1的A，官方仍满分；D6对象身份断言未实施。",
+        "源码版本4.1.6.dev与安装元数据4.1.0.dev0有不同口径，源码身份另有全字节证据。"
+      ],
+      "unexecuted_questions": [
+        "本轮未做原镜像正式评分对照，不能量化派生层收益或声称原actor坏。",
+        "隔离构建实际逐包版本、完整pip check、wheel本地payload重hash、跨账户/地区及完整资源事件unknown。",
+        "自主模型和真实题面交付未测。"
+      ],
+      "current_use": {
+        "diagnostic": "yes",
+        "comparison": "conditional",
+        "training": "no",
+        "holdout": "no"
+      },
+      "next_action": "优先为现有两集群用例加入有版本的Identifier/ARN验收并复验；此前仅诊断，受限比较需先落实身份审计与原分/语义分列。",
+      "conditions": {
+        "diagnostic": "保留原版本、原分、身份及证据级别；不混作正确修复率。",
+        "comparison": "conditional仅表示满足条件后的受限可能性，不表示本次新增准入。固定任务/环境/预算/有效分母，预登记限制与语义审计；P5须先消解，不能靠事后审计绕过。",
+        "training": "当前未授予训练资格。有未处理质量阻断，先修订/重验；D6未实施。",
+        "holdout": "已参与模型比较或仍有质量阻断，当前不能作最终留出。"
+      },
+      "development_evidence": {
+        "summary": "原/派生actor均CC2.1.205/UID54321、Python3.12.4、boto3/botocore1.35.9、pytest8.3.2；查询真实B ARN为目标DBClusterNotFoundFault，公开旧测4 pass。原actor all_match_expect=true，表示预期目标失败被复现。",
+        "identity_version_command_scope": "无新记录的项明确unknown；以下机器字段只提取已保存attempt，不执行命令。",
+        "evidence_kind": "09-29 code_v1+正式devcheck；私有root与正式grader分别记录",
+        "budget": "2CPU/4GiB；正式setup900/test1800/whole1800，未证明旧300预算也完成",
+        "resource_boundary": "采样非全生命周期，resource_facts=null；不声明全程无OOM。",
+        "actual_prompt_boundary": "actor首条Devcheck控制文本，未证明真实题面/public_hints交付。"
+      },
+      "model_evidence": {
+        "status": "未在09-22原范围尝试",
+        "performance": "unknown",
+        "new_model_run": false
+      },
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/results/getmoto__moto-6114/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/results/getmoto__moto-6114/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/results/getmoto__moto-6114/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/getmoto__moto-6114/result.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/getmoto__moto-6114/result.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/moto_pair_result_review.md",
+        "runs/swegym_cpu_preprobe_20260929/analysis/moto6114_final_v1.json",
+        "runs/swegym_cpu_preprobe_20260929/analysis/evidence_manifest_moto6114_v1.json",
+        "runs/swegym40_status_20260929/root_evidence_check.json",
+        "runs/swegym40_status_20260929/cpu29_overlap_remote_hash_check.json"
+      ]
+    },
+    {
+      "instance_id": "getmoto__moto-5406",
+      "original_static_classification": "diagnostic_first_ids",
+      "historical_task2_probe_pool": false,
+      "goal": "DynamoDB TableArn 的地区应随客户端所选地区生成。",
+      "static_findings": [
+        "来源测试把East1主例改East2，26 P2P没有保留另一地区TableArn保护。",
+        "公开原例表名笔误不作为规格；原公开East1标准建表测试提供独立地区契约。"
+      ],
+      "verified_repairs": [
+        "不是install_wave1；实际原make init完成。no-op/gold/恒East2评分0/1/1，27参考×3完整，真实导出源码与私有行为字节一致；安装和两层清理核验完成。"
+      ],
+      "confirmed_open_issues": [
+        "S1/T2b已实测：恒East2能得1却在East1新探针及原公开测试失败。D6最小双地区验收尚未实施。"
+      ],
+      "unexecuted_questions": [
+        "Stream/SSE/TableClass组合、完整pip check和全生命周期资源事件未核全。",
+        "真实模型题面/public_hints交付及自主解题unknown，桩actor成功不等于模型能力。"
+      ],
+      "current_use": {
+        "diagnostic": "yes",
+        "comparison": "conditional",
+        "training": "no",
+        "holdout": "no"
+      },
+      "next_action": "优先把双地区ARN验收设计落实为有版本修订并复验0/1/退化；在此之前仅诊断，受限比较须先固定双地区语义审计和原分并列方案。",
+      "conditions": {
+        "diagnostic": "保留原版本、原分、身份及证据级别；不混作正确修复率。",
+        "comparison": "conditional仅表示满足条件后的受限可能性，不表示本次新增准入。固定任务/环境/预算/有效分母，预登记限制与语义审计；P5须先消解，不能靠事后审计绕过。",
+        "training": "当前未授予训练资格。有未处理质量阻断，先修订/重验；D6未实施。",
+        "holdout": "已参与模型比较或仍有质量阻断，当前不能作最终留出。"
+      },
+      "development_evidence": {
+        "summary": "09-29原baseline01镜像无需新增层。正式actor CC2.1.205/UID54321、Python3.12.4、boto3/botocore1.35.9、pytest8.3.2，East2失败、East1通过、原公开East1测试1 pass。私有root三变体不能替代actor。",
+        "identity_version_command_scope": "无新记录的项明确unknown；以下机器字段只提取已保存attempt，不执行命令。",
+        "evidence_kind": "09-29 code_v1+正式devcheck；私有root与正式grader分别记录",
+        "budget": "2CPU/4GiB；正式setup900/test1800/whole1800，未证明旧300预算也完成",
+        "resource_boundary": "采样非全生命周期，resource_facts=null；不声明全程无OOM。",
+        "actual_prompt_boundary": "actor首条Devcheck控制文本，未证明真实题面/public_hints交付。"
+      },
+      "model_evidence": {
+        "status": "未在09-22原范围尝试",
+        "performance": "unknown",
+        "new_model_run": false
+      },
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/getmoto__moto-5406/result.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/getmoto__moto-5406/result.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/moto_pair_result_review.md",
+        "runs/swegym_cpu_preprobe_20260929/analysis/moto5406_final_v1.json",
+        "runs/swegym_cpu_preprobe_20260929/analysis/evidence_manifest_moto5406_v1.json",
+        "runs/swegym40_status_20260929/root_evidence_check.json",
+        "runs/swegym40_status_20260929/cpu29_overlap_remote_hash_check.json"
+      ]
+    },
+    {
+      "instance_id": "pandas-dev__pandas-56849",
+      "original_static_classification": "candidate_ids",
+      "historical_task2_probe_pool": true,
+      "goal": "恢复小写 m 的月末频率兼容行为，保持合法月末序列和既有别名/非法输入边界。",
+      "static_findings": [
+        "唯一F2P检查两个月末及含小写m的FutureWarning regex；公开原例20期、倍数/共享入口未直接覆盖。",
+        "assert_index_equal不检查DatetimeIndex.freq；warning规范化成M的合理路线可能误拒，尚未运行候选。",
+        "历史gold重编后426实际测试通过；冻结1+419键，10参数成员合并成4键且均通过。"
+      ],
+      "verified_repairs": [
+        "正式actor实际增量重编闭环已补，不再是只有grader重编/成功import的间接推断；沿原镜像，不套48106修订配方。"
+      ],
+      "confirmed_open_issues": [
+        "warning大小写误拒仍是具体静态疑点；实际错误候选得分unknown。",
+        "参数键身份合并已证，但本次合并成员全过，未证明错分。"
+      ],
+      "unexecuted_questions": [
+        "规范化M warning而保持20期/倍数/边界的非gold候选未编译评分。",
+        "仅修date_range或丢freq候选未执行；19s不是所有机器冷构建预算保证。"
+      ],
+      "current_use": {
+        "diagnostic": "yes",
+        "comparison": "conditional",
+        "training": "conditional",
+        "holdout": "conditional"
+      },
+      "next_action": "优先运行已有设计的规范化warning合理候选对照；后续模型须使用真实重编路径，训练前完成§4步骤2/3和剩余覆盖记录。",
+      "conditions": {
+        "diagnostic": "保留原版本、原分、身份及证据级别；不混作正确修复率。",
+        "comparison": "conditional仅表示满足条件后的受限可能性，不表示本次新增准入。固定任务/环境/预算/有效分母，预登记限制与语义审计；P5须先消解，不能靠事后审计绕过。",
+        "training": "当前未授予训练资格。须补齐§2正向覆盖、§4步骤2/3及剩余质量记录；conditional不是已合格。",
+        "holdout": "在训练级质量完成后另核§9/D3版本关系、答案隔离、未参与模型/提示词/训练配方选择；当前未证符合。"
+      },
+      "development_evidence": {
+        "summary": "正式actor Python3.10.15/pandas3.0.0.dev0+91.g612823e824，meson1.2.1/meson-python0.13.1/Cython3.0.5；build属agent。触碰offsets.pyx后import实际执行Cython→C→link四步19s，.so时间改变；原例Invalid frequency:m，119旧测通过；私有gold原例及119通过。",
+        "identity_version_command_scope": "无新记录的项明确unknown；以下机器字段只提取已保存attempt，不执行命令。",
+        "evidence_kind": "真实CC+桩正式actor开发验证，不是模型自主求解",
+        "actor_uid": 54321,
+        "cc_version": "2.1.205 (Claude Code)",
+        "base_commit": "612823e824805b97a2dbe258ba808dc572083d49",
+        "image": "xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-56849:latest",
+        "image_override": null,
+        "profile_digest": "sha256:d4a886fbed364aa2dd403dd4c24c3bfacce6d3addc04a707e0cea2ba5d804a41",
+        "interpreter_prefix": "/opt/miniconda3/envs/testbed",
+        "commands": [
+          {
+            "id": "env",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 600,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "解释器、pandas 来源（须为 /testbed）与版本、构建目录属主、身份"
+          },
+          {
+            "id": "mcve",
+            "rc": 1,
+            "status": "nonzero",
+            "expect": "nonzero",
+            "matches_expect": true,
+            "output_bytes": 1238,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "题面原例：freq=\"m\"（已弃用的 \"M\" 的小写别名）不应报错"
+          },
+          {
+            "id": "rebuild",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 577,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "开发路径：改 Cython 源后 meson 可编辑安装能否由 agent 增量重编（触碰 offsets.pyx → import，记录重编输出与耗时）"
+          },
+          {
+            "id": "date_range",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 1716,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "相关公开测试：date_range / 频率别名"
+          },
+          {
+            "id": "tree",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 41,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "运行后工作区改动"
+          }
+        ],
+        "cleanup": {
+          "container_rm": 0,
+          "network_failures": [],
+          "relay_failures": [],
+          "stub_rc": 0,
+          "labeled_containers_left": [],
+          "labeled_networks_left": [],
+          "residual_after_force": []
+        },
+        "private_gold_identity": "独立root/default-user对照，非actor同权限；不能据此作严格单变量补丁归因。"
+      },
+      "model_evidence": {
+        "status": "未在09-22原范围尝试",
+        "performance": "unknown",
+        "new_model_run": false
+      },
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-56849/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+        "runs/task2_swegym_dev_20260925/runs/pandas56849/orig/attempt.json",
+        "runs/task2_swegym_dev_20260925/runs/pandas56849/orig/captures/env.out",
+        "runs/task2_swegym_dev_20260925/runs/pandas56849/orig/stub_script.json",
+        "runs/task2_swegym_dev_20260925/runs/private/pandas-dev__pandas-56849_gold.json",
+        "runs/task2_swegym_dev_20260925/runs/pandas56849/orig/captures/rebuild.out",
+        "runs/swegym40_status_20260929/root_evidence_check.json"
+      ]
+    },
+    {
+      "instance_id": "pandas-dev__pandas-48106",
+      "original_static_classification": "candidate_ids",
+      "historical_task2_probe_pool": true,
+      "goal": "categorical Series 扩容追加类别外数值时转object并保留原值；已有类别/NA遵守相邻dtype契约。",
+      "static_findings": [
+        "16F2P含主例、已有类别、10 nullable数值类别及4种NA；不能把15项一律说成公开冲突。",
+        "合理indexing侧修复可被结果断言接受；未发现已证gold回归。历史1045执行项不等于1036冻结参考。"
+      ],
+      "verified_repairs": [
+        "grader pandas_meta_v3实际源码安装/pip check成功；reference_bindings_v1的3组Period别名共7完整节点真实被wrapper消费，noop0/gold1、P2P1020全命中，旧恒零判断失效。",
+        "正式actor导入/开发路径另已验证；未把grader54322当actor54321。"
+      ],
+      "confirmed_open_issues": [
+        "余下两组tz别名分别合并2/4完整节点，未在上述3组bindings；当前六成员均pass，已证身份合并而未证错分。"
+      ],
+      "unexecuted_questions": [
+        "保持真实摘要顺序的混合状态/缺席聚合对照未执行；合成parser结果也不等于真实候选误奖。",
+        "标准要求的系统退化/仅示例实现对照仍不齐，全仓回归unknown。"
+      ],
+      "current_use": {
+        "diagnostic": "yes",
+        "comparison": "conditional",
+        "training": "conditional",
+        "holdout": "conditional"
+      },
+      "next_action": "保留精确pandas_meta_v3+原顶层binding输入；优先补两组tz聚合诊断，训练资格待正向覆盖与退化检查完成。",
+      "conditions": {
+        "diagnostic": "保留原版本、原分、身份及证据级别；不混作正确修复率。",
+        "comparison": "conditional仅表示满足条件后的受限可能性，不表示本次新增准入。固定任务/环境/预算/有效分母，预登记限制与语义审计；P5须先消解，不能靠事后审计绕过。",
+        "training": "当前未授予训练资格。须补齐§2正向覆盖、§4步骤2/3及剩余质量记录；conditional不是已合格。",
+        "holdout": "在训练级质量完成后另核§9/D3版本关系、答案隔离、未参与模型/提示词/训练配方选择；当前未证符合。"
+      },
+      "development_evidence": {
+        "summary": "正式actor原公开镜像Python3.8.20/pandas1.5.0.dev0+1299.g8b72297c87、NumPy1.24.4/Cython0.29.32；目标为扩增赋0触发内部TypeError，公开窄setitem14 pass；私有gold输出a,b,c,0且dtype object，14 pass。纯Python修复不需强制全Cython构建。",
+        "identity_version_command_scope": "无新记录的项明确unknown；以下机器字段只提取已保存attempt，不执行命令。",
+        "evidence_kind": "真实CC+桩正式actor开发验证，不是模型自主求解",
+        "actor_uid": 54321,
+        "cc_version": "2.1.205 (Claude Code)",
+        "base_commit": "8b72297c8799725e98cb2c6aee664325b752194f",
+        "image": "xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-48106:latest",
+        "image_override": null,
+        "profile_digest": "sha256:d4a886fbed364aa2dd403dd4c24c3bfacce6d3addc04a707e0cea2ba5d804a41",
+        "interpreter_prefix": "/opt/miniconda3/envs/testbed",
+        "commands": [
+          {
+            "id": "env",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 375,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "解释器、pandas 来源（须为 /testbed）与版本、构建目录属主、身份"
+          },
+          {
+            "id": "mcve",
+            "rc": 1,
+            "status": "nonzero",
+            "expect": "nonzero",
+            "matches_expect": true,
+            "output_bytes": 1525,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "题面原例：Categorical Series 扩增赋数值应转成 object，而不是抛内部 TypeError"
+          },
+          {
+            "id": "setitem",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 922,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "相关公开测试：setitem / categorical / 扩增"
+          },
+          {
+            "id": "tree",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 41,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "运行后工作区改动"
+          }
+        ],
+        "cleanup": {
+          "container_rm": 0,
+          "network_failures": [],
+          "relay_failures": [],
+          "stub_rc": 0,
+          "labeled_containers_left": [],
+          "labeled_networks_left": [],
+          "residual_after_force": []
+        },
+        "private_gold_identity": "独立root/default-user对照，非actor同权限；不能据此作严格单变量补丁归因。"
+      },
+      "model_evidence": {
+        "status": "未在09-22原范围尝试",
+        "performance": "unknown",
+        "new_model_run": false
+      },
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-48106/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-48106/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-48106/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+        "runs/env_recipe_repair_20260919/pandas_meta_v3/reference_bindings_v1.json",
+        "runs/task2_swegym_dev_20260925/runs/pandas48106/orig/attempt.json",
+        "runs/task2_swegym_dev_20260925/runs/pandas48106/orig/captures/env.out",
+        "runs/task2_swegym_dev_20260925/runs/pandas48106/orig/stub_script.json",
+        "runs/task2_swegym_dev_20260925/runs/private/pandas-dev__pandas-48106_gold.json",
+        "runs/swegym40_status_20260929/root_evidence_check.json"
+      ]
+    },
+    {
+      "instance_id": "pandas-dev__pandas-53958",
+      "original_static_classification": "candidate_ids",
+      "historical_task2_probe_pool": true,
+      "goal": "为类型注解提供一致的真实NaTType/NAType入口；题面提出_libs或api.typing两个选项。",
+      "static_findings": [
+        "唯一F2P要求api.typing精确18名；题面未公开唯一选定位置，P5保留。",
+        "断言只比较dir字符串，不读对象身份，单例误当类型可能通过；该反例未运行。"
+      ],
+      "verified_repairs": [
+        "正式actor导入、editable/build权限及Python改动路径已核，无新增派生层；历史正式更新名单验收noop0/gold1成立。",
+        "T0决定不改题面，开发情境保留并标注需要理解/同步名单；未把公开旧测失败当环境损坏。"
+      ],
+      "confirmed_open_issues": [
+        "P6公开旧名单与正常新增导出冲突已实测；评分使用恢复后的更新名单，solver改公开测试不会自动改变评分。",
+        "P5两个入口方案与单一验收的范围争议尚未裁决；后检不能代替先消解目标范围。",
+        "导出对象身份缺少决定性断言，具体假阳性未实测。",
+        "T0只处置P6公开旧名单冲突，并未裁定两个命名空间方案；未找到后续明确选择typing的公开输入/决定。历史19成员资格保留，当前能力比较条件未核销（v1§11）。"
+      ],
+      "unexecuted_questions": [
+        "singleton误导出候选正式reward及身份对照未执行。",
+        "_libs合法路线是否应受接受仍属规范选择，不由0/1运行裁决。",
+        "历史安装xarray/dev版本metadata告警不等于全环境pip check健康。"
+      ],
+      "current_use": {
+        "diagnostic": "yes",
+        "comparison": "conditional",
+        "training": "no",
+        "holdout": "no"
+      },
+      "next_action": "先澄清P5有效目标范围，保留旧19探针池历史资格但不无条件进入正确性比较；独立身份反例可诊断，D6若改验收须新版本。",
+      "conditions": {
+        "diagnostic": "保留原版本、原分、身份及证据级别；不混作正确修复率。",
+        "comparison": "旧任务二仍登记为带限制的可进探针；按现标准，P5命名空间范围须先消解，P6公开名单冲突继续披露，之后才谈受限正确性比较。",
+        "training": "当前未授予训练资格。有未处理质量阻断，先修订/重验；D6未实施。",
+        "holdout": "已参与模型比较或仍有质量阻断，当前不能作最终留出。"
+      },
+      "development_evidence": {
+        "summary": "正式actor Python3.10.15/pandas2.1.0.dev0+1120.g1186ee0080，meson1.0.1/meson-python0.13.1/Cython0.29.33；原_libs有NaTType无NAType，typing均无。公开API 11 pass；私有gold添加真实类型后公开旧名单测试1 fail/10 pass，18 vs16，是目标修订引起的名单冲突。",
+        "identity_version_command_scope": "无新记录的项明确unknown；以下机器字段只提取已保存attempt，不执行命令。",
+        "evidence_kind": "真实CC+桩正式actor开发验证，不是模型自主求解",
+        "actor_uid": 54321,
+        "cc_version": "2.1.205 (Claude Code)",
+        "base_commit": "1186ee0080a43a08c3431a5bfa86898f6ec3b54d",
+        "image": "xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-53958:latest",
+        "image_override": null,
+        "profile_digest": "sha256:d4a886fbed364aa2dd403dd4c24c3bfacce6d3addc04a707e0cea2ba5d804a41",
+        "interpreter_prefix": "/opt/miniconda3/envs/testbed",
+        "commands": [
+          {
+            "id": "env",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 604,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "解释器、pandas 来源（须为 /testbed）与版本、构建目录属主、身份"
+          },
+          {
+            "id": "mcve",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "any",
+            "matches_expect": true,
+            "output_bytes": 242,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "题面原例：两种导入现状（题面没有指定唯一方案，只记录事实，不断言）"
+          },
+          {
+            "id": "api",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 1002,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "相关公开测试：公开 API 名单"
+          },
+          {
+            "id": "tree",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 41,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "运行后工作区改动"
+          }
+        ],
+        "cleanup": {
+          "container_rm": 0,
+          "network_failures": [],
+          "relay_failures": [],
+          "stub_rc": 0,
+          "labeled_containers_left": [],
+          "labeled_networks_left": [],
+          "residual_after_force": []
+        },
+        "private_gold_identity": "独立root/default-user对照，非actor同权限；不能据此作严格单变量补丁归因。"
+      },
+      "model_evidence": {
+        "status": "未在09-22原范围尝试",
+        "performance": "unknown",
+        "new_model_run": false
+      },
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-53958/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-53958/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-53958/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+        "runs/task2_swegym_dev_20260925/runs/pandas53958/orig/attempt.json",
+        "runs/task2_swegym_dev_20260925/runs/pandas53958/orig/captures/env.out",
+        "runs/task2_swegym_dev_20260925/runs/pandas53958/orig/stub_script.json",
+        "runs/task2_swegym_dev_20260925/runs/private/pandas-dev__pandas-53958_gold.json",
+        "runs/swegym40_status_20260929/root_evidence_check.json"
+      ]
+    },
+    {
+      "instance_id": "pandas-dev__pandas-50319",
+      "original_static_classification": "diagnostic_first_ids",
+      "historical_task2_probe_pool": false,
+      "goal": "点分日期guess_datetime_format不抛错，公开明确接受None或有效格式。",
+      "static_findings": [
+        "唯一新增断言只接受特定格式串，排除了公开允许的None路线；是静态接受范围冲突。",
+        "历史reference_v1已修反斜杠参考缺席：gold114pass，noop1fail113pass，冻结1+109；两组空白别名合并但成员均pass。"
+      ],
+      "verified_repairs": [
+        "reference_v1绑定真实消费，gold历史恒失败说法已失效；修复参考身份不消除题意冲突。"
+      ],
+      "confirmed_open_issues": [
+        "P5 None路线与验收冲突未消解；仍无合理None候选完整回归和实际误拒证据。",
+        "两组合键不等于已发生错分。"
+      ],
+      "unexecuted_questions": [
+        "局部ValueError→None实现保持小数秒/dayfirst/旧格式和上层fallback后，真实评分如何unknown。",
+        "正式actor重编、消息/工具和当前资产可用性unknown。"
+      ],
+      "current_use": {
+        "diagnostic": "yes",
+        "comparison": "no",
+        "training": "no",
+        "holdout": "no"
+      },
+      "next_action": "维持诊断；先按公开None路线作有界行为/评分对照，范围裁决与版本修订另立，不改题面排除None。",
+      "conditions": {
+        "diagnostic": "保留原版本、原分、身份及证据级别；不混作正确修复率。",
+        "comparison": "未准入普通比较；先完成所列范围/语义阻断。",
+        "training": "当前未授予训练资格。有未处理质量阻断，先修订/重验；D6未实施。",
+        "holdout": "已参与模型比较或仍有质量阻断，当前不能作最终留出。"
+      },
+      "development_evidence": {
+        "summary": "无正式actor开发或模型记录；仅历史grader54322安装重编成功。Cython开发/当前镜像可用性unknown，不能由旧grader代替。",
+        "identity_version_command_scope": "无新记录的项明确unknown；以下机器字段只提取已保存attempt，不执行命令。",
+        "actor_identity": "unknown",
+        "current_image_available": "unknown",
+        "command_execution": "仅历史grader记录；本次无正式actor/新CPU记录"
+      },
+      "model_evidence": {
+        "status": "未在09-22原范围尝试",
+        "performance": "unknown",
+        "new_model_run": false
+      },
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/pandas-dev__pandas-50319/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/pandas-dev__pandas-50319/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/pandas-dev__pandas-50319/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+        "runs/env_recipe_repair_20260919/reference_v1/reference_bindings_v1.json",
+        "runs/swegym40_status_20260929/root_evidence_check.json"
+      ]
+    },
+    {
+      "instance_id": "pandas-dev__pandas-51605",
+      "original_static_classification": "diagnostic_first_ids",
+      "historical_task2_probe_pool": false,
+      "goal": "MultiIndex.isin空候选返回与self等长的全False布尔ndarray，并保持原合法iterable行为。",
+      "static_findings": [
+        "F2P严格核两行空list的bool ndarray，来源公开三行/文档支持等长契约。",
+        "gold提前len(values)绕过原iterator→list归一化，静态上破坏非空iterator、漏修空iterator；空str/bytes早返回还绕过旧校验。",
+        "历史noop0/gold1、13项/13参考一一对应，不保护iterator。"
+      ],
+      "verified_repairs": [],
+      "confirmed_open_issues": [
+        "gold相邻合法输入回归有强静态依据，但本轮尚未实跑base/gold反例，不记实测失败。"
+      ],
+      "unexecuted_questions": [
+        "[]、iter([])、iter([(1,3)])每次新建iterator的实际对照未执行。",
+        "固定两个False错误候选、空str/bytes、原三行及当前actor路径unknown。"
+      ],
+      "current_use": {
+        "diagnostic": "yes",
+        "comparison": "no",
+        "training": "no",
+        "holdout": "no"
+      },
+      "next_action": "先核base/gold iterator真实行为和公开三行原例，再决定修订；当前维持诊断，不沿用旧ready_for_probe。",
+      "conditions": {
+        "diagnostic": "保留原版本、原分、身份及证据级别；不混作正确修复率。",
+        "comparison": "未准入普通比较；先完成所列范围/语义阻断。",
+        "training": "当前未授予训练资格。有未处理质量阻断，先修订/重验；D6未实施。",
+        "holdout": "已参与模型比较或仍有质量阻断，当前不能作最终留出。"
+      },
+      "development_evidence": {
+        "summary": "无正式actor或模型记录；旧grader纯Python路径安装成功不等于当前agent导入/改动生效。历史约700s安装不是每次Python编辑必须全构建。",
+        "identity_version_command_scope": "无新记录的项明确unknown；以下机器字段只提取已保存attempt，不执行命令。",
+        "actor_identity": "unknown",
+        "current_image_available": "unknown",
+        "command_execution": "仅历史grader记录；本次无正式actor/新CPU记录"
+      },
+      "model_evidence": {
+        "status": "未在09-22原范围尝试",
+        "performance": "unknown",
+        "new_model_run": false
+      },
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/pandas-dev__pandas-51605/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/pandas-dev__pandas-51605/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/pandas-dev__pandas-51605/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/results.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/t0_decisions_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task2_swegym_dev_conditions_20260925/codex_completion_review_20260925.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+        "runs/swegym40_status_20260929/root_evidence_check.json"
+      ]
+    }
+  ],
+  "shared_current_recovery_status": "root本次只读远端核对：任务二21份最终attempt+96个capture共117项SHA一致；原6个actor派生镜像精确ID均不在当前宿主。本报告引用该核对，不曾SSH或恢复镜像。配方资产证据不能替代当前实例可用性。"
+}

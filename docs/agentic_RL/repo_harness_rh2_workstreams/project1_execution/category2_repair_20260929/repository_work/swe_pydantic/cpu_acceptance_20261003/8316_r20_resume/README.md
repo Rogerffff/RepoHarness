@@ -1,0 +1,11 @@
+# 8316：保留R14五行，用R20补19行
+
+2026-10-03。R20实际发布、CPU-a部署1479个精确成员与可信48/216回读已[核收](../../coordination_20261003/8316_r20_support_owner_readback_v1.json)。[固定输入](formal_inputs.json)及独立公开actor输入已生成；[本地prepare](../../coordination_20261003/8316_r20_local_prepare_owner_readback_v1.json)确认144参考、实际spec预算900/120/1800、原精确镜像，以及七份脚本与R14逐字节相同。[非作者输入核查](../../reviews/non_author_8316_r20_input_review_20261003.md)已通过，七个上传成员和28个复用材料远端SHA读回通过。新十九行作业`pyd8316-formal-20261003035447-r20-f5f0f`与公开actor均已自然RC0并完成题主原件读回，见[实际24行与失败语义](actual_matrix_semantics.md)。新19奖励均0，各144参考完整；公开actor三命令0／1／0，原公开测试9通过。[最终组合非作者核查](../../reviews/non_author_8316_r20_combined_cpu_review_20261003.md)及[题主核收](../../coordination_20261003/8316_r20_combined_cpu_owner_acceptance_v1.json)已通过，固定普通GPU探针已提交并实际通知。
+
+[原五行非作者核查](../../reviews/non_author_8316_partial_cpu_review_20261003.md)允许保留R14 job的noop／gold／keep_digit／scan／w_example_only实际0／1／1／1／0，每行144参考和451项政策内baseline。原w_acr_max8测试前保护超时infra/null保留，不回写为0或新分。
+
+[实际接续范围](resume_scope.json)仅为失败w_acr_max8与未跑18个独立错误机制，按原候选字节和顺序接续。R20只给精确材料／grader将准备reset allowance从300改900；安装／测试／whole预算、保护与资源保持。原[设计草稿](resume_plan_draft.json)作为发布前记录保留，不代表当前输入。
+
+新源码与全部发布成员已核对，264条完整spec记录只有8316／DVC9395的reset预算变化；6283等其余262题不变。发布者保存的替代Docker重放账本验证900的运输路径，但没有执行真实项目CPU。原广域hold已原字节归档，范围处置仅允许6283 R19及本题R20各一次固定版本实验，见[处置记录](../../coordination_20261003/cpu_hold_scope_disposition_v1.json)；[派发guard增量独立核查](../../reviews/non_author_8316_r20_hold_history_delta_20261003.md)通过。6283四行已自然结束并由题主核清理，本题随后派发。实际十九行账本已逐项核900及固定政策身份；19次保护129.630–315.576秒，含一次超过旧300秒但在本版预算内完成。708调用RC0、2464原件SHA及本run容器／网络清理读回通过。旧五行仍标R14，新19行另标实际R20，合并验收保留版本边界。
+
+公开actor实际f939…、UID54321/Py3.8.19/core2.14.5、四桩请求与三条实际Bash命令、原公开题面CRLF字节、420解码字符串及清理已[核收](../../coordination_20261003/8316_r20_actor_owner_readback_v1.json)；它不计新模型样本。十九行全参考及公开actor已获最终组合非作者核查。[组合探针生成器静态核查](../../reviews/non_author_8316_r20_combined_probe_generator_review_20261003.md)通过后，生成器已执行一次；[固定普通GPU请求](../../tasks/pydantic__pydantic-8316/probe_request.json)和snapshot已生成，3,279个绑定逐SHA核收通过。请求`swe-pydantic8316-behavior-v1-20261003`已通过CLI提交并实际通知GPU执行者，输入SHA为`d935ed00f0744ee8c4a248487d333e5d69fb4cd778f2ae06e349a283253ae3ff`；按probe-wide-v1申请两模型首次各1条，实际结果待。若GPU实际镜像不同于R20政策所固定的CPU grader，须由共享发布者提供兼容版本，不自由覆盖900秒预算或冒用CPU镜像ID。遇新infra或清理未知即停，不机械重试或再升预算。

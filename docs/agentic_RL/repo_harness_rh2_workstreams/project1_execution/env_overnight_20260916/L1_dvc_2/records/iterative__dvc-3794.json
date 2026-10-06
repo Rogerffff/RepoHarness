@@ -1,0 +1,302 @@
+{
+ "task_id": "iterative__dvc-3794",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+  "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+  "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+  "raw": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc",
+  "base_commit": "d81b56978fd2206c6e7e7056ac18ab350cb9a6c8",
+  "version": "1.0",
+  "python_version": "3.9",
+  "eval_cmd": "pytest -rA",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-3794:latest",
+  "workdir": "/testbed",
+  "test_patch_paths": [
+   "tests/func/test_remote.py"
+  ],
+  "gold_paths": [
+   "dvc/command/remote.py"
+  ],
+  "n_f2p": 3,
+  "n_p2p": 12,
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3794/{gold,empty}/offline/a1/",
+  "signals": {
+   "in_e2": [],
+   "fragile_reference_id": false,
+   "stage1": {
+    "empty": {
+     "verdict": "RESOLVED_NO",
+     "rc_install": 0
+    },
+    "gold": {
+     "verdict": "RESOLVED_FULL",
+     "rc_install": 0,
+     "p2p_missing": 0,
+     "f2p_missing": 0
+    }
+   },
+   "deepseek_candidate_oracle": null
+  }
+ },
+ "public_view": {
+  "目标行为": "让用户能改一个已有 remote 的名字。题面给的具体形态是 `dvc remote modify <name> name <new>`，即给 `remote modify` 加一个 `name` 配置参数；并提到 `git remote` 支持改名。",
+  "约束": "题面没有给 CLI 形状以外的约束；没提默认 remote（core.remote）要不要跟着改、没提多级配置（repo/local/global/system）、没提重名冲突怎么办、没提退出码。",
+  "公开材料无法确定的点": [
+   "最终采用哪种 CLI：题面明确要求 `remote modify ... name ...`；F2P 要求的却是新子命令 `dvc remote rename <old> <new>`。",
+   "重名时的行为（gold：跨全部 level 检查并抛 ConfigError → 退出码 251）。",
+   "`core.remote` 指向被改名 remote 时是否要同步更新，以及要不要跨 level 更新（gold：要，且要遍历到 args.level 为止）。",
+   "退出码约定（251 = DvcException、254 = CLI 参数错误），这两个数字要从 base:dvc/main.py:51-61 读出来才知道。"
+  ],
+  "base 关键代码": "dvc/command/remote.py 已有 CmdRemoteAdd/Default/Modify/Remove 与 `CmdRemote._check_exists`；`CmdRemoteRemove.run` 里已有『反向遍历 self.config.LEVELS 清掉 core.remote 引用』的现成范式（base:dvc/command/remote.py:47-60），gold 基本照抄它。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "repos/dvc 3f846a1794bc1ad1a782b0e44cd0c003591ffa55 `Add a new rename command  (#3794)`，--stat 显示只有 dvc/command/remote.py(40+) 与 tests/func/test_remote.py(71+)"
+   ],
+   "note": "gold + test_patch 与上游 commit 完全一致，无丢件；无二进制/LFS/子模块。",
+   "by": "L1_dvc_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base:dvc/command/remote.py 无 rename 子命令",
+    "stage1 empty：3 条 F2P 全 FAILED"
+   ],
+   "note": "这是 feature request 而非 bug：base 确实没有改名能力，『初态含问题』成立但性质是缺功能。",
+   "by": "L1_dvc_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 545 字符，代码块闭合"
+   ],
+   "note": "题面完整、无截断、无外链图片。",
+   "by": "L1_dvc_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 仅 tests/func/test_remote.py",
+    "gold 仅 dvc/command/remote.py"
+   ],
+   "note": "零交集，无混合职责文件。additional_exclusions 空。",
+   "by": "L1_dvc_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh: `git checkout <base> tests/func/test_remote.py` + git apply"
+   ],
+   "note": "恢复集合是单一纯测试文件。",
+   "by": "L1_dvc_2"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan.json 本包 18 题的 test_patch/gold 路径表"
+   ],
+   "note": "本包内没有第二题触碰 dvc/command/remote.py 或 tests/func/test_remote.py。5188 改的是 dvc/command/config.py（--show-origin），不同修复。",
+   "by": "L1_dvc_2"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement 全文（要求 `dvc remote modify myremote name supercoolremote`）",
+    "F2P: tests/func/test_remote.py::test_remote_rename（要求 `main([\"remote\",\"rename\",old,new])`）",
+    "raw hints_text：`\\`name\\` is ugly. \\`dvc remote rename\\` is much better.` / `Let's just introduce \\`dvc remote rename\\` as suggested by @karajan1001.`"
+   ],
+   "note": "**题面与评分要的是两个不同的 CLI**。题面逐字给出 `remote modify <name> name <new>` 的用法示例；F2P 要的是全新子命令 `remote rename <old> <new>`。做出这个选择的整段讨论（维护者先说更想要 `name` 参数、再被说服改用 `rename`）只存在于不可见的 hints_text 里，题面没有任何反向线索。按题面字面实现 `modify ... name ...` 的解答 3 条 F2P 全 0。",
+   "by": "L1_dvc_2"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "test_patch: `assert main([\"remote\",\"rename\",remote_name]) == 254`",
+    "test_patch: `assert main([\"remote\",\"rename\",new_name,other_name]) == 251`",
+    "base:dvc/main.py:51-61"
+   ],
+   "note": "F2P 锁死三件公开材料没交代的事：(a) 子命令名必须叫 `rename`；(b) 第二个参数必须是**必填位置参数**（少给一个参数要走 argparse 错误路径拿 254，用 `--new` 选项实现就拿不到 254）；(c) 不存在/重名要抛 DvcException 拿 251 而不是自己 `return 1`。这些都是 dvc 既有 CLI 约定（可从 base 的 CmdRemoteAdd/Remove 与 main.py 推出），但题面完全没要求，属于『评分强制了题面之外的接口形状』。错误消息文本没有被断言，这一点是好的。",
+   "by": "L1_dvc_2"
+  },
+  "25": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_remote_default（跨 repo/local 两级更新 core.remote）",
+    "test_remote_duplicated（跨 level 重名检测）"
+   ],
+   "note": "三条 F2P 覆盖了这个功能的三处真正难点：基本改名、跨 level 重名检测（gold 用 `load_config_to_level(None)`）、跨 level 同步 core.remote（gold 的 `for level in reversed(self.config.LEVELS)` 循环）。只做单级改名的部分实现会在 test_remote_default 与 test_remote_duplicated 上失败。这一题的 F2P 设计质量在本包里属于较好的。",
+   "by": "L1_dvc_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "stage1 gold status_map：tests/func/test_remote.py 内 15 条 PASSED / 5 条 FAILED",
+    "P2P 12 条"
+   ],
+   "note": "因为 dvc 按整文件跑（eval.sh `pytest -rA tests/func/test_remote.py`），P2P 自动覆盖了同文件里所有双侧 PASSED 的 12 条，其中 test_remote_modify_default、test_show_default、test_remove_default、TestRemoteDefault::test 都直接与 gold 的 core.remote 逻辑相邻，是有判别力的回归。缺口：gold 改的是 `dvc/command/remote.py` 的 add_parser，`tests/unit/command/` 下的 CLI 解析测试未被纳入；另 `TestRemoteShouldHandleUppercaseRemoteName::test` 在 base 与 gold 两侧都 FAILED（既有失败），恰好使 gold 里 `args.new` 未做 `.lower()` 的不一致无人拦截。",
+   "by": "L1_dvc_2"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "golden_patch: `\"Rename failed. Remote name '{}' already exists.\".format({self.args.new})`",
+    "base:dvc/command/remote.py:17-18 `self.args.name = self.args.name.lower()`",
+    "stage1 gold test_output.txt（测试段内）实测输出：`ERROR: configuration error - config file error: Rename failed. Remote name '{'overlap'}' already exists.` —— 集合字面量的渲染结果被实跑日志直接证实"
+   ],
+   "note": "gold 与上游 commit 逐字一致、不依赖未交付改动，但自带两个缺陷：(a) 错误消息用 `.format({self.args.new})` 传了一个**集合字面量**，实际渲染成 `Remote name '{'new'}' already exists.`（上游 typo，因为没有断言消息所以测试照过）；(b) `CmdRemote.__init__` 只把 `args.name` 小写化，`args.new` 没有，于是 `remote rename foo BAR` 会写出大写的 remote 名，而 `remote add BAR` 会被小写成 `bar` —— 同一份配置里出现两种大小写策略。",
+   "by": "L1_dvc_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak.py：iterative__dvc-3794 gold_added=28 ps_match=0 hints_match=0"
+   ],
+   "note": "题面不含修复代码与 PR 链接。hints 里有 git-remote 文档链接和 issue #3552 链接，但 hints 不可见。",
+   "by": "L1_dvc_2"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "stage1 eval.sh install 段（同 3677 形状）"
+   ],
+   "note": "install 段需要网络（pip、git+https 的 mock-ssh-server）。离线阶段一靠镜像预装兜底。",
+   "by": "L1_dvc_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 内容"
+   ],
+   "note": "三条 F2P 只读写本地 .dvc/config，`gdrive://test/test` 只当字符串写进配置，不触发任何认证或下载。",
+   "by": "L1_dvc_2"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "stage1 gold status_map：test_partial_push_n_pull / test_push_order / test_raise_on_too_many_open_files / test_external_dir_resource_on_no_cache / TestRemoteShouldHandleUppercaseRemoteName::test 五条在 gold 下仍 FAILED"
+   ],
+   "note": "整文件跑会连带跑同文件里 5 条既有失败用例（它们不在 P2P，所以不影响判分）。这 5 条是否与网络/外部 remote 有关未核实（`not_checked`），但它们在 empty 与 gold 两侧同样 FAILED，说明是环境既有失败而非本题引入。",
+   "by": "L1_dvc_2"
+  },
+  "18": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh:101 `pytest -rA tests/func/test_remote.py`",
+    "gold status_map 20 条真实用例（15 PASSED + 5 FAILED）⊇ F2P 3 + P2P 12"
+   ],
+   "note": "无漏选；过选 5 条既有失败用例，但不计分。",
+   "by": "L1_dvc_2"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "stage1 gold status_map.json 28 个键中有 8 个伪条目：'Could'/'No'/'unexpected'/'configuration'/'the' -> 'ERROR:'，'dvc:main.py:74'/'dvc:main.py:50'/'dvc.cli:cli.py:92' -> 'ERROR'",
+    "rh2/src/repoharness2/envpack/swegym_parsers.py: parse_log_pytest 取 `line.split()[1]` 当 test id"
+   ],
+   "note": "本题的噪声来源不只是 pip：**dvc 自己在测试期间打印的 `ERROR: configuration error - ...` 与 pytest 捕获日志里的 `dvc:main.py:50 ERROR` 行也被解析成状态条目**。伪键不与真实 nodeid 冲突，本题判分不受影响；但它证明 parser 的唯一门槛是『行首是状态词』，测试期间进入 stdout 的任意文本都能写进 status_map —— 这是候选可影响的面（见 issues 里的 31）。",
+   "by": "L1_dvc_2"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 empty 12 PASSED / 8 FAILED；gold 15 PASSED / 5 FAILED"
+   ],
+   "note": "分差恰好是 3 条 F2P，方向正确，P2P 两侧一致。",
+   "by": "L1_dvc_2"
+  },
+  "31": {
+   "status": "unknown",
+   "evidence_refs": [
+    "同 19 的伪条目证据"
+   ],
+   "note": "静态线索：parse_log_pytest 会把测试段内任何以 PASSED/FAILED/ERROR/SKIPPED/XFAIL 开头的行当状态行。是否存在真正可利用的伪造路径（例如候选新增 tests/func/conftest.py 或 sitecustomize.py 打印 `PASSED <nodeid>`）没有实跑验证，也没核对 RH2 是否另有保护（rh2/scripts/sandbox_probes/grader-protect-control-surface.sh 存在但未读）。标 unknown。",
+   "by": "L1_dvc_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "题意-评分方向相反",
+   "severity": "P1",
+   "evidence_refs": [
+    "problem_statement",
+    "test_patch test_remote_rename",
+    "hints_text 维护者裁定"
+   ],
+   "proposed_action": "把维护者的裁定（否决 `remote modify ... name ...`，改为新增 `dvc remote rename <old> <new>`，对齐 `git remote rename`）写进题面；否则该题在盲解下几乎必然 0 分且原因与能力无关。",
+   "next_experiment": "盲解一次只给现题面，检查候选是否实现了 `name` 参数而非 `rename` 子命令；统计 3 条 F2P 通过数（预期 0）。"
+  },
+  {
+   "category": "评分强制接口形状",
+   "severity": "P2",
+   "evidence_refs": [
+    "`assert main([...,'rename',remote_name]) == 254`"
+   ],
+   "proposed_action": "补题面时同时写清子命令名、两个必填位置参数、重名/不存在应抛 DvcException；或放宽 254 这条断言。",
+   "next_experiment": "用 `--new` 选项式实现跑 F2P，确认只有 254 那条断言失败。"
+  },
+  {
+   "category": "gold 缺陷",
+   "severity": "P3",
+   "evidence_refs": [
+    "golden_patch `.format({self.args.new})`",
+    "base:dvc/command/remote.py:17-18"
+   ],
+   "proposed_action": "记录 gold 的 set-literal 格式化 typo 与 `args.new` 未小写化；不因为 gold 有瑕疵就放宽测试，但若将来补断言不要按 gold 的错误消息写。",
+   "next_experiment": "在 gold 上跑 `dvc remote rename foo BAR` 后读 .dvc/config，确认写出的是大写 `BAR`。"
+  },
+  {
+   "category": "整文件跑的既有失败",
+   "severity": "P3",
+   "evidence_refs": [
+    "stage1 gold status_map 5 条 FAILED"
+   ],
+   "proposed_action": "记录这 5 条为该镜像下的既有失败基线；若将来把 P2P 改成『整文件通过集』，必须先解释它们。",
+   "next_experiment": "读这 5 条的测试体，判断是否依赖外部 remote/网络/文件描述符上限。"
+  },
+  {
+   "category": "parser 可写面",
+   "severity": "P2",
+   "evidence_refs": [
+    "8 个伪状态键"
+   ],
+   "proposed_action": "仓库级问题（所有走 parse_log_pytest 的仓库同形）：确认生产判分是否只取 `>>>>> Start/End Test Output` 段，以及是否对『行首状态词 + 第二 token 必须像 nodeid』加约束。",
+   "next_experiment": "构造一个只打印 `PASSED tests/func/test_remote.py::test_remote_rename` 的假补丁，走真实 grader 看是否被判通过。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只有 tests/func/test_remote.py 一个纯测试文件；gold 只改 dvc/command/remote.py。恢复测试文件不会覆盖任何合法解答路径。沿用第四组 B 默认空。",
+  "evidence_refs": [
+   "test_patch",
+   "golden_patch",
+   "stage1 eval.sh"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/unit/command/test_config.py 及 dvc/command/remote.py 的 add_parser 相关单测",
+   "reason": "gold 新增了一个 subparser，CLI 解析层的回归目前零覆盖。"
+  },
+  {
+   "id": "tests/func/test_remote.py::TestRemoteShouldHandleUppercaseRemoteName::test",
+   "reason": "直接暴露 gold 里 `args.new` 未小写化的不一致；当前它在 base/gold 两侧都 FAILED，需要先修好环境再纳入。"
+  },
+  {
+   "id": "tests/func/test_config.py 里 --level/--local/--global 相关用例",
+   "reason": "gold 的跨 level 遍历直接复用 config.LEVELS 语义，改错会影响所有 level 相关命令。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "链路本身干净（整文件跑、F2P 设计有判别力、gold 与上游一致），但题面要求的 CLI 与评分要求的 CLI 是两个不同的东西，裁定只在不可见 hints 里；不补题面就是一道注定 0 分且归因错误的题。"
+ },
+ "costs": {
+  "minutes": 26
+ },
+ "by": "L1_dvc_2 (Claude Opus 5, 2026-09-16, 静态审查)"
+}

@@ -1,0 +1,426 @@
+{
+  "task_id": "r2e_gym_subset::numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb",
+  "instance_id": "numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb",
+  "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0（无材料修订；expected sha256:2d06e553…、hidden_tests_tree sha256:d8853bba…、run_tests.sh sha256:8285765f…）",
+  "source_adapter_ref": "s2_r2e ingest：grading_bundles_r2e_v0.jsonl:19、validation_bundles_v0.jsonl:19、public_bundles_v0.jsonl（v3 静态包）；parser r2e_prime_pytest_v1（prime_envs_c4d04dfe），normalization prime_decolor_v1",
+  "recipe_ref": {
+    "derived_image": "r2e_derive_v1（recipe sha256:0da821a1…），ref rh2-r2e-derived/numpy:5e8301c2b360-r2e_derive_v1",
+    "grader_image_id": "sha256:b72f0fc44079…（R-f 与 rerun2 评分所用构建）",
+    "devcheck_image_id": "sha256:d0b59d8bbbfa…（同 ref、同配方在另一台机器上的构建）",
+    "resources": "默认 2 CPU / 4 GiB / /tmp 1 GiB / pids 512"
+  },
+  "code_snapshot_ref": "grader r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe；devcheck experiments/r2e_actor_20260925/r2e_devcheck.py，profile_digest sha256:149b3abe…，Claude Code 2.1.205 + 桩端点",
+  "facts_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/facts.json（环境轮汇总；本次逐项对照原始账本与日志核过）",
+  "checks": {
+    "1": {
+      "status": "pass",
+      "note": "隐藏测试树、期望、run_tests.sh 的摘要与 grading_bundle 一致，评分日志头 RH2_SETUP_HIDDEN_TESTS_TREE=d8853bba…；validation_bundle 的 gold 与 gold.patch 相同；initial_diff 0 字节。",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/v3/private/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/grading_bundle.json",
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-n_b4799438.eval.log"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "2": {
+      "status": "pass",
+      "note": "noop 两轮中 15 个目标键都在 T:487 → einsumfunc.py:1089 → :712 抛题面原句；devcheck pr1（agent 身份）逐字复现。",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-n_a9fdcb72.eval.log",
+        "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_d46437e5.eval.log",
+        "runs/r2e_actor_20260925/devcheck/numpy__5e8301c2b36097dd8be5a12e0bb4369a1/orig/captures/pr1_1_cmd.out"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "3": {
+      "status": "unknown",
+      "note": "只核了静态渲染的 user_prompt.txt 和 v3 public_hints；devcheck 发给模型的用户消息是桩文本，真实题面消息没有捕获。",
+      "evidence_refs": [
+        "runs/r2e_actor_20260925/devcheck/numpy__5e8301c2b36097dd8be5a12e0bb4369a1/orig/stub/requests/messages_000.json"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "4": {
+      "status": "pass",
+      "note": "合法修复只需改受 git 跟踪的 numpy/core/einsumfunc.py；official 文件是 r2e_tests 与 run_tests.sh；没有额外排除。",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/v3/private/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/gold.patch"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "5": {
+      "status": "issue",
+      "note": "本题 gold 新增行和隐藏断言块（gh-10343）逐字出现在 numpy__43e333e2、numpy__d89bc4bb 的公开工作树里（已 grep 核对）。按机械比对，numpy__18b7cd9d、2f4a9650、d805e9b6 的 gold 出现在本题初态里（抽查行为一致，没逐行核）。影响留出集划分，不影响本题评分。",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/cross_task_gold_scan.json",
+        "runs/r2e_static_prep_20260924/v3/public/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/worktree/numpy/core/einsumfunc.py",
+        "runs/r2e_static_prep_20260924/v3/public/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd/worktree/numpy/core/einsumfunc.py"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "6": {
+      "status": "pass",
+      "note": "派生镜像能导入 numpy 1.15.0.dev0+354ac25（来自 /testbed/numpy）；pytest 7.4.4、hypothesis 6.79.4；没有 pip，本题也不需要。",
+      "evidence_refs": [
+        "runs/r2e_actor_20260925/devcheck/numpy__5e8301c2b36097dd8be5a12e0bb4369a1/orig/captures/env.out",
+        "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/dev_probe.json"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "7": {
+      "status": "not_applicable",
+      "note": "不需要权重、数据或外部资产。",
+      "evidence_refs": [],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "8": {
+      "status": "pass",
+      "note": "agent（uid 54321）下导入、复现、公开测试都能跑；评分以 54322 身份运行隐藏测试。",
+      "evidence_refs": [
+        "runs/r2e_actor_20260925/devcheck/numpy__5e8301c2b36097dd8be5a12e0bb4369a1/orig/prelaunch.json",
+        "runs/r2e_actor_20260925/devcheck/numpy__5e8301c2b36097dd8be5a12e0bb4369a1/orig/captures/pr4_4_pytest.out"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "9": {
+      "status": "pass",
+      "note": "导入路径是 /testbed/numpy/__init__.py；gold 这类纯 Python 改动直接生效（35/35）；评分 RH2_INSTALL_SKIPPED=1、不重编译，本题的合法修复也不需要编译。",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-n_b4799438.eval.log"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "10": {
+      "status": "pass",
+      "note": "devcheck pr1–pr4（agent 身份）：复现、参照、扩展情形、公开测试 35 passed。公开 test_einsum.py 就是隐藏测试减 8 行，回归键可在本地完整自检。放在 /testbed 外的脚本导入不了 numpy，v3 提示没写（见 I6）。",
+      "evidence_refs": [
+        "runs/r2e_actor_20260925/devcheck/numpy__5e8301c2b36097dd8be5a12e0bb4369a1/orig/captures/pr3_3_cmd.out",
+        "runs/r2e_actor_20260925/devcheck/numpy__5e8301c2b36097dd8be5a12e0bb4369a1/orig/captures/pr4_4_pytest.out",
+        "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/dev_probe.json"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "11": {
+      "status": "pass",
+      "note": "准备、解题、测试都不需要网络；devcheck 中外部 DNS 和禁止目标都是 DENIED。",
+      "evidence_refs": [
+        "runs/r2e_actor_20260925/devcheck/numpy__5e8301c2b36097dd8be5a12e0bb4369a1/orig/prelaunch.json"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "12": {
+      "status": "not_applicable",
+      "note": "没有外部服务。",
+      "evidence_refs": [],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "13": {
+      "status": "pass",
+      "note": "四份评分账本：内存峰值 489–503 MB（上限 4 GiB），测试 1.4–2.4 s。",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl#L19",
+        "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl#L19",
+        "runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl#L19",
+        "runs/r2e_env_repair_20260924/_rerun2/ledger_gold.jsonl#L19"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "14": {
+      "status": "pass",
+      "note": "noop、gold 各两轮逐键一致（日志把地址和耗时归一化后逐字相同）；M3 来源镜像 gold 两次都是 35 passed。次数有限。",
+      "evidence_refs": [
+        "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_14e906b7.eval.log",
+        "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl#L26",
+        "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl#L72"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "16": {
+      "status": "unknown",
+      "note": "devcheck 没有提交候选；评分侧的 gold 是以补丁文件应用的。真实候选经 RH2 冻结、投影交给评分的过程未验（actor 待验）。",
+      "evidence_refs": [
+        "runs/r2e_actor_20260925/devcheck/numpy__5e8301c2b36097dd8be5a12e0bb4369a1/orig/attempt.json"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "17": {
+      "status": "pass",
+      "note": "评分先删 r2e_tests 再放入隐藏测试（RH2_SETUP_RESTORED=2、RH2_SETUP_TEST_FILES=3）；gold 没碰任何测试路径。",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-n_b4799438.eval.log"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "18": {
+      "status": "pass",
+      "note": "收集 35 项；noop 下目标键失败在 helper 末尾第 487 行，说明前面的部分都执行了；gold 35 passed。",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-n_a9fdcb72.eval.log"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "19": {
+      "status": "pass",
+      "note": "键为 类名.测试名，共 35 个；段外解析 0 个，keys_equal=true。",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl#L19"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "20": {
+      "status": "pass",
+      "note": "noop 与 gold 只差 15 个目标键；noop 的 0 来自目标行为失败，不是安装或收集问题。",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl#L19",
+        "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl#L19"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "21": {
+      "status": "pass",
+      "note": "失败原因在日志里都能看到；没有超时或平台错误。",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-n_a9fdcb72.eval.log"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "22": {
+      "status": "pass",
+      "note": "M3 独立 runner（来源镜像、无网络）跑 gold 两次都是 35 passed，与 RH2 逐键一致；noop 侧的参考日志没读。",
+      "evidence_refs": [
+        "runs/env_overnight_20260916/M3/gold_ledger/logs_r2e/numpy/5e8301c2b360/gold/a1/test_output.txt",
+        "runs/env_overnight_20260916/M3/gold_ledger/logs_r2e/numpy/5e8301c2b360/gold/a2/test_output.txt"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "23": {
+      "status": "pass",
+      "note": "题面示例和期望明确，报错能从 base 逐行读出；泛化范围（tensordot、多操作数、直接调 einsum_path）不定，见 25、27。",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/v3/public/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/user_prompt.txt"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "24": {
+      "status": "pass",
+      "note": "没有针对报错文本、收缩路径或内部结构的新断言；期望全 PASSED；更完整的修复预期仍得 1（静态判断，C-A 待实跑）。",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/v3/private/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/hidden_tests/test_1.py",
+        "runs/r2e_static_prep_20260924/v3/private/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/expected_output.json"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "25": {
+      "status": "issue",
+      "note": "只测题面这一例（全 1、大尺寸在前、不走 BLAS）；只放宽一个方向（C-C）或直接删检查（C-D），静态上都预期得 1；15 个目标键是同一处检查。静态推断，待实跑。",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/v3/private/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/hidden_tests/test_1.py"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "26": {
+      "status": "pass",
+      "note": "20 个回归键加上 helper 原有部分（含默认 optimize=True 的 BLAS 路径和 TestEinSumPath 精确路径）保护非单例输入的行为。gold 唯一的额外变化：直接调 einsum_path 时，同一操作数内 1 对 N 的重复标签不再报错（np.einsum 仍由 C 层报错），影响可忽略、未测。生产代码里没有别的 einsum/einsum_path 调用者。",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/v3/public/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/worktree/numpy/core/src/multiarray/einsum.c.src"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "27": {
+      "status": "issue",
+      "note": "gold 修好了题面示例和对调顺序的情形，但被求和的单例标签走 tensordot（'ij,jk->ik'，(2,3) 与 (1,4)）和三操作数情形仍报 shape-mismatch for sum（私有 gold 对照实测）；上游后来用 broadcast_indices 补上。新报错文本把两个尺寸写反了（实测，外观问题）。",
+      "evidence_refs": [
+        "runs/r2e_actor_20260925/devcheck/numpy__5e8301c2b36097dd8be5a12e0bb4369a1/private_gold/private_control.json",
+        "runs/r2e_static_prep_20260924/v3/public/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/worktree/numpy/core/einsumfunc.py"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "28": {
+      "status": "not_applicable",
+      "note": "本次没有修订；可选的测试加强建议见 issues I1。",
+      "evidence_refs": [],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "29": {
+      "status": "pass",
+      "note": "本题初态：git 的 refs、remotes、reflog、unreachable 都是 0，HEAD 无子提交，隐藏测试不可读。跨题可见性见 5。",
+      "evidence_refs": [
+        "runs/r2e_actor_20260925/devcheck/numpy__5e8301c2b36097dd8be5a12e0bb4369a1/orig/attempt.json",
+        "runs/r2e_actor_20260925/devcheck/numpy__5e8301c2b36097dd8be5a12e0bb4369a1/orig/captures/r2e_preflight.out"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "30": {
+      "status": "pass",
+      "note": "解题容器不能出外网：DNS 和禁止目标都是 DENIED，只有 relay 可达。",
+      "evidence_refs": [
+        "runs/r2e_actor_20260925/devcheck/numpy__5e8301c2b36097dd8be5a12e0bb4369a1/orig/prelaunch.json"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "31": {
+      "status": "unknown",
+      "note": "共享机制，没在本题核：隐藏测试靠 numpy.testing 断言，而它是候选能改的仓库源码；agent 也能写 .venv。本题目标键的失败是 einsum 内部抛异常，只改断言函数拿不到分。",
+      "evidence_refs": [
+        "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/dev_probe.json"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "32": {
+      "status": "pass",
+      "note": "检查的是行为（与 optimize=False 参照及 [10,10] 相等），不是文本；全 1 输入的区分力弱，见 25。",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/v3/private/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/hidden_tests/test_1.py"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "33": {
+      "status": "unknown",
+      "note": "devcheck 只验证了真实 Claude Code 2.1.205 + 桩端点下的工具执行与退出；真实模型求解和交付未验。",
+      "evidence_refs": [
+        "runs/r2e_actor_20260925/devcheck/numpy__5e8301c2b36097dd8be5a12e0bb4369a1/orig/devcheck_stdout.json"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    },
+    "37": {
+      "status": "not_applicable",
+      "note": "没有材料修订。",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/v3/private/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/revisions.json"
+      ],
+      "by": "Claude 私有主审（static_review）"
+    }
+  },
+  "issues": [
+    {
+      "id": "I1",
+      "category": "test_coverage",
+      "scope": "task",
+      "summary": "隐藏测试只检查题面一例（全 1、大尺寸在前、不走 tensordot）。只放宽一个方向的实现和直接删检查的实现，静态上都预期得 1；R3–R6 缺覆盖。",
+      "evidence_level": "静态推断 + 私有 gold 执行对照",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/v3/private/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/hidden_tests/test_1.py",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/results/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/card.md"
+      ],
+      "proposed_action": "用正式评分实跑 C-C、C-A（首选）与 C-D，各预期 35/35 得 1。若 C-C 得 1，可选的测试加强是在隐藏断言里加对调顺序一例（gold 已实测通过）；不加 tensordot 或多操作数断言，除非用户先扩大范围。",
+      "status": "open"
+    },
+    {
+      "id": "I2",
+      "category": "gold_quality",
+      "scope": "task",
+      "summary": "gold 是部分修复：被求和的单例标签走 tensordot、以及三操作数的情形仍报 ValueError: shape-mismatch for sum；上游后来用 broadcast_indices 补上。reward 区分不了部分修复和完整修复。",
+      "evidence_level": "当前 CPU（私有一次性容器，root）",
+      "evidence_refs": [
+        "runs/r2e_actor_20260925/devcheck/numpy__5e8301c2b36097dd8be5a12e0bb4369a1/private_gold/private_control.json",
+        "runs/r2e_static_prep_20260924/v3/public/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd/worktree/numpy/core/einsumfunc.py"
+      ],
+      "proposed_action": "作为用途注记：reward 1 只说明题面这一例修好了。不改材料。",
+      "status": "verified"
+    },
+    {
+      "id": "I3",
+      "category": "gold_quality",
+      "scope": "task",
+      "summary": "gold 的新报错文本把两个尺寸写反了：operand 1 实际大小为 3，却显示成 operand 1 (10) … previous terms (3)。没有测试覆盖，属外观问题。",
+      "evidence_level": "当前 CPU（私有一次性容器）",
+      "evidence_refs": [
+        "runs/r2e_actor_20260925/devcheck/numpy__5e8301c2b36097dd8be5a12e0bb4369a1/private_gold/private_control.json"
+      ],
+      "proposed_action": "只记录；不据此判 gold 或候选。",
+      "status": "verified"
+    },
+    {
+      "id": "I4",
+      "category": "task_relation",
+      "scope": "repo:numpy（v3 同仓 7 题）",
+      "summary": "本题 gold 与隐藏断言块出现在 numpy__43e333e2、numpy__d89bc4bb 的公开初态里；按机械比对，numpy__18b7cd9d、2f4a9650、d805e9b6 的修复出现在本题初态里。",
+      "evidence_level": "静态逐文件核对（反向只做了行为抽查）",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/cross_task_gold_scan.json"
+      ],
+      "proposed_action": "划分留出集时让有包含关系的题落在同一侧，或者记录这项暴露。",
+      "status": "verified"
+    },
+    {
+      "id": "I5",
+      "category": "input_rendering",
+      "scope": "task",
+      "summary": "真实题面消息仍未捕获：devcheck 的用户消息是桩文本，系统提示里没有题面。",
+      "evidence_level": "当前真实 CC + 桩端点",
+      "evidence_refs": [
+        "runs/r2e_actor_20260925/devcheck/numpy__5e8301c2b36097dd8be5a12e0bb4369a1/orig/stub/requests/messages_000.json"
+      ],
+      "proposed_action": "actor 验证时捕获模型实际收到的首条消息，与 user_prompt.txt 和 public_hints 对照。",
+      "status": "open"
+    },
+    {
+      "id": "I6",
+      "category": "solver_condition",
+      "scope": "repo:numpy",
+      "summary": "放在 /testbed 外的脚本导入不了 numpy（例如 python /tmp/x.py），v3 public_hints 没有说明，只有给审查者看的 environment_brief 写了。旧记录说本题裸 pytest 收集会失败，其依据（测试目录缺 __init__.py）在本题 base 不成立。",
+      "evidence_level": "历史探针原始值 + 静态",
+      "evidence_refs": [
+        "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/dev_probe.json",
+        "runs/r2e_env_repair_20260924/p2/followups/bare_pytest.log"
+      ],
+      "proposed_action": "actor 验证时观察模型是否踩到这一点；把 environment_brief 中裸 pytest 的说法改为本题未实测、统一用 python -m pytest。",
+      "status": "open"
+    },
+    {
+      "id": "I7",
+      "category": "material_note",
+      "scope": "coordinator_materials",
+      "summary": "run_refs.json 两条 noop 行的 mismatched 只列了 12 个（少了 uint8、uint32、uint64），账本第 19 行实际是 15 个；环境轮记录的 disposition.reason 仍写着只差 R13。",
+      "evidence_level": "原件对照",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/v3/private/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/run_refs.json",
+        "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl#L19"
+      ],
+      "proposed_action": "修汇总脚本的截断，更新旧 reason 文字；都不影响本题结论。",
+      "status": "open"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "没有证据需要额外路径规则：合法修复只在 numpy/core/einsumfunc.py；评分侧会替换 r2e_tests。",
+    "evidence_refs": [
+      "runs/r2e_static_prep_20260924/v3/private/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/gold.patch"
+    ],
+    "applied_version": null
+  },
+  "revision_refs": [],
+  "disposition": {
+    "state": "needs_review",
+    "scope": "static_review",
+    "reason": "静态候选待 actor 验证，不是题意或测试争议。题面、noop 失败原因、隐藏断言、gold 结果互相对得上，没有发现过严。覆盖面窄：reward 1 只说明题面这一例（大尺寸在前、收缩不走 BLAS）修好了，不能理解为完整支持单例维广播；gold 本身也是部分修复。环境轮处置 environment_qualified（环境口径）不变。",
+    "next_step": "用正式评分实跑 C-C（只放宽一个方向）与 C-A（更完整修复），补丁描述见 card.md；之后做 actor 验证，并捕获真实题面消息。",
+    "prior_disposition": "environment_qualified（r2e_env_repair_20260924，环境口径）",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/results/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/analysis_before_history.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/results/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/old_findings_delta.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/results/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/card.md",
+      "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl#L19",
+      "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl#L19",
+      "runs/r2e_actor_20260925/devcheck/numpy__5e8301c2b36097dd8be5a12e0bb4369a1/private_gold/private_control.json"
+    ],
+    "reviewer": null
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "exposure_notes": "主审读过 gold、隐藏测试、期望映射、评分日志、devcheck 私有 gold 对照与环境轮旧记录；本记录和各草稿不提供给求解模型。跨题：本题 gold 与隐藏断言在 numpy__43e333e2、numpy__d89bc4bb 的公开初态里可见。"
+  },
+  "costs": {
+    "container_wall_seconds": null,
+    "agent_tokens": null,
+    "human_decisions": null,
+    "source_refs": [],
+    "note": "本次静态审查没有运行容器，token 未观测；既往评分耗时见 facts_ref，不计入本记录。"
+  },
+  "coordinator_notes": [
+    {
+      "date": "2026-09-25",
+      "by": "Claude B（协调者）",
+      "note": "本记录写于候选实跑之前，'待实跑''预期'为当时推断。实跑结果见 docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/grader_candidates.md，主审与复核的对照见同目录 results/<instance_id>/review.md，批次结论见 README.md §3。协调者未改动本记录的其它字段。"
+    }
+  ]
+}

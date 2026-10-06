@@ -1,0 +1,171 @@
+{
+  "checked_at_utc": "2026-10-02T20:28:51.684880+00:00",
+  "status": "actual_public_delivery_grade_roundtrip_checks_passed",
+  "release_id": "cat2-cpu-r2e080087-swe8-git-20261003-v1",
+  "job": {
+    "package": "r2e_coveragepy",
+    "job": "covea69-public-r6-cpub-20261003-01",
+    "mode": "run",
+    "slot": 0,
+    "command": [
+      "python3",
+      "-c",
+      "import pathlib,hashlib,subprocess,json,socket,os\nchecks={'/work/rh2-category2-20261003/releases/cat2-cpu-r2e080087-swe8-git-20261003-v1/manifest.json': 'ab0a3a13fd65e0ea4cd60541ea3b37b01196170477e25832df246f33ea208828', '/work/rh2-category2-20261003/packages/r2e_coveragepy/derived/cov_remaining_r6_v1/overlays.jsonl': '3949e42d3bea6f4e46dec287aa360c9b19d370b4816fc95aa7abf1344ee712ac', '/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/prepared/replay_summary.json': 'f28fe916a7744b0332cf0da2d2abb64dd35bb96d83afb35699c2b4f4b9028759', '/work/rh2-category2-20261003/packages/r2e_coveragepy/inputs/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/public_delivery_v2.json': '1b9f14a494980b36413299120fddc2719098e0a8ad2e0f78d70adf9338163244'}\nfor p,d in checks.items(): assert hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()==d,p\nassert not pathlib.Path('/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/ea69_public_e2e02').exists(),'output exists'\nfacts=json.loads(subprocess.check_output(['docker','image','inspect','sha256:fc124163bfbbbf914f2106d640d396db75356226036c6f42eda47f71afc7c068']))[0]\nassert facts['Id']=='sha256:fc124163bfbbbf914f2106d640d396db75356226036c6f42eda47f71afc7c068'\nif 'public'=='public':\n sockets=[]\n try:\n  for address in [('172.17.0.1',18190),('127.0.0.1',18191)]:\n   sock=socket.socket();sock.bind(address);sockets.append(sock)\n finally:\n  for sock in sockets:sock.close()\nprint('Fixed inputs and image verified; starting original entry',flush=True)\na=['env', 'PYTHONDONTWRITEBYTECODE=1', 'PYTHONPATH=/work/rh2-category2-20261003/releases/cat2-cpu-r2e080087-swe8-git-20261003-v1/repo/rh2/src', '/work/rh2-category2-20261003/runtime_cpu_v2/rh2/.venv/bin/python', '/work/rh2-category2-20261003/releases/cat2-cpu-r2e080087-swe8-git-20261003-v1/repo/rh2/experiments/r2e_lifecycle_20260929/r2e_probe_e2e.py', '--scenario', '/work/rh2-category2-20261003/packages/r2e_coveragepy/inputs/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/public_delivery_v2.json', '--out-root', '/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/ea69_public_e2e02', '--prepared-summary', '/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/prepared/replay_summary.json', '--overlays', '/work/rh2-category2-20261003/packages/r2e_coveragepy/derived/cov_remaining_r6_v1/overlays.jsonl', '--cc-tarball', '/work/rh2-category2-20261003/cc/claude-code-linux-x64-2.1.205.tgz', '--gw-port', '18190', '--stub-port', '18191', '--attempt-id', 'covea69-r6-public-20261003-01', '--label', 'rh2.coveragepy=covea69-r6-public-01']\nos.execvp(a[0],a)\n"
+    ],
+    "cwd": "/root",
+    "started_at_utc": "2026-10-02T19:01:18Z",
+    "supervisor_pid": 209634,
+    "status": "finished",
+    "child_pid": 209636,
+    "returncode": 0,
+    "finished_at_utc": "2026-10-02T19:03:30Z"
+  },
+  "actual_first_request_ref": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/ea69_public_e2e02/stub/requests/messages_000.json",
+  "actual_first_request_sha256": "sha256:8799d0f971a8226d2ddc11ba47e5efdb52a99f8fe396db133a253904b1ab312e",
+  "rendered_prompt_ref": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/ea69_public_e2e02/attempt/prompt.txt",
+  "prompt_sha256": "sha256:eb156fad331ac8dcdf370370bfb3eb0480b1a4052f32eb4555b5564c67ff5d3a",
+  "statement_sha256": "sha256:87f805dad9c0268639721aa5e02df3a6b430ade43e91344f641eefd47d242cdf",
+  "full_statement_in_rendered_prompt": true,
+  "full_rendered_prompt_in_first_actual_request": true,
+  "solver": "public_stub_no_model",
+  "public_command_rcs": {
+    "r2e_preflight": "0",
+    "env": "0",
+    "pr1_1_cmd": "0",
+    "pr2_2_cmd": "0",
+    "pr5_6_pytest": "0",
+    "public_open_spy_encoding": "1",
+    "public_html_compat": "0"
+  },
+  "public_tool_output_tails": [
+    "RH2_PREFLIGHT_INTERPRETER=ok\nRH2_PREFLIGHT_HIDDEN_TESTS=ok\nRH2_PREFLIGHT_GIT_HISTORY=ok\nRH2_STEP_RC:r2e_preflight=0",
+    "uid=54321(agent) gid=54321(agent) groups=54321(agent)\nVIRTUAL_ENV=/testbed/.venv\nRH2_BASHENV_WRITE=DENIED\nRH2_SYS_EXECUTABLE=/testbed/.venv/bin/python\ncoverage 6.1a0 /testbed/coverage/__init__.py\ncwd=/ coverage /testbed/coverage/__init__.py\n/usr/bin/git\n/testbed/.venv/bin/coverage\n/testbed/.venv/bin/python: No module named pip\npytest 6.2.5\n?? install.sh\n?? run_tests.sh\nPORCELAIN_RC=0\nRH2_STEP_RC:env=0",
+    "coverage from: /testbed/coverage/__init__.py\n['coverage_html.js', 'demo_py.html', 'favicon_32.png', 'index.html', 'keybd_closed.png', 'keybd_open.png', 'status.json', 'style.css']\n.gitignore exists: False\nRH2_STEP_RC:pr1_1_cmd=0",
+    "Wrote HTML report to htmlcov/index.html\ncoverage_html.js\ndemo_py.html\nfavicon_32.png\nindex.html\nkeybd_closed.png\nkeybd_open.png\nstatus.json\nstyle.css\n--- htmlcov/.gitignore:\ncat: htmlcov/.gitignore: No such file or directory\n--- git status (htmlcov only):\n?? htmlcov/coverage_html.js\n?? htmlcov/demo_py.html\n?? htmlcov/favicon_32.png\n?? htmlcov/index.html\n?? htmlcov/keybd_closed.png\n?? htmlcov/keybd_open.png\n?? htmlcov/status.json\n?? htmlcov/style.css\nRH2_STEP_RC:pr2_2_cmd=0",
+    "..............................................                           [100%]\n46 passed in 2.38s\nRH2_STEP_RC:pr5_6_pytest=0",
+    "Traceback (most recent call last):\n  File \"<stdin>\", line 4, in <module>\nTypeError: open() got an unexpected keyword argument 'encoding'\nRH2_STEP_RC:public_open_spy_encoding=1",
+    "========================== warnings summary ===============================\ntests/conftest.py:21\n  /testbed/tests/conftest.py:21: PytestAssertRewriteWarning: Module already imported so cannot be rewritten: tests.coveragetest\n    pytest.register_assert_rewrite(\"tests.coveragetest\")\n\ntests/conftest.py:22\n  /testbed/tests/conftest.py:22: PytestAssertRewriteWarning: Module already imported so cannot be rewritten: tests.helpers\n    pytest.register_assert_rewrite(\"tests.helpers\")\n\n-- Docs: https://docs.pytest.org/en/stable/warnings.html\n46 passed, 2 warnings in 2.43s\nRH2_STEP_RC:public_html_compat=0"
+  ],
+  "formal_actor_grade": {
+    "candidate": "public_actor_artifacts",
+    "reward": 0.0,
+    "match": 41,
+    "total": 49,
+    "mismatched": [
+      "HtmlDeltaTest.test_html_created",
+      "HtmlDeltaTest.test_html_delta_from_coverage_change",
+      "HtmlDeltaTest.test_html_delta_from_coverage_version_change",
+      "HtmlDeltaTest.test_html_delta_from_settings_change",
+      "HtmlDeltaTest.test_html_delta_from_source_change",
+      "HtmlDeltaTest.test_status_format_change",
+      "HtmlGitignoreTest.test_existing_gitignore_is_preserved_and_report_ignored",
+      "HtmlGitignoreTest.test_html_report_is_ignored_by_git"
+    ],
+    "per_key_evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/cpu/public_artifacts_r6_per_key.json",
+    "candidate_patch_sha256": null,
+    "projection_included_paths": [],
+    "test": {
+      "exec_exit_code": 0,
+      "rc": 1,
+      "seconds": 5.251,
+      "segment_completed": true
+    },
+    "cleanup": {
+      "detail": "",
+      "removed": true,
+      "steps": [
+        "rm:ok"
+      ]
+    }
+  },
+  "roundtrip": {
+    "ok": true,
+    "identity_equal": {
+      "task_id": true,
+      "workdir": true,
+      "public_bundle_digest": true,
+      "materialized_head": true,
+      "task_base_commit": true,
+      "policy": true,
+      "policy_digest": true,
+      "image_ids": true
+    },
+    "image_ids": [
+      "sha256:fc124163bfbbbf914f2106d640d396db75356226036c6f42eda47f71afc7c068",
+      "sha256:fc124163bfbbbf914f2106d640d396db75356226036c6f42eda47f71afc7c068"
+    ],
+    "baseline_entries_equal": true,
+    "patch_entries_equal": true,
+    "excluded_evidence_matches": true,
+    "excluded_path_differences": [],
+    "excluded_difference_allowed": true,
+    "transport_digest_equal": true,
+    "candidate_excluded_pathset_changed": [
+      true,
+      false
+    ],
+    "available": true,
+    "baseline": {
+      "entries_equal": true
+    },
+    "frozen_patch": {
+      "entries_equal": true
+    },
+    "ledger_patch_sha256_equals_render": true
+  },
+  "candidate": {
+    "form": "frozen_patch_v1+verified_git_transport",
+    "export_ok": true,
+    "empty": true,
+    "frozen_export_ok": true,
+    "frozen_patch_digest": "sha256:b7bb95e6c85aa14c8c14d4bb11481144fefd1d74fd615d9124dd432b57794bb5",
+    "baseline_manifest_digest": "sha256:0b21a29f86979819bb2ddc35d5f963eaeca0b82035136b2a0c0a3e2b614e9436",
+    "entry_count": 0,
+    "files": [],
+    "excluded_pathset_changed": true,
+    "classification": {
+      "verdict": "projectable",
+      "reasons": []
+    },
+    "unsafe": false,
+    "export_segments": {
+      "post_census": 1.0924363109998012,
+      "artifact_capture": 0.0006178639996505808
+    },
+    "post_omitted_cache": {
+      "dirs": 2,
+      "files": 46
+    }
+  },
+  "candidate_entries": [],
+  "cleanup": {
+    "actor": {
+      "container_rm": 0,
+      "container_left": "",
+      "network_failures": [],
+      "relay_failures": [],
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "cleanup_ok": true
+    },
+    "grade": {
+      "detail": "",
+      "removed": true,
+      "steps": [
+        "rm:ok"
+      ]
+    },
+    "residuals": {
+      "covea69-r6-public-20261003-01": {
+        "containers": [],
+        "networks": []
+      },
+      "covea69-r6-public-20261003-01-gcc": {
+        "containers": [],
+        "networks": []
+      },
+      "_clean": true
+    }
+  },
+  "original_evidence_root": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/ea69_public_e2e02"
+}

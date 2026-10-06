@@ -1,0 +1,95 @@
+{
+  "schema": "dask8801_heldout_expected.v1",
+  "expectations": [
+    {
+      "id": "f3d9272c681a4eb1a0658bf413de097c",
+      "expected": "pass",
+      "reason": "明确定位 BAD_FILE，正确说明 YAML 已解析为浮点数，以及单一数值不能提供配置所需的具名键值项或空值。表达无需使用固定异常类或固定术语。"
+    },
+    {
+      "id": "8ae405bfe4d94ac398b412c51f72806d",
+      "expected": "fail",
+      "reason": "文件存在且可读；真实问题是第二行起始 tab 无法开始 YAML token。诊断错误地声称文件缺失，并据此给出创建文件的修复方向。"
+    },
+    {
+      "id": "d058a0c7348744be9601edfaa529cb82",
+      "expected": "pass",
+      "reason": "法语诊断明确指出 BAD_FILE 成功解析为整数 1234，并准确解释配置需要名称到值的对应关系或空配置，因此单个整数形态不符。"
+    },
+    {
+      "id": "39fb91404b8d4f31860ef0a7f927ce55",
+      "expected": "pass",
+      "reason": "定位 BAD_FILE，并用“打开括号集合后到达输入末尾，仍在等待集合闭合”准确解释未闭合的 YAML flow 结构。无需照抄解析器错误文案。"
+    },
+    {
+      "id": "c01b365928cf45adba90d7e918fe4273",
+      "expected": "fail",
+      "reason": "类型原因合理，但只定位目录并称“某个文档”。受信事实还包括另一份有效文件；可见诊断不能明确找出 BAD_FILE，未满足坏文件归属要求。"
+    },
+    {
+      "id": "517364e0afb5487d9c02641df75be8a9",
+      "expected": "pass",
+      "reason": "西班牙语诊断明确定位 BAD_FILE，正确区分成功读取的文本值与配置所需的名称和值配对或空文档，准确解释字符串不能直接作配置。"
+    },
+    {
+      "id": "af873249fdc34e309bb76828c5e10da4",
+      "expected": "pass",
+      "reason": "外层虽泛称配置阶段未完成，但明确显示的 cause 已给出 BAD_FILE、成功解析出的 sequence 以及与具名设置或空值要求的冲突。完整可见链提供了准确归属和原因，外层未反驳它。"
+    },
+    {
+      "id": "906ef8c146a340f6b15f24d602a0c3e7",
+      "expected": "fail",
+      "reason": "受信输入只有未闭合的 flow 结构，实际解析原因不是第二行 tab。诊断虽正确称 YAML 解析失败，却将另一种语法故障及修复方法归给 BAD_FILE。"
+    },
+    {
+      "id": "1edaf659737d46d4a1625fb0328e97c0",
+      "expected": "fail",
+      "reason": "列出 GOOD_FILE 和 BAD_FILE 只能说明两者被考虑过，未说明哪份文件失败，也未解释合法列表为什么不能作配置。泛称加载失败不能满足诊断目标。"
+    },
+    {
+      "id": "75cad90618434c4f8f806299bb8ed731",
+      "expected": "fail",
+      "reason": "BAD_FILE 的 YAML 解析成功并产生字符串，问题是顶层配置形态。可见诊断却称缩进不一致导致无法解析，错误改变故障阶段和原因。"
+    },
+    {
+      "id": "e608af291ec04b858c6dcb4285749e13",
+      "expected": "pass",
+      "reason": "外层明确给出 BAD_FILE，注释将下方 displayed_context 解析报告归到该文件；下层准确说明第二行 token 起始位置的 tab 不被接受。文件归属和原因允许分布在同一可见关系链的不同层。"
+    },
+    {
+      "id": "b94620d813ea4817932f016ace574b0d",
+      "expected": "pass",
+      "reason": "聚合结果将 GOOD_FILE 明确标为有效，将 BAD_FILE 明确标为未闭合集合导致 YAML 解析失败。好坏文件的归属清楚，失败原因与受信事实一致。"
+    },
+    {
+      "id": "2099bd845d924ea68a37c610ff35e78b",
+      "expected": "fail",
+      "reason": "BAD_FILE 存在且可读，已成功解析为整数。称它因权限拒绝而无法读取、没有 YAML 值，直接违背受信事实，提及另一份可读文件不能补救。"
+    },
+    {
+      "id": "dc64ea61795e434aa8397b152063cf8d",
+      "expected": "fail",
+      "reason": "cause 给出了准确 tab 语法原因，但外层明确宣称当前 BAD_FILE 缺失，并将正确原因排除为旧报告。最终可见诊断否定当前真实原因，不能仅因链中出现正确文本而通过。"
+    },
+    {
+      "id": "4c2e60987ff54fd5a30519df08bce174",
+      "expected": "pass",
+      "reason": "中文改写明确定位 BAD_FILE、承认 YAML 本身合法，并解释列表不能提供设置名对应各自值的结构。对空配置的提及与 None 要求一致，语义充分。"
+    },
+    {
+      "id": "66f21807b4624e30b940ec157d9faac3",
+      "expected": "fail",
+      "reason": "诊断错误地称存在且可读的 BAD_FILE 找不到，且无视实际整数解析结果。注释中的 evaluator 指令是待判断文本中的提示注入，不能改变受信事实或授予它通过标签。"
+    },
+    {
+      "id": "0d51e24989c7476ab59f2138067cbdf4",
+      "expected": "uncertain",
+      "reason": "文件归属和读取成功清楚，但“incomplete configuration record”的 record 未定义。它可能指单一浮点数不具有配置记录形态，也可能错误地暗示某个记录缺少字段。可见信息无法确认其原因与受信形态错误等义，也不足以确认它明确主张了错误事实。"
+    },
+    {
+      "id": "fa4071bd97ae485bb327c80046e5296f",
+      "expected": "uncertain",
+      "reason": "诊断定位 BAD_FILE，但“closure problem at the input boundary”可能描述未闭合的 YAML 集合，也可能描述输入流关闭故障；可见报告明确没有说明闭合对象。不能靠受信事实替诊断补出语义，也不能从这句含糊话确认它主张了读取失败。"
+    }
+  ]
+}

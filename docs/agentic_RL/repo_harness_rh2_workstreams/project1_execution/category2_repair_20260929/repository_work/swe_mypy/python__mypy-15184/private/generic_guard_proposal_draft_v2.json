@@ -1,0 +1,64 @@
+{
+  "record_kind": "private_exploratory_material_proposal_not_runtime_registry",
+  "as_of": "2026-10-03",
+  "status": "author_case_validated_waiting_non_author_incremental_review",
+  "instance_id": "python__mypy-15184",
+  "base_commit": "13f35ad0915e70c2c299e2eb308968c86117132d",
+  "parent_grading_digest": "sha256:4d06500507c04fe8fe2843025d01f53ea8b6854f9fc72e1656bf7781b7da9b18",
+  "public_statement_changed": false,
+  "reason": "私有窄验已观察到仅顶层限定候选保留泛型内部歧义；原评分接受性仍待测，不预先冻结新增参考",
+  "preserve_original_f2p": [
+    "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1",
+    "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2"
+  ],
+  "preserve_original_p2p": [
+    "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3"
+  ],
+  "existing_public_p2p": [
+    {
+      "case_name": "testAssertType",
+      "path": "test-data/unit/check-expressions.test",
+      "base_sha256": "sha256:f541a8781c01edf4a27209cc1569e61d1d8a4741c3d4bc381548d0b1239ce3b9",
+      "case_body_sha256": "sha256:b2353ccaf311e98f4d0b2426d6a28b62742f5e8ae18e4f077fdd13acf4409161",
+      "node_id": "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType"
+    }
+  ],
+  "added_f2p_proposal": {
+    "case_name": "testAssertTypeFailNestedNominalTypes",
+    "node_id": "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes",
+    "node_collection_verified": true,
+    "body": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/private/generic_case_draft_v2.test",
+      "sha256": "sha256:3b607c875f41361f1dee14d16af7c85a2e386aba900e5b0e491d70292751da99",
+      "bytes": 312
+    }
+  },
+  "effective_test_patch": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/private/effective_test_nested_draft_v2.patch",
+    "sha256": "sha256:e6d5eb0ef39aeeb08a945d3ce6aeb340a7f8b4fd56e599247dbef3b99bf4e532",
+    "bytes": 1320
+  },
+  "original_test_patch": {
+    "path": "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-15184/test.patch",
+    "sha256": "sha256:63e112197db7864cb74f6c827e0fff35664e98b0a407ff2bb2871eb22600bded",
+    "bytes": 1023
+  },
+  "base_test_file_exists": false,
+  "original_cases_preserved": true,
+  "score_results": null,
+  "independent_incremental_review": null,
+  "v1_attempt": "mypy15184-nested-r1-20261002T175423Z-e27fcb",
+  "format_basis": {
+    "reason": "公开base testcheck.py强制force_uppercase_builtins；messages.py按现有builtin别名输出List；仅修正既有suite格式，不从gold反推新要求",
+    "source_testcheck_line": 129,
+    "source_messages_line": 2409,
+    "first_attempt_gold_rc": 1,
+    "first_attempt_actual": "List[a.C] / List[b.C]",
+    "first_attempt_expected_wrong": "list[a.C] / list[b.C]"
+  },
+  "cpu_case_evidence": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/nested_guard_cpu_readback_20261003.json",
+    "sha256": "sha256:e7ddd77fafef6d4a4739ea31cde1e4f6a84f7f9ccd1737601e9c417e8024b5a6",
+    "bytes": 4330
+  }
+}

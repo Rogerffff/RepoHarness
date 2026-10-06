@@ -1,0 +1,18 @@
+--- a/aiohttp/connector.py
++++ b/aiohttp/connector.py
+@@ -1217,6 +1217,15 @@
+                     # chance to do this:
+                     underlying_transport.close()
+                     raise
++                if isinstance(tls_transport, asyncio.Transport):
++                    fingerprint = self._get_fingerprint(req)
++                    if fingerprint:
++                        try:
++                            fingerprint.check(tls_transport)
++                        except ServerFingerprintMismatch:
++                            if not tls_transport.is_closing():
++                                tls_transport.close()
++                            raise
+         except cert_errors as exc:
+             raise ClientConnectorCertificateError(req.connection_key, exc) from exc
+         except ssl_errors as exc:

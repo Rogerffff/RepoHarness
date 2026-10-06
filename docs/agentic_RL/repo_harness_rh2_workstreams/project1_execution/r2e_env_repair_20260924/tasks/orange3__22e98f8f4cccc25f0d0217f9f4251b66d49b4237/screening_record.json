@@ -1,0 +1,243 @@
+{
+ "schema_id": "rh2.r2e_screening_record.v1",
+ "task_id": "r2e_gym_subset::orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237",
+ "instance_id": "orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237",
+ "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0",
+ "source_adapter_ref": "s2_r2e ingest_manifest_v0 (pin ea567fec1f6a…)",
+ "recipe_ref": {
+  "derived_image": "r2e_derive_v1",
+  "resources": "default"
+ },
+ "code_snapshot_ref": "runs/r2e_snapshot_20260923.sha256 (388 files) + r2e_env_tools.sha256",
+ "facts_ref": "tasks/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/facts.json",
+ "dev_probe_ref": "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/dev_probe.json",
+ "checks": {
+  "R01": {
+   "status": "pass",
+   "note": "派生镜像 21 项复核通过；覆盖表 / 隐藏测试树 / 入口脚本 / HEAD 与评分面一致",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/facts.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/facts.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R02": {
+   "status": "pass",
+   "note": "noop 0 来自 1 个 mismatched 键（无 missing、无零解析）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-o_a29ba791.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R03": {
+   "status": "pass",
+   "note": "公开 prompt 1575 字、题面 1472 字、含代码块=True；public_hints 的“pre-activated conda env named testbed”对 R2E 不成立（全局 E09，不计入本题）；工作区可见 run_tests.sh（yes，只暴露 r2e_tests 目录名与命令）与 install.sh（构建脚本，本仓库各题同一内容，无修复内容）。题面质量观察（不属环境资格）：标为 “Example Buggy Code” 的函数体按字面执行就得到期望值 [0, 1, 2]，逐行等于 gold 补丁——题面泄漏了修复（事后对照 gold 得知，写复现脚本之后）。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/prepared_r2e/prompts.jsonl",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl",
+    "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/agent_probe.log",
+    "runs/r2e_env_repair_20260924/p3/hygiene_check/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237.txt",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/validation_bundles_v0.jsonl"
+   ],
+   "by": "p3-subagent"
+  },
+  "R04": {
+   "status": "pass",
+   "note": "hygiene test_files = r2e_tests/{__init__.py, test_1.py} + run_tests.sh（diagnostics control_surface.EXPECTED_FILES=3，PROTECTED_FILES 同数）；gold 只触碰 Orange/widgets/data/owcreateclass.py，不在其中；解题不需要改 r2e_tests 以外的测试辅助文件。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-o_6a0d5a19.diagnostics.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/facts.json"
+   ],
+   "by": "p3-subagent"
+  },
+  "R05": {
+   "status": "pass",
+   "note": "python → /testbed/.venv/bin/python 3.7.9 /testbed/.venv /opt/py/cpython-3.7.9-linux-x86_64-gnu；pytest 7.4.4；pip：pip 24.0 from /testbed/.venv/lib/python3.7/site-packages/pip (python 3.7)，pip check rc=0（No broken requirements found.），86 个包；导入方式 path_entry（.pth 行 /testbed）：cwd=/testbed → /testbed/Orange/__init__.py 3.29.0.dev（rc=0），cwd=/tmp → /testbed/Orange/__init__.py 3.29.0.dev（rc=0）；gcc=/usr/bin/gcc、make=/usr/bin/make、xvfb-run=/usr/bin/xvfb-run、uv=MISSING（WHICH_* 值：远端运行时的解析器丢掉了这些键，本地已用主会话更新后的 run_dev_probe.py --reparse 重算 dev_probe.json，原始 agent_probe.log 不变）。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/agent_probe.log",
+    "runs/r2e_env_repair_20260924/p3/hygiene_check/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237.txt"
+   ],
+   "by": "p3-subagent"
+  },
+  "R06": {
+   "status": "not_applicable",
+   "note": "期望全是 PASSED，没有需要归因的 FAILED / ERROR 键。未跟踪资产：datasets → Orange/tests/datasets/（软链，目标目录是已跟踪的 24–25 个测试数据文件；由 install.sh 的 check_orange 在安装成功后 ln -s 建立），不含修复内容。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p3/hygiene_check/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237.txt",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-o_6a0d5a19.eval.log"
+   ],
+   "by": "p3-subagent"
+  },
+  "R07": {
+   "status": "pass",
+   "note": "派生镜像复核：agent uid 解释器 isolated/normal 均 ok、/rh2_private ls/cat denied、私有目录 root:root 700；探针（agent/54321，chown 后）：/testbed=ok、site-packages=ok、.venv/bin=ok、HOME=ok、/tmp=ok、/usr/local=denied；cgroup memory.max=4294967296、cpu.max=200000 100000、pids.max=512、/tmp 1048576 KB。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/facts.json",
+    "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/dev_probe.json"
+   ],
+   "by": "derived_image + run_dev_probe.py"
+  },
+  "R08": {
+   "status": "pass",
+   "note": "导入 /testbed/Orange/__init__.py；gold 23/23；gold 达到来源定义（reward 1），对账 agree。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-o_6a0d5a19.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R09": {
+   "status": "pass",
+   "note": "公开测试 Orange/tests/test__orange.py：收集 rc=0（1 test collected in 1.27s），限量运行 rc=0（1 passed in 1.15s）；公开复现脚本 rc=0、REPRO_OBSERVED=1：UNIQUE=[2, 3, 1] MAPPING=[2, 0, 1] EXPECTED_MAPPING=[0, 1, 2] / REPRO_REASON=mapping [2, 0, 1] != [0, 1, 2] (issue says actual [2, 0, 1])",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/agent_probe.log",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237.py"
+   ],
+   "by": "p3-subagent"
+  },
+  "R10": {
+   "status": "pass",
+   "note": "探针 NET_CONNECT_RC=1、NET_DNS_RC=2（无出网）；期望里没有因网络失败的键；gold 在无网络的 grader 里达到来源定义；解题不需要下载。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/dev_probe.json",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-o_6a0d5a19.eval.log"
+   ],
+   "by": "p3-subagent"
+  },
+  "R11": {
+   "status": "pass",
+   "note": "期望键不依赖外部服务；仓库自带的 Orange/tests/sql/* 需要 postgres，在工作区整体 skip（09-24 试跑 88 skipped），本题隐藏测试不含 sql 测试。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-o_6a0d5a19.eval.log"
+   ],
+   "by": "p3-subagent"
+  },
+  "R12": {
+   "status": "pass",
+   "note": "自动检查原文（pass）：峰值 2148 MB / 限额 4 GiB = 0.524; setup 136s test 3s。人工复核：探针 chown -R /testbed 192.60 s（4 包并行、与中央复跑争 CPU，不作校准）；峰值 52% 限额，低于 60% 阈值；同仓两题的内存归因见包 README §2.3。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-o_6a0d5a19.diagnostics.json",
+    "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/root_init.log"
+   ],
+   "by": "collate_facts.py + p3-subagent"
+  },
+  "R13": {
+   "status": "pass",
+   "note": "noop：noop 同条件 2 次 reward 与差异集合一致；gold：gold 同条件 2 次 reward 与差异集合一致。中央复跑（/work/envrepair/_rerun2/）由主会话验收时并入。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-reps-noop-_bdbfd895.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-o_a29ba791.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-reps-gold-_b84ef6c6.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-o_6a0d5a19.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R14": {
+   "status": "pass",
+   "note": "每次评分都是 fresh 容器（账本 cleanup removed=true）；探针前后 git status 行数 3 → 3；账本 omitted_cache_count 的 baseline 与 post 相同（baseline=post={dirs 4, files 22}），计的是镜像自带的 __pycache__ / .pytest_cache 目录，非 0 属正常（checks_r2e R14 09-24 修订后的判据）；并发只记录。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/dev_probe.json",
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl",
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl"
+   ],
+   "by": "p3-subagent"
+  },
+  "R15": {
+   "status": "pass",
+   "note": "2 行 agree（reward、差异集合、观测映射逐键相同）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R16": {
+   "status": "pass",
+   "note": "目标键 1：['TestHelpers.test_unique_in_order_mapping']；目标键 TestHelpers.test_unique_in_order_mapping 对应题面的 unique_in_order_mapping 映射错误。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-o_a29ba791.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-o_6a0d5a19.eval.log",
+    "runs/r2e_rf_20260923/remote/prepared_r2e/prompts.jsonl"
+   ],
+   "by": "collate_facts.py + p3-subagent"
+  },
+  "R17": {
+   "status": "pass",
+   "note": "派生镜像：git 已清理、fix_present=no、refs/remotes/reflog=0、私有目录 700；探针：HEAD 子提交词数=1（1=无子提交）、refs=0、reflog=0、stash=0、remotes=''、残留补丁文件=无；工作区 git status 只有 ?? datasets / ?? install.sh / ?? run_tests.sh 三项未跟踪，无已跟踪改动；install.sh 是按 Python 3.7 / 3.8 / 3.10 依次尝试的安装脚本（7 题同一内容），不含修复。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/facts.json",
+    "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p3/hygiene_check/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237.txt"
+   ],
+   "by": "p3-subagent"
+  },
+  "R18": {
+   "status": "not_applicable",
+   "note": "本题无配方、无材料修订提案；题面泄漏修复属题目质量，交后续筛查。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/facts.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/packages/p3/README.md"
+   ],
+   "by": "p3-subagent"
+  },
+  "R19": {
+   "status": "pass",
+   "note": "探针：/work/code/rh2/.venv/bin/python /work/code/rh2/scripts/r2e_env/run_dev_probe.py --repo-root /work/code --overlays /work/r2e_derived/overlays.jsonl --task-ids <P3 orange3 批> --out-dir /work/envrepair/p3/dev_probe --repro-dir /work/envrepair/p3/repros --activation none（systemd unit r2e-p3-probe-1832）；逐键原因来自 R-f gold/noop 日志；补充核对脚本在 runs/r2e_env_repair_20260924/p3/{hygiene_check,fixture_check,memprobe}/ 并随结果回传。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p3/logs/probe_orange3.log"
+   ],
+   "by": "p3-subagent"
+  },
+  "R20": {
+   "status": "pass",
+   "note": "本题没有逐题配方；解题侧条件与观察只适用于本题所在的 orange3 派生镜像，同仓不同版本不自动继承（Python / numpy / scipy 版本逐题不同，见 hygiene_check）。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p3/hygiene_check/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237.txt",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/packages/p3/README.md"
+   ],
+   "by": "p3-subagent"
+  }
+ },
+ "issues": [
+  {
+   "category": "material",
+   "scope": "task",
+   "summary": "题面 “Example Buggy Code” 的函数体就是 gold 修复（按字面执行输出期望值），属题面泄漏修复；不影响环境资格。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/prepared_r2e/prompts.jsonl",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/validation_bundles_v0.jsonl"
+   ],
+   "proposed_action": "交后续题意质量 / 反作弊筛查决定是否改写题面或降级；本轮不动。",
+   "status": "open"
+  }
+ ],
+ "solver_conditions": {
+  "cwd_required": "否（.pth 路径项 /testbed；cwd=/tmp 也导入 /testbed 下的包）",
+  "interpreter": "/testbed/.venv/bin/python（3.7.9；镜像 ENV 让 PATH 首项为 /testbed/.venv/bin，VIRTUAL_ENV=/testbed/.venv）",
+  "pip": "present（pip 24.0，pip check 通过；无网络，装不了新包）",
+  "network": "none（探针 NET_CONNECT_RC=1、DNS rc=2）",
+  "public_tests": "Orange/tests/test__orange.py 收集 rc=0 / 运行 rc=0",
+  "repro": "repros/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237.py rc=0，REPRO_OBSERVED=1",
+  "xvfb": "需要：widget 测试与涉及 Qt 的复现要带入口同样的前缀 QT_QPA_PLATFORM=minimal … xvfb-run --auto-servernum（xvfb-run 在 /usr/bin）；纯库调用不需要（本题复现是纯函数调用，也能在前缀下运行）",
+  "notes": "工作区有来源镜像自带的 3 个未跟踪项：datasets（指向 Orange/tests/datasets/ 的软链，install.sh 的 check_orange 建的）、install.sh、run_tests.sh，都与修复无关；Orange/tests/sql/* 需要 postgres，会整体 skip；探针实测 chown -R /testbed 在 rollout 初始化里要 1.5–4 分钟（见 R12）。"
+ },
+ "classification": "env_ok",
+ "revision_refs": [],
+ "disposition": {
+  "state": "environment_qualified",
+  "scope": "环境资格（不含题目质量 / 训练准入）",
+  "reason": "R01/R02/R08/R13/R15 pass、探针十项最小条件满足、无未归因 issue。题面泄漏修复记为题目质量 issue（已归因、不属环境）。",
+  "evidence_refs": [
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/facts.json",
+   "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/dev_probe.json"
+  ],
+  "reviewer": null
+ },
+ "costs": {
+  "probe_seconds": 214.29,
+  "chown_seconds": 192.6,
+  "rerun_attempts": 0,
+  "rerun_seconds": 0
+ }
+}

@@ -1,0 +1,71 @@
+{
+  "status": "draft_not_registered",
+  "replaces_revision_ids": [
+    "r2e-mr-024",
+    "r2e-mr-025"
+  ],
+  "source_revision_document": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v11.json",
+  "source_revision_document_sha256": "sha256:03acd34d7421bcf9c379612d0b8a5ce3d4292fdee0ee67327661eae5169d5c33",
+  "entries": [
+    {
+      "revision_id": null,
+      "instance_id": "pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07",
+      "kind": "hidden_test_text_replace",
+      "target": "test_1.py",
+      "edits": [
+        {
+          "old": "        im.putpalette(list(range(256)) * 4, \"RGBA\")\n        im_remapped = im.remap_palette(list(range(256)))\n        assert_image_equal(im, im_remapped)\n        assert im.palette.palette == im_remapped.palette.palette\n",
+          "new": "        im.putpalette(list(range(256)) * 4, \"RGBA\")\n        # Snapshot the source palette and its RGBA rendering before the call\n        palette_before = bytes(im.palette.palette)\n        rgba_before = im.convert(\"RGBA\").tobytes()\n        im_remapped = im.remap_palette(list(range(256)))\n        assert_image_equal(im, im_remapped)\n        assert im.palette.palette == im_remapped.palette.palette\n        # The result keeps the original RGBA palette ...\n        assert im_remapped.palette.palette == palette_before\n        # ... and the palette used for rendering keeps the alpha values\n        assert im_remapped.convert(\"RGBA\").tobytes() == rgba_before\n"
+        },
+        {
+          "old": "    def test_remap_palette_transparency(self):\n",
+          "new": "    def test_remap_palette_rgba_reorder(self):\n        # Test a non-identity transform with an RGBA palette: entries move as\n        # whole RGBA entries and the image renders with the same colours\n        im = Image.new(\"P\", (2, 1))\n        im.putpixel((1, 0), 1)\n        im.putpalette((10, 20, 30, 40, 50, 60, 70, 80), \"RGBA\")\n        im_remapped = im.remap_palette([1, 0])\n        assert list(im_remapped.getdata()) == [1, 0]\n        assert bytes(im_remapped.palette.palette[:8]) == bytes(\n            (50, 60, 70, 80, 10, 20, 30, 40)\n        )\n        assert list(im_remapped.convert(\"RGBA\").getdata()) == [\n            (10, 20, 30, 40),\n            (50, 60, 70, 80),\n        ]\n\n    def test_remap_palette_rgba_gif_save(self):\n        # Saving a P image with an RGBA palette as GIF optimizes the palette\n        # through remap_palette with an RGB source_palette; colours must survive\n        im = Image.new(\"P\", (4, 1))\n        for x, v in enumerate((10, 20, 30, 40)):\n            im.putpixel((x, 0), v)\n        im.putpalette(\n            [c for i in range(256) for c in (i, 255 - i, i // 2, 128)], \"RGBA\"\n        )\n        out = io.BytesIO()\n        im.save(out, \"GIF\")\n        out.seek(0)\n        with Image.open(out) as reloaded:\n            assert list(reloaded.convert(\"RGB\").getdata()) == [\n                (10, 245, 5),\n                (20, 235, 10),\n                (30, 225, 15),\n                (40, 215, 20),\n            ]\n\n    def test_remap_palette_transparency(self):\n"
+        },
+        {
+          "old": "    def test__new(self):\n",
+          "new": "    def test_remap_palette_rgba_transparency(self):\n        # An RGBA palette together with a transparency index: remapping keeps\n        # the RGBA entries and moves the transparency index with its entry\n        im = Image.new(\"P\", (2, 1))\n        im.putpixel((1, 0), 1)\n        im.putpalette((10, 20, 30, 40, 50, 60, 70, 80), \"RGBA\")\n        im.info[\"transparency\"] = 0\n\n        im_same = im.remap_palette([0, 1])\n        assert list(im_same.getdata()) == [0, 1]\n        assert bytes(im_same.palette.palette[:8]) == bytes(\n            (10, 20, 30, 40, 50, 60, 70, 80)\n        )\n        assert im_same.info[\"transparency\"] == 0\n\n        im_remapped = im.remap_palette([1, 0])\n        assert list(im_remapped.getdata()) == [1, 0]\n        assert bytes(im_remapped.palette.palette[:8]) == bytes(\n            (50, 60, 70, 80, 10, 20, 30, 40)\n        )\n        assert im_remapped.info[\"transparency\"] == 1\n        # The transparency index renders fully transparent, the other entry\n        # keeps its own alpha\n        assert list(im_remapped.convert(\"RGBA\").getdata()) == [\n            (10, 20, 30, 0),\n            (50, 60, 70, 80),\n        ]\n\n        # The same with a full 256-entry RGBA palette\n        im = Image.new(\"P\", (256, 1))\n        for x in range(256):\n            im.putpixel((x, 0), x)\n        im.putpalette(list(range(256)) * 4, \"RGBA\")\n        im.info[\"transparency\"] = 0\n        palette_before = bytes(im.palette.palette)\n\n        im_same = im.remap_palette(list(range(256)))\n        assert bytes(im_same.palette.palette[:1024]) == palette_before[:1024]\n        assert im_same.info[\"transparency\"] == 0\n\n        im_remapped = im.remap_palette([1, 0] + list(range(2, 256)))\n        assert bytes(im_remapped.palette.palette[:8]) == (\n            palette_before[4:8] + palette_before[:4]\n        )\n        assert im_remapped.info[\"transparency\"] == 1\n\n    def test__new(self):\n"
+        }
+      ],
+      "sha256_before": "sha256:17ececcd4da49d30953b7dacab62735b070e05859b954935a460d11722ef7955",
+      "sha256_after": "sha256:78631c73aa9599b3b07c157fdc08f94df7e4698685fee9e462d17db321334612",
+      "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/pillow-c2-20261003/r2e_tests/test_1.py",
+      "expected_change": null,
+      "decision_ref": "remaining_workflow_20261002.md §2、§4；统一处理标准 R-c / D4 既有授权",
+      "reason": "合并现有 r2e-mr-024 与云端 R-c v2：保留旧断言，补 RGBA 调色板与整数透明索引的交集行为；gold/A1u 为已证负对照，原正式 C1 为主正对照，U11 为第二正对照。",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category3_diagnosis_20260929/tasks/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/result.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category3_diagnosis_20260929/tasks/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/review.md"
+      ]
+    },
+    {
+      "revision_id": null,
+      "instance_id": "pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07",
+      "kind": "expected_file_replace",
+      "target": "expected_output_json",
+      "edits": null,
+      "sha256_before": "sha256:0421915b48d86f7e1335f001214ce2ba54c195176a2028d0ce3cb7d0e205581d",
+      "sha256_after": "sha256:af126a3c513f11efd3f78a89ff5f601a1c9bf401d078d43d569b2dfcc6650304",
+      "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/pillow-c2-20261003/expected_output.json",
+      "expected_change": {
+        "changed": {},
+        "added": {
+          "\u001b[1mTestImage.test_remap_palette_rgba_gif_save\u001b[0m": "PASSED",
+          "\u001b[1mTestImage.test_remap_palette_rgba_reorder\u001b[0m": "PASSED",
+          "\u001b[1mTestImage.test_remap_palette_rgba_transparency\u001b[0m": "PASSED"
+        },
+        "removed": []
+      },
+      "decision_ref": "remaining_workflow_20261002.md §2、§4；统一处理标准 R-c / D4 既有授权",
+      "reason": "从来源 71 键整体替换为最终 74 键；包含旧的两个新增键与 RGBA/整数透明索引新键，其余状态不变。",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category3_diagnosis_20260929/tasks/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/result.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category3_diagnosis_20260929/tasks/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/review.md"
+      ]
+    }
+  ],
+  "payload_sources": {
+    "test_1.py": "rh2/experiments/category3_cloud_20260929/pillow3a61/hidden_test_1_revised_v2.py",
+    "expected_output.json": "rh2/experiments/category3_cloud_20260929/pillow3a61/expected_output_revised_v1.json"
+  },
+  "publication_note": "新 ID 由共用发布者分配；替换旧两条，不追加重复目标。revised_file 为拟发布位置，目前未写入。"
+}

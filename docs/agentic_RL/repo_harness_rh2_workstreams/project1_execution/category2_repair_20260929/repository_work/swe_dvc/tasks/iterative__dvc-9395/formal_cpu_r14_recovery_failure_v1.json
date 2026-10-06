@@ -1,0 +1,156 @@
+{
+  "format": "swe_dvc_formal_cpu_infra_failure.v1",
+  "at_utc": "2026-10-03T02:39:38.519007+00:00",
+  "instance_id": "iterative__dvc-9395",
+  "job_id": "dvc9395-r14-recovery-noop-20261003-021424",
+  "series": "dvc9395_r14_recovery_v1",
+  "release_id": "cat2-cpu-r2e089092-swe34-dvc-pyd-20261003-v1",
+  "release_manifest_sha256": "sha256:51b833975be2c3354be45b731552235a33070315f0039c8e6f54987de95f6ca8",
+  "report": {
+    "execution_failure_evidence": [],
+    "execution_failure_stage": null,
+    "expected_match": null,
+    "expected_total": null,
+    "f2p_pass": null,
+    "f2p_total": null,
+    "failure_category": "infra_failure",
+    "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+dvc9395-behavior-v2-draft",
+    "grading_semantics": "swe_f2p_p2p",
+    "infra_failure_detail": "grading_control_surface_protect_timeout_after_300s",
+    "outcome": "failed_to_grade",
+    "p2p_fail": null,
+    "p2p_total": null,
+    "report_id": "rpt_grading_a645ee12",
+    "reward": null
+  },
+  "phases": {
+    "delta_apply": 0.173442,
+    "grader_baseline_rebuild": 0.415772,
+    "grader_cleanup": 1.598694,
+    "grader_start_and_verify": 46.729859,
+    "grader_trusted_setup": 301.287596,
+    "parser_and_report": 0.397284,
+    "test": null
+  },
+  "trusted_setup": {
+    "RH2_SETUP_ABSENT_TEST_FILES": "0",
+    "RH2_SETUP_APPLY_RC": "0",
+    "RH2_SETUP_EXPECTED_TEST_FILES": "2",
+    "RH2_SETUP_IRREGULAR_TEST_FILES": "",
+    "RH2_SETUP_OK": "1",
+    "RH2_SETUP_RESTORED": "2",
+    "RH2_SETUP_TEST_FILES": "2"
+  },
+  "control_surface": null,
+  "candidate_prerequisite": null,
+  "installation": null,
+  "test": null,
+  "actual_oom_facts": {
+    "container_oom_killed": false,
+    "oom_kill_events": 0,
+    "pids_events_max": 0
+  },
+  "actual_peak_memory_mb": 665.844,
+  "cleanup": {
+    "detail": "",
+    "removed": true,
+    "steps": [
+      "rm:ok"
+    ]
+  },
+  "external_cleanup_readback": {
+    "job_id": "dvc9395-r14-recovery-noop-20261003-021424",
+    "as_of_utc": "2026-10-03T02:31:12.061399+00:00",
+    "read_only": true,
+    "containers": {
+      "command": [
+        "docker",
+        "ps",
+        "-a",
+        "-q",
+        "--filter",
+        "label=rh2.run_id=dvc9395-r14-recovery-noop-20261003-021424"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "ids": []
+    },
+    "networks": {
+      "command": [
+        "docker",
+        "network",
+        "ls",
+        "-q",
+        "--filter",
+        "label=rh2.run_id=dvc9395-r14-recovery-noop-20261003-021424"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "",
+      "ids": []
+    }
+  },
+  "raw_archive": {
+    "path": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r14_recovery_noop_021424_v1.tar.gz",
+    "sha256": "sha256:fe3fda0dd174f56bfee92eca9a97e47ae6949231460369aa16526d1ea7984975"
+  },
+  "raw_receipt": {
+    "path": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r14_recovery_noop_021424_v1.receipt.json",
+    "sha256": "sha256:995188b76e32fed02c873a110e329b4fb4650d2aec3dd9ab6d44b989db282711"
+  },
+  "raw_manifest": {
+    "path": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r14_recovery_noop_021424_v1/manifest.json",
+    "sha256": "sha256:35fbacbe04bfbb25941145228113c079da8d0a4174f1ed219ee9928e845cee94"
+  },
+  "old_failure_record": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/formal_cpu_r14_failure_v1.json",
+    "sha256": "sha256:123f64e25adf8906494fa9a59c123df6f373009ac3cce611ba43c4ba3dd0fc26"
+  },
+  "support_receipt": {
+    "path": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/support/cpu_a_control_surface_protect_v1/dvc9395_resource_support_receipt_v1.json",
+    "sha256": "sha256:8f009c783e281db37865a6d112fb9f30ea7bd75683b08ec471b291be3374d1a0"
+  },
+  "new_prepare_completion": {
+    "path": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r14_recovery_noop_021424_v1/formal/jobs/dvc9395-r14-recovery-prepare-20261003-021424-a4/completion.json",
+    "sha256": "sha256:21443512d3791c421c758f1550f6b414b764ad8abfbc306568730e8de597fc11"
+  },
+  "new_prepare_summary": {
+    "path": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r14_recovery_noop_021424_v1/formal/prepared/replay_summary.json",
+    "sha256": "sha256:4cb44fd85ba92b940b263dca5cfe93b59ecab56c0f99f05cdfd82ed743281767"
+  },
+  "new_run_input": {
+    "path": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r14_recovery_noop_021424_v1/formal/run_input.json",
+    "sha256": "sha256:1ed8cd6b84584278e89f6dfc55e61233e55b14ca62941d9a1cbf9479d624fdcd"
+  },
+  "equivalence_checks": {
+    "same_old_and_new_keys": [
+      "grading_materials_identity",
+      "scripts_digest",
+      "image_id_actual",
+      "policy",
+      "budgets"
+    ],
+    "eval_log_sha256": "sha256:fc4f57fb953419644b1396b2cf4fc2cc9aa9dc8b642394240a9e92647bd44aca",
+    "same_public_task_view_and_prompt_bytes": true,
+    "same_test_patch_and_candidates": true,
+    "different_jobs_outputs_and_prepares": true
+  },
+  "transport_exit_code_not_grade": 0,
+  "completed_valid_controls": [],
+  "remaining_controls_not_dispatched": [
+    "gold",
+    "c3_frozenfix",
+    "c3_missing_only",
+    "up351_port",
+    "w_swallow3"
+  ],
+  "no_retry_without_change": true,
+  "observed_cause": "新独立prepare成功后，正式noop再次在控制面保护默认300秒超时；trusted restore/apply自证成功，候选UID预检／安装／测试未开始。保护子步stdout未交付，具体chown位置或主机根因仍未证明。",
+  "inferences_and_limits": [
+    "支持中的隔离保护242.417秒成功不等于正式恢复；正式两次都为infra／reward null，不计noop0。",
+    "两次eval字节相同仅表明两次日志都截止同一setup自证点，不是同一次执行或已测出相同子步。",
+    "无OOM/pid耗尽的留存事实，不能据此证明CPU/磁盘争用；新运行不自动复用旧FrozenPatch。",
+    "本系列已停止，后续五控制未派发，需具体版本化修正或新的阶段证据；其余三题有效绑定不变。"
+  ]
+}

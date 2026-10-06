@@ -1,0 +1,22 @@
+{
+  "name": "coveragepy_ea69_public_preserve_delivery_v3",
+  "task": "coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5",
+  "purpose": "新版公开statement与不变brief真实首请求，公开兼容命令单进程运行；不解题、不写项目源码/测试；导出空候选走正式往返评分。",
+  "steps": [
+    {
+      "kind": "bash_r2e_preflight"
+    },
+    {
+      "kind": "bash",
+      "id": "public_html_compat",
+      "command": "cd /testbed && python - <<'PYCODE'\n# Public-only compatibility command for the original test helper.\n# Preserve its write tracking; forward arguments accepted by builtins.open.\nimport os\nimport tempfile\nimport pytest\nfrom tests.test_html import FileWriteTracker\n\n\ndef compatible_open(self, filename, mode=\"r\", *args, **kwargs):\n    if mode.startswith(\"w\"):\n        self.written.add(filename.replace(\"\\\\\", \"/\"))\n    return open(filename, mode, *args, **kwargs)\n\n\nFileWriteTracker.open = compatible_open\nwith tempfile.TemporaryDirectory() as work:\n    path = os.path.join(work, \"example.txt\")\n    written = set()\n    tracker = FileWriteTracker(written)\n    with tracker.open(path, \"w\", encoding=\"utf-8\") as stream:\n        stream.write(\"example\\n\")\n    assert written == {path.replace(\"\\\\\", \"/\")}\n    with tracker.open(path, \"r\", encoding=\"utf-8\") as stream:\n        assert stream.read() == \"example\\n\"\nprint(\"RH2_PUBLIC_SPY_ENCODING_OK=1\", flush=True)\nraise SystemExit(pytest.main([\n    \"-o\", \"addopts=\", \"-p\", \"no:cacheprovider\", \"--color=no\", \"-rfE\",\n    \"tests/test_html.py\", \"-q\",\n]))\nPYCODE",
+      "timeout_ms": 600000
+    }
+  ],
+  "solve": {
+    "wall_seconds": 1200,
+    "max_context_len": 32768,
+    "max_new_tokens": 4096
+  },
+  "scope": "statement-only公开交付变化窄验，不重复历史矩阵和公开MCVE。"
+}

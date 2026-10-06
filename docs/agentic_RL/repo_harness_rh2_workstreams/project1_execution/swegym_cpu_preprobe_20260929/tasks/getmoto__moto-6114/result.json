@@ -1,0 +1,1503 @@
+{
+  "schema": "swegym_cpu_final_result.v1",
+  "date": "2026-09-29",
+  "instance_id": "getmoto__moto-6114",
+  "run": "mixed-v1",
+  "state": "cpu_complete_quality_gap_confirmed_independently_reviewed",
+  "review_kind": "owner full original-evidence readback; cross-package final review complete",
+  "actor": {
+    "actor_original": {
+      "result": "ran",
+      "checks": {
+        "interpreter_in_tool_result": false,
+        "host_log_present": true,
+        "no_harness_dir_in_container": true,
+        "no_launcher_or_done_marker": true,
+        "message_start_matches_stub_requests": true,
+        "exit_code_zero": true,
+        "result_event_present": true,
+        "log_complete": true,
+        "bashenv_denied_for_agent": false,
+        "all_commands_ran": true,
+        "all_match_expect": true
+      },
+      "commands_result": [
+        {
+          "id": "identity",
+          "rc": 0,
+          "status": "rc0",
+          "expect": "zero",
+          "matches_expect": true,
+          "output_bytes": 177,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "实际actor身份、激活、本地源码与SDK版本"
+        },
+        {
+          "id": "target_identity",
+          "rc": 1,
+          "status": "nonzero",
+          "expect": "nonzero",
+          "matches_expect": true,
+          "output_bytes": 766,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "两个实际集群，查询B实际ARN，比较Identifier/ARN；不比较创建与查询时会变化的完整对象"
+        },
+        {
+          "id": "public_existing",
+          "rc": 0,
+          "status": "rc0",
+          "expect": "zero",
+          "matches_expect": true,
+          "output_bytes": 2879,
+          "output_truncated_to": 200000,
+          "pytest": {
+            "passed": 4,
+            "deselected": 31,
+            "warning": 21
+          },
+          "purpose": "公开旧名称/列表/不存在名称路径"
+        }
+      ],
+      "image_facts": {
+        "image": "sha256:fefec492f58ed0f8385a7e72234d296bd84d295031ce7e019f63fc33973ec249",
+        "inspect": "sha256:fefec492f58ed0f8385a7e72234d296bd84d295031ce7e019f63fc33973ec249 [\"xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6114@sha256:cb35f7e131f8e46c8a6865e8fb618c09032ce5ee27f1122f79010a7cfae8ef9a\"]",
+        "inspect_rc": 0,
+        "initial_worktree": "HEAD=f01709f9ba656e7cf4399bcd1a0a07fd134b0aec\nPORCELAIN_BEGIN\nPORCELAIN_RC=0\n",
+        "initial_worktree_rc": 0
+      },
+      "base_commit": "f01709f9ba656e7cf4399bcd1a0a07fd134b0aec",
+      "cc_version_observed": "2.1.205 (Claude Code)",
+      "effective_profile": {
+        "cpus": 2.0,
+        "memory_bytes": 4294967296,
+        "tmp_tmpfs_bytes": 1073741824,
+        "home_tmpfs_bytes": 268435456,
+        "writable_layer_quota_bytes": 8589934592,
+        "pids_limit": 512
+      },
+      "post_run_facts": {
+        "RH2_HARNESS_DIR": "ABSENT",
+        "RH2_RUN_SH": "ABSENT",
+        "RH2_RUN_DONE": "ABSENT",
+        "RH2_GIT_STATUS_LINES": "0",
+        "RH2_AGENT_PROCS": "0",
+        "RH2_NEWER_FILES": "172"
+      },
+      "cleanup": {
+        "container_rm": 0,
+        "network_failures": [],
+        "relay_failures": [],
+        "stub_rc": 0,
+        "labeled_containers_left": [],
+        "labeled_networks_left": [],
+        "residual_after_force": []
+      }
+    },
+    "actor_revised": {
+      "result": "ran",
+      "checks": {
+        "interpreter_in_tool_result": false,
+        "host_log_present": true,
+        "no_harness_dir_in_container": true,
+        "no_launcher_or_done_marker": true,
+        "message_start_matches_stub_requests": true,
+        "exit_code_zero": true,
+        "result_event_present": true,
+        "log_complete": true,
+        "bashenv_denied_for_agent": false,
+        "all_commands_ran": true,
+        "all_match_expect": true
+      },
+      "commands_result": [
+        {
+          "id": "identity",
+          "rc": 0,
+          "status": "rc0",
+          "expect": "zero",
+          "matches_expect": true,
+          "output_bytes": 177,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "实际actor身份、激活、本地源码与SDK版本"
+        },
+        {
+          "id": "target_identity",
+          "rc": 1,
+          "status": "nonzero",
+          "expect": "nonzero",
+          "matches_expect": true,
+          "output_bytes": 766,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "两个实际集群，查询B实际ARN，比较Identifier/ARN；不比较创建与查询时会变化的完整对象"
+        },
+        {
+          "id": "public_existing",
+          "rc": 0,
+          "status": "rc0",
+          "expect": "zero",
+          "matches_expect": true,
+          "output_bytes": 2879,
+          "output_truncated_to": 200000,
+          "pytest": {
+            "passed": 4,
+            "deselected": 31,
+            "warning": 21
+          },
+          "purpose": "公开旧名称/列表/不存在名称路径"
+        }
+      ],
+      "image_facts": {
+        "image": "sha256:aaf97ca9107336dc68a964386be07361bf363f3a4684998d3727d704c20cd5a0",
+        "inspect": "sha256:aaf97ca9107336dc68a964386be07361bf363f3a4684998d3727d704c20cd5a0 []",
+        "inspect_rc": 0,
+        "initial_worktree": "HEAD=f01709f9ba656e7cf4399bcd1a0a07fd134b0aec\nPORCELAIN_BEGIN\nPORCELAIN_RC=0\n",
+        "initial_worktree_rc": 0
+      },
+      "base_commit": "f01709f9ba656e7cf4399bcd1a0a07fd134b0aec",
+      "cc_version_observed": "2.1.205 (Claude Code)",
+      "effective_profile": {
+        "cpus": 2.0,
+        "memory_bytes": 4294967296,
+        "tmp_tmpfs_bytes": 1073741824,
+        "home_tmpfs_bytes": 268435456,
+        "writable_layer_quota_bytes": 8589934592,
+        "pids_limit": 512
+      },
+      "post_run_facts": {
+        "RH2_HARNESS_DIR": "ABSENT",
+        "RH2_RUN_SH": "ABSENT",
+        "RH2_RUN_DONE": "ABSENT",
+        "RH2_GIT_STATUS_LINES": "0",
+        "RH2_AGENT_PROCS": "0",
+        "RH2_NEWER_FILES": "172"
+      },
+      "cleanup": {
+        "container_rm": 0,
+        "network_failures": [],
+        "relay_failures": [],
+        "stub_rc": 0,
+        "labeled_containers_left": [],
+        "labeled_networks_left": [],
+        "residual_after_force": []
+      }
+    }
+  },
+  "private": {
+    "scope": "private root behavior only",
+    "spec_sha256": "40cdfd95cc006879bcc408d629fdd4e8d1983c1bde9595fca2503c7dac36a408",
+    "started_at": 1790624613.938195,
+    "variants": {
+      "base": {
+        "container": "rh2-cpu29-private-f7312c582393",
+        "started_at": 1790624613.9887962,
+        "preparation": [
+          {
+            "step": "git config --global --add safe.directory /testbed",
+            "rc": 0
+          },
+          {
+            "step": "TEST_SERVER_MODE=false MOTO_ACCOUNT_ID=123456789012 AWS_EC2_METADATA_DISABLED=true AWS_ACCESS_KEY_ID=testing AWS_SECRET_ACCESS_KEY=testing AWS_SESSION_TOKEN=testing python - <<'PY_CHECK'\nimport os,sys,subprocess,boto3,botocore,moto\nprint('PY_CHECK',sys.executable);print('IDENTITY',os.getuid(),os.getcwd(),os.environ.get('HOME'));print('VERSIONS',boto3.__version__,botocore.__version__,moto.__file__);assert moto.__file__.startswith('/testbed/')\nprint(subprocess.check_output(['git','rev-parse','HEAD'],text=True));print(subprocess.check_output(['git','status','--porcelain'],text=True))\nPY_CHECK",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'moto/rds/models.py'\"'\"', '\"'\"'a614a137f21dce20445cad98611e578b435d4f09a592ced584d887d9edb9250c'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          }
+        ],
+        "commands": [
+          {
+            "id": "target_identity",
+            "rc": 1,
+            "seconds": 2.0463763429997925,
+            "stdout_bytes": 87,
+            "stderr_bytes": 679
+          }
+        ],
+        "status": "executed_interpret_separately",
+        "cleanup": {
+          "rm_rc": 0,
+          "query_rc": 0,
+          "remaining": [],
+          "stderr": ""
+        },
+        "finished_at": 1790624618.771794
+      },
+      "gold": {
+        "container": "rh2-cpu29-private-08f48577b72b",
+        "started_at": 1790624618.7728965,
+        "preparation": [
+          {
+            "step": "git config --global --add safe.directory /testbed",
+            "rc": 0
+          },
+          {
+            "step": "TEST_SERVER_MODE=false MOTO_ACCOUNT_ID=123456789012 AWS_EC2_METADATA_DISABLED=true AWS_ACCESS_KEY_ID=testing AWS_SECRET_ACCESS_KEY=testing AWS_SESSION_TOKEN=testing python - <<'PY_CHECK'\nimport os,sys,subprocess,boto3,botocore,moto\nprint('PY_CHECK',sys.executable);print('IDENTITY',os.getuid(),os.getcwd(),os.environ.get('HOME'));print('VERSIONS',boto3.__version__,botocore.__version__,moto.__file__);assert moto.__file__.startswith('/testbed/')\nprint(subprocess.check_output(['git','rev-parse','HEAD'],text=True));print(subprocess.check_output(['git','status','--porcelain'],text=True))\nPY_CHECK",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'moto/rds/models.py'\"'\"', '\"'\"'a614a137f21dce20445cad98611e578b435d4f09a592ced584d887d9edb9250c'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          },
+          {
+            "step": "git apply --check /in/gold.patch",
+            "rc": 0
+          },
+          {
+            "step": "git apply /in/gold.patch",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'moto/rds/models.py'\"'\"', '\"'\"'00e61d1980f71fb4b0f37fa8e517a1fd3778c8ac5d687e4847d27217c5bc1c5b'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          }
+        ],
+        "commands": [
+          {
+            "id": "target_identity",
+            "rc": 0,
+            "seconds": 2.2346402359999047,
+            "stdout_bytes": 199,
+            "stderr_bytes": 0
+          }
+        ],
+        "status": "executed_interpret_separately",
+        "cleanup": {
+          "rm_rc": 0,
+          "query_rc": 0,
+          "remaining": [],
+          "stderr": ""
+        },
+        "finished_at": 1790624624.4032578
+      },
+      "degenerate": {
+        "container": "rh2-cpu29-private-fa7499da1fbb",
+        "started_at": 1790624624.4047713,
+        "preparation": [
+          {
+            "step": "git config --global --add safe.directory /testbed",
+            "rc": 0
+          },
+          {
+            "step": "TEST_SERVER_MODE=false MOTO_ACCOUNT_ID=123456789012 AWS_EC2_METADATA_DISABLED=true AWS_ACCESS_KEY_ID=testing AWS_SECRET_ACCESS_KEY=testing AWS_SESSION_TOKEN=testing python - <<'PY_CHECK'\nimport os,sys,subprocess,boto3,botocore,moto\nprint('PY_CHECK',sys.executable);print('IDENTITY',os.getuid(),os.getcwd(),os.environ.get('HOME'));print('VERSIONS',boto3.__version__,botocore.__version__,moto.__file__);assert moto.__file__.startswith('/testbed/')\nprint(subprocess.check_output(['git','rev-parse','HEAD'],text=True));print(subprocess.check_output(['git','status','--porcelain'],text=True))\nPY_CHECK",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'moto/rds/models.py'\"'\"', '\"'\"'a614a137f21dce20445cad98611e578b435d4f09a592ced584d887d9edb9250c'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          },
+          {
+            "step": "git apply --check /in/degenerate_first_object.patch",
+            "rc": 0
+          },
+          {
+            "step": "git apply /in/degenerate_first_object.patch",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'moto/rds/models.py'\"'\"', '\"'\"'a5e0c305e9981b61209a2fc3bc4e2c40944fade972a4ff28b5ed0fc54b81815e'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          }
+        ],
+        "commands": [
+          {
+            "id": "target_identity",
+            "rc": 1,
+            "seconds": 2.232000653999421,
+            "stdout_bytes": 199,
+            "stderr_bytes": 89
+          }
+        ],
+        "status": "executed_interpret_separately",
+        "cleanup": {
+          "rm_rc": 0,
+          "query_rc": 0,
+          "remaining": [],
+          "stderr": ""
+        },
+        "finished_at": 1790624630.0853732
+      }
+    },
+    "image_id_actual": "sha256:aaf97ca9107336dc68a964386be07361bf363f3a4684998d3727d704c20cd5a0",
+    "finished_at": 1790624630.0864806
+  },
+  "private_source_checks": [
+    {
+      "variant": "base",
+      "all_prepare_rc_zero": true,
+      "source_sha_verified_in_raw": true,
+      "cleaned": true
+    },
+    {
+      "variant": "gold",
+      "all_prepare_rc_zero": true,
+      "source_sha_verified_in_raw": true,
+      "cleaned": true
+    },
+    {
+      "variant": "degenerate",
+      "all_prepare_rc_zero": true,
+      "source_sha_verified_in_raw": true,
+      "cleaned": true
+    }
+  ],
+  "formal": {
+    "noop": {
+      "ledger": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_noop/ledger.jsonl",
+      "reward": 0.0,
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 0,
+        "f2p_total": 1,
+        "failure_category": "tests_failed",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": 0,
+        "p2p_total": 34,
+        "report_id": "rpt_grading_bf67a611",
+        "reward": 0.0
+      },
+      "reference_status": {
+        "fail_to_pass": {
+          "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_after_creation": "FAILED"
+        },
+        "pass_to_pass": {
+          "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_without_stopping": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_modify_db_cluster_needs_long_master_user_password": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_modify_db_cluster_new_cluster_identifier": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot_fails_for_unknown_snapshot": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_after_stopping": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot_fails_for_unknown_cluster": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_long_master_user_password": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_that_is_protected": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot_copy_tags": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster__verify_default_properties": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_initial": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_enable_http_endpoint_valid": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_do_snapshot": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_add_tags_to_cluster": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster_already_stopped": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_snapshots": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_add_tags_to_cluster_snapshot": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_unknown_cluster": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_restore_db_cluster_from_snapshot_and_override_params": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot_fails_for_existed_target_snapshot": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_fails_for_non_existent_cluster": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_database_name": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_snapshot": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_additional_parameters": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_master_user_password": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_restore_db_cluster_from_snapshot": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_master_username": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_unknown_cluster": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster_unknown_cluster": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_enable_http_endpoint_invalid": "PASSED"
+        }
+      },
+      "log": {
+        "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_noop/eval_logs/evallog_replay-cpu29-getmoto-mot_bf67a611.eval.log",
+        "bytes": 45257,
+        "sha256": "2ddafa497a132fb21316c1c5c53444f23ef4ab83f6aa077d6ba539ff90447a23",
+        "matches_ledger": true,
+        "partial": false
+      },
+      "parsed_outside_test_segment": [],
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 10.014,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 7.503
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 7.503,
+        "segment_completed": true
+      },
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/moto/__init__.py",
+        "RH2_OBS_PKG_VERSION": "4.1.6.dev",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "10a0308d887b21b702e28790379e06bfdbede40a5d5d04684757372d4d86f96c",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "10a0308d887b21b702e28790379e06bfdbede40a5d5d04684757372d4d86f96c"
+      },
+      "phases": {
+        "delta_apply": 0.192523,
+        "grader_baseline_rebuild": 1.154045,
+        "grader_cleanup": 1.575355,
+        "grader_start_and_verify": 2.144251,
+        "grader_trusted_setup": 310.450119,
+        "parser_and_report": 1.67044,
+        "test": 19.003626
+      },
+      "resource": {
+        "mem_peak_mb": 969.551,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "resource_facts": null,
+      "policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "verdict_diagnostics": {
+        "apply_ok": true,
+        "expected_match": null,
+        "grading_semantics": "swe_f2p_p2p",
+        "num_parsed_outside_segment": 0,
+        "num_parsed_tests": 35,
+        "parser_source": "swegym_parsers@242429c1",
+        "reference_missing": [],
+        "reference_skipped": [],
+        "resolution": "RESOLVED_NO"
+      },
+      "image_identity": "local_build:sha256:aaf97ca9107336dc68a964386be07361bf363f3a4684998d3727d704c20cd5a0",
+      "export": {
+        "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_noop/artifacts/swe_gym_lite--getmoto__moto-6114/a1-33ac007e/frozen_patch.json",
+        "entries": [],
+        "decoded_source_sha256": null,
+        "matches_private_applied_source": null,
+        "candidate_patch_matches_input_bytes": null,
+        "excluded_pathset_changed": false
+      },
+      "candidate_cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "driver_close": {
+        "ledger": "/work/swegym_cpu_preprobe_20260929/results/getmoto__moto-6114/mixed-v1/grade_noop/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "budget": {
+        "instance_id": "getmoto__moto-6114",
+        "before": 300.0,
+        "after": 900.0,
+        "test_seconds_unchanged": 1800.0,
+        "scope": "CPU host preparation/reset/observation budget only; whole-grading CLI deadline independent",
+        "reason": "observed overlay2 metacopy=N prefix chown preparation timeout; no kernel or permission change"
+      },
+      "install_detail": {
+        "build_dependencies_completed": true,
+        "find_links": "/opt/rh2/build-wheels",
+        "pip_distribution_version": "4.1.0.dev0",
+        "imported_source_version": "4.1.6.dev",
+        "version_strings_not_equated": true,
+        "exact_isolated_build_packages_not_verbose_logged": true
+      }
+    },
+    "gold": {
+      "ledger": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_gold/ledger.jsonl",
+      "reward": 1.0,
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 1,
+        "f2p_total": 1,
+        "failure_category": null,
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "resolved",
+        "p2p_fail": 0,
+        "p2p_total": 34,
+        "report_id": "rpt_grading_c5a9f535",
+        "reward": 1.0
+      },
+      "reference_status": {
+        "fail_to_pass": {
+          "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_after_creation": "PASSED"
+        },
+        "pass_to_pass": {
+          "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_without_stopping": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_modify_db_cluster_needs_long_master_user_password": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_modify_db_cluster_new_cluster_identifier": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot_fails_for_unknown_snapshot": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_after_stopping": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot_fails_for_unknown_cluster": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_long_master_user_password": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_that_is_protected": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot_copy_tags": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster__verify_default_properties": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_initial": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_enable_http_endpoint_valid": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_do_snapshot": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_add_tags_to_cluster": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster_already_stopped": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_snapshots": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_add_tags_to_cluster_snapshot": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_unknown_cluster": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_restore_db_cluster_from_snapshot_and_override_params": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot_fails_for_existed_target_snapshot": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_fails_for_non_existent_cluster": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_database_name": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_snapshot": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_additional_parameters": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_master_user_password": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_restore_db_cluster_from_snapshot": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_master_username": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_unknown_cluster": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster_unknown_cluster": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_enable_http_endpoint_invalid": "PASSED"
+        }
+      },
+      "log": {
+        "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_gold/eval_logs/evallog_replay-cpu29-getmoto-mot_c5a9f535.eval.log",
+        "bytes": 40987,
+        "sha256": "335bf63a3b89e922d943ffdfc7d38a0c4de81202007d7a97fb170d4e38733e01",
+        "matches_ledger": true,
+        "partial": false
+      },
+      "parsed_outside_test_segment": [],
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 9.928,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 7.026
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 7.026,
+        "segment_completed": true
+      },
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/moto/__init__.py",
+        "RH2_OBS_PKG_VERSION": "4.1.6.dev",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "10a0308d887b21b702e28790379e06bfdbede40a5d5d04684757372d4d86f96c",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "10a0308d887b21b702e28790379e06bfdbede40a5d5d04684757372d4d86f96c"
+      },
+      "phases": {
+        "delta_apply": 0.410704,
+        "grader_baseline_rebuild": 1.163082,
+        "grader_cleanup": 1.578175,
+        "grader_start_and_verify": 2.116368,
+        "grader_trusted_setup": 302.26781,
+        "parser_and_report": 1.680904,
+        "test": 18.40657
+      },
+      "resource": {
+        "mem_peak_mb": 940.684,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "resource_facts": null,
+      "policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "verdict_diagnostics": {
+        "apply_ok": true,
+        "expected_match": null,
+        "grading_semantics": "swe_f2p_p2p",
+        "num_parsed_outside_segment": 0,
+        "num_parsed_tests": 35,
+        "parser_source": "swegym_parsers@242429c1",
+        "reference_missing": [],
+        "reference_skipped": [],
+        "resolution": "RESOLVED_FULL"
+      },
+      "image_identity": "local_build:sha256:aaf97ca9107336dc68a964386be07361bf363f3a4684998d3727d704c20cd5a0",
+      "export": {
+        "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_gold/artifacts/swe_gym_lite--getmoto__moto-6114/a1-7ab15744/frozen_patch.json",
+        "entries": [
+          {
+            "path": "moto/rds/models.py",
+            "operation": "modify",
+            "mode": "100644",
+            "content_digest": "sha256:00e61d1980f71fb4b0f37fa8e517a1fd3778c8ac5d687e4847d27217c5bc1c5b"
+          }
+        ],
+        "decoded_source_sha256": "00e61d1980f71fb4b0f37fa8e517a1fd3778c8ac5d687e4847d27217c5bc1c5b",
+        "matches_private_applied_source": true,
+        "candidate_patch_matches_input_bytes": true,
+        "excluded_pathset_changed": false
+      },
+      "candidate_cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "driver_close": {
+        "ledger": "/work/swegym_cpu_preprobe_20260929/results/getmoto__moto-6114/mixed-v1/grade_gold/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "budget": {
+        "instance_id": "getmoto__moto-6114",
+        "before": 300.0,
+        "after": 900.0,
+        "test_seconds_unchanged": 1800.0,
+        "scope": "CPU host preparation/reset/observation budget only; whole-grading CLI deadline independent",
+        "reason": "observed overlay2 metacopy=N prefix chown preparation timeout; no kernel or permission change"
+      },
+      "install_detail": {
+        "build_dependencies_completed": true,
+        "find_links": "/opt/rh2/build-wheels",
+        "pip_distribution_version": "4.1.0.dev0",
+        "imported_source_version": "4.1.6.dev",
+        "version_strings_not_equated": true,
+        "exact_isolated_build_packages_not_verbose_logged": true
+      }
+    },
+    "degenerate": {
+      "ledger": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_degenerate/ledger.jsonl",
+      "reward": 1.0,
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 1,
+        "f2p_total": 1,
+        "failure_category": null,
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "resolved",
+        "p2p_fail": 0,
+        "p2p_total": 34,
+        "report_id": "rpt_grading_722b5ef8",
+        "reward": 1.0
+      },
+      "reference_status": {
+        "fail_to_pass": {
+          "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_after_creation": "PASSED"
+        },
+        "pass_to_pass": {
+          "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_without_stopping": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_modify_db_cluster_needs_long_master_user_password": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_modify_db_cluster_new_cluster_identifier": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot_fails_for_unknown_snapshot": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_after_stopping": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot_fails_for_unknown_cluster": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_long_master_user_password": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_that_is_protected": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot_copy_tags": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster__verify_default_properties": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_initial": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_enable_http_endpoint_valid": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_do_snapshot": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_add_tags_to_cluster": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster_already_stopped": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_snapshots": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_add_tags_to_cluster_snapshot": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_unknown_cluster": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_restore_db_cluster_from_snapshot_and_override_params": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot_fails_for_existed_target_snapshot": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_fails_for_non_existent_cluster": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_database_name": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_snapshot": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_additional_parameters": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_master_user_password": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_restore_db_cluster_from_snapshot": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_master_username": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_unknown_cluster": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster_unknown_cluster": "PASSED",
+          "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_enable_http_endpoint_invalid": "PASSED"
+        }
+      },
+      "log": {
+        "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_degenerate/eval_logs/evallog_replay-cpu29-getmoto-mot_722b5ef8.eval.log",
+        "bytes": 40959,
+        "sha256": "d70701a3d80f42055dbcff0037c67face55fd7878fd545d802b9e84ad4a7cedd",
+        "matches_ledger": true,
+        "partial": false
+      },
+      "parsed_outside_test_segment": [],
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 9.445,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 7.126
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 7.126,
+        "segment_completed": true
+      },
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/moto/__init__.py",
+        "RH2_OBS_PKG_VERSION": "4.1.6.dev",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "10a0308d887b21b702e28790379e06bfdbede40a5d5d04684757372d4d86f96c",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "10a0308d887b21b702e28790379e06bfdbede40a5d5d04684757372d4d86f96c"
+      },
+      "phases": {
+        "delta_apply": 0.426409,
+        "grader_baseline_rebuild": 1.164002,
+        "grader_cleanup": 1.613149,
+        "grader_start_and_verify": 2.084008,
+        "grader_trusted_setup": 258.812168,
+        "parser_and_report": 1.503449,
+        "test": 18.081773
+      },
+      "resource": {
+        "mem_peak_mb": 943.078,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "resource_facts": null,
+      "policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "verdict_diagnostics": {
+        "apply_ok": true,
+        "expected_match": null,
+        "grading_semantics": "swe_f2p_p2p",
+        "num_parsed_outside_segment": 0,
+        "num_parsed_tests": 35,
+        "parser_source": "swegym_parsers@242429c1",
+        "reference_missing": [],
+        "reference_skipped": [],
+        "resolution": "RESOLVED_FULL"
+      },
+      "image_identity": "local_build:sha256:aaf97ca9107336dc68a964386be07361bf363f3a4684998d3727d704c20cd5a0",
+      "export": {
+        "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_degenerate/artifacts/swe_gym_lite--getmoto__moto-6114/a1-37d5b73c/frozen_patch.json",
+        "entries": [
+          {
+            "path": "moto/rds/models.py",
+            "operation": "modify",
+            "mode": "100644",
+            "content_digest": "sha256:a5e0c305e9981b61209a2fc3bc4e2c40944fade972a4ff28b5ed0fc54b81815e"
+          }
+        ],
+        "decoded_source_sha256": "a5e0c305e9981b61209a2fc3bc4e2c40944fade972a4ff28b5ed0fc54b81815e",
+        "matches_private_applied_source": true,
+        "candidate_patch_matches_input_bytes": true,
+        "excluded_pathset_changed": false
+      },
+      "candidate_cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "driver_close": {
+        "ledger": "/work/swegym_cpu_preprobe_20260929/results/getmoto__moto-6114/mixed-v1/grade_degenerate/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "budget": {
+        "instance_id": "getmoto__moto-6114",
+        "before": 300.0,
+        "after": 900.0,
+        "test_seconds_unchanged": 1800.0,
+        "scope": "CPU host preparation/reset/observation budget only; whole-grading CLI deadline independent",
+        "reason": "observed overlay2 metacopy=N prefix chown preparation timeout; no kernel or permission change"
+      },
+      "install_detail": {
+        "build_dependencies_completed": true,
+        "find_links": "/opt/rh2/build-wheels",
+        "pip_distribution_version": "4.1.0.dev0",
+        "imported_source_version": "4.1.6.dev",
+        "version_strings_not_equated": true,
+        "exact_isolated_build_packages_not_verbose_logged": true
+      }
+    }
+  },
+  "scope": "CPU deterministic public Devcheck plus separate root private behavior; no autonomous solver or formal issue/public_hints delivery proof",
+  "remaining": [
+    "D6 treatment/new-version validation if authorized; formal tests unchanged",
+    "full pip_check and full-lifetime resource event evidence unperformed; wheel bytes not locally rehashed",
+    "formal issue/public_hints delivery, autonomous model, model/GPU/budget/training separate"
+  ],
+  "environment": {
+    "restoration": "historical install_wave1 COPY-only wheels and pip env; original make init retained",
+    "not_observed_repair": "original actor already all_match_expect; expected target DBClusterNotFoundFault and old tests pass; no new dependency failure observed",
+    "actor_revalidation": "same commands and observed behavior on derived image; aligns actor/private/formal image",
+    "source_id": "sha256:fefec492f58ed0f8385a7e72234d296bd84d295031ce7e019f63fc33973ec249",
+    "derived_id": "sha256:aaf97ca9107336dc68a964386be07361bf363f3a4684998d3727d704c20cd5a0",
+    "base_layers": 13,
+    "derived_layers": 14,
+    "base_prefix_identical": true,
+    "pins": [
+      "setuptools==72.1.0",
+      "wheel==0.43.0",
+      "packaging==24.1"
+    ],
+    "wheel_manifest": [
+      {
+        "name": "packaging-24.1-py3-none-any.whl",
+        "sha256": "5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124",
+        "bytes": 53985
+      },
+      {
+        "name": "wheel-0.43.0-py3-none-any.whl",
+        "sha256": "55c570405f142630c6b9f72fe09d9b67cf1477fcf543ae5b8dcb1f5b7377da81",
+        "bytes": 65775
+      },
+      {
+        "name": "setuptools-72.1.0-py3-none-any.whl",
+        "sha256": "5a03e1860cf56bb6ef48ce186b0e557fdba433237481a9a625176c2831be15d1",
+        "bytes": 2337965
+      }
+    ],
+    "wheel_bytes_locally_available": false,
+    "asset_verification_scope": "runner verified exact filenames/hash/bytes before build; local manifest and build evidence read, wheel bytes not rehashed locally",
+    "download_cleanup": {
+      "rm_rc": 0,
+      "query_rc": 0,
+      "remaining": [],
+      "stderr": "Error response from daemon: No such container: cpu29-download-getmoto-moto-6114-mixed-v1\n"
+    }
+  },
+  "behavior_matrix": {
+    "base": "name lookup B succeeds; ARN lookup B raises DBClusterNotFoundFault",
+    "gold": "ARN B returns exactly one B with actual expected ARN",
+    "degenerate": "ARN B returns exactly one A with A ARN; identity assertion fails"
+  },
+  "evidence": [
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/actor_original/attempt.json",
+      "sha256": "d271a91b965bba72db2fa90d6cec7f47fb75f17d7de073a196c43ee14d1b4339"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/actor_original/captures/identity.out",
+      "sha256": "a9d026122d51b0dad2d99fc0240e637d85226515afd2fa7d628ff66c40b82155"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/actor_original/captures/public_existing.out",
+      "sha256": "9d9015fb893a60620daeeb01a89dae71d9cf57506f4b322fa941f362ed59f4dc"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/actor_original/captures/target_identity.out",
+      "sha256": "d1354935e9b591296af0cf3cded38c71388663342f5f4518dad1d0ebd8d11153"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/actor_revised/attempt.json",
+      "sha256": "33d42995eec21a7ee06bfaaa7a899f7c7c1ac621dc38e02565593142fb714856"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/actor_revised/captures/identity.out",
+      "sha256": "a9d026122d51b0dad2d99fc0240e637d85226515afd2fa7d628ff66c40b82155"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/actor_revised/captures/public_existing.out",
+      "sha256": "cd3046f74187f3701226ca227efc2cbcffe491de706ec37350e482437049d3df"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/actor_revised/captures/target_identity.out",
+      "sha256": "d1354935e9b591296af0cf3cded38c71388663342f5f4518dad1d0ebd8d11153"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/build_dependencies.log",
+      "sha256": "2cba6f02dbb6f772d66c0d27422984715fe047102b6d6b3f3bdb2149d4a3f94c"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/dependency_build/Dockerfile",
+      "sha256": "352caaf2eae8dc6fdb3291e9afaf85281a0b0199d6b3ee091d9e3d3247d44993"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/dependency_build/download_cleanup.json",
+      "sha256": "c9466f1e7d5e0408950486ebb40f4d61348ca65a887113b0ca917187ded8661c"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/dependency_build/image.json",
+      "sha256": "b9a7deccac6bde376124f994f65fdb3ecb5250918638dd68f3bb21f572354b93"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/download_wheels.log",
+      "sha256": "b3e2c5ad291151f8d1a1b51b119b591bd45c51b4def9c10316cb4b3fba0bb4ba"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_degenerate/artifacts/swe_gym_lite--getmoto__moto-6114/a1-37d5b73c/baseline_manifest.json",
+      "sha256": "7233f7c5bf810a2a1ffc350e749c4553bb9fa5588eb6c8aa982b41690985d665"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_degenerate/artifacts/swe_gym_lite--getmoto__moto-6114/a1-37d5b73c/candidate.patch",
+      "sha256": "5c042121e4bf56693c71f418c139b628d108b0c1fcd67bc0af48201e471c6451"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_degenerate/artifacts/swe_gym_lite--getmoto__moto-6114/a1-37d5b73c/classification.json",
+      "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_degenerate/artifacts/swe_gym_lite--getmoto__moto-6114/a1-37d5b73c/frozen_patch.json",
+      "sha256": "42d237b43da86aae47ddf77a11613be3b947fb05c218e5f8ad32f8642cef148a"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_degenerate/artifacts/swe_gym_lite--getmoto__moto-6114/a1-37d5b73c/projection.json",
+      "sha256": "150f006f3dd8236dc736f7c2cfb6b05713a076c12c20f2bc407c1c0f6e128c92"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_degenerate/artifacts/swe_gym_lite--getmoto__moto-6114/a1-37d5b73c/stage.json",
+      "sha256": "50462b212d8a81770f710e254bfbf655fed648923d48278ff29ee5e9d7ec1540"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_degenerate/budget/getmoto__moto-6114.json",
+      "sha256": "eb2b8bbb3f3bc36db61fc3d4f8a83781f938a921ff501b80cc5b0a0f8736192d"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_degenerate/driver_close_checked.json",
+      "sha256": "f8c3fbeefbe23a17e0ba0602a455599b28e94913cee26ee84afa979496c69811"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_degenerate/eval_logs/evallog_replay-cpu29-getmoto-mot_722b5ef8.diagnostics.json",
+      "sha256": "22e348151bb7f9c50aa821225787b6aebb0378c30d744262be3158fdb0bfde1f"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_degenerate/eval_logs/evallog_replay-cpu29-getmoto-mot_722b5ef8.eval.log",
+      "sha256": "d70701a3d80f42055dbcff0037c67face55fd7878fd545d802b9e84ad4a7cedd"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_degenerate/frozen_source_checked.json",
+      "sha256": "0bfcd98984952d73512a45efacde1990d92f590100527701702adbdfd8a47c40"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_degenerate/ledger.jsonl",
+      "sha256": "069b89db60326f164b7f73a7a2f473a32fb5f672aa92875d3f0d6107378c7f66"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_degenerate.log",
+      "sha256": "97f800d0e487f08f9dc7286245786db5825d7c15fa5fc9bae4474603f59e2c29"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_gold/artifacts/swe_gym_lite--getmoto__moto-6114/a1-7ab15744/baseline_manifest.json",
+      "sha256": "7233f7c5bf810a2a1ffc350e749c4553bb9fa5588eb6c8aa982b41690985d665"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_gold/artifacts/swe_gym_lite--getmoto__moto-6114/a1-7ab15744/candidate.patch",
+      "sha256": "bfae681e1044acffe64d7d65c1615b5545f4b62b2625961b7a6fe7d0ad591bbc"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_gold/artifacts/swe_gym_lite--getmoto__moto-6114/a1-7ab15744/classification.json",
+      "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_gold/artifacts/swe_gym_lite--getmoto__moto-6114/a1-7ab15744/frozen_patch.json",
+      "sha256": "a26a03ece70244ed7235bf590836cb0a1b5b30a398eedd4aad0ff1ac74fb5008"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_gold/artifacts/swe_gym_lite--getmoto__moto-6114/a1-7ab15744/projection.json",
+      "sha256": "c3678a80757cbd3f121ac38aa400a10bcf4d0c09e1dff31606a96c16b254cc3e"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_gold/artifacts/swe_gym_lite--getmoto__moto-6114/a1-7ab15744/stage.json",
+      "sha256": "50462b212d8a81770f710e254bfbf655fed648923d48278ff29ee5e9d7ec1540"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_gold/budget/getmoto__moto-6114.json",
+      "sha256": "eb2b8bbb3f3bc36db61fc3d4f8a83781f938a921ff501b80cc5b0a0f8736192d"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_gold/driver_close_checked.json",
+      "sha256": "20b1b4baccff3c7ab4730b801cc5af1ba4accf5f5f481e6261170d1da1d976d6"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_gold/eval_logs/evallog_replay-cpu29-getmoto-mot_c5a9f535.diagnostics.json",
+      "sha256": "e6829e15ea2e34ed46e8be0bf2a364e59b677d934326d31ad6e86a80cf39a92d"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_gold/eval_logs/evallog_replay-cpu29-getmoto-mot_c5a9f535.eval.log",
+      "sha256": "335bf63a3b89e922d943ffdfc7d38a0c4de81202007d7a97fb170d4e38733e01"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_gold/frozen_source_checked.json",
+      "sha256": "db83b6d52b009715127d7b8f319662aed41a992daca96b409738689f15b9285a"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_gold/ledger.jsonl",
+      "sha256": "d87fc52b3c9f38e82a25d8b2d4e1ee9e1109949286e464a19c7e7d0ea8118dd9"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_gold.log",
+      "sha256": "013886fc4e4b8faaf9299a3e5275b1b704b6bc84e556f16aa44e542998e83b23"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_noop/artifacts/swe_gym_lite--getmoto__moto-6114/a1-33ac007e/baseline_manifest.json",
+      "sha256": "7233f7c5bf810a2a1ffc350e749c4553bb9fa5588eb6c8aa982b41690985d665"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_noop/artifacts/swe_gym_lite--getmoto__moto-6114/a1-33ac007e/classification.json",
+      "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_noop/artifacts/swe_gym_lite--getmoto__moto-6114/a1-33ac007e/frozen_patch.json",
+      "sha256": "ea2de32a2aa50d08e03a577cc43c7449d39d533e58a2138d6b370b2a0794770a"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_noop/artifacts/swe_gym_lite--getmoto__moto-6114/a1-33ac007e/projection.json",
+      "sha256": "7cc2315107565fe14c9fc3cc8a2921dcd8df488c9e3b5228c61823f52ab2729f"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_noop/artifacts/swe_gym_lite--getmoto__moto-6114/a1-33ac007e/stage.json",
+      "sha256": "897a8addcc393ba4f26ed7d17e478601eb0c00abb4ecc2a7c9361a7445c2b3a4"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_noop/budget/getmoto__moto-6114.json",
+      "sha256": "eb2b8bbb3f3bc36db61fc3d4f8a83781f938a921ff501b80cc5b0a0f8736192d"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_noop/driver_close_checked.json",
+      "sha256": "cfbc895769d28375f634a97e32536b579463b05cea7efb02b3e922e6eb59b60b"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_noop/eval_logs/evallog_replay-cpu29-getmoto-mot_bf67a611.diagnostics.json",
+      "sha256": "6b6b99a751f7a2976690e12f8e4e003d36ac62acff0622b55ba5a7316166d11a"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_noop/eval_logs/evallog_replay-cpu29-getmoto-mot_bf67a611.eval.log",
+      "sha256": "2ddafa497a132fb21316c1c5c53444f23ef4ab83f6aa077d6ba539ff90447a23"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_noop/ledger.jsonl",
+      "sha256": "7fddc4cb120b809b759f4dbe107e117cf732467f638101aa3e38624ddb6c24cb"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/grade_noop.log",
+      "sha256": "f54d9238224b192121fb1da88d4c2b165c83e3fcbb754af11603f7a53e31c0b6"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/original_image.json",
+      "sha256": "9ece462e8edf3254fc522143cc64832d95e6038549c76b07dcf8e91e058caa71"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/base/prep_0.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/base/prep_1.out",
+      "sha256": "f600e6483d0c198ae09e4f0634c4f1fe82e69eaee4afb0e6ea22b01645a4b114"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/base/prep_2.out",
+      "sha256": "eb244963ad3b2e37c814bff580411111e4cfb90bf9ef852fda5516265ed5c4bb"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/base/target_identity.out",
+      "sha256": "d1354935e9b591296af0cf3cded38c71388663342f5f4518dad1d0ebd8d11153"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/degenerate/prep_0.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/degenerate/prep_1.out",
+      "sha256": "f600e6483d0c198ae09e4f0634c4f1fe82e69eaee4afb0e6ea22b01645a4b114"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/degenerate/prep_2.out",
+      "sha256": "eb244963ad3b2e37c814bff580411111e4cfb90bf9ef852fda5516265ed5c4bb"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/degenerate/prep_3.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/degenerate/prep_4.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/degenerate/prep_5.out",
+      "sha256": "901fd79131197b07c143edc5320c9d3e8e84cc23f0286dc4693272605f99e913"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/degenerate/target_identity.out",
+      "sha256": "1529fd2550883c6d79ba1dd943ac61a4b0893b88911fe9be9b3259a44156ca89"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/gold/prep_0.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/gold/prep_1.out",
+      "sha256": "f600e6483d0c198ae09e4f0634c4f1fe82e69eaee4afb0e6ea22b01645a4b114"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/gold/prep_2.out",
+      "sha256": "eb244963ad3b2e37c814bff580411111e4cfb90bf9ef852fda5516265ed5c4bb"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/gold/prep_3.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/gold/prep_4.out",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/gold/prep_5.out",
+      "sha256": "570df1d6db530bdd95b86b6cfc646f2196df302cf0a2b82a526e2a0e15b6ac46"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/gold/target_identity.out",
+      "sha256": "99fc61d1a3eef4d8b3b8d1512fa89ceb5030b6c9c220508190635ca940369817"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/private_behavior/summary.json",
+      "sha256": "02e4f9c2b3157b4c6e344886bd666b0420afe39bd2dd5cf47d4f48ca9d505618"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/status.json",
+      "sha256": "e187f45062f731d0919443994d9322d1c2233af079155791c40d8e7df5a89263"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/task_inputs/getmoto__moto-6114/buildplan.json",
+      "sha256": "376ef6864e3151d68645164770e6b2590b311ce64c94eb952f2d8b1d2abd9b3b"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/task_inputs/getmoto__moto-6114/private/behavior_commands.json",
+      "sha256": "72c4d101b54a4848930d2c14ec5e67dd5dd94f8d1c0ff0394bca45ead373bef7"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/task_inputs/getmoto__moto-6114/private/patch_validation.json",
+      "sha256": "d0c8cf81af16b8c529561b40b4c86c4232bddee937fe8f5c165e4d224e799067"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/task_inputs/getmoto__moto-6114/public_commands.json",
+      "sha256": "c102412f815fea5a87c99dc8b686eddbe32c1d63bef7925939c7a0ec5416539a"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/task_inputs/getmoto__moto-6114/recovery.json",
+      "sha256": "23b12ee8b31fdf1013a717108f7411fea4a9067865affe42e577f2613b260af5"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/task_inputs/getmoto__moto-6114/wheel_manifest.json",
+      "sha256": "660fa7aa83d8c3cedeb5e188ef7a4de0621e6011a37be48958813a6c50425a55"
+    },
+    {
+      "path": "runs/swegym_quality_batch04_20260921_v1/private/getmoto__moto-6114/grading.json",
+      "sha256": "b26dccd671637cac4cf79dd15f6e1e0973b8cccb6157142b1b2e15220e025066"
+    },
+    {
+      "path": "runs/swegym_quality_batch04_20260921_v1/private/getmoto__moto-6114/test.patch",
+      "sha256": "32beadd88d5189dcab69b796980a93c464cb7b6f9d16bc8329d5da3e80571b61"
+    },
+    {
+      "path": "runs/swegym_quality_batch04_20260921_v1/public/getmoto__moto-6114/base/moto/rds/models.py",
+      "sha256": "a614a137f21dce20445cad98611e578b435d4f09a592ced584d887d9edb9250c"
+    },
+    {
+      "path": "runs/swegym_quality_batch04_20260921_v1/public/getmoto__moto-6114/user_prompt.txt",
+      "sha256": "00bd0d4b2b8ae3974d0ec8def8814dc83aaf3bf80eb4e9e47c6a52f074ad7f78"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/analysis/moto6114_final_v1.json",
+      "sha256": "c4456d2b0027b9976076fe2277345d98e4bd27fe7a30e0db7badcfa98a694c6a"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/analysis/evidence_manifest_moto6114_v1.json",
+      "sha256": "97f40d5097d2f82879dd4a3e58c186ec95a7ee702930e32b02193ee6b4608eec"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/moto_pair_result_review.md",
+      "sha256": "7cf7e10948ba2bcd204c589330466735e24f923eb03bf1ee08b7426bc09f237c"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/analysis/resource_moto_pair_v1.json",
+      "sha256": "655e7be17ceedc1cdab894cdc5822cea35ce8022cc6034db2b78aaaa29b53340"
+    }
+  ],
+  "quality": {
+    "classification": "S1",
+    "finding": "first object candidate earns 1 while lookup by actual B ARN returns one A",
+    "public_basis": "runs/swegym_quality_batch04_20260921_v1/public/getmoto__moto-6114/user_prompt.txt",
+    "prompt_typo_boundary": "public example alternates test-cluster-1/test-cluster-0; probe uses actual ARN returned for existing B, preserving stated requirement",
+    "formal_gap": "source test patch checks len==1 on second cluster ARN but not Identifier or ARN equality",
+    "private_counterexample": "two actual clusters A/B, name lookup B succeeds, actual B ARN returns A only for mutant",
+    "no_formal_test_change": true,
+    "scope": "exact Identifier/ARN for same-region existing cluster; not full mutable object equality, cross-account or Neptune generalization"
+  },
+  "allowed_use": [
+    "CPU development/restored historical install recipe and scoring coverage diagnosis",
+    "no unconditional correctness comparison or training reward before D6 quality treatment"
+  ],
+  "root_reconciliation": {
+    "parser": "runs/swegym_cpu_preprobe_20260929/analysis/moto6114_final_v1.json",
+    "all_reference_states_match_owner_readback": true,
+    "transport_manifest": "runs/swegym_cpu_preprobe_20260929/analysis/evidence_manifest_moto6114_v1.json",
+    "files": 106,
+    "bytes": 2309115,
+    "verified": true,
+    "local_mismatches": []
+  },
+  "independent_review": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/moto_pair_result_review.md",
+    "status": "complete",
+    "finding": "final cards and original evidence consistent; remaining D6/qualification boundaries retained"
+  },
+  "sampled_resources": {
+    "path": "runs/swegym_cpu_preprobe_20260929/analysis/resource_moto_pair_v1.json",
+    "scope": "15-second samples matched only grading report container suffix; not full lifetime. Missing facts stay null; preparation included.",
+    "rows": [
+      {
+        "task": "getmoto__moto-6114",
+        "ledger": "results/getmoto__moto-6114/mixed-v1/grade_degenerate/ledger.jsonl",
+        "report_id": "rpt_grading_722b5ef8",
+        "samples": 18,
+        "ledger_resource": {
+          "mem_peak_mb": 943.078,
+          "mem_peak_unavailable_or_zero": false
+        },
+        "ledger_resource_facts": null,
+        "limits": {
+          "Memory": 4294967296,
+          "NanoCpus": 2000000000,
+          "PidsLimit": 512,
+          "ShmSize": 67108864,
+          "Tmpfs": {
+            "/tmp": "size=1073741824,mode=1777,exec,nosuid,nodev"
+          }
+        },
+        "first": 1790625395.9396498,
+        "last": 1790625653.7978246,
+        "max_sample_gap_seconds": 15.21925401687622,
+        "observed_memory_peak_bytes": 871276544,
+        "observed_pids_peak": 9,
+        "memory.events": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "pids.events": {
+          "max": 0
+        }
+      },
+      {
+        "task": "getmoto__moto-6114",
+        "ledger": "results/getmoto__moto-6114/mixed-v1/grade_gold/ledger.jsonl",
+        "report_id": "rpt_grading_c5a9f535",
+        "samples": 22,
+        "ledger_resource": {
+          "mem_peak_mb": 940.684,
+          "mem_peak_unavailable_or_zero": false
+        },
+        "ledger_resource_facts": null,
+        "limits": {
+          "Memory": 4294967296,
+          "NanoCpus": 2000000000,
+          "PidsLimit": 512,
+          "ShmSize": 67108864,
+          "Tmpfs": {
+            "/tmp": "size=1073741824,mode=1777,exec,nosuid,nodev"
+          }
+        },
+        "first": 1790625031.934048,
+        "last": 1790625350.4522374,
+        "max_sample_gap_seconds": 15.17691445350647,
+        "observed_memory_peak_bytes": 986378240,
+        "observed_pids_peak": 9,
+        "memory.events": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "pids.events": {
+          "max": 0
+        }
+      },
+      {
+        "task": "getmoto__moto-6114",
+        "ledger": "results/getmoto__moto-6114/mixed-v1/grade_noop/ledger.jsonl",
+        "report_id": "rpt_grading_bf67a611",
+        "samples": 22,
+        "ledger_resource": {
+          "mem_peak_mb": 969.551,
+          "mem_peak_unavailable_or_zero": false
+        },
+        "ledger_resource_facts": null,
+        "limits": {
+          "Memory": 4294967296,
+          "NanoCpus": 2000000000,
+          "PidsLimit": 512,
+          "ShmSize": 67108864,
+          "Tmpfs": {
+            "/tmp": "size=1073741824,mode=1777,exec,nosuid,nodev"
+          }
+        },
+        "first": 1790624667.7305462,
+        "last": 1790624986.486042,
+        "max_sample_gap_seconds": 15.199060916900635,
+        "observed_memory_peak_bytes": 891240448,
+        "observed_pids_peak": 9,
+        "memory.events": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        },
+        "pids.events": {
+          "max": 0
+        }
+      }
+    ]
+  }
+}

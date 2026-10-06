@@ -1,0 +1,7 @@
+{
+  "instance_id": "modin-project__modin-6780",
+  "original_install": "python -m pip install -e .;",
+  "revised_install": "python -I -m pip install --no-index --find-links=/opt/rh2/compat-wheels --no-deps pytest==7.4.4 || exit $?\npython -m pip install -e .;",
+  "decision": "E21",
+  "reason": "pytest8 WarningsChecker raises missing-warning instead of propagating TypeError inside helper try/except; test original pytest7 behavior without changing assertion. 3 reference aliases separately bind full nodes."
+}

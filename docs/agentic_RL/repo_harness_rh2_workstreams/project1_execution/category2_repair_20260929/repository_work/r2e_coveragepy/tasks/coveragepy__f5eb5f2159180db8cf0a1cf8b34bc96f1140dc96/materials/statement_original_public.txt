@@ -1,0 +1,28 @@
+[ISSUE]
+**Title:** JSON coverage report missing branch attributes leads to test assertion failures
+
+**Description:**
+When generating a JSON coverage report with branch coverage enabled, the report does not include the `covered_branches` and `missing_branches` attributes in the totals. This omission causes tests that expect these attributes to fail.
+
+**Example Code:**
+```python
+import coverage
+
+cov = coverage.Coverage(branch=True)
+cov.start()
+# ... execute some code ...
+cov.stop()
+cov.json_report(outfile='coverage.json')
+```
+
+**Expected Behavior:**
+The `totals` section in `coverage.json` should include `covered_branches` and `missing_branches`, providing detailed branch coverage information.
+
+**Actual Behavior:**
+The `totals` section is missing `covered_branches` and `missing_branches`, leading to an `AssertionError` in tests that validate the presence of these attributes.
+
+**Error Message:**
+```
+AssertionError: {'totals': {'covered_lines': 2, ...}} != {'totals': {'covered_branches': 1, 'covered_lines': 2, 'missing_branches': 1, ...}}
+```
+[/ISSUE]

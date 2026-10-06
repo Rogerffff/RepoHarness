@@ -1,0 +1,186 @@
+{
+  "status": "pass",
+  "scope": "local_material_and_isolated_assertions_not_formal_cpu",
+  "parent_test_sha256": "sha256:161f9d3b7bafc365932249ad934aa9f17ef12ff90d88b2ee7683605ccd05a3bd",
+  "new_test_sha256": "sha256:7649b82fb114a9bbdfa3a73148c4d8f1ee8bed926dd2d7853c6385379b88c8b6",
+  "new_tree_sha256": "sha256:2a62382c32a9def6a9ccf42c27fb938b7e4c0c0747805bafeaa605afce6b4724",
+  "edit_count": 2,
+  "test_function_names_unchanged": true,
+  "expected_key_count": 17,
+  "existing_065_constraints_retained": true,
+  "positive_helper_calls": 34,
+  "historical_behavior_input_sha256": {
+    "pcheck_public4_gold.json": "sha256:53b2cd90f0673be30d61139c2586e2e31c820b8ed67340c790bef15d39b98147",
+    "pcheck_public4_CA.json": "sha256:10b036ece2092beb64b13d74fbdfcd243893d9a4c68847929080fc796dcbd4e7"
+  },
+  "candidate_checks": [
+    {
+      "candidate": "noop",
+      "isolated_assertions": "reject",
+      "failures": [
+        {
+          "check": "weired_url:/",
+          "type": "AssertionError",
+          "error": "'file:implicit' != 'ssh:implicit'"
+        },
+        {
+          "check": "my_host:path/sp1",
+          "type": "AssertionError",
+          "error": "'file:implicit' != 'ssh:implicit'"
+        },
+        {
+          "check": "data_server.example.org:/srv/ds",
+          "type": "AssertionError",
+          "error": "'file:implicit' != 'ssh:implicit'"
+        },
+        {
+          "check": "is_url:weired_url:/",
+          "type": "AssertionError",
+          "error": "False is not true"
+        },
+        {
+          "check": "is_url:my_host:path/sp1",
+          "type": "AssertionError",
+          "error": "False is not true"
+        }
+      ],
+      "formal_reward": null
+    },
+    {
+      "candidate": "gold",
+      "isolated_assertions": "reject",
+      "failures": [
+        {
+          "check": "/some/dir:x",
+          "type": "AssertionError",
+          "error": "'ssh:implicit' != 'file:implicit'"
+        },
+        {
+          "check": "parse_url_opts_all_four_assertions",
+          "type": "ValueError",
+          "error": "Thought that this url would point to host:path but got query and fragments: {'scheme': 'ssh:implicit', 'username': '', 'password': '', 'hostname': '', 'port': '', 'path': 'openfmri_s3', 'query': '_url=s3://b/k', 'fragment': ''}"
+        }
+      ],
+      "formal_reward": null
+    },
+    {
+      "candidate": "C-A",
+      "isolated_assertions": "pass",
+      "failures": [],
+      "formal_reward": null
+    },
+    {
+      "candidate": "C-B",
+      "isolated_assertions": "reject",
+      "failures": [
+        {
+          "check": "/some/dir:x",
+          "type": "AssertionError",
+          "error": "'ssh:implicit' != 'file:implicit'"
+        },
+        {
+          "check": "fields_reconstruction",
+          "type": "AssertionError",
+          "error": "'example.com:path/sp1/fname' != 'example.com/path/sp1:fname'"
+        },
+        {
+          "check": "parse_url_opts_all_four_assertions",
+          "type": "ValueError",
+          "error": "Thought that this url would point to host:path but got query and fragments: {'scheme': 'ssh:implicit', 'username': '', 'password': '', 'hostname': '', 'port': '', 'path': 'openfmri_s3', 'query': '_url=s3://b/k', 'fragment': ''}"
+        }
+      ],
+      "formal_reward": null
+    },
+    {
+      "candidate": "D-eq",
+      "isolated_assertions": "reject",
+      "failures": [
+        {
+          "check": "weired_url:/",
+          "type": "AssertionError",
+          "error": "'file:implicit' != 'ssh:implicit'"
+        },
+        {
+          "check": "my_host:path/sp1",
+          "type": "AssertionError",
+          "error": "'file:implicit' != 'ssh:implicit'"
+        },
+        {
+          "check": "data_server.example.org:/srv/ds",
+          "type": "AssertionError",
+          "error": "'file:implicit' != 'ssh:implicit'"
+        },
+        {
+          "check": "is_url:weired_url:/",
+          "type": "AssertionError",
+          "error": "False is not true"
+        },
+        {
+          "check": "is_url:my_host:path/sp1",
+          "type": "AssertionError",
+          "error": "False is not true"
+        }
+      ],
+      "formal_reward": null
+    },
+    {
+      "candidate": "D-eq-minus",
+      "isolated_assertions": "reject",
+      "failures": [
+        {
+          "check": "weired_url:/",
+          "type": "AssertionError",
+          "error": "'file:implicit' != 'ssh:implicit'"
+        },
+        {
+          "check": "my_host:path/sp1",
+          "type": "AssertionError",
+          "error": "'file:implicit' != 'ssh:implicit'"
+        },
+        {
+          "check": "data_server.example.org:/srv/ds",
+          "type": "AssertionError",
+          "error": "'file:implicit' != 'ssh:implicit'"
+        },
+        {
+          "check": "is_url:weired_url:/",
+          "type": "AssertionError",
+          "error": "False is not true"
+        },
+        {
+          "check": "is_url:my_host:path/sp1",
+          "type": "AssertionError",
+          "error": "False is not true"
+        }
+      ],
+      "formal_reward": null
+    },
+    {
+      "candidate": "D-hard",
+      "isolated_assertions": "reject",
+      "failures": [
+        {
+          "check": "my_host:path/sp1",
+          "type": "AssertionError",
+          "error": "'file:implicit' != 'ssh:implicit'"
+        },
+        {
+          "check": "data_server.example.org:/srv/ds",
+          "type": "AssertionError",
+          "error": "'file:implicit' != 'ssh:implicit'"
+        },
+        {
+          "check": "is_url:my_host:path/sp1",
+          "type": "AssertionError",
+          "error": "False is not true"
+        }
+      ],
+      "formal_reward": null
+    }
+  ],
+  "limitations": [
+    "使用本机标准库，未导入完整DataLad/nose/pytest。",
+    "无容器/正式解析/17键评分/退出清理证据；formal_reward均为空。",
+    "新材料登记、构建和定向CPU验收待完成。"
+  ]
+}

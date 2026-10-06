@@ -1,0 +1,21 @@
+Traceback (most recent call last):
+  File "revised_example_v1.py", line 8, in <module>
+    cov.save()  
+  File "/testbed/coverage/control.py", line 642, in save
+    data = self.get_data()
+  File "/testbed/coverage/control.py", line 696, in get_data
+    if self._collector and self._collector.flush_data():
+  File "/testbed/coverage/collector.py", line 425, in flush_data
+    self.covdata.add_lines(self.mapped_file_dict(self.data))
+  File "/testbed/coverage/sqldata.py", line 443, in add_lines
+    file_id = self._file_id(filename, add=True)
+  File "/testbed/coverage/sqldata.py", line 367, in _file_id
+    cur = con.execute("insert or replace into file (path) values (?)", (filename,))
+  File "/testbed/coverage/sqldata.py", line 1032, in execute
+    return self.con.execute(sql, parameters)
+UnicodeEncodeError: 'utf-8' codec can't encode character '\udcff' in position 8: surrogates not allowed
+[rc=1]
+.
+..
+.coverage
+revised_example_v1.py

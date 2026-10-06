@@ -1,0 +1,16 @@
+{
+  "schema_id": "rh2.public_task_bundle.v1",
+  "instance_id": "aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a",
+  "repo": "aiohttp",
+  "base_commit": "e181a0e468d4fb35f2c990c604566089a7afe945",
+  "image": "namanjain12/aiohttp_final:4075c653fb67a29740bf9ac050bb02d10a57343a",
+  "image_manifest_digest": "sha256:a19a89833844a1aa26c1d06d889129ec50a9578063711368d52ae53a202e78a9",
+  "workdir": "/testbed",
+  "allowed_tools": [
+    "bash",
+    "edit"
+  ],
+  "problem_statement": "[ISSUE]\n**Title:** HTTP Parser Fails to Reject Headers with Invalid Characters and Malformed Status Lines\n\n**Description**\nThe HTTP parser does not raise errors when encountering headers with invalid characters or improperly formatted status lines, leading to potential mishandling of HTTP requests.\n\n**Example Buggy Code:**\n```python\ndef test_invalid_header(parser):\n    invalid_header = \"\\xffoo: bar\"\n    request = f\"POST / HTTP/1.1\\r\\n{invalid_header}\\r\\n\\r\\n\".encode()\n    parser.feed_data(request)\n\ndef test_malformed_status_line(parser):\n    malformed_status = b\"GET\\n/path\\x0cHTTP/1.1\\r\\n\\r\\n\"\n    parser.feed_data(malformed_status)\n```\n\n**Expected Behavior**\n- The first test should raise a `BadHttpMessage` exception due to the invalid character `ÿ` in the header.\n- The second test should raise a `BadStatusLine` exception because the status line contains improper whitespace and control characters.\n\n**Actual Behavior**\n- No exceptions are raised when processing the invalid header or the malformed status line, causing the tests to fail unexpectedly.\n\n[/ISSUE]",
+  "problem_statement_sha256": "sha256:c3253b921246dcb9c99490b35b129269eb54cf4276f67837a6bd14d73819d731",
+  "public_hints": "You are a software engineer fixing a real GitHub issue in the repository checked out at /testbed (your bash tool already runs there).\n- The project's Python environment is the virtualenv at /testbed/.venv: `python` and the repo's test tools already point at it. There is no network access and `pip` may be unavailable, so work with the packages that are already installed.\n- Explore the code, find the root cause, and edit NON-TEST source files to fix the issue.\n- Do NOT modify the repository's test files: the fix is judged by a separate set of tests.\n- You may run tests to verify your fix, but keep runs narrow (a single test file or module) to save time; run them from /testbed with `python -m pytest`.\n- When you are confident the fix is complete, reply with a short summary and stop calling tools."
+}

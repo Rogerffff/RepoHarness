@@ -1,0 +1,366 @@
+{
+  "schema": "monai.probe_first_attempt_owner_analysis.v1",
+  "as_of": "2026-10-03",
+  "task_id": "swe_gym_lite::Project-MONAI__MONAI-3715",
+  "request_id": "swe-monai3715-string-modes-r5-20261003-v1",
+  "job_id": "gpu1003-monai3715-qwen36-a1",
+  "model": "qwen36",
+  "status": "first_model_semantics_analyzed_second_model_pending",
+  "raw_reward": 1,
+  "candidate_semantics": "根因修复合理，单文件两处条件改为转换后self.mode；train/eval及非法输入语义保留",
+  "material_revision_id": "monai3715-string-modes-forward-cpu-v1",
+  "grading_materials_identity": "sha256:a88992c71eed8c4b9ac3482294a198ba253b1467e6963e1078cd98f9c48abd03",
+  "actual_actor_image_id": "sha256:6cbdf6b5eefbe27e97db5839aa8586584cc57f20759fb6c408690fddc8202e38",
+  "formal_refs_all_passed": [
+    "tests/test_prepare_batch_default.py::TestPrepareBatchDefault::test_evaluator_string_modes_forward_and_restore_cpu",
+    "tests/test_prepare_batch_default.py::TestPrepareBatchDefault::test_content",
+    "tests/test_prepare_batch_default.py::TestPrepareBatchDefault::test_empty_data"
+  ],
+  "formal_install_test_complete": true,
+  "first_precise_localization_event_line": 21,
+  "first_edit_event_line": 61,
+  "patch_revisions": 1,
+  "pre_edit_failure_reproduction": false,
+  "calls": [
+    {
+      "event_line": 11,
+      "id": "toolu_1e0486885c879d52",
+      "tool": "Read",
+      "input": {
+        "file_path": "/testbed/monai/engines/evaluator.py"
+      },
+      "result_event_line": 15,
+      "is_error": false,
+      "result_sha256": "a2f6cef533dfe3686b3e5a521a860767b0a131376570997c7cc2db3063fe7cc1"
+    },
+    {
+      "event_line": 29,
+      "id": "toolu_830ad7de8797eeb1",
+      "tool": "Bash",
+      "input": {
+        "command": "grep -n \"def look_up_option\" /testbed/monai/utils/module.py"
+      },
+      "result_event_line": 33,
+      "is_error": false,
+      "result_sha256": "fd18b1130964dde97d5cc4fc2f2c7c7d13a7476c7b10a53f44efa11e92007a63"
+    },
+    {
+      "event_line": 43,
+      "id": "toolu_af219cdffcfb90c9",
+      "tool": "Read",
+      "input": {
+        "file_path": "/testbed/monai/utils/module.py",
+        "offset": 47,
+        "limit": 60
+      },
+      "result_event_line": 47,
+      "is_error": false,
+      "result_sha256": "7c2619e74d7a02ccd2aa8020d337ef417a492e12406b00ce07519fe93c1251c7"
+    },
+    {
+      "event_line": 61,
+      "id": "toolu_4fa14b1a528b61bf",
+      "tool": "Edit",
+      "input": {
+        "replace_all": false,
+        "file_path": "/testbed/monai/engines/evaluator.py",
+        "old_string": "        self.mode = look_up_option(mode, ForwardMode)\n        if mode == ForwardMode.EVAL:\n            self.mode = eval_mode\n        elif mode == ForwardMode.TRAIN:\n            self.mode = train_mode\n        else:\n            raise ValueError(f\"unsupported mode: {mode}, should be 'eval' or 'train'.\")",
+        "new_string": "        self.mode = look_up_option(mode, ForwardMode)\n        if self.mode == ForwardMode.EVAL:\n            self.mode = eval_mode\n        elif self.mode == ForwardMode.TRAIN:\n            self.mode = train_mode\n        else:\n            raise ValueError(f\"unsupported mode: {mode}, should be 'eval' or 'train'.\")"
+      },
+      "result_event_line": 65,
+      "is_error": false,
+      "result_sha256": "47b578b636cec339033a663731394761e6fd850ecf11a483e8381b81e42620e9"
+    },
+    {
+      "event_line": 79,
+      "id": "toolu_fc1b938e0e9e6dda",
+      "tool": "Bash",
+      "input": {
+        "command": "python -c \"\nfrom monai.utils import ForwardMode\nfrom monai.engines.evaluator import Evaluator\nimport torch\n\n# Create a simple data loader\ndata = [{'image': torch.tensor([1.0]), 'label': torch.tensor([0.0])}]\n\n# Test with ForwardMode.EVAL enum - should work\nprint('Testing with ForwardMode.EVAL...')\ntry:\n    evaluator = Evaluator(\n        device=torch.device('cpu'),\n        val_data_loader=data,\n        epoch_length=1,\n        mode=ForwardMode.EVAL,\n    )\n    print('  ForwardMode.EVAL: PASSED')\nexcept Exception as e:\n    print(f'  ForwardMode.EVAL: FAILED - {e}')\n\n# Test with ForwardMode.TRAIN enum - should work\nprint('Testing with ForwardMode.TRAIN...')\ntry:\n    evaluator = Evaluator(\n        device=torch.device('cpu'),\n        val_data_loader=data,\n        epoch_length=1,\n        mode=ForwardMode.TRAIN,\n    )\n    print('  ForwardMode.TRAIN: PASSED')\nexcept Exception as e:\n    print(f'  ForwardMode.TRAIN: FAILED - {e}')\n\n# Test with string 'eval' - this is the bug case\nprint('Testing with string \\\"eval\\\"...')\ntry:\n    evaluator = Evaluator(\n        device=torch.device('cpu'),\n        val_data_loader=data,\n        epoch_length=1,\n        mode='eval',\n    )\n    print('  string \\\"eval\\\": PASSED')\nexcept Exception as e:\n    print(f'  string \\\"eval\\\": FAILED - {e}')\n\n# Test with string 'train' - this is the bug case from the issue\nprint('Testing with string \\\"train\\\"...')\ntry:\n    evaluator = Evaluator(\n        device=torch.device('cpu'),\n        val_data_loader=data,\n        epoch_length=1,\n        mode='train',\n    )\n    print('  string \\\"train\\\": PASSED')\nexcept Exception as e:\n    print(f'  string \\\"train\\\": FAILED - {e}')\n\n# Test with invalid mode - should still fail\nprint('Testing with invalid mode \\\"invalid\\\"...')\ntry:\n    evaluator = Evaluator(\n        device=torch.device('cpu'),\n        val_data_loader=data,\n        epoch_length=1,\n        mode='invalid',\n    )\n    print('  string \\\"invalid\\\": UNEXPECTEDLY PASSED')\nexcept ValueError as e:\n    print(f'  string \\\"invalid\\\": PASSED (correctly raised ValueError)')\nexcept Exception as e:\n    print(f'  string \\\"invalid\\\": FAILED with unexpected error - {e}')\n\nprint()\nprint('All tests completed!')\n\"\n"
+      },
+      "result_event_line": 85,
+      "is_error": false,
+      "result_sha256": "9a65eeb1075cb205915b203fa4f3e9436620923088f37c00b57a86ef45aa62de"
+    },
+    {
+      "event_line": 99,
+      "id": "toolu_4b4c1050ce62d3c8",
+      "tool": "Bash",
+      "input": {
+        "command": "find /testbed -type f -name \"*.py\" -path \"*/tests/*\" | xargs grep -l \"Evaluator\\|mode.*train\\|mode.*eval\" | head -5"
+      },
+      "result_event_line": 103,
+      "is_error": false,
+      "result_sha256": "f77a988fa65a654e8670699e7b306de53f2de560666661c5846f9def8c4bdf62"
+    },
+    {
+      "event_line": 113,
+      "id": "toolu_271efa03095a4dca",
+      "tool": "Bash",
+      "input": {
+        "command": "find /testbed -type f -name \"*evaluator*\" -o -name \"*evaluation*\" | grep -i test"
+      },
+      "result_event_line": 117,
+      "is_error": false,
+      "result_sha256": "565f6626d8160cf1e3d51ccb3ec32cc37522bede354636653233895e23356ec4"
+    },
+    {
+      "event_line": 127,
+      "id": "toolu_1e34b6c9600bc296",
+      "tool": "Bash",
+      "input": {
+        "command": "python -m pytest tests/test_ensemble_evaluator.py -v 2>&1 | head -60"
+      },
+      "result_event_line": 131,
+      "is_error": false,
+      "result_sha256": "805622700c98fdbef2d49f40dfade280762012361871f6115ec375ccc26e38c8"
+    },
+    {
+      "event_line": 145,
+      "id": "toolu_2984ddcdeec8bbef",
+      "tool": "Bash",
+      "input": {
+        "command": "grep -rn \"mode.*=.*['\\\"]train['\\\"]\\|mode.*=.*['\\\"]eval['\\\"]\" /testbed/tests/ 2>/dev/null | head -20"
+      },
+      "result_event_line": 149,
+      "is_error": false,
+      "result_sha256": "cac1685585590361647e7a27b58a25a590f335bfcd0ab70fcdc0424e40c20843"
+    },
+    {
+      "event_line": 159,
+      "id": "toolu_5fee3d677ddff9a2",
+      "tool": "Bash",
+      "input": {
+        "command": "grep -rn \"ForwardMode\\|mode=\" /testbed/tests/ 2>/dev/null | grep -i evaluat | head -10"
+      },
+      "result_event_line": 163,
+      "is_error": false,
+      "result_sha256": "cac1685585590361647e7a27b58a25a590f335bfcd0ab70fcdc0424e40c20843"
+    },
+    {
+      "event_line": 173,
+      "id": "toolu_dbb73973d3f7a536",
+      "tool": "Read",
+      "input": {
+        "file_path": "/testbed/tests/test_ensemble_evaluator.py"
+      },
+      "result_event_line": 177,
+      "is_error": false,
+      "result_sha256": "1d099b4a3c134e690978e79e2aa60a8c9dd78c4a9f49ecefb9d92427855c7aa5"
+    },
+    {
+      "event_line": 191,
+      "id": "toolu_e9f27e9efd19c6ef",
+      "tool": "Read",
+      "input": {
+        "file_path": "/testbed/monai/engines/evaluator.py",
+        "offset": 115,
+        "limit": 15
+      },
+      "result_event_line": 195,
+      "is_error": false,
+      "result_sha256": "9d1d7588dbf83d281f929b8475872c098c833907dceb92c8cce2f3540f8e01c9"
+    },
+    {
+      "event_line": 209,
+      "id": "toolu_074a0521b33d8dbe",
+      "tool": "Bash",
+      "input": {
+        "command": "python -c \"\nimport torch\nfrom monai.engines import SupervisedEvaluator\nfrom monai.inferers import SaliencyInferer\n\n# Create a simple network\nclass SimpleNet(torch.nn.Module):\n    def __init__(self):\n        super().__init__()\n        self.fc = torch.nn.Linear(10, 2)\n    def forward(self, x):\n        return self.fc(x)\n\n# Create data\ndata = [{'image': torch.randn(2, 10), 'label': torch.randint(0, 2, (2,))}]\nloader = torch.utils.data.DataLoader(data, batch_size=1)\n\n# Test SupervisedEvaluator with mode='train' - this is what saliency map needs\nprint('Testing SupervisedEvaluator with mode=\\\"train\\\"...')\ntry:\n    evaluator = SupervisedEvaluator(\n        device=torch.device('cpu'),\n        val_data_loader=loader,\n        network=SimpleNet(),\n        mode='train',  # This is what SaliencyInferer needs\n    )\n    print('  SupervisedEvaluator with mode=\\\"train\\\": PASSED')\nexcept Exception as e:\n    print(f'  FAILED: {e}')\n\n# Test with SaliencyInferer\nprint()\nprint('Testing SupervisedEvaluator with mode=\\\"train\\\" and SaliencyInferer...')\ntry:\n    evaluator = SupervisedEvaluator(\n        device=torch.device('cpu'),\n        val_data_loader=loader,\n        network=SimpleNet(),\n        inferer=SaliencyInferer(),\n        mode='train',  # This is what SaliencyInferer needs\n    )\n    evaluator.run()\n    print('  SupervisedEvaluator with SaliencyInferer: PASSED')\nexcept Exception as e:\n    print(f'  FAILED: {e}')\n\nprint()\nprint('Saliency map inference test completed!')\n\"\n"
+      },
+      "result_event_line": 213,
+      "is_error": false,
+      "result_sha256": "476cb680d7930838dfedb4f193b37a6cdfbd862e8e6269b16755df9a43c50466"
+    },
+    {
+      "event_line": 227,
+      "id": "toolu_51e6a6e4ff8a1ed9",
+      "tool": "Bash",
+      "input": {
+        "command": "python -c \"\nimport torch\nfrom monai.engines import SupervisedEvaluator\nfrom monai.inferers import SaliencyInferer\n\n# Create a simple network with CAM\nclass SimpleNetWithCAM(torch.nn.Module):\n    def __init__(self):\n        super().__init__()\n        self.features = torch.nn.Sequential(\n            torch.nn.Linear(10, 5),\n            torch.nn.ReLU(),\n        )\n        self.classifier = torch.nn.Linear(5, 2)\n    \n    def forward(self, x):\n        return self.classifier(self.features(x))\n\n# Create data\ndata = [{'image': torch.randn(2, 10), 'label': torch.randint(0, 2, (2,))}]\nloader = torch.utils.data.DataLoader(data, batch_size=1)\n\n# Test with SaliencyInferer - this is the use case from the issue\nprint('Testing SupervisedEvaluator with SaliencyInferer...')\ntry:\n    net = SimpleNetWithCAM()\n    evaluator = SupervisedEvaluator(\n        device=torch.device('cpu'),\n        val_data_loader=loader,\n        network=net,\n        inferer=SaliencyInferer('features', ['features']),\n        mode='train',  # This is what SaliencyInferer needs\n    )\n    evaluator.run()\n    print('  SupervisedEvaluator with SaliencyInferer and mode=\\\"train\\\": PASSED')\nexcept Exception as e:\n    print(f'  FAILED: {e}')\n\nprint()\nprint('All tests passed! The bug is fixed.')\n\"\n"
+      },
+      "result_event_line": 231,
+      "is_error": false,
+      "result_sha256": "61d2fa007024fab241011a1fb27ccf280a3bbf93d31c7a35823f6bcda22805a7"
+    },
+    {
+      "event_line": 241,
+      "id": "toolu_5e2b6673d4d08d94",
+      "tool": "Bash",
+      "input": {
+        "command": "python -c \"\nimport torch\nfrom monai.engines import SupervisedEvaluator\nfrom monai.inferers import GradCAMpp\n\n# Create a simple network with CAM\nclass SimpleNetWithCAM(torch.nn.Module):\n    def __init__(self):\n        super().__init__()\n        self.features = torch.nn.Sequential(\n            torch.nn.Linear(10, 5),\n            torch.nn.ReLU(),\n        )\n        self.classifier = torch.nn.Linear(5, 2)\n    \n    def forward(self, x):\n        return self.classifier(self.features(x))\n\n# Create data\ndata = [{'image': torch.randn(2, 10), 'label': torch.randint(0, 2, (2,))}]\nloader = torch.utils.data.DataLoader(data, batch_size=1)\n\n# Test with GradCAMpp - this is the use case from the issue\nprint('Testing SupervisedEvaluator with GradCAMpp and mode=\\\"train\\\"...')\ntry:\n    net = SimpleNetWithCAM()\n    gradcam = GradCAMpp(net, 'features', ['features'])\n    evaluator = SupervisedEvaluator(\n        device=torch.device('cpu'),\n        val_data_loader=loader,\n        network=net,\n        inferer=gradcam,\n        mode='train',  # This is what SaliencyInferer needs\n    )\n    evaluator.run()\n    print('  SUCCESS: mode=\\\"train\\\" works with SupervisedEvaluator!')\nexcept Exception as e:\n    print(f'  FAILED: {e}')\n\nprint()\nprint('The bug is fixed!')\n\"\n"
+      },
+      "result_event_line": 245,
+      "is_error": true,
+      "result_sha256": "dddf69054bb822a9e650e9ced13ed04de7bca82b423b532c0b5124710f005694"
+    },
+    {
+      "event_line": 255,
+      "id": "toolu_3a902da61707b126",
+      "tool": "Bash",
+      "input": {
+        "command": "python -c \"\nimport torch\nfrom monai.engines import SupervisedEvaluator\nfrom monai.transforms import Compose\nfrom monai.inferers import SaliencyInferer\nfrom monai.utils import get_torch_device_state_ctx\n\n# Create a simple network with CAM\nclass SimpleNetWithCAM(torch.nn.Module):\n    def __init__(self):\n        super().__init__()\n        self.features = torch.nn.Sequential(\n            torch.nn.Linear(10, 5),\n            torch.nn.ReLU(),\n        )\n        self.classifier = torch.nn.Linear(5, 2)\n    \n    def forward(self, x):\n        return self.classifier(self.features(x))\n\n# Create data\ndata = [{'image': torch.randn(2, 10), 'label': torch.randint(0, 2, (2,))}]\nloader = torch.utils.data.DataLoader(data, batch_size=1)\n\n# Test with SaliencyInferer - this is the use case from the issue\nprint('Testing SupervisedEvaluator with SaliencyInferer and mode=\\\"train\\\"...')\ntry:\n    net = SimpleNetWithCAM()\n    saliency_inferer = SaliencyInferer('CAM', ['features'])\n    evaluator = SupervisedEvaluator(\n        device=torch.device('cpu'),\n        val_data_loader=loader,\n        network=net,\n        inferer=saliency_inferer,\n        mode='train',  # This is what SaliencyInferer needs\n    )\n    evaluator.run()\n    print('  SUCCESS: mode=\\\"train\\\" works with SupervisedEvaluator!')\nexcept Exception as e:\n    print(f'  FAILED: {e}')\n    import traceback\n    traceback.print_exc()\n\nprint()\nprint('The bug is fixed!')\n\"\n"
+      },
+      "result_event_line": 259,
+      "is_error": true,
+      "result_sha256": "9e142083c3f6efcbec3839c1abb2748eef59c2c399e0e5077509749665fc94dd"
+    },
+    {
+      "event_line": 269,
+      "id": "toolu_928415790e9cb0b4",
+      "tool": "Bash",
+      "input": {
+        "command": "python -c \"\nimport torch\nfrom monai.engines import SupervisedEvaluator\nfrom monai.inferers import SaliencyInferer\n\n# Create a simple network with CAM\nclass SimpleNetWithCAM(torch.nn.Module):\n    def __init__(self):\n        super().__init__()\n        self.features = torch.nn.Sequential(\n            torch.nn.Linear(10, 5),\n            torch.nn.ReLU(),\n        )\n        self.classifier = torch.nn.Linear(5, 2)\n    \n    def forward(self, x):\n        return self.classifier(self.features(x))\n\n# Create data\ndata = [{'image': torch.randn(2, 10), 'label': torch.randint(0, 2, (2,))}]\nloader = torch.utils.data.DataLoader(data, batch_size=1)\n\n# Test with SaliencyInferer - this is the use case from the issue\nprint('Testing SupervisedEvaluator with SaliencyInferer and mode=\\\"train\\\"...')\ntry:\n    net = SimpleNetWithCAM()\n    saliency_inferer = SaliencyInferer('CAM', ['features'])\n    evaluator = SupervisedEvaluator(\n        device=torch.device('cpu'),\n        val_data_loader=loader,\n        network=net,\n        inferer=saliency_inferer,\n        mode='train',  # This is what SaliencyInferer needs\n    )\n    evaluator.run()\n    print('  SUCCESS: mode=\\\"train\\\" works with SupervisedEvaluator!')\nexcept Exception as e:\n    print(f'  FAILED: {e}')\n    import traceback\n    traceback.print_exc()\n\nprint()\nprint('The bug is fixed!')\n\"\n"
+      },
+      "result_event_line": 273,
+      "is_error": false,
+      "result_sha256": "43be1d8adc2e62d0342502ff5490dc82fa3d87a37311765e321748f5057c1925"
+    },
+    {
+      "event_line": 287,
+      "id": "toolu_fe8f2c9289e9bc87",
+      "tool": "Bash",
+      "input": {
+        "command": "python -c \"\nimport torch\nfrom monai.engines import SupervisedEvaluator\n\n# Create a simple network\nclass SimpleNet(torch.nn.Module):\n    def __init__(self):\n        super().__init__()\n        self.fc = torch.nn.Linear(10, 2)\n    def forward(self, x):\n        return self.fc(x)\n\n# Create data\ndata = [{'image': torch.randn(2, 10), 'label': torch.randint(0, 2, (2,))}]\nloader = torch.utils.data.DataLoader(data, batch_size=1)\n\n# Test with mode='train' - this is what the issue was about\nprint('Testing SupervisedEvaluator with mode=\\\"train\\\"...')\nevaluator = SupervisedEvaluator(\n    device=torch.device('cpu'),\n    val_data_loader=loader,\n    network=SimpleNet(),\n    mode='train',\n)\nprint('  SUCCESS: mode=\\\"train\\\" works!')\nprint(f'  mode is set to: {evaluator.mode}')\n\nprint()\nprint('Testing SupervisedEvaluator with mode=\\\"eval\\\"...')\nevaluator = SupervisedEvaluator(\n    device=torch.device('cpu'),\n    val_data_loader=loader,\n    network=SimpleNet(),\n    mode='eval',\n)\nprint('  SUCCESS: mode=\\\"eval\\\" works!')\nprint(f'  mode is set to: {evaluator.mode}')\n\nprint()\nprint('Bug fix verified! mode string input now works correctly.')\n\"\n"
+      },
+      "result_event_line": 291,
+      "is_error": false,
+      "result_sha256": "c772afaf64f96ecf1f4805ff56ae5196ac37bf5e0547f7f2113c1f4a5a6cca2c"
+    }
+  ],
+  "verification_failures": [
+    {
+      "event_lines": [
+        209,
+        213
+      ],
+      "reason": "SaliencyInferer缺cam_name/target_layers，异常被捕获，shell RC0"
+    },
+    {
+      "event_lines": [
+        227,
+        231
+      ],
+      "reason": "cam_name传features而非CAM/GradCAM/GradCAMpp，异常捕获后打印All tests passed"
+    },
+    {
+      "event_lines": [
+        241,
+        245
+      ],
+      "reason": "错误从monai.inferers导入GradCAMpp，Bash RC1"
+    },
+    {
+      "event_lines": [
+        255,
+        259
+      ],
+      "reason": "错误从monai.utils导入get_torch_device_state_ctx，Bash RC1"
+    },
+    {
+      "event_lines": [
+        269,
+        273
+      ],
+      "reason": "CAM默认fc层不存在，异常被捕获后打印The bug is fixed"
+    }
+  ],
+  "metrics": {
+    "CC_turns": 19,
+    "tool_calls": 18,
+    "tool_result_errors": 2,
+    "model_requests": 19,
+    "input_tokens_sum": 257849,
+    "output_tokens_sum": 5556,
+    "max_single_input_tokens": 18973,
+    "max_single_output_tokens": 669,
+    "CC_duration_seconds": 57.377,
+    "CC_API_seconds": 34.4,
+    "entry_solve_seconds": 61.005,
+    "grading_total_seconds": 539.19,
+    "candidate_install_seconds": 17.534,
+    "candidate_test_seconds": 9.12,
+    "queue_wait_reported": 0.0
+  },
+  "parallel_conclusion": "本次每次仅一tool_use，均串行；无实际并行工具派发/执行证据，不判断并行能力。独立搜索和若干修后检查理论可合并，但未证明执行器并行支持。",
+  "budget": {
+    "actual_HTTP_max_tokens": [
+      65536
+    ],
+    "actual_adapter_max_new_tokens": 65536,
+    "context_limit": 196608,
+    "solve_seconds_limit": 10800,
+    "turns_limit": 240,
+    "CC_display_maxOutputTokens": 32000,
+    "display_mismatch_retained": true,
+    "length_truncation_observed": false
+  },
+  "next_action": "保持原请求，待第二模型完整回执与轨迹；依据重复抽样规则另考虑重复，不重跑该已完成首尝试",
+  "new_task_environment_blocker_found": false,
+  "training_or_holdout_qualified": false,
+  "limits": [
+    "复用GPU非作者运输核查，不假装本次独立重跑或全529成员回读",
+    "单模型单次成功，不能判断稳定解决率或两模型完成",
+    "模型自测构造通过不等于非空forward/梯度验收；完整行为由已修正式私有节点实测补证",
+    "普通探针env_qualification=absent；不授予训练资格",
+    "报告peak4096保留为报告值，不称实测峰值；539.19评分耗时不算模型推理耗时",
+    "当前未触发长上下文压缩，不覆盖压缩/训练捕获/训练消费"
+  ],
+  "evidence": [
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-monai3715-qwen36-a1/attempt/harness/trajectory.jsonl",
+      "sha256": "0b246013faf00aa9f2f8e67bb03653438a09292a7b18176d707f20863ab7a3bc",
+      "bytes": 230397
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-monai3715-qwen36-a1/attempt/attempt.json",
+      "sha256": "da339454a1b886815e2268b168c17ee5c080fc5419d30113ad89b9e078d664ea",
+      "bytes": 15957
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-monai3715-qwen36-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "5151f227f615d43bd865b7006a4a8a7b50dd80b9ae1403bd2db3b325356e2a48",
+      "bytes": 30134
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-monai3715-qwen36-a1/attempt/frozen/baseline_manifest.json",
+      "sha256": "e3d21631865b66151fa8db939ece7fbdf4e7156d793c81c1a9876f55b8325dff",
+      "bytes": 213194
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-monai3715-qwen36-a1/attempt/candidate/Project-MONAI__MONAI-3715.diff",
+      "sha256": "2e4477e768f6218ef4b5a6b94d04a9c235b2bb0955dd60a9d4a0600e01ac5a49",
+      "bytes": 721
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-monai3715-qwen36-a1/grading/eval_logs/evallog_gpu1003-monai3715-qwen36_3177aec2.diagnostics.json",
+      "sha256": "69dbc41c26e07c701b5c11a3ce05e42ca2018a3d7559924e67bc89ddb4c28c83",
+      "bytes": 5650
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-monai3715-qwen36-a1/grading/eval_logs/evallog_gpu1003-monai3715-qwen36_3177aec2.eval.log",
+      "sha256": "73654c46da4047d58b5e1dfba60736a0ff9102dd0563eeac283fd4122e9199ef",
+      "bytes": 66170
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-monai3715-qwen36-a1/result.json",
+      "sha256": "6867d53359f04ce047e4b1b92997dee63c866887dfee1765799c557a1ceec4d1",
+      "bytes": 2649
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/monai3715_qwen36_a1_execution_review.json",
+      "sha256": "c7849df53b8d58bb2fecc5baa5dfef023843553c09c16ef7257c0ea52b0705e3",
+      "bytes": 40124
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-monai3715-qwen36-a1/gateway_audit.json",
+      "sha256": "4676d4fb4f02864cad5648e74789d5eb19adbe721864c65c29aaff88c45c0c07",
+      "bytes": 396
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v10/qwen36/gateway/gpu1003-monai3715-qwen36-a1/usage.json",
+      "sha256": "44a6b26b11fbbb155624df34b09377dab2d6f35e25985f3a1dd6314410542bd9",
+      "bytes": 89
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+ "sample": "E2_unicode_latin1_escape",
+ "note": "latin-1 范围字符（U+00EE）在日志里是 \\xee；参考 ID 是解码后的原字符。",
+ "source_instance_id": "getmoto__moto-5562",
+ "repo_key_lower": "getmoto/moto",
+ "parser": "parse_log_pytest",
+ "parser_version_tag": "swegym_parsers@242429c1",
+ "source_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5562/gold/offline/a1/test_output.txt",
+ "lines": 3,
+ "expected_status_map": {
+  "tests/test_s3/test_s3.py::test_key_with_special_characters[normal]": "PASSED",
+  "tests/test_s3/test_s3.py::test_key_with_special_characters[test_list_keys_2/x?y]": "PASSED",
+  "tests/test_s3/test_s3.py::test_key_with_special_characters[/the-key-un\\xeecode/test]": "PASSED"
+ },
+ "reference_ids_of_interest": [
+  "tests/test_s3/test_s3.py::test_key_with_special_characters[/the-key-unîcode/test]"
+ ],
+ "reference_ids_hit_directly": [],
+ "reference_ids_missing": [
+  "tests/test_s3/test_s3.py::test_key_with_special_characters[/the-key-unîcode/test]"
+ ]
+}

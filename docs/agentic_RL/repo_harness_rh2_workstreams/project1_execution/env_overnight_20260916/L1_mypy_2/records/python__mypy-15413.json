@@ -1,0 +1,250 @@
+{
+ "task_id": "python__mypy-15413",
+ "source": "SWE-Gym lite / python/mypy PR 15413（--warn-return-any 不再对 lambda 生效）",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "e7b917ec7532206b996542570f4b68a33c3ff771",
+  "version": "1.4",
+  "python_version": "3.11",
+  "eval_cmd": "pytest -n0 -rA -k",
+  "f2p": [
+   "mypy/test/testcheck.py::TypeCheckSuite::check-flags.test::testReturnAnyLambda"
+  ],
+  "p2p": [],
+  "gold_paths": [
+   "mypy/checker.py"
+  ],
+  "test_patch_paths": [
+   "test-data/unit/check-flags.test"
+  ],
+  "runtime_evidence": "无（不在 stage1 样本、in_e2 空、无 DeepSeek 候选）"
+ },
+ "public_view": {
+  "goal": "`--warn-return-any` 会对 `sorted([...], key=lambda i: x[i])` 这种小 lambda 报 'Returning Any from function declared to return ...'；题面希望不要报。",
+  "constraints": [
+   "题面给完整复现与两个版本的对比输出，无外链、无图片、无截断",
+   "**题面自己没下结论**：'I'm not actually sure that this is a bug or whether this is an intended feature -- I could see it either way.'"
+  ],
+  "unknowns_from_public_only": [
+   "到底要不要改：题面明说两种都说得通；hints 里维护者也说 'I agree that I'm not sure to what extent this is intentional'。'lambda 一律豁免'这个决定只存在于 PR 里",
+   "如果改，豁免范围是 lambda 全体，还是只在返回类型是 TypeVar/协议时豁免？题面无线索",
+   "题面复现依赖 typeshed 的 sorted 签名（0.782→0.790 之间变过），与 base(1.4) 的签名未必一致"
+  ],
+  "base_code_evidence": [
+   "e7b917ec7:mypy/checker.py:4236 `is_lambda = isinstance(self.scope.top_function(), LambdaExpr)` —— 判定位在 base 已存在，且已用于 allow_none_func_call（:4245）",
+   "e7b917ec7:mypy/checker.py:4262-4275 warn_return_any 分支的四个 and 条件里没有 is_lambda",
+   "e7b917ec7:test-data/unit/check-flags.test 里没有任何 --warn-return-any 用例；既有用例在 check-warnings.test（9 处 --warn-return-any、4 处 'Returning Any' 断言）、check-errorcodes.test、check-basic.test"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "test_patch 把新 case 加进 test-data/unit/check-flags.test，而该文件在 base 里**一条 --warn-return-any 用例都没有**；既有的 warn-return-any 用例集中在 check-warnings.test"
+   ],
+   "note": "材料对应本身没错（文件存在、gold 目标存在），但新用例放错了文件。后果见 25/26：以 test_patch 路径为准的保护与以 -k 为准的选择都因此错过了真正的回归集。",
+   "by": "L1_mypy_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "e7b917ec7:mypy/checker.py:4262-4275 缺 is_lambda 条件"
+   ],
+   "note": "静态确认 base 会对 lambda 报 warn-return-any。",
+   "by": "L1_mypy_2"
+  },
+  "3": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "题面：'I'm not actually sure that this is a bug or whether this is an intended feature'",
+    "hints_text 520 字符，维护者同样不确定：'I agree that I'm not sure to what extent this is intentional, but a) I agree it's kind of annoying, b) ... we don't get the error when aliasing the lambda'"
+   ],
+   "note": "题面与 hints 都没有给出'应该改成什么'的结论——它是一份**没有需求的 bug report**。agent 从公开材料无法确定方向（继续报错也是合法立场）。",
+   "by": "L1_mypy_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只碰 test-data/unit/check-flags.test"
+   ],
+   "note": "无非测试源码；gold 不碰测试样路径。",
+   "by": "L1_mypy_2"
+  },
+  "17": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "同 file_rules",
+    "本题真正的回归集 check-warnings.test 不在 test_patch 里，因而完全不受保护"
+   ],
+   "note": "仓库级 + 本题特例。",
+   "by": "L1_mypy_2"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "40 题里 gold 改 mypy/checker.py 的还有 11945/15413/16905/9909，改的函数各不相同"
+   ],
+   "note": "无重复。",
+   "by": "L1_mypy_2"
+  },
+  "23": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "题面无结论；F2P 要求两处都不报错"
+   ],
+   "note": "公开材料推不出 F2P 所检查的行为方向。另：F2P 的第二段 `fn = lambda x: a; cb(fn)` 在 base 上本来就不报错（hints 明说 'we don't get the error when aliasing the lambda'），所以它其实是一条伪装成 F2P 的回归断言。",
+   "by": "L1_mypy_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 无 `# E:` 行，纯'无输出'断言"
+   ],
+   "note": "不强制唯一实现——但代价是过于宽松，见 25。",
+   "by": "L1_mypy_2"
+  },
+  "25": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "F2P=1 且是纯负向（要求没有任何错误输出）、P2P=0",
+    "e7b917ec7:test-data/unit/check-warnings.test 有 4 条 'Returning Any from function declared to return' 断言、9 处 --warn-return-any；check-errorcodes.test 与 check-basic.test 各 1 处 —— 全部不在 F2P/P2P"
+   ],
+   "note": "最省事的假修复：把 e7b917ec7:mypy/checker.py:4276 那行 `self.msg.incorrectly_returning_any(return_type, s)` 删掉（或把 self.options.warn_return_any 恒判 False）。F2P 满分，P2P 无约束，等于 `--warn-return-any` 整体失效而评分毫无察觉。",
+   "by": "L1_mypy_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "P2P=0，且真正的回归集在另一个文件"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_mypy_2"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 只加一行 `and not is_lambda`；is_lambda 在 base 的同一函数里已定义（:4236）"
+   ],
+   "note": "gold 正确、最小、不依赖未交付改动。",
+   "by": "L1_mypy_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 无 PR/commit 链接、无修复代码"
+   ],
+   "note": "无静态泄漏。",
+   "by": "L1_mypy_2"
+  },
+  "6": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "未实跑安装。",
+   "by": "L1_mypy_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P case 不需要 fixture"
+   ],
+   "note": "无外部依赖。注意题面复现用 sorted，依赖 typeshed 版本；F2P 改用自定义 Callable，回避了这一点。",
+   "by": "L1_mypy_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "case 正文无网络调用"
+   ],
+   "note": "纯离线。",
+   "by": "L1_mypy_2"
+  },
+  "18": {
+   "status": "pass",
+   "evidence_refs": [
+    "kscan.json:python__mypy-15413 over_select=[]"
+   ],
+   "note": "无 -k 过选。",
+   "by": "L1_mypy_2"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "nodeid 4 段；e7b917ec7:mypy/test/data.py 含 DataFileCollector"
+   ],
+   "note": "形状一致。",
+   "by": "L1_mypy_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "requirement_no_decision",
+   "severity": "P1",
+   "evidence_refs": [
+    "题面与 hints 都明说不确定该不该改"
+   ],
+   "proposed_action": "若保留本题，必须把 PR 的裁定（'lambda 一律豁免 --warn-return-any'）写进题面；否则模型选'维持现状'同样合理却判 0。",
+   "next_experiment": "让模型只读题面作答，统计它选择'不改'或'加 cast 建议'的比例。"
+  },
+  {
+   "category": "grading_coverage",
+   "severity": "P1",
+   "evidence_refs": [
+    "F2P 纯负向 + P2P=0；check-warnings.test 的 4 条断言未入评分"
+   ],
+   "proposed_action": "补 P2P：check-warnings.test 全部 --warn-return-any 用例，外加 check-errorcodes.test 的 'Returning Any' 用例。",
+   "next_experiment": "删掉 incorrectly_returning_any 调用的假修复跑当前 F2P（预期满分），再跑 check-warnings.test（预期 4 条挂）。"
+  },
+  {
+   "category": "test_placement",
+   "severity": "P3",
+   "evidence_refs": [
+    "新用例进了 check-flags.test，既有同主题用例在 check-warnings.test"
+   ],
+   "proposed_action": "重建 P2P 时按'功能'而不是'test_patch 触碰的文件'取候选集。",
+   "next_experiment": "无。"
+  },
+  {
+   "category": "file_boundary",
+   "severity": "P1",
+   "evidence_refs": [
+    "rh2/src/repoharness2/grading/manager.py:656/672/581"
+   ],
+   "proposed_action": "建议把 mypy/test/* 与 test-data/* 纳入 hygiene 保护（40 题 gold 均不触碰）。",
+   "next_experiment": "构造只改 mypy/test/helpers.py::assert_string_arrays_equal 的候选 patch 走一次评分，确认当前会判满分。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 test-data/unit/ 下的 .test 数据文件，gold 只碰 mypy/ 源码，两者无交集，按第四组 B 默认保持空。仓库级建议（需用户裁定、对 40 题统一生效）：把 'mypy/test/*' 与 'test-data/*' 加入 hygiene.test_globs——40 题 gold 无一触碰这两处（已对 validation_bundles 全量核对），而当前 agent 改 mypy/test/helpers.py、mypy/test/data.py 或 test-data/unit/fixtures/*.pyi 既不被 eval 的 git checkout 还原，也不被判 rejected_test_tampering。副作用：agent 在 test-data/ 下建临时文件会让整份提交作废，需一并决定。",
+  "evidence_refs": [
+   "rh2/src/repoharness2/grading/manager.py:656、:672、:581",
+   "rh2/src/repoharness2/contracts/grading.py:118-121"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "mypy/test/testcheck.py::TypeCheckSuite::check-warnings.test 全文件",
+   "reason": "--warn-return-any 的既有用例全在这里（9 处 flag、4 条 'Returning Any' 断言），是本题唯一有意义的护栏。"
+  },
+  {
+   "id": "check-errorcodes.test 里 [misc]/[no-any-return] 相关 case",
+   "reason": "错误码路径同样经过被改的分支。"
+  },
+  {
+   "id": "新增：具名函数返回 Any 时仍须报错（与 lambda 形成对照）",
+   "reason": "钉死豁免只对 lambda 生效。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "reject_revision",
+  "reason": "题面是一份明确写着'我也不确定该不该改'的 bug report，评分方向只存在于 PR 里；加上 F2P 纯负向 + P2P=0，删掉整条检查即可满分。要保留必须同时改题面与补 P2P。"
+ },
+ "costs": {
+  "minutes": 24
+ }
+}

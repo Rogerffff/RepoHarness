@@ -1,0 +1,114 @@
+============================= test session starts ==============================
+platform linux -- Python 3.9.19, pytest-8.3.2, pluggy-1.5.0 -- /opt/miniconda3/envs/testbed/bin/python
+rootdir: /testbed
+configfile: setup.cfg
+plugins: rerunfailures-14.0, xdist-3.6.1, cov-5.0.0
+collecting ... collected 122 items / 118 deselected / 4 selected
+
+dask/array/tests/test_slicing.py::test_slicing_integer_no_warnings FAILED [ 25%]
+dask/array/tests/test_slicing.py::test_getitem_avoids_large_chunks FAILED [ 50%]
+dask/array/tests/test_slicing.py::test_getitem_avoids_large_chunks_missing[chunks0] PASSED [ 75%]
+dask/array/tests/test_slicing.py::test_getitem_avoids_large_chunks_missing[chunks1] XFAIL [100%]
+
+=================================== FAILURES ===================================
+_______________________ test_slicing_integer_no_warnings _______________________
+
+    def test_slicing_integer_no_warnings():
+        # https://github.com/dask/dask/pull/2457/
+        X = da.random.random((100, 2), (2, 2))
+        idx = np.array([0, 0, 1, 1])
+>       with pytest.warns(None) as rec:
+
+dask/array/tests/test_slicing.py:788: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = WarningsChecker(record=True), expected_warning = None, match_expr = None
+
+    def __init__(
+        self,
+        expected_warning: type[Warning] | tuple[type[Warning], ...] = Warning,
+        match_expr: str | Pattern[str] | None = None,
+        *,
+        _ispytest: bool = False,
+    ) -> None:
+        check_ispytest(_ispytest)
+        super().__init__(_ispytest=True)
+    
+        msg = "exceptions must be derived from Warning, not %s"
+        if isinstance(expected_warning, tuple):
+            for exc in expected_warning:
+                if not issubclass(exc, Warning):
+                    raise TypeError(msg % type(exc))
+            expected_warning_tup = expected_warning
+        elif isinstance(expected_warning, type) and issubclass(
+            expected_warning, Warning
+        ):
+            expected_warning_tup = (expected_warning,)
+        else:
+>           raise TypeError(msg % type(expected_warning))
+E           TypeError: exceptions must be derived from Warning, not <class 'NoneType'>
+
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/_pytest/recwarn.py:280: TypeError
+_______________________ test_getitem_avoids_large_chunks _______________________
+
+    def test_getitem_avoids_large_chunks():
+        with dask.config.set({"array.chunk-size": "0.1Mb"}):
+            a = np.arange(2 * 128 * 128, dtype="int64").reshape(2, 128, 128)
+            arr = da.from_array(a, chunks=(1, 128, 128))
+            indexer = [0] + [1] * 11
+            expected = a[indexer]
+    
+            # By default, we warn
+            with pytest.warns(da.PerformanceWarning):
+                result = arr[indexer]
+    
+            assert_eq(result, expected)
+            assert result.chunks == ((1, 11), (128,), (128,))
+    
+            # Users can silence the warning
+            with dask.config.set({"array.slicing.split-large-chunks": False}):
+>               with pytest.warns(None) as e:
+
+dask/array/tests/test_slicing.py:891: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = WarningsChecker(record=True), expected_warning = None, match_expr = None
+
+    def __init__(
+        self,
+        expected_warning: type[Warning] | tuple[type[Warning], ...] = Warning,
+        match_expr: str | Pattern[str] | None = None,
+        *,
+        _ispytest: bool = False,
+    ) -> None:
+        check_ispytest(_ispytest)
+        super().__init__(_ispytest=True)
+    
+        msg = "exceptions must be derived from Warning, not %s"
+        if isinstance(expected_warning, tuple):
+            for exc in expected_warning:
+                if not issubclass(exc, Warning):
+                    raise TypeError(msg % type(exc))
+            expected_warning_tup = expected_warning
+        elif isinstance(expected_warning, type) and issubclass(
+            expected_warning, Warning
+        ):
+            expected_warning_tup = (expected_warning,)
+        else:
+>           raise TypeError(msg % type(expected_warning))
+E           TypeError: exceptions must be derived from Warning, not <class 'NoneType'>
+
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/_pytest/recwarn.py:280: TypeError
+==================================== PASSES ====================================
+============================= slowest 10 durations =============================
+2.81s call     dask/array/tests/test_slicing.py::test_getitem_avoids_large_chunks_missing[chunks0]
+0.05s call     dask/array/tests/test_slicing.py::test_getitem_avoids_large_chunks_missing[chunks1]
+0.01s call     dask/array/tests/test_slicing.py::test_getitem_avoids_large_chunks
+
+(7 durations < 0.005s hidden.  Use -vv to show these durations.)
+=========================== short test summary info ============================
+PASSED dask/array/tests/test_slicing.py::test_getitem_avoids_large_chunks_missing[chunks0]
+XFAIL dask/array/tests/test_slicing.py::test_getitem_avoids_large_chunks_missing[chunks1] - https://github.com/dask/dask/issues/6586
+FAILED dask/array/tests/test_slicing.py::test_slicing_integer_no_warnings - T...
+FAILED dask/array/tests/test_slicing.py::test_getitem_avoids_large_chunks - T...
+============ 2 failed, 1 passed, 118 deselected, 1 xfailed in 3.57s ============

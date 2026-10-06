@@ -1,0 +1,1371 @@
+{
+ "schema": "rh2.env_overnight.l4.r2e_tasks.v1",
+ "generated_by": "docs/.../env_overnight_20260916/L4_r2e/build_tasks_48.py",
+ "source": "R2E-Gym/R2E-Gym-Subset",
+ "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+ "task_revision": "upstream",
+ "reconciliation": {
+  "core24_commits": 24,
+  "night_expansion24_commits": 24,
+  "total": 48,
+  "duplicate_commits": 0,
+  "all_same_source": true,
+  "all_same_source_revision": true,
+  "matches_coordinator_r2e_images_48": true,
+  "image_ref_equals_repo_final_colon_commit": true,
+  "per_repo": {
+   "aiohttp": 5,
+   "coveragepy": 5,
+   "datalad": 5,
+   "numpy": 7,
+   "orange3": 7,
+   "pandas": 7,
+   "pillow": 7,
+   "scrapy": 5
+  },
+  "note": "两批均来自 R2E-Gym/R2E-Gym-Subset 同一冻结 revision；不是跨来源候选表（SWE-Gym 的 24 题在 b_probe_preparation 的同一 manifest 里，已按 source 过滤剔除）"
+ },
+ "tasks": [
+  {
+   "task_id": "r2e::1c1c0ea353041c8814a6131c3a92978dc2373e52",
+   "group": "night_expansion24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "aiohttp",
+   "commit_hash": "1c1c0ea353041c8814a6131c3a92978dc2373e52",
+   "image_ref": "namanjain12/aiohttp_final:1c1c0ea353041c8814a6131c3a92978dc2373e52",
+   "image_digest_observed": null,
+   "workdir": "/testbed",
+   "expected_n": 56,
+   "expected_status_counts": {
+    "PASSED": 56
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1114,
+   "coverage_reason": "同一既有仓库按 expected 测试数量排序的四分位/中位/四分之三位；与旧24题去重，不代表能力难度或题目公平性",
+   "selection_status": "environment_exploration_only",
+   "selection_quantile": 0.5,
+   "materials_refs": {
+    "ledger": "runs/env_probe_stage1_20260910/ledger/{r2e_preflight_20260911,r2e_remainder_20260911,r2e_failure_repeats_20260911}/results.jsonl",
+    "logs_root": "runs/env_probe_stage1_20260910/ledger/<batch>/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/candidate_manifest.jsonl",
+    "source_row_full": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/r2e_candidates_full.jsonl",
+    "fixture_snapshot": "runs/env_probe_stage1_20260910/ledger/r2e_fixture_snapshots_20260911/1c1c0ea353041c8814a6131c3a92978dc2373e52/"
+   }
+  },
+  {
+   "task_id": "r2e::22a12cc2e2ef289d9e96fd87dfc17272177e52ac",
+   "group": "core24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "aiohttp",
+   "commit_hash": "22a12cc2e2ef289d9e96fd87dfc17272177e52ac",
+   "image_ref": "namanjain12/aiohttp_final:22a12cc2e2ef289d9e96fd87dfc17272177e52ac",
+   "image_digest_observed": "sha256:0e2b38f160ac763a3fe3421ac9d6b7a5b0cf495677d9dc47dcec6a5b6c20c490",
+   "workdir": "/testbed",
+   "expected_n": 18,
+   "expected_status_counts": {
+    "PASSED": 18
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1275,
+   "coverage_reason": "预留扩展：同仓库不同任务及题面长度；题面长度不代表难度或运行成本，尚未逐题质量审查",
+   "selection_status": "development_candidate_only",
+   "materials_refs": {
+    "ledger": "docs/.../env_probe_20260909/ledger/r2e_ledger_v3.jsonl",
+    "logs_root": "runs/env_probe_20260909_final_sync/ledger/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "docs/.../b_probe_preparation_20260909/candidate_manifest.jsonl",
+    "problem_statement": "docs/.../data_freeze/meta/r2e_subset.jsonl",
+    "source_row_full": "absent_locally"
+   }
+  },
+  {
+   "task_id": "r2e::240da100151933883d7dea0528d45877df025b92",
+   "group": "night_expansion24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "aiohttp",
+   "commit_hash": "240da100151933883d7dea0528d45877df025b92",
+   "image_ref": "namanjain12/aiohttp_final:240da100151933883d7dea0528d45877df025b92",
+   "image_digest_observed": null,
+   "workdir": "/testbed",
+   "expected_n": 33,
+   "expected_status_counts": {
+    "PASSED": 31,
+    "FAILED": 2
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1051,
+   "coverage_reason": "同一既有仓库按 expected 测试数量排序的四分位/中位/四分之三位；与旧24题去重，不代表能力难度或题目公平性",
+   "selection_status": "environment_exploration_only",
+   "selection_quantile": 0.25,
+   "materials_refs": {
+    "ledger": "runs/env_probe_stage1_20260910/ledger/{r2e_preflight_20260911,r2e_remainder_20260911,r2e_failure_repeats_20260911}/results.jsonl",
+    "logs_root": "runs/env_probe_stage1_20260910/ledger/<batch>/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/candidate_manifest.jsonl",
+    "source_row_full": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/r2e_candidates_full.jsonl",
+    "fixture_snapshot": "runs/env_probe_stage1_20260910/ledger/r2e_fixture_snapshots_20260911/240da100151933883d7dea0528d45877df025b92/"
+   }
+  },
+  {
+   "task_id": "r2e::4075c653fb67a29740bf9ac050bb02d10a57343a",
+   "group": "night_expansion24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "aiohttp",
+   "commit_hash": "4075c653fb67a29740bf9ac050bb02d10a57343a",
+   "image_ref": "namanjain12/aiohttp_final:4075c653fb67a29740bf9ac050bb02d10a57343a",
+   "image_digest_observed": null,
+   "workdir": "/testbed",
+   "expected_n": 129,
+   "expected_status_counts": {
+    "PASSED": 126,
+    "FAILED": 3
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1081,
+   "coverage_reason": "同一既有仓库按 expected 测试数量排序的四分位/中位/四分之三位；与旧24题去重，不代表能力难度或题目公平性",
+   "selection_status": "environment_exploration_only",
+   "selection_quantile": 0.75,
+   "materials_refs": {
+    "ledger": "runs/env_probe_stage1_20260910/ledger/{r2e_preflight_20260911,r2e_remainder_20260911,r2e_failure_repeats_20260911}/results.jsonl",
+    "logs_root": "runs/env_probe_stage1_20260910/ledger/<batch>/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/candidate_manifest.jsonl",
+    "source_row_full": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/r2e_candidates_full.jsonl",
+    "fixture_snapshot": "runs/env_probe_stage1_20260910/ledger/r2e_fixture_snapshots_20260911/4075c653fb67a29740bf9ac050bb02d10a57343a/"
+   }
+  },
+  {
+   "task_id": "r2e::618335186f22834c0d8daabcf53ccf44d42488a2",
+   "group": "core24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "aiohttp",
+   "commit_hash": "618335186f22834c0d8daabcf53ccf44d42488a2",
+   "image_ref": "namanjain12/aiohttp_final:618335186f22834c0d8daabcf53ccf44d42488a2",
+   "image_digest_observed": "sha256:67aefa179aab4b224a367b97446b72c033d9884ad10dcda09f7165a0e4b4e65b",
+   "workdir": "/testbed",
+   "expected_n": 47,
+   "expected_status_counts": {
+    "PASSED": 47
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1145,
+   "coverage_reason": "HTTP 压缩/分块边界",
+   "selection_status": "development_candidate_only",
+   "materials_refs": {
+    "ledger": "docs/.../env_probe_20260909/ledger/r2e_ledger_v3.jsonl",
+    "logs_root": "runs/env_probe_20260909_final_sync/ledger/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "docs/.../b_probe_preparation_20260909/candidate_manifest.jsonl",
+    "problem_statement": "docs/.../data_freeze/meta/r2e_subset.jsonl",
+    "source_row_full": "absent_locally"
+   }
+  },
+  {
+   "task_id": "r2e::016af5f6352d69206ac8f7537c2b18828767bcae",
+   "group": "night_expansion24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "coveragepy",
+   "commit_hash": "016af5f6352d69206ac8f7537c2b18828767bcae",
+   "image_ref": "namanjain12/coveragepy_final:016af5f6352d69206ac8f7537c2b18828767bcae",
+   "image_digest_observed": null,
+   "workdir": "/testbed",
+   "expected_n": 15,
+   "expected_status_counts": {
+    "PASSED": 14,
+    "FAILED": 1
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1148,
+   "coverage_reason": "同一既有仓库按 expected 测试数量排序的四分位/中位/四分之三位；与旧24题去重，不代表能力难度或题目公平性",
+   "selection_status": "environment_exploration_only",
+   "selection_quantile": 0.25,
+   "materials_refs": {
+    "ledger": "runs/env_probe_stage1_20260910/ledger/{r2e_preflight_20260911,r2e_remainder_20260911,r2e_failure_repeats_20260911}/results.jsonl",
+    "logs_root": "runs/env_probe_stage1_20260910/ledger/<batch>/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/candidate_manifest.jsonl",
+    "source_row_full": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/r2e_candidates_full.jsonl",
+    "fixture_snapshot": "runs/env_probe_stage1_20260910/ledger/r2e_fixture_snapshots_20260911/016af5f6352d69206ac8f7537c2b18828767bcae/"
+   }
+  },
+  {
+   "task_id": "r2e::5dbbe1430c16fe15b553e6909be8be5f2b9b71b9",
+   "group": "night_expansion24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "coveragepy",
+   "commit_hash": "5dbbe1430c16fe15b553e6909be8be5f2b9b71b9",
+   "image_ref": "namanjain12/coveragepy_final:5dbbe1430c16fe15b553e6909be8be5f2b9b71b9",
+   "image_digest_observed": null,
+   "workdir": "/testbed",
+   "expected_n": 75,
+   "expected_status_counts": {
+    "PASSED": 75
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 744,
+   "coverage_reason": "同一既有仓库按 expected 测试数量排序的四分位/中位/四分之三位；与旧24题去重，不代表能力难度或题目公平性",
+   "selection_status": "environment_exploration_only",
+   "selection_quantile": 0.75,
+   "materials_refs": {
+    "ledger": "runs/env_probe_stage1_20260910/ledger/{r2e_preflight_20260911,r2e_remainder_20260911,r2e_failure_repeats_20260911}/results.jsonl",
+    "logs_root": "runs/env_probe_stage1_20260910/ledger/<batch>/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/candidate_manifest.jsonl",
+    "source_row_full": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/r2e_candidates_full.jsonl",
+    "fixture_snapshot": "runs/env_probe_stage1_20260910/ledger/r2e_fixture_snapshots_20260911/5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/"
+   }
+  },
+  {
+   "task_id": "r2e::97997d2cd6801d0335e3fa162b719d6f8c160266",
+   "group": "night_expansion24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "coveragepy",
+   "commit_hash": "97997d2cd6801d0335e3fa162b719d6f8c160266",
+   "image_ref": "namanjain12/coveragepy_final:97997d2cd6801d0335e3fa162b719d6f8c160266",
+   "image_digest_observed": null,
+   "workdir": "/testbed",
+   "expected_n": 44,
+   "expected_status_counts": {
+    "PASSED": 44
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1300,
+   "coverage_reason": "同一既有仓库按 expected 测试数量排序的四分位/中位/四分之三位；与旧24题去重，不代表能力难度或题目公平性",
+   "selection_status": "environment_exploration_only",
+   "selection_quantile": 0.5,
+   "materials_refs": {
+    "ledger": "runs/env_probe_stage1_20260910/ledger/{r2e_preflight_20260911,r2e_remainder_20260911,r2e_failure_repeats_20260911}/results.jsonl",
+    "logs_root": "runs/env_probe_stage1_20260910/ledger/<batch>/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/candidate_manifest.jsonl",
+    "source_row_full": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/r2e_candidates_full.jsonl",
+    "fixture_snapshot": "runs/env_probe_stage1_20260910/ledger/r2e_fixture_snapshots_20260911/97997d2cd6801d0335e3fa162b719d6f8c160266/"
+   }
+  },
+  {
+   "task_id": "r2e::ea6906b092d9bb09285094eee94e322d2cb413a5",
+   "group": "core24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "coveragepy",
+   "commit_hash": "ea6906b092d9bb09285094eee94e322d2cb413a5",
+   "image_ref": "namanjain12/coveragepy_final:ea6906b092d9bb09285094eee94e322d2cb413a5",
+   "image_digest_observed": "sha256:e6069f48a7815401ea56658b9eaeeae97581d0f1c890c31b44b94ca435d34cdf",
+   "workdir": "/testbed",
+   "expected_n": 46,
+   "expected_status_counts": {
+    "PASSED": 46
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1192,
+   "coverage_reason": "预留扩展：同仓库不同任务及题面长度；题面长度不代表难度或运行成本，尚未逐题质量审查",
+   "selection_status": "development_candidate_only",
+   "materials_refs": {
+    "ledger": "docs/.../env_probe_20260909/ledger/r2e_ledger_v3.jsonl",
+    "logs_root": "runs/env_probe_20260909_final_sync/ledger/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "docs/.../b_probe_preparation_20260909/candidate_manifest.jsonl",
+    "problem_statement": "docs/.../data_freeze/meta/r2e_subset.jsonl",
+    "source_row_full": "absent_locally"
+   }
+  },
+  {
+   "task_id": "r2e::f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96",
+   "group": "core24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "coveragepy",
+   "commit_hash": "f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96",
+   "image_ref": "namanjain12/coveragepy_final:f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96",
+   "image_digest_observed": "sha256:fb0335af8820e2f5cda1cc4ed82380546ed36fbd485da4181b8de9ef74b9ae28",
+   "workdir": "/testbed",
+   "expected_n": 4,
+   "expected_status_counts": {
+    "PASSED": 4
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1062,
+   "coverage_reason": "覆盖率报告与期望输出解析",
+   "selection_status": "development_candidate_only",
+   "materials_refs": {
+    "ledger": "docs/.../env_probe_20260909/ledger/r2e_ledger_v3.jsonl",
+    "logs_root": "runs/env_probe_20260909_final_sync/ledger/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "docs/.../b_probe_preparation_20260909/candidate_manifest.jsonl",
+    "problem_statement": "docs/.../data_freeze/meta/r2e_subset.jsonl",
+    "source_row_full": "absent_locally"
+   }
+  },
+  {
+   "task_id": "r2e::16c1ffc349df566151db0beb6d355ca27266bb8c",
+   "group": "night_expansion24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "datalad",
+   "commit_hash": "16c1ffc349df566151db0beb6d355ca27266bb8c",
+   "image_ref": "namanjain12/datalad_final:16c1ffc349df566151db0beb6d355ca27266bb8c",
+   "image_digest_observed": null,
+   "workdir": "/testbed",
+   "expected_n": 8,
+   "expected_status_counts": {
+    "PASSED": 3,
+    "FAILED": 5
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 816,
+   "coverage_reason": "同一既有仓库按 expected 测试数量排序的四分位/中位/四分之三位；与旧24题去重，不代表能力难度或题目公平性",
+   "selection_status": "environment_exploration_only",
+   "selection_quantile": 0.5,
+   "materials_refs": {
+    "ledger": "runs/env_probe_stage1_20260910/ledger/{r2e_preflight_20260911,r2e_remainder_20260911,r2e_failure_repeats_20260911}/results.jsonl",
+    "logs_root": "runs/env_probe_stage1_20260910/ledger/<batch>/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/candidate_manifest.jsonl",
+    "source_row_full": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/r2e_candidates_full.jsonl",
+    "fixture_snapshot": "runs/env_probe_stage1_20260910/ledger/r2e_fixture_snapshots_20260911/16c1ffc349df566151db0beb6d355ca27266bb8c/"
+   }
+  },
+  {
+   "task_id": "r2e::19f5b45096cadaa4677c9b15f18a6d303497eaeb",
+   "group": "night_expansion24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "datalad",
+   "commit_hash": "19f5b45096cadaa4677c9b15f18a6d303497eaeb",
+   "image_ref": "namanjain12/datalad_final:19f5b45096cadaa4677c9b15f18a6d303497eaeb",
+   "image_digest_observed": null,
+   "workdir": "/testbed",
+   "expected_n": 19,
+   "expected_status_counts": {
+    "PASSED": 19
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1152,
+   "coverage_reason": "同一既有仓库按 expected 测试数量排序的四分位/中位/四分之三位；与旧24题去重，不代表能力难度或题目公平性",
+   "selection_status": "environment_exploration_only",
+   "selection_quantile": 0.75,
+   "materials_refs": {
+    "ledger": "runs/env_probe_stage1_20260910/ledger/{r2e_preflight_20260911,r2e_remainder_20260911,r2e_failure_repeats_20260911}/results.jsonl",
+    "logs_root": "runs/env_probe_stage1_20260910/ledger/<batch>/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/candidate_manifest.jsonl",
+    "source_row_full": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/r2e_candidates_full.jsonl",
+    "fixture_snapshot": "runs/env_probe_stage1_20260910/ledger/r2e_fixture_snapshots_20260911/19f5b45096cadaa4677c9b15f18a6d303497eaeb/"
+   }
+  },
+  {
+   "task_id": "r2e::58ba5165234cb16de0e8463ee75097362099835f",
+   "group": "night_expansion24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "datalad",
+   "commit_hash": "58ba5165234cb16de0e8463ee75097362099835f",
+   "image_ref": "namanjain12/datalad_final:58ba5165234cb16de0e8463ee75097362099835f",
+   "image_digest_observed": null,
+   "workdir": "/testbed",
+   "expected_n": 4,
+   "expected_status_counts": {
+    "PASSED": 4
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1194,
+   "coverage_reason": "同一既有仓库按 expected 测试数量排序的四分位/中位/四分之三位；与旧24题去重，不代表能力难度或题目公平性",
+   "selection_status": "environment_exploration_only",
+   "selection_quantile": 0.25,
+   "materials_refs": {
+    "ledger": "runs/env_probe_stage1_20260910/ledger/{r2e_preflight_20260911,r2e_remainder_20260911,r2e_failure_repeats_20260911}/results.jsonl",
+    "logs_root": "runs/env_probe_stage1_20260910/ledger/<batch>/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/candidate_manifest.jsonl",
+    "source_row_full": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/r2e_candidates_full.jsonl",
+    "fixture_snapshot": "runs/env_probe_stage1_20260910/ledger/r2e_fixture_snapshots_20260911/58ba5165234cb16de0e8463ee75097362099835f/"
+   }
+  },
+  {
+   "task_id": "r2e::6b6fa3898546793fa3517def09f85a74d51ec4bb",
+   "group": "core24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "datalad",
+   "commit_hash": "6b6fa3898546793fa3517def09f85a74d51ec4bb",
+   "image_ref": "namanjain12/datalad_final:6b6fa3898546793fa3517def09f85a74d51ec4bb",
+   "image_digest_observed": "sha256:edfa364dda5bed8fa9ac58a785f7e58b59bbe3cf70e3d2bbbc4b9c9deec8cab4",
+   "workdir": "/testbed",
+   "expected_n": 17,
+   "expected_status_counts": {
+    "PASSED": 16,
+    "FAILED": 1
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1100,
+   "coverage_reason": "SSH URL 解析及依赖环境",
+   "selection_status": "development_candidate_only",
+   "materials_refs": {
+    "ledger": "docs/.../env_probe_20260909/ledger/r2e_ledger_v3.jsonl",
+    "logs_root": "runs/env_probe_20260909_final_sync/ledger/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "docs/.../b_probe_preparation_20260909/candidate_manifest.jsonl",
+    "problem_statement": "docs/.../data_freeze/meta/r2e_subset.jsonl",
+    "source_row_full": "absent_locally"
+   }
+  },
+  {
+   "task_id": "r2e::9ba5de094ea326e6fd5773f21c7de1776ec0fa69",
+   "group": "core24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "datalad",
+   "commit_hash": "9ba5de094ea326e6fd5773f21c7de1776ec0fa69",
+   "image_ref": "namanjain12/datalad_final:9ba5de094ea326e6fd5773f21c7de1776ec0fa69",
+   "image_digest_observed": "sha256:0de1b795f57190f5456df392de21733195274bf8b906fa98942730085e636ed1",
+   "workdir": "/testbed",
+   "expected_n": 7,
+   "expected_status_counts": {
+    "PASSED": 2,
+    "FAILED": 5
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1244,
+   "coverage_reason": "预留扩展：同仓库不同任务及题面长度；题面长度不代表难度或运行成本，尚未逐题质量审查",
+   "selection_status": "development_candidate_only",
+   "materials_refs": {
+    "ledger": "docs/.../env_probe_20260909/ledger/r2e_ledger_v3.jsonl",
+    "logs_root": "runs/env_probe_20260909_final_sync/ledger/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "docs/.../b_probe_preparation_20260909/candidate_manifest.jsonl",
+    "problem_statement": "docs/.../data_freeze/meta/r2e_subset.jsonl",
+    "source_row_full": "absent_locally"
+   }
+  },
+  {
+   "task_id": "r2e::18b7cd9df7a4d960550b18faa14d5473e7d5c3d9",
+   "group": "core24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "numpy",
+   "commit_hash": "18b7cd9df7a4d960550b18faa14d5473e7d5c3d9",
+   "image_ref": "namanjain12/numpy_final:18b7cd9df7a4d960550b18faa14d5473e7d5c3d9",
+   "image_digest_observed": "sha256:f0258fc6e47aceef2d27aea7fd4c68a74ac4075e66c201c90221fc9612dd9ca4",
+   "workdir": "/testbed",
+   "expected_n": 11,
+   "expected_status_counts": {
+    "PASSED": 11
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 852,
+   "coverage_reason": "预留扩展：同仓库不同任务及题面长度；题面长度不代表难度或运行成本，尚未逐题质量审查",
+   "selection_status": "development_candidate_only",
+   "materials_refs": {
+    "ledger": "docs/.../env_probe_20260909/ledger/r2e_ledger_v3.jsonl",
+    "logs_root": "runs/env_probe_20260909_final_sync/ledger/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "docs/.../b_probe_preparation_20260909/candidate_manifest.jsonl",
+    "problem_statement": "docs/.../data_freeze/meta/r2e_subset.jsonl",
+    "source_row_full": "absent_locally"
+   }
+  },
+  {
+   "task_id": "r2e::2f4a965019722c3c56f43433bfa4a99c4c083138",
+   "group": "core24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "numpy",
+   "commit_hash": "2f4a965019722c3c56f43433bfa4a99c4c083138",
+   "image_ref": "namanjain12/numpy_final:2f4a965019722c3c56f43433bfa4a99c4c083138",
+   "image_digest_observed": "sha256:81981ad99db21eaf250c4c8dd5f71fb0438be66c4f580c78cdfa6366491e4d6b",
+   "workdir": "/testbed",
+   "expected_n": 142,
+   "expected_status_counts": {
+    "PASSED": 142
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1287,
+   "coverage_reason": "预留扩展：同仓库不同任务及题面长度；题面长度不代表难度或运行成本，尚未逐题质量审查",
+   "selection_status": "development_candidate_only",
+   "materials_refs": {
+    "ledger": "docs/.../env_probe_20260909/ledger/r2e_ledger_v3.jsonl",
+    "logs_root": "runs/env_probe_20260909_final_sync/ledger/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "docs/.../b_probe_preparation_20260909/candidate_manifest.jsonl",
+    "problem_statement": "docs/.../data_freeze/meta/r2e_subset.jsonl",
+    "source_row_full": "absent_locally"
+   }
+  },
+  {
+   "task_id": "r2e::43e333e2ff641f6dce852e46c9c650333b0d4b3d",
+   "group": "night_expansion24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "numpy",
+   "commit_hash": "43e333e2ff641f6dce852e46c9c650333b0d4b3d",
+   "image_ref": "namanjain12/numpy_final:43e333e2ff641f6dce852e46c9c650333b0d4b3d",
+   "image_digest_observed": null,
+   "workdir": "/testbed",
+   "expected_n": 88,
+   "expected_status_counts": {
+    "PASSED": 88
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 962,
+   "coverage_reason": "同一既有仓库按 expected 测试数量排序的四分位/中位/四分之三位；与旧24题去重，不代表能力难度或题目公平性",
+   "selection_status": "environment_exploration_only",
+   "selection_quantile": 0.5,
+   "materials_refs": {
+    "ledger": "runs/env_probe_stage1_20260910/ledger/{r2e_preflight_20260911,r2e_remainder_20260911,r2e_failure_repeats_20260911}/results.jsonl",
+    "logs_root": "runs/env_probe_stage1_20260910/ledger/<batch>/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/candidate_manifest.jsonl",
+    "source_row_full": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/r2e_candidates_full.jsonl",
+    "fixture_snapshot": "runs/env_probe_stage1_20260910/ledger/r2e_fixture_snapshots_20260911/43e333e2ff641f6dce852e46c9c650333b0d4b3d/"
+   }
+  },
+  {
+   "task_id": "r2e::5e8301c2b36097dd8be5a12e0bb4369a1df4fabb",
+   "group": "core24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "numpy",
+   "commit_hash": "5e8301c2b36097dd8be5a12e0bb4369a1df4fabb",
+   "image_ref": "namanjain12/numpy_final:5e8301c2b36097dd8be5a12e0bb4369a1df4fabb",
+   "image_digest_observed": "sha256:3af4e75e99b012a31011a603c665a8eb2a55d3eeef2ab0fe3cce2da5735ef6a9",
+   "workdir": "/testbed",
+   "expected_n": 35,
+   "expected_status_counts": {
+    "PASSED": 35
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 883,
+   "coverage_reason": "einsum 优化与单维度输入",
+   "selection_status": "development_candidate_only",
+   "materials_refs": {
+    "ledger": "docs/.../env_probe_20260909/ledger/r2e_ledger_v3.jsonl",
+    "logs_root": "runs/env_probe_20260909_final_sync/ledger/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "docs/.../b_probe_preparation_20260909/candidate_manifest.jsonl",
+    "problem_statement": "docs/.../data_freeze/meta/r2e_subset.jsonl",
+    "source_row_full": "absent_locally"
+   }
+  },
+  {
+   "task_id": "r2e::a5ea773e66110cf335c9ed37e8ccdc14f8e56764",
+   "group": "night_expansion24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "numpy",
+   "commit_hash": "a5ea773e66110cf335c9ed37e8ccdc14f8e56764",
+   "image_ref": "namanjain12/numpy_final:a5ea773e66110cf335c9ed37e8ccdc14f8e56764",
+   "image_digest_observed": null,
+   "workdir": "/testbed",
+   "expected_n": 32,
+   "expected_status_counts": {
+    "PASSED": 32
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1015,
+   "coverage_reason": "同一既有仓库按 expected 测试数量排序的四分位/中位/四分之三位；与旧24题去重，不代表能力难度或题目公平性",
+   "selection_status": "environment_exploration_only",
+   "selection_quantile": 0.25,
+   "materials_refs": {
+    "ledger": "runs/env_probe_stage1_20260910/ledger/{r2e_preflight_20260911,r2e_remainder_20260911,r2e_failure_repeats_20260911}/results.jsonl",
+    "logs_root": "runs/env_probe_stage1_20260910/ledger/<batch>/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/candidate_manifest.jsonl",
+    "source_row_full": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/r2e_candidates_full.jsonl",
+    "fixture_snapshot": "runs/env_probe_stage1_20260910/ledger/r2e_fixture_snapshots_20260911/a5ea773e66110cf335c9ed37e8ccdc14f8e56764/"
+   }
+  },
+  {
+   "task_id": "r2e::d805e9b66228e68a0eb14d901cd350159c49af18",
+   "group": "night_expansion24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "numpy",
+   "commit_hash": "d805e9b66228e68a0eb14d901cd350159c49af18",
+   "image_ref": "namanjain12/numpy_final:d805e9b66228e68a0eb14d901cd350159c49af18",
+   "image_digest_observed": null,
+   "workdir": "/testbed",
+   "expected_n": 229,
+   "expected_status_counts": {
+    "PASSED": 229
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1163,
+   "coverage_reason": "同一既有仓库按 expected 测试数量排序的四分位/中位/四分之三位；与旧24题去重，不代表能力难度或题目公平性",
+   "selection_status": "environment_exploration_only",
+   "selection_quantile": 0.75,
+   "materials_refs": {
+    "ledger": "runs/env_probe_stage1_20260910/ledger/{r2e_preflight_20260911,r2e_remainder_20260911,r2e_failure_repeats_20260911}/results.jsonl",
+    "logs_root": "runs/env_probe_stage1_20260910/ledger/<batch>/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/candidate_manifest.jsonl",
+    "source_row_full": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/r2e_candidates_full.jsonl",
+    "fixture_snapshot": "runs/env_probe_stage1_20260910/ledger/r2e_fixture_snapshots_20260911/d805e9b66228e68a0eb14d901cd350159c49af18/"
+   }
+  },
+  {
+   "task_id": "r2e::d89bc4bbf541affbcf87498ff4af86b9451480cd",
+   "group": "core24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "numpy",
+   "commit_hash": "d89bc4bbf541affbcf87498ff4af86b9451480cd",
+   "image_ref": "namanjain12/numpy_final:d89bc4bbf541affbcf87498ff4af86b9451480cd",
+   "image_digest_observed": "sha256:8b2a87e17b33a60d8e722d45a8e087d46e2bbd41c7949b9c52c7027ca09fff0d",
+   "workdir": "/testbed",
+   "expected_n": 78,
+   "expected_status_counts": {
+    "PASSED": 78
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1037,
+   "coverage_reason": "直方图参数处理；与 einsum 覆盖不同子系统",
+   "selection_status": "development_candidate_only",
+   "materials_refs": {
+    "ledger": "docs/.../env_probe_20260909/ledger/r2e_ledger_v3.jsonl",
+    "logs_root": "runs/env_probe_20260909_final_sync/ledger/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "docs/.../b_probe_preparation_20260909/candidate_manifest.jsonl",
+    "problem_statement": "docs/.../data_freeze/meta/r2e_subset.jsonl",
+    "source_row_full": "absent_locally"
+   }
+  },
+  {
+   "task_id": "r2e::22e98f8f4cccc25f0d0217f9f4251b66d49b4237",
+   "group": "core24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "orange3",
+   "commit_hash": "22e98f8f4cccc25f0d0217f9f4251b66d49b4237",
+   "image_ref": "namanjain12/orange3_final:22e98f8f4cccc25f0d0217f9f4251b66d49b4237",
+   "image_digest_observed": "sha256:7eb0b9127698aa0c907f90fd0218253634aa3a489f5e98051d3ca8685b103984",
+   "workdir": "/testbed",
+   "expected_n": 23,
+   "expected_status_counts": {
+    "PASSED": 23
+   },
+   "run_tests_sh": "QT_QPA_PLATFORM=minimal PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' xvfb-run --auto-servernum .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1472,
+   "coverage_reason": "预留扩展：同仓库不同任务及题面长度；题面长度不代表难度或运行成本，尚未逐题质量审查",
+   "selection_status": "development_candidate_only",
+   "materials_refs": {
+    "ledger": "docs/.../env_probe_20260909/ledger/r2e_ledger_v3.jsonl",
+    "logs_root": "runs/env_probe_20260909_final_sync/ledger/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "docs/.../b_probe_preparation_20260909/candidate_manifest.jsonl",
+    "problem_statement": "docs/.../data_freeze/meta/r2e_subset.jsonl",
+    "source_row_full": "absent_locally"
+   }
+  },
+  {
+   "task_id": "r2e::4014f2483e3bab0621c9ae0f994947c008183253",
+   "group": "night_expansion24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "orange3",
+   "commit_hash": "4014f2483e3bab0621c9ae0f994947c008183253",
+   "image_ref": "namanjain12/orange3_final:4014f2483e3bab0621c9ae0f994947c008183253",
+   "image_digest_observed": null,
+   "workdir": "/testbed",
+   "expected_n": 27,
+   "expected_status_counts": {
+    "PASSED": 27
+   },
+   "run_tests_sh": "QT_QPA_PLATFORM=minimal PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' xvfb-run --auto-servernum .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1551,
+   "coverage_reason": "同一既有仓库按 expected 测试数量排序的四分位/中位/四分之三位；与旧24题去重，不代表能力难度或题目公平性",
+   "selection_status": "environment_exploration_only",
+   "selection_quantile": 0.5,
+   "materials_refs": {
+    "ledger": "runs/env_probe_stage1_20260910/ledger/{r2e_preflight_20260911,r2e_remainder_20260911,r2e_failure_repeats_20260911}/results.jsonl",
+    "logs_root": "runs/env_probe_stage1_20260910/ledger/<batch>/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/candidate_manifest.jsonl",
+    "source_row_full": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/r2e_candidates_full.jsonl",
+    "fixture_snapshot": "runs/env_probe_stage1_20260910/ledger/r2e_fixture_snapshots_20260911/4014f2483e3bab0621c9ae0f994947c008183253/"
+   }
+  },
+  {
+   "task_id": "r2e::50f6a758f1c66b8f4a18806714e3c2f4cefcab3e",
+   "group": "core24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "orange3",
+   "commit_hash": "50f6a758f1c66b8f4a18806714e3c2f4cefcab3e",
+   "image_ref": "namanjain12/orange3_final:50f6a758f1c66b8f4a18806714e3c2f4cefcab3e",
+   "image_digest_observed": "sha256:d059adb9d88d0e75f357ec4a180f00459c1890a45ba8b4628c709d9c2e9fc721",
+   "workdir": "/testbed",
+   "expected_n": 48,
+   "expected_status_counts": {
+    "PASSED": 48
+   },
+   "run_tests_sh": "QT_QPA_PLATFORM=minimal PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' xvfb-run --auto-servernum .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 969,
+   "coverage_reason": "预留扩展：同仓库不同任务及题面长度；题面长度不代表难度或运行成本，尚未逐题质量审查",
+   "selection_status": "development_candidate_only",
+   "materials_refs": {
+    "ledger": "docs/.../env_probe_20260909/ledger/r2e_ledger_v3.jsonl",
+    "logs_root": "runs/env_probe_20260909_final_sync/ledger/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "docs/.../b_probe_preparation_20260909/candidate_manifest.jsonl",
+    "problem_statement": "docs/.../data_freeze/meta/r2e_subset.jsonl",
+    "source_row_full": "absent_locally"
+   }
+  },
+  {
+   "task_id": "r2e::9b5494e26f407b75e79699c9d40be6df1d80a040",
+   "group": "night_expansion24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "orange3",
+   "commit_hash": "9b5494e26f407b75e79699c9d40be6df1d80a040",
+   "image_ref": "namanjain12/orange3_final:9b5494e26f407b75e79699c9d40be6df1d80a040",
+   "image_digest_observed": null,
+   "workdir": "/testbed",
+   "expected_n": 13,
+   "expected_status_counts": {
+    "PASSED": 9,
+    "FAILED": 4
+   },
+   "run_tests_sh": "QT_QPA_PLATFORM=minimal PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' xvfb-run --auto-servernum .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 593,
+   "coverage_reason": "同一既有仓库按 expected 测试数量排序的四分位/中位/四分之三位；与旧24题去重，不代表能力难度或题目公平性",
+   "selection_status": "environment_exploration_only",
+   "selection_quantile": 0.25,
+   "materials_refs": {
+    "ledger": "runs/env_probe_stage1_20260910/ledger/{r2e_preflight_20260911,r2e_remainder_20260911,r2e_failure_repeats_20260911}/results.jsonl",
+    "logs_root": "runs/env_probe_stage1_20260910/ledger/<batch>/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/candidate_manifest.jsonl",
+    "source_row_full": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/r2e_candidates_full.jsonl",
+    "fixture_snapshot": "runs/env_probe_stage1_20260910/ledger/r2e_fixture_snapshots_20260911/9b5494e26f407b75e79699c9d40be6df1d80a040/"
+   }
+  },
+  {
+   "task_id": "r2e::c3fb72ba464880e0354cf33f8b3d3773865c2bf6",
+   "group": "night_expansion24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "orange3",
+   "commit_hash": "c3fb72ba464880e0354cf33f8b3d3773865c2bf6",
+   "image_ref": "namanjain12/orange3_final:c3fb72ba464880e0354cf33f8b3d3773865c2bf6",
+   "image_digest_observed": null,
+   "workdir": "/testbed",
+   "expected_n": 44,
+   "expected_status_counts": {
+    "PASSED": 44
+   },
+   "run_tests_sh": "QT_QPA_PLATFORM=minimal PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' xvfb-run --auto-servernum .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 946,
+   "coverage_reason": "同一既有仓库按 expected 测试数量排序的四分位/中位/四分之三位；与旧24题去重，不代表能力难度或题目公平性",
+   "selection_status": "environment_exploration_only",
+   "selection_quantile": 0.75,
+   "materials_refs": {
+    "ledger": "runs/env_probe_stage1_20260910/ledger/{r2e_preflight_20260911,r2e_remainder_20260911,r2e_failure_repeats_20260911}/results.jsonl",
+    "logs_root": "runs/env_probe_stage1_20260910/ledger/<batch>/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/candidate_manifest.jsonl",
+    "source_row_full": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/r2e_candidates_full.jsonl",
+    "fixture_snapshot": "runs/env_probe_stage1_20260910/ledger/r2e_fixture_snapshots_20260911/c3fb72ba464880e0354cf33f8b3d3773865c2bf6/"
+   }
+  },
+  {
+   "task_id": "r2e::f237f9688e06ae46fe98d195b134d01f5b38b2e0",
+   "group": "core24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "orange3",
+   "commit_hash": "f237f9688e06ae46fe98d195b134d01f5b38b2e0",
+   "image_ref": "namanjain12/orange3_final:f237f9688e06ae46fe98d195b134d01f5b38b2e0",
+   "image_digest_observed": "sha256:781df00f73a367b94f8160c9b0fb7f59c94fb3b2980231f65bbb3d12640e4044",
+   "workdir": "/testbed",
+   "expected_n": 23,
+   "expected_status_counts": {
+    "ERROR": 1,
+    "PASSED": 20,
+    "FAILED": 2
+   },
+   "run_tests_sh": "QT_QPA_PLATFORM=minimal PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' xvfb-run --auto-servernum .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1388,
+   "coverage_reason": "GUI/widget 上下文；待核无显示设备运行条件",
+   "selection_status": "development_candidate_only",
+   "materials_refs": {
+    "ledger": "docs/.../env_probe_20260909/ledger/r2e_ledger_v3.jsonl",
+    "logs_root": "runs/env_probe_20260909_final_sync/ledger/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "docs/.../b_probe_preparation_20260909/candidate_manifest.jsonl",
+    "problem_statement": "docs/.../data_freeze/meta/r2e_subset.jsonl",
+    "source_row_full": "absent_locally"
+   }
+  },
+  {
+   "task_id": "r2e::f5026689551be7f0a43ad5f0d129e5bcfff7999c",
+   "group": "core24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "orange3",
+   "commit_hash": "f5026689551be7f0a43ad5f0d129e5bcfff7999c",
+   "image_ref": "namanjain12/orange3_final:f5026689551be7f0a43ad5f0d129e5bcfff7999c",
+   "image_digest_observed": "sha256:8c2d145bafab7209bb75044d42d63e37498b86f430e10c903ff8f3bc97585b1c",
+   "workdir": "/testbed",
+   "expected_n": 8,
+   "expected_status_counts": {
+    "PASSED": 8
+   },
+   "run_tests_sh": "QT_QPA_PLATFORM=minimal PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' xvfb-run --auto-servernum .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1190,
+   "coverage_reason": "跨平台路径迁移；待核 Linux 镜像能否重现",
+   "selection_status": "development_candidate_only",
+   "materials_refs": {
+    "ledger": "docs/.../env_probe_20260909/ledger/r2e_ledger_v3.jsonl",
+    "logs_root": "runs/env_probe_20260909_final_sync/ledger/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "docs/.../b_probe_preparation_20260909/candidate_manifest.jsonl",
+    "problem_statement": "docs/.../data_freeze/meta/r2e_subset.jsonl",
+    "source_row_full": "absent_locally"
+   }
+  },
+  {
+   "task_id": "r2e::19c5eea5db0046276bfc0eef8a67febf090eeaaf",
+   "group": "core24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "pandas",
+   "commit_hash": "19c5eea5db0046276bfc0eef8a67febf090eeaaf",
+   "image_ref": "namanjain12/pandas_final:19c5eea5db0046276bfc0eef8a67febf090eeaaf",
+   "image_digest_observed": "sha256:fe590536728ad61642019cbcdea311d95d399177e1e7746240f7c23072444366",
+   "workdir": "/testbed",
+   "expected_n": 155,
+   "expected_status_counts": {
+    "PASSED": 138,
+    "ERROR": 17
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 908,
+   "coverage_reason": "预留扩展：同仓库不同任务及题面长度；题面长度不代表难度或运行成本，尚未逐题质量审查",
+   "selection_status": "development_candidate_only",
+   "materials_refs": {
+    "ledger": "docs/.../env_probe_20260909/ledger/r2e_ledger_v3.jsonl",
+    "logs_root": "runs/env_probe_20260909_final_sync/ledger/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "docs/.../b_probe_preparation_20260909/candidate_manifest.jsonl",
+    "problem_statement": "docs/.../data_freeze/meta/r2e_subset.jsonl",
+    "source_row_full": "absent_locally"
+   }
+  },
+  {
+   "task_id": "r2e::294cbc8d1faa15ba245391c5624752ecebd7f63b",
+   "group": "core24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "pandas",
+   "commit_hash": "294cbc8d1faa15ba245391c5624752ecebd7f63b",
+   "image_ref": "namanjain12/pandas_final:294cbc8d1faa15ba245391c5624752ecebd7f63b",
+   "image_digest_observed": "sha256:c15cf2173260819285c385862e1373e7820c018a2694f42a16eb3a0048d2637f",
+   "workdir": "/testbed",
+   "expected_n": 21,
+   "expected_status_counts": {
+    "PASSED": 20,
+    "ERROR": 1
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1094,
+   "coverage_reason": "DataFrame.info 的列标识处理",
+   "selection_status": "development_candidate_only",
+   "materials_refs": {
+    "ledger": "docs/.../env_probe_20260909/ledger/r2e_ledger_v3.jsonl",
+    "logs_root": "runs/env_probe_20260909_final_sync/ledger/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "docs/.../b_probe_preparation_20260909/candidate_manifest.jsonl",
+    "problem_statement": "docs/.../data_freeze/meta/r2e_subset.jsonl",
+    "source_row_full": "absent_locally"
+   }
+  },
+  {
+   "task_id": "r2e::32dd55cb8331c36df6b485eb042c7d2d2a808db0",
+   "group": "night_expansion24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "pandas",
+   "commit_hash": "32dd55cb8331c36df6b485eb042c7d2d2a808db0",
+   "image_ref": "namanjain12/pandas_final:32dd55cb8331c36df6b485eb042c7d2d2a808db0",
+   "image_digest_observed": null,
+   "workdir": "/testbed",
+   "expected_n": 92,
+   "expected_status_counts": {
+    "PASSED": 79,
+    "ERROR": 13
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1123,
+   "coverage_reason": "同一既有仓库按 expected 测试数量排序的四分位/中位/四分之三位；与旧24题去重，不代表能力难度或题目公平性",
+   "selection_status": "environment_exploration_only",
+   "selection_quantile": 0.5,
+   "materials_refs": {
+    "ledger": "runs/env_probe_stage1_20260910/ledger/{r2e_preflight_20260911,r2e_remainder_20260911,r2e_failure_repeats_20260911}/results.jsonl",
+    "logs_root": "runs/env_probe_stage1_20260910/ledger/<batch>/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/candidate_manifest.jsonl",
+    "source_row_full": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/r2e_candidates_full.jsonl",
+    "fixture_snapshot": "runs/env_probe_stage1_20260910/ledger/r2e_fixture_snapshots_20260911/32dd55cb8331c36df6b485eb042c7d2d2a808db0/"
+   }
+  },
+  {
+   "task_id": "r2e::4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199",
+   "group": "night_expansion24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "pandas",
+   "commit_hash": "4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199",
+   "image_ref": "namanjain12/pandas_final:4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199",
+   "image_digest_observed": null,
+   "workdir": "/testbed",
+   "expected_n": 226,
+   "expected_status_counts": {
+    "PASSED": 224,
+    "ERROR": 2
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 668,
+   "coverage_reason": "同一既有仓库按 expected 测试数量排序的四分位/中位/四分之三位；与旧24题去重，不代表能力难度或题目公平性",
+   "selection_status": "environment_exploration_only",
+   "selection_quantile": 0.75,
+   "materials_refs": {
+    "ledger": "runs/env_probe_stage1_20260910/ledger/{r2e_preflight_20260911,r2e_remainder_20260911,r2e_failure_repeats_20260911}/results.jsonl",
+    "logs_root": "runs/env_probe_stage1_20260910/ledger/<batch>/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/candidate_manifest.jsonl",
+    "source_row_full": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/r2e_candidates_full.jsonl",
+    "fixture_snapshot": "runs/env_probe_stage1_20260910/ledger/r2e_fixture_snapshots_20260911/4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/"
+   }
+  },
+  {
+   "task_id": "r2e::7dd34ea7a121ce4282ce095b058c5c46568f07af",
+   "group": "core24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "pandas",
+   "commit_hash": "7dd34ea7a121ce4282ce095b058c5c46568f07af",
+   "image_ref": "namanjain12/pandas_final:7dd34ea7a121ce4282ce095b058c5c46568f07af",
+   "image_digest_observed": "sha256:e15dcf6dfc401bd3f1c2094961318980a99244a2badce44b5bdc5771ad304fda",
+   "workdir": "/testbed",
+   "expected_n": 34,
+   "expected_status_counts": {
+    "PASSED": 30,
+    "ERROR": 4
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1269,
+   "coverage_reason": "RangeIndex 差集排序与负步长",
+   "selection_status": "development_candidate_only",
+   "materials_refs": {
+    "ledger": "docs/.../env_probe_20260909/ledger/r2e_ledger_v3.jsonl",
+    "logs_root": "runs/env_probe_20260909_final_sync/ledger/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "docs/.../b_probe_preparation_20260909/candidate_manifest.jsonl",
+    "problem_statement": "docs/.../data_freeze/meta/r2e_subset.jsonl",
+    "source_row_full": "absent_locally"
+   }
+  },
+  {
+   "task_id": "r2e::877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d",
+   "group": "night_expansion24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "pandas",
+   "commit_hash": "877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d",
+   "image_ref": "namanjain12/pandas_final:877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d",
+   "image_digest_observed": null,
+   "workdir": "/testbed",
+   "expected_n": 34,
+   "expected_status_counts": {
+    "PASSED": 25,
+    "ERROR": 9
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1171,
+   "coverage_reason": "同一既有仓库按 expected 测试数量排序的四分位/中位/四分之三位；与旧24题去重，不代表能力难度或题目公平性",
+   "selection_status": "environment_exploration_only",
+   "selection_quantile": 0.25,
+   "materials_refs": {
+    "ledger": "runs/env_probe_stage1_20260910/ledger/{r2e_preflight_20260911,r2e_remainder_20260911,r2e_failure_repeats_20260911}/results.jsonl",
+    "logs_root": "runs/env_probe_stage1_20260910/ledger/<batch>/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/candidate_manifest.jsonl",
+    "source_row_full": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/r2e_candidates_full.jsonl",
+    "fixture_snapshot": "runs/env_probe_stage1_20260910/ledger/r2e_fixture_snapshots_20260911/877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d/"
+   }
+  },
+  {
+   "task_id": "r2e::f656217a06b31e48474702036e0a5c49f664186c",
+   "group": "core24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "pandas",
+   "commit_hash": "f656217a06b31e48474702036e0a5c49f664186c",
+   "image_ref": "namanjain12/pandas_final:f656217a06b31e48474702036e0a5c49f664186c",
+   "image_digest_observed": "sha256:4fc086306e31c872bd25276b498601fe0233667ecadf46771d64c70a649f1418",
+   "workdir": "/testbed",
+   "expected_n": 323,
+   "expected_status_counts": {
+    "PASSED": 311,
+    "ERROR": 12
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1338,
+   "coverage_reason": "预留扩展：同仓库不同任务及题面长度；题面长度不代表难度或运行成本，尚未逐题质量审查",
+   "selection_status": "development_candidate_only",
+   "materials_refs": {
+    "ledger": "docs/.../env_probe_20260909/ledger/r2e_ledger_v3.jsonl",
+    "logs_root": "runs/env_probe_20260909_final_sync/ledger/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "docs/.../b_probe_preparation_20260909/candidate_manifest.jsonl",
+    "problem_statement": "docs/.../data_freeze/meta/r2e_subset.jsonl",
+    "source_row_full": "absent_locally"
+   }
+  },
+  {
+   "task_id": "r2e::2b061b68dbbf4fb590ab532b6fdffea8ee063ae8",
+   "group": "night_expansion24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "pillow",
+   "commit_hash": "2b061b68dbbf4fb590ab532b6fdffea8ee063ae8",
+   "image_ref": "namanjain12/pillow_final:2b061b68dbbf4fb590ab532b6fdffea8ee063ae8",
+   "image_digest_observed": null,
+   "workdir": "/testbed",
+   "expected_n": 55,
+   "expected_status_counts": {
+    "PASSED": 53,
+    "FAILED": 2
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1258,
+   "coverage_reason": "同一既有仓库按 expected 测试数量排序的四分位/中位/四分之三位；与旧24题去重，不代表能力难度或题目公平性",
+   "selection_status": "environment_exploration_only",
+   "selection_quantile": 0.75,
+   "materials_refs": {
+    "ledger": "runs/env_probe_stage1_20260910/ledger/{r2e_preflight_20260911,r2e_remainder_20260911,r2e_failure_repeats_20260911}/results.jsonl",
+    "logs_root": "runs/env_probe_stage1_20260910/ledger/<batch>/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/candidate_manifest.jsonl",
+    "source_row_full": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/r2e_candidates_full.jsonl",
+    "fixture_snapshot": "runs/env_probe_stage1_20260910/ledger/r2e_fixture_snapshots_20260911/2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/"
+   }
+  },
+  {
+   "task_id": "r2e::2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+   "group": "core24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "pillow",
+   "commit_hash": "2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+   "image_ref": "namanjain12/pillow_final:2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+   "image_digest_observed": "sha256:9af0401db9ea4b616b3ca0f42d5863eef7342ab248456693ae850db9f7a117ba",
+   "workdir": "/testbed",
+   "expected_n": 62,
+   "expected_status_counts": {
+    "PASSED": 60,
+    "FAILED": 2
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1256,
+   "coverage_reason": "预留扩展：同仓库不同任务及题面长度；题面长度不代表难度或运行成本，尚未逐题质量审查",
+   "selection_status": "development_candidate_only",
+   "materials_refs": {
+    "ledger": "docs/.../env_probe_20260909/ledger/r2e_ledger_v3.jsonl",
+    "logs_root": "runs/env_probe_20260909_final_sync/ledger/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "docs/.../b_probe_preparation_20260909/candidate_manifest.jsonl",
+    "problem_statement": "docs/.../data_freeze/meta/r2e_subset.jsonl",
+    "source_row_full": "absent_locally"
+   }
+  },
+  {
+   "task_id": "r2e::3a61c9e95e5c0a2da5736956e2dbafa57a9ede07",
+   "group": "core24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "pillow",
+   "commit_hash": "3a61c9e95e5c0a2da5736956e2dbafa57a9ede07",
+   "image_ref": "namanjain12/pillow_final:3a61c9e95e5c0a2da5736956e2dbafa57a9ede07",
+   "image_digest_observed": "sha256:bdd3d96728209c98e23507a55d2c086fe0a89a106c0d23bfb4854663d8f48813",
+   "workdir": "/testbed",
+   "expected_n": 71,
+   "expected_status_counts": {
+    "PASSED": 71
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1203,
+   "coverage_reason": "RGBA 调色板重映射",
+   "selection_status": "development_candidate_only",
+   "materials_refs": {
+    "ledger": "docs/.../env_probe_20260909/ledger/r2e_ledger_v3.jsonl",
+    "logs_root": "runs/env_probe_20260909_final_sync/ledger/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "docs/.../b_probe_preparation_20260909/candidate_manifest.jsonl",
+    "problem_statement": "docs/.../data_freeze/meta/r2e_subset.jsonl",
+    "source_row_full": "absent_locally"
+   }
+  },
+  {
+   "task_id": "r2e::3ac9396e8c991e7baab66187af2a35c3f4e83605",
+   "group": "night_expansion24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "pillow",
+   "commit_hash": "3ac9396e8c991e7baab66187af2a35c3f4e83605",
+   "image_ref": "namanjain12/pillow_final:3ac9396e8c991e7baab66187af2a35c3f4e83605",
+   "image_digest_observed": null,
+   "workdir": "/testbed",
+   "expected_n": 11,
+   "expected_status_counts": {
+    "PASSED": 11
+   },
+   "run_tests_sh": ".venv/bin/python -W ignore r2e_tests/unittest_custom_runner.py",
+   "problem_statement_chars": 1137,
+   "coverage_reason": "同一既有仓库按 expected 测试数量排序的四分位/中位/四分之三位；与旧24题去重，不代表能力难度或题目公平性",
+   "selection_status": "environment_exploration_only",
+   "selection_quantile": 0.25,
+   "materials_refs": {
+    "ledger": "runs/env_probe_stage1_20260910/ledger/{r2e_preflight_20260911,r2e_remainder_20260911,r2e_failure_repeats_20260911}/results.jsonl",
+    "logs_root": "runs/env_probe_stage1_20260910/ledger/<batch>/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/candidate_manifest.jsonl",
+    "source_row_full": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/r2e_candidates_full.jsonl",
+    "fixture_snapshot": "runs/env_probe_stage1_20260910/ledger/r2e_fixture_snapshots_20260911/3ac9396e8c991e7baab66187af2a35c3f4e83605/"
+   }
+  },
+  {
+   "task_id": "r2e::4bc6483564ae1a254911e98280b9a501f047a2e0",
+   "group": "night_expansion24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "pillow",
+   "commit_hash": "4bc6483564ae1a254911e98280b9a501f047a2e0",
+   "image_ref": "namanjain12/pillow_final:4bc6483564ae1a254911e98280b9a501f047a2e0",
+   "image_digest_observed": null,
+   "workdir": "/testbed",
+   "expected_n": 24,
+   "expected_status_counts": {
+    "PASSED": 24
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 829,
+   "coverage_reason": "同一既有仓库按 expected 测试数量排序的四分位/中位/四分之三位；与旧24题去重，不代表能力难度或题目公平性",
+   "selection_status": "environment_exploration_only",
+   "selection_quantile": 0.5,
+   "materials_refs": {
+    "ledger": "runs/env_probe_stage1_20260910/ledger/{r2e_preflight_20260911,r2e_remainder_20260911,r2e_failure_repeats_20260911}/results.jsonl",
+    "logs_root": "runs/env_probe_stage1_20260910/ledger/<batch>/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/candidate_manifest.jsonl",
+    "source_row_full": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/r2e_candidates_full.jsonl",
+    "fixture_snapshot": "runs/env_probe_stage1_20260910/ledger/r2e_fixture_snapshots_20260911/4bc6483564ae1a254911e98280b9a501f047a2e0/"
+   }
+  },
+  {
+   "task_id": "r2e::a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90",
+   "group": "core24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "pillow",
+   "commit_hash": "a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90",
+   "image_ref": "namanjain12/pillow_final:a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90",
+   "image_digest_observed": "sha256:c9ee334c59190b34affeedb010cf805d456306370d6176ccb8db11648a7f5733",
+   "workdir": "/testbed",
+   "expected_n": 93,
+   "expected_status_counts": {
+    "PASSED": 93
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 858,
+   "coverage_reason": "预留扩展：同仓库不同任务及题面长度；题面长度不代表难度或运行成本，尚未逐题质量审查",
+   "selection_status": "development_candidate_only",
+   "materials_refs": {
+    "ledger": "docs/.../env_probe_20260909/ledger/r2e_ledger_v3.jsonl",
+    "logs_root": "runs/env_probe_20260909_final_sync/ledger/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "docs/.../b_probe_preparation_20260909/candidate_manifest.jsonl",
+    "problem_statement": "docs/.../data_freeze/meta/r2e_subset.jsonl",
+    "source_row_full": "absent_locally"
+   }
+  },
+  {
+   "task_id": "r2e::f9d3ee0f4888f7618071c0a5315c916062e78854",
+   "group": "core24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "pillow",
+   "commit_hash": "f9d3ee0f4888f7618071c0a5315c916062e78854",
+   "image_ref": "namanjain12/pillow_final:f9d3ee0f4888f7618071c0a5315c916062e78854",
+   "image_digest_observed": "sha256:c2a5ad3e5d96e2742212c1cb0948145b57b8dda421a7b0d79a51b90e662ca576",
+   "workdir": "/testbed",
+   "expected_n": 26,
+   "expected_status_counts": {
+    "PASSED": 26
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1029,
+   "coverage_reason": "图像 pad 的取整与定位",
+   "selection_status": "development_candidate_only",
+   "materials_refs": {
+    "ledger": "docs/.../env_probe_20260909/ledger/r2e_ledger_v3.jsonl",
+    "logs_root": "runs/env_probe_20260909_final_sync/ledger/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "docs/.../b_probe_preparation_20260909/candidate_manifest.jsonl",
+    "problem_statement": "docs/.../data_freeze/meta/r2e_subset.jsonl",
+    "source_row_full": "absent_locally"
+   }
+  },
+  {
+   "task_id": "r2e::75450e75d269b2a2b00b6303af1033df1f69cc67",
+   "group": "night_expansion24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "scrapy",
+   "commit_hash": "75450e75d269b2a2b00b6303af1033df1f69cc67",
+   "image_ref": "namanjain12/scrapy_final:75450e75d269b2a2b00b6303af1033df1f69cc67",
+   "image_digest_observed": null,
+   "workdir": "/testbed",
+   "expected_n": 17,
+   "expected_status_counts": {
+    "PASSED": 17
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1093,
+   "coverage_reason": "同一既有仓库按 expected 测试数量排序的四分位/中位/四分之三位；与旧24题去重，不代表能力难度或题目公平性",
+   "selection_status": "environment_exploration_only",
+   "selection_quantile": 0.5,
+   "materials_refs": {
+    "ledger": "runs/env_probe_stage1_20260910/ledger/{r2e_preflight_20260911,r2e_remainder_20260911,r2e_failure_repeats_20260911}/results.jsonl",
+    "logs_root": "runs/env_probe_stage1_20260910/ledger/<batch>/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/candidate_manifest.jsonl",
+    "source_row_full": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/r2e_candidates_full.jsonl",
+    "fixture_snapshot": "runs/env_probe_stage1_20260910/ledger/r2e_fixture_snapshots_20260911/75450e75d269b2a2b00b6303af1033df1f69cc67/"
+   }
+  },
+  {
+   "task_id": "r2e::9a15fcf89a151811de8ac783419df0512c863d5e",
+   "group": "night_expansion24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "scrapy",
+   "commit_hash": "9a15fcf89a151811de8ac783419df0512c863d5e",
+   "image_ref": "namanjain12/scrapy_final:9a15fcf89a151811de8ac783419df0512c863d5e",
+   "image_digest_observed": null,
+   "workdir": "/testbed",
+   "expected_n": 7,
+   "expected_status_counts": {
+    "PASSED": 5,
+    "FAILED": 2
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 988,
+   "coverage_reason": "同一既有仓库按 expected 测试数量排序的四分位/中位/四分之三位；与旧24题去重，不代表能力难度或题目公平性",
+   "selection_status": "environment_exploration_only",
+   "selection_quantile": 0.25,
+   "materials_refs": {
+    "ledger": "runs/env_probe_stage1_20260910/ledger/{r2e_preflight_20260911,r2e_remainder_20260911,r2e_failure_repeats_20260911}/results.jsonl",
+    "logs_root": "runs/env_probe_stage1_20260910/ledger/<batch>/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/candidate_manifest.jsonl",
+    "source_row_full": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/r2e_candidates_full.jsonl",
+    "fixture_snapshot": "runs/env_probe_stage1_20260910/ledger/r2e_fixture_snapshots_20260911/9a15fcf89a151811de8ac783419df0512c863d5e/"
+   }
+  },
+  {
+   "task_id": "r2e::a95a338eeada7275a5289cf036136610ebaf07eb",
+   "group": "core24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "scrapy",
+   "commit_hash": "a95a338eeada7275a5289cf036136610ebaf07eb",
+   "image_ref": "namanjain12/scrapy_final:a95a338eeada7275a5289cf036136610ebaf07eb",
+   "image_digest_observed": "sha256:cd01a127a7c83ad8e59e0380f34dbf20e7469fe0ae4ebb051c83993dbc4d067d",
+   "workdir": "/testbed",
+   "expected_n": 5,
+   "expected_status_counts": {
+    "PASSED": 3,
+    "FAILED": 2
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1330,
+   "coverage_reason": "partial 包装函数的反射行为",
+   "selection_status": "development_candidate_only",
+   "materials_refs": {
+    "ledger": "docs/.../env_probe_20260909/ledger/r2e_ledger_v3.jsonl",
+    "logs_root": "runs/env_probe_20260909_final_sync/ledger/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "docs/.../b_probe_preparation_20260909/candidate_manifest.jsonl",
+    "problem_statement": "docs/.../data_freeze/meta/r2e_subset.jsonl",
+    "source_row_full": "absent_locally"
+   }
+  },
+  {
+   "task_id": "r2e::cfed9b6659c90e0799361911b1d72ed127edf471",
+   "group": "core24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "scrapy",
+   "commit_hash": "cfed9b6659c90e0799361911b1d72ed127edf471",
+   "image_ref": "namanjain12/scrapy_final:cfed9b6659c90e0799361911b1d72ed127edf471",
+   "image_digest_observed": "sha256:fa079ea2bf7a05e1a472d6a840f820d2512d64f5a656ee65a069a0bbc7b706f1",
+   "workdir": "/testbed",
+   "expected_n": 9,
+   "expected_status_counts": {
+    "PASSED": 6,
+    "FAILED": 3
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 1279,
+   "coverage_reason": "预留扩展：同仓库不同任务及题面长度；题面长度不代表难度或运行成本，尚未逐题质量审查",
+   "selection_status": "development_candidate_only",
+   "materials_refs": {
+    "ledger": "docs/.../env_probe_20260909/ledger/r2e_ledger_v3.jsonl",
+    "logs_root": "runs/env_probe_20260909_final_sync/ledger/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "docs/.../b_probe_preparation_20260909/candidate_manifest.jsonl",
+    "problem_statement": "docs/.../data_freeze/meta/r2e_subset.jsonl",
+    "source_row_full": "absent_locally"
+   }
+  },
+  {
+   "task_id": "r2e::e938752973b4fc53e0fa0c0bc68a431613b987e4",
+   "group": "night_expansion24",
+   "source": "R2E-Gym/R2E-Gym-Subset",
+   "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+   "task_revision": "upstream",
+   "repo": "scrapy",
+   "commit_hash": "e938752973b4fc53e0fa0c0bc68a431613b987e4",
+   "image_ref": "namanjain12/scrapy_final:e938752973b4fc53e0fa0c0bc68a431613b987e4",
+   "image_digest_observed": null,
+   "workdir": "/testbed",
+   "expected_n": 62,
+   "expected_status_counts": {
+    "PASSED": 62
+   },
+   "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+   "problem_statement_chars": 877,
+   "coverage_reason": "同一既有仓库按 expected 测试数量排序的四分位/中位/四分之三位；与旧24题去重，不代表能力难度或题目公平性",
+   "selection_status": "environment_exploration_only",
+   "selection_quantile": 0.75,
+   "materials_refs": {
+    "ledger": "runs/env_probe_stage1_20260910/ledger/{r2e_preflight_20260911,r2e_remainder_20260911,r2e_failure_repeats_20260911}/results.jsonl",
+    "logs_root": "runs/env_probe_stage1_20260910/ledger/<batch>/logs_r2e/<repo>/<commit12>/<gate>/a<n>/",
+    "candidate_manifest": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/candidate_manifest.jsonl",
+    "source_row_full": "runs/env_probe_stage1_20260910/r2e_expansion_preparation/r2e_candidates_full.jsonl",
+    "fixture_snapshot": "runs/env_probe_stage1_20260910/ledger/r2e_fixture_snapshots_20260911/e938752973b4fc53e0fa0c0bc68a431613b987e4/"
+   }
+  }
+ ]
+}

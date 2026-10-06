@@ -1,0 +1,219 @@
+{
+  "schema_id": "rh2.ordinary_gpu_probe.owner_request.v1",
+  "request_id": "probe-swe-dask-7138-20261003-v1",
+  "status": "cpu_acceptance_complete_pending_executor_admission",
+  "package_id": "swe_dask",
+  "package_path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask",
+  "owner_thread_id": "01a0fd62-996e-7953-8af9-856540ff3015",
+  "owner_thread_title": "SWE | Dask 题目修订",
+  "tasks": [
+    {
+      "task_id": "swe_gym_lite::dask__dask-7138",
+      "instance_id": "dask__dask-7138",
+      "purpose": "ravel的array-like支持、正确展开和既有array=关键字兼容在真实coding harness下的基座修法诊断；题主负责完整轨迹及必要复修。",
+      "allowed_uses": [
+        "本批普通基座质量诊断"
+      ],
+      "limits": [
+        "原题面已有asanyarray转换方向，解题引导属性须在能力结论中保留",
+        "原source gold重命名array参数，当前新增P2P为负对照，不以gold标签替代正确性",
+        "旧pip check冲突保留；本轮只实测本题路径",
+        "正式训练typed actor未接入；本批沿既有精确派生image_override做诊断",
+        "三行runner_integrity_changed=true与安装日志一致；无细粒度前后文件diff，变化原因只能据有限证据推断，不伪改该字段"
+      ],
+      "source_binding": {
+        "release_id": "cat2-cpu-r2e089092-swe39-dask-monai-20261003-v1",
+        "local_release_dir": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe39_dask_monai_v1",
+        "external_manifest": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe39_dask_monai_v1/manifest.json",
+        "external_manifest_sha256": "sha256:2b788d1ce84228a27894e04886ade347e91993f48ddc9bdeeb8f92de4aa92917",
+        "producer_manifest": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe39_dask_monai_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest_swe39_dask_monai_combined_20261003_v1/ingest_manifest_swe_revision_v1.json",
+          "sha256": "sha256:9f56ab144ff9a6c8a811a406ab8f799270c5e7981a9fd388ca518165e822692e"
+        },
+        "registry": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe39_dask_monai_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/dask7138_fixed_test_patch_v1/material_revisions.json",
+          "sha256": "sha256:c6a9d747f0ed3a2ad49851ec524389786e703f8bc3572e65be26374126714d13"
+        },
+        "material_revision_ids": [
+          "dask7138-array-keyword-v1"
+        ],
+        "material_bundle_files": {
+          "public_bundles_v0.jsonl": {
+            "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe39_dask_monai_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest_swe39_dask_monai_combined_20261003_v1/public_bundles_v0.jsonl",
+            "sha256": "sha256:f6f338ef3ba0f927d8957c37c5fdb781cce42cef023cd4a9d002edf52ca01e78"
+          },
+          "environment_packages_v0.jsonl": {
+            "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe39_dask_monai_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest_swe39_dask_monai_combined_20261003_v1/environment_packages_v0.jsonl",
+            "sha256": "sha256:20b169d6b02dcd5c177c31f70842bbe6f45b2f06d8d12c45c5321c51943f4522"
+          },
+          "grading_bundles_v2_v0.jsonl": {
+            "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe39_dask_monai_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest_swe39_dask_monai_combined_20261003_v1/grading_bundles_v2_v0.jsonl",
+            "sha256": "sha256:294100fe94a35264f606a205d4b6da17dad9233798fbd9190fb4f82c81f35b86"
+          },
+          "validation_bundles_v0.jsonl": {
+            "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe39_dask_monai_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest_swe39_dask_monai_combined_20261003_v1/validation_bundles_v0.jsonl",
+            "sha256": "sha256:196fdf81e1142c431d7b60dee5082db6ccfd3ba8b65f88f686bb12b2020ad961"
+          }
+        },
+        "base_commit": "9bb586a6b8fac1983b7cea3ab399719f93dbbb29",
+        "public_bundle_digest": "sha256:02e3a996c88ecb46121a606d5c910986ad2d22ceec7b4663babaeaf3ad6b8c8b",
+        "environment_package_digest": "sha256:bb77d20f8e384eaf09a31183d0c05bf2fa1590a94a65ffa8a7f1d260140ebb63",
+        "grading_bundle_digest": "sha256:ab58a76b4d8fa60add16e3217d0a2d8e10c9bff2667dfcdc67c61e1cddc0175a",
+        "grading_materials_identity": "sha256:3e94408ef02d1c2fb6c9113a5c86920325280b2a80962bf579d98087e283136e",
+        "public_statement_revision": "unchanged",
+        "problem_statement_sha256": "sha256:611bad2c01d471ecf524f255527507c6175fc0023c3baebd2a184ca21a9c1028",
+        "effective_test_patch": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7138/effective_test.patch",
+          "sha256": "sha256:2f3c5c539816149a06b6c460b5d79d6b3223f452cd5862bcdbac41faf76bc44a"
+        },
+        "reference_partitions": {
+          "original_f2p": 1,
+          "original_p2p": 468,
+          "added_p2p": 1,
+          "total": 470
+        },
+        "formal_binding": {
+          "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-formal-cpu-c-20261003-v1/remote/run/formal_binding.json",
+          "sha256": "sha256:6fcaa227779c12430be43c06871d0f2d88523762ef8bd0687335e6d3c23e7e06"
+        },
+        "publication_receipt": {
+          "path": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r15/dask7138_publication_receipt.json",
+          "sha256": "sha256:050574d5a7a1b5fce5b3667ad204b052625467c36a1cb28f4d2b98ff476489a0"
+        },
+        "consumer_requirements": [
+          "使用冻结R15正式array-keyword consumer/1F469P和pytest7.4.4受信配方，不能回退旧testpatch或原gold正例",
+          "GPU重新prepare，核实际public/env/grading/material/完整参考身份；共同代码迁移版本另留实际绑定",
+          "私有测试/gold/候选/分析不进入solver，原FrozenPatch直接评分"
+        ]
+      },
+      "image": {
+        "source_ref_by_digest": "xingyaoww/sweb.eval.x86_64.dask_s_dask-7138@sha256:91df52cb66bb64003ecf4721832eae373c701536aa3dcb85ddc7d9e0ea757736",
+        "source_image_id_cpu": "sha256:8da379ba385fb50070429c697a92cdb5673b8475b0b48a7da7e8642cc99eef3e",
+        "recipe_id": "dask7138-pytest744-fixed-v1",
+        "actor_Dockerfile": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe39_dask_monai_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/dask7138_fixed_test_patch_v1/actor_Dockerfile",
+          "sha256": "sha256:e2d77f7453ce989d198e5022902ca28694a9e19938d423dc48065cb7e02a2211"
+        },
+        "actor_image_readback": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe39_dask_monai_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/dask7138_fixed_test_patch_v1/actor_image.json",
+          "sha256": "sha256:f82d14f28b7ad9eb04be5982f47a9f91ecaa69c2fa0c5ce71944df7e80d82b0d"
+        },
+        "grader_Dockerfile": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe39_dask_monai_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/dask7138_fixed_test_patch_v1/grader_Dockerfile",
+          "sha256": "sha256:eea5bb600626982ca4fca6d873c5b77f2858a85aa8cdc746bc172e1daae148cd"
+        },
+        "grader_image_readback": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe39_dask_monai_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/dask7138_fixed_test_patch_v1/grader_image.json",
+          "sha256": "sha256:c95bc596a9747d6227a04143de34d8aafd1be83561924522ecea5f2cdff4a23e"
+        },
+        "wheel": {
+          "filename": "pytest-7.4.4-py3-none-any.whl",
+          "sha256": "b090cdf5ed60bf4c45261be03239c2c1c22df034fbffe691abe93cd80cea01d8",
+          "grader_image_path": "/opt/rh2/compat-wheels/pytest-7.4.4-py3-none-any.whl",
+          "actor_runtime_wheel": "removed_after_install_per_verified_Dockerfile"
+        },
+        "cpu_actor_image_id": "sha256:fdd298b61309ae2df4cb9f528351526b7b3817c42fc34f47f98152a92a520881",
+        "cpu_grader_image_id": "sha256:625b404c6c1c40da31df4edfea6052a10fbd30b7fb49d58072b6ee2b215fab13",
+        "gpu_actual_actor_image_id": null,
+        "gpu_actual_grader_image_id": null,
+        "source_host": "cpu-c",
+        "gpu_binding_policy": "优先传输已有精确派生actor/grader；仅cpu-c存在不代表GPU存在，load后核实际config ID/原source/recipe和无私有材料；等价重建或consumer变化另留依据，不改绑旧分"
+      },
+      "actor": {
+        "image_override": "sha256:fdd298b61309ae2df4cb9f528351526b7b3817c42fc34f47f98152a92a520881",
+        "image_recipe_note": "诊断用固定预安装pytest7.4.4 actor；typed正式训练actor未实现，原source/public/environment身份保留。",
+        "cpu_public_actor": {
+          "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-cpu-c-20261003-v1/remote/run/actor/attempt.json",
+          "sha256": "sha256:d77ba66b5ce443b361743d56ccf6467475c9e0aac1993852738044936f7da35d"
+        },
+        "prelaunch": {
+          "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-cpu-c-20261003-v1/remote/run/actor/prelaunch.json",
+          "sha256": "sha256:f12c64018aaca7683082c2a6b196992d1a796492224d45310620652142a6a69e"
+        },
+        "actual_first_request": {
+          "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-cpu-c-20261003-v1/remote/run/actor/stub/requests/messages_000.json",
+          "sha256": "sha256:06a1855202b57f3d7e1ca457e2f7eea03dbb47a8baa0aa9b28f94912196fa883"
+        },
+        "public_tests_scope": "560原公开模块项、旧array=合法调用、原list错误复现、UID54321/干净base/激活拒写/完整清理；CC2.1.205脚本桩非模型推理"
+      },
+      "grader": {
+        "derived_image_id": "sha256:625b404c6c1c40da31df4edfea6052a10fbd30b7fb49d58072b6ee2b215fab13",
+        "setup_seconds": 300.0,
+        "whole_seconds": 3600,
+        "recipe": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe39_dask_monai_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/dask7138_fixed_test_patch_v1/install_recipe.json",
+          "sha256": "sha256:0a51cfc288da9be52a6187f7a6d840308237f47f21c184cc0de7efbf0bed1bc6"
+        },
+        "formal_materials_identity": "sha256:3e94408ef02d1c2fb6c9113a5c86920325280b2a80962bf579d98087e283136e",
+        "notes": "COPY-only grader候选UID54322先核固定wheel SHA再离线安装pytest7.4.4/原editable；安装摘要变化如实保存"
+      },
+      "public_delivery": {
+        "mode": "unchanged",
+        "basis": "原公开题面及hints已在历史CPU首请求实际交付；GPU必须保留公开字节、中性环境激活和array参数可见源码，不注入私有调查材料"
+      },
+      "cpu_acceptance": {
+        "formal_matrix": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7138/formal_cpu_readback_r15_20261003.json",
+          "sha256": "sha256:54a27294c7efc4f717ff4200085e1a06fc780b2c7857780f91ca8f341e851aa7"
+        },
+        "readback_manifest": {
+          "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-formal-cpu-c-20261003-v1/remote/readback_manifest.json",
+          "sha256": "02c6904a59418cebb976ea309d359f29a8743a67ca290528881561ee51d856c5",
+          "verified_members": 45
+        },
+        "formal_positive": "compatible_ravel=1，1F469P全部通过",
+        "formal_negative": "noop=0原F失败；gold=0仅新增keyword P失败，原468P全部通过；每行470参考完整",
+        "formal_identity": "候选apply54321/评分policy54322，固定625b，安装和test完整/无infra/清理；UID及摘要覆盖限度见独立报告",
+        "independent_review": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_7138_formal_cpu_r15_review_20261003.json",
+          "sha256": "sha256:9f459920d0afeaaed70c5461006ffdc4fdc132d5968ae575e609530e4e819ecd"
+        },
+        "independent_review_md": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_7138_formal_cpu_r15_review_20261003.md",
+          "sha256": "sha256:03af2f1e659ce0cc2c5c629d489756e599074392f527c7feaa50a6ebf4b0f1b2"
+        },
+        "prior_actual_actor_independent_review": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_cpu_and_7305_review_20261003.json",
+          "sha256": "sha256:91ddcd37aa683ee7418967dd9199588160f986ae0a29be176e16cef3f7920e65"
+        }
+      },
+      "validated_cpu_profile": {
+        "cpu": 2,
+        "memory_bytes": 4294967296,
+        "candidate_uid": 54321,
+        "grader_uid": 54322,
+        "network": "deny_all"
+      },
+      "validated_replay_budgets": {
+        "candidate_stage_seconds": 900,
+        "grading_deadline_seconds": 3600,
+        "cleanup_seconds": 120,
+        "image_pull_seconds": 1800
+      }
+    }
+  ],
+  "model_budget": {
+    "decision_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/ordinary_probe_20260929/gpu_coordination_decisions_20261002.md",
+    "budget_id": "probe-wide-v1",
+    "attempts_per_model": 1,
+    "models": [
+      "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+      "Qwen/Qwen3.6-35B-A3B"
+    ],
+    "subsequent_repeats": "按全批至少27/52题修复验收后第二阶段规则安排，不在首轮挤占未覆盖题；截断/infra接续不伪增有效样本"
+  },
+  "executor_resolves": [
+    "冻结共同入口与R15 consumer兼容版本",
+    "新prepared实际材料/470参考/公开交付身份",
+    "实际GPU actor/grader/source/recipe和image覆盖身份",
+    "实际生效统一宽预算及隐藏限制",
+    "完整轨迹、原FrozenPatch直评和清理/回收"
+  ],
+  "receipt_requirements": [
+    "两既定模型各1完整attempt及作业/模型/预算/代码/image/material实际身份",
+    "完整轨迹、公开首请求、原baseline/FrozenPatch、候选补丁、结束原因和token/回合/调用及时间拆分",
+    "逐参考结果、完整install/test日志、原score和所有异常/清理/回收SHA",
+    "直接通知登记owner；budget截断/infra缺项保留待接续，不默置0或算完成"
+  ],
+  "result_owner_policy": "题主逐轨迹审根因/定位/工具/并行机会及实际支持/验证质量/效率/稳定性；成功失败异常均保留，必要修订仍由原题主负责，提交不等于整题完工。"
+}

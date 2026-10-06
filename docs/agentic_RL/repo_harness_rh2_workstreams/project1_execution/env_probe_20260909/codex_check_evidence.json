@@ -1,0 +1,238 @@
+{
+  "checked_at_utc": "2026-09-09T02:52:02.983345+00:00",
+  "scope": "远端运行中的快照；不是全量验收或生产配置批准",
+  "runtime": {
+    "checked_at_utc": "2026-09-09T02:49:30.479654+00:00",
+    "tmux": [
+      "full216"
+    ],
+    "full216_done_flag": false,
+    "disk_free_bytes": 495901315072,
+    "ledger_rows": 1231,
+    "last_attempt_started_at": "2026-09-09T02:47:53.010224+00:00"
+  },
+  "account_snapshot": {
+    "checked_at_utc": "2026-09-09T02:49:26.025177+00:00",
+    "vast": {
+      "credit_usd": 4.877018462315618
+    },
+    "deepseek": {
+      "is_available": true,
+      "balances": [
+        {
+          "currency": "CNY",
+          "total_balance": "36.56",
+          "granted_balance": "0.00",
+          "topped_up_balance": "36.56"
+        },
+        {
+          "currency": "USD",
+          "total_balance": "0.00",
+          "granted_balance": "0.00",
+          "topped_up_balance": "0.00"
+        }
+      ]
+    }
+  },
+  "swegym": {
+    "ledger_rows": 1237,
+    "latest_started_at": "2026-09-09T02:49:30.545168+00:00",
+    "default_result_counts": {
+      "facts/recorded": 216,
+      "empty/passed": 435,
+      "gold/passed": 410,
+      "gold/failed": 26,
+      "probe_unrelated/passed": 12,
+      "probe_mutation/rejected": 10,
+      "probe_mutation/suspicious_pass": 1,
+      "probe_mutation/fixture_invalid": 1,
+      "gold/infra_failed:docker_timeout": 17,
+      "facts/infra_failed:docker_timeout": 18,
+      "empty/infra_failed:docker_timeout": 18,
+      "empty/suspicious": 1
+    },
+    "pass_one_verdict_counts": {
+      "empty": {
+        "RESOLVED_NO": 216
+      },
+      "gold": {
+        "RESOLVED_FULL": 204,
+        "RESOLVED_NO": 12
+      }
+    },
+    "paired_three_tasks": 110,
+    "three_gate_keys": 220,
+    "unique_default_graded_attempts": 872,
+    "verdict_inconsistent_groups": [],
+    "mutation_counts": {
+      "rejected": 10,
+      "suspicious_pass": 1,
+      "fixture_invalid": 1
+    },
+    "interrupted_scoring_attempts": [
+      {
+        "instance_id": "Project-MONAI__MONAI-763",
+        "gate": "empty",
+        "attempt": 2,
+        "result": "suspicious",
+        "rc_test": 3,
+        "parsed_cases": 0,
+        "started_at": "2026-09-09T01:58:38.601389+00:00"
+      }
+    ]
+  },
+  "swegym_default_scored_log_hash_status": {
+    "matched": 872
+  },
+  "r2e_prime_replay": {
+    "source_url": "https://raw.githubusercontent.com/PrimeIntellect-ai/prime-envs/c4d04dfe212c153a587ea4ce072ae6753e74d6e9/environments/swe/r2e_gym/r2e_gym/taskset.py",
+    "source_sha256": "sha256:b928139eb0e9b4da9ca5d0ad927e17cf32727a6d18bc444ed57d63ca1a273bed",
+    "literal_escape_byte_count": 1,
+    "minimal_ansi_example_passed": true,
+    "attempt_count": 144,
+    "agreement_count": 144,
+    "disagreements": []
+  },
+  "r2e_log_hash_status": {
+    "r2e_ledger.jsonl": {
+      "no_logged_hash": 24,
+      "different_existing_file": 94,
+      "matches": 2
+    },
+    "r2e_ledger_v2.jsonl": {
+      "different_existing_file": 143,
+      "matches": 1
+    },
+    "r2e_ledger_v3.jsonl": {
+      "matches": 144
+    }
+  },
+  "r2e_gold_final_content": {
+    "tasks": 7,
+    "attempts": 21,
+    "file_pairs": 24,
+    "equivalent_attempts": 21,
+    "all_equivalent": true
+  },
+  "candidate_projection_differences": [
+    {
+      "instance_id": "conan-io__conan-13326",
+      "additional_rh2_exclusions": [
+        "conans/test/integration/package_id/test_cache_compatibles.py"
+      ],
+      "probe_result": "unresolved"
+    },
+    {
+      "instance_id": "dask__dask-7656",
+      "additional_rh2_exclusions": [
+        "dask/tests/test_base.py"
+      ],
+      "probe_result": "resolved"
+    },
+    {
+      "instance_id": "modin-project__modin-6298",
+      "additional_rh2_exclusions": [
+        "modin/numpy/test/test_array_math.py"
+      ],
+      "probe_result": "resolved"
+    },
+    {
+      "instance_id": "pandas-dev__pandas-48106",
+      "additional_rh2_exclusions": [
+        "pandas/tests/series/indexing/test_setitem.py"
+      ],
+      "probe_result": "unresolved"
+    },
+    {
+      "instance_id": "pydantic__pydantic-8793",
+      "additional_rh2_exclusions": [
+        "tests/test_create_model.py"
+      ],
+      "probe_result": "resolved"
+    },
+    {
+      "instance_id": "pydantic__pydantic-5706",
+      "additional_rh2_exclusions": [
+        "tests/test_edge_cases.py",
+        "tests/test_types.py"
+      ],
+      "probe_result": "resolved"
+    }
+  ],
+  "shm_short_reproduction": [
+    {
+      "condition": "64m",
+      "at_utc": "2026-09-09T02:48:46.912537+00:00",
+      "shm_bytes": 67108864,
+      "return_code": 0,
+      "loader_result": {
+        "source_sha256": "e9bbef94c01d601c421aa0715838840a0614eed792ea33027fbbb039e1486723",
+        "requested_batches": 3,
+        "loaded_batches": 0,
+        "status": "error",
+        "exception_type": "RuntimeError",
+        "error": "Caught RuntimeError in DataLoader worker process 0.\nOriginal Traceback (most recent call last):\n  File \"/opt/miniconda3/envs/testbed/lib/python3.8/site-packages/torch/utils/data/_utils/worker.py\", line 309, in _worker_loop\n    data = fetcher.fetch(index)  # type: ignore[possibly-undefined]\n  File \"/opt/miniconda3/envs/testbed/lib/python3.8/site-packages/torch/utils/data/_utils/fetch.py\", line 55, in fetch\n    return self.collate_fn(data)\n  File \"/testbed/monai/data/utils.py\", line 218, in list_data_collate\n    return default_collate(data)\n  File \"/opt/miniconda3/envs/testbed/lib/python3.8/site-packages/torch/utils/data/_utils/collate.py\", line 317, in default_collate\n    return collate(batch, collate_fn_map=default_collate_fn_map)\n  File \"/opt/miniconda3/envs/testbed/lib/python3.8/site-packages/torch/utils/data/_utils/collate.py\", line 155, in collate\n    clone.update({key: collate([d[key] for d in batch], collate_fn_map=collate_fn_map) for key in elem})\n  File \"/opt/miniconda3/envs/testbed/lib/python3.8/site-packages/torch/utils/data/_utils/collate.py\", line 155, in <dictcomp>\n    clone.update({key: collate([d[key] for d in batch], collate_fn_map=collate_fn_map) for key in elem})\n  File \"/opt/miniconda3/envs/testbed/lib/python3.8/site-packages/torch/utils/data/_utils/collate.py\", line 142, in collate\n    return collate_fn_map[elem_type](batch, collate_fn_map=collate_fn_map)\n  File \"/opt/miniconda3/envs/testbed/lib/python3.8/site-packages/torch/utils/data/_utils/collate.py\", line 212, in collate_tensor_fn\n    storage = elem._typed_storage()._new_shared(numel, device=elem.device)\n  File \"/opt/miniconda3/envs/testbed/lib/python3.8/site-packages/torch/storage.py\", line 968, in _new_shared\n    untyped_storage = torch.UntypedStorage._new_shared(size * self._element_size(), device=device)\n  File \"/opt/miniconda3/envs/testbed/lib/python3.8/site-packages/torch/storage.py\", line 302, in _new_shared\n    return cls._new_using_fd_cpu(size)\nRuntimeError: unable to write to file </torch_61_3787292902_0>: No space left on device (28)\n",
+        "elapsed_s": 12.132
+      },
+      "elapsed_s": 19.421
+    },
+    {
+      "condition": "1g",
+      "at_utc": "2026-09-09T02:49:06.334286+00:00",
+      "shm_bytes": 1073741824,
+      "return_code": 0,
+      "loader_result": {
+        "source_sha256": "e9bbef94c01d601c421aa0715838840a0614eed792ea33027fbbb039e1486723",
+        "requested_batches": 3,
+        "loaded_batches": 3,
+        "status": "loaded_three_batches",
+        "batch_tensor_bytes": 56623104,
+        "shm_used_bytes": [
+          227885056,
+          170934272,
+          113983488
+        ],
+        "elapsed_s": 15.111
+      },
+      "elapsed_s": 21.205
+    }
+  ],
+  "shm_full_attempt": {
+    "at_utc": "2026-09-09T02:47:08.480380+00:00",
+    "status": "operator_interrupted_diagnostic",
+    "reason": "已见共享内存占用超过默认容量；完整非参考测试继续进行 3D UNet CPU 训练，改做数据加载短复现，不产出该次完整评分结论。",
+    "containers": [
+      {
+        "name": "/rh2probe_f9f8076796cbb2c3_codex_shm1g",
+        "shm_size": 1073741824,
+        "image_id": "sha256:ebe529a9ab5b76d823d94d5a210377ba6e2365a29a68626da744b17c134a3cb5",
+        "partial_test_output.txt_copied": true,
+        "eval.sh_copied": true,
+        "test_integration_segmentation_3d.py_copied": true,
+        "df_dev_shm": "Filesystem      1B-blocks      Used Available Use% Mounted on\nshm            1073741824 227885056 845856768  22% /dev/shm\n"
+      }
+    ]
+  },
+  "official_script_static_recheck": {
+    "checked_at_utc": "2026-09-09T02:39:01.991067+00:00",
+    "tasks": 216,
+    "install_present": 216,
+    "rebuild_matches_official": 216
+  },
+  "ledger_sha256": {
+    "cc_candidate_grading.jsonl": "sha256:b2ee8416814c9a017b9c6103c50bb2fd9cf5b5faaa2044ccd506205fabb1966c",
+    "r2e_ledger.jsonl": "sha256:1a23490dae8df977b45c2c4796148aedcaf29bc6b90c4bceb37e7804f9efe5c7",
+    "swegym_ledger.jsonl": "sha256:252d18defa289ed6f725b46a5ee65ce44cdcb011e61d2553a7832c50d24ab6e0",
+    "r2e_ledger_v2.jsonl": "sha256:3797ef42c6c49f67fe93da080f154b2aca55541b2de182bdf40eaa18bfb01104",
+    "cc_reference_ledger.jsonl": "sha256:7cf9b27c7d1dfb57bad72ad21e409e8a8b65cf237a1bd5f6c44cdb6975adaaf9",
+    "swegym_facts_v2.jsonl": "sha256:acd2237ea59298ca24d1c625c0e1226964e01f6919bb072590f2ce29fda4242d",
+    "r2e_ledger_v3.jsonl": "sha256:3dbb1e6fc1edecbd657a89a8b29bcb6ee7cdfc87154d69d40ce7473a547d220a"
+  },
+  "local_source_head": "04f599f82d5eef4a808fab001f295896ebed5efa",
+  "local_worktree_clean": false,
+  "backup": {
+    "path_relative_to_repo": "runs/env_probe_20260909_codex_backup",
+    "remote_selected_file_bytes_at_last_rsync": 221696254,
+    "kind": "仍在运行时取得的备份，旧版已覆盖工件无法恢复"
+  }
+}

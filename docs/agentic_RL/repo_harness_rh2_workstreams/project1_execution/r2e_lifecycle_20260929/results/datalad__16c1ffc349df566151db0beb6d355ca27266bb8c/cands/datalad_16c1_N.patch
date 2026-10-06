@@ -1,0 +1,13 @@
+diff --git a/datalad/interface/utils.py b/datalad/interface/utils.py
+index 7c35619..1ade648 100644
+--- a/datalad/interface/utils.py
++++ b/datalad/interface/utils.py
+@@ -1027,7 +1027,7 @@ def eval_results(func):
+                         break
+                 if result_filter:
+                     try:
+-                        if not result_filter(res):
++                        if not result_filter(res, **_kwargs):
+                             raise ValueError('excluded by filter')
+                     except ValueError as e:
+                         lgr.debug('not reporting result (%s)', exc_str(e))

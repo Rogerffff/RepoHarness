@@ -1,0 +1,423 @@
+{
+ "schema_id": "rh2.l8.disposition_counts.v0",
+ "generated_at_local": "2026-09-16 04:3x（本机）",
+ "method": "遍历 env_overnight_20260916/L1_*/records/*.json，取 disposition_hint.state；task_id 以文件名（instance_id）为准（L1_monai_2 的 task_id 字段带 swe_gym_lite:: 前缀，不影响统计）；仓库归属取 tasks_by_repo.json。",
+ "states": [
+  "ready_for_probe",
+  "needs_repair",
+  "needs_review",
+  "reject_revision",
+  "unsupported_conditions"
+ ],
+ "note_states": "unsupported_conditions 是 environment_screening_definition_20260915.md §4 的合法状态，本轮 13 个 L1 包无一使用（全部为 0）；MONAI-3205/moto-7105 这类“当前条件不支持”被各包写成 needs_repair 或条件式建议，读数时注意。",
+ "by_repo": {
+  "Project-MONAI/MONAI": {
+   "covered": 26,
+   "assigned": 26,
+   "ready_for_probe": 11,
+   "needs_repair": 11,
+   "needs_review": 3,
+   "reject_revision": 1,
+   "unsupported_conditions": 0
+  },
+  "conan-io/conan": {
+   "covered": 12,
+   "assigned": 12,
+   "ready_for_probe": 4,
+   "needs_repair": 4,
+   "needs_review": 4,
+   "reject_revision": 0,
+   "unsupported_conditions": 0
+  },
+  "dask/dask": {
+   "covered": 14,
+   "assigned": 14,
+   "ready_for_probe": 7,
+   "needs_repair": 2,
+   "needs_review": 2,
+   "reject_revision": 3,
+   "unsupported_conditions": 0
+  },
+  "getmoto/moto": {
+   "covered": 59,
+   "assigned": 59,
+   "ready_for_probe": 27,
+   "needs_repair": 13,
+   "needs_review": 19,
+   "reject_revision": 0,
+   "unsupported_conditions": 0
+  },
+  "iterative/dvc": {
+   "covered": 35,
+   "assigned": 35,
+   "ready_for_probe": 8,
+   "needs_repair": 21,
+   "needs_review": 5,
+   "reject_revision": 1,
+   "unsupported_conditions": 0
+  },
+  "modin-project/modin": {
+   "covered": 5,
+   "assigned": 5,
+   "ready_for_probe": 2,
+   "needs_repair": 2,
+   "needs_review": 1,
+   "reject_revision": 0,
+   "unsupported_conditions": 0
+  },
+  "pandas-dev/pandas": {
+   "covered": 5,
+   "assigned": 5,
+   "ready_for_probe": 1,
+   "needs_repair": 2,
+   "needs_review": 2,
+   "reject_revision": 0,
+   "unsupported_conditions": 0
+  },
+  "pydantic/pydantic": {
+   "covered": 20,
+   "assigned": 20,
+   "ready_for_probe": 7,
+   "needs_repair": 5,
+   "needs_review": 7,
+   "reject_revision": 1,
+   "unsupported_conditions": 0
+  },
+  "python/mypy": {
+   "covered": 40,
+   "assigned": 40,
+   "ready_for_probe": 12,
+   "needs_repair": 20,
+   "needs_review": 4,
+   "reject_revision": 4,
+   "unsupported_conditions": 0
+  }
+ },
+ "by_package": {
+  "L1_conan": {
+   "covered": 12,
+   "ready_for_probe": 4,
+   "needs_repair": 4,
+   "needs_review": 4,
+   "reject_revision": 0,
+   "unsupported_conditions": 0
+  },
+  "L1_dask": {
+   "covered": 14,
+   "ready_for_probe": 7,
+   "needs_repair": 2,
+   "needs_review": 2,
+   "reject_revision": 3,
+   "unsupported_conditions": 0
+  },
+  "L1_dvc_1": {
+   "covered": 17,
+   "ready_for_probe": 2,
+   "needs_repair": 10,
+   "needs_review": 4,
+   "reject_revision": 1,
+   "unsupported_conditions": 0
+  },
+  "L1_dvc_2": {
+   "covered": 18,
+   "ready_for_probe": 6,
+   "needs_repair": 11,
+   "needs_review": 1,
+   "reject_revision": 0,
+   "unsupported_conditions": 0
+  },
+  "L1_modin_pandas": {
+   "covered": 10,
+   "ready_for_probe": 3,
+   "needs_repair": 4,
+   "needs_review": 3,
+   "reject_revision": 0,
+   "unsupported_conditions": 0
+  },
+  "L1_monai_1": {
+   "covered": 13,
+   "ready_for_probe": 3,
+   "needs_repair": 8,
+   "needs_review": 2,
+   "reject_revision": 0,
+   "unsupported_conditions": 0
+  },
+  "L1_monai_2": {
+   "covered": 13,
+   "ready_for_probe": 8,
+   "needs_repair": 3,
+   "needs_review": 1,
+   "reject_revision": 1,
+   "unsupported_conditions": 0
+  },
+  "L1_moto_1": {
+   "covered": 19,
+   "ready_for_probe": 7,
+   "needs_repair": 9,
+   "needs_review": 3,
+   "reject_revision": 0,
+   "unsupported_conditions": 0
+  },
+  "L1_moto_2": {
+   "covered": 20,
+   "ready_for_probe": 12,
+   "needs_repair": 1,
+   "needs_review": 7,
+   "reject_revision": 0,
+   "unsupported_conditions": 0
+  },
+  "L1_moto_3": {
+   "covered": 20,
+   "ready_for_probe": 8,
+   "needs_repair": 3,
+   "needs_review": 9,
+   "reject_revision": 0,
+   "unsupported_conditions": 0
+  },
+  "L1_mypy_1": {
+   "covered": 20,
+   "ready_for_probe": 7,
+   "needs_repair": 10,
+   "needs_review": 1,
+   "reject_revision": 2,
+   "unsupported_conditions": 0
+  },
+  "L1_mypy_2": {
+   "covered": 20,
+   "ready_for_probe": 5,
+   "needs_repair": 10,
+   "needs_review": 3,
+   "reject_revision": 2,
+   "unsupported_conditions": 0
+  },
+  "L1_pydantic": {
+   "covered": 20,
+   "ready_for_probe": 7,
+   "needs_repair": 5,
+   "needs_review": 7,
+   "reject_revision": 1,
+   "unsupported_conditions": 0
+  }
+ },
+ "total": {
+  "covered": 216,
+  "assigned": 216,
+  "ready_for_probe": 79,
+  "needs_repair": 80,
+  "needs_review": 47,
+  "reject_revision": 10,
+  "unsupported_conditions": 0
+ },
+ "uncovered_tasks": [],
+ "reconciliation_with_summaries": [
+  {
+   "package": "L1_conan",
+   "summary_claims": {
+    "ready_for_probe": 4,
+    "needs_repair": 4,
+    "needs_review": 4,
+    "reject_revision": 0
+   },
+   "recomputed": {
+    "ready_for_probe": 4,
+    "needs_repair": 4,
+    "needs_review": 4,
+    "reject_revision": 0
+   },
+   "mismatch": null
+  },
+  {
+   "package": "L1_dask",
+   "summary_claims": {
+    "ready_for_probe": 7,
+    "needs_repair": 2,
+    "needs_review": 2,
+    "reject_revision": 3
+   },
+   "recomputed": {
+    "ready_for_probe": 7,
+    "needs_repair": 2,
+    "needs_review": 2,
+    "reject_revision": 3
+   },
+   "mismatch": null
+  },
+  {
+   "package": "L1_dvc_1",
+   "summary_claims": {
+    "ready_for_probe": 2,
+    "needs_repair": 10,
+    "needs_review": 4,
+    "reject_revision": 1
+   },
+   "recomputed": {
+    "ready_for_probe": 2,
+    "needs_repair": 10,
+    "needs_review": 4,
+    "reject_revision": 1
+   },
+   "mismatch": null
+  },
+  {
+   "package": "L1_dvc_2",
+   "summary_claims": {
+    "ready_for_probe": 6,
+    "needs_repair": 11,
+    "needs_review": 1,
+    "reject_revision": 0
+   },
+   "recomputed": {
+    "ready_for_probe": 6,
+    "needs_repair": 11,
+    "needs_review": 1,
+    "reject_revision": 0
+   },
+   "mismatch": null
+  },
+  {
+   "package": "L1_monai_1",
+   "summary_claims": {
+    "ready_for_probe": 3,
+    "needs_repair": 8,
+    "needs_review": 2,
+    "reject_revision": 0
+   },
+   "recomputed": {
+    "ready_for_probe": 3,
+    "needs_repair": 8,
+    "needs_review": 2,
+    "reject_revision": 0
+   },
+   "mismatch": null
+  },
+  {
+   "package": "L1_monai_2",
+   "summary_claims": {
+    "ready_for_probe": 8,
+    "needs_repair": 3,
+    "needs_review": 1,
+    "reject_revision": 1
+   },
+   "recomputed": {
+    "ready_for_probe": 8,
+    "needs_repair": 3,
+    "needs_review": 1,
+    "reject_revision": 1
+   },
+   "mismatch": null
+  },
+  {
+   "package": "L1_moto_1",
+   "summary_claims": {
+    "ready_for_probe": 7,
+    "needs_repair": 9,
+    "needs_review": 3,
+    "reject_revision": 0
+   },
+   "recomputed": {
+    "ready_for_probe": 7,
+    "needs_repair": 9,
+    "needs_review": 3,
+    "reject_revision": 0
+   },
+   "mismatch": null
+  },
+  {
+   "package": "L1_moto_2",
+   "summary_claims": {
+    "ready_for_probe": 12,
+    "needs_repair": 1,
+    "needs_review": 7,
+    "reject_revision": 0
+   },
+   "recomputed": {
+    "ready_for_probe": 12,
+    "needs_repair": 1,
+    "needs_review": 7,
+    "reject_revision": 0
+   },
+   "mismatch": null
+  },
+  {
+   "package": "L1_moto_3",
+   "summary_claims": {
+    "ready_for_probe": 8,
+    "needs_repair": 3,
+    "needs_review": 9,
+    "reject_revision": 0
+   },
+   "recomputed": {
+    "ready_for_probe": 8,
+    "needs_repair": 3,
+    "needs_review": 9,
+    "reject_revision": 0
+   },
+   "mismatch": null
+  },
+  {
+   "package": "L1_mypy_1",
+   "summary_claims": {
+    "ready_for_probe": 7,
+    "needs_repair": 10,
+    "needs_review": 1,
+    "reject_revision": 2
+   },
+   "recomputed": {
+    "ready_for_probe": 7,
+    "needs_repair": 10,
+    "needs_review": 1,
+    "reject_revision": 2
+   },
+   "mismatch": null
+  },
+  {
+   "package": "L1_mypy_2",
+   "summary_claims": {
+    "ready_for_probe": 5,
+    "needs_repair": 10,
+    "needs_review": 3,
+    "reject_revision": 2
+   },
+   "recomputed": {
+    "ready_for_probe": 5,
+    "needs_repair": 10,
+    "needs_review": 3,
+    "reject_revision": 2
+   },
+   "mismatch": null
+  },
+  {
+   "package": "L1_pydantic",
+   "summary_claims": {
+    "ready_for_probe": 7,
+    "needs_repair": 5,
+    "needs_review": 7,
+    "reject_revision": 1
+   },
+   "recomputed": {
+    "ready_for_probe": 7,
+    "needs_repair": 5,
+    "needs_review": 7,
+    "reject_revision": 1
+   },
+   "mismatch": null
+  },
+  {
+   "package": "L1_modin_pandas",
+   "summary_claims": {
+    "ready_for_probe": 3,
+    "needs_repair": 4,
+    "needs_review": 3,
+    "reject_revision": 0
+   },
+   "recomputed": {
+    "ready_for_probe": 3,
+    "needs_repair": 4,
+    "needs_review": 3,
+    "reject_revision": 0
+   },
+   "mismatch": null
+  }
+ ],
+ "reconciliation_result": "13 个 L1 包的 summary.md 自报分布与从 records/ 重算的结果**逐项一致，无不一致项**。"
+}

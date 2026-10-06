@@ -1,0 +1,81 @@
+{
+  "as_of": "2026-10-03",
+  "scope": "owner static publication and deployment receipt readback; new task CPU matrix not run yet",
+  "request_id": "swe-mypy15184-nested-v2-publish-20261003",
+  "receipt_sha256": "c2c0cea5c8505339c334f3fa6a30fd4626cc6a50be1b01d6640902350db2e130",
+  "release_id": "cat2-cpu-r2e089092-swe14-preflight-20261003-v1",
+  "release_manifest_sha256": "00ac5c375629f59543f548fbc7b0cb3cbe7d1418f7a956d9deebcefab2e8a87c",
+  "local_release_files_verified": 950,
+  "deployment": {
+    "host": "cpu-a",
+    "release_id": "cat2-cpu-r2e089092-swe14-preflight-20261003-v1",
+    "remote_path": "/work/rh2-category2-20261003/releases/cat2-cpu-r2e089092-swe14-preflight-20261003-v1",
+    "manifest_sha256": "00ac5c375629f59543f548fbc7b0cb3cbe7d1418f7a956d9deebcefab2e8a87c",
+    "transfer": {
+      "files": 950,
+      "transfer_sha_passed": true,
+      "exact_member_set_passed": true
+    },
+    "trusted_loader_verification": {
+      "returncode": 0,
+      "stdout_log": "runs/category2_repair_20260929/host_setup_20261003/cpu-a/release_receipts/cat2-cpu-r2e089092-swe14-preflight-20261003-v1.readback_stdout.log",
+      "stderr_log": "runs/category2_repair_20260929/host_setup_20261003/cpu-a/release_receipts/cat2-cpu-r2e089092-swe14-preflight-20261003-v1.readback_stderr.log",
+      "result": {
+        "release_id": "cat2-cpu-r2e089092-swe14-preflight-20261003-v1",
+        "checksummed_files": 950,
+        "r2e_count": 48,
+        "swe_count": 216,
+        "status": "material_and_source_readback_passed_cpu_not_run"
+      }
+    }
+  },
+  "public_digest": "sha256:77b85678b3f20ef5689e4a9b646518ae1247407ff44b250803563c11dce3ea7e",
+  "grading_digest": "sha256:3a3c4e78c7dc1b1dce9187d36d00079c4d08621f7019140e6544e77b9f2db4bf",
+  "environment_digest": "sha256:de06cc63c20f88a4691b7037dfeaeae5f31c4dc13f09cf703161cf6df2954f1e",
+  "effective_test_patch_sha256": "sha256:e6d5eb0ef39aeeb08a945d3ce6aeb340a7f8b4fd56e599247dbef3b99bf4e532",
+  "references_f2p": [
+    "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1",
+    "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2",
+    "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes"
+  ],
+  "references_p2p": [
+    "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3",
+    "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType"
+  ],
+  "vendor_eval_prefix": "pytest -n0 -rA -k",
+  "effective_test_command": "pytest -n0 -rA mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1 mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2 mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3 mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType",
+  "grading_revision": {
+    "operation": "replace_mypy15184_test_patch_append_f2p_p2p",
+    "revision_id": "mypy15184-nested-nominal-types-v2",
+    "registry_sha256": "sha256:7abfdf350875e5d28c679ac196f20c8a44efdce184fa7be00ddf97cb2009740c",
+    "parent_grading_digest": "sha256:4d06500507c04fe8fe2843025d01f53ea8b6854f9fc72e1656bf7781b7da9b18",
+    "public_bundle_digest": "sha256:77b85678b3f20ef5689e4a9b646518ae1247407ff44b250803563c11dce3ea7e",
+    "original_fail_to_pass": [
+      "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1",
+      "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2"
+    ],
+    "original_pass_to_pass": [
+      "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3"
+    ],
+    "original_test_patch_sha256": "sha256:63e112197db7864cb74f6c827e0fff35664e98b0a407ff2bb2871eb22600bded",
+    "effective_test_patch_sha256": "sha256:e6d5eb0ef39aeeb08a945d3ce6aeb340a7f8b4fd56e599247dbef3b99bf4e532",
+    "test_files": [
+      {
+        "path": "test-data/unit/check-expressions.test",
+        "base_sha256": "sha256:f541a8781c01edf4a27209cc1569e61d1d8a4741c3d4bc381548d0b1239ce3b9"
+      }
+    ],
+    "added_fail_to_pass": [
+      "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes"
+    ],
+    "added_pass_to_pass": [
+      "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType"
+    ],
+    "absent_base_file_sha256": "sha256:5bb7154032b1aeed6372fb29b70537d45a3fa7384ea50ecb2f756ba1d5635915"
+  },
+  "binding": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy15184_r10_binding_v1.json",
+  "binding_sha256": "a3d4a085a8d3f28db88f1184025d54018d3874bb95a2b37f9a6ca57495786bef",
+  "formal_cpu_results": null,
+  "ordinary_probe_ready": false,
+  "preflight_incident": "owner first check asserted vendor metadata prefix lacked -k; corrected check to actual derive_test_command_for_bundle; no CPU job had been launched"
+}

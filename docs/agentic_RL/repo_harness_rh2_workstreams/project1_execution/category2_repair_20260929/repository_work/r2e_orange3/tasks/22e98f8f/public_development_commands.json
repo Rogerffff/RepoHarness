@@ -1,0 +1,20 @@
+[
+  {
+    "id": "actor_identity_imports",
+    "timeout_s": 120,
+    "purpose": "确认当前身份、解释器与实际导入位置",
+    "cmd": "id\npwd\npython - <<'PYINFO'\nimport sys\nimport numpy\nimport Orange\nfrom Orange.widgets.data import owcreateclass\nprint(\"interpreter\", sys.executable)\nprint(\"python_version\", sys.version.split()[0])\nprint(\"numpy\", numpy.__version__, numpy.__file__)\nprint(\"Orange\", Orange.__file__)\nprint(\"module\", owcreateclass.__file__)\nPYINFO"
+  },
+  {
+    "id": "public_helper_test",
+    "timeout_s": 300,
+    "purpose": "运行公开helper已有测试",
+    "cmd": "QT_QPA_PLATFORM=minimal xvfb-run --auto-servernum python -m pytest -q Orange/widgets/data/tests/test_owcreateclass.py::TestHelpers::test_unique_in_order_mapping"
+  },
+  {
+    "id": "public_mapping_relation",
+    "timeout_s": 120,
+    "purpose": "检查公开需求中的逐位置还原关系，并覆盖数字和字符串的重复值",
+    "cmd": "QT_QPA_PLATFORM=minimal xvfb-run --auto-servernum python - <<'PYCHECK'\nimport numpy as np\nfrom Orange.widgets.data.owcreateclass import unique_in_order_mapping\nfor values in ([8, 4, 6, 8, 4], [\"zebra\", \"apple\", \"zebra\", \"mint\", \"apple\"]):\n    a = np.asarray(values)\n    unique, mapping = unique_in_order_mapping(a)\n    print(\"input\", a.tolist(), \"unique\", unique.tolist(), \"mapping\", mapping.tolist())\n    assert np.array_equal(unique[mapping], a), \"mapping must reconstruct the input\"\nPYCHECK"
+  }
+]

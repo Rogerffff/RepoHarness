@@ -1,0 +1,30 @@
+[
+  {
+    "id": "identity",
+    "cmd": "python -c 'import sys,os,json,pathspec,dvc; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable); print(\"RH2_CONDA=\"+str(os.environ.get(\"CONDA_DEFAULT_ENV\"))); print(json.dumps({\"uid\":os.getuid(),\"dvc\":dvc.__file__,\"pathspec\":pathspec.__version__})); assert os.getuid()==54321; assert pathspec.__version__==\"0.8.1\"; assert dvc.__file__.startswith(\"/testbed/\")'",
+    "timeout_s": 120,
+    "expect": "zero",
+    "purpose": "真实agent身份、testbed解释器、当前DVC源码和公开pathspec依赖"
+  },
+  {
+    "id": "activation_permissions",
+    "cmd": "echo RH2_BASHENV_WRITE=$( ( : >> /rh2/bash_env ) 2>/dev/null && echo WRITABLE || echo DENIED ); test ! -w /rh2/bash_env",
+    "timeout_s": 60,
+    "expect": "zero",
+    "purpose": "既有激活文件保护核查"
+  },
+  {
+    "id": "public_tests",
+    "cmd": "PYTHONPATH=/testbed python -m pytest -q tests/unit/command/test_metrics.py::test_metrics_show_precision tests/unit/command/test_metrics.py::test_metrics_diff_precision",
+    "timeout_s": 300,
+    "expect": "zero",
+    "purpose": "公开开发说明中已存在的两条基线测试"
+  },
+  {
+    "id": "dependency_check",
+    "cmd": "python -m pip check && PYTHONPATH=/testbed python -m dvc metrics show --help",
+    "timeout_s": 120,
+    "expect": "zero",
+    "purpose": "公开依赖一致性与已有CLI帮助"
+  }
+]

@@ -1,0 +1,1989 @@
+{
+  "format": "swe_dvc_formal_cpu_acceptance.v2",
+  "as_of_utc": "2026-10-03T04:09:18.177431+00:00",
+  "instance_id": "iterative__dvc-9395",
+  "release_id": "cat2-cpu-r2e093-swe40-prepare900-20261003-v1",
+  "release_manifest_sha256": "sha256:2a4ceb0315ea959232151d70f29ccc48bd34bdb0cb7dcfbb4aa177fec07bd393",
+  "support_receipt": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r20/dvc9395_publication_receipt.json",
+  "support_receipt_sha256": "sha256:dd6e6894a4079e141d2fe54ab3775d012d58f3b0adbfedfede8813598f0447cb",
+  "cpu_host": "cpu-a",
+  "series": "dvc9395_r20_v1",
+  "prepare_job_id": "dvc9395-r20-prepare-20261003-031559",
+  "prepare_exit_code": 0,
+  "prepare_input": "runs/category2_repair_20260929/repository_work/swe_dvc/formal9395_r20_prepare_input.json",
+  "prepare_input_sha256": "sha256:db0ca992989946682244948a9f659eb0cc9da3a5d54e7a2614943fcfd69f87a1",
+  "run_input": "runs/category2_repair_20260929/repository_work/swe_dvc/formal9395_r20_run_input.json",
+  "run_input_sha256": "sha256:e459f6f54bd71a152cfdcccd1eb724b9e9332602269c62eba3a481e687c32d3d",
+  "prepare_completion_sha256": "sha256:ee5b6654a0a107a5335c219bd817879c732a154e73a0f6b402b209744d8afd06",
+  "prepared_summary_sha256": "sha256:47d78323f469bab6a4462cebc8c91a005345e0865a51e088e9d1e2cfc57a56f1",
+  "prepared_manifest_sha256": "sha256:756fa907f464bf58edafb812845869558012ce35a266f1f2e1086e63cc8942ef",
+  "host_grading_artifact_sha256": "sha256:21198a8ee0f8b99e693b93110834b00d4445f5de4755a933c4a7708da51ab34e",
+  "environment_package_digest": "sha256:62df73d0a7bf30057b6b4e585cc799a09c853c320310e32f93f9f7b6aaaf437e",
+  "grading_bundle_digest": "sha256:b939c2ea3070d0187a663891f33affc5347ee0029c048cf0c984be4f0d02f8f8",
+  "grading_materials_identity": "sha256:9d456666b845fd90146499033601805ce2ecdc3d88e26202f8b9855cf287f68a",
+  "public_bundle_digest": "sha256:1f95551f8b887dc01d5a2c2fba8aef01a449c701e1577dec4905181f14abafd9",
+  "material_revision_id": "dvc9395-behavior-v2-draft",
+  "effective_test_patch_sha256": "sha256:964c80ef786b71091fcc722d8b3fdcd8afe8ba7e3f5fb511d6cb9661a25c2777",
+  "reference_counts": {
+    "fail_to_pass": 3,
+    "pass_to_pass": 37
+  },
+  "test_command": "pytest -rA tests/func/test_repro_multistage.py tests/func/test_run_cache.py",
+  "jobs": [
+    {
+      "job_id": "dvc9395-r20-noop-20261003-032003",
+      "candidate": "noop",
+      "status": "completed",
+      "formal_grading": true,
+      "reward": 0.0,
+      "outcome": "unresolved",
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 0,
+        "f2p_total": 3,
+        "failure_category": "tests_failed",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+dvc9395-behavior-v2-draft",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": 0,
+        "p2p_total": 37,
+        "report_id": "rpt_grading_3b1cce2b",
+        "reward": 0.0
+      },
+      "reference_missing_count": 0,
+      "actual_passed": 37,
+      "actual_failed": 4,
+      "actual_skipped": 0,
+      "actual_total": 41,
+      "actual_states": {
+        "tests/func/test_repro_multistage.py::test_non_existing_stage_name": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_frozen": "PASSED",
+        "tests/func/test_repro_multistage.py::test_downstream": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted": "PASSED",
+        "tests/func/test_repro_multistage.py::test_cyclic_graph_error": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_multiple_params": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[source]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[output]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[normal]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[dry]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_preserves_modified_source": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_still_errors_for_missing_source": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_no_run_cache_does_not_download_runs": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_existing_output_without_hash_can_run": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_changed_dependency_can_recompute": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_restores_from_http_with_local_run_cache": "PASSED",
+        "tests/func/test_run_cache.py::test_push_pull": "PASSED",
+        "tests/func/test_run_cache.py::test_restore": "PASSED",
+        "tests/func/test_run_cache.py::test_save": "PASSED",
+        "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry": "PASSED",
+        "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]": "PASSED",
+        "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]": "PASSED",
+        "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]": "PASSED",
+        "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage": "PASSED",
+        "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source": "FAILED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_import": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream": "FAILED",
+        "tests/func/test_run_cache.py::test_restore_pull": "FAILED"
+      },
+      "prepared_provenance_checked": true,
+      "candidate_prerequisite": {
+        "exit_code": 0,
+        "home": "/home/rh2grader",
+        "script_sha256": "sha256:1ef738bb44a2fd27407a54d08d9f4903c973a90d9e635f4badbdb8c6ebab2c6e",
+        "state": "verified",
+        "stderr": "",
+        "stdout": "RH2_DVC_BEHAVIOR_UID54322_WHEEL_BYTES_OK=1\n",
+        "user": "54322"
+      },
+      "candidate_install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 9.622,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 30.239
+      },
+      "grading_revision": {
+        "apply_ok": true,
+        "binding_version": "reference-bindings-v1",
+        "bindings_sha256": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "environment_package_digest": "sha256:62df73d0a7bf30057b6b4e585cc799a09c853c320310e32f93f9f7b6aaaf437e",
+        "grading_bundle_digest": "sha256:b939c2ea3070d0187a663891f33affc5347ee0029c048cf0c984be4f0d02f8f8",
+        "materials_identity": "sha256:9d456666b845fd90146499033601805ce2ecdc3d88e26202f8b9855cf287f68a",
+        "parent_grading_digest": "sha256:8162cfda6fe1ad611cf9407a87cb2cdb62af3bbf662f14b0ed43b659b428180c",
+        "parser_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "partitions": {
+          "added_f2p": {
+            "references": [
+              "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream"
+            ],
+            "result": {
+              "failure": [
+                "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream"
+              ],
+              "missing": [],
+              "skipped": [],
+              "success": [],
+              "unaccounted": []
+            }
+          },
+          "added_p2p": {
+            "references": [
+              "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[source]",
+              "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[output]",
+              "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[normal]",
+              "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[dry]",
+              "tests/func/test_repro_multistage.py::test_pull_without_remote_preserves_modified_source",
+              "tests/func/test_repro_multistage.py::test_pull_without_remote_still_errors_for_missing_source",
+              "tests/func/test_repro_multistage.py::test_pull_no_run_cache_does_not_download_runs",
+              "tests/func/test_repro_multistage.py::test_pull_existing_output_without_hash_can_run",
+              "tests/func/test_repro_multistage.py::test_pull_changed_dependency_can_recompute",
+              "tests/func/test_repro_multistage.py::test_pull_restores_from_http_with_local_run_cache"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[source]",
+                "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[output]",
+                "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[normal]",
+                "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[dry]",
+                "tests/func/test_repro_multistage.py::test_pull_without_remote_preserves_modified_source",
+                "tests/func/test_repro_multistage.py::test_pull_without_remote_still_errors_for_missing_source",
+                "tests/func/test_repro_multistage.py::test_pull_no_run_cache_does_not_download_runs",
+                "tests/func/test_repro_multistage.py::test_pull_existing_output_without_hash_can_run",
+                "tests/func/test_repro_multistage.py::test_pull_changed_dependency_can_recompute",
+                "tests/func/test_repro_multistage.py::test_pull_restores_from_http_with_local_run_cache"
+              ],
+              "unaccounted": []
+            }
+          },
+          "bound_source_f2p": {
+            "references": [
+              "tests/func/test_run_cache.py::test_restore_pull",
+              "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source"
+            ],
+            "result": {
+              "failure": [
+                "tests/func/test_run_cache.py::test_restore_pull",
+                "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source"
+              ],
+              "missing": [],
+              "skipped": [],
+              "success": [],
+              "unaccounted": []
+            }
+          },
+          "bound_source_p2p": {
+            "references": [
+              "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs",
+              "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]",
+              "tests/func/test_repro_multistage.py::test_repro_frozen",
+              "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage",
+              "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]",
+              "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]",
+              "tests/func/test_repro_multistage.py::test_downstream",
+              "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist",
+              "tests/func/test_run_cache.py::test_save",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved",
+              "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]",
+              "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile",
+              "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]",
+              "tests/func/test_run_cache.py::test_restore",
+              "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages",
+              "tests/func/test_repro_multistage.py::test_non_existing_stage_name",
+              "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry",
+              "tests/func/test_repro_multistage.py::test_cyclic_graph_error",
+              "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes",
+              "tests/func/test_repro_multistage.py::test_repro_multiple_params",
+              "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]",
+              "tests/func/test_run_cache.py::test_push_pull",
+              "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs",
+                "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]",
+                "tests/func/test_repro_multistage.py::test_repro_frozen",
+                "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage",
+                "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]",
+                "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]",
+                "tests/func/test_repro_multistage.py::test_downstream",
+                "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist",
+                "tests/func/test_run_cache.py::test_save",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved",
+                "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]",
+                "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile",
+                "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]",
+                "tests/func/test_run_cache.py::test_restore",
+                "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages",
+                "tests/func/test_repro_multistage.py::test_non_existing_stage_name",
+                "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry",
+                "tests/func/test_repro_multistage.py::test_cyclic_graph_error",
+                "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes",
+                "tests/func/test_repro_multistage.py::test_repro_multiple_params",
+                "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]",
+                "tests/func/test_run_cache.py::test_push_pull",
+                "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile"
+              ],
+              "unaccounted": []
+            }
+          }
+        },
+        "public_bundle_digest": "sha256:1f95551f8b887dc01d5a2c2fba8aef01a449c701e1577dec4905181f14abafd9",
+        "registry_sha256": "sha256:815811717d21fa259b354eaf85a1598241d66d85b5af547d9208b2835c4edace",
+        "revision_id": "dvc9395-behavior-v2-draft",
+        "source_references": {
+          "fail_to_pass": [
+            "tests/func/test_run_cache.py::test_restore_pull",
+            "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source"
+          ],
+          "pass_to_pass": [
+            "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs",
+            "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]",
+            "tests/func/test_repro_multistage.py::test_repro_frozen",
+            "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage",
+            "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]",
+            "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]",
+            "tests/func/test_repro_multistage.py::test_downstream",
+            "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist",
+            "tests/func/test_run_cache.py::test_save",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved",
+            "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]",
+            "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile",
+            "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]",
+            "tests/func/test_run_cache.py::test_restore",
+            "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages",
+            "tests/func/test_repro_multistage.py::test_non_existing_stage_name",
+            "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry",
+            "tests/func/test_repro_multistage.py::test_cyclic_graph_error",
+            "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes",
+            "tests/func/test_repro_multistage.py::test_repro_multiple_params",
+            "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]",
+            "tests/func/test_run_cache.py::test_push_pull",
+            "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile"
+          ]
+        },
+        "state": "parsed",
+        "test_command": "pytest -rA tests/func/test_repro_multistage.py tests/func/test_run_cache.py"
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "cleanup_label_readback": {
+        "containers": [],
+        "networks": [],
+        "result": "cleanup_readback.json"
+      },
+      "phase_seconds": {
+        "delta_apply": 0.184878,
+        "grader_baseline_rebuild": 0.498381,
+        "grader_cleanup": 1.538358,
+        "grader_start_and_verify": 49.551535,
+        "grader_trusted_setup": 209.157235,
+        "parser_and_report": 5.12973,
+        "test": 41.489676
+      },
+      "scripts_digest": "sha256:ec5f61cf288b78aaafd469b40013bcd571e93e1ab5db7c32c8852b6a83f035f3",
+      "ledger_sha256": "sha256:365e8be833643175939bad592eff3b58a57dd5f52e6c10b75100330dc4215029",
+      "archive": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r20_noop_032003_v1.tar.gz",
+      "archive_sha256": "sha256:5d32ae145e8692532717c1fd9d3a635f03854f39410eb7bb12f59792cb80e183",
+      "evidence_root": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r20_noop_032003_v1",
+      "raw_file_count": 35,
+      "full_new_file_capture": null,
+      "grading_materials_identity": "sha256:9d456666b845fd90146499033601805ce2ecdc3d88e26202f8b9855cf287f68a",
+      "actual_budgets": {
+        "candidate_stage_seconds": 900.0,
+        "cleanup_seconds": 120.0,
+        "env_reset_timeout_seconds": 900,
+        "grading_deadline_seconds": 3600.0,
+        "image_pull_seconds": 1800.0
+      },
+      "preparation_budget_policy": {
+        "policy_sha256": "d417dbb8d3140e6a0082f2f12cda02fd492feb14db9375ace3d69222e48acdab",
+        "request_id": "dvc9395-control-protect-timeout-support-20261003-v2",
+        "request_input_sha256": "3bf174133d17334cc752c4a9775acf9782fc2017b76cd4682d5202081c1ddf57"
+      }
+    },
+    {
+      "job_id": "dvc9395-r20-gold-20261003-032003",
+      "candidate": "gold",
+      "status": "completed",
+      "formal_grading": true,
+      "reward": 0.0,
+      "outcome": "unresolved",
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 2,
+        "f2p_total": 3,
+        "failure_category": "tests_failed",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+dvc9395-behavior-v2-draft",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": 10,
+        "p2p_total": 37,
+        "report_id": "rpt_grading_fa1b2402",
+        "reward": 0.0
+      },
+      "reference_missing_count": 0,
+      "actual_passed": 30,
+      "actual_failed": 11,
+      "actual_skipped": 0,
+      "actual_total": 41,
+      "actual_states": {
+        "tests/func/test_repro_multistage.py::test_non_existing_stage_name": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_frozen": "PASSED",
+        "tests/func/test_repro_multistage.py::test_downstream": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted": "PASSED",
+        "tests/func/test_repro_multistage.py::test_cyclic_graph_error": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_multiple_params": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_import": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream": "PASSED",
+        "tests/func/test_run_cache.py::test_push_pull": "PASSED",
+        "tests/func/test_run_cache.py::test_restore": "PASSED",
+        "tests/func/test_run_cache.py::test_save": "PASSED",
+        "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry": "PASSED",
+        "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]": "PASSED",
+        "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]": "PASSED",
+        "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]": "PASSED",
+        "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage": "PASSED",
+        "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages": "PASSED",
+        "tests/func/test_run_cache.py::test_restore_pull": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[source]": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[output]": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[normal]": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[dry]": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_preserves_modified_source": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_still_errors_for_missing_source": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_no_run_cache_does_not_download_runs": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_existing_output_without_hash_can_run": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_changed_dependency_can_recompute": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_restores_from_http_with_local_run_cache": "FAILED"
+      },
+      "prepared_provenance_checked": true,
+      "candidate_prerequisite": {
+        "exit_code": 0,
+        "home": "/home/rh2grader",
+        "script_sha256": "sha256:1ef738bb44a2fd27407a54d08d9f4903c973a90d9e635f4badbdb8c6ebab2c6e",
+        "state": "verified",
+        "stderr": "",
+        "stdout": "RH2_DVC_BEHAVIOR_UID54322_WHEEL_BYTES_OK=1\n",
+        "user": "54322"
+      },
+      "candidate_install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 9.88,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 26.8
+      },
+      "grading_revision": {
+        "apply_ok": true,
+        "binding_version": "reference-bindings-v1",
+        "bindings_sha256": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "environment_package_digest": "sha256:62df73d0a7bf30057b6b4e585cc799a09c853c320310e32f93f9f7b6aaaf437e",
+        "grading_bundle_digest": "sha256:b939c2ea3070d0187a663891f33affc5347ee0029c048cf0c984be4f0d02f8f8",
+        "materials_identity": "sha256:9d456666b845fd90146499033601805ce2ecdc3d88e26202f8b9855cf287f68a",
+        "parent_grading_digest": "sha256:8162cfda6fe1ad611cf9407a87cb2cdb62af3bbf662f14b0ed43b659b428180c",
+        "parser_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "partitions": {
+          "added_f2p": {
+            "references": [
+              "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream"
+              ],
+              "unaccounted": []
+            }
+          },
+          "added_p2p": {
+            "references": [
+              "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[source]",
+              "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[output]",
+              "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[normal]",
+              "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[dry]",
+              "tests/func/test_repro_multistage.py::test_pull_without_remote_preserves_modified_source",
+              "tests/func/test_repro_multistage.py::test_pull_without_remote_still_errors_for_missing_source",
+              "tests/func/test_repro_multistage.py::test_pull_no_run_cache_does_not_download_runs",
+              "tests/func/test_repro_multistage.py::test_pull_existing_output_without_hash_can_run",
+              "tests/func/test_repro_multistage.py::test_pull_changed_dependency_can_recompute",
+              "tests/func/test_repro_multistage.py::test_pull_restores_from_http_with_local_run_cache"
+            ],
+            "result": {
+              "failure": [
+                "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[source]",
+                "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[output]",
+                "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[normal]",
+                "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[dry]",
+                "tests/func/test_repro_multistage.py::test_pull_without_remote_preserves_modified_source",
+                "tests/func/test_repro_multistage.py::test_pull_without_remote_still_errors_for_missing_source",
+                "tests/func/test_repro_multistage.py::test_pull_no_run_cache_does_not_download_runs",
+                "tests/func/test_repro_multistage.py::test_pull_existing_output_without_hash_can_run",
+                "tests/func/test_repro_multistage.py::test_pull_changed_dependency_can_recompute",
+                "tests/func/test_repro_multistage.py::test_pull_restores_from_http_with_local_run_cache"
+              ],
+              "missing": [],
+              "skipped": [],
+              "success": [],
+              "unaccounted": []
+            }
+          },
+          "bound_source_f2p": {
+            "references": [
+              "tests/func/test_run_cache.py::test_restore_pull",
+              "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source"
+            ],
+            "result": {
+              "failure": [
+                "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source"
+              ],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/func/test_run_cache.py::test_restore_pull"
+              ],
+              "unaccounted": []
+            }
+          },
+          "bound_source_p2p": {
+            "references": [
+              "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs",
+              "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]",
+              "tests/func/test_repro_multistage.py::test_repro_frozen",
+              "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage",
+              "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]",
+              "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]",
+              "tests/func/test_repro_multistage.py::test_downstream",
+              "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist",
+              "tests/func/test_run_cache.py::test_save",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved",
+              "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]",
+              "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile",
+              "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]",
+              "tests/func/test_run_cache.py::test_restore",
+              "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages",
+              "tests/func/test_repro_multistage.py::test_non_existing_stage_name",
+              "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry",
+              "tests/func/test_repro_multistage.py::test_cyclic_graph_error",
+              "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes",
+              "tests/func/test_repro_multistage.py::test_repro_multiple_params",
+              "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]",
+              "tests/func/test_run_cache.py::test_push_pull",
+              "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs",
+                "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]",
+                "tests/func/test_repro_multistage.py::test_repro_frozen",
+                "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage",
+                "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]",
+                "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]",
+                "tests/func/test_repro_multistage.py::test_downstream",
+                "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist",
+                "tests/func/test_run_cache.py::test_save",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved",
+                "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]",
+                "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile",
+                "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]",
+                "tests/func/test_run_cache.py::test_restore",
+                "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages",
+                "tests/func/test_repro_multistage.py::test_non_existing_stage_name",
+                "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry",
+                "tests/func/test_repro_multistage.py::test_cyclic_graph_error",
+                "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes",
+                "tests/func/test_repro_multistage.py::test_repro_multiple_params",
+                "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]",
+                "tests/func/test_run_cache.py::test_push_pull",
+                "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile"
+              ],
+              "unaccounted": []
+            }
+          }
+        },
+        "public_bundle_digest": "sha256:1f95551f8b887dc01d5a2c2fba8aef01a449c701e1577dec4905181f14abafd9",
+        "registry_sha256": "sha256:815811717d21fa259b354eaf85a1598241d66d85b5af547d9208b2835c4edace",
+        "revision_id": "dvc9395-behavior-v2-draft",
+        "source_references": {
+          "fail_to_pass": [
+            "tests/func/test_run_cache.py::test_restore_pull",
+            "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source"
+          ],
+          "pass_to_pass": [
+            "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs",
+            "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]",
+            "tests/func/test_repro_multistage.py::test_repro_frozen",
+            "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage",
+            "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]",
+            "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]",
+            "tests/func/test_repro_multistage.py::test_downstream",
+            "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist",
+            "tests/func/test_run_cache.py::test_save",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved",
+            "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]",
+            "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile",
+            "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]",
+            "tests/func/test_run_cache.py::test_restore",
+            "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages",
+            "tests/func/test_repro_multistage.py::test_non_existing_stage_name",
+            "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry",
+            "tests/func/test_repro_multistage.py::test_cyclic_graph_error",
+            "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes",
+            "tests/func/test_repro_multistage.py::test_repro_multiple_params",
+            "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]",
+            "tests/func/test_run_cache.py::test_push_pull",
+            "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile"
+          ]
+        },
+        "state": "parsed",
+        "test_command": "pytest -rA tests/func/test_repro_multistage.py tests/func/test_run_cache.py"
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "cleanup_label_readback": {
+        "containers": [],
+        "networks": [],
+        "result": "cleanup_readback.json"
+      },
+      "phase_seconds": {
+        "delta_apply": 0.338786,
+        "grader_baseline_rebuild": 0.394054,
+        "grader_cleanup": 1.67635,
+        "grader_start_and_verify": 47.319153,
+        "grader_trusted_setup": 248.715881,
+        "parser_and_report": 5.388522,
+        "test": 38.17099
+      },
+      "scripts_digest": "sha256:ec5f61cf288b78aaafd469b40013bcd571e93e1ab5db7c32c8852b6a83f035f3",
+      "ledger_sha256": "sha256:1261daaf7d83ad45988b579a19e34f0f91960022a2d4377cb937921c3e4e061c",
+      "archive": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r20_gold_032003_v1.tar.gz",
+      "archive_sha256": "sha256:d5c2313f6ea050a9b4685fa638417ee28b21932a887860c97c87cfedb7391a69",
+      "evidence_root": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r20_gold_032003_v1",
+      "raw_file_count": 36,
+      "full_new_file_capture": null,
+      "grading_materials_identity": "sha256:9d456666b845fd90146499033601805ce2ecdc3d88e26202f8b9855cf287f68a",
+      "actual_budgets": {
+        "candidate_stage_seconds": 900.0,
+        "cleanup_seconds": 120.0,
+        "env_reset_timeout_seconds": 900,
+        "grading_deadline_seconds": 3600.0,
+        "image_pull_seconds": 1800.0
+      },
+      "preparation_budget_policy": {
+        "policy_sha256": "d417dbb8d3140e6a0082f2f12cda02fd492feb14db9375ace3d69222e48acdab",
+        "request_id": "dvc9395-control-protect-timeout-support-20261003-v2",
+        "request_input_sha256": "3bf174133d17334cc752c4a9775acf9782fc2017b76cd4682d5202081c1ddf57"
+      }
+    },
+    {
+      "job_id": "dvc9395-r20-c3_frozenfix-20261003-032003",
+      "candidate": "c3_frozenfix",
+      "status": "completed",
+      "formal_grading": true,
+      "reward": 1.0,
+      "outcome": "resolved",
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 3,
+        "f2p_total": 3,
+        "failure_category": null,
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+dvc9395-behavior-v2-draft",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "resolved",
+        "p2p_fail": 0,
+        "p2p_total": 37,
+        "report_id": "rpt_grading_44ed08cc",
+        "reward": 1.0
+      },
+      "reference_missing_count": 0,
+      "actual_passed": 41,
+      "actual_failed": 0,
+      "actual_skipped": 0,
+      "actual_total": 41,
+      "actual_states": {
+        "tests/func/test_repro_multistage.py::test_non_existing_stage_name": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_frozen": "PASSED",
+        "tests/func/test_repro_multistage.py::test_downstream": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted": "PASSED",
+        "tests/func/test_repro_multistage.py::test_cyclic_graph_error": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_multiple_params": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_import": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[source]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[output]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[normal]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[dry]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_preserves_modified_source": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_still_errors_for_missing_source": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_no_run_cache_does_not_download_runs": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_existing_output_without_hash_can_run": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_changed_dependency_can_recompute": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_restores_from_http_with_local_run_cache": "PASSED",
+        "tests/func/test_run_cache.py::test_push_pull": "PASSED",
+        "tests/func/test_run_cache.py::test_restore": "PASSED",
+        "tests/func/test_run_cache.py::test_save": "PASSED",
+        "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry": "PASSED",
+        "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]": "PASSED",
+        "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]": "PASSED",
+        "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]": "PASSED",
+        "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage": "PASSED",
+        "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages": "PASSED",
+        "tests/func/test_run_cache.py::test_restore_pull": "PASSED"
+      },
+      "prepared_provenance_checked": true,
+      "candidate_prerequisite": {
+        "exit_code": 0,
+        "home": "/home/rh2grader",
+        "script_sha256": "sha256:1ef738bb44a2fd27407a54d08d9f4903c973a90d9e635f4badbdb8c6ebab2c6e",
+        "state": "verified",
+        "stderr": "",
+        "stdout": "RH2_DVC_BEHAVIOR_UID54322_WHEEL_BYTES_OK=1\n",
+        "user": "54322"
+      },
+      "candidate_install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 10.18,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 31.588
+      },
+      "grading_revision": {
+        "apply_ok": true,
+        "binding_version": "reference-bindings-v1",
+        "bindings_sha256": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "environment_package_digest": "sha256:62df73d0a7bf30057b6b4e585cc799a09c853c320310e32f93f9f7b6aaaf437e",
+        "grading_bundle_digest": "sha256:b939c2ea3070d0187a663891f33affc5347ee0029c048cf0c984be4f0d02f8f8",
+        "materials_identity": "sha256:9d456666b845fd90146499033601805ce2ecdc3d88e26202f8b9855cf287f68a",
+        "parent_grading_digest": "sha256:8162cfda6fe1ad611cf9407a87cb2cdb62af3bbf662f14b0ed43b659b428180c",
+        "parser_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "partitions": {
+          "added_f2p": {
+            "references": [
+              "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream"
+              ],
+              "unaccounted": []
+            }
+          },
+          "added_p2p": {
+            "references": [
+              "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[source]",
+              "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[output]",
+              "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[normal]",
+              "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[dry]",
+              "tests/func/test_repro_multistage.py::test_pull_without_remote_preserves_modified_source",
+              "tests/func/test_repro_multistage.py::test_pull_without_remote_still_errors_for_missing_source",
+              "tests/func/test_repro_multistage.py::test_pull_no_run_cache_does_not_download_runs",
+              "tests/func/test_repro_multistage.py::test_pull_existing_output_without_hash_can_run",
+              "tests/func/test_repro_multistage.py::test_pull_changed_dependency_can_recompute",
+              "tests/func/test_repro_multistage.py::test_pull_restores_from_http_with_local_run_cache"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[source]",
+                "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[output]",
+                "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[normal]",
+                "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[dry]",
+                "tests/func/test_repro_multistage.py::test_pull_without_remote_preserves_modified_source",
+                "tests/func/test_repro_multistage.py::test_pull_without_remote_still_errors_for_missing_source",
+                "tests/func/test_repro_multistage.py::test_pull_no_run_cache_does_not_download_runs",
+                "tests/func/test_repro_multistage.py::test_pull_existing_output_without_hash_can_run",
+                "tests/func/test_repro_multistage.py::test_pull_changed_dependency_can_recompute",
+                "tests/func/test_repro_multistage.py::test_pull_restores_from_http_with_local_run_cache"
+              ],
+              "unaccounted": []
+            }
+          },
+          "bound_source_f2p": {
+            "references": [
+              "tests/func/test_run_cache.py::test_restore_pull",
+              "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/func/test_run_cache.py::test_restore_pull",
+                "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source"
+              ],
+              "unaccounted": []
+            }
+          },
+          "bound_source_p2p": {
+            "references": [
+              "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs",
+              "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]",
+              "tests/func/test_repro_multistage.py::test_repro_frozen",
+              "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage",
+              "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]",
+              "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]",
+              "tests/func/test_repro_multistage.py::test_downstream",
+              "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist",
+              "tests/func/test_run_cache.py::test_save",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved",
+              "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]",
+              "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile",
+              "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]",
+              "tests/func/test_run_cache.py::test_restore",
+              "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages",
+              "tests/func/test_repro_multistage.py::test_non_existing_stage_name",
+              "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry",
+              "tests/func/test_repro_multistage.py::test_cyclic_graph_error",
+              "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes",
+              "tests/func/test_repro_multistage.py::test_repro_multiple_params",
+              "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]",
+              "tests/func/test_run_cache.py::test_push_pull",
+              "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs",
+                "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]",
+                "tests/func/test_repro_multistage.py::test_repro_frozen",
+                "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage",
+                "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]",
+                "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]",
+                "tests/func/test_repro_multistage.py::test_downstream",
+                "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist",
+                "tests/func/test_run_cache.py::test_save",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved",
+                "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]",
+                "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile",
+                "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]",
+                "tests/func/test_run_cache.py::test_restore",
+                "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages",
+                "tests/func/test_repro_multistage.py::test_non_existing_stage_name",
+                "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry",
+                "tests/func/test_repro_multistage.py::test_cyclic_graph_error",
+                "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes",
+                "tests/func/test_repro_multistage.py::test_repro_multiple_params",
+                "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]",
+                "tests/func/test_run_cache.py::test_push_pull",
+                "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile"
+              ],
+              "unaccounted": []
+            }
+          }
+        },
+        "public_bundle_digest": "sha256:1f95551f8b887dc01d5a2c2fba8aef01a449c701e1577dec4905181f14abafd9",
+        "registry_sha256": "sha256:815811717d21fa259b354eaf85a1598241d66d85b5af547d9208b2835c4edace",
+        "revision_id": "dvc9395-behavior-v2-draft",
+        "source_references": {
+          "fail_to_pass": [
+            "tests/func/test_run_cache.py::test_restore_pull",
+            "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source"
+          ],
+          "pass_to_pass": [
+            "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs",
+            "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]",
+            "tests/func/test_repro_multistage.py::test_repro_frozen",
+            "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage",
+            "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]",
+            "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]",
+            "tests/func/test_repro_multistage.py::test_downstream",
+            "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist",
+            "tests/func/test_run_cache.py::test_save",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved",
+            "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]",
+            "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile",
+            "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]",
+            "tests/func/test_run_cache.py::test_restore",
+            "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages",
+            "tests/func/test_repro_multistage.py::test_non_existing_stage_name",
+            "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry",
+            "tests/func/test_repro_multistage.py::test_cyclic_graph_error",
+            "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes",
+            "tests/func/test_repro_multistage.py::test_repro_multiple_params",
+            "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]",
+            "tests/func/test_run_cache.py::test_push_pull",
+            "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile"
+          ]
+        },
+        "state": "parsed",
+        "test_command": "pytest -rA tests/func/test_repro_multistage.py tests/func/test_run_cache.py"
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "cleanup_label_readback": {
+        "containers": [],
+        "networks": [],
+        "result": "cleanup_readback.json"
+      },
+      "phase_seconds": {
+        "delta_apply": 0.382281,
+        "grader_baseline_rebuild": 0.477271,
+        "grader_cleanup": 1.92347,
+        "grader_start_and_verify": 48.666526,
+        "grader_trusted_setup": 161.07287,
+        "parser_and_report": 5.553393,
+        "test": 43.221514
+      },
+      "scripts_digest": "sha256:ec5f61cf288b78aaafd469b40013bcd571e93e1ab5db7c32c8852b6a83f035f3",
+      "ledger_sha256": "sha256:0a1c25464b6ca027daa6983e4cd4d7eb14e3462e538b304404cd430127ad4a31",
+      "archive": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r20_c3_frozenfix_032003_v1.tar.gz",
+      "archive_sha256": "sha256:c3dce31c58a6f4ccd85a595b288d54a12b6d1415465e6370c76cc5ac475b90f4",
+      "evidence_root": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r20_c3_frozenfix_032003_v1",
+      "raw_file_count": 37,
+      "full_new_file_capture": null,
+      "grading_materials_identity": "sha256:9d456666b845fd90146499033601805ce2ecdc3d88e26202f8b9855cf287f68a",
+      "actual_budgets": {
+        "candidate_stage_seconds": 900.0,
+        "cleanup_seconds": 120.0,
+        "env_reset_timeout_seconds": 900,
+        "grading_deadline_seconds": 3600.0,
+        "image_pull_seconds": 1800.0
+      },
+      "preparation_budget_policy": {
+        "policy_sha256": "d417dbb8d3140e6a0082f2f12cda02fd492feb14db9375ace3d69222e48acdab",
+        "request_id": "dvc9395-control-protect-timeout-support-20261003-v2",
+        "request_input_sha256": "3bf174133d17334cc752c4a9775acf9782fc2017b76cd4682d5202081c1ddf57"
+      }
+    },
+    {
+      "job_id": "dvc9395-r20-c3_missing_only-20261003-032003-a5",
+      "candidate": "c3_missing_only",
+      "status": "completed",
+      "formal_grading": true,
+      "reward": 0.0,
+      "outcome": "unresolved",
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 2,
+        "f2p_total": 3,
+        "failure_category": "tests_failed",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+dvc9395-behavior-v2-draft",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": 0,
+        "p2p_total": 37,
+        "report_id": "rpt_grading_1aaf207c",
+        "reward": 0.0
+      },
+      "reference_missing_count": 0,
+      "actual_passed": 40,
+      "actual_failed": 1,
+      "actual_skipped": 0,
+      "actual_total": 41,
+      "actual_states": {
+        "tests/func/test_repro_multistage.py::test_non_existing_stage_name": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_frozen": "PASSED",
+        "tests/func/test_repro_multistage.py::test_downstream": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted": "PASSED",
+        "tests/func/test_repro_multistage.py::test_cyclic_graph_error": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_multiple_params": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_import": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[source]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[output]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[normal]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[dry]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_preserves_modified_source": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_still_errors_for_missing_source": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_no_run_cache_does_not_download_runs": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_existing_output_without_hash_can_run": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_changed_dependency_can_recompute": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_restores_from_http_with_local_run_cache": "PASSED",
+        "tests/func/test_run_cache.py::test_push_pull": "PASSED",
+        "tests/func/test_run_cache.py::test_restore": "PASSED",
+        "tests/func/test_run_cache.py::test_save": "PASSED",
+        "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry": "PASSED",
+        "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]": "PASSED",
+        "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]": "PASSED",
+        "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]": "PASSED",
+        "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage": "PASSED",
+        "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages": "PASSED",
+        "tests/func/test_run_cache.py::test_restore_pull": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream": "FAILED"
+      },
+      "prepared_provenance_checked": true,
+      "candidate_prerequisite": {
+        "exit_code": 0,
+        "home": "/home/rh2grader",
+        "script_sha256": "sha256:1ef738bb44a2fd27407a54d08d9f4903c973a90d9e635f4badbdb8c6ebab2c6e",
+        "state": "verified",
+        "stderr": "",
+        "stdout": "RH2_DVC_BEHAVIOR_UID54322_WHEEL_BYTES_OK=1\n",
+        "user": "54322"
+      },
+      "candidate_install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 9.608,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 26.364
+      },
+      "grading_revision": {
+        "apply_ok": true,
+        "binding_version": "reference-bindings-v1",
+        "bindings_sha256": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "environment_package_digest": "sha256:62df73d0a7bf30057b6b4e585cc799a09c853c320310e32f93f9f7b6aaaf437e",
+        "grading_bundle_digest": "sha256:b939c2ea3070d0187a663891f33affc5347ee0029c048cf0c984be4f0d02f8f8",
+        "materials_identity": "sha256:9d456666b845fd90146499033601805ce2ecdc3d88e26202f8b9855cf287f68a",
+        "parent_grading_digest": "sha256:8162cfda6fe1ad611cf9407a87cb2cdb62af3bbf662f14b0ed43b659b428180c",
+        "parser_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "partitions": {
+          "added_f2p": {
+            "references": [
+              "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream"
+            ],
+            "result": {
+              "failure": [
+                "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream"
+              ],
+              "missing": [],
+              "skipped": [],
+              "success": [],
+              "unaccounted": []
+            }
+          },
+          "added_p2p": {
+            "references": [
+              "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[source]",
+              "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[output]",
+              "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[normal]",
+              "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[dry]",
+              "tests/func/test_repro_multistage.py::test_pull_without_remote_preserves_modified_source",
+              "tests/func/test_repro_multistage.py::test_pull_without_remote_still_errors_for_missing_source",
+              "tests/func/test_repro_multistage.py::test_pull_no_run_cache_does_not_download_runs",
+              "tests/func/test_repro_multistage.py::test_pull_existing_output_without_hash_can_run",
+              "tests/func/test_repro_multistage.py::test_pull_changed_dependency_can_recompute",
+              "tests/func/test_repro_multistage.py::test_pull_restores_from_http_with_local_run_cache"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[source]",
+                "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[output]",
+                "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[normal]",
+                "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[dry]",
+                "tests/func/test_repro_multistage.py::test_pull_without_remote_preserves_modified_source",
+                "tests/func/test_repro_multistage.py::test_pull_without_remote_still_errors_for_missing_source",
+                "tests/func/test_repro_multistage.py::test_pull_no_run_cache_does_not_download_runs",
+                "tests/func/test_repro_multistage.py::test_pull_existing_output_without_hash_can_run",
+                "tests/func/test_repro_multistage.py::test_pull_changed_dependency_can_recompute",
+                "tests/func/test_repro_multistage.py::test_pull_restores_from_http_with_local_run_cache"
+              ],
+              "unaccounted": []
+            }
+          },
+          "bound_source_f2p": {
+            "references": [
+              "tests/func/test_run_cache.py::test_restore_pull",
+              "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/func/test_run_cache.py::test_restore_pull",
+                "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source"
+              ],
+              "unaccounted": []
+            }
+          },
+          "bound_source_p2p": {
+            "references": [
+              "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs",
+              "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]",
+              "tests/func/test_repro_multistage.py::test_repro_frozen",
+              "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage",
+              "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]",
+              "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]",
+              "tests/func/test_repro_multistage.py::test_downstream",
+              "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist",
+              "tests/func/test_run_cache.py::test_save",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved",
+              "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]",
+              "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile",
+              "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]",
+              "tests/func/test_run_cache.py::test_restore",
+              "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages",
+              "tests/func/test_repro_multistage.py::test_non_existing_stage_name",
+              "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry",
+              "tests/func/test_repro_multistage.py::test_cyclic_graph_error",
+              "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes",
+              "tests/func/test_repro_multistage.py::test_repro_multiple_params",
+              "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]",
+              "tests/func/test_run_cache.py::test_push_pull",
+              "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs",
+                "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]",
+                "tests/func/test_repro_multistage.py::test_repro_frozen",
+                "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage",
+                "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]",
+                "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]",
+                "tests/func/test_repro_multistage.py::test_downstream",
+                "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist",
+                "tests/func/test_run_cache.py::test_save",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved",
+                "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]",
+                "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile",
+                "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]",
+                "tests/func/test_run_cache.py::test_restore",
+                "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages",
+                "tests/func/test_repro_multistage.py::test_non_existing_stage_name",
+                "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry",
+                "tests/func/test_repro_multistage.py::test_cyclic_graph_error",
+                "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes",
+                "tests/func/test_repro_multistage.py::test_repro_multiple_params",
+                "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]",
+                "tests/func/test_run_cache.py::test_push_pull",
+                "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile"
+              ],
+              "unaccounted": []
+            }
+          }
+        },
+        "public_bundle_digest": "sha256:1f95551f8b887dc01d5a2c2fba8aef01a449c701e1577dec4905181f14abafd9",
+        "registry_sha256": "sha256:815811717d21fa259b354eaf85a1598241d66d85b5af547d9208b2835c4edace",
+        "revision_id": "dvc9395-behavior-v2-draft",
+        "source_references": {
+          "fail_to_pass": [
+            "tests/func/test_run_cache.py::test_restore_pull",
+            "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source"
+          ],
+          "pass_to_pass": [
+            "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs",
+            "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]",
+            "tests/func/test_repro_multistage.py::test_repro_frozen",
+            "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage",
+            "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]",
+            "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]",
+            "tests/func/test_repro_multistage.py::test_downstream",
+            "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist",
+            "tests/func/test_run_cache.py::test_save",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved",
+            "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]",
+            "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile",
+            "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]",
+            "tests/func/test_run_cache.py::test_restore",
+            "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages",
+            "tests/func/test_repro_multistage.py::test_non_existing_stage_name",
+            "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry",
+            "tests/func/test_repro_multistage.py::test_cyclic_graph_error",
+            "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes",
+            "tests/func/test_repro_multistage.py::test_repro_multiple_params",
+            "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]",
+            "tests/func/test_run_cache.py::test_push_pull",
+            "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile"
+          ]
+        },
+        "state": "parsed",
+        "test_command": "pytest -rA tests/func/test_repro_multistage.py tests/func/test_run_cache.py"
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "cleanup_label_readback": {
+        "containers": [],
+        "networks": [],
+        "result": "cleanup_readback.json"
+      },
+      "phase_seconds": {
+        "delta_apply": 0.411109,
+        "grader_baseline_rebuild": 0.462583,
+        "grader_cleanup": 1.876387,
+        "grader_start_and_verify": 46.949003,
+        "grader_trusted_setup": 148.966321,
+        "parser_and_report": 5.730561,
+        "test": 37.406221
+      },
+      "scripts_digest": "sha256:ec5f61cf288b78aaafd469b40013bcd571e93e1ab5db7c32c8852b6a83f035f3",
+      "ledger_sha256": "sha256:ce1fa1f2deb5c3216ba241227a94fa6848ff5b6252a2cb72afe432ea8c8f5351",
+      "archive": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r20_c3_missing_only_032003_v1.tar.gz",
+      "archive_sha256": "sha256:ea769fd93494930f52bc4d4db173071adde4888ddd0c343b7c189c915caf748e",
+      "evidence_root": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r20_c3_missing_only_032003_v1",
+      "raw_file_count": 36,
+      "full_new_file_capture": null,
+      "grading_materials_identity": "sha256:9d456666b845fd90146499033601805ce2ecdc3d88e26202f8b9855cf287f68a",
+      "actual_budgets": {
+        "candidate_stage_seconds": 900.0,
+        "cleanup_seconds": 120.0,
+        "env_reset_timeout_seconds": 900,
+        "grading_deadline_seconds": 3600.0,
+        "image_pull_seconds": 1800.0
+      },
+      "preparation_budget_policy": {
+        "policy_sha256": "d417dbb8d3140e6a0082f2f12cda02fd492feb14db9375ace3d69222e48acdab",
+        "request_id": "dvc9395-control-protect-timeout-support-20261003-v2",
+        "request_input_sha256": "3bf174133d17334cc752c4a9775acf9782fc2017b76cd4682d5202081c1ddf57"
+      }
+    },
+    {
+      "job_id": "dvc9395-r20-up351_port-20261003-032003",
+      "candidate": "up351_port",
+      "status": "completed",
+      "formal_grading": true,
+      "reward": 0.0,
+      "outcome": "unresolved",
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 3,
+        "f2p_total": 3,
+        "failure_category": "tests_failed",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+dvc9395-behavior-v2-draft",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": 6,
+        "p2p_total": 37,
+        "report_id": "rpt_grading_c1ee9bc5",
+        "reward": 0.0
+      },
+      "reference_missing_count": 0,
+      "actual_passed": 35,
+      "actual_failed": 6,
+      "actual_skipped": 0,
+      "actual_total": 41,
+      "actual_states": {
+        "tests/func/test_repro_multistage.py::test_non_existing_stage_name": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_frozen": "PASSED",
+        "tests/func/test_repro_multistage.py::test_downstream": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted": "PASSED",
+        "tests/func/test_repro_multistage.py::test_cyclic_graph_error": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_multiple_params": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_import": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_no_run_cache_does_not_download_runs": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_existing_output_without_hash_can_run": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_changed_dependency_can_recompute": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_restores_from_http_with_local_run_cache": "PASSED",
+        "tests/func/test_run_cache.py::test_push_pull": "PASSED",
+        "tests/func/test_run_cache.py::test_restore": "PASSED",
+        "tests/func/test_run_cache.py::test_save": "PASSED",
+        "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry": "PASSED",
+        "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]": "PASSED",
+        "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]": "PASSED",
+        "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]": "PASSED",
+        "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage": "PASSED",
+        "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages": "PASSED",
+        "tests/func/test_run_cache.py::test_restore_pull": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[source]": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[output]": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[normal]": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[dry]": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_preserves_modified_source": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_still_errors_for_missing_source": "FAILED"
+      },
+      "prepared_provenance_checked": true,
+      "candidate_prerequisite": {
+        "exit_code": 0,
+        "home": "/home/rh2grader",
+        "script_sha256": "sha256:1ef738bb44a2fd27407a54d08d9f4903c973a90d9e635f4badbdb8c6ebab2c6e",
+        "state": "verified",
+        "stderr": "",
+        "stdout": "RH2_DVC_BEHAVIOR_UID54322_WHEEL_BYTES_OK=1\n",
+        "user": "54322"
+      },
+      "candidate_install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 10.286,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 35.08
+      },
+      "grading_revision": {
+        "apply_ok": true,
+        "binding_version": "reference-bindings-v1",
+        "bindings_sha256": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "environment_package_digest": "sha256:62df73d0a7bf30057b6b4e585cc799a09c853c320310e32f93f9f7b6aaaf437e",
+        "grading_bundle_digest": "sha256:b939c2ea3070d0187a663891f33affc5347ee0029c048cf0c984be4f0d02f8f8",
+        "materials_identity": "sha256:9d456666b845fd90146499033601805ce2ecdc3d88e26202f8b9855cf287f68a",
+        "parent_grading_digest": "sha256:8162cfda6fe1ad611cf9407a87cb2cdb62af3bbf662f14b0ed43b659b428180c",
+        "parser_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "partitions": {
+          "added_f2p": {
+            "references": [
+              "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream"
+              ],
+              "unaccounted": []
+            }
+          },
+          "added_p2p": {
+            "references": [
+              "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[source]",
+              "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[output]",
+              "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[normal]",
+              "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[dry]",
+              "tests/func/test_repro_multistage.py::test_pull_without_remote_preserves_modified_source",
+              "tests/func/test_repro_multistage.py::test_pull_without_remote_still_errors_for_missing_source",
+              "tests/func/test_repro_multistage.py::test_pull_no_run_cache_does_not_download_runs",
+              "tests/func/test_repro_multistage.py::test_pull_existing_output_without_hash_can_run",
+              "tests/func/test_repro_multistage.py::test_pull_changed_dependency_can_recompute",
+              "tests/func/test_repro_multistage.py::test_pull_restores_from_http_with_local_run_cache"
+            ],
+            "result": {
+              "failure": [
+                "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[source]",
+                "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[output]",
+                "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[normal]",
+                "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[dry]",
+                "tests/func/test_repro_multistage.py::test_pull_without_remote_preserves_modified_source",
+                "tests/func/test_repro_multistage.py::test_pull_without_remote_still_errors_for_missing_source"
+              ],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/func/test_repro_multistage.py::test_pull_no_run_cache_does_not_download_runs",
+                "tests/func/test_repro_multistage.py::test_pull_existing_output_without_hash_can_run",
+                "tests/func/test_repro_multistage.py::test_pull_changed_dependency_can_recompute",
+                "tests/func/test_repro_multistage.py::test_pull_restores_from_http_with_local_run_cache"
+              ],
+              "unaccounted": []
+            }
+          },
+          "bound_source_f2p": {
+            "references": [
+              "tests/func/test_run_cache.py::test_restore_pull",
+              "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/func/test_run_cache.py::test_restore_pull",
+                "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source"
+              ],
+              "unaccounted": []
+            }
+          },
+          "bound_source_p2p": {
+            "references": [
+              "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs",
+              "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]",
+              "tests/func/test_repro_multistage.py::test_repro_frozen",
+              "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage",
+              "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]",
+              "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]",
+              "tests/func/test_repro_multistage.py::test_downstream",
+              "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist",
+              "tests/func/test_run_cache.py::test_save",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved",
+              "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]",
+              "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile",
+              "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]",
+              "tests/func/test_run_cache.py::test_restore",
+              "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages",
+              "tests/func/test_repro_multistage.py::test_non_existing_stage_name",
+              "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry",
+              "tests/func/test_repro_multistage.py::test_cyclic_graph_error",
+              "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes",
+              "tests/func/test_repro_multistage.py::test_repro_multiple_params",
+              "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]",
+              "tests/func/test_run_cache.py::test_push_pull",
+              "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs",
+                "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]",
+                "tests/func/test_repro_multistage.py::test_repro_frozen",
+                "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage",
+                "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]",
+                "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]",
+                "tests/func/test_repro_multistage.py::test_downstream",
+                "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist",
+                "tests/func/test_run_cache.py::test_save",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved",
+                "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]",
+                "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile",
+                "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]",
+                "tests/func/test_run_cache.py::test_restore",
+                "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages",
+                "tests/func/test_repro_multistage.py::test_non_existing_stage_name",
+                "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry",
+                "tests/func/test_repro_multistage.py::test_cyclic_graph_error",
+                "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes",
+                "tests/func/test_repro_multistage.py::test_repro_multiple_params",
+                "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]",
+                "tests/func/test_run_cache.py::test_push_pull",
+                "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile"
+              ],
+              "unaccounted": []
+            }
+          }
+        },
+        "public_bundle_digest": "sha256:1f95551f8b887dc01d5a2c2fba8aef01a449c701e1577dec4905181f14abafd9",
+        "registry_sha256": "sha256:815811717d21fa259b354eaf85a1598241d66d85b5af547d9208b2835c4edace",
+        "revision_id": "dvc9395-behavior-v2-draft",
+        "source_references": {
+          "fail_to_pass": [
+            "tests/func/test_run_cache.py::test_restore_pull",
+            "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source"
+          ],
+          "pass_to_pass": [
+            "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs",
+            "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]",
+            "tests/func/test_repro_multistage.py::test_repro_frozen",
+            "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage",
+            "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]",
+            "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]",
+            "tests/func/test_repro_multistage.py::test_downstream",
+            "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist",
+            "tests/func/test_run_cache.py::test_save",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved",
+            "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]",
+            "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile",
+            "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]",
+            "tests/func/test_run_cache.py::test_restore",
+            "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages",
+            "tests/func/test_repro_multistage.py::test_non_existing_stage_name",
+            "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry",
+            "tests/func/test_repro_multistage.py::test_cyclic_graph_error",
+            "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes",
+            "tests/func/test_repro_multistage.py::test_repro_multiple_params",
+            "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]",
+            "tests/func/test_run_cache.py::test_push_pull",
+            "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile"
+          ]
+        },
+        "state": "parsed",
+        "test_command": "pytest -rA tests/func/test_repro_multistage.py tests/func/test_run_cache.py"
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "cleanup_label_readback": {
+        "containers": [],
+        "networks": [],
+        "result": "cleanup_readback.json"
+      },
+      "phase_seconds": {
+        "delta_apply": 0.654149,
+        "grader_baseline_rebuild": 0.454679,
+        "grader_cleanup": 2.08255,
+        "grader_start_and_verify": 48.05859,
+        "grader_trusted_setup": 213.27916,
+        "parser_and_report": 5.221925,
+        "test": 46.879375
+      },
+      "scripts_digest": "sha256:ec5f61cf288b78aaafd469b40013bcd571e93e1ab5db7c32c8852b6a83f035f3",
+      "ledger_sha256": "sha256:ecd2f720b9fdfb4cbe8d145770e797b8cba2c7bcdada7cee56d3dfaf6540ebeb",
+      "archive": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r20_up351_port_032003_v1.tar.gz",
+      "archive_sha256": "sha256:fcb40fc285bf68a3b0d95128cc25a2f01b07f8499ff82f993e6b39a0a3f3418f",
+      "evidence_root": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r20_up351_port_032003_v1",
+      "raw_file_count": 36,
+      "full_new_file_capture": null,
+      "grading_materials_identity": "sha256:9d456666b845fd90146499033601805ce2ecdc3d88e26202f8b9855cf287f68a",
+      "actual_budgets": {
+        "candidate_stage_seconds": 900.0,
+        "cleanup_seconds": 120.0,
+        "env_reset_timeout_seconds": 900,
+        "grading_deadline_seconds": 3600.0,
+        "image_pull_seconds": 1800.0
+      },
+      "preparation_budget_policy": {
+        "policy_sha256": "d417dbb8d3140e6a0082f2f12cda02fd492feb14db9375ace3d69222e48acdab",
+        "request_id": "dvc9395-control-protect-timeout-support-20261003-v2",
+        "request_input_sha256": "3bf174133d17334cc752c4a9775acf9782fc2017b76cd4682d5202081c1ddf57"
+      }
+    },
+    {
+      "job_id": "dvc9395-r20-w_swallow3-20261003-032003",
+      "candidate": "w_swallow3",
+      "status": "completed",
+      "formal_grading": true,
+      "reward": 0.0,
+      "outcome": "unresolved",
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 2,
+        "f2p_total": 3,
+        "failure_category": "tests_failed",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+dvc9395-behavior-v2-draft",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": 10,
+        "p2p_total": 37,
+        "report_id": "rpt_grading_40fa3ff7",
+        "reward": 0.0
+      },
+      "reference_missing_count": 0,
+      "actual_passed": 30,
+      "actual_failed": 11,
+      "actual_skipped": 0,
+      "actual_total": 41,
+      "actual_states": {
+        "tests/func/test_repro_multistage.py::test_non_existing_stage_name": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_frozen": "PASSED",
+        "tests/func/test_repro_multistage.py::test_downstream": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted": "PASSED",
+        "tests/func/test_repro_multistage.py::test_cyclic_graph_error": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_multiple_params": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_import": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream": "PASSED",
+        "tests/func/test_run_cache.py::test_push_pull": "PASSED",
+        "tests/func/test_run_cache.py::test_restore": "PASSED",
+        "tests/func/test_run_cache.py::test_save": "PASSED",
+        "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry": "PASSED",
+        "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]": "PASSED",
+        "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]": "PASSED",
+        "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]": "PASSED",
+        "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage": "PASSED",
+        "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages": "PASSED",
+        "tests/func/test_run_cache.py::test_restore_pull": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[source]": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[output]": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[normal]": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[dry]": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_preserves_modified_source": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_still_errors_for_missing_source": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_no_run_cache_does_not_download_runs": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_existing_output_without_hash_can_run": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_changed_dependency_can_recompute": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_restores_from_http_with_local_run_cache": "FAILED"
+      },
+      "prepared_provenance_checked": true,
+      "candidate_prerequisite": {
+        "exit_code": 0,
+        "home": "/home/rh2grader",
+        "script_sha256": "sha256:1ef738bb44a2fd27407a54d08d9f4903c973a90d9e635f4badbdb8c6ebab2c6e",
+        "state": "verified",
+        "stderr": "",
+        "stdout": "RH2_DVC_BEHAVIOR_UID54322_WHEEL_BYTES_OK=1\n",
+        "user": "54322"
+      },
+      "candidate_install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 11.089,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 32.88
+      },
+      "grading_revision": {
+        "apply_ok": true,
+        "binding_version": "reference-bindings-v1",
+        "bindings_sha256": "sha256:44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+        "environment_package_digest": "sha256:62df73d0a7bf30057b6b4e585cc799a09c853c320310e32f93f9f7b6aaaf437e",
+        "grading_bundle_digest": "sha256:b939c2ea3070d0187a663891f33affc5347ee0029c048cf0c984be4f0d02f8f8",
+        "materials_identity": "sha256:9d456666b845fd90146499033601805ce2ecdc3d88e26202f8b9855cf287f68a",
+        "parent_grading_digest": "sha256:8162cfda6fe1ad611cf9407a87cb2cdb62af3bbf662f14b0ed43b659b428180c",
+        "parser_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "partitions": {
+          "added_f2p": {
+            "references": [
+              "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream"
+              ],
+              "unaccounted": []
+            }
+          },
+          "added_p2p": {
+            "references": [
+              "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[source]",
+              "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[output]",
+              "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[normal]",
+              "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[dry]",
+              "tests/func/test_repro_multistage.py::test_pull_without_remote_preserves_modified_source",
+              "tests/func/test_repro_multistage.py::test_pull_without_remote_still_errors_for_missing_source",
+              "tests/func/test_repro_multistage.py::test_pull_no_run_cache_does_not_download_runs",
+              "tests/func/test_repro_multistage.py::test_pull_existing_output_without_hash_can_run",
+              "tests/func/test_repro_multistage.py::test_pull_changed_dependency_can_recompute",
+              "tests/func/test_repro_multistage.py::test_pull_restores_from_http_with_local_run_cache"
+            ],
+            "result": {
+              "failure": [
+                "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[source]",
+                "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[output]",
+                "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[normal]",
+                "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[dry]",
+                "tests/func/test_repro_multistage.py::test_pull_without_remote_preserves_modified_source",
+                "tests/func/test_repro_multistage.py::test_pull_without_remote_still_errors_for_missing_source",
+                "tests/func/test_repro_multistage.py::test_pull_no_run_cache_does_not_download_runs",
+                "tests/func/test_repro_multistage.py::test_pull_existing_output_without_hash_can_run",
+                "tests/func/test_repro_multistage.py::test_pull_changed_dependency_can_recompute",
+                "tests/func/test_repro_multistage.py::test_pull_restores_from_http_with_local_run_cache"
+              ],
+              "missing": [],
+              "skipped": [],
+              "success": [],
+              "unaccounted": []
+            }
+          },
+          "bound_source_f2p": {
+            "references": [
+              "tests/func/test_run_cache.py::test_restore_pull",
+              "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source"
+            ],
+            "result": {
+              "failure": [
+                "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source"
+              ],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/func/test_run_cache.py::test_restore_pull"
+              ],
+              "unaccounted": []
+            }
+          },
+          "bound_source_p2p": {
+            "references": [
+              "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs",
+              "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]",
+              "tests/func/test_repro_multistage.py::test_repro_frozen",
+              "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage",
+              "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]",
+              "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]",
+              "tests/func/test_repro_multistage.py::test_downstream",
+              "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist",
+              "tests/func/test_run_cache.py::test_save",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved",
+              "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]",
+              "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile",
+              "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]",
+              "tests/func/test_run_cache.py::test_restore",
+              "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages",
+              "tests/func/test_repro_multistage.py::test_non_existing_stage_name",
+              "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry",
+              "tests/func/test_repro_multistage.py::test_cyclic_graph_error",
+              "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes",
+              "tests/func/test_repro_multistage.py::test_repro_multiple_params",
+              "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]",
+              "tests/func/test_run_cache.py::test_push_pull",
+              "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out",
+              "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs",
+                "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]",
+                "tests/func/test_repro_multistage.py::test_repro_frozen",
+                "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage",
+                "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]",
+                "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]",
+                "tests/func/test_repro_multistage.py::test_downstream",
+                "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist",
+                "tests/func/test_run_cache.py::test_save",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved",
+                "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]",
+                "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile",
+                "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]",
+                "tests/func/test_run_cache.py::test_restore",
+                "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages",
+                "tests/func/test_repro_multistage.py::test_non_existing_stage_name",
+                "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry",
+                "tests/func/test_repro_multistage.py::test_cyclic_graph_error",
+                "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes",
+                "tests/func/test_repro_multistage.py::test_repro_multiple_params",
+                "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]",
+                "tests/func/test_run_cache.py::test_push_pull",
+                "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out",
+                "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile"
+              ],
+              "unaccounted": []
+            }
+          }
+        },
+        "public_bundle_digest": "sha256:1f95551f8b887dc01d5a2c2fba8aef01a449c701e1577dec4905181f14abafd9",
+        "registry_sha256": "sha256:815811717d21fa259b354eaf85a1598241d66d85b5af547d9208b2835c4edace",
+        "revision_id": "dvc9395-behavior-v2-draft",
+        "source_references": {
+          "fail_to_pass": [
+            "tests/func/test_run_cache.py::test_restore_pull",
+            "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source"
+          ],
+          "pass_to_pass": [
+            "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs",
+            "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]",
+            "tests/func/test_repro_multistage.py::test_repro_frozen",
+            "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage",
+            "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]",
+            "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]",
+            "tests/func/test_repro_multistage.py::test_downstream",
+            "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist",
+            "tests/func/test_run_cache.py::test_save",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved",
+            "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]",
+            "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile",
+            "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]",
+            "tests/func/test_run_cache.py::test_restore",
+            "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages",
+            "tests/func/test_repro_multistage.py::test_non_existing_stage_name",
+            "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry",
+            "tests/func/test_repro_multistage.py::test_cyclic_graph_error",
+            "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes",
+            "tests/func/test_repro_multistage.py::test_repro_multiple_params",
+            "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]",
+            "tests/func/test_run_cache.py::test_push_pull",
+            "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out",
+            "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile"
+          ]
+        },
+        "state": "parsed",
+        "test_command": "pytest -rA tests/func/test_repro_multistage.py tests/func/test_run_cache.py"
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "cleanup_label_readback": {
+        "containers": [],
+        "networks": [],
+        "result": "cleanup_readback.json"
+      },
+      "phase_seconds": {
+        "delta_apply": 0.312785,
+        "grader_baseline_rebuild": 0.43759,
+        "grader_cleanup": 1.797434,
+        "grader_start_and_verify": 47.286862,
+        "grader_trusted_setup": 203.056073,
+        "parser_and_report": 5.542115,
+        "test": 45.502108
+      },
+      "scripts_digest": "sha256:ec5f61cf288b78aaafd469b40013bcd571e93e1ab5db7c32c8852b6a83f035f3",
+      "ledger_sha256": "sha256:a3cd99c779868645c3c663ab1da5cd533c10ee227730b5de134bddc2b2389511",
+      "archive": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r20_w_swallow3_032003_v1.tar.gz",
+      "archive_sha256": "sha256:350bb8d48ccb4fcf741308ae9f2e4038a163f2da42b3551d4d0429d5b467ed60",
+      "evidence_root": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r20_w_swallow3_032003_v1",
+      "raw_file_count": 36,
+      "full_new_file_capture": null,
+      "grading_materials_identity": "sha256:9d456666b845fd90146499033601805ce2ecdc3d88e26202f8b9855cf287f68a",
+      "actual_budgets": {
+        "candidate_stage_seconds": 900.0,
+        "cleanup_seconds": 120.0,
+        "env_reset_timeout_seconds": 900,
+        "grading_deadline_seconds": 3600.0,
+        "image_pull_seconds": 1800.0
+      },
+      "preparation_budget_policy": {
+        "policy_sha256": "d417dbb8d3140e6a0082f2f12cda02fd492feb14db9375ace3d69222e48acdab",
+        "request_id": "dvc9395-control-protect-timeout-support-20261003-v2",
+        "request_input_sha256": "3bf174133d17334cc752c4a9775acf9782fc2017b76cd4682d5202081c1ddf57"
+      }
+    }
+  ],
+  "status": "formal_controls_complete_non_author_review_pending",
+  "non_author_runtime_review": "pending",
+  "actor_check": "R5 historical public actor evidence; actual R20 prepared public and prompt equal; independent applicability separately reviewed",
+  "actual_r20_prepared_public_equals_r5": true,
+  "actual_r20_prompt_text_bytes_equal_r5": true,
+  "prompt_json_metadata_environment_digest_new": "sha256:62df73d0a7bf30057b6b4e585cc799a09c853c320310e32f93f9f7b6aaaf437e",
+  "qualifies_for_probe": false,
+  "still_needs_cpu": true,
+  "still_needs_gpu": true,
+  "limitations": [
+    "No sealed original-install-only historical test consumer; original historical controls reward not inferred or overwritten",
+    "All six ledger resource_facts null; one c3_frozenfix running-container HostConfig snapshot confirms finite2CPU/4GiB/PID512/none configuration at that point only. No whole-run OOM/PID/peak/minimum-resource proof",
+    "R5 actual public actor reused only at same public/image/code scope; not a new R20 actor run or training typed actor integration"
+  ]
+}

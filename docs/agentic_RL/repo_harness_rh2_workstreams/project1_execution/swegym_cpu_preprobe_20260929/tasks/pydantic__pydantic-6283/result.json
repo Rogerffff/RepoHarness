@@ -1,0 +1,91 @@
+{
+  "task": "pydantic__pydantic-6283",
+  "date": "2026-09-29",
+  "status": "cpu_completed_independently_reviewed",
+  "evidence_audit": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/pydantic__pydantic-6283/evidence_audit.json",
+  "source_run": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-6283/followup_20260928T184018Z-6ec4ba",
+  "quality": {
+    "severity": "S1",
+    "codes": [
+      "T2c"
+    ],
+    "empirical_false_positive": null,
+    "detail": "S1/T2c示例覆盖限制保留；本轮验证型construct候选因两项真实构造回归被正式正确拒绝，无该候选误奖"
+  },
+  "use": {
+    "diagnosis": true,
+    "training": false,
+    "holdout": false,
+    "capability_comparison": "conditional_with_preregistered_semantic_audit_and_entry_budget_verification"
+  },
+  "formal": {
+    "grade_noop": {
+      "status": "completed_raw_verified",
+      "reward": 0.0,
+      "f2p_pass": 0,
+      "f2p_total": 1,
+      "p2p_fail": 0,
+      "p2p_total": 38
+    },
+    "grade_gold": {
+      "status": "completed_raw_verified",
+      "reward": 1.0,
+      "f2p_pass": 1,
+      "f2p_total": 1,
+      "p2p_fail": 0,
+      "p2p_total": 38
+    },
+    "grade_validate_construct": {
+      "status": "completed_raw_verified",
+      "reward": 0.0,
+      "f2p_pass": 1,
+      "f2p_total": 1,
+      "p2p_fail": 2,
+      "p2p_total": 38
+    }
+  },
+  "remaining": [
+    "D6正式SWE修订入口成本与实施授权；本夜不实施",
+    "授权后的版本化R-c正式CPU复验",
+    "真实题面/public_hints交付",
+    "GPU入口/模型/预算",
+    "跨题关联与训练/留出划分",
+    "真实模型难度与成本",
+    "准备阶段效率独立版本观察"
+  ],
+  "revision_proposal": {
+    "scope": "one valid non-example TextRoot string equality instance; preserve existing no-validation tests",
+    "executed": true,
+    "formal_implementation_authorized": false,
+    "private_extra_inputs": "runs/swegym_cpu_preprobe_20260929/inputs_extra/6283_nonexample_v1/manifest.json",
+    "private_extra_status": "executed_independently_reviewed",
+    "execution_scope": "private root nonexample control only; not formal implementation",
+    "private_extra_result": {
+      "base": {
+        "rc": 1,
+        "precise_failure": "TEXT_ROOT_NONEXAMPLE_EQUALITY_FAILED",
+        "seconds": 0.429020205
+      },
+      "gold": {
+        "rc": 0,
+        "equal": true,
+        "seconds": 0.408527443
+      },
+      "validate_construct": {
+        "rc": 0,
+        "equal": true,
+        "seconds": 0.43611303
+      },
+      "cleanup": "all rm/query rc0 and remaining empty",
+      "actual_analysis": "runs/swegym_cpu_preprobe_20260929/analysis/6283_nonexample_actual_v1.json",
+      "sha_manifest": "runs/swegym_cpu_preprobe_20260929/analysis/evidence_manifest_6283_nonexample_v1.json",
+      "independent_review": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/pyd6283_nonexample_review.md",
+      "scope_limit": "Adds a verified non42 control; does not remove S1/T2c or implement D6; existing no-validation safeguards remain necessary"
+    }
+  },
+  "acceptance": {
+    "independent_review": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/pydantic6283_final_review.md",
+    "root_parser_replay": "runs/swegym_cpu_preprobe_20260929/analysis/pydantic6283_followup_v1.json",
+    "status": "completed"
+  }
+}

@@ -1,0 +1,1398 @@
+{
+ "schema": "rh2.screening_record.v0（稀疏）",
+ "n": 10,
+ "records": [
+  {
+   "task_id": "getmoto__moto-5417",
+   "task_revision": "upstream",
+   "source_adapter_ref": "swe_gym_lite_full_f70b1a29 / swegym_parsers@242429c1",
+   "recipe_ref": "image=xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5417:latest, version=4.0",
+   "code_snapshot_ref": "rh2/src/repoharness2/envpack/swegym_parsers.py",
+   "facts_ref": [
+    "runs/env_overnight_20260916/L2_reference_ids/sweep_182.json",
+    "runs/env_overnight_20260916/L2_reference_ids/global_checks.json"
+   ],
+   "materials_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5417/gold/offline/a1/test_output.txt",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5417/empty/offline/a1/test_output.txt",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/task_signals_swegym.json"
+   ],
+   "public_view": {
+    "note": "本包只查 parser/参考 ID 身份，未做题面盲审。",
+    "unknowns": [
+     "题面要求与约束未审（属 L1 仓库包职责）"
+    ]
+   },
+   "checks": {
+    "19": {
+     "status": "issue",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5417/gold/offline/a1/test_output.txt",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=getmoto__moto-5417",
+      "rh2/src/repoharness2/envpack/swegym_parsers.py"
+     ],
+     "note": "parser 逐字复现阶段一 status_map.json（相等）；1 个参考 ID 缺席，全部可用 unicode_escape 解码在同一日志内唯一定位。",
+     "by": "L2_reference_ids"
+    },
+    "18": {
+     "status": "pass",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5417/gold/offline/a1/test_output.txt"
+     ],
+     "note": "对应完整 nodeid 的摘要行在 gold 日志里存在且为 PASSED，说明测试确实被收集并执行（依据仅为 -rA 摘要行）。",
+     "by": "L2_reference_ids"
+    },
+    "20": {
+     "status": "issue",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5417/gold/offline/a1/test_output.txt",
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5417/empty/offline/a1/test_output.txt"
+     ],
+     "note": "gold/empty 两侧缺席集合完全相同，说明 RESOLVED_NO 的差额来自参考 ID 身份问题而非目标行为。",
+     "by": "L2_reference_ids"
+    },
+    "37": {
+     "status": "unknown",
+     "evidence_refs": [
+      "id_mapping_proposals.json"
+     ],
+     "note": "本包只给第二类（有证据、无碰撞、语义不变的 ID 映射）候选，未实施；是否接受由用户决定。",
+     "by": "L2_reference_ids"
+    },
+    "39": {
+     "status": "pass",
+     "evidence_refs": [
+      "runs/env_overnight_20260916/L2_reference_ids/global_checks.json"
+     ],
+     "note": "回退规则在 181 份 gold 日志上零解码歧义、零覆盖已有键、零解码异常，共享修复不影响其它题。",
+     "by": "L2_reference_ids"
+    }
+   },
+   "issues": [
+    {
+     "category": "parser_reference_id_mismatch",
+     "scope": "task",
+     "severity": "P1",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5417/gold/offline/a1/test_output.txt",
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5417/empty/offline/a1/test_output.txt",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=getmoto__moto-5417",
+      "rh2/src/repoharness2/envpack/swegym_parsers.py"
+     ],
+     "note": "1 个 P2P 参考 ID 在 gold 与 empty 两侧都取不到状态，按 swe_f2p_p2p 语义直接判 RESOLVED_NO；差异只在 pytest nodeid 的 ASCII 转义层数，不是测试真的没跑。",
+     "proposed_action": "参考 ID 直接命中优先，缺席时做一次 unicode_escape 解码回退并要求唯一命中（见 id_mapping_proposals.json）。",
+     "status": "proposed"
+    }
+   ],
+   "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "本包未发现需额外排除的文件；沿第四组 §0/§6.5 默认空。",
+    "evidence_refs": [
+     "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/batch4_scoring_20260910/README.md"
+    ]
+   },
+   "revision_refs": [
+    {
+     "type": "class2_id_mapping",
+     "parent": "upstream",
+     "changes_ref": "id_mapping_proposals.json#instance_id=getmoto__moto-5417",
+     "reason": "pytest nodeid ASCII 转义层数差异导致参考 ID 取不到状态；映射在同一日志内唯一。",
+     "verification_refs": [
+      "runs/env_overnight_20260916/L2_reference_ids/global_checks.json",
+      "parser_samples/"
+     ],
+     "reviewer": null
+    }
+   ],
+   "proposed_regression_tests": [
+    "parser_samples/E1_unicode_astral_escape",
+    "parser_samples/E2_unicode_latin1_escape",
+    "parser_samples/E3_backslash_doubling",
+    "parser_samples/E4_bytes_param_byte_escape",
+    "parser_samples/E5_control_char_escape",
+    "parser_samples/T1_space_truncation_unique",
+    "parser_samples/T2_truncated_key_collision",
+    "parser_samples/V1_pydantic_trailing_status_value_is_word",
+    "parser_samples/N1_non_pytest_line_parsed"
+   ],
+   "disposition": {
+    "state": "needs_repair",
+    "scope": "评分接线（参考 ID 匹配）层；题面/解法有效性未审",
+    "reason": "缺陷可复现、原因明确、修复方案在全池可验证无副作用；不改 expected、不改数据文件。",
+    "evidence_refs": [
+     "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5417/gold/offline/a1/test_output.txt",
+     "id_mapping_proposals.json"
+    ],
+    "reviewer": null
+   },
+   "usage": {
+    "intended_use": "未分配",
+    "exposure_notes": "in_e2=[]"
+   },
+   "costs": {
+    "minutes": null,
+    "container_wall_seconds": 0,
+    "agent_tokens": null,
+    "human_decisions": 0,
+    "source_refs": [
+     "本包全部离线复算，无容器运行"
+    ]
+   }
+  },
+  {
+   "task_id": "getmoto__moto-5545",
+   "task_revision": "upstream",
+   "source_adapter_ref": "swe_gym_lite_full_f70b1a29 / swegym_parsers@242429c1",
+   "recipe_ref": "image=xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5545:latest, version=4.0",
+   "code_snapshot_ref": "rh2/src/repoharness2/envpack/swegym_parsers.py",
+   "facts_ref": [
+    "runs/env_overnight_20260916/L2_reference_ids/sweep_182.json",
+    "runs/env_overnight_20260916/L2_reference_ids/global_checks.json"
+   ],
+   "materials_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5545/gold/offline/a1/test_output.txt",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5545/empty/offline/a1/test_output.txt",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/task_signals_swegym.json"
+   ],
+   "public_view": {
+    "note": "本包只查 parser/参考 ID 身份，未做题面盲审。",
+    "unknowns": [
+     "题面要求与约束未审（属 L1 仓库包职责）"
+    ]
+   },
+   "checks": {
+    "19": {
+     "status": "issue",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5545/gold/offline/a1/test_output.txt",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=getmoto__moto-5545",
+      "rh2/src/repoharness2/envpack/swegym_parsers.py"
+     ],
+     "note": "parser 逐字复现阶段一 status_map.json（相等）；1 个参考 ID 缺席，全部可用 unicode_escape 解码在同一日志内唯一定位。",
+     "by": "L2_reference_ids"
+    },
+    "18": {
+     "status": "pass",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5545/gold/offline/a1/test_output.txt"
+     ],
+     "note": "对应完整 nodeid 的摘要行在 gold 日志里存在且为 PASSED，说明测试确实被收集并执行（依据仅为 -rA 摘要行）。",
+     "by": "L2_reference_ids"
+    },
+    "20": {
+     "status": "issue",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5545/gold/offline/a1/test_output.txt",
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5545/empty/offline/a1/test_output.txt"
+     ],
+     "note": "gold/empty 两侧缺席集合完全相同，说明 RESOLVED_NO 的差额来自参考 ID 身份问题而非目标行为。",
+     "by": "L2_reference_ids"
+    },
+    "37": {
+     "status": "unknown",
+     "evidence_refs": [
+      "id_mapping_proposals.json"
+     ],
+     "note": "本包只给第二类（有证据、无碰撞、语义不变的 ID 映射）候选，未实施；是否接受由用户决定。",
+     "by": "L2_reference_ids"
+    },
+    "39": {
+     "status": "pass",
+     "evidence_refs": [
+      "runs/env_overnight_20260916/L2_reference_ids/global_checks.json"
+     ],
+     "note": "回退规则在 181 份 gold 日志上零解码歧义、零覆盖已有键、零解码异常，共享修复不影响其它题。",
+     "by": "L2_reference_ids"
+    }
+   },
+   "issues": [
+    {
+     "category": "parser_reference_id_mismatch",
+     "scope": "task",
+     "severity": "P1",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5545/gold/offline/a1/test_output.txt",
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5545/empty/offline/a1/test_output.txt",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=getmoto__moto-5545",
+      "rh2/src/repoharness2/envpack/swegym_parsers.py"
+     ],
+     "note": "1 个 P2P 参考 ID 在 gold 与 empty 两侧都取不到状态，按 swe_f2p_p2p 语义直接判 RESOLVED_NO；差异只在 pytest nodeid 的 ASCII 转义层数，不是测试真的没跑。",
+     "proposed_action": "参考 ID 直接命中优先，缺席时做一次 unicode_escape 解码回退并要求唯一命中（见 id_mapping_proposals.json）。",
+     "status": "proposed"
+    }
+   ],
+   "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "本包未发现需额外排除的文件；沿第四组 §0/§6.5 默认空。",
+    "evidence_refs": [
+     "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/batch4_scoring_20260910/README.md"
+    ]
+   },
+   "revision_refs": [
+    {
+     "type": "class2_id_mapping",
+     "parent": "upstream",
+     "changes_ref": "id_mapping_proposals.json#instance_id=getmoto__moto-5545",
+     "reason": "pytest nodeid ASCII 转义层数差异导致参考 ID 取不到状态；映射在同一日志内唯一。",
+     "verification_refs": [
+      "runs/env_overnight_20260916/L2_reference_ids/global_checks.json",
+      "parser_samples/"
+     ],
+     "reviewer": null
+    }
+   ],
+   "proposed_regression_tests": [
+    "parser_samples/E1_unicode_astral_escape",
+    "parser_samples/E2_unicode_latin1_escape",
+    "parser_samples/E3_backslash_doubling",
+    "parser_samples/E4_bytes_param_byte_escape",
+    "parser_samples/E5_control_char_escape",
+    "parser_samples/T1_space_truncation_unique",
+    "parser_samples/T2_truncated_key_collision",
+    "parser_samples/V1_pydantic_trailing_status_value_is_word",
+    "parser_samples/N1_non_pytest_line_parsed"
+   ],
+   "disposition": {
+    "state": "needs_repair",
+    "scope": "评分接线（参考 ID 匹配）层；题面/解法有效性未审",
+    "reason": "缺陷可复现、原因明确、修复方案在全池可验证无副作用；不改 expected、不改数据文件。",
+    "evidence_refs": [
+     "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5545/gold/offline/a1/test_output.txt",
+     "id_mapping_proposals.json"
+    ],
+    "reviewer": null
+   },
+   "usage": {
+    "intended_use": "未分配",
+    "exposure_notes": "in_e2=[]"
+   },
+   "costs": {
+    "minutes": null,
+    "container_wall_seconds": 0,
+    "agent_tokens": null,
+    "human_decisions": 0,
+    "source_refs": [
+     "本包全部离线复算，无容器运行"
+    ]
+   }
+  },
+  {
+   "task_id": "getmoto__moto-5562",
+   "task_revision": "upstream",
+   "source_adapter_ref": "swe_gym_lite_full_f70b1a29 / swegym_parsers@242429c1",
+   "recipe_ref": "image=xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5562:latest, version=4.0",
+   "code_snapshot_ref": "rh2/src/repoharness2/envpack/swegym_parsers.py",
+   "facts_ref": [
+    "runs/env_overnight_20260916/L2_reference_ids/sweep_182.json",
+    "runs/env_overnight_20260916/L2_reference_ids/global_checks.json"
+   ],
+   "materials_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5562/gold/offline/a1/test_output.txt",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5562/empty/offline/a1/test_output.txt",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/task_signals_swegym.json"
+   ],
+   "public_view": {
+    "note": "本包只查 parser/参考 ID 身份，未做题面盲审。",
+    "unknowns": [
+     "题面要求与约束未审（属 L1 仓库包职责）"
+    ]
+   },
+   "checks": {
+    "19": {
+     "status": "issue",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5562/gold/offline/a1/test_output.txt",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=getmoto__moto-5562",
+      "rh2/src/repoharness2/envpack/swegym_parsers.py"
+     ],
+     "note": "parser 逐字复现阶段一 status_map.json（相等）；1 个参考 ID 缺席，全部可用 unicode_escape 解码在同一日志内唯一定位。",
+     "by": "L2_reference_ids"
+    },
+    "18": {
+     "status": "pass",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5562/gold/offline/a1/test_output.txt"
+     ],
+     "note": "对应完整 nodeid 的摘要行在 gold 日志里存在且为 PASSED，说明测试确实被收集并执行（依据仅为 -rA 摘要行）。",
+     "by": "L2_reference_ids"
+    },
+    "20": {
+     "status": "issue",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5562/gold/offline/a1/test_output.txt",
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5562/empty/offline/a1/test_output.txt"
+     ],
+     "note": "gold/empty 两侧缺席集合完全相同，说明 RESOLVED_NO 的差额来自参考 ID 身份问题而非目标行为。",
+     "by": "L2_reference_ids"
+    },
+    "37": {
+     "status": "unknown",
+     "evidence_refs": [
+      "id_mapping_proposals.json"
+     ],
+     "note": "本包只给第二类（有证据、无碰撞、语义不变的 ID 映射）候选，未实施；是否接受由用户决定。",
+     "by": "L2_reference_ids"
+    },
+    "39": {
+     "status": "pass",
+     "evidence_refs": [
+      "runs/env_overnight_20260916/L2_reference_ids/global_checks.json"
+     ],
+     "note": "回退规则在 181 份 gold 日志上零解码歧义、零覆盖已有键、零解码异常，共享修复不影响其它题。",
+     "by": "L2_reference_ids"
+    }
+   },
+   "issues": [
+    {
+     "category": "parser_reference_id_mismatch",
+     "scope": "task",
+     "severity": "P1",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5562/gold/offline/a1/test_output.txt",
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5562/empty/offline/a1/test_output.txt",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=getmoto__moto-5562",
+      "rh2/src/repoharness2/envpack/swegym_parsers.py"
+     ],
+     "note": "1 个 P2P 参考 ID 在 gold 与 empty 两侧都取不到状态，按 swe_f2p_p2p 语义直接判 RESOLVED_NO；差异只在 pytest nodeid 的 ASCII 转义层数，不是测试真的没跑。",
+     "proposed_action": "参考 ID 直接命中优先，缺席时做一次 unicode_escape 解码回退并要求唯一命中（见 id_mapping_proposals.json）。",
+     "status": "proposed"
+    }
+   ],
+   "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "本包未发现需额外排除的文件；沿第四组 §0/§6.5 默认空。",
+    "evidence_refs": [
+     "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/batch4_scoring_20260910/README.md"
+    ]
+   },
+   "revision_refs": [
+    {
+     "type": "class2_id_mapping",
+     "parent": "upstream",
+     "changes_ref": "id_mapping_proposals.json#instance_id=getmoto__moto-5562",
+     "reason": "pytest nodeid ASCII 转义层数差异导致参考 ID 取不到状态；映射在同一日志内唯一。",
+     "verification_refs": [
+      "runs/env_overnight_20260916/L2_reference_ids/global_checks.json",
+      "parser_samples/"
+     ],
+     "reviewer": null
+    }
+   ],
+   "proposed_regression_tests": [
+    "parser_samples/E1_unicode_astral_escape",
+    "parser_samples/E2_unicode_latin1_escape",
+    "parser_samples/E3_backslash_doubling",
+    "parser_samples/E4_bytes_param_byte_escape",
+    "parser_samples/E5_control_char_escape",
+    "parser_samples/T1_space_truncation_unique",
+    "parser_samples/T2_truncated_key_collision",
+    "parser_samples/V1_pydantic_trailing_status_value_is_word",
+    "parser_samples/N1_non_pytest_line_parsed"
+   ],
+   "disposition": {
+    "state": "needs_repair",
+    "scope": "评分接线（参考 ID 匹配）层；题面/解法有效性未审",
+    "reason": "缺陷可复现、原因明确、修复方案在全池可验证无副作用；不改 expected、不改数据文件。",
+    "evidence_refs": [
+     "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5562/gold/offline/a1/test_output.txt",
+     "id_mapping_proposals.json"
+    ],
+    "reviewer": null
+   },
+   "usage": {
+    "intended_use": "未分配",
+    "exposure_notes": "in_e2=[]"
+   },
+   "costs": {
+    "minutes": null,
+    "container_wall_seconds": 0,
+    "agent_tokens": null,
+    "human_decisions": 0,
+    "source_refs": [
+     "本包全部离线复算，无容器运行"
+    ]
+   }
+  },
+  {
+   "task_id": "getmoto__moto-5701",
+   "task_revision": "upstream",
+   "source_adapter_ref": "swe_gym_lite_full_f70b1a29 / swegym_parsers@242429c1",
+   "recipe_ref": "image=xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5701:latest, version=4.0",
+   "code_snapshot_ref": "rh2/src/repoharness2/envpack/swegym_parsers.py",
+   "facts_ref": [
+    "runs/env_overnight_20260916/L2_reference_ids/sweep_182.json",
+    "runs/env_overnight_20260916/L2_reference_ids/global_checks.json"
+   ],
+   "materials_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5701/gold/offline/a1/test_output.txt",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5701/empty/offline/a1/test_output.txt",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/task_signals_swegym.json"
+   ],
+   "public_view": {
+    "note": "本包只查 parser/参考 ID 身份，未做题面盲审。",
+    "unknowns": [
+     "题面要求与约束未审（属 L1 仓库包职责）"
+    ]
+   },
+   "checks": {
+    "19": {
+     "status": "issue",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5701/gold/offline/a1/test_output.txt",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=getmoto__moto-5701",
+      "rh2/src/repoharness2/envpack/swegym_parsers.py"
+     ],
+     "note": "parser 逐字复现阶段一 status_map.json（相等）；1 个参考 ID 缺席，全部可用 unicode_escape 解码在同一日志内唯一定位。",
+     "by": "L2_reference_ids"
+    },
+    "18": {
+     "status": "pass",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5701/gold/offline/a1/test_output.txt"
+     ],
+     "note": "对应完整 nodeid 的摘要行在 gold 日志里存在且为 PASSED，说明测试确实被收集并执行（依据仅为 -rA 摘要行）。",
+     "by": "L2_reference_ids"
+    },
+    "20": {
+     "status": "issue",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5701/gold/offline/a1/test_output.txt",
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5701/empty/offline/a1/test_output.txt"
+     ],
+     "note": "gold/empty 两侧缺席集合完全相同，说明 RESOLVED_NO 的差额来自参考 ID 身份问题而非目标行为。",
+     "by": "L2_reference_ids"
+    },
+    "37": {
+     "status": "unknown",
+     "evidence_refs": [
+      "id_mapping_proposals.json"
+     ],
+     "note": "本包只给第二类（有证据、无碰撞、语义不变的 ID 映射）候选，未实施；是否接受由用户决定。",
+     "by": "L2_reference_ids"
+    },
+    "39": {
+     "status": "pass",
+     "evidence_refs": [
+      "runs/env_overnight_20260916/L2_reference_ids/global_checks.json"
+     ],
+     "note": "回退规则在 181 份 gold 日志上零解码歧义、零覆盖已有键、零解码异常，共享修复不影响其它题。",
+     "by": "L2_reference_ids"
+    }
+   },
+   "issues": [
+    {
+     "category": "parser_reference_id_mismatch",
+     "scope": "task",
+     "severity": "P1",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5701/gold/offline/a1/test_output.txt",
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5701/empty/offline/a1/test_output.txt",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=getmoto__moto-5701",
+      "rh2/src/repoharness2/envpack/swegym_parsers.py"
+     ],
+     "note": "1 个 P2P 参考 ID 在 gold 与 empty 两侧都取不到状态，按 swe_f2p_p2p 语义直接判 RESOLVED_NO；差异只在 pytest nodeid 的 ASCII 转义层数，不是测试真的没跑。",
+     "proposed_action": "参考 ID 直接命中优先，缺席时做一次 unicode_escape 解码回退并要求唯一命中（见 id_mapping_proposals.json）。",
+     "status": "proposed"
+    }
+   ],
+   "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "本包未发现需额外排除的文件；沿第四组 §0/§6.5 默认空。",
+    "evidence_refs": [
+     "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/batch4_scoring_20260910/README.md"
+    ]
+   },
+   "revision_refs": [
+    {
+     "type": "class2_id_mapping",
+     "parent": "upstream",
+     "changes_ref": "id_mapping_proposals.json#instance_id=getmoto__moto-5701",
+     "reason": "pytest nodeid ASCII 转义层数差异导致参考 ID 取不到状态；映射在同一日志内唯一。",
+     "verification_refs": [
+      "runs/env_overnight_20260916/L2_reference_ids/global_checks.json",
+      "parser_samples/"
+     ],
+     "reviewer": null
+    }
+   ],
+   "proposed_regression_tests": [
+    "parser_samples/E1_unicode_astral_escape",
+    "parser_samples/E2_unicode_latin1_escape",
+    "parser_samples/E3_backslash_doubling",
+    "parser_samples/E4_bytes_param_byte_escape",
+    "parser_samples/E5_control_char_escape",
+    "parser_samples/T1_space_truncation_unique",
+    "parser_samples/T2_truncated_key_collision",
+    "parser_samples/V1_pydantic_trailing_status_value_is_word",
+    "parser_samples/N1_non_pytest_line_parsed"
+   ],
+   "disposition": {
+    "state": "needs_repair",
+    "scope": "评分接线（参考 ID 匹配）层；题面/解法有效性未审",
+    "reason": "缺陷可复现、原因明确、修复方案在全池可验证无副作用；不改 expected、不改数据文件。",
+    "evidence_refs": [
+     "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5701/gold/offline/a1/test_output.txt",
+     "id_mapping_proposals.json"
+    ],
+    "reviewer": null
+   },
+   "usage": {
+    "intended_use": "未分配",
+    "exposure_notes": "in_e2=['B']"
+   },
+   "costs": {
+    "minutes": null,
+    "container_wall_seconds": 0,
+    "agent_tokens": null,
+    "human_decisions": 0,
+    "source_refs": [
+     "本包全部离线复算，无容器运行"
+    ]
+   }
+  },
+  {
+   "task_id": "getmoto__moto-6308",
+   "task_revision": "upstream",
+   "source_adapter_ref": "swe_gym_lite_full_f70b1a29 / swegym_parsers@242429c1",
+   "recipe_ref": "image=xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6308:latest, version=4.1",
+   "code_snapshot_ref": "rh2/src/repoharness2/envpack/swegym_parsers.py",
+   "facts_ref": [
+    "runs/env_overnight_20260916/L2_reference_ids/sweep_182.json",
+    "runs/env_overnight_20260916/L2_reference_ids/global_checks.json"
+   ],
+   "materials_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-6308/gold/offline/a1/test_output.txt",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-6308/empty/offline/a1/test_output.txt",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/task_signals_swegym.json"
+   ],
+   "public_view": {
+    "note": "本包只查 parser/参考 ID 身份，未做题面盲审。",
+    "unknowns": [
+     "题面要求与约束未审（属 L1 仓库包职责）"
+    ]
+   },
+   "checks": {
+    "19": {
+     "status": "issue",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-6308/gold/offline/a1/test_output.txt",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=getmoto__moto-6308",
+      "rh2/src/repoharness2/envpack/swegym_parsers.py"
+     ],
+     "note": "parser 逐字复现阶段一 status_map.json（相等）；1 个参考 ID 缺席，全部可用 unicode_escape 解码在同一日志内唯一定位。",
+     "by": "L2_reference_ids"
+    },
+    "18": {
+     "status": "pass",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-6308/gold/offline/a1/test_output.txt"
+     ],
+     "note": "对应完整 nodeid 的摘要行在 gold 日志里存在且为 PASSED，说明测试确实被收集并执行（依据仅为 -rA 摘要行）。",
+     "by": "L2_reference_ids"
+    },
+    "20": {
+     "status": "issue",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-6308/gold/offline/a1/test_output.txt",
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-6308/empty/offline/a1/test_output.txt"
+     ],
+     "note": "gold/empty 两侧缺席集合完全相同，说明 RESOLVED_NO 的差额来自参考 ID 身份问题而非目标行为。",
+     "by": "L2_reference_ids"
+    },
+    "37": {
+     "status": "unknown",
+     "evidence_refs": [
+      "id_mapping_proposals.json"
+     ],
+     "note": "本包只给第二类（有证据、无碰撞、语义不变的 ID 映射）候选，未实施；是否接受由用户决定。",
+     "by": "L2_reference_ids"
+    },
+    "39": {
+     "status": "pass",
+     "evidence_refs": [
+      "runs/env_overnight_20260916/L2_reference_ids/global_checks.json"
+     ],
+     "note": "回退规则在 181 份 gold 日志上零解码歧义、零覆盖已有键、零解码异常，共享修复不影响其它题。",
+     "by": "L2_reference_ids"
+    }
+   },
+   "issues": [
+    {
+     "category": "parser_reference_id_mismatch",
+     "scope": "task",
+     "severity": "P1",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-6308/gold/offline/a1/test_output.txt",
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-6308/empty/offline/a1/test_output.txt",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=getmoto__moto-6308",
+      "rh2/src/repoharness2/envpack/swegym_parsers.py"
+     ],
+     "note": "1 个 P2P 参考 ID 在 gold 与 empty 两侧都取不到状态，按 swe_f2p_p2p 语义直接判 RESOLVED_NO；差异只在 pytest nodeid 的 ASCII 转义层数，不是测试真的没跑。",
+     "proposed_action": "参考 ID 直接命中优先，缺席时做一次 unicode_escape 解码回退并要求唯一命中（见 id_mapping_proposals.json）。",
+     "status": "proposed"
+    }
+   ],
+   "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "本包未发现需额外排除的文件；沿第四组 §0/§6.5 默认空。",
+    "evidence_refs": [
+     "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/batch4_scoring_20260910/README.md"
+    ]
+   },
+   "revision_refs": [
+    {
+     "type": "class2_id_mapping",
+     "parent": "upstream",
+     "changes_ref": "id_mapping_proposals.json#instance_id=getmoto__moto-6308",
+     "reason": "pytest nodeid ASCII 转义层数差异导致参考 ID 取不到状态；映射在同一日志内唯一。",
+     "verification_refs": [
+      "runs/env_overnight_20260916/L2_reference_ids/global_checks.json",
+      "parser_samples/"
+     ],
+     "reviewer": null
+    }
+   ],
+   "proposed_regression_tests": [
+    "parser_samples/E1_unicode_astral_escape",
+    "parser_samples/E2_unicode_latin1_escape",
+    "parser_samples/E3_backslash_doubling",
+    "parser_samples/E4_bytes_param_byte_escape",
+    "parser_samples/E5_control_char_escape",
+    "parser_samples/T1_space_truncation_unique",
+    "parser_samples/T2_truncated_key_collision",
+    "parser_samples/V1_pydantic_trailing_status_value_is_word",
+    "parser_samples/N1_non_pytest_line_parsed"
+   ],
+   "disposition": {
+    "state": "needs_repair",
+    "scope": "评分接线（参考 ID 匹配）层；题面/解法有效性未审",
+    "reason": "缺陷可复现、原因明确、修复方案在全池可验证无副作用；不改 expected、不改数据文件。",
+    "evidence_refs": [
+     "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-6308/gold/offline/a1/test_output.txt",
+     "id_mapping_proposals.json"
+    ],
+    "reviewer": null
+   },
+   "usage": {
+    "intended_use": "未分配",
+    "exposure_notes": "in_e2=[]"
+   },
+   "costs": {
+    "minutes": null,
+    "container_wall_seconds": 0,
+    "agent_tokens": null,
+    "human_decisions": 0,
+    "source_refs": [
+     "本包全部离线复算，无容器运行"
+    ]
+   }
+  },
+  {
+   "task_id": "iterative__dvc-4185",
+   "task_revision": "upstream",
+   "source_adapter_ref": "swe_gym_lite_full_f70b1a29 / swegym_parsers@242429c1",
+   "recipe_ref": "image=xingyaoww/sweb.eval.x86_64.iterative_s_dvc-4185:latest, version=1.1",
+   "code_snapshot_ref": "rh2/src/repoharness2/envpack/swegym_parsers.py",
+   "facts_ref": [
+    "runs/env_overnight_20260916/L2_reference_ids/sweep_182.json",
+    "runs/env_overnight_20260916/L2_reference_ids/global_checks.json"
+   ],
+   "materials_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4185/gold/offline/a1/test_output.txt",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4185/empty/offline/a1/test_output.txt",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/task_signals_swegym.json"
+   ],
+   "public_view": {
+    "note": "本包只查 parser/参考 ID 身份，未做题面盲审。",
+    "unknowns": [
+     "题面要求与约束未审（属 L1 仓库包职责）"
+    ]
+   },
+   "checks": {
+    "19": {
+     "status": "issue",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4185/gold/offline/a1/test_output.txt",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=iterative__dvc-4185",
+      "rh2/src/repoharness2/envpack/swegym_parsers.py"
+     ],
+     "note": "parser 逐字复现阶段一 status_map.json（相等）；1 个参考 ID 缺席，全部可用 unicode_escape 解码在同一日志内唯一定位。",
+     "by": "L2_reference_ids"
+    },
+    "18": {
+     "status": "pass",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4185/gold/offline/a1/test_output.txt"
+     ],
+     "note": "对应完整 nodeid 的摘要行在 gold 日志里存在且为 PASSED，说明测试确实被收集并执行（依据仅为 -rA 摘要行）。",
+     "by": "L2_reference_ids"
+    },
+    "20": {
+     "status": "issue",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4185/gold/offline/a1/test_output.txt",
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4185/empty/offline/a1/test_output.txt"
+     ],
+     "note": "gold/empty 两侧缺席集合完全相同，说明 RESOLVED_NO 的差额来自参考 ID 身份问题而非目标行为。",
+     "by": "L2_reference_ids"
+    },
+    "37": {
+     "status": "unknown",
+     "evidence_refs": [
+      "id_mapping_proposals.json"
+     ],
+     "note": "本包只给第二类（有证据、无碰撞、语义不变的 ID 映射）候选，未实施；是否接受由用户决定。",
+     "by": "L2_reference_ids"
+    },
+    "39": {
+     "status": "pass",
+     "evidence_refs": [
+      "runs/env_overnight_20260916/L2_reference_ids/global_checks.json"
+     ],
+     "note": "回退规则在 181 份 gold 日志上零解码歧义、零覆盖已有键、零解码异常，共享修复不影响其它题。",
+     "by": "L2_reference_ids"
+    }
+   },
+   "issues": [
+    {
+     "category": "parser_reference_id_mismatch",
+     "scope": "task",
+     "severity": "P1",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4185/gold/offline/a1/test_output.txt",
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4185/empty/offline/a1/test_output.txt",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=iterative__dvc-4185",
+      "rh2/src/repoharness2/envpack/swegym_parsers.py"
+     ],
+     "note": "1 个 P2P 参考 ID 在 gold 与 empty 两侧都取不到状态，按 swe_f2p_p2p 语义直接判 RESOLVED_NO；差异只在 pytest nodeid 的 ASCII 转义层数，不是测试真的没跑。",
+     "proposed_action": "参考 ID 直接命中优先，缺席时做一次 unicode_escape 解码回退并要求唯一命中（见 id_mapping_proposals.json）。",
+     "status": "proposed"
+    }
+   ],
+   "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "本包未发现需额外排除的文件；沿第四组 §0/§6.5 默认空。",
+    "evidence_refs": [
+     "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/batch4_scoring_20260910/README.md"
+    ]
+   },
+   "revision_refs": [
+    {
+     "type": "class2_id_mapping",
+     "parent": "upstream",
+     "changes_ref": "id_mapping_proposals.json#instance_id=iterative__dvc-4185",
+     "reason": "pytest nodeid ASCII 转义层数差异导致参考 ID 取不到状态；映射在同一日志内唯一。",
+     "verification_refs": [
+      "runs/env_overnight_20260916/L2_reference_ids/global_checks.json",
+      "parser_samples/"
+     ],
+     "reviewer": null
+    }
+   ],
+   "proposed_regression_tests": [
+    "parser_samples/E1_unicode_astral_escape",
+    "parser_samples/E2_unicode_latin1_escape",
+    "parser_samples/E3_backslash_doubling",
+    "parser_samples/E4_bytes_param_byte_escape",
+    "parser_samples/E5_control_char_escape",
+    "parser_samples/T1_space_truncation_unique",
+    "parser_samples/T2_truncated_key_collision",
+    "parser_samples/V1_pydantic_trailing_status_value_is_word",
+    "parser_samples/N1_non_pytest_line_parsed"
+   ],
+   "disposition": {
+    "state": "needs_repair",
+    "scope": "评分接线（参考 ID 匹配）层；题面/解法有效性未审",
+    "reason": "缺陷可复现、原因明确、修复方案在全池可验证无副作用；不改 expected、不改数据文件。",
+    "evidence_refs": [
+     "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4185/gold/offline/a1/test_output.txt",
+     "id_mapping_proposals.json"
+    ],
+    "reviewer": null
+   },
+   "usage": {
+    "intended_use": "未分配",
+    "exposure_notes": "in_e2=[]"
+   },
+   "costs": {
+    "minutes": null,
+    "container_wall_seconds": 0,
+    "agent_tokens": null,
+    "human_decisions": 0,
+    "source_refs": [
+     "本包全部离线复算，无容器运行"
+    ]
+   }
+  },
+  {
+   "task_id": "modin-project__modin-6780",
+   "task_revision": "upstream",
+   "source_adapter_ref": "swe_gym_lite_full_f70b1a29 / swegym_parsers@242429c1",
+   "recipe_ref": "image=xingyaoww/sweb.eval.x86_64.modin-project_s_modin-6780:latest, version=0.25",
+   "code_snapshot_ref": "rh2/src/repoharness2/envpack/swegym_parsers.py",
+   "facts_ref": [
+    "runs/env_overnight_20260916/L2_reference_ids/sweep_182.json",
+    "runs/env_overnight_20260916/L2_reference_ids/global_checks.json"
+   ],
+   "materials_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/modin-project__modin-6780/gold/offline/a1/test_output.txt",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/modin-project__modin-6780/empty/offline/a1/test_output.txt",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/task_signals_swegym.json"
+   ],
+   "public_view": {
+    "note": "本包只查 parser/参考 ID 身份，未做题面盲审。",
+    "unknowns": [
+     "题面要求与约束未审（属 L1 仓库包职责）"
+    ]
+   },
+   "checks": {
+    "19": {
+     "status": "issue",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/modin-project__modin-6780/gold/offline/a1/test_output.txt",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=modin-project__modin-6780",
+      "rh2/src/repoharness2/envpack/swegym_parsers.py"
+     ],
+     "note": "parser 逐字复现阶段一 status_map.json（相等）；3 个参考 ID 缺席，全部可用 unicode_escape 解码在同一日志内唯一定位。",
+     "by": "L2_reference_ids"
+    },
+    "18": {
+     "status": "pass",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/modin-project__modin-6780/gold/offline/a1/test_output.txt"
+     ],
+     "note": "对应完整 nodeid 的摘要行在 gold 日志里存在且为 PASSED，说明测试确实被收集并执行（依据仅为 -rA 摘要行）。",
+     "by": "L2_reference_ids"
+    },
+    "20": {
+     "status": "issue",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/modin-project__modin-6780/gold/offline/a1/test_output.txt",
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/modin-project__modin-6780/empty/offline/a1/test_output.txt"
+     ],
+     "note": "gold/empty 两侧缺席集合完全相同，说明 RESOLVED_NO 的差额来自参考 ID 身份问题而非目标行为。",
+     "by": "L2_reference_ids"
+    },
+    "37": {
+     "status": "unknown",
+     "evidence_refs": [
+      "id_mapping_proposals.json"
+     ],
+     "note": "本包只给第二类（有证据、无碰撞、语义不变的 ID 映射）候选，未实施；是否接受由用户决定。",
+     "by": "L2_reference_ids"
+    },
+    "39": {
+     "status": "pass",
+     "evidence_refs": [
+      "runs/env_overnight_20260916/L2_reference_ids/global_checks.json"
+     ],
+     "note": "回退规则在 181 份 gold 日志上零解码歧义、零覆盖已有键、零解码异常，共享修复不影响其它题。",
+     "by": "L2_reference_ids"
+    }
+   },
+   "issues": [
+    {
+     "category": "parser_reference_id_mismatch",
+     "scope": "task",
+     "severity": "P1",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/modin-project__modin-6780/gold/offline/a1/test_output.txt",
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/modin-project__modin-6780/empty/offline/a1/test_output.txt",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=modin-project__modin-6780",
+      "rh2/src/repoharness2/envpack/swegym_parsers.py"
+     ],
+     "note": "3 个 P2P 参考 ID 在 gold 与 empty 两侧都取不到状态，按 swe_f2p_p2p 语义直接判 RESOLVED_NO；差异只在 pytest nodeid 的 ASCII 转义层数，不是测试真的没跑。",
+     "proposed_action": "参考 ID 直接命中优先，缺席时做一次 unicode_escape 解码回退并要求唯一命中（见 id_mapping_proposals.json）。",
+     "status": "proposed"
+    }
+   ],
+   "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "本包未发现需额外排除的文件；沿第四组 §0/§6.5 默认空。",
+    "evidence_refs": [
+     "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/batch4_scoring_20260910/README.md"
+    ]
+   },
+   "revision_refs": [
+    {
+     "type": "class2_id_mapping",
+     "parent": "upstream",
+     "changes_ref": "id_mapping_proposals.json#instance_id=modin-project__modin-6780",
+     "reason": "pytest nodeid ASCII 转义层数差异导致参考 ID 取不到状态；映射在同一日志内唯一。",
+     "verification_refs": [
+      "runs/env_overnight_20260916/L2_reference_ids/global_checks.json",
+      "parser_samples/"
+     ],
+     "reviewer": null
+    }
+   ],
+   "proposed_regression_tests": [
+    "parser_samples/E1_unicode_astral_escape",
+    "parser_samples/E2_unicode_latin1_escape",
+    "parser_samples/E3_backslash_doubling",
+    "parser_samples/E4_bytes_param_byte_escape",
+    "parser_samples/E5_control_char_escape",
+    "parser_samples/T1_space_truncation_unique",
+    "parser_samples/T2_truncated_key_collision",
+    "parser_samples/V1_pydantic_trailing_status_value_is_word",
+    "parser_samples/N1_non_pytest_line_parsed"
+   ],
+   "disposition": {
+    "state": "needs_repair",
+    "scope": "评分接线（参考 ID 匹配）层；题面/解法有效性未审",
+    "reason": "缺陷可复现、原因明确、修复方案在全池可验证无副作用；不改 expected、不改数据文件。",
+    "evidence_refs": [
+     "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/modin-project__modin-6780/gold/offline/a1/test_output.txt",
+     "id_mapping_proposals.json"
+    ],
+    "reviewer": null
+   },
+   "usage": {
+    "intended_use": "未分配",
+    "exposure_notes": "in_e2=[]"
+   },
+   "costs": {
+    "minutes": null,
+    "container_wall_seconds": 0,
+    "agent_tokens": null,
+    "human_decisions": 0,
+    "source_refs": [
+     "本包全部离线复算，无容器运行"
+    ]
+   }
+  },
+  {
+   "task_id": "pandas-dev__pandas-48106",
+   "task_revision": "upstream",
+   "source_adapter_ref": "swe_gym_lite_full_f70b1a29 / swegym_parsers@242429c1",
+   "recipe_ref": "image=xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-48106:latest, version=1.5",
+   "code_snapshot_ref": "rh2/src/repoharness2/envpack/swegym_parsers.py",
+   "facts_ref": [
+    "runs/env_overnight_20260916/L2_reference_ids/sweep_182.json",
+    "runs/env_overnight_20260916/L2_reference_ids/global_checks.json"
+   ],
+   "materials_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-48106/gold/offline/a1/test_output.txt",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-48106/empty/offline/a1/test_output.txt",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/task_signals_swegym.json"
+   ],
+   "public_view": {
+    "note": "本包只查 parser/参考 ID 身份，未做题面盲审。",
+    "unknowns": [
+     "题面要求与约束未审（属 L1 仓库包职责）"
+    ]
+   },
+   "checks": {
+    "19": {
+     "status": "issue",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-48106/gold/offline/a1/test_output.txt",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=pandas-dev__pandas-48106",
+      "rh2/src/repoharness2/envpack/swegym_parsers.py"
+     ],
+     "note": "parser 逐字复现阶段一 status_map.json（相等）；3 个参考 ID 缺席，全部可用 unicode_escape 解码在同一日志内唯一定位。",
+     "by": "L2_reference_ids"
+    },
+    "18": {
+     "status": "pass",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-48106/gold/offline/a1/test_output.txt"
+     ],
+     "note": "对应完整 nodeid 的摘要行在 gold 日志里存在且为 PASSED，说明测试确实被收集并执行（依据仅为 -rA 摘要行）。",
+     "by": "L2_reference_ids"
+    },
+    "20": {
+     "status": "issue",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-48106/gold/offline/a1/test_output.txt",
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-48106/empty/offline/a1/test_output.txt"
+     ],
+     "note": "gold/empty 两侧缺席集合完全相同，说明 RESOLVED_NO 的差额来自参考 ID 身份问题而非目标行为。",
+     "by": "L2_reference_ids"
+    },
+    "37": {
+     "status": "unknown",
+     "evidence_refs": [
+      "id_mapping_proposals.json"
+     ],
+     "note": "本包只给第二类（有证据、无碰撞、语义不变的 ID 映射）候选，未实施；是否接受由用户决定。",
+     "by": "L2_reference_ids"
+    },
+    "39": {
+     "status": "pass",
+     "evidence_refs": [
+      "runs/env_overnight_20260916/L2_reference_ids/global_checks.json"
+     ],
+     "note": "回退规则在 181 份 gold 日志上零解码歧义、零覆盖已有键、零解码异常，共享修复不影响其它题。",
+     "by": "L2_reference_ids"
+    }
+   },
+   "issues": [
+    {
+     "category": "parser_reference_id_mismatch",
+     "scope": "task",
+     "severity": "P1",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-48106/gold/offline/a1/test_output.txt",
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-48106/empty/offline/a1/test_output.txt",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=pandas-dev__pandas-48106",
+      "rh2/src/repoharness2/envpack/swegym_parsers.py"
+     ],
+     "note": "3 个 P2P 参考 ID 在 gold 与 empty 两侧都取不到状态，按 swe_f2p_p2p 语义直接判 RESOLVED_NO；差异只在 pytest nodeid 的 ASCII 转义层数，不是测试真的没跑。",
+     "proposed_action": "参考 ID 直接命中优先，缺席时做一次 unicode_escape 解码回退并要求唯一命中（见 id_mapping_proposals.json）。",
+     "status": "proposed"
+    },
+    {
+     "category": "reference_under_verification",
+     "scope": "source",
+     "severity": "P2",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-48106/gold/offline/a1/test_output.txt",
+      "truncation_collisions_summary.json"
+     ],
+     "note": "3 个参考 ID 是截断键，分别折叠 [2, 3, 2] 条完整用例，字典 last-wins，实际只核到最后一条的状态。",
+     "proposed_action": "属于全池性质（72 题 / 388 个参考 ID），单题不处置；见报告‘需要用户决定’第 2 条。",
+     "status": "open"
+    }
+   ],
+   "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "本包未发现需额外排除的文件；沿第四组 §0/§6.5 默认空。",
+    "evidence_refs": [
+     "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/batch4_scoring_20260910/README.md"
+    ]
+   },
+   "revision_refs": [
+    {
+     "type": "class2_id_mapping",
+     "parent": "upstream",
+     "changes_ref": "id_mapping_proposals.json#instance_id=pandas-dev__pandas-48106",
+     "reason": "pytest nodeid ASCII 转义层数差异导致参考 ID 取不到状态；映射在同一日志内唯一。",
+     "verification_refs": [
+      "runs/env_overnight_20260916/L2_reference_ids/global_checks.json",
+      "parser_samples/"
+     ],
+     "reviewer": null
+    }
+   ],
+   "proposed_regression_tests": [
+    "parser_samples/E1_unicode_astral_escape",
+    "parser_samples/E2_unicode_latin1_escape",
+    "parser_samples/E3_backslash_doubling",
+    "parser_samples/E4_bytes_param_byte_escape",
+    "parser_samples/E5_control_char_escape",
+    "parser_samples/T1_space_truncation_unique",
+    "parser_samples/T2_truncated_key_collision",
+    "parser_samples/V1_pydantic_trailing_status_value_is_word",
+    "parser_samples/N1_non_pytest_line_parsed"
+   ],
+   "disposition": {
+    "state": "needs_repair",
+    "scope": "评分接线（参考 ID 匹配）层；题面/解法有效性未审",
+    "reason": "缺陷可复现、原因明确、修复方案在全池可验证无副作用；不改 expected、不改数据文件。",
+    "evidence_refs": [
+     "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-48106/gold/offline/a1/test_output.txt",
+     "id_mapping_proposals.json"
+    ],
+    "reviewer": null
+   },
+   "usage": {
+    "intended_use": "未分配",
+    "exposure_notes": "in_e2=['A', 'B']"
+   },
+   "costs": {
+    "minutes": null,
+    "container_wall_seconds": 0,
+    "agent_tokens": null,
+    "human_decisions": 0,
+    "source_refs": [
+     "本包全部离线复算，无容器运行"
+    ]
+   }
+  },
+  {
+   "task_id": "pandas-dev__pandas-50319",
+   "task_revision": "upstream",
+   "source_adapter_ref": "swe_gym_lite_full_f70b1a29 / swegym_parsers@242429c1",
+   "recipe_ref": "image=xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-50319:latest, version=2.0",
+   "code_snapshot_ref": "rh2/src/repoharness2/envpack/swegym_parsers.py",
+   "facts_ref": [
+    "runs/env_overnight_20260916/L2_reference_ids/sweep_182.json",
+    "runs/env_overnight_20260916/L2_reference_ids/global_checks.json"
+   ],
+   "materials_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-50319/gold/offline/a1/test_output.txt",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-50319/empty/offline/a1/test_output.txt",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/task_signals_swegym.json"
+   ],
+   "public_view": {
+    "note": "本包只查 parser/参考 ID 身份，未做题面盲审。",
+    "unknowns": [
+     "题面要求与约束未审（属 L1 仓库包职责）"
+    ]
+   },
+   "checks": {
+    "19": {
+     "status": "issue",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-50319/gold/offline/a1/test_output.txt",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=pandas-dev__pandas-50319",
+      "rh2/src/repoharness2/envpack/swegym_parsers.py"
+     ],
+     "note": "parser 逐字复现阶段一 status_map.json（相等）；1 个参考 ID 缺席，全部可用 unicode_escape 解码在同一日志内唯一定位。",
+     "by": "L2_reference_ids"
+    },
+    "18": {
+     "status": "pass",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-50319/gold/offline/a1/test_output.txt"
+     ],
+     "note": "对应完整 nodeid 的摘要行在 gold 日志里存在且为 PASSED，说明测试确实被收集并执行（依据仅为 -rA 摘要行）。",
+     "by": "L2_reference_ids"
+    },
+    "20": {
+     "status": "issue",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-50319/gold/offline/a1/test_output.txt",
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-50319/empty/offline/a1/test_output.txt"
+     ],
+     "note": "gold/empty 两侧缺席集合完全相同，说明 RESOLVED_NO 的差额来自参考 ID 身份问题而非目标行为。",
+     "by": "L2_reference_ids"
+    },
+    "37": {
+     "status": "unknown",
+     "evidence_refs": [
+      "id_mapping_proposals.json"
+     ],
+     "note": "本包只给第二类（有证据、无碰撞、语义不变的 ID 映射）候选，未实施；是否接受由用户决定。",
+     "by": "L2_reference_ids"
+    },
+    "39": {
+     "status": "pass",
+     "evidence_refs": [
+      "runs/env_overnight_20260916/L2_reference_ids/global_checks.json"
+     ],
+     "note": "回退规则在 181 份 gold 日志上零解码歧义、零覆盖已有键、零解码异常，共享修复不影响其它题。",
+     "by": "L2_reference_ids"
+    }
+   },
+   "issues": [
+    {
+     "category": "parser_reference_id_mismatch",
+     "scope": "task",
+     "severity": "P1",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-50319/gold/offline/a1/test_output.txt",
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-50319/empty/offline/a1/test_output.txt",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=pandas-dev__pandas-50319",
+      "rh2/src/repoharness2/envpack/swegym_parsers.py"
+     ],
+     "note": "1 个 P2P 参考 ID 在 gold 与 empty 两侧都取不到状态，按 swe_f2p_p2p 语义直接判 RESOLVED_NO；差异只在 pytest nodeid 的 ASCII 转义层数，不是测试真的没跑。",
+     "proposed_action": "参考 ID 直接命中优先，缺席时做一次 unicode_escape 解码回退并要求唯一命中（见 id_mapping_proposals.json）。",
+     "status": "proposed"
+    }
+   ],
+   "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "本包未发现需额外排除的文件；沿第四组 §0/§6.5 默认空。",
+    "evidence_refs": [
+     "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/batch4_scoring_20260910/README.md"
+    ]
+   },
+   "revision_refs": [
+    {
+     "type": "class2_id_mapping",
+     "parent": "upstream",
+     "changes_ref": "id_mapping_proposals.json#instance_id=pandas-dev__pandas-50319",
+     "reason": "pytest nodeid ASCII 转义层数差异导致参考 ID 取不到状态；映射在同一日志内唯一。",
+     "verification_refs": [
+      "runs/env_overnight_20260916/L2_reference_ids/global_checks.json",
+      "parser_samples/"
+     ],
+     "reviewer": null
+    }
+   ],
+   "proposed_regression_tests": [
+    "parser_samples/E1_unicode_astral_escape",
+    "parser_samples/E2_unicode_latin1_escape",
+    "parser_samples/E3_backslash_doubling",
+    "parser_samples/E4_bytes_param_byte_escape",
+    "parser_samples/E5_control_char_escape",
+    "parser_samples/T1_space_truncation_unique",
+    "parser_samples/T2_truncated_key_collision",
+    "parser_samples/V1_pydantic_trailing_status_value_is_word",
+    "parser_samples/N1_non_pytest_line_parsed"
+   ],
+   "disposition": {
+    "state": "needs_repair",
+    "scope": "评分接线（参考 ID 匹配）层；题面/解法有效性未审",
+    "reason": "缺陷可复现、原因明确、修复方案在全池可验证无副作用；不改 expected、不改数据文件。",
+    "evidence_refs": [
+     "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-50319/gold/offline/a1/test_output.txt",
+     "id_mapping_proposals.json"
+    ],
+    "reviewer": null
+   },
+   "usage": {
+    "intended_use": "未分配",
+    "exposure_notes": "in_e2=['B']"
+   },
+   "costs": {
+    "minutes": null,
+    "container_wall_seconds": 0,
+    "agent_tokens": null,
+    "human_decisions": 0,
+    "source_refs": [
+     "本包全部离线复算，无容器运行"
+    ]
+   }
+  },
+  {
+   "task_id": "pydantic__pydantic-8977",
+   "task_revision": "upstream",
+   "source_adapter_ref": "swe_gym_lite_full_f70b1a29 / swegym_parsers@242429c1",
+   "recipe_ref": "image=xingyaoww/sweb.eval.x86_64.pydantic_s_pydantic-8977:latest, version=2.7",
+   "code_snapshot_ref": "rh2/src/repoharness2/envpack/swegym_parsers.py",
+   "facts_ref": [
+    "runs/env_overnight_20260916/L2_reference_ids/sweep_182.json",
+    "runs/env_overnight_20260916/L2_reference_ids/global_checks.json"
+   ],
+   "materials_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pydantic__pydantic-8977/gold/offline/a1/test_output.txt",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pydantic__pydantic-8977/empty/offline/a1/test_output.txt",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/task_signals_swegym.json"
+   ],
+   "public_view": {
+    "note": "本包只查 parser/参考 ID 身份，未做题面盲审。",
+    "unknowns": [
+     "题面要求与约束未审（属 L1 仓库包职责）"
+    ]
+   },
+   "checks": {
+    "19": {
+     "status": "issue",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pydantic__pydantic-8977/gold/offline/a1/test_output.txt",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=pydantic__pydantic-8977",
+      "rh2/src/repoharness2/envpack/swegym_parsers.py"
+     ],
+     "note": "parser 逐字复现阶段一 status_map.json（相等）；5 个参考 ID 缺席，全部可用 unicode_escape 解码在同一日志内唯一定位。",
+     "by": "L2_reference_ids"
+    },
+    "18": {
+     "status": "pass",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pydantic__pydantic-8977/gold/offline/a1/test_output.txt"
+     ],
+     "note": "对应完整 nodeid 的摘要行在 gold 日志里存在且为 PASSED，说明测试确实被收集并执行（依据仅为 -rA 摘要行）。",
+     "by": "L2_reference_ids"
+    },
+    "20": {
+     "status": "issue",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pydantic__pydantic-8977/gold/offline/a1/test_output.txt",
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pydantic__pydantic-8977/empty/offline/a1/test_output.txt"
+     ],
+     "note": "gold/empty 两侧缺席集合完全相同，说明 RESOLVED_NO 的差额来自参考 ID 身份问题而非目标行为。",
+     "by": "L2_reference_ids"
+    },
+    "37": {
+     "status": "unknown",
+     "evidence_refs": [
+      "id_mapping_proposals.json"
+     ],
+     "note": "本包只给第二类（有证据、无碰撞、语义不变的 ID 映射）候选，未实施；是否接受由用户决定。",
+     "by": "L2_reference_ids"
+    },
+    "39": {
+     "status": "pass",
+     "evidence_refs": [
+      "runs/env_overnight_20260916/L2_reference_ids/global_checks.json"
+     ],
+     "note": "回退规则在 181 份 gold 日志上零解码歧义、零覆盖已有键、零解码异常，共享修复不影响其它题。",
+     "by": "L2_reference_ids"
+    }
+   },
+   "issues": [
+    {
+     "category": "parser_reference_id_mismatch",
+     "scope": "task",
+     "severity": "P1",
+     "evidence_refs": [
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pydantic__pydantic-8977/gold/offline/a1/test_output.txt",
+      "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pydantic__pydantic-8977/empty/offline/a1/test_output.txt",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:instance_id=pydantic__pydantic-8977",
+      "rh2/src/repoharness2/envpack/swegym_parsers.py"
+     ],
+     "note": "5 个 P2P 参考 ID 在 gold 与 empty 两侧都取不到状态，按 swe_f2p_p2p 语义直接判 RESOLVED_NO；差异只在 pytest nodeid 的 ASCII 转义层数，不是测试真的没跑。",
+     "proposed_action": "参考 ID 直接命中优先，缺席时做一次 unicode_escape 解码回退并要求唯一命中（见 id_mapping_proposals.json）。",
+     "status": "proposed"
+    }
+   ],
+   "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "本包未发现需额外排除的文件；沿第四组 §0/§6.5 默认空。",
+    "evidence_refs": [
+     "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/batch4_scoring_20260910/README.md"
+    ]
+   },
+   "revision_refs": [
+    {
+     "type": "class2_id_mapping",
+     "parent": "upstream",
+     "changes_ref": "id_mapping_proposals.json#instance_id=pydantic__pydantic-8977",
+     "reason": "pytest nodeid ASCII 转义层数差异导致参考 ID 取不到状态；映射在同一日志内唯一。",
+     "verification_refs": [
+      "runs/env_overnight_20260916/L2_reference_ids/global_checks.json",
+      "parser_samples/"
+     ],
+     "reviewer": null
+    }
+   ],
+   "proposed_regression_tests": [
+    "parser_samples/E1_unicode_astral_escape",
+    "parser_samples/E2_unicode_latin1_escape",
+    "parser_samples/E3_backslash_doubling",
+    "parser_samples/E4_bytes_param_byte_escape",
+    "parser_samples/E5_control_char_escape",
+    "parser_samples/T1_space_truncation_unique",
+    "parser_samples/T2_truncated_key_collision",
+    "parser_samples/V1_pydantic_trailing_status_value_is_word",
+    "parser_samples/N1_non_pytest_line_parsed"
+   ],
+   "disposition": {
+    "state": "needs_repair",
+    "scope": "评分接线（参考 ID 匹配）层；题面/解法有效性未审",
+    "reason": "缺陷可复现、原因明确、修复方案在全池可验证无副作用；不改 expected、不改数据文件。",
+    "evidence_refs": [
+     "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pydantic__pydantic-8977/gold/offline/a1/test_output.txt",
+     "id_mapping_proposals.json"
+    ],
+    "reviewer": null
+   },
+   "usage": {
+    "intended_use": "未分配",
+    "exposure_notes": "in_e2=[]"
+   },
+   "costs": {
+    "minutes": null,
+    "container_wall_seconds": 0,
+    "agent_tokens": null,
+    "human_decisions": 0,
+    "source_refs": [
+     "本包全部离线复算，无容器运行"
+    ]
+   }
+  }
+ ]
+}

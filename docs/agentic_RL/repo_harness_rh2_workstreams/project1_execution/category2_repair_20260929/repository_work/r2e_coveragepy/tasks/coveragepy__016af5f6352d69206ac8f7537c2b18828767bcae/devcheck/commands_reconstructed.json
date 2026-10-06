@@ -1,0 +1,56 @@
+{
+  "schema": "coveragepy.devcheck_plan.v1",
+  "status": "planned_not_run",
+  "source_reader_report": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/public_read.md",
+  "reconstructed_by": "coveragepy owner 2026-10-03",
+  "commands": [
+    {
+      "id": "env_import",
+      "timeout_s": 120,
+      "expect": "zero",
+      "cmd": "python -c 'import sys, shutil, coverage; from coverage.collector import CTracer; print(sys.executable, sys.version.split()[0]); print(coverage.__version__, coverage.__file__); print(CTracer); print(sys.getfilesystemencoding(), sys.getfilesystemencodeerrors()); print(shutil.which(\"coverage\"))'",
+      "purpose": "核解释器、coverage 来源、C tracer 与 coverage CLI；实际输出需 actor 身份验收。"
+    },
+    {
+      "id": "repro_exec_surrogate",
+      "timeout_s": 120,
+      "expect": "nonzero",
+      "cmd": "python /devcheck/repro_public_both_modes.py",
+      "purpose": "按原公开读者全文重建；base 两种模式失败，正确解均成功且保留普通 UTF-8 文件。",
+      "correct_control_expect": "zero"
+    },
+    {
+      "id": "prompt_example_literal",
+      "timeout_s": 120,
+      "expect": "zero",
+      "cmd": "python /devcheck/literal_example.py",
+      "purpose": "复用原例历史：原题面不触发崩溃，只记录，不作为修后题面。"
+    },
+    {
+      "id": "prompt_example_revised",
+      "timeout_s": 120,
+      "expect": "nonzero",
+      "cmd": "python /devcheck/revised_example.py",
+      "purpose": "修订示例：base 崩溃、正确解保存成功；脚本在 actor 可写的临时工作目录执行。",
+      "correct_control_expect": "zero"
+    },
+    {
+      "id": "public_tests_data_api",
+      "timeout_s": 600,
+      "expect": "zero",
+      "cmd": "python -m pytest -n 0 -o cache_dir=/tmp/r2e_pytest_cache tests/test_data.py tests/test_api.py",
+      "purpose": "沿用原读者命令；先核实际依赖。若 setup.cfg 插件缺失，记录后采用公开等效入口，不把依赖失败算解法失败。"
+    },
+    {
+      "id": "public_tests_exec_related",
+      "timeout_s": 600,
+      "expect": "zero",
+      "cmd": "python -m pytest -n 0 -o cache_dir=/tmp/r2e_pytest_cache tests/test_oddball.py::ExecTest tests/test_process.py::ProcessTest::test_lang_c tests/test_files.py",
+      "purpose": "公开执行、LANG=C 与路径回归；需要 PATH 可执行 coverage。"
+    }
+  ],
+  "setup_notes": [
+    "在正式 actor 入口挂载公开 devcheck 脚本到 /devcheck；各命令工作目录/临时目录由运行者按公开可写范围布置。",
+    "未重建 boundary_source_and_data_api：属于题外诊断，不作为准入要求；改为修订后的公开示例，故不是失踪六条命令的逐字恢复。"
+  ]
+}

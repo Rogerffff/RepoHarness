@@ -1,0 +1,969 @@
+{
+  "schema": "swe_pydantic8316.coder_first_arm_owner_readback.v1",
+  "read_at_utc": "2026-10-03T07:44:39.250897+00:00",
+  "request_id": "swe-pydantic8316-behavior-v1-20261003",
+  "job_id": "gpu1003-pydantic8316-coder-a1",
+  "runtime": "code_v8",
+  "execution_evidence_accepted": true,
+  "independent_execution_review_accepted": true,
+  "closed_files": 133,
+  "closed_bytes": 11386168,
+  "all_144_formal_references_compared_to_actual_log": true,
+  "raw_reward": 1,
+  "install_rc": 0,
+  "test_rc": 0,
+  "frozen_patch_digest": "sha256:0d5d282966bb8be7e86817fcc568e9bf7ffb92ccab00028d516f3e713ec4e5ed",
+  "baseline_digest": "sha256:159f38430075ed49590b96724934cee9689f1f09219547ce213300c367dac4ba",
+  "baseline_451_archive_paths_types_execute_modes_content_verified": true,
+  "actor_grader_census_same_bytes": true,
+  "original_prompt_actual_first_HTTP_exact": true,
+  "private_patch_and_four_nonpublic_markers_absent_in_decoded_HTTP_bodies": true,
+  "source_semantics": "缩写边界通用正则修复有效；旧数字/下划线规则保留，当前约定范围未见生产源码回归。",
+  "full_candidate_delivery_defect": "未修正或移除失败的test_fix_verification.py；错误地预期to_camel/populate_by_name接受HTTPResponseCode。其真实失败来自原轨迹工具14，正式命令未收集此文件。",
+  "formal_reward_not_rewritten": true,
+  "P4_to_camel_not_promoted_to_required_fix": true,
+  "candidate_modified_official_test": true,
+  "official_test_modification_stripped_by_projection": true,
+  "temporary_failed_test_remains_in_projection": true,
+  "projected_applied_digest": "sha256:c9b79abdca94adc09bf9edcb066b3f16f221cf07144f45948c19a44ee3517bd4",
+  "pre_solver_dirty_files_not_actor_edits": {
+    "pdm.lock": "acdc0b32291f5d2ca9b85ad77a78bb65767c10b0478a950b6c781678e4589204",
+    "pyproject.toml": "490834c405f054966de3130c78f35f2b157d5f606533a0777142255d5c20b454"
+  },
+  "pure_function_replay_scope": "原17个camel2snake公开参数、原CAMELToSnake及现有v3的11个断言，仅标准库AST纯函数；不是项目/CPU/GPU评分。",
+  "pure_function_cases": [
+    {
+      "input": "camel_to_snake",
+      "expected": "camel_to_snake",
+      "actual": "camel_to_snake",
+      "passed": true
+    },
+    {
+      "input": "camelToSnake",
+      "expected": "camel_to_snake",
+      "actual": "camel_to_snake",
+      "passed": true
+    },
+    {
+      "input": "camel2Snake",
+      "expected": "camel_2_snake",
+      "actual": "camel_2_snake",
+      "passed": true
+    },
+    {
+      "input": "_camelToSnake",
+      "expected": "_camel_to_snake",
+      "actual": "_camel_to_snake",
+      "passed": true
+    },
+    {
+      "input": "camelToSnake_",
+      "expected": "camel_to_snake_",
+      "actual": "camel_to_snake_",
+      "passed": true
+    },
+    {
+      "input": "__camelToSnake__",
+      "expected": "__camel_to_snake__",
+      "actual": "__camel_to_snake__",
+      "passed": true
+    },
+    {
+      "input": "CamelToSnake",
+      "expected": "camel_to_snake",
+      "actual": "camel_to_snake",
+      "passed": true
+    },
+    {
+      "input": "Camel2Snake",
+      "expected": "camel_2_snake",
+      "actual": "camel_2_snake",
+      "passed": true
+    },
+    {
+      "input": "_CamelToSnake",
+      "expected": "_camel_to_snake",
+      "actual": "_camel_to_snake",
+      "passed": true
+    },
+    {
+      "input": "CamelToSnake_",
+      "expected": "camel_to_snake_",
+      "actual": "camel_to_snake_",
+      "passed": true
+    },
+    {
+      "input": "__CamelToSnake__",
+      "expected": "__camel_to_snake__",
+      "actual": "__camel_to_snake__",
+      "passed": true
+    },
+    {
+      "input": "Camel2",
+      "expected": "camel_2",
+      "actual": "camel_2",
+      "passed": true
+    },
+    {
+      "input": "Camel2_",
+      "expected": "camel_2_",
+      "actual": "camel_2_",
+      "passed": true
+    },
+    {
+      "input": "_Camel2",
+      "expected": "_camel_2",
+      "actual": "_camel_2",
+      "passed": true
+    },
+    {
+      "input": "camel2",
+      "expected": "camel_2",
+      "actual": "camel_2",
+      "passed": true
+    },
+    {
+      "input": "camel2_",
+      "expected": "camel_2_",
+      "actual": "camel_2_",
+      "passed": true
+    },
+    {
+      "input": "_camel2",
+      "expected": "_camel_2",
+      "actual": "_camel_2",
+      "passed": true
+    },
+    {
+      "input": "CAMELToSnake",
+      "expected": "camel_to_snake",
+      "actual": "camel_to_snake",
+      "passed": true
+    },
+    {
+      "input": "HTTPResponse",
+      "expected": "http_response",
+      "actual": "http_response",
+      "passed": true
+    },
+    {
+      "input": "getHTTPResponseCode",
+      "expected": "get_http_response_code",
+      "actual": "get_http_response_code",
+      "passed": true
+    },
+    {
+      "input": "userIDToken",
+      "expected": "user_id_token",
+      "actual": "user_id_token",
+      "passed": true
+    },
+    {
+      "input": "XMLToJSONConverter",
+      "expected": "xml_to_json_converter",
+      "actual": "xml_to_json_converter",
+      "passed": true
+    },
+    {
+      "input": "__HTTPResponse__",
+      "expected": "__http_response__",
+      "actual": "__http_response__",
+      "passed": true
+    },
+    {
+      "input": "base64URLEncode",
+      "expected": "base_64_url_encode",
+      "actual": "base_64_url_encode",
+      "passed": true
+    },
+    {
+      "input": "parseURL",
+      "expected": "parse_url",
+      "actual": "parse_url",
+      "passed": true
+    },
+    {
+      "input": "loadCONFIGURATIONFile",
+      "expected": "load_configuration_file",
+      "actual": "load_configuration_file",
+      "passed": true
+    },
+    {
+      "input": "convertXMLToJSONViaHTTPRequest",
+      "expected": "convert_xml_to_json_via_http_request",
+      "actual": "convert_xml_to_json_via_http_request",
+      "passed": true
+    },
+    {
+      "input": "get_HTTPResponse",
+      "expected": "get_http_response",
+      "actual": "get_http_response",
+      "passed": true
+    },
+    {
+      "input": "ÜberHTTPClient",
+      "expected": "über_http_client",
+      "actual": "über_http_client",
+      "passed": true
+    }
+  ],
+  "to_camel_to_pascal_AST_unchanged": true,
+  "model_requests": 21,
+  "tool_calls": 20,
+  "tool_counts": {
+    "Bash": 15,
+    "Read": 2,
+    "Edit": 2,
+    "Write": 1
+  },
+  "tools_serial": true,
+  "child_agent_calls": 0,
+  "tool_errors": 2,
+  "requests_input_tokens": 299694,
+  "requests_output_tokens": 4274,
+  "token_total_cumulative": 303968,
+  "entry_solve_seconds": 45.311,
+  "CC_duration_seconds": 41.77,
+  "CC_API_seconds_nested": 33.897,
+  "time_from_first_HTTP_to_production_edit_result_seconds": 10.745,
+  "grading_seconds": 211.742,
+  "resource_role_samples": {
+    "actor": {
+      "count": 5,
+      "observed_peak_bytes": 891764736,
+      "install_samples": 0,
+      "test_samples": 0
+    },
+    "relay": {
+      "count": 5,
+      "observed_peak_bytes": 27418624,
+      "install_samples": 0,
+      "test_samples": 0
+    },
+    "grader": {
+      "count": 14,
+      "observed_peak_bytes": 591765504,
+      "install_samples": 0,
+      "test_samples": 0
+    }
+  },
+  "grader_report_peak_MiB": 655.422,
+  "resource_gaps_unknown": true,
+  "paired_probe_complete": false,
+  "Qwen_first_arm_complete": false,
+  "training_eligibility_asserted": false,
+  "new_CPU_or_GPU_or_model_calls": 0,
+  "non_author_limitations": [
+    "本次是首个自主Coder臂，不是CPU矩阵/旧FP重评分；Qwen首臂没有执行原件，不生成配对或整项完成。",
+    "raw1/144正式参考状态齐全不等于候选语义终审或训练/holdout资格，env_qualification=absent。",
+    "原FP确有tests/test_utils.py修改；可信投影剥离，正式评分使用固定发布测试；原FP/原diff保留。临时test_fix_verification.py仍在投影，语义影响由题主审。",
+    "全文件测试footer159 passed/14 skipped与144正式参考分母不同；正式144全PASSED、无missing/skip，不将其余14skip误作参考缺失。",
+    "21有限采样区分actor/relay/grader实际CID，grader14样本但短install/test各0，缺口保持未知；655.422MiB仅report来源，外部samplepeak不替代。",
+    "终态快照只证明本臂evidence_ready/entry0；queue整体running，不读取另一在途题或宣称全宿主PID0/默认网络终场。",
+    "原attempt的code_snapshot_id/prepared_manifest_sha256/host_grading_artifact_sha256为空，baseline.environment_package_digest为空；使用不可变terminal command/root_readiness/source_manifest/input_check/prepared与FP外部关联，不回填旧原件。",
+    "model capture前后实际服务身份/argv/mount/配置成立，未重哈希71GB weights，也不证明GPU显存权重逐字节。"
+  ],
+  "request_ack_performed": false,
+  "bindings": [
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/code8_fixed_image_load_v1/actual_image_readback.json",
+      "sha256": "e572d48593f3bb4180bd82abc1f061f13ec383d9162b9a52c678681e27718d81",
+      "bytes": 6332
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/code_v8/rh2/experiments/ordinary_gpu_probe_20261002/entry.py",
+      "sha256": "bdf806bf8da1d5ebb4970887bfc3c7738eb3e57a75e1d07215d6d68b17e574c4",
+      "bytes": 27732
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/code_v8/rh2/experiments/ordinary_gpu_probe_20261002/serial_dispatch.py",
+      "sha256": "cb435f7390d9aeba3bad51efabf808634668263e9dfbcffae96f50a4b8f90f10",
+      "bytes": 7539
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/code_v8/source_manifest.json",
+      "sha256": "09ddb8bfdeecd3ffaa38c1048a574161ef6fa6053b2855da50166e8e8677899d",
+      "bytes": 504439
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/evidence/moto6114_neptune37/fixed_validation_0.json",
+      "sha256": "8d60f642ac870da95a957531a93f6ea91fd892f8c29a85d449f4e41e3fe468f5",
+      "bytes": 2719
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/evidence/moto6114_neptune37/fixed_validation_1.json",
+      "sha256": "553e1aeaa984ea899518d12688462be0a35d815b4d94abae13a7af0e301d990f",
+      "bytes": 1724
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/evidence/pydantic5662/fixed_validation_0.json",
+      "sha256": "d594e9f69e77aa01a081a2d36f1422e765ca296fa26544cc80aad649fd2ab9a0",
+      "bytes": 695
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/evidence/pydantic6283_v2/fixed_validation_0.json",
+      "sha256": "842129b82b2922bf80c326e1c9636722b8304ed33184e116deeb2bf42a1221eb",
+      "bytes": 695
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/evidence/pydantic8316/fixed_validation_0.json",
+      "sha256": "225c1661ee5531129dc89d9e4ea088bba0a7504d8182a9906458b8b683f08cbf",
+      "bytes": 5956
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/evidence/pydantic8316/fixed_validation_1.json",
+      "sha256": "213beef3b2369688e5a9a6c46f2583e39d402979a1686b7caffda4a12aaa7f1b",
+      "bytes": 6551
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/inputs_manifest.json",
+      "sha256": "a2faed9195894a4823ac7b322c319de8f53a58fc9e77e6ef52cc48550d72b73a",
+      "bytes": 118032
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/prepared/moto6114_neptune37/prepared/prepared_manifest.json",
+      "sha256": "a5cc27befc7dc2abbe2aa9b85acad78e975bca1f478d7f4f333a018222003340",
+      "bytes": 918
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/prepared/moto6114_neptune37/prepared/prompts.jsonl",
+      "sha256": "ca0d46c99ff17d834a9dfadd2dd137981950450c0709ce3bc4d66b9446d8a8e6",
+      "bytes": 1994
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/prepared/moto6114_neptune37/prepared/rollout_task_views.jsonl",
+      "sha256": "e81c49c6bd79692b0ccab949092dc0baef75926eb5f382e868956467cd7d0525",
+      "bytes": 3122
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/prepared/moto6114_neptune37/private/host_grading_views.jsonl",
+      "sha256": "0c85186b769b80e51612f9b8939099a94a073dbfedf2f4709af2e8820126191a",
+      "bytes": 11607
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/prepared/moto6114_neptune37/public_dev_brief.md",
+      "sha256": "8ee4f528e81f02a45984d758804461a4d8ae6c0aa3535cfa420c04342d1f3052",
+      "bytes": 1558
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/prepared/moto6114_neptune37/replay_summary.json",
+      "sha256": "9819ba1fb6e5b06aa1aa48ccc7bc6c545f2d9eeb7c07fb79b0c1803a089a6d40",
+      "bytes": 499
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/prepared/pydantic5662/prepared/prepared_manifest.json",
+      "sha256": "fa6a648c74b15e963b8dcf5bfbc4ea93ff5cd4020daa9b4f439b9ba34e3c9b94",
+      "bytes": 928
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/prepared/pydantic5662/prepared/prompts.jsonl",
+      "sha256": "f519e9bf5d09b15173cc0c711452ccb2f5ff15234d0387f41579ad64448b392c",
+      "bytes": 4578
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/prepared/pydantic5662/prepared/rollout_task_views.jsonl",
+      "sha256": "36344c8dcfe92e9b313e8687a702ea0afdceacd241eae4844e71195f27be89e2",
+      "bytes": 5711
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/prepared/pydantic5662/private/host_grading_views.jsonl",
+      "sha256": "14cba944b9f1385d0fc06ce94347e21ee534f397d89f5d650c91095d39776d6a",
+      "bytes": 18489
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/prepared/pydantic5662/replay_summary.json",
+      "sha256": "efafba57e5668b7cafc4464a7b6f9487a0f57bfafeaf0e6dd2fc3c1ccf6ccedf",
+      "bytes": 492
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/prepared/pydantic6283_v2/prepared/prepared_manifest.json",
+      "sha256": "79073c746838fb8340ccae4b66e6e4d824ad982a119ccffe0c40775fd0e1d0e8",
+      "bytes": 928
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/prepared/pydantic6283_v2/prepared/prompts.jsonl",
+      "sha256": "a35cd3ac66605f67dc32e2920239bf0e96c02f7ed4688706bcc2aa4a62b948d6",
+      "bytes": 1772
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/prepared/pydantic6283_v2/prepared/rollout_task_views.jsonl",
+      "sha256": "d242065af09e6019b0f09b1896ecf8669ad87fc482474bf8310a18c0541e3c93",
+      "bytes": 2905
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/prepared/pydantic6283_v2/private/host_grading_views.jsonl",
+      "sha256": "ec519cb476c029291fb54ca1c0843dc8f757d0870476865dada2d4daded5a83b",
+      "bytes": 9406
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/prepared/pydantic6283_v2/replay_summary.json",
+      "sha256": "2a0b45c98d5b37605d0dc153ce68260d8fa57043b87da57ba278c9ea9f75967b",
+      "bytes": 498
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/prepared/pydantic8316/prepared/prepared_manifest.json",
+      "sha256": "2ad5678d1ffdd979445792a5ca2e7e5db65bbb1dd7b8a67fb846ccf272eeb46e",
+      "bytes": 928
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/prepared/pydantic8316/prepared/prompts.jsonl",
+      "sha256": "02895e60d19f782b185c4353f8c5fe8584f259ea959a69a586f5095e9395504d",
+      "bytes": 3223
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/prepared/pydantic8316/prepared/rollout_task_views.jsonl",
+      "sha256": "af58f236dbd55d04285c4ab61ec2ba44e105dd3bd0899e648e36e336437a6562",
+      "bytes": 4356
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/prepared/pydantic8316/private/host_grading_views.jsonl",
+      "sha256": "48c147dce8ca158482ea872bb429dbb0b047327e8a43b8ed85dba60e0308e234",
+      "bytes": 26229
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/prepared/pydantic8316/replay_summary.json",
+      "sha256": "4cbb4cf1765c4bb85e28c44f1609e33a6a986a5982ff7a6908d9cff8648b7d31",
+      "bytes": 492
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/request_copies/swe-moto6114-identity-neptune37-r21-20261003-v1.6dfa36e642be.json",
+      "sha256": "6dfa36e642bee0e9fb5e8d35efe85149bb8c9258a4a980591c9706cc57d31723",
+      "bytes": 23064
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/request_copies/swe-pydantic5662-behavior-v1-20261003.19f2de2a8100.json",
+      "sha256": "19f2de2a81007ca3ab7ad60b9583e1cbfb57701c0f517485e9985e0483cd8922",
+      "bytes": 19038
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/request_copies/swe-pydantic6283-behavior-v2-20261003.8c0c87229c62.json",
+      "sha256": "8c0c87229c62f97a0471ed029d87a1e1bd88927dc9dd23d39669566557a0cb39",
+      "bytes": 21252
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_queue_v22_inputs_v1/request_copies/swe-pydantic8316-behavior-v1-20261003.d935ed00f074.json",
+      "sha256": "d935ed00f0744ee8c4a248487d333e5d69fb4cd778f2ae06e349a283253ae3ff",
+      "bytes": 22669
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_v17/gateway_coder.json",
+      "sha256": "4a0dc71e56c5c944a6a0e4591ed9832a1c5f67926dfe804d030820b2b349d5cd",
+      "bytes": 488
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_v22/configuration_receipt.json",
+      "sha256": "f1f4651d5eda19f6b62f95fae80699b4347a2cf3bf73012c491fdc71659e00dc",
+      "bytes": 359
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_v22/fixed_inputs_manifest.json",
+      "sha256": "a2faed9195894a4823ac7b322c319de8f53a58fc9e77e6ef52cc48550d72b73a",
+      "bytes": 118032
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_v22/gateway_binding_intent_v1.json",
+      "sha256": "5b3adb176b5cc9590fc1462048bef70df7358237014222406619174320ff7179",
+      "bytes": 35587
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_v22/gateway_binding_v1.json",
+      "sha256": "95eb670ec7e523b3d254157aab9732fc29ccbf00784206d109950b9d073d682a",
+      "bytes": 13053
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_v22/gateway_coder.json",
+      "sha256": "77c48b363143e3d9060a70912182ae4dac38a0a71ae89625e1ce152b0c0967dc",
+      "bytes": 577
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_v22/input_checks/gpu1003-moto6114-neptune37-coder-a1/input_check.json",
+      "sha256": "f41a8ccd9ed95755eaff698cecce0a9d2a0932bd00c52f3fe7623b224e7167a6",
+      "bytes": 8786
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_v22/input_checks/gpu1003-pydantic5662-coder-a1/input_check.json",
+      "sha256": "2dcaedb4849847dda2fd01981dacbce52decb93c4f019958661655a5b4b14800",
+      "bytes": 12119
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_v22/input_checks/gpu1003-pydantic6283-v2-coder-a1/input_check.json",
+      "sha256": "61a71f39d8d766acc4f96e37ad3dcf20a451ce544197a2ae8c9b1d90803754ae",
+      "bytes": 6983
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_v22/input_checks/gpu1003-pydantic8316-coder-a1/input_check.json",
+      "sha256": "40d20bfae5030eb45833b8b2457a047c0bf02d4d7eb2a8cc48e67aa6a1963b03",
+      "bytes": 16090
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_v22/pure_entry_commands.json",
+      "sha256": "d3880c9919067e151f0d632a373cb67c59948c67840fef122fe97bcea092e927",
+      "bytes": 4530
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_v22/purecheck_gpu1003-moto6114-neptune37-coder-a1.json",
+      "sha256": "38433cc72894670bd55e71698e74351388cede52ef6c5b81efb72d908b45fbd9",
+      "bytes": 1189
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_v22/purecheck_gpu1003-pydantic5662-coder-a1.json",
+      "sha256": "46013300bdf577587386289c00cb40882b970501b8f1b5beb3afe6aefc9b7bad",
+      "bytes": 1191
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_v22/purecheck_gpu1003-pydantic6283-v2-coder-a1.json",
+      "sha256": "a2a175c9d9b9e12d5887d1c86c12d144ace4eac881f3e27a38697e776cfd6b66",
+      "bytes": 1193
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_v22/purecheck_gpu1003-pydantic8316-coder-a1.json",
+      "sha256": "5ccdec6096a07ee7080bdc05fdf0560012f144724bdd8082473f6a0ef36de18a",
+      "bytes": 1189
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/config_v22/tasks.json",
+      "sha256": "2ea59890356e0ef870e9b52c1266473b945a60586eedc8017449cfa7c62cf1ba",
+      "bytes": 2299
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/diagnostics/QUEUE_V22_gpu1003-pydantic8316-coder-a1_before/adapter_config_actual.json",
+      "sha256": "1568f2e833897101fe16e4184436147663a7a42f153ff18f65d066fe9b83eec4",
+      "bytes": 766
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/diagnostics/QUEUE_V22_gpu1003-pydantic8316-coder-a1_before/adapter_inspect_actual.json",
+      "sha256": "1cc3587aff2e560ee82738862a08ecab22c29202ba1b48913e0c5fd1c43f8fdf",
+      "bytes": 1841
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/diagnostics/QUEUE_V22_gpu1003-pydantic8316-coder-a1_before/adapter_inspect_after_actual.json",
+      "sha256": "1cc3587aff2e560ee82738862a08ecab22c29202ba1b48913e0c5fd1c43f8fdf",
+      "bytes": 1841
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/diagnostics/QUEUE_V22_gpu1003-pydantic8316-coder-a1_before/backend_continuous_log.txt",
+      "sha256": "72fa4fb2ab24c85b74a888dbcae1bbe8c22a535f91a2a652ad61c96069b8ad7c",
+      "bytes": 893924
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/diagnostics/QUEUE_V22_gpu1003-pydantic8316-coder-a1_before/capture_receipt.json",
+      "sha256": "8580d0d1b1e50df2f1833ea93db821dd01f11a7432a1b8cbe4fd9230cfb1a445",
+      "bytes": 1575
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/diagnostics/QUEUE_V22_gpu1003-pydantic8316-coder-a1_before/download_manifest_actual.json",
+      "sha256": "5783533eae085661e3b3cde2e46ee46c9dbce0c05154d6028f6e46aa7260de39",
+      "bytes": 4505
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/diagnostics/QUEUE_V22_gpu1003-pydantic8316-coder-a1_before/engine_inspect_actual.json",
+      "sha256": "6ea90e51aa7c3a61f6602806e47caaa78ba00d2dfd8631c59b28c372485d3176",
+      "bytes": 1168
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/diagnostics/QUEUE_V22_gpu1003-pydantic8316-coder-a1_before/engine_inspect_after_actual.json",
+      "sha256": "6ea90e51aa7c3a61f6602806e47caaa78ba00d2dfd8631c59b28c372485d3176",
+      "bytes": 1168
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/diagnostics/QUEUE_V22_gpu1003-pydantic8316-coder-a1_before/engine_template_actual.py",
+      "sha256": "d2626d30b9fa6d4953fa8e99823d76ec517c85a82137bb02d94a807cad587a09",
+      "bytes": 10653
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/diagnostics/QUEUE_V22_gpu1003-pydantic8316-coder-a1_before/identity_binding_actual.json",
+      "sha256": "a5739fc2570e82b2de7804c4d31124944b64dac9ef397d424c462ea675bbc08a",
+      "bytes": 2960
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/diagnostics/QUEUE_V22_gpu1003-pydantic8316-coder-a1_before/model_chat_template_actual.jinja",
+      "sha256": "5a38bfa05833266240066aedc497decc9b00cc0d3e3b8cceea98cf530196ab06",
+      "bytes": 6211
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/diagnostics/QUEUE_V22_gpu1003-pydantic8316-coder-a1_before/model_file_sizes_actual.json",
+      "sha256": "a10a5d6fe23597016d4e6f40482c768416149c7a1a8e58758dc945a944a9f001",
+      "bytes": 3783
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/diagnostics/QUEUE_V22_gpu1003-pydantic8316-coder-a1_before/model_info_actual.json",
+      "sha256": "a1544c97decd77edd30e6e0da5a1bc4b237a64572fe120e16d440bbc4352175d",
+      "bytes": 2105
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/diagnostics/QUEUE_V22_gpu1003-pydantic8316-coder-a1_before/server_info_actual.json",
+      "sha256": "b588eb440e60d3a47b72ccc69b7755c850d635bf9b83039ebc726f56f9fe0cb5",
+      "bytes": 42342
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/gpu1003-pydantic8316-coder-a1_closed_resource_v1.jsonl",
+      "sha256": "c522b1ebac8d436d9883564835a637a0b77156cdff4eb6dbe2e5084d8d1b3d74",
+      "bytes": 21396
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/gpu1003-pydantic8316-coder-a1_terminal_snapshot_v1.json",
+      "sha256": "8d76bd3cd84d47b03a0d553ce27fdcb8af05d05bb2300c31b16075daffd880a4",
+      "bytes": 17427
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/pyd6283_original_fp_v2_regrade_v1/status.json",
+      "sha256": "88532d557dd017861aa86249fe50ae67a458780e68b64bd6e01ca9176e4628f1",
+      "bytes": 3054
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/attempt/attempt.json",
+      "sha256": "3f60025851fa58548ad1b5039231d8430e9c6fd02e2d20a74a18a6138c2d1026",
+      "bytes": 16447
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/attempt/bringup_artifacts/cc_version_observed.json",
+      "sha256": "c2b9bcf966c47d9a00227877026cb90b76afed482fd0df4e0ac12caab786bacb",
+      "bytes": 60
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/attempt/candidate/pydantic__pydantic-8316.diff",
+      "sha256": "87ca3b1b086cb0bb6af3e824613f8d20576f21cad9611f89890e842f8bb0f6ee",
+      "bytes": 3447
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/attempt/cc_home.tgz",
+      "sha256": "e190c47ed5fcf7d4adbfc280b938437330f32dfcd89db0e17e71c9211b5c203e",
+      "bytes": 28525
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/attempt/facts/activation_check.json",
+      "sha256": "ca608e13608c5d346f847b79d797c7cafa28be7769e9f3671b343f31bfcc74cf",
+      "bytes": 509
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/attempt/facts/agent_env_facts.txt",
+      "sha256": "8b4e87ac17fae195c5bdf65c1cd5d4014d2bebac9dbf1d99be6ca3165eda88a0",
+      "bytes": 1174
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/attempt/facts/materialize_probe.txt",
+      "sha256": "0226f4ccd294f469e804378fd9ab708a4559044b367700489b31537fc1518860",
+      "bytes": 165
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/attempt/facts/pip_freeze_after.txt",
+      "sha256": "792e5361ff0cab843ac8087dda9922700b38df57a4af347b9a6a30c4c910fe23",
+      "bytes": 1998
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/attempt/facts/pip_freeze_before.txt",
+      "sha256": "792e5361ff0cab843ac8087dda9922700b38df57a4af347b9a6a30c4c910fe23",
+      "bytes": 1998
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/attempt/facts/prelaunch.json",
+      "sha256": "6e9230b07c78e6603f0ec05b3a3ad2d0efb1d6d8e0a472b7b78bf41b82e043c6",
+      "bytes": 2309
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/attempt/frozen/baseline.tar",
+      "sha256": "9cf4b22d3ec1089c7e161891861ad7af53a08a9a3567153602ec8f462d75f8b0",
+      "bytes": 7086080
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/attempt/frozen/baseline_census.txt",
+      "sha256": "e93b70787a7313e2a6ac32a1c5ab42d022bc9c8c240ece0ad3d6caa939a3a40f",
+      "bytes": 52331
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/attempt/frozen/baseline_manifest.json",
+      "sha256": "ccaca3d7a06c9deb8cc709191fe1114bb97315a7005d6667491569af83e03f06",
+      "bytes": 107375
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/attempt/frozen/classification.json",
+      "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6",
+      "bytes": 93
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "61dd96da9c9ba0faa33d78093f75462f93cfa57f322be3bc24410f5328e2014e",
+      "bytes": 34280
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/attempt/harness/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/attempt/harness/trajectory.jsonl",
+      "sha256": "2bdbde7da785a3000fb6cf38a48f6bbb031c225ed6a385f706ee8b9247778320",
+      "bytes": 237066
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/attempt/prompt.txt",
+      "sha256": "890093a81ab948b6e551bfa49aa5d9a32c31c4ce838a9ab9c3bbc88543015ded",
+      "bytes": 2650
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/attempt/trajectory.jsonl",
+      "sha256": "2bdbde7da785a3000fb6cf38a48f6bbb031c225ed6a385f706ee8b9247778320",
+      "bytes": 237066
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/gateway_audit.json",
+      "sha256": "fa21312323aa403c0efdb2a39f2dd1a90725f602642472b24ae888e32f574280",
+      "bytes": 397
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/grading/baseline_rebuild_census.txt",
+      "sha256": "e93b70787a7313e2a6ac32a1c5ab42d022bc9c8c240ece0ad3d6caa939a3a40f",
+      "bytes": 52331
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/grading/eval_logs/evallog_gpu1003-pydantic8316-cod_a0c72082.diagnostics.json",
+      "sha256": "a5b51e7558ad6a842a0361dffdd99ef5935228c23f39e279b4f4873e562143f6",
+      "bytes": 26484
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/grading/eval_logs/evallog_gpu1003-pydantic8316-cod_a0c72082.eval.log",
+      "sha256": "f4a5564c74913e2766f15e8e8f8290603709648b8c2d2ee70cc1f8079ebe8b93",
+      "bytes": 52940
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/grading/projection.json",
+      "sha256": "1913c225bd29e0da3fccca5394154e496798fc582259d86afe0e39a91b63f416",
+      "bytes": 370
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/grading/report.json",
+      "sha256": "a2cc6688089dfff2062dd5fe4f1dc49bd6627fe55928959605c9eaaea57c3c16",
+      "bytes": 1813
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/grading/status.json",
+      "sha256": "63b3ee1b6485c39043111f0bea310118691e0103aea3ebb5d9816c3e0a04aef9",
+      "bytes": 2597
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/input_check.json",
+      "sha256": "40d20bfae5030eb45833b8b2457a047c0bf02d4d7eb2a8cc48e67aa6a1963b03",
+      "bytes": 16090
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/result.json",
+      "sha256": "c03751e9b6b33fecc1644f8aa5cd519061fef366d1b5f2afbe63cf0bff26a128",
+      "bytes": 2633
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v22/results/gpu1003-pydantic8316-coder-a1/solver_prompt.txt",
+      "sha256": "890093a81ab948b6e551bfa49aa5d9a32c31c4ce838a9ab9c3bbc88543015ded",
+      "bytes": 2650
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v14/coder/adapter/adapter_config.json",
+      "sha256": "1568f2e833897101fe16e4184436147663a7a42f153ff18f65d066fe9b83eec4",
+      "bytes": 766
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v14/coder/adapter/gpu1003-pydantic8316-coder-a1.turns.jsonl",
+      "sha256": "2de2f71b39a5d4e8f6b328aa901bf74158bf6cc46330cae44310dfed285ad762",
+      "bytes": 41090
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v14/coder/engine_launch_v1.json",
+      "sha256": "a5739fc2570e82b2de7804c4d31124944b64dac9ef397d424c462ea675bbc08a",
+      "bytes": 2960
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v20/coder/gateway/gateway_config.json",
+      "sha256": "b3e1a0e4e1b68522d0dcf37e4c1d8239cbc0fef846bfb67f04e1a58864e38d65",
+      "bytes": 591
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v20/coder/gateway/gpu1003-pydantic8316-coder-a1/requests.jsonl",
+      "sha256": "2a1793f32c9c1cc611ef071d146855a49ade1adbb2aa33165febc665120da750",
+      "bytes": 1069145
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v20/coder/gateway/gpu1003-pydantic8316-coder-a1/resp_1.sse",
+      "sha256": "9c6e8e018d6cffd058bee3e18f4b7eccfd5b905096f6f118780cc1f3cbbf3199",
+      "bytes": 1545
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v20/coder/gateway/gpu1003-pydantic8316-coder-a1/resp_10.sse",
+      "sha256": "83c0aa1017fcbbe91037b7a86f776741d1a72aa28f578dccc6936453e7cef7ef",
+      "bytes": 1516
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v20/coder/gateway/gpu1003-pydantic8316-coder-a1/resp_11.sse",
+      "sha256": "4dc6fec5e2a8e596f98ba7f444ba27382fa07ae28f0f0f6d4a539f93965ae5e7",
+      "bytes": 1513
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v20/coder/gateway/gpu1003-pydantic8316-coder-a1/resp_12.sse",
+      "sha256": "581e76c6804e0e4a96bff410804fd9e71deb0b594383a798e09acb06dfaec408",
+      "bytes": 1448
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v20/coder/gateway/gpu1003-pydantic8316-coder-a1/resp_13.sse",
+      "sha256": "df1316ff72a2e32fbd21141b0dfcfab754d8b982933b8bacb1487de4ecaf81ad",
+      "bytes": 3253
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v20/coder/gateway/gpu1003-pydantic8316-coder-a1/resp_14.sse",
+      "sha256": "89ca6be784e20203283d57b0f8e1c81c824fafcd2a74a6c33c20ff0c0b83520b",
+      "bytes": 994
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v20/coder/gateway/gpu1003-pydantic8316-coder-a1/resp_15.sse",
+      "sha256": "7e2da6b24a3e046b1cda2eef43d3a10f2d6e36c125930bc2b542371d8d98c527",
+      "bytes": 2478
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v20/coder/gateway/gpu1003-pydantic8316-coder-a1/resp_16.sse",
+      "sha256": "624fe7f7ad9a52b2d5373fa4ef9a2f311290c4af1922969db2920dc2e59144f8",
+      "bytes": 4144
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v20/coder/gateway/gpu1003-pydantic8316-coder-a1/resp_17.sse",
+      "sha256": "c287035f45e13167afba959e0f0fc7be7b979471a1ff47341f54ffb930fe143b",
+      "bytes": 1442
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v20/coder/gateway/gpu1003-pydantic8316-coder-a1/resp_18.sse",
+      "sha256": "66c4a47a93f9584883796bdb909f5a8ec28a36e27481bfaacfcaa6b3e8657469",
+      "bytes": 1581
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v20/coder/gateway/gpu1003-pydantic8316-coder-a1/resp_19.sse",
+      "sha256": "6da6576999eafbc737e2e97ef3cc77b9c74b32369e4efa8a3176934458528b59",
+      "bytes": 1916
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v20/coder/gateway/gpu1003-pydantic8316-coder-a1/resp_2.sse",
+      "sha256": "d5a950c857c9f9e75a5fc2a0c2898502ee58e54c7046fd67a42aaf756f9c241b",
+      "bytes": 1374
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v20/coder/gateway/gpu1003-pydantic8316-coder-a1/resp_20.sse",
+      "sha256": "a1e36f4d9c902986b1fe524b0be3f2d84eb1c7938a9353e63f77196f80d5fe26",
+      "bytes": 3345
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v20/coder/gateway/gpu1003-pydantic8316-coder-a1/resp_21.sse",
+      "sha256": "d6f78a689ebd83e4368c0a38c7e0745e3971f3b1d150f096929f7cd743cfe013",
+      "bytes": 1509
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v20/coder/gateway/gpu1003-pydantic8316-coder-a1/resp_3.sse",
+      "sha256": "523cd0489fef2c91333eec70ac7b8a6c63868f31cb1532ae38889115339fcaff",
+      "bytes": 1662
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v20/coder/gateway/gpu1003-pydantic8316-coder-a1/resp_4.sse",
+      "sha256": "97788131fd975499b942cf92bce77c8ec015bfa5dc351b5e428bfcd230a3dbd6",
+      "bytes": 1101
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v20/coder/gateway/gpu1003-pydantic8316-coder-a1/resp_5.sse",
+      "sha256": "03b48d9cf1f19656ed79f7c3ef1a9089c4114d8c047a693e110c7537f9ece12e",
+      "bytes": 1342
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v20/coder/gateway/gpu1003-pydantic8316-coder-a1/resp_6.sse",
+      "sha256": "713d10c3de0358baf1a547d55fc6254a381785963d76b4e3fe3f9f9376386958",
+      "bytes": 2075
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v20/coder/gateway/gpu1003-pydantic8316-coder-a1/resp_7.sse",
+      "sha256": "b5deab92b3c880931942e163c3923b31769f44bf776b8b45dfd863870f5e3677",
+      "bytes": 2141
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v20/coder/gateway/gpu1003-pydantic8316-coder-a1/resp_8.sse",
+      "sha256": "89ef69c53afb940a93f4dd15007bda9d9680c25f6146b9a16a3eebe1535061c1",
+      "bytes": 3078
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v20/coder/gateway/gpu1003-pydantic8316-coder-a1/resp_9.sse",
+      "sha256": "b26bdd1872f303bc61d149de0fe8178cfae1fe79142429b155502ce52a0747f0",
+      "bytes": 2071
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v20/coder/gateway/gpu1003-pydantic8316-coder-a1/responses.jsonl",
+      "sha256": "15ad9cc2248bb0c4d6e398851292cbdcf4e4145cd97ab70a1139a8716441887e",
+      "bytes": 6554
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v20/coder/gateway/gpu1003-pydantic8316-coder-a1/session_close.jsonl",
+      "sha256": "337eb666b55e23c597dd74f3bee76ae249edd2ae62a1713b9dbe79122c1b5bb5",
+      "bytes": 129
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v20/coder/gateway/gpu1003-pydantic8316-coder-a1/usage.json",
+      "sha256": "03d6be28bd5a2923fcb2a0a77a0381c94ac002bb7d51804e521497221b5b97cf",
+      "bytes": 89
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/tools/bind_queue16_root_v1.py",
+      "sha256": "d1f6937389d6e71b553d5a29077bcf9706aad8537e067b7b9fd2ae3057f38ddb",
+      "bytes": 15021
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/tools/bind_queue22_root_v2.py",
+      "sha256": "c5c844c9ee94b34bc85caf398269fa51ae376012c48bdb72720b038340aaca09",
+      "bytes": 19304
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/tools/capture_coder_runtime_identity_v1.py",
+      "sha256": "ff2a28e3cecc2f4992ff21c538a78c543180f7c7dd344b3fbec761e616a6f1c3",
+      "bytes": 16713
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/tools/prepare_config_queue_v22_v1.py",
+      "sha256": "21d74fa56cf36ab07b22368d2e9b30c327210ae3481cd9941093d7a64750cecb",
+      "bytes": 7663
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/tools/readback_queue22_inputs_v1.py",
+      "sha256": "fb2cb5647e45de281f58d34d41c5ca0cb9870eea119229860d2221c6b6498ab4",
+      "bytes": 6969
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/tools/root_dispatch_one_v12.py",
+      "sha256": "45514560d96d71ee8803d33d1ea51440aaace01969cd01e558268c49dd748084",
+      "bytes": 76314
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/receipts/swe-pydantic8316-behavior-v1-20261003_partial_coder_a1_v1.json",
+      "bytes": 5904,
+      "sha256": "2ebede997018cc074de720adc051c608d38476aa3a394761b4aae5be64313d2e"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/pydantic8316_coder_a1_execution_review_v1.json",
+      "bytes": 54710,
+      "sha256": "aa1427bb2e003e6774154bbe6383d4c65cfbd148eb0092942b4bb198ff1542b6"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/pydantic8316_coder_a1_execution_review_v1.md",
+      "bytes": 2253,
+      "sha256": "e9f3cb483316c17dca8dc30b23a83d41434ecbfd166e067b8ff65bb706410363"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/gpu1003-pydantic8316-coder-a1_closed_manifest_v1.json",
+      "bytes": 26373,
+      "sha256": "3dd730906086007fa391907b7e35044e2abcec7e772638ff0c32052b30aacc91"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/tasks/pydantic__pydantic-8316/effective_test.patch",
+      "bytes": 1819,
+      "sha256": "b248daa2eaf1ee37523ba03b078d768a9790a5db234813ee2b8b239b774a81e0"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8316_coder_q22_canonical_transcript_v1.txt",
+      "bytes": 70165,
+      "sha256": "e5ecb01fb3bba4933778c35ffec2efa49a07fdcbe6957b08044504e89fec8ec1"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/coordination_20261003/8316_r20_combined_cpu_owner_acceptance_v1.json",
+      "bytes": 878688,
+      "sha256": "5e98623ac3da531cff4c3d090468990344ff7c9bd891a061e5d38eb595842231"
+    }
+  ]
+}

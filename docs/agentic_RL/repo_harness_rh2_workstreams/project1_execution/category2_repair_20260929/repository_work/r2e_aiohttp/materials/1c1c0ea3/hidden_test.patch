@@ -1,0 +1,40 @@
+--- current/test_1.py
++++ draft/test_1.py
+@@ -943,6 +943,37 @@
+     assert not m.called
+ 
+ 
++def test_run_app_cleanup_error_is_observable_after_interrupt(patched_loop) -> None:
++    # 清理异常可以抛给调用者，也可以交给异常处理器；两条路线均有效。
++    message = "cleanup failed after interrupt"
++    cleanup_reached = []
++    reports = []
++
++    async def context(app):
++        yield
++        cleanup_reached.append(True)
++        raise RuntimeError(message)
++
++    app = web.Application()
++    app.cleanup_ctx.append(context)
++    patched_loop.set_exception_handler(lambda loop, context: reports.append(context))
++    raised = ""
++    try:
++        web.run_app(
++            app, print=stopper(patched_loop), loop=patched_loop, handle_signals=False
++        )
++    except Exception as exc:
++        raised = str(exc)
++
++    assert cleanup_reached, "cleanup context was not reached"
++    reported = any(
++        message in str(context.get("exception", ""))
++        or message in str(context.get("message", ""))
++        for context in reports
++    )
++    assert message in raised or reported, "cleanup exception was silently lost"
++
++
+ class TestShutdown:
+     def raiser(self) -> NoReturn:
+         raise KeyboardInterrupt

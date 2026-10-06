@@ -1,0 +1,59 @@
+diff --git a/dask/dataframe/partitionquantiles.py b/dask/dataframe/partitionquantiles.py
+--- a/dask/dataframe/partitionquantiles.py
++++ b/dask/dataframe/partitionquantiles.py
+@@ -420,6 +420,30 @@
+     return vals_and_weights
+ 
+ 
++def _exact_min_max(s):
++    """Exact (min, max) of an integer partition as Python ints, else None"""
++    dtype = getattr(s, "dtype", None)
++    if len(s) and isinstance(dtype, np.dtype) and np.issubdtype(dtype, np.integer):
++        return int(s.min()), int(s.max())
++    return None
++
++
++def _pin_min_max(rv, min_maxes):
++    """Replace approximate ends by the exact global minimum and maximum"""
++    min_maxes = [x for x in min_maxes if x is not None]
++    if (
++        not min_maxes
++        or not isinstance(rv, np.ndarray)
++        or not np.issubdtype(rv.dtype, np.integer)
++    ):
++        return rv
++    lo = min(x[0] for x in min_maxes)
++    hi = max(x[1] for x in min_maxes)
++    out = sorted(min(max(int(v), lo), hi) for v in rv.tolist())
++    out[0], out[-1] = lo, hi
++    return np.array(out, dtype=rv.dtype)
++
++
+ def dtype_info(df):
+     info = None
+     if is_categorical_dtype(df):
+@@ -468,16 +492,22 @@
+     merged_key = max(merge_dsk)
+ 
+     name3 = "re-quantiles-3-" + token
++    name_mm = "re-quantiles-minmax-" + token
++    mm_dsk = {(name_mm, i): (_exact_min_max, key) for i, key in enumerate(df_keys)}
+     last_dsk = {
+         (name3, 0): (
+             pd.Series,  # TODO: Use `type(df._meta)` when cudf adds `tolist()`
+-            (process_val_weights, merged_key, npartitions, (name0, 0)),
++            (
++                _pin_min_max,
++                (process_val_weights, merged_key, npartitions, (name0, 0)),
++                sorted(mm_dsk),
++            ),
+             qs,
+             None,
+             df.name,
+         )
+     }
+ 
+-    dsk = merge(df.dask, dtype_dsk, val_dsk, merge_dsk, last_dsk)
++    dsk = merge(df.dask, dtype_dsk, val_dsk, merge_dsk, mm_dsk, last_dsk)
+     new_divisions = [0.0, 1.0]
+     return return_type(dsk, name3, df._meta, new_divisions)

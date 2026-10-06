@@ -1,0 +1,77 @@
+{
+ "image": "c3keep/pillow_a682:src",
+ "python_prefix": "/testbed/.venv",
+ "variants": {
+  "upstream": []
+ },
+ "files": {
+  "probe_matrix.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow_a682/probe_matrix.py",
+  "hidden_test_1_revised_v1.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow_a682/hidden_test_1_revised_v1.py",
+  "x10.0.0": "/home/user/RepoHarness/runs/category3_cloud_20260929/pillow_a682/upstream/x10.0.0",
+  "x10.1.0": "/home/user/RepoHarness/runs/category3_cloud_20260929/pillow_a682/upstream/x10.1.0",
+  "x10.4.0": "/home/user/RepoHarness/runs/category3_cloud_20260929/pillow_a682/upstream/x10.4.0",
+  "x11.3.0": "/home/user/RepoHarness/runs/category3_cloud_20260929/pillow_a682/upstream/x11.3.0"
+ },
+ "commands": [
+  {
+   "id": "up10.0.0_import",
+   "timeout_s": 120,
+   "cmd": "PYTHONPATH=/in/x10.0.0 python -c 'import PIL; from PIL import Image; print(PIL.__version__, PIL.__file__, Image.core.__file__)'"
+  },
+  {
+   "id": "up10.0.0_probe",
+   "timeout_s": 600,
+   "cmd": "rm -rf /tmp/probe && PYTHONPATH=/in/x10.0.0 python /in/probe_matrix.py /tmp/probe 2>&1"
+  },
+  {
+   "id": "up10.0.0_rev1_fn",
+   "timeout_s": 600,
+   "cmd": "rm -rf /testbed/r2e_tests && cp -r /r2e_tests /testbed/r2e_tests && cp /in/hidden_test_1_revised_v1.py /testbed/r2e_tests/test_1.py && PYTHONPATH=/in/x10.0.0 PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA -p no:cacheprovider --color=no r2e_tests/test_1.py -k 'test_removed_transparency or test_rgb_transparency or test_transparent_optimize' 2>&1 | tail -n 12; rm -rf /testbed/r2e_tests"
+  },
+  {
+   "id": "up10.1.0_import",
+   "timeout_s": 120,
+   "cmd": "PYTHONPATH=/in/x10.1.0 python -c 'import PIL; from PIL import Image; print(PIL.__version__, PIL.__file__, Image.core.__file__)'"
+  },
+  {
+   "id": "up10.1.0_probe",
+   "timeout_s": 600,
+   "cmd": "rm -rf /tmp/probe && PYTHONPATH=/in/x10.1.0 python /in/probe_matrix.py /tmp/probe 2>&1"
+  },
+  {
+   "id": "up10.1.0_rev1_fn",
+   "timeout_s": 600,
+   "cmd": "rm -rf /testbed/r2e_tests && cp -r /r2e_tests /testbed/r2e_tests && cp /in/hidden_test_1_revised_v1.py /testbed/r2e_tests/test_1.py && PYTHONPATH=/in/x10.1.0 PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA -p no:cacheprovider --color=no r2e_tests/test_1.py -k 'test_removed_transparency or test_rgb_transparency or test_transparent_optimize' 2>&1 | tail -n 12; rm -rf /testbed/r2e_tests"
+  },
+  {
+   "id": "up10.4.0_import",
+   "timeout_s": 120,
+   "cmd": "PYTHONPATH=/in/x10.4.0 python -c 'import PIL; from PIL import Image; print(PIL.__version__, PIL.__file__, Image.core.__file__)'"
+  },
+  {
+   "id": "up10.4.0_probe",
+   "timeout_s": 600,
+   "cmd": "rm -rf /tmp/probe && PYTHONPATH=/in/x10.4.0 python /in/probe_matrix.py /tmp/probe 2>&1"
+  },
+  {
+   "id": "up10.4.0_rev1_fn",
+   "timeout_s": 600,
+   "cmd": "rm -rf /testbed/r2e_tests && cp -r /r2e_tests /testbed/r2e_tests && cp /in/hidden_test_1_revised_v1.py /testbed/r2e_tests/test_1.py && PYTHONPATH=/in/x10.4.0 PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA -p no:cacheprovider --color=no r2e_tests/test_1.py -k 'test_removed_transparency or test_rgb_transparency or test_transparent_optimize' 2>&1 | tail -n 12; rm -rf /testbed/r2e_tests"
+  },
+  {
+   "id": "up11.3.0_import",
+   "timeout_s": 120,
+   "cmd": "PYTHONPATH=/in/x11.3.0 python -c 'import PIL; from PIL import Image; print(PIL.__version__, PIL.__file__, Image.core.__file__)'"
+  },
+  {
+   "id": "up11.3.0_probe",
+   "timeout_s": 600,
+   "cmd": "rm -rf /tmp/probe && PYTHONPATH=/in/x11.3.0 python /in/probe_matrix.py /tmp/probe 2>&1"
+  },
+  {
+   "id": "up11.3.0_rev1_fn",
+   "timeout_s": 600,
+   "cmd": "rm -rf /testbed/r2e_tests && cp -r /r2e_tests /testbed/r2e_tests && cp /in/hidden_test_1_revised_v1.py /testbed/r2e_tests/test_1.py && PYTHONPATH=/in/x11.3.0 PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA -p no:cacheprovider --color=no r2e_tests/test_1.py -k 'test_removed_transparency or test_rgb_transparency or test_transparent_optimize' 2>&1 | tail -n 12; rm -rf /testbed/r2e_tests"
+  }
+ ]
+}

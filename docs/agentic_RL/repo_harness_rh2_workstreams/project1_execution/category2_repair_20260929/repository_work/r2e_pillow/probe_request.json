@@ -1,0 +1,100 @@
+{
+  "schema_id": "rh2.ordinary_gpu_probe.owner_request.v1",
+  "request_id": "r2e-pillow-2d01-cpu-v1-20261003",
+  "status": "cpu_acceptance_complete_pending_executor_review",
+  "package_id": "r2e_pillow",
+  "package_path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_pillow",
+  "owner_thread_id": "01a0fd64-1b6e-75b0-978a-2873ac32201c",
+  "owner_thread_title": "R2E | Pillow 题目修订",
+  "tasks": [
+    {
+      "task_id": "r2e_gym_subset::pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+      "instance_id": "pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+      "purpose": "在已通过必要CPU修订/开发验收的真实harness中观察基座解决TIFF photometric缺陷的能力；回传后由本题主审候选行为、评分一致性与必要后续修订。",
+      "allowed_uses": [
+        "普通基座诊断与必要能力比较"
+      ],
+      "limits": [
+        "正式评分保留两个pytest旧API的FAILED期望键；reward按62键状态表匹配，不等于全部私有测试PASSED。公开临时兼容副本不改该材料。",
+        "CPU正确源码actor对照是确定性私有开发验证，不计模型成绩。",
+        "Pillow同仓答案包含关系仍在，不能随意跨训练/留出划分；本请求不授予训练或留出资格。"
+      ],
+      "source_binding": {
+        "release_id": "cat2-cpu-r2e064065-swe5-20261003-v1",
+        "local_release_dir": "runs/category2_repair_20260929/releases_20261003/r2e_064_065_candidate_v1",
+        "external_manifest": "runs/category2_repair_20260929/releases_20261003/r2e_064_065_candidate_v1/manifest.json",
+        "external_manifest_sha256": "sha256:282021962a92b510f077385660ac56acedcd7fac1d97e63db3baa98e4dcc057f",
+        "registry": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_064_065_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v13.json",
+          "sha256": "sha256:1a8fe1016b30d17a9d684099cb08fdb632e3b99800c1a9b6db427b01bd5ecd7e"
+        },
+        "input_pins": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_064_065_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/t1_input_pins_r2e_v14.json",
+          "sha256": "sha256:5b397f8db723b29b3b0dfa1d83a69ad995812a7f9cbe68d3b387f4ddfed93bac"
+        },
+        "material_revision_ids": [
+          "r2e-mr-063"
+        ],
+        "hidden_test_file": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_064_065_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/r2e_tests/test_1.py",
+          "sha256": "sha256:4beac7f3be5f09ace2e09e46300cbfb2b283f8afdc1f0e750daa281bb7fd6e27"
+        },
+        "hidden_tests_tree_sha256": "sha256:bd62b707f7ef41bb21dcb4773e8206970773511eb9c819e7ae0adeb624f8fada",
+        "expected_output_json_sha256": "sha256:28da3c259354012c9989afbeb731f9eea95a7913ac43ff8fd8a2a41ebce9df15",
+        "expected_total": 62,
+        "run_tests_sh_sha256": "sha256:8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+        "problem_statement_sha256": "sha256:ad8f5c57410407c9373ed601063a9f588b0eb534e39ede1da2e1aff2e6c33003",
+        "reference_binding": {
+          "source": "固定release受信validation面重导出",
+          "sha256": "sha256:190a8e47712345194ab36111eebae27a7229d79c16db5bb394e158ba596c4702",
+          "local_export_path": "runs/category2_repair_20260929/r2e_pillow_cpu_b_20261003/2d01_cpu_core_v1/prepared/2d01-release-v1/gold/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96.gold.patch"
+        }
+      },
+      "image": {
+        "source_ref_by_digest": "namanjain12/pillow_final@sha256:9af0401db9ea4b616b3ca0f42d5863eef7342ab248456693ae850db9f7a117ba",
+        "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+        "recipe_sha256": "sha256:54e35b094ecff3dffe724f34443a928519da09480152c21d60b44752b111845a",
+        "cpu_derived_image_id": "sha256:344103dc340c055f2e676a1c1acf0f0d8a2876477111bd8d6580b566eaf3f184",
+        "cpu_facts": {
+          "path": "runs/category2_repair_20260929/r2e_pillow_cpu_b_20261003/2d01_cpu_core_v1/derived/pillow2d01-build-20261002T171740Z/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/facts.json",
+          "sha256": "sha256:3be0f60dcb700d05b8912bab415157895f1948f966591787563d1e051c640896"
+        },
+        "gpu_binding_policy": "由统一执行者核固定版本并准备实际GPU宿主镜像/ID，不沿用CPU或旧宿主ID。",
+        "environment_install_note": "来源镜像既有解释器/依赖；sysconfig_v1修复已纳入配方，没有pytest降级或新增Pillow依赖改装。"
+      },
+      "public_development_brief": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_pillow/public/2d01_development_brief.md",
+        "sha256": "sha256:ef6cd806aa0602c36674cb5fd526f7c60fda7f7d27cfcb5e58e1cd0496bc6647",
+        "visibility": "只有原题面与本份中性公开说明进入fresh solver，不整体交付内部父目录或旧public_hints。"
+      },
+      "cpu_acceptance": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_pillow/cpu_2d01_acceptance_v1.json",
+        "sha256": "sha256:48b5ea8e6a6ee97246f77970b27b250cd26852bfe070d4861a017efda901758f",
+        "core_evidence_dir": "runs/category2_repair_20260929/r2e_pillow_cpu_b_20261003/2d01_cpu_core_v1",
+        "core_manifest_sha256": "sha256:25ea0718e60f7a6eaaf0d68d4cb611e669abed2ec2ef18f1acbddf1b88447c43",
+        "formal_positive": "gold reward1,62/62",
+        "formal_negative": "noop reward0,60/62",
+        "actor_base": "9/9命令按预期；公开82通过2跳过；两原例失败",
+        "actor_private_positive": "9/9命令按预期；同公开82通过2跳过；两原例通过；agent UID54321；非模型结果",
+        "cleanup": "两个actor及两个formal控制均完整退出并零残留；旧torch缺失失败单列且已清理",
+        "historical_reuse": "未变的九方正式矩阵继续复用"
+      }
+    }
+  ],
+  "model_budget": {
+    "decision_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/ordinary_probe_20260929/gpu_coordination_decisions_20261002.md",
+    "budget_id": "probe-wide-v1",
+    "attempts_per_model": 1,
+    "models": [
+      "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+      "Qwen/Qwen3.6-35B-A3B"
+    ]
+  },
+  "executor_resolves": [
+    "不可变GPU运行请求与代码版本",
+    "实际GPU宿主镜像ID及来源/材料一致性",
+    "公开说明最终请求交付",
+    "模型服务/预算/排队准入"
+  ],
+  "result_owner_policy": "证据返回本owner后继续审公开要求、实际候选与评分；修订仍由本线程持续负责。"
+}

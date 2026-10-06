@@ -1,0 +1,703 @@
+{
+  "scope": "第四次窄复核的 F1 修后回放与必要正例；真实 Docker 不在本脚本范围",
+  "cases": [
+    {
+      "case": "digest_mismatch:fa_formal:release",
+      "result": "fatal",
+      "reason": "rollout_image_digest_mismatch",
+      "mode": "fa_formal",
+      "events": [
+        "fatal:rollout_image_digest_mismatch",
+        "rm_enter",
+        "rm_return",
+        "network_rm",
+        "audit_sink"
+      ],
+      "during_cleanup": {
+        "fatal_notifications": 1,
+        "receipt_count": 1,
+        "failure_types": [
+          "FatalExecutionInfrastructureError"
+        ],
+        "failure_details": [
+          "rollout_image_digest_mismatch: 镜像 digest 漂移: 冻结记录 sha256:1111111111111111111111111111111111111111111111111111111111111111, 实际 RepoDigests=['fake/img@sha256:2222222222222222222222222222222222222222222222222222222222222222']"
+        ],
+        "events": [
+          "fatal:rollout_image_digest_mismatch",
+          "rm_enter"
+        ]
+      },
+      "fatal_notifications": [
+        "rollout_image_digest_mismatch"
+      ],
+      "outcome_reason": null,
+      "outcome_completion": null,
+      "receipt_disposition": "fatal_run_halt",
+      "receipt_reason": "rollout_image_digest_mismatch",
+      "receipt_bodies_persisted": false,
+      "receipt_cleanup_records": 1,
+      "failure_types": [
+        "FatalExecutionInfrastructureError"
+      ],
+      "failure_details": [
+        "rollout_image_digest_mismatch: 镜像 digest 漂移: 冻结记录 sha256:1111111111111111111111111111111111111111111111111111111111111111, 实际 RepoDigests=['fake/img@sha256:2222222222222222222222222222222222222222222222222222222222222222']"
+      ],
+      "cleanup_steps": [],
+      "cleanup_completed": true,
+      "lease_released": true,
+      "containers_removed": 1,
+      "private_networks_registered": 0,
+      "quarantine_count": 0,
+      "opened_sessions": 0,
+      "dropped_sessions": 0,
+      "grading_calls": 0,
+      "inflight_after_audit": 0
+    },
+    {
+      "case": "digest_mismatch:fa_formal:cross_deadline",
+      "result": "fatal",
+      "reason": "rollout_image_digest_mismatch",
+      "mode": "fa_formal",
+      "events": [
+        "fatal:rollout_image_digest_mismatch",
+        "rm_enter",
+        "rm_return",
+        "network_rm",
+        "audit_sink"
+      ],
+      "during_cleanup": {
+        "fatal_notifications": 1,
+        "receipt_count": 1,
+        "failure_types": [
+          "FatalExecutionInfrastructureError"
+        ],
+        "failure_details": [
+          "rollout_image_digest_mismatch: 镜像 digest 漂移: 冻结记录 sha256:1111111111111111111111111111111111111111111111111111111111111111, 实际 RepoDigests=['fake/img@sha256:2222222222222222222222222222222222222222222222222222222222222222']"
+        ],
+        "events": [
+          "fatal:rollout_image_digest_mismatch",
+          "rm_enter"
+        ],
+        "observed_after_deadline": true,
+        "still_cleaning_after_deadline": true,
+        "notifications_after_deadline": 1
+      },
+      "fatal_notifications": [
+        "rollout_image_digest_mismatch"
+      ],
+      "outcome_reason": null,
+      "outcome_completion": null,
+      "receipt_disposition": "fatal_run_halt",
+      "receipt_reason": "rollout_image_digest_mismatch",
+      "receipt_bodies_persisted": false,
+      "receipt_cleanup_records": 1,
+      "failure_types": [
+        "FatalExecutionInfrastructureError"
+      ],
+      "failure_details": [
+        "rollout_image_digest_mismatch: 镜像 digest 漂移: 冻结记录 sha256:1111111111111111111111111111111111111111111111111111111111111111, 实际 RepoDigests=['fake/img@sha256:2222222222222222222222222222222222222222222222222222222222222222']"
+      ],
+      "cleanup_steps": [],
+      "cleanup_completed": true,
+      "lease_released": true,
+      "containers_removed": 1,
+      "private_networks_registered": 0,
+      "quarantine_count": 0,
+      "opened_sessions": 0,
+      "dropped_sessions": 0,
+      "grading_calls": 0,
+      "inflight_after_audit": 0
+    },
+    {
+      "case": "lineage_mismatch:fa_formal:release",
+      "result": "fatal",
+      "reason": "rollout_testbed_lineage_failed",
+      "mode": "fa_formal",
+      "events": [
+        "fatal:rollout_testbed_lineage_failed",
+        "rm_enter",
+        "rm_return",
+        "network_rm",
+        "audit_sink"
+      ],
+      "during_cleanup": {
+        "fatal_notifications": 1,
+        "receipt_count": 1,
+        "failure_types": [
+          "FatalExecutionInfrastructureError"
+        ],
+        "failure_details": [
+          "rollout_testbed_lineage_failed: /testbed 物化校验失败: exit=0, HEAD='ffffffffffffffffffffffffffffffffffffffff', HEAD^='none', base_commit='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', base_object_ok=True; stderr tail: "
+        ],
+        "events": [
+          "fatal:rollout_testbed_lineage_failed",
+          "rm_enter"
+        ]
+      },
+      "fatal_notifications": [
+        "rollout_testbed_lineage_failed"
+      ],
+      "outcome_reason": null,
+      "outcome_completion": null,
+      "receipt_disposition": "fatal_run_halt",
+      "receipt_reason": "rollout_testbed_lineage_failed",
+      "receipt_bodies_persisted": false,
+      "receipt_cleanup_records": 1,
+      "failure_types": [
+        "FatalExecutionInfrastructureError"
+      ],
+      "failure_details": [
+        "rollout_testbed_lineage_failed: /testbed 物化校验失败: exit=0, HEAD='ffffffffffffffffffffffffffffffffffffffff', HEAD^='none', base_commit='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', base_object_ok=True; stderr tail: "
+      ],
+      "cleanup_steps": [],
+      "cleanup_completed": true,
+      "lease_released": true,
+      "containers_removed": 1,
+      "private_networks_registered": 0,
+      "quarantine_count": 0,
+      "opened_sessions": 0,
+      "dropped_sessions": 0,
+      "grading_calls": 0,
+      "inflight_after_audit": 0
+    },
+    {
+      "case": "lineage_mismatch:fa_formal:cross_deadline",
+      "result": "fatal",
+      "reason": "rollout_testbed_lineage_failed",
+      "mode": "fa_formal",
+      "events": [
+        "fatal:rollout_testbed_lineage_failed",
+        "rm_enter",
+        "rm_return",
+        "network_rm",
+        "audit_sink"
+      ],
+      "during_cleanup": {
+        "fatal_notifications": 1,
+        "receipt_count": 1,
+        "failure_types": [
+          "FatalExecutionInfrastructureError"
+        ],
+        "failure_details": [
+          "rollout_testbed_lineage_failed: /testbed 物化校验失败: exit=0, HEAD='ffffffffffffffffffffffffffffffffffffffff', HEAD^='none', base_commit='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', base_object_ok=True; stderr tail: "
+        ],
+        "events": [
+          "fatal:rollout_testbed_lineage_failed",
+          "rm_enter"
+        ],
+        "observed_after_deadline": true,
+        "still_cleaning_after_deadline": true,
+        "notifications_after_deadline": 1
+      },
+      "fatal_notifications": [
+        "rollout_testbed_lineage_failed"
+      ],
+      "outcome_reason": null,
+      "outcome_completion": null,
+      "receipt_disposition": "fatal_run_halt",
+      "receipt_reason": "rollout_testbed_lineage_failed",
+      "receipt_bodies_persisted": false,
+      "receipt_cleanup_records": 1,
+      "failure_types": [
+        "FatalExecutionInfrastructureError"
+      ],
+      "failure_details": [
+        "rollout_testbed_lineage_failed: /testbed 物化校验失败: exit=0, HEAD='ffffffffffffffffffffffffffffffffffffffff', HEAD^='none', base_commit='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', base_object_ok=True; stderr tail: "
+      ],
+      "cleanup_steps": [],
+      "cleanup_completed": true,
+      "lease_released": true,
+      "containers_removed": 1,
+      "private_networks_registered": 0,
+      "quarantine_count": 0,
+      "opened_sessions": 0,
+      "dropped_sessions": 0,
+      "grading_calls": 0,
+      "inflight_after_audit": 0
+    },
+    {
+      "case": "workspace_contract_invalid:fa_formal:cross_deadline",
+      "result": "fatal",
+      "reason": "rh2_contract_validation_failed",
+      "mode": "fa_formal",
+      "events": [
+        "fatal:rh2_contract_validation_failed",
+        "rm_enter",
+        "rm_return",
+        "network_rm",
+        "audit_sink"
+      ],
+      "during_cleanup": {
+        "fatal_notifications": 1,
+        "receipt_count": 1,
+        "failure_types": [
+          "ValidationError"
+        ],
+        "failure_details": [
+          "1 validation error for WorkspaceHandle\nmounted_bundles.0\n  Input should be a valid dictionary or instance of BundleMount [type=model_type, input_value='invalid-mount-shape', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/model_type"
+        ],
+        "events": [
+          "fatal:rh2_contract_validation_failed",
+          "rm_enter"
+        ],
+        "observed_after_deadline": true,
+        "still_cleaning_after_deadline": true,
+        "notifications_after_deadline": 1
+      },
+      "fatal_notifications": [
+        "rh2_contract_validation_failed"
+      ],
+      "outcome_reason": null,
+      "outcome_completion": null,
+      "receipt_disposition": "fatal_run_halt",
+      "receipt_reason": "rh2_contract_validation_failed",
+      "receipt_bodies_persisted": false,
+      "receipt_cleanup_records": 1,
+      "failure_types": [
+        "ValidationError"
+      ],
+      "failure_details": [
+        "1 validation error for WorkspaceHandle\nmounted_bundles.0\n  Input should be a valid dictionary or instance of BundleMount [type=model_type, input_value='invalid-mount-shape', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/model_type"
+      ],
+      "cleanup_steps": [],
+      "cleanup_completed": true,
+      "lease_released": true,
+      "containers_removed": 1,
+      "private_networks_registered": 0,
+      "quarantine_count": 0,
+      "opened_sessions": 0,
+      "dropped_sessions": 0,
+      "grading_calls": 0,
+      "inflight_after_audit": 0
+    },
+    {
+      "case": "identity_incomplete:fa_formal:none",
+      "result": "fatal",
+      "reason": "fa_identity_incomplete_in_formal_mode",
+      "mode": "fa_formal",
+      "events": [
+        "fatal:fa_identity_incomplete_in_formal_mode",
+        "audit_sink"
+      ],
+      "during_cleanup": null,
+      "fatal_notifications": [
+        "fa_identity_incomplete_in_formal_mode"
+      ],
+      "outcome_reason": null,
+      "outcome_completion": null,
+      "receipt_disposition": "fatal_run_halt",
+      "receipt_reason": "fa_identity_incomplete_in_formal_mode",
+      "receipt_bodies_persisted": false,
+      "receipt_cleanup_records": 1,
+      "failure_types": [
+        "FatalExecutionInfrastructureError"
+      ],
+      "failure_details": [
+        "fa_identity_incomplete_in_formal_mode: FA 模式 member metadata 四层身份不全（trajectory=exec_F22）——entry 契约破损，run-halt（不评分不交付）。"
+      ],
+      "cleanup_steps": [],
+      "cleanup_completed": true,
+      "lease_released": false,
+      "containers_removed": 0,
+      "private_networks_registered": 0,
+      "quarantine_count": 0,
+      "opened_sessions": 0,
+      "dropped_sessions": 0,
+      "grading_calls": 0,
+      "inflight_after_audit": 0
+    },
+    {
+      "case": "workspace_contract_invalid:fa_formal:none",
+      "result": "fatal",
+      "reason": "rh2_contract_validation_failed",
+      "mode": "fa_formal",
+      "events": [
+        "fatal:rh2_contract_validation_failed",
+        "rm_enter",
+        "rm_return",
+        "network_rm",
+        "audit_sink"
+      ],
+      "during_cleanup": null,
+      "fatal_notifications": [
+        "rh2_contract_validation_failed"
+      ],
+      "outcome_reason": null,
+      "outcome_completion": null,
+      "receipt_disposition": "fatal_run_halt",
+      "receipt_reason": "rh2_contract_validation_failed",
+      "receipt_bodies_persisted": false,
+      "receipt_cleanup_records": 1,
+      "failure_types": [
+        "ValidationError"
+      ],
+      "failure_details": [
+        "1 validation error for WorkspaceHandle\nmounted_bundles.0\n  Input should be a valid dictionary or instance of BundleMount [type=model_type, input_value='invalid-mount-shape', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/model_type"
+      ],
+      "cleanup_steps": [],
+      "cleanup_completed": true,
+      "lease_released": true,
+      "containers_removed": 1,
+      "private_networks_registered": 0,
+      "quarantine_count": 0,
+      "opened_sessions": 0,
+      "dropped_sessions": 0,
+      "grading_calls": 0,
+      "inflight_after_audit": 0
+    },
+    {
+      "case": "artifact_persist_failure:fa_formal:none",
+      "result": "fatal",
+      "reason": "frozen_artifact_persist_failed",
+      "mode": "fa_formal",
+      "events": [
+        "fatal:frozen_artifact_persist_failed",
+        "rm_enter",
+        "rm_return",
+        "network_rm",
+        "audit_sink"
+      ],
+      "during_cleanup": null,
+      "fatal_notifications": [
+        "frozen_artifact_persist_failed"
+      ],
+      "outcome_reason": null,
+      "outcome_completion": null,
+      "receipt_disposition": "fatal_run_halt",
+      "receipt_reason": "frozen_artifact_persist_failed",
+      "receipt_bodies_persisted": false,
+      "receipt_cleanup_records": 1,
+      "failure_types": [
+        "FatalExecutionInfrastructureError"
+      ],
+      "failure_details": [
+        "frozen_artifact_persist_failed: artifact 本体持久化失败：OSError: fake body store down"
+      ],
+      "cleanup_steps": [],
+      "cleanup_completed": true,
+      "lease_released": true,
+      "containers_removed": 1,
+      "private_networks_registered": 0,
+      "quarantine_count": 0,
+      "opened_sessions": 1,
+      "dropped_sessions": 1,
+      "grading_calls": 0,
+      "inflight_after_audit": 0
+    },
+    {
+      "case": "mask_missing:fa_formal:none",
+      "result": "fatal",
+      "reason": "sampling_mask_tape_missing_in_assembly",
+      "mode": "fa_formal",
+      "events": [
+        "fatal:sampling_mask_tape_missing_in_assembly",
+        "rm_enter",
+        "rm_return",
+        "network_rm",
+        "audit_sink"
+      ],
+      "during_cleanup": null,
+      "fatal_notifications": [
+        "sampling_mask_tape_missing_in_assembly"
+      ],
+      "outcome_reason": null,
+      "outcome_completion": null,
+      "receipt_disposition": "fatal_run_halt",
+      "receipt_reason": "sampling_mask_tape_missing_in_assembly",
+      "receipt_bodies_persisted": false,
+      "receipt_cleanup_records": 1,
+      "failure_types": [
+        "FatalExecutionInfrastructureError"
+      ],
+      "failure_details": [
+        "sampling_mask_tape_missing_in_assembly: 叶链 b0 回链轮 cap_exec_F22_t0 无 sampling-support tape——mask 会话每一轮都必须捕到支持集（partial 捕获不许进装配）。"
+      ],
+      "cleanup_steps": [],
+      "cleanup_completed": true,
+      "lease_released": true,
+      "containers_removed": 1,
+      "private_networks_registered": 0,
+      "quarantine_count": 0,
+      "opened_sessions": 1,
+      "dropped_sessions": 1,
+      "grading_calls": 0,
+      "inflight_after_audit": 0
+    },
+    {
+      "case": "digest_query_failure:fa_formal:none",
+      "result": "returned",
+      "status": "aborted",
+      "remove_sample": true,
+      "mode": "fa_formal",
+      "events": [
+        "rm_enter",
+        "rm_return",
+        "network_rm",
+        "audit_sink"
+      ],
+      "during_cleanup": null,
+      "fatal_notifications": [],
+      "outcome_reason": "rollout_image_digest_inspect_failed",
+      "outcome_completion": "missing",
+      "receipt_disposition": "aborted",
+      "receipt_reason": "rollout_image_digest_inspect_failed",
+      "receipt_bodies_persisted": false,
+      "receipt_cleanup_records": 1,
+      "failure_types": [
+        "SlimeBindingError"
+      ],
+      "failure_details": [
+        "[rollout_image_digest_inspect_failed] 镜像 RepoDigests 查询失败: exit=1; stderr tail: Error response from daemon: connection reset (fake)"
+      ],
+      "cleanup_steps": [],
+      "cleanup_completed": true,
+      "lease_released": true,
+      "containers_removed": 1,
+      "private_networks_registered": 0,
+      "quarantine_count": 0,
+      "opened_sessions": 0,
+      "dropped_sessions": 0,
+      "grading_calls": 0,
+      "inflight_after_audit": 0
+    },
+    {
+      "case": "lineage_query_failure:fa_formal:none",
+      "result": "returned",
+      "status": "aborted",
+      "remove_sample": true,
+      "mode": "fa_formal",
+      "events": [
+        "rm_enter",
+        "rm_return",
+        "network_rm",
+        "audit_sink"
+      ],
+      "during_cleanup": null,
+      "fatal_notifications": [],
+      "outcome_reason": "rollout_testbed_probe_failed",
+      "outcome_completion": "missing",
+      "receipt_disposition": "aborted",
+      "receipt_reason": "rollout_testbed_probe_failed",
+      "receipt_bodies_persisted": false,
+      "receipt_cleanup_records": 1,
+      "failure_types": [
+        "SlimeBindingError"
+      ],
+      "failure_details": [
+        "[rollout_testbed_probe_failed] /testbed 物化校验失败: exit=1, HEAD='', HEAD^='', base_commit='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', base_object_ok=False; stderr tail: fatal: not a git repository (fake exec failure)"
+      ],
+      "cleanup_steps": [],
+      "cleanup_completed": true,
+      "lease_released": true,
+      "containers_removed": 1,
+      "private_networks_registered": 0,
+      "quarantine_count": 0,
+      "opened_sessions": 0,
+      "dropped_sessions": 0,
+      "grading_calls": 0,
+      "inflight_after_audit": 0
+    },
+    {
+      "case": "digest_match:fa_formal:none",
+      "result": "returned",
+      "status": "completed",
+      "remove_sample": false,
+      "mode": "fa_formal",
+      "events": [
+        "rm_enter",
+        "rm_return",
+        "network_rm",
+        "audit_sink"
+      ],
+      "during_cleanup": null,
+      "fatal_notifications": [],
+      "outcome_reason": null,
+      "outcome_completion": "present_complete",
+      "receipt_disposition": "delivery_prepared",
+      "receipt_reason": null,
+      "receipt_bodies_persisted": true,
+      "receipt_cleanup_records": 1,
+      "failure_types": [],
+      "failure_details": [],
+      "cleanup_steps": [],
+      "cleanup_completed": true,
+      "lease_released": true,
+      "containers_removed": 1,
+      "private_networks_registered": 0,
+      "quarantine_count": 0,
+      "opened_sessions": 1,
+      "dropped_sessions": 1,
+      "grading_calls": 1,
+      "inflight_after_audit": 0
+    },
+    {
+      "case": "digest_mismatch:s1_compat:none",
+      "result": "fatal",
+      "reason": "rollout_image_digest_mismatch",
+      "mode": "s1_compat",
+      "events": [
+        "fatal:rollout_image_digest_mismatch",
+        "rm_enter",
+        "rm_return",
+        "audit_sink"
+      ],
+      "during_cleanup": null,
+      "fatal_notifications": [
+        "rollout_image_digest_mismatch"
+      ],
+      "outcome_reason": null,
+      "outcome_completion": null,
+      "receipt_disposition": "fatal_run_halt",
+      "receipt_reason": "rollout_image_digest_mismatch",
+      "receipt_bodies_persisted": false,
+      "receipt_cleanup_records": 1,
+      "failure_types": [
+        "FatalExecutionInfrastructureError"
+      ],
+      "failure_details": [
+        "rollout_image_digest_mismatch: 镜像 digest 漂移: 冻结记录 sha256:1111111111111111111111111111111111111111111111111111111111111111, 实际 RepoDigests=['fake/img@sha256:2222222222222222222222222222222222222222222222222222222222222222']"
+      ],
+      "cleanup_steps": [],
+      "cleanup_completed": true,
+      "lease_released": true,
+      "containers_removed": 1,
+      "private_networks_registered": 0,
+      "quarantine_count": 0,
+      "opened_sessions": 0,
+      "dropped_sessions": 0,
+      "grading_calls": 0,
+      "inflight_after_audit": 0
+    },
+    {
+      "case": "lineage_mismatch:s1_compat:none",
+      "result": "fatal",
+      "reason": "rollout_testbed_lineage_failed",
+      "mode": "s1_compat",
+      "events": [
+        "fatal:rollout_testbed_lineage_failed",
+        "rm_enter",
+        "rm_return",
+        "audit_sink"
+      ],
+      "during_cleanup": null,
+      "fatal_notifications": [
+        "rollout_testbed_lineage_failed"
+      ],
+      "outcome_reason": null,
+      "outcome_completion": null,
+      "receipt_disposition": "fatal_run_halt",
+      "receipt_reason": "rollout_testbed_lineage_failed",
+      "receipt_bodies_persisted": false,
+      "receipt_cleanup_records": 1,
+      "failure_types": [
+        "FatalExecutionInfrastructureError"
+      ],
+      "failure_details": [
+        "rollout_testbed_lineage_failed: /testbed 物化校验失败: exit=0, HEAD='ffffffffffffffffffffffffffffffffffffffff', HEAD^='none', base_commit='aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', base_object_ok=True; stderr tail: "
+      ],
+      "cleanup_steps": [],
+      "cleanup_completed": true,
+      "lease_released": true,
+      "containers_removed": 1,
+      "private_networks_registered": 0,
+      "quarantine_count": 0,
+      "opened_sessions": 0,
+      "dropped_sessions": 0,
+      "grading_calls": 0,
+      "inflight_after_audit": 0
+    },
+    {
+      "case": "mask_missing:s1_compat:none",
+      "result": "fatal",
+      "reason": "sampling_mask_tape_missing_in_assembly",
+      "mode": "s1_compat",
+      "events": [
+        "fatal:sampling_mask_tape_missing_in_assembly",
+        "rm_enter",
+        "rm_return",
+        "audit_sink"
+      ],
+      "during_cleanup": null,
+      "fatal_notifications": [
+        "sampling_mask_tape_missing_in_assembly"
+      ],
+      "outcome_reason": null,
+      "outcome_completion": null,
+      "receipt_disposition": "fatal_run_halt",
+      "receipt_reason": "sampling_mask_tape_missing_in_assembly",
+      "receipt_bodies_persisted": false,
+      "receipt_cleanup_records": 1,
+      "failure_types": [
+        "FatalExecutionInfrastructureError"
+      ],
+      "failure_details": [
+        "sampling_mask_tape_missing_in_assembly: 叶链 b0 回链轮 cap_rh2-psf__requests-2931-e90eaf03fa498789_t0 无 sampling-support tape——mask 会话每一轮都必须捕到支持集（partial 捕获不许进装配）。"
+      ],
+      "cleanup_steps": [],
+      "cleanup_completed": true,
+      "lease_released": true,
+      "containers_removed": 1,
+      "private_networks_registered": 0,
+      "quarantine_count": 0,
+      "opened_sessions": 1,
+      "dropped_sessions": 1,
+      "grading_calls": 0,
+      "inflight_after_audit": 0
+    },
+    {
+      "case": "workspace_contract_invalid:s1_compat:none",
+      "result": "returned",
+      "status": "aborted",
+      "remove_sample": true,
+      "mode": "s1_compat",
+      "events": [
+        "rm_enter",
+        "rm_return",
+        "audit_sink"
+      ],
+      "during_cleanup": null,
+      "fatal_notifications": [],
+      "outcome_reason": null,
+      "outcome_completion": null,
+      "receipt_disposition": "aborted",
+      "receipt_reason": "ValidationError",
+      "receipt_bodies_persisted": false,
+      "receipt_cleanup_records": 1,
+      "failure_types": [
+        "ValidationError"
+      ],
+      "failure_details": [
+        "1 validation error for WorkspaceHandle\nmounted_bundles.0\n  Input should be a valid dictionary or instance of BundleMount [type=model_type, input_value='invalid-mount-shape', input_type=str]\n    For further information visit https://errors.pydantic.dev/2.13/v/model_type"
+      ],
+      "cleanup_steps": [],
+      "cleanup_completed": true,
+      "lease_released": true,
+      "containers_removed": 1,
+      "private_networks_registered": 0,
+      "quarantine_count": 0,
+      "opened_sessions": 0,
+      "dropped_sessions": 0,
+      "grading_calls": 0,
+      "inflight_after_audit": 0
+    }
+  ],
+  "direct_seams": {
+    "profile_has_init": true,
+    "launch_argument_count": 1,
+    "init_false_violations": [
+      "HostConfig.Init=False != True（PID 1 须为 docker-init 回收孤儿）"
+    ],
+    "runtime_digest": "sha256:030926b1b2ba0bdcf09b53c11ac4691b11aaf1d6fcc6385ac4623ca6459fd5af",
+    "digest_without_init": "sha256:d8cbea64089c11cc39616923c9154c238e7905b279dbceb8bf5d90aca7175700",
+    "barrier_stop_survives_audit_projection": true
+  },
+  "source_digests": {
+    "rh2/src/repoharness2/adapters/slime/generate.py": "86db010653b817d40f84d629e57e40490b7383533b63b9cfac7eb27ac36da00e",
+    "rh2/src/repoharness2/adapters/slime/outcome_producer.py": "8312eae48f8b478069cc42b7a8ab698db2cbde10eaeaa6752b50600df534aa95",
+    "rh2/src/repoharness2/shutdown/chain.py": "e984cc0d79f00934c88970071b6a40d39db585ec3b7fda6f70e89f37a2c85cb9",
+    "rh2/src/repoharness2/adapters/slime/bringup.py": "dc693d22ce680c00f8f5582119434bdf84d66f970383c585463d826dfd967604",
+    "rh2/src/repoharness2/adapters/slime/quiescence_barrier.py": "aeb506d3190dc1feca7eac0c0e9849f13d49f4d4ff2a7e04935c1e3016e7a2a8",
+    "rh2/src/repoharness2/adapters/slime/sandbox_profile.py": "392927d2fcd8e96974f1d2bff2a650b0c3c2c5608426e2e655baa016fe96fe2a"
+  },
+  "probe_sha256": "d6653a84c5e8bd569161047b61ca94a04f7426a7dff94516d9d7eeb6f15e40a7"
+}

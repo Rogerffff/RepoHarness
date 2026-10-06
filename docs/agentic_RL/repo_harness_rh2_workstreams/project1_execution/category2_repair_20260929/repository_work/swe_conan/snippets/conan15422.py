@@ -1,0 +1,51 @@
+
+
+def test_presets_jobs_default_matches_public_helper():
+    # 在生成器同一进程取公开 helper 的值，不把宿主核数或容器配额写成常量。
+    import re
+
+    recipe = '''from conan import ConanFile
+from conan.tools.build import build_jobs
+from conan.tools.cmake import CMakeToolchain
+class JobsRecipe(ConanFile):
+    settings = "os", "compiler", "build_type", "arch"
+    def generate(self):
+        self.output.info("RH2_EXPECTED_JOBS=" + str(build_jobs(self)))
+        CMakeToolchain(self).generate()
+'''
+    client = TestClient()
+    client.save({"conanfile.py": recipe})
+    client.run('install . -s build_type=Release '
+               '-c tools.cmake.cmaketoolchain:generator="Ninja"')
+    expected = re.findall(r"RH2_EXPECTED_JOBS=(\d+)", str(client.out))
+    assert len(expected) == 1
+    presets = json.loads(client.load("CMakePresets.json"))
+    assert presets["buildPresets"][0]["jobs"] == int(expected[0])
+
+
+@pytest.mark.parametrize("jobs", [2, 7], ids=["jobs2", "jobs7"])
+def test_presets_jobs_explicit_values(jobs):
+    client = TestClient()
+    client.save({"conanfile.py": GenConanfile().with_settings("os", "arch", "compiler", "build_type")
+                 .with_generator("CMakeToolchain")})
+    client.run('install . -s build_type=Release -c tools.build:jobs={} '
+               '-c tools.cmake.cmaketoolchain:generator="Ninja"'.format(jobs))
+    presets = json.loads(client.load("CMakePresets.json"))
+    assert presets["buildPresets"][0]["jobs"] == jobs
+
+
+def test_presets_jobs_multiconfig_append_replace():
+    client = TestClient()
+    client.save({"conanfile.py": GenConanfile().with_settings("os", "arch", "compiler", "build_type")
+                 .with_generator("CMakeToolchain")})
+    expected = {}
+    for configuration, jobs in (("Release", 2), ("Debug", 7), ("Debug", 3)):
+        client.run('install . -s build_type={} -c tools.build:jobs={} '
+                   '-c tools.cmake.cmaketoolchain:generator="Ninja Multi-Config"'
+                   .format(configuration, jobs))
+        expected[configuration] = jobs
+        presets = json.loads(client.load("CMakePresets.json"))
+        builds = presets["buildPresets"]
+        actual = {item["configuration"]: item["jobs"] for item in builds}
+        assert len(builds) == len(expected)
+        assert actual == expected

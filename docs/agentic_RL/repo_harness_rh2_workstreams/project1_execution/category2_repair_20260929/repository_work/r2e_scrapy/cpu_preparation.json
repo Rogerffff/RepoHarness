@@ -1,0 +1,472 @@
+{
+  "as_of": "2026-10-03",
+  "instance_id": "scrapy__a95a338eeada7275a5289cf036136610ebaf07eb",
+  "scope": "cpu_acceptance_complete_gpu_handoff",
+  "host": "cpu-b",
+  "source_preparation_jobs": [
+    {
+      "job": "scrapy-a95a-source-20261002T165219Z",
+      "status": "busy_not_started",
+      "exit_code": 75,
+      "remote_job_output": "/work/rh2-category2-20261003/jobs/r2e_scrapy/scrapy-a95a-source-20261002T165219Z",
+      "host": "cpu-a"
+    },
+    {
+      "job": "scrapy-a95a-source-20261002T165822Z",
+      "status": "busy_not_started",
+      "exit_code": 75,
+      "remote_job_output": "/work/rh2-category2-20261003/jobs/r2e_scrapy/scrapy-a95a-source-20261002T165822Z",
+      "host": "cpu-a"
+    },
+    {
+      "job": "scrapy-a95a-source-20261002T170556Z",
+      "status": "busy_not_started",
+      "exit_code": 75,
+      "remote_job_output": "/work/rh2-category2-20261003/jobs/r2e_scrapy/scrapy-a95a-source-20261002T170556Z",
+      "host": "cpu-a"
+    },
+    {
+      "job": "scrapy-a95a-source-b-20261002T171334Z",
+      "host": "cpu-b",
+      "status": "busy_not_started",
+      "exit_code": 75,
+      "remote_job_output": "/work/rh2-category2-20261003/jobs/r2e_scrapy/scrapy-a95a-source-b-20261002T171334Z"
+    },
+    {
+      "job": "scrapy-a95a-source-b-20261002T172622Z",
+      "host": "cpu-b",
+      "status": "busy_not_started",
+      "exit_code": 75,
+      "remote_job_output": "/work/rh2-category2-20261003/jobs/r2e_scrapy/scrapy-a95a-source-b-20261002T172622Z"
+    },
+    {
+      "job": "scrapy-a95a-source-b-20261002T174027Z",
+      "host": "cpu-b",
+      "status": "source_prepared",
+      "exit_code": 0,
+      "remote_job_output": "/work/rh2-category2-20261003/jobs/r2e_scrapy/scrapy-a95a-source-b-20261002T174027Z"
+    }
+  ],
+  "candidate_inputs": {
+    "packet_id": "scrapy-a95a-inputs-20261002T170126Z",
+    "remote_path": "/work/rh2-category2-20261003/packages/r2e_scrapy/inputs/scrapy-a95a-inputs-20261002T170126Z",
+    "local_evidence": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/inputs/scrapy-a95a-inputs-20261002T170126Z",
+    "tar_sha256": "sha256:cc550f5d99861a41e20214fe1f36ff6506bee92cadad670f2d0dfc28f40e469a",
+    "inventory_sha256": "sha256:ef836a12f7533611c88ae73d018ef5fd3a494f71dc35936a34bd20dc57f812ca",
+    "verified_files": 13,
+    "current_planned_matrix_runs": 8,
+    "formal_release_binding": "cat2-cpu-r2e078079-swe7-git-20261003-v1",
+    "verified_hosts": {
+      "cpu-a": {
+        "remote_path": "/work/rh2-category2-20261003/packages/r2e_scrapy/inputs/scrapy-a95a-inputs-20261002T170126Z",
+        "verified_files": 13
+      },
+      "cpu-b": {
+        "remote_path": "/work/rh2-category2-20261003/packages/r2e_scrapy/inputs/scrapy-a95a-inputs-20261002T170126Z",
+        "verified_files": 13
+      }
+    },
+    "current_host": "cpu-b"
+  },
+  "remaining": [
+    "统一GPU队列核验与两模型各首次求解",
+    "回执轨迹／候选／评分语义审计及必要修复"
+  ],
+  "probe_ready": false,
+  "host_assignment": {
+    "host": "cpu-b",
+    "status": "open",
+    "actor_stub_port": 18197,
+    "instruction": "本题固定cpu-b，不向cpu-a提交新作业，不跨机并跑同题。",
+    "actor_gateway_port": 18196,
+    "port_correction": "取消原18315；同包串行复用18196/18197。"
+  },
+  "tools_packet": {
+    "packet_id": "scrapy-a95a-tools-20261002T172428Z",
+    "remote_path": "/work/rh2-category2-20261003/packages/r2e_scrapy/tools/scrapy-a95a-tools-20261002T172428Z",
+    "inventory_sha256": "cc14bd8a60c1de35c0086ccd34d0f6635a3b60529150b83ee79a9d4fc76b75b8",
+    "files": {
+      "cpu_workflow.py": {
+        "sha256": "963f5962fb8cc555cd3743d03c7cd8484ab32ee466947bed220a3060e1721137",
+        "bytes": 6921
+      },
+      "capture_warning_records.py": {
+        "sha256": "8457012734b63420340f2d9acb6560db7189a7eb5d80cb540a1f2ebbb58556b4",
+        "bytes": 2772
+      },
+      "private_actor_C1_commands.json": {
+        "sha256": "1c5d6f7b3490c140e0f3005c5a16ed6c3719236c430640c29f911fdb37b3b0f1",
+        "bytes": 6130
+      }
+    },
+    "status": "current_cli_orchestration_only"
+  },
+  "formal_release": {
+    "release_id": "cat2-cpu-r2e078079-swe7-git-20261003-v1",
+    "remote_path": "/work/rh2-category2-20261003/releases/cat2-cpu-r2e078079-swe7-git-20261003-v1",
+    "manifest_sha256": "80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9",
+    "revision_ids": [
+      "r2e-mr-066",
+      "r2e-mr-067"
+    ],
+    "host_readback": "coordinator_837_files_trusted48_216_and_owner_full_manifest_verification",
+    "task_material_digest_matches_reviewed_rev4": true,
+    "actual_actor_or_grading": "new_r5_actor_executed; completed_r4_matrix_preserved"
+  },
+  "shared_builder_adapter": {
+    "status": "shared_fixed_entry_used",
+    "builder_sha256": "5af7dc214976336ea440674bc4416cfa0a805881463798e05ebbb3e33af19471",
+    "job": "scrapy-a95a-build-b-20261002T175157Z",
+    "transport_resources_cleanup": "coordinator_smoke_reused_not_repeated"
+  },
+  "retired_tools_packets": [
+    {
+      "packet_id": "scrapy-a95a-tools-20261002T172219Z",
+      "remote_path": "/work/rh2-category2-20261003/packages/r2e_scrapy/tools/scrapy-a95a-tools-20261002T172219Z",
+      "inventory_sha256": "c4897e0e15a683f74d3fcb1171b977e67095e99d1ee1a5b82cd08cc5e32a1470",
+      "files": {
+        "cpu_workflow.py": {
+          "sha256": "7179453e31cd864ff2dc9bd8643fe83dfa708642e21d52d0204ad7386b47b2cc",
+          "bytes": 9410
+        },
+        "capture_warning_records.py": {
+          "sha256": "8457012734b63420340f2d9acb6560db7189a7eb5d80cb540a1f2ebbb58556b4",
+          "bytes": 2772
+        },
+        "private_actor_C1_commands.json": {
+          "sha256": "1c5d6f7b3490c140e0f3005c5a16ed6c3719236c430640c29f911fdb37b3b0f1",
+          "bytes": 6130
+        }
+      },
+      "status": "retired_before_execution",
+      "reason": "共用发布者单一维护builder归属/清理适配，不使用此包中的准备适配。"
+    }
+  ],
+  "trusted_prepared": {
+    "job": "scrapy-a95a-dev-b-20261002T183830Z",
+    "host": "cpu-b",
+    "remote_path": "/work/rh2-category2-20261003/packages/r2e_scrapy/acceptance/scrapy-a95a-dev-b-20261002T183830Z/prepared_r5",
+    "evidence_path": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/scrapy-a95a-dev-b-20261002T183830Z/remote_evidence/acceptance/prepared_r5",
+    "exit_code": 0,
+    "single_task": true,
+    "gold_sha_verified_against_private_source": true,
+    "manifest_sha256": "80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9",
+    "prepared_task_face_load_passed": true,
+    "task_acceptance": "non_author_cpu_acceptance_passed"
+  },
+  "public_dev_notes": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/public_dev_notes.md",
+    "sha256": "sha256:49cc51a8b8c559c1e7e4b601f13e5f05684fd141eb80ca64e41cadf3d1969f8e",
+    "scope": "neutral_public_environment_draft",
+    "current_cpu_actor_validation": "validated_C1_actor_environment_file_repro_and_public_four_tests",
+    "contains_private_candidate_or_grading_notes": false
+  },
+  "runtime_for_new_jobs": {
+    "remote_python": "/work/rh2-category2-20261003/runtime_cpu_v2/rh2/.venv/bin/python",
+    "status": "coordinator_verified_three_hosts",
+    "torch": "2.13.0+cpu",
+    "torch_cuda": null,
+    "harness_dependency_imports": "verified_by_coordinator_not_task_actor_acceptance"
+  },
+  "source_image_prepared": {
+    "job": "scrapy-a95a-source-b-20261002T174027Z",
+    "host": "cpu-b",
+    "evidence_path": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/scrapy-a95a-source-b-20261002T174027Z/remote_evidence",
+    "source_image_id_actual": "sha256:d8fd84df1c7415d2470337b6c0774f16f83af4bd89fde3fb0334b72b85a6978b",
+    "source_manifest_digest": "sha256:cd01a127a7c83ad8e59e0380f34dbf20e7469fe0ae4ebb051c83993dbc4d067d",
+    "relay_image_id_actual": "sha256:ec7d6c95cd3692a2e2d228a8b1ca74e4025b54121fcc4c5da6f09cfa473315ad",
+    "exit_code": 0,
+    "derived_material_image": false
+  },
+  "historical_trusted_prepared": [
+    {
+      "job": "scrapy-a95a-prepared-b-20261002T172535Z",
+      "host": "cpu-b",
+      "remote_path": "/work/rh2-category2-20261003/packages/r2e_scrapy/acceptance/scrapy-a95a-prepared-b-20261002T172535Z",
+      "evidence_path": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/scrapy-a95a-prepared-b-20261002T172535Z/remote_evidence",
+      "exit_code": 0,
+      "single_task": true,
+      "gold_sha_verified_against_private_source": true,
+      "manifest_sha256": "0ce1aaf92f625f385fdf0ed560a9f5d505e9c555c2c9a00d262d503c79f79863",
+      "task_acceptance": "not_run"
+    },
+    {
+      "job": "scrapy-a95a-build-b-20261002T175157Z",
+      "host": "cpu-b",
+      "remote_path": "/work/rh2-category2-20261003/packages/r2e_scrapy/acceptance/scrapy-a95a-build-b-20261002T175157Z",
+      "evidence_path": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/scrapy-a95a-build-b-20261002T175157Z/remote_evidence",
+      "exit_code": 0,
+      "single_task": true,
+      "gold_sha_verified_against_private_source": true,
+      "manifest_sha256": "621e73660ea5685b9a77c353e7f4f3664d7eefa073aed8454bae1ae3e32f388f",
+      "task_acceptance": "matrix_executed_pending_actor_and_independent_review"
+    }
+  ],
+  "historical_releases": [
+    {
+      "release_id": "cat2-cpu-r2e066068-swe5-20261003-v1",
+      "remote_path": "/work/rh2-category2-20261003/releases/cat2-cpu-r2e066068-swe5-20261003-v1",
+      "manifest_sha256": "0ce1aaf92f625f385fdf0ed560a9f5d505e9c555c2c9a00d262d503c79f79863",
+      "revision_ids": [
+        "r2e-mr-066",
+        "r2e-mr-067"
+      ],
+      "host_readback": "confirmed_by_coordinator_797_files_trusted48_216",
+      "task_material_digest_matches_reviewed_rev4": true,
+      "actual_actor_or_grading": "not_run"
+    },
+    {
+      "release_id": "cat2-cpu-r2e070077-swe6-20261003-v1",
+      "remote_path": "/work/rh2-category2-20261003/releases/cat2-cpu-r2e070077-swe6-20261003-v1",
+      "manifest_sha256": "621e73660ea5685b9a77c353e7f4f3664d7eefa073aed8454bae1ae3e32f388f",
+      "revision_ids": [
+        "r2e-mr-066",
+        "r2e-mr-067"
+      ],
+      "host_readback": "coordinator_823_files_trusted48_216_and_owner_checksum",
+      "task_material_digest_matches_reviewed_rev4": true,
+      "actual_actor_or_grading": "matrix_executed_evidence_audited"
+    }
+  ],
+  "derived_image": {
+    "job": "scrapy-a95a-build-b-20261002T175157Z",
+    "host": "cpu-b",
+    "facts_path": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/scrapy-a95a-build-b-20261002T175157Z/remote_evidence/derived/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/facts.json",
+    "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+    "recipe_sha256": "sha256:22f7c2ec0e7620445acec40a03e771081a29de50e54c8dec88ac991cc05eac0a",
+    "ok": true,
+    "failures": []
+  },
+  "formal_matrix": {
+    "job": "scrapy-a95a-matrix-b-20261002T175619Z",
+    "host": "cpu-b",
+    "remote_path": "/work/rh2-category2-20261003/packages/r2e_scrapy/acceptance/scrapy-a95a-matrix-b-20261002T175619Z",
+    "evidence_path": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/scrapy-a95a-matrix-b-20261002T175619Z/remote_evidence",
+    "exit_code": 0,
+    "manifest_sha256": "621e73660ea5685b9a77c353e7f4f3664d7eefa073aed8454bae1ae3e32f388f",
+    "status": "executed_needs_original_log_and_semantic_review",
+    "candidate_count": 8,
+    "owner_audit": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/cpu_acceptance.json",
+    "all_eight_outcomes_match": true,
+    "actual_counts": {
+      "resolved": 2,
+      "unresolved_tests_failed": 6,
+      "reference_missing": 0
+    }
+  },
+  "development_jobs": [
+    {
+      "job": "scrapy-a95a-dev-b-20261002T181041Z",
+      "host": "cpu-b",
+      "exit_code": 75,
+      "status": "busy_not_started",
+      "scope": "r5_prepare_actor_private_warnings",
+      "local_evidence": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/scrapy-a95a-dev-b-20261002T181041Z"
+    },
+    {
+      "job": "scrapy-a95a-dev-b-20261002T181526Z",
+      "exit_code": 75,
+      "host": "cpu-b",
+      "status": "busy_not_started",
+      "local_evidence": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/scrapy-a95a-dev-b-20261002T181526Z"
+    },
+    {
+      "job": "scrapy-a95a-dev-b-20261002T182013Z",
+      "exit_code": 75,
+      "host": "cpu-b",
+      "status": "busy_not_started",
+      "local_evidence": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/scrapy-a95a-dev-b-20261002T182013Z"
+    },
+    {
+      "job": "scrapy-a95a-dev-b-20261002T182340Z",
+      "exit_code": 75,
+      "host": "cpu-b",
+      "status": "busy_not_started",
+      "local_evidence": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/scrapy-a95a-dev-b-20261002T182340Z"
+    },
+    {
+      "job": "scrapy-a95a-dev-b-20261002T182659Z",
+      "exit_code": 75,
+      "host": "cpu-b",
+      "status": "busy_not_started",
+      "local_evidence": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/scrapy-a95a-dev-b-20261002T182659Z"
+    },
+    {
+      "job": "scrapy-a95a-dev-b-20261002T183135Z",
+      "exit_code": 75,
+      "host": "cpu-b",
+      "status": "busy_not_started",
+      "local_evidence": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/scrapy-a95a-dev-b-20261002T183135Z"
+    },
+    {
+      "job": "scrapy-a95a-dev-b-20261002T183423Z",
+      "exit_code": 75,
+      "host": "cpu-b",
+      "status": "busy_not_started",
+      "local_evidence": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/scrapy-a95a-dev-b-20261002T183423Z"
+    },
+    {
+      "job": "scrapy-a95a-dev-b-20261002T183830Z",
+      "exit_code": 0,
+      "host": "cpu-b",
+      "status": "executed_cpu_evidence_review_passed",
+      "local_evidence": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/scrapy-a95a-dev-b-20261002T183830Z"
+    }
+  ],
+  "actual_actor": {
+    "job": "scrapy-a95a-dev-b-20261002T183830Z",
+    "release_id": "cat2-cpu-r2e078079-swe7-git-20261003-v1",
+    "release_manifest_sha256": "80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9",
+    "evidence": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/scrapy-a95a-dev-b-20261002T183830Z/remote_evidence",
+    "attempt": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/scrapy-a95a-dev-b-20261002T183830Z/remote_evidence/acceptance/actor_r5/actor/attempt.json",
+    "command_count": 5,
+    "commands_result": [
+      {
+        "id": "r2e_preflight",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "any",
+        "matches_expect": true,
+        "output_bytes": 88,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "R2E rollout 预检（agent 身份，经 CC Bash）"
+      },
+      {
+        "id": "env_python_scrapy",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 121,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "确认解释器与导入来源：预计打印 /testbed/.venv/bin/python 与 3.9.21、scrapy 2.7.0 且 __file__ 为 /testbed/scrapy/__init__.py，并显示本环境 inspect.isgeneratorfunction 会穿透 functools.partial（True）。修复前后输出应相同；若 scrapy 不是从 /testbed 导入，后面的复现结论不可用。"
+      },
+      {
+        "id": "private_C1_apply",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 25,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "仅供CPU桩驱动的正对照开发验证，不提供给求解模型或探针上下文；核私有C1补丁字节并经agent身份应用。"
+      },
+      {
+        "id": "repro_issue_example",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 160,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "仅在 C1 验收容器内：文件形式复现应打印 False，退出码0；不使用 python -c 定义待检查生成器。"
+      },
+      {
+        "id": "pytest_generator_return_tests",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 1044,
+        "output_truncated_to": 200000,
+        "pytest": {
+          "passed": 4
+        },
+        "purpose": "仓库现有公开测试（4 个用例），作为非 partial 行为的回归护栏：修复前后都应 4 passed。注意 conftest.py 会在 tests/keys/ 下重新生成 git-ignore 的 localhost.key/.crt；tests/__init__.py 导入时会做一次注定失败的 DNS 查询，断网下可能多等几秒。-p no:cacheprovider 只是为了不写 .pytest_cache。"
+      }
+    ],
+    "harness_exit_code": 0,
+    "cc_version": "2.1.205 (Claude Code)",
+    "actual_agent_uid": "54321",
+    "actual_interpreter": "/testbed/.venv/bin/python",
+    "python_version": "3.9.21",
+    "scrapy_version": "2.7.0",
+    "scrapy_source": "/testbed/scrapy/__init__.py",
+    "public_repro_result": false,
+    "public_tests_passed": 4,
+    "actual_image_id": "sha256:ac29555d3b7cceaf6d2ce5654eda8d04408bcea370e6373963a04565b7d05ded",
+    "raw_checks": {
+      "interpreter_in_tool_result": false,
+      "host_log_present": true,
+      "no_harness_dir_in_container": true,
+      "no_launcher_or_done_marker": true,
+      "message_start_matches_stub_requests": true,
+      "exit_code_zero": true,
+      "result_event_present": true,
+      "log_complete": true,
+      "bashenv_denied_for_agent": false,
+      "all_commands_ran": true,
+      "all_match_expect": true,
+      "r2e_preflight_ok": true,
+      "image_is_overlay_derived_id": true
+    },
+    "legacy_check_markers_absent": [
+      "interpreter_in_tool_result",
+      "bashenv_denied_for_agent"
+    ],
+    "legacy_check_explanation": "通用场景只搜RH2_SYS_EXECUTABLE和RH2_BASHENV_WRITE标记，本清单没有这两种输出。实际解释器/激活身份以env捕获与activation_check/prelaunch证明；保留raw false，未追加标记命令、未将值改成true。",
+    "prelaunch_ok": true,
+    "activation_ok": true,
+    "r2e_preflight": {
+      "failures": [],
+      "lines": [
+        "RH2_PREFLIGHT_INTERPRETER=ok",
+        "RH2_PREFLIGHT_HIDDEN_TESTS=ok",
+        "RH2_PREFLIGHT_GIT_HISTORY=ok"
+      ]
+    },
+    "actual_limits": {
+      "cpus": 2.0,
+      "memory_bytes": 4294967296,
+      "tmp_tmpfs_bytes": 1073741824,
+      "home_tmpfs_bytes": 268435456,
+      "writable_layer_quota_bytes": 8589934592,
+      "pids_limit": 512
+    },
+    "stub_requests": 6,
+    "real_model_result": false,
+    "cleanup": {
+      "container_rm": 0,
+      "network_failures": [],
+      "relay_failures": [],
+      "stub_rc": 0,
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "residual_after_force": []
+    }
+  },
+  "actual_warning_observations": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/cpu_acceptance.json",
+  "image_reuse_binding": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/scrapy-a95a-dev-b-20261002T183830Z/remote_evidence/acceptance/image_reuse_binding.json",
+  "cpu_acceptance_complete": true,
+  "non_author_review": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/review_cpu_acceptance_20261003.md",
+    "sha256": "sha256:e73f726461f73509228090fa103ea81ab13833f29bd65a40852001c26b8aa9c7"
+  },
+  "probe_submission": {
+    "request_path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/probe_request.json",
+    "status": "registered_pending_gpu_host_validation_and_admission",
+    "owner_retains_result_audit": true,
+    "handoff_path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/probe_handoff_20261003.json",
+    "request_sha256": "sha256:2e351e520c216977d88529b1725a2af0f609a2ede7423a425c0740b2284965a0",
+    "executor_registry_acknowledged": true
+  },
+  "work_control": {
+    "status": "administrative_pause_resumed_three_party_workflow",
+    "date": "2026-10-03",
+    "timezone": "Asia/Singapore",
+    "updated_at_utc": "2026-10-02T20:32:19.395431+00:00",
+    "checkpoint": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/resume_checkpoint_20261003.md",
+    "previous_pause_checkpoint": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/pause_checkpoint_20261003.md",
+    "authorization_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/../../coordination_resume_20261003.md",
+    "cpu_job_in_flight": false,
+    "child_agent_in_flight": false,
+    "background_retry_or_dispatch": false,
+    "cpu_dispatch_gate_lifted_by_this_owner": false,
+    "cpu_rerun_required": false,
+    "active_probe_request_id": "r2e-scrapy-a95a-cpu-rev4-20261003"
+  }
+}

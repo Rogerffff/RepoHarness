@@ -1,0 +1,448 @@
+{
+  "schema_id": "rh2.r2e_pillow_model_semantic_audit.v1",
+  "as_of": "2026-10-03",
+  "attempt_id": "gpu1003-pillow2d01-coder-a1",
+  "instance_id": "pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+  "model": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+  "status": "owner_audited_pending_executor_independent_transport_review",
+  "official_report": {
+    "schema_id": "rh2.grading_report.v1",
+    "report_id": "rpt_grading_3e7bebe5",
+    "trajectory_id": "gpu1003-pillow2d01-coder-a1",
+    "task_id": "r2e_gym_subset::pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+    "grader_name": "swebench_official_parser",
+    "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+    "outcome": "unresolved",
+    "failure_category": "tests_failed",
+    "reward": 0.0,
+    "reward_scale_version": "binary_v1",
+    "f2p_pass_count": null,
+    "f2p_total_count": null,
+    "p2p_fail_count": null,
+    "p2p_total_count": null,
+    "execution_failure_stage": null,
+    "execution_failure_evidence": [],
+    "grading_semantics": "r2e_expected_map",
+    "expected_match_count": 60,
+    "expected_total_count": 62,
+    "patch_hygiene": {
+      "cleaned_patch_digest": "sha256:a1a50fc37fbb28849d10a42515aa4d39a9b0d0ffd7068c9e6b4feaaa14d21e39",
+      "digest_kind": "applied_entry_set",
+      "replayed_on_clean_checkout": true,
+      "test_files_modified": false,
+      "forbidden_path_touched": false,
+      "forbidden_paths": [],
+      "verdict": "clean"
+    },
+    "infra_failure_detail": null,
+    "eval_log_ref": {
+      "ref_id": "evallog_gpu1003-pillow2d01-coder_3e7bebe5",
+      "sha256": "sha256:2d12197afcc62c7e0c133829fe669d3c199481a85da2d51e8b86172abb532b96",
+      "byte_size": 13682
+    },
+    "timings": {
+      "schema_id": "rh2.grading_timing_record.v1",
+      "record_id": "timing_3e7bebe5",
+      "trajectory_id": "gpu1003-pillow2d01-coder-a1",
+      "task_id": "r2e_gym_subset::pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+      "image_pull_seconds": 0.0,
+      "env_reset_seconds": 9.04,
+      "prep_seconds": 1.18,
+      "test_seconds": 0.99,
+      "total_grading_seconds": 46.754,
+      "queue_wait_seconds": 0.0,
+      "container_peak_memory_mb": 489.984,
+      "queue_depth_at_enqueue": null,
+      "backpressure_triggered": false
+    },
+    "graded_at_utc": "2026-10-02T18:39:25.994957Z"
+  },
+  "independent_expected_map_readback": {
+    "total": 62,
+    "matches": 60,
+    "keys_equal": true,
+    "mismatches": [
+      {
+        "key": "TestFileTiff.test_photometric[1]",
+        "expected": "PASSED",
+        "observed": "FAILED"
+      },
+      {
+        "key": "TestFileTiff.test_photometric[L]",
+        "expected": "PASSED",
+        "observed": "FAILED"
+      }
+    ],
+    "known_expected_failed_unchanged": true
+  },
+  "public_delivery": {
+    "original_statement_exactly_in_prompt": true,
+    "statement_sha256": "sha256:ad8f5c57410407c9373ed601063a9f588b0eb534e39ede1da2e1aff2e6c33003",
+    "reviewed_brief_body_in_prompt": true,
+    "brief_rendering": "outer trailing whitespace stripped; body unchanged",
+    "brief_source_sha256": "sha256:ef6cd806aa0602c36674cb5fd526f7c60fda7f7d27cfcb5e58e1cd0496bc6647",
+    "prompt_sha256": "sha256:784cd77def70d0f34b26f000652cb0b2a8003a8f9e759052beb2775bd2ec80c7"
+  },
+  "actual_solve": {
+    "harness_exit_code": 0,
+    "termination": "completed",
+    "solve_seconds": 68.092,
+    "harness_log_complete": true,
+    "wall_seconds": 10800,
+    "max_turns": 240,
+    "max_context_len": 196608,
+    "max_new_tokens": 65536,
+    "budget_version": "probe-wide-v1",
+    "gateway_drain": {
+      "session_id": "gpu1003-pillow2d01-coder-a1",
+      "revoked": true,
+      "active_requests": 0,
+      "drained": true,
+      "ts": 1790966316.5802383
+    },
+    "cleanup": {
+      "container_rm": 0,
+      "container_left": "",
+      "network_failures": [],
+      "relay_failures": [],
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "cleanup_ok": true
+    },
+    "trajectory_summary": {
+      "assistant_events": 49,
+      "tool_calls": {
+        "Bash": 17,
+        "Write": 6,
+        "Read": 2,
+        "Edit": 2
+      },
+      "tool_calls_total": 27,
+      "tool_result_errors": 3,
+      "cc_result": {
+        "subtype": "success",
+        "is_error": false,
+        "num_turns": 28,
+        "duration_ms": 63619,
+        "duration_api_ms": 60319,
+        "total_cost_usd": 4.80755,
+        "stop_reason": "end_turn",
+        "usage": {
+          "input_tokens": 931980,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "output_tokens": 5906,
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "",
+          "iterations": [],
+          "speed": "standard"
+        },
+        "modelUsage": {
+          "slime-actor": {
+            "inputTokens": 931980,
+            "outputTokens": 5906,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0,
+            "webSearchRequests": 0,
+            "costUSD": 4.80755,
+            "contextWindow": 196608,
+            "maxOutputTokens": 32000
+          }
+        }
+      },
+      "init": {
+        "model": "slime-actor",
+        "permissionMode": "bypassPermissions",
+        "claude_code_version": "2.1.205",
+        "tools": [
+          "Bash",
+          "Edit",
+          "NotebookEdit",
+          "Read",
+          "Write"
+        ],
+        "mcp_servers": [],
+        "cwd": "/testbed"
+      }
+    },
+    "image_used": "sha256:a473288fadb9440c5ad95c0bd7035dd6ea9e185eb20fd0f21dfe890da0dfee93",
+    "overlay": {
+      "derived_image_ref": "rh2-gpu1003-pillow2d01-v1/pillow:2d01f7d02243-r2e_derive_v1m2s",
+      "derived_image_id": "sha256:a473288fadb9440c5ad95c0bd7035dd6ea9e185eb20fd0f21dfe890da0dfee93",
+      "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+      "recipe_sha256": "sha256:54e35b094ecff3dffe724f34443a928519da09480152c21d60b44752b111845a",
+      "base_image_ref": "namanjain12/pillow_final:2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+      "built_at_utc": "2026-10-02 18:03:46.094625+00:00"
+    }
+  },
+  "candidate": {
+    "form": "frozen_patch_v1+verified_git_transport",
+    "export_ok": true,
+    "empty": false,
+    "frozen_export_ok": true,
+    "frozen_patch_digest": "sha256:1201329fd2d91c1b4dec70d9d1fe74dd758fb79a91a7f63d4d4531d334c15763",
+    "baseline_manifest_digest": "sha256:1e637a9b2ca207cfef88c25daad21af6846a144729cd8cd82e5ea09c836fc535",
+    "entry_count": 10,
+    "entries": [
+      {
+        "path": "comprehensive_test.py",
+        "operation": "add",
+        "object_type": "regular",
+        "mode": "100644",
+        "content_digest": "sha256:bb9ad6fd8a214fc2320a874c24d8b583d99c4d175679cd48b965799b4705f2c1"
+      },
+      {
+        "path": "reproduce_issue.py",
+        "operation": "add",
+        "object_type": "regular",
+        "mode": "100644",
+        "content_digest": "sha256:4367f51ba235cacce918c51119182c13e829dcea6472568268496e5e85f59d04"
+      },
+      {
+        "path": "rgb_test.py",
+        "operation": "add",
+        "object_type": "regular",
+        "mode": "100644",
+        "content_digest": "sha256:3503bbc30db71064408196f048199eea5b1d51a0e63e16a21680aed802ee48ac"
+      },
+      {
+        "path": "src/PIL/TiffImagePlugin.py",
+        "operation": "modify",
+        "object_type": "regular",
+        "mode": "100644",
+        "content_digest": "sha256:624f5e0d419b97175ce23ea1899965d41b512a05710b0581f682ce4b5b29b01a"
+      },
+      {
+        "path": "temp.tif",
+        "operation": "add",
+        "object_type": "regular",
+        "mode": "100644",
+        "content_digest": "sha256:48eed50b14dccc5326606fc4d63e861f9032460d4bfc046a57f3b7b1e8e61664"
+      },
+      {
+        "path": "test1.tif",
+        "operation": "add",
+        "object_type": "regular",
+        "mode": "100644",
+        "content_digest": "sha256:15e559593f40b9d13205ed6b4689cf6404d3a215ef9d7627175efdb7a6b44a90"
+      },
+      {
+        "path": "test2.tif",
+        "operation": "add",
+        "object_type": "regular",
+        "mode": "100644",
+        "content_digest": "sha256:20408d3371d6f96c2682bb198eb06f0ec12cce5ee43ec603727426e3fb7e0d7a"
+      },
+      {
+        "path": "test3.tif",
+        "operation": "add",
+        "object_type": "regular",
+        "mode": "100644",
+        "content_digest": "sha256:13cc35e24d15ae6bc90052b988a77bec1ecebd2797af4b9358828fa59fbb074d"
+      },
+      {
+        "path": "test4.tif",
+        "operation": "add",
+        "object_type": "regular",
+        "mode": "100644",
+        "content_digest": "sha256:5e51889197e688b2a5150f38304b3934c624f51419654b6c4e3bf642c61102a0"
+      },
+      {
+        "path": "test5.tif",
+        "operation": "add",
+        "object_type": "regular",
+        "mode": "100644",
+        "content_digest": "sha256:d6ac0defc75f556af5906d3987b6b4e445f8ec99c079db5a958fcbbb60dd41f9"
+      }
+    ],
+    "files": [
+      "comprehensive_test.py",
+      "reproduce_issue.py",
+      "rgb_test.py",
+      "src/PIL/TiffImagePlugin.py",
+      "temp.tif",
+      "test1.tif",
+      "test2.tif",
+      "test3.tif",
+      "test4.tif",
+      "test5.tif"
+    ],
+    "excluded_pathset_changed": true,
+    "classification": {
+      "verdict": "projectable",
+      "reasons": []
+    },
+    "unsafe": false,
+    "export_segments": {
+      "post_census": 0.5035871239997505,
+      "artifact_capture": 0.06085136399997282
+    },
+    "post_omitted_cache": {
+      "dirs": 4,
+      "files": 76
+    },
+    "render": {
+      "base_tree": "7eb93eaa8d57054ae95fafeef1ca4390ce91444f",
+      "post_tree": "490d9c3f70a2abb9b5a62419d1cff97ba8c541a1",
+      "selfcheck_apply_cached_tree": "490d9c3f70a2abb9b5a62419d1cff97ba8c541a1",
+      "selfcheck_ok": true,
+      "forced_binary_paths": [
+        "test1.tif",
+        "test2.tif",
+        "test3.tif",
+        "test4.tif",
+        "test5.tif"
+      ],
+      "attributes_mode": "per_path",
+      "diff_headers": 10,
+      "files_in_patch": [
+        "comprehensive_test.py",
+        "reproduce_issue.py",
+        "rgb_test.py",
+        "src/PIL/TiffImagePlugin.py",
+        "temp.tif",
+        "test1.tif",
+        "test2.tif",
+        "test3.tif",
+        "test4.tif",
+        "test5.tif"
+      ],
+      "binary_hunks": 6,
+      "git_version": "git version 2.43.0",
+      "bytes": 6784,
+      "sha256": "sha256:ddcaf1d793e463a0e2e7e41148b811d8a1eb9e295adb8fdf0fcdf5672e423d4a",
+      "path": "candidate/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96.diff",
+      "baseline_paths_fetched": 1,
+      "baseline_bytes_source": "actual_pre_solver_archive"
+    },
+    "bytes": 6784,
+    "sha256": "sha256:ddcaf1d793e463a0e2e7e41148b811d8a1eb9e295adb8fdf0fcdf5672e423d4a"
+  },
+  "transport": {
+    "source": "original_frozen_patch",
+    "frozen_patch_digest": "sha256:1201329fd2d91c1b4dec70d9d1fe74dd758fb79a91a7f63d4d4531d334c15763",
+    "baseline_manifest_digest": "sha256:1e637a9b2ca207cfef88c25daad21af6846a144729cd8cd82e5ea09c836fc535",
+    "baseline_rebuild_passed": true,
+    "manager_close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "supply_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0,
+      "containers_created_total": 1,
+      "containers_removed_total": 1,
+      "container_history_retained": 1,
+      "leases_total": 1
+    },
+    "cleanup_ok": true,
+    "candidate_review_diff_ok": true
+  },
+  "semantic_result": {
+    "classification": "implementation_incomplete_image_roundtrip",
+    "changed_source": [
+      "src/PIL/TiffImagePlugin.py"
+    ],
+    "fixes_tag_override": true,
+    "preserves_roundtrip_pixels": false,
+    "captured_entry_count": 10,
+    "added_diagnostic_files": [
+      "comprehensive_test.py",
+      "reproduce_issue.py",
+      "rgb_test.py"
+    ],
+    "added_tiff_files": [
+      "temp.tif",
+      "test1.tif",
+      "test2.tif",
+      "test3.tif",
+      "test4.tif",
+      "test5.tif"
+    ],
+    "candidate_condition": "PHOTOMETRIC_INTERPRETATION not in info",
+    "development": {
+      "metadata_tests_passed": 21,
+      "save_selected_tests_passed": 6,
+      "save_subset_repeated_tests_passed": 3,
+      "counts_overlap": true,
+      "reviewed_public_compat_method_used": false,
+      "tool_errors": [
+        "Edit identical old/new text",
+        "nonexistent test_save node",
+        "unsupported explicit RGB tag=1 roundtrip self-test"
+      ]
+    },
+    "failure_location": "test_1.py:460 assert_image_equal(original,reloaded), both 1/L",
+    "interpretation": "通过检查原 tiffinfo 参数保留标签0，没有同步写出像素语义；模型自测只检查标签和已有公开回归，21项metadata与6项save通过（随后3项属于重复）；没有使用已交付的兼容方法，但这不是执行环境失败。往返断言早已存在于固定评分材料，不是因模型得0新增；属于既有C2式漏修。两个旧pytest兼容FAILED不额外扣分。没有当前证据支持评分误拒或环境阻断。",
+    "limits": [
+      "单次0不代表模型总体能力或整题难度",
+      "公开测试通过不证明题面全部行为正确",
+      "不把确定性CPU正确解计入模型成绩",
+      "没有申请超出probe-wide-v1的额外模型尝试"
+    ]
+  },
+  "evidence_files": {
+    "runs/ordinary_gpu_probe_20261002/remote/queue_v7/results/gpu1003-pillow2d01-coder-a1/result.json": {
+      "sha256": "sha256:9174623838c5fa13315f59b08679ff1688903e2569d5f443d34dcb6301ea5b57",
+      "size": 2696
+    },
+    "runs/ordinary_gpu_probe_20261002/remote/queue_v7/results/gpu1003-pillow2d01-coder-a1/input_check.json": {
+      "sha256": "sha256:3f37f19827b0ed694e4713ab4bb65d89b21eb44ba28b775249b654a76435bdd6",
+      "size": 2578
+    },
+    "runs/ordinary_gpu_probe_20261002/remote/queue_v7/results/gpu1003-pillow2d01-coder-a1/gateway_audit.json": {
+      "sha256": "sha256:3a08ff39b343c52d4f8ee9e5454ca7fa21f98c078cc4a5ce5f3a3c541f1d45d5",
+      "size": 394
+    },
+    "runs/ordinary_gpu_probe_20261002/remote/queue_v7/results/gpu1003-pillow2d01-coder-a1/solver_prompt.txt": {
+      "sha256": "sha256:784cd77def70d0f34b26f000652cb0b2a8003a8f9e759052beb2775bd2ec80c7",
+      "size": 6522
+    },
+    "runs/ordinary_gpu_probe_20261002/remote/queue_v7/results/gpu1003-pillow2d01-coder-a1/grading/report.json": {
+      "sha256": "sha256:a49e2a00e7f95c547c1294836333e009778b9bc73f68cea1858cdd289ced5491",
+      "size": 1876
+    },
+    "runs/ordinary_gpu_probe_20261002/remote/queue_v7/results/gpu1003-pillow2d01-coder-a1/grading/projection.json": {
+      "sha256": "sha256:5059312064ebba2d916448fadeb85ccac93bfbd253d9e4726c1347106e739fca",
+      "size": 507
+    },
+    "runs/ordinary_gpu_probe_20261002/remote/queue_v7/results/gpu1003-pillow2d01-coder-a1/grading/status.json": {
+      "sha256": "sha256:260883994d6ae0b8e2f7abceacdf16e4f543c8c5140f0dcbeb0416725e7dd234",
+      "size": 2660
+    },
+    "runs/ordinary_gpu_probe_20261002/remote/queue_v7/results/gpu1003-pillow2d01-coder-a1/attempt/attempt.json": {
+      "sha256": "sha256:4fe343c288b28304e375e6f32fd7bc56c6d25542617da3d5d7f509708866f6de",
+      "size": 19587
+    },
+    "runs/ordinary_gpu_probe_20261002/remote/queue_v7/results/gpu1003-pillow2d01-coder-a1/attempt/frozen/baseline_manifest.json": {
+      "sha256": "sha256:165962423f07cfc26f0a5bc57e8f250a776a02d288a9df69e608135c4f4e2884",
+      "size": 345763
+    },
+    "runs/ordinary_gpu_probe_20261002/remote/queue_v7/results/gpu1003-pillow2d01-coder-a1/attempt/frozen/frozen_patch.json": {
+      "sha256": "sha256:2d3fe8fffcccb8515ebb5e21eada6d8ba155db1a0102489501ff77f02d739c1f",
+      "size": 117587
+    },
+    "runs/ordinary_gpu_probe_20261002/remote/queue_v7/results/gpu1003-pillow2d01-coder-a1/attempt/harness/trajectory.jsonl": {
+      "sha256": "sha256:06a1e19f6ac99a29161bd15fad7d02eba946d8ee9c9a42e7671ef93d44e48436",
+      "size": 403735
+    },
+    "runs/ordinary_gpu_probe_20261002/remote/queue_v7/results/gpu1003-pillow2d01-coder-a1/attempt/candidate/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96.diff": {
+      "sha256": "sha256:ddcaf1d793e463a0e2e7e41148b811d8a1eb9e295adb8fdf0fcdf5672e423d4a",
+      "size": 6784
+    },
+    "runs/ordinary_gpu_probe_20261002/remote/queue_v7/results/gpu1003-pillow2d01-coder-a1/grading/eval_logs/evallog_gpu1003-pillow2d01-coder_3e7bebe5.eval.log": {
+      "sha256": "sha256:2d12197afcc62c7e0c133829fe669d3c199481a85da2d51e8b86172abb532b96",
+      "size": 13682
+    }
+  }
+}

@@ -1,0 +1,13 @@
+diff --git a/src/PIL/ImageOps.py b/src/PIL/ImageOps.py
+index c6201d8..e101ee7 100644
+--- a/src/PIL/ImageOps.py
++++ b/src/PIL/ImageOps.py
+@@ -525,6 +525,8 @@ def invert(image):
+     lut = []
+     for i in range(256):
+         lut.append(255 - i)
++    if image.mode == "1":
++        return image.point(lambda v: 0 if v else 255)
+     return _lut(image, lut)
+ 
+ 

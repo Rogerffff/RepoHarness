@@ -1,0 +1,35 @@
+diff --git a/aiohttp/http_parser.py b/aiohttp/http_parser.py
+--- a/aiohttp/http_parser.py
++++ b/aiohttp/http_parser.py
+@@ -66,6 +66,10 @@ ASCIISET: Final[Set[str]] = set(string.printable)
+ METHRE: Final[Pattern[str]] = re.compile(r"[!#$%&'*+\-.^_`|~0-9A-Za-z]+")
+ VERSRE: Final[Pattern[str]] = re.compile(r"HTTP/(\d).(\d)")
+ HDRRE: Final[Pattern[bytes]] = re.compile(rb"[\x00-\x1F\x7F()<>@,;:\[\]={} \t\"\\]")
++# field-name = token (RFC 9110 section 5.1); ASCII tchar only
++HDR_NAME_TOKEN: Final[Pattern[bytes]] = re.compile(rb"[!#$%&'*+\-.^_`|~0-9A-Za-z]+")
++# request-line must not contain C0 controls or DEL (incl. HTAB, LF, VT, FF, CR)
++REQUEST_LINE_CTL: Final[Pattern[str]] = re.compile(r"[\x00-\x1f\x7f]")
+ HEXDIGIT = re.compile(rb"[0-9a-fA-F]+")
+ 
+ 
+@@ -146,7 +150,7 @@ class HeadersParser:
+                 raise InvalidHeader(line)
+ 
+             bvalue = bvalue.lstrip(b" \t")
+-            if HDRRE.search(bname):
++            if not HDR_NAME_TOKEN.fullmatch(bname):
+                 raise InvalidHeader(bname)
+             if len(bname) > self.max_field_size:
+                 raise LineTooLong(
+@@ -546,8 +550,10 @@ class HttpRequestParser(HttpParser[RawRequestMessage]):
+     def parse_message(self, lines: List[bytes]) -> RawRequestMessage:
+         # request line
+         line = lines[0].decode("utf-8", "surrogateescape")
++        if REQUEST_LINE_CTL.search(line):
++            raise BadStatusLine(line)
+         try:
+-            method, path, version = line.split(maxsplit=2)
++            method, path, version = line.split(" ", maxsplit=2)
+         except ValueError:
+             raise BadStatusLine(line) from None
+ 

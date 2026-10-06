@@ -1,0 +1,26 @@
+{
+  "as_of": "2026-10-03",
+  "task_id": "swe_gym_lite::python__mypy-10174",
+  "source_job": "gpu1003-mypy10174-qwen36-a1",
+  "issue": "GPU派生COPY wheel为0600，候选UID54322 editable构建依赖读取Permission denied；后续pip pytest导致末命令RC0。",
+  "historical_raw_reward": 1,
+  "historical_result_unchanged": true,
+  "test_rc": 0,
+  "reference_keys": 4,
+  "diagnostics_install_failed_commands": [
+    {
+      "cmd": "python -m pip install -e .",
+      "rc": 1
+    }
+  ],
+  "observed_import_path": "/testbed/mypy/__init__.py",
+  "affected_gpu_image_id": "sha256:32f313c82fd4f065517b8fd1faff22b79a8c1c8e108200c85c8de8188191baad",
+  "original_frozen_patch_digest": "sha256:5772af211384a9828c83dd61c60c96a6447475e34c4b2bfb891f584ac4304664",
+  "original_baseline_manifest_digest": "sha256:337be5fc6ed9a5013249a17bcfb9e48cf7dce2aa3ca27cb4b8b9fd9f0efb7172",
+  "status": "narrow_revalidation_required",
+  "revalidation_scope": "同公开source digest和wheel SHA，明确0644派生材料，原FrozenPatch/完整baseline身份重建和候选评分；核meet.py实际导入及候选源码摘要，不重做旧矩阵或模型求解。",
+  "gpu_coder_pending": true,
+  "cpu_previous_matrix_unchanged": true,
+  "mypy15184_not_observed_affected": true,
+  "source_result_dir": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-mypy10174-qwen36-a1"
+}

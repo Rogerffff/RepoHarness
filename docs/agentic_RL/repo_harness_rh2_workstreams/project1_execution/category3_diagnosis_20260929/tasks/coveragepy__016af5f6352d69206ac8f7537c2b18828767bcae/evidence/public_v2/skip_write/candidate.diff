@@ -1,0 +1,34 @@
+diff --git a/coverage/sqldata.py b/coverage/sqldata.py
+index 613a280c..397663d5 100644
+--- a/coverage/sqldata.py
++++ b/coverage/sqldata.py
+@@ -439,6 +439,8 @@ class CoverageData(SimpleReprMixin):
+         with self._connect() as con:
+             self._set_context_id()
+             for filename, linenos in iitems(line_data):
++                if not _utf8_encodable(filename):
++                    continue
+                 linemap = nums_to_numbits(linenos)
+                 file_id = self._file_id(filename, add=True)
+                 query = "select numbits from line_bits where file_id = ? and context_id = ?"
+@@ -471,6 +473,8 @@ class CoverageData(SimpleReprMixin):
+         with self._connect() as con:
+             self._set_context_id()
+             for filename, arcs in iitems(arc_data):
++                if not _utf8_encodable(filename):
++                    continue
+                 file_id = self._file_id(filename, add=True)
+                 data = [(file_id, self._current_context_id, fromno, tono) for fromno, tono in arcs]
+                 con.executemany(
+@@ -1069,3 +1073,11 @@ class SqliteDb(SimpleReprMixin):
+ def _regexp(text, pattern):
+     """A regexp function for SQLite."""
+     return re.search(text, pattern) is not None
++
++
++def _utf8_encodable(filename):
++    try:
++        filename.encode("utf-8")
++    except UnicodeEncodeError:
++        return False
++    return True

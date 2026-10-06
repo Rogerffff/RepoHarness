@@ -1,0 +1,16 @@
+diff --git a/dvc/utils/serialize/_py.py b/dvc/utils/serialize/_py.py
+--- a/dvc/utils/serialize/_py.py
++++ b/dvc/utils/serialize/_py.py
+@@ -176,6 +176,12 @@
+         result = value.s
+     elif isinstance(value, ast.NameConstant):
+         result = value.value
++    elif isinstance(value, ast.UnaryOp) and isinstance(value.op, ast.USub):
++        number = value.operand
++        if isinstance(number, ast.Num) and type(number.n) is int:
++            result = -number.n
++        else:
++            raise ValueError
+     else:
+         raise ValueError
+     return result

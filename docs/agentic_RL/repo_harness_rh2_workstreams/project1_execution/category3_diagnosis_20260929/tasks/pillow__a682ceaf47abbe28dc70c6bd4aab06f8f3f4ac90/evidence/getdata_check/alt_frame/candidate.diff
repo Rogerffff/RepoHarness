@@ -1,0 +1,23 @@
+diff --git a/src/PIL/GifImagePlugin.py b/src/PIL/GifImagePlugin.py
+index cf2993e38..4752983d4 100644
+--- a/src/PIL/GifImagePlugin.py
++++ b/src/PIL/GifImagePlugin.py
+@@ -556,7 +556,17 @@ def _write_single_frame(im, fp, palette):
+     flags = 0
+     if get_interlace(im):
+         flags = flags | 64
+-    _write_local_header(fp, im, (0, 0), flags)
++    header_im = im
++    if (
++        "transparency" not in im.encoderinfo
++        and "transparency" in im.info
++        and "transparency" not in im_out.info
++    ):
++        # the transparency could not be kept when normalizing the mode
++        header_im = im.copy()
++        del header_im.info["transparency"]
++        header_im.encoderinfo = im.encoderinfo
++    _write_local_header(fp, header_im, (0, 0), flags)
+ 
+     im_out.encoderconfig = (8, get_interlace(im))
+     ImageFile._save(im_out, fp, [("gif", (0, 0) + im.size, 0, RAWMODE[im_out.mode])])

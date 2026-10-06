@@ -1,0 +1,36 @@
+{
+  "instance_id": "getmoto__moto-7584",
+  "base_image": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7584:latest",
+  "base_id": "sha256:437ec771611180d48f01985f1faaac352bae045c7f3db7c3582298b937252f5d",
+  "base_digest": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-7584@sha256:3b263c0c4745d890400b7beaf08c10b5413f86ae7983dd4bf14d93e43cd2fbf9",
+  "derived_tag": "rh2-envrepair/install-wave1-getmoto__moto-7584:c3cloud",
+  "derived_id": "sha256:c0569089e93f29df5029db1d6642afad29d5ef9a87587cfd4eaf383e2ee1f239",
+  "recipe": "ARG BASE_IMAGE\nFROM ${BASE_IMAGE}\nCOPY wheels/ /opt/rh2/build-wheels/\nENV PIP_NO_INDEX=1 PIP_FIND_LINKS=/opt/rh2/build-wheels\n",
+  "pins": {
+    "setuptools": "72.1.0",
+    "wheel": "0.43.0",
+    "packaging": "24.1"
+  },
+  "wheels": [
+    {
+      "name": "setuptools-72.1.0-py3-none-any.whl",
+      "sha256": "5a03e1860cf56bb6ef48ce186b0e557fdba433237481a9a625176c2831be15d1",
+      "bytes": 2337965,
+      "expected_match": true
+    },
+    {
+      "name": "wheel-0.43.0-py3-none-any.whl",
+      "sha256": "55c570405f142630c6b9f72fe09d9b67cf1477fcf543ae5b8dcb1f5b7377da81",
+      "bytes": 65775,
+      "expected_match": true
+    },
+    {
+      "name": "packaging-24.1-py3-none-any.whl",
+      "sha256": "5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124",
+      "bytes": 53985,
+      "expected_match": true
+    }
+  ],
+  "base_layers_preserved": true,
+  "derived_layers": 14
+}

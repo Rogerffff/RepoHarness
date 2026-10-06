@@ -1,0 +1,262 @@
+{
+  "schema_id": "coveragepy.ea69.r17.non_author_pre_run_static_check.v1",
+  "date": "2026-10-03",
+  "reviewer": "non_author_existing_context_reviewer",
+  "fresh_public_reader": false,
+  "status": "passed_static_pre_run_actual_cpu_not_verified",
+  "scope": "仅EA69 R6→R17材料身份、已审wrapper冻结父入口与两份启动脚本；不全面重审项目。",
+  "executed_remote_actions": false,
+  "project_tests_run": false,
+  "actual_cpu_acceptance": false,
+  "findings": [],
+  "release_manifest_sha256": "76aee53151d3b58758d00a9feb5a901b720b4b430f37d2057ed07c1ef0ce2fa6",
+  "receipt_sha256": "0a4ff5bc6992eed0e27f1d007af718b2086b3928fc71732375093e3da0b3de0d",
+  "parent_and_wrapper_same_as_previous_review": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/public_notes_cpu_solve.py",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/public_preserve_cpu_e2e.py",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/scenarios/public_preserve_delivery_v3.json",
+    "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_coverage_ea69_v1/repo/rh2/experiments/r2e_lifecycle_20260929/r2e_probe_e2e.py",
+    "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_coverage_ea69_v1/repo/rh2/experiments/r2e_lifecycle_20260929/r2e_solve_attempt.py",
+    "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_coverage_ea69_v1/repo/rh2/experiments/base_probe_20260922/solve_attempt.py"
+  ],
+  "additional_r6_r17_byte_equal_files": [
+    "rh2/scripts/replay_grade.py",
+    "rh2/scripts/build_r2e_derived.py",
+    "rh2/experiments/base_probe_fixes_20260923/stub_anthropic_endpoint.py",
+    "rh2/experiments/base_probe_20260922/model_gateway.py",
+    "rh2/experiments/ordinary_probe_20260929/result_validity.py",
+    "rh2/experiments/ordinary_probe_20260929/frozen_transport.py",
+    "rh2/experiments/r2e_lifecycle_20260929/replay_grade_budget.py",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/recipes/env_pins_v2.json"
+  ],
+  "independent_target_identity": {
+    "changed_fields": {
+      "prepared/rollout_task_views.jsonl": [
+        ".environment_package_digest",
+        ".public.problem_statement",
+        ".public.problem_statement_sha256",
+        ".public_bundle_digest"
+      ],
+      "private/host_grading_views.jsonl": [
+        ".environment_package_digest",
+        ".grading.material_revisions",
+        ".grading_bundle_digest"
+      ],
+      "prepared/prompts.jsonl": [
+        ".metadata.environment_package_digest",
+        ".metadata.public_bundle_digest",
+        ".prompt"
+      ]
+    },
+    "environment_payload_changed_fields": [
+      ".grading_bundle_digest",
+      ".public_bundle_digest"
+    ],
+    "public_digest": "sha256:53deb1de7539fb7dfb1150fbe52957a29ee0f69d35f68f9796a53aa787ebdcc0",
+    "grading_digest": "sha256:46de14f5ca6fc9adcfff2fcac483c05d98fc8a9e29d1286e66867a3a463566c8",
+    "environment_digest": "sha256:8fb9b7e14b7e0e28030bc1d8e49d9a51b5620231a445c44d6be104c0016f85a9",
+    "local_prepared_manifest_sha256": "dfd93e12751f9624616729a7a6d7080166e6f03bd80df79d5559c5ae304e77c4",
+    "local_host_artifact_sha256": "dc8761483ce32c141d33070a2ae600ce78e389d4f5619b43a863228150a4dc9f",
+    "private_payload_changed_fields": [
+      "material_revisions"
+    ],
+    "retained_active_revisions": [
+      "r2e-mr-073",
+      "r2e-mr-074",
+      "r2e-mr-075"
+    ],
+    "added_revision": "r2e-mr-093",
+    "expected_keys": 49,
+    "prompt_change_exactly_statement_substitution": true,
+    "hidden_expected_runner_payload_exactly_r6": true,
+    "packet_7_files_plus_manifest_match_archive_and_sources": true
+  },
+  "launchers": [
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/launch_prepare_r17.py",
+      "sha256": "f4880b892f524596ac8cbd560f1af9a524149a894acea0c56ada749b0804c652",
+      "remote_body_sha256": "cc6a40639bd86a2fdf70a45a3b4789f3379f3ed0dab71f50d98c6423520861d3",
+      "syntax_passed": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/launch_narrow_r17.py",
+      "sha256": "e66764549008a8dc396735cfb76e09710785d703986cdc30e6f53e36dc1a6607",
+      "remote_body_sha256": "7d2ab2dac70f068676478410adc1acc9d5f3738abaeb4058b37778e4e842e010",
+      "syntax_passed": true
+    }
+  ],
+  "passed_checks": {
+    "admission": "仅原control/cpu_slot.py；prepare与run各自原mode、package及唯一job。全机2槽、prepare1由共享slot入口管理，无替代并发器。",
+    "prepare": "固定R17 manifest、最小packet逐SHA、新目录；固定source RepoDigest/pull linux/amd64核验；仅EA69 prepare与原builder，skip-pull+sysconfig+固定env_pins，2CPU/4g/512pids；构建facts必须ok、同R6 recipe身份与SHA。",
+    "narrow": "必须先prepare finished/rc0；核源recipe、derived实际image ID、CC tar SHA、新public/grading/statement及hidden/runner/49keys；固定18210/18211可bind检查，再调用已审wrapper。",
+    "original_flow": "没有改求解、导出、私有评分、往返、清理；空候选约束保持，正式noop照原流程；无gold/候选私有方案输入，无模型推理。",
+    "optimization": "远端BODY显式要求__debug__且无PYTHONOPTIMIZE，保留wrapper assert身份门。"
+  },
+  "reused_evidence": [
+    "同字节wrapper非作者静态审查",
+    "R6已通过CPU七候选矩阵及实际空noop；仅私有payload和recipe不变范围复用",
+    "发布者共享32字段/264题差异验证；本核不重复其他题共享审查"
+  ],
+  "limits": [
+    "本地静态prepare不是CPU-C实际prepare；本核未执行SSH、Docker、安装、模型或项目测试。",
+    "已有本地prepare回执为rc75且status not_admitted；只表明未admit，不是CPU失败或成功。后续作业状态需以实际新回执为准。",
+    "尚不能确认R17实际镜像、messages_000完整新题面+brief、公开命令46测试、空FrozenPatch、49键noop、运输往返或清理；需真实CPU后一次原件窄核。",
+    "ordinary_gpu entry.py仅用于此前prompt公式比对，R17包未包含它；本wrapper不import它，无入口缺失依赖。",
+    "归档packet及其传输回执可追溯；实际远端读取字节仍须原件回收对拍。",
+    "不是fresh公开读者；不替代已有fresh读者审查，不授训练资格，不自动放行普通模型探针。"
+  ],
+  "evidence": [
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_coverage_ea69_v1/manifest.json",
+      "sha256": "76aee53151d3b58758d00a9feb5a901b720b4b430f37d2057ed07c1ef0ce2fa6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r17/coverage_ea69_publication_receipt.json",
+      "sha256": "0a4ff5bc6992eed0e27f1d007af718b2086b3928fc71732375093e3da0b3de0d"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/public_notes_cpu_solve.py",
+      "sha256": "96353a9700fb99b515056edac2c213667db0bb46e4b768aab6e9ed6fc41d7463"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/public_preserve_cpu_e2e.py",
+      "sha256": "9302124d5ad280e4041c1f4fba4516db0284d4907ba62e735b371bc002bdd19f"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/scenarios/public_preserve_delivery_v3.json",
+      "sha256": "418cc4e5bdd3c56ecb2beea98c6768d64b79300657cec3da22f80fec4b2b54cd"
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_coverage_ea69_v1/repo/rh2/experiments/r2e_lifecycle_20260929/r2e_probe_e2e.py",
+      "sha256": "a5b23b49f126b76a1512a3a6f184bb7e16276c4e9cf137dc7cdc46d3af4ee4fc"
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_coverage_ea69_v1/repo/rh2/experiments/r2e_lifecycle_20260929/r2e_solve_attempt.py",
+      "sha256": "10a71cca67af24c9ab5a6de09cb1845751c643632559842bb61dbce6ebc01d5a"
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_coverage_ea69_v1/repo/rh2/experiments/base_probe_20260922/solve_attempt.py",
+      "sha256": "00ca849909150de02769f297374a9bbfacf2746347c425474775d9c3e22a04f9"
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_coverage_ea69_v1/repo/rh2/scripts/replay_grade.py",
+      "sha256": "d36fa3367415e573305a7a03619f51e7cbd358627569f3844d5c203b70d66db3"
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_coverage_ea69_v1/repo/rh2/scripts/build_r2e_derived.py",
+      "sha256": "5af7dc214976336ea440674bc4416cfa0a805881463798e05ebbb3e33af19471"
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_coverage_ea69_v1/repo/rh2/experiments/base_probe_fixes_20260923/stub_anthropic_endpoint.py",
+      "sha256": "dab06b7a5ed681e9938c6033f41e3bd6947cdc19c0e333e7fc5a859d805f5138"
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_coverage_ea69_v1/repo/rh2/experiments/base_probe_20260922/model_gateway.py",
+      "sha256": "b481eaf27b8a38d86dfb90bd79504b770ccb2ffe27ad42e739714858ca5d2b43"
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_coverage_ea69_v1/repo/rh2/experiments/ordinary_probe_20260929/result_validity.py",
+      "sha256": "dc5f27ad8be6c925f11377dc3311391aa041f599e87820282bcfa8b9069c4941"
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_coverage_ea69_v1/repo/rh2/experiments/ordinary_probe_20260929/frozen_transport.py",
+      "sha256": "11c3baf1cbd4f8b9191f7825b20fcad14670f9d2309df7850754fd6e45bd3d8a"
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_coverage_ea69_v1/repo/rh2/experiments/r2e_lifecycle_20260929/replay_grade_budget.py",
+      "sha256": "3cdcd2877b194e0745ceab33c9b6d40d61ac62762db81d7ec7a1c194a1d865cf"
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_coverage_ea69_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/recipes/env_pins_v2.json",
+      "sha256": "389f93e40435e39efda8a23a26c0f097db2140cdaea179784c4b6f17da810af8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/prepared/rollout_task_views.jsonl",
+      "sha256": "92aadf9d60b23de4d33db68b4cf2150a020c8feda1667e80af2592773d07caee"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/local_r17_static_identity/prepared/rollout_task_views.jsonl",
+      "sha256": "d4c4ef36da0d1c2b4e3ad90e3e529c5f64b61643c26ec2a32aca2a08a6d1e9be"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/private/host_grading_views.jsonl",
+      "sha256": "78b28860a8019d85dbc96c223eb3a90e79606511dcdc10e1d1482c5e8609c195"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/local_r17_static_identity/private/host_grading_views.jsonl",
+      "sha256": "dc8761483ce32c141d33070a2ae600ce78e389d4f5619b43a863228150a4dc9f"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/prepared/prompts.jsonl",
+      "sha256": "ab8a1abbf471700569273ef456fb24f859ba44fbdd37a64e3e62b5f67a085ea7"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/local_r17_static_identity/prepared/prompts.jsonl",
+      "sha256": "507f5d42b96d9ed38ac56dd0caaf513fd56a1f557e5fc6c1eb6a90409dd1944e"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/materials/statement_preserve_public_v2.txt",
+      "sha256": "39b6b28abc08b21a76a71d8908a7e37a00040cbfc3f9d92ee12bc37b3b6a194f"
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/environment_packages_v0.jsonl",
+      "sha256": "f9d28466e73e2f49f7bcce0f38e2cee0baa79fc381c6e1a99fb3e688c953720b"
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_coverage_ea69_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest_ea69_r093_20261003_v1/environment_packages_v0.jsonl",
+      "sha256": "83cc7ab47b13ab6b58ca05d9447e366f9066a7713090f1c884b4babee73ac3fa"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/local_r17_static_identity/prepared/replay_summary.json",
+      "sha256": "5b98d6fd90a55c09afd3225978fe29e82cdba201b93f8ceb0aa588fed13e588d"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/local_r17_static_identity/prepared/prepared_manifest.json",
+      "sha256": "dfd93e12751f9624616729a7a6d7080166e6f03bd80df79d5559c5ae304e77c4"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/local_r17_static_identity/identity_readback.json",
+      "sha256": "b33e609432fdfc5ee13e669a708c8cbeee1ab327f6996083fdf8be5b23a368ae"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/minimal_inputs_manifest_v2.json",
+      "sha256": "b83480ffc46c832fb48045b974e74b4701839dd4a809913d91aee5f954781bbb"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/minimal_inputs_v2.tgz",
+      "sha256": "88070ff558952f1544632d1a942080d886faa4d8360396b0bce22fddddcafd5a"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_c_minimal_input_transfer_v2.json",
+      "sha256": "e543a21e3b763511376eaabc9a6535be2800401f2e6f3ff3a16b6f1362ea5415"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/launch_prepare_r17.py",
+      "sha256": "f4880b892f524596ac8cbd560f1af9a524149a894acea0c56ada749b0804c652"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/launch_narrow_r17.py",
+      "sha256": "e66764549008a8dc396735cfb76e09710785d703986cdc30e6f53e36dc1a6607"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/derived/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/facts.json",
+      "sha256": "fbbf87ab6505e6a203b15e00aa75904c5ba1009df35c98f2ea0225f574b5c2f9"
+    },
+    {
+      "path": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r17/runtime_environment_scope_readback.json",
+      "sha256": "22bb88a87ead2249c29580e4fb0f0dfb89972e9aa2ad25aaada5730885fc8912"
+    },
+    {
+      "path": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r17/root_scope_readback.json",
+      "sha256": "9784b9b7354e63259e1cfc32f198247b04f1e4b092f81dbe0ff71f951f7454d1"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/prepare_r17_dispatch_receipt.json",
+      "sha256": "2d6a79a7baad8893ac927dfff596091097a9d8a3aea7cde280c738d306e4a67b"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/prepare_r17_status_readback.txt",
+      "sha256": "779904b42d5529e6699103d7a69957b6977380d95a275a5b6acf8e0eb4e7cd25"
+    }
+  ]
+}

@@ -1,0 +1,4021 @@
+{
+  "schema": "swe_dvc.non_author_9395_qwen_pair_semantic_review.v1",
+  "as_of_SGT": "2026-10-04",
+  "job": "gpu1003-dvc9395-qwen36-a1",
+  "scope": "offline stdlib, private context disclosed; no candidate/model/tests/CPU/Docker/SSH/grading/ACK/shared source or board modification",
+  "review_complete": true,
+  "blocking_findings": [],
+  "author_numeric_or_semantic_errors_requiring_revision": [],
+  "candidate_correct": false,
+  "raw": 0,
+  "score": {
+    "F2P": {
+      "PASSED": 1,
+      "FAILED": 2
+    },
+    "P2P": {
+      "PASSED": 36,
+      "FAILED": 1
+    },
+    "unscored": {
+      "FAILED": 1
+    }
+  },
+  "actual_nodes": [
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_non_existing_stage_name",
+      "status": "PASSED",
+      "eval_line": 6309,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_frozen",
+      "status": "PASSED",
+      "eval_line": 6310,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_downstream",
+      "status": "PASSED",
+      "eval_line": 6311,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes",
+      "status": "PASSED",
+      "eval_line": 6312,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile",
+      "status": "PASSED",
+      "eval_line": 6313,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile",
+      "status": "PASSED",
+      "eval_line": 6314,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved",
+      "status": "PASSED",
+      "eval_line": 6315,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs",
+      "status": "PASSED",
+      "eval_line": 6316,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist",
+      "status": "PASSED",
+      "eval_line": 6317,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist",
+      "status": "PASSED",
+      "eval_line": 6318,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted",
+      "status": "PASSED",
+      "eval_line": 6319,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_cyclic_graph_error",
+      "status": "PASSED",
+      "eval_line": 6320,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_multiple_params",
+      "status": "PASSED",
+      "eval_line": 6321,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]",
+      "status": "PASSED",
+      "eval_line": 6322,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]",
+      "status": "PASSED",
+      "eval_line": 6323,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]",
+      "status": "PASSED",
+      "eval_line": 6324,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]",
+      "status": "PASSED",
+      "eval_line": 6325,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out",
+      "status": "PASSED",
+      "eval_line": 6326,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream",
+      "status": "PASSED",
+      "eval_line": 6327,
+      "pytest_exception_summary_suffix": null,
+      "partition": "F2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[source]",
+      "status": "PASSED",
+      "eval_line": 6328,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[output]",
+      "status": "PASSED",
+      "eval_line": 6329,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[normal]",
+      "status": "PASSED",
+      "eval_line": 6330,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[dry]",
+      "status": "PASSED",
+      "eval_line": 6331,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_pull_without_remote_still_errors_for_missing_source",
+      "status": "PASSED",
+      "eval_line": 6332,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_pull_no_run_cache_does_not_download_runs",
+      "status": "PASSED",
+      "eval_line": 6333,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_pull_existing_output_without_hash_can_run",
+      "status": "PASSED",
+      "eval_line": 6334,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_pull_changed_dependency_can_recompute",
+      "status": "PASSED",
+      "eval_line": 6335,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_pull_restores_from_http_with_local_run_cache",
+      "status": "PASSED",
+      "eval_line": 6336,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_run_cache.py::test_push_pull",
+      "status": "PASSED",
+      "eval_line": 6337,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_run_cache.py::test_restore",
+      "status": "PASSED",
+      "eval_line": 6338,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_run_cache.py::test_save",
+      "status": "PASSED",
+      "eval_line": 6339,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry",
+      "status": "PASSED",
+      "eval_line": 6340,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]",
+      "status": "PASSED",
+      "eval_line": 6341,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]",
+      "status": "PASSED",
+      "eval_line": 6342,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]",
+      "status": "PASSED",
+      "eval_line": 6343,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage",
+      "status": "PASSED",
+      "eval_line": 6344,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages",
+      "status": "PASSED",
+      "eval_line": 6345,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source",
+      "status": "FAILED",
+      "eval_line": 6346,
+      "pytest_exception_summary_suffix": null,
+      "partition": "F2P"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_pulls_mising_import",
+      "status": "FAILED",
+      "eval_line": 6347,
+      "pytest_exception_summary_suffix": "...",
+      "partition": "unscored"
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_pull_without_remote_preserves_modified_source",
+      "status": "FAILED",
+      "eval_line": 6348,
+      "pytest_exception_summary_suffix": null,
+      "partition": "P2P"
+    },
+    {
+      "node_id": "tests/func/test_run_cache.py::test_restore_pull",
+      "status": "FAILED",
+      "eval_line": 6349,
+      "pytest_exception_summary_suffix": "dvc.exceptions.Repro...",
+      "partition": "F2P"
+    }
+  ],
+  "formal_refs": {
+    "F2P": [
+      "tests/func/test_run_cache.py::test_restore_pull",
+      "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source",
+      "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream"
+    ],
+    "P2P": [
+      "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs",
+      "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]",
+      "tests/func/test_repro_multistage.py::test_repro_frozen",
+      "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage",
+      "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]",
+      "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]",
+      "tests/func/test_repro_multistage.py::test_downstream",
+      "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]",
+      "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist",
+      "tests/func/test_run_cache.py::test_save",
+      "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved",
+      "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]",
+      "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted",
+      "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist",
+      "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile",
+      "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]",
+      "tests/func/test_run_cache.py::test_restore",
+      "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages",
+      "tests/func/test_repro_multistage.py::test_non_existing_stage_name",
+      "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry",
+      "tests/func/test_repro_multistage.py::test_cyclic_graph_error",
+      "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes",
+      "tests/func/test_repro_multistage.py::test_repro_multiple_params",
+      "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]",
+      "tests/func/test_run_cache.py::test_push_pull",
+      "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out",
+      "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile",
+      "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[source]",
+      "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[output]",
+      "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[normal]",
+      "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[dry]",
+      "tests/func/test_repro_multistage.py::test_pull_without_remote_preserves_modified_source",
+      "tests/func/test_repro_multistage.py::test_pull_without_remote_still_errors_for_missing_source",
+      "tests/func/test_repro_multistage.py::test_pull_no_run_cache_does_not_download_runs",
+      "tests/func/test_repro_multistage.py::test_pull_existing_output_without_hash_can_run",
+      "tests/func/test_repro_multistage.py::test_pull_changed_dependency_can_recompute",
+      "tests/func/test_repro_multistage.py::test_pull_restores_from_http_with_local_run_cache"
+    ]
+  },
+  "official_parser_count": 42,
+  "actual_pytest_count": 41,
+  "formal_reference_count": 40,
+  "source_chain": {
+    "reads": [
+      {
+        "ordinal": 8,
+        "line": 100,
+        "result_line": 104,
+        "path": "dvc/commands/repro.py",
+        "numbered_lines": 182,
+        "matches_current_text": true,
+        "source_at_read_sha256": "430de1b6528e5e79756420393d9acf990f56a79cfbcf22e19aefafd4b3f2d21f"
+      },
+      {
+        "ordinal": 10,
+        "line": 132,
+        "result_line": 136,
+        "path": "dvc/repo/reproduce.py",
+        "numbered_lines": 271,
+        "matches_current_text": true,
+        "source_at_read_sha256": "1812a1ce7c3f592afa2055a393dfb6bd23b03c338c9925e0c08196cc029be629"
+      },
+      {
+        "ordinal": 15,
+        "line": 202,
+        "result_line": 206,
+        "path": "dvc/stage/__init__.py",
+        "numbered_lines": 100,
+        "matches_current_text": true,
+        "source_at_read_sha256": "c92c337596f78c4bbc251710894c00e717a98e29d63d17b87fdd388382573e80"
+      },
+      {
+        "ordinal": 19,
+        "line": 258,
+        "result_line": 262,
+        "path": "dvc/stage/cache.py",
+        "numbered_lines": 281,
+        "matches_current_text": true,
+        "source_at_read_sha256": "8cf04395af8d9318aadb6795ac9173beae09e1d2b5e1036e592451c8edeedf76"
+      },
+      {
+        "ordinal": 23,
+        "line": 314,
+        "result_line": 318,
+        "path": "dvc/stage/run.py",
+        "numbered_lines": 152,
+        "matches_current_text": true,
+        "source_at_read_sha256": "d7a4ffe56f2e620de694370d821cad74bebc073ac41d1b964ef16cf1bde41939"
+      },
+      {
+        "ordinal": 25,
+        "line": 342,
+        "result_line": 346,
+        "path": "dvc/stage/__init__.py",
+        "numbered_lines": 100,
+        "matches_current_text": true,
+        "source_at_read_sha256": "c92c337596f78c4bbc251710894c00e717a98e29d63d17b87fdd388382573e80"
+      },
+      {
+        "ordinal": 26,
+        "line": 356,
+        "result_line": 360,
+        "path": "tests/func/test_repro_multistage.py",
+        "numbered_lines": 100,
+        "matches_current_text": true,
+        "source_at_read_sha256": "ca738a7a94b991881a48abdb02aa1d27565f087e5742511d1fbbd752afde99e1"
+      },
+      {
+        "ordinal": 28,
+        "line": 384,
+        "result_line": 388,
+        "path": "tests/func/test_run_cache.py",
+        "numbered_lines": 186,
+        "matches_current_text": true,
+        "source_at_read_sha256": "0d9bfa7a96c4e29e178c89b96357ec1adae59bfa27027173f07b234b08504960"
+      },
+      {
+        "ordinal": 29,
+        "line": 398,
+        "result_line": 402,
+        "path": "dvc/stage/__init__.py",
+        "numbered_lines": 100,
+        "matches_current_text": true,
+        "source_at_read_sha256": "c92c337596f78c4bbc251710894c00e717a98e29d63d17b87fdd388382573e80"
+      },
+      {
+        "ordinal": 31,
+        "line": 426,
+        "result_line": 430,
+        "path": "dvc/stage/utils.py",
+        "numbered_lines": 30,
+        "matches_current_text": true,
+        "source_at_read_sha256": "3a9a49e53aca46d3d254d43374a920759fa88d6062c4c8fc4341873ebca446a6"
+      },
+      {
+        "ordinal": 33,
+        "line": 454,
+        "result_line": 458,
+        "path": "dvc/stage/__init__.py",
+        "numbered_lines": 30,
+        "matches_current_text": true,
+        "source_at_read_sha256": "c92c337596f78c4bbc251710894c00e717a98e29d63d17b87fdd388382573e80"
+      },
+      {
+        "ordinal": 34,
+        "line": 468,
+        "result_line": 472,
+        "path": "dvc/repo/pull.py",
+        "numbered_lines": 57,
+        "matches_current_text": true,
+        "source_at_read_sha256": "2b3d61086991389b97b1c96bba791712df8bc5d27a8c2e01fe3a37ee046a4ff6"
+      },
+      {
+        "ordinal": 35,
+        "line": 482,
+        "result_line": 486,
+        "path": "dvc/stage/__init__.py",
+        "numbered_lines": 30,
+        "matches_current_text": true,
+        "source_at_read_sha256": "c92c337596f78c4bbc251710894c00e717a98e29d63d17b87fdd388382573e80"
+      },
+      {
+        "ordinal": 37,
+        "line": 510,
+        "result_line": 514,
+        "path": "dvc/stage/__init__.py",
+        "numbered_lines": 50,
+        "matches_current_text": true,
+        "source_at_read_sha256": "c92c337596f78c4bbc251710894c00e717a98e29d63d17b87fdd388382573e80"
+      },
+      {
+        "ordinal": 39,
+        "line": 538,
+        "result_line": 542,
+        "path": "dvc/output.py",
+        "numbered_lines": 40,
+        "matches_current_text": true,
+        "source_at_read_sha256": "061f94c5cfac3c122eddc583f2b6314d4e93a8b472a00a13eebfee824240107c"
+      },
+      {
+        "ordinal": 41,
+        "line": 566,
+        "result_line": 570,
+        "path": "dvc/output.py",
+        "numbered_lines": 15,
+        "matches_current_text": true,
+        "source_at_read_sha256": "061f94c5cfac3c122eddc583f2b6314d4e93a8b472a00a13eebfee824240107c"
+      },
+      {
+        "ordinal": 43,
+        "line": 594,
+        "result_line": 598,
+        "path": "dvc/data_cloud.py",
+        "numbered_lines": 40,
+        "matches_current_text": true,
+        "source_at_read_sha256": "7a3efac995cba7a041f09760ef5ecb5d1b0861d1b87e24e90368f06c47775179"
+      },
+      {
+        "ordinal": 45,
+        "line": 622,
+        "result_line": 626,
+        "path": "dvc/output.py",
+        "numbered_lines": 10,
+        "matches_current_text": true,
+        "source_at_read_sha256": "061f94c5cfac3c122eddc583f2b6314d4e93a8b472a00a13eebfee824240107c"
+      },
+      {
+        "ordinal": 47,
+        "line": 650,
+        "result_line": 654,
+        "path": "dvc/stage/__init__.py",
+        "numbered_lines": 60,
+        "matches_current_text": true,
+        "source_at_read_sha256": "c92c337596f78c4bbc251710894c00e717a98e29d63d17b87fdd388382573e80"
+      },
+      {
+        "ordinal": 48,
+        "line": 664,
+        "result_line": 668,
+        "path": "dvc/stage/__init__.py",
+        "numbered_lines": 30,
+        "matches_current_text": true,
+        "source_at_read_sha256": "c92c337596f78c4bbc251710894c00e717a98e29d63d17b87fdd388382573e80"
+      },
+      {
+        "ordinal": 49,
+        "line": 682,
+        "result_line": 686,
+        "path": "dvc/stage/__init__.py",
+        "numbered_lines": 30,
+        "matches_current_text": true,
+        "source_at_read_sha256": "c92c337596f78c4bbc251710894c00e717a98e29d63d17b87fdd388382573e80"
+      },
+      {
+        "ordinal": 51,
+        "line": 710,
+        "result_line": 714,
+        "path": "dvc/stage/__init__.py",
+        "numbered_lines": 50,
+        "matches_current_text": true,
+        "source_at_read_sha256": "21f395adfe66017e15cfb124102886be08b84ad4bce1d863c04d649a70ce6fcf"
+      },
+      {
+        "ordinal": 53,
+        "line": 742,
+        "result_line": 746,
+        "path": "dvc/stage/__init__.py",
+        "numbered_lines": 15,
+        "matches_current_text": true,
+        "source_at_read_sha256": "17b5e342c33b34c808f473b2e49d4258631d52662a44f67c673a0a9f4fe97f04"
+      },
+      {
+        "ordinal": 61,
+        "line": 858,
+        "result_line": 862,
+        "path": "dvc/stage/__init__.py",
+        "numbered_lines": 15,
+        "matches_current_text": true,
+        "source_at_read_sha256": "4d066e5759077f6e27eeae8617444c98e1abf84edda544c1410280e6dc3cad81"
+      },
+      {
+        "ordinal": 68,
+        "line": 958,
+        "result_line": 962,
+        "path": "tests/func/test_run_cache.py",
+        "numbered_lines": 27,
+        "matches_current_text": true,
+        "source_at_read_sha256": "0d9bfa7a96c4e29e178c89b96357ec1adae59bfa27027173f07b234b08504960"
+      },
+      {
+        "ordinal": 69,
+        "line": 972,
+        "result_line": 976,
+        "path": "tests/func/test_run_cache.py",
+        "numbered_lines": 186,
+        "matches_current_text": true,
+        "source_at_read_sha256": "0d9bfa7a96c4e29e178c89b96357ec1adae59bfa27027173f07b234b08504960"
+      },
+      {
+        "ordinal": 79,
+        "line": 1116,
+        "result_line": 1120,
+        "path": "dvc/commands/repro.py",
+        "numbered_lines": 20,
+        "matches_current_text": true,
+        "source_at_read_sha256": "430de1b6528e5e79756420393d9acf990f56a79cfbcf22e19aefafd4b3f2d21f"
+      },
+      {
+        "ordinal": 84,
+        "line": 1188,
+        "result_line": 1192,
+        "path": "dvc/stage/__init__.py",
+        "numbered_lines": 60,
+        "matches_current_text": true,
+        "source_at_read_sha256": "f37caf7555fb69dfec45c0aaf6306b3e8af1fb992f89dbe56d27b060b92e0a02"
+      },
+      {
+        "ordinal": 85,
+        "line": 1202,
+        "result_line": 1206,
+        "path": "dvc/stage/__init__.py",
+        "numbered_lines": 30,
+        "matches_current_text": true,
+        "source_at_read_sha256": "f37caf7555fb69dfec45c0aaf6306b3e8af1fb992f89dbe56d27b060b92e0a02"
+      }
+    ],
+    "successful_edits": [
+      {
+        "ordinal": 50,
+        "line": 696,
+        "path": "dvc/stage/__init__.py",
+        "old_occurrences": 1,
+        "source_after_edit_sha256": "21f395adfe66017e15cfb124102886be08b84ad4bce1d863c04d649a70ce6fcf"
+      },
+      {
+        "ordinal": 52,
+        "line": 724,
+        "path": "dvc/stage/__init__.py",
+        "old_occurrences": 1,
+        "source_after_edit_sha256": "17b5e342c33b34c808f473b2e49d4258631d52662a44f67c673a0a9f4fe97f04"
+      },
+      {
+        "ordinal": 54,
+        "line": 756,
+        "path": "dvc/stage/__init__.py",
+        "old_occurrences": 1,
+        "source_after_edit_sha256": "4d066e5759077f6e27eeae8617444c98e1abf84edda544c1410280e6dc3cad81"
+      },
+      {
+        "ordinal": 62,
+        "line": 872,
+        "path": "dvc/stage/__init__.py",
+        "old_occurrences": 1,
+        "source_after_edit_sha256": "f37caf7555fb69dfec45c0aaf6306b3e8af1fb992f89dbe56d27b060b92e0a02"
+      },
+      {
+        "ordinal": 70,
+        "line": 986,
+        "path": "tests/func/test_run_cache.py",
+        "old_occurrences": 1,
+        "source_after_edit_sha256": "b3388f9e96dc5496dd3e0d1cc7e71d7d1a01b771578a462501ad4dea9a809c4c"
+      },
+      {
+        "ordinal": 72,
+        "line": 1014,
+        "path": "tests/func/test_run_cache.py",
+        "old_occurrences": 1,
+        "source_after_edit_sha256": "79ecdef048361d239cf1ee8267a293f797a1ff560c8f1ffc5b94fcb2599e48b7"
+      },
+      {
+        "ordinal": 75,
+        "line": 1056,
+        "path": "tests/func/test_run_cache.py",
+        "old_occurrences": 1,
+        "source_after_edit_sha256": "19864a9ffe40ec471ab0b7742bb797c002bba3dc973708dcf788fa489f8554bc"
+      },
+      {
+        "ordinal": 80,
+        "line": 1130,
+        "path": "dvc/commands/repro.py",
+        "old_occurrences": 1,
+        "source_after_edit_sha256": "3d9e385906b229b5789d0b3c1e10a686307327e365da8aa6192f5fce5dd24232"
+      }
+    ],
+    "final_FP_entries": [
+      {
+        "path": "dvc/commands/repro.py",
+        "content_sha256": "3d9e385906b229b5789d0b3c1e10a686307327e365da8aa6192f5fce5dd24232",
+        "bytes": 5448,
+        "edit_history_matches_final_bytes": true
+      },
+      {
+        "path": "dvc/stage/__init__.py",
+        "content_sha256": "f37caf7555fb69dfec45c0aaf6306b3e8af1fb992f89dbe56d27b060b92e0a02",
+        "bytes": 25196,
+        "edit_history_matches_final_bytes": true
+      },
+      {
+        "path": "tests/func/test_run_cache.py",
+        "content_sha256": "19864a9ffe40ec471ab0b7742bb797c002bba3dc973708dcf788fa489f8554bc",
+        "bytes": 7904,
+        "edit_history_matches_final_bytes": true
+      }
+    ],
+    "baseline_canonical": "sha256:0c75caa0ac9790c739e0250f37125f342241d19d57bb430e6a6c7fa009acf0ec",
+    "FP_canonical": "sha256:bca0a3a7a04f2259a21b1f0aa7904b12ceff777f234dc2bde16f28345f45d476",
+    "projection": {
+      "schema_id": "rh2.fa.scoring_projection.v1",
+      "frozen_patch_digest": "sha256:bca0a3a7a04f2259a21b1f0aa7904b12ceff777f234dc2bde16f28345f45d476",
+      "rollout_execution_id": "gpu1003-dvc9395-qwen36-a1",
+      "physical_attempt_id": "gpu1003-dvc9395-qwen36-a1#p1",
+      "included_entry_paths": [
+        "dvc/commands/repro.py",
+        "dvc/stage/__init__.py"
+      ]
+    }
+  },
+  "trajectory": {
+    "rows": 1264,
+    "tools": [
+      {
+        "ordinal": 1,
+        "trajectory_line": 11,
+        "result_line": 19,
+        "tool_id": "toolu_301acc04a47db2f4",
+        "name": "Bash",
+        "input": {
+          "command": "python -c 'import dvc, pygit2; print(dvc.__file__, pygit2.__version__, pygit2.LIBGIT2_VERSION)'"
+        },
+        "input_canonical_json_sha256": "7469b45232bd081dd0bcb9731c70b31b693fe0f85e4937cc688d85a5939b224f",
+        "result_content_utf8_sha256": "1f94a86104aefcebde55968b62de14b55640df5641d299c5b5f5bf13711e7958",
+        "result_content_bytes": 37,
+        "is_error": false,
+        "gateway_seq": 1,
+        "gateway_input_canonical_json_sha256": "7469b45232bd081dd0bcb9731c70b31b693fe0f85e4937cc688d85a5939b224f",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 2,
+        "trajectory_line": 15,
+        "result_line": 20,
+        "tool_id": "toolu_fc1f6587d6242888",
+        "name": "Bash",
+        "input": {
+          "command": "python -m dvc repro --help"
+        },
+        "input_canonical_json_sha256": "eb434a2a245b386bb84bc41efb0f4c642c454dc43ad8abd495e4912c6b31ae4e",
+        "result_content_utf8_sha256": "c7c09f2adb8d32250cf3d53c6527c291c8c61e5185b13419da03cb3e5412c9f4",
+        "result_content_bytes": 2316,
+        "is_error": false,
+        "gateway_seq": 1,
+        "gateway_input_canonical_json_sha256": "eb434a2a245b386bb84bc41efb0f4c642c454dc43ad8abd495e4912c6b31ae4e",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 3,
+        "trajectory_line": 30,
+        "result_line": 34,
+        "tool_id": "toolu_6614edb1eaa00835",
+        "name": "Bash",
+        "input": {
+          "command": "find /testbed -type f -name \"*.py\" | xargs grep -l \"def main\" | grep -i repro | head -20"
+        },
+        "input_canonical_json_sha256": "96e8456c1d1a7ddb5782834c618689bddd86155e837a87bc319a0dccf133579d",
+        "result_content_utf8_sha256": "cac1685585590361647e7a27b58a25a590f335bfcd0ab70fcdc0424e40c20843",
+        "result_content_bytes": 31,
+        "is_error": false,
+        "gateway_seq": 2,
+        "gateway_input_canonical_json_sha256": "96e8456c1d1a7ddb5782834c618689bddd86155e837a87bc319a0dccf133579d",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 4,
+        "trajectory_line": 44,
+        "result_line": 48,
+        "tool_id": "toolu_1d64fb3af2b8310a",
+        "name": "Bash",
+        "input": {
+          "command": "find /testbed -type f -name \"*.py\" -path \"*/command/*\" | xargs grep -l \"repro\" 2>/dev/null | head -10"
+        },
+        "input_canonical_json_sha256": "68cee2a92d1cba44ef2e6dbf2e46609ffffe2ee048541ad614df278b5300bf29",
+        "result_content_utf8_sha256": "9195a76a6d3c75581d6a4748d6909737aee2512b04c8337121a81f2ae1ee681e",
+        "result_content_bytes": 89,
+        "is_error": false,
+        "gateway_seq": 3,
+        "gateway_input_canonical_json_sha256": "68cee2a92d1cba44ef2e6dbf2e46609ffffe2ee048541ad614df278b5300bf29",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 5,
+        "trajectory_line": 58,
+        "result_line": 62,
+        "tool_id": "toolu_8f83e459cb6e5388",
+        "name": "Bash",
+        "input": {
+          "command": "ls -la /testbed/dvc/command/ | head -30"
+        },
+        "input_canonical_json_sha256": "db1755d81dbb3c404e29db97bccee4347a56ec4f1cbe8462df7c4c367d50ebfd",
+        "result_content_utf8_sha256": "4005247508952a4351c703f48167ddbd8ae15aea1171290be2fa09b422d4979e",
+        "result_content_bytes": 68,
+        "is_error": false,
+        "gateway_seq": 4,
+        "gateway_input_canonical_json_sha256": "db1755d81dbb3c404e29db97bccee4347a56ec4f1cbe8462df7c4c367d50ebfd",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 6,
+        "trajectory_line": 72,
+        "result_line": 76,
+        "tool_id": "toolu_c9b53cff3a23cf4f",
+        "name": "Bash",
+        "input": {
+          "command": "ls -la /testbed/dvc/"
+        },
+        "input_canonical_json_sha256": "51d9ad627fd2a4cc8a341cda6fa18ac217902d637846642199cef206d22bd7cb",
+        "result_content_utf8_sha256": "95fa5298d86dc021f9a5729c693c3d6819fc9efc6d81d255b3007c01730d9d77",
+        "result_content_bytes": 2523,
+        "is_error": false,
+        "gateway_seq": 5,
+        "gateway_input_canonical_json_sha256": "51d9ad627fd2a4cc8a341cda6fa18ac217902d637846642199cef206d22bd7cb",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 7,
+        "trajectory_line": 86,
+        "result_line": 90,
+        "tool_id": "toolu_0fddeea158409309",
+        "name": "Bash",
+        "input": {
+          "command": "ls -la /testbed/dvc/commands/"
+        },
+        "input_canonical_json_sha256": "fc19f63064170d092eb53568334483492b68ccb276722abe5235a744f9678a53",
+        "result_content_utf8_sha256": "816ce48b233029deadccd1346d6aa3e5187cafa1d9490fe92113f8938485e7ce",
+        "result_content_bytes": 2413,
+        "is_error": false,
+        "gateway_seq": 6,
+        "gateway_input_canonical_json_sha256": "fc19f63064170d092eb53568334483492b68ccb276722abe5235a744f9678a53",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 8,
+        "trajectory_line": 100,
+        "result_line": 104,
+        "tool_id": "toolu_18dbd14a6c31bd95",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/dvc/commands/repro.py"
+        },
+        "input_canonical_json_sha256": "a3c3d06e1eb96a4a0673e149247ce9fb834d3d02e7e1fcb1e69e5f6d67baab50",
+        "result_content_utf8_sha256": "0ef90a7dadd7b09b488ec324245029df628fc65517c6261a5771c63bbd0f38be",
+        "result_content_bytes": 5960,
+        "is_error": false,
+        "gateway_seq": 7,
+        "gateway_input_canonical_json_sha256": "a3c3d06e1eb96a4a0673e149247ce9fb834d3d02e7e1fcb1e69e5f6d67baab50",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 9,
+        "trajectory_line": 118,
+        "result_line": 122,
+        "tool_id": "toolu_da2ee6884890f42e",
+        "name": "Bash",
+        "input": {
+          "command": "ls -la /testbed/dvc/repo/"
+        },
+        "input_canonical_json_sha256": "43cef18cfda7bc846f1f8a7c687e39929c660bb86d0bb17aca491d08a6644550",
+        "result_content_utf8_sha256": "14b5c290cd1357e578f1b530f925eb6e0eaa65c2fbd57652a5f6410371dd1216",
+        "result_content_bytes": 2299,
+        "is_error": false,
+        "gateway_seq": 8,
+        "gateway_input_canonical_json_sha256": "43cef18cfda7bc846f1f8a7c687e39929c660bb86d0bb17aca491d08a6644550",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 10,
+        "trajectory_line": 132,
+        "result_line": 136,
+        "tool_id": "toolu_56aa730cb4cb6424",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/dvc/repo/reproduce.py"
+        },
+        "input_canonical_json_sha256": "e67f923ade8c08fa7a6057bfb042042c532d4ac6912d1cd73f4e8c0ef75b3e5b",
+        "result_content_utf8_sha256": "f17b85fef18613f55b639b6139a1bf55bb2d3e3c383e490b732d818a3fb5a179",
+        "result_content_bytes": 9560,
+        "is_error": false,
+        "gateway_seq": 9,
+        "gateway_input_canonical_json_sha256": "e67f923ade8c08fa7a6057bfb042042c532d4ac6912d1cd73f4e8c0ef75b3e5b",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 11,
+        "trajectory_line": 146,
+        "result_line": 150,
+        "tool_id": "toolu_ac1610a9415ef21d",
+        "name": "Bash",
+        "input": {
+          "command": "grep -rn \"pull\" /testbed/dvc/repo/reproduce.py"
+        },
+        "input_canonical_json_sha256": "fb6276be77f267f272b2ce1f575a0838a5931ee8b8b00ead8cad64c279e33550",
+        "result_content_utf8_sha256": "cac1685585590361647e7a27b58a25a590f335bfcd0ab70fcdc0424e40c20843",
+        "result_content_bytes": 31,
+        "is_error": false,
+        "gateway_seq": 10,
+        "gateway_input_canonical_json_sha256": "fb6276be77f267f272b2ce1f575a0838a5931ee8b8b00ead8cad64c279e33550",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 12,
+        "trajectory_line": 160,
+        "result_line": 164,
+        "tool_id": "toolu_0a7a91d3f80e9e9b",
+        "name": "Bash",
+        "input": {
+          "command": "grep -rn \"kwargs.*pull\" /testbed/dvc/ --include=\"*.py\" | head -20"
+        },
+        "input_canonical_json_sha256": "365ec5757a094f4286cd922ab98a49925f33a13ecc830df886041bd546f885db",
+        "result_content_utf8_sha256": "cac1685585590361647e7a27b58a25a590f335bfcd0ab70fcdc0424e40c20843",
+        "result_content_bytes": 31,
+        "is_error": false,
+        "gateway_seq": 11,
+        "gateway_input_canonical_json_sha256": "365ec5757a094f4286cd922ab98a49925f33a13ecc830df886041bd546f885db",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 13,
+        "trajectory_line": 174,
+        "result_line": 178,
+        "tool_id": "toolu_5e50b2656a61ce5c",
+        "name": "Bash",
+        "input": {
+          "command": "grep -rn '\"pull\"' /testbed/dvc/ --include=\"*.py\" | head -20"
+        },
+        "input_canonical_json_sha256": "848ba4568ddba0b8572048226a0f7055601d75a9ce45b74dbc0a885134e4e955",
+        "result_content_utf8_sha256": "b4a31ec3ba849f64f1337e9a3e491688e80c94ce3aa4158e9170eb448721ebbb",
+        "result_content_bytes": 775,
+        "is_error": false,
+        "gateway_seq": 12,
+        "gateway_input_canonical_json_sha256": "848ba4568ddba0b8572048226a0f7055601d75a9ce45b74dbc0a885134e4e955",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 14,
+        "trajectory_line": 188,
+        "result_line": 192,
+        "tool_id": "toolu_bbc600c4301ba4f8",
+        "name": "Bash",
+        "input": {
+          "command": "grep -rn \"def reproduce\" /testbed/dvc/ --include=\"*.py\" | head -20"
+        },
+        "input_canonical_json_sha256": "17fd26494c4d207d97a9e3a26eb2604fff3dbbe438405ad2d79d2cb726b1bf07",
+        "result_content_utf8_sha256": "0f9cfc2382a575125d3ba48e6d31b9e00853835f517191a16d017c2cf47c1f8e",
+        "result_content_bytes": 673,
+        "is_error": false,
+        "gateway_seq": 13,
+        "gateway_input_canonical_json_sha256": "17fd26494c4d207d97a9e3a26eb2604fff3dbbe438405ad2d79d2cb726b1bf07",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 15,
+        "trajectory_line": 202,
+        "result_line": 206,
+        "tool_id": "toolu_0b1b3c6d1ca36815",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/dvc/stage/__init__.py",
+          "offset": 400,
+          "limit": 100
+        },
+        "input_canonical_json_sha256": "2a7559b873f913309dafee30dc0e2fbadd4f89f8b3f856b770b8caf0dc348852",
+        "result_content_utf8_sha256": "fabd2bc6ed53ae1c21c8f05da094a4767d7a524b9a0f0021d820acf0a49b0b85",
+        "result_content_bytes": 3452,
+        "is_error": false,
+        "gateway_seq": 14,
+        "gateway_input_canonical_json_sha256": "2a7559b873f913309dafee30dc0e2fbadd4f89f8b3f856b770b8caf0dc348852",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 16,
+        "trajectory_line": 216,
+        "result_line": 220,
+        "tool_id": "toolu_8830ef1ab2187433",
+        "name": "Bash",
+        "input": {
+          "command": "grep -rn \"run_cache\" /testbed/dvc/stage/__init__.py | head -20"
+        },
+        "input_canonical_json_sha256": "30c47a8e86cddbd19807ab026a273b8bc7504172ed0c4f4cf6491ef74d31c704",
+        "result_content_utf8_sha256": "6dd44276031b801171535d8278cb0eb6bea101c21c7e1d86dc9d407188cf1a69",
+        "result_content_bytes": 262,
+        "is_error": false,
+        "gateway_seq": 15,
+        "gateway_input_canonical_json_sha256": "30c47a8e86cddbd19807ab026a273b8bc7504172ed0c4f4cf6491ef74d31c704",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 17,
+        "trajectory_line": 230,
+        "result_line": 234,
+        "tool_id": "toolu_32e1a7a27d14d675",
+        "name": "Bash",
+        "input": {
+          "command": "grep -rn \"run_cache\\|run-cache\\|run cache\" /testbed/dvc/ --include=\"*.py\" | grep -v test | head -40"
+        },
+        "input_canonical_json_sha256": "1b60fec56906f5bbf9471f3470d4374e96de9bf6f9ec02f0417d6517fbc30d6a",
+        "result_content_utf8_sha256": "cac1685585590361647e7a27b58a25a590f335bfcd0ab70fcdc0424e40c20843",
+        "result_content_bytes": 31,
+        "is_error": false,
+        "gateway_seq": 16,
+        "gateway_input_canonical_json_sha256": "1b60fec56906f5bbf9471f3470d4374e96de9bf6f9ec02f0417d6517fbc30d6a",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 18,
+        "trajectory_line": 244,
+        "result_line": 248,
+        "tool_id": "toolu_fddd2bacf94aeafe",
+        "name": "Bash",
+        "input": {
+          "command": "grep -rn \"run_cache\" /testbed/dvc/ --include=\"*.py\" | head -40"
+        },
+        "input_canonical_json_sha256": "4bf28f854f5b9773a1eec129800fa9e9336bf8f82fe1b97996c31dfd4fbc8c33",
+        "result_content_utf8_sha256": "52b117633181b64cf6826d586b72e845b90a4c28e21bb93b79ab536c7b2148a9",
+        "result_content_bytes": 3519,
+        "is_error": false,
+        "gateway_seq": 17,
+        "gateway_input_canonical_json_sha256": "4bf28f854f5b9773a1eec129800fa9e9336bf8f82fe1b97996c31dfd4fbc8c33",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 19,
+        "trajectory_line": 258,
+        "result_line": 262,
+        "tool_id": "toolu_9aaedabb4e829784",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/dvc/stage/cache.py"
+        },
+        "input_canonical_json_sha256": "c610cd7b18fefd60eb839f1f565fed459fcd208b3d56b088b9c6a6a4af7ef9b4",
+        "result_content_utf8_sha256": "02837815d2eff26abe1dd3c11bcd15e3d19b740e6a9f9b6bc71214383e1b60f8",
+        "result_content_bytes": 10058,
+        "is_error": false,
+        "gateway_seq": 18,
+        "gateway_input_canonical_json_sha256": "c610cd7b18fefd60eb839f1f565fed459fcd208b3d56b088b9c6a6a4af7ef9b4",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 20,
+        "trajectory_line": 272,
+        "result_line": 276,
+        "tool_id": "toolu_af25e7dd31f02431",
+        "name": "Bash",
+        "input": {
+          "command": "grep -rn \"\\.restore\\(\" /testbed/dvc/ --include=\"*.py\" | head -20"
+        },
+        "input_canonical_json_sha256": "01cc5e22e63678b5e16cec1d095c6bfdce456009e356a4c71a68c5d80ee76e01",
+        "result_content_utf8_sha256": "fa85b3b853f732bafed9f954a70bdc18499e0356272df1d9a52f30709d18c9de",
+        "result_content_bytes": 84,
+        "is_error": false,
+        "gateway_seq": 19,
+        "gateway_input_canonical_json_sha256": "01cc5e22e63678b5e16cec1d095c6bfdce456009e356a4c71a68c5d80ee76e01",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 21,
+        "trajectory_line": 286,
+        "result_line": 290,
+        "tool_id": "toolu_bd1861ac9cad3f4c",
+        "name": "Bash",
+        "input": {
+          "command": "grep -rn \"restore\" /testbed/dvc/ --include=\"*.py\" | grep -v test | head -30"
+        },
+        "input_canonical_json_sha256": "f4f143ec8989177b3c6d6b733d40b76d30534b11da796ead48f00c1be9f32944",
+        "result_content_utf8_sha256": "cac1685585590361647e7a27b58a25a590f335bfcd0ab70fcdc0424e40c20843",
+        "result_content_bytes": 31,
+        "is_error": false,
+        "gateway_seq": 20,
+        "gateway_input_canonical_json_sha256": "f4f143ec8989177b3c6d6b733d40b76d30534b11da796ead48f00c1be9f32944",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 22,
+        "trajectory_line": 300,
+        "result_line": 304,
+        "tool_id": "toolu_f7cd09c54138ab43",
+        "name": "Bash",
+        "input": {
+          "command": "grep -rn \"stage_cache\" /testbed/dvc/ --include=\"*.py\" | head -30"
+        },
+        "input_canonical_json_sha256": "2c92ecdb9944cb7ef105bd2c54c8cc489eae8ebbae2b426f693c7da43a40f839",
+        "result_content_utf8_sha256": "974f4d860522e87cafa05af798cdc42b4fe55eec7d9e57d61ef9867af0fcd99e",
+        "result_content_bytes": 1019,
+        "is_error": false,
+        "gateway_seq": 21,
+        "gateway_input_canonical_json_sha256": "2c92ecdb9944cb7ef105bd2c54c8cc489eae8ebbae2b426f693c7da43a40f839",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 23,
+        "trajectory_line": 314,
+        "result_line": 318,
+        "tool_id": "toolu_5d33b16f5183265a",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/dvc/stage/run.py"
+        },
+        "input_canonical_json_sha256": "2395367f5782017e45c401a4f9f26cee276861253f74d5744158467d863044c3",
+        "result_content_utf8_sha256": "fae1fceaf42f92a008fb535fe7c54e515b278111f3235b483128ce9dc7a02ffe",
+        "result_content_bytes": 5251,
+        "is_error": false,
+        "gateway_seq": 22,
+        "gateway_input_canonical_json_sha256": "2395367f5782017e45c401a4f9f26cee276861253f74d5744158467d863044c3",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 24,
+        "trajectory_line": 328,
+        "result_line": 332,
+        "tool_id": "toolu_de450d34e0ad4eda",
+        "name": "Bash",
+        "input": {
+          "command": "grep -rn \"is_data_source\" /testbed/dvc/ --include=\"*.py\" | head -30"
+        },
+        "input_canonical_json_sha256": "5d775b5b09eced65232c0a56dc9a39eaf04ad1bf6d7b3200557845274f4b63e2",
+        "result_content_utf8_sha256": "2de7fa73b2958449c4f2ff566610017ed81afff97751d07e4a8a1d821667d88a",
+        "result_content_bytes": 818,
+        "is_error": false,
+        "gateway_seq": 23,
+        "gateway_input_canonical_json_sha256": "5d775b5b09eced65232c0a56dc9a39eaf04ad1bf6d7b3200557845274f4b63e2",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 25,
+        "trajectory_line": 342,
+        "result_line": 346,
+        "tool_id": "toolu_13e48007bfc5834e",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/dvc/stage/__init__.py",
+          "limit": 100,
+          "offset": 230
+        },
+        "input_canonical_json_sha256": "d4cac186fa057b02fa5a16275b68c7200324926d16e99c1215815200294430cf",
+        "result_content_utf8_sha256": "fb5886808a37d0983215ac7b9c2b841609d1802fe6b78f27a7f3f7ca1a1b791e",
+        "result_content_bytes": 3495,
+        "is_error": false,
+        "gateway_seq": 24,
+        "gateway_input_canonical_json_sha256": "d4cac186fa057b02fa5a16275b68c7200324926d16e99c1215815200294430cf",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 26,
+        "trajectory_line": 356,
+        "result_line": 360,
+        "tool_id": "toolu_b3d206adb7413228",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/tests/func/test_repro_multistage.py",
+          "limit": 100
+        },
+        "input_canonical_json_sha256": "9d40b9986be25e56093b9d57806ddb5a1c1d9baa0e0c1f291f2934aeb44d26d9",
+        "result_content_utf8_sha256": "4ed5c00f0341bdc5f270789b0e890d363ad7df2e039f3159a2dc5427d916c4a3",
+        "result_content_bytes": 3156,
+        "is_error": false,
+        "gateway_seq": 25,
+        "gateway_input_canonical_json_sha256": "9d40b9986be25e56093b9d57806ddb5a1c1d9baa0e0c1f291f2934aeb44d26d9",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 27,
+        "trajectory_line": 370,
+        "result_line": 374,
+        "tool_id": "toolu_edcd5b9e8bee22fe",
+        "name": "Bash",
+        "input": {
+          "command": "grep -rn \"\\-\\-pull\\|pull=\" /testbed/tests/ --include=\"*.py\" | grep -i repro | head -20"
+        },
+        "input_canonical_json_sha256": "b44848f7e9b255c5f4187a2c9d7e7ebb0d166624fb739004be10c9054d9959a0",
+        "result_content_utf8_sha256": "8cbd2548f2fbbff1a76c28d90a96947d364ca99760f2b21a155f3ab395588cfa",
+        "result_content_bytes": 97,
+        "is_error": false,
+        "gateway_seq": 26,
+        "gateway_input_canonical_json_sha256": "b44848f7e9b255c5f4187a2c9d7e7ebb0d166624fb739004be10c9054d9959a0",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 28,
+        "trajectory_line": 384,
+        "result_line": 388,
+        "tool_id": "toolu_2a934a0ddce974c0",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/tests/func/test_run_cache.py"
+        },
+        "input_canonical_json_sha256": "b0c585b60507dd1216cc18b6d11897373d4e28713247ae154f0f00b9e20620f4",
+        "result_content_utf8_sha256": "6aee47b48d33cefb78216d2de5749f0b887a4807327563661c861e42e4608682",
+        "result_content_bytes": 6589,
+        "is_error": false,
+        "gateway_seq": 27,
+        "gateway_input_canonical_json_sha256": "b0c585b60507dd1216cc18b6d11897373d4e28713247ae154f0f00b9e20620f4",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 29,
+        "trajectory_line": 398,
+        "result_line": 402,
+        "tool_id": "toolu_95e55eda690bbe4b",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/dvc/stage/__init__.py",
+          "limit": 100,
+          "offset": 550
+        },
+        "input_canonical_json_sha256": "8b1652a34e449b5b4dfb5cd86366e4de66451368d0e95ef17e25a35805b57b37",
+        "result_content_utf8_sha256": "927c6371572fb825cd2db7801e1a20d931a40949f6cb9c7fc8aaa3d2b1c1a3a2",
+        "result_content_bytes": 3863,
+        "is_error": false,
+        "gateway_seq": 28,
+        "gateway_input_canonical_json_sha256": "8b1652a34e449b5b4dfb5cd86366e4de66451368d0e95ef17e25a35805b57b37",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 30,
+        "trajectory_line": 412,
+        "result_line": 416,
+        "tool_id": "toolu_e00378abbbf6029f",
+        "name": "Bash",
+        "input": {
+          "command": "grep -rn \"check_missing_outputs\" /testbed/dvc/ --include=\"*.py\" | head -10"
+        },
+        "input_canonical_json_sha256": "58785c2f6d8a13368bce7f56c2639727bed1766445df40568c29e623b3fbcdfc",
+        "result_content_utf8_sha256": "e23cf3336cd5464ffeded68b04dc40f6dccc7de30c7aa84b8e711fc45f722a04",
+        "result_content_bytes": 359,
+        "is_error": false,
+        "gateway_seq": 29,
+        "gateway_input_canonical_json_sha256": "58785c2f6d8a13368bce7f56c2639727bed1766445df40568c29e623b3fbcdfc",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 31,
+        "trajectory_line": 426,
+        "result_line": 430,
+        "tool_id": "toolu_75ff0232292d2e93",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/dvc/stage/utils.py",
+          "offset": 135,
+          "limit": 30
+        },
+        "input_canonical_json_sha256": "956e9dfc8dac9bf952beecf08d806fd05356ec1a8a414b9f6abcf6d904c71699",
+        "result_content_utf8_sha256": "66edb53c37b435fa58f39a2346e1e5acd164479dd479eb34cf90f30d6cb4bfa1",
+        "result_content_bytes": 1022,
+        "is_error": false,
+        "gateway_seq": 30,
+        "gateway_input_canonical_json_sha256": "956e9dfc8dac9bf952beecf08d806fd05356ec1a8a414b9f6abcf6d904c71699",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 32,
+        "trajectory_line": 440,
+        "result_line": 444,
+        "tool_id": "toolu_12db76f4f304e6cb",
+        "name": "Bash",
+        "input": {
+          "command": "grep -rn \"outs_cached\" /testbed/dvc/ --include=\"*.py\" | head -10"
+        },
+        "input_canonical_json_sha256": "f8a641a8e47bec7ce4fa6356171b1e68d00daa0c098a7d8a1df037ccb68938d4",
+        "result_content_utf8_sha256": "40e8d28287c2320bda31d0778b2cce4baea880a91081e09af7a7966796d348bf",
+        "result_content_bytes": 265,
+        "is_error": false,
+        "gateway_seq": 31,
+        "gateway_input_canonical_json_sha256": "f8a641a8e47bec7ce4fa6356171b1e68d00daa0c098a7d8a1df037ccb68938d4",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 33,
+        "trajectory_line": 454,
+        "result_line": 458,
+        "tool_id": "toolu_4991951689c605dd",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/dvc/stage/__init__.py",
+          "limit": 30,
+          "offset": 695
+        },
+        "input_canonical_json_sha256": "a192b7286834d11da38b44445275f4f2ea17f044c05b5256efad3197a56ff070",
+        "result_content_utf8_sha256": "9a14bd056cf6996c69beeca10b41d9859e515bef5a6d4f15ff5316315eef265b",
+        "result_content_bytes": 1189,
+        "is_error": false,
+        "gateway_seq": 32,
+        "gateway_input_canonical_json_sha256": "a192b7286834d11da38b44445275f4f2ea17f044c05b5256efad3197a56ff070",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 34,
+        "trajectory_line": 468,
+        "result_line": 472,
+        "tool_id": "toolu_2d88fbe2af81f8a4",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/dvc/repo/pull.py"
+        },
+        "input_canonical_json_sha256": "d653ecabd041860063f57ced867cb0624fdcf0618a2d74973f6cadf8259c2842",
+        "result_content_utf8_sha256": "c3ed238d0bf753c89ac033ef20e7414882dd3c91eb33951534fdd3b4b70dac74",
+        "result_content_bytes": 1380,
+        "is_error": false,
+        "gateway_seq": 33,
+        "gateway_input_canonical_json_sha256": "d653ecabd041860063f57ced867cb0624fdcf0618a2d74973f6cadf8259c2842",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 35,
+        "trajectory_line": 482,
+        "result_line": 486,
+        "tool_id": "toolu_7a4ae9bbc1f18d2c",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/dvc/stage/__init__.py",
+          "limit": 30,
+          "offset": 420
+        },
+        "input_canonical_json_sha256": "7880c43e10cc8a1c56f37aa6cd0638fa082438b7b501080e4fb2ceeccd104fe1",
+        "result_content_utf8_sha256": "1dda4bb4dfa624177f8b0a500c6f61429c0b6a9de02bcb793ef5466aec85a227",
+        "result_content_bytes": 1066,
+        "is_error": false,
+        "gateway_seq": 34,
+        "gateway_input_canonical_json_sha256": "7880c43e10cc8a1c56f37aa6cd0638fa082438b7b501080e4fb2ceeccd104fe1",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 36,
+        "trajectory_line": 496,
+        "result_line": 500,
+        "tool_id": "toolu_3d3961f74191ac24",
+        "name": "Bash",
+        "input": {
+          "command": "grep -rn \"def changed\" /testbed/dvc/stage/__init__.py | head -10"
+        },
+        "input_canonical_json_sha256": "51e43bc96bd2726eb39e6b55d4de68391a659fb3977a806c172f3397f3cad62e",
+        "result_content_utf8_sha256": "1350d6d3fc5731ae09de96a124587ead4544517b7b1aed088966084372caf934",
+        "result_content_bytes": 435,
+        "is_error": false,
+        "gateway_seq": 35,
+        "gateway_input_canonical_json_sha256": "51e43bc96bd2726eb39e6b55d4de68391a659fb3977a806c172f3397f3cad62e",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 37,
+        "trajectory_line": 510,
+        "result_line": 514,
+        "tool_id": "toolu_c9d2f3ea7edb1950",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/dvc/stage/__init__.py",
+          "limit": 50,
+          "offset": 344
+        },
+        "input_canonical_json_sha256": "0b05619adf09186e667e80348b1e4849d93ddeb7afecb8119230f5ce1c0f6b35",
+        "result_content_utf8_sha256": "0792359226d5fe96ffa483826b4148cad355d0b896971e27e980ffa7e7dce9fd",
+        "result_content_bytes": 1734,
+        "is_error": false,
+        "gateway_seq": 36,
+        "gateway_input_canonical_json_sha256": "0b05619adf09186e667e80348b1e4849d93ddeb7afecb8119230f5ce1c0f6b35",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 38,
+        "trajectory_line": 524,
+        "result_line": 528,
+        "tool_id": "toolu_190a2c460576acc6",
+        "name": "Bash",
+        "input": {
+          "command": "grep -rn \"def status\" /testbed/dvc/output.py | head -5"
+        },
+        "input_canonical_json_sha256": "eaa4c5bb868e87540c061331cdcbe2b46f5c4fbb70afad948f5bd6dc274906b6",
+        "result_content_utf8_sha256": "52e7ff70274f22985fe8c1794317bb2cc8926f01f1f081c7cfda024019015441",
+        "result_content_bytes": 66,
+        "is_error": false,
+        "gateway_seq": 37,
+        "gateway_input_canonical_json_sha256": "eaa4c5bb868e87540c061331cdcbe2b46f5c4fbb70afad948f5bd6dc274906b6",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 39,
+        "trajectory_line": 538,
+        "result_line": 542,
+        "tool_id": "toolu_18f51fc73ffd3ef6",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/dvc/output.py",
+          "limit": 40,
+          "offset": 605
+        },
+        "input_canonical_json_sha256": "9434a6ba7d2429c7b61696460025d12ed4eb0a2eb204f12121edc3584fcb1dcc",
+        "result_content_utf8_sha256": "bb031b194254f05bbe5d19800fd782d57ef91333f0ab6f94d9b60251225dfcbe",
+        "result_content_bytes": 1232,
+        "is_error": false,
+        "gateway_seq": 38,
+        "gateway_input_canonical_json_sha256": "9434a6ba7d2429c7b61696460025d12ed4eb0a2eb204f12121edc3584fcb1dcc",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 40,
+        "trajectory_line": 552,
+        "result_line": 556,
+        "tool_id": "toolu_61fac5ee3f26283c",
+        "name": "Bash",
+        "input": {
+          "command": "grep -rn \"def workspace_status\" /testbed/dvc/output.py | head -5"
+        },
+        "input_canonical_json_sha256": "519796fb717e2c45fc0f01f43c9948999c162698a1c459585b3cb6ea26bc3483",
+        "result_content_utf8_sha256": "27f57f9057e2f8893cd2e9177451ad80a5392476ede4bfd9f069201875019cdf",
+        "result_content_bytes": 76,
+        "is_error": false,
+        "gateway_seq": 39,
+        "gateway_input_canonical_json_sha256": "519796fb717e2c45fc0f01f43c9948999c162698a1c459585b3cb6ea26bc3483",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 41,
+        "trajectory_line": 566,
+        "result_line": 570,
+        "tool_id": "toolu_b8ebdc4936eda50e",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/dvc/output.py",
+          "limit": 15,
+          "offset": 593
+        },
+        "input_canonical_json_sha256": "9447ac9fa68ef53b355031f42702357a9cd853f3d9aa023daeb9fac928d39331",
+        "result_content_utf8_sha256": "ad5ef803ed82e98304b7c02998637b59a66a85a7d8a2ecfc77e446dc488bca2b",
+        "result_content_bytes": 411,
+        "is_error": false,
+        "gateway_seq": 40,
+        "gateway_input_canonical_json_sha256": "9447ac9fa68ef53b355031f42702357a9cd853f3d9aa023daeb9fac928d39331",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 42,
+        "trajectory_line": 580,
+        "result_line": 584,
+        "tool_id": "toolu_1e52529673896f14",
+        "name": "Bash",
+        "input": {
+          "command": "grep -rn \"def pull\" /testbed/dvc/data_cloud.py | head -5"
+        },
+        "input_canonical_json_sha256": "12431070dbbd4233aea0804e11c0cca73e2e45bdd2b73e6810dee62e64477450",
+        "result_content_utf8_sha256": "7c21bfcd88c8d6ea5ce123113a24e756091222d27afb25f0267df8560aa3b98b",
+        "result_content_bytes": 44,
+        "is_error": false,
+        "gateway_seq": 41,
+        "gateway_input_canonical_json_sha256": "12431070dbbd4233aea0804e11c0cca73e2e45bdd2b73e6810dee62e64477450",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 43,
+        "trajectory_line": 594,
+        "result_line": 598,
+        "tool_id": "toolu_bdba5f348d0ba3f4",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/dvc/data_cloud.py",
+          "limit": 40,
+          "offset": 160
+        },
+        "input_canonical_json_sha256": "f5f0a92347cedd34503c333f6ef301f2f6b9d46fba78e238121bb3d8bae1c1a6",
+        "result_content_utf8_sha256": "5747e8c02e0514d8188951cf78b62cc3d68768989b00ddb2b42db9ed9b84da27",
+        "result_content_bytes": 1469,
+        "is_error": false,
+        "gateway_seq": 42,
+        "gateway_input_canonical_json_sha256": "f5f0a92347cedd34503c333f6ef301f2f6b9d46fba78e238121bb3d8bae1c1a6",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 44,
+        "trajectory_line": 608,
+        "result_line": 612,
+        "tool_id": "toolu_a786d6866c18180e",
+        "name": "Bash",
+        "input": {
+          "command": "grep -rn \"def exists\" /testbed/dvc/output.py | head -5"
+        },
+        "input_canonical_json_sha256": "9bd94e11461730246e54dff474b1bc20f4b45ca5cb723d5a4051a4f88403c5ec",
+        "result_content_utf8_sha256": "3e138b26f8246ce84b6904f788e9150e1610b5cc5875af8b2676de15c1a2aa06",
+        "result_content_bytes": 48,
+        "is_error": false,
+        "gateway_seq": 43,
+        "gateway_input_canonical_json_sha256": "9bd94e11461730246e54dff474b1bc20f4b45ca5cb723d5a4051a4f88403c5ec",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 45,
+        "trajectory_line": 622,
+        "result_line": 626,
+        "tool_id": "toolu_f5412d91abc07174",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/dvc/output.py",
+          "limit": 10,
+          "offset": 555
+        },
+        "input_canonical_json_sha256": "7604a06c45cfcb91792be4c36d1676858d388a9d8db8d3151e10e9524abfaa30",
+        "result_content_utf8_sha256": "ced5cc66d5317c7a7233c251219aa5e11130a40ad692be8112d0b3f6a5f5b780",
+        "result_content_bytes": 300,
+        "is_error": false,
+        "gateway_seq": 44,
+        "gateway_input_canonical_json_sha256": "7604a06c45cfcb91792be4c36d1676858d388a9d8db8d3151e10e9524abfaa30",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 46,
+        "trajectory_line": 636,
+        "result_line": 640,
+        "tool_id": "toolu_8d052de6e584dcce",
+        "name": "Bash",
+        "input": {
+          "command": "grep -rn \"hash_info\" /testbed/dvc/output.py | head -20"
+        },
+        "input_canonical_json_sha256": "4ec5b4eb95119f71f10fb430f15864f474320a62a73fabbcb1e254faddafffda",
+        "result_content_utf8_sha256": "1cc875b6d362ab2b29e880b3bee98b7bc06f1216c4cf19ead9fcfa1a5d39cf11",
+        "result_content_bytes": 1530,
+        "is_error": false,
+        "gateway_seq": 45,
+        "gateway_input_canonical_json_sha256": "4ec5b4eb95119f71f10fb430f15864f474320a62a73fabbcb1e254faddafffda",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 47,
+        "trajectory_line": 650,
+        "result_line": 654,
+        "tool_id": "toolu_849fa470ed8c9bc7",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/dvc/stage/__init__.py",
+          "limit": 60,
+          "offset": 560
+        },
+        "input_canonical_json_sha256": "395b864b1abd5e3c08f72e81988d001fd27334ac3ea2acb8a79293a112acb7e8",
+        "result_content_utf8_sha256": "3708fc82fba826371984945f85eebf06a6fe3ccb260174771ed27755bbdda517",
+        "result_content_bytes": 2318,
+        "is_error": false,
+        "gateway_seq": 46,
+        "gateway_input_canonical_json_sha256": "395b864b1abd5e3c08f72e81988d001fd27334ac3ea2acb8a79293a112acb7e8",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 48,
+        "trajectory_line": 664,
+        "result_line": 668,
+        "tool_id": "toolu_b3a7a2689089060e",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/dvc/stage/__init__.py",
+          "limit": 30,
+          "offset": 620
+        },
+        "input_canonical_json_sha256": "8fccc7a48e10115aa7abf005368b118f6eae9f12b667c8f6a6c57bdb299ec973",
+        "result_content_utf8_sha256": "27c6029b6abf998f6e41210c4099d25a19b742414ea551f53421d1b2cce6ae70",
+        "result_content_bytes": 1134,
+        "is_error": false,
+        "gateway_seq": 47,
+        "gateway_input_canonical_json_sha256": "8fccc7a48e10115aa7abf005368b118f6eae9f12b667c8f6a6c57bdb299ec973",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 49,
+        "trajectory_line": 682,
+        "result_line": 686,
+        "tool_id": "toolu_d891d8ef86fdf1e5",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/dvc/stage/__init__.py",
+          "limit": 30,
+          "offset": 1
+        },
+        "input_canonical_json_sha256": "720e81e1309eeafda94c52639b90eaa3ec9b01643df51f483720879f27d90822",
+        "result_content_utf8_sha256": "3f74021ed9683bc3a2258723ee3534c911dbd9f1903187b339b856d5484bb45a",
+        "result_content_bytes": 680,
+        "is_error": false,
+        "gateway_seq": 48,
+        "gateway_input_canonical_json_sha256": "720e81e1309eeafda94c52639b90eaa3ec9b01643df51f483720879f27d90822",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 50,
+        "trajectory_line": 696,
+        "result_line": 700,
+        "tool_id": "toolu_7dc09d38ce314c9d",
+        "name": "Edit",
+        "input": {
+          "replace_all": false,
+          "file_path": "/testbed/dvc/stage/__init__.py",
+          "old_string": "    @rwlocked(read=[\"outs\"])\n    def _check_missing_outputs(self) -> None:\n        check_missing_outputs(self)",
+          "new_string": "    @rwlocked(read=[\"outs\"])\n    def _check_missing_outputs(self) -> None:\n        check_missing_outputs(self)\n\n    def _checkout_outs(self, allow_missing: bool = False) -> None:\n        \"\"\"Checkout outputs from cache.\"\"\"\n        for out in self.outs:\n            if out.hash_info and not out.exists:\n                out.checkout(allow_missing=allow_missing)"
+        },
+        "input_canonical_json_sha256": "47ceb127078d0a09599befad3b11efbff4d4b893c3cdf48f2983a8055c10d136",
+        "result_content_utf8_sha256": "9665d29570ff10ebf2f502d35c188caba594df06066d69f955f6b2137653ecfd",
+        "result_content_bytes": 138,
+        "is_error": false,
+        "gateway_seq": 49,
+        "gateway_input_canonical_json_sha256": "6eb39593ff8416381e39a8f15a2837d47e1b06832d1d7a562984a9522018c7d6",
+        "gateway_input_matches_trajectory_object": false
+      },
+      {
+        "ordinal": 51,
+        "trajectory_line": 710,
+        "result_line": 714,
+        "tool_id": "toolu_4d34cc64a600c309",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/dvc/stage/__init__.py",
+          "limit": 50,
+          "offset": 560
+        },
+        "input_canonical_json_sha256": "0f003afe25eed806786867544a7302365c0e6b4cb283219399e8cef2b850dc66",
+        "result_content_utf8_sha256": "721faa8010739f5d97e69d79453eaf78ec321e08e06bcd1962f5dd4c90a895e8",
+        "result_content_bytes": 1901,
+        "is_error": false,
+        "gateway_seq": 50,
+        "gateway_input_canonical_json_sha256": "0f003afe25eed806786867544a7302365c0e6b4cb283219399e8cef2b850dc66",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 52,
+        "trajectory_line": 724,
+        "result_line": 728,
+        "tool_id": "toolu_f8537e70d2456c21",
+        "name": "Edit",
+        "input": {
+          "replace_all": false,
+          "file_path": "/testbed/dvc/stage/__init__.py",
+          "old_string": "        else:\n            args = (\"outputs\", \"frozen \") if self.frozen else (\"data sources\", \"\")\n            logger.info(\"Verifying %s in %s%s\", *args, self)\n            if not dry:\n                self._check_missing_outputs()",
+          "new_string": "        else:\n            args = (\"outputs\", \"frozen \") if self.frozen else (\"data sources\", \"\")\n            logger.info(\"Verifying %s in %s%s\", *args, self)\n            if not dry:\n                if kwargs.get(\"pull\"):\n                    self._pull_and_checkout_outs()\n                self._check_missing_outputs()"
+        },
+        "input_canonical_json_sha256": "dd65a73d25211d781b7039c9f2515cc1134e44de41969f53c7b46e2f8af3bf5b",
+        "result_content_utf8_sha256": "9665d29570ff10ebf2f502d35c188caba594df06066d69f955f6b2137653ecfd",
+        "result_content_bytes": 138,
+        "is_error": false,
+        "gateway_seq": 51,
+        "gateway_input_canonical_json_sha256": "dd65a73d25211d781b7039c9f2515cc1134e44de41969f53c7b46e2f8af3bf5b",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 53,
+        "trajectory_line": 742,
+        "result_line": 746,
+        "tool_id": "toolu_39ad0f0e4886a460",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/dvc/stage/__init__.py",
+          "limit": 15,
+          "offset": 614
+        },
+        "input_canonical_json_sha256": "d9ad6485a3f25fe84590df4abce2e8fa852f06c331ecff41f94fe078e6dec62c",
+        "result_content_utf8_sha256": "1774870bab5a430b238fa147e1013ced361e3260982b192b5ef78e3c4020ca55",
+        "result_content_bytes": 561,
+        "is_error": false,
+        "gateway_seq": 52,
+        "gateway_input_canonical_json_sha256": "d9ad6485a3f25fe84590df4abce2e8fa852f06c331ecff41f94fe078e6dec62c",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 54,
+        "trajectory_line": 756,
+        "result_line": 760,
+        "tool_id": "toolu_04bea3f9051f1f60",
+        "name": "Edit",
+        "input": {
+          "replace_all": false,
+          "file_path": "/testbed/dvc/stage/__init__.py",
+          "old_string": "    @rwlocked(read=[\"outs\"])\n    def _check_missing_outputs(self) -> None:\n        check_missing_outputs(self)\n\n    def _checkout_outs(self, allow_missing: bool = False) -> None:\n        \"\"\"Checkout outputs from cache.\"\"\"\n        for out in self.outs:\n            if out.hash_info and not out.exists:\n                out.checkout(allow_missing=allow_missing)",
+          "new_string": "    @rwlocked(read=[\"outs\"])\n    def _check_missing_outputs(self) -> None:\n        check_missing_outputs(self)\n\n    def _pull_and_checkout_outs(self) -> None:\n        \"\"\"Pull missing outputs from remote and checkout to workspace.\"\"\"\n        from dvc.utils import big_file_size, big_file_traceback\n\n        used_objs = self.get_used_objs()\n        for odb, objs in used_objs.items():\n            if objs:\n                self.repo.cloud.pull(objs)\n\n        self._checkout_outs()\n\n    def _checkout_outs(self, allow_missing: bool = False) -> None:\n        \"\"\"Checkout outputs from cache.\"\"\"\n        from dvc.exceptions import OutputDoesNotExistError\n\n        for out in self.outs:\n            if out.hash_info and not out.exists:\n                try:\n                    out.checkout(allow_missing=allow_missing)\n                except OutputDoesNotExistError:\n                    logger.warning(\n                        big_file_traceback.format(\n                            path=str(out),\n                            size=big_file_size(out),\n                        )\n                    )\n                    raise"
+        },
+        "input_canonical_json_sha256": "fd5916045949c2900cae8cf633b24e5e29fb17f2f6788f713936330391294c75",
+        "result_content_utf8_sha256": "9665d29570ff10ebf2f502d35c188caba594df06066d69f955f6b2137653ecfd",
+        "result_content_bytes": 138,
+        "is_error": false,
+        "gateway_seq": 53,
+        "gateway_input_canonical_json_sha256": "fd5916045949c2900cae8cf633b24e5e29fb17f2f6788f713936330391294c75",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 55,
+        "trajectory_line": 770,
+        "result_line": 776,
+        "tool_id": "toolu_049791e594ac920e",
+        "name": "Bash",
+        "input": {
+          "command": "python -m pytest -q tests/func/test_run_cache.py -x 2>&1 | head -50"
+        },
+        "input_canonical_json_sha256": "6d37ddace3eb16c3dcb24d40f0bb9c7c2aa2e66a7815e7a53c36562a32766349",
+        "result_content_utf8_sha256": "53da926d98f66b30d1c0a64b82c2de6983103eeef6fbb2a98a6318154864a16f",
+        "result_content_bytes": 389,
+        "is_error": false,
+        "gateway_seq": 54,
+        "gateway_input_canonical_json_sha256": "6d37ddace3eb16c3dcb24d40f0bb9c7c2aa2e66a7815e7a53c36562a32766349",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 56,
+        "trajectory_line": 786,
+        "result_line": 792,
+        "tool_id": "toolu_ae05488a1f43322b",
+        "name": "Bash",
+        "input": {
+          "command": "python -m pytest -q tests/func/test_repro_multistage.py -x 2>&1 | head -100"
+        },
+        "input_canonical_json_sha256": "18181c48537ef4e74eb2eaac63f91af04523136897e747be0a4e7ebcd157c71a",
+        "result_content_utf8_sha256": "acabeb58697b053b9d6bf87b4781247d8d859f94682ff3406624225ff18b5319",
+        "result_content_bytes": 389,
+        "is_error": false,
+        "gateway_seq": 55,
+        "gateway_input_canonical_json_sha256": "18181c48537ef4e74eb2eaac63f91af04523136897e747be0a4e7ebcd157c71a",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 57,
+        "trajectory_line": 802,
+        "result_line": 806,
+        "tool_id": "toolu_0298f33c98553f85",
+        "name": "Bash",
+        "input": {
+          "command": "python -c \"\nimport tempfile\nimport os\nimport shutil\n\n# Create a temporary directory for the test\ntmpdir = tempfile.mkdtemp()\nos.chdir(tmpdir)\n\n# Initialize git and dvc\nos.system('git init -q')\nos.system('python -m dvc init -q')\n\n# Create a remote\nos.makedirs('remote')\nos.system('python -m dvc remote add -d myremote remote')\n\n# Create and add a file\nwith open('data.txt', 'w') as f:\n    f.write('hello world')\n\nos.system('python -m dvc add data.txt -q')\n\n# Push to remote\nos.system('python -m dvc push -q')\n\n# Remove the file and the cache\nos.remove('data.txt')\nshutil.rmtree('.dvc/cache')\n\n# Create a simple pipeline that depends on data.txt\nwith open('dvc.yaml', 'w') as f:\n    f.write('''\nstages:\n  process:\n    cmd: cat data.txt > output.txt\n    deps:\n    - data.txt\n    outs:\n    - output.txt\n''')\n\n# Try to reproduce with --pull\nresult = os.system('python -m dvc repro --pull -q')\nprint(f'Repro exit code: {result}')\n\n# Check if output was created\nif os.path.exists('output.txt'):\n    with open('output.txt') as f:\n        print(f'Output content: {f.read()}')\nelse:\n    print('ERROR: output.txt was not created!')\n\n# Clean up\nos.chdir('/')\nshutil.rmtree(tmpdir)\n\"\n"
+        },
+        "input_canonical_json_sha256": "3595060b7527018465f3491b804b304c57e01cdd31f17b997d42389b8eb8a0c8",
+        "result_content_utf8_sha256": "4edbe3e4d159bc9116502381acab54980983dd00b70f8aea85f8811f8b52f594",
+        "result_content_bytes": 97,
+        "is_error": false,
+        "gateway_seq": 56,
+        "gateway_input_canonical_json_sha256": "a2ff47b6b3cd2c7d4023e362c23d091be4b347502e5347903003c4131fa16fe7",
+        "gateway_input_matches_trajectory_object": false
+      },
+      {
+        "ordinal": 58,
+        "trajectory_line": 816,
+        "result_line": 820,
+        "tool_id": "toolu_ac5e4f1446aabcb1",
+        "name": "Bash",
+        "input": {
+          "command": "cd /tmp && rm -rf test_pull && mkdir test_pull && cd test_pull && \\\ngit init -q && \\\npython -m dvc init -q && \\\nmkdir remote && \\\npython -m dvc remote add -d myremote remote && \\\necho \"hello world\" > data.txt && \\\npython -m dvc add data.txt && \\\npython -m dvc push && \\\nrm data.txt && \\\nrm -rf .dvc/cache && \\\ncat > dvc.yaml << 'EOF'\nstages:\n  process:\n    cmd: cat data.txt > output.txt\n    deps:\n    - data.txt\n    outs:\n    - output.txt\nEOF\npython -m dvc repro --pull 2>&1"
+        },
+        "input_canonical_json_sha256": "53a8c73f5c035a2f6a4692ed7c8a56103c4e8b1deca5c9b1f1ddd951d575f99a",
+        "result_content_utf8_sha256": "a73799dc958a4e324cf7e642df13288c6ed32081ad23e6fdd9826211edecf04a",
+        "result_content_bytes": 377,
+        "is_error": true,
+        "gateway_seq": 57,
+        "gateway_input_canonical_json_sha256": "53a8c73f5c035a2f6a4692ed7c8a56103c4e8b1deca5c9b1f1ddd951d575f99a",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 59,
+        "trajectory_line": 830,
+        "result_line": 834,
+        "tool_id": "toolu_6d3fa88b6aa4dac6",
+        "name": "Bash",
+        "input": {
+          "command": "grep -rn \"big_file_size\\|big_file_traceback\" /testbed/dvc/ --include=\"*.py\" | head -10"
+        },
+        "input_canonical_json_sha256": "423d254c0f8f7a5de23ea24a916d121f0d68a50aaa6ce781007cee0cd65e7c8b",
+        "result_content_utf8_sha256": "d3d74267f02401ebdb2e8d3bcc19d8f95a7f12df50071a84f69b9ca80fc15d1a",
+        "result_content_bytes": 272,
+        "is_error": false,
+        "gateway_seq": 58,
+        "gateway_input_canonical_json_sha256": "423d254c0f8f7a5de23ea24a916d121f0d68a50aaa6ce781007cee0cd65e7c8b",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 60,
+        "trajectory_line": 844,
+        "result_line": 848,
+        "tool_id": "toolu_ace42ff059bc65cb",
+        "name": "Bash",
+        "input": {
+          "command": "grep -rn \"OutputDoesNotExistError\" /testbed/dvc/ --include=\"*.py\" | head -10"
+        },
+        "input_canonical_json_sha256": "462a22b6ff0eb6c617a4dcfc3acf187cac8cd4b489e42cb5f1364e8d464b919d",
+        "result_content_utf8_sha256": "253df4759e12f4ac3701b4c6a4d83ebc856f3bc31f98cc8626bfda7b36e59d54",
+        "result_content_bytes": 681,
+        "is_error": false,
+        "gateway_seq": 59,
+        "gateway_input_canonical_json_sha256": "462a22b6ff0eb6c617a4dcfc3acf187cac8cd4b489e42cb5f1364e8d464b919d",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 61,
+        "trajectory_line": 858,
+        "result_line": 862,
+        "tool_id": "toolu_55fd671f1c136c06",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/dvc/stage/__init__.py",
+          "limit": 15,
+          "offset": 496
+        },
+        "input_canonical_json_sha256": "03d6328253c17c60749811ab89ae34db2dfc7172ad40c55191b12d7b7546c574",
+        "result_content_utf8_sha256": "1212b2922b7c37a8d6768a1a1d63c7745913d43e12f5c665a88094f4ef1ad87f",
+        "result_content_bytes": 574,
+        "is_error": false,
+        "gateway_seq": 60,
+        "gateway_input_canonical_json_sha256": "03d6328253c17c60749811ab89ae34db2dfc7172ad40c55191b12d7b7546c574",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 62,
+        "trajectory_line": 872,
+        "result_line": 876,
+        "tool_id": "toolu_bbefd0cefdb14355",
+        "name": "Edit",
+        "input": {
+          "replace_all": false,
+          "file_path": "/testbed/dvc/stage/__init__.py",
+          "old_string": "    def _pull_and_checkout_outs(self) -> None:\n        \"\"\"Pull missing outputs from remote and checkout to workspace.\"\"\"\n        from dvc.utils import big_file_size, big_file_traceback\n\n        used_objs = self.get_used_objs()\n        for odb, objs in used_objs.items():\n            if objs:\n                self.repo.cloud.pull(objs)\n\n        self._checkout_outs()\n\n    def _checkout_outs(self, allow_missing: bool = False) -> None:\n        \"\"\"Checkout outputs from cache.\"\"\"\n        from dvc.exceptions import OutputDoesNotExistError\n\n        for out in self.outs:\n            if out.hash_info and not out.exists:\n                try:\n                    out.checkout(allow_missing=allow_missing)\n                except OutputDoesNotExistError:\n                    logger.warning(\n                        big_file_traceback.format(\n                            path=str(out),\n                            size=big_file_size(out),\n                        )\n                    )\n                    raise",
+          "new_string": "    def _pull_and_checkout_outs(self) -> None:\n        \"\"\"Pull missing outputs from remote and checkout to workspace.\"\"\"\n        from dvc.output import OutputDoesNotExistError\n\n        used_objs = self.get_used_objs()\n        for odb, objs in used_objs.items():\n            if objs:\n                self.repo.cloud.pull(objs)\n\n        for out in self.outs:\n            if out.hash_info and not out.exists:\n                try:\n                    out.checkout()\n                except OutputDoesNotExistError:\n                    logger.warning(\"expected output '%s' does not exist\", out)\n                    raise"
+        },
+        "input_canonical_json_sha256": "6f97d90643f060842491db34b12b5b2ab5a86c7f3547b4e881759d3a2f1ebd32",
+        "result_content_utf8_sha256": "9665d29570ff10ebf2f502d35c188caba594df06066d69f955f6b2137653ecfd",
+        "result_content_bytes": 138,
+        "is_error": false,
+        "gateway_seq": 61,
+        "gateway_input_canonical_json_sha256": "6f97d90643f060842491db34b12b5b2ab5a86c7f3547b4e881759d3a2f1ebd32",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 63,
+        "trajectory_line": 886,
+        "result_line": 890,
+        "tool_id": "toolu_bdffa6e3544791d6",
+        "name": "Bash",
+        "input": {
+          "command": "cd /tmp && rm -rf test_pull && mkdir test_pull && cd test_pull && \\\ngit init -q && \\\npython -m dvc init -q && \\\nmkdir remote && \\\npython -m dvc remote add -d myremote remote && \\\necho \"hello world\" > data.txt && \\\npython -m dvc add data.txt && \\\npython -m dvc push && \\\nrm data.txt && \\\nrm -rf .dvc/cache && \\\ncat > dvc.yaml << 'EOF'\nstages:\n  process:\n    cmd: cat data.txt > output.txt\n    deps:\n    - data.txt\n    outs:\n    - output.txt\nEOF\npython -m dvc repro --pull 2>&1"
+        },
+        "input_canonical_json_sha256": "53a8c73f5c035a2f6a4692ed7c8a56103c4e8b1deca5c9b1f1ddd951d575f99a",
+        "result_content_utf8_sha256": "3e1290bbce9711b2698dc3a38773122f2122aab758d652e08768a1d543187f73",
+        "result_content_bytes": 581,
+        "is_error": false,
+        "gateway_seq": 62,
+        "gateway_input_canonical_json_sha256": "53a8c73f5c035a2f6a4692ed7c8a56103c4e8b1deca5c9b1f1ddd951d575f99a",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 64,
+        "trajectory_line": 900,
+        "result_line": 904,
+        "tool_id": "toolu_4809b79c2865d7be",
+        "name": "Bash",
+        "input": {
+          "command": "cd /tmp && rm -rf test_pull && mkdir test_pull && cd test_pull && \\\ngit init -q && \\\npython -m dvc init -q && \\\nmkdir remote && \\\npython -m dvc remote add -d myremote remote && \\\necho \"hello world\" > data.txt && \\\npython -m dvc add data.txt && \\\npython -m dvc push && \\\nrm data.txt && \\\nrm -rf .dvc/cache && \\\ncat > dvc.yaml << 'EOF'\nstages:\n  process:\n    cmd: cat data.txt > output.txt\n    deps:\n    - data.txt\n    outs:\n    - output.txt\nEOF\n# Verify data.txt is gone\nls -la data.txt 2>&1 || echo \"data.txt is gone (expected)\"\n# Try to reproduce with --pull\npython -m dvc repro --pull 2>&1\n# Check results\necho \"---\"\necho \"data.txt exists: $(test -f data.txt && echo yes || echo no)\"\necho \"output.txt exists: $(test -f output.txt && echo yes || echo no)\""
+        },
+        "input_canonical_json_sha256": "fc01e6c34976cbba0c87d67054bc7505bb148228de0f1fb398fd93f19bf0c36e",
+        "result_content_utf8_sha256": "b4a187e4fa46eaa06cbe8325e1c9e1c074ea2b613d6ea57b887a8cc4dfec0175",
+        "result_content_bytes": 713,
+        "is_error": false,
+        "gateway_seq": 63,
+        "gateway_input_canonical_json_sha256": "fc01e6c34976cbba0c87d67054bc7505bb148228de0f1fb398fd93f19bf0c36e",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 65,
+        "trajectory_line": 914,
+        "result_line": 918,
+        "tool_id": "toolu_1521f42af142a2ca",
+        "name": "Bash",
+        "input": {
+          "command": "cd /tmp && rm -rf test_pull && mkdir test_pull && cd test_pull && \\\ngit init -q && \\\npython -m dvc init -q && \\\nmkdir remote && \\\npython -m dvc remote add -d myremote remote && \\\necho \"hello world\" > data.txt && \\\npython -m dvc add data.txt && \\\npython -m dvc push && \\\nrm data.txt && \\\nrm -rf .dvc/cache && \\\n# No dvc.yaml - just try to repro the data source stage directly\npython -m dvc repro --pull data.txt.dvc 2>&1\necho \"---\"\necho \"data.txt exists: $(test -f data.txt && echo yes || echo no)\""
+        },
+        "input_canonical_json_sha256": "39e6d80e2f02f4c7a622d82e42edcbda61344bab2984b1df831459d34e117cc2",
+        "result_content_utf8_sha256": "ac95c4ca1f0609f5fbe39fa5e73221ff93f89e07d09f911835873207acd117c4",
+        "result_content_bytes": 470,
+        "is_error": false,
+        "gateway_seq": 64,
+        "gateway_input_canonical_json_sha256": "39e6d80e2f02f4c7a622d82e42edcbda61344bab2984b1df831459d34e117cc2",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 66,
+        "trajectory_line": 928,
+        "result_line": 932,
+        "tool_id": "toolu_e454662eed33e888",
+        "name": "Bash",
+        "input": {
+          "command": "cd /tmp && rm -rf test_pull && mkdir test_pull && cd test_pull && \\\ngit init -q && \\\npython -m dvc init -q && \\\nmkdir remote && \\\npython -m dvc remote add -d myremote remote && \\\necho \"hello world\" > data.txt && \\\npython -m dvc add data.txt && \\\npython -m dvc push && \\\nrm data.txt && \\\nrm -rf .dvc/cache && \\\ncat > dvc.yaml << 'EOF'\nstages:\n  process:\n    cmd: cat data.txt > output.txt\n    deps:\n    - data.txt\n    outs:\n    - output.txt\nEOF\n# Try to repro the process stage - it should pull data.txt first\npython -m dvc repro --pull 2>&1\necho \"---\"\necho \"data.txt exists: $(test -f data.txt && echo yes || echo no)\"\necho \"output.txt exists: $(test -f output.txt && echo yes || echo no)\"\ncat output.txt"
+        },
+        "input_canonical_json_sha256": "2d7842801d32165e3dc45481a6004406e477d93515c889671b0b7f6aa1a5332a",
+        "result_content_utf8_sha256": "32026d0996e60fba1d633c20e4b6b0263982f660de476ae6666949d251d24c73",
+        "result_content_bytes": 641,
+        "is_error": false,
+        "gateway_seq": 65,
+        "gateway_input_canonical_json_sha256": "2d7842801d32165e3dc45481a6004406e477d93515c889671b0b7f6aa1a5332a",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 67,
+        "trajectory_line": 942,
+        "result_line": 948,
+        "tool_id": "toolu_ddfd61bb362ea925",
+        "name": "Bash",
+        "input": {
+          "command": "python -m pytest -q tests/func/test_run_cache.py tests/func/test_repro_multistage.py -x 2>&1 | tail -20"
+        },
+        "input_canonical_json_sha256": "e16ef1fb657ba4355fa9c12476a33b7f62fcf7fb78600bdc2589989e8837f4a5",
+        "result_content_utf8_sha256": "3ce2a7e12ddc728c37f25b5037934cdb3ae34c9e25b7a4e0889499a4b6a88aef",
+        "result_content_bytes": 390,
+        "is_error": false,
+        "gateway_seq": 66,
+        "gateway_input_canonical_json_sha256": "e16ef1fb657ba4355fa9c12476a33b7f62fcf7fb78600bdc2589989e8837f4a5",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 68,
+        "trajectory_line": 958,
+        "result_line": 962,
+        "tool_id": "toolu_f490a282aa6f0930",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/tests/func/test_run_cache.py",
+          "limit": 30,
+          "offset": 160
+        },
+        "input_canonical_json_sha256": "d66f85cdb6721e746bca80da594f08861f09faea9d737e4db43de419cb1d49e1",
+        "result_content_utf8_sha256": "4ee575efbe562e974e21eb608572291f59ed5a734a675cdc159610090fcf063f",
+        "result_content_bytes": 984,
+        "is_error": false,
+        "gateway_seq": 67,
+        "gateway_input_canonical_json_sha256": "d66f85cdb6721e746bca80da594f08861f09faea9d737e4db43de419cb1d49e1",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 69,
+        "trajectory_line": 972,
+        "result_line": 976,
+        "tool_id": "toolu_753d895e2b8e22a3",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/tests/func/test_run_cache.py"
+        },
+        "input_canonical_json_sha256": "b0c585b60507dd1216cc18b6d11897373d4e28713247ae154f0f00b9e20620f4",
+        "result_content_utf8_sha256": "6aee47b48d33cefb78216d2de5749f0b887a4807327563661c861e42e4608682",
+        "result_content_bytes": 6589,
+        "is_error": false,
+        "gateway_seq": 68,
+        "gateway_input_canonical_json_sha256": "b0c585b60507dd1216cc18b6d11897373d4e28713247ae154f0f00b9e20620f4",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 70,
+        "trajectory_line": 986,
+        "result_line": 990,
+        "tool_id": "toolu_362705d05216d263",
+        "name": "Edit",
+        "input": {
+          "replace_all": false,
+          "file_path": "/testbed/tests/func/test_run_cache.py",
+          "old_string": "def test_restore_pull(tmp_dir, dvc, run_copy, mocker, local_remote):\n    import dvc.output as dvc_output\n\n    tmp_dir.gen(\"foo\", \"foo\")\n    stage = run_copy(\"foo\", \"bar\", name=\"copy-foo-bar\")\n\n    dvc.push()\n\n    mock_restore = mocker.spy(dvc.stage_cache, \"restore\")\n    mock_run = mocker.patch(\"dvc.stage.run.cmd_run\")\n    mock_checkout = mocker.spy(dvc_output, \"checkout\")\n\n    # removing any information that `dvc` could use to re-generate from\n    (tmp_dir / \"bar\").unlink()\n    (tmp_dir / LOCK_FILE).unlink()\n    remove(stage.outs[0].cache_path)\n\n    (stage,) = dvc.reproduce(\"copy-foo-bar\", pull=True)\n\n    mock_restore.assert_called_once_with(stage, pull=True, dry=False)\n    mock_run.assert_not_called()\n    assert mock_checkout.call_count == 2\n    assert (tmp_dir / \"bar\").exists()\n    assert not (tmp_dir / \"foo\").unlink()\n    assert (tmp_dir / LOCK_FILE).exists()",
+          "new_string": "def test_restore_pull(tmp_dir, dvc, run_copy, mocker, local_remote):\n    import dvc.output as dvc_output\n\n    tmp_dir.gen(\"foo\", \"foo\")\n    stage = run_copy(\"foo\", \"bar\", name=\"copy-foo-bar\")\n\n    dvc.push()\n\n    mock_restore = mocker.spy(dvc.stage_cache, \"restore\")\n    mock_run = mocker.patch(\"dvc.stage.run.cmd_run\")\n    mock_checkout = mocker.spy(dvc_output, \"checkout\")\n\n    # removing any information that `dvc` could use to re-generate from\n    (tmp_dir / \"bar\").unlink()\n    (tmp_dir / LOCK_FILE).unlink()\n    remove(stage.outs[0].cache_path)\n\n    (stage,) = dvc.reproduce(\"copy-foo-bar\", pull=True)\n\n    mock_restore.assert_called_once_with(stage, pull=True, dry=False)\n    mock_run.assert_not_called()\n    assert mock_checkout.call_count == 2\n    assert (tmp_dir / \"bar\").exists()\n    assert not (tmp_dir / \"foo\").unlink()\n    assert (tmp_dir / LOCK_FILE).exists()\n\n\ndef test_repro_pull_data_source(tmp_dir, dvc, mocker, local_remote):\n    \"\"\"Test that `dvc repro --pull` pulls missing outputs for data sources.\"\"\"\n    from dvc.utils.fs import remove\n\n    # Create and add a data source file\n    tmp_dir.gen(\"data\", \"data content\")\n    (data_stage,) = tmp_dir.dvc_gen(\"data\", \"data content\")\n\n    # Push to remote\n    dvc.push()\n\n    # Remove the file and cache to simulate missing output\n    (tmp_dir / \"data\").unlink()\n    remove(data_stage.outs[0].cache_path)\n\n    # Verify the file is gone\n    assert not (tmp_dir / \"data\").exists()\n\n    # Reproduce with --pull should pull the missing data source\n    (stage,) = dvc.reproduce(\"data\", pull=True)\n\n    assert stage is data_stage\n    assert (tmp_dir / \"data\").exists()\n    assert (tmp_dir / \"data\").read_text() == \"data content\"\n\n\ndef test_repro_pull_data_source_in_pipeline(tmp_dir, dvc, run_copy, local_remote):\n    \"\"\"Test that `dvc repro --pull` pulls missing data source in a pipeline.\"\"\"\n    from dvc.utils.fs import remove\n\n    # Create and add a data source file\n    tmp_dir.gen(\"data\", \"source data\")\n    (data_stage,) = tmp_dir.dvc_gen(\"data\", \"source data\")\n\n    # Create a pipeline stage that depends on the data source\n    stage = run_copy(\"data\", \"result\", name=\"copy-data-result\")\n\n    # Push to remote\n    dvc.push()\n\n    # Remove the data file and cache\n    (tmp_dir / \"data\").unlink()\n    remove(data_stage.outs[0].cache_path)\n\n    # Verify the file is gone\n    assert not (tmp_dir / \"data\").exists()\n\n    # Reproduce with --pull should pull the missing data source first\n    result = dvc.reproduce(pull=True)\n\n    # Verify data source was pulled\n    assert (tmp_dir / \"data\").exists()\n    assert (tmp_dir / \"data\").read_text() == \"source data\"\n    # Verify pipeline was executed\n    assert (tmp_dir / \"result\").exists()\n    assert (tmp_dir / \"result\").read_text() == \"source data\""
+        },
+        "input_canonical_json_sha256": "004105f398c362fc84fce99e7b90970e84780d24b5205737ae3ba05fa2f94704",
+        "result_content_utf8_sha256": "bb656d9e71e9a420dc4f333933c1f7f3fc66d6918a3d8569d3c76bbb709f3ae7",
+        "result_content_bytes": 145,
+        "is_error": false,
+        "gateway_seq": 69,
+        "gateway_input_canonical_json_sha256": "004105f398c362fc84fce99e7b90970e84780d24b5205737ae3ba05fa2f94704",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 71,
+        "trajectory_line": 1000,
+        "result_line": 1004,
+        "tool_id": "toolu_612d77680f79d7e6",
+        "name": "Bash",
+        "input": {
+          "command": "python -m pytest -q tests/func/test_run_cache.py::test_repro_pull_data_source tests/func/test_run_cache.py::test_repro_pull_data_source_in_pipeline -v 2>&1 | tail -50"
+        },
+        "input_canonical_json_sha256": "c79355be8755ba6ffc3eb5c634c65b43cc2a68a423e603ed3cc53954bb1b9286",
+        "result_content_utf8_sha256": "a6bbd3d7506d78d5c6eb37d18f18d7062eca015b361de409bbed40fd89de3f6a",
+        "result_content_bytes": 4615,
+        "is_error": false,
+        "gateway_seq": 70,
+        "gateway_input_canonical_json_sha256": "c79355be8755ba6ffc3eb5c634c65b43cc2a68a423e603ed3cc53954bb1b9286",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 72,
+        "trajectory_line": 1014,
+        "result_line": 1018,
+        "tool_id": "toolu_f7ee56f609c8763f",
+        "name": "Edit",
+        "input": {
+          "replace_all": false,
+          "file_path": "/testbed/tests/func/test_run_cache.py",
+          "old_string": "def test_repro_pull_data_source(tmp_dir, dvc, mocker, local_remote):\n    \"\"\"Test that `dvc repro --pull` pulls missing outputs for data sources.\"\"\"\n    from dvc.utils.fs import remove\n\n    # Create and add a data source file\n    tmp_dir.gen(\"data\", \"data content\")\n    (data_stage,) = tmp_dir.dvc_gen(\"data\", \"data content\")\n\n    # Push to remote\n    dvc.push()\n\n    # Remove the file and cache to simulate missing output\n    (tmp_dir / \"data\").unlink()\n    remove(data_stage.outs[0].cache_path)\n\n    # Verify the file is gone\n    assert not (tmp_dir / \"data\").exists()\n\n    # Reproduce with --pull should pull the missing data source\n    (stage,) = dvc.reproduce(\"data\", pull=True)\n\n    assert stage is data_stage\n    assert (tmp_dir / \"data\").exists()\n    assert (tmp_dir / \"data\").read_text() == \"data content\"",
+          "new_string": "def test_repro_pull_data_source(tmp_dir, dvc, mocker, local_remote):\n    \"\"\"Test that `dvc repro --pull` pulls missing outputs for data sources.\"\"\"\n    from dvc.utils.fs import remove\n\n    # Create and add a data source file\n    tmp_dir.gen(\"data\", \"data content\")\n    (data_stage,) = tmp_dir.dvc_gen(\"data\", \"data content\")\n\n    # Push to remote\n    dvc.push()\n\n    # Remove the file and cache to simulate missing output\n    (tmp_dir / \"data\").unlink()\n    remove(data_stage.outs[0].cache_path)\n\n    # Verify the file is gone\n    assert not (tmp_dir / \"data\").exists()\n\n    # Reproduce with --pull should pull the missing data source\n    # Use the .dvc file as the target\n    (stage,) = dvc.reproduce(\"data.dvc\", pull=True)\n\n    assert stage is data_stage\n    assert (tmp_dir / \"data\").exists()\n    assert (tmp_dir / \"data\").read_text() == \"data content\""
+        },
+        "input_canonical_json_sha256": "d4c6d50621a1cde7b63f462741e2a0e98bbd9ff4a585b85e4ba32b3653e667ab",
+        "result_content_utf8_sha256": "bb656d9e71e9a420dc4f333933c1f7f3fc66d6918a3d8569d3c76bbb709f3ae7",
+        "result_content_bytes": 145,
+        "is_error": false,
+        "gateway_seq": 71,
+        "gateway_input_canonical_json_sha256": "d4c6d50621a1cde7b63f462741e2a0e98bbd9ff4a585b85e4ba32b3653e667ab",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 73,
+        "trajectory_line": 1028,
+        "result_line": 1032,
+        "tool_id": "toolu_7c592b1c2e89a565",
+        "name": "Bash",
+        "input": {
+          "command": "python -m pytest -q tests/func/test_run_cache.py::test_repro_pull_data_source tests/func/test_run_cache.py::test_repro_pull_data_source_in_pipeline -v 2>&1 | tail -30"
+        },
+        "input_canonical_json_sha256": "4a6d18d9e3489e5fa6f49b853edae854446c5163937793e13fc0b54c6280f38e",
+        "result_content_utf8_sha256": "ef1f2b7146afc396c7ef78b0c7f899e1c25253ebbff839027dc400b4cf03d305",
+        "result_content_bytes": 3147,
+        "is_error": false,
+        "gateway_seq": 72,
+        "gateway_input_canonical_json_sha256": "4a6d18d9e3489e5fa6f49b853edae854446c5163937793e13fc0b54c6280f38e",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 74,
+        "trajectory_line": 1042,
+        "result_line": 1046,
+        "tool_id": "toolu_d2bc64e584663c21",
+        "name": "Bash",
+        "input": {
+          "command": "python -m pytest -q tests/func/test_run_cache.py::test_repro_pull_data_source -v 2>&1 | grep -A 5 \"AssertionError\""
+        },
+        "input_canonical_json_sha256": "3bd503737374504db9b9350c166e7818eedff1b8f166d4375ac3620d573177b2",
+        "result_content_utf8_sha256": "0c3eab6c91e4a1f81f41875b264c098f5f1d48dd98eb2454a80f1602c997db6f",
+        "result_content_bytes": 616,
+        "is_error": false,
+        "gateway_seq": 73,
+        "gateway_input_canonical_json_sha256": "3bd503737374504db9b9350c166e7818eedff1b8f166d4375ac3620d573177b2",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 75,
+        "trajectory_line": 1056,
+        "result_line": 1060,
+        "tool_id": "toolu_3c5f6ce4e653c61f",
+        "name": "Edit",
+        "input": {
+          "replace_all": false,
+          "file_path": "/testbed/tests/func/test_run_cache.py",
+          "old_string": "def test_repro_pull_data_source(tmp_dir, dvc, mocker, local_remote):\n    \"\"\"Test that `dvc repro --pull` pulls missing outputs for data sources.\"\"\"\n    from dvc.utils.fs import remove\n\n    # Create and add a data source file\n    tmp_dir.gen(\"data\", \"data content\")\n    (data_stage,) = tmp_dir.dvc_gen(\"data\", \"data content\")\n\n    # Push to remote\n    dvc.push()\n\n    # Remove the file and cache to simulate missing output\n    (tmp_dir / \"data\").unlink()\n    remove(data_stage.outs[0].cache_path)\n\n    # Verify the file is gone\n    assert not (tmp_dir / \"data\").exists()\n\n    # Reproduce with --pull should pull the missing data source\n    # Use the .dvc file as the target\n    (stage,) = dvc.reproduce(\"data.dvc\", pull=True)\n\n    assert stage is data_stage\n    assert (tmp_dir / \"data\").exists()\n    assert (tmp_dir / \"data\").read_text() == \"data content\"",
+          "new_string": "def test_repro_pull_data_source(tmp_dir, dvc, mocker, local_remote):\n    \"\"\"Test that `dvc repro --pull` pulls missing outputs for data sources.\"\"\"\n    from dvc.utils.fs import remove\n\n    # Create and add a data source file\n    tmp_dir.gen(\"data\", \"data content\")\n    (data_stage,) = tmp_dir.dvc_gen(\"data\", \"data content\")\n\n    # Push to remote\n    dvc.push()\n\n    # Remove the file and cache to simulate missing output\n    (tmp_dir / \"data\").unlink()\n    remove(data_stage.outs[0].cache_path)\n\n    # Verify the file is gone\n    assert not (tmp_dir / \"data\").exists()\n\n    # Reproduce with --pull should pull the missing data source\n    # Use the .dvc file as the target\n    (stage,) = dvc.reproduce(\"data.dvc\", pull=True)\n\n    assert stage.addressing == data_stage.addressing\n    assert (tmp_dir / \"data\").exists()\n    assert (tmp_dir / \"data\").read_text() == \"data content\""
+        },
+        "input_canonical_json_sha256": "895a9cedafc071b98ed8934be0d8797f0f5a085bbaaca225c2e106b14d256d82",
+        "result_content_utf8_sha256": "bb656d9e71e9a420dc4f333933c1f7f3fc66d6918a3d8569d3c76bbb709f3ae7",
+        "result_content_bytes": 145,
+        "is_error": false,
+        "gateway_seq": 74,
+        "gateway_input_canonical_json_sha256": "895a9cedafc071b98ed8934be0d8797f0f5a085bbaaca225c2e106b14d256d82",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 76,
+        "trajectory_line": 1070,
+        "result_line": 1074,
+        "tool_id": "toolu_dc1f0a4bef9ebbcd",
+        "name": "Bash",
+        "input": {
+          "command": "python -m pytest -q tests/func/test_run_cache.py::test_repro_pull_data_source tests/func/test_run_cache.py::test_repro_pull_data_source_in_pipeline -v 2>&1 | tail -20"
+        },
+        "input_canonical_json_sha256": "bb7cb252223f4efd03ec3989fa66ebe7483030811a763681398aa999ddbec248",
+        "result_content_utf8_sha256": "a8a75d71af3106086e13dc4a949a632e4c716a96658e32d430f14e562e4d91f5",
+        "result_content_bytes": 1068,
+        "is_error": false,
+        "gateway_seq": 75,
+        "gateway_input_canonical_json_sha256": "bb7cb252223f4efd03ec3989fa66ebe7483030811a763681398aa999ddbec248",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 77,
+        "trajectory_line": 1084,
+        "result_line": 1090,
+        "tool_id": "toolu_1b383bd722e5df2c",
+        "name": "Bash",
+        "input": {
+          "command": "python -m pytest -q tests/func/test_run_cache.py -v 2>&1 | tail -30"
+        },
+        "input_canonical_json_sha256": "fd9c4ba1e1f30f14d8fd786df0eccc75be9686c091633693ee93f500556b5c6c",
+        "result_content_utf8_sha256": "892f00f52decfb80da33d86d97946986b15bea522cab6720c8880f4c5893e99b",
+        "result_content_bytes": 1069,
+        "is_error": false,
+        "gateway_seq": 76,
+        "gateway_input_canonical_json_sha256": "fd9c4ba1e1f30f14d8fd786df0eccc75be9686c091633693ee93f500556b5c6c",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 78,
+        "trajectory_line": 1100,
+        "result_line": 1106,
+        "tool_id": "toolu_1eb9d00f3bb5eef5",
+        "name": "Bash",
+        "input": {
+          "command": "python -m pytest -q tests/func/test_repro_multistage.py -v 2>&1 | tail -30"
+        },
+        "input_canonical_json_sha256": "670401aa9c7ea5de2d4e74c2162a0a8e08dd94605fffae0ad966854f1e888ab7",
+        "result_content_utf8_sha256": "04d601f393d22dc859e062c0b87f20717d63fd76793e1c3e36751a9c85f254b8",
+        "result_content_bytes": 1069,
+        "is_error": false,
+        "gateway_seq": 77,
+        "gateway_input_canonical_json_sha256": "670401aa9c7ea5de2d4e74c2162a0a8e08dd94605fffae0ad966854f1e888ab7",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 79,
+        "trajectory_line": 1116,
+        "result_line": 1120,
+        "tool_id": "toolu_54454c0906e49bd8",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/dvc/commands/repro.py",
+          "limit": 20,
+          "offset": 125
+        },
+        "input_canonical_json_sha256": "e5029505a1320f8ae313f524159fa589baa5e6b7f522c4b55a9fb19c46fc15c1",
+        "result_content_utf8_sha256": "3a15176baf3a5959056e7da680d0f76495375e57c0e061288e01effc3ca9b227",
+        "result_content_bytes": 677,
+        "is_error": false,
+        "gateway_seq": 78,
+        "gateway_input_canonical_json_sha256": "e5029505a1320f8ae313f524159fa589baa5e6b7f522c4b55a9fb19c46fc15c1",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 80,
+        "trajectory_line": 1130,
+        "result_line": 1134,
+        "tool_id": "toolu_c00f9cb6381add0c",
+        "name": "Edit",
+        "input": {
+          "replace_all": false,
+          "file_path": "/testbed/dvc/commands/repro.py",
+          "old_string": "    repro_parser.add_argument(\n        \"--pull\",\n        action=\"store_true\",\n        default=False,\n        help=(\n            \"Try automatically pulling missing cache for outputs restored \"\n            \"from the run-cache.\"\n        ),\n    )",
+          "new_string": "    repro_parser.add_argument(\n        \"--pull\",\n        action=\"store_true\",\n        default=False,\n        help=(\n            \"Try automatically pulling missing cache for outputs restored \"\n            \"from the run-cache, and for data sources (e.g., files added \"\n            \"with `dvc add`) that are missing from the workspace.\"\n        ),\n    )"
+        },
+        "input_canonical_json_sha256": "aee5ea357fa9e33520ec28db8e66af762e491ed30b2c42524f1ad110f84f2e18",
+        "result_content_utf8_sha256": "f1faff4f78dc6325d988f7b1d4a98a8405383bd6042ab74e7708dd0efbc2c41a",
+        "result_content_bytes": 138,
+        "is_error": false,
+        "gateway_seq": 79,
+        "gateway_input_canonical_json_sha256": "aee5ea357fa9e33520ec28db8e66af762e491ed30b2c42524f1ad110f84f2e18",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 81,
+        "trajectory_line": 1144,
+        "result_line": 1148,
+        "tool_id": "toolu_9b3f7d872bd5911b",
+        "name": "Bash",
+        "input": {
+          "command": "python -m dvc repro --help | grep -A 3 \"\\-\\-pull\""
+        },
+        "input_canonical_json_sha256": "e9240e06d91afb8598ca750590f8ba46486f3e2ea027462f6282a013f564192b",
+        "result_content_utf8_sha256": "e5b29f08fe5d7c3b9654ab7fcf6c5d88552b202df528267ce0f548a21a004e70",
+        "result_content_bytes": 427,
+        "is_error": false,
+        "gateway_seq": 80,
+        "gateway_input_canonical_json_sha256": "e9240e06d91afb8598ca750590f8ba46486f3e2ea027462f6282a013f564192b",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 82,
+        "trajectory_line": 1158,
+        "result_line": 1164,
+        "tool_id": "toolu_cc520222ed7c13a2",
+        "name": "Bash",
+        "input": {
+          "command": "python -m pytest -q tests/func/test_repro.py -v 2>&1 | tail -40"
+        },
+        "input_canonical_json_sha256": "6781fb89a95a821535863ca811710ab820b0f1e048d855df50d1fadc2fb7cbf9",
+        "result_content_utf8_sha256": "2167bbce072300728db100087e92d270814106473584d8ab36903fc17d90cce4",
+        "result_content_bytes": 1149,
+        "is_error": false,
+        "gateway_seq": 81,
+        "gateway_input_canonical_json_sha256": "6781fb89a95a821535863ca811710ab820b0f1e048d855df50d1fadc2fb7cbf9",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 83,
+        "trajectory_line": 1174,
+        "result_line": 1178,
+        "tool_id": "toolu_1a0955b86e7c5a71",
+        "name": "Bash",
+        "input": {
+          "command": "python -m pytest -q tests/unit/command/test_repro.py -v 2>&1 | tail -20"
+        },
+        "input_canonical_json_sha256": "5bcc855a55a9feb53f0748be83d413f0497975c73c1cf6570b39ecd4cf649e69",
+        "result_content_utf8_sha256": "a129b212388ef29e32c4d233292cd0c41b43ac4f769eb810632a025865f4a211",
+        "result_content_bytes": 1068,
+        "is_error": false,
+        "gateway_seq": 82,
+        "gateway_input_canonical_json_sha256": "5bcc855a55a9feb53f0748be83d413f0497975c73c1cf6570b39ecd4cf649e69",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 84,
+        "trajectory_line": 1188,
+        "result_line": 1192,
+        "tool_id": "toolu_aed665278f3f7a23",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/dvc/stage/__init__.py",
+          "limit": 60,
+          "offset": 560
+        },
+        "input_canonical_json_sha256": "395b864b1abd5e3c08f72e81988d001fd27334ac3ea2acb8a79293a112acb7e8",
+        "result_content_utf8_sha256": "98b76cd234f1619b1d0b1af419164b81edb94b2e8ca07c8eefda29adee6e8a22",
+        "result_content_bytes": 2315,
+        "is_error": false,
+        "gateway_seq": 83,
+        "gateway_input_canonical_json_sha256": "395b864b1abd5e3c08f72e81988d001fd27334ac3ea2acb8a79293a112acb7e8",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 85,
+        "trajectory_line": 1202,
+        "result_line": 1206,
+        "tool_id": "toolu_86837c8406b97a47",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/dvc/stage/__init__.py",
+          "limit": 30,
+          "offset": 615
+        },
+        "input_canonical_json_sha256": "050ed290c0d5e09fd75e70444e7c89325e141a2f5c238a3e9eedf9213d502cc9",
+        "result_content_utf8_sha256": "a27f4b1813ce14ca2597a94655d7f04880e8ee20c45c78a0e555018b9e83b156",
+        "result_content_bytes": 1155,
+        "is_error": false,
+        "gateway_seq": 84,
+        "gateway_input_canonical_json_sha256": "050ed290c0d5e09fd75e70444e7c89325e141a2f5c238a3e9eedf9213d502cc9",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 86,
+        "trajectory_line": 1216,
+        "result_line": 1220,
+        "tool_id": "toolu_cbbf6ea5278b939b",
+        "name": "Bash",
+        "input": {
+          "command": "cd /tmp && rm -rf final_test && mkdir final_test && cd final_test && \\\ngit init -q && \\\npython -m dvc init -q && \\\nmkdir remote && \\\npython -m dvc remote add -d myremote remote && \\\necho \"source data\" > data.txt && \\\npython -m dvc add data.txt && \\\npython -m dvc push && \\\nrm data.txt && \\\nrm -rf .dvc/cache && \\\ncat > dvc.yaml << 'EOF'\nstages:\n  process:\n    cmd: cat data.txt > output.txt\n    deps:\n    - data.txt\n    outs:\n    - output.txt\nEOF\necho \"=== Before repro: data.txt exists ===\"\ntest -f data.txt && echo \"YES\" || echo \"NO\"\necho \"\"\necho \"=== Running: dvc repro --pull ===\"\npython -m dvc repro --pull 2>&1 | grep -v \"^!\" | grep -v \"^Traceback\" | grep -v \"^  \" | grep -v \"^!\\|\"\necho \"\"\necho \"=== After repro: data.txt exists ===\"\ntest -f data.txt && echo \"YES\" || echo \"NO\"\necho \"=== After repro: output.txt exists ===\"\ntest -f output.txt && echo \"YES\" || echo \"NO\"\necho \"=== Output content ===\"\ncat output.txt 2>/dev/null || echo \"(empty)\""
+        },
+        "input_canonical_json_sha256": "9ee1fecfa96bacf00633ea2d68a0baa16ded4bdeb0ada0076bcd294f371a1d63",
+        "result_content_utf8_sha256": "5f49b5ee48ffb93b2098310bf2e51a2b7fbc9d49340b01e5d11332379445744e",
+        "result_content_bytes": 415,
+        "is_error": false,
+        "gateway_seq": 85,
+        "gateway_input_canonical_json_sha256": "9ee1fecfa96bacf00633ea2d68a0baa16ded4bdeb0ada0076bcd294f371a1d63",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 87,
+        "trajectory_line": 1230,
+        "result_line": 1234,
+        "tool_id": "toolu_53cf6432d4facab1",
+        "name": "Bash",
+        "input": {
+          "command": "cd /tmp && rm -rf test_no_pull && mkdir test_no_pull && cd test_no_pull && \\\ngit init -q && \\\npython -m dvc init -q && \\\nmkdir remote && \\\npython -m dvc remote add -d myremote remote && \\\necho \"source data\" > data.txt && \\\npython -m dvc add data.txt && \\\npython -m dvc push && \\\nrm data.txt && \\\nrm -rf .dvc/cache && \\\ncat > dvc.yaml << 'EOF'\nstages:\n  process:\n    cmd: cat data.txt > output.txt\n    deps:\n    - data.txt\n    outs:\n    - output.txt\nEOF\necho \"=== Running: dvc repro (without --pull) ===\"\npython -m dvc repro 2>&1 | tail -5\necho \"\"\necho \"=== data.txt exists ===\"\ntest -f data.txt && echo \"YES\" || echo \"NO\""
+        },
+        "input_canonical_json_sha256": "6a591652a55cc09e2cf76538abbb9ca6c8c46988b311fc7f28667ba949721c08",
+        "result_content_utf8_sha256": "fc008e00176fd59e2a3b5acce2796d02af6359bc15d8ed06f676ef86841828f7",
+        "result_content_bytes": 414,
+        "is_error": false,
+        "gateway_seq": 86,
+        "gateway_input_canonical_json_sha256": "6a591652a55cc09e2cf76538abbb9ca6c8c46988b311fc7f28667ba949721c08",
+        "gateway_input_matches_trajectory_object": true
+      },
+      {
+        "ordinal": 88,
+        "trajectory_line": 1244,
+        "result_line": 1250,
+        "tool_id": "toolu_58d3c9316c246b61",
+        "name": "Bash",
+        "input": {
+          "command": "python -m pytest -q tests/unit/stage/ -v 2>&1 | tail -20"
+        },
+        "input_canonical_json_sha256": "b0ba094d70509fbda5afed5cc6c4c6ae62f1bd16ca100643b900dbced236fb35",
+        "result_content_utf8_sha256": "ca379577394f3b55eec96ce2ba2dfe79f3bcbf82ffb0ed7b859c1fecbbd935af",
+        "result_content_bytes": 1549,
+        "is_error": false,
+        "gateway_seq": 87,
+        "gateway_input_canonical_json_sha256": "b0ba094d70509fbda5afed5cc6c4c6ae62f1bd16ca100643b900dbced236fb35",
+        "gateway_input_matches_trajectory_object": true
+      }
+    ],
+    "tool_counts": {
+      "Bash": 51,
+      "Read": 29,
+      "Edit": 8
+    },
+    "is_error_count": 1,
+    "assistant_texts": [
+      {
+        "line": 114,
+        "text": "Now let me look at the repo-level reproduce function:"
+      },
+      {
+        "line": 678,
+        "text": "Now I have a clear understanding. Let me implement the fix. The issue is that `--pull` only pulls outputs from run-cache, but doesn't pull missing outputs for data sources. Let me add the functionality to pull missing outputs for data sources when `--pull` is used."
+      },
+      {
+        "line": 738,
+        "text": "Now I need to add the `_pull_and_checkout_outs()` method:"
+      },
+      {
+        "line": 1260,
+        "text": "Now let me provide a summary of the changes made:\n\n## Summary\n\nI've fixed the issue where `dvc repro --pull` only pulled missing cache for outputs restored from run-cache, but didn't pull missing outputs for data sources (dvc files created with `dvc add` that have no command).\n\n### Changes Made\n\n1. **`/testbed/dvc/stage/__init__.py`** - Added the core functionality:\n   - Added `_pull_and_checkout_outs()` method that pulls missing outputs from remote to local cache and then checks them out to the workspace\n   - Modified the `run()` method to call `_pull_and_checkout_outs()` when `pull=True` is passed, before checking for missing outputs\n\n2. **`/testbed/dvc/commands/repro.py`** - Updated help text:\n   - Updated the `--pull` option description to reflect that it now also pulls missing outputs for data sources\n\n3. **`/testbed/tests/func/test_run_cache.py`** - Added new tests:\n   - `test_repro_pull_data_source`: Tests that `dvc repro --pull` pulls missing outputs for data sources\n   - `test_repro_pull_data_source_in_pipeline`: Tests that `dvc repro --pull` pulls missing data sources in a pipeline context\n\n### How it works\n\nWhen `dvc repro --pull` is run and a data source stage has missing outputs:\n1. The `run()` method detects that `pull=True` is passed\n2. It calls `_pull_and_checkout_outs()` which:\n   - Gets all output objects that need to be pulled (from `get_used_objs()`)\n   - Pulls them from remote to local cache\n   - Checks them out from local cache to the workspace\n3. Then `_check_missing_outputs()` verifies the outputs exist\n\nThis allows the user to automatically pull all missing files needed for the repro, not just outputs restored from run-cache."
+      }
+    ]
+  },
+  "gateway": {
+    "requests": 88,
+    "SSE_groups": [
+      {
+        "seq": 1,
+        "tool_ids": [
+          "toolu_301acc04a47db2f4",
+          "toolu_fc1f6587d6242888"
+        ],
+        "tool_count": 2,
+        "SSE_sha256": "073b21ff9621a7197f27c4f10cbf4a4b8e4b9c2923fde265e0f2e53cfd0db025",
+        "SSE_bytes": 2386,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 2,
+        "tool_ids": [
+          "toolu_6614edb1eaa00835"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "cc440be5042958f847faeb213ef3c9abbf083d8ad5d70aab78fa501f0add725e",
+        "SSE_bytes": 1473,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 3,
+        "tool_ids": [
+          "toolu_1d64fb3af2b8310a"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "f3185ecc96df2485689d7b4ad544b23d8831d6eda85989ab59279e05917ed7ed",
+        "SSE_bytes": 1436,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 4,
+        "tool_ids": [
+          "toolu_8f83e459cb6e5388"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "cf225c9ae62c09bc925eac0c40df4fa37c8311f240bd0acadf386b10afbae93e",
+        "SSE_bytes": 1343,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 5,
+        "tool_ids": [
+          "toolu_c9b53cff3a23cf4f"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "5639ff9bbbec5f8d7f463cf58cdcc92bf2e4aec9082de01a04e9938a608c5085",
+        "SSE_bytes": 1320,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 6,
+        "tool_ids": [
+          "toolu_0fddeea158409309"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "d3ecc750f8ee149f6355a5b7f9fa0be916a39326436f76b0bc6bfdc26b70d75c",
+        "SSE_bytes": 1346,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 7,
+        "tool_ids": [
+          "toolu_18dbd14a6c31bd95"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "00b9ae7203fc307da02ea103579f19b7b00e0fe90102f2e3ae83518e8b4db835",
+        "SSE_bytes": 1328,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 8,
+        "tool_ids": [
+          "toolu_da2ee6884890f42e"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "94e11dadb1e1b3e685f534ec390df664b8219263ed2124922513c37d135a732c",
+        "SSE_bytes": 1828,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 9,
+        "tool_ids": [
+          "toolu_56aa730cb4cb6424"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "feb1884ce7f6ab2a85a5156c9c39c79f61c51ae37361ea22dfc1c20166ed5c1c",
+        "SSE_bytes": 1322,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 10,
+        "tool_ids": [
+          "toolu_ac1610a9415ef21d"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "c283d36d40cd2d2badfe5b6b7f43a45688ac5507063c29d4a4375378e3fed842",
+        "SSE_bytes": 1594,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 11,
+        "tool_ids": [
+          "toolu_0a7a91d3f80e9e9b"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "7673f08f1448ea92af7ffd23d1385577bdb5c49ef56cbd09f4846f5534424f55",
+        "SSE_bytes": 1443,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 12,
+        "tool_ids": [
+          "toolu_5e50b2656a61ce5c"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "c2c810308ef55c70694787cbcdc0ce20fc56fa675fa6851f69bd33179fa18a62",
+        "SSE_bytes": 1375,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 13,
+        "tool_ids": [
+          "toolu_bbc600c4301ba4f8"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "561df2684931c642de81a1b53b19c086a9b68d747970b6d1e576bf96850a6c81",
+        "SSE_bytes": 1406,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 14,
+        "tool_ids": [
+          "toolu_0b1b3c6d1ca36815"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "aebb14823f8cd4bf062b7da21e4053f003d60ec3ec3b15659f37cea7ecaa5c96",
+        "SSE_bytes": 1399,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 15,
+        "tool_ids": [
+          "toolu_8830ef1ab2187433"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "177df92c2639928a99808e9d03706824fb70f6fe8d8a8501bb5a54c3ef2ba90d",
+        "SSE_bytes": 1501,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 16,
+        "tool_ids": [
+          "toolu_32e1a7a27d14d675"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "08217b263fd9df21aa59f055d73e5e534c564975ee7cf4597799cb83615aa9fa",
+        "SSE_bytes": 1466,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 17,
+        "tool_ids": [
+          "toolu_fddd2bacf94aeafe"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "d1f2e72d9670d0b223fb238869de118a830a3f0bba761dae148991926ea824e1",
+        "SSE_bytes": 1456,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 18,
+        "tool_ids": [
+          "toolu_9aaedabb4e829784"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "2807c4f7bdf49c139c52640f02987570371cfc62a806b5b9da9c7311372a5e72",
+        "SSE_bytes": 1421,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 19,
+        "tool_ids": [
+          "toolu_af25e7dd31f02431"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "4d537b05051e24ba47a645413d05afb4c0582bbb93388bbfca43847371a22131",
+        "SSE_bytes": 2047,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 20,
+        "tool_ids": [
+          "toolu_bd1861ac9cad3f4c"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "8d5f7ad19c006e1335fc8b3f4c32cab567c814b64449ec4c966ad62bf762d9bc",
+        "SSE_bytes": 1371,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 21,
+        "tool_ids": [
+          "toolu_f7cd09c54138ab43"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "8ec350a241b679378aa8a7007f154d6d74023d2feebda63156639ae2301f02c4",
+        "SSE_bytes": 1383,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 22,
+        "tool_ids": [
+          "toolu_5d33b16f5183265a"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "4b0b42c435b4ab1f6f06b0febccfb53eef555c3603c60ec9f44abeedebadc0ed",
+        "SSE_bytes": 1374,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 23,
+        "tool_ids": [
+          "toolu_de450d34e0ad4eda"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "35fc2603a523dbfdeedb5457c2cc21021dc2e8f77906c30f196265b1cc4b9a37",
+        "SSE_bytes": 2746,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 24,
+        "tool_ids": [
+          "toolu_13e48007bfc5834e"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "c28d27113ca2bda74a2ff96f9fbca5dbe8ded6e35381dec18cd48e80d7a0ffc2",
+        "SSE_bytes": 2175,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 25,
+        "tool_ids": [
+          "toolu_b3d206adb7413228"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "a4ae68d5f45d46a7380f7319c624eb195f60de7d54859e4b508b3af1d73387d7",
+        "SSE_bytes": 1428,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 26,
+        "tool_ids": [
+          "toolu_edcd5b9e8bee22fe"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "1f4c3c9a7e6aa53647bfc5d191dbc2ecab0720f5d7e6e75ab20c2856f315314e",
+        "SSE_bytes": 1454,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 27,
+        "tool_ids": [
+          "toolu_2a934a0ddce974c0"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "12e5a697897385db1dc7f8fee7b96da1abf09459c271a31e07387fb2453a1c41",
+        "SSE_bytes": 1325,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 28,
+        "tool_ids": [
+          "toolu_95e55eda690bbe4b"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "702852fa98fd6b70b82a52d0d463397395197b2c6ca6cafd6fc251458ab86dd7",
+        "SSE_bytes": 1591,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 29,
+        "tool_ids": [
+          "toolu_e00378abbbf6029f"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "6171373147c188995c3f9028405ef71eb7607c632ddbeed28617427dc0ad01c7",
+        "SSE_bytes": 1551,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 30,
+        "tool_ids": [
+          "toolu_75ff0232292d2e93"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "2d7b0c595da8e8d60d02d913ff60c1bdaf091e3b50ebf2104cb40c32c4bd6e7d",
+        "SSE_bytes": 1369,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 31,
+        "tool_ids": [
+          "toolu_12db76f4f304e6cb"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "00a2f56361acf8ac7ee01f812a3ec262f6ce9ba7025df6115f0ecc02fa51a3fa",
+        "SSE_bytes": 2919,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 32,
+        "tool_ids": [
+          "toolu_4991951689c605dd"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "4de90d7e51d07c28290f95964f940acb7476fbd2c8b130a1fc94002051fad292",
+        "SSE_bytes": 1412,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 33,
+        "tool_ids": [
+          "toolu_2d88fbe2af81f8a4"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "5d9eb1b2a2d3cc2001cf5529a2a81fb33f13d49ec513e52c8218fbac54852a9d",
+        "SSE_bytes": 2563,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 34,
+        "tool_ids": [
+          "toolu_7a4ae9bbc1f18d2c"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "091cabc8693dac41ee2d756ae0fcdca0482f15d49aad3c2ee7eeafa5f82995fb",
+        "SSE_bytes": 3648,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 35,
+        "tool_ids": [
+          "toolu_3d3961f74191ac24"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "d0c9e9972c06720dff8addaa2e38d4d2cba582165b7f5d5c17d9f44b778692d6",
+        "SSE_bytes": 2054,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 36,
+        "tool_ids": [
+          "toolu_c9d2f3ea7edb1950"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "d0a4f0d15eb5ba91a28a0194b1f2f935d7f94c7091d367d5b39d7e3c9eae0e5a",
+        "SSE_bytes": 1376,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 37,
+        "tool_ids": [
+          "toolu_190a2c460576acc6"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "5e552516536efd0fa9ad4212ad528f75cfbcc9a7d9942724850d33a0e58128e9",
+        "SSE_bytes": 1446,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 38,
+        "tool_ids": [
+          "toolu_18f51fc73ffd3ef6"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "18549b96d70490ddad1ffca3a3a63e2fdfc2516e10247db3f219fc249a36c9c8",
+        "SSE_bytes": 1358,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 39,
+        "tool_ids": [
+          "toolu_61fac5ee3f26283c"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "1b741a974748b0fdaa56ed9d6d0cbac14f4a9eb19804084e76cf089903c95637",
+        "SSE_bytes": 1429,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 40,
+        "tool_ids": [
+          "toolu_b8ebdc4936eda50e"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "e50277e8d387345a5ea7633e88ffe6d5bb5e48fd4f42a4a4d616190d3d8285fe",
+        "SSE_bytes": 1339,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 41,
+        "tool_ids": [
+          "toolu_1e52529673896f14"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "cecb05c1ca8af89344b8714b692f2ae839cca0d0f8e829134113fe6455e5f4c2",
+        "SSE_bytes": 2621,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 42,
+        "tool_ids": [
+          "toolu_bdba5f348d0ba3f4"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "8c1fc05cc4ef6f27846db59f14ef0926d905be1ed11241fc9d661517db8cb3c0",
+        "SSE_bytes": 1360,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 43,
+        "tool_ids": [
+          "toolu_a786d6866c18180e"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "35c62e25657f7bb51e31d487f80841512989f43e5783abda465a46f5e643652d",
+        "SSE_bytes": 3522,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 44,
+        "tool_ids": [
+          "toolu_f5412d91abc07174"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "e030345b82787ee16445b71ccd920848088156fb4c3afe009a03700ebb6a4069",
+        "SSE_bytes": 1345,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 45,
+        "tool_ids": [
+          "toolu_8d052de6e584dcce"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "9d5f05b9b199828a0a52e30264cee509bba85268b5a207edc49c1e12d03f6ccd",
+        "SSE_bytes": 1731,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 46,
+        "tool_ids": [
+          "toolu_849fa470ed8c9bc7"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "0f96dc0f4d274550f295c784fa13f8315487d96baee1b2853361975a4f8caba1",
+        "SSE_bytes": 1677,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 47,
+        "tool_ids": [
+          "toolu_b3a7a2689089060e"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "03d19ca1d7138af9532faa17e4e821ee7cb8e3fdab8b10ca63f686c62fe269b8",
+        "SSE_bytes": 3114,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 48,
+        "tool_ids": [
+          "toolu_d891d8ef86fdf1e5"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "6d8bfc1606ca0c4bb76fb5715855d892070b862075035b4f0331fd69dfa41b09",
+        "SSE_bytes": 2713,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 49,
+        "tool_ids": [
+          "toolu_7dc09d38ce314c9d"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "93be251b47bee54859f9835d577016de9442e57c0540966466ba22dc9fe834bc",
+        "SSE_bytes": 2287,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 50,
+        "tool_ids": [
+          "toolu_4d34cc64a600c309"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "88975e7f6141f01d320f3f8d9970a131454be35a0b62fd3400c2e38e34a0f558",
+        "SSE_bytes": 1483,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 51,
+        "tool_ids": [
+          "toolu_f8537e70d2456c21"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "7a1d86d178e99544ded2477cb946c1f5cffe06244213ffcf92704bf55f401fb2",
+        "SSE_bytes": 2254,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 52,
+        "tool_ids": [
+          "toolu_39ad0f0e4886a460"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "3c067903d5a4f825c1164cb9026842be7b02acb25669cb93717499ad6af6304d",
+        "SSE_bytes": 2247,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 53,
+        "tool_ids": [
+          "toolu_04bea3f9051f1f60"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "e9ed8d51fb7f909b5fc601c08010f7d3ccd8d9fa8975f1ceb42d53560f13f466",
+        "SSE_bytes": 3102,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 54,
+        "tool_ids": [
+          "toolu_049791e594ac920e"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "20343b80cd54c7d9be5a92cb7131ee525fa7934c900b1c24389b542a849b7526",
+        "SSE_bytes": 1443,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 55,
+        "tool_ids": [
+          "toolu_ae05488a1f43322b"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "d30acf5ca73b5b12a4cf843ec124075da1ba1dfe0260665f3f0f7e63c63ef20c",
+        "SSE_bytes": 1450,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 56,
+        "tool_ids": [
+          "toolu_0298f33c98553f85"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "6b6368b96f327f876af527848bb58dfbb29a9d95a1bdef6eefd3c18cc739eab6",
+        "SSE_bytes": 2732,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 57,
+        "tool_ids": [
+          "toolu_ac5e4f1446aabcb1"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "fe40a65195dda8d140371186964b3bb4718454637645a71e5060eff0c01c6e41",
+        "SSE_bytes": 1888,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 58,
+        "tool_ids": [
+          "toolu_6d3fa88b6aa4dac6"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "dbebf1f992844af25c3b9acf44f0ffe9fbf518f0c9a7c2a93992e029aad6ef5c",
+        "SSE_bytes": 1520,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 59,
+        "tool_ids": [
+          "toolu_ace42ff059bc65cb"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "0ca8ea75b2a29585e7dbc4cf2ad9c9d7583a016cc57b1adf8d461bc7d729c803",
+        "SSE_bytes": 1446,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 60,
+        "tool_ids": [
+          "toolu_55fd671f1c136c06"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "980f1fdb53efb11a70ca9571f401b2c43ad53dcf3a04140af84a93909aecf81b",
+        "SSE_bytes": 1381,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 61,
+        "tool_ids": [
+          "toolu_bbefd0cefdb14355"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "e5f9d92859e86b95729b3ce494cd7123669de69ccd3e019c44b01a56296376e3",
+        "SSE_bytes": 3232,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 62,
+        "tool_ids": [
+          "toolu_bdffa6e3544791d6"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "6ea42bdadc92e0b2e0f4f599eb60c752e5f4487506b0d8c20a2120ef81ee8889",
+        "SSE_bytes": 1828,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 63,
+        "tool_ids": [
+          "toolu_4809b79c2865d7be"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "f20014e7167f17a17a7a2612e3693fa5ca16ce2b7076225d12f97502e432e701",
+        "SSE_bytes": 2268,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 64,
+        "tool_ids": [
+          "toolu_1521f42af142a2ca"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "262c28857b5d747f93cec51fde36ea44fec59a20f3baa0ba4bbaa37a637c411f",
+        "SSE_bytes": 3217,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 65,
+        "tool_ids": [
+          "toolu_e454662eed33e888"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "935331b40c632489467607250b71d3ebe96b1b3d33d55599cc8789dad2317bfa",
+        "SSE_bytes": 2359,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 66,
+        "tool_ids": [
+          "toolu_ddfd61bb362ea925"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "98be53989f0ea6c62e38f0bda1e005118db8b28d69f69005b2a4f44c57be304c",
+        "SSE_bytes": 1461,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 67,
+        "tool_ids": [
+          "toolu_f490a282aa6f0930"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "e87a9e0e9c4b7065b7f9d8cf180985bfc0a6948d097bff960eb1f1131fb39469",
+        "SSE_bytes": 1451,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 68,
+        "tool_ids": [
+          "toolu_753d895e2b8e22a3"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "53f8d4904c21c607fa55a0277aa9b090c5284d749561180e27b4f76fa3963fad",
+        "SSE_bytes": 1403,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 69,
+        "tool_ids": [
+          "toolu_362705d05216d263"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "a3db80415c1399b49913c8ebcf5ae428cbe957485dc76d0a8633d253f129b4d1",
+        "SSE_bytes": 5633,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 70,
+        "tool_ids": [
+          "toolu_612d77680f79d7e6"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "992d2649af52cde3ca03972ab3a27e859d6dae1538e31ebc75ab348316e40519",
+        "SSE_bytes": 1474,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 71,
+        "tool_ids": [
+          "toolu_f7ee56f609c8763f"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "ca5e2f8290d0f6e43ba96b541a90108974e1b8e17de184468fb26867c854ec44",
+        "SSE_bytes": 3485,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 72,
+        "tool_ids": [
+          "toolu_7c592b1c2e89a565"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "91f001b5e872c3b893855dfd9fc0eae2709629530a00699f03ee24871c3b0128",
+        "SSE_bytes": 1453,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 73,
+        "tool_ids": [
+          "toolu_d2bc64e584663c21"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "8ffa86ad5a2fb7374b25dad9008e62de372b377e65102294ca43573612cd5cb1",
+        "SSE_bytes": 1659,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 74,
+        "tool_ids": [
+          "toolu_3c5f6ce4e653c61f"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "1ccb4e75c5929bd184ab8bdac30c1c7376ede23c5143942e8d09d4a3afdf26b3",
+        "SSE_bytes": 3634,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 75,
+        "tool_ids": [
+          "toolu_dc1f0a4bef9ebbcd"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "4e5383f4963a6c0359080d290812f55669a83ea17fa46cb6688167e1a05240e6",
+        "SSE_bytes": 1453,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 76,
+        "tool_ids": [
+          "toolu_1b383bd722e5df2c"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "323a40cb0f8b9d85c4b0fc49e2c9d051f39372d573034f89df8d39923d19397e",
+        "SSE_bytes": 1420,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 77,
+        "tool_ids": [
+          "toolu_1eb9d00f3bb5eef5"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "aa2dc12c5be6e1354232f9a3b4af6df9cfde93ca3eae5610a7cf651235c42628",
+        "SSE_bytes": 1389,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 78,
+        "tool_ids": [
+          "toolu_54454c0906e49bd8"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "3f286f54ab82b06d02d67a70bc747e724ce66799c0f1e131bdb55d366f09b538",
+        "SSE_bytes": 1414,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 79,
+        "tool_ids": [
+          "toolu_c00f9cb6381add0c"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "d19483a199937f8d4e48cea7fcc2ed07e4a4385c621179eae3ab9780f8c62986",
+        "SSE_bytes": 2110,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 80,
+        "tool_ids": [
+          "toolu_9b3f7d872bd5911b"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "6a4eb6fde87e235854c085857a0bf1cc0b8fe6fa97c26c800dff570dea8e588e",
+        "SSE_bytes": 1360,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 81,
+        "tool_ids": [
+          "toolu_cc520222ed7c13a2"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "db5ae65b453c1ac257eff10578fbb6427dbb0ebe5aa2a77e0b686a7ceff62cb7",
+        "SSE_bytes": 1404,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 82,
+        "tool_ids": [
+          "toolu_1a0955b86e7c5a71"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "c33a263a75cee9b27a5122db7f2d3894e8056e01bda29f2966c44a4b21a1746d",
+        "SSE_bytes": 1408,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 83,
+        "tool_ids": [
+          "toolu_aed665278f3f7a23"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "739e34f55aef6f639d850280e48c38305508b9140981d9a72b261d6922961f5d",
+        "SSE_bytes": 1426,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 84,
+        "tool_ids": [
+          "toolu_86837c8406b97a47"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "76f1b45fb8cdc8bc209d1af0b12313053dbaca275877cd945104953fdcd439bd",
+        "SSE_bytes": 1363,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 85,
+        "tool_ids": [
+          "toolu_cbbf6ea5278b939b"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "98d6d9a3a71e68252193a6e8b3da536c11ea90bd1c4a34e1a50c4ff5f237eb80",
+        "SSE_bytes": 2503,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 86,
+        "tool_ids": [
+          "toolu_53cf6432d4facab1"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "ba945dfee54b6a55ce1deabad2858d3bf7fbc9fbc2e21ff06fe6c0e1662339bb",
+        "SSE_bytes": 2108,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 87,
+        "tool_ids": [
+          "toolu_58d3c9316c246b61"
+        ],
+        "tool_count": 1,
+        "SSE_sha256": "625c0c0d78e682605d367c4db14987d95f6f98ad53a14919ded693c85276c023",
+        "SSE_bytes": 1518,
+        "message_stop_count": 1
+      },
+      {
+        "seq": 88,
+        "tool_ids": [],
+        "tool_count": 0,
+        "SSE_sha256": "7d88c5329036465f0dfb5626dc553850d85bfe9f7ba8eb9d5fe2252fec81845f",
+        "SSE_bytes": 4383,
+        "message_stop_count": 1
+      }
+    ],
+    "all_status200_attempt1_no_stream_error": true,
+    "CC_num_turns": 89,
+    "tool_names_ids_all_match": true,
+    "input_objects_exact_match_count": 86,
+    "input_object_differences": [
+      {
+        "ordinal": 50,
+        "trajectory_line": 696,
+        "gateway_seq": 49,
+        "name": "Edit",
+        "gateway_input": {
+          "file_path": "/testbed/dvc/stage/__init__.py",
+          "old_string": "    @rwlocked(read=[\"outs\"])\n    def _check_missing_outputs(self) -> None:\n        check_missing_outputs(self)",
+          "new_string": "    @rwlocked(read=[\"outs\"])\n    def _check_missing_outputs(self) -> None:\n        check_missing_outputs(self)\n\n    def _checkout_outs(self, allow_missing: bool = False) -> None:\n        \"\"\"Checkout outputs from cache.\"\"\"\n        for out in self.outs:\n            if out.hash_info and not out.exists:\n                out.checkout(allow_missing=allow_missing)"
+        },
+        "trajectory_input": {
+          "replace_all": false,
+          "file_path": "/testbed/dvc/stage/__init__.py",
+          "old_string": "    @rwlocked(read=[\"outs\"])\n    def _check_missing_outputs(self) -> None:\n        check_missing_outputs(self)",
+          "new_string": "    @rwlocked(read=[\"outs\"])\n    def _check_missing_outputs(self) -> None:\n        check_missing_outputs(self)\n\n    def _checkout_outs(self, allow_missing: bool = False) -> None:\n        \"\"\"Checkout outputs from cache.\"\"\"\n        for out in self.outs:\n            if out.hash_info and not out.exists:\n                out.checkout(allow_missing=allow_missing)"
+        }
+      },
+      {
+        "ordinal": 57,
+        "trajectory_line": 802,
+        "gateway_seq": 56,
+        "name": "Bash",
+        "gateway_input": {
+          "command": "cd /testbed && python -c \"\nimport tempfile\nimport os\nimport shutil\n\n# Create a temporary directory for the test\ntmpdir = tempfile.mkdtemp()\nos.chdir(tmpdir)\n\n# Initialize git and dvc\nos.system('git init -q')\nos.system('python -m dvc init -q')\n\n# Create a remote\nos.makedirs('remote')\nos.system('python -m dvc remote add -d myremote remote')\n\n# Create and add a file\nwith open('data.txt', 'w') as f:\n    f.write('hello world')\n\nos.system('python -m dvc add data.txt -q')\n\n# Push to remote\nos.system('python -m dvc push -q')\n\n# Remove the file and the cache\nos.remove('data.txt')\nshutil.rmtree('.dvc/cache')\n\n# Create a simple pipeline that depends on data.txt\nwith open('dvc.yaml', 'w') as f:\n    f.write('''\nstages:\n  process:\n    cmd: cat data.txt > output.txt\n    deps:\n    - data.txt\n    outs:\n    - output.txt\n''')\n\n# Try to reproduce with --pull\nresult = os.system('python -m dvc repro --pull -q')\nprint(f'Repro exit code: {result}')\n\n# Check if output was created\nif os.path.exists('output.txt'):\n    with open('output.txt') as f:\n        print(f'Output content: {f.read()}')\nelse:\n    print('ERROR: output.txt was not created!')\n\n# Clean up\nos.chdir('/')\nshutil.rmtree(tmpdir)\n\"\n"
+        },
+        "trajectory_input": {
+          "command": "python -c \"\nimport tempfile\nimport os\nimport shutil\n\n# Create a temporary directory for the test\ntmpdir = tempfile.mkdtemp()\nos.chdir(tmpdir)\n\n# Initialize git and dvc\nos.system('git init -q')\nos.system('python -m dvc init -q')\n\n# Create a remote\nos.makedirs('remote')\nos.system('python -m dvc remote add -d myremote remote')\n\n# Create and add a file\nwith open('data.txt', 'w') as f:\n    f.write('hello world')\n\nos.system('python -m dvc add data.txt -q')\n\n# Push to remote\nos.system('python -m dvc push -q')\n\n# Remove the file and the cache\nos.remove('data.txt')\nshutil.rmtree('.dvc/cache')\n\n# Create a simple pipeline that depends on data.txt\nwith open('dvc.yaml', 'w') as f:\n    f.write('''\nstages:\n  process:\n    cmd: cat data.txt > output.txt\n    deps:\n    - data.txt\n    outs:\n    - output.txt\n''')\n\n# Try to reproduce with --pull\nresult = os.system('python -m dvc repro --pull -q')\nprint(f'Repro exit code: {result}')\n\n# Check if output was created\nif os.path.exists('output.txt'):\n    with open('output.txt') as f:\n        print(f'Output content: {f.read()}')\nelse:\n    print('ERROR: output.txt was not created!')\n\n# Clean up\nos.chdir('/')\nshutil.rmtree(tmpdir)\n\"\n"
+        }
+      }
+    ],
+    "input_diff_scope": "50 adds default replace_all=false in CC; 57 CC lacks raw SSE cd /testbed && prefix; retain both bytes, no general normalization or unsupported cause assertion",
+    "response_seconds_sum": 114.399,
+    "input_tokens_sum": 3068590,
+    "output_tokens_sum": 16725,
+    "max_input_tokens": 60117,
+    "max_output_tokens": 1110
+  },
+  "finite_resources": {
+    "rows": 39,
+    "containers": {
+      "actor": {
+        "run_id": "gpu1003-dvc9395-qwen36-a1",
+        "samples": 20,
+        "sampled_memory_peak_max_bytes": 990486528,
+        "sampled_pids_peak_max": 26,
+        "sampled_oom_kill_events_max": 0,
+        "sampled_pids_max_events_max": 0,
+        "container_ids": [
+          "b0e4ae213d1939e14d9afdfa8561ee76b1d0dcd80b3563f9e3f211326fa6938c"
+        ]
+      },
+      "grader": {
+        "run_id": "gpu1003-dvc9395-qwen36-a1-grade",
+        "samples": 18,
+        "sampled_memory_peak_max_bytes": 1004756992,
+        "sampled_pids_peak_max": 12,
+        "sampled_oom_kill_events_max": 0,
+        "sampled_pids_max_events_max": 0,
+        "container_ids": [
+          "aa3d3e5e64482583cdb3d2c3a7bfcb5cb97ee1486ea4a661b4b51f663048a775"
+        ]
+      },
+      "relay": {
+        "run_id": "gpu1003-dvc9395-qwen36-a1",
+        "samples": 20,
+        "sampled_memory_peak_max_bytes": 28016640,
+        "sampled_pids_peak_max": 7,
+        "sampled_oom_kill_events_max": 0,
+        "sampled_pids_max_events_max": 0,
+        "container_ids": [
+          "8bbd49de00b1a77e54145abb13766ddfc151dd4db28d9f07111c4eefbc76589e"
+        ]
+      }
+    },
+    "full_lifetime_coverage": false
+  },
+  "specific_judgments": {
+    "source_composite_failure": "ordinary and modified-with-remote source substeps pass; later imported.dvc checkout fails, Output.get_used_objs repo_import empty",
+    "remote_run_cache": "StageCache restore still does not fetch remote run-cache; deleted local runs -> patched cmd_run then missing bar on save",
+    "modified_no_remote": "unconditional cloud.pull before checking out.exists -> NoRemoteError; no evidence source overwritten",
+    "tool75": "changes is identity to equal addressing, preserves exists+exact content asserts",
+    "public_tests_final_unique_groups": {
+      "run_cache": 12,
+      "repro_multistage": 17,
+      "repro": 80,
+      "unit_command_repro": 2,
+      "unit_stage_directory": 82
+    },
+    "public_tests_total": 193,
+    "added_tests": 2,
+    "public_test_repeats_not_accumulated": true,
+    "last_CLI_filter": "grep -v ^!\\| contains empty alternative, erases repro output; file existence/content observations remain, repro RC not isolated"
+  },
+  "Coder_reused": {
+    "original_GPU_reward": null,
+    "original_GPU_entry_rc": 1,
+    "original_GPU_cleanup": false,
+    "same_original_FP_CPU_raw": 0,
+    "CPU_F_pass": 0,
+    "CPU_F_total": 3,
+    "CPU_P_pass": 37,
+    "CPU_P_total": 37,
+    "new_solve_or_model_sample": false,
+    "old_private_semantics_reused": true
+  },
+  "ACK_performed": false,
+  "stability_or_training_qualification": null,
+  "evidence_pins": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/dvc9395_two_model_first_round_audit_20261004_v1.md",
+      "sha256": "551de1a9ce0a8a09de2e390df1d566330ecbea47ee6a9bcb7390b7f28914420a",
+      "bytes": 6386
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/reviews/non_author_dvc9395_pair_execution_local_readback_20261004_v1.json",
+      "sha256": "983903c2ca0573459839b5a84066bdb9911cd2f0a2790efcc9bf58745dbd5c6b",
+      "bytes": 168008
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/reviews/non_author_dvc9395_pair_execution_review_20261004_v1.json",
+      "sha256": "dc124a33ee481177389e276917e85ecc626fab119611ecd621d575643f3a33fd",
+      "bytes": 18465
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/reviews/non_author_dvc9395_pair_execution_review_20261004_v1.md",
+      "sha256": "84729404b5aa67df5a7793594039b2792324ac7d3133e1c9143f522a72d19052",
+      "bytes": 18763
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/reviews/non_author_dvc9395_same_original_fp_cpu_runtime_20261003_v1.json",
+      "sha256": "940a96ba9032d26911f9e38072551f6b070bbb1ee0c19bf409eb6c02bbceac8b",
+      "bytes": 25959
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/reviews/non_author_dvc9395_same_original_fp_cpu_runtime_20261003_v1.md",
+      "sha256": "d9704016a0b4ee5f649a3744b678d96afed03ac8fe5e7ad3125eb76e68d634b5",
+      "bytes": 12478
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/reviews/non_author_dvc_three_coder_a1_semantic_review_20261003.md",
+      "sha256": "f67401f24fc7a60bd8a2f3a1e2f62c34e5b4e77d0faf86452cbe4c2a2a134a05",
+      "bytes": 24173
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/coder_a1_same_original_fp_cpu_grade_acceptance_v1.json",
+      "sha256": "5c48c93d0b7670edcc22cd937daf49361cc5054787d88851437a9287e302e52b",
+      "bytes": 3509
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/coder_a1_semantic_audit_v1.md",
+      "sha256": "4ea483a455af6f66023deef3537ed4a99b5045c9a6697e07943199a0934ad85e",
+      "bytes": 8978
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/qwen36_a1_owner_evidence_readback_v1.json",
+      "sha256": "52b0a14e91451c197fd5b73cd0d05581627d35ce36aee0610b0ba9d3785ddad1",
+      "bytes": 282181
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/qwen36_a1_semantic_audit_v1.md",
+      "sha256": "87d0a81c929cd00eeae0a2632c2bae927fc83290f8fa7d7b3a21a9830d72d602",
+      "bytes": 11998
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_pair_operational_owner_readback_v1.json",
+      "sha256": "1d973ecc693b065e29697630cfcc65795c5a1f1faf16f28faf41af5adf6f16c7",
+      "bytes": 15293
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_qwen_source_read_consistency_v1.json",
+      "sha256": "3443cb1d1fabd7661d81ac6601375f7273572b311d7bbd214c8f0b2cd8c5be80",
+      "bytes": 6072
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-coder-a1/queue_v27/results/gpu1003-dvc9395-coder-a1/attempt/attempt.json",
+      "sha256": "1561b5b242bc34cc0164295ede46adcbf080a74fa0504aaf2da6ace666771ae0",
+      "bytes": 16588
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-coder-a1/queue_v27/results/gpu1003-dvc9395-coder-a1/attempt/prompt.txt",
+      "sha256": "6aeed5c0b63922deb81519b033392a11ab4f2af0be1f24f954e66536bc41f3a4",
+      "bytes": 1769
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-coder-a1/queue_v27/results/gpu1003-dvc9395-coder-a1/input_check.json",
+      "sha256": "b726f72578ef7a7087ab6ab2b5cc10f9c35530afb685e30064a3726a0767219b",
+      "bytes": 11350
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-dvc9395-qwen36-a1_before/adapter_config_actual.json",
+      "sha256": "39f78df905b32cbb4bdc3783b993a763af76e5f355ef818c8749284fa98c2b09",
+      "bytes": 741
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-dvc9395-qwen36-a1_before/adapter_inspect_actual.json",
+      "sha256": "e93c40b01c8dbb38e64a0ecc69c7348c274ece07630359da46b8970308f843d7",
+      "bytes": 1857
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-dvc9395-qwen36-a1_before/capture_receipt.json",
+      "sha256": "2ae12b3cf951dea64af12128efe50cd9106f7b2cb91f3a3e0c8418d3e637d1c4",
+      "bytes": 1574
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-dvc9395-qwen36-a1_before/current_terminal_evidence_v3/journal.jsonl",
+      "sha256": "b3633ae7053bc586d3d9591fa696060f6d8d56ba8abe34860b80ae6ad472193d",
+      "bytes": 4493
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-dvc9395-qwen36-a1_before/current_terminal_evidence_v3/success.json",
+      "sha256": "b67d22663bc5d1add52fa2d606ae2fa19dce00b974efa10dfffd7764cd115ae7",
+      "bytes": 5389
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-dvc9395-qwen36-a1_before/download_manifest_actual.json",
+      "sha256": "32bd30f61860366b3783eabc9d75bee0cd28c474d9c07de8be8d9ae60a4552ab",
+      "bytes": 6509
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-dvc9395-qwen36-a1_before/engine_inspect_actual.json",
+      "sha256": "d9e5c4b34b20e57f0a4f60e7e4dd2acd097f627c5572fb75221c368728ed53c0",
+      "bytes": 1156
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-dvc9395-qwen36-a1_before/model_file_sizes_actual.json",
+      "sha256": "cb0718f57a6ec078826434d95f110af217b297810191ecacbf283c913a8e24a6",
+      "bytes": 5164
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-dvc9395-qwen36-a1_before/server_info_actual.json",
+      "sha256": "ea4453c9506ad80ae67d0b6ab90ac02a450472198421ac89335728bf829d00b8",
+      "bytes": 42357
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/prepared_remaining_eight_code8_v1/dvc9395/host_evidence/owner_request.json",
+      "sha256": "8dddd01f5530417085ea20cec8e884e1c0da0b1eca49de724c128d93185805f1",
+      "bytes": 24491
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/prepared_remaining_eight_code8_v1/dvc9395/prepared/prompts.jsonl",
+      "sha256": "5bfbc9056521434fa789707feb1bbeb0fd19bfe13c3eec6a7eed7c6b2ab8a367",
+      "bytes": 1220
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/prepared_remaining_eight_code8_v1/dvc9395/prepared/rollout_task_views.jsonl",
+      "sha256": "a81d2e0d8a2cf61c2bd7d84bbf1c728a5d0683246357a742eb846ce5d7d6bac9",
+      "bytes": 2349
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/prepared_remaining_eight_code8_v1/dvc9395/private/host_grading_views.jsonl",
+      "sha256": "21198a8ee0f8b99e693b93110834b00d4445f5de4755a933c4a7708da51ab34e",
+      "bytes": 40288
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/queue_qwen_tail2_v1/requests/gpu1003-dvc9395-qwen36-a1.json",
+      "sha256": "c34138ae72f05d0c14b04dba377df8a59742f54bc27e6bd422b14776c31eaf8d",
+      "bytes": 67539
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-dvc9395-qwen36-a1/attempt/attempt.json",
+      "sha256": "8c47f9ef6aecbe36b728c672d422e9b300729a1263e28fd60475857666b26f99",
+      "bytes": 16541
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-dvc9395-qwen36-a1/attempt/frozen/baseline.tar",
+      "sha256": "a91aea77992a789ede590526ffd72200106afb99ff10ccc1cc655e139d1eb3ce",
+      "bytes": 3696640
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-dvc9395-qwen36-a1/attempt/frozen/baseline_census.txt",
+      "sha256": "87dedd5c5e50786ce2c71f166495671c6c2d5f867894a1b620df999e67d4fd50",
+      "bytes": 67596
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-dvc9395-qwen36-a1/attempt/frozen/baseline_manifest.json",
+      "sha256": "b41f4a530df5841ab7bc6f9c9f9344f4e3bc271649dc50f3345d5a444178d6d1",
+      "bytes": 142671
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-dvc9395-qwen36-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "f64380b3567fd0e7967a4ff46f1062910a2682a8912861e97940dc99b8295ab0",
+      "bytes": 52754
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-dvc9395-qwen36-a1/attempt/prompt.txt",
+      "sha256": "6aeed5c0b63922deb81519b033392a11ab4f2af0be1f24f954e66536bc41f3a4",
+      "bytes": 1769
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-dvc9395-qwen36-a1/attempt/trajectory.jsonl",
+      "sha256": "d267e1caae3370a7dfc48f1f65efcfd21887a5c98cec271c9d14ffc12b72a242",
+      "bytes": 871761
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-dvc9395-qwen36-a1/grading/baseline_rebuild_census.txt",
+      "sha256": "87dedd5c5e50786ce2c71f166495671c6c2d5f867894a1b620df999e67d4fd50",
+      "bytes": 67596
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-dvc9395-qwen36-a1/grading/eval_logs/evallog_gpu1003-dvc9395-qwen36-a_89f3ee6d.diagnostics.json",
+      "sha256": "0d7596483573b900334bba3aafad03cbba075bca41c20eaf20335b6787f25f9b",
+      "bytes": 14861
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-dvc9395-qwen36-a1/grading/eval_logs/evallog_gpu1003-dvc9395-qwen36-a_89f3ee6d.eval.log",
+      "sha256": "e69b70cd673b8df8c6c30f812798ef1eed01bcfd9a08178c7e3384ed7ca272fd",
+      "bytes": 334529
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-dvc9395-qwen36-a1/grading/projection.json",
+      "sha256": "4b790a837397b90f6372386b8cb333d7dcc3dadd8f4615496b63916c382e5622",
+      "bytes": 352
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-dvc9395-qwen36-a1/grading/report.json",
+      "sha256": "9c2b6b34b28aa1c573cbfad60e26b9cf9bc79080b63a6582ea844196ff49fb25",
+      "bytes": 1819
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-dvc9395-qwen36-a1/grading/status.json",
+      "sha256": "5eb804aef6594453323ee08077a68cd1ad5dba68a346ef589465ce944bdcb423",
+      "bytes": 2603
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-dvc9395-qwen36-a1/input_check.json",
+      "sha256": "0ac316aa3d620075533b0e7a75bc3d62fddd08241e298ee30cff80313b980beb",
+      "bytes": 11352
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/qwen_tail2_closed_v1/gpu1003-dvc9395-qwen36-a1/closed_manifest.json",
+      "sha256": "4d93b2f811c5dd94923ef4a0a5b6182407c6cdcb31193614dde1b0b4fe12506f",
+      "bytes": 97640
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/qwen_tail2_closed_v1/gpu1003-dvc9395-qwen36-a1/resources.jsonl",
+      "sha256": "fe6017d84a6ebad65c3d25872c3344b17230e4a59187d3cddfee400b4cc273c7",
+      "bytes": 50312
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/qwen_tail2_closed_v1/gpu1003-dvc9395-qwen36-a1/terminal_snapshot.json",
+      "sha256": "86b6172299143b1abfc3da9c9cb41c41a94f87870e84aaeab718fd7047a6739c",
+      "bytes": 70705
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/engine_launch_v1.json",
+      "sha256": "603bec65f047c9b87967c58be43b8933ef3b662f9eab7052ac8ee64c3ae9e9f7",
+      "bytes": 3069
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/requests.jsonl",
+      "sha256": "3e4ae33d2b5fb415796fe70baae7f8a3ecb5e7b0dc9a267db6814c5e96adad03",
+      "bytes": 11188211
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_1.sse",
+      "sha256": "073b21ff9621a7197f27c4f10cbf4a4b8e4b9c2923fde265e0f2e53cfd0db025",
+      "bytes": 2386
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_10.sse",
+      "sha256": "c283d36d40cd2d2badfe5b6b7f43a45688ac5507063c29d4a4375378e3fed842",
+      "bytes": 1594
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_11.sse",
+      "sha256": "7673f08f1448ea92af7ffd23d1385577bdb5c49ef56cbd09f4846f5534424f55",
+      "bytes": 1443
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_12.sse",
+      "sha256": "c2c810308ef55c70694787cbcdc0ce20fc56fa675fa6851f69bd33179fa18a62",
+      "bytes": 1375
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_13.sse",
+      "sha256": "561df2684931c642de81a1b53b19c086a9b68d747970b6d1e576bf96850a6c81",
+      "bytes": 1406
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_14.sse",
+      "sha256": "aebb14823f8cd4bf062b7da21e4053f003d60ec3ec3b15659f37cea7ecaa5c96",
+      "bytes": 1399
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_15.sse",
+      "sha256": "177df92c2639928a99808e9d03706824fb70f6fe8d8a8501bb5a54c3ef2ba90d",
+      "bytes": 1501
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_16.sse",
+      "sha256": "08217b263fd9df21aa59f055d73e5e534c564975ee7cf4597799cb83615aa9fa",
+      "bytes": 1466
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_17.sse",
+      "sha256": "d1f2e72d9670d0b223fb238869de118a830a3f0bba761dae148991926ea824e1",
+      "bytes": 1456
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_18.sse",
+      "sha256": "2807c4f7bdf49c139c52640f02987570371cfc62a806b5b9da9c7311372a5e72",
+      "bytes": 1421
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_19.sse",
+      "sha256": "4d537b05051e24ba47a645413d05afb4c0582bbb93388bbfca43847371a22131",
+      "bytes": 2047
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_2.sse",
+      "sha256": "cc440be5042958f847faeb213ef3c9abbf083d8ad5d70aab78fa501f0add725e",
+      "bytes": 1473
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_20.sse",
+      "sha256": "8d5f7ad19c006e1335fc8b3f4c32cab567c814b64449ec4c966ad62bf762d9bc",
+      "bytes": 1371
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_21.sse",
+      "sha256": "8ec350a241b679378aa8a7007f154d6d74023d2feebda63156639ae2301f02c4",
+      "bytes": 1383
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_22.sse",
+      "sha256": "4b0b42c435b4ab1f6f06b0febccfb53eef555c3603c60ec9f44abeedebadc0ed",
+      "bytes": 1374
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_23.sse",
+      "sha256": "35fc2603a523dbfdeedb5457c2cc21021dc2e8f77906c30f196265b1cc4b9a37",
+      "bytes": 2746
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_24.sse",
+      "sha256": "c28d27113ca2bda74a2ff96f9fbca5dbe8ded6e35381dec18cd48e80d7a0ffc2",
+      "bytes": 2175
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_25.sse",
+      "sha256": "a4ae68d5f45d46a7380f7319c624eb195f60de7d54859e4b508b3af1d73387d7",
+      "bytes": 1428
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_26.sse",
+      "sha256": "1f4c3c9a7e6aa53647bfc5d191dbc2ecab0720f5d7e6e75ab20c2856f315314e",
+      "bytes": 1454
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_27.sse",
+      "sha256": "12e5a697897385db1dc7f8fee7b96da1abf09459c271a31e07387fb2453a1c41",
+      "bytes": 1325
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_28.sse",
+      "sha256": "702852fa98fd6b70b82a52d0d463397395197b2c6ca6cafd6fc251458ab86dd7",
+      "bytes": 1591
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_29.sse",
+      "sha256": "6171373147c188995c3f9028405ef71eb7607c632ddbeed28617427dc0ad01c7",
+      "bytes": 1551
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_3.sse",
+      "sha256": "f3185ecc96df2485689d7b4ad544b23d8831d6eda85989ab59279e05917ed7ed",
+      "bytes": 1436
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_30.sse",
+      "sha256": "2d7b0c595da8e8d60d02d913ff60c1bdaf091e3b50ebf2104cb40c32c4bd6e7d",
+      "bytes": 1369
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_31.sse",
+      "sha256": "00a2f56361acf8ac7ee01f812a3ec262f6ce9ba7025df6115f0ecc02fa51a3fa",
+      "bytes": 2919
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_32.sse",
+      "sha256": "4de90d7e51d07c28290f95964f940acb7476fbd2c8b130a1fc94002051fad292",
+      "bytes": 1412
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_33.sse",
+      "sha256": "5d9eb1b2a2d3cc2001cf5529a2a81fb33f13d49ec513e52c8218fbac54852a9d",
+      "bytes": 2563
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_34.sse",
+      "sha256": "091cabc8693dac41ee2d756ae0fcdca0482f15d49aad3c2ee7eeafa5f82995fb",
+      "bytes": 3648
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_35.sse",
+      "sha256": "d0c9e9972c06720dff8addaa2e38d4d2cba582165b7f5d5c17d9f44b778692d6",
+      "bytes": 2054
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_36.sse",
+      "sha256": "d0a4f0d15eb5ba91a28a0194b1f2f935d7f94c7091d367d5b39d7e3c9eae0e5a",
+      "bytes": 1376
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_37.sse",
+      "sha256": "5e552516536efd0fa9ad4212ad528f75cfbcc9a7d9942724850d33a0e58128e9",
+      "bytes": 1446
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_38.sse",
+      "sha256": "18549b96d70490ddad1ffca3a3a63e2fdfc2516e10247db3f219fc249a36c9c8",
+      "bytes": 1358
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_39.sse",
+      "sha256": "1b741a974748b0fdaa56ed9d6d0cbac14f4a9eb19804084e76cf089903c95637",
+      "bytes": 1429
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_4.sse",
+      "sha256": "cf225c9ae62c09bc925eac0c40df4fa37c8311f240bd0acadf386b10afbae93e",
+      "bytes": 1343
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_40.sse",
+      "sha256": "e50277e8d387345a5ea7633e88ffe6d5bb5e48fd4f42a4a4d616190d3d8285fe",
+      "bytes": 1339
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_41.sse",
+      "sha256": "cecb05c1ca8af89344b8714b692f2ae839cca0d0f8e829134113fe6455e5f4c2",
+      "bytes": 2621
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_42.sse",
+      "sha256": "8c1fc05cc4ef6f27846db59f14ef0926d905be1ed11241fc9d661517db8cb3c0",
+      "bytes": 1360
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_43.sse",
+      "sha256": "35c62e25657f7bb51e31d487f80841512989f43e5783abda465a46f5e643652d",
+      "bytes": 3522
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_44.sse",
+      "sha256": "e030345b82787ee16445b71ccd920848088156fb4c3afe009a03700ebb6a4069",
+      "bytes": 1345
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_45.sse",
+      "sha256": "9d5f05b9b199828a0a52e30264cee509bba85268b5a207edc49c1e12d03f6ccd",
+      "bytes": 1731
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_46.sse",
+      "sha256": "0f96dc0f4d274550f295c784fa13f8315487d96baee1b2853361975a4f8caba1",
+      "bytes": 1677
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_47.sse",
+      "sha256": "03d19ca1d7138af9532faa17e4e821ee7cb8e3fdab8b10ca63f686c62fe269b8",
+      "bytes": 3114
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_48.sse",
+      "sha256": "6d8bfc1606ca0c4bb76fb5715855d892070b862075035b4f0331fd69dfa41b09",
+      "bytes": 2713
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_49.sse",
+      "sha256": "93be251b47bee54859f9835d577016de9442e57c0540966466ba22dc9fe834bc",
+      "bytes": 2287
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_5.sse",
+      "sha256": "5639ff9bbbec5f8d7f463cf58cdcc92bf2e4aec9082de01a04e9938a608c5085",
+      "bytes": 1320
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_50.sse",
+      "sha256": "88975e7f6141f01d320f3f8d9970a131454be35a0b62fd3400c2e38e34a0f558",
+      "bytes": 1483
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_51.sse",
+      "sha256": "7a1d86d178e99544ded2477cb946c1f5cffe06244213ffcf92704bf55f401fb2",
+      "bytes": 2254
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_52.sse",
+      "sha256": "3c067903d5a4f825c1164cb9026842be7b02acb25669cb93717499ad6af6304d",
+      "bytes": 2247
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_53.sse",
+      "sha256": "e9ed8d51fb7f909b5fc601c08010f7d3ccd8d9fa8975f1ceb42d53560f13f466",
+      "bytes": 3102
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_54.sse",
+      "sha256": "20343b80cd54c7d9be5a92cb7131ee525fa7934c900b1c24389b542a849b7526",
+      "bytes": 1443
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_55.sse",
+      "sha256": "d30acf5ca73b5b12a4cf843ec124075da1ba1dfe0260665f3f0f7e63c63ef20c",
+      "bytes": 1450
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_56.sse",
+      "sha256": "6b6368b96f327f876af527848bb58dfbb29a9d95a1bdef6eefd3c18cc739eab6",
+      "bytes": 2732
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_57.sse",
+      "sha256": "fe40a65195dda8d140371186964b3bb4718454637645a71e5060eff0c01c6e41",
+      "bytes": 1888
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_58.sse",
+      "sha256": "dbebf1f992844af25c3b9acf44f0ffe9fbf518f0c9a7c2a93992e029aad6ef5c",
+      "bytes": 1520
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_59.sse",
+      "sha256": "0ca8ea75b2a29585e7dbc4cf2ad9c9d7583a016cc57b1adf8d461bc7d729c803",
+      "bytes": 1446
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_6.sse",
+      "sha256": "d3ecc750f8ee149f6355a5b7f9fa0be916a39326436f76b0bc6bfdc26b70d75c",
+      "bytes": 1346
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_60.sse",
+      "sha256": "980f1fdb53efb11a70ca9571f401b2c43ad53dcf3a04140af84a93909aecf81b",
+      "bytes": 1381
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_61.sse",
+      "sha256": "e5f9d92859e86b95729b3ce494cd7123669de69ccd3e019c44b01a56296376e3",
+      "bytes": 3232
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_62.sse",
+      "sha256": "6ea42bdadc92e0b2e0f4f599eb60c752e5f4487506b0d8c20a2120ef81ee8889",
+      "bytes": 1828
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_63.sse",
+      "sha256": "f20014e7167f17a17a7a2612e3693fa5ca16ce2b7076225d12f97502e432e701",
+      "bytes": 2268
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_64.sse",
+      "sha256": "262c28857b5d747f93cec51fde36ea44fec59a20f3baa0ba4bbaa37a637c411f",
+      "bytes": 3217
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_65.sse",
+      "sha256": "935331b40c632489467607250b71d3ebe96b1b3d33d55599cc8789dad2317bfa",
+      "bytes": 2359
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_66.sse",
+      "sha256": "98be53989f0ea6c62e38f0bda1e005118db8b28d69f69005b2a4f44c57be304c",
+      "bytes": 1461
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_67.sse",
+      "sha256": "e87a9e0e9c4b7065b7f9d8cf180985bfc0a6948d097bff960eb1f1131fb39469",
+      "bytes": 1451
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_68.sse",
+      "sha256": "53f8d4904c21c607fa55a0277aa9b090c5284d749561180e27b4f76fa3963fad",
+      "bytes": 1403
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_69.sse",
+      "sha256": "a3db80415c1399b49913c8ebcf5ae428cbe957485dc76d0a8633d253f129b4d1",
+      "bytes": 5633
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_7.sse",
+      "sha256": "00b9ae7203fc307da02ea103579f19b7b00e0fe90102f2e3ae83518e8b4db835",
+      "bytes": 1328
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_70.sse",
+      "sha256": "992d2649af52cde3ca03972ab3a27e859d6dae1538e31ebc75ab348316e40519",
+      "bytes": 1474
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_71.sse",
+      "sha256": "ca5e2f8290d0f6e43ba96b541a90108974e1b8e17de184468fb26867c854ec44",
+      "bytes": 3485
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_72.sse",
+      "sha256": "91f001b5e872c3b893855dfd9fc0eae2709629530a00699f03ee24871c3b0128",
+      "bytes": 1453
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_73.sse",
+      "sha256": "8ffa86ad5a2fb7374b25dad9008e62de372b377e65102294ca43573612cd5cb1",
+      "bytes": 1659
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_74.sse",
+      "sha256": "1ccb4e75c5929bd184ab8bdac30c1c7376ede23c5143942e8d09d4a3afdf26b3",
+      "bytes": 3634
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_75.sse",
+      "sha256": "4e5383f4963a6c0359080d290812f55669a83ea17fa46cb6688167e1a05240e6",
+      "bytes": 1453
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_76.sse",
+      "sha256": "323a40cb0f8b9d85c4b0fc49e2c9d051f39372d573034f89df8d39923d19397e",
+      "bytes": 1420
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_77.sse",
+      "sha256": "aa2dc12c5be6e1354232f9a3b4af6df9cfde93ca3eae5610a7cf651235c42628",
+      "bytes": 1389
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_78.sse",
+      "sha256": "3f286f54ab82b06d02d67a70bc747e724ce66799c0f1e131bdb55d366f09b538",
+      "bytes": 1414
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_79.sse",
+      "sha256": "d19483a199937f8d4e48cea7fcc2ed07e4a4385c621179eae3ab9780f8c62986",
+      "bytes": 2110
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_8.sse",
+      "sha256": "94e11dadb1e1b3e685f534ec390df664b8219263ed2124922513c37d135a732c",
+      "bytes": 1828
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_80.sse",
+      "sha256": "6a4eb6fde87e235854c085857a0bf1cc0b8fe6fa97c26c800dff570dea8e588e",
+      "bytes": 1360
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_81.sse",
+      "sha256": "db5ae65b453c1ac257eff10578fbb6427dbb0ebe5aa2a77e0b686a7ceff62cb7",
+      "bytes": 1404
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_82.sse",
+      "sha256": "c33a263a75cee9b27a5122db7f2d3894e8056e01bda29f2966c44a4b21a1746d",
+      "bytes": 1408
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_83.sse",
+      "sha256": "739e34f55aef6f639d850280e48c38305508b9140981d9a72b261d6922961f5d",
+      "bytes": 1426
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_84.sse",
+      "sha256": "76f1b45fb8cdc8bc209d1af0b12313053dbaca275877cd945104953fdcd439bd",
+      "bytes": 1363
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_85.sse",
+      "sha256": "98d6d9a3a71e68252193a6e8b3da536c11ea90bd1c4a34e1a50c4ff5f237eb80",
+      "bytes": 2503
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_86.sse",
+      "sha256": "ba945dfee54b6a55ce1deabad2858d3bf7fbc9fbc2e21ff06fe6c0e1662339bb",
+      "bytes": 2108
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_87.sse",
+      "sha256": "625c0c0d78e682605d367c4db14987d95f6f98ad53a14919ded693c85276c023",
+      "bytes": 1518
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_88.sse",
+      "sha256": "7d88c5329036465f0dfb5626dc553850d85bfe9f7ba8eb9d5fe2252fec81845f",
+      "bytes": 4383
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/resp_9.sse",
+      "sha256": "feb1884ce7f6ab2a85a5156c9c39c79f61c51ae37361ea22dfc1c20166ed5c1c",
+      "bytes": 1322
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/responses.jsonl",
+      "sha256": "df1eaf20a936c99f0283e881550a6e0a29303d76ebd6e6cb18e8a3f422463d9f",
+      "bytes": 27536
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/session_close.jsonl",
+      "sha256": "aa44980b23d07a4ceca73cfd850f724627f3fecd40b69d0ecc101cd7b01c65bc",
+      "bytes": 126
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-dvc9395-qwen36-a1/usage.json",
+      "sha256": "34522e8f5a41a79e446f2db03e75ad1cfccc40aa20751aba5834309ff2355a6f",
+      "bytes": 91
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/dvc9395_Qwen_P2P_summary_correction_v1.json",
+      "sha256": "1b294e5b5bbb2e686ec7fd39a64fdf21e082e9d8cb725a91628b631fd694f8df",
+      "bytes": 838
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/dvc9395_qwen36_execution_receipt_v1/execution_receipt.json",
+      "sha256": "55f1bfda379232313c6c187af4926d791ad95ec1514542f3c2b8604118ca29fe",
+      "bytes": 74129
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/swe-dvc9395-behavior-r20-v1-20261003_pair_execution_receipt_v1.json",
+      "sha256": "eed35d58c543a7ef411042cbe310b4d5553034658ccbf75166354e6f53bbfe4c",
+      "bytes": 5215
+    }
+  ]
+}

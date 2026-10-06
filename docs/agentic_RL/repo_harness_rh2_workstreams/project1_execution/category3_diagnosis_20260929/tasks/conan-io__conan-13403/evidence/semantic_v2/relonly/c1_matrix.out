@@ -1,0 +1,111 @@
+{
+ "default": {
+  "exception": null,
+  "runs": [
+   [
+    "SRC",
+    "autoreconf --verbose"
+   ]
+  ],
+  "cwd_after": "BUILD",
+  "cwd_restored": true,
+  "source_folder_unchanged": true
+ },
+ "args_kw": {
+  "exception": null,
+  "runs": [
+   [
+    "SRC",
+    "autoreconf --verbose --install"
+   ]
+  ],
+  "cwd_after": "BUILD",
+  "cwd_restored": true,
+  "source_folder_unchanged": true
+ },
+ "args_positional": {
+  "exception": null,
+  "runs": [
+   [
+    "SRC",
+    "autoreconf --verbose --install"
+   ]
+  ],
+  "cwd_after": "BUILD",
+  "cwd_restored": true,
+  "source_folder_unchanged": true
+ },
+ "rel_sub": {
+  "exception": null,
+  "runs": [
+   [
+    "SRC/sub",
+    "autoreconf --verbose"
+   ]
+  ],
+  "cwd_after": "BUILD",
+  "cwd_restored": true,
+  "source_folder_unchanged": true
+ },
+ "abs_build": {
+  "exception": "FileNotFoundError: [Errno 2] No such file or directory: '/tmp/tmpurjt0npx/src//tmp/tmpurjt0npx/build dir'",
+  "raised_at": "files.py:299",
+  "runs": [],
+  "cwd_after": "BUILD",
+  "cwd_restored": true,
+  "source_folder_unchanged": true
+ },
+ "abs_build_args": {
+  "exception": "FileNotFoundError: [Errno 2] No such file or directory: '/tmp/tmpurjt0npx/src//tmp/tmpurjt0npx/build dir'",
+  "raised_at": "files.py:299",
+  "runs": [],
+  "cwd_after": "BUILD",
+  "cwd_restored": true,
+  "source_folder_unchanged": true
+ },
+ "abs_sub": {
+  "exception": "FileNotFoundError: [Errno 2] No such file or directory: '/tmp/tmpurjt0npx/src//tmp/tmpurjt0npx/src/sub'",
+  "raised_at": "files.py:299",
+  "runs": [],
+  "cwd_after": "BUILD",
+  "cwd_restored": true,
+  "source_folder_unchanged": true
+ },
+ "missing": {
+  "exception": "FileNotFoundError: [Errno 2] No such file or directory: '/tmp/tmpurjt0npx/src/missing'",
+  "raised_at": "files.py:299",
+  "runs": [],
+  "cwd_after": "BUILD",
+  "cwd_restored": true,
+  "source_folder_unchanged": true
+ },
+ "run_fails_sub": {
+  "exception": "ConanException: simulated autoreconf failure",
+  "raised_at": "matrix.py:31",
+  "runs": [
+   [
+    "SRC/sub",
+    "autoreconf --verbose"
+   ]
+  ],
+  "cwd_after": "BUILD",
+  "cwd_restored": true,
+  "source_folder_unchanged": true
+ },
+ "sequence_sub_then_default": {
+  "exception": null,
+  "runs": [
+   [
+    "SRC/sub",
+    "autoreconf --verbose"
+   ],
+   [
+    "SRC",
+    "autoreconf --verbose"
+   ]
+  ],
+  "cwd_after": "BUILD",
+  "cwd_restored": true,
+  "source_folder_unchanged": true
+ }
+}

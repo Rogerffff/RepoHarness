@@ -1,0 +1,228 @@
+{
+  "schema_id": "coveragepy.ea69.qwen36.non_author_semantic_review.v1",
+  "review_date": "2026-10-03",
+  "reviewer": "non_author_candidate_semantic_reviewer",
+  "fresh_public_reader": false,
+  "job": "gpu1003-coverageea69-qwen36-a1",
+  "instance_id": "coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5",
+  "status": "candidate_defect_confirmed_and_public_requirement_delivery_gap",
+  "scope": "只核本臂源码、公开测试全部改动、实际交付要求及正式失败；完整执行/七维/效率/总账由父线程负责。",
+  "method": "只读本地baseline.tar/FrozenPatch，内存base64解码、内容SHA及AST对拍；阅读实际solver_prompt/必要CC工具结果与正式失败。不SSH/Docker/安装/模型/项目测试。",
+  "original_result": {
+    "reward": 0.0,
+    "match": 48,
+    "total": 49,
+    "failure_category": "tests_failed",
+    "infra_failure_detail": null,
+    "failed_key": "HtmlGitignoreTest.test_existing_gitignore_is_preserved_and_report_ignored",
+    "failure_at": "r2e_tests/test_2.py:80",
+    "observed_existing_content": "*\n",
+    "lost_existing_content": "# User-owned rules\ncustom.tmp\n"
+  },
+  "candidate_changes": [
+    {
+      "path": "coverage/html.py",
+      "mode": "100644",
+      "baseline_content_sha256": "sha256:c1e9dd130184d6fc97140c6e7a2b49df12f826bcf86e92ced29c29e5fa0f9bc9",
+      "candidate_content_sha256": "sha256:b407ce288a999dd81e92f8d7dfc8809ece39ee2f06744ba0283c6e91d0f10c68",
+      "delta": "仅新增gitignore_path赋值与with open(w)写*换行；全部既有AST不变",
+      "candidate_lines": [
+        231,
+        234
+      ],
+      "existing_ast_unchanged_after_removing_only_addition": true
+    },
+    {
+      "path": "tests/test_html.py",
+      "mode": "100644",
+      "baseline_content_sha256": "sha256:5770b63e4e3341f8c7402401091cf1b2c2a916c4ffd0a127d0b27d820755422a",
+      "candidate_content_sha256": "sha256:8204f350fb1a8fe300624037dac5e7821e1cfb1ab1a8d39cecf167e9f683710a",
+      "delta": "仅新增HtmlDeltaTest.test_html_gitignore_created；全部既有AST不变",
+      "candidate_lines": [
+        154,
+        160
+      ],
+      "existing_ast_unchanged_after_removing_only_addition": true
+    }
+  ],
+  "source_semantics": {
+    "new_directory_report_ignored": "通过已有真实Git正式节点；写入*规则确能忽略该目录生成报告。",
+    "existing_gitignore": "每次成功report后open(w)截断内容，保留要求未实现；正式原失败与源码一致。",
+    "no_data": "改动在report数据检查之后，正式无数据节点通过。",
+    "encoding": "实现不传encoding，原public spy兼容路径非本次失败原因。",
+    "normal_model_failure_attribution": "仅能确认对已授权固定验收目标的功能缺陷；未公开交付新增preserve要求，不能无条件归因纯模型失败。"
+  },
+  "test_control": {
+    "candidate_test_like_paths": [
+      "tests/test_html.py"
+    ],
+    "all_existing_test_assertions_and_helpers_unchanged": true,
+    "only_added_test": "HtmlDeltaTest.test_html_gitignore_created",
+    "test_checks": [
+      "htmlcov/.gitignore存在",
+      "FileWriteTracker记录其写入"
+    ],
+    "test_omits": [
+      "已有内容保留",
+      "真实Git忽略效果",
+      "重复报告行为"
+    ],
+    "conftest_or_fixture_modified": false,
+    "formal_runner_or_hidden_tests_modified": false,
+    "hidden_imports_modified_public_test_module": false,
+    "runner_integrity_changed": false,
+    "formal_setup_hidden_tests_tree_sha256": "sha256:d9860e3e4c82c0d005cc5fdb3027ac0b489128eec2ffafdb306fc33d991c3430",
+    "formal_runner_sha256": "sha256:8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+    "pollution_or_scoring_bypass_evidence": false,
+    "note": "patch_hygiene.test_files_modified=false不能用来否定实际tests/test_html.py修改；FrozenPatch/diagnostics明确有该路径。"
+  },
+  "public_selfcheck": {
+    "original_html_tests_output": "46 passed in 0.89s",
+    "compat_output": "46 passed, 2 warnings in 0.86s",
+    "added_test_output": "47 passed in 0.98s",
+    "pipeline_caveat": "两条pytest命令管道head -100，输出通过不能单独证明pytest退出码；正式testRC=1独立保留。",
+    "ad_hoc_syntax_error": "f-string表达式含反斜杠，模型随后修正脚本，未改源码；不是评分环境误拒。",
+    "preserve_or_existing_file_scenario_exercised": false
+  },
+  "material_blocker": {
+    "kind": "public_requirement_delivery_missing",
+    "affected_scope": "本题R6/073–075的49键评分面配当前public statement和brief，以及实际delivered prompt；不阻断无关题或共享环境。",
+    "public_statement_sha256": "sha256:87f805dad9c0268639721aa5e02df3a6b430ade43e91344f641eefd47d242cdf",
+    "public_brief_sha256": "sha256:475e3ee69e2e28b4812c1b464a1c9e8381011e9f4959551e05c162387823e2e9",
+    "actual_delivered_prompt_sha256": "sha256:b5b1c227c22bbaa04d20fb298a6013fb2e7060df3fc6f4b895b37596daf22e29",
+    "missing_requirement": "已有有效用户.gitignore内容必须保留，并在首次和再次生成时使HTML报告继续被Git忽略。",
+    "prior_cpu_review_limit": "旧CPU核查证实评分和身份有效，且明确原ISSUE覆盖策略不明；未把保留要求传给solver，也没有将此公开目标缺项列为准入阻断。旧CPU通过不能替代目标交付。",
+    "goal_authorization_unchanged": true,
+    "private_acceptance_unchanged": true,
+    "block_next_ordinary_dispatch_using_current_public_delivery": true,
+    "fix_proposal": {
+      "preferred": "正式新增statement_text_replace，target=problem_statement，补Expected Behavior；新编号由发布者分配，不造编号，不改073–075隐藏测试或49键。",
+      "suggested_public_text": "If the output directory already contains a .gitignore file with user-provided content, preserve that content while ensuring that all generated HTML report files are ignored by Git. This must remain true when the report is generated again.",
+      "avoid_leakage": "只交付行为要求，不公开私有节点/文件内容/候选/append具体实现。",
+      "version_fields_to_refresh": [
+        "problem_statement/problem_statement_sha256",
+        "public_bundle_digest",
+        "prepared prompt与实际delivered SHA",
+        "material revision清单/manifest/owner probe request输入身份"
+      ],
+      "ordinary_brief_only_alternative": "如先以显式task requirements补充brief，须将其标为任务要求而非环境建议并固定新SHA；正式statement修订优先。"
+    }
+  },
+  "cpu_actions": {
+    "run_now": false,
+    "do_not_rerun_all_seven_controls": true,
+    "after_fix": [
+      "窄核新版公开目标与旧隐藏验收一致；按现行流程安排未接触私有材料的干净公开读者。",
+      "重prepare并核新版public lineage；hidden tree/runner/expected/base/recipe不变时复用旧七行矩阵与相应镜像事实，按发布者实际身份确认。",
+      "一条同版CPU公开交付/空候选往返窄验：实际messages_000含保留要求及兼容命令说明，评分面仍49键、baseline/image/overlay/运输/清理匹配。"
+    ],
+    "automatic_model_rerun": false,
+    "historical_score_change": false
+  },
+  "allowed_uses": [
+    "保留本臂原reward0和48/49作为旧公开交付缺项版本下的诊断证据。",
+    "比较实际候选源码的覆盖行为；记录公开自测覆盖不足。"
+  ],
+  "disallowed_uses": [
+    "把该0直接报为已明确公开preserve要求下的纯模型失败。",
+    "无版本说明的原benchmark成绩、训练资格或自动训练负样本。",
+    "为了让gold或本候选通过删除已授权保留验收；静默改原件或重跑洗分。"
+  ],
+  "evidence": [
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v11/results/gpu1003-coverageea69-qwen36-a1/solver_prompt.txt",
+      "sha256": "sha256:b5b1c227c22bbaa04d20fb298a6013fb2e7060df3fc6f4b895b37596daf22e29",
+      "bytes": 3555
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v11/results/gpu1003-coverageea69-qwen36-a1/attempt/prompt.txt",
+      "sha256": "sha256:b5b1c227c22bbaa04d20fb298a6013fb2e7060df3fc6f4b895b37596daf22e29",
+      "bytes": 3555
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v11/results/gpu1003-coverageea69-qwen36-a1/attempt/frozen/baseline.tar",
+      "sha256": "sha256:4d73e691a71e2ae569849c7781b170ad2f9702f65c1f9585bc6ba5ceec1448ab",
+      "bytes": 4198400
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v11/results/gpu1003-coverageea69-qwen36-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "sha256:59592ab4a17111db748a4616a35985c08d09e02c46d95822f64f77d665a7c9c8",
+      "bytes": 81389
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v11/results/gpu1003-coverageea69-qwen36-a1/attempt/frozen/baseline_manifest.json",
+      "sha256": "sha256:130972c146cc14d7db31295d1e33db1c4f4ba413a385dc40d9b8fb66d737c0e8",
+      "bytes": 83474
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v11/results/gpu1003-coverageea69-qwen36-a1/attempt/candidate/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5.diff",
+      "sha256": "sha256:3613231470b320f2b6a4d5f6de5adf472e036b607816406d986b53745f72cd7f",
+      "bytes": 1653
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v11/results/gpu1003-coverageea69-qwen36-a1/attempt/trajectory.jsonl",
+      "sha256": "sha256:8591d839204e9ee7448a605dfa742f13fece900cb3af4e9ee0f8b33fab5d2942",
+      "bytes": 306869
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v11/results/gpu1003-coverageea69-qwen36-a1/grading/projection.json",
+      "sha256": "sha256:33086ad52ecc322f411f01fa55439b3ae809e3c040bb0fb93f3dc9b23db9fc81",
+      "bytes": 354
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v11/results/gpu1003-coverageea69-qwen36-a1/grading/report.json",
+      "sha256": "sha256:3457fdc04c09f18b5817604f7ae8b3ad906c99a4f7f0a5e55eec4b2c5a398eba",
+      "bytes": 1893
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v11/results/gpu1003-coverageea69-qwen36-a1/grading/eval_logs/evallog_gpu1003-coverageea69-qwe_e7ebb5da.diagnostics.json",
+      "sha256": "sha256:25180eb54b4e1cfa3bf6705b780b9410e8afed409879ecad90bb59cf16070d96",
+      "bytes": 3818
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v11/results/gpu1003-coverageea69-qwen36-a1/grading/eval_logs/evallog_gpu1003-coverageea69-qwe_e7ebb5da.eval.log",
+      "sha256": "sha256:2cc29e08c1c939c958205042696ad1252392df3bf5166b29c9f93986c94d3c7d",
+      "bytes": 11098
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/materials/test_1_open_args_v1.py",
+      "sha256": "sha256:30f34e643804fbe5c2575ce8469c1bf4dd5f912f1214ade93fbd9968759e9361",
+      "bytes": 42253
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/materials/test_2_preserve_v1.py",
+      "sha256": "sha256:e5fee9fb81700d682e45c5c25cdc18035000e1dd86bf78fb2c8391ee61105497",
+      "bytes": 3879
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/materials/expected_v1.json",
+      "sha256": "sha256:b3482977f4b14e436b61638b92950c68bea93f5cda15cf7854d4c87ff3627527",
+      "bytes": 2725
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/public_devbrief_20261003.md",
+      "sha256": "sha256:475e3ee69e2e28b4812c1b464a1c9e8381011e9f4959551e05c162387823e2e9",
+      "bytes": 2106
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/probe_request.json",
+      "sha256": "sha256:9ec4fce830ed8f5883dd6f5ab0d96822e12cf89c5b212d1d04584f0db165c3ea",
+      "bytes": 9590
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/reviews/non_author_ea69_cpu_review_20261003.md",
+      "sha256": "sha256:9babc93bcabcf4201e7f57826ca9f24e46a5adf59e3f1e3157b20305aefa2b3a",
+      "bytes": 8511
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/coveragepyea69_qwen36_a1_execution_review.md",
+      "sha256": "sha256:09af241ed13ee972864768862eb526788571dbfbf192bb33e11d5b267f40c2ff",
+      "bytes": 14517
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/coveragepyea69_qwen36_a1_execution_review.json",
+      "sha256": "sha256:2c41d2875f498428882bfb633cd13a005fa36aa6d2708d7a8d413b0e3626b13c",
+      "bytes": 156188
+    }
+  ]
+}

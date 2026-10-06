@@ -1,0 +1,28 @@
+[ISSUE]
+**Title:** Missing Warning When Loading Variable Definitions with Unused Variables
+
+**Description:**
+When loading variable definitions that include variables absent from the current data, the application silently ignores those definitions without displaying the warning described below.
+
+**Example:**
+```python
+# Attempt to parse variable definitions with unused variables
+self.widget._parse_var_defs({
+    "categorical": {
+        "foo": {"renamed_values": {}},
+        "bar": {"renamed_values": {}}
+    },
+    "numeric": {}
+})
+```
+
+**Expected Behavior:**
+The application should display a warning message indicating that the variables `'foo'` and `'bar'` are defined but not used in the data. No errors should occur during this process.
+
+**Actual Behavior:**
+The definitions for the unused variables are silently ignored and no warning is displayed. The example does not raise an application exception.
+
+**Development Note:**
+The existing public `TestOWColor.test_parse_var_defs_no_rename` ends with an assertion that a definition for an unused variable produces no warning. That assertion conflicts with the behavior requested here. Preserve its checks for duplicate renames, and validate the final unused-variable case against the warning behavior requested in this issue.
+
+[/ISSUE]

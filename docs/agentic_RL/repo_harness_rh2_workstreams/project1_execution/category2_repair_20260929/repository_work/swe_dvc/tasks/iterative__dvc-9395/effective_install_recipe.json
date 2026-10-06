@@ -1,0 +1,18 @@
+{
+  "instance_id": "iterative__dvc-9395",
+  "original_install": "python -m pip install --upgrade pip wheel GitPython; python -m pip install \"cython<3.0.0\" && python -m pip install --no-build-isolation pyyaml==5.4.1; python -m pip install git+https://github.com/iterative/mock-ssh-server.git || true; python -m pip install -r tests/requirements.txt || true; python -m pip install -r test-requirements.txt || true; python -m pip install -e \".[tests,dev,all_remotes,all,testing]\"; python -m pip install \"numpy<=1.20\"; python -m pip install \"pytest<8\";",
+  "revised_install": "python -m pip install --no-index --find-links=/opt/rh2/build-wheels --no-deps pygit2==1.14.1 &&\nrh2_recipe_install() {\n  python -m pip install --no-deps pygit2==1.14.1 || return $?\n  python -m pip install -e '.[all,tests]'\n  local install_rc=$?\n  python -I -c 'import importlib.metadata as m,json; print(\"RH2_DVC_DEPS=\"+json.dumps({x:m.version(x) for x in ['\"'\"'dvc'\"'\"', '\"'\"'pygit2'\"'\"']}))'\n  return \"$install_rc\"\n}\nrh2_recipe_install",
+  "extras": [
+    "all",
+    "tests"
+  ],
+  "compat": [
+    "pygit2==1.14.1"
+  ],
+  "decision": "E13",
+  "note": "沿旧tail配方；相同pygit2 wheel在新依赖镜像的build-wheels位置，两侧都保持pin；仅路径适配。",
+  "reason": "Target CPython3.9 wheel, preserve pygit2 historical constants; previous host downloader produced incompatible CPython3.10 wheel.",
+  "status": "draft_not_formally_published",
+  "parent_recipe_path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/dvc_tail_v1/recipes/iterative__dvc-9395.json",
+  "parent_recipe_sha256": "sha256:f80b7d645c89ecce9332df8f2b4d712b768cf4e6e50c369f46e5f9a975109b7d"
+}

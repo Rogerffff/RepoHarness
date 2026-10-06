@@ -1,6 +1,6 @@
 # E3 窄实施 Brief：路由 tape 紧凑表示（I23）
 
-2026-09-22 / Claude（A 线分叉）。**状态：Brief，待 Codex 聚焦检查；未实施。** 依据：[第六组决定 2 与 E3](README.md)（I18 暂缓期间对"不动路由链路"的窄范围补充授权）、[方向检查](claude_a_direction_review_20260922.md)与 [Codex 复核 §2.1](codex_direction_review_20260922.md)。
+2026-09-22 / Claude（A 线分叉）。**状态：E3 主体（`45c67de3`）与 E3b（`d4a11940`）已实施并通过 Codex [实施复核](e3_implementation_review_20260923/README.md)（2026-09-23）；性能口径以 §10 为准，§8.3 的原数字保留但按 §10 标注条件。** 依据：[第六组决定 2 与 E3](README.md)（I18 暂缓期间对"不动路由链路"的窄范围补充授权）、[方向检查](claude_a_direction_review_20260922.md)与 [Codex 复核 §2.1](codex_direction_review_20260922.md)。
 
 ## 1. 范围
 
@@ -173,3 +173,28 @@
 - **测试**（`tests/adapters/test_e3b_meta_digest.py`，11 例）：0 B / 4 B / 16 KiB / 1 MiB±1 / 4 MiB 全等；目标键排在首 / 尾 / 唯一；其它字段带同样的值、占位样文本（`\x00RH2_BIG_0\x00`、带引号的同串、`"routed_experts"` 文本）、另一大串、Unicode 键值、空串 / 假值键；值非 str 或键缺失时回落原函数；非 str 键两者同为 `TypeError`；hook 记录的 `raw_meta_info_digest` 与 oracle 一致（wire 与 list 两种形态）；`json.dumps` 被 spy 证明没有处理过大串。
 - **测量**（本机，含快路径判定与前后段生成，取 3 次最小值）：`canonical_json_digest` 28 / 52 / 107 ms → 流式 5 / 10 / 21 ms（8K / 16K / 32K 行，base64 16 / 32 / 64 MiB），摘要逐位相同。单轮 hook 合计（`baseline_bench.py`，`results/baseline_new_e3b.txt`）：旧 182 / 294 / 544 ms → E3 50 / 101 / 420（噪声，生命周期基准同规模 194）→ E3b 22 / 42 / 85 ms。该脚本"其中 meta digest 约"一列单独计时的是**原函数**（参考值），不是 hook 内实际走的流式版本。
 - **可独立回退**：删除 hook 里的三元分支与 `_canonical_meta_digest` 即回到 E3 主体状态，记录内容不变。
+
+## 10. EP1：性能证据的口径修正（2026-09-23，按 Codex 实施复核）
+
+Codex 复核对生产实现无阻塞项；唯一待修项 EP1 / P2 指向 §8.3 的**收益证据**，全部 accepted：
+
+1. 生命周期基准在计时前开了 `tracemalloc`，单轮脚本没有——跟踪开销显著偏向需要大量 Python 对象的旧路径（Codex 同源码对照：8 轮到 8K 行，仅改跟踪开关，捕获合计 735 → 5,295 ms）。
+2. 载荷用 `randbytes` 生成整个 int32 值域；目标模型 Qwen3-30B-A3B 是 128 个专家，编号 0..127 只引用 128 个小整数对象，旧表示的分配与驻留成本显著不同。
+3. 心跳的 `await sleep(0)` 不能让夹具准备阶段的延迟先结算，准备成本被记到了 hook 头上。
+
+**撤回**：§8.3 "旧表示的逐轮成本随 session 存量恶化（0.54 s → 5.1 s）"与"心跳延迟 7.5 s 意味着其它会话全部停摆"两条结论。原数据保留并标注为"tracemalloc 开、随机 int32、含夹具准备"的条件读数，不改写。
+
+**已修**：`lifecycle_bench.py` 时间与内存分成不同运行（`--trace-memory` 只报内存）、专家编号默认 0..127（`--stress-random-int32` 才用全值域并标注为压力条件）、心跳先等两个周期结算准备阶段再清零；`baseline_bench.py` 同样改为 0..127。
+
+**修正条件后的实测采用 Codex 的数字**（本机 Apple Silicon，25 轮到 32K 行 × 48 × 8，两叶，编号 0..127，tracemalloc 关，夹具准备不计入，每形态一次）：
+
+| 指标 | 旧 `110bbd91` | E3 | E3b |
+| --- | ---: | ---: | ---: |
+| 25 轮 hook 合计 | 4,476 ms | 2,427 ms | 1,198 ms |
+| 最后一轮 hook | 380 ms | 180 ms | 89 ms |
+| hook 心跳最大延迟 | 370 ms | 179 ms | 89 ms |
+| 两叶 backfill | 307 / 325 ms | 2.8 / 2.0 ms | 1.1 / 1.2 ms |
+| 两叶投影 | 1,229 / 995 ms | 18 / 18 ms | 17 / 17 ms |
+| 25 轮后 Python 可追踪存量（另起进程） | 1,875 MiB | — | 627 MiB |
+
+结论不变：逐轮捕获、逐叶投影与驻留内存都改善，收益量级比 §8.3 小但明确；真实作业的吞吐与事件循环占用仍归 E5，不据此定并发参数或展开 I18。

@@ -1,0 +1,21 @@
+diff --git a/src/PIL/GifImagePlugin.py b/src/PIL/GifImagePlugin.py
+index cf2993e38..730bcd3ce 100644
+--- a/src/PIL/GifImagePlugin.py
++++ b/src/PIL/GifImagePlugin.py
+@@ -481,7 +481,16 @@ def _normalize_mode(im):
+         im.load()
+         return im
+     if Image.getmodebase(im.mode) == "RGB":
++        source = im
+         im = im.convert("P", palette=Image.Palette.ADAPTIVE)
++        trns = source.info.get("transparency")
++        if isinstance(trns, tuple) and "transparency" not in im.info:
++            # no exact palette entry: use the closest colour as the transparent one
++            palette = im.im.getpalette("RGB")
++            im.info["transparency"] = min(
++                range(len(palette) // 3),
++                key=lambda i: sum((palette[3 * i + c] - trns[c]) ** 2 for c in range(3)),
++            )
+         if im.palette.mode == "RGBA":
+             for rgba in im.palette.colors:
+                 if rgba[3] == 0:

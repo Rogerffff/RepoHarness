@@ -1,0 +1,239 @@
+{
+  "schema_id": "rh2.category2.owner_probe_request.v1",
+  "status": "submitted_for_executor_validation",
+  "created_at": "2026-10-03T01:46:04.354370+00:00",
+  "task_id": "swe_gym_lite::pandas-dev__pandas-48106",
+  "instance_id": "pandas-dev__pandas-48106",
+  "source": "swe_gym_lite",
+  "owner_thread_id": "01a0fd63-67de-77d2-b1fe-6a74a1de4481",
+  "owner_host_id": "local",
+  "package_id": "swe_pandas",
+  "package_path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas",
+  "material_version": "pandas48106-complete-bindings-e19-v1",
+  "purpose": "完整绑定与E19安装验收后，观察模型能否修复categorical Series扩容及相邻dtype行为；原评分与候选语义分别审查。",
+  "permitted_use": "探索性题目/环境质量与基座诊断；不自动授予训练资格。",
+  "blocking_missing": [],
+  "model_and_budget": {
+    "authority": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/ordinary_probe_20260929/gpu_coordination_decisions_20261002.md",
+      "sha256": "sha256:2d70bd54cfb80722e66d78901ed909f0c77648ffd6e32f3cd9f7023afc0c1804"
+    },
+    "config_id": "probe-wide-v1",
+    "attempts_per_configured_model": 1,
+    "repeat_plan": "首轮各1；后续统一批次默认各补至总3，有依据的2–4调整；本首轮请求不自动追加或混算条件不同样本。",
+    "models": [
+      "Qwen3-Coder-30B-A3B-Instruct",
+      "Qwen3.6-35B-A3B"
+    ],
+    "precision": "BF16",
+    "request_scope": "首轮两模型各1次，逐项回执；后续重复按统一第二阶段关联本请求，不把首个模型完成当整项完成。"
+  },
+  "public_delivery": {
+    "mode": "unchanged",
+    "prepared_prompt": {
+      "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_48106_received_noop_v1/prepared/prompts.jsonl",
+      "sha256": "sha256:16c879e2243f477e321eec60138403d90ab85bfdf4649b0e5defe49999d0cec6"
+    },
+    "prompt_text_sha256": "sha256:a06d1a9b4feb133146e735191cffc380ac5c7cd1f751caedf4d1044002850e1f",
+    "public_bundle_digest": "sha256:23ec7b2316ca1852adbf2b80c998895f02f73e49d7848d407a6777c5c6a067f7",
+    "reason": "本题只改私有完整绑定和评分安装，R13公开包未变；原公开actor复现及已有测试已核。执行者回读实际prompt保持原样；不交付本包材料、gold、私有辅助/测试或审查。"
+  },
+  "executor_only_materials": {
+    "cpu_release_id": "cat2-cpu-r2e089092-swe27-pandas-moto-20261003-v1",
+    "release_manifest": {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe27_pandas_moto_v1/manifest.json",
+      "sha256": "sha256:3fad18daff8db219294e10cbf08d4424d68cf7000d008bb983cba4bdc427b641"
+    },
+    "published_materials": {
+      "asset_facts.json": {
+        "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe27_pandas_moto_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/pandas48106_bindings_e19_v1/asset_facts.json",
+        "sha256": "sha256:5aaba928dbb3ecd08d92eeaca0d120eaaf914534922482a9b29d23c24ae98a15"
+      },
+      "install_recipe.json": {
+        "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe27_pandas_moto_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/pandas48106_bindings_e19_v1/install_recipe.json",
+        "sha256": "sha256:d9eaba74f519789b34cf94b74e755fa260eadba78d0951c504b97e5861b43aae"
+      },
+      "material_revisions.json": {
+        "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe27_pandas_moto_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/pandas48106_bindings_e19_v1/material_revisions.json",
+        "sha256": "sha256:d0ddf68c4f77729d854fbe1bb382b7cb326f46e597eeefdf3b986c4a821ba16f"
+      },
+      "reference_bindings.json": {
+        "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe27_pandas_moto_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/pandas48106_bindings_e19_v1/reference_bindings.json",
+        "sha256": "sha256:55b512574381a62c14facab6f7d125813a4685edf312dbbf1d8c87a5ce4e0a0a"
+      },
+      "wheel_manifest.json": {
+        "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe27_pandas_moto_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/pandas48106_bindings_e19_v1/wheel_manifest.json",
+        "sha256": "sha256:64eecd6a1911d4368ffe3e6ecfeefab726f8412465a70d2fd5cc5f39b5a3d0f8"
+      }
+    },
+    "original_test_patch": {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe27_pandas_moto_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/pandas48106_bindings_e19_v1/original_test.patch",
+      "sha256": "sha256:aec2e587f0094d68a2679591548b601fec2a4c54af3ca5a0bfa6a29e65532be2"
+    },
+    "prepared_manifest": {
+      "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_48106_received_noop_v1/prepared/prepared_manifest.json",
+      "sha256": "sha256:1ec93897ba4e95b3349772e400f8a7bfc9d500872b90e32bb347426482ec0b9b"
+    },
+    "host_grading_view": {
+      "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_48106_received_noop_v1/private/host_grading_views.jsonl",
+      "sha256": "sha256:2eba77c29807303c8d418bf47d119049d5221875c92a376a5c6c8ca939004ee3"
+    },
+    "identity": {
+      "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_48106_received_noop_v1/input_identity.json",
+      "sha256": "sha256:5e89d90da4e52a34833553960067602192f43d1f15253014a921a848926e58d0"
+    },
+    "binding": {
+      "grading_digest": "sha256:1b0dbf2b6ce752cedc45e359d8b50fbaeebada462aa192f5dca43c8db4ff1111",
+      "environment_package_digest": "sha256:64fdb83d7c1e8c4ca2b8c5b2336c999cee5ef4b651ff215ff4e5eb90096f1cbb",
+      "scripts_digest": "sha256:594109504074848b0988037581294fd922056fba076d8e8807e0dd6f9b4215b2",
+      "parent_grading_digest": "sha256:3c5e123be70f030ed8355e8b9aa8b51c32651c33d2c7a3da34724080f0f1127f",
+      "bindings_sha256": "sha256:4c628adf0150848e756bae3afb917af9d248b2c983c30612a9e6925a266f3b08"
+    },
+    "separation": "整个区及CPU对照只供受信执行者核绑定/评分，不进solver上下文和挂载。",
+    "publication_receipt": {
+      "path": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r13/pandas48106_publication_receipt.json",
+      "sha256": "sha256:e6a3c79ecdd524777199417e6b5f5098c439fc8e00e97727275af5710f31e055"
+    }
+  },
+  "environment": {
+    "base_commit": "8b72297c8799725e98cb2c6aee664325b752194f",
+    "actor": {
+      "source_image_by_digest": "xingyaoww/sweb.eval.x86_64.pandas-dev_s_pandas-48106@sha256:5300b53bb30e5b29f5425967f370e3a72c42b9bbffeb4c2fd1d3ba831716bdd5",
+      "cpu_actual_image_id": "sha256:0e706113dce17d30fade5723a2a71c162afa253d777fd7fa139c5b89cf05c4b8",
+      "gpu_actual_image_id": null,
+      "route": "原source actor；可用已核code4精确image_override诊断入口，固定源manifest/实际image，不代表typed训练actor租约。",
+      "validation": {
+        "status": "public_commands_and_profile_activation_verified",
+        "job_id": "pandas48106-public-v2-a334edd8fc79",
+        "completed_at_utc": "2026-10-02T17:44:34Z",
+        "harness_exit_code": 0,
+        "uid": 54321,
+        "base_commit": "8b72297c8799725e98cb2c6aee664325b752194f",
+        "pandas_import": "/testbed/pandas/__init__.py",
+        "python": "3.8.20",
+        "public_setitem_passed": 14,
+        "public_setitem_deselected": 1854,
+        "mcve": "original_public_input_raises_TypeError_as_expected",
+        "prelaunch_ok": true,
+        "activation_ok": true,
+        "residual_after_force": [],
+        "runtime": "runtime_cpu_v2",
+        "release": "cat2-cpu-r2e064065-swe5-20261003-v1",
+        "generic_bashenv_write_probe": {
+          "raw_flag": false,
+          "actual_action_requested": false,
+          "interpretation": "本次四条公开命令不含RH2_BASHENV_WRITE操作；该通用检查未执行，不能写成全部检查为True"
+        },
+        "source_evidence_sha256": "sha256:1bf21fab95ca78414546a55cdc1b29c41423133e50adf468c989b7c5861b418a",
+        "scope": "新宿主原公开actor窄核；没有修订后评分或训练资格",
+        "trace_raw_receipt": {
+          "path": "runs/category2_repair_20260929/pandas_cpu_20261003/cpu_c_48106_public_actor_trace_received/receipt_manifest.json",
+          "sha256": "sha256:2f086abf0b4b0516fe4677c2f92a35d0dd50667889ae14a20e616b46bddb6f1a"
+        }
+      },
+      "reused_non_author_review": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/reviews/non_author_cpu_evidence_review_20261003.md",
+        "sha256": "sha256:4fe58964c2191990ee4cd387f3f284fc1f5801c48242338f33bd9efcb1ea67e6"
+      }
+    },
+    "grader": {
+      "cpu_actual_image_id": "sha256:53b17fe21e906498091df64913c28682c23c6eaad8fbc7106fffa737d170860a",
+      "gpu_actual_image_id": null,
+      "recipe_id": "pandas48106-e19-meta-v3",
+      "install_recipe": {
+        "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe27_pandas_moto_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/pandas48106_bindings_e19_v1/install_recipe.json",
+        "sha256": "sha256:d9eaba74f519789b34cf94b74e755fa260eadba78d0951c504b97e5861b43aae"
+      },
+      "wheel_manifest": {
+        "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe27_pandas_moto_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/pandas48106_bindings_e19_v1/wheel_manifest.json",
+        "sha256": "sha256:64eecd6a1911d4368ffe3e6ecfeefab726f8412465a70d2fd5cc5f39b5a3d0f8"
+      },
+      "cpu_image_inspect": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_48106_received_noop_v1/grader_image_inspect.json",
+        "sha256": "sha256:ac381fc997222467a8915747a5efac1331a2031f40ea8876c8c207bda5fe5ab1"
+      },
+      "gpu_requirement": "绑定固定E19镜像及材料身份；优先运输已验精确image。GPU若需不同镜像身份的兼容发布，执行者关联原请求并完成受影响身份/资格窄核，不能冒填CPU ID为GPU实际ID。"
+    },
+    "cpu_validation_budgets": {
+      "setup_reset_observation_seconds": 900,
+      "candidate_stage_seconds": 1800,
+      "test_seconds": 1800,
+      "grading_deadline_seconds": 3600,
+      "cleanup_seconds": 120,
+      "image_pull_seconds": 1800,
+      "reason": "当前2CPU/4GiB已验安装NoOp612.216秒、Gold638.555秒；启动/重置另计，900秒setup及1800秒测试/3600秒全评分均须受影响兼容配置保留，不能沿默认300秒静默截断。评分脚本digest不变。"
+    }
+  },
+  "cpu_acceptance": {
+    "noop_raw_receipt": {
+      "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_48106_received_noop_v1/receipt_manifest.json",
+      "sha256": "sha256:b1659cd6e886556c720d55c2fd30c51bedb1aa94e08408578b69637ec5c379c3"
+    },
+    "noop_ledger": {
+      "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_48106_received_whole_v1/noop/ledger.jsonl",
+      "sha256": "sha256:e54caa26aab06df4d13161f74860a5d2121ab1f086ec9460e49e21599a4f9c89"
+    },
+    "qualification_source": "已独立核过的当前NoOp账本，仅同image/scripts/material身份可用；Gold真实kind=cc不被P-A加载，下游记录实际资格消费。",
+    "non_author_material_review": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/reviews/non_author_material_review_20261003.md",
+      "sha256": "sha256:8d166cbc274830eb16c7f4b0429fc62afa623b960bd3eb2c9e4f65bc058e912a"
+    },
+    "gold_label_boundary": "本次在途Gold字节为原validation gold，driver实际kind=cc；不重命名历史账本，不将该行当P-A Gold资格。",
+    "noop_non_author_review": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/reviews/non_author_48106_formal_noop_review_20261003.md",
+      "sha256": "sha256:21175165ef3690b64195c3f0ac4ba9b338e624e8459cb9bc04375fdedd6d92c6"
+    },
+    "owner_result": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/tasks/pandas-dev__pandas-48106/cpu_acceptance_20261003_v1.json",
+      "sha256": "sha256:ccce1c78db86e2a264108a3ff9e473c2121d12b5ae9c21e488c659ab0a2c2af3"
+    },
+    "whole_matrix_receipt": {
+      "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_48106_received_whole_v1/receipt_manifest.json",
+      "sha256": "sha256:65b466412dbc31dc3d9c3391fa86f4fd58b4749d0ca0c1fd9463aca62744c77f"
+    },
+    "gold_ledger": {
+      "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_48106_received_whole_v1/gold/ledger.jsonl",
+      "sha256": "sha256:7488f6f5996a5fe7247a483e8906e96f0d6caf82b5f928cbf00129f8d0253223"
+    },
+    "non_author_gold_matrix_review": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/reviews/non_author_48106_formal_gold_matrix_review_20261003.md",
+      "sha256": "sha256:d09e83e78e40a1088aa68964c945ce5d48ac622095cfbfc3042a90ae6bb670ec"
+    },
+    "final_residue_raw": {
+      "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_48106_final_residue_readback_20261003_v2.json",
+      "sha256": "sha256:89e5cc0889414dfbf3351145b58a5d4495b8af968e2f473846899a8fec57d175"
+    },
+    "final_residue_transport": {
+      "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_48106_final_residue_transport_20261003_v2.json",
+      "sha256": "sha256:e99cebc33f9c8bef4dd2a0bf05e1b1ed528b7824c0d62e98e7c037dccafb6f8b"
+    },
+    "current_formal_rewards": {
+      "noop": 0.0,
+      "validation_gold_bytes_kind_cc": 1.0
+    }
+  },
+  "receipt_to_owner": {
+    "thread_id": "01a0fd63-67de-77d2-b1fe-6a74a1de4481",
+    "host_id": "local",
+    "include": [
+      "every_requested_model_and_attempt_or_missing_reason",
+      "actual_code_material_profile_model_image_budget_and_prompt",
+      "complete_trajectory_frozen_patch_baseline_per_reference_raw_score",
+      "termination_tokens_turns_tool_calls_wall_time_and_queue_prepare_time",
+      "candidate_and_grader_cleanup_all_anomalies"
+    ],
+    "owner_next_action": "审公开要求→实际候选→原评分，逐轨迹区分正常解错、截断、infra和缺评分；分析根因/定位纠错/工具/并行机会及支持/验证效率，必要时修复。"
+  },
+  "request_id": "probe-swe-pandas-48106-20261003-v1",
+  "required_consumer_operations": [
+    "bind_pandas48106_reference_install",
+    "complete reference-bindings-v1 five groups/13 members",
+    "fixed E19 grader image pairing; actor stays separately declared source image"
+  ],
+  "limitations": [
+    "CPU0/1 and narrow original public actor evidence; not a real model attempt",
+    "No training typed actor lease or training qualification claimed",
+    "Natural close only; no strong-kill cleanup guarantee claimed",
+    "GPU actual images/code/admission not filled by owner; executor freezes and checks affected compatibility before dispatch"
+  ]
+}

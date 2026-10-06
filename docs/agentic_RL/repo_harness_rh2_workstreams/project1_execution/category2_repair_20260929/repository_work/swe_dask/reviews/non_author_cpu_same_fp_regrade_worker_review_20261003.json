@@ -1,0 +1,642 @@
+{
+  "schema": "non_author_cpu_same_fp_regrade_worker_review.v1",
+  "as_of": "2026-10-03",
+  "role": "non-author independent subagent",
+  "review_method": "static source and local artifact byte/hash review only",
+  "worker_sha256": "30db91df2afd0ad29bbe1fb296ad39e4d1df9653c774b4bb129527ec560bdbcd",
+  "launcher": "launch_cpu_recovery_v2.py",
+  "launcher_sha256": "dd278359f0d75ca60e9d513fa66cc942ff5d83fa98391d262fff6304cbab22ad",
+  "snapshot_manifest_sha256": "b22c915de19b36f1e619edb69e557e9af7a14369ba4955e27bd116bd9c4e11a5",
+  "snapshot_file_count": 1099,
+  "snapshot_bytes": 145261405,
+  "code8_source_members": 1045,
+  "all_snapshot_files_independently_verified": true,
+  "worker_executed_by_reviewer": false,
+  "candidate_executed_by_reviewer": false,
+  "ssh_docker_cpu_gpu_called_by_reviewer": false,
+  "static_conclusion": "no_unresolved_deterministic_blocker_in_final_worker_and_bound_launcher; runtime acceptance remains unverified",
+  "closed_findings": [
+    "cleanup observation exception cannot bypass original bounded cleanup",
+    "snapshot reverified after execution",
+    "code8 actual module path/hash binding",
+    "actual CPU slot child/parent/run/package and fixed wrapper binding",
+    "SIGTERM/SIGINT first cancellation reaches cleanup; repeated signals do not recancel",
+    "7305 processes nodes required in formal result.success",
+    "oom and oom_kill both zero required",
+    "this launcher sets stop_on_nonzero so any nonzero recovery stops subsequent dispatch"
+  ],
+  "actual_grading_mode": "single_shell_deny_all_no_supply",
+  "inputs": [
+    {
+      "instance": "7305",
+      "original_FP_digest": "sha256:5e64758cd92207d53d5ed93525a9f02d4e4e067a197a066b14e836a8974959e2",
+      "original_baseline_digest": "sha256:ee9ff8a96c8c01bf8261cca50561bcf7f1db65aa3f2064d9e82e4faf3c1bec9d",
+      "actual_image_id_expected": "sha256:b4f186ca0a0139f4287b9203a666b9fd009af079ddad700bb2bf8019aede8b99",
+      "old_scripts_digest": "sha256:f5d18ea25690356ea6a30217bcf8cbef090405cd579a7164c0786a905624e900",
+      "new_single_shell_scripts_digest": "sha256:a071ed0d14c576d2029f8bdb3b4d9e9f04e679be6e5dea8633c3b63607700450",
+      "reference_total": 105,
+      "fixed_test_command": "pytest -n0 -rA  --color=no dask/dataframe/tests/test_shuffle.py",
+      "original_budgets": {
+        "whole_seconds": 3600.0,
+        "setup_seconds": 300.0,
+        "apply_seconds": 120.0,
+        "test_seconds": 1800.0
+      },
+      "new_budgets": {
+        "whole_seconds": 3600.0,
+        "setup_seconds": 900,
+        "apply_seconds": 120.0,
+        "test_seconds": 1800.0
+      },
+      "selected_env": {
+        "DASK_NUM_WORKERS": "2",
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1"
+      },
+      "fixed_input_file_checks": [
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v8/source_manifest.json",
+          "sha256": "09ddb8bfdeecd3ffaa38c1048a574161ef6fa6053b2855da50166e8e8677899d",
+          "bytes": 504439,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v8/rh2/experiments/ordinary_gpu_probe_20261002/entry.py",
+          "sha256": "bdf806bf8da1d5ebb4970887bfc3c7738eb3e57a75e1d07215d6d68b17e574c4",
+          "bytes": 27732,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v8/rh2/experiments/ordinary_gpu_probe_20261002/serial_dispatch.py",
+          "sha256": "cb435f7390d9aeba3bad51efabf808634668263e9dfbcffae96f50a4b8f90f10",
+          "bytes": 7539,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/config_v23/tasks.json",
+          "sha256": "7d71fe0d69ab72faf9b6e88068681d6c5526d1642846233c87edc0f6f1a6f9e1",
+          "bytes": 1621,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/config_v23/gateway_coder.json",
+          "sha256": "f93ec7cd76e5d425c50d4a194b77f2d8814eaf5d0a0cd28e33189ed63fff0ff2",
+          "bytes": 521,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/services_v14/coder/adapter/adapter_config.json",
+          "sha256": "1568f2e833897101fe16e4184436147663a7a42f153ff18f65d066fe9b83eec4",
+          "bytes": 766,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/prepared_new_three_code8_v1/dask7305/summary.json",
+          "sha256": "9a4e1b74aaf3c6817e5b2a3bd6e14052f5aafb563197cd7800e0944f7696a5ea",
+          "bytes": 460,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/prepared_new_three_code8_v1/dask7305/prepared/prepared_manifest.json",
+          "sha256": "e27dcf842f6cc4451bf6cd0aa51166ba66c9fa28e17a2da2f746b60c2e680cb3",
+          "bytes": 912,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/prepared_new_three_code8_v1/dask7305/prepared/prompts.jsonl",
+          "sha256": "b64791b853d7c41b6c9f149fa1be04340056b7f42ca69861486236f0546f190a",
+          "bytes": 3274,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/prepared_new_three_code8_v1/dask7305/prepared/rollout_task_views.jsonl",
+          "sha256": "4f40912b8a2115e60bdd033169ffc2c09e92b9b48c70b040525d6b6e34bfb155",
+          "bytes": 4399,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/prepared_new_three_code8_v1/dask7305/private/host_grading_views.jsonl",
+          "sha256": "eecfd9864893d0fa3251fa4ef2e5eeffcd6f427ad7c845864bfb504a8948b297",
+          "bytes": 24201,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/gpu1003-dask7305-coder-a1_terminal_snapshot_v1.json",
+          "sha256": "10fc0a75ac69fd121f17bbbbbf0d559d8b51a2b1e07a20f12fbcf5b0ada3eaf7",
+          "bytes": 17760,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23/results/gpu1003-dask7305-coder-a1/result.json",
+          "sha256": "291a6aae82efe38d99b2dab9d696c3c0ca7679bf8a0ee13377a63629b933caf6",
+          "bytes": 2698,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23/results/gpu1003-dask7305-coder-a1/input_check.json",
+          "sha256": "82838fdb7f02c37ea3f353e3db174c1528e2110a73d873af4b39bbce63bb9d8a",
+          "bytes": 13047,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23/results/gpu1003-dask7305-coder-a1/attempt/attempt.json",
+          "sha256": "791b9f20f0dffe68b77d0e4f0f4cfb4f2896a0d58321b26d1f459e0bc15de6b7",
+          "bytes": 19837,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23/results/gpu1003-dask7305-coder-a1/attempt/frozen/frozen_patch.json",
+          "sha256": "aed0ad51595a04e4746bb10e2f8baa15a9afc6c27b432e8124773d855e995844",
+          "bytes": 65001,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23/results/gpu1003-dask7305-coder-a1/attempt/frozen/baseline_manifest.json",
+          "sha256": "1b56ba4fb22136421aa750a599599d8ad6bf9c17b064ee79316a0444539cebc6",
+          "bytes": 100403,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23/results/gpu1003-dask7305-coder-a1/attempt/frozen/baseline.tar",
+          "sha256": "04c1663b90bbf92af12e50c2cb1e22c935686136388312c1953ea054890d6d6b",
+          "bytes": 8949760,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23/results/gpu1003-dask7305-coder-a1/grading/projection.json",
+          "sha256": "7924c98862c45c5e755eace199febb2661f8fb4b3a2d21f88d9382ea68ad55b5",
+          "bytes": 761,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23/results/gpu1003-dask7305-coder-a1/grading/report.json",
+          "sha256": "75af66291c51c2c601d2e82f491641a827c8bf6f2038817104ea9d3a95b0c917",
+          "bytes": 1878,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23/results/gpu1003-dask7305-coder-a1/grading/status.json",
+          "sha256": "9f92f49089ec60d1a2e6ba3ad749c5798d20d373ffc04b00b5642986262a9031",
+          "bytes": 2662,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23/results/gpu1003-dask7305-coder-a1/grading/baseline_rebuild_census.txt",
+          "sha256": "54898e0c70ca9913bd80abc68386097b04ffe6086fffdc48d63f00b55868bfeb",
+          "bytes": 48146,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23/results/gpu1003-dask7305-coder-a1/grading/eval_logs/evallog_gpu1003-dask7305-coder-a_0163622a.eval.log",
+          "sha256": "eef0e4be7d86f17c66733b9bffa25044bfc5e870b37f55f6f294311010c082f8",
+          "bytes": 53856,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23/results/gpu1003-dask7305-coder-a1/grading/eval_logs/evallog_gpu1003-dask7305-coder-a_0163622a.diagnostics.json",
+          "sha256": "29cee26c76a8893efc19a1eb5f432ecbdda2b57102a411d8bc96708f80bb4841",
+          "bytes": 12268,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v8/rh2/src/repoharness2/grading/manager.py",
+          "sha256": "1783533e1e3b66a57fcaa5a599a1da4f8e4e886318e24f040c6df91f294c1c1e",
+          "bytes": 225647,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v8/rh2/src/repoharness2/adapters/slime/sandbox_profile.py",
+          "sha256": "313bfd7691c5dca775aa0e9992f13561e20936f062ddfa3d269892b6bf4895ee",
+          "bytes": 138643,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v8/rh2/experiments/ordinary_gpu_probe_20261002/spec_overrides.py",
+          "sha256": "098c21cacf4cd497a7eb7240ad2b34b2106bbd27bf14b1af200fe9ac0a3008ad",
+          "bytes": 6583,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/dask7305_original_fp_setup900_v1_failed_closed_manifest_v2.json",
+          "sha256": "7fe307c985ba178c7bf539e902159fbd81d1fba5d2fc146992a7504b3bfe7849",
+          "bytes": 16344,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/dask7305_original_fp_setup900_v1/status.json",
+          "sha256": "49f90007cd3508ffc9bc77e9ac3c17aaa9cd25a6a104b515ae00c302dcf7e738",
+          "bytes": 3101,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/dask7305_originalfp_pid_exhaustion_intervention_v1/intent.json",
+          "sha256": "e911085a1cfaf61b5b6e525040cba14e38df9580908993cfd833e221bde21365",
+          "bytes": 976,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/dask7305_originalfp_pid_exhaustion_intervention_v1/signal_sent.json",
+          "sha256": "116a3ddcb1221528afc878725eae29b258e28ce310e6feac16d2334095dd1604",
+          "bytes": 134,
+          "verified": true
+        }
+      ]
+    },
+    {
+      "instance": "9378",
+      "original_FP_digest": "sha256:ed5ec645234368669128c41ad3a2b9104ecf20bf346535bd22e2f60dda49df4d",
+      "original_baseline_digest": "sha256:0a68c9ecdaed99f151d4602e501d833268db1a0a9aa672957c7ca7d7e0825d94",
+      "actual_image_id_expected": "sha256:1e5a0ee850161b35d33d26445f73e872488a45e0e436195af239190b68574096",
+      "old_scripts_digest": "sha256:973844ec7101c4754a1a0d3ca73815717f75430a80a494d0dcb1d184f68bac69",
+      "new_single_shell_scripts_digest": "sha256:973844ec7101c4754a1a0d3ca73815717f75430a80a494d0dcb1d184f68bac69",
+      "reference_total": 137,
+      "fixed_test_command": "pytest -n0 -rA  --color=no dask/array/tests/test_masked.py",
+      "original_budgets": {
+        "whole_seconds": 3600.0,
+        "setup_seconds": 300.0,
+        "apply_seconds": 120.0,
+        "test_seconds": 1800.0
+      },
+      "new_budgets": {
+        "whole_seconds": 3600.0,
+        "setup_seconds": 900.0,
+        "apply_seconds": 120.0,
+        "test_seconds": 1800.0
+      },
+      "selected_env": null,
+      "fixed_input_file_checks": [
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v8/rh2/experiments/ordinary_gpu_probe_20261002/entry.py",
+          "sha256": "bdf806bf8da1d5ebb4970887bfc3c7738eb3e57a75e1d07215d6d68b17e574c4",
+          "bytes": 27732,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v8/rh2/experiments/ordinary_gpu_probe_20261002/serial_dispatch.py",
+          "sha256": "cb435f7390d9aeba3bad51efabf808634668263e9dfbcffae96f50a4b8f90f10",
+          "bytes": 7539,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v8/rh2/experiments/ordinary_gpu_probe_20261002/spec_overrides.py",
+          "sha256": "098c21cacf4cd497a7eb7240ad2b34b2106bbd27bf14b1af200fe9ac0a3008ad",
+          "bytes": 6583,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v8/rh2/src/repoharness2/adapters/slime/sandbox_profile.py",
+          "sha256": "313bfd7691c5dca775aa0e9992f13561e20936f062ddfa3d269892b6bf4895ee",
+          "bytes": 138643,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v8/rh2/src/repoharness2/grading/manager.py",
+          "sha256": "1783533e1e3b66a57fcaa5a599a1da4f8e4e886318e24f040c6df91f294c1c1e",
+          "bytes": 225647,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v8/source_manifest.json",
+          "sha256": "09ddb8bfdeecd3ffaa38c1048a574161ef6fa6053b2855da50166e8e8677899d",
+          "bytes": 504439,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/config_v23/gateway_coder.json",
+          "sha256": "f93ec7cd76e5d425c50d4a194b77f2d8814eaf5d0a0cd28e33189ed63fff0ff2",
+          "bytes": 521,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/config_v23/tasks.json",
+          "sha256": "7d71fe0d69ab72faf9b6e88068681d6c5526d1642846233c87edc0f6f1a6f9e1",
+          "bytes": 1621,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/gpu1003-dask9378-coder-a1_terminal_snapshot_v1.json",
+          "sha256": "edb4719038c53cd5094abee21f58f17693403765018f7dd35625cc41518b960b",
+          "bytes": 18007,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/prepared_new_three_code8_v1/dask9378/prepared/prepared_manifest.json",
+          "sha256": "07f7e5420b626fccdca417f6c115f9b74d429fb267935a912c67879f8fff920d",
+          "bytes": 912,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/prepared_new_three_code8_v1/dask9378/prepared/prompts.jsonl",
+          "sha256": "43c8b44267abf58581c44c54a8001ad46a68432a7264bc12b6cfb27981efcf8f",
+          "bytes": 1425,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/prepared_new_three_code8_v1/dask9378/prepared/rollout_task_views.jsonl",
+          "sha256": "3c561bb6019712ce3b1b9d6bb268e3506d9cd8e476a5efaca914422c6714927d",
+          "bytes": 2550,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/prepared_new_three_code8_v1/dask9378/private/host_grading_views.jsonl",
+          "sha256": "018185dd213e190809d28ae83687518cf6b40a2bda3fd3ef5c843fea3a7e1f85",
+          "bytes": 21481,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/prepared_new_three_code8_v1/dask9378/summary.json",
+          "sha256": "71776f2a984a4c7b8528c0081b749611f6d615861fad270829b15908d663fb7b",
+          "bytes": 460,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/attempt/attempt.json",
+          "sha256": "0a3eded3aefac2945326c435e390bd44425f28c1a13a5f167749090fdffc3388",
+          "bytes": 18350,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/attempt/frozen/baseline.tar",
+          "sha256": "354282795a27dad001031899719847d7a9cd703bf45cf6320312d36638054a00",
+          "bytes": 16353280,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/attempt/frozen/baseline_manifest.json",
+          "sha256": "a120be76370418beb159adf6b147998c1109988a66182b7bab3ee020529c0f8c",
+          "bytes": 110627,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/attempt/frozen/frozen_patch.json",
+          "sha256": "b8835cb148c9aa5bca7d8a36ba3c4f2c0bd10a28f541776de2e428e3ebfe8067",
+          "bytes": 29366,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/grading/baseline_rebuild_census.txt",
+          "sha256": "5d5a7f777053ad5775307b445643b826a628fc7cb2850ae399ab2e1c08b97c2e",
+          "bytes": 53124,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/grading/eval_logs/evallog_gpu1003-dask9378-coder-a_99b2114f.diagnostics.json",
+          "sha256": "cd8fcb4da3c26728b257f8312392d3911ee44912d5c79d096e287524b52d81d8",
+          "bytes": 13129,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/grading/eval_logs/evallog_gpu1003-dask9378-coder-a_99b2114f.eval.log",
+          "sha256": "b886dbeecf0297c7cc0b97a671b2dad1519d8fcab3ed1099e1760f39d4cf1979",
+          "bytes": 30277,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/grading/projection.json",
+          "sha256": "d623a827e6b3891bdf43676f7bca6c6ec3e813407d86881a7fc31e171d2ff430",
+          "bytes": 560,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/grading/report.json",
+          "sha256": "3bb42468184590e92b5073b2eeb58f7004be6a4eb06b04950f684a811b4b58dd",
+          "bytes": 1872,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/grading/status.json",
+          "sha256": "dc2e605e497f906b7952006479bb71439ff9fdf9870728622bc8850fa67b26c8",
+          "bytes": 2656,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/input_check.json",
+          "sha256": "db7c184ac24a1e309b2aa50f7d7e2c6ba921fb64e6399df50b9ec676a0d22336",
+          "bytes": 13950,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/result.json",
+          "sha256": "025a08a76dcd40eec32f710342a70970a39b1fddd26beb2e13ac8141aea5d29d",
+          "bytes": 2692,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/services_v14/coder/adapter/adapter_config.json",
+          "sha256": "1568f2e833897101fe16e4184436147663a7a42f153ff18f65d066fe9b83eec4",
+          "bytes": 766,
+          "verified": true
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/q23_raw_image_inspects_v1.json",
+          "sha256": "73b86eee14152ea5a7aca31909a4da0ed81261174fbebb60d8bd82d8d738cac4",
+          "bytes": 11088,
+          "verified": true
+        }
+      ]
+    }
+  ],
+  "pending_independent_runtime_acceptance": [
+    "new namespace pure construction and private permissions",
+    "OS signal surrogate and actual bounded cleanup",
+    "fresh baseline actual image/resource/UID bindings",
+    "complete unchanged 105/137 reference accounting with actual candidate failures retained",
+    "7305 selected env and Dask num_workers observation plus original two processes branches",
+    "PID/OOM cumulative event and owned-resource cleanup readback",
+    "post-run fixed source hashes"
+  ],
+  "limitations": [
+    "source checks do not prove actual scores or runtime native thread attribution",
+    "previous pure-check private permission rejection is task-owner report; runtime recovery outcome is not inferred",
+    "normal candidate test failures may be complete environment acceptance, but infra/parse/missing references cannot",
+    "original infrastructure None and prior resource failure artifacts preserved",
+    "same original FP is one model sample, not a new model arm",
+    "other-model arm remains absent and no training qualification granted"
+  ],
+  "new_scores": null,
+  "training_qualification": null,
+  "sources": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tools/cpu_same_fp_regrade.py",
+      "sha256": "30db91df2afd0ad29bbe1fb296ad39e4d1df9653c774b4bb129527ec560bdbcd",
+      "bytes": 20558,
+      "line_count": 342,
+      "reviewed_line_ranges": [
+        [
+          1,
+          342
+        ]
+      ]
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tools/cpu_serial_queues.py",
+      "sha256": "b4e5254555f51cba3b0dc55f66bce07f2f08ee6528a1b99e7df412df8b6a98ee",
+      "bytes": 3281,
+      "line_count": 82,
+      "reviewed_line_ranges": [
+        [
+          59,
+          78
+        ]
+      ]
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tools/cpu_wait_for_slot.py",
+      "sha256": "b78f5a14382f9d2ca165fe2613d933b55397bfe9edcea856fc7f425e890dd942",
+      "bytes": 3016,
+      "line_count": 72,
+      "reviewed_line_ranges": [
+        [
+          28,
+          68
+        ]
+      ]
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask_same_fp_cpu_c_v1/launch_cpu_recovery_v2.py",
+      "sha256": "dd278359f0d75ca60e9d513fa66cc942ff5d83fa98391d262fff6304cbab22ad",
+      "bytes": 4538,
+      "line_count": 59,
+      "reviewed_line_ranges": [
+        [
+          8,
+          48
+        ]
+      ]
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask_same_fp_cpu_c_v1/deploy_snapshot_v3.py",
+      "sha256": "2c8bc89ba4d116dc6cf68ff5863ffa66b4e75acb03176d6a2ed4d2558a338bca",
+      "bytes": 3939,
+      "line_count": 58,
+      "reviewed_line_ranges": [
+        [
+          34,
+          57
+        ]
+      ]
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask_same_fp_cpu_c_v1/snapshot_b22c915de19b36f1/snapshot_manifest.json",
+      "sha256": "b22c915de19b36f1e619edb69e557e9af7a14369ba4955e27bd116bd9c4e11a5",
+      "bytes": 289714,
+      "line_count": 5507
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask_same_fp_cpu_c_v1/snapshot_b22c915de19b36f1_build_receipt.json",
+      "sha256": "99fcba86b5f14996ecf4f3313b2b4cb1939ba206be089fa2fdf5adce1481bbb9",
+      "bytes": 712,
+      "line_count": 10
+    },
+    {
+      "path": "runs/category2_repair_20260929/host_setup_20261003/cpu-c/cpu_slot.py",
+      "sha256": "a77d0665ec15e919a341c0d7dbd18fdc6091663e372dfb1002c57d17e5753972",
+      "bytes": 4027,
+      "line_count": 106,
+      "reviewed_line_ranges": [
+        [
+          43,
+          61
+        ],
+        [
+          76,
+          102
+        ]
+      ]
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v8/rh2/experiments/ordinary_gpu_probe_20261002/entry.py",
+      "sha256": "bdf806bf8da1d5ebb4970887bfc3c7738eb3e57a75e1d07215d6d68b17e574c4",
+      "bytes": 27732,
+      "line_count": 454,
+      "reviewed_line_ranges": [
+        [
+          24,
+          29
+        ],
+        [
+          261,
+          278
+        ]
+      ]
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v8/rh2/src/repoharness2/grading/manager.py",
+      "sha256": "1783533e1e3b66a57fcaa5a599a1da4f8e4e886318e24f040c6df91f294c1c1e",
+      "bytes": 225647,
+      "line_count": 4039,
+      "reviewed_line_ranges": [
+        [
+          1125,
+          1142
+        ],
+        [
+          1896,
+          1918
+        ],
+        [
+          2189,
+          2201
+        ],
+        [
+          2204,
+          2211
+        ],
+        [
+          2726,
+          2776
+        ],
+        [
+          3556,
+          3559
+        ],
+        [
+          3590,
+          3610
+        ]
+      ]
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/tools/regrade_dask7305_original_fp_threadbudget_v1.py",
+      "sha256": "d368490c3df303791bffcf32ab36638937e767e1998c676631ab319731b48fb8",
+      "bytes": 18830,
+      "line_count": 154,
+      "reviewed_line_ranges": [
+        [
+          22,
+          64
+        ],
+        [
+          66,
+          83
+        ]
+      ]
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/tools/regrade_dask7305_original_fp_threadbudget_v1_inputs.json",
+      "sha256": "d9732ce0ef99d947deb619c72a417f792946a13af3ffe235f4fb6459c606d3bc",
+      "bytes": 101172,
+      "line_count": 1645
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/tools/regrade_dask9378_original_fp_setup900_v1.py",
+      "sha256": "42c21aa85c55f81cd3e32d8bbeec37bec0efa0db54407e0d48d7ab206c620b8f",
+      "bytes": 16144,
+      "line_count": 138,
+      "reviewed_line_ranges": [
+        [
+          22,
+          56
+        ]
+      ]
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/tools/regrade_dask9378_original_fp_setup900_v1_inputs.json",
+      "sha256": "88d5d43c1e127b131dbd8be1f2330ca5e98db29fe5a8132dc5c1950fb7c80922",
+      "bytes": 37308,
+      "line_count": 660
+    }
+  ]
+}

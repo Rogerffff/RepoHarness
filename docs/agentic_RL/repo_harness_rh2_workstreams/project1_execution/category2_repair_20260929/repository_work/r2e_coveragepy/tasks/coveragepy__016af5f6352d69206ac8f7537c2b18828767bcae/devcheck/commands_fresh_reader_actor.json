@@ -1,0 +1,34 @@
+[
+  {
+    "id": "environment_probe",
+    "cmd": "cd /testbed && python - <<'PY'\nimport sys, sqlite3, coverage\nprint(sys.executable)\nprint(sys.version)\nprint(coverage.__file__)\nprint(sqlite3.sqlite_version)\nprint(dict(coverage.Coverage().sys_info()).get('CTracer'))\nPY",
+    "timeout_s": 30,
+    "expect": "zero",
+    "purpose": "未执行。确认 Python 3.7.9、解释器位于 /testbed/.venv、coverage 导入本题工作树，并记录 SQLite 版本及 CTracer 可用性；公开静态材料不能保证这些实际结果。",
+    "execution_status": "not_run"
+  },
+  {
+    "id": "statement_example",
+    "cmd": "cd /testbed && python - <<'PY'\nimport coverage\ncov = coverage.Coverage()\ncov.start()\nexec(compile(\"pass\", \"\\udcff.py\", \"exec\"))\ncov.stop()\ncov.save()\nPY",
+    "timeout_s": 30,
+    "expect": "nonzero",
+    "purpose": "未执行。在未修改初态记录原题示例是否于 cov.save() 抛 UnicodeEncodeError 及实际栈；修后保存应正常返回。异常中字符位置不是固定验收值。",
+    "execution_status": "not_run"
+  },
+  {
+    "id": "normal_file_save",
+    "cmd": "cd /testbed && python - <<'PY'\nimport os, tempfile, coverage\nwith tempfile.TemporaryDirectory() as task_tmp:\n    cov = coverage.Coverage(config_file=False, data_file=os.path.join(task_tmp, '.coverage'))\n    cov.start()\n    exec(compile('pass', os.path.join(task_tmp, 'ordinary.py'), 'exec'), {})\n    cov.stop()\n    cov.save()\n    loaded = coverage.Coverage(config_file=False, data_file=os.path.join(task_tmp, '.coverage'))\n    loaded.load()\n    data = loaded.get_data()\n    files = list(data.measured_files())\n    assert len(files) == 1, files\n    assert data.lines(files[0]) == [1], data.lines(files[0])\nPY",
+    "timeout_s": 30,
+    "expect": "zero",
+    "purpose": "未执行。修后普通代码仍可采集、保存、读回第 1 行，避免仅靠丢弃全部数据满足不崩溃。",
+    "execution_status": "not_run"
+  },
+  {
+    "id": "public_regressions",
+    "cmd": "cd /testbed && python -m pytest -o addopts= tests/test_api.py tests/test_data.py tests/test_oddball.py",
+    "timeout_s": 180,
+    "expect": "any",
+    "purpose": "未执行。实际容器中核对相关公开回归；若依赖或构建条件缺失，记录具体阻塞，不能用静态工作树推定通过。-o addopts= 清除 setup.cfg 默认 -n3 等选项。",
+    "execution_status": "not_run"
+  }
+]

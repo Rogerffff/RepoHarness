@@ -1,0 +1,750 @@
+{
+  "format": "swe_dvc_formal_cpu_acceptance.v2",
+  "as_of_utc": "2026-10-02T23:52:56.141914+00:00",
+  "instance_id": "iterative__dvc-6954",
+  "release_id": "cat2-cpu-r2e089092-swe34-dvc-pyd-20261003-v1",
+  "release_manifest_sha256": "sha256:51b833975be2c3354be45b731552235a33070315f0039c8e6f54987de95f6ca8",
+  "support_receipt": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r14/dvc6954_publication_receipt.json",
+  "support_receipt_sha256": "sha256:2ac314f6751bc0e9150d1ef101d5361cc88906fb5fcb577517f112ed227b4668",
+  "cpu_host": "cpu-a",
+  "series": "dvc6954_r14_v1",
+  "prepare_job_id": "dvc6954-r14-prepare-20261003-002",
+  "prepare_exit_code": 0,
+  "prepare_input": "runs/category2_repair_20260929/repository_work/swe_dvc/formal6954_r14_prepare_input.json",
+  "prepare_input_sha256": "sha256:b20b4aec837e2b4b83f708d312f8ded2c302deaf86558e0ef645d009f42ca0ee",
+  "run_input": "runs/category2_repair_20260929/repository_work/swe_dvc/formal6954_r14_run_input.json",
+  "run_input_sha256": "sha256:0f35137fa5a0306c2b08aee877a7a84dfa370df9b142638606b8a8d35a8c6772",
+  "prepare_completion_sha256": "sha256:cdfb21b13d038b7083b15f74cb06b92c0d9da4f29e5ad1931af64e523c9831d1",
+  "prepared_summary_sha256": "sha256:a4862ec050024536e718c107fe69ad8613fa9e573427b8c182aa445b2fcfde11",
+  "prepared_manifest_sha256": "sha256:a1aa0200be589df82faafc91d008429521724d56a9f5ff8ab51926980dc51cde",
+  "host_grading_artifact_sha256": "sha256:3d5459fee235d462960d7e1042ff87e6e6f40de9cf2962e2fd315f7433bc2118",
+  "environment_package_digest": "sha256:c8cde31e2160b7caa94884d54e45a48f2527a744e2bb1ecb3789f502ebc6e311",
+  "grading_bundle_digest": "sha256:b52115d1d2cfc212db95f2a2bafe71c7e8c2c7d1f9a6a3a6d020130d20e7025e",
+  "grading_materials_identity": "sha256:77a22ff0a47782cb689525fc0ac48a7b2828bf931b17c887ea0d42683e067bfa",
+  "public_bundle_digest": "sha256:9186b41928accff7f5b576f240163c6c87c013cc9cfb219fa8a42571b3d526fb",
+  "material_revision_id": "dvc6954-behavior-v1-draft",
+  "effective_test_patch_sha256": "sha256:52c6a71bba1b1ca9f067d9846006dc5f2af9ecb0dde107f8a4ee75519c0b33fc",
+  "reference_counts": {
+    "fail_to_pass": 3,
+    "pass_to_pass": 12
+  },
+  "test_command": "pytest -rA tests/func/params/test_show.py tests/unit/utils/serialize/test_python.py",
+  "jobs": [
+    {
+      "job_id": "dvc6954-r14-noop-20261003-001",
+      "candidate": "noop",
+      "status": "completed",
+      "formal_grading": true,
+      "reward": 0.0,
+      "outcome": "unresolved",
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 0,
+        "f2p_total": 3,
+        "failure_category": "tests_failed",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+dvc6954-behavior-v1-draft",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": 0,
+        "p2p_total": 12,
+        "report_id": "rpt_grading_86e53023",
+        "reward": 0.0
+      },
+      "reference_missing_count": 0,
+      "actual_passed": 23,
+      "actual_failed": 3,
+      "actual_skipped": 0,
+      "actual_total": 26,
+      "actual_states": {
+        "tests/func/params/test_show.py::test_show_empty": "PASSED",
+        "tests/func/params/test_show.py::test_show": "PASSED",
+        "tests/func/params/test_show.py::test_show_toml": "PASSED",
+        "tests/func/params/test_show.py::test_show_py": "PASSED",
+        "tests/func/params/test_show.py::test_show_multiple": "PASSED",
+        "tests/func/params/test_show.py::test_show_list": "PASSED",
+        "tests/func/params/test_show.py::test_show_branch": "PASSED",
+        "tests/func/params/test_show.py::test_pipeline_params": "PASSED",
+        "tests/func/params/test_show.py::test_show_no_repo": "PASSED",
+        "tests/func/params/test_show.py::test_log_errors[dvc.yaml-error_path0]": "PASSED",
+        "tests/func/params/test_show.py::test_log_errors[params_other.yaml-error_path1]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[bool]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[int]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[float]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[str]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[dict]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[list]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[set]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[tuple]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[none]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[class]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[constructor]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[sum]": "PASSED",
+        "tests/func/params/test_show.py::test_negative_python_params_lock_and_repro": "FAILED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[negative_int]": "FAILED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_negative_float_and_containers": "FAILED"
+      },
+      "prepared_provenance_checked": true,
+      "candidate_prerequisite": {
+        "exit_code": 0,
+        "home": "/home/rh2grader",
+        "script_sha256": "sha256:8eeb79a16593e4c73237adacb98f2dd9494eb831136b0cf4ac21752b34fa5092",
+        "state": "verified",
+        "stderr": "",
+        "stdout": "RH2_DVC_BEHAVIOR_UID54322_WHEEL_BYTES_OK=1\n",
+        "user": "54322"
+      },
+      "candidate_install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 8.453,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 3.282
+      },
+      "grading_revision": {
+        "apply_ok": true,
+        "binding_version": "reference-bindings-v1",
+        "bindings_sha256": "sha256:ed7a90aa3f1733095ac93d8da7b41a1735f6060982d75a3183c00e1f4a658ccb",
+        "environment_package_digest": "sha256:c8cde31e2160b7caa94884d54e45a48f2527a744e2bb1ecb3789f502ebc6e311",
+        "grading_bundle_digest": "sha256:b52115d1d2cfc212db95f2a2bafe71c7e8c2c7d1f9a6a3a6d020130d20e7025e",
+        "materials_identity": "sha256:77a22ff0a47782cb689525fc0ac48a7b2828bf931b17c887ea0d42683e067bfa",
+        "parent_grading_digest": "sha256:a32d00b7a72298f83b2a186182c6a6bbd4a2ce00b30804714380c9b577a3fda8",
+        "parser_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "partitions": {
+          "added_f2p": {
+            "references": [
+              "tests/unit/utils/serialize/test_python.py::test_parse_negative_float_and_containers",
+              "tests/func/params/test_show.py::test_negative_python_params_lock_and_repro"
+            ],
+            "result": {
+              "failure": [
+                "tests/unit/utils/serialize/test_python.py::test_parse_negative_float_and_containers",
+                "tests/func/params/test_show.py::test_negative_python_params_lock_and_repro"
+              ],
+              "missing": [],
+              "skipped": [],
+              "success": [],
+              "unaccounted": []
+            }
+          },
+          "added_p2p": {
+            "references": [],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [],
+              "unaccounted": []
+            }
+          },
+          "bound_source_f2p": {
+            "references": [
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[negative_int]"
+            ],
+            "result": {
+              "failure": [
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[negative_int]"
+              ],
+              "missing": [],
+              "skipped": [],
+              "success": [],
+              "unaccounted": []
+            }
+          },
+          "bound_source_p2p": {
+            "references": [
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[dict]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[sum]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[set]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[constructor]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[str]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[list]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[bool]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[float]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[int]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[class]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[none]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[tuple]"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[dict]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[sum]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[set]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[constructor]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[str]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[list]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[bool]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[float]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[int]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[class]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[none]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[tuple]"
+              ],
+              "unaccounted": []
+            }
+          }
+        },
+        "public_bundle_digest": "sha256:9186b41928accff7f5b576f240163c6c87c013cc9cfb219fa8a42571b3d526fb",
+        "registry_sha256": "sha256:815811717d21fa259b354eaf85a1598241d66d85b5af547d9208b2835c4edace",
+        "revision_id": "dvc6954-behavior-v1-draft",
+        "source_references": {
+          "fail_to_pass": [
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[UNARY_OP"
+          ],
+          "pass_to_pass": [
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[DICT",
+            "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[SUM",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[SET",
+            "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[CONSTRUCTOR",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[STR",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[LIST",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[BOOL",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[FLOAT",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[INT",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[class",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[NONE",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[TUPLE"
+          ]
+        },
+        "state": "parsed",
+        "test_command": "pytest -rA tests/func/params/test_show.py tests/unit/utils/serialize/test_python.py"
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "cleanup_label_readback": {
+        "containers": [],
+        "networks": [],
+        "result": "cleanup_readback.json"
+      },
+      "phase_seconds": {
+        "delta_apply": 0.170613,
+        "grader_baseline_rebuild": 0.480529,
+        "grader_cleanup": 1.783382,
+        "grader_start_and_verify": 42.052657,
+        "grader_trusted_setup": 172.44972,
+        "parser_and_report": 5.301019,
+        "test": 13.356192
+      },
+      "scripts_digest": "sha256:d8b83fd2c0abca83e72aaa1648b70c26e6698b16549fbda1673e2cccfc0eabbb",
+      "ledger_sha256": "sha256:e5263043b4c1faf5fdb4bd33f43e0764119d5028725c71b579973f5c7d21134c",
+      "archive": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal6954_r14_noop001_v1.tar.gz",
+      "archive_sha256": "sha256:28c5978dcd0b12344537a3dfb91e084887432be6f59d3fde87f4c1f9fb7e8531",
+      "evidence_root": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal6954_r14_noop001_v1",
+      "raw_file_count": 31,
+      "full_new_file_capture": {
+        "path": "tests/unit/utils/serialize/test_python.py",
+        "bytes": 1624,
+        "lines": 56,
+        "sha256": "sha256:291c52123b8d576780732193f2c651f3c95f695bb1976e0621736ea57f0283ae",
+        "full_bytes_in_trusted_log": true
+      },
+      "grading_materials_identity": "sha256:77a22ff0a47782cb689525fc0ac48a7b2828bf931b17c887ea0d42683e067bfa"
+    },
+    {
+      "job_id": "dvc6954-r14-gold-20261003-001",
+      "candidate": "gold",
+      "status": "completed",
+      "formal_grading": true,
+      "reward": 1.0,
+      "outcome": "resolved",
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 3,
+        "f2p_total": 3,
+        "failure_category": null,
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+dvc6954-behavior-v1-draft",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "resolved",
+        "p2p_fail": 0,
+        "p2p_total": 12,
+        "report_id": "rpt_grading_4e9fe288",
+        "reward": 1.0
+      },
+      "reference_missing_count": 0,
+      "actual_passed": 26,
+      "actual_failed": 0,
+      "actual_skipped": 0,
+      "actual_total": 26,
+      "actual_states": {
+        "tests/func/params/test_show.py::test_show_empty": "PASSED",
+        "tests/func/params/test_show.py::test_show": "PASSED",
+        "tests/func/params/test_show.py::test_show_toml": "PASSED",
+        "tests/func/params/test_show.py::test_show_py": "PASSED",
+        "tests/func/params/test_show.py::test_show_multiple": "PASSED",
+        "tests/func/params/test_show.py::test_show_list": "PASSED",
+        "tests/func/params/test_show.py::test_show_branch": "PASSED",
+        "tests/func/params/test_show.py::test_pipeline_params": "PASSED",
+        "tests/func/params/test_show.py::test_show_no_repo": "PASSED",
+        "tests/func/params/test_show.py::test_log_errors[dvc.yaml-error_path0]": "PASSED",
+        "tests/func/params/test_show.py::test_log_errors[params_other.yaml-error_path1]": "PASSED",
+        "tests/func/params/test_show.py::test_negative_python_params_lock_and_repro": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[bool]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[int]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[float]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[str]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[dict]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[list]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[set]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[tuple]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[none]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[negative_int]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[class]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[constructor]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[sum]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_negative_float_and_containers": "PASSED"
+      },
+      "prepared_provenance_checked": true,
+      "candidate_prerequisite": {
+        "exit_code": 0,
+        "home": "/home/rh2grader",
+        "script_sha256": "sha256:8eeb79a16593e4c73237adacb98f2dd9494eb831136b0cf4ac21752b34fa5092",
+        "state": "verified",
+        "stderr": "",
+        "stdout": "RH2_DVC_BEHAVIOR_UID54322_WHEEL_BYTES_OK=1\n",
+        "user": "54322"
+      },
+      "candidate_install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 8.053,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 3.066
+      },
+      "grading_revision": {
+        "apply_ok": true,
+        "binding_version": "reference-bindings-v1",
+        "bindings_sha256": "sha256:ed7a90aa3f1733095ac93d8da7b41a1735f6060982d75a3183c00e1f4a658ccb",
+        "environment_package_digest": "sha256:c8cde31e2160b7caa94884d54e45a48f2527a744e2bb1ecb3789f502ebc6e311",
+        "grading_bundle_digest": "sha256:b52115d1d2cfc212db95f2a2bafe71c7e8c2c7d1f9a6a3a6d020130d20e7025e",
+        "materials_identity": "sha256:77a22ff0a47782cb689525fc0ac48a7b2828bf931b17c887ea0d42683e067bfa",
+        "parent_grading_digest": "sha256:a32d00b7a72298f83b2a186182c6a6bbd4a2ce00b30804714380c9b577a3fda8",
+        "parser_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "partitions": {
+          "added_f2p": {
+            "references": [
+              "tests/unit/utils/serialize/test_python.py::test_parse_negative_float_and_containers",
+              "tests/func/params/test_show.py::test_negative_python_params_lock_and_repro"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/unit/utils/serialize/test_python.py::test_parse_negative_float_and_containers",
+                "tests/func/params/test_show.py::test_negative_python_params_lock_and_repro"
+              ],
+              "unaccounted": []
+            }
+          },
+          "added_p2p": {
+            "references": [],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [],
+              "unaccounted": []
+            }
+          },
+          "bound_source_f2p": {
+            "references": [
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[negative_int]"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[negative_int]"
+              ],
+              "unaccounted": []
+            }
+          },
+          "bound_source_p2p": {
+            "references": [
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[dict]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[sum]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[set]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[constructor]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[str]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[list]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[bool]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[float]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[int]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[class]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[none]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[tuple]"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[dict]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[sum]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[set]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[constructor]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[str]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[list]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[bool]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[float]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[int]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[class]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[none]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[tuple]"
+              ],
+              "unaccounted": []
+            }
+          }
+        },
+        "public_bundle_digest": "sha256:9186b41928accff7f5b576f240163c6c87c013cc9cfb219fa8a42571b3d526fb",
+        "registry_sha256": "sha256:815811717d21fa259b354eaf85a1598241d66d85b5af547d9208b2835c4edace",
+        "revision_id": "dvc6954-behavior-v1-draft",
+        "source_references": {
+          "fail_to_pass": [
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[UNARY_OP"
+          ],
+          "pass_to_pass": [
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[DICT",
+            "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[SUM",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[SET",
+            "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[CONSTRUCTOR",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[STR",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[LIST",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[BOOL",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[FLOAT",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[INT",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[class",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[NONE",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[TUPLE"
+          ]
+        },
+        "state": "parsed",
+        "test_command": "pytest -rA tests/func/params/test_show.py tests/unit/utils/serialize/test_python.py"
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "cleanup_label_readback": {
+        "containers": [],
+        "networks": [],
+        "result": "cleanup_readback.json"
+      },
+      "phase_seconds": {
+        "delta_apply": 0.386406,
+        "grader_baseline_rebuild": 0.456343,
+        "grader_cleanup": 1.562407,
+        "grader_start_and_verify": 43.505968,
+        "grader_trusted_setup": 172.43743,
+        "parser_and_report": 5.580274,
+        "test": 12.649132
+      },
+      "scripts_digest": "sha256:d8b83fd2c0abca83e72aaa1648b70c26e6698b16549fbda1673e2cccfc0eabbb",
+      "ledger_sha256": "sha256:3cc9cf83280ac53b61bf41562d1cbf0505aacb25360dddbe7ce42c217d2efff6",
+      "archive": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal6954_r14_gold001_v1.tar.gz",
+      "archive_sha256": "sha256:b89f1c7bf00b61f9547c77b78e2e5da4968c60122b85652ba7ea7ab0eeacc105",
+      "evidence_root": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal6954_r14_gold001_v1",
+      "raw_file_count": 32,
+      "full_new_file_capture": {
+        "path": "tests/unit/utils/serialize/test_python.py",
+        "bytes": 1624,
+        "lines": 56,
+        "sha256": "sha256:291c52123b8d576780732193f2c651f3c95f695bb1976e0621736ea57f0283ae",
+        "full_bytes_in_trusted_log": true
+      },
+      "grading_materials_identity": "sha256:77a22ff0a47782cb689525fc0ac48a7b2828bf931b17c887ea0d42683e067bfa"
+    },
+    {
+      "job_id": "dvc6954-r14-negative_int_only-20261003-233645-a4",
+      "candidate": "negative_int_only",
+      "status": "completed",
+      "formal_grading": true,
+      "reward": 0.0,
+      "outcome": "unresolved",
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 1,
+        "f2p_total": 3,
+        "failure_category": "tests_failed",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+dvc6954-behavior-v1-draft",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": 0,
+        "p2p_total": 12,
+        "report_id": "rpt_grading_a42ba31b",
+        "reward": 0.0
+      },
+      "reference_missing_count": 0,
+      "actual_passed": 24,
+      "actual_failed": 2,
+      "actual_skipped": 0,
+      "actual_total": 26,
+      "actual_states": {
+        "tests/func/params/test_show.py::test_show_empty": "PASSED",
+        "tests/func/params/test_show.py::test_show": "PASSED",
+        "tests/func/params/test_show.py::test_show_toml": "PASSED",
+        "tests/func/params/test_show.py::test_show_py": "PASSED",
+        "tests/func/params/test_show.py::test_show_multiple": "PASSED",
+        "tests/func/params/test_show.py::test_show_list": "PASSED",
+        "tests/func/params/test_show.py::test_show_branch": "PASSED",
+        "tests/func/params/test_show.py::test_pipeline_params": "PASSED",
+        "tests/func/params/test_show.py::test_show_no_repo": "PASSED",
+        "tests/func/params/test_show.py::test_log_errors[dvc.yaml-error_path0]": "PASSED",
+        "tests/func/params/test_show.py::test_log_errors[params_other.yaml-error_path1]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[bool]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[int]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[float]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[str]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[dict]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[list]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[set]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[tuple]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[none]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[negative_int]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[class]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[constructor]": "PASSED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[sum]": "PASSED",
+        "tests/func/params/test_show.py::test_negative_python_params_lock_and_repro": "FAILED",
+        "tests/unit/utils/serialize/test_python.py::test_parse_negative_float_and_containers": "FAILED"
+      },
+      "prepared_provenance_checked": true,
+      "candidate_prerequisite": {
+        "exit_code": 0,
+        "home": "/home/rh2grader",
+        "script_sha256": "sha256:8eeb79a16593e4c73237adacb98f2dd9494eb831136b0cf4ac21752b34fa5092",
+        "state": "verified",
+        "stderr": "",
+        "stdout": "RH2_DVC_BEHAVIOR_UID54322_WHEEL_BYTES_OK=1\n",
+        "user": "54322"
+      },
+      "candidate_install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 8.33,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 3.879
+      },
+      "grading_revision": {
+        "apply_ok": true,
+        "binding_version": "reference-bindings-v1",
+        "bindings_sha256": "sha256:ed7a90aa3f1733095ac93d8da7b41a1735f6060982d75a3183c00e1f4a658ccb",
+        "environment_package_digest": "sha256:c8cde31e2160b7caa94884d54e45a48f2527a744e2bb1ecb3789f502ebc6e311",
+        "grading_bundle_digest": "sha256:b52115d1d2cfc212db95f2a2bafe71c7e8c2c7d1f9a6a3a6d020130d20e7025e",
+        "materials_identity": "sha256:77a22ff0a47782cb689525fc0ac48a7b2828bf931b17c887ea0d42683e067bfa",
+        "parent_grading_digest": "sha256:a32d00b7a72298f83b2a186182c6a6bbd4a2ce00b30804714380c9b577a3fda8",
+        "parser_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "partitions": {
+          "added_f2p": {
+            "references": [
+              "tests/unit/utils/serialize/test_python.py::test_parse_negative_float_and_containers",
+              "tests/func/params/test_show.py::test_negative_python_params_lock_and_repro"
+            ],
+            "result": {
+              "failure": [
+                "tests/unit/utils/serialize/test_python.py::test_parse_negative_float_and_containers",
+                "tests/func/params/test_show.py::test_negative_python_params_lock_and_repro"
+              ],
+              "missing": [],
+              "skipped": [],
+              "success": [],
+              "unaccounted": []
+            }
+          },
+          "added_p2p": {
+            "references": [],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [],
+              "unaccounted": []
+            }
+          },
+          "bound_source_f2p": {
+            "references": [
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[negative_int]"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[negative_int]"
+              ],
+              "unaccounted": []
+            }
+          },
+          "bound_source_p2p": {
+            "references": [
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[dict]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[sum]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[set]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[constructor]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[str]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[list]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[bool]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[float]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[int]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[class]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[none]",
+              "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[tuple]"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[dict]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[sum]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[set]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[constructor]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[str]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[list]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[bool]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[float]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[int]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[class]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[none]",
+                "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[tuple]"
+              ],
+              "unaccounted": []
+            }
+          }
+        },
+        "public_bundle_digest": "sha256:9186b41928accff7f5b576f240163c6c87c013cc9cfb219fa8a42571b3d526fb",
+        "registry_sha256": "sha256:815811717d21fa259b354eaf85a1598241d66d85b5af547d9208b2835c4edace",
+        "revision_id": "dvc6954-behavior-v1-draft",
+        "source_references": {
+          "fail_to_pass": [
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[UNARY_OP"
+          ],
+          "pass_to_pass": [
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[DICT",
+            "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[SUM",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[SET",
+            "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types[CONSTRUCTOR",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[STR",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[LIST",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[BOOL",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[FLOAT",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[INT",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[class",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[NONE",
+            "tests/unit/utils/serialize/test_python.py::test_parse_valid_types[TUPLE"
+          ]
+        },
+        "state": "parsed",
+        "test_command": "pytest -rA tests/func/params/test_show.py tests/unit/utils/serialize/test_python.py"
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "cleanup_label_readback": {
+        "containers": [],
+        "networks": [],
+        "result": "cleanup_readback.json"
+      },
+      "phase_seconds": {
+        "delta_apply": 0.382252,
+        "grader_baseline_rebuild": 0.410602,
+        "grader_cleanup": 1.588333,
+        "grader_start_and_verify": 43.855752,
+        "grader_trusted_setup": 168.323376,
+        "parser_and_report": 5.74986,
+        "test": 13.850798
+      },
+      "scripts_digest": "sha256:d8b83fd2c0abca83e72aaa1648b70c26e6698b16549fbda1673e2cccfc0eabbb",
+      "ledger_sha256": "sha256:b084f10dc020526e867cc2ad50f092e9c9be2b3aef3f7dca7fcbd14e8ecfb706",
+      "archive": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal6954_r14_negative_int_only_233645_v1.tar.gz",
+      "archive_sha256": "sha256:8f2c78ef785dfad51717eb758b61fa83ae517ddfc0b55ddb70f150ab0474fe4f",
+      "evidence_root": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal6954_r14_negative_int_only_233645_v1",
+      "raw_file_count": 32,
+      "full_new_file_capture": {
+        "path": "tests/unit/utils/serialize/test_python.py",
+        "bytes": 1624,
+        "lines": 56,
+        "sha256": "sha256:291c52123b8d576780732193f2c651f3c95f695bb1976e0621736ea57f0283ae",
+        "full_bytes_in_trusted_log": true
+      },
+      "grading_materials_identity": "sha256:77a22ff0a47782cb689525fc0ac48a7b2828bf931b17c887ea0d42683e067bfa"
+    }
+  ],
+  "status": "formal_controls_complete_non_author_review_pending",
+  "non_author_runtime_review": "pending",
+  "actor_check": "R5 historical public actor evidence; actual R14 prepared public and prompt equal; independent applicability separately reviewed",
+  "actual_r14_prepared_public_equals_r5": true,
+  "actual_r14_prompt_text_bytes_equal_r5": true,
+  "prompt_json_metadata_environment_digest_new": "sha256:c8cde31e2160b7caa94884d54e45a48f2527a744e2bb1ecb3789f502ebc6e311",
+  "qualifies_for_probe": false,
+  "still_needs_cpu": true,
+  "still_needs_gpu": true,
+  "limitations": [
+    "No sealed original-install-only historical test consumer; original historical controls reward not inferred or overwritten",
+    "Actual grader resource policy is in ledger/runtime config; no new after-removal Docker HostConfig inspection",
+    "R5 actual public actor reused only at same public/image/code scope; not a new R14 actor run or training typed actor integration"
+  ]
+}

@@ -1,0 +1,187 @@
+{
+  "schema": "dask_acceptance_plan.v1",
+  "as_of": "2026-10-03",
+  "instance_id": "dask__dask-7305",
+  "revision_id": "dask7305-exact-ends-auto-v3",
+  "effective_test_patch": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7305/effective_test.patch",
+    "sha256": "4c63d384f1c62eaa019c12bc70ae8b0cab0d7595e719edcc1d5e878feb86c127"
+  },
+  "expected_results_are_not_observed_scores": true,
+  "rows": [
+    {
+      "name": "noop",
+      "patch": null,
+      "role": "unrepaired",
+      "expected_reward": 0,
+      "reason": "未修复的原源码须被拒绝",
+      "priority": "first_formal_matrix",
+      "observed_reward_on_this_revision": null,
+      "original_material_f2p_count": 1
+    },
+    {
+      "name": "gold_full_auto",
+      "patch": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7305/gold_full_auto.patch",
+        "sha256": "1a249962f60580a4340d6f92a45b414475c0eca86655715abb70229a366b5994"
+      },
+      "role": "positive_draft",
+      "expected_reward": 1,
+      "reason": "既有 gold_full 加整数 auto 修补；新组合尚待 CPU 和非作者核实",
+      "priority": "first_formal_matrix",
+      "observed_reward_on_this_revision": null,
+      "original_material_f2p_count": 1
+    },
+    {
+      "name": "gold",
+      "patch": {
+        "path": "runs/swegym_quality_expansion_20260925/private/dask__dask-7305/gold.patch",
+        "sha256": "aa80a49b78eeabd0f7d4517ece79e894b75dcc2579f05f55d13d92ba6d1ed11d"
+      },
+      "role": "incomplete_gold",
+      "expected_reward": 0,
+      "reason": "唯一值不足、跨 2**63 和 auto 均有已证残缺",
+      "priority": "first_formal_matrix",
+      "observed_reward_on_this_revision": null,
+      "original_material_f2p_count": 1
+    },
+    {
+      "name": "gold_full",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask7305/candidates/gold_full.patch",
+        "sha256": "9b4f7bb3d1dd8a7f3695ddb664472369d2862ba7f08b83b8b85b07e52a1ba383"
+      },
+      "role": "historically_partial_positive",
+      "expected_reward": 0,
+      "reason": "显式分区的已核正对照，仍在已证 auto 路径丢行；保留原资格范围",
+      "priority": "first_formal_matrix",
+      "observed_reward_on_this_revision": null,
+      "original_material_f2p_count": 1
+    },
+    {
+      "name": "exact_full",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask7305/candidates/exact_full.patch",
+        "sha256": "17a2cd20683c71616a406442dd2ad9892899ff6113e86aa4466a0d550e19e1b8"
+      },
+      "role": "historically_partial_positive",
+      "expected_reward": 0,
+      "reason": "显式分区的已核正对照，仍在已证 auto 路径丢行；保留原资格范围",
+      "priority": "first_formal_matrix",
+      "observed_reward_on_this_revision": null,
+      "original_material_f2p_count": 1
+    },
+    {
+      "name": "higher_full",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask7305/candidates/higher_full.patch",
+        "sha256": "ae7e5227881ad9659394368d92f1bb2a1d02301eb8c5a65b024c7d45c27c940f"
+      },
+      "role": "historically_partial_positive",
+      "expected_reward": 0,
+      "reason": "显式分区的已核正对照，仍在已证 auto 路径丢行；保留原资格范围",
+      "priority": "first_formal_matrix",
+      "observed_reward_on_this_revision": null,
+      "original_material_f2p_count": 1
+    },
+    {
+      "name": "nearest_via_float",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask7305/candidates/nearest_via_float.patch",
+        "sha256": "873e589be4972431633dbd77c667a61ff88cd4b160dfb39b2287e588cb17c1a4"
+      },
+      "role": "known_wrong",
+      "expected_reward": 0,
+      "reason": "先转 float64 再求分位数，题面原例端点仍偏移",
+      "priority": "first_formal_matrix",
+      "observed_reward_on_this_revision": null,
+      "original_material_f2p_count": 1
+    },
+    {
+      "name": "clip_partition",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask7305/candidates/clip_partition.patch",
+        "sha256": "c978da08e9a101d51f5d5725cc6755ab5e86a7564ddc7fc322be8ab849ecd192"
+      },
+      "role": "known_wrong",
+      "expected_reward": 0,
+      "reason": "只抑制分区症状，分位数端点仍错",
+      "priority": "first_formal_matrix",
+      "observed_reward_on_this_revision": null,
+      "original_material_f2p_count": 1
+    },
+    {
+      "name": "uint_only",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask7305/candidates/uint_only.patch",
+        "sha256": "cc90b8053823a63759203a0fdc732d648e83bdaa5603c0cb804dd4a4711ab674"
+      },
+      "role": "known_wrong",
+      "expected_reward": 0,
+      "reason": "只覆盖 uint64，遗漏有符号大整数",
+      "priority": "first_formal_matrix",
+      "observed_reward_on_this_revision": null,
+      "original_material_f2p_count": 1
+    },
+    {
+      "name": "k1_only",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask7305/candidates/k1_only.patch",
+        "sha256": "3fc2e8982ace14976d21653be7be467451518a2c66d1c64cc8fe0df00b90f942"
+      },
+      "role": "known_wrong",
+      "expected_reward": 0,
+      "reason": "只覆盖题面字面分区数 1",
+      "priority": "first_formal_matrix",
+      "observed_reward_on_this_revision": null,
+      "original_material_f2p_count": 1
+    },
+    {
+      "name": "first_last",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask7305/candidates/first_last.patch",
+        "sha256": "7192e57f6dd73350d4706286b87b30064d7233ac639ccba3a73ce27a1a67c68a"
+      },
+      "role": "known_wrong",
+      "expected_reward": 0,
+      "reason": "假定输入有序，把首尾当端点",
+      "priority": "first_formal_matrix",
+      "observed_reward_on_this_revision": null,
+      "original_material_f2p_count": 1
+    },
+    {
+      "name": "gold_pin_only",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask7305/candidates/gold_pin_only.patch",
+        "sha256": "b0456f64abb6182ecb3559a7b48dc6d8a4919e23ceceec4a00d4e8a96a4d59f7"
+      },
+      "role": "known_wrong",
+      "expected_reward": 0,
+      "reason": "只钉端点，跨 2**63 的数组 dtype 仍有精度损失",
+      "priority": "first_formal_matrix",
+      "observed_reward_on_this_revision": null,
+      "original_material_f2p_count": 1
+    },
+    {
+      "name": "gold_typed_only",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask7305/candidates/gold_typed_only.patch",
+        "sha256": "265665b19f8ede439a7157aa6a06bf471875f1f0c193deed09bc1dac0a326db0"
+      },
+      "role": "known_wrong",
+      "expected_reward": 0,
+      "reason": "只固定 dtype，唯一值不足的插值仍错",
+      "priority": "first_formal_matrix",
+      "observed_reward_on_this_revision": null,
+      "original_material_f2p_count": 1
+    }
+  ],
+  "success_conditions": [
+    "固定材料身份、镜像、执行入口、安装配方与身份",
+    "有效正对照为 1；未修复及各已知错解为 0",
+    "安装和测试实际执行、参考无缺席；逐项参考状态和失败断言符合预期",
+    "保存完整评分账本、输出、候选和清理结果",
+    "非作者核公开依据、正对照及本轮实际结果"
+  ],
+  "known_wrong_coverage": "初始矩阵按独立机制选取；其余历史候选保留原件。接受性比较不能因私有检查通过而省略正式身份/导入等差异。"
+}

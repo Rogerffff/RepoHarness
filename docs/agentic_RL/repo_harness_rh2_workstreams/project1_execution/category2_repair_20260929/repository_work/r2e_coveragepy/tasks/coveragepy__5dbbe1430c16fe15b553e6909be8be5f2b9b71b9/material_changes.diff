@@ -1,0 +1,11 @@
+--- source/problem_statement
++++ draft/problem_statement
+@@ -13,7 +13,7 @@
+ ```
+ 
+ **Expected Behavior:**
+-Warnings marked with `once=True` should be displayed only once each, preventing duplicate warnings from appearing.
++Warnings marked with `once=True` should be displayed only once each, preventing duplicate warnings from appearing. As with `disable_warnings`, a warning is identified by its `slug` (the short name shown in parentheses after the message): once a `once=True` warning has been displayed, later `once=True` warnings with the same slug are not displayed, even if their message text is different. `once=True` warnings with different slugs are each still displayed once.
+ 
+ **Actual Behavior:**
+ A `TypeError` is raised with the message: `_warn() got an unexpected keyword argument 'once'`

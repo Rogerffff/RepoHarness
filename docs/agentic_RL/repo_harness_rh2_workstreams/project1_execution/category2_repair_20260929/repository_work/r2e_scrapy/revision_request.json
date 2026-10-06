@@ -1,0 +1,131 @@
+{
+  "scope": "private_preparation_not_published",
+  "as_of": "2026-10-03",
+  "instance_id": "scrapy__a95a338eeada7275a5289cf036136610ebaf07eb",
+  "owner_thread_id": "01a0fd64-a083-76d2-95e6-81e7e07c3b44",
+  "prepared_revision": "rev4_record_blocks_draft",
+  "shared_publisher": {
+    "thread_id": "01a08bd3-b639-7c71-a1ee-f3f4d05b3a0e",
+    "name": "负责处理分类二的明确问题"
+  },
+  "shared_revision_ids": "publisher_to_assign_do_not_reuse_064",
+  "entries_template": [
+    {
+      "revision_id": null,
+      "instance_id": "scrapy__a95a338eeada7275a5289cf036136610ebaf07eb",
+      "kind": "hidden_test_text_replace",
+      "target": "test_1.py",
+      "edits": [
+        {
+          "old": "    def test_generators_return_something(self):\n        def f1():\n            yield 1\n            return 2\n\n        def g1():\n            yield 1\n            return \"asdf\"\n\n        def h1():\n            yield 1\n\n            def helper():\n                return 0\n\n            yield helper()\n            return 2\n\n        def i1():\n            \"\"\"\ndocstring\n            \"\"\"\n            url = \"\"\"\nhttps://example.org\n        \"\"\"\n            yield url\n            return 1\n\n        assert is_generator_with_return_value(top_level_return_something)\n        assert is_generator_with_return_value(f1)\n        assert is_generator_with_return_value(g1)\n        assert is_generator_with_return_value(h1)\n        assert is_generator_with_return_value(i1)\n\n        with warnings.catch_warnings(record=True) as w:\n            warn_on_generator_with_return_value(None, top_level_return_something)\n            self.assertEqual(len(w), 1)\n            self.assertIn('The \"NoneType.top_level_return_something\" method is a generator', str(w[0].message))\n        with warnings.catch_warnings(record=True) as w:\n            warn_on_generator_with_return_value(None, f1)\n            self.assertEqual(len(w), 1)\n            self.assertIn('The \"NoneType.f1\" method is a generator', str(w[0].message))\n        with warnings.catch_warnings(record=True) as w:\n            warn_on_generator_with_return_value(None, g1)\n            self.assertEqual(len(w), 1)\n            self.assertIn('The \"NoneType.g1\" method is a generator', str(w[0].message))\n        with warnings.catch_warnings(record=True) as w:\n            warn_on_generator_with_return_value(None, h1)\n            self.assertEqual(len(w), 1)\n            self.assertIn('The \"NoneType.h1\" method is a generator', str(w[0].message))\n        with warnings.catch_warnings(record=True) as w:\n            warn_on_generator_with_return_value(None, i1)\n            self.assertEqual(len(w), 1)\n            self.assertIn('The \"NoneType.i1\" method is a generator', str(w[0].message))\n",
+          "new": "    def test_generators_return_something(self):\n        def f1():\n            yield 1\n            return 2\n\n        def g1():\n            yield 1\n            return \"asdf\"\n\n        def h1():\n            yield 1\n\n            def helper():\n                return 0\n\n            yield helper()\n            return 2\n\n        def i1():\n            \"\"\"\ndocstring\n            \"\"\"\n            url = \"\"\"\nhttps://example.org\n        \"\"\"\n            yield url\n            return 1\n\n        assert is_generator_with_return_value(top_level_return_something)\n        assert is_generator_with_return_value(f1)\n        assert is_generator_with_return_value(g1)\n        assert is_generator_with_return_value(h1)\n        assert is_generator_with_return_value(i1)\n\n        with warnings.catch_warnings(record=True) as w:\n            warnings.simplefilter(\"always\", Warning)\n            warn_on_generator_with_return_value(None, top_level_return_something)\n            self.assertEqual(len(w), 1)\n            self.assertIn('The \"NoneType.top_level_return_something\" method is a generator', str(w[0].message))\n        with warnings.catch_warnings(record=True) as w:\n            warnings.simplefilter(\"always\", Warning)\n            warn_on_generator_with_return_value(None, f1)\n            self.assertEqual(len(w), 1)\n            self.assertIn('The \"NoneType.f1\" method is a generator', str(w[0].message))\n        with warnings.catch_warnings(record=True) as w:\n            warnings.simplefilter(\"always\", Warning)\n            warn_on_generator_with_return_value(None, g1)\n            self.assertEqual(len(w), 1)\n            self.assertIn('The \"NoneType.g1\" method is a generator', str(w[0].message))\n        with warnings.catch_warnings(record=True) as w:\n            warnings.simplefilter(\"always\", Warning)\n            warn_on_generator_with_return_value(None, h1)\n            self.assertEqual(len(w), 1)\n            self.assertIn('The \"NoneType.h1\" method is a generator', str(w[0].message))\n        with warnings.catch_warnings(record=True) as w:\n            warnings.simplefilter(\"always\", Warning)\n            warn_on_generator_with_return_value(None, i1)\n            self.assertEqual(len(w), 1)\n            self.assertIn('The \"NoneType.i1\" method is a generator', str(w[0].message))\n"
+        },
+        {
+          "old": "    def test_generators_return_none(self):\n        def f2():\n            yield 1\n            return None\n\n        def g2():\n            yield 1\n            return\n\n        def h2():\n            yield 1\n\n        def i2():\n            yield 1\n            yield from generator_that_returns_stuff()\n\n        def j2():\n            yield 1\n\n            def helper():\n                return 0\n\n            yield helper()\n\n        def k2():\n            \"\"\"\ndocstring\n            \"\"\"\n            url = \"\"\"\nhttps://example.org\n        \"\"\"\n            yield url\n            return\n\n        def l2():\n            return\n\n        assert not is_generator_with_return_value(top_level_return_none)\n        assert not is_generator_with_return_value(f2)\n        assert not is_generator_with_return_value(g2)\n        assert not is_generator_with_return_value(h2)\n        assert not is_generator_with_return_value(i2)\n        assert not is_generator_with_return_value(j2)  # not recursive\n        assert not is_generator_with_return_value(k2)  # not recursive\n        assert not is_generator_with_return_value(l2)\n\n        with warnings.catch_warnings(record=True) as w:\n            warn_on_generator_with_return_value(None, top_level_return_none)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warn_on_generator_with_return_value(None, f2)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warn_on_generator_with_return_value(None, g2)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warn_on_generator_with_return_value(None, h2)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warn_on_generator_with_return_value(None, i2)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warn_on_generator_with_return_value(None, j2)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warn_on_generator_with_return_value(None, k2)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warn_on_generator_with_return_value(None, l2)\n            self.assertEqual(len(w), 0)\n",
+          "new": "    def test_generators_return_none(self):\n        def f2():\n            yield 1\n            return None\n\n        def g2():\n            yield 1\n            return\n\n        def h2():\n            yield 1\n\n        def i2():\n            yield 1\n            yield from generator_that_returns_stuff()\n\n        def j2():\n            yield 1\n\n            def helper():\n                return 0\n\n            yield helper()\n\n        def k2():\n            \"\"\"\ndocstring\n            \"\"\"\n            url = \"\"\"\nhttps://example.org\n        \"\"\"\n            yield url\n            return\n\n        def l2():\n            return\n\n        assert not is_generator_with_return_value(top_level_return_none)\n        assert not is_generator_with_return_value(f2)\n        assert not is_generator_with_return_value(g2)\n        assert not is_generator_with_return_value(h2)\n        assert not is_generator_with_return_value(i2)\n        assert not is_generator_with_return_value(j2)  # not recursive\n        assert not is_generator_with_return_value(k2)  # not recursive\n        assert not is_generator_with_return_value(l2)\n\n        with warnings.catch_warnings(record=True) as w:\n            warnings.simplefilter(\"always\", Warning)\n            warn_on_generator_with_return_value(None, top_level_return_none)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warnings.simplefilter(\"always\", Warning)\n            warn_on_generator_with_return_value(None, f2)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warnings.simplefilter(\"always\", Warning)\n            warn_on_generator_with_return_value(None, g2)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warnings.simplefilter(\"always\", Warning)\n            warn_on_generator_with_return_value(None, h2)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warnings.simplefilter(\"always\", Warning)\n            warn_on_generator_with_return_value(None, i2)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warnings.simplefilter(\"always\", Warning)\n            warn_on_generator_with_return_value(None, j2)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warnings.simplefilter(\"always\", Warning)\n            warn_on_generator_with_return_value(None, k2)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warnings.simplefilter(\"always\", Warning)\n            warn_on_generator_with_return_value(None, l2)\n            self.assertEqual(len(w), 0)\n"
+        },
+        {
+          "old": "    def test_generators_return_none_with_decorator(self):\n        def decorator(func):\n            def inner_func():\n                func()\n            return inner_func\n\n        @decorator\n        def f3():\n            yield 1\n            return None\n\n        @decorator\n        def g3():\n            yield 1\n            return\n\n        @decorator\n        def h3():\n            yield 1\n\n        @decorator\n        def i3():\n            yield 1\n            yield from generator_that_returns_stuff()\n\n        @decorator\n        def j3():\n            yield 1\n\n            def helper():\n                return 0\n\n            yield helper()\n\n        @decorator\n        def k3():\n            \"\"\"\ndocstring\n            \"\"\"\n            url = \"\"\"\nhttps://example.org\n        \"\"\"\n            yield url\n            return\n\n        @decorator\n        def l3():\n            return\n\n        assert not is_generator_with_return_value(top_level_return_none)\n        assert not is_generator_with_return_value(f3)\n        assert not is_generator_with_return_value(g3)\n        assert not is_generator_with_return_value(h3)\n        assert not is_generator_with_return_value(i3)\n        assert not is_generator_with_return_value(j3)  # not recursive\n        assert not is_generator_with_return_value(k3)  # not recursive\n        assert not is_generator_with_return_value(l3)\n\n        with warnings.catch_warnings(record=True) as w:\n            warn_on_generator_with_return_value(None, top_level_return_none)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warn_on_generator_with_return_value(None, f3)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warn_on_generator_with_return_value(None, g3)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warn_on_generator_with_return_value(None, h3)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warn_on_generator_with_return_value(None, i3)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warn_on_generator_with_return_value(None, j3)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warn_on_generator_with_return_value(None, k3)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warn_on_generator_with_return_value(None, l3)\n            self.assertEqual(len(w), 0)\n",
+          "new": "    def test_generators_return_none_with_decorator(self):\n        def decorator(func):\n            def inner_func():\n                func()\n            return inner_func\n\n        @decorator\n        def f3():\n            yield 1\n            return None\n\n        @decorator\n        def g3():\n            yield 1\n            return\n\n        @decorator\n        def h3():\n            yield 1\n\n        @decorator\n        def i3():\n            yield 1\n            yield from generator_that_returns_stuff()\n\n        @decorator\n        def j3():\n            yield 1\n\n            def helper():\n                return 0\n\n            yield helper()\n\n        @decorator\n        def k3():\n            \"\"\"\ndocstring\n            \"\"\"\n            url = \"\"\"\nhttps://example.org\n        \"\"\"\n            yield url\n            return\n\n        @decorator\n        def l3():\n            return\n\n        assert not is_generator_with_return_value(top_level_return_none)\n        assert not is_generator_with_return_value(f3)\n        assert not is_generator_with_return_value(g3)\n        assert not is_generator_with_return_value(h3)\n        assert not is_generator_with_return_value(i3)\n        assert not is_generator_with_return_value(j3)  # not recursive\n        assert not is_generator_with_return_value(k3)  # not recursive\n        assert not is_generator_with_return_value(l3)\n\n        with warnings.catch_warnings(record=True) as w:\n            warnings.simplefilter(\"always\", Warning)\n            warn_on_generator_with_return_value(None, top_level_return_none)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warnings.simplefilter(\"always\", Warning)\n            warn_on_generator_with_return_value(None, f3)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warnings.simplefilter(\"always\", Warning)\n            warn_on_generator_with_return_value(None, g3)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warnings.simplefilter(\"always\", Warning)\n            warn_on_generator_with_return_value(None, h3)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warnings.simplefilter(\"always\", Warning)\n            warn_on_generator_with_return_value(None, i3)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warnings.simplefilter(\"always\", Warning)\n            warn_on_generator_with_return_value(None, j3)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warnings.simplefilter(\"always\", Warning)\n            warn_on_generator_with_return_value(None, k3)\n            self.assertEqual(len(w), 0)\n        with warnings.catch_warnings(record=True) as w:\n            warnings.simplefilter(\"always\", Warning)\n            warn_on_generator_with_return_value(None, l3)\n            self.assertEqual(len(w), 0)\n"
+        },
+        {
+          "old": "    def test_indentation_error(self):\n        with warnings.catch_warnings(record=True) as w:\n            warn_on_generator_with_return_value(None, top_level_return_none)\n            self.assertEqual(len(w), 1)\n            self.assertIn('Unable to determine', str(w[0].message))\n",
+          "new": "    def test_indentation_error(self):\n        with warnings.catch_warnings(record=True) as w:\n            warnings.simplefilter(\"always\", Warning)\n            warn_on_generator_with_return_value(None, top_level_return_none)\n            self.assertEqual(len(w), 1)\n            self.assertIn('Unable to determine', str(w[0].message))\n"
+        },
+        {
+          "old": "        partial_cb = partial(cb, arg1=42)\n        assert not is_generator_with_return_value(partial_cb)\n",
+          "new": "        partial_cb = partial(cb, arg1=42)\n        assert not is_generator_with_return_value(partial_cb)\n\n        def cb_with_return(arg1, arg2):\n            yield {}\n            return 1\n\n        assert is_generator_with_return_value(partial(cb_with_return, 1))\n        assert is_generator_with_return_value(partial(cb_with_return, arg1=42))\n\n        class Callbacks:\n            def method_with_return(self, arg1, arg2):\n                yield {}\n                return 1\n\n        assert is_generator_with_return_value(partial(Callbacks().method_with_return, 1))\n"
+        }
+      ],
+      "sha256_before": "sha256:baf73412e45b12e88bc5383d6ba11a64112d01d9b343fd85db5304b248111896",
+      "sha256_after": "sha256:9c6bc43ef5eead9453128d7d40959afb7bfd0d9e85c4c068a6d17993c991abac",
+      "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/r2e_tests/test_1.py",
+      "expected_change": null,
+      "decision_ref": "统一标准 v1 §5 / §9 D4；题级草案待非作者复核与正式验收",
+      "reason": "R-c 保留 rev2 的三条 partial 断言；R-a 仅在已有22个记录块内部恢复 Warning 记录，不新增 setUp 或 UserWarning 类别限制。",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/preparation.md"
+      ]
+    },
+    {
+      "revision_id": null,
+      "instance_id": "scrapy__a95a338eeada7275a5289cf036136610ebaf07eb",
+      "kind": "expected_text_replace",
+      "target": "expected_output_json",
+      "edits": [
+        {
+          "old": "\"UtilsMiscPy3TestCase.test_generators_return_something\": \"FAILED\"",
+          "new": "\"UtilsMiscPy3TestCase.test_generators_return_something\": \"PASSED\""
+        },
+        {
+          "old": "\"UtilsMiscPy3TestCase.test_indentation_error\": \"FAILED\"",
+          "new": "\"UtilsMiscPy3TestCase.test_indentation_error\": \"PASSED\""
+        }
+      ],
+      "sha256_before": "sha256:2c5d045cd0d33191f62a962df28fd04f7f95ae954adb3b8d91881b48b8a29dd0",
+      "sha256_after": "sha256:95f7d31faf0fa9838958db3a8121edc60a6181b7194f4801d674ef41802fe8e9",
+      "revised_file": null,
+      "expected_change": {
+        "changed": {
+          "UtilsMiscPy3TestCase.test_generators_return_something": [
+            "FAILED",
+            "PASSED"
+          ],
+          "UtilsMiscPy3TestCase.test_indentation_error": [
+            "FAILED",
+            "PASSED"
+          ]
+        },
+        "added": {},
+        "removed": []
+      },
+      "decision_ref": "统一标准 v1 §5 / §9 D4；题级草案待非作者复核与正式验收",
+      "reason": "两条已有公开警告测试恢复执行，期望 FAILED→PASSED；五键及顺序不变。",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/preparation.md"
+      ]
+    }
+  ],
+  "local_material_file": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/materials/rev4/r2e_tests/test_1.py",
+  "local_expected_file": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/materials/expected_output.json",
+  "parent": {
+    "base_commit": "9077d0f9b490114f117c668f115240c16afccedf",
+    "source_image_ref": "namanjain12/scrapy_final:a95a338eeada7275a5289cf036136610ebaf07eb",
+    "source_manifest_digest": "sha256:cd01a127a7c83ad8e59e0380f34dbf20e7469fe0ae4ebb051c83993dbc4d067d",
+    "hidden_tests_tree_sha256": "sha256:63928e22fc359d645cdd4af1a1a14d00cde84a3c8bf4f90811db12f40ce359b7",
+    "expected_output_sha256": "sha256:2c5d045cd0d33191f62a962df28fd04f7f95ae954adb3b8d91881b48b8a29dd0",
+    "current_revision_ids": [],
+    "statement_sha256": "sha256:eddf95214b7bbc41b0b1109eab8ab79319f9af065385831fcbf5eebff558bffb",
+    "run_tests_sh_sha256": "sha256:8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf"
+  },
+  "candidate_material": {
+    "hidden_tests_tree_sha256": "sha256:e6f17ed8b7f80a0c0d6654f35d60e42bfd39a187f8c2442b854e388206349aeb",
+    "expected_output_sha256": "sha256:95f7d31faf0fa9838958db3a8121edc60a6181b7194f4801d674ef41802fe8e9",
+    "public_statement_changed": false,
+    "grading_script_changed": false
+  },
+  "positive_control": {
+    "candidate": "C1",
+    "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/cands/scrapy_a95a_C1.patch",
+    "sha256": "sha256:3345719910836649b43592970e37cb11b778690807b13d5fe4de5aac253a04d6",
+    "expected_score": 1,
+    "note": "修订版上 gold 为 0（只在 test_partial 的绑定方法断言失败），以后批量环境复验本题的正对照改用 C1"
+  },
+  "remaining": [
+    "CPU核Warning实际记录列表、C1与类别候选及负例，静态窄核已完成",
+    "共享维护者分配编号、安放文件并封板 ingest/pins",
+    "CPU 新宿主与派生材料镜像验收",
+    "正式矩阵与 C1 公开开发验证",
+    "统一探针接收及消息交付核对"
+  ],
+  "probe_ready": false,
+  "model_config_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/ordinary_probe_20260929/gpu_coordination_decisions_20261002.md",
+  "material_static_review": {
+    "status": "no_static_blocker",
+    "scope": "non_author_static_only",
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/review_rev4_20261003.md",
+    "formal_acceptance": false
+  }
+}

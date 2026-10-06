@@ -1,0 +1,63 @@
+{
+  "schema": "category2.cpu_support_request.v1",
+  "created_at_utc": "2026-10-03T00:01:05.093450+00:00",
+  "scope": "cpu-a / swe_mypy 单个原GPU候选安装窄复验运行名额",
+  "affected_task": "swe_gym_lite::python__mypy-10174",
+  "related_probe_request": "swe-mypy10174-strict-equality-v1-20261003",
+  "request": "请协调cpu-a一个run槽；后续同仓最多占一槽，等待长矩阵自然完成。若cpu-a持续无名额，可明确分配支持同源CPU镜像/冻结R6的替代CPU主机；题主不自行跨主机。无需增加并发、停止他人或重租机器。",
+  "why_now": "GPU首臂实际editable安装RC1读取旧0600供应wheel失败；Coder暂停。需要一个原FP同源可读镜像下安装/源码/四参考的窄复验，非重模型、非全矩阵。",
+  "estimated_scope": "单次run，已有CPU镜像9d63…，不prepare/build/pull，正式预算3600秒，受限grader 2CPU/4GiB/512pids；完成后自有清理/释放槽。",
+  "immutable_worker_sha256": "64754d020213034bcc64c10c8572a8401ee92e3254aee88a35c7da621e54f696",
+  "binding_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/gpu_install_revalidation_20261003/binding_v2.json",
+  "binding_sha256": "6bbcb0ea7d151a92e19a86f6294d25a4e6d9c30e40b4efa620cf60d4b19147cd",
+  "attempts": [
+    {
+      "job": "mypy10174-gpu-original-regrade-r1-20261002T233957Z-086f5b",
+      "wrapper_receipt": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r1-20261002T233957Z-086f5b/launch/receipt.json",
+      "wrapper_rc": 75,
+      "finished_at_utc": "2026-10-02T23:41:05Z",
+      "busy_reason": "All CPU slots busy; retry later",
+      "preparation_failure": null,
+      "candidate_or_scoring_ran": false
+    },
+    {
+      "job": "mypy10174-gpu-original-regrade-r2-20261002T234409Z-d4fdea",
+      "wrapper_receipt": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r2-20261002T234409Z-d4fdea/launch/receipt.json",
+      "wrapper_rc": 75,
+      "finished_at_utc": "2026-10-02T23:44:12Z",
+      "busy_reason": "All CPU slots busy; retry later",
+      "preparation_failure": null,
+      "candidate_or_scoring_ran": false
+    },
+    {
+      "job": "mypy10174-gpu-original-regrade-r3-20261002T235343Z-c0d3fd",
+      "wrapper_receipt": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r3-20261002T235343Z-c0d3fd/launch/receipt.json",
+      "wrapper_rc": 1,
+      "finished_at_utc": "2026-10-02T23:53:56Z",
+      "busy_reason": null,
+      "preparation_failure": "Traceback (most recent call last):\n  File \"/work/rh2-category2-20261003/packages/swe_mypy/workers/gpu_original_regrade-709ec88b62c0.py\", line 198, in <module>\n    main()\n  File \"/work/rh2-category2-20261003/packages/swe_mypy/workers/gpu_original_regrade-709ec88b62c0.py\", line 57, in main\n    assert summary['prepared_manifest_sha256'] == b['prepared_manifest_sha256']\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+      "candidate_or_scoring_ran": false
+    },
+    {
+      "job": "mypy10174-gpu-original-regrade-r4-20261002T235603Z-a2a8f9",
+      "wrapper_receipt": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r4-20261002T235603Z-a2a8f9/launch/receipt.json",
+      "wrapper_rc": 75,
+      "finished_at_utc": "2026-10-02T23:56:17Z",
+      "busy_reason": "All CPU slots busy; retry later",
+      "preparation_failure": null,
+      "candidate_or_scoring_ran": false
+    },
+    {
+      "job": "mypy10174-gpu-original-regrade-r5-20261002T235826Z-a7beb8",
+      "wrapper_receipt": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r5-20261002T235826Z-a7beb8/launch/receipt.json",
+      "wrapper_rc": 75,
+      "finished_at_utc": "2026-10-02T23:58:29Z",
+      "busy_reason": "All CPU slots busy; retry later",
+      "preparation_failure": null,
+      "candidate_or_scoring_ran": false
+    }
+  ],
+  "current_running_own_job": null,
+  "old_frozen_inputs_unmodified": true,
+  "r3_fix": "唯一manifest prepared_at_utc变化，静态双非作者已核；其余全部字段和成员/private SHA精确相同。旧失败保留，v2 worker以fresh真实SHA加载。"
+}

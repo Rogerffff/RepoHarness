@@ -1,0 +1,115 @@
+{
+  "purpose": "固定Pandas题级发布输入；不是生产loader schema、CPU验收或探针请求",
+  "task_key": "swe_gym_lite::pandas-dev__pandas-50319",
+  "owner_thread_id": "01a0fd63-67de-77d2-b1fe-6a74a1de4481",
+  "material_version": "pandas50319-dot-date-draft-b697a9171ad3",
+  "material_status": "unpublished_draft",
+  "cpu_host": "cpu-c",
+  "public_change": false,
+  "task_materials": {
+    "instance_id": "pandas-dev__pandas-50319",
+    "revision_draft": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/tasks/pandas-dev__pandas-50319/revision_draft.json",
+      "sha256": "sha256:b697a9171ad36c848eb199d9b98a875926dc2c162f1b1570fd948ef1e1657004"
+    },
+    "reference_bindings": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/tasks/pandas-dev__pandas-50319/reference_bindings_draft.json",
+      "sha256": "sha256:9ffda7e9f2b322ad6f2db28b57212a9dcacb0f4e661b8beac40329c5f3ac5363"
+    },
+    "public_change": false,
+    "parent_grading_digest": "sha256:d37caa1d070ef67c1487e31485f8a5463d81761393acd88294aeaf99cc9ee17d",
+    "public_bundle_digest": "sha256:5c94214a75aca9417902ae115febdacf58f52a1a9a5f553631234c67832a7d27",
+    "source_reference_counts": {
+      "fail_to_pass_before": 1,
+      "fail_to_pass_after": 2,
+      "pass_to_pass_before": 109,
+      "pass_to_pass_after": 109
+    },
+    "required_shared_consumer_change": "固定登记有效测试补丁、替换来源 F2P、完整节点绑定，并使正式选择/恢复/保护/解析和材料身份一致。",
+    "publication_priority": 2,
+    "effective_test_patch": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/tasks/pandas-dev__pandas-50319/test_patch_draft.patch",
+      "sha256": "sha256:0cef8c604fb79cd8d677087b28a09736751617e5aacfb312cb8fede48d3cae8f"
+    },
+    "test_patch_application": "replace original patch on base; never overlay the old added assertion",
+    "fail_to_pass_replacement": {
+      "before": [
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[27.03.2003"
+      ],
+      "after": [
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_dot_date_contract[reported]",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_dot_date_contract[another-dot-date]"
+      ]
+    },
+    "private_cpu_matrix": [
+      "noop",
+      "gold",
+      "none_fallback",
+      "constant_none",
+      "bad_format",
+      "reported_only_none"
+    ],
+    "precondition": "实际Cython构建和新进程扩展加载；合理None路线保留旧P2P并触发上层正确回退",
+    "original_material_none_control_scope": "使用冻结原材料；若配方/完整绑定尚未正式登记，只记录私有校准，不冒称正式新材料验收"
+  },
+  "material_manifest": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/materials_manifest.json",
+    "sha256": "sha256:ebf11069c7e7fd04b2f7941228cfda66fb76534967203787a6afad6213cc9281"
+  },
+  "material_review": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/reviews/non_author_material_review_20261003.md",
+    "sha256": "sha256:8d166cbc274830eb16c7f4b0429fc62afa623b960bd3eb2c9e4f65bc058e912a"
+  },
+  "existing_completed_cpu_evidence_review": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/reviews/non_author_cpu_evidence_review_20261003.md",
+    "sha256": "sha256:4fe58964c2191990ee4cd387f3f284fc1f5801c48242338f33bd9efcb1ea67e6",
+    "scope": "completed assets, original 48106 public actor and original 50319 root NoOp/None calibration only; excludes in-flight 50319 public actor and revised formal scores"
+  },
+  "original_public_actor": {
+    "status": "original_public_actor_completed_author_readback_non_author_review_pending",
+    "release": "cat2-cpu-r2e078079-swe7-git-20261003-v1",
+    "runtime": "runtime_cpu_v2",
+    "scope": "fresh prepared and public source build/import/existing caller; no private candidate/test",
+    "job_id": "pandas50319-public-v5-83037b3703d8",
+    "started_at_utc": "2026-10-02T18:47:53Z",
+    "fresh_prepared_parent_identity": "matched",
+    "prelaunch_ok": true,
+    "activation_ok": true,
+    "completed_at_utc": "2026-10-02T19:03:26Z",
+    "job_exit_code": 0,
+    "harness_exit_code": 0,
+    "uid": 54321,
+    "base_commit": "1613f26ff0ec75e30828996fd9ec3f9dd5119ca6",
+    "public_caller_passed": 8,
+    "public_caller_seconds": 0.41,
+    "actual_build_exit_code": 0,
+    "extension_sha256": "sha256:127481b230a3c52c886aea1d01b8957e61b55ab106e315f93c4a8f399ecd425c",
+    "extension_mtime": 1790967668.0,
+    "build_started_epoch": 1790967066,
+    "extension_identity_scope": "original source rebuilt; content hash unchanged, actual compile/link logs, rc0 and mtime after build start support fresh load",
+    "all_commands_ran": true,
+    "all_match_expect": true,
+    "residual_after_force": [],
+    "raw_receipt": {
+      "path": "runs/category2_repair_20260929/pandas_cpu_20261003/cpu_c_50319_public_actor_v5_received/receipt_manifest.json",
+      "sha256": "sha256:5730a60eea37de92fa3b70edd5420fb695b30bce355099a7ef9c3bbdc7141d12",
+      "files": 44
+    },
+    "source_evidence_sha256": "sha256:1290e29c1b7a8d3d2ce9e140c511bd98d00aaf93b7863cbdcfaf6a9b45274e90",
+    "generic_bashenv_write_probe": {
+      "raw_flag": false,
+      "actual_action_requested": false,
+      "interpretation": "九条公开命令未请求RH2_BASHENV_WRITE操作；不能写成全部通用检查通过"
+    }
+  },
+  "required_delivery": "正式不可变consumer/材料编号、派生grading/public身份、精确发布manifest及cpu-c部署/可信读回回执；登记/保护/恢复/选择/解析/资格均消费同一修订，不以诊断wrapper替代",
+  "cpu_gate": "派发实际开放以发布方运行控制回执为准；本请求不自行改control/setup",
+  "reuse_scope": "原材料/CPU核查按精确版本复用；新材料正式noop/gold或六候选矩阵由题主完成，不要求发布方重复题级终审",
+  "probe_ready": false,
+  "training_qualified": false,
+  "original_material_none_calibration": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/cpu_calibration_50319_20261003.json",
+    "sha256": "sha256:277a001ee34bc16c3b872b80311af6b3814f13a3370e9a89f68e7d9f24382319"
+  },
+  "new_public_actor_review": "44件原件的非作者窄核正在本题主的subagent进行；不会据作者读回放行正式探针。"
+}

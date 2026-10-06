@@ -1,0 +1,11 @@
+diff --git a/tests/test_prepare_batch_default.py b/tests/test_prepare_batch_default.py
+--- a/tests/test_prepare_batch_default.py
++++ b/tests/test_prepare_batch_default.py
+@@ -43,6 +43,7 @@ def test_content(self):
+             non_blocking=False,
+             prepare_batch=PrepareBatchDefault(),
+             decollate=False,
++            mode="eval",
+         )
+         evaluator.run()
+         output = evaluator.state.output

@@ -4,6 +4,8 @@
 
 后续讨论：[外部沙箱与环境提前准备建议](pipeline_proposal.md)回应用户关于 CPU 容量、GPU 等待和长短任务混合的新目标，并给出优先级调整与真机前验证范围；本页保留资料调查结果。
 
+2026-10-05 独立复核：[rollout manager 架构与闭包内存修复](codex_rollout_manager_review_20261005.md)，逐项核对 Claude 的 14 个优化点，纠正单进程/GIL、并发计数和路由优化的语义分类，并提出固定执行宿主池的分阶段方案。闭包修复通过本轮聚焦验收；架构升级尚未实施。
+
 **建议先用 MiMo 的三个配套仓库对照训练接入，用 AgentENV 对照环境服务，用 DeepSeek DSec 对照状态所有权和环境分层。现有证据支持把重复准备前移、把执行后端与评分语义分开；尚不足以支持整体更换训练框架或恢复同容器评分为默认。**
 
 已下载五个源码快照并核对提交，未安装依赖、启动 Docker、下载任务镜像/模型或使用付费服务；本轮不需要 API 或用户决策。原 `reference/verl`、`reference/AgentEnv` 等目录保留。源码和报告原件在 [调查目录](../../../../../runs/external_rl_infra_survey_20261004/)，版本与 SHA-256 在 [manifest.json](../../../../../runs/external_rl_infra_survey_20261004/manifest.json)。

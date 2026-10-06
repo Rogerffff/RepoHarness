@@ -1,0 +1,361 @@
+{
+  "schema_id": "rh2.r2e_screening_record.static_review.v1",
+  "task_id": "r2e_gym_subset::aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac",
+  "instance_id": "aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac",
+  "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0（无材料修订；expected sha256:351982fc…；hidden_tests_tree sha256:80d242d6…）",
+  "source_adapter_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl 第 2 行（line_sha256 55a97683…）；public_bundles_v0.jsonl 行 sha256 7829681f…；validation_bundles_v0.jsonl 第 2 行",
+  "recipe_ref": {
+    "derived_image": "rh2-r2e-derived/aiohttp:22a12cc2e2ef-r2e_derive_v1",
+    "grading_image_id": "sha256:dfd6021fb1d936eeb3437dfcfb5ea7ba7c8a230f5253aeaffd900ef4752eeb90",
+    "devcheck_image_id": "sha256:2b571f22044592b07f0cad9655c1539e065a2bdd1e722b77880006e7c3b4bac7",
+    "image_id_note": "同 tag、同配方，重建后 ID 不同；Python 3.9.21、pytest 8.3.3 与插件、git status 输出一致，未逐层比对",
+    "env_recipe": null,
+    "resources": "default（2 CPU / 4 GiB / /tmp 1 GiB / pids 512）"
+  },
+  "code_snapshot_ref": "静态审查未新运行 RH2 代码；评分运行引用 grader_version r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe（账本 report 字段）",
+  "facts_ref": [
+    {
+      "ref": "runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl",
+      "line": 2,
+      "role": "noop，当前材料",
+      "result": "reward 0，17/18，只错 TestProxy.test_https_connect_fingerprint_mismatch",
+      "log": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_306d8c84.eval.log"
+    },
+    {
+      "ref": "runs/r2e_env_repair_20260924/_rerun2/ledger_gold.jsonl",
+      "line": 2,
+      "role": "gold，当前材料",
+      "result": "reward 1，18/18",
+      "log": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_b98f2211.eval.log"
+    },
+    {
+      "ref": "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl",
+      "line": 2,
+      "role": "noop，当前材料（R-f）",
+      "result": "reward 0，17/18，同一不符键",
+      "log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-a_f456eb30.eval.log"
+    },
+    {
+      "ref": "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl",
+      "line": 2,
+      "role": "gold，当前材料（R-f）",
+      "result": "reward 1，18/18",
+      "log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-a_11caaf09.eval.log"
+    },
+    {
+      "ref": "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl",
+      "line": [
+        6,
+        53
+      ],
+      "role": "M3 独立 runner，来源镜像，gold 两次",
+      "result": "两次都是 18 passed"
+    },
+    {
+      "ref": "runs/r2e_actor_20260925/devcheck/aiohttp__22a12cc2e2ef289d9e96fd87dfc1727/orig/",
+      "role": "正式 actor 启动路径 + 真实 Claude Code 2.1.205 + 桩端点，agent uid 54321，base",
+      "result": "preflight 三项都是 ok；依赖齐全；公开测试 12/10/17/2 passed；C4：direct+bad_fp→SFM，经代理三种情况都是 CONNECTED"
+    },
+    {
+      "ref": "runs/r2e_actor_20260925/devcheck/aiohttp__22a12cc2e2ef289d9e96fd87dfc1727/private_gold/private_control.json",
+      "role": "一次性私有容器，root，不联网，gold",
+      "result": "C4：proxy+good_fp→CONNECTED；proxy+bad_fp 与 proxy+bad_fp_per_request→SFM（host/port 是代理地址）"
+    },
+    {
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac/screening_record.json",
+      "role": "历史环境审查记录（09-24），只作对照",
+      "result": "environment_qualified；R03、R09 issue（题面没提代理路径）"
+    }
+  ],
+  "checks": {
+    "1": {
+      "status": "pass",
+      "note": "隐藏测试树摘要与期望摘要在 eval 日志和 run_refs 中一致；gold 可干净应用（index 6bc3ee54 与公开工作树 blob 相同）；base_commit 一致。"
+    },
+    "2": {
+      "status": "pass",
+      "note": "初态缺陷在代理 CONNECT 路径上：agent 身份运行 C4，proxy+bad_fp 为 CONNECTED；noop 目标键失败原因是 'ServerFingerprintMismatch not raised'（test_1.py:475）。题面示例所说的路径不对，见 23。"
+    },
+    "3": {
+      "status": "unknown",
+      "note": "静态渲染已核对；devcheck 的 user 消息是脚本指令，模型实际收到的完整题面消息没有捕获。"
+    },
+    "4": {
+      "status": "pass",
+      "note": "修复只涉及 aiohttp/connector.py（非测试源码）；改 tests/ 不影响评分。静态判断。"
+    },
+    "5": {
+      "status": "pass",
+      "note": "池内同仓 5 题中本题 base 最新（3.11.0.dev0），本题修复不在其它题的初态里（跨题比对与人工 grep）；反向：本题初态包含 1c1c0ea3 的 gold 与新测试，以及 4075c653、240da100 的测试名，影响的是那几题的暴露面。"
+    },
+    "6": {
+      "status": "pass",
+      "note": "Python 3.9.21、pytest 8.3.3（cov/mock/asyncio）、pip 24.2（devcheck env）。"
+    },
+    "7": {
+      "status": "pass",
+      "note": "trustme、proxy.py、pytest_cov、aiohappyeyeballs 都在（devcheck pr0_1）；examples/server.crt/.key 可用于回环 TLS。"
+    },
+    "8": {
+      "status": "pass",
+      "note": "agent uid 54321 在正式启动路径下能导入、跑测试、做回环复现；评分以 54322 身份跑 gold 18/18。"
+    },
+    "9": {
+      "status": "pass",
+      "note": "导入路径是 /testbed/aiohttp/__init__.py（devcheck env 与评分日志）；gold 对照的行为变化证明改动已生效。"
+    },
+    "10": {
+      "status": "pass",
+      "note": "公开测试与 C4 离线复现在 base 上以 agent 身份实测，C4 能区分 base 与 gold。"
+    },
+    "11": {
+      "status": "pass",
+      "note": "各阶段都不需要联网；题面示例的 example.com 可以用回环地址代替。"
+    },
+    "12": {
+      "status": "not_applicable",
+      "note": "目标测试完全 mock，不依赖外部服务。"
+    },
+    "13": {
+      "status": "pass",
+      "note": "评分内存峰值 515–528 MB / 4 GiB；单测 0.02 s 量级。"
+    },
+    "14": {
+      "status": "pass",
+      "note": "当前材料 noop 两次、gold 两次，逐键一致；M3 gold 两次 18 passed。"
+    },
+    "15": {
+      "status": "not_checked"
+    },
+    "16": {
+      "status": "unknown",
+      "note": "gold 通过 git apply 交给 grader；非 gold 候选经 actor 冻结、投影、grader 的完整交付链，本题没有实跑。"
+    },
+    "17": {
+      "status": "pass",
+      "note": "RH2_SETUP_OK=1，恢复 3 个隐藏文件；gold 不触碰测试路径。"
+    },
+    "18": {
+      "status": "pass",
+      "note": "收集 18 个，全部执行；pytest 8.3.3 没有 subtests 插件，subTest 第一个失败即判整例失败。"
+    },
+    "19": {
+      "status": "pass",
+      "note": "18 个键与期望逐键对上；单文件，不会撞键。"
+    },
+    "20": {
+      "status": "pass",
+      "note": "noop 的 0 来自目标键断言失败，不是安装失败或零解析。"
+    },
+    "21": {
+      "status": "not_checked",
+      "note": "只见到成功与断言失败两种形态。"
+    },
+    "22": {
+      "status": "pass",
+      "note": "M3 独立 runner 在来源镜像上跑 gold 两次都是 18 passed；历史对账 5+5 份参考日志一致（未逐份打开）。"
+    },
+    "23": {
+      "status": "issue",
+      "note": "题面示例用了 21 字符的 str 指纹，构造时即 ValueError（devcheck pr2_2）；直连已经会校验（pr3_6）；缺陷只在 HTTP 代理 CONNECT 路径，题面没提。可以读代码推知（公开读者已推出），但照题面复现会得出'base 没问题'。与历史 R03/R09 一致。"
+    },
+    "24": {
+      "status": "unknown",
+      "note": "目标测试替换了 connector._get_fingerprint，所以语义等价、但不经该 helper 取指纹的实现（K2）预计判 0。可能性较低；静态推断，K2 待实跑。"
+    },
+    "25": {
+      "status": "issue",
+      "note": "目标键不检查被校验的 transport：在 _create_proxy_connection 里校验连到代理的原始 TCP transport（K3）在现实中是空操作（Fingerprint.check 遇到非 TLS transport 直接 return），但预计 reward 1；一律拒绝的实现（K4）同样预计 1。静态推断，待实跑。"
+    },
+    "26": {
+      "status": "issue",
+      "note": "'经代理 + 正确指纹仍连通'没有测试保护；Fingerprint 构造契约与直连校验不在隐藏集里（公开测试可用）。"
+    },
+    "27": {
+      "status": "pass",
+      "note": "gold 在可达路径（HTTP 代理 + start_tls）上正确（私有对照 C4）；未覆盖 _wrap_existing_connection（本环境不可达）和 https 代理那一跳；异常 host/port 是代理地址；isinstance(asyncio.Transport) 守卫在非标准 transport 上会放行而不校验（未核实）。这些都属于题面没有约定的范围。"
+    },
+    "28": {
+      "status": "not_applicable",
+      "note": "没有新增断言或修订。"
+    },
+    "29": {
+      "status": "pass",
+      "note": "preflight：HEAD 没有子提交、隐藏测试不可读；公开 CHANGES/ 没有相关片段；公开 test_proxy.py 不含新测试。"
+    },
+    "30": {
+      "status": "not_checked",
+      "note": "actor 不联网；外部答案可达性和真实轨迹未查。"
+    },
+    "31": {
+      "status": "unknown",
+      "note": "隐藏 conftest 通过 pytest_plugins 加载 aiohttp.pytest_plugin，属于候选可改的包代码，是同仓共有通道；本题没有特有的评分控制面。"
+    },
+    "32": {
+      "status": "issue",
+      "note": "verifier 检查的是 mock 交互（调用了 check 并把异常传出），不是指纹校验本身；见 25。"
+    },
+    "33": {
+      "status": "not_checked"
+    },
+    "34": {
+      "status": "not_checked"
+    },
+    "35": {
+      "status": "not_checked"
+    },
+    "36": {
+      "status": "not_checked"
+    },
+    "37": {
+      "status": "not_applicable",
+      "note": "没有修订。"
+    }
+  },
+  "issues": [
+    {
+      "id": "aio22-statement-misleading",
+      "category": "task_quality/statement",
+      "checks": [
+        "3",
+        "23"
+      ],
+      "summary": "题面示例是直连加非法长度的 str 指纹（构造时即 ValueError），直连路径已经会校验；真实缺陷在 HTTP 代理 CONNECT 后升级 TLS 的路径，题面没提。",
+      "evidence_level": "执行证据（devcheck agent 身份 pr2_2、pr3_6、pr4_7；私有 gold 对照）+ 历史 R03/R09",
+      "proposed_action": "修订提案：题面补上触发条件，并把示例改成 ssl=aiohttp.Fingerprint(<32 字节>)。需用户决定；只补题面不能解决 aio22-weak-target-test。",
+      "status": "open"
+    },
+    {
+      "id": "aio22-weak-target-test",
+      "category": "task_quality/test_strength",
+      "checks": [
+        "25",
+        "26",
+        "32"
+      ],
+      "summary": "目标键 TestProxy.test_https_connect_fingerprint_mismatch 替换了 _get_fingerprint 并把 check 设成直接抛异常，只断言代码调用了 check 并把异常传出来；校验原始代理 transport 的空操作实现（K3）和一律拒绝的实现（K4）预计都得 1；'经代理 + 正确指纹'没有正例。",
+      "evidence_level": "静态推断（读测试与 client_reqrep.py:139-141）；待正式评分实跑 K3/K4 并在私有容器跑 C4",
+      "proposed_action": "先实跑 K1–K4。坐实后提出测试修订：用真实 Fingerprint，TransportMock 带 sslcontext/ssl_object/peername extras，另加正确指纹经代理的正例；修订后用 gold、K1–K4 重新核对。需用户决定。",
+      "status": "open"
+    },
+    {
+      "id": "aio22-mock-coupling",
+      "category": "task_quality/over_specific",
+      "checks": [
+        "24"
+      ],
+      "summary": "不经 _get_fingerprint 取指纹、但语义等价的实现（K2）预计判 0。这种写法不常见。",
+      "evidence_level": "静态推断；待 K2 实跑",
+      "proposed_action": "随 aio22-weak-target-test 的修订一并处理（改用真实 Fingerprint 与 transport extras 后，这一耦合随之消失）。",
+      "status": "open"
+    },
+    {
+      "id": "aio22-solver-condition-sys-path",
+      "category": "solver_condition",
+      "checks": [
+        "8",
+        "10"
+      ],
+      "summary": "aiohttp 没有装进 venv，/testbed 必须在 sys.path 上；跑测试用 python -m pytest。沿用历史族 solver_condition:testbed_must_be_on_sys_path。",
+      "evidence_level": "实测（devcheck env；历史 posthoc3）",
+      "proposed_action": "v3 环境说明已写入；无需再处理。",
+      "status": "addressed_in_public_brief"
+    }
+  ],
+  "candidates_for_grading": [
+    {
+      "id": "K1",
+      "kind": "合理替代（正对照）",
+      "file": "aiohttp/connector.py",
+      "function": "_create_proxy_connection",
+      "change": "接收 _start_tls_connection 的返回值，用 _get_fingerprint(req) 取指纹并 check(tls_transport)；不匹配时关闭 transport、在 cleanup 启用时登记、再抛出",
+      "expected_reward": 1,
+      "expected_mismatched_keys": [],
+      "expected_c4": "同 gold"
+    },
+    {
+      "id": "K2",
+      "kind": "语义等价但 mock 耦合",
+      "file": "aiohttp/connector.py",
+      "function": "_start_tls_connection",
+      "change": "位置同 gold；指纹直接取 req.ssl / self._ssl 中的 Fingerprint，不调用 _get_fingerprint",
+      "expected_reward": 0,
+      "expected_mismatched_keys": [
+        "TestProxy.test_https_connect_fingerprint_mismatch"
+      ],
+      "expected_c4": "同 gold"
+    },
+    {
+      "id": "K3",
+      "kind": "错误修复（负对照，关键）",
+      "file": "aiohttp/connector.py",
+      "function": "_create_proxy_connection",
+      "change": "连接代理后立即 fp=_get_fingerprint(req)；如果 req.is_ssl() and fp 就 fp.check(transport)，校验的是原始 TCP transport",
+      "expected_reward": 1,
+      "expected_mismatched_keys": [],
+      "expected_c4": "同 base（proxy+bad_fp 与 proxy+bad_fp_per_request 为 CONNECTED 200）"
+    },
+    {
+      "id": "K4",
+      "kind": "过度拒绝（次要负对照）",
+      "file": "aiohttp/connector.py",
+      "function": "_start_tls_connection",
+      "change": "start_tls 之后，只要 _get_fingerprint(req) 为真，就关闭 transport 并 raise ServerFingerprintMismatch(b'', b'', req.host, req.port)，不做比较",
+      "expected_reward": 1,
+      "expected_mismatched_keys": [],
+      "expected_c4": "proxy+good_fp 也是 SFM got_is_cert=False"
+    }
+  ],
+  "candidates_patch_ref": "card.md 附录 A（四份补丁都已在 base connector.py blob 6bc3ee54 上 git apply --check 通过，改后文件能正常解析）",
+  "behavior_check_request": "同一派生镜像的一次性私有容器（root，不联网），每次从 base 出发分别应用 K1–K4，在 /testbed 下运行 devcheck commands_with_preflight.json 中 id=pr4_7_cmd 的命令；预期输出见 card.md §5 表格。",
+  "file_rules": {
+    "additional_exclusions": []
+  },
+  "revision_refs": [],
+  "disposition": {
+    "scope": "static_review",
+    "state": "needs_review",
+    "reason": "两层原因。(1) 静态候选待 actor 验证：开发条件已由 devcheck 实测，真实模型求解未验。(2) 题意/测试争议：题面误导（缺触发条件，示例不成立），且目标键只检查 mock 交互，预计误收 K3/K4；须先用正式评分实跑 K1–K4，再决定是否提出测试与题面修订。环境资格维持历史的 environment_qualified，本次新证据都支持这一点。",
+    "next_step": "用正式评分代码实跑 K1–K4，并在私有容器对同样的代码状态跑 C4（pr4_7_cmd）。",
+    "pending_checks": [
+      "3",
+      "16",
+      "24",
+      "25",
+      "31"
+    ],
+    "history_relation": "与 09-24 环境审查的事实结论一致；新增的是测试强度问题（K3/K4），历史 R16 标的 pass 只成立于症状对应这一层。"
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "not_for": [
+      "正式训练准入",
+      "评测题（修订前）"
+    ],
+    "caveats": [
+      "reward=1 不能证明修复有效（K3 类会被误收）",
+      "reward=0 中可能混有被题面示例误导的轨迹（改构造器或判断无需修改）"
+    ],
+    "reviewer_exposure": "审查者读过 gold.patch、隐藏测试全文、expected、运行日志与历史环境审查记录；本记录与草稿不提供给解题模型。"
+  },
+  "costs": {
+    "review_tokens": null,
+    "review_usd": null,
+    "cpu_seconds_new": null,
+    "note": "本次静态审查没有新增运行；费用与 token 没有工具观测。"
+  },
+  "reviewed_by": "Claude（R2E 私有主审，第二批静态审查）",
+  "reviewed_at": "2026-09-25",
+  "artifacts": [
+    "analysis_before_history.md",
+    "old_findings_delta.md",
+    "card.md"
+  ],
+  "coordinator_notes": [
+    {
+      "date": "2026-09-25",
+      "by": "Claude B（协调者）",
+      "note": "本记录写于候选实跑之前，'待实跑''预期'为当时推断。实跑结果见 docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/grader_candidates.md，主审与复核的对照见同目录 results/<instance_id>/review.md，批次结论见 README.md §3。协调者未改动本记录的其它字段。"
+    }
+  ]
+}

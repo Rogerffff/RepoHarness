@@ -1,0 +1,256 @@
+{
+ "schema_id": "rh2.r2e_screening_record.v1",
+ "task_id": "r2e_gym_subset::datalad__16c1ffc349df566151db0beb6d355ca27266bb8c",
+ "instance_id": "datalad__16c1ffc349df566151db0beb6d355ca27266bb8c",
+ "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0",
+ "source_adapter_ref": "s2_r2e ingest_manifest_v0 (pin ea567fec…)",
+ "recipe_ref": {
+  "derived_image": "r2e_derive_v1",
+  "resources": "default"
+ },
+ "code_snapshot_ref": "runs/r2e_snapshot_20260923.sha256 (388 files) + r2e_env_tools.sha256（远端 run_dev_probe.py cd2c85cd… / dev_probe_agent.sh 618e0e53… 与本机一致）",
+ "facts_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/facts.json",
+ "dev_probe_ref": "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/dev_probe.json",
+ "checks": {
+  "R01": {
+   "status": "pass",
+   "note": "派生镜像 21 项复核通过；覆盖表 / 隐藏测试树 / 入口脚本 / HEAD 与评分面一致；探针 GIT_HEAD = base_commit fddce1e754d3，镜像 ID 与覆盖表一致（探针按 overlays.jsonl 的 ID inspect 通过）。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/facts.json",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/dev_probe.json"
+   ],
+   "by": "collate_facts.py + p2-subagent"
+  },
+  "R02": {
+   "status": "pass",
+   "note": "noop 0 来自 1 个 mismatched 键（无 missing、无零解析）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-d_ff9ede96.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R03": {
+   "status": "pass",
+   "note": "公开 prompt 919 字符，题面 816 字符、含代码块；公开复现脚本按题面复现成功（REPRO_OBSERVED=1）。示例里的 Test_Utils 定义在公开测试模块 datalad/interface/tests/test_utils.py（题面没写出处，工作区可见）；复现脚本按其公开定义写等价命令类后复现成功。 全局提示写 conda testbed（R2E 实为 .venv）属 E09，不计入本题。run_tests.sh / install.sh 在工作区可见：前者只含入口命令与隐藏测试目录名，后者是本仓库通用安装脚本（同仓各题逐字相同，followups A），不含修复。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/prepared_r2e/prompts.jsonl",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c.py",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+   ],
+   "by": "p2-subagent"
+  },
+  "R04": {
+   "status": "pass",
+   "note": "official / hygiene test_files = r2e_tests/{__init__.py,conftest.py,test_1.py} + run_tests.sh（r2e_official_files）；gold 只触碰 datalad/interface/utils.py，不在其中；解题不需要改 r2e_tests 以外的测试辅助文件。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/facts.json",
+    "rh2/src/repoharness2/adapters/slime/r2e_grading_scripts.py#L80-84"
+   ],
+   "by": "p2-subagent"
+  },
+  "R05": {
+   "status": "pass",
+   "note": "python → /testbed/.venv/bin/python 3.7.9（PATH 首项，镜像 ENV）；pytest 7.4.4；pip 缺失（/testbed/.venv/bin/python: No module named pip；pip / pip3 / uv 命令都不存在，见 WHICH_* 键——本地 dev_probe.json 已用 run_dev_probe.py --reparse（parser v2）重建，远端副本仍是 v1、缺这些键）；gcc / make / git 有。导入方式：editable finder（uv pip install -e .），/tmp 下也导入 /testbed/datalad/__init__.py（IMPORT_FROM_TMP_RC=0）。 git-annex 在（followups A）。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/agent_probe.log",
+    "runs/env_overnight_20260916/M3/facts/16c1ffc349df/pkgsrc.txt",
+    "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+   ],
+   "by": "run_dev_probe.py + p2-subagent"
+  },
+  "R06": {
+   "status": "pass",
+   "note": "5 个 FAILED 键（test_dirty / test_paths_by_dataset / test_save_hierarchy / test_get_dataset_directories / test_filter_unmodified）在 noop 与 gold 下原因相同：TypeError: …got multiple values for argument 'path'。隐藏 conftest 的 `path` fixture 与 datalad nose 风格装饰器（@with_tempfile / @with_tree 把临时路径按位置参数追加）冲突——R2E 转成 pytest 的产物，确定性、与环境无关（不缺依赖 / 网络 / 资源）。公开模块里同样 5 个用例 ERROR（fixture 'path' not found）。这 5 键永远 FAILED，不区分解答，只是让它们的用例体从不执行。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/facts.json",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-d_dff48178.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-d_ff9ede96.eval.log",
+    "runs/r2e_env_repair_20260924/p2/pubtests/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c.log",
+    "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+   ],
+   "by": "p2-subagent"
+  },
+  "R07": {
+   "status": "pass",
+   "note": "派生镜像复核通过（两种 uid 的解释器可执行、私有目录不可读）；探针 chown 后 /testbed、site-packages、.venv/bin、HOME、/tmp 可写，/usr/local 不可写；/rh2_private 对 agent Permission denied，/testbed 与 / 下都没有 r2e_tests。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/facts.json",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/dev_probe.json"
+   ],
+   "by": "collate_facts.py + run_dev_probe.py"
+  },
+  "R08": {
+   "status": "pass",
+   "note": "导入 /testbed/datalad/__init__.py；gold 8/8",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-d_dff48178.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R09": {
+   "status": "pass",
+   "note": "探针公开测试 datalad/tests/test__main__.py：收集 ok、运行 rc 0。补充检查（按 gold 触碰文件选同目录测试，uid 54321 同级条件，事后选择）：datalad/interface/tests/test_utils.py：3 passed / 5 errors（fixture 'path' not found，与改动无关）；plain 与 -W ignore 相同。公开复现 REPRO_RC=0、REPRO_OBSERVED=1。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p2/pubtests/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c.log",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c.py",
+    "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+   ],
+   "by": "run_dev_probe.py + p2-subagent"
+  },
+  "R10": {
+   "status": "pass",
+   "note": "NET_CONNECT_RC=1（连 1.1.1.1:443 失败）、NET_DNS_RC=2；期望键里没有因网络失败的；解题与本题测试都不需要下载。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/dev_probe.json"
+   ],
+   "by": "run_dev_probe.py + p2-subagent"
+  },
+  "R11": {
+   "status": "pass",
+   "note": "FAILED 键的原因与外部服务无关（见 R06）；gold 在无网络的评分沙箱里达到来源定义。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-d_dff48178.eval.log"
+   ],
+   "by": "p2-subagent"
+  },
+  "R12": {
+   "status": "pass",
+   "note": "峰值 658 MB / 限额 4 GiB = 0.161; setup 66s test 2s；探针 chown -R /testbed 83.64 s（与中央复跑和其它包并发，偏高，不作校准）。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-d_dff48178.diagnostics.json",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/root_init.log"
+   ],
+   "by": "collate_facts.py + run_dev_probe.py"
+  },
+  "R13": {
+   "status": "pass",
+   "note": "noop: noop 同条件 2 次 reward 与差异集合一致; gold: gold 同条件 2 次 reward 与差异集合一致",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_a280b0c2.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_dcc2c830.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-d_dff48178.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-d_ff9ede96.eval.log"
+   ],
+   "by": "collate_facts.py（中央复跑并入）"
+  },
+  "R14": {
+   "status": "pass",
+   "note": "R-f 每次 fresh 容器，cleanup.removed=true；omitted_cache_count 的 baseline 与 post 计数相同（没有新增缓存）；gold 行 candidate_test_like_paths=[]；探针前后 git status 行数 2 → 2。本轮四包并行，耗时不作校准。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl",
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/dev_probe.json"
+   ],
+   "by": "p2-subagent"
+  },
+  "R15": {
+   "status": "pass",
+   "note": "2 行 agree（reward、差异集合、观测映射逐键相同）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R16": {
+   "status": "pass",
+   "note": "目标键 test_result_filter ↔ 题面 result_filter 收不到 kwargs；noop 原因行 \"AssertionError: 'dataset' not found in {}\" 与题面逐字一致。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-d_ff9ede96.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-d_dff48178.eval.log"
+   ],
+   "by": "collate_facts.py + p2-subagent"
+  },
+  "R17": {
+   "status": "pass",
+   "note": "派生镜像 git 清理与私有目录 700 复核通过；探针：HEAD 无子提交（children words 1）、refs 0、reflog 0、stash 0、无 remote；无 *.orig / *.rej / *.patch / *.diff 残留；?? install.sh 是本仓库通用安装脚本、不含修复（followups A）。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/facts.json",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+   ],
+   "by": "run_dev_probe.py + p2-subagent"
+  },
+  "R18": {
+   "status": "pass",
+   "note": "无需修复配方或材料修订；只有解题侧条件（记入 solver_conditions，E10：进记录不进题面）。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/dev_probe.json"
+   ],
+   "by": "p2-subagent"
+  },
+  "R19": {
+   "status": "pass",
+   "note": "探针：systemd unit r2e-p2-probe-1825，命令见 packages/p2/README.md，输出 runs/…/p2/dev_probe/；补充检查脚本 pubtests.sh / followups.sh 与日志一并回传；R-f 运行 run_id r2e-rf-all-noop / r2e-rf-all-gold。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p2/probe.log",
+    "runs/r2e_env_repair_20260924/p2/pubtests.sh",
+    "runs/r2e_env_repair_20260924/p2/followups.sh"
+   ],
+   "by": "p2-subagent"
+  },
+  "R20": {
+   "status": "pass",
+   "note": "editable 安装与 agent HOME 无 git 身份是本批 5 个 datalad 镜像共有的；隐藏 conftest 5 题逐字相同（sha256 551a34e5…）；path fixture 冲突只在隐藏测试含 nose 风格 path 参数用例的题（16c1ffc3、9ba5de09）出现。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p2/followups/followups.log",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/summary.json"
+   ],
+   "by": "p2-subagent"
+  }
+ },
+ "issues": [
+  {
+   "category": "solver_condition",
+   "scope": "repo:datalad（本批 5 题）",
+   "summary": "agent HOME（空 tmpfs）没有 git 身份：datalad 建数据集 / 提交会失败（Author identity unknown）；较新版本导入时打印 git 身份警告。本题复现没有涉及 git 操作，同一初始化，推断相同。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/dev_probe.json"
+   ],
+   "proposed_action": "记入解题侧条件；或由 rollout 初始化为 agent 写入 git 身份（A 线接缝，本轮不改）。评分不受影响：隐藏 conftest 自带临时 HOME + git 身份。",
+   "status": "open"
+  }
+ ],
+ "solver_conditions": {
+  "cwd_required": "不要求（editable finder；/tmp 下也导入 /testbed/datalad）",
+  "interpreter": "/testbed/.venv/bin/python（PATH 首项，镜像 ENV；3.7.9）",
+  "pip": "absent（No module named pip；无 pip / pip3 / uv 命令）",
+  "network": "none（NET_CONNECT_RC=1、DNS rc 2）",
+  "public_tests": "datalad/tests/test__main__.py（探针）：收集 ok / 运行 rc 0；相关模块：datalad/interface/tests/test_utils.py：3 passed / 5 errors（fixture 'path' not found，与改动无关）；plain 与 -W ignore 相同",
+  "repro": "REPRO_RC=0；REPRO_OBSERVED=1",
+  "notes": "agent HOME 无 git 身份：建数据集 / 提交前需 git config --global（HOME 可写）或设 GIT_AUTHOR_* / GIT_COMMITTER_*；git-annex 在。 gcc / make / git 有；pip / pip3 / uv 无；无出网。"
+ },
+ "classification": "solver_condition",
+ "revision_refs": [],
+ "disposition": {
+  "state": "environment_qualified",
+  "scope": "本题当前材料（expected_v0）+ r2e_derive_v1 + 默认 rollout profile",
+  "reason": "只差 R13：同条件只有 R-f 一次运行，待中央复跑并入；R01/R02/R08/R15 pass、探针十项最小条件满足、issue 都已归因（只剩解题侧条件）。若中央复跑逐键一致 → environment_qualified。",
+  "pending_checks": [],
+  "evidence_refs": [
+   "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/dev_probe.json",
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/facts.json"
+  ],
+  "reviewer": null
+ },
+ "costs": {
+  "probe_seconds": 91.28,
+  "probe_runs": 1,
+  "rerun_attempts": 0,
+  "rerun_seconds": 0
+ },
+ "review_notes": [
+  {
+   "by": "Claude（验收，apply_r13.py）",
+   "at": "2026-09-23",
+   "change": "R13 由中央复跑并入：pass；disposition.state 'unknown' → 'environment_qualified'"
+  },
+  {
+   "by": "Claude（09-24 Codex R1 更正）",
+   "at": "2026-09-24",
+   "change": "相关性复核：test_utils.py 的 5 个 ERROR 是 test_dirty / test_paths_by_dataset / test_save_hierarchy / test_get_dataset_directories / test_filter_unmodified（nose 风格装饰器在 pytest 下缺 fixture），本题修复在 eval_results，对应测试可运行。记为解题侧噪声。"
+  }
+ ]
+}

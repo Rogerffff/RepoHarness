@@ -1,0 +1,965 @@
+{
+  "schema": "Dask8801_Qwen36_a1_non_author_candidate_and_binding_review_v1",
+  "as_of": "2026-10-04T02:12:36.941737+08:00",
+  "reviewer_task": "/root/dask8801_qwen36_a1_candidate_review",
+  "job_id": "gpu1003-dask8801-qwen36-a1",
+  "scope": "非作者源码/轨迹/原件与实际GPU诊断输入绑定窄核；不是fresh语义judge。",
+  "decision": {
+    "evidence_binding": "pass",
+    "raw_behavior_score": 1,
+    "formal_references_passed": 45,
+    "formal_references_total": 45,
+    "full_diagnostic_goal": "fail_diagnostic_semantics",
+    "fresh_semantic_results": {
+      "total": 13,
+      "pass": 9,
+      "fail": 4,
+      "uncertain": 0
+    },
+    "falsy_compatibility_records": {
+      "total": 10,
+      "empty_configuration": 10,
+      "diagnostic_failure": 0
+    },
+    "import_diagnostic": {
+      "included_in_semantic_denominator": true,
+      "case_id": "nonmapping_str:import",
+      "fresh_verdict": "pass"
+    },
+    "automatic_training_reward_authorized": false,
+    "training_qualification": null
+  },
+  "transport_checks": {
+    "raw_refs": {
+      "count": 144,
+      "bytes": 22290505,
+      "mismatches": [],
+      "expected_listing": {
+        "path": "runs/category2_repair_20260929/swe_dask/model_analysis_20261004/dask8801_qwen36_a1_v1/originals_checks_v1.json",
+        "sha256": "34bafa441415ff68bc4a34ff5a0e55aae99af3dc2d80082c4def94df79c73d59",
+        "bytes": 84791
+      }
+    },
+    "receipt_refs": {
+      "count": 33,
+      "bytes": 816731,
+      "mismatches": [],
+      "expected_listing": {
+        "path": "runs/category2_repair_20260929/swe_dask/model_analysis_20261004/dask8801_qwen36_a1_v1/originals_checks_v1.json",
+        "sha256": "34bafa441415ff68bc4a34ff5a0e55aae99af3dc2d80082c4def94df79c73d59",
+        "bytes": 84791
+      }
+    },
+    "Coder_CPU_reverification_refs": {
+      "count": 30,
+      "bytes": 392701,
+      "mismatches": [],
+      "expected_listing": {
+        "path": "runs/category2_repair_20260929/swe_dask/model_analysis_20261004/dask8801_qwen36_a1_v1/originals_checks_v1.json",
+        "sha256": "34bafa441415ff68bc4a34ff5a0e55aae99af3dc2d80082c4def94df79c73d59",
+        "bytes": 84791
+      }
+    }
+  },
+  "candidate_identity": {
+    "FrozenPatch_digest": "sha256:7104262ba651714c74a09d0c854629dc855e811a2e36cb6f25d7ad7d1d248dcb",
+    "baseline_digest": "sha256:aff22965ee08670e719a8ae2c026cf1f78ef93e201356921845b61ada0262aea",
+    "actual_material_identity": "sha256:b5cf41d813f263bc4d3d04985ecfde892677fb05ef6b6f1e5f95b93758e49b1b",
+    "revision_id": "dask8801-behavior-semantic-v7-compat1",
+    "code_binding": "code9/R25",
+    "entries": [
+      {
+        "path": "dask/config.py",
+        "content_digest": "sha256:a75daef2905664b9eba4f94ff4525636fc46b1e5992199981cb59316f5fc22cc"
+      },
+      {
+        "path": "dask/tests/test_config.py",
+        "content_digest": "sha256:0c15999358a80ad9be1bdd5455179fdabfc8209f9de03658adb254a75b64b965"
+      }
+    ],
+    "scoring_projection": {
+      "schema_id": "rh2.fa.scoring_projection.v1",
+      "frozen_patch_digest": "sha256:7104262ba651714c74a09d0c854629dc855e811a2e36cb6f25d7ad7d1d248dcb",
+      "rollout_execution_id": "gpu1003-dask8801-qwen36-a1",
+      "physical_attempt_id": "gpu1003-dask8801-qwen36-a1#p1",
+      "included_entry_paths": [
+        "dask/config.py"
+      ]
+    },
+    "applied_entry_set_digest_recomputed": "sha256:00810108d7bee940762f737924f1410c29784c5b6762efe019e17c7f5b6d4c37",
+    "exact_edit_replay": [
+      {
+        "trajectory_line": 75,
+        "result_line": 79,
+        "path": "dask/config.py",
+        "after_sha256": "a75daef2905664b9eba4f94ff4525636fc46b1e5992199981cb59316f5fc22cc",
+        "outcome": "applied"
+      },
+      {
+        "trajectory_line": 179,
+        "result_line": 183,
+        "path": "dask/tests/test_config.py",
+        "after_sha256": "2f6ebbb338c333f14c80aeac2ab6ea158d21b20c14ad32d747ed1739d0f452f3",
+        "outcome": "applied"
+      },
+      {
+        "trajectory_line": 229,
+        "result_line": 233,
+        "path": "dask/tests/test_config.py",
+        "after_sha256": "a933d487209bca8f202bcc4e250057d34899755a9359b966972fcc2f8efebae0",
+        "outcome": "applied"
+      },
+      {
+        "trajectory_line": 247,
+        "result_line": 251,
+        "path": "dask/tests/test_config.py",
+        "outcome": "failed_no_modification"
+      },
+      {
+        "trajectory_line": 275,
+        "result_line": 279,
+        "path": "dask/tests/test_config.py",
+        "after_sha256": "0c15999358a80ad9be1bdd5455179fdabfc8209f9de03658adb254a75b64b965",
+        "outcome": "applied"
+      }
+    ]
+  },
+  "source_review": {
+    "changed_existing_definitions": [
+      "collect_yaml"
+    ],
+    "added_definition": "_is_falsey_non_mapping",
+    "unmodified_existing_config_definitions": 17,
+    "unmodified_existing_test_definitions": 34,
+    "mapping_and_empty_null_configuration": "源码保留Mapping，空文档/仅注释/null/空映射不添加设置；本次正式行为参考覆盖并通过。",
+    "falsy_non_mapping": "None/False/数值0/空字符串/空Sequence转为{}；10正式兼容封包均empty_configuration且前后fixture SHA一致；当前v7允许此分支。",
+    "other_nonmapping": "源码拒绝非空str/list/int/float/True等；本次四类×两入口及str import封包绑定fresh9项pass。",
+    "unreadable_entries": "目录枚举/文件读取仍只忽略OSError；原两项权限回归在本次45参考中通过。",
+    "malformed_yaml": "源码没有补充解析失败的文件身份；本次四项fresh fail已有实际证据。",
+    "no_test_oracle_mutation_in_scoring": "模型FP包含测试追加，原34函数不变；评分投影仅config.py，可信材料恢复后评45参考，runner_integrity_changed=false，无candidate_test_like_paths或fixture污染记录。"
+  },
+  "findings": [
+    {
+      "id": "candidate_yaml_filename_gap",
+      "priority": "P2",
+      "reachability": "production_observed",
+      "current_behavior": "本次冻结源码collect_yaml第217行仍调用yaml.safe_load(f.read())，只捕获OSError；损坏YAML直接传播PyYAML异常，没有增加具体配置文件身份。",
+      "violated_invariant": "公开目标要求可读的损坏YAML报错同时指明坏文件并真实解释内容问题；只出现异常本身不能完成完整诊断目标。",
+      "evidence": "本次正式log第1482–1485行的四个原封包对应syntax_brace/tab的directory/file入口；fresh独立裁决均为fail，其message仅标<unicode string>。",
+      "impact": "原45项行为参考可全过，完整诊断目标仍失败；不能把raw1写成完整目标通过。",
+      "suggested_phase": "将其作为本次模型候选的实际失败登记；后续作者修法再按当前协议做新候选验收，保留此候选原件与原分数。",
+      "file_and_line": {
+        "frozen_entry_path": "dask/config.py",
+        "line": 217,
+        "content_sha256": "a75daef2905664b9eba4f94ff4525636fc46b1e5992199981cb59316f5fc22cc"
+      },
+      "minimal_probe_existing_evidence": "读取正式log第1482–1485行并解码诊断封包；本轮没有执行候选或重新运行pytest。",
+      "repair_acceptance": "保留原行为回归、空/None/{}与falsy兼容边界；损坏YAML目录/文件入口的可见诊断包含真实坏文件及真实解析原因，并交新鲜独立judge。",
+      "advice_not_implemented": "解析时保留文件身份，或在不隐藏真实cause的前提下补充路径诊断；不要求固定异常类或固定措辞。",
+      "task_material_blocker_added": false
+    }
+  ],
+  "trajectory_review": {
+    "source_root_cause_located_at_lines": [
+      7,
+      21,
+      67
+    ],
+    "code_edit_line": 75,
+    "ordinary_import_check": {
+      "tool_line": 93,
+      "result_line": 97,
+      "observed": "Import successful!"
+    },
+    "manual_cases": {
+      "tool_line": 111,
+      "result_line": 115,
+      "scope": "10有效配置+6非映射样例；仅打印PASS/FAIL，未验证损坏YAML文件身份。"
+    },
+    "original_tests": {
+      "tool_line": 129,
+      "result_line": 133,
+      "observed": "43 passed in 0.16s"
+    },
+    "issue_import_check": {
+      "tool_line": 147,
+      "result_line": 151,
+      "observed": "str配置import失败，消息包含真实文件路径"
+    },
+    "self_added_test_failure": {
+      "tool_line": 193,
+      "result_line": 197,
+      "observed": "2 failed, 74 passed；n/N作为非空str导致新写测试期望错"
+    },
+    "parser_probe": {
+      "tool_line": 211,
+      "result_line": 215,
+      "observed": "模型实际读出y/Y/n/N为str，yes/no/on/off为bool"
+    },
+    "correction": "第229行移除误列有效分支的n/N；第247行Edit失败无修改；第275行完成替换，最终测试增加y/Y等但没有把n/N加入invalid列表。源码实际拒绝n/N，缺口只是新增测试覆盖。",
+    "final_added_tests": {
+      "tool_line": 289,
+      "result_line": 293,
+      "observed": "81 passed in 0.19s",
+      "base": 43,
+      "new_valid_or_empty_param_rows": 21,
+      "new_invalid_param_rows": 17,
+      "caveat": "21参数行包括2个正常Mapping；invalid函数的typename参数未被断言使用，match只核通用文字，不核具体路径/类型/内容原因；未新增损坏YAML诊断测试。"
+    },
+    "final_explanation": {
+      "line": 321,
+      "supported": "非映射、空/null及falsy处理描述与源码相符；新增21+17参数行可对上。",
+      "limitation": "“fix is complete”不能作为当前完整公开目标通过的结论，因为损坏YAML文件身份仍缺失。"
+    },
+    "tools_count": {
+      "Read": 5,
+      "Bash": 9,
+      "Edit": 5
+    }
+  },
+  "formal_reference_results": [
+    {
+      "partition": "added_p2p",
+      "reference": "dask/tests/test_config.py::test_collect_yaml_permission_errors[directory]",
+      "observed": "PASSED",
+      "eval_log_line": 1535
+    },
+    {
+      "partition": "added_p2p",
+      "reference": "dask/tests/test_config.py::test_collect_yaml_permission_errors[file]",
+      "observed": "PASSED",
+      "eval_log_line": 1536
+    },
+    {
+      "partition": "original_f2p",
+      "reference": "dask/tests/test_config.py::test_collect_yaml_no_top_level_dict",
+      "observed": "PASSED",
+      "eval_log_line": 1538
+    },
+    {
+      "partition": "original_f2p",
+      "reference": "dask/tests/test_config.py::test_collect_yaml_malformed_file",
+      "observed": "PASSED",
+      "eval_log_line": 1537
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_schema",
+      "observed": "PASSED",
+      "eval_log_line": 1567
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_collect_yaml_paths",
+      "observed": "PASSED",
+      "eval_log_line": 1533
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_get_set_canonical_name",
+      "observed": "PASSED",
+      "eval_log_line": 1562
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_set_hard_to_copyables",
+      "observed": "PASSED",
+      "eval_log_line": 1547
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_get_override_with",
+      "observed": "PASSED",
+      "eval_log_line": 1570
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_collect",
+      "observed": "PASSED",
+      "eval_log_line": 1540
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_ensure_file_directory[True]",
+      "observed": "PASSED",
+      "eval_log_line": 1548
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_config_serialization",
+      "observed": "PASSED",
+      "eval_log_line": 1571
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_expand_environment_variables[inp4-out4]",
+      "observed": "PASSED",
+      "eval_log_line": 1557
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_set_nested",
+      "observed": "PASSED",
+      "eval_log_line": 1546
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_expand_environment_variables[inp6-out6]",
+      "observed": "PASSED",
+      "eval_log_line": 1559
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_set",
+      "observed": "PASSED",
+      "eval_log_line": 1544
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_env",
+      "observed": "PASSED",
+      "eval_log_line": 1539
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_ensure_file",
+      "observed": "PASSED",
+      "eval_log_line": 1543
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_merge",
+      "observed": "PASSED",
+      "eval_log_line": 1532
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test__get_paths",
+      "observed": "PASSED",
+      "eval_log_line": 1573
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_ensure_file_defaults_to_DASK_CONFIG_directory",
+      "observed": "PASSED",
+      "eval_log_line": 1550
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_rename",
+      "observed": "PASSED",
+      "eval_log_line": 1551
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_expand_environment_variables[inp7-out7]",
+      "observed": "PASSED",
+      "eval_log_line": 1560
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_expand_environment_variables[1-1_1]",
+      "observed": "PASSED",
+      "eval_log_line": 1554
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_schema_is_complete",
+      "observed": "PASSED",
+      "eval_log_line": 1568
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_get",
+      "observed": "PASSED",
+      "eval_log_line": 1542
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_merge_None_to_dict",
+      "observed": "PASSED",
+      "eval_log_line": 1565
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_deprecations",
+      "observed": "PASSED",
+      "eval_log_line": 1569
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_collect_yaml_dir",
+      "observed": "PASSED",
+      "eval_log_line": 1534
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_core_file",
+      "observed": "PASSED",
+      "eval_log_line": 1566
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_config_inheritance",
+      "observed": "PASSED",
+      "eval_log_line": 1572
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_collect_env_none",
+      "observed": "PASSED",
+      "eval_log_line": 1541
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_env_var_canonical_name",
+      "observed": "PASSED",
+      "eval_log_line": 1561
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_get_set_roundtrip[custom-key]",
+      "observed": "PASSED",
+      "eval_log_line": 1564
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_expand_environment_variables[inp5-out5]",
+      "observed": "PASSED",
+      "eval_log_line": 1558
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_ensure_file_directory[False]",
+      "observed": "PASSED",
+      "eval_log_line": 1549
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_set_kwargs",
+      "observed": "PASSED",
+      "eval_log_line": 1545
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_get_set_roundtrip[custom_key]",
+      "observed": "PASSED",
+      "eval_log_line": 1563
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_canonical_name",
+      "observed": "PASSED",
+      "eval_log_line": 1530
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_update",
+      "observed": "PASSED",
+      "eval_log_line": 1531
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_refresh",
+      "observed": "PASSED",
+      "eval_log_line": 1552
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_expand_environment_variables[1-1_0]",
+      "observed": "PASSED",
+      "eval_log_line": 1553
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_expand_environment_variables[$FOO-foo]",
+      "observed": "PASSED",
+      "eval_log_line": 1555
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_expand_environment_variables[inp3-out3]",
+      "observed": "PASSED",
+      "eval_log_line": 1556
+    },
+    {
+      "partition": "original_p2p",
+      "reference": "dask/tests/test_config.py::test_default_search_paths",
+      "observed": "PASSED",
+      "eval_log_line": 1574
+    }
+  ],
+  "diagnostic_packet_binding": {
+    "physical_test_segment_count": 1,
+    "diagnostic_packets": 13,
+    "falsy_compat_packets": 10,
+    "raw_import_exception_packets": 1,
+    "raw_import_packet_is_not_extra_semantic_case": true,
+    "all_before_after_fixtures_match_trusted_bytes": true,
+    "capture_issues": [],
+    "case_mapping": [
+      {
+        "case_id": "nonmapping_float:directory",
+        "id": "re6edd468d712495ad5cfa1087681b7dc739a5e6d2ab6923d23b95b9543c65852",
+        "payload_sha256": "c5715a147da829d01bdfe4be1decaf432ab2401b485b922457fe688d39415491",
+        "eval_log_line": 1504,
+        "fresh_verdict": "pass",
+        "verdict_source": "independent_verdicts_v1.json"
+      },
+      {
+        "case_id": "nonmapping_float:file",
+        "id": "ra9b299d6d1266926527573bf76141a498cb91c01134e84190eb7afa51e09ab43",
+        "payload_sha256": "60485b438b62a70b2b0d579291ec2a7d527060adf8acb70edcb339e4e8f21475",
+        "eval_log_line": 1505,
+        "fresh_verdict": "pass",
+        "verdict_source": "independent_verdicts_v1.json"
+      },
+      {
+        "case_id": "nonmapping_int:directory",
+        "id": "r3d9ac4b54ad46dbf4694ac685099a6c537ee04303d71a8185a47c77cdef20a57",
+        "payload_sha256": "6d30f1dbd05cfe755a6c860171d76e073910c31d6abba3da8e38ae4862ea8709",
+        "eval_log_line": 1502,
+        "fresh_verdict": "pass",
+        "verdict_source": "independent_verdicts_v1.json"
+      },
+      {
+        "case_id": "nonmapping_int:file",
+        "id": "r18fca3450552706621b329ead3e9aa319d9bcd512c95404026644ec9f0f50edb",
+        "payload_sha256": "9a44b43c2e999bad3fcfcee3b471410fb2210627c539b11221f106cbae76e10a",
+        "eval_log_line": 1503,
+        "fresh_verdict": "pass",
+        "verdict_source": "independent_verdicts_v1.json"
+      },
+      {
+        "case_id": "nonmapping_list:directory",
+        "id": "r2923b7e34e844405bc425517f3805c1214d8c3da10b133b4f4af06d6a146c150",
+        "payload_sha256": "50ded368bc87452a9d8bc9e0bef7834ca24b7c19ca87f6c08fd93f51ba6143e4",
+        "eval_log_line": 1498,
+        "fresh_verdict": "pass",
+        "verdict_source": "independent_verdicts_v1.json"
+      },
+      {
+        "case_id": "nonmapping_list:file",
+        "id": "r9aef4545f88fbf18efa7bbb79d09599aeda4d2ea5ffca1ba9c4c6f8907da74d6",
+        "payload_sha256": "97ff5206b994cd7a394d1f4a8a1ee95958683c827827ab59dc172e6999db9c21",
+        "eval_log_line": 1499,
+        "fresh_verdict": "pass",
+        "verdict_source": "independent_verdicts_v1.json"
+      },
+      {
+        "case_id": "nonmapping_str:directory",
+        "id": "r07f7f5eab2b6b3178058b0e138576a4cc2ae8747149cce9e175e7dd613bc8dd9",
+        "payload_sha256": "1fedccd1539bc67307691600d8353a892537c2e20a238039f57b9962afe82e25",
+        "eval_log_line": 1500,
+        "fresh_verdict": "pass",
+        "verdict_source": "independent_verdicts_v1.json"
+      },
+      {
+        "case_id": "nonmapping_str:file",
+        "id": "r507d5e4d0a5e761a0d77b3b639c164fc8a8950d80b39c13dd2c6312bc4bdd947",
+        "payload_sha256": "208f2c30ead5c428c036c24b7223d393c519e00fa7a86a0ef60312dcd27a27a4",
+        "eval_log_line": 1501,
+        "fresh_verdict": "pass",
+        "verdict_source": "independent_verdicts_v1.json"
+      },
+      {
+        "case_id": "nonmapping_str:import",
+        "id": "r769c60744092d898d9b94d206a08d25b528e8f8d1b5cc656ad32118f16358e45",
+        "payload_sha256": "7d82c3f621cd050c924f8a53d9623fe107a7a23e777f98f2b9da38121b22aefb",
+        "eval_log_line": 1522,
+        "fresh_verdict": "pass",
+        "verdict_source": "independent_verdicts_v1.json"
+      },
+      {
+        "case_id": "syntax_brace:directory",
+        "id": "r4cb0c16dda37d0e40c14e3914fd5e6f28b6f934694f8a486bc3e6d792c64888c",
+        "payload_sha256": "fed4c4844d3c9e20415f27fcdfd7f2353203f7ab84f3822aafd2509a326c7786",
+        "eval_log_line": 1482,
+        "fresh_verdict": "fail",
+        "verdict_source": "independent_verdicts_v1.json"
+      },
+      {
+        "case_id": "syntax_brace:file",
+        "id": "r0655df8035ecb66bbe77c34e68982806104dae2598c81af0adf7cd92387cafea",
+        "payload_sha256": "c03191e67be32c7835118dc8c93eeae144e46bae128a5b58a468aaeac04c4ca1",
+        "eval_log_line": 1483,
+        "fresh_verdict": "fail",
+        "verdict_source": "independent_verdicts_v1.json"
+      },
+      {
+        "case_id": "syntax_tab:directory",
+        "id": "r2dab23f63cebed8c68ee50752d7dd9c9d9623ee60dcf05da0ad1867b3edbb203",
+        "payload_sha256": "ebe0a34d55fa9be3b7b5a78de5e804532cb5bab19ca8abe0eaad816ef4bf8868",
+        "eval_log_line": 1484,
+        "fresh_verdict": "fail",
+        "verdict_source": "independent_verdicts_v1.json"
+      },
+      {
+        "case_id": "syntax_tab:file",
+        "id": "rd8e8d381c0b26735d40313e0ff0962a1672a2d67f9d4882755e66d7f8706144e",
+        "payload_sha256": "e9df28b73f5042cde22e37370c7c21b1e05244c70d236d04a45c3e513b92d9a2",
+        "eval_log_line": 1485,
+        "fresh_verdict": "fail",
+        "verdict_source": "independent_verdicts_v1.json"
+      }
+    ],
+    "compatibility_mapping": [
+      {
+        "case_id": "falsy_list:directory",
+        "branch": "empty_configuration",
+        "eval_log_line": 1488,
+        "content_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "case_id": "falsy_list:file",
+        "branch": "empty_configuration",
+        "eval_log_line": 1489,
+        "content_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      {
+        "case_id": "falsy_str:directory",
+        "branch": "empty_configuration",
+        "eval_log_line": 1490,
+        "content_sha256": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126"
+      },
+      {
+        "case_id": "falsy_str:file",
+        "branch": "empty_configuration",
+        "eval_log_line": 1491,
+        "content_sha256": "12ae32cb1ec02d01eda3581b127c1fee3b0dc53572ed6baf239721a03d82e126"
+      },
+      {
+        "case_id": "falsy_int:directory",
+        "branch": "empty_configuration",
+        "eval_log_line": 1492,
+        "content_sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+      },
+      {
+        "case_id": "falsy_int:file",
+        "branch": "empty_configuration",
+        "eval_log_line": 1493,
+        "content_sha256": "5feceb66ffc86f38d952786c6d696c79c2dbc239dd4e91b46729d73a27fb57e9"
+      },
+      {
+        "case_id": "falsy_float:directory",
+        "branch": "empty_configuration",
+        "eval_log_line": 1494,
+        "content_sha256": "8aed642bf5118b9d3c859bd4be35ecac75b6e873cce34e7b6f554b06f75550d7"
+      },
+      {
+        "case_id": "falsy_float:file",
+        "branch": "empty_configuration",
+        "eval_log_line": 1495,
+        "content_sha256": "8aed642bf5118b9d3c859bd4be35ecac75b6e873cce34e7b6f554b06f75550d7"
+      },
+      {
+        "case_id": "falsy_bool:directory",
+        "branch": "empty_configuration",
+        "eval_log_line": 1496,
+        "content_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+      },
+      {
+        "case_id": "falsy_bool:file",
+        "branch": "empty_configuration",
+        "eval_log_line": 1497,
+        "content_sha256": "fcbcf165908dd18a9e49f7ff27810176db8e9f63b4352213741664245224f8aa"
+      }
+    ],
+    "custom_gpu_key_recipe": {
+      "seed_order": [
+        "material_identity_with_sha256_prefix",
+        "FrozenPatch_digest_with_sha256_prefix",
+        "eval_log_bare_SHA256",
+        "judge_config_bare_SHA256",
+        "judge_prompt_bare_SHA256",
+        "canonical_payload_bare_SHA256"
+      ],
+      "payload_encoding": "json.dumps(payload,sort_keys=True,ensure_ascii=False,separators=(comma,colon)).encode(UTF8)",
+      "seed_encoding": "sha256(json.dumps(seed).encode(UTF8))；json默认ASCII及空格分隔；ID=r+hex",
+      "all_13_ids_recomputed": true,
+      "uses_CPU_ledger_formula": false,
+      "fake_CPU_ledger_or_apply_user_fields_added": false,
+      "scope": "本次只读GPU分析绑定；不改变公共评分契约，不借用旧CPU结果。"
+    },
+    "fresh_verdict_ID_and_quote_references_valid": true,
+    "fresh_output_sha256": "c0fc12e7c31e6287d51f34fd6e95c38f7db0b6312a40a3183682df0d3b5a6ebb",
+    "fresh_provenance_sha256": "221711ab6e992252dd75f0e3572c5b02385e382ac1949ee38810a17d84b00d27",
+    "diagnostic_outcome_sha256": "accfe6ab51e5f5bd02a4cc2dda4aa149260084b48c4f933b96748e85d1f1d728"
+  },
+  "public_delivery": {
+    "mode": "unchanged",
+    "prepared_actual_and_first_model_prompt_exact_match": true,
+    "prompt_sha256": "da676ad7d775266c4e31d755ea6d534a8d75ff7b351484d7eff521ba7c063e7c",
+    "prompt_bytes": 8668,
+    "statement_sha256": "0b3ffb734d5e9f1eac09848d407b0f040913075359563f7717d5f3efb1ce166c",
+    "statement_bytes": 8563,
+    "CRLF_count": 162,
+    "model_requests": 20,
+    "model_sent": "Qwen3.6-35B-A3B",
+    "private_test_protocol_controls_in_solver_input": "未发现；实际first request精确匹配prepared公开prompt，baseline公开test无私有诊断追加。",
+    "old_generic_public_hints": "沿用已明确unchanged范围，仅prepared spec.prompt；旧Do NOT modify tests等通用hints未额外投递不作为违令或新pending。"
+  },
+  "limitations": [
+    "仅针对一个实际Qwen3.6首轮候选；不能推广为模型稳定能力或训练资格。",
+    "本轮只读原件、JSON/base64/SHA与AST，未SSH、CPU、容器、pytest、候选执行、模型或控制运行。",
+    "旧Coder CPU引用30项仅机械核来源/字节，不用其19/4或R16的420控制填本次结果。",
+    "fresh语义裁决由另一个干净上下文审查者形成；本报告仅回验真实输入、ID、引用及输出。provenance声明只读两输入已核SHA；具体后端版本/effort未被工具暴露。",
+    "未做全Docker Config、内核、子进程环境或整个code9集成审计；只核本次候选/公开交付/评分与诊断运输的相关证据。",
+    "正式import只采集str输入那1项，已包括在13项中；损坏YAML full import范围的源码推断不另记为运行通过。"
+  ],
+  "dimension_notes": {
+    "A/E/F/G/M/N": "已核候选分支、目标一致性、实际log/正式参考、collector/fresh输出与兼容分支。",
+    "D/H": "已核原FP/baseline/material/prompt身份与custom GPU键；原始分和诊断分开。",
+    "B/C/I": "本轮无训练策略或准入变更，无新增行政挡板；只登记实际候选失败，停止条件见下。",
+    "J/K": "helper局部可读；源码仅collect_yaml与helper变化。性能或抽象优化不在此候选验收范围。",
+    "L": "N/A：只读证据核查，没有队列/运行实现改动；本轮不评整链吞吐。"
+  },
+  "stop_condition": "原件、FP、公开交付、45参考、13真实诊断与10兼容记录已可逐项追溯；fresh新结果也已回验。收口为“行为1、完整诊断fail”；不为了扩大反例启动新控制或重跑，不新增审批/任务材料阻断。",
+  "read_refs": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "de76dc6bab84209f40053433a68f82ff6feaf4708199473f1a67410f93d6d99c",
+      "bytes": 7626
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/review-standards.md",
+      "sha256": "b56af8cf2805d50f109ed81c33a09bf8e9a10a52d3393741048556a85c0f2acd",
+      "bytes": 21690
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/collaboration-protocol.md",
+      "sha256": "4fb97787272c173c79f203548e488c781526fef4234427cddab8c77e378265ef",
+      "bytes": 18723
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/coordination_workflow_20261003.md",
+      "sha256": "00672909249942072b74c9bccb78617a9b4ab835a6ac64ba9a1190c35ac5fce3",
+      "bytes": 13024
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/card.md",
+      "sha256": "24cb654931748361deb3463bd6f097859a0ef235a08de2b0ef874baf933de584",
+      "bytes": 8474
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/revision.json",
+      "sha256": "fddedb82581076d5b7277693fb3bef44aa73c0a5216e3c243e3ee0133167b87e",
+      "bytes": 14119
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/cpu_acceptance_plan.json",
+      "sha256": "15fbca274831f6d1a607afb9cb0f994297305420770cfdac3152e3d67e5c558b",
+      "bytes": 28576
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/probe_request.json",
+      "sha256": "2afb838064e341c2ae9355c5d136b1de1672647370c3d879d5fb07999e53ddcd",
+      "bytes": 16873
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/acceptance_matrix.json",
+      "sha256": "02668ef71feef69b0db6c8e0f8b7723de11397bde3723abb2a562b18615d4f81",
+      "bytes": 25247
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/effective_statement.txt",
+      "sha256": "0b3ffb734d5e9f1eac09848d407b0f040913075359563f7717d5f3efb1ce166c",
+      "bytes": 8563
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/effective_test.py",
+      "sha256": "8257cf66bb3a65181f165cd9ef040b828a0084cf1ca76e9181d6968053a332e7",
+      "bytes": 28768
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/effective_test.patch",
+      "sha256": "a0d2794fb43dc920f7dbc00078975b9334a3040d873aa56971256f04f3dd360c",
+      "bytes": 13552
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tools/config_diagnostic_protocol.py",
+      "sha256": "7886a70ac59d051eca4459c6e32d94b77159c6890341183041dc73df03d1292a",
+      "bytes": 13981
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tools/judge_job_from_formal_log.py",
+      "sha256": "1a4c9a97470b026772961b9f7981a6f910d9f142e41e5ffbf8ff8c7486a51d12",
+      "bytes": 8609
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/semantic_controls/judge_config_v3_bound.json",
+      "sha256": "7e7e861112af22ec7be814a084e395070a5806777eff908dd02c746e8c8acfea",
+      "bytes": 1085
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/semantic_judge_prompt_v3.txt",
+      "sha256": "9d49671b56ae155f9183d8a0280ff7e779959de2697cdf3887ba4f558f2c19c1",
+      "bytes": 3190
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/model_analysis_20261004/dask8801_qwen36_a1_v1/originals_checks_v1.json",
+      "sha256": "34bafa441415ff68bc4a34ff5a0e55aae99af3dc2d80082c4def94df79c73d59",
+      "bytes": 84791
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/model_analysis_20261004/dask8801_qwen36_a1_v1/trajectory_index_v1.json",
+      "sha256": "06893ebca61a56ec8535ef1e52e665a65b8085f51e7ce7e756b0af77e0f7b081",
+      "bytes": 115415
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/model_analysis_20261004/dask8801_qwen36_a1_v1/anonymous_GPU_binding_crosscheck_v1.py",
+      "sha256": "4cf818f86650ed0a25f9d751b79e564ad6855606de64b719506265af2a93afd1",
+      "bytes": 4603
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/model_analysis_20261004/dask8801_qwen36_a1_v1/anonymous_GPU_binding_crosscheck_v1.json",
+      "sha256": "a37917e206ed97e9682fb6f681016b8ef11d10eb7039aa505efbc7761606f54f",
+      "bytes": 4669
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v8/rh2/src/repoharness2/grading/manager.py",
+      "sha256": "1783533e1e3b66a57fcaa5a599a1da4f8e4e886318e24f040c6df91f294c1c1e",
+      "bytes": 225647
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-qwen36-a1/code_v9/source_manifest.json",
+      "sha256": "161f80fdb9e4c5377455c65a0d9fd5efd54a7cffbb63a2e96fc78928cc9ad342",
+      "bytes": 510627
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-qwen36-a1/config_qwen_dask4_r25_code9_v1/tasks.json",
+      "sha256": "b58ae18b1121687883fada9e4bb7229252179dbe21ce7621ef20baa2596677ac",
+      "bytes": 1837
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-qwen36-a1/config_qwen_dask4_r25_code9_v1/input_checks/gpu1003-dask8801-qwen36-a1/input_check.json",
+      "sha256": "0726c72d525c573019f8710b674b973c17344ef62bf30fbcaed13eecdf409c2b",
+      "bytes": 10945
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-qwen36-a1/prepared_dask_four_r25_code9_v1/dask8801/private/host_grading_views.jsonl",
+      "sha256": "1660f444f3b62fb0506d6d97fb524db137d91e28a3b4d9ac4c5c9e92678b5e4d",
+      "bytes": 22208
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-qwen36-a1/prepared_dask_four_r25_code9_v1/dask8801/prepared/rollout_task_views.jsonl",
+      "sha256": "c1772cca2e2c15d902d9e1f9e5afda8a753aba0da66aa2b777fe0a6573cdf7b9",
+      "bytes": 10527
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-qwen36-a1/prepared_dask_four_r25_code9_v1/dask8801/prepared/prompts.jsonl",
+      "sha256": "d8101df6595d72ece7f5b0bd789c541085bf2576e41426cfbca5005e487e3d69",
+      "bytes": 9402
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask8801-qwen36-a1/attempt/attempt.json",
+      "sha256": "cd710bb3b5105b7feb0c820849f015b5bf9742d8fc6b8239a7b171e0df0fd5fc",
+      "bytes": 16171
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask8801-qwen36-a1/attempt/trajectory.jsonl",
+      "sha256": "dbb5a60d9f1a88471c40c6c56b1c4e04f3678e0172e2381c60b031d651978078",
+      "bytes": 394033
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask8801-qwen36-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "6c50d3a65b71f11d2fb813ab4a94d8c4083894c7a8ca06ec3042a68e1a979bc8",
+      "bytes": 54128
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask8801-qwen36-a1/attempt/frozen/baseline_manifest.json",
+      "sha256": "ef4851038f426788a5751d1121d47140be0394952819ed2f9cc2013d2d154e3a",
+      "bytes": 108793
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask8801-qwen36-a1/attempt/frozen/baseline.tar",
+      "sha256": "4670e8e78951a74c40c127a6ffe06520df2ff4c4cbd552688316edff10b8b723",
+      "bytes": 15278080
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask8801-qwen36-a1/attempt/candidate/dask__dask-8801.diff",
+      "sha256": "bcc017e027bba311e3133a9b7fed1565a3e22bb6c982ae9febc86ee7ad5e437c",
+      "bytes": 5522
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask8801-qwen36-a1/grading/projection.json",
+      "sha256": "b3f20ada5e78fd8349648c79b646f2f72563f71c0397296aa7aac39c94cdb7a4",
+      "bytes": 318
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask8801-qwen36-a1/grading/report.json",
+      "sha256": "2d7b9fac70cc098e7104015df47c4ef95ebdefa14fdc5a0ca5dec41143953ed4",
+      "bytes": 1812
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask8801-qwen36-a1/grading/status.json",
+      "sha256": "62cffe3ec0251ba514ba243614aaf466edc12e774fc907bd784ebb215b47c05f",
+      "bytes": 2596
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask8801-qwen36-a1/grading/eval_logs/evallog_gpu1003-dask8801-qwen36-_77927cf9.diagnostics.json",
+      "sha256": "f73f8c3f8ec43dab68c7458542f60d439163e16a24723d9477c0614b0cea8739",
+      "bytes": 10722
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask8801-qwen36-a1/grading/eval_logs/evallog_gpu1003-dask8801-qwen36-_77927cf9.eval.log",
+      "sha256": "e1102e2ad447ca9ed0a54ed40352aaaf0c6475df6919087601041689981321c2",
+      "bytes": 73989
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask8801-qwen36-a1/solver_prompt.txt",
+      "sha256": "da676ad7d775266c4e31d755ea6d534a8d75ff7b351484d7eff521ba7c063e7c",
+      "bytes": 8668
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask8801-qwen36-a1/attempt/prompt.txt",
+      "sha256": "da676ad7d775266c4e31d755ea6d534a8d75ff7b351484d7eff521ba7c063e7c",
+      "bytes": 8668
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/dask4-r25-code9-v1/gpu1003-dask8801-qwen36-a1/requests.jsonl",
+      "sha256": "c8648474960d6330dd41d98119716c5e4c0ba5fb31e48f996884329a35ad93ba",
+      "bytes": 1762659
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/model_analysis_20261003/dask7656_qwen36_a1_v1/public_hint_scope_GPU_clarification_v1.json",
+      "sha256": "f331fc7787c5998589735263755d28624727885ca0f008ff41f09c83dc4a3b90",
+      "bytes": 1374
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/semantic_judgement_20261004/actual_job_a1_v1/job.json",
+      "sha256": "b673464fcca4218143cd16dc40297a7da10f936be63ddc72c4eea008050d77ee",
+      "bytes": 1531
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/semantic_judgement_20261004/actual_job_a1_v1/private_run_binding.json",
+      "sha256": "943e8a029da63a43011afa6e85d5a237cc232969dd0f21fe6abdf2d9db6cc358",
+      "bytes": 4989
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/semantic_judgement_20261004/actual_job_a1_v1/judge_inputs.json",
+      "sha256": "72eb091d83cf528c113d2bc00c4b088fb4c85531666484d8ab81fa615ad268b0",
+      "bytes": 13771
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/semantic_judgement_20261004/actual_job_a1_v1/judge_prompt.txt",
+      "sha256": "9d49671b56ae155f9183d8a0280ff7e779959de2697cdf3887ba4f558f2c19c1",
+      "bytes": 3190
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/semantic_judgement_20261004/actual_job_a1_v1/independent_verdicts_v1.json",
+      "sha256": "c0fc12e7c31e6287d51f34fd6e95c38f7db0b6312a40a3183682df0d3b5a6ebb",
+      "bytes": 6529
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/semantic_judgement_20261004/actual_job_a1_v1/independent_judge_provenance_v1.json",
+      "sha256": "221711ab6e992252dd75f0e3572c5b02385e382ac1949ee38810a17d84b00d27",
+      "bytes": 2430
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/semantic_judgement_20261004/actual_job_a1_v1/diagnostic_outcome.json",
+      "sha256": "accfe6ab51e5f5bd02a4cc2dda4aa149260084b48c4f933b96748e85d1f1d728",
+      "bytes": 9073
+    }
+  ]
+}

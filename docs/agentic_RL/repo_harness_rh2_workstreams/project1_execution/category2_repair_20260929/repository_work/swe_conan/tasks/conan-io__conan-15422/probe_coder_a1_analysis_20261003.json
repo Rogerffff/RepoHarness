@@ -1,0 +1,243 @@
+{
+  "schema_id": "conan.owner.model_analysis.v1",
+  "as_of": "2026-10-03T06:09:47.991297+00:00",
+  "request_id": "swe-conan15422-r12-briefv1-20261003-v1",
+  "job_id": "gpu1003-conan15422-coder-a1",
+  "model": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+  "sample": 1,
+  "material_version": "conan15422_private_test_v2",
+  "budget_version": "probe-wide-v1",
+  "raw_score": {
+    "reward": 0,
+    "f2p": {
+      "passed": 4,
+      "total": 5
+    },
+    "p2p": {
+      "passed": 40,
+      "total": 40
+    }
+  },
+  "semantic_verdict": "incomplete_fix_explicit_jobs_only_default_effective_jobs_omitted_valid_test_failure",
+  "candidate_findings": [
+    {
+      "priority": "P1",
+      "finding": "guard omits default effective jobs and retains original default parallelism defect"
+    },
+    {
+      "priority": "P2",
+      "finding": "full issue satisfaction asserted despite missing default behavior and JSON-only demo"
+    }
+  ],
+  "task_material_findings": [],
+  "semantic_independent_review": {
+    "status": "completed_no_task_material_blocker",
+    "report": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_15422_coder_a1_semantic_review_20261003.md",
+      "sha256": "sha256:36511c3af90d01038f7dc89d9eaeb06ce1a2ab243784a5a08bc1fa5acf84bb60"
+    },
+    "scope": "non-author focused candidate semantics, exact references, model trajectory/validation; no CPU/GPU rerun"
+  },
+  "execution_independent_review": {
+    "status": "execution_evidence_consistent_complete_test_failure",
+    "report": {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/conan15422_coder_a1_execution_review_v1.json",
+      "sha256": "sha256:387975f1e1f6dfd92c23500bd207b629b209191cbd62c83f22fa76b108f71ea5"
+    },
+    "scope": "completed first Coder arm execution/transport only; no full trajectory or semantic audit"
+  },
+  "owner_analysis": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-15422/probe_coder_a1_analysis_20261003.md",
+    "sha256": "sha256:0198440b315e09fd3092351654bfafe4414afa21c6943743f2689bd18769082c"
+  },
+  "owner_readback": {
+    "path": "runs/category2_repair_20260929/conan_cpu_20261003/probe_analysis_15422_coder_a1_20261003_v1/owner_readback.json",
+    "sha256": "sha256:69bb6555ba5e662e60f92f4ace2fc2ecf5f3f8155f8d471972e2db0f46e41773"
+  },
+  "trajectory": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v18/results/gpu1003-conan15422-coder-a1/attempt/trajectory.jsonl",
+    "sha256": "b936d704d424534d2d2181a23787b803dd5a2f9395a3b8017996685a0d4a6103",
+    "bytes": 453817
+  },
+  "complete_candidate": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v18/results/gpu1003-conan15422-coder-a1/attempt/candidate/conan-io__conan-15422.diff",
+    "sha256": "f429ece39a75f44ffe6feb47251ac842962c2c0dc6ca3ea0a136523dc921b1df",
+    "bytes": 9522
+  },
+  "frozen_patch": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v18/results/gpu1003-conan15422-coder-a1/attempt/frozen/frozen_patch.json",
+    "sha256": "afec7b91ee51d4cb97233221e9088aa5cd00242242aa7e0e02d5cd5293f42958",
+    "bytes": 34426
+  },
+  "scoring_projection": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v18/results/gpu1003-conan15422-coder-a1/grading/projection.json",
+    "sha256": "6ba15d309f292b4ea2992b7026f6a1697a5affdbe7fb45b7304c0bae69a07f63",
+    "bytes": 437
+  },
+  "dimensions": {
+    "method": {
+      "heading": "方法与错误演化",
+      "analysis": "公开issue要求生成build preset的jobs，让 `cmake --build --preset`继承并行能力，未要求“只有显式配置才加”。公开 `build_jobs()` 明确定义：有 `tools.build:jobs`取显式值，否则取检测CPU数；这个默认能力正是遗漏字段时没有传给CMake的部分。新增默认参考读取同一生成进程的公开helper结果，不固定主机CPU数量，也不强制gold的具体实现。\n\n模型行195正确定位 `_build_preset_fields()`，行199先加 `jobs=build_jobs(conanfile)`并写正值。它新增“未设置jobs时应无字段”自测，经历string类型与共享fixture纠错后，行294发现真实helper返回默认2。行307已读明默认行为，仍在行312解释为应该只保留显式值，行316增加 `if \"tools.build:jobs\" in conanfile.conf._values`。最终默认路径不调用helper，原并行问题仍在；主动读取私有 `_values`也偏离公开Conf接口。\n\n显式2／7的真实configure＋build及Multi-Config追加／替换通过；默认缺项被准确拒绝，40旧参考保持。没有测试识别／绕过。公开单元改成每例fresh对象解决污染，本身合理；新增“不设jobs就不生成”断言却把未获支持的兼容假设固化进测试。demo打印同一假设并保留，不是独立功能依据。初版生产实现没有实际评分，不能声称“中途候选已经通过全部评分”。"
+    },
+    "localization": {
+      "heading": "定位",
+      "analysis": "工具2首次读对生产源码，距首请求 **1.397秒**；随后查看测试、ParallelBlock和build_jobs。行195正确定位与计划的响应完成距首请求 **13.207秒**，在18个工具后；这只是响应完成上界。查helper时先搜索cmake／conans目录、误读 `/testbed/conan/tools/build.py`（实际build目录），然后查 `build/__init__.py`和cpu.py。根因位置正确，需求解释在自测阶段发生错误回退。"
+    },
+    "tools": {
+      "heading": "工具与纠错",
+      "analysis": "38工具：**Bash18、Read10、Edit8、Write2**，六个原 `is_error=true`：缺失build.py、三次单元失败、两次demo错误。三次单元结果分别2失败／2通过、1失败／3通过、1失败／3通过，最后4通过。\n\n它正确修string `\"8\"`为int8和module fixture污染，随后为错误默认预期修改了生产代码。demo先 `from unittest.mock import mock`导入失败，再改MagicMock却残留 `mock.patch`，产生NameError；最终重写直接调用真实 `_CMakePresets.generate()`，脚本完成。这个纠错恢复了工具执行，但不能修正需求理解。原脚本捕获Exception只打印、不保证非零，成功退出本身不足以判所有demo正确；本次具体输出是生成无jobs和显式16。"
+    },
+    "parallel": {
+      "heading": "并行",
+      "analysis": "39响应前38各一个工具，最后结束，无多工具请求或重叠。生产文件定位后，独立公开测试与helper读取有并行机会，但大量纠错依赖顺序。CC／adapter多工具可用性未独立证明，模型并行能力不可判断；不将同一单元文件的写入与测试列为可安全并行。"
+    },
+    "verification": {
+      "heading": "验证",
+      "analysis": "| 结果 | 覆盖与限制 |\n| --- | --- |\n| 行242／268／294→333 | 三次自测失败后最终4通过；最后两条新例分别显式8、错误默认省略假设 |\n| 行348 | 原公开CMakeToolchain integration40通过、3平台skip，3.33秒；不含宿主新增五F节点 |\n| 行361 | CMake工具公开unit58通过，0.97秒；含前述单元4，不能相加为不重叠62 |\n| 行383／423→445 | demo两次异常后生成成功，默认无jobs、显式16；未运行真正cmake configure／build |\n| 可信grader | 原1／1F、新3／4F、40／40P；显式2／7实际CMake3.23.5 configure和build成立，默认KeyError失败 |\n\n模型最终行450准确披露“只加显式值”和公开测试通过，却声称“完全满足原issue”，且用自设默认兼容假设作依据。它没有验证默认并行实际结果，也没有执行所示 `cmake --build --preset`示例。广泛旧回归通过可以排除部分回归，不能核销新增默认功能；宿主可信测试明确抓住该缺口。"
+    },
+    "efficiency": {
+      "heading": "效率",
+      "analysis": "求解 **92.707秒**、harness89.856秒；CC89.235秒／API81.519秒，差7.716秒不等于纯工具时间。39回合累计输入 **759,342**／输出 **9,995 tokens**，最大单请求32,775；CC／gateway／adapter一致。误定位helper、重复整文件编辑与单元测试、demo导入修补增加开销；其中fixture修正有价值，错误需求驱动的生产回退没有达成目标。不据单题时长评一般模型效率。\n\nGit清理16.301秒、可信初始化8.523秒及容器准备独立；评分100.245秒、测试5.478秒、评分队列0秒，不算求解慢。39gateway实际输出预算65536，CC32000元数据不覆盖它；196608上下文／240回合／3小时未触及，不是预算截断失败。CC自动估计4.046585美元非本地账单。"
+    },
+    "termination_and_stability": {
+      "heading": "结束与稳定性",
+      "analysis": "`completed/success/end_turn`、harness0、39HTTP200无流错误，正常结束后语义缺陷被可信测试判0，不能归类infra或截断。18个有限宿主采样有未知间隔，不推全程峰值。Coder只一次，Qwen首次缺；不判一般稳定率或训练资格。"
+    }
+  },
+  "metrics": {
+    "model_turns": 39,
+    "tool_calls": 38,
+    "tool_counts": {
+      "Bash": 18,
+      "Read": 10,
+      "Edit": 8,
+      "Write": 2
+    },
+    "reported_tool_errors": 6,
+    "error_rows": [
+      154,
+      242,
+      268,
+      294,
+      383,
+      423
+    ],
+    "cumulative_input_tokens": 759342,
+    "cumulative_output_tokens": 9995,
+    "largest_request_input_tokens": 32775,
+    "solve_seconds": 92.707,
+    "harness_exec_seconds": 89.856,
+    "cc_duration_seconds": 89.235,
+    "cc_api_duration_seconds": 81.519,
+    "cc_non_api_residual_seconds_not_pure_tool_time": 7.716,
+    "first_relevant_source_read_since_first_request_seconds": 1.3966515064239502,
+    "initial_correct_root_location_response_completion_since_first_request_seconds": 13.207143068313599,
+    "diagnosis_response_trajectory_row": 195,
+    "environment_preparation_stage_seconds": {
+      "image_ready": 0.021,
+      "network_and_container": 1.221,
+      "git_sanitize": 16.301,
+      "trusted_init": 8.523,
+      "baseline_census": 0.167,
+      "quiescence": 0.401
+    },
+    "grading_timing": {
+      "schema_id": "rh2.grading_timing_record.v1",
+      "record_id": "timing_816a9dea",
+      "trajectory_id": "gpu1003-conan15422-coder-a1",
+      "task_id": "swe_gym_lite::conan-io__conan-15422",
+      "image_pull_seconds": 0.0,
+      "env_reset_seconds": 17.007,
+      "prep_seconds": 0.408,
+      "test_seconds": 5.478,
+      "total_grading_seconds": 100.245,
+      "queue_wait_seconds": 0.0,
+      "container_peak_memory_mb": 345.762,
+      "queue_depth_at_enqueue": null,
+      "backpressure_triggered": false
+    },
+    "cc_cost_usd_builtin_estimate_not_compute_bill": 4.046585
+  },
+  "reference_states": {
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_android_c_library": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_android_legacy_toolchain_flag[False]": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_android_legacy_toolchain_flag[None]": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_android_legacy_toolchain_flag[True]": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_android_legacy_toolchain_with_compileflags[False]": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_android_legacy_toolchain_with_compileflags[None]": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_android_legacy_toolchain_with_compileflags[True]": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_avoid_ovewrite_user_cmakepresets": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_build_folder_vars_editables": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_cmake_layout_toolchain_folder": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_cmake_presets_binary_dir_available": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_cmake_presets_multiconfig": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_cmake_presets_shared_preset[CMakePresets.json]": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_cmake_presets_shared_preset[CMakeUserPresets.json]": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_cmake_presets_singleconfig": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_cross_arch": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_cross_build": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_cross_build_conf": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_cross_build_linux_to_macos": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_cross_build_user_toolchain": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_cross_build_user_toolchain_confs": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_extra_flags": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_extra_flags_via_conf": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_find_builddirs": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_no_cross_build": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_no_cross_build_arch": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_pkg_config_block": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_presets_jobs_default_matches_public_helper": "FAILED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_presets_jobs_explicit_values[jobs2]": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_presets_jobs_explicit_values[jobs7]": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_presets_jobs_multiconfig_append_replace": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_presets_ninja_msvc[x86-x86]": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_presets_ninja_msvc[x86-x86_64]": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_presets_ninja_msvc[x86_64-x86]": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_presets_ninja_msvc[x86_64-x86_64]": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_presets_njobs": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_presets_not_found_error_msg": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_recipe_build_folders_vars": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_set_cmake_lang_compilers_and_launchers": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_set_linker_scripts": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_test_package_layout": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_toolchain_cache_variables": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_user_presets_custom_location[False]": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_user_presets_custom_location[subproject]": "PASSED",
+    "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_variables_types": "PASSED"
+  },
+  "non_reference_platform_skips": [
+    {
+      "reported_source_line": 355,
+      "reason": "Only OSX",
+      "function": "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_cmaketoolchain_cmake_system_processor_cross_apple",
+      "non_reference": true,
+      "mapping": "raw log line/reason + fixed trusted source AST, not direct full skipped-node output"
+    },
+    {
+      "reported_source_line": 382,
+      "reason": "Only OSX",
+      "function": "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_apple_vars_overwrite_user_conf",
+      "non_reference": true,
+      "mapping": "raw log line/reason + fixed trusted source AST, not direct full skipped-node output"
+    },
+    {
+      "reported_source_line": 816,
+      "reason": "Only Windows",
+      "function": "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py::test_presets_paths_normalization",
+      "non_reference": true,
+      "mapping": "raw log line/reason + fixed trusted source AST, not direct full skipped-node output"
+    }
+  ],
+  "actual_gateway_output_limits": [
+    65536
+  ],
+  "candidate_repair_required_for_success": true,
+  "task_material_changes_required": false,
+  "CPU_or_model_rerun_required": false,
+  "ordinary_additional_samples": "deferred_coverage_first",
+  "paired_request_closed": false,
+  "pending_models": [
+    "Qwen/Qwen3.6-35B-A3B"
+  ],
+  "training_eligibility": "not_established"
+}

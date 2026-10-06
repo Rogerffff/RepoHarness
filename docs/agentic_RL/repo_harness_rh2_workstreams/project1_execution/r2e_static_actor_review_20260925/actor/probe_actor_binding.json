@@ -1,0 +1,92 @@
+{
+  "scope": "CPU only; no Docker, network, SSH, model, or scoring execution. Build probe stops at first Docker boundary.",
+  "task_id": "r2e_gym_subset::orange3__9b5494e26f407b75e79699c9d40be6df1d80a040",
+  "material_revisions": [
+    "r2e-mr-020"
+  ],
+  "build_boundary": {
+    "no_environment_step": {
+      "pins": [],
+      "recipe_id": "r2e_derive_v1",
+      "recipe_sha256": "sha256:0da821a15fa389289f524c60d3a421bc940cce753e4ecf3d53560b7ab6b31df9",
+      "material_guard": "env_recipe_required:r2e-mr-020:+env_v2:recipe=r2e_derive_v1",
+      "docker_boundary_calls": [],
+      "stopped_result_failures": [
+        "env_recipe_required:r2e-mr-020:+env_v2:recipe=r2e_derive_v1"
+      ],
+      "built": false
+    },
+    "approved_scipy": {
+      "pins": [
+        "scipy==1.5.4"
+      ],
+      "recipe_id": "r2e_derive_v1+env_v2",
+      "recipe_sha256": "sha256:5122771965c2cb69f748b63f874b514b99b33e731a40d8e568a1af05de9e6fbc",
+      "material_guard": null,
+      "docker_boundary_calls": [
+        {
+          "operation": "image_inspect",
+          "ref": "namanjain12/orange3_final@sha256:a5aa510cf45da43f32775bd0cdbf1ac81ef5e621732ba30a12f120624e3358f9"
+        }
+      ],
+      "stopped_result_failures": [
+        "RuntimeError:CPU_PROBE_STOP_AT_DOCKER_BOUNDARY"
+      ],
+      "built": false
+    },
+    "wrong_package": {
+      "pins": [
+        "hypothesis==6.24.1"
+      ],
+      "recipe_id": "r2e_derive_v1+env_v2",
+      "recipe_sha256": "sha256:0fd613f305e8b78181f712e7df9bbf0b1b024dcebe81e3d8c340b83eb0782ca0",
+      "material_guard": null,
+      "docker_boundary_calls": [
+        {
+          "operation": "image_inspect",
+          "ref": "namanjain12/orange3_final@sha256:a5aa510cf45da43f32775bd0cdbf1ac81ef5e621732ba30a12f120624e3358f9"
+        }
+      ],
+      "stopped_result_failures": [
+        "RuntimeError:CPU_PROBE_STOP_AT_DOCKER_BOUNDARY"
+      ],
+      "built": false
+    }
+  },
+  "actual_overlay_checks": {
+    "actual_old_overlay": {
+      "image": "sha256:dd35c11cf6a7e199649cb5add7160f1681ba01ba00e087376c5a4594bdae7910",
+      "recipe": "r2e_derive_v1",
+      "rejection": "overlay:env_recipe_required:r2e-mr-020:+env_v2:recipe=r2e_derive_v1"
+    },
+    "actual_approved_overlay": {
+      "image": "sha256:f27e31c68aad8c6be86466780c58f62430059adee6a5082aebe141d9dde6036b",
+      "recipe": "r2e_derive_v1+env_v2",
+      "rejection": null
+    }
+  },
+  "task_face": {
+    "loaded_via_environment": true,
+    "rollout_image": "sha256:f27e31c68aad8c6be86466780c58f62430059adee6a5082aebe141d9dde6036b",
+    "grading_image": "sha256:f27e31c68aad8c6be86466780c58f62430059adee6a5082aebe141d9dde6036b",
+    "grading_local_build_id": "sha256:f27e31c68aad8c6be86466780c58f62430059adee6a5082aebe141d9dde6036b",
+    "rollout_local_build": true,
+    "grading_local_build": true,
+    "rollout_interpreter_prefix": "/testbed/.venv",
+    "rollout_manifest_digest": null,
+    "grading_manifest_digest": null,
+    "public_payload_keeps_source_image": true
+  },
+  "source_sha256": {
+    "rh2/src/repoharness2/adapters/slime/prepared_task_face.py": "42ba5db6430d3e118016c64b0bdaf72f24a5bf6c8297fa2535e2be85fdf34ff7",
+    "rh2/src/repoharness2/envpack/environment_overlay.py": "0b14684e4b06a30e8ab897de23f06ee528f0213ecbca5f62374f12fb237c7abc",
+    "rh2/scripts/build_r2e_derived.py": "45d671dbc86bfdc83cd969869f8b8ebbdf1b01941df831fa430c93f16b7de5ca",
+    "rh2/scripts/r2e_derive/env_v2.sh": "2eeba21074d2a8eca6ac50d13fae5611a0e1680896c31a7239994ba930211ad7",
+    "rh2/src/repoharness2/adapters/slime/bringup.py": "3b0fd1a7b2c511168f339e1a71469d1fdced8517cf063de076690dfdb2db1fd7",
+    "rh2/src/repoharness2/adapters/slime/generate.py": "79a425501ed7315e0fa9fe2da350947941bc8e83425f5a3093a81b3679f7d199",
+    "rh2/experiments/miles_gpu_spike/launch.sh": "596b641d1a666333bcc8d1beae8149f7ca97f446d530814cfdb0f32640a6333a",
+    "rh2/experiments/r2e_actor_20260925/r2e_devcheck.py": "2c5f987bb39fd5ed989538b8b91f6bbf3213d16d9948e3d4dbd958138849f355",
+    "rh2/experiments/task2_swegym_dev_20260925/devcheck.py": "ba30d5b93a4b58ea6b3fbcc7e9d695b8136d7011d48a32d9dea3ecd41a1024d9",
+    "rh2/experiments/base_probe_fixes_20260923/acceptance_startup_2.py": "c67194f09e202c1cd1e83a3a1fbf5df7706952d2e542f97a4b2f3882604dc5d1"
+  }
+}

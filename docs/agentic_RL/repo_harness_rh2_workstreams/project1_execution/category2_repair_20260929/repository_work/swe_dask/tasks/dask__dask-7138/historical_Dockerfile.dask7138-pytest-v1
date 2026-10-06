@@ -1,0 +1,6 @@
+# 保留Dask源码；pytest 8移除了本checkout使用的warns(None)，验证7.4兼容系列。
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+COPY dask_pytest/ /opt/rh2/pytest-wheels/
+RUN /opt/miniconda3/envs/testbed/bin/python -m pip install --no-index --no-deps \
+    --find-links=/opt/rh2/pytest-wheels pytest==7.4.4

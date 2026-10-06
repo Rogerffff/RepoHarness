@@ -1,0 +1,25 @@
+diff --git a/scrapy/http/headers.py b/scrapy/http/headers.py
+index 13f0f03..dd4f4bd 100644
+--- a/scrapy/http/headers.py
++++ b/scrapy/http/headers.py
+@@ -23,7 +23,7 @@ class Headers(CaselessDict):
+         elif not hasattr(value, '__iter__'):
+             value = [value]
+ 
+-        return [self._tobytes(x) for x in value]
++        return [self._tobytes(x).decode(self.encoding) for x in value]
+ 
+     def _tobytes(self, x):
+         if isinstance(x, bytes):
+diff --git a/scrapy/responsetypes.py b/scrapy/responsetypes.py
+index 4603854..7c017fe 100644
+--- a/scrapy/responsetypes.py
++++ b/scrapy/responsetypes.py
+@@ -24,6 +24,7 @@ class ResponseTypes(object):
+         'application/vnd.wap.xhtml+xml': 'scrapy.http.HtmlResponse',
+         'application/xml': 'scrapy.http.XmlResponse',
+         'application/json': 'scrapy.http.TextResponse',
++        'application/x-json': 'scrapy.http.TextResponse',
+         'application/javascript': 'scrapy.http.TextResponse',
+         'application/x-javascript': 'scrapy.http.TextResponse',
+         'text/xml': 'scrapy.http.XmlResponse',

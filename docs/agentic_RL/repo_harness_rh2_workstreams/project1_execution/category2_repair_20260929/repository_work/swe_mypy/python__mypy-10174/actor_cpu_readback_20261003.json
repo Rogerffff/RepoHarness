@@ -1,0 +1,133 @@
+{
+  "as_of": "2026-10-03",
+  "scope": "作者回读真实CC公开开发命令；不是基座模型能力探针或新题面实际solver交付证明",
+  "status": "author_actor_command_checks_passed_non_author_runtime_review_pending",
+  "job": "mypy-actor-r1-20261002T180207Z-3a9dcf",
+  "instance_id": "python__mypy-10174",
+  "release_id": "cat2-cpu-r2e078079-swe7-git-20261003-v1",
+  "release_manifest_sha256": "80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9",
+  "host_runtime": "runtime_cpu_v2/rh2/.venv/bin/python",
+  "actor_image_id_actual": "sha256:9d63f1ddcbd277fa62d49e10d800908cfec54544e890fc5fe741d2101ca8eb7e",
+  "head": "c8bae06919674b9846e3ff864b0a44592db888eb",
+  "actual_uid": 54321,
+  "activation": {
+    "role": "rollout",
+    "container_name": "rh2acc-python__mypy-10174-26048070",
+    "ok": true,
+    "violations": [],
+    "inspect_facts": {},
+    "probe_facts": {
+      "ACT_EXPECTED_PREFIX": "/opt/miniconda3/envs/testbed",
+      "ACT_PYTHON": "/opt/miniconda3/envs/testbed/bin/python",
+      "ACT_SYS_EXECUTABLE": "/opt/miniconda3/envs/testbed/bin/python",
+      "ACT_SYS_PREFIX": "/opt/miniconda3/envs/testbed",
+      "ACT_CONDA_DEFAULT_ENV": "testbed",
+      "ACT_VIRTUAL_ENV": "",
+      "RH2_ACTIVATION_PROBE_OK": "1"
+    },
+    "seconds": 0.4515
+  },
+  "prelaunch": {
+    "ok": true,
+    "violations": [],
+    "mounts": [],
+    "binds": [],
+    "network_constraints_verified": true
+  },
+  "effective_profile": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmp_tmpfs_bytes": 1073741824,
+    "home_tmpfs_bytes": 268435456,
+    "writable_layer_quota_bytes": 8589934592,
+    "pids_limit": 512
+  },
+  "harness_exit_code": 0,
+  "commands": {
+    "identity": {
+      "id": "identity",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 317,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "真实actor UID、解释器与源码来源；不是新题面交付证明"
+    },
+    "public_repro": {
+      "id": "public_repro",
+      "rc": 1,
+      "status": "nonzero",
+      "expect": "nonzero",
+      "matches_expect": true,
+      "output_bytes": 177,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "公开base复现；直接记录mypy退出码，末尾没有grep/tail覆盖"
+    },
+    "public_collect": {
+      "id": "public_collect",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 112,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "公开case真实节点收集；不等于新私有节点登记"
+    },
+    "public_regression": {
+      "id": "public_regression",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 141,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "已有公开小组回归；执行到额外case不增加评分参考"
+    },
+    "tree": {
+      "id": "tree",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 66,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "HEAD与工作区变动"
+    }
+  },
+  "public_collected_nodes": [
+    "mypy/test/testcheck.py::TypeCheckSuite::testStrictEqualityWithFixedLengthTupleInCheck"
+  ],
+  "public_regression_passed": 1,
+  "public_reproduction": "10174原Optional[Any]误报，mypy退出1",
+  "initial_worktree": "HEAD=c8bae06919674b9846e3ff864b0a44592db888eb\nPORCELAIN_BEGIN\n M test-requirements.txt\nPORCELAIN_RC=0\n",
+  "worktree_after": "c8bae06919674b9846e3ff864b0a44592db888eb\n M test-requirements.txt\n",
+  "dirty_explanation": "test-requirements.txt在镜像初态已修改，与历史base镜像现状一致；COPY-wheel派生未改源码，本次公开命令未新增变更",
+  "untested_inherited_check": {
+    "bashenv_denied_for_agent": false,
+    "interpretation": "冻结normal场景查找RH2_BASHENV_WRITE=DENIED标记；本题公开命令清单未执行此尝试，False表示未测，不能声称该check通过。保护文件只读性由prelaunch ACTIVATION_WRITE=DENIED另证。"
+  },
+  "cleanup": {
+    "container_rm": 0,
+    "network_failures": [],
+    "relay_failures": [],
+    "stub_rc": 0,
+    "labeled_containers_left": [],
+    "labeled_networks_left": [],
+    "residual_after_force": []
+  },
+  "evidence_root": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy-actor-r1-20261002T180207Z-3a9dcf/attempt/python__mypy-10174",
+  "evidence_sha256": {
+    "attempt.json": "sha256:7accb515277bd8ca9f64e50aa8cbf3c67ee24ebd36103a50d075d8d2a249b8c5",
+    "identity.out": "sha256:eb586f6465e1ae1cebd2450a5ab843e334c4ef99b57e1ef26c7d0daf147b716b",
+    "public_repro.out": "sha256:60b95cd10521667ca85a5538b4a21f355672322a93a3a601492b5ce3c35a9082",
+    "public_collect.out": "sha256:d748d4cd850c7ef73d9da16da4ab14ffa9e9dde49d16c43bbe54776c7f7e6364",
+    "public_regression.out": "sha256:f3afa22d124eec8598008a19ffbd2d6b2e9c0daa3d7eadae70f888f84885406a",
+    "tree.out": "sha256:a40e40b45dcd1cada4079aafe42fcfe5afcad79a2110205b947bcbef03d0ec26"
+  }
+}

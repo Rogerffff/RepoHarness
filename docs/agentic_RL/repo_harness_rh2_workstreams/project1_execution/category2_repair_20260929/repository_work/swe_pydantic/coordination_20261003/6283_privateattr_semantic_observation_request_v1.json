@@ -1,0 +1,14 @@
+{
+  "as_of": "2026-10-03",
+  "related_request_id": "swe-pydantic6283-behavior-v1-20261003",
+  "job": "gpu1003-pydantic6283-qwen36-a1",
+  "original_frozen_patch_digest": "sha256:1ac717446957b1463305cabaceb2e71f8a9b0685c8377f0659869820b8b829d5",
+  "candidate_source": "pydantic/root_model.py",
+  "candidate_source_sha256": "2e8b2748bea649c5bde853049ba9255d62dd6eb033ad9c979dac90765f644b44",
+  "finding_status": "decisive_source_mechanism_identified_actual_runtime_observation_pending",
+  "finding": "候选在super.model_construct执行model_post_init之后无条件从实例__dict__ pop真实__pydantic_private__；RootModel类级None会使PrivateAttr读路径对None下标。公开base已有PrivateAttr读写/相等支持，但现40参考缺construct+PrivateAttr组合。",
+  "requested_observation": "请在wheel权限修复后的原FP窄regrade之实际候选源码环境（若能复用已安装grader）增加一次只读诊断；不要改正式测试/原分/原FP，不调用模型，不重做CPU矩阵。若不适合复用，则告知，题主在cpu-a后续独占槽诊断。",
+  "python": "import hashlib, pathlib\nfrom pydantic import PrivateAttr, RootModel\np = pathlib.Path(\"/testbed/pydantic/root_model.py\")\nassert hashlib.sha256(p.read_bytes()).hexdigest() == \"2e8b2748bea649c5bde853049ba9255d62dd6eb033ad9c979dac90765f644b44\"\nclass R(RootModel[int]):\n    _secret = PrivateAttr(default=\"abc\")\nprint(\"PRIVATE_INIT_VALUE\", R(42)._secret)\nr = R.model_construct(42)\nprint(\"PRIVATE_CONSTRUCT_DICT\", r.__dict__)\ntry:\n    print(\"PRIVATE_CONSTRUCT_VALUE\", r._secret)\nexcept Exception as exc:\n    print(\"PRIVATE_CONSTRUCT_ERROR\", type(exc).__name__, str(exc))\n",
+  "public_expectation": "原公开PrivateAttr默认读取语义应保留；model_construct不能删除真实私有属性初始化结果。预期construct._secret为abc。",
+  "next_action": "6283旧材料/后续模型臂继续保持暂停；先保存旧材料原FP评分与该语义观察，再由题主补最小私有P2P及新版本发布/CPU验收。8511及其他题依各自实际GPU权限核查继续。"
+}

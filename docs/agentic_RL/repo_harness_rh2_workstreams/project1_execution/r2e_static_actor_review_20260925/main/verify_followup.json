@@ -1,0 +1,32 @@
+{
+  "healthy": {
+    "returncode": 0,
+    "stdout": "probe: OK 镜像比对 1，相同 1，删除 0，内容不符 0，只在镜像 0，只在导出 0，权限不同 0\n工作树对清单：1/1 一致；镜像比对：1/1 一致",
+    "stderr": ""
+  },
+  "changed_bytes": {
+    "returncode": 1,
+    "stdout": "probe: 实际文件与清单不符：内容/权限/软链 1，多出 0，缺失 0\nprobe: MISMATCH 镜像比对 1，相同 0，删除 0，内容不符 1，只在镜像 0，只在导出 0，权限不同 0\n工作树对清单：0/1 一致；镜像比对：0/1 一致",
+    "stderr": ""
+  },
+  "missing_file": {
+    "returncode": 1,
+    "stdout": "probe: 实际文件与清单不符：内容/权限/软链 0，多出 0，缺失 1\nprobe: MISMATCH 镜像比对 1，相同 0，删除 0，内容不符 0，只在镜像 1，只在导出 0，权限不同 0\n工作树对清单：0/1 一致；镜像比对：0/1 一致",
+    "stderr": ""
+  },
+  "extra_file": {
+    "returncode": 1,
+    "stdout": "probe: 实际文件与清单不符：内容/权限/软链 0，多出 1，缺失 0\nprobe: MISMATCH 镜像比对 1，相同 1，删除 0，内容不符 0，只在镜像 0，只在导出 1，权限不同 0\n工作树对清单：0/1 一致；镜像比对：0/1 一致",
+    "stderr": ""
+  },
+  "changed_to_symlink": {
+    "returncode": 1,
+    "stdout": "probe: 实际文件与清单不符：内容/权限/软链 1，多出 0，缺失 0\nprobe: MISMATCH 镜像比对 1，相同 0，删除 0，内容不符 1，只在镜像 0，只在导出 0，权限不同 0\n工作树对清单：0/1 一致；镜像比对：0/1 一致",
+    "stderr": ""
+  },
+  "missing_image_directory": {
+    "returncode": 1,
+    "stdout": "工作树对清单：1/1 一致；镜像比对：0/0 一致",
+    "stderr": "注意：没有镜像记录，镜像比对未验证"
+  }
+}

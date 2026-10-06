@@ -1,0 +1,11 @@
+[case testAssertTypeFailNestedNominalTypes]
+# flags: --python-version 3.9
+from typing import assert_type
+import a, b
+def f(x: list[a.C]) -> None:
+    assert_type(x, list[b.C])  # E: Expression is of type "List[a.C]", not "List[b.C]"
+[file a.py]
+class C: ...
+[file b.py]
+class C: ...
+[builtins fixtures/list.pyi]

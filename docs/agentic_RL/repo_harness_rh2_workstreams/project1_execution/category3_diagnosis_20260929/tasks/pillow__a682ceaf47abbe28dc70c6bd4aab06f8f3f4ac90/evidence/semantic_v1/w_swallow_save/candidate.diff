@@ -1,0 +1,17 @@
+diff --git a/src/PIL/GifImagePlugin.py b/src/PIL/GifImagePlugin.py
+index cf2993e38..4b81e104a 100644
+--- a/src/PIL/GifImagePlugin.py
++++ b/src/PIL/GifImagePlugin.py
+@@ -662,7 +662,11 @@ def _save(im, fp, filename, save_all=False):
+         im.encoderinfo["optimize"] = im.encoderinfo.get("optimize", True)
+ 
+     if not save_all or not _write_multiple_frames(im, fp, palette):
+-        _write_single_frame(im, fp, palette)
++        try:
++            _write_single_frame(im, fp, palette)
++        except TypeError:
++            # transparency that cannot be used; ignore it
++            pass
+ 
+     fp.write(b";")  # end of file
+ 

@@ -1,0 +1,42 @@
+{
+  "name": "coveragepy_f5eb_public_delivery_v1",
+  "task": "coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96",
+  "purpose": "交付固定公开题面，运行公开API的分支JSON复现及原公开JSON测试；不做求解修改。",
+  "steps": [
+    {
+      "kind": "bash_r2e_preflight"
+    },
+    {
+      "kind": "bash",
+      "id": "environment_probe",
+      "command": "cd /testbed && id && python -c 'import sys, coverage, pytest; print(sys.executable); print(sys.version); print(coverage.__file__); print(pytest.__version__)'",
+      "timeout_ms": 60000
+    },
+    {
+      "kind": "bash",
+      "id": "public_branch_report",
+      "command": "cd /testbed && python - <<'PYCODE'\nimport json, os, tempfile, coverage\nwith tempfile.TemporaryDirectory() as work:\n    source = os.path.join(work, 'demo.py')\n    with open(source, 'w') as f:\n        f.write('flag = True\\nif flag:\\n    x = 1\\nelse:\\n    x = 2\\n')\n    cov = coverage.Coverage(branch=True, config_file=False, data_file=os.path.join(work, '.coverage'))\n    cov.start()\n    with open(source) as f:\n        exec(compile(f.read(), source, 'exec'), {})\n    cov.stop()\n    report = os.path.join(work, 'coverage.json')\n    cov.json_report(outfile=report)\n    with open(report) as f:\n        data = json.load(f)\n    print(json.dumps(data, sort_keys=True))\nPYCODE",
+      "timeout_ms": 120000
+    },
+    {
+      "kind": "bash",
+      "id": "public_json_tests",
+      "command": "cd /testbed && python -m pytest -o addopts=\"\" -p no:cacheprovider --color=no -rfE tests/test_json.py",
+      "timeout_ms": 240000
+    }
+  ],
+  "solve": {
+    "wall_seconds": 1200,
+    "max_context_len": 32768,
+    "max_new_tokens": 4096
+  },
+  "public_provenance": {
+    "statement": "runs/r2e_static_prep_20260924/v3/public/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/user_prompt.txt",
+    "statement_sha256": "sha256:c9bb55b0f2b1193db573c4bca8904971a1df0b2ea3a2d050347be5087b34cf6a",
+    "public_test": "runs/r2e_static_prep_20260924/v3/public/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/worktree/tests/test_json.py",
+    "public_test_sha256": "sha256:70116b13adea657318148c8a1aaae40d29e66cca8660611190bf4d839db36e54",
+    "author_constructed_public_only": true,
+    "fresh_reader_claim": false,
+    "execution_status": "not_run"
+  }
+}

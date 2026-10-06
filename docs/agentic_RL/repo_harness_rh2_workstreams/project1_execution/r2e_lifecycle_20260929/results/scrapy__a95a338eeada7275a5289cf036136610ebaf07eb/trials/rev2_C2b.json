@@ -1,0 +1,41 @@
+{
+ "task": "scrapy__a95a338eeada7275a5289cf036136610ebaf07eb",
+ "image": "sha256:d7f8d826ef87da4804790cd08ff8746bf2ee7df6b02bdecff878bf9d190012ac",
+ "recipe_id": "r2e_derive_v1+sysconfig_v1",
+ "patch": "/work/r2e/trials/lc_scrapy_a95a/a95a338e/scrapy_a95a_C2b.patch",
+ "edits": "/work/r2e/trials/lc_scrapy_a95a/a95a338e/draft_a95a_r1r2_v2.json",
+ "expected": "/work/r2e/trials/lc_scrapy_a95a/a95a338e/expected_after_a95a.json",
+ "kind": "trial_not_formal_grading",
+ "apply": "Checking patch scrapy/utils/misc.py...\nApplied patch scrapy/utils/misc.py cleanly.\nRH2_APPLY_RC=0\n",
+ "edits_apply": "RH2_TRIAL_EDITS_APPLIED=1\n",
+ "test_seconds": 2.6,
+ "markers": true,
+ "observed": {
+  "UtilsMiscPy3TestCase.test_generators_return_none": "PASSED",
+  "UtilsMiscPy3TestCase.test_generators_return_none_with_decorator": "PASSED",
+  "UtilsMiscPy3TestCase.test_generators_return_something": "FAILED",
+  "UtilsMiscPy3TestCase.test_indentation_error": "FAILED",
+  "UtilsMiscPy3TestCase.test_partial": "PASSED"
+ },
+ "n_observed": 5,
+ "log_tail": "RH2_INSTALL_SKIPPED=1\n>>>>> Start Test Output\n============================= test session starts ==============================\nplatform linux -- Python 3.9.21, pytest-8.3.4, pluggy-1.5.0\nrootdir: /testbed\nconfigfile: pytest.ini\ncollected 5 items\n\nr2e_tests/test_1.py ..FF.                                                [100%]\n\n=================================== FAILURES ===================================\n____________ UtilsMiscPy3TestCase.test_generators_return_something _____________\n\nself = <r2e_tests.test_1.UtilsMiscPy3TestCase testMethod=test_generators_return_something>\n\n        def test_generators_return_something(self):\n            def f1():\n                yield 1\n                return 2\n    \n            def g1():\n                yield 1\n                return \"asdf\"\n    \n            def h1():\n                yield 1\n    \n                def helper():\n                    return 0\n    \n                yield helper()\n                return 2\n    \n            def i1():\n                \"\"\"\n    docstring\n                \"\"\"\n                url = \"\"\"\n    https://example.org\n            \"\"\"\n                yield url\n                return 1\n    \n            assert is_generator_with_return_value(top_level_return_something)\n            assert is_generator_with_return_value(f1)\n            assert is_generator_with_return_value(g1)\n            assert is_generator_with_return_value(h1)\n            assert is_generator_with_return_value(i1)\n    \n            with warnings.catch_warnings(record=True) as w:\n                warn_on_generator_with_return_value(None, top_level_return_something)\n>               self.assertEqual(len(w), 1)\nE               AssertionError: 0 != 1\n\n/testbed/r2e_tests/test_1.py:87: AssertionError\n_________________ UtilsMiscPy3TestCase.test_indentation_error __________________\n\nself = <r2e_tests.test_1.UtilsMiscPy3TestCase testMethod=test_indentation_error>\n\n    @mock.patch(\"scrapy.utils.misc.is_generator_with_return_value\", new=_indentation_error)\n    def test_indentation_error(self):\n        with warnings.catch_warnings(record=True) as w:\n            warn_on_generator_with_return_value(None, top_level_return_none)\n>           self.assertEqual(len(w), 1)\nE           AssertionError: 0 != 1\n\n/testbed/r2e_tests/test_1.py:264: AssertionError\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED r2e_tests/test_1.py::UtilsMiscPy3TestCase::test_generators_return_none\nPASSED r2e_tests/test_1.py::UtilsMiscPy3TestCase::test_generators_return_none_with_decorator\nPASSED r2e_tests/test_1.py::UtilsMiscPy3TestCase::test_partial\nFAILED r2e_tests/test_1.py::UtilsMiscPy3TestCase::test_generators_return_something\nFAILED r2e_tests/test_1.py::UtilsMiscPy3TestCase::test_indentation_error - As...\n========================= 2 failed, 3 passed in 0.17s ==========================\n>>>>> End Test Output\nRH2_TEST_RC=1\n",
+ "stderr_tail": "",
+ "expected_n": 5,
+ "missing": [],
+ "extra": [],
+ "status_diff": [
+  [
+   "UtilsMiscPy3TestCase.test_generators_return_something",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "UtilsMiscPy3TestCase.test_indentation_error",
+   "PASSED",
+   "FAILED"
+  ]
+ ],
+ "match": false,
+ "verdict": "mismatch",
+ "seconds": 36.2
+}

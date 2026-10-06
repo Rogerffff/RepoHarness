@@ -1,0 +1,57 @@
+diff --git a/scrapy/utils/misc.py b/scrapy/utils/misc.py
+--- a/scrapy/utils/misc.py
++++ b/scrapy/utils/misc.py
+@@ -1,5 +1,6 @@
+ """Helper functions which don't fit anywhere else"""
+ import ast
++import functools
+ import inspect
+ import os
+ import re
+@@ -225,8 +226,12 @@
+         value = return_node.value
+         return value is None or isinstance(value, ast.NameConstant) and value.value is None
+ 
+-    if inspect.isgeneratorfunction(callable):
+-        src = inspect.getsource(callable)
++    func = callable
++    while isinstance(func, functools.partial):
++        func = func.func
++
++    if inspect.isgeneratorfunction(func):
++        src = inspect.getsource(func)
+         pattern = re.compile(r"(^[\t ]+)")
+         code = pattern.sub("", src)
+ 
+@@ -249,23 +254,29 @@
+     Logs a warning if a callable is a generator function and includes
+     a 'return' statement with a value different than None
+     """
++    func = callable
++    while isinstance(func, functools.partial):
++        func = func.func
++    func_name = getattr(func, '__name__', repr(func))
+     try:
+         if is_generator_with_return_value(callable):
+             warnings.warn(
+-                f'The "{spider.__class__.__name__}.{callable.__name__}" method is '
++                f'The "{spider.__class__.__name__}.{func_name}" method is '
+                 'a generator and includes a "return" statement with a value '
+                 'different than None. This could lead to unexpected behaviour. Please see '
+                 'https://docs.python.org/3/reference/simple_stmts.html#the-return-statement '
+                 'for details about the semantics of the "return" statement within generators',
++                category=RuntimeWarning,
+                 stacklevel=2,
+             )
+     except IndentationError:
+-        callable_name = spider.__class__.__name__ + "." + callable.__name__
++        callable_name = spider.__class__.__name__ + "." + func_name
+         warnings.warn(
+             f'Unable to determine whether or not "{callable_name}" is a generator with a return value. '
+             'This will not prevent your code from working, but it prevents Scrapy from detecting '
+             f'potential issues in your implementation of "{callable_name}". Please, report this in the '
+             'Scrapy issue tracker (https://github.com/scrapy/scrapy/issues), '
+             f'including the code of "{callable_name}"',
++            category=RuntimeWarning,
+             stacklevel=2,
+         )

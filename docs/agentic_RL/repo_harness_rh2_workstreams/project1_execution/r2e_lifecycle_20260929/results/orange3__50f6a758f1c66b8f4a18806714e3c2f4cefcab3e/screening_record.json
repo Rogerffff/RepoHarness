@@ -1,0 +1,118 @@
+{
+  "record_note": "静态审查题级记录。字段沿 environment_screening_definition_20260915 §1，另按统一标准 v1 加 usage.v1。路径均相对仓库根；缩写同 card.md（LC/ = runs/r2e_lifecycle_20260929/，INV/ = LC/inv/orange3_50f6/，DC/ = LC/devcheck_rev/unrev/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/，PRIV/ 与 PUB/ 为 runs/r2e_static_prep_20260924/v3/{private,public}/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/）。",
+  "task_id": "r2e_gym_subset::orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e",
+  "instance_id": "orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e",
+  "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0（无材料修订；v3–v11 的公开与私有材料对本题相同）",
+  "source_adapter_ref": {
+    "source": "R2E-Gym/R2E-Gym-Subset@e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+    "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl:25（line_sha256 93fb56cb…）",
+    "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl（line_sha256 bf83a703…）",
+    "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/validation_bundles_v0.jsonl:25（line_sha256 c4bfe938…）",
+    "parser": "r2e_prime_pytest_v1（prime-envs c4d04dfe）；grading_semantics = r2e_expected_map"
+  },
+  "recipe_ref": {
+    "derived_image_recipe": "r2e_derive_v1+sysconfig_v1",
+    "derived_image_ref": "rh2-r2e-derived/orange3:50f6a758f1c6-r2e_derive_v1s",
+    "derived_image_id": "sha256:f5573c5a67037e06958260f7bc84260310c381dc43b34af2652caad17c5a3159",
+    "base_image": "namanjain12/orange3_final:50f6a758f1c66b8f4a18806714e3c2f4cefcab3e（sha256:d059adb9…）",
+    "overlays_sha256": "sha256:d45d16a7292d7373128ce2318c6164f89caef0332074e5548665c0173ff49a09",
+    "resources": "缺省：2 CPU / 4 GiB / /tmp 1 GiB",
+    "grading_budget_this_machine": "env_reset_timeout 1200 s（控制面保护时限，只放宽时限）；缺省 300 s 时 noop / gold 均 failed_to_grade",
+    "previous_machine": "r2e_derive_v1 / sha256:9fa2177f…（09-23、09-24 的运行）"
+  },
+  "code_snapshot_ref": "v9 任务面（协调者 09-29 夜：devcheck_rev 与 INV/inv_50f6_*.sh 所用的 rh2 代码快照）；具体提交以协调者记录为准",
+  "facts_ref": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/facts.json（旧机，环境资格）",
+    "LC/env_verify/ledger_l1_noop.jsonl:7",
+    "LC/env_verify/ledger_l1_gold.jsonl:7",
+    "LC/budget_v5/ledger_noop.jsonl:8",
+    "LC/budget_v5/ledger_gold.jsonl:8",
+    "INV/ledger_K1_budget1200.jsonl",
+    "INV/ledger_K2_budget1200.jsonl",
+    "INV/ledger_K3_budget1200.jsonl",
+    "INV/ledger_K4_budget1200.jsonl",
+    "INV/pcheck_probe_{none,gold,K1,K2,K3,K4}.json",
+    "DC/devcheck.log",
+    "DC/private_control.json"
+  ],
+  "checks": {
+    "1": {"status": "pass", "note": "隐藏测试 = 公开 test_owcolor.py + 新增 test_load_ignore_warning − no_rename 末尾的 \"var not\" 段（逐行 diff 只差这两处）；gold 在 base 上干净应用；grading_bundle 与 run_refs 的哈希一致；base 30c56576 是修复提交的父提交", "evidence_refs": ["PRIV/hidden_tests/test_1.py", "PUB/worktree/Orange/widgets/data/tests/test_owcolor.py", "PRIV/grading_bundle.json", "PRIV/run_refs.json"], "by": "investigator"},
+    "2": {"status": "pass", "note": "noop 只在目标键失败，原因是没有发出任何警告。题面说的 TypeError 是测试读未调用 mock 的 call_args 时自己报的（见 issue P4）", "evidence_refs": ["LC/budget_v5/ledger_noop.jsonl:8", "DC/orig/captures/repro_unused_vars_warning.out:12,30", "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_df1485a0.eval.log:54-57"], "by": "investigator + coordinator runs"},
+    "3": {"status": "issue", "note": "P4：题面 Actual Behavior 与标题描述的不是应用行为。公开提示已改为 .venv 措辞。模型实际收到的题面渲染未核：devcheck 的用户消息是 devcheck 指令", "evidence_refs": ["PUB/user_prompt.txt:4-7,25", "PUB/public_bundle.json:15", "DC/orig/stub/requests/messages_000.json"], "by": "investigator"},
+    "4": {"status": "pass", "note": "合法修复只需改跟踪文件 Orange/widgets/data/owcolor.py；gold 与 K1–K4 的 projection.included_paths 都只有这一个文件", "evidence_refs": ["LC/budget_v5/ledger_gold.jsonl:8", "INV/ledger_K1_budget1200.jsonl"], "by": "investigator"},
+    "5": {"status": "issue", "note": "X1：本题 gold（14/14 条非平凡新增行）与目标测试名出现在 orange3 c3fb72ba、f5026689 的公开初态里（grep 核实）；本题初态含 4014f248、9b5494e2、f237f968 的新测试名。只登记，不阻断", "evidence_refs": ["runs/r2e_static_prep_20260924/cross_task_gold_scan.json", "runs/r2e_static_prep_20260924/cross_task_test_scan.json"], "by": "investigator"},
+    "6": {"status": "pass", "note": "新机派生镜像 r2e_derive_v1+sysconfig_v1：Orange 3.32.0.dev 从 /testbed 导入，pytest 7.4.4，PyQt5", "evidence_refs": ["DC/orig/captures/env.out:1-7", "DC/orig/captures/env_import.out"], "by": "coordinator devcheck"},
+    "7": {"status": "pass", "note": "iris、heart_disease、zoo 在跟踪目录 Orange/datasets/ 下", "evidence_refs": ["PUB/worktree/Orange/datasets/"], "by": "investigator"},
+    "8": {"status": "pass", "note": "解题：agent uid 54321，经正式启动路径；评分：uid 54322", "evidence_refs": ["DC/orig/prelaunch.json", "LC/budget_v5/ledger_gold.jsonl:8"], "by": "coordinator devcheck"},
+    "9": {"status": "pass", "note": "K1 的失败文本就是 K1 代码生成的消息；各候选在私有探针上结果不同，说明运行的确实是候选代码", "evidence_refs": ["INV/logs_K1/evallog_replay-r2e-inv-50f6-K1-0_9e2e4112.eval.log:55-58", "INV/pcheck_probe_K2.json"], "by": "investigator"},
+    "10": {"status": "pass", "note": "devcheck 全部检查为真，公开读者 4 条命令结果都符合预期。Qt 前缀不在提示里，但可从 run_tests.sh / CONTRIBUTING.md 推知；不带前缀的对照没有跑", "evidence_refs": ["DC/devcheck.log", "DC/orig/captures/"], "by": "coordinator devcheck"},
+    "11": {"status": "pass", "note": "各阶段都不需要网络；外网 DNS 被拒", "evidence_refs": ["DC/orig/prelaunch.json"], "by": "coordinator devcheck"},
+    "12": {"status": "not_applicable", "note": "没有外部服务", "evidence_refs": [], "by": "investigator"},
+    "13": {"status": "issue", "note": "链路条件：本机缺省 300 s 控制面保护时，可信 setup（chown copy-up）超时，noop / gold 都记为 failed_to_grade（reward 为 null，没有记成 0）；放宽到 1200 s 后正常。新机可信 setup 279–497 s。这不是题目缺陷，根因交 A 线（setup_cost 族）", "evidence_refs": ["LC/env_verify/ledger_l1_noop.jsonl:7", "LC/env_verify/ledger_l1_gold.jsonl:7", "LC/budget_v5/ledger_noop.jsonl:8"], "by": "investigator"},
+    "14": {"status": "pass", "note": "旧机 noop / gold 各 2 次、新机各 1 次，结论相同；K1–K4 四次运行中其余 47 键全部 PASSED", "evidence_refs": ["PRIV/run_refs.json", "LC/budget_v5/ledger_noop.jsonl:8", "INV/ledger_K2_budget1200.jsonl"], "by": "investigator"},
+    "15": {"status": "pass", "note": "每次评分用全新容器。K2、K3 并行时只拉长了可信 setup（497 s），结果不受影响", "evidence_refs": ["INV/ledger_K2_budget1200.jsonl", "INV/ledger_K3_budget1200.jsonl"], "by": "investigator"},
+    "16": {"status": "pass", "note": "RH2_SETUP_APPLY_RC=0；投影只含 owcolor.py", "evidence_refs": ["INV/logs_K1/evallog_replay-r2e-inv-50f6-K1-0_9e2e4112.eval.log:1-13"], "by": "investigator"},
+    "17": {"status": "pass", "note": "RH2_SETUP_RESTORED=2、RH2_SETUP_TEST_FILES=3", "evidence_refs": ["INV/logs_K1/evallog_replay-r2e-inv-50f6-K1-0_9e2e4112.eval.log:5-13"], "by": "investigator"},
+    "18": {"status": "pass", "note": "测试段完整跑完，解析出 48 个键，另有 3 个 SKIPPED（导入的 WidgetTest 基类自身的测试，不成键）", "evidence_refs": ["INV/logs_K2/evallog_replay-r2e-inv-50f6-K2-0_6e55591b.eval.log:82"], "by": "investigator"},
+    "19": {"status": "pass", "note": "48 个键都带类名、互不重复；只有一个隐藏测试文件，不存在跨文件撞键", "evidence_refs": ["PRIV/expected_output.json"], "by": "investigator"},
+    "20": {"status": "pass", "note": "noop 得 0 只因目标键失败，失败原因是没有警告；gold 得 1", "evidence_refs": ["LC/budget_v5/ledger_noop.jsonl:8", "LC/budget_v5/ledger_gold.jsonl:8"], "by": "investigator"},
+    "21": {"status": "pass", "note": "超时被记为 failed_to_grade（infra），没有记成 0", "evidence_refs": ["LC/env_verify/ledger_l1_noop.jsonl:7"], "by": "investigator"},
+    "22": {"status": "pass", "note": "沿用旧证据：M3 独立 runner 在来源镜像上跑 gold 两次都通过，对账一致；本轮没有重跑", "evidence_refs": ["runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl:24,74"], "by": "investigator"},
+    "23": {"status": "issue", "note": "三处问题：警告名单的格式题面没说（T1 / P3）；混合文件与公开旧断言冲突（P6）；题面的 TypeError 描述误导（P4）", "evidence_refs": ["PUB/user_prompt.txt:22", "PUB/worktree/Orange/widgets/data/tests/test_owcolor.py:885-888"], "by": "investigator"},
+    "24": {"status": "issue", "note": "T1：名字全列、满足全部公开要求的 K1 被判 0，失败在 n=6 那一轮、test_1.py:820", "evidence_refs": ["INV/ledger_K1_budget1200.jsonl", "INV/logs_K1/evallog_replay-r2e-inv-50f6-K1-0_9e2e4112.eval.log:55-58"], "by": "investigator + coordinator runs"},
+    "25": {"status": "issue", "note": "T2：K2（退化候选）、K3、K4 都拿到 48/48；复核提出的 C-deg 结果待回", "evidence_refs": ["INV/ledger_K2_budget1200.jsonl", "INV/ledger_K3_budget1200.jsonl", "INV/ledger_K4_budget1200.jsonl", "INV/pcheck_probe_K2.json"], "by": "investigator + coordinator runs"},
+    "26": {"status": "pass", "note": "gold 没有破坏已测的旧行为。两处旧行为没有断言，登记为 T3：R7（未用变量的 rename 不参与重名检查），以及\"先校验、后弹警告\"的顺序", "evidence_refs": ["PUB/worktree/Orange/widgets/data/owcolor.py:678-719"], "by": "investigator"},
+    "27": {"status": "pass", "note": "G1 无：gold 两段都检查，有无数据都处理，校验之后才弹警告；只有标题 \"Invalid definitions\" 这类小瑕疵", "evidence_refs": ["PRIV/gold.patch", "INV/pcheck_probe_gold.json"], "by": "investigator"},
+    "28": {"status": "unknown", "note": "修订草案的每条断言都列了公开依据；还待协调者实施、验收与 Codex 复核", "evidence_refs": ["docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/card.md"], "by": "investigator"},
+    "29": {"status": "pass", "note": "隐藏测试对 agent 不可读；HEAD 无子提交；refs、remotes、reflog 都为 0", "evidence_refs": ["DC/orig/captures/r2e_preflight.out", "DC/orig/attempt.json"], "by": "coordinator devcheck"},
+    "30": {"status": "pass", "note": "无网络，拿不到上游修复", "evidence_refs": ["DC/orig/prelaunch.json"], "by": "coordinator devcheck"},
+    "31": {"status": "not_checked", "note": "通用控制面问题（例如候选改测试辅助 Orange/widgets/tests/base.py）引用 A 线结论，不逐题审", "evidence_refs": [], "by": "investigator"},
+    "32": {"status": "issue", "note": "verifier 逐字匹配 gold 的文案格式，而且只覆盖题面示例的输入形态（见 T1、T2）", "evidence_refs": ["PRIV/hidden_tests/test_1.py:796-820"], "by": "investigator"},
+    "33": {"status": "unknown", "note": "用桩模型的 devcheck 验证了启动、工具调用、退出与收尾；没有做真实模型求解", "evidence_refs": ["DC/devcheck.log"], "by": "coordinator devcheck"},
+    "37": {"status": "not_applicable", "note": "尚未实施修订。草案只改评分标准（测试），不改任务目标", "evidence_refs": [], "by": "investigator"}
+  },
+  "issues": [
+    {"id": "T1", "category": "T1", "severity": "误拒（非 S 级）", "scope": "hidden_test:TestOWColor.test_load_ignore_warning", "summary": "逐字要求名单格式：单引号、逗号、' and '、超过 5 个名字时只列前 4 个再加 'and N other'。题面只要求指出是哪些变量，仓库里列表截断的写法也各不相同。名字全列的合理解 K1 被判 0", "evidence_level": "当前 CPU：正式评分", "evidence_refs": ["INV/ledger_K1_budget1200.jsonl", "INV/logs_K1/evallog_replay-r2e-inv-50f6-K1-0_9e2e4112.eval.log:55-58", "INV/pcheck_probe_K1.json"], "proposed_action": "R-b（card.md §6、附录 A）", "status": "open"},
+    {"id": "T2", "category": "T2b（第 3 步）；第 4 步；T2c（第 2 步，输入形态）", "severity": "S1", "scope": "hidden_test:TestOWColor.test_load_ignore_warning", "summary": "核心断言只覆盖示例形态：未加载数据、只在 categorical 段、全部未用。退化候选 K2（有数据就不警告）得 1，K3（混合文件不警告）、K4（不查 numeric 段）也得 1。复核提出的 C-deg（弹框后提前 return）结果待回", "evidence_level": "当前 CPU：正式评分 + 私有行为探针", "evidence_refs": ["INV/ledger_K2_budget1200.jsonl", "INV/ledger_K3_budget1200.jsonl", "INV/ledger_K4_budget1200.jsonl", "INV/pcheck_probe_K2.json", "INV/pcheck_probe_K3.json", "INV/pcheck_probe_K4.json"], "proposed_action": "R-c（card.md §6、附录 A）", "status": "open"},
+    {"id": "T3", "category": "T3", "severity": "S2", "scope": "hidden_test", "summary": "两处旧行为没有断言：R7（未用变量的 rename 不参与重名检查；上游删掉了唯一覆盖它的那段），以及有未用变量时要先校验、后弹警告的顺序", "evidence_level": "源码推断", "evidence_refs": ["PUB/worktree/Orange/widgets/data/owcolor.py:678-681,691-692"], "proposed_action": "登记；按 §8 抽查", "status": "open"},
+    {"id": "P4", "category": "P4", "severity": "登记", "scope": "problem_statement", "summary": "题面说应用抛 TypeError，实际是测试读未调用 mock 的 call_args 时自己报的错；标题把\"缺少功能\"写成了\"报错\"。与旧的 prompt_quality_candidates 族一致", "evidence_level": "已有运行日志 + devcheck", "evidence_refs": ["runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_df1485a0.eval.log:54-57", "DC/orig/captures/repro_unused_vars_warning.out:12,30"], "proposed_action": "登记；R-f 可选（card.md §8）", "status": "open"},
+    {"id": "P6", "category": "P6", "severity": "登记", "scope": "public_tests", "summary": "公开的 test_parse_var_defs_no_rename 断言 \"var not\" 不触发警告，与正确修复冲突：gold 下在 :888 失败。隐藏版已删这一段。与 T2 叠加有风险：为保住这条公开测试而写的 K3 式特例会拿满分", "evidence_level": "当前 CPU：devcheck 私有 gold 对照", "evidence_refs": ["DC/private_control.json", "PUB/worktree/Orange/widgets/data/tests/test_owcolor.py:885-888"], "proposed_action": "登记；探针分析按 P6 解读", "status": "open"},
+    {"id": "X1", "category": "X1", "severity": "登记", "scope": "task_relations", "summary": "本题 gold 与目标测试出现在 orange3 c3fb72ba、f5026689 的公开初态里", "evidence_level": "机械扫描 + grep", "evidence_refs": ["runs/r2e_static_prep_20260924/cross_task_gold_scan.json"], "proposed_action": "训练时控制重复采样；留出按仓库划分", "status": "open"},
+    {"id": "E3-budget", "category": "E3（链路）", "severity": "运行条件", "scope": "this_machine", "summary": "缺省 300 s 控制面保护下可信 setup 超时（failed_to_grade）；1200 s 下正常", "evidence_level": "当前 CPU：正式评分", "evidence_refs": ["LC/env_verify/ledger_l1_noop.jsonl:7", "LC/budget_v5/ledger_noop.jsonl:8"], "proposed_action": "本机评分放宽到 1200 s；根因（chown copy-up）交 A 线", "status": "open"}
+  ],
+  "file_rules": {"additional_exclusions": [], "rationale": "没有证据支持加路径规则", "evidence_refs": [], "applied_version": null},
+  "revision_refs": [],
+  "revision_proposals": [
+    {"templates": ["R-b", "R-c"], "status": "draft（必做）", "target": "PRIV/hidden_tests/test_1.py（评分时为 r2e_tests/test_1.py），替换唯一的 test_load_ignore_warning 函数", "changes_ref": "card.md 附录 A", "new_file_sha256": "f21ca9b349c35b32081de19718017517a425ff8fb9a8581d3460ce9008f1ae21", "expected_output_change": "无（仍为 48 键）", "public_basis": ["PUB/user_prompt.txt:6-7,21-22", "PUB/worktree/Orange/widgets/data/owcolor.py:698-712"], "trigger_counterexamples": ["K1（R-b）", "K2、K3、K4、C-deg（R-c）"], "acceptance_matrix": {"gold": 1, "K1": 1, "noop": 0, "K2": 0, "K3": 0, "K4": 0, "C-deg": 0, "K5_no_names（可选）": 0}, "acceptance_conditions": "本机 1200 s；逐个核对各候选的失败行（card.md 附录 A 末尾）；Codex 复核"}
+  ],
+  "disposition": {
+    "state": "needs_repair",
+    "scope": "static_review",
+    "reason": "可复现的材料缺陷：T1（名单格式逐字匹配，合理解 K1 判 0）与 T2 / S1（退化解 K2 及部分实现 K3、K4 得 1）。修订 R-b + R-c 已写成草案，待实施与验收；运行条件已核（devcheck；本机评分须 1200 s）",
+    "evidence_refs": ["INV/ledger_K1_budget1200.jsonl", "INV/ledger_K2_budget1200.jsonl", "DC/devcheck.log", "LC/budget_v5/ledger_gold.jsonl:8"],
+    "reviewer": "独立复核初判一致（T1、S1、P4），另提 C-deg，结果待回；修订后还需 Codex 复核",
+    "previous": {"state": "environment_qualified", "scope": "环境资格（09-24 P3 包，不含题目质量）", "note": "旧处置在其范围与旧机条件下成立；新机须加 1200 s 条件"},
+    "draft_history": [{"stage": "analysis_before_history（09-29 07:50）", "state": "needs_review", "changed_to": "needs_repair", "reason": "正式评分已坐实缺陷（K1=0；K2、K3、K4=1），修复方案已具体化；按定义文档 §4，这属于 needs_repair，不再是\"证据不足、待核\""}]
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "exposure_notes": "主审读过 gold、隐藏测试、期望映射、09-24 环境审查历史与全部候选运行结果；复核者也接触过同样材料。本记录不提供给解题模型",
+    "v1": {
+      "problem_localization": {"value": "yes"},
+      "capability_comparison": {"value": "conditional", "missing": "R-b + R-c 修订验收。现有材料下合理解 K1 得 0、退化解 K2 得 1，分数不能反映能力；本机评分须 1200 s", "evidence_refs": ["INV/ledger_K1_budget1200.jsonl", "INV/ledger_K2_budget1200.jsonl"]},
+      "training_candidate": {"value": "conditional", "missing": "R-b + R-c 验收（gold 1、K1 1、noop 0、K2 / K3 / K4 / C-deg 0）与 Codex 复核；S2（T3）与 X1 已登记", "evidence_refs": ["card.md §6"]},
+      "heldout_candidate": {"value": "conditional", "missing": "修订后只能作标明版本的自建评测；按仓库划分，须与 c3fb72ba、f5026689 同侧；审查已暴露 gold 与隐藏测试，不得用于选模型或调提示", "evidence_refs": ["runs/r2e_static_prep_20260924/cross_task_gold_scan.json"]}
+    }
+  },
+  "costs": {
+    "container_wall_seconds": {
+      "grading_1200s": {"noop": {"trusted_setup": 279.4, "test": 11.3}, "gold": {"trusted_setup": 280.8, "test": 10.9}, "K1": {"trusted_setup": 328.6, "test_rc_seconds": 15.8}, "K2": {"trusted_setup": 497.1, "test_rc_seconds": 14.7}, "K3": {"trusted_setup": 496.8, "test_rc_seconds": 14.8}, "K4": {"trusted_setup": 329.2, "test_rc_seconds": 14.6}},
+      "grading_300s_timeout": {"noop": {"trusted_setup": 300.7}, "gold": {"trusted_setup": 300.7}},
+      "devcheck": {"container_init_approx": 198.2, "solve": 40.8},
+      "private_probe_per_candidate": "11.7–15.8"
+    },
+    "agent_tokens": null,
+    "human_decisions": null,
+    "source_refs": ["LC/budget_v5/ledger_noop.jsonl:8", "LC/budget_v5/ledger_gold.jsonl:8", "LC/env_verify/ledger_l1_noop.jsonl:7", "INV/ledger_K1_budget1200.jsonl", "DC/orig/attempt.json", "INV/pcheck_probe_gold.json"]
+  }
+}

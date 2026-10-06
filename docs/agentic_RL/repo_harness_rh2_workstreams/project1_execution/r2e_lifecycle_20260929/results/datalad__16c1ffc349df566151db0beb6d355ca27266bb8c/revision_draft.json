@@ -1,0 +1,201 @@
+{
+ "instance_id": "datalad__16c1ffc349df566151db0beb6d355ca27266bb8c",
+ "template": "R-c + R-b（同一修订版本，即决定包选项 A；R-b 经 Codex 判为 P5，待用户裁定）",
+ "status": "P5 待决：Codex 复核 R-c 通过、R-b 判为 P5；协调者决定本轮不落任何材料，用户裁定后一次落（选 A 用本草案，选 B 或 C 用 revision_draft_rc_only.json）。试跑：8 个候选全部与预期一致（试跑，不是正式评分）；只上 R-c 时 C2 为 0、只上 R-b 时 F 得 1。落地后须正式评分（本机带 1200 s 放宽包装）",
+ "items": [
+  {
+   "id": "R-c-1",
+   "new_key": "test_result_filter_gets_call_kwargs",
+   "fixes": "T2c（唯一正向断言只用题面示例字面值）+ T2b（退化候选 D 吞过滤器异常，当前材料正式评分 1.0）；同时挡住 F（固定传 dataset=None）与 C-ign（忽略去留决定）"
+  },
+  {
+   "id": "R-c-2",
+   "new_key": "test_result_filter_plain_callables_with_call_kwargs",
+   "fixes": "v1 §4 第 4 步（N 无条件传 kwargs，当前材料正式评分 1.0；带关键字参数调用时 Constraint 与单参过滤器报 TypeError）"
+  },
+  {
+   "id": "R-b",
+   "key": "test_result_filter（sadfilter）",
+   "fixes": "C2（读法 D：位置参数按名给出并补默认值）在当前材料正式评分 0.0，只因 sadfilter 的 assert_not_in；是否属误拒（T1）取决于用户对 P5 的裁定；只能与 R-c-1 同版本（只上 R-b 时 F 得 1）"
+  }
+ ],
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "    def sadfilter(res, **kwargs):\n        assert_not_in('dataset', kwargs)\n",
+     "new": "    def sadfilter(res, **kwargs):\n        # no dataset was given in the call: the filter must not be handed\n        # one (the argument may be absent or None)\n        assert_equal(kwargs.get('dataset'), None)\n"
+    },
+    {
+     "old": "    Test_Utils().__call__(4, result_filter=sadfilter)\n",
+     "new": "    Test_Utils().__call__(4, result_filter=sadfilter)\n\n\ndef test_result_filter_gets_call_kwargs():\n    # a filter that accepts **kwargs gets the keyword arguments of the API\n    # call -- not only `dataset` -- also in generator mode and when the\n    # command is called as a Dataset method (all arguments become keyword\n    # arguments); the filter's decision is honored\n    seen = []\n\n    def kwfilter(res, **kwargs):\n        seen.append(kwargs)\n        return res['somekey'] in (1, 3)\n\n    for rtype in ('list', 'generator'):\n        del seen[:]\n        assert_equal(\n            [r['somekey'] for r in Test_Utils().__call__(\n                number=4, dataset='awesome', return_type=rtype,\n                result_filter=kwfilter)],\n            [1, 3])\n        ok_(seen)\n        for kw in seen:\n            assert_equal(kw.get('number'), 4)\n            assert_equal(kw.get('dataset'), 'awesome')\n\n    del seen[:]\n    ds = Dataset('/does/not/matter')\n    assert_equal(\n        [r['somekey'] for r in ds.fake_command(4, result_filter=kwfilter)],\n        [1, 3])\n    ok_(seen)\n    for kw in seen:\n        assert_equal(kw.get('number'), 4)\n        ok_(kw.get('dataset') is ds)\n\n\ndef test_result_filter_plain_callables_with_call_kwargs():\n    # filters that do not accept **kwargs -- Constraints (as used for the\n    # class-level default filter of `create` and for the --report-status /\n    # --report-type command line options) and plain one-argument callables\n    # (e.g. datalad.interface.results.is_ok_dataset) -- keep working when\n    # the API call has keyword arguments\n    ds = Dataset('/does/not/matter')\n    for filt in (\n            EnsureKeyChoice('somekey', (0, 2)),\n            EnsureKeyChoice('status', ('ok',)) & EnsureKeyChoice('somekey', (0, 2)),\n            lambda x: x['somekey'] in (0, 2)):\n        assert_equal(\n            [r['somekey'] for r in Test_Utils().__call__(\n                4, dataset='awesome', result_filter=filt)],\n            [0, 2])\n        assert_equal(\n            [r['somekey'] for r in ds.fake_command(4, result_filter=filt)],\n            [0, 2])\n"
+    }
+   ]
+  }
+ ],
+ "expected_after": {
+  "test_interface_prep": "PASSED",
+  "test_eval_results_plus_build_doc": "PASSED",
+  "test_result_filter": "PASSED",
+  "test_dirty": "FAILED",
+  "test_paths_by_dataset": "FAILED",
+  "test_save_hierarchy": "FAILED",
+  "test_get_dataset_directories": "FAILED",
+  "test_filter_unmodified": "FAILED",
+  "test_result_filter_gets_call_kwargs": "PASSED",
+  "test_result_filter_plain_callables_with_call_kwargs": "PASSED"
+ },
+ "formal_expected_change": {
+  "changed": {},
+  "added": {
+   "test_result_filter_gets_call_kwargs": "PASSED",
+   "test_result_filter_plain_callables_with_call_kwargs": "PASSED"
+  },
+  "removed": []
+ },
+ "positive_control": "gold",
+ "acceptance": {
+  "gold": {
+   "role": "正对照（读法 S：只传调用方写出的关键字参数）",
+   "expected_score": 1,
+   "expected_fail_keys": [],
+   "trial": "trials/rev_gold.json",
+   "trial_verdict": "match 10/10; missing=[] extra=[]",
+   "trial_evidence": "10 键全部解析，5 个 PASSED 行含 GK、PC",
+   "patch": "runs/r2e_static_prep_20260924/v3/private/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/gold.patch"
+  },
+  "noop": {
+   "role": "空补丁",
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "test_result_filter",
+    "test_result_filter_gets_call_kwargs"
+   ],
+   "expected_fail_where": "test_result_filter 在 greatfilter（HT':427，'dataset' not found in {}）；gets_call_kwargs 在 HT':459（None != 4）",
+   "trial": "trials/rev_noop.json",
+   "trial_verdict": "mismatch 10/10; missing=[] extra=[]; FAILED=test_result_filter, test_result_filter_gets_call_kwargs",
+   "trial_evidence": "日志尾部：GK 在 HT':459 AssertionError: None != 4；RF 摘要为 'dataset' not found（greatfilter，HT':427）",
+   "patch": "none"
+  },
+  "C1": {
+   "role": "替代正对照（读法 S，签名判断失败时回退旧调用）",
+   "expected_score": 1,
+   "expected_fail_keys": [],
+   "trial": "trials/rev_C1.json",
+   "trial_verdict": "match 10/10; missing=[] extra=[]",
+   "trial_evidence": "10 键全部解析，GK、PC 为 PASSED（旧式过滤器兼容由执行证据闭合）",
+   "patch": "cands/datalad_16c1_C1.patch"
+  },
+  "C2": {
+   "role": "读法 D 的替代解（位置参数按名给出并补默认值）；R-b 针对的候选，是否算正确解待 P5 裁定",
+   "expected_score": 1,
+   "expected_fail_keys": [],
+   "trial": "trials/rev_C2.json",
+   "trial_verdict": "match 10/10; missing=[] extra=[]",
+   "trial_evidence": "10 键全部解析，RF、GK、PC 为 PASSED（R-b 下读法 D 不再被 sadfilter 拒绝）",
+   "patch": "cands/datalad_16c1_C2.patch"
+  },
+  "D": {
+   "role": "v1 §4 第 3 步退化候选（except ValueError → except Exception，吞过滤器异常，不转发 kwargs）",
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "test_result_filter_gets_call_kwargs"
+   ],
+   "expected_fail_where": "HT':459 kw.get('number') 为 None",
+   "trial": "trials/rev_D.json",
+   "trial_verdict": "mismatch 10/10; missing=[] extra=[]; FAILED=test_result_filter_gets_call_kwargs",
+   "trial_evidence": "日志尾部只剩摘要 AssertionError；按源码唯一可能失败的是 HT':459（D 下过滤器正常返回去留决定，[1, 3] 与 ok_(seen) 成立）；日志里 RF 的 greatfilter 断言被吞（debug 行 'dataset' not found in {}）",
+   "patch": "cands/datalad_16c1_D.patch"
+  },
+  "N": {
+   "role": "v1 §4 第 4 步错误修法（无条件 result_filter(res, **_kwargs)）",
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "test_result_filter_plain_callables_with_call_kwargs"
+   ],
+   "expected_fail_where": "TypeError: __call__() got an unexpected keyword argument 'dataset'",
+   "trial": "trials/rev_N.json",
+   "trial_verdict": "mismatch 10/10; missing=[] extra=[]; FAILED=test_result_filter_plain_callables_with_call_kwargs",
+   "trial_evidence": "日志尾部：TypeError: __call__() got an unexpected keyword argument 'dataset'，位置 datalad/interface/utils.py:1030（N 的无条件转发）",
+   "patch": "cands/datalad_16c1_N.patch"
+  },
+  "F": {
+   "role": "故意写错：给接受 **kwargs 的过滤器固定传 dataset=None（card.md 附录 B.4）",
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "test_result_filter_gets_call_kwargs"
+   ],
+   "expected_fail_where": "HT':459 kw.get('number') 为 None",
+   "trial": "trials/rev_F.json",
+   "trial_verdict": "mismatch 10/10; missing=[] extra=[]; FAILED=test_result_filter_gets_call_kwargs",
+   "trial_evidence": "日志尾部只剩摘要 AssertionError；按源码唯一可能失败的是 HT':459；只上 R-c 的 F（trials/rc_F.json）日志保留了同一断言 HT_rc:457 None != 4",
+   "patch": "cands/datalad_16c1_F.patch"
+  },
+  "Cign": {
+   "role": "已知相关错误候选（review.md §4 构造，本轮新写补丁）：调用接受 kwargs 的过滤器，但忽略其去留决定",
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "test_result_filter_gets_call_kwargs"
+   ],
+   "expected_fail_where": "HT':452-456 结果为 [0, 1, 2, 3] 而不是 [1, 3]",
+   "trial": "trials/rev_Cign.json",
+   "trial_verdict": "mismatch 10/10; missing=[] extra=[]; FAILED=test_result_filter_gets_call_kwargs",
+   "trial_evidence": "日志尾部只剩摘要 AssertionError；按源码唯一可能失败的是 HT':452-456（结果 [0, 1, 2, 3] 不等于 [1, 3]）",
+   "patch": "cands/datalad_16c1_Cign.patch"
+  }
+ },
+ "controls_not_in_acceptance": "当前材料对照（trials/env_*_current.json 与协调者正式评分）、只上 R-c（trials/rc_*.json，见 revision_draft_rc_only.json）、只上 R-b（trials/rb_F.json）写在 revision_plan.md §5",
+ "paths_note": "trials/ 与 cands/ 相对本题目录；runs/ 开头的路径相对仓库根；HT' = 修订后 test_1.py（490 行），HT_rc = 只上 R-c 的 test_1.py（488 行）；RF = test_result_filter，GK = test_result_filter_gets_call_kwargs，PC = test_result_filter_plain_callables_with_call_kwargs。试跑工具不是正式评分（rh2/experiments/r2e_lifecycle_20260929/trial_grade.py 文件头）；结果文件只保留日志最后 8000 字符。trial_verdict 里的 n/10 指十个键中有 n 个与期望一致（5 个死键按期望为 FAILED），不是通过的测试数",
+ "candidate_patch_sha256": {
+  "gold": "sha256:cdd8f96cc066facdaf9bb944b0e9703484faa18b3db60e341c7e6ccfa30fec48",
+  "C1": "sha256:e1c43074b5e8bfb33e5f13d5605944d14dda96bea2567c55ca14411e24318fa6",
+  "C2": "sha256:da326e10986ddc350965922c0dc479547b6075efa8e7ebc3e3522218b1c6236b",
+  "D": "sha256:0bcb50fc53def2f5c3b0948360ee3323bc9083eae28c9fb81fb0431e1621fe8d",
+  "N": "sha256:5ea0edbcb84e382cb69169b30d96fe87a0de527b44d9224e1854ddc6e48b8944",
+  "F": "sha256:20b0d5ea44ab2e78d87460824444dae2cb9cf620f08c3debc4f6a2ff6d876313",
+  "Cign": "sha256:5f046911f374eed1bb23143d6e66a2b57b4bcc94367ecde9634fa19609d05339"
+ },
+ "parent_material": {
+  "hidden_test_file": "runs/r2e_static_prep_20260924/v3/private/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/hidden_tests/test_1.py",
+  "hidden_test_file_sha256": "sha256:92ef9efaeefacbe92e4d7abd282ff1fa94ac2237f339e11b1dd31d9f3ac657eb",
+  "hidden_test_file_lines": 434,
+  "hidden_tests_tree_sha256": "sha256:a5ddfbe553d5e9e403257593eecca0643a9805506dd848d9365a0ddb108ba716",
+  "expected_output_sha256": "sha256:97ecb569efd62dad733d7a2de4f8cd34a0322febb2faf243cbc532aa1b6544a1",
+  "expected_n": 8,
+  "material_revisions": [],
+  "formal_material_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl:11（line_sha256 687e6ecb…；摘要同上）；pins v10 所指 material_revisions_v9.json 及 v1–v8 均无本题条目；PRIVATE_DIR/revisions.json 为 []"
+ },
+ "trial_image": {
+  "image_id": "sha256:3874afbac47a0ea6083b369f72bd3a4169e017f0cf38207e3186df2120f80062",
+  "recipe_id": "r2e_derive_v1+sysconfig_v1",
+  "note": "与 runs/r2e_lifecycle_20260929/inv/datalad_16c1/ledger_{D,N,C1,C2}_budget1200.jsonl 和 budget_v5/ledger_{noop,gold}.jsonl 的 image_id_actual 相同"
+ },
+ "trial_inputs_sha256": {
+  "draft_full.json": "sha256:fcee26899c9abb891ef116544cf1a3928423319658d79d3a4fe50272970c7ab5",
+  "draft_rc_only.json": "sha256:10e8723d90086b21c2413bcff940a27830476e8bdac65aa12c707b7171eca7c6",
+  "draft_rb_only.json": "sha256:e8cbea7d0764ee60f44931bda775e8096e6f44c1514576edbff8b9972e043a2c",
+  "expected_after.json": "sha256:bc1633e901db14548a21e1d88f739f4387291ebb1dd0d5c3250b2a51ec540612"
+ },
+ "trial_inputs_copy": "trials/inputs/（与上传到远端的文件逐字节相同）",
+ "revised_test_file_sha256": "sha256:73f08e74c3318de543eba6ae6841e1ad199d6616ca6ffa9a5b5c06c0726b5e42",
+ "revised_test_file_lines": 490,
+ "revised_expected_file_sha256": "sha256:96162fea621459efe431aad591c0ff4914f0d4eeab5eb94ebf8ebaac6729fdcd",
+ "revised_expected_file_note": "按 card.md 附录 B.3 补丁得到的 expected_output.json（保持原文件格式，末尾无换行），可作正式 expected_file_replace 的修订后文件",
+ "version_for_options_B_C": "revision_draft_rc_only.json",
+ "codex_review": "codex_reviews/review_revision_datalad_16c1.md（相对本批目录 r2e_lifecycle_20260929/）：R-c 通过；R-b 属 P5，用户裁定前整题只作问题定位",
+ "formal_acceptance_plan": {
+  "candidates": [
+   "gold",
+   "noop",
+   "C1",
+   "C2",
+   "D",
+   "N",
+   "F",
+   "Cign"
+  ],
+  "note": "落地后正式评分跑这 8 个，C-ign 不再是可选；预期得分与失败键同 acceptance。本机带 1200 s 放宽包装、单独记账并引用日志首行"
+ }
+}

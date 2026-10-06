@@ -1,0 +1,7 @@
+[case testStrictEqualityWithFixedLengthTupleInCheckWithoutStrictOptional]
+# flags: --strict-equality --no-strict-optional
+if 1 in ('x', 'y'):  # E: Non-overlapping container check (element type: "int", container item type: "str")
+    pass
+[builtins fixtures/tuple.pyi]
+[typing fixtures/typing-full.pyi]
+

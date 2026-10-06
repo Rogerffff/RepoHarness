@@ -1,0 +1,29 @@
+{
+ "image": "c3keep/pillow_a682:src",
+ "python_prefix": "/testbed/.venv",
+ "variants": {
+  "base": [],
+  "gold": [
+   "git apply /in/gold.patch"
+  ],
+  "alt_typeerror": [
+   "git apply /in/alt_typeerror.patch"
+  ],
+  "alt_frame": [
+   "git apply /in/alt_frame.patch"
+  ]
+ },
+ "files": {
+  "gold.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow_a682/gold.patch",
+  "alt_typeerror.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow_a682/alt_typeerror.patch",
+  "alt_frame.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow_a682/alt_frame.patch",
+  "getdata_check.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow_a682/getdata_check.py"
+ },
+ "commands": [
+  {
+   "id": "getdata",
+   "cmd": "python /in/getdata_check.py 2>&1",
+   "timeout_s": 120
+  }
+ ]
+}

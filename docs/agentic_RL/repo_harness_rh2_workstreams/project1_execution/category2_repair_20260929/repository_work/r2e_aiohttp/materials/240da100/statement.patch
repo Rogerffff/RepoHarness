@@ -1,0 +1,41 @@
+--- current/problem_statement
++++ draft/problem_statement
+@@ -8,18 +8,29 @@
+ 
+ **Example Code**
+ 
++The example replaces the transport connection with a completed Future, so it runs without contacting the proxy. It still exercises ProxyConnector.connect().
++
+ ```python
+-import unittest
+ import asyncio
+-from aiohttp import ProxyConnector, ClientRequest
++from unittest import mock
++from aiohttp import ProxyConnector
++from aiohttp.client import ClientRequest
+ 
+-class ProxyConnectorTests(unittest.TestCase):
+-    def test_request_port(self):
+-        loop = asyncio.new_event_loop()
+-        connector = ProxyConnector('http://proxy.example.com', loop=loop)
+-        req = ClientRequest('GET', 'http://localhost:1234/path')
+-        loop.run_until_complete(connector._create_connection(req))
+-        print(req.path)  # Expected: 'http://localhost:1234/path'
++loop = asyncio.new_event_loop()
++transport, protocol = mock.Mock(), mock.Mock()
++connected = loop.create_future()
++connected.set_result((transport, protocol))
++transport_loop = mock.Mock()
++transport_loop.create_connection.return_value = connected
++connector = ProxyConnector('http://proxy.example.com', loop=transport_loop)
++try:
++    req = ClientRequest('GET', 'http://localhost:1234/path', loop=loop)
++    loop.run_until_complete(connector.connect(req))
++    print(req.path)
++    assert req.path == 'http://localhost:1234/path'
++finally:
++    connector.close()
++    loop.close()
+ ```
+ 
+ **Expected Behavior**

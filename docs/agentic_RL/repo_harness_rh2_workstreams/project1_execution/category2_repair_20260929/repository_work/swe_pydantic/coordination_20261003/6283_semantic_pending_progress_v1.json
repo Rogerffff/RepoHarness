@@ -1,0 +1,8 @@
+{
+  "checkpoint": "CPU R7 对照和非作者核查保持有效。GPU Qwen 首臂原 raw1/40参考PASSED，但安装RC1；完整轨迹/候选初审另发现 model_construct 无条件删除合法PrivateAttr状态，源码机制重放支持，真实Py3.8/core复现待GPU回执。原FP/分数/材料不回写。",
+  "next_action": "等待GPU同source/wheel SHA权限修复、原FP窄regrade及PrivateAttr单例观察回执；确认语义回归后以新材料版本补最小P2P，安全关闭旧请求后重走窄发布/CPU/非作者核查；Coder与重复臂继续暂停。继续无关题CPU，仍需CPU/GPU。",
+  "blocker": "两个独立问题：公开wheel读取权限拒绝导致实际安装RC1；6283模型候选疑似删除construct已初始化的PrivateAttr字典，当前40参考未覆盖，已发原FP最小观察请求，真实依赖复现待回执。源码/标准库重放不冒作真实环境通过或失败。",
+  "blocked_material_versions": [
+    "cat2-cpu-r2e088-swe12-git-20261003-v1"
+  ]
+}

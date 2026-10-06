@@ -1,0 +1,107 @@
+{
+  "instance_id": "conan-io__conan-12397",
+  "old_record_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/records/conan-io__conan-12397.json",
+  "environment": {
+    "status": "verified_original_baseline_outside_repair_scope",
+    "recipe": "full216/baseline01 原始对照；无已知环境修复需求",
+    "status_ref": "runs/env_recipe_repair_20260919/scope_reconciliation_20260920.json#outside_repair_ids",
+    "analysis_ref": "runs/full216_rh2_diagnostic_20260919/analysis_final_1011/coverage_216.json#conan-io__conan-12397",
+    "scope": "原始 noop 有目标失败且安装审计无失败；gold 完整命令退出 0，不等于题目质量或稳定性认证。",
+    "existing_observations": {
+      "noop": {
+        "reward": 0.0,
+        "test_rc": 1,
+        "log": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-0/eval_logs/evallog_replay-f216-baseline01-w_540c82fd.eval.log",
+        "sha256": "18659f49d77677206cc04e207db78c353908c05e52434ffc7b164840f6e947f8"
+      },
+      "gold": {
+        "reward": 1.0,
+        "test_rc": 0,
+        "log": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-0/eval_logs/evallog_replay-f216-baseline01-w_b0585990.eval.log",
+        "sha256": "d1f48cd16040e586773da7373a940c094c21fa016ce4ad19577ec910044aa1a7"
+      }
+    }
+  },
+  "requirements": "MesonToolchain 为 Clang/libc++ 生成 C++ 链接参数时应带与编译参数一致的 -stdlib，使题面的 Linux native 示例正确链接。保留用户 flags，不把此 C++ 标志加进 C 链接参数或把 GCC 的 ABI 编译宏误当链接参数。",
+  "public_sufficiency": "充分：Notes 指出缺失 -stdlib，Workaround 给出 cpp_link_args 位置；基线已通过 libcxx_flags 分离 libcxx 与 gcc_cxx11_abi，并在统一 _context 处理 native/cross 输出。",
+  "test_assessment": "F2P 验证 Apple cross 输出中的 C++ 标志，P2P 验证 GCC/native 和 flags 保留；都不直接覆盖题面的 Linux native Clang。顺序断言与既有 cpp_args 追加方式一致，尚无足够依据把它作为必须修订的歧义。",
+  "old_claim_reviews": [
+    {
+      "old_claim": "题面直接说明修复方向，可以用于探针。",
+      "status": "confirmed",
+      "assessment": "问题与修复位置明确，基线公共 _context 同时处理 native/cross，修复不需要隐藏提示。",
+      "evidence": [
+        "public.problem_statement#Notes/Workaround",
+        "base:conan/tools/meson/toolchain.py:303-321,373-375"
+      ]
+    },
+    {
+      "old_claim": "checks.1：test_extra_flags_via_conf 在 P2P 内却也被 test_patch 改写。",
+      "status": "confirmed",
+      "assessment": "profile 的 libcxx 从 libstdc++11 改为 libstdc++，期望添加 ABI=0 编译宏。这不使 P2P 自动失效：P2P 表示打好测试补丁后的基线仍过，不等于测试文本从未变化。",
+      "evidence": [
+        "grading.test_patch",
+        "grading.pass_to_pass",
+        "environment.existing_observations.noop"
+      ]
+    },
+    {
+      "old_claim": "checks.24：-stdlib 必须排在所有用户 flags 后，缺乏依据。",
+      "status": "unresolved",
+      "assessment": "精确顺序约束存在，但旧 _context 已按此顺序追加 C++ 标志，且冲突选项的先后可能影响编译行为；未提供等价重排反例，不能只因题面未逐字说明就判过严。",
+      "evidence": [
+        "base:conan/tools/meson/toolchain.py:307-321",
+        "grading.test_patch"
+      ]
+    },
+    {
+      "old_claim": "checks.25：仅修 Apple/cross 也可能满分，native GCC P2P 不能证明 native Clang 已修。",
+      "status": "confirmed",
+      "assessment": "F2P 明确是 Apple cross；两个 P2P 都是 Windows/gcc。静态覆盖缺口成立，具体反例的正式评分尚未运行。",
+      "evidence": [
+        "base:conans/test/integration/toolchains/meson/test_mesontoolchain.py:12-34,67-75,102-111",
+        "grading.test_patch"
+      ]
+    },
+    {
+      "old_claim": "checks.31 / control_surface_conftest_user：候选新增配置可进入测试控制面。",
+      "status": "unresolved",
+      "assessment": "旧仓库线索与本轮题意审查分开；没有执行新的篡改反例，也未据此给本题降级。可信边界的现实风险应沿统一评分链审查，不能把安装/参考键已验误写成安全已验。",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/CODEX_REVIEW_20260916.md#2",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/records/conan-io__conan-12397.json#checks.31"
+      ]
+    }
+  ],
+  "recommendation": "probe_candidate",
+  "recommendation_scope": "本轮模型探针/反例调查建议，不是训练准入、剔题或修改正式题包决定。",
+  "next_action": [
+    "可进入补充模型探针；人工检查候选是否在共用上下文添加 libcxx 链接标志。",
+    "最小错误修复对照（未运行）：只在 self._is_apple_system 为真时向 cpp_link_args 添加 self.libcxx；该补丁预计通过官方 Apple F2P 和 GCC P2P，却仍漏 Linux+clang+libc++。用 Linux native profile 生成 conan_meson_native.ini，核对 cpp_link_args 含 -stdlib=libc++，同时 c_link_args 不含它；不需安装新工具链即可先做生成物诊断。"
+  ],
+  "evidence_level": {
+    "task_quality": "static",
+    "environment": "existing_run",
+    "new_counterexamples": "not_run",
+    "local_verification": "16 份所引用既有评分日志的 SHA256 与当前归档一致；未新增 Docker/远端/模型运行。"
+  },
+  "unknowns": [
+    "未执行 Apple-only 反例或 Linux native 生成对照；不能宣称该反例已获满分。",
+    "官方测试没有实际链接应用程序；真实链接仍是后续行为验证。"
+  ],
+  "materials": {
+    "base_commit": "883eff8961d6e0d96652f78e3d7d3884479e769e",
+    "source_repository": "runs/env_overnight_20260916/repos/conan（只用 git show 读取精确 base）",
+    "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl:29",
+    "test_patch_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:29",
+    "gold_reference_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl:29",
+    "reference_counts": {
+      "f2p": 1,
+      "p2p": 2
+    },
+    "base_source_refs": [
+      "conan/tools/meson/toolchain.py:303-321,353-375",
+      "conans/test/integration/toolchains/meson/test_mesontoolchain.py:10-62,65-120"
+    ]
+  }
+}

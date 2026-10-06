@@ -1,0 +1,563 @@
+{
+  "scope": "EF1 复核：真实 miles 入口 -> fa_formal 编排 -> writer -> 离线报告。\n\n复用既有 prepared 题包 / Docker / capture / grader 夹具；不运行真实模型或容器。\n引擎、资源、评分内容为替身，评分契约、身份、finalize、审计出口、报告为真实代码。\n一小时事件窗与评分分段时长为测试输入，不是性能测量。证据只写本轮目录。\n运行：RH2_MILES_PATH=<fork> rh2/.venv/bin/python <本文件>\n",
+  "all_required_checks_pass": true,
+  "cases": [
+    {
+      "kind": "resolved",
+      "evaluation": false,
+      "materialize_failed": false,
+      "outputs": 1,
+      "grading_calls": 1,
+      "trajectory_id": "miles_g0_m0",
+      "physical_attempt_id": "miles_g0_m0#p1-be714a40"
+    },
+    {
+      "kind": "unresolved",
+      "evaluation": false,
+      "materialize_failed": false,
+      "outputs": 1,
+      "grading_calls": 1,
+      "trajectory_id": "miles_g0_m0",
+      "physical_attempt_id": "miles_g0_m0#p1-b49f98ce"
+    },
+    {
+      "kind": "failed_to_grade",
+      "evaluation": false,
+      "materialize_failed": false,
+      "outputs": 1,
+      "grading_calls": 1,
+      "trajectory_id": "miles_g0_m0",
+      "physical_attempt_id": "miles_g0_m0#p1-8dab08a9"
+    },
+    {
+      "kind": "resolved",
+      "evaluation": false,
+      "materialize_failed": true,
+      "outputs": 1,
+      "grading_calls": 0,
+      "trajectory_id": "miles_g0_m0",
+      "physical_attempt_id": "miles_g0_m0#p1-f0785d7a"
+    },
+    {
+      "kind": "resolved",
+      "evaluation": true,
+      "materialize_failed": false,
+      "outputs": 1,
+      "grading_calls": 1,
+      "trajectory_id": "eval-0123abcd4567-d0-p0_m0",
+      "physical_attempt_id": "eval-0123abcd4567-d0-p0_m0#p1-d810db96"
+    }
+  ],
+  "base": {
+    "reward": {
+      "status": "partial",
+      "reasons": [
+        "partial_grading_coverage: 3/4 个训练 execution 带评分块",
+        "no_delivery_records: 没有旧 record_event 交付行（正式 miles 路径不写；bringup_events 只有生命周期行也算没有）——交付记录 / eligibility 分布无法知道",
+        "no_rollout_group_events"
+      ],
+      "graded_attempts": {
+        "source": "execution_audit",
+        "delivery_records": null,
+        "graded": 3,
+        "executions_without_grading_record": 1,
+        "legacy_writer_unknown": 0,
+        "delivered_without_grading_record": null,
+        "outcomes": {
+          "failed_to_grade": 1,
+          "resolved": 1,
+          "unresolved": 1
+        },
+        "failure_categories": {
+          "infra_failure": 1,
+          "tests_failed": 1
+        },
+        "reward": {
+          "count": 2,
+          "min": 0.0,
+          "p50": 0.0,
+          "p95": 1.0,
+          "max": 1.0,
+          "sum": 1.0,
+          "unknown": 1
+        },
+        "reward_value_counts": {
+          "0.0": 1,
+          "1.0": 1
+        },
+        "eligibility_classes": null,
+        "audited_attempts_without_delivery_record": null,
+        "by_task": {
+          "swe_gym_lite::getmoto__moto-1": {
+            "graded": 3,
+            "reward_known": 2,
+            "reward_sum": 1.0,
+            "reward_mean": 0.5
+          }
+        }
+      },
+      "delivered_groups": null,
+      "pre_filter_population": {
+        "status": "not_collected",
+        "reason": "过滤前全组总体没有事件来源，不从已交付组推造"
+      }
+    },
+    "rates": {
+      "window": {
+        "start_unix": 1000.0,
+        "end_unix": 4600.0,
+        "hours": 1.0,
+        "event_rows_with_ts": 2,
+        "event_rows_without_ts": 0
+      },
+      "window_note": "本 run rh2 事件 ts_unix 首末（含启动与收尾段；进行中 run 截到最后一条事件）；逐轮稳态看 learner_timeline",
+      "gpu_count": 8,
+      "gpu_count_source": "run_manifest.json topology.actor_gpus + rollout_gpus",
+      "reasons": [
+        "no_group_events: 没有 group_consumed / group_filtered 事件——合格组数未知（不是 0）",
+        "partial_grading_coverage: 3/4 个训练 execution 带评分块——速率只覆盖这部分，不代表总体"
+      ],
+      "qualified_groups": {
+        "count": null,
+        "per_hour": null,
+        "per_gpu_hour": null,
+        "source": "group_consumed（buffer 交给 learner 的组）"
+      },
+      "applied_optimizer_steps": {
+        "count": null,
+        "per_hour": null,
+        "per_gpu_hour": null,
+        "source": "train_step.optimizer_step_applied（多 rank 副本取一份）"
+      },
+      "effective_gradings": {
+        "resolved": {
+          "count": 1,
+          "per_hour": 1.0,
+          "per_gpu_hour": 0.125
+        },
+        "trusted_zero": {
+          "count": 1,
+          "per_hour": 1.0,
+          "per_gpu_hour": 0.125
+        },
+        "total": {
+          "count": 2,
+          "per_hour": 2.0,
+          "per_gpu_hour": 0.25
+        },
+        "source": "execution audit 的 grading 块（每次 execution 的审计出口；按 physical_attempt_id 去重取最后一条）；可信 0 分 = unresolved + reward 0.0 + 模型负样本归因"
+      },
+      "gradings_not_effective": {
+        "reward_unknown": 1,
+        "inconsistent": 0,
+        "executions_without_grading_block": 1,
+        "legacy_writer_unknown": 0,
+        "evaluation_attempts_excluded": 1,
+        "duplicate_execution_records_collapsed": 0,
+        "rows_without_session_id": 0
+      },
+      "grading_coverage": {
+        "executions_audited": 4,
+        "with_grading_block": 3,
+        "without_grading_block": 1,
+        "legacy_writer_unknown": 0,
+        "audit_rows_without_grading_block": 1
+      }
+    },
+    "timings": {
+      "container_peak_memory_mb": {
+        "count": 3,
+        "min": 128.0,
+        "p50": 128.0,
+        "p95": 128.0,
+        "max": 128.0,
+        "sum": 384.0,
+        "unknown": 0
+      },
+      "env_reset_seconds": {
+        "count": 3,
+        "min": 2.0,
+        "p50": 2.0,
+        "p95": 2.0,
+        "max": 2.0,
+        "sum": 6.0,
+        "unknown": 0
+      },
+      "image_pull_seconds": {
+        "count": 3,
+        "min": 1.0,
+        "p50": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "sum": 3.0,
+        "unknown": 0
+      },
+      "prep_seconds": {
+        "count": 3,
+        "min": 3.0,
+        "p50": 3.0,
+        "p95": 3.0,
+        "max": 3.0,
+        "sum": 9.0,
+        "unknown": 0
+      },
+      "queue_wait_seconds": {
+        "count": 3,
+        "min": 0.5,
+        "p50": 0.5,
+        "p95": 0.5,
+        "max": 0.5,
+        "sum": 1.5,
+        "unknown": 0
+      },
+      "test_seconds": {
+        "count": 3,
+        "min": 4.0,
+        "p50": 4.0,
+        "p95": 4.0,
+        "max": 4.0,
+        "sum": 12.0,
+        "unknown": 0
+      },
+      "total_grading_seconds": {
+        "count": 3,
+        "min": 10.0,
+        "p50": 10.0,
+        "p95": 10.0,
+        "max": 10.0,
+        "sum": 30.0,
+        "unknown": 0
+      }
+    },
+    "evaluation": {
+      "status": "partial",
+      "reasons": [
+        "no_eval_point_events: 缺评测钩子的逐点汇总（钩子未接线或事件日志未启用）——完整性与绑定未知"
+      ],
+      "attempt_rows": 1,
+      "by_eval_point": {
+        "0123abcd4567": {
+          "eval_rollout_ids": [
+            0
+          ],
+          "datasets": [
+            "swe_dev"
+          ],
+          "attempts": 1,
+          "result_classes": {
+            "graded": 1
+          },
+          "resolved": 1,
+          "unavailable_reasons": {},
+          "grading_failure_categories": {},
+          "observed_weight_versions": [
+            "5"
+          ],
+          "target_weight_versions": [
+            "5"
+          ],
+          "configured_hf_checkpoints": []
+        }
+      },
+      "eval_point_events": [],
+      "points_complete": 0,
+      "points_incomplete": 0,
+      "points_binding": {},
+      "eval_windows": [],
+      "grading_regrades": {
+        "events": 0,
+        "by_op_and_category": {}
+      }
+    }
+  },
+  "duplicate": {
+    "window": {
+      "start_unix": 1000.0,
+      "end_unix": 4600.0,
+      "hours": 1.0,
+      "event_rows_with_ts": 2,
+      "event_rows_without_ts": 0
+    },
+    "window_note": "本 run rh2 事件 ts_unix 首末（含启动与收尾段；进行中 run 截到最后一条事件）；逐轮稳态看 learner_timeline",
+    "gpu_count": 8,
+    "gpu_count_source": "run_manifest.json topology.actor_gpus + rollout_gpus",
+    "reasons": [
+      "no_group_events: 没有 group_consumed / group_filtered 事件——合格组数未知（不是 0）",
+      "partial_grading_coverage: 3/4 个训练 execution 带评分块——速率只覆盖这部分，不代表总体"
+    ],
+    "qualified_groups": {
+      "count": null,
+      "per_hour": null,
+      "per_gpu_hour": null,
+      "source": "group_consumed（buffer 交给 learner 的组）"
+    },
+    "applied_optimizer_steps": {
+      "count": null,
+      "per_hour": null,
+      "per_gpu_hour": null,
+      "source": "train_step.optimizer_step_applied（多 rank 副本取一份）"
+    },
+    "effective_gradings": {
+      "resolved": {
+        "count": 1,
+        "per_hour": 1.0,
+        "per_gpu_hour": 0.125
+      },
+      "trusted_zero": {
+        "count": 1,
+        "per_hour": 1.0,
+        "per_gpu_hour": 0.125
+      },
+      "total": {
+        "count": 2,
+        "per_hour": 2.0,
+        "per_gpu_hour": 0.25
+      },
+      "source": "execution audit 的 grading 块（每次 execution 的审计出口；按 physical_attempt_id 去重取最后一条）；可信 0 分 = unresolved + reward 0.0 + 模型负样本归因"
+    },
+    "gradings_not_effective": {
+      "reward_unknown": 1,
+      "inconsistent": 0,
+      "executions_without_grading_block": 1,
+      "legacy_writer_unknown": 0,
+      "evaluation_attempts_excluded": 1,
+      "duplicate_execution_records_collapsed": 1,
+      "rows_without_session_id": 0
+    },
+    "grading_coverage": {
+      "executions_audited": 4,
+      "with_grading_block": 3,
+      "without_grading_block": 1,
+      "legacy_writer_unknown": 0,
+      "audit_rows_without_grading_block": 1
+    }
+  },
+  "lifecycle_only": {
+    "reward": {
+      "status": "not_collected",
+      "reasons": [
+        "no_grading_records: 没有带 grading 块的 execution audit（也没有旧 bringup_events 评分块）——评分总体无法知道（不是没有评分）",
+        "no_delivery_records: 没有旧 record_event 交付行（正式 miles 路径不写；bringup_events 只有生命周期行也算没有）——交付记录 / eligibility 分布无法知道",
+        "no_rollout_group_events"
+      ],
+      "graded_attempts": null,
+      "delivered_groups": null,
+      "pre_filter_population": {
+        "status": "not_collected",
+        "reason": "过滤前全组总体没有事件来源，不从已交付组推造"
+      }
+    },
+    "rates": {
+      "window": {
+        "start_unix": 1000.0,
+        "end_unix": 4600.0,
+        "hours": 1.0,
+        "event_rows_with_ts": 2,
+        "event_rows_without_ts": 0
+      },
+      "window_note": "本 run rh2 事件 ts_unix 首末（含启动与收尾段；进行中 run 截到最后一条事件）；逐轮稳态看 learner_timeline",
+      "gpu_count": 8,
+      "gpu_count_source": "run_manifest.json topology.actor_gpus + rollout_gpus",
+      "reasons": [
+        "no_group_events: 没有 group_consumed / group_filtered 事件——合格组数未知（不是 0）",
+        "no_grading_records: 没有带 grading 块的 execution audit（也没有旧 bringup_events 评分块）——有效评分数未知（不是 0）"
+      ],
+      "qualified_groups": {
+        "count": null,
+        "per_hour": null,
+        "per_gpu_hour": null,
+        "source": "group_consumed（buffer 交给 learner 的组）"
+      },
+      "applied_optimizer_steps": {
+        "count": null,
+        "per_hour": null,
+        "per_gpu_hour": null,
+        "source": "train_step.optimizer_step_applied（多 rank 副本取一份）"
+      },
+      "effective_gradings": null,
+      "gradings_not_effective": null,
+      "grading_coverage": null
+    },
+    "timings": null,
+    "evaluation": {
+      "status": "not_collected",
+      "reasons": [
+        "no_eval_records: 没有评测 audit 行 / eval_point / eval_window 事件——不能据此说评测已完成"
+      ],
+      "attempt_rows": 0,
+      "by_eval_point": {},
+      "eval_point_events": [],
+      "points_complete": 0,
+      "points_incomplete": 0,
+      "points_binding": {},
+      "eval_windows": [],
+      "grading_regrades": {
+        "events": 0,
+        "by_op_and_category": {}
+      }
+    }
+  },
+  "with_lifecycle_delivery_fields": {
+    "source": "execution_audit",
+    "delivery_records": null,
+    "graded": 3,
+    "executions_without_grading_record": 1,
+    "legacy_writer_unknown": 0,
+    "delivered_without_grading_record": null,
+    "outcomes": {
+      "failed_to_grade": 1,
+      "resolved": 1,
+      "unresolved": 1
+    },
+    "failure_categories": {
+      "infra_failure": 1,
+      "tests_failed": 1
+    },
+    "reward": {
+      "count": 2,
+      "min": 0.0,
+      "p50": 0.0,
+      "p95": 1.0,
+      "max": 1.0,
+      "sum": 1.0,
+      "unknown": 1
+    },
+    "reward_value_counts": {
+      "0.0": 1,
+      "1.0": 1
+    },
+    "eligibility_classes": null,
+    "audited_attempts_without_delivery_record": null,
+    "by_task": {
+      "swe_gym_lite::getmoto__moto-1": {
+        "graded": 3,
+        "reward_known": 2,
+        "reward_sum": 1.0,
+        "reward_mean": 0.5
+      }
+    }
+  },
+  "legacy": {
+    "window": {
+      "start_unix": 1000.0,
+      "end_unix": 4600.0,
+      "hours": 1.0,
+      "event_rows_with_ts": 2,
+      "event_rows_without_ts": 0
+    },
+    "window_note": "本 run rh2 事件 ts_unix 首末（含启动与收尾段；进行中 run 截到最后一条事件）；逐轮稳态看 learner_timeline",
+    "gpu_count": 8,
+    "gpu_count_source": "run_manifest.json topology.actor_gpus + rollout_gpus",
+    "reasons": [
+      "no_group_events: 没有 group_consumed / group_filtered 事件——合格组数未知（不是 0）"
+    ],
+    "qualified_groups": {
+      "count": null,
+      "per_hour": null,
+      "per_gpu_hour": null,
+      "source": "group_consumed（buffer 交给 learner 的组）"
+    },
+    "applied_optimizer_steps": {
+      "count": null,
+      "per_hour": null,
+      "per_gpu_hour": null,
+      "source": "train_step.optimizer_step_applied（多 rank 副本取一份）"
+    },
+    "effective_gradings": {
+      "resolved": {
+        "count": 1,
+        "per_hour": 1.0,
+        "per_gpu_hour": 0.125
+      },
+      "trusted_zero": {
+        "count": 0,
+        "per_hour": 0.0,
+        "per_gpu_hour": 0.0
+      },
+      "total": {
+        "count": 1,
+        "per_hour": 1.0,
+        "per_gpu_hour": 0.125
+      },
+      "source": "旧 bringup_events grading 块（E5 之前的证据；同 session 取最后一条）；可信 0 分 = unresolved + reward 0.0 + 模型负样本归因"
+    },
+    "gradings_not_effective": {
+      "reward_unknown": 0,
+      "inconsistent": 0,
+      "executions_without_grading_block": 0,
+      "legacy_writer_unknown": 0,
+      "evaluation_attempts_excluded": 0,
+      "duplicate_execution_records_collapsed": 0,
+      "rows_without_session_id": 0
+    },
+    "grading_coverage": {
+      "executions_audited": 1,
+      "with_grading_block": 1,
+      "without_grading_block": 0,
+      "legacy_writer_unknown": 0,
+      "audit_rows_without_grading_block": null
+    }
+  },
+  "mixed_writer_fixture_only": {
+    "window": {
+      "start_unix": 1000.0,
+      "end_unix": 4600.0,
+      "hours": 1.0,
+      "event_rows_with_ts": 2,
+      "event_rows_without_ts": 0
+    },
+    "window_note": "本 run rh2 事件 ts_unix 首末（含启动与收尾段；进行中 run 截到最后一条事件）；逐轮稳态看 learner_timeline",
+    "gpu_count": 8,
+    "gpu_count_source": "run_manifest.json topology.actor_gpus + rollout_gpus",
+    "reasons": [
+      "no_group_events: 没有 group_consumed / group_filtered 事件——合格组数未知（不是 0）",
+      "partial_grading_coverage: 1/2 个训练 execution 带评分块（其中 1 个来自 E5 之前的 writer、评分未知：混版本输入）——速率只覆盖这部分，不代表总体"
+    ],
+    "qualified_groups": {
+      "count": null,
+      "per_hour": null,
+      "per_gpu_hour": null,
+      "source": "group_consumed（buffer 交给 learner 的组）"
+    },
+    "applied_optimizer_steps": {
+      "count": null,
+      "per_hour": null,
+      "per_gpu_hour": null,
+      "source": "train_step.optimizer_step_applied（多 rank 副本取一份）"
+    },
+    "effective_gradings": {
+      "resolved": {
+        "count": 1,
+        "per_hour": 1.0,
+        "per_gpu_hour": 0.125
+      },
+      "trusted_zero": {
+        "count": 0,
+        "per_hour": 0.0,
+        "per_gpu_hour": 0.0
+      },
+      "total": {
+        "count": 1,
+        "per_hour": 1.0,
+        "per_gpu_hour": 0.125
+      },
+      "source": "execution audit 的 grading 块（每次 execution 的审计出口；按 physical_attempt_id 去重取最后一条）；可信 0 分 = unresolved + reward 0.0 + 模型负样本归因"
+    },
+    "gradings_not_effective": {
+      "reward_unknown": 0,
+      "inconsistent": 0,
+      "executions_without_grading_block": 0,
+      "legacy_writer_unknown": 1,
+      "evaluation_attempts_excluded": 0,
+      "duplicate_execution_records_collapsed": 0,
+      "rows_without_session_id": 0
+    },
+    "grading_coverage": {
+      "executions_audited": 2,
+      "with_grading_block": 1,
+      "without_grading_block": 0,
+      "legacy_writer_unknown": 1,
+      "audit_rows_without_grading_block": 0
+    }
+  }
+}

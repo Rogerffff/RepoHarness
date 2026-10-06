@@ -1,0 +1,103 @@
+{
+  "schema_id": "rh2.category2.cpu_retirement_dependency.v1",
+  "as_of_date": "2026-10-03",
+  "checked_at_utc": "2026-10-02T21:50:46.851709+00:00",
+  "owner_thread_id": "01a0fd64-a083-76d2-95e6-81e7e07c3b44",
+  "package_id": "r2e_scrapy",
+  "cpu_host": "cpu-b",
+  "task_ids": [
+    "r2e_gym_subset::scrapy__a95a338eeada7275a5289cf036136610ebaf07eb"
+  ],
+  "needs_cpu_now": false,
+  "known_cpu_dependencies": [],
+  "known_cpu_reruns": [],
+  "known_cpu_repairs": [],
+  "pending_irreplaceable_originals": [],
+  "cpu_jobs_in_flight_for_this_package": false,
+  "archive_complete_for_package_scope": true,
+  "local_archive_manifests": [
+    {
+      "path": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/retirement_20261003/cpu_b_archive_manifest.json",
+      "sha256": "40926746ffdbb656ea41b7dcd2644e8236d4cc93b51a91fe8d3f38d4cec00d70"
+    },
+    {
+      "path": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/retirement_20261003/cpu_local_evidence_manifest.json",
+      "sha256": "6908ab1d2a6d3752b79e5cc0774aee6dcd57677546589966cdd87f36b82a7696"
+    },
+    {
+      "path": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/scrapy-a95a-dev-b-20261002T183830Z/remote_evidence/transfer_inventory.json",
+      "sha256": "f2e6ff5c8ef2ff8b2ad9c894efdb0b2fb92140c50da750209a510cee5940d7c1"
+    }
+  ],
+  "shared_release_archives": [
+    {
+      "release_id": "cat2-cpu-r2e070077-swe6-20261003-v1",
+      "manifest_path": "runs/category2_repair_20260929/releases_20261003/r2e_070_077_swe6_candidate_v1/manifest.json",
+      "manifest_sha256": "621e73660ea5685b9a77c353e7f4f3664d7eefa073aed8454bae1ae3e32f388f",
+      "verified_local_members": 823,
+      "all_members_sha_and_size_match": true
+    },
+    {
+      "release_id": "cat2-cpu-r2e078079-swe7-git-20261003-v1",
+      "manifest_path": "runs/category2_repair_20260929/releases_20261003/r2e_078_079_swe7_git_candidate_v1/manifest.json",
+      "manifest_sha256": "80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9",
+      "verified_local_members": 837,
+      "all_members_sha_and_size_match": true
+    }
+  ],
+  "release_archive_verification": {
+    "path": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/retirement_20261003/cpu_release_archive_verification.json",
+    "sha256": "40ea0714ed08981b70295d4393d37b324d7f717fb05179cbe2f917ff6e95430c"
+  },
+  "remote_source_scope": {
+    "cpu_host": "cpu-b",
+    "ranges_relative_to_shared_host_root": [
+      "packages/r2e_scrapy/**",
+      "jobs/r2e_scrapy/**"
+    ],
+    "inventory_ref": {
+      "path": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/retirement_20261003/remote_sha_inventory.json",
+      "sha256": "52db4dba94268ad02cd78ae80b0b89efbf4d93b859f9923a9945908bd4ee4537"
+    },
+    "current_regular_files": 261,
+    "current_source_bytes": 2574860,
+    "omitted": []
+  },
+  "archive_completion": {
+    "existing_sha_identical_files_reused": 240,
+    "missing_originals_fetched": 21,
+    "all_remote_files_sha_size_verified": 261,
+    "local_immutable_evidence_files_verified": 322,
+    "frozen_release_members_verified": [
+      823,
+      837
+    ],
+    "supplement_fetch_receipt": {
+      "path": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/retirement_20261003/supplement_fetch_receipt.json",
+      "sha256": "32aaf39562ad92ef36a145fd3da4d614574e8ee450d76f13c8795a67dd53ece2"
+    }
+  },
+  "verification_scope_notes": [
+    "回收字节和源mode元数据保留；CPU回收prepared/private不作为后续GPU runtime输入。",
+    "本回执只说明Scrapy已有CPU证据与已知依赖；全机无作业/槽空、封派发及退租由发布/巡检线程核实。",
+    "没有执行新实验、重跑候选矩阵、修改control或关闭机器。"
+  ],
+  "gpu_work_continues": true,
+  "needs_gpu": true,
+  "gpu_remaining": [
+    "两款模型完整首轮结果",
+    "逐轨迹行为/语义及评分分析",
+    "统一安排的第二阶段重复与稳定性分析"
+  ],
+  "future_gpu_defects_are_not_known_cpu_dependencies": true,
+  "future_cpu_repair_route": "若GPU分析实际发现需要CPU复验的缺陷，再向发布线程安排剩余CPU资源；尚未回传的结果不列为现有CPU修复待办。",
+  "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/cpu_acceptance_20261003.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/review_cpu_acceptance_20261003.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/probe_result_analysis_20261003.md"
+  ],
+  "request_unchanged": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/probe_request.json",
+    "sha256": "2e351e520c216977d88529b1725a2af0f609a2ede7423a425c0740b2284965a0"
+  }
+}

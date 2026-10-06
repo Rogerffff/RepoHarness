@@ -1,0 +1,40 @@
+{
+ "task": "numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9",
+ "image": "sha256:c86794602d47e67eca2e5f28feaf2bde59b71d8be7cd8960353464959d324fdf",
+ "recipe_id": "r2e_derive_v1+sysconfig_v1",
+ "patch": "none",
+ "edits": null,
+ "expected": "current",
+ "kind": "trial_not_formal_grading",
+ "test_seconds": 1.5,
+ "markers": true,
+ "observed": {
+  "TestDocs.test_complex": "PASSED",
+  "TestDocs.test_doctests": "PASSED",
+  "TestDocs.test_integ_coeffs": "PASSED",
+  "TestDocs.test_objects": "PASSED",
+  "TestDocs.test_poly": "PASSED",
+  "TestDocs.test_poly_eq": "FAILED",
+  "TestDocs.test_poly_int_overflow": "PASSED",
+  "TestDocs.test_polyfit": "PASSED",
+  "TestDocs.test_roots": "PASSED",
+  "TestDocs.test_str_leading_zeros": "PASSED",
+  "TestDocs.test_zero_dims": "PASSED"
+ },
+ "n_observed": 11,
+ "log_tail": "RH2_INSTALL_SKIPPED=1\n>>>>> Start Test Output\n============================= test session starts ==============================\nplatform linux -- Python 3.7.9, pytest-7.4.4, pluggy-1.2.0\nrootdir: /testbed\nplugins: hypothesis-6.79.4, env-1.0.1\ncollected 11 items\n\nr2e_tests/test_1.py .....F.....                                          [100%]\n\n=================================== FAILURES ===================================\n____________________________ TestDocs.test_poly_eq _____________________________\n\nself = <r2e_tests.test_1.TestDocs testMethod=test_poly_eq>\n\n    def test_poly_eq(self):\n        p = np.poly1d([1, 2, 3])\n        p2 = np.poly1d([1, 2, 4])\n>       assert_equal(p == None, False)\n\nr2e_tests/test_1.py:219: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = poly1d([1, 2, 3]), other = None\n\n    def __eq__(self, other):\n>       if self.coeffs.shape != other.coeffs.shape:\nE       AttributeError: 'NoneType' object has no attribute 'coeffs'\n\nnumpy/lib/polynomial.py:1202: AttributeError\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED r2e_tests/test_1.py::TestDocs::test_complex\nPASSED r2e_tests/test_1.py::TestDocs::test_doctests\nPASSED r2e_tests/test_1.py::TestDocs::test_integ_coeffs\nPASSED r2e_tests/test_1.py::TestDocs::test_objects\nPASSED r2e_tests/test_1.py::TestDocs::test_poly\nPASSED r2e_tests/test_1.py::TestDocs::test_poly_int_overflow\nPASSED r2e_tests/test_1.py::TestDocs::test_polyfit\nPASSED r2e_tests/test_1.py::TestDocs::test_roots\nPASSED r2e_tests/test_1.py::TestDocs::test_str_leading_zeros\nPASSED r2e_tests/test_1.py::TestDocs::test_zero_dims\nFAILED r2e_tests/test_1.py::TestDocs::test_poly_eq - AttributeError: 'NoneTyp...\n========================= 1 failed, 10 passed in 0.56s =========================\n>>>>> End Test Output\nRH2_TEST_RC=1\n",
+ "stderr_tail": "",
+ "expected_n": 11,
+ "missing": [],
+ "extra": [],
+ "status_diff": [
+  [
+   "TestDocs.test_poly_eq",
+   "PASSED",
+   "FAILED"
+  ]
+ ],
+ "match": false,
+ "verdict": "mismatch",
+ "seconds": 66.6
+}

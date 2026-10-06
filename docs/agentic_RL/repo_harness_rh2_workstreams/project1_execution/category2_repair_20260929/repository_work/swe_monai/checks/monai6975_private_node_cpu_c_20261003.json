@@ -1,0 +1,127 @@
+{
+  "schema": "monai.private_new_node_check.v1",
+  "as_of": "2026-10-03",
+  "task_id": "Project-MONAI__MONAI-6975",
+  "host_alias": "cpu-c",
+  "job": "monai-6975-private-node-20261003-81ccfd89",
+  "scope": "private root new P2P node only; no formal reward or64-reference CPU acceptance",
+  "evidence_root": "runs/category2_repair_20260929/repository_work/swe_monai/cpu_c_20261003/monai-6975-private-node-20261003-81ccfd89",
+  "actual_image_id": "sha256:fbfdddc4edda1f0ea4c1b76a572bd95045be4bbd202b197a94e8d8ee14a73fd6",
+  "input_manifest_sha256": "902e402a20724488b95df81d2d4ffbb198d8609f7bbccbd0db50b7a43673db77",
+  "spec": {
+    "path": "runs/category2_repair_20260929/repository_work/swe_monai/cpu_c_20261003/monai-6975-private-node-20261003-81ccfd89.unit_spec.json",
+    "sha256": "0d13101c061a8ed0bb0a1d32b93677483476d4679c6fb3f915d7c2fa7103d6e9"
+  },
+  "target_node": "tests/test_dataset.py::TestDataset::test_dataset_lazy_dict_returns_transformed_pixels_cpu",
+  "rows": {
+    "noop": {
+      "target_rc": 0,
+      "test_key": "tests/test_dataset.py::TestDataset::test_dataset_lazy_dict_returns_transformed_pixels_cpu",
+      "result": "PASSED",
+      "preparation_rc": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "seconds": 10.350522132999686,
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      }
+    },
+    "gold": {
+      "target_rc": 0,
+      "test_key": "tests/test_dataset.py::TestDataset::test_dataset_lazy_dict_returns_transformed_pixels_cpu",
+      "result": "PASSED",
+      "preparation_rc": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "seconds": 10.264354120999997,
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      }
+    },
+    "discard_dict_output": {
+      "target_rc": 1,
+      "test_key": "tests/test_dataset.py::TestDataset::test_dataset_lazy_dict_returns_transformed_pixels_cpu",
+      "result": "FAILED",
+      "preparation_rc": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "seconds": 9.105161823999879,
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      }
+    }
+  },
+  "all_source_patch_and_import_preparation_rc_zero": true,
+  "wrong_control_target_value_failure": "12/12 pixels differ at torch.testing.assert_close; not import/arbitrary nonzero",
+  "no_skip_or_missing_target": true,
+  "requested_resources_only": {
+    "cpus": 2,
+    "memory_bytes": 4294967296,
+    "pids_limit": 512
+  },
+  "actual_private_container_host_config_not_archived": true,
+  "cpu_slot_returncode": 0,
+  "launcher_returncode": 0,
+  "formal_reward_proven": false,
+  "formal64_reference_matrix_executed": false,
+  "independently_reviewed_at_creation": false,
+  "artifact_sha256": {
+    "discard_dict_output/initial.txt": "4ccc9c51100cc1d47725b2c7e0147f99e617eadaa0d73bc6c4ac7af0f14e05fb",
+    "discard_dict_output/new_node_test.out": "32e44ccbae46f129cda504e522e3eb180d4e60b2aeb7102d3524e4643c3e6f1f",
+    "discard_dict_output/prep_0.out": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "discard_dict_output/prep_1.out": "ffd181013ba287c31762398ea62f3621c9bb4ced1d2f9c893765e4bddc3050e9",
+    "discard_dict_output/prep_2.out": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "discard_dict_output/prep_3.out": "d6cbf9413fb468ce0e966b1bd5a700a6a18753afb4be80065aacc18d8995b32a",
+    "discard_dict_output/prep_4.out": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "discard_dict_output/prep_5.out": "f7bfc50b04d6465f1dbaf7dcbd1b56baf506ebd02deee95d6468f6bd5efd8291",
+    "discard_dict_output/prep_6.out": "f0658b81cdb0dc45e79468db4336e05fd4d4e0dd1da5e000cf16400d5f8c5733",
+    "gold/initial.txt": "4ccc9c51100cc1d47725b2c7e0147f99e617eadaa0d73bc6c4ac7af0f14e05fb",
+    "gold/new_node_test.out": "d86d6eb8338e571c311bbd6672d557834bde7e908cecdb02d4c4ce744b021297",
+    "gold/prep_0.out": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "gold/prep_1.out": "ffd181013ba287c31762398ea62f3621c9bb4ced1d2f9c893765e4bddc3050e9",
+    "gold/prep_2.out": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "gold/prep_3.out": "3d4629a65ecb3b5b2be4b72812f2a23c94e89bf13b9001895e3bcb86d2c1a13e",
+    "gold/prep_4.out": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "gold/prep_5.out": "f7bfc50b04d6465f1dbaf7dcbd1b56baf506ebd02deee95d6468f6bd5efd8291",
+    "gold/prep_6.out": "f0658b81cdb0dc45e79468db4336e05fd4d4e0dd1da5e000cf16400d5f8c5733",
+    "noop/initial.txt": "4ccc9c51100cc1d47725b2c7e0147f99e617eadaa0d73bc6c4ac7af0f14e05fb",
+    "noop/new_node_test.out": "cb8fcfb39b0a18ab7a55cc7fb4649efb2cefcf2ffb632c2b5307ba0f22d2b5cb",
+    "noop/prep_0.out": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "noop/prep_1.out": "ffd181013ba287c31762398ea62f3621c9bb4ced1d2f9c893765e4bddc3050e9",
+    "noop/prep_2.out": "332ea73296703d2bf10d464d41a08d89158b4538861f27ed6de8bd77184ea801",
+    "noop/prep_3.out": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "noop/prep_4.out": "f7bfc50b04d6465f1dbaf7dcbd1b56baf506ebd02deee95d6468f6bd5efd8291",
+    "noop/prep_5.out": "f0658b81cdb0dc45e79468db4336e05fd4d4e0dd1da5e000cf16400d5f8c5733",
+    "summary.json": "32e0a16f399d7b60491248a2f008e8d9b562da13f4c466902d5054032de0259d"
+  },
+  "outer_snapshot": {
+    "path": "runs/category2_repair_20260929/repository_work/swe_monai/cpu_c_20261003/monai-6975-private-node-20261003-81ccfd89.snapshot-9e8f7b4d.json",
+    "sha256": "1ecadb85fa4d34bb8cbf783fa15b1788488727f5e5fdb7c6e6aaf5011cde36d1"
+  }
+}

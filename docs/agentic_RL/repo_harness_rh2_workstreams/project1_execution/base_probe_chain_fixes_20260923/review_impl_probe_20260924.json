@@ -1,0 +1,171 @@
+{
+  "host_signals": {
+    "SIGHUP": {
+      "exit_code": -1,
+      "client_exit_code": -1,
+      "client_exit_kind": "container_process_exit",
+      "log_complete": true
+    },
+    "SIGINT": {
+      "exit_code": -2,
+      "client_exit_code": -2,
+      "client_exit_kind": "container_process_exit",
+      "log_complete": true
+    },
+    "SIGTERM": {
+      "exit_code": -15,
+      "client_exit_code": -15,
+      "client_exit_kind": "container_process_exit",
+      "log_complete": true
+    },
+    "SIGKILL": {
+      "exit_code": -9,
+      "client_exit_code": -9,
+      "client_exit_kind": "container_process_exit",
+      "log_complete": true
+    }
+  },
+  "formal_chain": [
+    {
+      "case": "normal_zero",
+      "input_exit_code": 0,
+      "reject_on_nonzero": true,
+      "completion_class": "present_complete",
+      "termination_kind": "completed",
+      "reward": 1.0,
+      "remove_sample": false,
+      "grading_calls": 1,
+      "persisted_harness_log_present": false,
+      "harness_paths_indexed": 0,
+      "failure_details": []
+    },
+    {
+      "case": "container_130",
+      "input_exit_code": 130,
+      "reject_on_nonzero": true,
+      "completion_class": "missing",
+      "termination_kind": "harness_crash",
+      "reward": 0.0,
+      "remove_sample": true,
+      "grading_calls": 0,
+      "persisted_harness_log_present": false,
+      "harness_paths_indexed": 0,
+      "failure_details": [
+        "[nonzero_harness_exit_in_formal_chain] harness 非零退出 130（正式链拒绝）——训练守卫下 CC 不该因 infra 失败退出，可疑到拒绝该 execution。"
+      ]
+    },
+    {
+      "case": "host_SIGINT_current",
+      "input_exit_code": -2,
+      "reject_on_nonzero": true,
+      "completion_class": "present_complete",
+      "termination_kind": "completed",
+      "reward": 1.0,
+      "remove_sample": false,
+      "grading_calls": 1,
+      "persisted_harness_log_present": false,
+      "harness_paths_indexed": 0,
+      "failure_details": []
+    },
+    {
+      "case": "host_SIGTERM_cap_current",
+      "input_exit_code": -15,
+      "reject_on_nonzero": true,
+      "completion_class": "present_truncated",
+      "termination_kind": "max_turns_exhausted",
+      "reward": 1.0,
+      "remove_sample": false,
+      "grading_calls": 1,
+      "persisted_harness_log_present": false,
+      "harness_paths_indexed": 0,
+      "failure_details": []
+    },
+    {
+      "case": "typed_loss_control",
+      "input_exit_code": -2,
+      "reject_on_nonzero": true,
+      "completion_class": "missing",
+      "termination_kind": "harness_crash",
+      "reward": 0.0,
+      "remove_sample": true,
+      "grading_calls": 0,
+      "persisted_harness_log_present": false,
+      "harness_paths_indexed": 0,
+      "failure_details": [
+        "[harness_exec_connection_lost] injected host connection loss"
+      ]
+    },
+    {
+      "case": "typed_loss_cap_control",
+      "input_exit_code": -15,
+      "reject_on_nonzero": true,
+      "completion_class": "missing",
+      "termination_kind": "harness_crash",
+      "reward": 0.0,
+      "remove_sample": true,
+      "grading_calls": 0,
+      "persisted_harness_log_present": false,
+      "harness_paths_indexed": 0,
+      "failure_details": [
+        "[harness_exec_connection_lost] injected host connection loss"
+      ]
+    },
+    {
+      "case": "normal_audit_control",
+      "input_exit_code": 0,
+      "reject_on_nonzero": true,
+      "completion_class": "present_complete",
+      "termination_kind": "completed",
+      "reward": 1.0,
+      "remove_sample": false,
+      "grading_calls": 1,
+      "persisted_harness_log_present": true,
+      "harness_paths_indexed": 2,
+      "failure_details": []
+    },
+    {
+      "case": "typed_loss_audit",
+      "input_exit_code": 125,
+      "reject_on_nonzero": true,
+      "completion_class": "missing",
+      "termination_kind": "harness_crash",
+      "reward": 0.0,
+      "remove_sample": true,
+      "grading_calls": 0,
+      "persisted_harness_log_present": false,
+      "harness_paths_indexed": 0,
+      "failure_details": [
+        "[harness_exec_connection_lost] injected host connection loss"
+      ]
+    }
+  ],
+  "cancelled_launch": {
+    "cancel_propagated": true,
+    "partial_file_bytes": 7,
+    "outer_deadline_rc": null,
+    "hit_by": null,
+    "harness_log_in_launch_facts": false,
+    "pending_pumps": 0
+  },
+  "outer_deadline_launch": {
+    "cancel_propagated": false,
+    "partial_file_bytes": 7,
+    "outer_deadline_rc": -1,
+    "hit_by": "harness_outer",
+    "harness_log_in_launch_facts": false,
+    "pending_pumps": 0
+  },
+  "owner_timeout_control": {
+    "exit_code": -1,
+    "client_exit_kind": "time_budget",
+    "partial_reason": "time_budget"
+  },
+  "short_write": {
+    "input_bytes": 8192,
+    "actual_file_bytes": 4096,
+    "reported_bytes": 8192,
+    "log_complete": true,
+    "partial_reason": null,
+    "exit_code": 0
+  }
+}

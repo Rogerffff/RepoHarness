@@ -1,0 +1,48 @@
+{
+  "instance_id": "dask__dask-8801",
+  "base_commit": "9634da11a5a6e5eb64cf941d2088aabffe504adb",
+  "scope": "local_extracted_source_and_official_test_functions_not_RH2",
+  "change": "error wording only; exception type, file path, reason and valid input behavior preserved",
+  "results": {
+    "gold": {
+      "source_sha256": "ad89a85473ae4b099f58e0d489337ddbad7d2136dc1d410760098c7b89b5d08b",
+      "official_f2p_functions": {
+        "test_collect_yaml_no_top_level_dict": "passed",
+        "test_collect_yaml_malformed_file": "passed"
+      },
+      "semantic_checks": [
+        {
+          "input": "{",
+          "type": "ValueError",
+          "path_and_cause": true
+        },
+        {
+          "input": "[1234]",
+          "type": "ValueError",
+          "path_and_cause": true
+        }
+      ],
+      "valid_mapping_preserved": true
+    },
+    "wording_only_variant": {
+      "source_sha256": "2f52fa0062d97ab81c03e1b13790583843e51e41a3b87e3e3667b233ad934375",
+      "official_f2p_functions": {
+        "test_collect_yaml_no_top_level_dict": "AssertionError",
+        "test_collect_yaml_malformed_file": "AssertionError"
+      },
+      "semantic_checks": [
+        {
+          "input": "{",
+          "type": "ValueError",
+          "path_and_cause": true
+        },
+        {
+          "input": "[1234]",
+          "type": "ValueError",
+          "path_and_cause": true
+        }
+      ],
+      "valid_mapping_preserved": true
+    }
+  }
+}

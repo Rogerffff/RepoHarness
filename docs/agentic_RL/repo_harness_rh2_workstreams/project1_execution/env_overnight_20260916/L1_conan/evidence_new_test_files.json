@@ -1,0 +1,173 @@
+{
+ "说明": "test_patch 触碰的每个路径在 base_commit 是否存在；不存在 = 官方恢复步骤 git checkout <base> <路径> 会整条 pathspec 失败（见 repo_level_findings.md §5）。",
+ "tasks": {
+  "conan-io__conan-13326": {
+   "paths": [
+    {
+     "路径": "conans/test/unittests/tools/build/test_cppstd.py",
+     "base 存在": true,
+     "test_patch 标记为新建": false
+    }
+   ],
+   "eval.sh 里的 git checkout 行": [
+    "git checkout 00700331f59e1e01b53315fec786e7f78d7bced2 conans/test/unittests/tools/build/test_cppstd.py",
+    "git checkout 00700331f59e1e01b53315fec786e7f78d7bced2 conans/test/unittests/tools/build/test_cppstd.py"
+   ],
+   "恢复是否退化为无 pathspec 整树 checkout": false
+  },
+  "conan-io__conan-14296": {
+   "paths": [
+    {
+     "路径": "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py",
+     "base 存在": true,
+     "test_patch 标记为新建": false
+    }
+   ],
+   "eval.sh 里的 git checkout 行": [
+    "git checkout a26104a90c1d683956982ede2e6a481e5dbde5e4 conans/test/integration/toolchains/cmake/test_cmaketoolchain.py",
+    "git checkout a26104a90c1d683956982ede2e6a481e5dbde5e4 conans/test/integration/toolchains/cmake/test_cmaketoolchain.py"
+   ],
+   "恢复是否退化为无 pathspec 整树 checkout": false
+  },
+  "conan-io__conan-11560": {
+   "paths": [
+    {
+     "路径": "conans/test/unittests/tools/google/test_bazeldeps.py",
+     "base 存在": true,
+     "test_patch 标记为新建": false
+    }
+   ],
+   "eval.sh 里的 git checkout 行": [
+    "git checkout 345be91a038e1bda707e07a19889953412d358dc conans/test/unittests/tools/google/test_bazeldeps.py",
+    "git checkout 345be91a038e1bda707e07a19889953412d358dc conans/test/unittests/tools/google/test_bazeldeps.py"
+   ],
+   "恢复是否退化为无 pathspec 整树 checkout": false
+  },
+  "conan-io__conan-11594": {
+   "paths": [
+    {
+     "路径": "conans/test/unittests/tools/cmake/test_cmake_test.py",
+     "base 存在": false,
+     "test_patch 标记为新建": true
+    }
+   ],
+   "eval.sh 里的 git checkout 行": [
+    "git checkout 4ed1bee0fb81b2826208e8c1c824c99fb6d69be8",
+    "git checkout 4ed1bee0fb81b2826208e8c1c824c99fb6d69be8"
+   ],
+   "恢复是否退化为无 pathspec 整树 checkout": true
+  },
+  "conan-io__conan-12397": {
+   "paths": [
+    {
+     "路径": "conans/test/integration/toolchains/meson/test_mesontoolchain.py",
+     "base 存在": true,
+     "test_patch 标记为新建": false
+    }
+   ],
+   "eval.sh 里的 git checkout 行": [
+    "git checkout 883eff8961d6e0d96652f78e3d7d3884479e769e conans/test/integration/toolchains/meson/test_mesontoolchain.py",
+    "git checkout 883eff8961d6e0d96652f78e3d7d3884479e769e conans/test/integration/toolchains/meson/test_mesontoolchain.py"
+   ],
+   "恢复是否退化为无 pathspec 整树 checkout": false
+  },
+  "conan-io__conan-13230": {
+   "paths": [
+    {
+     "路径": "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py",
+     "base 存在": true,
+     "test_patch 标记为新建": false
+    }
+   ],
+   "eval.sh 里的 git checkout 行": [
+    "git checkout c2001bad8aa873eaf2c392ab6e3ff8b8bdfec971 conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py",
+    "git checkout c2001bad8aa873eaf2c392ab6e3ff8b8bdfec971 conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py"
+   ],
+   "恢复是否退化为无 pathspec 整树 checkout": false
+  },
+  "conan-io__conan-13403": {
+   "paths": [
+    {
+     "路径": "conans/test/unittests/tools/gnu/autotools_test.py",
+     "base 存在": true,
+     "test_patch 标记为新建": false
+    }
+   ],
+   "eval.sh 里的 git checkout 行": [
+    "git checkout 55163679ad1fa933f671ddf186e53b92bf39bbdb conans/test/unittests/tools/gnu/autotools_test.py",
+    "git checkout 55163679ad1fa933f671ddf186e53b92bf39bbdb conans/test/unittests/tools/gnu/autotools_test.py"
+   ],
+   "恢复是否退化为无 pathspec 整树 checkout": false
+  },
+  "conan-io__conan-13610": {
+   "paths": [
+    {
+     "路径": "conans/test/integration/command_v2/test_output_level.py",
+     "base 存在": true,
+     "test_patch 标记为新建": false
+    }
+   ],
+   "eval.sh 里的 git checkout 行": [
+    "git checkout 0c1624d2dd3b0278c1cf6f66f8dcc7bd1aa9ec48 conans/test/integration/command_v2/test_output_level.py",
+    "git checkout 0c1624d2dd3b0278c1cf6f66f8dcc7bd1aa9ec48 conans/test/integration/command_v2/test_output_level.py"
+   ],
+   "恢复是否退化为无 pathspec 整树 checkout": false
+  },
+  "conan-io__conan-13721": {
+   "paths": [
+    {
+     "路径": "conans/test/integration/configuration/test_profile_jinja.py",
+     "base 存在": true,
+     "test_patch 标记为新建": false
+    }
+   ],
+   "eval.sh 里的 git checkout 行": [
+    "git checkout 0efbe7e49fdf554da4d897735b357d85b2a75aca conans/test/integration/configuration/test_profile_jinja.py",
+    "git checkout 0efbe7e49fdf554da4d897735b357d85b2a75aca conans/test/integration/configuration/test_profile_jinja.py"
+   ],
+   "恢复是否退化为无 pathspec 整树 checkout": false
+  },
+  "conan-io__conan-13788": {
+   "paths": [
+    {
+     "路径": "conans/test/integration/graph_lock/graph_lock_build_requires_test.py",
+     "base 存在": true,
+     "test_patch 标记为新建": false
+    }
+   ],
+   "eval.sh 里的 git checkout 行": [
+    "git checkout c1b3978914dd09e4c07fc8d1e688d5636fda6e79 conans/test/integration/graph_lock/graph_lock_build_requires_test.py",
+    "git checkout c1b3978914dd09e4c07fc8d1e688d5636fda6e79 conans/test/integration/graph_lock/graph_lock_build_requires_test.py"
+   ],
+   "恢复是否退化为无 pathspec 整树 checkout": false
+  },
+  "conan-io__conan-14177": {
+   "paths": [
+    {
+     "路径": "conans/test/unittests/tools/files/test_patches.py",
+     "base 存在": true,
+     "test_patch 标记为新建": false
+    }
+   ],
+   "eval.sh 里的 git checkout 行": [
+    "git checkout b43eb83956f053a47cc3897cfdd57b9da13a16e6 conans/test/unittests/tools/files/test_patches.py",
+    "git checkout b43eb83956f053a47cc3897cfdd57b9da13a16e6 conans/test/unittests/tools/files/test_patches.py"
+   ],
+   "恢复是否退化为无 pathspec 整树 checkout": false
+  },
+  "conan-io__conan-15422": {
+   "paths": [
+    {
+     "路径": "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py",
+     "base 存在": true,
+     "test_patch 标记为新建": false
+    }
+   ],
+   "eval.sh 里的 git checkout 行": [
+    "git checkout f08b9924712cf0c2f27b93cbb5206d56d0d824d8 conans/test/integration/toolchains/cmake/test_cmaketoolchain.py",
+    "git checkout f08b9924712cf0c2f27b93cbb5206d56d0d824d8 conans/test/integration/toolchains/cmake/test_cmaketoolchain.py"
+   ],
+   "恢复是否退化为无 pathspec 整树 checkout": false
+  }
+ }
+}

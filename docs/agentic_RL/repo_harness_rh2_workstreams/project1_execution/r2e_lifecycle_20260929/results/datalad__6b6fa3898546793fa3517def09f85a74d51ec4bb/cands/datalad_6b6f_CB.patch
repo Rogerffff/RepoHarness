@@ -1,0 +1,16 @@
+diff --git a/datalad/support/network.py b/datalad/support/network.py
+index 88fbba7..3908605 100644
+--- a/datalad/support/network.py
++++ b/datalad/support/network.py
+@@ -489,8 +489,10 @@ class URL(object):
+                 lgr.log(5, "Assuming ssh style url, adjusted: %s" % (fields,))
+ 
+         if not fields['scheme'] and not fields['hostname']:
+-            if fields['path'] and '@' in fields['path']:
++            parts = _split_colon(url)
++            if fields['path'] and '@' in fields['path'] or len(parts) > 1:
+                 # user@host:path/sp1
++                # or host_name: (hence parts check)
+                 fields['scheme'] = 'ssh:implicit'
+             elif url.startswith('//'):
+                 # e.g. // or ///path

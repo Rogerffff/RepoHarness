@@ -1,0 +1,66 @@
+{
+  "schema": "moto.acceptance_matrix.plan.v1",
+  "as_of": "2026-10-03",
+  "instance_id": "getmoto__moto-5406",
+  "status": "not_run",
+  "material_request": "revision_request.json",
+  "reference_counts": {
+    "fail_to_pass": 1,
+    "pass_to_pass": 27
+  },
+  "controls": [
+    {
+      "name": "noop",
+      "role": "noop",
+      "patch": {
+        "path": "runs/category2_repair_20260929/swe_materials/moto5406_next/controls/noop.patch",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "expected_reward": 0,
+      "expected_reward_evidence": "既有原评分和公开 East1 对照；新28参考未运行"
+    },
+    {
+      "name": "gold",
+      "role": "positive",
+      "patch": {
+        "path": "runs/category2_repair_20260929/swe_materials/moto5406_next/controls/gold.patch",
+        "sha256": "2a707374963e8e522bb609524cba59460828b3ecc05a9503e4de7e72d10545de",
+        "bytes": 775
+      },
+      "expected_reward": 1,
+      "expected_reward_evidence": "既有原评分和公开 East1 对照；新28参考未运行"
+    },
+    {
+      "name": "constant_east2",
+      "role": "known_wrong",
+      "patch": {
+        "path": "runs/category2_repair_20260929/swe_materials/moto5406_next/controls/constant_east2.patch",
+        "sha256": "c9a677627557f2a18a95a11d0f1b18df48897f441ed1038a212a9107d3b8b884",
+        "bytes": 409
+      },
+      "expected_reward": 0,
+      "expected_reward_evidence": "既有原评分和公开 East1 对照；新28参考未运行"
+    }
+  ],
+  "formal_run_count": 3,
+  "new_host_identity_check": true,
+  "shared_code_snapshot": null,
+  "cpu_host": null,
+  "resource_limits": "按本题既有配方和总协调全机名额落实，不使用旧SSH或无约束并发",
+  "required_evidence": [
+    "实际固定材料／镜像／代码／配方",
+    "安装与测试完整执行／逐参考状态／退出码",
+    "新增或修正断言的真实执行与目标失败位置",
+    "完整日志、工件、异常及两层清理",
+    "有效正对照与非作者核查"
+  ],
+  "reuse_or_targeted_actor_validation": "5406修订公开消息及原例；6185/7584补缺失actor命令；其余只补新宿主身份和受影响路径",
+  "never_send_to_solver": [
+    "gold",
+    "负对照",
+    "私有测试断言",
+    "题主分析"
+  ],
+  "probe_submission": "not_submitted"
+}

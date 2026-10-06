@@ -1,0 +1,1888 @@
+{
+  "schema": "coveragepy.model_analysis.v1",
+  "as_of_utc": "2026-10-02T21:42:52.413386+00:00",
+  "task_id": "coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9",
+  "owner_thread_id": "01a0fd63-c159-7331-b391-d78dd853ec75",
+  "status": "first_round_reviewed_repeat_pending",
+  "request_id": "r2e-coveragepy-5dbb-r068-cpu-r5-20261003-v1",
+  "material": "R5/038+039+068/public A/76 keys",
+  "report": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/model_analysis_20261003.md",
+    "sha256": "sha256:682ffe16a0c6a034f092741146407c6a1ad6b1b7cd50c4f28d749649e61700fc"
+  },
+  "gpu_receipt": {
+    "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/receipts/r2e-coveragepy-5dbb-r068-cpu-r5-20261003-v1.json",
+    "sha256": "sha256:a59100ab15142ca4b0dfa27895a9a2c9767fd33559d9cd75e7bb704152ce0045"
+  },
+  "request_immutable": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/probe_request.json",
+    "sha256": "sha256:a4620c245ae4ce06893b3d0877e524fcf9ff8a8960aea912aebe2e8c0f84e50d"
+  },
+  "non_author_review": {
+    "status": "passed_no_material_blocker_candidate_quality_limit_retained",
+    "report": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/reviews/non_author_5dbb_model_semantic_review_20261003.md",
+      "sha256": "sha256:d83e244d7b876b62b8d9bab029bef4870c597f279dd95f1e8963d98a1df98c53"
+    },
+    "machine_checks": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/reviews/non_author_5dbb_model_semantic_review_20261003.json",
+      "sha256": "sha256:c2044a1cb094c480458d5e6f3c2d64ac785c10aea733701c0bdaf5feb7b85b86"
+    },
+    "fresh_public_reader": false,
+    "performed_new_model_or_cpu_run": false
+  },
+  "models": {
+    "coder": {
+      "job_id": "gpu1003-coveragepy5dbb-coder-a1",
+      "actual_model": "Qwen3-Coder-30B-A3B-Instruct",
+      "checkpoint_revision": "b2cff646eb4bb1d68355c01b18ae02e7cf42d120",
+      "actual_budget": {
+        "version": "probe-wide-v1",
+        "max_context_len": 196608,
+        "max_new_tokens": 65536,
+        "max_turns": 240,
+        "wall_seconds": 10800,
+        "max_requests_per_session": 1024,
+        "first_byte_timeout_seconds": 1800,
+        "adapter_idle_drop_seconds": 14400
+      },
+      "actual_grading_budgets": {
+        "whole_seconds": 3600.0,
+        "setup_seconds": 300.0,
+        "apply_seconds": 120.0,
+        "test_seconds": 1800.0
+      },
+      "sampling": {
+        "temperature": 0.7,
+        "top_p": 0.8,
+        "top_k": 20,
+        "repetition_penalty": 1.05,
+        "max_new_tokens": 65536
+      },
+      "sampling_evidence_limit": "固定代码+gateway/adapter逐请求关联；未存原始SGLang POST采样字段",
+      "raw_grade": {
+        "reward": 1.0,
+        "matched": 76,
+        "total": 76,
+        "source": "original_frozen_patch"
+      },
+      "source_semantics": "pass_for_approved_A",
+      "whole_patch_quality": "qualified_not_a_clean_fix_example",
+      "candidate_paths": [
+        ".coverage",
+        "comprehensive_test.py",
+        "coverage/control.py",
+        "final_validation.py",
+        "original_issue_test.py",
+        "test_once_functionality.py",
+        "test_once_issue.py",
+        "tests/modules/.coverage"
+      ],
+      "frozen_patch_digest": "sha256:9b8da278e28bc6c8d6e9845afbfcee078208f34554d5fd35e1555bb12763707b",
+      "metrics": {
+        "first_generation_request_ts": 1790973275.7824235,
+        "first_generation_request_utc": "2026-10-02T20:34:35.782423+00:00",
+        "generation_requests": 35,
+        "gateway_generation_seconds_sum": 48.705,
+        "gateway_first_byte_seconds_sum": 48.693,
+        "tool_count": 34,
+        "solve_seconds": 60.268,
+        "cc_num_turns": 35,
+        "cc_duration_seconds": 56.447,
+        "cc_api_duration_seconds": 49.402,
+        "cc_non_api_remainder_seconds": 7.045,
+        "input_tokens": 888036,
+        "output_tokens": 5580,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "actor_attempt_total_seconds": 108.023,
+        "first_request_after_actor_start_seconds": 43.83,
+        "actor_step_timings": {
+          "image_ready": 0.018,
+          "network_and_container": 1.27,
+          "git_sanitize": 2.392,
+          "trusted_init": 24.765,
+          "baseline_census": 0.181,
+          "quiescence": 0.479
+        },
+        "grading_timings": {
+          "schema_id": "rh2.grading_timing_record.v1",
+          "record_id": "timing_c0ebeb96",
+          "trajectory_id": "gpu1003-coveragepy5dbb-coder-a1",
+          "task_id": "r2e_gym_subset::coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9",
+          "image_pull_seconds": 0.0,
+          "env_reset_seconds": 3.297,
+          "prep_seconds": 0.61,
+          "test_seconds": 3.242,
+          "total_grading_seconds": 31.795,
+          "queue_wait_seconds": 0.0,
+          "container_peak_memory_mb": 297.762,
+          "queue_depth_at_enqueue": null,
+          "backpressure_triggered": false
+        },
+        "queue_wait_solver_seconds": null,
+        "weight_switch_seconds": null,
+        "isolated_tool_seconds": null,
+        "cc_alias_price_estimate_usd": 4.57968,
+        "actual_self_hosted_cost_usd": null
+      },
+      "tool_counts": {
+        "Read": 7,
+        "Bash": 17,
+        "Write": 6,
+        "Edit": 4
+      },
+      "tool_result_errors": 1,
+      "tool_audit_index": [
+        {
+          "ordinal": 1,
+          "call_line": 10,
+          "result_line": 14,
+          "message_id": "msg_f3cb5ea311e8380df6afb6d9",
+          "tool_use_id": "toolu_eabb25f66c4fa78d",
+          "name": "Read",
+          "path": "/testbed/coverage/__init__.py",
+          "command": null,
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:34:36.379Z",
+          "result_seconds_after_first_request": 0.597,
+          "is_error": false,
+          "output_characters": 1385,
+          "output_sha256": "57ea233ca02664e36fbade7df2d7418fb199389e3be7c892bd9ba9efa280196a"
+        },
+        {
+          "ordinal": 2,
+          "call_line": 23,
+          "result_line": 27,
+          "message_id": "msg_284e72a1f1990d9f0c3b9895",
+          "tool_use_id": "toolu_ee1c11b95ccd5d29",
+          "name": "Read",
+          "path": "/testbed/coverage/control.py",
+          "command": null,
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:34:36.764Z",
+          "result_seconds_after_first_request": 0.982,
+          "is_error": false,
+          "output_characters": 44490,
+          "output_sha256": "324e5d31313fe7c742068d6a6ac11b5efddc571cadde97ab76da9419649a21bb"
+        },
+        {
+          "ordinal": 3,
+          "call_line": 36,
+          "result_line": 40,
+          "message_id": "msg_97d1e9a2301f7a9835507940",
+          "tool_use_id": "toolu_6a7fe8169e9b61f1",
+          "name": "Bash",
+          "path": null,
+          "command": "find /testbed -name \"*.py\" -exec grep -l \"_warn\\|warn\" {} \\; | head -10",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:34:39.678Z",
+          "result_seconds_after_first_request": 3.896,
+          "is_error": false,
+          "output_characters": 283,
+          "output_sha256": "14dbe5e0ab6a4039b8ade09b44ae00885fa7a7c22cd25ac16df8208140c30dd8"
+        },
+        {
+          "ordinal": 4,
+          "call_line": 49,
+          "result_line": 53,
+          "message_id": "msg_027968c8d86e5c715ff673bb",
+          "tool_use_id": "toolu_55ce1d7237d1c3cc",
+          "name": "Bash",
+          "path": null,
+          "command": "grep -n -A 10 -B 5 \"warn\\|_warn\" /testbed/tests/test_api.py /testbed/tests/test_testing.py",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:34:40.256Z",
+          "result_seconds_after_first_request": 4.474,
+          "is_error": false,
+          "output_characters": 17056,
+          "output_sha256": "2c3e15d052781874a086b2540ae902a18717649374e25bd9ef4f3620893e489f"
+        },
+        {
+          "ordinal": 5,
+          "call_line": 62,
+          "result_line": 66,
+          "message_id": "msg_e6d98daa70ad8dadca949756",
+          "tool_use_id": "toolu_21ec01b7a11b6abe",
+          "name": "Bash",
+          "path": null,
+          "command": "grep -r \"once\" /testbed/tests/ --include=\"*.py\"",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:34:41.101Z",
+          "result_seconds_after_first_request": 5.319,
+          "is_error": false,
+          "output_characters": 1076,
+          "output_sha256": "4728a1871086938f34a6dbe2bfffb652e6a49357998171dd05dcddd18fc6d83a"
+        },
+        {
+          "ordinal": 6,
+          "call_line": 75,
+          "result_line": 79,
+          "message_id": "msg_ae90803430466230774856d2",
+          "tool_use_id": "toolu_d2aa3f50aeac0e03",
+          "name": "Read",
+          "path": "/testbed/coverage/config.py",
+          "command": null,
+          "read_offset": null,
+          "read_limit": 200,
+          "result_timestamp": "2026-10-02T20:34:41.647Z",
+          "result_seconds_after_first_request": 5.865,
+          "is_error": false,
+          "output_characters": 7272,
+          "output_sha256": "a27d236ea0a5efa07569eda1bd59638cdbd206e0b661b580faa5b3b5554808ad"
+        },
+        {
+          "ordinal": 7,
+          "call_line": 88,
+          "result_line": 92,
+          "message_id": "msg_c2b19faa54c4e71e7ef31137",
+          "tool_use_id": "toolu_ce6af9d46657cb52",
+          "name": "Write",
+          "path": "/testbed/test_once_issue.py",
+          "command": null,
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:34:43.162Z",
+          "result_seconds_after_first_request": 7.38,
+          "is_error": false,
+          "output_characters": 123,
+          "output_sha256": "1769fba1d6f15bee600a9f807577ac6874b9b0c83600dbf381678ad472aac51c"
+        },
+        {
+          "ordinal": 8,
+          "call_line": 97,
+          "result_line": 101,
+          "message_id": "msg_cce7b39fae79ecba5d252469",
+          "tool_use_id": "toolu_fa3c8a2e12248da2",
+          "name": "Bash",
+          "path": null,
+          "command": "python test_once_issue.py",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:34:43.614Z",
+          "result_seconds_after_first_request": 7.832,
+          "is_error": false,
+          "output_characters": 69,
+          "output_sha256": "b2ae955821dd25e9dec51f17c23892e5785a922f8319fa5b5545becda3c6cb1c"
+        },
+        {
+          "ordinal": 9,
+          "call_line": 110,
+          "result_line": 114,
+          "message_id": "msg_4341040784115bf9540ab40c",
+          "tool_use_id": "toolu_5978998cabb08659",
+          "name": "Read",
+          "path": "/testbed/coverage/control.py",
+          "command": null,
+          "read_offset": 336,
+          "read_limit": 20,
+          "result_timestamp": "2026-10-02T20:34:44.364Z",
+          "result_seconds_after_first_request": 8.582,
+          "is_error": false,
+          "output_characters": 741,
+          "output_sha256": "22dcb1bc22bda58821302c792247ecf1126c547633ceb3ea7fb307d46d32d12d"
+        },
+        {
+          "ordinal": 10,
+          "call_line": 123,
+          "result_line": 127,
+          "message_id": "msg_61fb9c0fcb593f65746d640d",
+          "tool_use_id": "toolu_baaa7d51e82d2136",
+          "name": "Edit",
+          "path": "/testbed/coverage/control.py",
+          "command": null,
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:34:48.033Z",
+          "result_seconds_after_first_request": 12.251,
+          "is_error": false,
+          "output_characters": 134,
+          "output_sha256": "43851f9527a5e57d7cd4cc9f9ea66d3430f9e9bb92f1f4b92a4efc56c3032759"
+        },
+        {
+          "ordinal": 11,
+          "call_line": 136,
+          "result_line": 140,
+          "message_id": "msg_f3be67555533cc8a71bc1a72",
+          "tool_use_id": "toolu_ecb74fce72101074",
+          "name": "Bash",
+          "path": null,
+          "command": "python test_once_issue.py",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:34:48.512Z",
+          "result_seconds_after_first_request": 12.73,
+          "is_error": false,
+          "output_characters": 132,
+          "output_sha256": "343f66e19c387e3a0e6d195b70d857abb96368f0653e8a1b485e910600b940bb"
+        },
+        {
+          "ordinal": 12,
+          "call_line": 149,
+          "result_line": 153,
+          "message_id": "msg_a170aa74e2590b2389b52541",
+          "tool_use_id": "toolu_d52a0bd26ff8558d",
+          "name": "Write",
+          "path": "/testbed/test_once_issue.py",
+          "command": null,
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:34:50.120Z",
+          "result_seconds_after_first_request": 14.338,
+          "is_error": false,
+          "output_characters": 133,
+          "output_sha256": "94097345d28b5f470e9efa4cfa026aca2b867aac7422afbc5c291e3e6eeb0708"
+        },
+        {
+          "ordinal": 13,
+          "call_line": 158,
+          "result_line": 162,
+          "message_id": "msg_0625194380b326738c70baf4",
+          "tool_use_id": "toolu_eb25f139ca12e44c",
+          "name": "Bash",
+          "path": null,
+          "command": "python test_once_issue.py",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:34:50.523Z",
+          "result_seconds_after_first_request": 14.741,
+          "is_error": false,
+          "output_characters": 243,
+          "output_sha256": "46e8d2084c13e4d4f1e26efbfd97ea014e7878468ec2ce3466ddc6f2373113c2"
+        },
+        {
+          "ordinal": 14,
+          "call_line": 171,
+          "result_line": 175,
+          "message_id": "msg_17eb769e22fadf2dc76a90c2",
+          "tool_use_id": "toolu_ad33890e6edf179e",
+          "name": "Edit",
+          "path": "/testbed/coverage/control.py",
+          "command": null,
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:34:55.326Z",
+          "result_seconds_after_first_request": 19.544,
+          "is_error": false,
+          "output_characters": 134,
+          "output_sha256": "43851f9527a5e57d7cd4cc9f9ea66d3430f9e9bb92f1f4b92a4efc56c3032759"
+        },
+        {
+          "ordinal": 15,
+          "call_line": 180,
+          "result_line": 184,
+          "message_id": "msg_dd21c33004c94a01ee925825",
+          "tool_use_id": "toolu_4f40c14e37a3efb1",
+          "name": "Bash",
+          "path": null,
+          "command": "python test_once_issue.py",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:34:55.789Z",
+          "result_seconds_after_first_request": 20.007,
+          "is_error": false,
+          "output_characters": 243,
+          "output_sha256": "46e8d2084c13e4d4f1e26efbfd97ea014e7878468ec2ce3466ddc6f2373113c2"
+        },
+        {
+          "ordinal": 16,
+          "call_line": 193,
+          "result_line": 197,
+          "message_id": "msg_709c9f04be3dda341633b5df",
+          "tool_use_id": "toolu_7545c8e620d1a467",
+          "name": "Read",
+          "path": "/testbed/coverage/control.py",
+          "command": null,
+          "read_offset": 336,
+          "read_limit": 30,
+          "result_timestamp": "2026-10-02T20:34:56.751Z",
+          "result_seconds_after_first_request": 20.969,
+          "is_error": false,
+          "output_characters": 1337,
+          "output_sha256": "9e236d7ff4d4924da5e6bf57f49dc1374d4971e6eb83ec69b03770996c6009ed"
+        },
+        {
+          "ordinal": 17,
+          "call_line": 206,
+          "result_line": 210,
+          "message_id": "msg_7ab67b23859e1bd49616d225",
+          "tool_use_id": "toolu_edfcd5b7daf1139a",
+          "name": "Edit",
+          "path": "/testbed/coverage/control.py",
+          "command": null,
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:34:58.661Z",
+          "result_seconds_after_first_request": 22.879,
+          "is_error": false,
+          "output_characters": 134,
+          "output_sha256": "43851f9527a5e57d7cd4cc9f9ea66d3430f9e9bb92f1f4b92a4efc56c3032759"
+        },
+        {
+          "ordinal": 18,
+          "call_line": 215,
+          "result_line": 219,
+          "message_id": "msg_7f0a87ea780a74fefe0b8228",
+          "tool_use_id": "toolu_d93f981e6b67b3a4",
+          "name": "Edit",
+          "path": "/testbed/coverage/control.py",
+          "command": null,
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:35:02.977Z",
+          "result_seconds_after_first_request": 27.195,
+          "is_error": false,
+          "output_characters": 134,
+          "output_sha256": "43851f9527a5e57d7cd4cc9f9ea66d3430f9e9bb92f1f4b92a4efc56c3032759"
+        },
+        {
+          "ordinal": 19,
+          "call_line": 224,
+          "result_line": 228,
+          "message_id": "msg_f95af26fdc2867a7cc950b9e",
+          "tool_use_id": "toolu_9a30cf7ce8a6510d",
+          "name": "Bash",
+          "path": null,
+          "command": "python test_once_issue.py",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:35:03.351Z",
+          "result_seconds_after_first_request": 27.569,
+          "is_error": false,
+          "output_characters": 196,
+          "output_sha256": "81b965b2101fe1d91f1353a08e4f2fe541625fb730166d2a790e161a99e8103f"
+        },
+        {
+          "ordinal": 20,
+          "call_line": 237,
+          "result_line": 241,
+          "message_id": "msg_bdaac4fb6577e5d778d2ee41",
+          "tool_use_id": "toolu_bd9adbca57dace37",
+          "name": "Write",
+          "path": "/testbed/comprehensive_test.py",
+          "command": null,
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:35:06.432Z",
+          "result_seconds_after_first_request": 30.65,
+          "is_error": false,
+          "output_characters": 126,
+          "output_sha256": "82c15213210067a3ca057fb23d84fd05460c389e4f033f70d8edccf79aa008c6"
+        },
+        {
+          "ordinal": 21,
+          "call_line": 246,
+          "result_line": 250,
+          "message_id": "msg_0b06c6ab40366349c8b69a34",
+          "tool_use_id": "toolu_2b3a822322d33ecb",
+          "name": "Bash",
+          "path": null,
+          "command": "python comprehensive_test.py",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:35:06.843Z",
+          "result_seconds_after_first_request": 31.061,
+          "is_error": false,
+          "output_characters": 810,
+          "output_sha256": "f0127c0aacb37b76b983999576f1fbdc7664d28ba6d26bdec1cf99dfb5596b2f"
+        },
+        {
+          "ordinal": 22,
+          "call_line": 259,
+          "result_line": 263,
+          "message_id": "msg_0e1b2c98afa392f7107a17bc",
+          "tool_use_id": "toolu_4994b79b9efd8f2b",
+          "name": "Bash",
+          "path": null,
+          "command": "python -m pytest -o addopts=\"\" -p no:cacheprovider --color=no -rfE tests/test_api.py tests/test_testing.py -k warn",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:35:09.141Z",
+          "result_seconds_after_first_request": 33.359,
+          "is_error": false,
+          "output_characters": 728,
+          "output_sha256": "30f341437dfe3a391cb46374e81eda7c2f7513fbfe2c24503d62782a5f749e10"
+        },
+        {
+          "ordinal": 23,
+          "call_line": 272,
+          "result_line": 276,
+          "message_id": "msg_f42e22fb4c516494e0ff3911",
+          "tool_use_id": "toolu_3d06e4c567a18cd4",
+          "name": "Bash",
+          "path": null,
+          "command": "python -m pytest -o addopts=\"\" -p no:cacheprovider --color=no -x tests/test_api.py",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:35:11.768Z",
+          "result_seconds_after_first_request": 35.986,
+          "is_error": false,
+          "output_characters": 623,
+          "output_sha256": "220ce46ae40c38d63db64ac7ba980d564a604ac4069b04e744121c7733047884"
+        },
+        {
+          "ordinal": 24,
+          "call_line": 285,
+          "result_line": 289,
+          "message_id": "msg_abdbe9ed7a4eae55d4af834c",
+          "tool_use_id": "toolu_fdd121fb691103fd",
+          "name": "Bash",
+          "path": null,
+          "command": "python -m pytest -o addopts=\"\" -p no:cacheprovider --color=no -x tests/test_testing.py",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:35:12.967Z",
+          "result_seconds_after_first_request": 37.185,
+          "is_error": false,
+          "output_characters": 543,
+          "output_sha256": "40d91d25be02380e2359db78c27109e511079481ae69b41b75838aec860f78b0"
+        },
+        {
+          "ordinal": 25,
+          "call_line": 298,
+          "result_line": 302,
+          "message_id": "msg_62aa10e8215de189ea35f1f0",
+          "tool_use_id": "toolu_e98b7634139b287c",
+          "name": "Write",
+          "path": "/testbed/test_once_functionality.py",
+          "command": null,
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:35:16.490Z",
+          "result_seconds_after_first_request": 40.708,
+          "is_error": false,
+          "output_characters": 131,
+          "output_sha256": "91c19713f98028527cfcad5e7bd9b4096eb50e53152b8ab13196edd340ef36a7"
+        },
+        {
+          "ordinal": 26,
+          "call_line": 307,
+          "result_line": 311,
+          "message_id": "msg_e692211ed70ce1c54d7334ec",
+          "tool_use_id": "toolu_c7d5870ea86c5e3a",
+          "name": "Bash",
+          "path": null,
+          "command": "python -m pytest -o addopts=\"\" -p no:cacheprovider --color=no test_once_functionality.py",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:35:17.343Z",
+          "result_seconds_after_first_request": 41.561,
+          "is_error": true,
+          "output_characters": 1877,
+          "output_sha256": "2aa34ec71477697ade7a19ef706a1152fdb687950d5d85309271a27f40456883"
+        },
+        {
+          "ordinal": 27,
+          "call_line": 320,
+          "result_line": 324,
+          "message_id": "msg_6cff14b61a48b01ce0eabd75",
+          "tool_use_id": "toolu_ce2ff31c94101889",
+          "name": "Read",
+          "path": "/testbed/tests/coveragetest.py",
+          "command": null,
+          "read_offset": null,
+          "read_limit": 50,
+          "result_timestamp": "2026-10-02T20:35:17.948Z",
+          "result_seconds_after_first_request": 42.166,
+          "is_error": false,
+          "output_characters": 1516,
+          "output_sha256": "fc9a698a7428f9e7929dbd67fa6f2d037f04d4b59cba77b0394b34a4d278e4d7"
+        },
+        {
+          "ordinal": 28,
+          "call_line": 333,
+          "result_line": 337,
+          "message_id": "msg_072ce88fc2fc1633df914317",
+          "tool_use_id": "toolu_c165474046b34a25",
+          "name": "Bash",
+          "path": null,
+          "command": "grep -n \"assert_warnings\" /testbed/tests/coveragetest.py",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:35:18.529Z",
+          "result_seconds_after_first_request": 42.747,
+          "is_error": false,
+          "output_characters": 66,
+          "output_sha256": "cc252ccc874c83f80d104aa6633f4517423096fe684ba01bb055e853545e8169"
+        },
+        {
+          "ordinal": 29,
+          "call_line": 342,
+          "result_line": 346,
+          "message_id": "msg_282aa32e15904768da8dc47a",
+          "tool_use_id": "toolu_5eafe3118e578ee4",
+          "name": "Read",
+          "path": "/testbed/tests/coveragetest.py",
+          "command": null,
+          "read_offset": 245,
+          "read_limit": 30,
+          "result_timestamp": "2026-10-02T20:35:19.054Z",
+          "result_seconds_after_first_request": 43.272,
+          "is_error": false,
+          "output_characters": 1291,
+          "output_sha256": "a55a827a05676e5f695198492af2167055a27f44ba4f2a21a550e804519e490e"
+        },
+        {
+          "ordinal": 30,
+          "call_line": 355,
+          "result_line": 359,
+          "message_id": "msg_e03af13e6a79962195f386d3",
+          "tool_use_id": "toolu_a01edd5996574ebe",
+          "name": "Write",
+          "path": "/testbed/final_validation.py",
+          "command": null,
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:35:23.672Z",
+          "result_seconds_after_first_request": 47.89,
+          "is_error": false,
+          "output_characters": 124,
+          "output_sha256": "e0eb23faa59db35e9e47fff7fd82708a2e3d89119f47b88829f0a2cef3b383d3"
+        },
+        {
+          "ordinal": 31,
+          "call_line": 364,
+          "result_line": 368,
+          "message_id": "msg_0536a6902e2522e3013f7248",
+          "tool_use_id": "toolu_8c8bd59cdabddddc",
+          "name": "Bash",
+          "path": null,
+          "command": "python final_validation.py",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:35:24.147Z",
+          "result_seconds_after_first_request": 48.365,
+          "is_error": false,
+          "output_characters": 838,
+          "output_sha256": "cc731e63af3ac229db088247860bd23a9b67b11fa91babc16bf94f9f98f1caa6"
+        },
+        {
+          "ordinal": 32,
+          "call_line": 377,
+          "result_line": 381,
+          "message_id": "msg_cf4d3fe9305e7eeca68727e8",
+          "tool_use_id": "toolu_2b9dc99741f325b2",
+          "name": "Write",
+          "path": "/testbed/original_issue_test.py",
+          "command": null,
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:35:25.309Z",
+          "result_seconds_after_first_request": 49.527,
+          "is_error": false,
+          "output_characters": 127,
+          "output_sha256": "737235b6b8c80220b57115bfc64f9b3c252f48e5e39986e89d2d9db71e1cb283"
+        },
+        {
+          "ordinal": 33,
+          "call_line": 386,
+          "result_line": 390,
+          "message_id": "msg_7623e530bbcdc78d7940d3e9",
+          "tool_use_id": "toolu_5662865bade00290",
+          "name": "Bash",
+          "path": null,
+          "command": "python original_issue_test.py",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:35:25.701Z",
+          "result_seconds_after_first_request": 49.919,
+          "is_error": false,
+          "output_characters": 100,
+          "output_sha256": "b055f57ff5bb4c1f3c9417e5c2164d62c31bcb472bf673fee14edcee82a22f3c"
+        },
+        {
+          "ordinal": 34,
+          "call_line": 399,
+          "result_line": 403,
+          "message_id": "msg_0ca3bc042f2c58bd1beedd34",
+          "tool_use_id": "toolu_64f6c249851adea5",
+          "name": "Bash",
+          "path": null,
+          "command": "git diff",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T20:35:29.732Z",
+          "result_seconds_after_first_request": 53.95,
+          "is_error": false,
+          "output_characters": 1464,
+          "output_sha256": "eaaccdc386114635e7ad0ee41d42412b87910c83c5320a22035a0e64d7ac3a6a"
+        }
+      ],
+      "dimensions": {
+        "1": {
+          "dimension": "方法与修法。",
+          "observation": "L110/114 读到 `_warn` 不接受 once 且 `_warnings` 只记原消息，L119 提出补签名和记录。L123 首次错误地在原消息中匹配带 slug 后缀，L136/140 仍输出同 slug 两条；L171 又比较格式化消息，L180/184 再次失败。L167 已认识到原消息／格式化消息不同，却没落实正确修法。L202 才明确保留原消息并另存 slug，L206/210 增集合、L215/219 按集合判断；L224/228 显示 bot 一次、bot2 一次。最终源码的非 once、disable_warnings、PID 格式及原消息记录路径保持原逻辑，不存在只补签名但仍按消息去重的问题。两个错误中间版本是实际解题过程，不混作最终候选成绩。",
+          "trajectory_lines": [
+            110,
+            119,
+            123,
+            136,
+            167,
+            171,
+            180,
+            202,
+            206,
+            215,
+            224
+          ],
+          "tools": [
+            {
+              "tool_use_id": "toolu_5978998cabb08659",
+              "call_line": 110,
+              "result_line": 114
+            },
+            {
+              "tool_use_id": "toolu_baaa7d51e82d2136",
+              "call_line": 123,
+              "result_line": 127
+            },
+            {
+              "tool_use_id": "toolu_ecb74fce72101074",
+              "call_line": 136,
+              "result_line": 140
+            },
+            {
+              "tool_use_id": "toolu_ad33890e6edf179e",
+              "call_line": 171,
+              "result_line": 175
+            },
+            {
+              "tool_use_id": "toolu_4f40c14e37a3efb1",
+              "call_line": 180,
+              "result_line": 184
+            },
+            {
+              "tool_use_id": "toolu_edfcd5b7daf1139a",
+              "call_line": 206,
+              "result_line": 210
+            },
+            {
+              "tool_use_id": "toolu_d93f981e6b67b3a4",
+              "call_line": 215,
+              "result_line": 219
+            },
+            {
+              "tool_use_id": "toolu_9a30cf7ce8a6510d",
+              "call_line": 224,
+              "result_line": 228
+            }
+          ]
+        },
+        "2": {
+          "dimension": "定位与纠错。",
+          "observation": "工具1 L10/14 先读导出入口；工具2 L23/27 找到正确文件，返回距首请求0.982秒。该次读取44,490字符、整个1086行；之后才在工具9 L110/114 精读20行。工具8 L97/101（7.832秒）复现 TypeError。正确独立 slug 方案在 L202，源码工具18 L215/219 于27.195秒完成，工具19于27.569秒验证。没有错改其它业务模块，但中间两次实现错误体现了数据表示和去重身份的判断不稳。",
+          "trajectory_lines": [
+            10,
+            23,
+            97,
+            110,
+            202,
+            215
+          ],
+          "tools": [
+            {
+              "tool_use_id": "toolu_eabb25f66c4fa78d",
+              "call_line": 10,
+              "result_line": 14
+            },
+            {
+              "tool_use_id": "toolu_ee1c11b95ccd5d29",
+              "call_line": 23,
+              "result_line": 27
+            },
+            {
+              "tool_use_id": "toolu_fa3c8a2e12248da2",
+              "call_line": 97,
+              "result_line": 101
+            },
+            {
+              "tool_use_id": "toolu_5978998cabb08659",
+              "call_line": 110,
+              "result_line": 114
+            },
+            {
+              "tool_use_id": "toolu_d93f981e6b67b3a4",
+              "call_line": 215,
+              "result_line": 219
+            }
+          ]
+        },
+        "3": {
+          "dimension": "工具使用。",
+          "observation": "共34调用：Read7、Bash17、Write6、Edit4。路径与解释器准确，未尝试安装／联网修环境；6个 warning、74个 API、22个 testing 测试确实完成。首次 `find … -exec grep … | head` 扫描范围较宽；warning grep返回17,056字符，与全文件 Read 形成较大重复上下文。唯一工具错误为 L307/311 的新增测试 AttributeError，属于模型写错测试 API，不是基础设施失败。最后 L399/403 只看 `git diff`，没有核未跟踪文件，未发现／清理自己留下的失败测试和开发产物。",
+          "trajectory_lines": [
+            307,
+            399
+          ],
+          "tools": [
+            {
+              "tool_use_id": "toolu_c7d5870ea86c5e3a",
+              "call_line": 307,
+              "result_line": 311
+            },
+            {
+              "tool_use_id": "toolu_64f6c249851adea5",
+              "call_line": 399,
+              "result_line": 403
+            }
+          ]
+        },
+        "4": {
+          "dimension": "并行调用。",
+          "observation": "34次均单工具生成批次，未请求同消息多工具。定位后独立的 warning／once 测试检索及配置读取存在可合并机会（L49、L62、L75）；源码编辑、运行后诊断具有依赖，不应强行并行。此次未提供工具开始时间或执行器并发调度事实，实际执行重叠不可判断；不能据单条串行路径判模型不会并行。",
+          "trajectory_lines": [
+            49,
+            62,
+            75
+          ],
+          "tools": [
+            {
+              "tool_use_id": "toolu_55ce1d7237d1c3cc",
+              "call_line": 49,
+              "result_line": 53
+            },
+            {
+              "tool_use_id": "toolu_21ec01b7a11b6abe",
+              "call_line": 62,
+              "result_line": 66
+            },
+            {
+              "tool_use_id": "toolu_d2aa3f50aeac0e03",
+              "call_line": 75,
+              "result_line": 79
+            }
+          ]
+        },
+        "5": {
+          "dimension": "验证质量。",
+          "observation": "修改前真实复现、修改后检查 stderr，能依据双警告输出纠错。L259/263为6 passed；L272/276为74 passed；L285/289为22 passed，前6为这96项的子集，不能相加称102个独立测试。L298编写2个新单测，却调用不存在的 `cov.assert_warnings`，L307/311两项都失败。L351将其称演示，另建 L355 的打印脚本，没有修／删失败单测；该脚本不核输出且无条件返回 True。L237/250 的 disable 检查又用已经一次警告过的 bot，单独这一操作不能区分配置抑制与 once 抑制。最终 L408关于两组既有测试通过有证据，但省略新增2失败，不能称整个候选测试都通过。原正式76键是独立执行事实，不替这些开发验证补缺。",
+          "trajectory_lines": [
+            237,
+            259,
+            272,
+            285,
+            298,
+            307,
+            351,
+            355,
+            408
+          ],
+          "tools": [
+            {
+              "tool_use_id": "toolu_bd9adbca57dace37",
+              "call_line": 237,
+              "result_line": 241
+            },
+            {
+              "tool_use_id": "toolu_4994b79b9efd8f2b",
+              "call_line": 259,
+              "result_line": 263
+            },
+            {
+              "tool_use_id": "toolu_3d06e4c567a18cd4",
+              "call_line": 272,
+              "result_line": 276
+            },
+            {
+              "tool_use_id": "toolu_fdd121fb691103fd",
+              "call_line": 285,
+              "result_line": 289
+            },
+            {
+              "tool_use_id": "toolu_e98b7634139b287c",
+              "call_line": 298,
+              "result_line": 302
+            },
+            {
+              "tool_use_id": "toolu_c7d5870ea86c5e3a",
+              "call_line": 307,
+              "result_line": 311
+            },
+            {
+              "tool_use_id": "toolu_a01edd5996574ebe",
+              "call_line": 355,
+              "result_line": 359
+            }
+          ]
+        },
+        "6": {
+          "dimension": "效率。",
+          "observation": "本次35生成请求、35 CC回合、34工具，input/output token888,036／5,580，缓存计数0；input是各请求累计，包含重复上下文，并非唯一输入长度。solve60.268秒，CC56.447秒，其中CC记API49.402秒；实际gateway35生成请求墙钟累计48.705秒，包含适配和运输，不等于纯GPU计算。无有效的新修法阶段内，反复比较原／格式化消息、重跑同一个脚本、另外建立打印型验证和再写同一 ISSUE 复现脚本，均增加了工作。完整工具／测试耗时没有独立计时，不能把CC剩余7.045秒全算成工具。分项基础设施和正式评分见下表。",
+          "trajectory_lines": [],
+          "tools": []
+        },
+        "7": {
+          "dimension": "结束与稳定性。",
+          "observation": "CC success／end_turn、harness RC0、stderr空，35请求全部200，无SSE错误，远低于240回合／3小时／1024生成护栏，未被预算截断。工具测试失败不改变正常结束分类。当前有效完整样本1，源码语义正确1，含交付质量缺陷1；没有其它同条件样本，修法和交付稳定性均未知。",
+          "trajectory_lines": [],
+          "tools": []
+        }
+      },
+      "parallel": {
+        "multiple_tool_generation_batches": [],
+        "tool_execution_start_times_available": false,
+        "actual_execution_overlap": "unknown",
+        "executor_internal_parallel_scheduling": "unknown",
+        "observed_reverse_completion": false
+      },
+      "termination": {
+        "shared": "completed",
+        "cc_subtype": "success",
+        "cc_stop_reason": "end_turn",
+        "harness_exit_code": 0,
+        "budget_truncated": false
+      },
+      "sample_accounting": {
+        "attempts": 1,
+        "normal_completed": 1,
+        "original_grade_passed": 1,
+        "source_semantics_passed": 1,
+        "truncated": 0,
+        "infra_failed": 0,
+        "missing_grade": 0,
+        "stable_success_rate_estimate": null
+      },
+      "evidence": [
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-coveragepy5dbb-coder-a1/attempt/attempt.json",
+          "sha256": "sha256:9819050082d5cce51bf181a3fffc404f15c5badc936e99bd0db8f0a5d06108c3"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-coveragepy5dbb-coder-a1/attempt/trajectory.jsonl",
+          "sha256": "sha256:58269b9d65d5af6dd8e8aec13b5b4da875ddb0c3e8fd70b00f8e42ef844dbffd"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-coveragepy5dbb-coder-a1/attempt/candidate/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9.diff",
+          "sha256": "sha256:76b7d869a0fb37456b54522a73f6cd35faa830e80fc6e1b6514fa8a49c770d94"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-coveragepy5dbb-coder-a1/attempt/frozen/frozen_patch.json",
+          "sha256": "sha256:3eb0de97ea9fa855962e0d1d1336a3c1e569e0b1c86c86ac8f94a6bf544eb400"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-coveragepy5dbb-coder-a1/attempt/frozen/baseline_manifest.json",
+          "sha256": "sha256:6eaeb8e6615d2eec996cebbd58878a91deede5a59ba7561c5c15d60f79bb74fb"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-coveragepy5dbb-coder-a1/attempt/frozen/baseline.tar",
+          "sha256": "sha256:5568fccd9adfd6b3de2891edc8a7d0b6614f8ab712e06f0936d7aa65bbd717c1"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-coveragepy5dbb-coder-a1/grading/report.json",
+          "sha256": "sha256:447b86dabbb818a79d8b424eb57e71b91641fb765b03fafe9f29fa07240c0006"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-coveragepy5dbb-coder-a1/grading/projection.json",
+          "sha256": "sha256:e0c2836070a4dd4890734e6024aa903b587429a35d56f7f8d8743304d6f5f019"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-coveragepy5dbb-coder-a1/grading/eval_logs/evallog_gpu1003-coveragepy5dbb-c_c0ebeb96.eval.log",
+          "sha256": "sha256:df6ccc8704c092a100ddfa06f500ece9373c7e73f9755040958e0de7e0909bf1"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-coveragepy5dbb-coder-a1/grading/eval_logs/evallog_gpu1003-coveragepy5dbb-c_c0ebeb96.diagnostics.json",
+          "sha256": "sha256:fd53019b47c8dabc4ee911c096e5fea8eaa36e4c6c5e0cba741449aa3706c6ed"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/services_v6/coder/gateway/gpu1003-coveragepy5dbb-coder-a1/requests.jsonl",
+          "sha256": "sha256:8e77070f0b14dfda3b990db5414fd8dbf44cab529d6a2ded5e19631a1043dedf"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/services_v6/coder/gateway/gpu1003-coveragepy5dbb-coder-a1/responses.jsonl",
+          "sha256": "sha256:ed8edf50168baf5db506f8f7bd451e46af36d3cfd0d68bee7fb7a5043abf18c5"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/services_v6/coder/gateway/gpu1003-coveragepy5dbb-coder-a1/usage.json",
+          "sha256": "sha256:438eaaac4cdffb2d486c508cd0af41b47a8b75c8ab23f72ffda6793ed53a7778"
+        }
+      ],
+      "execution_review": {
+        "path": "runs/ordinary_gpu_probe_20261002/reviews/coveragepy5dbb_coder_a1_execution_review.json",
+        "sha256": "beddad951e13207d749132a52175411e1d7f2bc1a4fc7a61892434766ee6af0c"
+      }
+    },
+    "qwen36": {
+      "job_id": "gpu1003-coveragepy5dbb-qwen36-a1",
+      "actual_model": "Qwen3.6-35B-A3B",
+      "checkpoint_revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+      "actual_budget": {
+        "version": "probe-wide-v1",
+        "max_context_len": 196608,
+        "max_new_tokens": 65536,
+        "max_turns": 240,
+        "wall_seconds": 10800,
+        "max_requests_per_session": 1024,
+        "first_byte_timeout_seconds": 1800,
+        "adapter_idle_drop_seconds": 14400
+      },
+      "actual_grading_budgets": {
+        "whole_seconds": 3600.0,
+        "setup_seconds": 300.0,
+        "apply_seconds": 120.0,
+        "test_seconds": 1800.0
+      },
+      "sampling": {
+        "temperature": 1.0,
+        "top_p": 0.95,
+        "top_k": 20,
+        "max_new_tokens": 65536
+      },
+      "sampling_evidence_limit": "固定代码+gateway/adapter逐请求关联；未存原始SGLang POST采样字段",
+      "raw_grade": {
+        "reward": 1.0,
+        "matched": 76,
+        "total": 76,
+        "source": "original_frozen_patch"
+      },
+      "source_semantics": "pass_for_approved_A",
+      "whole_patch_quality": "pass_with_unnecessary_helper_and_generated_data",
+      "candidate_paths": [
+        ".coverage",
+        "coverage/control.py",
+        "tests/coveragetest.py",
+        "tests/modules/.coverage"
+      ],
+      "frozen_patch_digest": "sha256:736f5598979392562bf0524a284a378b6729e7484e088c1b6e8eecc44b587e0d",
+      "metrics": {
+        "first_generation_request_ts": 1790975294.7005596,
+        "first_generation_request_utc": "2026-10-02T21:08:14.700560+00:00",
+        "generation_requests": 21,
+        "gateway_generation_seconds_sum": 39.224,
+        "gateway_first_byte_seconds_sum": 39.169,
+        "tool_count": 24,
+        "solve_seconds": 48.387,
+        "cc_num_turns": 25,
+        "cc_duration_seconds": 44.412,
+        "cc_api_duration_seconds": 39.846,
+        "cc_non_api_remainder_seconds": 4.566,
+        "input_tokens": 252887,
+        "output_tokens": 4659,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "actor_attempt_total_seconds": 93.261,
+        "first_request_after_actor_start_seconds": 41.367,
+        "actor_step_timings": {
+          "image_ready": 0.019,
+          "network_and_container": 1.111,
+          "git_sanitize": 2.426,
+          "trusted_init": 22.33,
+          "baseline_census": 0.18,
+          "quiescence": 0.506
+        },
+        "grading_timings": {
+          "schema_id": "rh2.grading_timing_record.v1",
+          "record_id": "timing_1e223946",
+          "trajectory_id": "gpu1003-coveragepy5dbb-qwen36-a1",
+          "task_id": "r2e_gym_subset::coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9",
+          "image_pull_seconds": 0.0,
+          "env_reset_seconds": 3.139,
+          "prep_seconds": 0.445,
+          "test_seconds": 3.556,
+          "total_grading_seconds": 28.477,
+          "queue_wait_seconds": 0.0,
+          "container_peak_memory_mb": 292.145,
+          "queue_depth_at_enqueue": null,
+          "backpressure_triggered": false
+        },
+        "queue_wait_solver_seconds": null,
+        "weight_switch_seconds": null,
+        "isolated_tool_seconds": null,
+        "cc_alias_price_estimate_usd": 1.38091,
+        "actual_self_hosted_cost_usd": null
+      },
+      "tool_counts": {
+        "Bash": 13,
+        "Read": 8,
+        "Edit": 3
+      },
+      "tool_result_errors": 1,
+      "tool_audit_index": [
+        {
+          "ordinal": 1,
+          "call_line": 11,
+          "result_line": 19,
+          "message_id": "msg_400c6b5c7b5dc234d26b661a",
+          "tool_use_id": "toolu_55c219321a1e8a95",
+          "name": "Bash",
+          "path": null,
+          "command": "find . -name \"*.py\" -type f | head -20 && ls -la",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T21:08:26.404Z",
+          "result_seconds_after_first_request": 11.703,
+          "is_error": false,
+          "output_characters": 2480,
+          "output_sha256": "1d08714b71069d60118e2f4833d5417509ecb4a9b019dd8700a8a13f5c1f26ac"
+        },
+        {
+          "ordinal": 2,
+          "call_line": 15,
+          "result_line": 20,
+          "message_id": "msg_400c6b5c7b5dc234d26b661a",
+          "tool_use_id": "toolu_e664a1374c993e54",
+          "name": "Bash",
+          "path": null,
+          "command": "grep -rn \"_warn\" --include=\"*.py\" coverage/ | head -30",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T21:08:26.407Z",
+          "result_seconds_after_first_request": 11.706,
+          "is_error": false,
+          "output_characters": 2148,
+          "output_sha256": "3a439a930c59c0ec1286a1b89139a4ee56ad750271a6082528cf759e06edf6df"
+        },
+        {
+          "ordinal": 3,
+          "call_line": 30,
+          "result_line": 34,
+          "message_id": "msg_25cffa45eaeecf5978ce7043",
+          "tool_use_id": "toolu_b352a28e5bfdafc7",
+          "name": "Read",
+          "path": "/testbed/coverage/control.py",
+          "command": null,
+          "read_offset": 330,
+          "read_limit": 30,
+          "result_timestamp": "2026-10-02T21:08:27.024Z",
+          "result_seconds_after_first_request": 12.323,
+          "is_error": false,
+          "output_characters": 1119,
+          "output_sha256": "885acd291ff4a8e4986a2bb239decdec29a7a309cf1d28d8d633e776828c7d5b"
+        },
+        {
+          "ordinal": 4,
+          "call_line": 48,
+          "result_line": 56,
+          "message_id": "msg_d100a5bfebf6d4759f389ed5",
+          "tool_use_id": "toolu_90d63eb511f71c16",
+          "name": "Read",
+          "path": "/testbed/coverage/control.py",
+          "command": null,
+          "read_offset": 200,
+          "read_limit": 50,
+          "result_timestamp": "2026-10-02T21:08:28.763Z",
+          "result_seconds_after_first_request": 14.062,
+          "is_error": false,
+          "output_characters": 1942,
+          "output_sha256": "b055a7fbe2e9e37f1fd951f0e77599ef602cda47a587804e5bfddfaadeb6a2da"
+        },
+        {
+          "ordinal": 5,
+          "call_line": 52,
+          "result_line": 57,
+          "message_id": "msg_d100a5bfebf6d4759f389ed5",
+          "tool_use_id": "toolu_2479b9b5a4bf3238",
+          "name": "Bash",
+          "path": null,
+          "command": "grep -n \"def.*warn\" tests/test_api.py tests/test_testing.py",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T21:08:28.772Z",
+          "result_seconds_after_first_request": 14.071,
+          "is_error": false,
+          "output_characters": 373,
+          "output_sha256": "b7885c7781aac5b462bfb5c403e7ebe7eabd3d1aeba13d204a529f4b99e23d13"
+        },
+        {
+          "ordinal": 6,
+          "call_line": 67,
+          "result_line": 76,
+          "message_id": "msg_26f7c85b84371d35155559ba",
+          "tool_use_id": "toolu_7e0b014c2f12157b",
+          "name": "Read",
+          "path": "/testbed/tests/test_api.py",
+          "command": null,
+          "read_offset": 495,
+          "read_limit": 80,
+          "result_timestamp": "2026-10-02T21:08:29.654Z",
+          "result_seconds_after_first_request": 14.953,
+          "is_error": false,
+          "output_characters": 3204,
+          "output_sha256": "89ca0bc6c889496d52bf792092aeaf7ca85b4667cdce7d9a9f206ad03123d8ba"
+        },
+        {
+          "ordinal": 7,
+          "call_line": 71,
+          "result_line": 75,
+          "message_id": "msg_26f7c85b84371d35155559ba",
+          "tool_use_id": "toolu_c6ff19c6811374d0",
+          "name": "Read",
+          "path": "/testbed/tests/test_api.py",
+          "command": null,
+          "read_offset": 355,
+          "read_limit": 50,
+          "result_timestamp": "2026-10-02T21:08:29.650Z",
+          "result_seconds_after_first_request": 14.949,
+          "is_error": false,
+          "output_characters": 2691,
+          "output_sha256": "66d13c27b9127b28874f7e47578d6238ece9e105b294a155272a4d39eec4c256"
+        },
+        {
+          "ordinal": 8,
+          "call_line": 86,
+          "result_line": 90,
+          "message_id": "msg_49fc8ce2aa402f43d2e3192a",
+          "tool_use_id": "toolu_bba01f827cf1e8f7",
+          "name": "Read",
+          "path": "/testbed/tests/test_testing.py",
+          "command": null,
+          "read_offset": 110,
+          "read_limit": 100,
+          "result_timestamp": "2026-10-02T21:08:30.273Z",
+          "result_seconds_after_first_request": 15.572,
+          "is_error": false,
+          "output_characters": 4600,
+          "output_sha256": "caa329c8f2008c712ae9d49343701473d200def22307c11b10db9c6fddecceb0"
+        },
+        {
+          "ordinal": 9,
+          "call_line": 104,
+          "result_line": 108,
+          "message_id": "msg_7486446c9c80c094a95a472c",
+          "tool_use_id": "toolu_42939b6eb24da488",
+          "name": "Bash",
+          "path": null,
+          "command": "python -c \"\nimport coverage\ncov = coverage.Coverage()\ncov.load()\ncov._warn('Warning, warning 1!', slug='bot', once=True)\n\"",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T21:08:31.200Z",
+          "result_seconds_after_first_request": 16.499,
+          "is_error": true,
+          "output_characters": 146,
+          "output_sha256": "590066d5fab9fc0872b32a3e79bd7245f8f33054bf428abbb68703b92a29be82"
+        },
+        {
+          "ordinal": 10,
+          "call_line": 118,
+          "result_line": 126,
+          "message_id": "msg_5939b62efe9a7cf71809378a",
+          "tool_use_id": "toolu_e775cbd132dba4e8",
+          "name": "Bash",
+          "path": null,
+          "command": "grep -n \"assert_warnings\" tests/test_testing.py | head -5",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T21:08:34.224Z",
+          "result_seconds_after_first_request": 19.523,
+          "is_error": false,
+          "output_characters": 282,
+          "output_sha256": "5fa1c147b6968264802cbcd456c70c724179b6a4c6e781a35036996854918d1d"
+        },
+        {
+          "ordinal": 11,
+          "call_line": 122,
+          "result_line": 127,
+          "message_id": "msg_5939b62efe9a7cf71809378a",
+          "tool_use_id": "toolu_0290dec0a064f315",
+          "name": "Bash",
+          "path": null,
+          "command": "grep -rn \"def assert_warnings\" tests/",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T21:08:34.257Z",
+          "result_seconds_after_first_request": 19.556,
+          "is_error": false,
+          "output_characters": 88,
+          "output_sha256": "f9038ac7c245634edea3e50d666448a27edaf7cd9532572b6a7791e7cf421578"
+        },
+        {
+          "ordinal": 12,
+          "call_line": 137,
+          "result_line": 141,
+          "message_id": "msg_71b9219ab286b19fb40d43b9",
+          "tool_use_id": "toolu_559c4a6c6239951b",
+          "name": "Read",
+          "path": "/testbed/tests/coveragetest.py",
+          "command": null,
+          "read_offset": 245,
+          "read_limit": 50,
+          "result_timestamp": "2026-10-02T21:08:34.788Z",
+          "result_seconds_after_first_request": 20.087,
+          "is_error": false,
+          "output_characters": 2230,
+          "output_sha256": "e1e04c9835e28050b8b5658de47e2aaa4a72d3b1956f5e9711b094673cfc7eaf"
+        },
+        {
+          "ordinal": 13,
+          "call_line": 155,
+          "result_line": 159,
+          "message_id": "msg_fb6c098fd9ae7f055ada353f",
+          "tool_use_id": "toolu_cdad3ce3d916fc9f",
+          "name": "Read",
+          "path": "/testbed/tests/coveragetest.py",
+          "command": null,
+          "read_offset": 265,
+          "read_limit": 30,
+          "result_timestamp": "2026-10-02T21:08:36.962Z",
+          "result_seconds_after_first_request": 22.261,
+          "is_error": false,
+          "output_characters": 1320,
+          "output_sha256": "ee00b3bf2c975e5dad686c040290cc911750ac047ad4d9d42c9e5b0862dad97f"
+        },
+        {
+          "ordinal": 14,
+          "call_line": 173,
+          "result_line": 177,
+          "message_id": "msg_b85e074cac5cef0ff64b4a2a",
+          "tool_use_id": "toolu_1d7bea01a8644313",
+          "name": "Edit",
+          "path": "/testbed/coverage/control.py",
+          "command": null,
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T21:08:38.361Z",
+          "result_seconds_after_first_request": 23.66,
+          "is_error": false,
+          "output_characters": 134,
+          "output_sha256": "43851f9527a5e57d7cd4cc9f9ea66d3430f9e9bb92f1f4b92a4efc56c3032759"
+        },
+        {
+          "ordinal": 15,
+          "call_line": 187,
+          "result_line": 191,
+          "message_id": "msg_32ea629c6eb2d0f1c64944c0",
+          "tool_use_id": "toolu_d41c37681a55cceb",
+          "name": "Edit",
+          "path": "/testbed/coverage/control.py",
+          "command": null,
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T21:08:40.954Z",
+          "result_seconds_after_first_request": 26.253,
+          "is_error": false,
+          "output_characters": 134,
+          "output_sha256": "43851f9527a5e57d7cd4cc9f9ea66d3430f9e9bb92f1f4b92a4efc56c3032759"
+        },
+        {
+          "ordinal": 16,
+          "call_line": 201,
+          "result_line": 205,
+          "message_id": "msg_77ff6105faf00eb372c77191",
+          "tool_use_id": "toolu_ef9384fb901e521b",
+          "name": "Edit",
+          "path": "/testbed/tests/coveragetest.py",
+          "command": null,
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T21:08:42.391Z",
+          "result_seconds_after_first_request": 27.69,
+          "is_error": false,
+          "output_characters": 136,
+          "output_sha256": "ad0b5d693faca147e81df16e3c29a6e19c1c7c33479c79669e5d6bf122260433"
+        },
+        {
+          "ordinal": 17,
+          "call_line": 219,
+          "result_line": 223,
+          "message_id": "msg_503f866fb190feed7e22ecff",
+          "tool_use_id": "toolu_53b99a261d5c1639",
+          "name": "Bash",
+          "path": null,
+          "command": "python -c \"\nimport coverage\nimport sys\n\n# Capture stderr\nold_stderr = sys.stderr\nsys.stderr = captured = []\n\nclass FakeList(list):\n    def write(self, s):\n        list.append(self, s)\n    def flush(self):\n        pass\n\nsys.stderr = FakeList()\n\ncov = coverage.Coverage()\ncov.load()\ncov._warn('Warning, warning 1!', slug='bot', once=True)\ncov._warn('Warning, warning 2!', slug='bot', once=True)\ncov._warn('Warning, warning 3!', slug='other', once=True)\ncov._warn('Warning, warning 4!', slug='other', once=True)\n\noutput = ''.join(sys.stderr)\nsys.stderr = old_stderr\n\nprint('Output:')\nprint(output)\nprint('---')\nprint('Expected: bot should appear once, other should appear once')\nprint('Total warnings:', output.count('Coverage.py warning:'))\n\"",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T21:08:44.120Z",
+          "result_seconds_after_first_request": 29.419,
+          "is_error": false,
+          "output_characters": 185,
+          "output_sha256": "bfc1a501fdb27feb521ca3353320080ae5894f16b9b95706e11dd337e55d9649"
+        },
+        {
+          "ordinal": 18,
+          "call_line": 237,
+          "result_line": 241,
+          "message_id": "msg_6d3143588f82e27b1d72f1de",
+          "tool_use_id": "toolu_0684cc06d84d6d2d",
+          "name": "Bash",
+          "path": null,
+          "command": "python -m pytest -o addopts=\"\" -p no:cacheprovider --color=no -rfE tests/test_api.py tests/test_testing.py -k warn 2>&1",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T21:08:46.422Z",
+          "result_seconds_after_first_request": 31.721,
+          "is_error": false,
+          "output_characters": 728,
+          "output_sha256": "30f341437dfe3a391cb46374e81eda7c2f7513fbfe2c24503d62782a5f749e10"
+        },
+        {
+          "ordinal": 19,
+          "call_line": 255,
+          "result_line": 259,
+          "message_id": "msg_da2ea896ca230f56a84c995c",
+          "tool_use_id": "toolu_bb0bae31235f16fa",
+          "name": "Bash",
+          "path": null,
+          "command": "python -c \"\nimport coverage\nimport sys\n\n# Test 1: once=True without slug should always show\nprint('Test 1: once=True without slug')\nold_stderr = sys.stderr\nfrom io import StringIO\nsys.stderr = cap = StringIO()\ncov = coverage.Coverage()\ncov.load()\ncov._warn('Warning 1', once=True)\ncov._warn('Warning 2', once=True)\nsys.stderr = old_stderr\noutput = cap.getvalue()\nprint('Output:')\nprint(output)\nprint('Both warnings should appear since no slug:', output.count('Coverage.py warning:') == 2)\nprint()\n\n# Test 2: once=False should always show\nprint('Test 2: once=False with same slug should always show')\nsys.stderr = cap = StringIO()\ncov = coverage.Coverage()\ncov.load()\ncov._warn('Warning 1', slug='test', once=False)\ncov._warn('Warning 2', slug='test', once=False)\nsys.stderr = old_stderr\noutput = cap.getvalue()\nprint('Output:')\nprint(output)\nprint('Both warnings should appear:', output.count('Coverage.py warning:') == 2)\nprint()\n\n# Test 3: once=True with different slugs should each show once\nprint('Test 3: once=True with different slugs')\nsys.stderr = cap = StringIO()\ncov = coverage.Coverage()\ncov.load()\ncov._warn('Warning 1', slug='a', once=True)\ncov._warn('Warning 2', slug='b', once=True)\ncov._warn('Warning 3', slug='a', once=True)\ncov._warn('Warning 4', slug='b', once=True)\nsys.stderr = old_stderr\noutput = cap.getvalue()\nprint('Output:')\nprint(output)\nprint('Should show exactly 2 warnings (a once, b once):', output.count('Coverage.py warning:') == 2)\n\"",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T21:08:49.502Z",
+          "result_seconds_after_first_request": 34.801,
+          "is_error": false,
+          "output_characters": 495,
+          "output_sha256": "851a4d7fc419559ec69d8a4f4b9fdc7151ce983970dcf34f8967f2623f88d508"
+        },
+        {
+          "ordinal": 20,
+          "call_line": 273,
+          "result_line": 277,
+          "message_id": "msg_04b8d86251346e5355feaecd",
+          "tool_use_id": "toolu_d83c073f82573e71",
+          "name": "Bash",
+          "path": null,
+          "command": "python -m pytest -o addopts=\"\" -p no:cacheprovider --color=no -rfE tests/test_api.py -x -q 2>&1 | head -50",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T21:08:52.705Z",
+          "result_seconds_after_first_request": 38.004,
+          "is_error": false,
+          "output_characters": 185,
+          "output_sha256": "9c0b2e08010dd383790266f732e99755643ce882558f03e22f732241057527c5"
+        },
+        {
+          "ordinal": 21,
+          "call_line": 291,
+          "result_line": 295,
+          "message_id": "msg_8bf64239e59132c243f00093",
+          "tool_use_id": "toolu_cd86e2b2d513b852",
+          "name": "Bash",
+          "path": null,
+          "command": "grep -rn \"\\. _warn\\|_warn(\" --include=\"*.py\" coverage/ | grep -v \"def _warn\" | grep -v \"self._warn\" | head -20",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T21:08:53.679Z",
+          "result_seconds_after_first_request": 38.978,
+          "is_error": false,
+          "output_characters": 226,
+          "output_sha256": "0f5f936046fae9255eb5410fe516047bde5257d8dfa9815099caed3258c47e8f"
+        },
+        {
+          "ordinal": 22,
+          "call_line": 305,
+          "result_line": 309,
+          "message_id": "msg_6322de955738c70b54c82125",
+          "tool_use_id": "toolu_c8782e227167478d",
+          "name": "Read",
+          "path": "/testbed/coverage/report.py",
+          "command": null,
+          "read_offset": 75,
+          "read_limit": 20,
+          "result_timestamp": "2026-10-02T21:08:54.266Z",
+          "result_seconds_after_first_request": 39.565,
+          "is_error": false,
+          "output_characters": 588,
+          "output_sha256": "2d3a4f1ebacf89b44b53d4f8fdb071f0deb03e2e4cf2bc901252d7c81516e66d"
+        },
+        {
+          "ordinal": 23,
+          "call_line": 319,
+          "result_line": 323,
+          "message_id": "msg_2a5018ed0d2dbd09dfe42d42",
+          "tool_use_id": "toolu_75ef8c914f234b59",
+          "name": "Bash",
+          "path": null,
+          "command": "python -m pytest -o addopts=\"\" -p no:cacheprovider --color=no -rfE tests/test_testing.py -x -q 2>&1 | head -30",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T21:08:55.690Z",
+          "result_seconds_after_first_request": 40.989,
+          "is_error": false,
+          "output_characters": 105,
+          "output_sha256": "6d7a7fc8a6af8b9ad6e235afc853a5655f3cd38db48db2d53dc1949eeb5e79d2"
+        },
+        {
+          "ordinal": 24,
+          "call_line": 337,
+          "result_line": 341,
+          "message_id": "msg_48bca20c5c8bce15a6b239f4",
+          "tool_use_id": "toolu_d69d49dec9fe1f71",
+          "name": "Bash",
+          "path": null,
+          "command": "python -c \"\nimport coverage\n\n# Reproduce the exact example from the issue\ncov = coverage.Coverage()\ncov.load()\ncov._warn('Warning, warning 1!', slug='bot', once=True)\ncov._warn('Warning, warning 2!', slug='bot', once=True)\nprint('No TypeError raised - fix is working!')\n\"",
+          "read_offset": null,
+          "read_limit": null,
+          "result_timestamp": "2026-10-02T21:08:56.753Z",
+          "result_seconds_after_first_request": 42.052,
+          "is_error": false,
+          "output_characters": 84,
+          "output_sha256": "ba688e00468770719e1391683df2eb03d93f0a21e149116ba618112ec4cad84f"
+        }
+      ],
+      "dimensions": {
+        "1": {
+          "dimension": "方法与修法。",
+          "observation": "L15/20定位 `_warn`，L30/34看到实现；L40准确提出同 slug 后续不同消息也须抑制、不同 slug 独立，直接选择独立集合。L114曾纠结被抑制消息是否仍记入 `_warnings`，L137/141读到 helper是替身捕获，随后 L147修正理解。L173/177建集合，L187/191补once与判断，第一次源码方案即正确。L201/205将公开 helper 的 capture 签名扩为 `once=False, **kwargs`，断言及记录逻辑不变；未证实该额外改动必要。正式 once 语义应据真实 `_warn` 的独立检验判断，不能仅凭使用替身的 helper 通过。",
+          "trajectory_lines": [
+            15,
+            30,
+            40,
+            114,
+            137,
+            147,
+            173,
+            187,
+            201
+          ],
+          "tools": [
+            {
+              "tool_use_id": "toolu_e664a1374c993e54",
+              "call_line": 15,
+              "result_line": 20
+            },
+            {
+              "tool_use_id": "toolu_b352a28e5bfdafc7",
+              "call_line": 30,
+              "result_line": 34
+            },
+            {
+              "tool_use_id": "toolu_559c4a6c6239951b",
+              "call_line": 137,
+              "result_line": 141
+            },
+            {
+              "tool_use_id": "toolu_1d7bea01a8644313",
+              "call_line": 173,
+              "result_line": 177
+            },
+            {
+              "tool_use_id": "toolu_d41c37681a55cceb",
+              "call_line": 187,
+              "result_line": 191
+            },
+            {
+              "tool_use_id": "toolu_ef9384fb901e521b",
+              "call_line": 201,
+              "result_line": 205
+            }
+          ]
+        },
+        "2": {
+          "dimension": "定位与纠错。",
+          "observation": "工具1是较宽目录枚举且扫到.venv，工具2即在coverage内定位，返回距首请求11.706秒；该首请求gateway耗时11.578秒，不能把这段全称文件搜索慢。工具3 L30/34以30行精读，12.323秒返回；L40形成正确根因／slug方案。工具9 L104/108于16.499秒真实复现。源码修复工具15 L187/191于26.253秒完成，helper工具16于27.690秒完成，L219/223于29.419秒验证两个 slug 各一次。L155/159重读前次helper末段，部分冗余；没有错误业务文件修改。",
+          "trajectory_lines": [
+            30,
+            40,
+            104,
+            155,
+            187,
+            219
+          ],
+          "tools": [
+            {
+              "tool_use_id": "toolu_b352a28e5bfdafc7",
+              "call_line": 30,
+              "result_line": 34
+            },
+            {
+              "tool_use_id": "toolu_42939b6eb24da488",
+              "call_line": 104,
+              "result_line": 108
+            },
+            {
+              "tool_use_id": "toolu_cdad3ce3d916fc9f",
+              "call_line": 155,
+              "result_line": 159
+            },
+            {
+              "tool_use_id": "toolu_d41c37681a55cceb",
+              "call_line": 187,
+              "result_line": 191
+            },
+            {
+              "tool_use_id": "toolu_53b99a261d5c1639",
+              "call_line": 219,
+              "result_line": 223
+            }
+          ]
+        },
+        "3": {
+          "dimension": "工具使用。",
+          "observation": "共24调用：Bash13、Read8、Edit3。唯一报错 L104/108 是刻意复现原 TypeError，随后正确处理。精读范围较窄，无安装／环境绕行。API及testing命令通过 `head` 截输出且未启用pipefail，因此管道0本身不能证明pytest成功；本次实际输出含完整 `74 passed`／`22 passed`，可据此确认。L291/295排除了self._warn并以head截限的调用检索不能称全调用点审计。L315把 report.py 局部参数 coverage称模块级对象不准确，未影响此次修改。没有最终 git status／完整工件清理检查。",
+          "trajectory_lines": [
+            104,
+            291,
+            315
+          ],
+          "tools": [
+            {
+              "tool_use_id": "toolu_42939b6eb24da488",
+              "call_line": 104,
+              "result_line": 108
+            },
+            {
+              "tool_use_id": "toolu_cd86e2b2d513b852",
+              "call_line": 291,
+              "result_line": 295
+            }
+          ]
+        },
+        "4": {
+          "dimension": "并行调用。",
+          "observation": "同一生成消息实际请求4组双工具：L11+15目录／符号搜索；L48+52初始化读取／测试索引；L67+71独立测试片段；L118+122两处helper检索。各组均读操作、无写冲突，8个请求有相应8个tool_use_id返回，L71的读取先于L67返回，结果仍正确对应。可确认识别并批量请求独立操作；轨迹只有完成时间，没有各工具开始／区间，实际重叠及执行器内部并发仍不可判断，不把“同消息两工具”直接等同于实测并行加速。",
+          "trajectory_lines": [
+            11,
+            48,
+            67,
+            71,
+            118
+          ],
+          "tools": [
+            {
+              "tool_use_id": "toolu_55c219321a1e8a95",
+              "call_line": 11,
+              "result_line": 19
+            },
+            {
+              "tool_use_id": "toolu_90d63eb511f71c16",
+              "call_line": 48,
+              "result_line": 56
+            },
+            {
+              "tool_use_id": "toolu_7e0b014c2f12157b",
+              "call_line": 67,
+              "result_line": 76
+            },
+            {
+              "tool_use_id": "toolu_c6ff19c6811374d0",
+              "call_line": 71,
+              "result_line": 75
+            },
+            {
+              "tool_use_id": "toolu_e775cbd132dba4e8",
+              "call_line": 118,
+              "result_line": 126
+            }
+          ]
+        },
+        "5": {
+          "dimension": "验证质量。",
+          "observation": "L104/108修改前MCVE复现，L219/223捕获真实stderr证明bot／other各一次。L255/259分别展示无slug两次、once=False同slug两次、不同slug各一次，都是打印布尔而非强断言；本次真实输出正确。L237/241 warning6通过，L273/277 API74通过，L319/323 testing22通过，重叠范围不重复计数。L337/341再跑公开原例，只有首个bot输出。未另外以新断言验证disable后的重新启用／混合once等边界，也未新增持久回归用例；最终说明在已运行范围内成立，不升级为完整测试套件或所有未来关键字兼容性证明。",
+          "trajectory_lines": [
+            104,
+            219,
+            237,
+            255,
+            273,
+            319,
+            337
+          ],
+          "tools": [
+            {
+              "tool_use_id": "toolu_42939b6eb24da488",
+              "call_line": 104,
+              "result_line": 108
+            },
+            {
+              "tool_use_id": "toolu_53b99a261d5c1639",
+              "call_line": 219,
+              "result_line": 223
+            },
+            {
+              "tool_use_id": "toolu_0684cc06d84d6d2d",
+              "call_line": 237,
+              "result_line": 241
+            },
+            {
+              "tool_use_id": "toolu_bb0bae31235f16fa",
+              "call_line": 255,
+              "result_line": 259
+            },
+            {
+              "tool_use_id": "toolu_d83c073f82573e71",
+              "call_line": 273,
+              "result_line": 277
+            },
+            {
+              "tool_use_id": "toolu_75ef8c914f234b59",
+              "call_line": 319,
+              "result_line": 323
+            },
+            {
+              "tool_use_id": "toolu_d69d49dec9fe1f71",
+              "call_line": 337,
+              "result_line": 341
+            }
+          ]
+        },
+        "6": {
+          "dimension": "效率。",
+          "observation": "21生成请求、25 CC回合、24工具，input/output token252,887／4,659，缓存计数0；回合与生成请求是不同计数。solve48.387秒，CC44.412秒、API39.846秒，gateway生成请求累计39.224秒。首次调用11.578秒占较大比重，但没有后端分段，不能断言由预填充／冷缓存哪一项造成。相对本次Coder更少请求、重复上下文和错误修法；只是两次个别运行的观察，不作模型总体速度排名。CC非API4.566秒包含工具及本地调度，工具纯时间未知。",
+          "trajectory_lines": [],
+          "tools": []
+        },
+        "7": {
+          "dimension": "结束与稳定性。",
+          "observation": "CC success／end_turn、harness RC0、stderr空，21生成请求全部200，无SSE错误，正常完成且未触及预算。刻意复现报错不是链路失败。有效完整样本1，源码语义正确1；同条件稳定性未知。没有将本次helper改动或生成数据库隐藏在纯源码成功摘要中。",
+          "trajectory_lines": [],
+          "tools": []
+        }
+      },
+      "parallel": {
+        "multiple_tool_generation_batches": [
+          [
+            {
+              "line": 11,
+              "tool_use_id": "toolu_55c219321a1e8a95",
+              "name": "Bash"
+            },
+            {
+              "line": 15,
+              "tool_use_id": "toolu_e664a1374c993e54",
+              "name": "Bash"
+            }
+          ],
+          [
+            {
+              "line": 48,
+              "tool_use_id": "toolu_90d63eb511f71c16",
+              "name": "Read"
+            },
+            {
+              "line": 52,
+              "tool_use_id": "toolu_2479b9b5a4bf3238",
+              "name": "Bash"
+            }
+          ],
+          [
+            {
+              "line": 67,
+              "tool_use_id": "toolu_7e0b014c2f12157b",
+              "name": "Read"
+            },
+            {
+              "line": 71,
+              "tool_use_id": "toolu_c6ff19c6811374d0",
+              "name": "Read"
+            }
+          ],
+          [
+            {
+              "line": 118,
+              "tool_use_id": "toolu_e775cbd132dba4e8",
+              "name": "Bash"
+            },
+            {
+              "line": 122,
+              "tool_use_id": "toolu_0290dec0a064f315",
+              "name": "Bash"
+            }
+          ]
+        ],
+        "tool_execution_start_times_available": false,
+        "actual_execution_overlap": "unknown",
+        "executor_internal_parallel_scheduling": "unknown",
+        "observed_reverse_completion": true
+      },
+      "termination": {
+        "shared": "completed",
+        "cc_subtype": "success",
+        "cc_stop_reason": "end_turn",
+        "harness_exit_code": 0,
+        "budget_truncated": false
+      },
+      "sample_accounting": {
+        "attempts": 1,
+        "normal_completed": 1,
+        "original_grade_passed": 1,
+        "source_semantics_passed": 1,
+        "truncated": 0,
+        "infra_failed": 0,
+        "missing_grade": 0,
+        "stable_success_rate_estimate": null
+      },
+      "evidence": [
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-coveragepy5dbb-qwen36-a1/attempt/attempt.json",
+          "sha256": "sha256:599c86765a0a5e47b6e2c0b21208d6dedb5eb89c788e8cff5ee1727e95efe05a"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-coveragepy5dbb-qwen36-a1/attempt/trajectory.jsonl",
+          "sha256": "sha256:3d4430d2a73184d2a7b79d38d8fd5417108b9055cc9cca93abe4055efafe7a15"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-coveragepy5dbb-qwen36-a1/attempt/candidate/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9.diff",
+          "sha256": "sha256:f8b60dc74dba35cd1dcfc31b295d4b15e3952ac66a42bc8f99303a97b69233ed"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-coveragepy5dbb-qwen36-a1/attempt/frozen/frozen_patch.json",
+          "sha256": "sha256:7bf759018083c14673ee5918ee230d28591451cf9e467bf4416d089e56b381ca"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-coveragepy5dbb-qwen36-a1/attempt/frozen/baseline_manifest.json",
+          "sha256": "sha256:6eaeb8e6615d2eec996cebbd58878a91deede5a59ba7561c5c15d60f79bb74fb"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-coveragepy5dbb-qwen36-a1/attempt/frozen/baseline.tar",
+          "sha256": "sha256:ecf16687ecf90c1b287e9f5b932869f5b3c13b83f4b993e3da91e2982d8609e0"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-coveragepy5dbb-qwen36-a1/grading/report.json",
+          "sha256": "sha256:8b290fa87c31b37c78d61f26a7691175b461fccd8dd64e93594aad82c3e82a05"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-coveragepy5dbb-qwen36-a1/grading/projection.json",
+          "sha256": "sha256:4a1d67c13f00bd356362ebf666c01ecff714b0215517c9e213890dfd3282576c"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-coveragepy5dbb-qwen36-a1/grading/eval_logs/evallog_gpu1003-coveragepy5dbb-q_1e223946.diagnostics.json",
+          "sha256": "sha256:56bfa6f442c6635c9b0048cb80f2946bcabf3346ebf94153d1faabd726dc706f"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-coveragepy5dbb-qwen36-a1/grading/eval_logs/evallog_gpu1003-coveragepy5dbb-q_1e223946.eval.log",
+          "sha256": "sha256:a3f573a436a7ea92785fc94ad9bbaae44cf5f3654fde4489f649b9cc0dcd85f3"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/services_v7/qwen36/gateway/gpu1003-coveragepy5dbb-qwen36-a1/requests.jsonl",
+          "sha256": "sha256:7c06c650ad47bc24f18f223abffbeef5632cd558f439edf07bdff533daf31284"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/services_v7/qwen36/gateway/gpu1003-coveragepy5dbb-qwen36-a1/responses.jsonl",
+          "sha256": "sha256:9b7661f6504c723ccac4534cfe4286698ad7fd27915106da172a2235dbab5b7a"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/services_v7/qwen36/gateway/gpu1003-coveragepy5dbb-qwen36-a1/usage.json",
+          "sha256": "sha256:bbb67618f0d88570e495055b643ddebd35ecd69bb70dd2c5d88156fd5e8525b5"
+        }
+      ],
+      "execution_review": {
+        "path": "runs/ordinary_gpu_probe_20261002/reviews/coveragepy5dbb_qwen36_a1_execution_review.json",
+        "sha256": "34942ae51205d8ba26d8f2e0167e0c9ef5ac897a0ae41a91ff72f0e33e1ad59f"
+      }
+    }
+  },
+  "new_material_or_environment_blockers": [],
+  "repeat_sampling": {
+    "status": "pending_gpu_batch_second_stage",
+    "first_round_per_model": 1,
+    "default_total_per_model": 3,
+    "additional_default_per_model": 2,
+    "batch_trigger": "全批至少27/52题CPU与独立验收后由GPU统一安排，保留首轮；未在此假设当前已触发",
+    "same_material_model_sampling_budget_required": true,
+    "failed_attempts_not_discarded": true
+  },
+  "resource_dependencies": {
+    "this_task_new_cpu_job_required": false,
+    "package_cpu_repair_dependency_cleared": false,
+    "gpu_repeats_and_review_pending": true,
+    "retirement_ready": false
+  },
+  "allowed_use": "标明R5自建修订版的普通基座诊断与源码/候选质量分析",
+  "not_established": [
+    "训练资格",
+    "原benchmark成绩",
+    "模型通常能力或稳定性",
+    "干净可合并Coder完整修复示例",
+    "工具实际并行重叠或纯GPU/工具独立计算时间",
+    "实际自托管美元费用"
+  ],
+  "audit_method": "原非流式assistant/tool_use/tool_result按一基轨迹行与tool_use_id关联，累计metrics独立重算；源语义、正式日志与test-like原件另据非作者窄核，执行身份/运输/清理复用有界执行报告",
+  "not_performed": [
+    "new SSH/Docker/CPU/model execution",
+    "changing original FrozenPatch or baseline",
+    "regrading filtered patch",
+    "modifying shared production materials"
+  ]
+}

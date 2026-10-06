@@ -1,0 +1,64 @@
+{
+ "task_id": "python__mypy-11352",
+ "source": "SWE-Gym lite / python/mypy PR 11352",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "9bd651758e8ea2494837814092af70f8d9e6f7a1",
+  "version": "0.920", "python_version": "3.9",
+  "eval_cmd": "pytest -n0 -rA -k",
+  "f2p": ["testAsyncContextManagerWithGenericFunction", "testAsyncContextManagerWithGenericFunctionAndSendType", "testContextManagerWithGenericFunctionAndSendType"],
+  "p2p": ["testContextManagerWithUnspecifiedArguments"],
+  "test_patch_paths": ["test-data/unit/check-default-plugin.test"],
+  "gold_paths": ["mypy/plugins/default.py"]
+ },
+ "public_view": {
+  "goal": "`@contextlib.asynccontextmanager` 装饰的泛型函数，其 TypeVar 不会随实参替换：`async with identity(1) as number` 里 number 被推成 `_T`-1` 而不是 `int`。要求推成 int，且 `number = 2` 不报错。",
+  "constraints": [
+   "题面明确写 'a non-async counterpart of this behaves as expected, and does not produce any errors'——即公开材料断言同步路径没有问题",
+   "题面给出完整最小复现，无外链、无图片"
+  ],
+  "unknowns_from_public_only": [
+   "修 mypy 侧特判还是修 typeshed 里 asynccontextmanager 的 stub（PEP 612 ParamSpec）——题面没说，两条路在公开语义上都成立",
+   "泛型 send type（`Generator[T, S, None]` / `AsyncGenerator[T, S]`）下 `variables` 是否该只保留 T——题面完全没提",
+   "reveal_type 的精确文本（`builtins.int*` 带星号、`def [T] (item: T`-1) -> ...`）无从推断"
+  ],
+  "base_code_evidence": [
+   "9bd651758:mypy/plugins/default.py:27-28 get_function_hook 只对 'contextlib.contextmanager' 返回 contextmanager_callback，asynccontextmanager 无特判",
+   "9bd651758:mypy/plugins/default.py:186-201 contextmanager_callback 用 default_return.copy_modified(..., variables=arg_type.variables)，不做 detach",
+   "9bd651758:test-data/unit/lib-stub/contextlib.pyi 在 sys.version_info >= (3,7) 分支下已定义 asynccontextmanager，测试材料齐全",
+   "9bd651758:mypy/checker.py:5738 detach_callable 已存在（此前只被 checker.py:5711-5712 使用）"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 目标 test-data/unit/check-default-plugin.test 在 base 存在（base 含 2 个 case）", "gold 目标 mypy/plugins/default.py 在 base 存在且 hunk 上下文逐行匹配", "lib-stub/contextlib.pyi 已含 asynccontextmanager，不需要 test_patch 补 stub"], "note": "无二进制/LFS/子模块。", "by": "L1_mypy_1"},
+  "2": {"status": "pass", "evidence_refs": ["9bd651758:mypy/plugins/default.py:27 只判 'contextlib.contextmanager'"], "note": "base 确实缺 asynccontextmanager 特判。未实跑。", "by": "L1_mypy_1"},
+  "3": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["public_bundles problem_statement 长 3984 字符，前 1992 与后 1992 逐字相同（runs/.../L1_mypy_1 校验：ps[:1992]==ps[1992:] 为 True）"], "note": "题面被整段复制了两遍（很可能是上游两个关联 issue 正文相同被拼接）。agent 实际收到的输入含冗余重复，浪费上下文，也可能让模型误以为有两个不同需求。属于可低成本修复的输入质量缺陷。", "by": "L1_mypy_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 只触碰 test-data/unit/check-default-plugin.test"], "note": "无非测试源码被 test_patch 触碰；gold 路径 mypy/plugins/default.py 与之无交集。additional_exclusions 保持空。", "by": "L1_mypy_1"},
+  "17": {"status": "pass", "evidence_refs": ["同上"], "note": "恢复 test_files 不会覆盖候选源码。", "by": "L1_mypy_1"},
+  "5": {"status": "pass", "evidence_refs": ["runs/.../L1_mypy_1/dupidx.txt：40 道 mypy 题中只有本题触碰 check-default-plugin.test 与 mypy/plugins/default.py"], "note": "无重复/派生。", "by": "L1_mypy_1"},
+  "23": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["F2P 含 testContextManagerWithGenericFunctionAndSendType（同步 contextmanager + Generator[T, S, None]）", "problem_statement 原文：'As a side note, a non-async counterpart of this behaves as expected, and does not produce any errors.'"], "note": "评分要求超出并且**与题面相矛盾**：题面明说同步路径没问题，F2P 却要求把同步 contextmanager 在带 send type 时的 variables 也修好。只按题面做（hints 里 BoniLindsley 提出的 two-line fix：把 'contextlib.asynccontextmanager' 加进 get_function_hook 的 fullname 判断）只能过 3 个 F2P 里的 1 个；另外两个 *AndSendType 需要额外引入 detach_callable，而这一需求在公开材料里零线索。", "by": "L1_mypy_1"},
+  "24": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["test_patch 中三个新 case 都断言精确 reveal_type 文本，如 'def [T] (item: T`-1) -> typing.AsyncContextManager[T`-1]'、'builtins.int*'"], "note": "锁死 mypy 内部类型表示（TypeVar id `-1、推断变量的 * 后缀）。走 typeshed/ParamSpec 路线的合法替代解不会改动 lib-stub fixture，因此根本触发不到这些 case——会直接判 0。另一方面这是 mypy 期望输出测试的通病，不是本题独有。", "by": "L1_mypy_1"},
+  "25": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["base check-default-plugin.test 只有 2 个 case：testContextManagerWithGenericFunction、testContextManagerWithUnspecifiedArguments；P2P 只收了后者"], "note": "`testContextManagerWithGenericFunction` 是与本次改动最直接相关的既有用例（同步泛型 contextmanager，gold 的 detach_callable 会影响它），却既不在 F2P 也不在 P2P。回归保护缺了最该有的一条。", "by": "L1_mypy_1"},
+  "26": {"status": "issue", "evidence_refs": ["P2P 只有 1 条"], "note": "见 proposed_regression_tests。", "by": "L1_mypy_1"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 两处改动：get_function_hook fullname 元组 + detach_callable 包裹，均与本题相关"], "note": "gold 无题外改动。它把 mypy.checker.detach_callable 引入 mypy/plugins/default.py（跨层 import），是 upstream 的选择，不算缺陷。", "by": "L1_mypy_1"},
+  "29": {"status": "pass", "evidence_refs": ["problem_statement 无 PR/commit 链接、无修复代码"], "note": "题面无泄漏；hints_text 里有 fork commit 直链（two-line fix 与 regression test），但 hints 不可见。", "by": "L1_mypy_1"},
+  "6": {"status": "not_checked", "evidence_refs": [], "note": "未实跑安装。", "by": "L1_mypy_1"},
+  "7": {"status": "pass", "evidence_refs": ["三个新 case 只依赖 test-data/unit/fixtures/typing-async.pyi、typing-medium.pyi、tuple.pyi 与 lib-stub/contextlib.pyi，均在 base 仓库内"], "note": "无外部资产依赖。", "by": "L1_mypy_1"},
+  "11": {"status": "pass", "evidence_refs": ["case 正文无 URL / requests / 外部服务"], "note": "测试阶段静态看不需要网络。", "by": "L1_mypy_1"},
+  "18": {"status": "pass", "evidence_refs": ["runs/.../L1_mypy_1/kcheck_all.txt：selector testAsyncContextManagerWithGenericFunction 会子串命中 testAsyncContextManagerWithGenericFunctionAndSendType"], "note": "过选是良性的——被多选中的那条本身也在 F2P；status_map 按完整 nodeid 记账（见 runs/env_probe_stage1_20260910/.../python__mypy-10174/gold/offline/a1/status_map.json）。", "by": "L1_mypy_1"}
+ },
+ "issues": [
+  {"category": "requirement_mismatch", "severity": "P1", "evidence_refs": ["F2P testContextManagerWithGenericFunctionAndSendType vs problem_statement 'non-async counterpart ... does not produce any errors'"], "proposed_action": "两条路择一：(a) 把两个 *AndSendType case 从 F2P 降为 P2P 之外的诊断项，只保留 testAsyncContextManagerWithGenericFunction 作为 F2P；(b) 补题面，明确 send type 泛型也在范围内。不补的话，按题面正确作答的 agent 最多拿 1/3 F2P，整题判 0。", "next_experiment": "只应用 hints 里的 two-line fix（get_function_hook fullname 加 asynccontextmanager，不加 detach_callable），跑三条 F2P，确认恰好过 testAsyncContextManagerWithGenericFunction、挂两条 *AndSendType。"},
+  {"category": "duplicated_problem_statement", "severity": "P2", "evidence_refs": ["problem_statement 前后两半逐字相同"], "proposed_action": "去重题面（保留一份），并在 ingest 层加一条通用检测：problem_statement 前后半完全相同即报警。", "next_experiment": "对 216 题全量跑同一检测，看还有多少题命中。"},
+  {"category": "grading_coverage", "severity": "P2", "evidence_refs": ["base check-default-plugin.test 仅 2 个 case，P2P 只收 1 个"], "proposed_action": "把 testContextManagerWithGenericFunction 补进 P2P。", "next_experiment": "base+test_patch+gold 跑 -k testContextManagerWithGenericFunction，确认 PASSED 后入 P2P。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只触碰纯测试数据文件 test-data/unit/check-default-plugin.test，无混合职责路径。", "evidence_refs": ["grading_bundles_v2_v0:python__mypy-11352 test_patch"]},
+ "proposed_regression_tests": [
+  {"id": "mypy/test/testcheck.py::TypeCheckSuite::testContextManagerWithGenericFunction", "reason": "base 里唯一的同步泛型 contextmanager 用例，gold 的 detach_callable 直接作用于它，却未入 P2P。"},
+  {"id": "test-data/unit/check-overloading.test 中依赖 detach_callable 的用例（mypy/checker.py:5711-5712 是 detach_callable 的唯一既有调用点，位于 overload 兼容性检查）", "reason": "gold 把 detach_callable 的使用扩散到插件层；若 agent 改的是 detach_callable 本身而不是调用点，overload 检查会回归。"},
+  {"id": "test-data/unit/check-async-await.test 全文件", "reason": "async with / AsyncContextManager 语义的主战场。"},
+  {"id": "test-data/unit/pythoneval.test 中 contextlib 相关用例", "reason": "用真实 typeshed 而非 fixture，可验证修法在真 stub 下也成立（hints 里作者正是卡在这里）。"}
+ ],
+ "disposition_hint": {"state": "needs_repair", "reason": "F2P 与题面直接矛盾（题面说同步没问题，F2P 要求修同步 send type），按题面正确作答会被判 0；另有题面整段重复与 P2P 漏收最相关既有用例。三处都能低成本修。"},
+ "costs": {"minutes": 22}
+}

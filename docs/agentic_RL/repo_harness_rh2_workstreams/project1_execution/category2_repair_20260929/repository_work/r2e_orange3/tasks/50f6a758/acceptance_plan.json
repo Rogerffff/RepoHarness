@@ -1,0 +1,104 @@
+{
+  "instance_id": "orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e",
+  "status": "prepared_not_run",
+  "expected_key_count": 48,
+  "fixed_material": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/50f6a758/revision_draft.json",
+    "sha256": "sha256:8812bbcbca7b35873d7f375063706ef3b7f815f75f8125c74d3b4bb1053986c3"
+  },
+  "env_reset_timeout_seconds": 1200,
+  "budget_note": "这是grader基线重建/控制面准备预算，不是模型求解时限；在最终consumer核实际生效值。",
+  "shared_runner_ref": "rh2/experiments/r2e_lifecycle_20260929/replay_grade_budget.py / rh2/scripts/replay_grade.py",
+  "machine_resource_entry": "由总协调正式入口提供；本文件不含SSH或凭据。",
+  "candidates": [
+    {
+      "candidate": "noop",
+      "patch": null,
+      "expected_score": 0,
+      "purpose": "原未用变量无警告",
+      "observed_score": null
+    },
+    {
+      "candidate": "gold",
+      "patch": {
+        "path": "runs/r2e_static_prep_20260924/v3/private/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/gold.patch",
+        "sha256": "sha256:8f3d578bfd467133d7db593389f03d1692cbe0cc1df78d2777b57d4ddefe8154"
+      },
+      "expected_score": 1,
+      "purpose": "原合理名单格式",
+      "observed_score": null
+    },
+    {
+      "candidate": "K1",
+      "patch": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/cands/orange3_50f6_K1.patch",
+        "sha256": "sha256:e0b92f37741958931e30f3a3119855162ac874460668f429c8743398fb90d907"
+      },
+      "expected_score": 1,
+      "purpose": "全列名单的合理解",
+      "observed_score": null
+    },
+    {
+      "candidate": "K2",
+      "patch": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/cands/orange3_50f6_K2.patch",
+        "sha256": "sha256:928a4b1276383b64c0e62aa30183c02860e1ee9cce2fe22636916f54f25def5c"
+      },
+      "expected_score": 0,
+      "purpose": "加载数据后抑制警告",
+      "observed_score": null
+    },
+    {
+      "candidate": "K3",
+      "patch": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/cands/orange3_50f6_K3.patch",
+        "sha256": "sha256:f924b3cf2bc4527c15ac7c93e9ae7b0b6079f05e3dfc810fad0e3b6bf9b21cd4"
+      },
+      "expected_score": 0,
+      "purpose": "混合文件抑制警告",
+      "observed_score": null
+    },
+    {
+      "candidate": "K4",
+      "patch": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/cands/orange3_50f6_K4.patch",
+        "sha256": "sha256:71c27fda2176e2fd93c00352f5ce00ddfbb281b03d8cc7e94af6989ee056aef2"
+      },
+      "expected_score": 0,
+      "purpose": "遗漏numeric段",
+      "observed_score": null
+    },
+    {
+      "candidate": "Cdeg",
+      "patch": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/cands/orange3_50f6_Cdeg.patch",
+        "sha256": "sha256:3e53e310fd06aafbb96b28a5164ef51651cc0e7579a7512aa75c3316ee4cd00b"
+      },
+      "expected_score": 0,
+      "purpose": "警告后提前返回，破坏已匹配定义应用",
+      "observed_score": null
+    },
+    {
+      "candidate": "K5",
+      "patch": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/50f6a758/cands/K5_unnamed_warning.patch",
+        "sha256": "sha256:6e8aa77a4f9226206d6f25a92357b6615eae907a62312731dfafb7cace88cf1b"
+      },
+      "expected_score": 0,
+      "purpose": "警告不点名变量",
+      "observed_score": null
+    }
+  ],
+  "acceptance_requires": [
+    "固定新版材料与镜像/配方/consumer",
+    "补丁成功应用和对应源码/产物确被加载",
+    "精确键集与完整日志",
+    "失败来自目标断言而非环境故障",
+    "实际准备预算与清理证据",
+    "非作者修订/证据复核",
+    "受影响公开开发路径与实际题面交付"
+  ],
+  "extra": [
+    "fresh公开读者给出等效开发命令；保留公开冲突旧断言的失败，不要求actor修改测试。"
+  ]
+}

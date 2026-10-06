@@ -1,0 +1,76 @@
+{
+  "schema": "mypy_gpu_install_narrow_cpu_acceptance.v1",
+  "as_of": "2026-10-03",
+  "task_id": "swe_gym_lite::python__mypy-10174",
+  "owner_thread": "01a0fd63-1eba-7133-951d-7dd3475840a4",
+  "status": "accepted_with_explicit_scope",
+  "root_readback_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-10174/gpu_install_revalidation_readback_20261003.json",
+  "root_readback_sha256": "2726492f6fd04a21fa7fca029b57c9f6c3a9d2f4ecbb2492fe59af51b0778735",
+  "non_author_reviews": [
+    {
+      "role": "Production Tracer",
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/reviews/non_author_10174_gpu_install_trace_20261003.md",
+      "sha256": "d9f685170acfaa18805a6bedefa78b0e21dd1f3eab5519368c17c11678fddc2b",
+      "status": "narrow_acceptance_passed",
+      "fresh_public_reader": false,
+      "context": "已见原FP、baseline、私有评分和作者材料；本次只读原件，无重复运行"
+    },
+    {
+      "role": "Falsifier",
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/reviews/non_author_10174_gpu_install_falsifier_20261003.md",
+      "sha256": "248c202c5087eca1c9a358b4802ef4afb9d1676ab3a0f3ca06c00ef5ffa59900",
+      "status": "narrow_acceptance_passed",
+      "fresh_public_reader": false,
+      "context": "已见原FP、baseline、私有评分和作者材料；本次只读原件，无重复运行"
+    }
+  ],
+  "root_reconciliation": {
+    "agreed": "原件身份、1472条基线、50路径投影、真实安装、4/4参考、reward1和清理均成立。",
+    "metadata_refinement": "安装前即有相同editable dist-info，不能称本次才创建；安装成立依据两轮真实pip build/install日志与独立RC。",
+    "no_unresolved_candidate_or_scoring_finding": true,
+    "no_majority_vote": "作者独立核实际原件；两角色结论相符只作复核。"
+  },
+  "actual_cpu_job": "mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3",
+  "reward": 1,
+  "references_passed": 4,
+  "preinstall_command_rcs": [
+    0,
+    0,
+    0
+  ],
+  "formal_install_failed_commands": [],
+  "baseline_entries": 1472,
+  "projection_paths": 50,
+  "preserved_candidate_cache_paths": 49,
+  "actual_cpu_image": "sha256:9d63f1ddcbd277fa62d49e10d800908cfec54544e890fc5fe741d2101ca8eb7e",
+  "old_gpu_image": "sha256:32f313c82fd4f065517b8fd1faff22b79a8c1c8e108200c85c8de8188191baad",
+  "historical_gpu_raw_reward": 1,
+  "historical_gpu_install_all_passed": false,
+  "historical_gpu_record_overwritten": false,
+  "source_probe_scope": "三阶段独立Python进程，非pytest进程内部追踪。",
+  "editable_metadata_created_by_this_run_proven": false,
+  "prewarmed_install": true,
+  "resource_facts": null,
+  "env_qualification": "absent",
+  "pkg_version_observation": "?",
+  "cpu_work_complete": true,
+  "remaining": [
+    "GPU实际同source/同wheel可读派生镜像及actor/grader UID读取核实；禁止旧32f权限缺陷镜像新派发。",
+    "GPU补已有实际checkpoint与请求运行读回证据；不能仅用serviceconfig/alias证实模型身份。",
+    "10174原请求仍claimed，未运行Coder首臂，后续模型轨迹与重复按原流程。"
+  ],
+  "request_unchanged": "swe-mypy10174-strict-equality-v1-20261003",
+  "original_request_sha256": "117617f74e54c379022cb43e9679d0af07d3465c9f0c05eb03a33679db3c5f7c",
+  "training_eligible": false,
+  "holdout_eligible": false,
+  "limits": [
+    "三条安装命令先单独运行，再由未改正式脚本重复，属于预热条件。",
+    "模块probe为独立Python进程，不是pytest内部加载跟踪；不追溯证明旧GPU实际加载。",
+    "site-packages editable元数据在前置安装前已存在；成功安装依据真实RC和pip build/install日志。",
+    "resource_facts为null、env_qualification为absent，包版本观测为?；未新增HostConfig实测。",
+    "R6 manager与GPU逐字相同，三个兼容消费者有差异；本题材料与脚本一致。",
+    "CPU新镜像可读不证明GPU新镜像已修；GPU实际checkpoint读回缺口另交执行者。",
+    "旧raw1、原FP/runtime、旧验收、请求和历史异常均未改写；不增加训练或留出资格。"
+  ],
+  "stop_condition": "本题窄补证完成；不再扩metadata/旧矩阵/模型重解。GPU新实际镜像修复另交执行者，不等同CPU证明。"
+}

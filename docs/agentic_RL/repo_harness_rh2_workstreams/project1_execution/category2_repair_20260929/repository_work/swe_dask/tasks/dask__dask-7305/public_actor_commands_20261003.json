@@ -1,0 +1,23 @@
+[
+  {
+    "id": "identity_import",
+    "cmd": "id; pwd; git rev-parse HEAD; git status --porcelain; python - <<'PY'\nimport sys,numpy,pandas,dask,dask.dataframe,pytest\nprint('PYTHON',sys.executable,sys.version)\nprint('DASK',dask.__file__,dask.__version__)\nprint('NUMPY',numpy.__version__,'PANDAS',pandas.__version__,'PYTEST',pytest.__version__)\nassert dask.__file__.startswith('/testbed/')\nPY",
+    "expect": "zero",
+    "timeout_s": 60,
+    "purpose": "原公开dataframe源码、身份、解释器与必要依赖"
+  },
+  {
+    "id": "issue_public_quantiles",
+    "cmd": "python - <<'PY'\nimport numpy as np\nimport pandas as pd\nimport dask.dataframe as dd\nfrom dask.dataframe.partitionquantiles import partition_quantiles\npandas_df=pd.DataFrame({'a':np.array([612509347682975743,616762138058293247],dtype=np.uint64)})\ndask_df=dd.from_pandas(pandas_df,npartitions=1)\nactual=partition_quantiles(dask_df.a,npartitions=1).compute()\nprint('ACTUAL',actual)\nprint('EXPECTED_ENDS',int(pandas_df.a.min()),int(pandas_df.a.max()))\nassert int(actual.iloc[0])==int(pandas_df.a.min())\nassert int(actual.iloc[-1])==int(pandas_df.a.max())\nPY",
+    "expect": "nonzero",
+    "timeout_s": 60,
+    "purpose": "原题面大uint64例子；base端点+1，应读确切差异"
+  },
+  {
+    "id": "public_shuffle_regression",
+    "cmd": "python -m pytest -p no:cacheprovider -n0 -rA --color=no dask/dataframe/tests/test_shuffle.py",
+    "expect": "zero",
+    "timeout_s": 900,
+    "purpose": "base原公开shuffle模块；不应用私有新测试；既有内部分界断言的P6另记"
+  }
+]

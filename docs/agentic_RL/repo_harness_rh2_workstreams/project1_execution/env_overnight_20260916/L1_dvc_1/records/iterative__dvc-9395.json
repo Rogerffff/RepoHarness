@@ -1,0 +1,232 @@
+{
+ "task_id": "iterative__dvc-9395",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "docs/.../s2/ingest/public_bundles_v0.jsonl#iterative__dvc-9395",
+  "grading": "docs/.../s2/ingest/grading_bundles_v2_v0.jsonl#iterative__dvc-9395",
+  "validation": "docs/.../s2/ingest/validation_bundles_v0.jsonl#iterative__dvc-9395",
+  "raw": "docs/.../s2/raw/swe_gym_lite_full_f70b1a29.jsonl#iterative__dvc-9395",
+  "base_commit": "c75a5583b3840ba90a8e800a0f42c1cb120916db",
+  "version": "2.56",
+  "python_version": "3.9",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-9395:latest",
+  "eval_cmd": "pytest -rA",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-9395/{gold,empty}/offline/a1/",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc"
+ },
+ "public_view": {
+  "目标行为": "`dvc repro --pull` 不只拉 run-cache 能恢复的产物，还要拉\"数据源\"（只有 outs、没有 cmd 的 .dvc）缺失的文件——题面原话 \"pull whatever is missing and necessary for this repro\"。",
+  "约束": "题面是**特性请求**不是 bug 报告：没有 traceback、没有期望输出、没有点名任何函数。base `dvc/commands/repro.py:130-134` 的 `--pull` 帮助文本即题面引用的那段。",
+  "公开材料无法确定的点": [
+   "拉多少：是\"缺什么拉什么\"（逐 stage、按需）还是\"repro 前把整条 pipeline 需要的都拉下来\"？题面明确说前者更好但没定义边界；",
+   "是否也要把**远端的 run-cache 索引**拉到本地（base 只在 `stage_cache.restore(stage, pull=True)` 里拉单条），题面完全没提；",
+   "import 依赖（`dvc imp` 产生的 .dvc）算不算\"数据源\"；",
+   "拉失败时（远端没有）应该报错还是继续，题面没说。"
+  ],
+  "相关模块": "dvc/repo/reproduce.py::reproduce / _reproduce_stages / _reproduce_stage、dvc/stage/cache.py::StageCache.pull/restore、dvc/repo/pull.py。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-9395/grading.json#test_patch",
+    "mat/iterative__dvc-9395/validation.json#golden_patch"
+   ],
+   "note": "test_patch 动 tests/func/test_repro_multistage.py + tests/func/test_run_cache.py，两者在 base 都存在（git show c75a5583:...）；gold 只动 dvc/repo/reproduce.py。同一问题。无二进制/LFS/子模块。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-9395/empty/offline/a1/status_map.json"
+   ],
+   "note": "empty 侧两条 F2P 都 FAILED，初态确实不具备该行为；base `dvc/repo/reproduce.py` 里 `pull` 只作为 kwargs 传给 `_reproduce_stage`→`stage_cache.restore(pull=True)`。",
+   "by": "static"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-9395/public.json#problem_statement",
+    "mat/iterative__dvc-9395/raw.json#hints_text"
+   ],
+   "note": "题面仅 698 字符且是开放式讨论（结尾是反问 \"Is there any use case where...\"）。**hints_text 长约 8 KB**，里面才有维护者最终确定的设计（\"1. 检查 stage 状态 2. 状态不干净就拉依赖再跑\"）以及 `--pull` 与 run-cache 的关系讨论——hints 不可见，题面与最终实现之间的信息落差很大。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-9395/grading.json#test_patch"
+   ],
+   "note": "test_patch 只触碰 tests/func/ 下两个纯测试文件；gold 不触碰测试样路径。",
+   "by": "static"
+  },
+  "17": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-9395/grading.json#test_patch",
+    "runs/env_probe_20260909_final_sync/ledger/logs_cc/iterative__dvc-9395/candidate.diff",
+    "docs/.../project1_execution/env_probe_20260909/ledger/cc_candidate_grading.jsonl#iterative__dvc-9395"
+   ],
+   "note": "恢复清单 = 两个官方测试文件，无混合职责。**但恢复会覆盖 agent 自己加的测试**：同批 dvc-5822 的 DeepSeek 候选往 tests/func/test_api.py 加了 `test_open_rev_local`，ledger 记 `projected_dropped=['tests/func/test_api.py']`——机制正确，只是 agent 的这部分工作必然作废。",
+   "by": "static"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dvc_1/prescan.json"
+   ],
+   "note": "本包唯一 version=2.56 的题；gold 路径 dvc/repo/reproduce.py 与本包其它题不重合。",
+   "by": "static"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "docs/.../project1_execution/env_probe_20260909/ledger/cc_candidate_grading.jsonl#iterative__dvc-9395",
+    "runs/env_probe_20260909_final_sync/ledger/logs_cc/iterative__dvc-9395/candidate.diff",
+    "mat/iterative__dvc-9395/grading.json#test_patch"
+   ],
+   "note": "**F2P 第二条 `test_restore_pull` 要求的行为无法从题面推出**：它把既有用例改成 `dvc.push(run_cache=True)` + 删本地 run-cache 目录，等于要求实现新增\"repro 开始时把远端整份 run-cache 拉下来\"（gold 的 `self.stage_cache.pull(None)`）。题面讲的是数据源文件，一个字没提 run-cache 索引的远端同步。",
+   "by": "static"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "docs/.../project1_execution/env_probe_20260909/ledger/cc_candidate_grading.jsonl#iterative__dvc-9395",
+    "mat/iterative__dvc-9395/grading.json#test_patch (`assert mock_checkout.call_count == 3`)"
+   ],
+   "note": "**已有实测反例**：DeepSeek 候选（在 `Stage.save_deps/_check_missing_outputs` 前加 `pull_missing_outputs()`）是对题面字面要求的一个合理实现，ledger 记 `f2p_status={test_repro_pulls_mising_data_source: PASSED, test_restore_pull: FAILED}` → RESOLVED_PARTIAL。`mock_checkout.call_count == 3` 是对内部 `dvc.output.checkout` 调用次数的白盒断言，没有任何公开依据；\"一次性把需要的都 pull 下来\"这种题面明确赞成的实现会得到不同的次数。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-9395/grading.json#fail_to_pass"
+   ],
+   "note": "F2P 只有 2 条且第 1 条只覆盖\"数据源\"一种形态。`test_repro_pulls_mising_import`（import 依赖）被排除（见 issue pygit2），`test_repro_pulls_intermediate_out` 落在 P2P 且在 base 就 PASSED（`empty/status_map.json` 记 PASSED）——**它是本次 PR 新增的用例却毫无判别力**。结果：只要让\"数据源缺失时拉一次\"外加\"repro 前 `stage_cache.pull(None)`\"即可满分。",
+   "by": "static"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-9395/gold/offline/a1/status_map.json"
+   ],
+   "note": "P2P 27 条，来自被触碰的两个文件整文件跑（eval_cmd 是 `pytest -rA tests/func/test_repro_multistage.py tests/func/test_run_cache.py`），覆盖 repro 的冻结/循环图/参数/下游与 run-cache 的存取推拉，是本包回归保护较好的一题。",
+   "by": "static"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-9395/gold/offline/a1/test_output.txt（test_repro_pulls_mising_import FAILED）"
+   ],
+   "note": "gold 逻辑本身与题目对应且不含无关改动（只有一处 `# noqa: C901, PLR0912` 属于 lint 附带）。但**gold 跑不过它自己 test_patch 里带来的 `test_repro_pulls_mising_import`**——原因是环境（pygit2 API 漂移），不是 gold 缺陷；数据集把这条从 F2P/P2P 两边都剔掉了，等于把失败静默藏起来。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-9395/public.json#problem_statement"
+   ],
+   "note": "题面不含修复代码，不含上游 PR/commit 号。（hints 含大量设计讨论但不可见。）",
+   "by": "static"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-9395/gold/offline/a1/test_output.txt:（`ImportError: cannot import name 'GIT_OBJ_COMMIT' from 'pygit2'`，帧 scmrepo/git/backend/pygit2/__init__.py:118）"
+   ],
+   "note": "安装解析到的 pygit2 已移除 `GIT_OBJ_*` 常量，配套 scmrepo 的 pygit2 后端 import 失败 → 任何需要外部 git 仓库（`erepo_dir` + `dvc imp`）的用例都挂。",
+   "by": "static"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-9395/gold/offline/a1/test_output.txt"
+   ],
+   "note": "F2P/P2P 用的是 `local_remote` fixture（本地目录当远端），不需要真实网络；gold 侧无 SKIPPED。",
+   "by": "static"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-9395/gold/offline/a1/status_map.json（键 `dvc.commands.freeze:freeze.py:19` 值 ERROR）"
+   ],
+   "note": "caplog 输出 `ERROR    dvc.commands.freeze:freeze.py:19 failed to freeze ...` 被 parser 当成测试结果记进 status_map（见跨题发现 B）。本题未与任何 F2P/P2P id 冲突。",
+   "by": "static"
+  },
+  "7": {
+   "status": "not_applicable",
+   "evidence_refs": [],
+   "note": "test_patch 不带外部资产。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "题面与评分不一致(23/24)",
+   "severity": "P1",
+   "evidence_refs": [
+    "docs/.../project1_execution/env_probe_20260909/ledger/cc_candidate_grading.jsonl#iterative__dvc-9395",
+    "runs/env_probe_20260909_final_sync/ledger/logs_cc/iterative__dvc-9395/candidate.diff",
+    "mat/iterative__dvc-9395/grading.json#test_patch"
+   ],
+   "note": "F2P 的两条一条对应题面（数据源），另一条 `test_restore_pull` 对应题面没提的\"远端 run-cache 整体 pull\"并用 `mock_checkout.call_count == 3` 锁内部调用次数。DeepSeek 候选实测正好过第一条、挂第二条 → RESOLVED_PARTIAL，是\"合理替代解被拒\"的现成反例。",
+   "proposed_action": "二选一：(a) 把\"repro --pull 同时要把远端 run-cache 拉到本地\"写进题面，并把 `call_count == 3` 换成行为级断言（例如 `mock_run.assert_not_called()` + 产物存在 + 本地 run-cache 目录被填充）；(b) 把 `test_restore_pull` 从 F2P 移出，只保留 `test_repro_pulls_mising_data_source`。",
+   "next_experiment": "把 DeepSeek 候选 + gold 的 `stage_cache.pull(None)` 两行拼起来重跑两条 F2P，确认是否仅 call_count 一项不符；再把断言改成 `>=2` 复跑。"
+  },
+  {
+   "category": "环境依赖漂移(6)",
+   "severity": "P2",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-9395/gold/offline/a1/test_output.txt（GIT_OBJ_COMMIT ImportError）"
+   ],
+   "note": "pygit2 与 scmrepo 版本不匹配，`test_repro_pulls_mising_import` 在 gold 侧永久失败；这条恰好是本特性\"import 依赖\"半边的唯一覆盖。",
+   "proposed_action": "在配方里钉 pygit2 到 scmrepo 该版本支持的区间（`pygit2<1.14` 一线，需实测），然后把 `test_repro_pulls_mising_import` 补回 F2P。",
+   "next_experiment": "镜像里 `pip install \"pygit2<1.14\"` 后单跑 `pytest -rA tests/func/test_repro_multistage.py::test_repro_pulls_mising_import`，看 gold 是否转绿。"
+  },
+  {
+   "category": "P2P 选择(25)",
+   "severity": "P3",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-9395/empty/offline/a1/status_map.json（test_repro_pulls_intermediate_out: PASSED）"
+   ],
+   "note": "本次 PR 新增的 `test_repro_pulls_intermediate_out` 在 base 就通过，被归到 P2P，对本题零判别力（中间产物本来就走 run-cache 路径）。不是缺陷，但说明\"新增用例自动落 P2P\"会产生无效条目。",
+   "proposed_action": "保留即可；若重建 P2P，可标注它为\"新增但 base 已通过\"。",
+   "next_experiment": "无。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰两个纯官方测试文件；gold 不触碰测试样路径。按第四组 B 保持为空。",
+  "evidence_refs": [
+   "mat/iterative__dvc-9395/grading.json#test_patch",
+   "mat/iterative__dvc-9395/validation.json#golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/func/test_repro_multistage.py::test_repro_pulls_mising_import",
+   "reason": "本特性 import 依赖那一半的唯一覆盖；修好 pygit2 后应进 F2P。"
+  },
+  {
+   "id": "tests/unit/repo/test_reproduce.py",
+   "reason": "gold 改的 `_reproduce_stages` 的单元测试同包，能挡住\"为了 pull 而打乱 stage 顺序\"的副作用（需先确认 base 有该文件）。"
+  },
+  {
+   "id": "tests/func/test_data_cloud.py::test_pull_stats",
+   "reason": "gold 新增了 `stage.repo.pull(..., allow_missing=True)` 调用，pull 的统计/返回值语义应有回归。"
+  },
+  {
+   "id": "tests/func/test_repro_multistage.py::test_downstream",
+   "reason": "已在 P2P；hints 里用户反复提到 `--pull` 与 `--downstream` 组合，是该改动最可能误伤的路径。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "题目本身有价值且 P2P 覆盖不错，但 F2P 第二条要求题面没有的行为并用内部调用次数锁实现，已有实测反例（合理实现只得 PARTIAL）；同时 pygit2 漂移让 import 半边永久失败。"
+ },
+ "costs": {
+  "minutes": 32
+ },
+ "by": "L1_dvc_1 (Claude Opus 5, 静态审查)"
+}

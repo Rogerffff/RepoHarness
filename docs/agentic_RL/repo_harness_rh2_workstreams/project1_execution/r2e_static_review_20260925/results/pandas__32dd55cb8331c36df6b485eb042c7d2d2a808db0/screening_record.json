@@ -1,0 +1,632 @@
+{
+ "task_id": "r2e_gym_subset::pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0",
+ "task_revision": "r2e_gym_subset_e8b9fcbc/material_revisions_v3:r2e-mr-016,r2e-mr-017（expected sha256:9771cde591cfc03943ad96243769be99e38d34c68946db660cd5cd5578a6c73c；hidden_tests_tree sha256:90bc90a8e051c7ab390a295f6da42975601d49cff3ec97dfd8d78069e732ebfb）",
+ "source_adapter_ref": {
+  "spec_vendor_id": "r2e_gym_subset_e8b9fcbc",
+  "source_revision": "e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a",
+  "source_commit_hash": "32dd55cb8331c36df6b485eb042c7d2d2a808db0",
+  "base_commit": "b7f061c3d24df943e16918ad3932e767f5639a38",
+  "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl（line_sha256 a8f696186bab82c47bd66f85a16bc1598749ea43991d3dd98af4e8d5f1b5aa68）",
+  "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl 第 32 行（line_sha256 ade7492cc348b5382ad61ab94a0364d961d341c30f92e9953592e2492f2e60e0）",
+  "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/validation_bundles_v0.jsonl 第 32 行（line_sha256 193465a913480534a17cb0c2aad7a7a06b6419ca274ae56dc1c1499e1a8d2933）",
+  "parser_id": "r2e_prime_pytest_v1",
+  "static_review_materials": "runs/r2e_static_prep_20260924/v2/{public,private}/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/"
+ },
+ "recipe_ref": {
+  "derived_image": "rh2-r2e-derived/pandas:32dd55cb8331-r2e_derive_v1m2",
+  "derived_image_id": "sha256:3d40959d5f081a4d9434b356e229b1cbc2a53a0d07b50186a91ef56a6e53aa64",
+  "recipe_id": "r2e_derive_v1+material_v2",
+  "recipe_sha256": "sha256:401541cbabe169f627d6e698b1808576aeee98c65f75e8ef665185c9c84e9ffb",
+  "resources": "default：2 CPU / 4 GiB / /tmp 1 GiB；评分 network deny_all",
+  "formal_actor_image_note": "环境卡（09-25）：正式 actor 目前取来源镜像 namanjain12/pandas_final@sha256:366c4abbe6e4…；进正式 actor 前须改用上面的派生镜像"
+ },
+ "code_snapshot_ref": {
+  "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+  "scripts_digest": "sha256:b92090900b5b832d7e94c2a7d72528e03e540ace96a5dd6a1311e9fb70d1e080",
+  "grader_profile_digest": "sha256:1bb8e0cf80ce48b15401fdf79d18f4f4c08a5f01001d8b0756311c58de25c19a",
+  "note": "取自 b5 账本；本次静态审查未执行任何代码"
+ },
+ "facts_ref": [
+  {
+   "id": "noop_b5",
+   "ledger": "runs/r2e_t0_batch3_20260924/replay_b5/ledger_b5_noop.jsonl",
+   "lines": [
+    5,
+    6
+   ],
+   "role": "noop",
+   "condition": "当前材料、派生镜像 3d40959d…、默认资源、评分用户 54322、deny_all",
+   "logs": [
+    "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-69e318acd762-pand_e72257bb.eval.log",
+    "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-69e318acd762-pand_1d03fd8e.eval.log"
+   ],
+   "result": "reward 0 ×2，90/92，mismatched 为 T1、T2；两份日志归一化后逐行相同"
+  },
+  {
+   "id": "gold_b5",
+   "ledger": "runs/r2e_t0_batch3_20260924/replay_b5/ledger_b5_gold.jsonl",
+   "lines": [
+    5,
+    6
+   ],
+   "role": "gold",
+   "condition": "同 noop_b5",
+   "logs": [
+    "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-caf6d2fe3186-pand_9b708f26.eval.log",
+    "runs/r2e_t0_batch3_20260924/replay_b5/eval_logs/evallog_replay-caf6d2fe3186-pand_28cafc33.eval.log"
+   ],
+   "result": "reward 1 ×2，92/92，RESOLVED_FULL；git_apply；included_paths ['pandas/core/frame.py']；内存峰值 726–728 MB"
+  },
+  {
+   "id": "rf_prerev",
+   "ledger": "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl 与 ledger_r2e_all_gold.jsonl",
+   "lines": [
+    32
+   ],
+   "role": "noop / gold（superseded：修订前来源材料）",
+   "logs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_75e948f0.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_c1ac93bc.eval.log"
+   ],
+   "result": "noop 90/92、gold 92/92；13 键 ERROR（fixture not found）；gold 观测键集合与当前期望相等"
+  },
+  {
+   "id": "m3_ref",
+   "ledger": "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl",
+   "lines": [
+    14,
+    62
+   ],
+   "role": "gold（M3 独立 runner、来源镜像、来源材料）",
+   "logs": [
+    "runs/env_overnight_20260916/M3/gold_ledger/logs_r2e/pandas/32dd55cb8331/gold/a1/test_output.txt",
+    "runs/env_overnight_20260916/M3/gold_ledger/logs_r2e/pandas/32dd55cb8331/gold/a2/test_output.txt"
+   ],
+   "result": "79 passed, 1 skipped, 13 errors ×2；facts：head_is_parent_of_fix=yes、fix_reachable=commit、r2e_tests_root=1"
+  },
+  {
+   "id": "dryrun_b3r2",
+   "logs": [
+    "runs/r2e_t0_batch3_20260924/dryrun_b3r2/pandas_32dd55cb_{noop,gold}_{orig,fix_a,fix_b}.test.log"
+   ],
+   "role": "修订试跑（一次性容器，按 grader 顺序）",
+   "result": "orig：13 errors；fix_a/fix_b：noop 2 failed / 90 passed，gold 92 passed"
+  },
+  {
+   "id": "dev_probe",
+   "log": "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/agent_probe.log",
+   "role": "开发条件探针（agent/54321、派生镜像 v1、无网络；历史证据）",
+   "result": "python=/testbed/.venv/bin/python 3.7.9、pytest 7.4.4、pip 24.0；公开 test_aggregation.py 8 passed；题面原例复现 REPRO_OBSERVED=1（题面原错，说明 bottleneck 未启用）"
+  },
+  {
+   "id": "fixture_check",
+   "file": "runs/r2e_env_repair_20260924/p3/fixture_check/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/result.txt",
+   "role": "root、一次性容器、base 原位跑公开 pandas/tests/frame/test_analytics.py（历史证据）",
+   "result": "PT_RC=0，91 passed / 1 skipped；含旧文字版 test_mean_datetimelike_numeric_only_false"
+  },
+  {
+   "id": "derived_facts",
+   "file": "runs/r2e_t0_batch3_20260924/derived7/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/facts.json",
+   "role": "当前配方派生镜像构建复核",
+   "result": "fix_present=no、git 已清理、隐藏测试对 agent/评分用户不可读、树摘要 90bc90a8…、镜像 ID 3d40959d…"
+  },
+  {
+   "id": "materials",
+   "files": [
+    "runs/r2e_static_prep_20260924/v2/private/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/hidden_tests/test_1.py",
+    "runs/r2e_static_prep_20260924/v2/private/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/hidden_tests/conftest.py",
+    "runs/r2e_static_prep_20260924/v2/private/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/revisions.json",
+    "runs/r2e_static_prep_20260924/v2/public/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/worktree/pandas/tests/frame/test_analytics.py"
+   ],
+   "role": "当前隐藏测试、修订单与公开 base 测试"
+  },
+  {
+   "id": "env_history",
+   "files": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/screening_record.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/findings.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/known_issues.json"
+   ],
+   "role": "环境阶段历史记录（逐条核对见 old_findings_delta.md）"
+  },
+  {
+   "id": "env_card",
+   "file": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/r2e_environment_card.md",
+   "role": "R2E 当批环境卡"
+  },
+  {
+   "id": "review_docs",
+   "files": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/public_read.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/analysis_before_history.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/old_findings_delta.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/card.md"
+   ],
+   "role": "本次审查产物"
+  }
+ ],
+ "checks": {
+  "1": {
+   "status": "pass",
+   "note": "base 是修复提交父提交；gold = 上游修复去掉测试与 whatsnew；隐藏 test_1.py 与公开 base test_analytics.py 只差修复提交的两处（T2 第 899 行、新增 T1）；当前期望 = 来源期望 + r2e-mr-017（键集合相等，恰 13 键 ERROR→PASSED）",
+   "evidence": [
+    "m3_ref",
+    "rf_prerev",
+    "materials"
+   ]
+  },
+  "2": {
+   "status": "pass",
+   "note": "noop 在题面路径报题面原错（T1：frame.py:8330 → nanops.py:554 → integer.py:578，日志 L120-187）；agent 身份按题面原例复现同一 ValueError",
+   "evidence": [
+    "noop_b5",
+    "dev_probe"
+   ]
+  },
+  "3": {
+   "status": "unknown",
+   "note": "实际渲染消息未捕获（user_prompt.txt 为静态渲染）；public_hints 的 conda 与「评分重置测试文件」两句对 R2E 不成立（共享 E09），后者在本题加重 I1",
+   "evidence": [
+    "review_docs",
+    "env_card"
+   ]
+  },
+  "4": {
+   "status": "pass",
+   "note": "修复只需改 .py（gold 只触及 pandas/core/frame.py）；R2E 评分只删除并重放 r2e_tests/ 与 run_tests.sh，不重置其它路径",
+   "evidence": [
+    "gold_b5",
+    "env_card"
+   ]
+  },
+  "5": {
+   "status": "not_checked",
+   "note": "未核对与其它 pandas 题的派生或重叠关系（按要求不读其它题）"
+  },
+  "6": {
+   "status": "pass",
+   "note": "不需要新依赖；venv pip check 通过（镜像层面）；无 SciPy，expected 绑定「无 SciPy」：装上后 test_kurt 成为期望外的键 → 0",
+   "evidence": [
+    "dev_probe",
+    "noop_b5"
+   ]
+  },
+  "7": {
+   "status": "not_applicable",
+   "note": "无权重、数据或外部资产"
+  },
+  "8": {
+   "status": "pass",
+   "note": "评分侧以 54322 实测；解题侧以 agent/54321 在派生镜像探针实测（镜像层面）；正式启动链（非交互 shell、/rh2/bash_env）actor 待验",
+   "evidence": [
+    "noop_b5",
+    "dev_probe"
+   ]
+  },
+  "9": {
+   "status": "pass",
+   "note": "评分与探针导入路径均为 /testbed/pandas/__init__.py；gold 使两个目标键翻转",
+   "evidence": [
+    "noop_b5",
+    "gold_b5",
+    "dev_probe"
+   ]
+  },
+  "10": {
+   "status": "pass",
+   "note": "读历史后由 unknown 改为 pass（镜像层面）：agent 跑公开 test_aggregation.py 8 passed、复现脚本成功；root 原位跑 base 公开 test_analytics.py 91 passed / 1 skipped；本题不在 public_test_noise 族。以 agent 身份跑 test_analytics.py 未实测；该文件的 test_mean_datetimelike_numeric_only_false 与隐藏 T2 相反",
+   "evidence": [
+    "dev_probe",
+    "fixture_check",
+    "env_history"
+   ]
+  },
+  "11": {
+   "status": "pass",
+   "note": "准备、解题、测试都不需要网络；评分 deny_all 下正常；探针无出网",
+   "evidence": [
+    "noop_b5",
+    "dev_probe"
+   ]
+  },
+  "12": {
+   "status": "not_applicable",
+   "note": "不依赖外部服务"
+  },
+  "13": {
+   "status": "pass",
+   "note": "评分峰值 714–728 MB / 4 GiB；测试 <3 s；可信初始化 chown 约 40 s（探针）",
+   "evidence": [
+    "gold_b5",
+    "rf_prerev",
+    "dev_probe"
+   ]
+  },
+  "14": {
+   "status": "pass",
+   "note": "当前材料 noop ×2、gold ×2 日志归一化后逐行相同；另有修订试跑 4 次、修订前 R-f/中央复跑与 M3 各 2 次；T1 用随机数但结果确定",
+   "evidence": [
+    "noop_b5",
+    "gold_b5",
+    "dryrun_b3r2",
+    "m3_ref"
+   ]
+  },
+  "15": {
+   "status": "pass",
+   "note": "每次评分 fresh 容器（cleanup.removed=true），缓存计数 baseline=post（36 目录 / 196 文件）；并发未测",
+   "evidence": [
+    "noop_b5"
+   ]
+  },
+  "16": {
+   "status": "pass",
+   "note": "gold 以 git_apply 应用，projection.included_paths=['pandas/core/frame.py']",
+   "evidence": [
+    "gold_b5"
+   ]
+  },
+  "17": {
+   "status": "pass",
+   "note": "RH2_SETUP_RESTORED=2；隐藏测试树摘要 90bc90a8… 与材料一致；候选源码未被覆盖",
+   "evidence": [
+    "noop_b5",
+    "gold_b5",
+    "derived_facts"
+   ]
+  },
+  "18": {
+   "status": "pass",
+   "note": "收集 93 项：92 项执行、1 项 SKIPPED；失败日志显示测试体已执行",
+   "evidence": [
+    "noop_b5",
+    "gold_b5"
+   ]
+  },
+  "19": {
+   "status": "pass",
+   "note": "92 键互不重复（单文件、两个类、无同名测试）；SKIPPED 不成键",
+   "evidence": [
+    "materials",
+    "gold_b5"
+   ]
+  },
+  "20": {
+   "status": "pass",
+   "note": "T1 的 noop 失败即题面原错；T2 的 noop 失败是正则不匹配、与题面无关，记在 23/24",
+   "evidence": [
+    "noop_b5"
+   ]
+  },
+  "21": {
+   "status": "pass",
+   "note": "日志完整（log.partial=false），失败原因可见",
+   "evidence": [
+    "noop_b5",
+    "gold_b5"
+   ]
+  },
+  "22": {
+   "status": "pass",
+   "note": "修订前与 M3 独立 runner 逐键一致；修订后无同版本独立 runner，改用一次性容器试跑逐键对照（环境卡已说明）",
+   "evidence": [
+    "m3_ref",
+    "rf_prerev",
+    "dryrun_b3r2"
+   ]
+  },
+  "23": {
+   "status": "issue",
+   "note": "T2 要求的 Period 报错文字无法从公开材料推知，且与公开 base 测试（test_analytics.py:899，base 上为绿）相反；题面只讲 Int64 与 numeric_only=True（I1）",
+   "evidence": [
+    "materials",
+    "fixture_check",
+    "noop_b5"
+   ]
+  },
+  "24": {
+   "status": "issue",
+   "note": "T2 强制 gold 路线（Period 须走 PeriodArray.mean）；C1/C2、nanops 层掩码、窄修 IntegerArray.sum 等合理解在 T2 上与 noop 同路径 → 0（静态 + noop 执行；候选未实跑）（I1）",
+   "evidence": [
+    "materials",
+    "noop_b5"
+   ]
+  },
+  "25": {
+   "status": "issue",
+   "note": "T1 只测 mean、全 Int64、无缺失值；C3（只对 mean 分派）可得 1；窄修 C4 现在只是被 T2 顺带挡住（静态）（I2）",
+   "evidence": [
+    "materials"
+   ]
+  },
+  "26": {
+   "status": "issue",
+   "note": "gold 改变公开测试记录的 Period 旧文字（与 24 同源）；ndarray 分支回归由 90 键充分覆盖；gold 把 int 截断权宜处理延伸到 Int64（未测、不影响判分，I5）",
+   "evidence": [
+    "materials",
+    "gold_b5"
+   ]
+  },
+  "27": {
+   "status": "pass",
+   "note": "gold 对题面正确，范围比题面广（全 EA、全归约名、numeric_only True/False）；未修默认 numeric_only=None 路径（题面不要求）；无无关改动",
+   "evidence": [
+    "materials",
+    "gold_b5"
+   ]
+  },
+  "28": {
+   "status": "pass",
+   "note": "已批准修订 r2e-mr-016/017 只恢复测试支撑，死键复活为回归键，未引入新要求",
+   "evidence": [
+    "materials",
+    "dryrun_b3r2"
+   ]
+  },
+  "29": {
+   "status": "issue",
+   "note": "派生镜像干净（fix_present=no、git 已清理、隐藏测试对 agent 不可读）；但正式 actor 目前取来源镜像，/r2e_tests 可读（含 T2 新文字）、修复提交可达——共享问题，进 actor 前须换镜像（I3）",
+   "evidence": [
+    "derived_facts",
+    "m3_ref",
+    "env_card"
+   ]
+  },
+  "30": {
+   "status": "pass",
+   "note": "无网络（评分 deny_all；探针无出网）",
+   "evidence": [
+    "noop_b5",
+    "dev_probe"
+   ]
+  },
+  "31": {
+   "status": "unknown",
+   "note": "评分 rootdir=/testbed：候选新增的 /testbed/conftest.py、setup.cfg 的 pytest 段、对 pandas/_testing.py 的改动都会在评分时生效；按共享审查处理（I6）",
+   "evidence": [
+    "noop_b5",
+    "env_card"
+   ]
+  },
+  "32": {
+   "status": "issue",
+   "note": "T2 校验的是 gold 路线特有的报错字符串，而不是题面行为（I1）",
+   "evidence": [
+    "materials",
+    "noop_b5"
+   ]
+  },
+  "33": {
+   "status": "not_checked",
+   "note": "需要真实模型求解"
+  },
+  "34": {
+   "status": "not_checked",
+   "note": "需要真实模型求解"
+  },
+  "35": {
+   "status": "not_checked",
+   "note": "需要真实模型求解"
+  },
+  "36": {
+   "status": "not_checked",
+   "note": "需要目标基座求解"
+  },
+  "37": {
+   "status": "pass",
+   "note": "现有修订属测试支撑恢复，并按修复后 gold 重核期望，已版本化（material_revisions_v3、material_v2）；若采纳 I1 的修订草案会改变测试标准，须形成新修订版",
+   "evidence": [
+    "materials",
+    "env_history"
+   ]
+  },
+  "38": {
+   "status": "pass",
+   "note": "修订经一次性容器试跑与正式 b5 各两次复验；本次未独立复跑",
+   "evidence": [
+    "dryrun_b3r2",
+    "noop_b5",
+    "gold_b5"
+   ]
+  },
+  "39": {
+   "status": "not_applicable",
+   "note": "逐题私有 conftest，不是共享修复"
+  },
+  "40": {
+   "status": "not_applicable",
+   "note": "不涉及流程本身的抽样统计"
+  }
+ },
+ "issues": [
+  {
+   "id": "I1",
+   "category": "test_standard_conflict",
+   "checks": [
+    "23",
+    "24",
+    "26",
+    "32"
+   ],
+   "severity": "high",
+   "scope": "task",
+   "summary": "目标键 T2（TestDataFrameAnalytics.test_mean_datetimelike_numeric_only_false）要求 Period 列 mean(numeric_only=False) 的 TypeError 匹配 'mean is not implemented for Period'（hidden_tests/test_1.py:899）。公开 base 测试同一行要求 'reduction operation 'mean' not allowed'，且在 base 上为绿；题面只讲 Int64 与 numeric_only=True。只有让 Period 列走 PeriodArray.mean 的实现（gold 式全 EA 分派，或逐列回退到 Series 归约）能过。只对数值 EA 分派（C1）、只在 numeric_only=True 时分派（C2）、nanops 层掩码支持、窄修 IntegerArray.sum（C4）等合理解，在 T2 上与 noop 走同一路径 → reward 0。",
+   "evidence_level": "静态推断 + 当前执行（noop 在 T2 上的失败路径与原因，日志 L51-109）+ 历史执行（base 公开测试原位 91 passed / 1 skipped）；替代候选未实跑",
+   "evidence_refs": [
+    "materials",
+    "noop_b5",
+    "fixture_check"
+   ],
+   "proposed_action": "先在 CPU 定点跑 C1（必要时加 C2），核对题面行为、公开测试与 RH2 得分。确认后提修订：T2 的 match 同时接受两条文字（公开先例 pandas/tests/reductions/test_reductions.py:350-358），并同时补含 pd.NA 的 Int64 均值断言（见 I2）；经独立审查与双向复验后形成修订版。",
+   "status": "open",
+   "history": "环境阶段 R16（修订前）已记为题意问题并移交后续筛查；批次三写回把 R16 改为 pass、issues[1] 标为 verified（resolution 复制自 fixture 问题）。本次推翻该状态，见 old_findings_delta.md H7、H8"
+  },
+  {
+   "id": "I2",
+   "category": "test_coverage_gap",
+   "checks": [
+    "25"
+   ],
+   "severity": "medium",
+   "scope": "task",
+   "summary": "与题面直接相关的目标键 T1 只测 mean、全 Int64 帧、无缺失值。只对 mean 分派 EA 的半修（C3）可得 1，而 sum 等仍报原错；不处理掩码计数的窄修 IntegerArray.sum（C4）现在只因 T2 顺带被判 0，放宽 T2 后会得 1。",
+   "evidence_level": "静态推断",
+   "evidence_refs": [
+    "materials"
+   ],
+   "proposed_action": "CPU 负例 C3、C4；随 I1 的修订补缺失值断言，是否补 sum 断言由审查决定",
+   "status": "open"
+  },
+  {
+   "id": "I3",
+   "category": "leakage_shared",
+   "checks": [
+    "29"
+   ],
+   "severity": "high（进正式 actor 前）",
+   "scope": "R2E 全池（共享）",
+   "summary": "正式 actor 目前取来源镜像：/r2e_tests 对所有用户可读（含 T2 的新文字），修复提交可达；派生镜像已核干净。",
+   "evidence_level": "代码事实（环境卡 09-25）+ 构建复核（derived7 facts）+ M3 来源镜像事实",
+   "evidence_refs": [
+    "env_card",
+    "derived_facts",
+    "m3_ref"
+   ],
+   "proposed_action": "按环境卡，R2E 进正式 actor 前改用派生镜像（B 线实现、A 线审查）",
+   "status": "open"
+  },
+  {
+   "id": "I4",
+   "category": "prompt_hints_shared",
+   "checks": [
+    "3"
+   ],
+   "severity": "low",
+   "scope": "R2E 全池（共享 E09）",
+   "summary": "public_hints 的「预激活 conda 环境 testbed」与「评分会重置测试文件」对 R2E 不准确；后者在本题会让解题者倾向保持公开 test_analytics.py 全绿，加重 I1。",
+   "evidence_level": "静态（提示原文与评分脚本口径）",
+   "evidence_refs": [
+    "review_docs",
+    "env_card"
+   ],
+   "proposed_action": "随 E09 的任务面修正处理；本题不单独改",
+   "status": "open"
+  },
+  {
+   "id": "I5",
+   "category": "gold_observation",
+   "checks": [
+    "26",
+    "27"
+   ],
+   "severity": "info",
+   "scope": "task",
+   "summary": "numeric_only=False 且帧含 datetimelike 列时，gold 的结果经 coerce_to_dtypes 对 kind=='i' 的列做 int()，Int64 列均值会被截断（如 5.5→5）。这是 base 对 numpy int 列既有权宜处理的延伸，未测，不影响判分。gold 也未修默认 numeric_only=None 的混合帧丢 EA 列（题面不要求）。",
+   "evidence_level": "静态推断",
+   "evidence_refs": [
+    "materials"
+   ],
+   "proposed_action": "只记录，不需处理",
+   "status": "open"
+  },
+  {
+   "id": "I6",
+   "category": "control_surface_shared",
+   "checks": [
+    "31"
+   ],
+   "severity": "low",
+   "scope": "R2E 全池（共享）",
+   "summary": "评分 rootdir 为 /testbed：候选新增的 /testbed/conftest.py、setup.cfg 的 pytest 段、对 pandas/_testing.py 的改动都会在评分时生效；账本有 candidate_touched_conftest_or_fixture 观测字段。修订后已无 ERROR 键，原先「根目录 conftest 让 ERROR 键翻转」的具体路径不再存在。",
+   "evidence_level": "静态 + 评分日志（rootdir: /testbed）",
+   "evidence_refs": [
+    "noop_b5",
+    "env_history"
+   ],
+   "proposed_action": "引用共享控制面审查；本题不加路径规则",
+   "status": "open"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "note": "无证据支持新增路径规则"
+ },
+ "revision_refs": [
+  {
+   "revision_id": "r2e-mr-016",
+   "kind": "hidden_test_file_add",
+   "target": "r2e_tests/conftest.py",
+   "sha256_after": "sha256:053ce35970a24eb9f8310b972e911f503ddb27eed9aefd14bb60ba7fa6905061",
+   "static_check": "pass：7 个 fixture 与 base 最内层定义逐字相同，无 autouse、无 hook、不导入工作区 conftest"
+  },
+  {
+   "revision_id": "r2e-mr-017",
+   "kind": "expected_text_replace",
+   "sha256_before": "sha256:b115c1cc79b92b1ab14e90d36c3b5a9bf2d333f8bec18ed7bdecd4fd61f7d95b",
+   "sha256_after": "sha256:9771cde591cfc03943ad96243769be99e38d34c68946db660cd5cd5578a6c73c",
+   "static_check": "pass：键集合不变，恰 13 键 ERROR→PASSED，均为修订前 noop 与 gold 都 ERROR 的死键"
+  },
+  {
+   "source": "runs/r2e_static_prep_20260924/v2/private/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/revisions.json",
+   "decision_ref": "T0-6 第二步（用户 2026-09-24 夜批准）"
+  }
+ ],
+ "disposition": {
+  "scope": "static_review",
+  "state": "needs_review",
+  "reason": "题意/测试争议：目标键 T2 强制要求 gold 路线下 Period 的报错文字，与公开 base 测试冲突、题面未提；另有 T1 漏测（缺失值、非 mean 归约）。不属于「静态候选待 actor 验证」。",
+  "key_aliases": {
+   "T1": "TestDataFrameAnalytics.test_mean_extensionarray_numeric_only_true",
+   "T2": "TestDataFrameAnalytics.test_mean_datetimelike_numeric_only_false"
+  },
+  "environment_scope_note": "环境阶段 qualified_with_revision（环境范围）的证据本次复核成立；本处置只针对题意与评分标准。建议环境记录为 T2 补一条 deferred 未完成项。",
+  "proposed_next_step": "CPU 定点：在当前派生镜像按评分顺序跑 C1（blk_func 仅在 isinstance(values, ExtensionArray) and is_numeric_dtype(values.dtype) 时调用 values._reduce，其余同 base）。预期题面示例正确、公开 test_analytics.py 全过、隐藏测试 91/92、reward 0；可加 C2、C3、C4。",
+  "revision_proposal": "T2 的 match 同时接受 'mean is not implemented for Period' 与 'reduction operation 'mean' not allowed'；同时补含 pd.NA 的 Int64 均值断言。须由用户或独立审查决定，并形成修订版（清单 37）。",
+  "decided_by": "主审静态建议（Claude，2026-09-25）；独立复核与协调者收口待做",
+  "reviewer": null,
+  "prior_draft": {
+   "ref": "results/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/analysis_before_history.md",
+   "state": "needs_review（与本稿相同）",
+   "changed_after_history": [
+    "清单 10：unknown → pass（镜像层面）。agent 身份跑公开测试与复现、root 原位跑 test_analytics.py 91 passed / 1 skipped，且本题不在 public_test_noise 族",
+    "解题侧 bottleneck：推断 → 镜像层面实测未启用（agent 按题面原例复现，得到非 bottleneck 分支上的 ValueError）",
+    "补环境钉：expected 绑定「无 SciPy」",
+    "补开发条件：不要 reset 5 个自带的已跟踪改动；pandas 自带的 pytest 配置不生效"
+   ],
+   "unchanged_reason": "处置与唯一下一步不变：历史没有提供合理替代解能过 T2 的证据，修订未触及 T2；历史中 R16=pass 与 issues[1]=verified 属记录错误"
+  },
+  "evidence_refs": [
+   "noop_b5",
+   "gold_b5",
+   "fixture_check",
+   "materials",
+   "env_history",
+   "review_docs"
+  ]
+ },
+ "usage": {
+  "intended_use": "development_diagnostic",
+  "not_approved_for": [
+   "训练 reward（修订并复验前）",
+   "正式评测"
+  ],
+  "diagnostic_caveat": "诊断时，T1 通过、只有 T2 失败的解只标'疑似规格争议'（Period 报错文字），失败键模式只用来筛出'疑似规格争议'的待复核样本：保留原始 reward，逐一核对候选是否满足公开要求、是否破坏受影响的旧行为，核实后才标'合理误拒'，不能按失败位置自动免除能力失败。 例：只对 mean 分派的半修也是这个模式，但 sum 仍坏。",
+  "reviewer_exposure": "主审读过 gold、隐藏测试（含修订 conftest）、期望映射、当前与历史运行日志、环境阶段历史记录；本记录与草稿不提供给解题模型",
+  "solver_visible_materials": "公开包（题面、public_hints、工作树）"
+ },
+ "costs": {
+  "review_tokens": null,
+  "review_usd": null,
+  "cpu_seconds": null,
+  "note": "静态审查，未执行命令；token 与费用无工具观测；历史运行耗时见各账本"
+ },
+ "coordinator_corrections": [
+  {
+   "at": "2026-09-25",
+   "source": "Codex 复核 r2e_static_actor_review_20260925/README.md",
+   "field": "usage.diagnostic_caveat",
+   "previous": "诊断时把「Period 未走 PeriodArray.mean 的正确解」（T1 通过、只有 T2 失败）单独归类，不计为能力失败",
+   "now": "诊断时，T1 通过、只有 T2 失败的解只标'疑似规格争议'（Period 报错文字），失败键模式只用来筛出'疑似规格争议'的待复核样本：保留原始 reward，逐一核对候选是否满足公开要求、是否破坏受影响的旧行为，核实后才标'合理误拒'，不能按失败位置自动免除能力失败。 例：只对 mean 分派的半修也是这个模式，但 sum 仍坏。"
+  }
+ ]
+}

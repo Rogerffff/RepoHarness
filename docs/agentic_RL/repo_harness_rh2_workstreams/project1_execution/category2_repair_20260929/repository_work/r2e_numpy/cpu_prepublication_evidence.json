@@ -1,0 +1,162 @@
+{
+  "schema_id": "rh2.r2e_numpy.prepublication_cpu_evidence.v1",
+  "instance_id": "numpy__d805e9b66228e68a0eb14d901cd350159c49af18",
+  "host_alias": "cpu-b",
+  "status": "author_execution_complete_pending_non_author_review",
+  "input_binding": {
+    "release_manifest_sha256": "sha256:282021962a92b510f077385660ac56acedcd7fac1d97e63db3baa98e4dcc057f",
+    "build_facts_sha256": "sha256:2df7f6b8a404179e1d76e758f002d82c84c57423a925ecceb920eac40f87fc3c",
+    "image_id": "sha256:3f061f94abbe3bcf729c2e9b899378108136a36118bb317ecd76be9b09e67eb0",
+    "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+    "recipe_sha256": "sha256:e0a8970ef09b4a758d92ad92293614413af5c3a55387ccc239a2ff6f50b02908",
+    "input_manifest_sha256": "sha256:6c7a263dfee40c57db0a70c626153fed215438aaa926e451b620895b66b36139",
+    "runner_sha256": "sha256:db2ec6385a4addc51513f2023c87c527ea5fbe7b5bb569dac9e3f735b9f98bde",
+    "parent_revision": "r2e-mr-056",
+    "new_material_published": false
+  },
+  "formal_parent_rows": [
+    {
+      "candidate": "hybrid",
+      "scope": "formal_parent_r2e_mr_056",
+      "observed_reward": 1.0,
+      "expected_match": 229,
+      "expected_total": 229,
+      "outcome": "resolved",
+      "stage_error": null,
+      "apply_method": "git_apply",
+      "included_paths": [
+        "numpy/ma/core.py"
+      ],
+      "ledger": "runs/category2_repair_20260929/r2e_numpy/cpu_b_20261003/remote_evidence/packages/r2e_numpy/diagnosis/parent-and-draft-v1/formal_parent/hybrid/ledger.jsonl",
+      "ledger_sha256": "sha256:f76224ba92505f11abb3bc38dd50e83043fc2d842213e49e973608ba588280fd",
+      "image_id_actual": "sha256:3f061f94abbe3bcf729c2e9b899378108136a36118bb317ecd76be9b09e67eb0",
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      }
+    },
+    {
+      "candidate": "K-A5c",
+      "scope": "formal_parent_r2e_mr_056",
+      "observed_reward": 1.0,
+      "expected_match": 229,
+      "expected_total": 229,
+      "outcome": "resolved",
+      "stage_error": null,
+      "apply_method": "git_apply",
+      "included_paths": [
+        "numpy/ma/core.py"
+      ],
+      "ledger": "runs/category2_repair_20260929/r2e_numpy/cpu_b_20261003/remote_evidence/packages/r2e_numpy/diagnosis/parent-and-draft-v1/formal_parent/K-A5c/ledger.jsonl",
+      "ledger_sha256": "sha256:da5be5a602c7a64f9452b90d9209fc660c4829d6daf229742c9bb91ebeff3427",
+      "image_id_actual": "sha256:3f061f94abbe3bcf729c2e9b899378108136a36118bb317ecd76be9b09e67eb0",
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      }
+    }
+  ],
+  "private_draft_rows": [
+    {
+      "scope": "private_trial_not_formal_grading",
+      "material": "draft",
+      "candidate": "K-A5c",
+      "expected_match": true,
+      "accepted": true,
+      "cleanup_confirmed": true,
+      "hidden_test_sha256": "sha256:09d0aa6d80f85d394fc0a7971e23de8dd43a79d817749f0246693f62898bf67a",
+      "result_sha256": "sha256:93395ae5fc748bf23231bbbaccb683edb8487463940ab102b3269dafe56e64e9",
+      "deviations": [
+        "explicit_confirmed_parent_image",
+        "2CPU_4GiB_limits_added",
+        "full_Docker_output_recorded",
+        "no_baseline_rebuild_verification",
+        "private_draft_not_registered"
+      ],
+      "n_observed": 229,
+      "expected_n": 229,
+      "missing": [],
+      "extra": [],
+      "status_diff": [],
+      "result": "runs/category2_repair_20260929/r2e_numpy/cpu_b_20261003/remote_evidence/packages/r2e_numpy/diagnosis/parent-and-draft-v1/private_trials/draft-K-A5c/result.json",
+      "complete_test_stdout": "runs/category2_repair_20260929/r2e_numpy/cpu_b_20261003/remote_evidence/packages/r2e_numpy/diagnosis/parent-and-draft-v1/private_trials/draft-K-A5c/009.stdout.log",
+      "complete_test_stdout_sha256": "sha256:486e6c12a61710b37063809ef711f3ee2e4ec11b83807e19751d5c0e161f5cac",
+      "decisive_failure_line": null
+    },
+    {
+      "scope": "private_trial_not_formal_grading",
+      "material": "draft",
+      "candidate": "hybrid",
+      "expected_match": false,
+      "accepted": true,
+      "cleanup_confirmed": true,
+      "hidden_test_sha256": "sha256:09d0aa6d80f85d394fc0a7971e23de8dd43a79d817749f0246693f62898bf67a",
+      "result_sha256": "sha256:c8a0aa440f357d6226fb0598eaaa0318fde7ea8cf1eb1640c4a135f511feaad7",
+      "deviations": [
+        "explicit_confirmed_parent_image",
+        "2CPU_4GiB_limits_added",
+        "full_Docker_output_recorded",
+        "no_baseline_rebuild_verification",
+        "private_draft_not_registered"
+      ],
+      "n_observed": 229,
+      "expected_n": 229,
+      "missing": [],
+      "extra": [],
+      "status_diff": [
+        [
+          "TestMaskedArray.test_str_repr",
+          "PASSED",
+          "FAILED"
+        ]
+      ],
+      "result": "runs/category2_repair_20260929/r2e_numpy/cpu_b_20261003/remote_evidence/packages/r2e_numpy/diagnosis/parent-and-draft-v1/private_trials/draft-hybrid/result.json",
+      "complete_test_stdout": "runs/category2_repair_20260929/r2e_numpy/cpu_b_20261003/remote_evidence/packages/r2e_numpy/diagnosis/parent-and-draft-v1/private_trials/draft-hybrid/009.stdout.log",
+      "complete_test_stdout_sha256": "sha256:d2f62882ddca27fdd7b5366f8148f93b4180b61db2326ef75c996b7d010fba69",
+      "decisive_failure_line": 499
+    },
+    {
+      "scope": "private_trial_not_formal_grading",
+      "material": "draft",
+      "candidate": "K-A5b",
+      "expected_match": false,
+      "accepted": true,
+      "cleanup_confirmed": true,
+      "hidden_test_sha256": "sha256:09d0aa6d80f85d394fc0a7971e23de8dd43a79d817749f0246693f62898bf67a",
+      "result_sha256": "sha256:fd9339f656210eaa4616ad307a1cf9215a96fee1186982d055e2dfec692baa27",
+      "deviations": [
+        "explicit_confirmed_parent_image",
+        "2CPU_4GiB_limits_added",
+        "full_Docker_output_recorded",
+        "no_baseline_rebuild_verification",
+        "private_draft_not_registered"
+      ],
+      "n_observed": 229,
+      "expected_n": 229,
+      "missing": [],
+      "extra": [],
+      "status_diff": [
+        [
+          "TestMaskedArray.test_str_repr",
+          "PASSED",
+          "FAILED"
+        ]
+      ],
+      "result": "runs/category2_repair_20260929/r2e_numpy/cpu_b_20261003/remote_evidence/packages/r2e_numpy/diagnosis/parent-and-draft-v1/private_trials/draft-K-A5b/result.json",
+      "complete_test_stdout": "runs/category2_repair_20260929/r2e_numpy/cpu_b_20261003/remote_evidence/packages/r2e_numpy/diagnosis/parent-and-draft-v1/private_trials/draft-K-A5b/009.stdout.log",
+      "complete_test_stdout_sha256": "sha256:05622b54c6320138d0861f33cc98bf4d7d9d9ec1dbb75ff8c8bb0b862c0fd2ea",
+      "decisive_failure_line": 511
+    }
+  ],
+  "new_numpy_material_published": false,
+  "new_numpy_formal_grading": "not_run",
+  "actor_message_delivery": "not_run",
+  "probe_submitted": false,
+  "historical_results_preserved": true
+}

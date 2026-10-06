@@ -1,0 +1,62 @@
+{
+ "task_id": "python__mypy-16869",
+ "source": "SWE-Gym lite / python/mypy PR 16869",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "8c2ef9dde8aa803e04038427ad84f09664d9d93f",
+  "version": "1.9", "python_version": "3.12",
+  "in_e2": ["B"],
+  "eval_cmd": "pytest -rA -k",
+  "f2p": ["testGenericClassTypeVarTuplePy311", "testGenericClassTypeVarTuplePy311_semanal"],
+  "p2p": ["testGenericClassTypeVarTuple", "testGenericClassTypeVarTuple_semanal", "testObjectBaseClass", "testObjectBaseClassWithImport"],
+  "test_patch_paths": ["mypy/test/teststubgen.py", "test-data/unit/stubgen.test"],
+  "gold_paths": ["mypy/stubgen.py"]
+ },
+ "public_view": {
+  "goal": "stubgen 处理 `class ClassName(Generic[*_Ts])` 时崩溃（TypeError: str object expected; got None）。要求 stubgen 能正确输出该基类。",
+  "constraints": [
+   "题面给出完整 traceback，定位到 mypy/stubgen.py:316 visit_tuple_expr → 说明某个子表达式的 accept 返回了 None",
+   "给出可直接运行的最小复现与命令 `stubgen test.py`，环境 mypy 1.8.0 / Python 3.12"
+  ],
+  "unknowns_from_public_only": [
+   "生成的 stub 里 `*Ts` 应原样保留，还是规范化成 `Unpack[Ts]`？题面没说（两种都是合法 stub）",
+   "是否需要同时处理 `Generic[Unpack[Ts]]` 这种等价写法——题面没提"
+  ],
+  "base_code_evidence": [
+   "8c2ef9dde:mypy/stubgen.py AliasPrinter 有 visit_op_expr/visit_index_expr/visit_tuple_expr，但**没有 visit_star_expr** → StarExpr 走基类返回 None，正是 traceback 里 'str object expected; got None' 的来源",
+   "8c2ef9dde:pyproject.toml [tool.pytest.ini_options] addopts = \"-nauto --strict-markers --strict-config\""
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 目标 mypy/test/teststubgen.py 与 test-data/unit/stubgen.test 在 base 都存在", "gold 目标 mypy/stubgen.py 存在，hunk 上下文（visit_op_expr 之后、find_defined_names 之前）逐行匹配"], "note": "无二进制/LFS/子模块。F2P/P2P nodeid 含 stubgen.test 段，与本版本 DataFileCollector 一致。", "by": "L1_mypy_1"},
+  "2": {"status": "pass", "evidence_refs": ["base mypy/stubgen.py 的 AliasPrinter 无 visit_star_expr"], "note": "静态确认；崩溃未实跑。", "by": "L1_mypy_1"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 1765 字符，含完整 traceback + 最小复现 + 版本信息，无外链图片"], "note": "这是本包 20 题里公开材料质量最好的一题。HTML 注释模板残留（<!-- Use this form only if ... -->）会进 prompt，属轻微噪声。", "by": "L1_mypy_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 触碰 mypy/test/teststubgen.py（纯测试模块，位于 mypy/test/ 下）与 test-data/unit/stubgen.test（纯测试数据）"], "note": "注意 mypy/test/teststubgen.py 虽在 mypy/ 包内，但只含测试代码与测试基类，不被 mypy 运行时导入；恢复它不会覆盖合法解答。additional_exclusions 保持空。", "by": "L1_mypy_1"},
+  "17": {"status": "pass", "evidence_refs": ["同上；gold 只改 mypy/stubgen.py，与两个 test_files 路径无交集"], "note": "恢复顺序上 teststubgen.py 必须被恢复——test_patch 往里加了 `if sys.version_info < options.pyversion: pytest.skip()`，缺了它 F2P 在低版本 Python 上会真跑而非跳过。", "by": "L1_mypy_1"},
+  "5": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["runs/.../L1_mypy_1/dupidx.txt：test-data/unit/stubgen.test 还被 python__mypy-15208 触碰，且两题 gold 都改 mypy/stubgen.py"], "note": "同文件同模块不同缺陷（15208 不在本包）。同族关系记录在案，不算重复题；若要留评测集，建议把 stubgen 族整组划到同一侧。", "by": "L1_mypy_1"},
+  "23": {"status": "pass", "evidence_refs": ["traceback 精确指向 visit_tuple_expr，题面给出期望行为"], "note": "公开材料足以推出 F2P 所查行为（stub 里保留 `*Ts`）。唯一不可推断处：期望输出保留 `*Ts` 原样而非 `Unpack[Ts]`，但这是最自然的选择。", "by": "L1_mypy_1"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 期望输出为完整 stub 文本 'class D(Generic[*Ts]): ...'"], "note": "断言的是对外可见的 stub 输出，不是内部实现细节；任何让 StarExpr 正确打印的实现都能过。未强制唯一实现。", "by": "L1_mypy_1"},
+  "25": {"status": "pass", "evidence_refs": ["F2P 覆盖 Py311 星号语法；P2P 覆盖 Unpack[Ts] 等价写法与两个 object 基类用例"], "note": "硬编码难以通过（要输出完整 stub 文本）；覆盖比本包其它题好。", "by": "L1_mypy_1"},
+  "26": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["P2P 4 条，均在 stubgen.test 内且集中在紧邻的两段"], "note": "gold 给 AliasPrinter 加了新 visitor，理论上会改变所有含 StarExpr 的别名/基类打印；建议扩到整文件，见 proposed_regression_tests。", "by": "L1_mypy_1"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 仅 import StarExpr + 4 行 visit_star_expr"], "note": "无题外改动、不依赖未交付改动。", "by": "L1_mypy_1"},
+  "29": {"status": "pass", "evidence_refs": ["problem_statement 无 PR/commit 链接、无修复代码；hints_text 为空或无方案（本题 hints 长度见 mat/）"], "note": "无静态泄漏。", "by": "L1_mypy_1"},
+  "6": {"status": "not_checked", "evidence_refs": [], "note": "未实跑安装。", "by": "L1_mypy_1"},
+  "7": {"status": "pass", "evidence_refs": ["case 只用仓库内 stubgen 测试基础设施"], "note": "无外部资产。", "by": "L1_mypy_1"},
+  "11": {"status": "pass", "evidence_refs": ["case 正文无 URL / 外部服务"], "note": "静态看测试阶段不需要网络。", "by": "L1_mypy_1"},
+  "13": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["grading_bundles eval_cmd = 'pytest -rA -k'（无 -n0）", "8c2ef9dde:pyproject.toml addopts = \"-nauto ...\""], "note": "见 issues：本题实际以 pytest-xdist -nauto 并行执行。", "by": "L1_mypy_1"},
+  "18": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["test_patch 在 mypy/test/teststubgen.py:700 附近插入 `if sys.version_info < options.pyversion: pytest.skip()`", "F2P 两个 case 带 `# flags: --python-version=3.11`，bundle 记录运行 Python 为 3.12"], "note": "在 3.12 下 sys.version_info(3.12) < (3,11) 为假，不跳过，F2P 会真跑。但只要实际运行 Python 低于 3.11，F2P 会变成 SKIPPED——需要确认 RH2 把 SKIPPED 当作未通过而不是通过，否则会出现'没改代码也满分'。", "by": "L1_mypy_1"}
+ },
+ "issues": [
+  {"category": "runner_config_inconsistency", "severity": "P2", "evidence_refs": ["40 道 mypy 题中 34 道 eval_cmd='pytest -n0 -rA -k'（version ≤1.6），6 道 eval_cmd='pytest -rA -k'（version 1.8/1.9/1.10：16555、16869、16905、16963、16966、17071）", "mypy 各版本 pytest 配置都含 addopts=-nauto（0.820 的 pytest.ini、0.960 的 pytest.ini、1.9 的 pyproject.toml 均已核对）"], "proposed_action": "给这 6 道题的 eval_cmd 补 -n0，与其余 34 道对齐；否则它们在 xdist 并行下评分，执行模式、输出交织、worker 崩溃归因与资源占用都和其它题不同。", "next_experiment": "在同一台机器上对 python__mypy-16869 分别用 `pytest -rA -k` 与 `pytest -n0 -rA -k` 跑 gold，比较逐 case 状态、耗时与峰值内存。"},
+  {"category": "skip_can_masquerade_as_pass", "severity": "P2", "evidence_refs": ["test_patch 往 teststubgen.py 注入 pytest.skip()"], "proposed_action": "确认 RH2 的 status 解析把 SKIPPED 归为未通过。", "next_experiment": "在低于 3.11 的解释器（或临时把 flags 改成 --python-version=3.13）下跑 F2P，看 status_map 记成什么、最终 verdict 是什么。"},
+  {"category": "grading_coverage", "severity": "P3", "evidence_refs": ["P2P 4 条集中在 stubgen.test 相邻两段"], "proposed_action": "把 stubgen.test 整文件纳入回归。", "next_experiment": "gold 上跑 teststubgen.py 全量，记录基线通过集。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 的两个路径都是纯测试资产：mypy/test/teststubgen.py 是测试模块（不被 mypy 运行时导入），test-data/unit/stubgen.test 是测试数据。gold 路径 mypy/stubgen.py 与它们无交集，恢复不会覆盖合法解答。", "evidence_refs": ["grading_bundles_v2_v0:python__mypy-16869 test_patch", "validation_bundles_v0:python__mypy-16869 golden_patch"]},
+ "proposed_regression_tests": [
+  {"id": "mypy/test/teststubgen.py 全量（含 StubgenPythonSuite 与 StubgenUtilSuite）", "reason": "gold 给 AliasPrinter 增加 visitor，影响所有别名/基类打印路径，同文件全量是最小充分回归。"},
+  {"id": "test-data/unit/stubgen.test 中所有含 Generic/TypeVar/Unpack 的 case", "reason": "与新 visitor 直接相关。"},
+  {"id": "mypy/test/testtransform.py、mypy/test/testsemanal.py 中 star expr 相关 case", "reason": "StarExpr 处理面上的邻近模块；若 agent 改的是 nodes.py 的 accept 分发而非 stubgen，这里会暴露。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "题面质量高（完整 traceback + 最小复现）、F2P 断言对外可见输出、未强制唯一实现、材料完整。唯一需要先处理的是 eval_cmd 缺 -n0（仓库级，不是本题独有）与 SKIPPED 归类确认。"},
+ "costs": {"minutes": 24}
+}

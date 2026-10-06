@@ -1,0 +1,50 @@
+{
+  "schema": "non_author_8801_CPU_recovery_capture_count_correction.v1",
+  "recorded_at_utc": "2026-10-03T13:05:12.741006+00:00",
+  "primary_report_json": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_8801_original_fp_CPU_environment_recovery_review_20261003.json",
+    "sha256": "0748ccd3c1a7e5a388b4851cf994a5a7942c588c9dbe51d2b69e62d71191aff1"
+  },
+  "primary_report_md": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_8801_original_fp_CPU_environment_recovery_review_20261003.md",
+    "sha256": "121e056e003e02a9d6a3d30207df81991f44c8098d99dd56a75d7f756ece0485"
+  },
+  "scope": "只纠正审查者附加raw marker统计；原报告不覆盖，所有原件、环境/正式45/资源/清理结论不变。",
+  "corrected_field": "behavior_results.captured_raw_marker_counts.compatibility_packets",
+  "original_value": 0,
+  "correct_value": 10,
+  "cause": "审查者误用不存在的RH2_DASK8801_COMPAT_V1查询前缀；固定protocol实际COMPAT_PREFIX为RH2_DASK8801_FALSY_COMPAT_V1。",
+  "correct_prefix": "RH2_DASK8801_FALSY_COMPAT_V1:",
+  "prefix_source_line": 13,
+  "matching_eval_log_lines": [
+    1443,
+    1445,
+    1447,
+    1449,
+    1451,
+    1453,
+    1455,
+    1457,
+    1459,
+    1461
+  ],
+  "corrected_marker_counts": {
+    "diagnostic_packets": 23,
+    "compatibility_packets": 10,
+    "raw_import_exception_markers": 1
+  },
+  "evidence": {
+    "capture_protocol": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tools/config_diagnostic_protocol.py",
+      "sha256": "7886a70ac59d051eca4459c6e32d94b77159c6890341183041dc73df03d1292a"
+    },
+    "complete_eval_log": {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask8801_same_fp_cpu_c_v1/actual_readback/dask8801-original-fp-cpu-recovery-20261003-v1/job/run/eval_logs/evallog_dask8801-original-fp-cpu_aff67a56.eval.log",
+      "sha256": "00a7add8d1be082684d8ad9dffab1cdadb86bd3d50a428cf9cbb61d684897968",
+      "bytes": 80873
+    }
+  },
+  "fresh_semantic_verdict_produced": false,
+  "formal_behavior_score_changed": false,
+  "training_qualification": null
+}

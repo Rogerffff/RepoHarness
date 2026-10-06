@@ -1,0 +1,251 @@
+{
+  "schema": "swe_moto.fixed_r18_offline_matrix_config.v1",
+  "release_id": "cat2-cpu-r2e093-swe40-moto-offline-20261003-v1",
+  "manifest_sha256": "a84bdc339618e010440df3728c982b2d1d141b1f8295f69761984386ee3a512e",
+  "producer_rel": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest_swe40_moto_offline_environment_20261003_v1",
+  "producer_sha256": "efdc7f639a3d312ae071d3a3dd1ccbc93eb819fedda2d9453012e5d312f22acb",
+  "tasks": {
+    "getmoto__moto-5960": {
+      "registry_rel": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/moto5960_offline_environment_v1",
+      "registry_sha256": "149b3cd74abc6c3293f9ef01527a15c621fa0f6ae7bf0ac4f36188e976c4fc7d",
+      "environment_recipe_sha256": "cce02f039f9af572c88ccc22bc913180939a61bac7fb3de8846cbb360b2a2664",
+      "environment": {
+        "recipe_id": "moto5960-offline-build-wheels-copy-only-v1",
+        "source_config_id": "sha256:c67dbd356fcaa937ebff4b3fe0d78e4ea78211888233a4e5f07da95eddfe079d",
+        "source_image": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5960:latest",
+        "source_image_manifest_digest": "sha256:4b71766331736b51bd74bb86cdb5e4e21040a7816e01fbb5d914526d33ef8944",
+        "derived_image_id": "sha256:4bafbb6965ff41c0f6eb50a73f831e7b62c41b5beda6ffad957fbc926c2359ac",
+        "wheel_manifest_sha256": "sha256:660fa7aa83d8c3cedeb5e188ef7a4de0621e6011a37be48958813a6c50425a55",
+        "wheels": [
+          [
+            "packaging-24.1-py3-none-any.whl",
+            "sha256:5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124",
+            53985
+          ],
+          [
+            "wheel-0.43.0-py3-none-any.whl",
+            "sha256:55c570405f142630c6b9f72fe09d9b67cf1477fcf543ae5b8dcb1f5b7377da81",
+            65775
+          ],
+          [
+            "setuptools-72.1.0-py3-none-any.whl",
+            "sha256:5a03e1860cf56bb6ef48ce186b0e557fdba433237481a9a625176c2831be15d1",
+            2337965
+          ]
+        ],
+        "dockerfile_sha256": "sha256:352caaf2eae8dc6fdb3291e9afaf85281a0b0199d6b3ee091d9e3d3247d44993",
+        "copy_only": true,
+        "original_install_unchanged": "make init",
+        "mode_policy": {
+          "directories": "0755",
+          "wheel_files": "0644",
+          "owner": "root:root",
+          "normalize_before_copy": true,
+          "record_input_and_actual_container_stat": true
+        },
+        "files": [
+          {
+            "path": "offline_supply_input.json",
+            "sha256": "sha256:de6510d19c7c6aab880640d08f404f22a04890fd0725c20354673fbc29988123"
+          },
+          {
+            "path": "build_supply_receipt.json",
+            "sha256": "sha256:8c6ca1a142a9b98b672e594cb865a99372122c0b7db4ec95ca710d1a5d692daf"
+          },
+          {
+            "path": "root_supply_acceptance.json",
+            "sha256": "sha256:ca6d068e2468d94a78ea149eedb663fb6746083b5ae135b2a8773fcc25e36970"
+          },
+          {
+            "path": "environment/Dockerfile",
+            "sha256": "sha256:352caaf2eae8dc6fdb3291e9afaf85281a0b0199d6b3ee091d9e3d3247d44993"
+          },
+          {
+            "path": "environment/wheel_manifest.json",
+            "sha256": "sha256:660fa7aa83d8c3cedeb5e188ef7a4de0621e6011a37be48958813a6c50425a55"
+          },
+          {
+            "path": "environment/packaging-24.1-py3-none-any.whl",
+            "sha256": "sha256:5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124"
+          },
+          {
+            "path": "environment/wheel-0.43.0-py3-none-any.whl",
+            "sha256": "sha256:55c570405f142630c6b9f72fe09d9b67cf1477fcf543ae5b8dcb1f5b7377da81"
+          },
+          {
+            "path": "environment/setuptools-72.1.0-py3-none-any.whl",
+            "sha256": "sha256:5a03e1860cf56bb6ef48ce186b0e557fdba433237481a9a625176c2831be15d1"
+          },
+          {
+            "path": "source_image_receipt.json",
+            "sha256": "sha256:82d4fe2eb121b740aac543d1319ad1c92bc92792d535365deb50b9ef12d8d68f"
+          }
+        ],
+        "qualification": "copy supply only;no installation/test/P-A or typed training actor qualification"
+      },
+      "grader_actual_image_id": "sha256:4bafbb6965ff41c0f6eb50a73f831e7b62c41b5beda6ffad957fbc926c2359ac",
+      "gold_sha256": "df2af6b800578dc24b6ef33c396677683d766702734f44d506248354147b7af9",
+      "controls": [
+        {
+          "name": "noop",
+          "role": "noop",
+          "expected_reward": 0,
+          "patch": null
+        },
+        {
+          "name": "gold",
+          "role": "positive",
+          "expected_reward": 1,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/gold.patch",
+            "sha256": "df2af6b800578dc24b6ef33c396677683d766702734f44d506248354147b7af9",
+            "bytes": 593
+          }
+        },
+        {
+          "name": "omit_keys_only",
+          "role": "constructed_negative_unrun",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-5960/omit_keys_only.patch",
+            "sha256": "5ddf1b01fdf43ecf0bc1a18e6d20908ff20ae70737d01ea00324f3a52fb1c734",
+            "bytes": 712
+          }
+        }
+      ],
+      "original_actor_image": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5960:latest",
+      "grading_spec_image": "sha256:4bafbb6965ff41c0f6eb50a73f831e7b62c41b5beda6ffad957fbc926c2359ac",
+      "grading_spec_image_local_build_id": "sha256:4bafbb6965ff41c0f6eb50a73f831e7b62c41b5beda6ffad957fbc926c2359ac",
+      "budget": {
+        "setup_seconds": 300.0,
+        "apply_seconds": 120.0,
+        "test_seconds": 1800.0,
+        "candidate_stage_seconds": 900,
+        "whole_grading_seconds": 1800,
+        "cleanup_seconds": 120,
+        "image_pull_seconds": 1800
+      }
+    },
+    "getmoto__moto-6408": {
+      "registry_rel": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/moto6408_offline_environment_v1",
+      "registry_sha256": "6b8864f0912219fdfd1cbfc5d5161544c5fdf57f9baa05ed53dc041c4d38a013",
+      "environment_recipe_sha256": "26be33584f80834e8ef039493efc1296ad29b61967d2720be1995185b2e78e07",
+      "environment": {
+        "recipe_id": "moto6408-offline-build-wheels-copy-only-v1",
+        "source_config_id": "sha256:a0071858b0bb3a9c316e3c75dd49e9a3a2f8136f7bb4213e1210b44b7de2e689",
+        "source_image": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6408:latest",
+        "source_image_manifest_digest": "sha256:db52bf5253616c8662863703accf3ad9e5c20e809e63f2e5829b48fb1212f8a4",
+        "derived_image_id": "sha256:f00e022c3edf2dd23121abab802e401a64ee9e98598f07fb37a83d5c4c2012a1",
+        "wheel_manifest_sha256": "sha256:660fa7aa83d8c3cedeb5e188ef7a4de0621e6011a37be48958813a6c50425a55",
+        "wheels": [
+          [
+            "packaging-24.1-py3-none-any.whl",
+            "sha256:5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124",
+            53985
+          ],
+          [
+            "wheel-0.43.0-py3-none-any.whl",
+            "sha256:55c570405f142630c6b9f72fe09d9b67cf1477fcf543ae5b8dcb1f5b7377da81",
+            65775
+          ],
+          [
+            "setuptools-72.1.0-py3-none-any.whl",
+            "sha256:5a03e1860cf56bb6ef48ce186b0e557fdba433237481a9a625176c2831be15d1",
+            2337965
+          ]
+        ],
+        "dockerfile_sha256": "sha256:352caaf2eae8dc6fdb3291e9afaf85281a0b0199d6b3ee091d9e3d3247d44993",
+        "copy_only": true,
+        "original_install_unchanged": "make init",
+        "mode_policy": {
+          "directories": "0755",
+          "wheel_files": "0644",
+          "owner": "root:root",
+          "normalize_before_copy": true,
+          "record_input_and_actual_container_stat": true
+        },
+        "files": [
+          {
+            "path": "offline_supply_input.json",
+            "sha256": "sha256:308faa9b858d685694985007c6bb95acdfc80a36ec9d68ad2d54082dd1cd459a"
+          },
+          {
+            "path": "build_supply_receipt.json",
+            "sha256": "sha256:ea09d5c3b4ab516d54724bfd057d27599069213cdce5608ea8f848119f155dad"
+          },
+          {
+            "path": "root_supply_acceptance.json",
+            "sha256": "sha256:a529c4d39e8d16e9a3fe063c4c3c46d3b237ffe1d555325a703dd775b7fae798"
+          },
+          {
+            "path": "environment/Dockerfile",
+            "sha256": "sha256:352caaf2eae8dc6fdb3291e9afaf85281a0b0199d6b3ee091d9e3d3247d44993"
+          },
+          {
+            "path": "environment/wheel_manifest.json",
+            "sha256": "sha256:660fa7aa83d8c3cedeb5e188ef7a4de0621e6011a37be48958813a6c50425a55"
+          },
+          {
+            "path": "environment/packaging-24.1-py3-none-any.whl",
+            "sha256": "sha256:5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124"
+          },
+          {
+            "path": "environment/wheel-0.43.0-py3-none-any.whl",
+            "sha256": "sha256:55c570405f142630c6b9f72fe09d9b67cf1477fcf543ae5b8dcb1f5b7377da81"
+          },
+          {
+            "path": "environment/setuptools-72.1.0-py3-none-any.whl",
+            "sha256": "sha256:5a03e1860cf56bb6ef48ce186b0e557fdba433237481a9a625176c2831be15d1"
+          },
+          {
+            "path": "source_image_receipt.json",
+            "sha256": "sha256:cd618f417622ff8d40a51d434f7f1dc40c60d403828d44fc83f5b6dbf325d86d"
+          }
+        ],
+        "qualification": "copy supply only;no installation/test/P-A or typed training actor qualification"
+      },
+      "grader_actual_image_id": "sha256:f00e022c3edf2dd23121abab802e401a64ee9e98598f07fb37a83d5c4c2012a1",
+      "gold_sha256": "fa6d9adadc553b4eb713ca3749a90efe7adb572348c837fd2bbf48a3dd95d7dd",
+      "controls": [
+        {
+          "name": "noop",
+          "role": "noop",
+          "expected_reward": 0,
+          "patch": null
+        },
+        {
+          "name": "gold",
+          "role": "positive",
+          "expected_reward": 1,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6408/gold.patch",
+            "sha256": "fa6d9adadc553b4eb713ca3749a90efe7adb572348c837fd2bbf48a3dd95d7dd",
+            "bytes": 993
+          }
+        },
+        {
+          "name": "reorder_only",
+          "role": "constructed_negative_unrun",
+          "expected_reward": 0,
+          "patch": {
+            "path": "/work/rh2-category2-20261003/packages/swe_moto/preparation_v1/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-6408/reorder_only.patch",
+            "sha256": "38870a10babbb10239825686c1493cefdff753bf3d7a15db83f217de8321ee8b",
+            "bytes": 290
+          }
+        }
+      ],
+      "original_actor_image": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6408:latest",
+      "grading_spec_image": "sha256:f00e022c3edf2dd23121abab802e401a64ee9e98598f07fb37a83d5c4c2012a1",
+      "grading_spec_image_local_build_id": "sha256:f00e022c3edf2dd23121abab802e401a64ee9e98598f07fb37a83d5c4c2012a1",
+      "budget": {
+        "setup_seconds": 300.0,
+        "apply_seconds": 120.0,
+        "test_seconds": 1800.0,
+        "candidate_stage_seconds": 900,
+        "whole_grading_seconds": 1800,
+        "cleanup_seconds": 120,
+        "image_pull_seconds": 1800
+      }
+    }
+  }
+}

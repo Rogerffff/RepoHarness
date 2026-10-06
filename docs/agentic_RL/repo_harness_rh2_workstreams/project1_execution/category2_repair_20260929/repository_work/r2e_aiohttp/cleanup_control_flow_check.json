@@ -1,0 +1,33 @@
+{
+  "as_of": "2026-10-03",
+  "kind": "isolated_stdlib_control_flow_not_grading",
+  "source_web_sha256": "sha256:da7193c490d70bcaa96ee788ff434fdb60ea6a344ca2e32a08118b20405ec746",
+  "results": [
+    {
+      "candidate": "base",
+      "new_assertion_only": "assertion_passed",
+      "patch_sha256": null
+    },
+    {
+      "candidate": "gold",
+      "new_assertion_only": "assertion_passed",
+      "patch_sha256": "sha256:926c9558d4b56b6a8049e2daf1d4789042469bacee4a652a7f763696186b6b03"
+    },
+    {
+      "candidate": "C1",
+      "new_assertion_only": "assertion_passed",
+      "patch_sha256": "sha256:98fa33f87ea36826251020cc0c01bbef91027f4cbb2df4c17cd01c9e98dd77eb"
+    },
+    {
+      "candidate": "C3",
+      "new_assertion_only": "assertion_failed",
+      "patch_sha256": "sha256:b8bab2e30a32936e21d0d93965a882b185b8258106acf88b4ba07eebe9b24c4a"
+    }
+  ],
+  "limitations": [
+    "本地Python3.12，不是正式Linux镜像Python3.9",
+    "以async generator替代真实Application/AppRunner/网络",
+    "仅核新增断言，base通过此断言不等于题目得1",
+    "仍需正式58键收集、六方评分和非作者核查"
+  ]
+}

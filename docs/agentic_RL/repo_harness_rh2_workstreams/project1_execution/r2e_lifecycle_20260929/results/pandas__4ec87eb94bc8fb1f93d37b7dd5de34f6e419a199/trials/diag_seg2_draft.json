@@ -1,0 +1,14 @@
+{
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "    tm.assert_series_equal(result, expected)\n\n\ndef test_groupby_quantile_NA_int(any_int_ea_dtype):\n",
+     "new": "    tm.assert_series_equal(result, expected)\n\n    # NA introduced by reindex: for the masked Float dtypes 0.0 sits under the\n    # mask. Two groups, one of them with two valid values.\n    ser = pd.Series([2.5, 3.5, 4.0], dtype=any_float_dtype).reindex([0, 1, 2, 3])\n    result = ser.groupby([\"a\", \"a\", \"b\", \"b\"]).quantile(0.5)\n    tm.assert_series_equal(\n        result, pd.Series([3.0, 4.0], index=[\"a\", \"b\"]), check_dtype=False\n    )\n\n\ndef test_groupby_quantile_NA_int(any_int_ea_dtype):\n"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,1234 @@
+{
+  "schema": "rh2.non_author_q24_first_coder_execution_review.v1",
+  "reviewed_at_utc": "2026-10-03",
+  "reviewer_role": "非作者执行窄核；已接触 R14 私有材料、CPU 对照和题主分析；不是 fresh 公开读者",
+  "scope": "只核 Q24 8511、8567 已结束的 Coder 首臂；closed snapshots 为执行权威",
+  "execution_review_passed": true,
+  "execution_results_reusable_within_review_scope": true,
+  "raw_rewards_preserved": true,
+  "candidate_semantic_acceptance": false,
+  "candidate_failures_related_to_production_changes": true,
+  "infrastructure_failure_observed": false,
+  "paired_two_model_request_closed": false,
+  "training_eligibility_asserted": false,
+  "source_release": "cat2-cpu-r2e089092-swe34-dvc-pyd-20261003-v1",
+  "manifest_sha256": "sha256:51b833975be2c3354be45b731552235a33070315f0039c8e6f54987de95f6ca8",
+  "authoritative_roots": [
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8511-coder-a1",
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1"
+  ],
+  "methods": [
+    "本地标准库逐成员大小/SHA256复算；不执行作者检查器",
+    "逐 baseline tar 文件内容与规范 mode、完整 census、重建 census、canonical baseline/FP digest 复算",
+    "所有候选 diff 条目从实际 baseline 严格纯文本重放至 FP 字节；production delta 与导航副本相同",
+    "完整 CC JSONL 解析，逐文本/工具/结果核 canonical 副本，首 HTTP 公开题面逐字绑定",
+    "原测试区段保留完整 node ID 的独立逐键读取，对齐全部正式参考、分区和报告",
+    "按实际 actor/grader/relay CID、run_id 和时间窗口审资源与清理；静态审入口 rollout 与私有评分数据流"
+  ],
+  "prohibited_actions_performed": [],
+  "blocking_findings": [],
+  "limits": [
+    "本轮失败机制审查不证明所有合理解法或材料的完整语义覆盖；暂未发现需要改材料或重跑 CPU 的新证据。",
+    "baseline manifest 的 environment_package_digest=null，assignment 的环境 digest 非空；运行身份和同源运输通过，不补填 typed 环境资格。",
+    "正式参考 173/162 逐键完整；来源 parser 的非参考空白参数 ID 和跳过节点限制未修复，不将 reported num_parsed_tests 当成完整 pytest states。",
+    "两份资源窗口 gaps_unknown=true；8567 grader 收尾一条 PID=0、cgroup/events=null 样本保留为空，不能作无 OOM 的独立证明；其余可观察样本无 OOM/pids limit 事件。",
+    "模型服务由实际 inspect、当前 HTTP 读回、只读 /model mount、下载清单 revision 与真实请求绑定；未重算每个权重文件，也未证明 GPU 内存权重哈希。",
+    "identity_binding_actual.json 中 source_code=code_v4 是历史服务元数据；实际 adapter Cmd 仍指 code_v4，当前题级入口及 consumer 是 queue_v24/code_v8，不能混称同一代码版本。",
+    "仅 Coder 首臂收口；Qwen 未执行范围、完整两模型请求和训练资格不在本报告中核销。"
+  ],
+  "tasks": {
+    "8511": {
+      "job": "gpu1003-pyd8511-coder-a1",
+      "source_release": "cat2-cpu-r2e089092-swe34-dvc-pyd-20261003-v1",
+      "release_manifest_sha256": "sha256:51b833975be2c3354be45b731552235a33070315f0039c8e6f54987de95f6ca8",
+      "fixed_request_sha256": "sha256:3effe400229ae4b4e66b0872bb2e9c88c9ea5787acd10915d352939a77cd6ed9",
+      "owner_request_sha256": "sha256:52dab640a4ab8a19a19cfa0449f4b92b3d52df82da844cc1f515432a0f6abb84",
+      "closed_manifest_sha256": "4069a5bacddea61b95c9e1b8b7c1bebdc50b3b9439f834994734b3b950b49c21",
+      "member_count": 356,
+      "total_bytes": 23240483,
+      "input_bound_files": 65,
+      "input_binding_bad": [],
+      "input_binding_missing": [],
+      "entry_sha256": "sha256:bdf806bf8da1d5ebb4970887bfc3c7738eb3e57a75e1d07215d6d68b17e574c4",
+      "shared_entry_sha256": "sha256:00ca849909150de02769f297374a9bbfacf2746347c425474775d9c3e22a04f9",
+      "source_manifest_sha256": "09ddb8bfdeecd3ffaa38c1048a574161ef6fa6053b2855da50166e8e8677899d",
+      "queue_inputs_manifest_sha256": "23abe51243d90e12bf344c01e9c61ba90f6c859d4d03d02073ae291b9d226367",
+      "actual_actor_grader_image": "sha256:df6c3affb7ea6fd826f44863ec92926f7b52558dd0f1b42e05f97aec9fe8ca68",
+      "base_commit": "e4fa099d5adde70acc80238ff810c87a5cec7ebf",
+      "public_bundle_digest": "sha256:edc64cdddc65f7fe20b6d9f7fdfd3c8fcfb77dacbd6457010e1a8b06c9d46165",
+      "environment_package_digest_assignment": "sha256:a72f287143d76320f9979e13c023966fb1915f265f5d901d790ef87dc1b15947",
+      "grading_materials_identity": "sha256:879bf1d3bc96bd56a96b8190728fa24df0e28cece50119015d402c917abb8eb6",
+      "revision": "pyd8511-behavior-v1",
+      "effective_test_patch_sha256": "sha256:3354d6d39957611a8385eb80bf1bfe622386143e3f3cdd3deff03ef5ad3908b6",
+      "private_delivery_checks": {
+        "all_requests_no_private_added_nodes": true,
+        "full_effective_test_patch_absent": true,
+        "actor_mounts_empty": true,
+        "entry_rollout_grader_dataflow_separate": true
+      },
+      "runtime": {
+        "python": "3.8.19",
+        "core": "2.14.5",
+        "actor_uid": 54321,
+        "grader_uid": 54322,
+        "pip_freeze_changed": false
+      },
+      "budget": {
+        "version": "probe-wide-v1",
+        "max_context_len": 196608,
+        "max_new_tokens": 65536,
+        "max_turns": 240,
+        "wall_seconds": 10800,
+        "max_requests_per_session": 1024,
+        "first_byte_timeout_seconds": 1800,
+        "adapter_idle_drop_seconds": 14400
+      },
+      "grading_budget": {
+        "whole_seconds": 3600,
+        "setup_seconds": 300,
+        "apply_seconds": 120,
+        "test_seconds": 1800
+      },
+      "job_start": "2026-10-03T09:04:31.250044+00:00",
+      "job_end": "2026-10-03T09:09:27.176668+00:00",
+      "actor_start": "2026-10-03T09:04:31.768701+00:00",
+      "actor_end": "2026-10-03T09:05:57.958566+00:00",
+      "solve_seconds": 57.322,
+      "resources": [
+        {
+          "role": "actor",
+          "container_id": "244bd8e020d1721a5b05ee7c1ac8d0bb81e34ca5ff680603948597346be3813f",
+          "name": "/rh2bp-pydantic-pydantic-8511-59cdba9c",
+          "run_id": "gpu1003-pyd8511-coder-a1",
+          "image_id": "sha256:df6c3affb7ea6fd826f44863ec92926f7b52558dd0f1b42e05f97aec9fe8ca68",
+          "samples": 6,
+          "observable_event_samples": 6,
+          "missing_event_timestamps": [],
+          "first": "2026-10-03T09:04:33.167364+00:00",
+          "last": "2026-10-03T09:05:48.520700+00:00",
+          "observed_memory_peak_bytes": 894521344,
+          "observed_pids_peak": 18,
+          "oom_or_pids_limit_event": false
+        },
+        {
+          "role": "relay",
+          "container_id": "ec0332abf94ba09f451bf67cc9843114fffaf50ead3a1dd96d8a8459d3922272",
+          "name": "/rh2-egress-relay-gpu1003-pyd8511-coder-a1",
+          "run_id": "gpu1003-pyd8511-coder-a1",
+          "image_id": "sha256:ec7d6c95cd3692a2e2d228a8b1ca74e4025b54121fcc4c5da6f09cfa473315ad",
+          "samples": 6,
+          "observable_event_samples": 6,
+          "missing_event_timestamps": [],
+          "first": "2026-10-03T09:04:33.167364+00:00",
+          "last": "2026-10-03T09:05:48.520700+00:00",
+          "observed_memory_peak_bytes": 27746304,
+          "observed_pids_peak": 7,
+          "oom_or_pids_limit_event": false
+        },
+        {
+          "role": "grader",
+          "container_id": "2a202d3f619f7e013d00c6efd965948b5f0b4adc7aa2479c1044566638110d99",
+          "name": "/rh2-gpu-grade-gpu1003-pyd8511-coder-a1-579b7ea7",
+          "run_id": "gpu1003-pyd8511-coder-a1-grade",
+          "image_id": "sha256:df6c3affb7ea6fd826f44863ec92926f7b52558dd0f1b42e05f97aec9fe8ca68",
+          "samples": 14,
+          "observable_event_samples": 14,
+          "missing_event_timestamps": [],
+          "first": "2026-10-03T09:06:03.598649+00:00",
+          "last": "2026-10-03T09:09:19.508602+00:00",
+          "observed_memory_peak_bytes": 582549504,
+          "observed_pids_peak": 8,
+          "oom_or_pids_limit_event": false
+        }
+      ],
+      "resource_bounds": {
+        "start": "2026-10-03T09:04:16.250044+00:00",
+        "end": "2026-10-03T09:09:42.176668+00:00",
+        "samples": 22,
+        "gaps_unknown": true,
+        "source_trailing_partial_bytes": 0,
+        "sample_requires_matching_actual_container_and_time": true
+      },
+      "cleanup": {
+        "container_rm": 0,
+        "container_left": "",
+        "network_failures": [],
+        "relay_failures": [],
+        "labeled_containers_left": [],
+        "labeled_networks_left": [],
+        "cleanup_ok": true
+      },
+      "manager_close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "supply_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0,
+        "containers_created_total": 1,
+        "containers_removed_total": 1,
+        "container_history_retained": 1,
+        "leases_total": 1
+      },
+      "gateway_drain": {
+        "session_id": "gpu1003-pyd8511-coder-a1",
+        "revoked": true,
+        "active_requests": 0,
+        "drained": true,
+        "ts": 1791018356.6895037
+      },
+      "model_service": {
+        "engine_id": "0752efbc6887af4d7cf59e583213447dd7f6488887c060d67df49baff3933af2",
+        "adapter_id": "d761d7ad2a8b744f2fc14dcd02b2e3742934f378ca4a30c855bc4e651d459bb1",
+        "engine_started_at": "2026-10-03T03:40:20.177710856Z",
+        "adapter_started_at": "2026-10-03T03:47:59.985612608Z",
+        "current_capture_start": "2026-10-03T09:04:30.978195+00:00",
+        "current_capture_end": "2026-10-03T09:04:31.154395+00:00",
+        "engine_image": "sha256:7fafb457002ab4d5a2aa6796d7267f086401065d022347b2f49ae366b6c2687a",
+        "checkpoint_repo": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+        "checkpoint_revision": "b2cff646eb4bb1d68355c01b18ae02e7cf42d120",
+        "download_manifest_sha256": "5783533eae085661e3b3cde2e46ee46c9dbce0c05154d6028f6e46aa7260de39",
+        "actual_mount_readonly": true,
+        "context_length": 196608,
+        "sampling": {
+          "temperature": 0.7,
+          "top_p": 0.8,
+          "top_k": 20,
+          "repetition_penalty": 1.05,
+          "max_new_tokens": 65536
+        },
+        "individual_weight_file_hashes_repeated": false,
+        "GPU_memory_weight_hash_attestation": false,
+        "max_actual_prompt_tokens": 38587,
+        "max_actual_output_tokens": 819
+      },
+      "baseline_canonical_digest": "sha256:40135f281c216e76a04de6772eaaadcdfd0b46d949e98c5164f29cba2f454e45",
+      "baseline_count": 452,
+      "baseline_tar_sha256": "81eea77963c4a236dbe2151d000a12a55fd4c51da622f0b0804e2e17caa9a863",
+      "baseline_environment_digest": null,
+      "census_full_and_rebuild_equal": true,
+      "excluded_census_same": true,
+      "frozen_patch_digest": "sha256:b8f75c2cd844fc318746adeda5ecbcce2fe8a04ee9c444fd9a08f39319972ea0",
+      "fp_content_and_all_diff_entries_replay_passed": true,
+      "fp_entry_count": 1,
+      "production_delta_exact": true,
+      "raw_nodes": 184,
+      "raw_status_counts": {
+        "PASSED": 172,
+        "SKIPPED": 11,
+        "FAILED": 1
+      },
+      "parser_report_key_count": 180,
+      "nonreference_nodes": {
+        "tests/test_dataclasses.py::test_kw_only": "SKIPPED",
+        "tests/test_dataclasses.py::test_kw_only_subclass": "SKIPPED",
+        "tests/test_dataclasses.py::test_kw_only_inheritance[pydantic-pydantic]": "SKIPPED",
+        "tests/test_dataclasses.py::test_kw_only_inheritance[pydantic-stdlib]": "SKIPPED",
+        "tests/test_dataclasses.py::test_kw_only_inheritance[stdlib-pydantic]": "SKIPPED",
+        "tests/test_dataclasses.py::test_kw_only_inheritance[stdlib-stdlib]": "SKIPPED",
+        "tests/test_dataclasses.py::test_dataclasses_inheritance_default_value_is_not_deleted[pydantic.Field(default=1)-stdlib]": "SKIPPED",
+        "tests/test_dataclasses.py::test_dataclass_slots[pydantic]": "SKIPPED",
+        "tests/test_dataclasses.py::test_dataclass_slots[stdlib]": "SKIPPED",
+        "tests/test_dataclasses.py::test_dataclass_slots_mixed[pydantic]": "SKIPPED",
+        "tests/test_dataclasses.py::test_dataclass_slots_mixed[stdlib]": "SKIPPED"
+      },
+      "formal_references": 173,
+      "partitions": {
+        "added_p2p": {
+          "count": 4,
+          "success_count": 3,
+          "failure": [
+            "tests/test_dataclasses.py::test_inherited_hidden_field_without_local_annotations"
+          ],
+          "skipped": [],
+          "missing": [],
+          "unaccounted": []
+        },
+        "original_f2p": {
+          "count": 1,
+          "success_count": 1,
+          "failure": [],
+          "skipped": [],
+          "missing": [],
+          "unaccounted": []
+        },
+        "original_p2p": {
+          "count": 168,
+          "success_count": 168,
+          "failure": [],
+          "skipped": [],
+          "missing": [],
+          "unaccounted": []
+        }
+      },
+      "full_harness_event_count": 276,
+      "canonical_all_text_tools_results_present": true,
+      "tool_calls": {
+        "Read": 3,
+        "Write": 3,
+        "Bash": 12,
+        "Edit": 4
+      },
+      "tool_result_errors": 1,
+      "model_requests": 23,
+      "all_HTTP_status_200": true,
+      "last_stop_reason": "end_turn",
+      "aggregate_usage": {
+        "input_tokens": 629984,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 5063,
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "",
+        "iterations": [],
+        "speed": "standard"
+      },
+      "install_rc": 0,
+      "test_rc": 1,
+      "install_failed_commands": [],
+      "log_partial": false,
+      "formal_reward": 0,
+      "source_refs_states": {
+        "tests/test_dataclasses.py::test_inherited_required_field_without_local_annotations": "PASSED",
+        "tests/test_dataclasses.py::test_inherited_hidden_field_without_local_annotations": "FAILED",
+        "tests/test_dataclasses.py::test_inherited_factory_field_without_local_annotations": "PASSED",
+        "tests/test_dataclasses.py::test_field_default_repr_stays_visible": "PASSED",
+        "tests/test_dataclasses.py::test_repr_false[Field]": "PASSED",
+        "tests/test_dataclasses.py::test_dataclass_equality_for_field_values[pydantic_pydantic]": "PASSED",
+        "tests/test_dataclasses.py::test_default_value[None]": "PASSED",
+        "tests/test_dataclasses.py::test_validate_assignment_extra_unknown_field_assigned_errors[config2]": "PASSED",
+        "tests/test_dataclasses.py::test_allow_extra": "PASSED",
+        "tests/test_dataclasses.py::test_validate_assignment": "PASSED",
+        "tests/test_dataclasses.py::test_value_error": "PASSED",
+        "tests/test_dataclasses.py::test_frozenset_field": "PASSED",
+        "tests/test_dataclasses.py::test_config_as_type_deprecated": "PASSED",
+        "tests/test_dataclasses.py::test_override_builtin_dataclass_nested_schema": "PASSED",
+        "tests/test_dataclasses.py::test_validate_long_string_error": "PASSED",
+        "tests/test_dataclasses.py::test_validate_assignment_extra_unknown_field_assigned_allowed[config5]": "PASSED",
+        "tests/test_dataclasses.py::test_dataclass_field_default_with_init": "PASSED",
+        "tests/test_dataclasses.py::test_vanilla_dataclass_decorators_in_type_adapter[combined-combined]": "PASSED",
+        "tests/test_dataclasses.py::test_validate_assignment_long_string_error": "PASSED",
+        "tests/test_dataclasses.py::test_model_validator_before": "PASSED",
+        "tests/test_dataclasses.py::test_inheritance": "PASSED",
+        "tests/test_dataclasses.py::test_decorators_in_model_field[pydantic-pydantic]": "PASSED",
+        "tests/test_dataclasses.py::test_arbitrary_types_allowed": "PASSED",
+        "tests/test_dataclasses.py::test_extra_forbid_list_error": "PASSED",
+        "tests/test_dataclasses.py::test_schema": "PASSED",
+        "tests/test_dataclasses.py::test_default_factory_field[field]": "PASSED",
+        "tests/test_dataclasses.py::test_convert_vanilla_dc": "PASSED",
+        "tests/test_dataclasses.py::test_initvar": "PASSED",
+        "tests/test_dataclasses.py::test_initvars_post_init": "PASSED",
+        "tests/test_dataclasses.py::test_pydantic_dataclass_preserves_metadata[combined]": "PASSED",
+        "tests/test_dataclasses.py::test_issue_2541": "PASSED",
+        "tests/test_dataclasses.py::test_validate_assignment_error": "PASSED",
+        "tests/test_dataclasses.py::test_forbid_extra": "PASSED",
+        "tests/test_dataclasses.py::test_model_config[stdlib]": "PASSED",
+        "tests/test_dataclasses.py::test_validate_assignment_extra_unknown_field_assigned_allowed[config6]": "PASSED",
+        "tests/test_dataclasses.py::test_alias_with_dashes": "PASSED",
+        "tests/test_dataclasses.py::test_inherited_dataclass_signature": "PASSED",
+        "tests/test_dataclasses.py::test_annotated_before_validator_called_once[pydantic]": "PASSED",
+        "tests/test_dataclasses.py::test_post_init_assignment": "PASSED",
+        "tests/test_dataclasses.py::test_vanilla_dataclass_decorators_in_type_adapter[stdlib-stdlib]": "PASSED",
+        "tests/test_dataclasses.py::test_model_config_override_in_decorator": "PASSED",
+        "tests/test_dataclasses.py::test_json_schema_with_computed_field": "PASSED",
+        "tests/test_dataclasses.py::test_can_inherit_stdlib_dataclasses_with_defaults": "PASSED",
+        "tests/test_dataclasses.py::test_nested_dataclass": "PASSED",
+        "tests/test_dataclasses.py::test_vanilla_dataclass_decorators_in_type_adapter[pydantic-combined]": "PASSED",
+        "tests/test_dataclasses.py::test_dataclasses_inheritance_default_value_is_not_deleted[dataclasses.field(default=1)-pydantic]": "PASSED",
+        "tests/test_dataclasses.py::test_parametrized_generic_dataclass[str-a-False-a-pydantic]": "PASSED",
+        "tests/test_dataclasses.py::test_ignore_extra": "PASSED",
+        "tests/test_dataclasses.py::test_inheritance_post_init": "PASSED",
+        "tests/test_dataclasses.py::test_pickle_overridden_builtin_dataclass": "PASSED",
+        "tests/test_dataclasses.py::test_fields": "PASSED",
+        "tests/test_dataclasses.py::test_parametrized_generic_dataclass[int-a-True-output_value2-stdlib]": "PASSED",
+        "tests/test_dataclasses.py::test_unparametrized_generic_dataclass[combined]": "PASSED",
+        "tests/test_dataclasses.py::test_vanilla_dataclass_decorators_in_type_adapter[stdlib-pydantic]": "PASSED",
+        "tests/test_dataclasses.py::test_override_builtin_dataclass_nested": "PASSED",
+        "tests/test_dataclasses.py::test_parametrized_generic_dataclass[int-1-False-1-combined]": "PASSED",
+        "tests/test_dataclasses.py::test_simple": "PASSED",
+        "tests/test_dataclasses.py::test_cross_module_cyclic_reference_dataclass": "PASSED",
+        "tests/test_dataclasses.py::test_pydantic_dataclass_preserves_metadata[identity]": "PASSED",
+        "tests/test_dataclasses.py::test_parametrized_generic_dataclass[str-a-False-a-combined]": "PASSED",
+        "tests/test_dataclasses.py::test_init_vars_inheritance": "PASSED",
+        "tests/test_dataclasses.py::test_issue_2594": "PASSED",
+        "tests/test_dataclasses.py::test_issue_2398": "PASSED",
+        "tests/test_dataclasses.py::test_default_factory_field[Field]": "PASSED",
+        "tests/test_dataclasses.py::test_ignore_extra_subclass": "PASSED",
+        "tests/test_dataclasses.py::test_dataclass_equality_for_field_values[pydantic_stdlib]": "PASSED",
+        "tests/test_dataclasses.py::test_issue_2383": "PASSED",
+        "tests/test_dataclasses.py::test_schema_description_unset": "PASSED",
+        "tests/test_dataclasses.py::test_annotated_before_validator_called_once[stdlib]": "PASSED",
+        "tests/test_dataclasses.py::test_post_init": "PASSED",
+        "tests/test_dataclasses.py::test_complex_nested_vanilla_dataclass": "PASSED",
+        "tests/test_dataclasses.py::test_validate_assignment_extra_unknown_field_assigned_allowed[config0]": "PASSED",
+        "tests/test_dataclasses.py::test_dataclass_field_default_factory_with_init": "PASSED",
+        "tests/test_dataclasses.py::test_recursive_dataclasses_gh_4509": "PASSED",
+        "tests/test_dataclasses.py::test_can_inherit_stdlib_dataclasses_default_factories_and_provide_a_value": "PASSED",
+        "tests/test_dataclasses.py::test_discriminated_union_basemodel_instance_value": "PASSED",
+        "tests/test_dataclasses.py::test_issue_2424": "PASSED",
+        "tests/test_dataclasses.py::test_decorators_in_model_field[combined-stdlib]": "PASSED",
+        "tests/test_dataclasses.py::test_dataclasses_inheritance_default_value_is_not_deleted[1-stdlib]": "PASSED",
+        "tests/test_dataclasses.py::test_vanilla_dataclass_decorators_in_type_adapter[combined-pydantic]": "PASSED",
+        "tests/test_dataclasses.py::test_rebuild_dataclass": "PASSED",
+        "tests/test_dataclasses.py::test_model_validator_after": "PASSED",
+        "tests/test_dataclasses.py::test_decorators_in_model_field[stdlib-pydantic]": "PASSED",
+        "tests/test_dataclasses.py::test_parametrized_generic_dataclass[int-a-True-output_value2-combined]": "PASSED",
+        "tests/test_dataclasses.py::test_not_validate_assignment": "PASSED",
+        "tests/test_dataclasses.py::test_init_vars_call_monkeypatch[True]": "PASSED",
+        "tests/test_dataclasses.py::test_model_config[pydantic]": "PASSED",
+        "tests/test_dataclasses.py::test_override_builtin_dataclass": "PASSED",
+        "tests/test_dataclasses.py::test_inheritance_replace[stdlib]": "PASSED",
+        "tests/test_dataclasses.py::test_decorators_in_model_field[stdlib-stdlib]": "PASSED",
+        "tests/test_dataclasses.py::test_std_dataclass_with_parent": "PASSED",
+        "tests/test_dataclasses.py::test_dataclasses_with_slots_and_default": "PASSED",
+        "tests/test_dataclasses.py::test_init_vars_call_monkeypatch[False]": "PASSED",
+        "tests/test_dataclasses.py::test_hashable_required": "PASSED",
+        "tests/test_dataclasses.py::test_parent_post_init": "PASSED",
+        "tests/test_dataclasses.py::test_forward_stdlib_dataclass_params": "PASSED",
+        "tests/test_dataclasses.py::test_issue_3162": "PASSED",
+        "tests/test_dataclasses.py::test_repr_false[field]": "PASSED",
+        "tests/test_dataclasses.py::test_dataclasses_inheritance_default_value_is_not_deleted[pydantic.Field(default=1)-pydantic]": "PASSED",
+        "tests/test_dataclasses.py::test_vanilla_dataclass_decorators_in_type_adapter[combined-stdlib]": "PASSED",
+        "tests/test_dataclasses.py::test_issue_3011": "PASSED",
+        "tests/test_dataclasses.py::test_parametrized_generic_dataclass[int-a-True-output_value2-pydantic]": "PASSED",
+        "tests/test_dataclasses.py::test_parametrized_generic_dataclass[int-1-False-1-stdlib]": "PASSED",
+        "tests/test_dataclasses.py::test_default_factory_singleton_field": "PASSED",
+        "tests/test_dataclasses.py::test_schema_generator": "PASSED",
+        "tests/test_dataclasses.py::test_override_builtin_dataclass_2": "PASSED",
+        "tests/test_dataclasses.py::test_default_value[1]": "PASSED",
+        "tests/test_dataclasses.py::test_nested_dataclass_model": "PASSED",
+        "tests/test_dataclasses.py::test_model_config_override_in_decorator_empty_config": "PASSED",
+        "tests/test_dataclasses.py::test_pydantic_dataclass_preserves_metadata[pydantic]": "PASSED",
+        "tests/test_dataclasses.py::test_decorators_in_model_field[combined-pydantic]": "PASSED",
+        "tests/test_dataclasses.py::test_vanilla_dataclass_decorators_in_type_adapter[stdlib-combined]": "PASSED",
+        "tests/test_dataclasses.py::test_parametrized_generic_dataclass[str-a-False-a-stdlib]": "PASSED",
+        "tests/test_dataclasses.py::test_validate_assignment_extra_unknown_field_assigned_allowed[config1]": "PASSED",
+        "tests/test_dataclasses.py::test_new_not_called": "PASSED",
+        "tests/test_dataclasses.py::test_post_init_validation": "PASSED",
+        "tests/test_dataclasses.py::test_validate_strings": "PASSED",
+        "tests/test_dataclasses.py::test_parametrized_generic_dataclass[int-1-False-1-pydantic]": "PASSED",
+        "tests/test_dataclasses.py::test_multiple_parametrized_generic_dataclasses": "PASSED",
+        "tests/test_dataclasses.py::test_classvar": "PASSED",
+        "tests/test_dataclasses.py::test_validate_assignment_extra_unknown_field_assigned_errors[config1]": "PASSED",
+        "tests/test_dataclasses.py::test_validator_info_field_name_data_before": "PASSED",
+        "tests/test_dataclasses.py::test_derived_field_from_initvar": "PASSED",
+        "tests/test_dataclasses.py::test_validate_assignment_extra_unknown_field_assigned_allowed[config4]": "PASSED",
+        "tests/test_dataclasses.py::test_unparametrized_generic_dataclass[stdlib]": "PASSED",
+        "tests/test_dataclasses.py::test_extra_forbid_list_no_error": "PASSED",
+        "tests/test_dataclasses.py::test_inheritance_replace[pydantic]": "PASSED",
+        "tests/test_dataclasses.py::test_default_value_ellipsis": "PASSED",
+        "tests/test_dataclasses.py::test_dataclass_config_validate_default": "PASSED",
+        "tests/test_dataclasses.py::test_can_inherit_stdlib_dataclasses_default_factories_and_use_them": "PASSED",
+        "tests/test_dataclasses.py::test_decorators_in_model_field[pydantic-stdlib]": "PASSED",
+        "tests/test_dataclasses.py::test_dataclass_equality_for_field_values[stdlib_stdlib]": "PASSED",
+        "tests/test_dataclasses.py::test_signature": "PASSED",
+        "tests/test_dataclasses.py::test_vanilla_dataclass_decorators_in_type_adapter[pydantic-pydantic]": "PASSED",
+        "tests/test_dataclasses.py::test_validate_assignment_extra_unknown_field_assigned_allowed[config7]": "PASSED",
+        "tests/test_dataclasses.py::test_validate_assignment_extra_unknown_field_assigned_allowed[config2]": "PASSED",
+        "tests/test_dataclasses.py::test_dataclasses_inheritance_default_value_is_not_deleted[1-pydantic]": "PASSED",
+        "tests/test_dataclasses.py::test_frozen": "PASSED",
+        "tests/test_dataclasses.py::test_subclass_post_init_inheritance": "PASSED",
+        "tests/test_dataclasses.py::test_schema_description_set": "PASSED",
+        "tests/test_dataclasses.py::test_post_init_after_validation": "PASSED",
+        "tests/test_dataclasses.py::test_post_init_inheritance_chain": "PASSED",
+        "tests/test_dataclasses.py::test_post_init_post_parse": "PASSED",
+        "tests/test_dataclasses.py::test_allow_extra_subclass": "PASSED",
+        "tests/test_dataclasses.py::test_can_inherit_stdlib_dataclasses_with_dataclass_fields": "PASSED",
+        "tests/test_dataclasses.py::test_validate_assignment_extra_unknown_field_assigned_errors[config3]": "PASSED",
+        "tests/test_dataclasses.py::test_no_validate_assignment_long_string_error": "PASSED",
+        "tests/test_dataclasses.py::test_validate_assignment_extra_unknown_field_assigned_allowed[config8]": "PASSED",
+        "tests/test_dataclasses.py::test_pydantic_field_annotation": "PASSED",
+        "tests/test_dataclasses.py::test_subclass_post_init_order": "PASSED",
+        "tests/test_dataclasses.py::test_vanilla_dataclass_decorators_in_type_adapter[pydantic-stdlib]": "PASSED",
+        "tests/test_dataclasses.py::test_metadata": "PASSED",
+        "tests/test_dataclasses.py::test_decorators_in_model_field[pydantic-combined]": "PASSED",
+        "tests/test_dataclasses.py::test_self_reference_dataclass": "PASSED",
+        "tests/test_dataclasses.py::test_pydantic_callable_field": "PASSED",
+        "tests/test_dataclasses.py::test_decorators_in_model_field[combined-combined]": "PASSED",
+        "tests/test_dataclasses.py::test_pydantic_dataclass_preserves_metadata[stdlib]": "PASSED",
+        "tests/test_dataclasses.py::test_is_pydantic_dataclass": "PASSED",
+        "tests/test_dataclasses.py::test_dataclasses_inheritance_default_value_is_not_deleted[dataclasses.field(default=1)-stdlib]": "PASSED",
+        "tests/test_dataclasses.py::test_dataclass_equality_for_field_values[stdlib_pydantic]": "PASSED",
+        "tests/test_dataclasses.py::test_cyclic_reference_dataclass": "PASSED",
+        "tests/test_dataclasses.py::test_dataclass_alias_generator": "PASSED",
+        "tests/test_dataclasses.py::test_nested_schema": "PASSED",
+        "tests/test_dataclasses.py::test_inherit_builtin_dataclass": "PASSED",
+        "tests/test_dataclasses.py::test_validate_assignment_extra_unknown_field_assigned_errors[config0]": "PASSED",
+        "tests/test_dataclasses.py::test_unparametrized_generic_dataclass[pydantic]": "PASSED",
+        "tests/test_dataclasses.py::test_field_validator": "PASSED",
+        "tests/test_dataclasses.py::test_model_name": "PASSED",
+        "tests/test_dataclasses.py::test_annotated_before_validator_called_once[combined]": "PASSED",
+        "tests/test_dataclasses.py::test_validate_assignment_extra_unknown_field_assigned_allowed[config3]": "PASSED",
+        "tests/test_dataclasses.py::test_combined_field_annotations": "PASSED",
+        "tests/test_dataclasses.py::test_decorators_in_model_field[stdlib-combined]": "PASSED",
+        "tests/test_dataclasses.py::test_validate_assignment_value_change": "PASSED"
+      },
+      "authoritative_snapshot": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8511-coder-a1",
+      "snapshot_all_members_size_and_sha256_verified": true,
+      "snapshot_extra_files_not_counted_as_manifest_members": [
+        "gpu1003-pyd8511-coder-a1_closed_manifest_v1.json",
+        "sync_receipt_v3.json"
+      ],
+      "execution_review_passed": true,
+      "raw_reward": 0,
+      "failure_category": "tests_failed",
+      "failure_is_ordinary_candidate_behavior": true,
+      "infrastructure_failure_observed": false,
+      "source_change_related": true,
+      "cleanup_no_residue_verified_within_job_scope": true,
+      "actor_profile": {
+        "cpus": 2,
+        "memory_bytes": 4294967296,
+        "pids_limit": 512
+      },
+      "formal_install_execution": {
+        "uid": 54322,
+        "install_rc": 0,
+        "test_rc": 1,
+        "all_failed_install_commands": [],
+        "editable_project_install": "python -m pip install -e .",
+        "test_requirements_install": "python -m pip install -r /tmp/rh2-envrepair-testing-reqs.txt",
+        "import_path": "/testbed/pydantic/__init__.py",
+        "package_version": "2.6.0a1",
+        "fixed_offline_prerequisite": "verified",
+        "trusted_setup_restored_and_applied": true,
+        "control_surface_protect_ok": true,
+        "runner_digest_before_after": "cdcb38ab1e198b9cd561dd143e40400f292c84e3211d65ee5e13cc16744cea34"
+      },
+      "baseline_mode_scope": "tar 中三个 executable 文件原权限为0777；census/manifest采用 regular 100755/100644规范模式。逐内容及规范执行位相同，未宣称原POSIX权限逐位相同。",
+      "source_shared_entry_hash_found_in_current_source_manifest": true,
+      "actual_grader_prelaunch_raw_report_archived": false,
+      "actual_Docker_call_streams_all_archived": false,
+      "failure_analysis": {
+        "production_path": "pydantic/dataclasses.py",
+        "mechanism": "Python3.8 的新增 make_pydantic_fields_compatible 使用 getattr(cls,'__annotations__',{}) 获得继承注解，并把继承的 FieldInfo(repr=False) 赋成 Child 本地 stdlib field；Child 无本地类型注解，stdlib dataclass 在 class creation 阶段 TypeError。",
+        "failure_reference": "tests/test_dataclasses.py::test_inherited_hidden_field_without_local_annotations",
+        "raw_stack": [
+          "tests/test_dataclasses.py:2671",
+          "pydantic/dataclasses.py:235",
+          "python3.8/dataclasses.py:885"
+        ],
+        "error": "TypeError: 'x' is a field but has no type annotation",
+        "original_F_passed": true,
+        "original_P_passed": 168,
+        "added_P_passed": 3,
+        "added_P_failed": 1,
+        "public_actor_example_after_patch": "x(y=3) a(b=1)",
+        "actor_development_limits": "先出现6个公开测试 AttributeError；模型改为getattr后，3个基本测试、4个metadata测试及162 passed/11 skipped/4 deselected的公开文件范围通过。正式新增继承用例未进入solver。",
+        "fallback_claim_rejected": "模型收尾的'all existing tests'只能按实际公开测试范围解释；不能覆盖私有新增P2P。"
+      },
+      "raw_bindings": {
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8511-coder-a1/queue_v24/results/gpu1003-pyd8511-coder-a1/input_check.json": {
+          "sha256": "056d50ea2375445fee2774716a3b3349e2dd9d83175003d1659a94dfeb337b1f",
+          "bytes": 17954
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8511-coder-a1/queue_v24/results/gpu1003-pyd8511-coder-a1/gateway_audit.json": {
+          "sha256": "b01a717325ed3a398306db9a6dc2a7cbf8e559fd6057808d33e6357e4d89cec5",
+          "bytes": 392
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8511-coder-a1/queue_v24/results/gpu1003-pyd8511-coder-a1/grading/report.json": {
+          "sha256": "0e749e87111bf7814a2067ad6c5743ffb8b95426bcf1c0ad8533a5ace399ace6",
+          "bytes": 1817
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8511-coder-a1/queue_v24/results/gpu1003-pyd8511-coder-a1/grading/status.json": {
+          "sha256": "ea0b709648a05aaac0c8d08f3b7179df2300079938f67dda2ced0985fff48fc4",
+          "bytes": 2601
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8511-coder-a1/queue_v24/results/gpu1003-pyd8511-coder-a1/grading/projection.json": {
+          "sha256": "d16733e0cf6e4cc56b9f0063e7c41e166c3f5e88309fc095a6dfb8abcdd4af08",
+          "bytes": 323
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8511-coder-a1/queue_v24/results/gpu1003-pyd8511-coder-a1/grading/baseline_rebuild_census.txt": {
+          "sha256": "a226ac05c791c5e9e840f881d0ad4385a918dbcf7399d72f43247697919ff627",
+          "bytes": 52451
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8511-coder-a1/queue_v24/results/gpu1003-pyd8511-coder-a1/attempt/attempt.json": {
+          "sha256": "5b3b2782474134b0e1391be357945c19f18e6ca1af28a8ef910438880363a218",
+          "bytes": 15830
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8511-coder-a1/queue_v24/results/gpu1003-pyd8511-coder-a1/attempt/harness/trajectory.jsonl": {
+          "sha256": "c58255d4b296dbd25dc1d7055a8eb0bb684a9399db6b419e297aba217c8b6830",
+          "bytes": 398756
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8511-coder-a1/queue_v24/results/gpu1003-pyd8511-coder-a1/attempt/facts/prelaunch.json": {
+          "sha256": "de76768435eaffb73f36e823bd079b365c88b28575cbf788a03a54b76640133a",
+          "bytes": 2311
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8511-coder-a1/queue_v24/results/gpu1003-pyd8511-coder-a1/attempt/facts/activation_check.json": {
+          "sha256": "de74dc956deed81a94b72ae30ef9a587f0cbd0c83cd0c74cd780b8343d4c8b06",
+          "bytes": 509
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8511-coder-a1/queue_v24/results/gpu1003-pyd8511-coder-a1/attempt/frozen/frozen_patch.json": {
+          "sha256": "50a24c148cf71a4c393ed7e94aff84ab1b05dadc69c4c5613a5f9097b7b42c72",
+          "bytes": 19375
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8511-coder-a1/queue_v24/results/gpu1003-pyd8511-coder-a1/attempt/frozen/baseline_manifest.json": {
+          "sha256": "9c61a99b9720ca2d4a1d2ce61c855f05d9839d4de2b5830e96c72fb332837672",
+          "bytes": 107617
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8511-coder-a1/queue_v24/results/gpu1003-pyd8511-coder-a1/attempt/frozen/baseline_census.txt": {
+          "sha256": "a226ac05c791c5e9e840f881d0ad4385a918dbcf7399d72f43247697919ff627",
+          "bytes": 52451
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8511-coder-a1/queue_v24/results/gpu1003-pyd8511-coder-a1/attempt/frozen/baseline.tar": {
+          "sha256": "81eea77963c4a236dbe2151d000a12a55fd4c51da622f0b0804e2e17caa9a863",
+          "bytes": 7075840
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8511-coder-a1/queue_v24/results/gpu1003-pyd8511-coder-a1/solver_prompt.txt": {
+          "sha256": "1cdac582865ee85718c6bc27a191a5f81abf36f0b1e765c4e645eb060264e81d",
+          "bytes": 1309
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8511-coder-a1/queue_v24/results/gpu1003-pyd8511-coder-a1/grading/eval_logs/evallog_gpu1003-pyd8511-coder-a1_579b7ea7.diagnostics.json": {
+          "sha256": "0b6df8512ae95704d2b4149e2fbd93e1e73188c4855694e6c921b36efd35752e",
+          "bytes": 31930
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8511-coder-a1/queue_v24/results/gpu1003-pyd8511-coder-a1/grading/eval_logs/evallog_gpu1003-pyd8511-coder-a1_579b7ea7.eval.log": {
+          "sha256": "ee4c0125ebf6b6b7c9f1a72c0a7ece29e04e68dc69fee236dfaf506b16d4602a",
+          "bytes": 53042
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8511-coder-a1/gpu1003-pyd8511-coder-a1_closed_manifest_v1.json": {
+          "sha256": "4069a5bacddea61b95c9e1b8b7c1bebdc50b3b9439f834994734b3b950b49c21",
+          "bytes": 66246
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8511-coder-a1/gpu1003-pyd8511-coder-a1_terminal_snapshot_v1.json": {
+          "sha256": "7f337d14371200c86a445e41efe9d9ab050a36adc48b8a7dc0f5511093bb86b9",
+          "bytes": 21251
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8511-coder-a1/gpu1003-pyd8511-coder-a1_closed_resource_v1.jsonl": {
+          "sha256": "a5a36cdbc3e71f7b99e5b825f116fd1a9eef102035b8f2abcd2eabe48f0de9c9",
+          "bytes": 22931
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8511-coder-a1/services_v22/coder/gateway/gpu1003-pyd8511-coder-a1/requests.jsonl": {
+          "sha256": "56d471b042226a9a435d0e4447072e410753366879de741e7c9cd5f7ed853651",
+          "bytes": 2512329
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8511-coder-a1/services_v22/coder/gateway/gpu1003-pyd8511-coder-a1/responses.jsonl": {
+          "sha256": "b617cee67884b7e22f37cf997201f17044917483fb71b62bf1fcd4e6d558f3d4",
+          "bytes": 7465
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8511-coder-a1/diagnostics/QUEUE_V24_gpu1003-pyd8511-coder-a1_before/capture_receipt.json": {
+          "sha256": "192171d43ec5116b319974e78a20fd4ccc0a7e7b9839b135d860b0f0210ae8ef",
+          "bytes": 1575
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8511-coder-a1/diagnostics/QUEUE_V24_gpu1003-pyd8511-coder-a1_before/identity_binding_actual.json": {
+          "sha256": "a5739fc2570e82b2de7804c4d31124944b64dac9ef397d424c462ea675bbc08a",
+          "bytes": 2960
+        }
+      },
+      "policy_digest_and_excluded_census_digest_recomputed": true,
+      "baseline_private_added_test_names_absent": true
+    },
+    "8567": {
+      "job": "gpu1003-pyd8567-coder-a1",
+      "source_release": "cat2-cpu-r2e089092-swe34-dvc-pyd-20261003-v1",
+      "release_manifest_sha256": "sha256:51b833975be2c3354be45b731552235a33070315f0039c8e6f54987de95f6ca8",
+      "fixed_request_sha256": "sha256:8ccd7c434995fa0866921040803543819ba63148306dfe2ea0c0b4f1a721cffb",
+      "owner_request_sha256": "sha256:72fdd7614fbc09241eaa2d461241f4a7784ca0ad43bfae01a2c0608f4fb6e1e2",
+      "closed_manifest_sha256": "c9399d48fe41d7b7591376b1358ffed198ba147c6e9960d29a64679dba038d8f",
+      "member_count": 377,
+      "total_bytes": 25272259,
+      "input_bound_files": 65,
+      "input_binding_bad": [],
+      "input_binding_missing": [],
+      "entry_sha256": "sha256:bdf806bf8da1d5ebb4970887bfc3c7738eb3e57a75e1d07215d6d68b17e574c4",
+      "shared_entry_sha256": "sha256:00ca849909150de02769f297374a9bbfacf2746347c425474775d9c3e22a04f9",
+      "source_manifest_sha256": "09ddb8bfdeecd3ffaa38c1048a574161ef6fa6053b2855da50166e8e8677899d",
+      "queue_inputs_manifest_sha256": "23abe51243d90e12bf344c01e9c61ba90f6c859d4d03d02073ae291b9d226367",
+      "actual_actor_grader_image": "sha256:bc5d796fe30c9c0150a1c15c25347a98f0a1f25bf5f8d9cb098756b38b3c2b74",
+      "base_commit": "8060fa1cff965850e5e08a67ca73d5272dcdcf9f",
+      "public_bundle_digest": "sha256:f01b3794148642ee4d987fdb2e57ec142f19080378c9ced0221290542149379f",
+      "environment_package_digest_assignment": "sha256:8d64c28668f711aa8ab86fbe1bfe10ff3a24b4afc5c2a3001e8b43b8e3bcfb8d",
+      "grading_materials_identity": "sha256:79fdb8c6fb5328a023a3f1b5ff2ade9e6fa405aec636d42755783bbb36546d0d",
+      "revision": "pyd8567-order-old-behavior-v5",
+      "effective_test_patch_sha256": "sha256:a1ed762e8f64ddaa9654c2281e66e7be993de5b6b13a27ee04e8cf3387e5bfc6",
+      "private_delivery_checks": {
+        "all_requests_no_private_added_nodes": true,
+        "full_effective_test_patch_absent": true,
+        "actor_mounts_empty": true,
+        "entry_rollout_grader_dataflow_separate": true
+      },
+      "runtime": {
+        "python": "3.8.19",
+        "core": "2.15.0",
+        "actor_uid": 54321,
+        "grader_uid": 54322,
+        "pip_freeze_changed": false
+      },
+      "budget": {
+        "version": "probe-wide-v1",
+        "max_context_len": 196608,
+        "max_new_tokens": 65536,
+        "max_turns": 240,
+        "wall_seconds": 10800,
+        "max_requests_per_session": 1024,
+        "first_byte_timeout_seconds": 1800,
+        "adapter_idle_drop_seconds": 14400
+      },
+      "grading_budget": {
+        "whole_seconds": 3600,
+        "setup_seconds": 300,
+        "apply_seconds": 120,
+        "test_seconds": 1800
+      },
+      "job_start": "2026-10-03T09:09:35.007500+00:00",
+      "job_end": "2026-10-03T09:15:38.342402+00:00",
+      "actor_start": "2026-10-03T09:09:35.534332+00:00",
+      "actor_end": "2026-10-03T09:11:24.151618+00:00",
+      "solve_seconds": 79.529,
+      "resources": [
+        {
+          "role": "actor",
+          "container_id": "97a51c76fc5cfc10bfe435a6be9a667a898e917c9fc78c1aabe2af3304a9c0a3",
+          "name": "/rh2bp-pydantic-pydantic-8567-a1ca8a33",
+          "run_id": "gpu1003-pyd8567-coder-a1",
+          "image_id": "sha256:bc5d796fe30c9c0150a1c15c25347a98f0a1f25bf5f8d9cb098756b38b3c2b74",
+          "samples": 7,
+          "observable_event_samples": 7,
+          "missing_event_timestamps": [],
+          "first": "2026-10-03T09:09:49.641493+00:00",
+          "last": "2026-10-03T09:11:20.088492+00:00",
+          "observed_memory_peak_bytes": 910204928,
+          "observed_pids_peak": 21,
+          "oom_or_pids_limit_event": false
+        },
+        {
+          "role": "relay",
+          "container_id": "5e488a97e1e1696af9bbd8b97071b463e1ce1b6840e9ee70766194eceb301a69",
+          "name": "/rh2-egress-relay-gpu1003-pyd8567-coder-a1",
+          "run_id": "gpu1003-pyd8567-coder-a1",
+          "image_id": "sha256:ec7d6c95cd3692a2e2d228a8b1ca74e4025b54121fcc4c5da6f09cfa473315ad",
+          "samples": 7,
+          "observable_event_samples": 7,
+          "missing_event_timestamps": [],
+          "first": "2026-10-03T09:09:49.641493+00:00",
+          "last": "2026-10-03T09:11:20.088492+00:00",
+          "observed_memory_peak_bytes": 27709440,
+          "observed_pids_peak": 7,
+          "oom_or_pids_limit_event": false
+        },
+        {
+          "role": "grader",
+          "container_id": "d8f617a01e05aeb75be03bf8cc9923af222c8c3a5174d33a1a286d35848c78bc",
+          "name": "/rh2-gpu-grade-gpu1003-pyd8567-coder-a1-a6470f81",
+          "run_id": "gpu1003-pyd8567-coder-a1-grade",
+          "image_id": "sha256:bc5d796fe30c9c0150a1c15c25347a98f0a1f25bf5f8d9cb098756b38b3c2b74",
+          "samples": 17,
+          "observable_event_samples": 16,
+          "missing_event_timestamps": [
+            "2026-10-03T09:15:36.268495+00:00"
+          ],
+          "first": "2026-10-03T09:11:35.159400+00:00",
+          "last": "2026-10-03T09:15:36.268495+00:00",
+          "observed_memory_peak_bytes": 588345344,
+          "observed_pids_peak": 8,
+          "oom_or_pids_limit_event": false
+        }
+      ],
+      "resource_bounds": {
+        "start": "2026-10-03T09:09:20.007500+00:00",
+        "end": "2026-10-03T09:15:53.342402+00:00",
+        "samples": 26,
+        "gaps_unknown": true,
+        "source_trailing_partial_bytes": 0,
+        "sample_requires_matching_actual_container_and_time": true
+      },
+      "cleanup": {
+        "container_rm": 0,
+        "container_left": "",
+        "network_failures": [],
+        "relay_failures": [],
+        "labeled_containers_left": [],
+        "labeled_networks_left": [],
+        "cleanup_ok": true
+      },
+      "manager_close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "supply_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0,
+        "containers_created_total": 1,
+        "containers_removed_total": 1,
+        "container_history_retained": 1,
+        "leases_total": 1
+      },
+      "gateway_drain": {
+        "session_id": "gpu1003-pyd8567-coder-a1",
+        "revoked": true,
+        "active_requests": 0,
+        "drained": true,
+        "ts": 1791018682.5886655
+      },
+      "model_service": {
+        "engine_id": "0752efbc6887af4d7cf59e583213447dd7f6488887c060d67df49baff3933af2",
+        "adapter_id": "d761d7ad2a8b744f2fc14dcd02b2e3742934f378ca4a30c855bc4e651d459bb1",
+        "engine_started_at": "2026-10-03T03:40:20.177710856Z",
+        "adapter_started_at": "2026-10-03T03:47:59.985612608Z",
+        "current_capture_start": "2026-10-03T09:09:34.739173+00:00",
+        "current_capture_end": "2026-10-03T09:09:34.910606+00:00",
+        "engine_image": "sha256:7fafb457002ab4d5a2aa6796d7267f086401065d022347b2f49ae366b6c2687a",
+        "checkpoint_repo": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+        "checkpoint_revision": "b2cff646eb4bb1d68355c01b18ae02e7cf42d120",
+        "download_manifest_sha256": "5783533eae085661e3b3cde2e46ee46c9dbce0c05154d6028f6e46aa7260de39",
+        "actual_mount_readonly": true,
+        "context_length": 196608,
+        "sampling": {
+          "temperature": 0.7,
+          "top_p": 0.8,
+          "top_k": 20,
+          "repetition_penalty": 1.05,
+          "max_new_tokens": 65536
+        },
+        "individual_weight_file_hashes_repeated": false,
+        "GPU_memory_weight_hash_attestation": false,
+        "max_actual_prompt_tokens": 39227,
+        "max_actual_output_tokens": 628
+      },
+      "baseline_canonical_digest": "sha256:eb494e7682db99522d57c38a96dc78b9469c0c6cbc36e33cdb811b1f25fc2d64",
+      "baseline_count": 458,
+      "baseline_tar_sha256": "c6728639451eec9b168632b1ba09af69b60848815ee1b156cd18332706cb8d19",
+      "baseline_environment_digest": null,
+      "census_full_and_rebuild_equal": true,
+      "excluded_census_same": true,
+      "frozen_patch_digest": "sha256:a54c75aa6a946b6cb05dede88b0b5d02ac75269a40339c073c91d8bc3eccfa90",
+      "fp_content_and_all_diff_entries_replay_passed": true,
+      "fp_entry_count": 8,
+      "production_delta_exact": true,
+      "raw_nodes": 168,
+      "raw_status_counts": {
+        "PASSED": 164,
+        "FAILED": 4
+      },
+      "parser_report_key_count": 168,
+      "nonreference_nodes": {
+        "tests/test_validators.py::test_validator_function_error_hide_input[before-config0-type=value_error, input_value='123', input_type=str]": "PASSED",
+        "tests/test_validators.py::test_validator_function_error_hide_input[before-config1-type=value_error, input_value='123', input_type=str]": "PASSED",
+        "tests/test_validators.py::test_validator_function_error_hide_input[after-config3-type=value_error, input_value='123', input_type=str]": "PASSED",
+        "tests/test_validators.py::test_validator_function_error_hide_input[after-config4-type=value_error, input_value='123', input_type=str]": "PASSED",
+        "tests/test_validators.py::test_validator_function_error_hide_input[plain-config6-type=value_error, input_value='123', input_type=str]": "PASSED",
+        "tests/test_validators.py::test_validator_function_error_hide_input[plain-config7-type=value_error, input_value='123', input_type=str]": "PASSED"
+      },
+      "formal_references": 162,
+      "partitions": {
+        "added_f2p": {
+          "count": 1,
+          "success_count": 0,
+          "failure": [
+            "tests/test_validators.py::test_plain_validator_serializer_unsupported_type_both_orders"
+          ],
+          "skipped": [],
+          "missing": [],
+          "unaccounted": []
+        },
+        "added_p2p": {
+          "count": 2,
+          "success_count": 0,
+          "failure": [
+            "tests/test_validators.py::test_plain_validator_unresolved_inner_forward_reference",
+            "tests/test_validators.py::test_plain_validator_typing_typeddict_inner_schema_not_required"
+          ],
+          "skipped": [],
+          "missing": [],
+          "unaccounted": []
+        },
+        "original_f2p": {
+          "count": 1,
+          "success_count": 0,
+          "failure": [
+            "tests/test_validators.py::test_plain_validator_plain_serializer"
+          ],
+          "skipped": [],
+          "missing": [],
+          "unaccounted": []
+        },
+        "original_p2p": {
+          "count": 158,
+          "success_count": 158,
+          "failure": [],
+          "skipped": [],
+          "missing": [],
+          "unaccounted": []
+        }
+      },
+      "full_harness_event_count": 517,
+      "canonical_all_text_tools_results_present": true,
+      "tool_calls": {
+        "Read": 10,
+        "Write": 7,
+        "Bash": 24,
+        "Edit": 2
+      },
+      "tool_result_errors": 4,
+      "model_requests": 44,
+      "all_HTTP_status_200": true,
+      "last_stop_reason": "end_turn",
+      "aggregate_usage": {
+        "input_tokens": 1090100,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 7246,
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 0,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "",
+        "iterations": [],
+        "speed": "standard"
+      },
+      "install_rc": 0,
+      "test_rc": 1,
+      "install_failed_commands": [],
+      "log_partial": false,
+      "formal_reward": 0,
+      "source_refs_states": {
+        "tests/test_validators.py::test_plain_validator_serializer_unsupported_type_both_orders": "FAILED",
+        "tests/test_validators.py::test_plain_validator_unresolved_inner_forward_reference": "FAILED",
+        "tests/test_validators.py::test_plain_validator_typing_typeddict_inner_schema_not_required": "FAILED",
+        "tests/test_validators.py::test_plain_validator_plain_serializer": "FAILED",
+        "tests/test_validators.py::test_v1_validator_signature_kwargs1": "PASSED",
+        "tests/test_validators.py::test_field_that_is_being_validated_is_excluded_from_validator_values": "PASSED",
+        "tests/test_validators.py::test_validator_self": "PASSED",
+        "tests/test_validators.py::test_validator_bad_fields_throws_configerror": "PASSED",
+        "tests/test_validators.py::test_validating_assignment_pre_root_validator_fail": "PASSED",
+        "tests/test_validators.py::test_nested_literal_validator": "PASSED",
+        "tests/test_validators.py::test_wildcard_validators[validator-pytest_warns0]": "PASSED",
+        "tests/test_validators.py::test_validator_allow_reuse_different_field_4": "PASSED",
+        "tests/test_validators.py::test_root_validator_classmethod[False-False]": "PASSED",
+        "tests/test_validators.py::test_annotated_validator_typing_cache[AfterValidator-<lambda>]": "PASSED",
+        "tests/test_validators.py::test_model_validator_many_values_change": "PASSED",
+        "tests/test_validators.py::test_wildcard_validator_error[validator-pytest_warns0]": "PASSED",
+        "tests/test_validators.py::test_validating_assignment_fail": "PASSED",
+        "tests/test_validators.py::test_info_field_name_data_before": "PASSED",
+        "tests/test_validators.py::test_validator_function_error_hide_input[before-config2-type=value_error]": "PASSED",
+        "tests/test_validators.py::test_use_no_fields_field_validator": "PASSED",
+        "tests/test_validators.py::test_functools_partialmethod_validator_v1[partial_values_val_func1]": "PASSED",
+        "tests/test_validators.py::test_int_validation": "PASSED",
+        "tests/test_validators.py::test_functools_partialmethod_validator_v1_cls_method[partial_cls_values_val_func1]": "PASSED",
+        "tests/test_validators.py::test_pre_called_once": "PASSED",
+        "tests/test_validators.py::test_validate_parent_all": "PASSED",
+        "tests/test_validators.py::test_custom_type_field_name_model_nested": "PASSED",
+        "tests/test_validators.py::test_int_overflow_validation[nan]": "PASSED",
+        "tests/test_validators.py::test_functools_partialmethod_validator_v1_cls_method[partial_cls_val_func2]": "PASSED",
+        "tests/test_validators.py::test_root_validator_skip_on_failure_invalid[kwargs1]": "PASSED",
+        "tests/test_validators.py::test_annotated_validator_plain": "PASSED",
+        "tests/test_validators.py::test_functools_partialmethod_validator_v1_cls_method[partial_cls_values_val_func2]": "PASSED",
+        "tests/test_validators.py::test_root_validator_returns_none_exception": "PASSED",
+        "tests/test_validators.py::test_root_validator_skip_on_failure_invalid[kwargs0]": "PASSED",
+        "tests/test_validators.py::test_functools_partialmethod_validator_v2_cls_method[partial_cls_val_func2]": "PASSED",
+        "tests/test_validators.py::test_field_validator_validate_default_post": "PASSED",
+        "tests/test_validators.py::test_validation_each_item_one_sublevel": "PASSED",
+        "tests/test_validators.py::test_v1_validator_signature_kwargs_not_allowed": "PASSED",
+        "tests/test_validators.py::test_datetime_field_validator": "PASSED",
+        "tests/test_validators.py::test_inheritance_replace_root_validator": "PASSED",
+        "tests/test_validators.py::test_validate_always_on_inheritance": "PASSED",
+        "tests/test_validators.py::test_root_validator": "PASSED",
+        "tests/test_validators.py::test_v1_validator_signature_with_values": "PASSED",
+        "tests/test_validators.py::test_validate_child_all": "PASSED",
+        "tests/test_validators.py::test_annotated_validator_typing_cache[WrapValidator-<lambda>]": "PASSED",
+        "tests/test_validators.py::test_assignment_validator_cls": "PASSED",
+        "tests/test_validators.py::test_functools_partialmethod_validator_v1[partial_values_val_func2]": "PASSED",
+        "tests/test_validators.py::test_root_validator_skip_on_failure_invalid[kwargs2]": "PASSED",
+        "tests/test_validators.py::test_root_validator_classmethod[True-True]": "PASSED",
+        "tests/test_validators.py::test_functools_partial_validator_v2[partial_val_func1]": "PASSED",
+        "tests/test_validators.py::test_field_validator_validate_default_post_optional": "PASSED",
+        "tests/test_validators.py::test_annotated_validator_wrap": "PASSED",
+        "tests/test_validators.py::test_v1_validator_deprecated": "PASSED",
+        "tests/test_validators.py::test_validation_each_item": "PASSED",
+        "tests/test_validators.py::test_exceptions_in_field_validators_restore_original_field_value": "PASSED",
+        "tests/test_validators.py::test_root_validator_classmethod[False-True]": "PASSED",
+        "tests/test_validators.py::test_functools_partialmethod_validator_v2_cls_method[partial_cls_info_val_func]": "PASSED",
+        "tests/test_validators.py::test_validator_function_error_hide_input[plain-config8-type=value_error]": "PASSED",
+        "tests/test_validators.py::test_v1_validator_signature_with_values_kw_only": "PASSED",
+        "tests/test_validators.py::test_key_validation": "PASSED",
+        "tests/test_validators.py::test_root_validator_skip_on_failure_valid[kwargs0]": "PASSED",
+        "tests/test_validators.py::test_functools_partialmethod_validator_v2[partial_val_func1]": "PASSED",
+        "tests/test_validators.py::test_functools_partialmethod_validator_v2[partial_val_func2]": "PASSED",
+        "tests/test_validators.py::test_frozenset_validation": "PASSED",
+        "tests/test_validators.py::test_validate_child_extra": "PASSED",
+        "tests/test_validators.py::test_validator_allow_reuse_different_field_2": "PASSED",
+        "tests/test_validators.py::test_annotated_validator_runs_before_field_validators": "PASSED",
+        "tests/test_validators.py::test_annotated_validator_before": "PASSED",
+        "tests/test_validators.py::test_validation_each_item_nullable": "PASSED",
+        "tests/test_validators.py::test_invalid_field": "PASSED",
+        "tests/test_validators.py::test_validator_always_post_optional": "PASSED",
+        "tests/test_validators.py::test_root_validator_subclass": "PASSED",
+        "tests/test_validators.py::test_simple": "PASSED",
+        "tests/test_validators.py::test_v1_validator_signature_with_field": "PASSED",
+        "tests/test_validators.py::test_validate_default_raises_for_dataclasses": "PASSED",
+        "tests/test_validators.py::test_custom_type_field_name_typed_dict": "PASSED",
+        "tests/test_validators.py::test_model_config_validate_default": "PASSED",
+        "tests/test_validators.py::test_validator_allow_reuse_different_field_1": "PASSED",
+        "tests/test_validators.py::test_root_validator_skip_on_failure_valid[kwargs1]": "PASSED",
+        "tests/test_validators.py::test_decorator_proxy": "PASSED",
+        "tests/test_validators.py::test_validator_allow_reuse_same_field": "PASSED",
+        "tests/test_validators.py::test_custom_type_field_name_dataclass": "PASSED",
+        "tests/test_validators.py::test_functools_partialmethod_validator_v2[partial_info_val_func]": "PASSED",
+        "tests/test_validators.py::test_overridden_root_validators": "PASSED",
+        "tests/test_validators.py::test_inheritance_keep": "PASSED",
+        "tests/test_validators.py::test_root_validator_skip_on_failure_valid[kwargs3]": "PASSED",
+        "tests/test_validators.py::test_v1_validator_signature_kwargs2": "PASSED",
+        "tests/test_validators.py::test_root_validator_allow_reuse_inheritance": "PASSED",
+        "tests/test_validators.py::test_validate_multiple": "PASSED",
+        "tests/test_validators.py::test_validator_function_error_hide_input[after-config5-type=value_error]": "PASSED",
+        "tests/test_validators.py::test_validate_child": "PASSED",
+        "tests/test_validators.py::test_validator_always_pre": "PASSED",
+        "tests/test_validators.py::test_v1_validator_signature_with_config": "PASSED",
+        "tests/test_validators.py::test_plain_validator_field_name": "PASSED",
+        "tests/test_validators.py::test_annotated_validator_nested": "PASSED",
+        "tests/test_validators.py::test_validator_always_optional": "PASSED",
+        "tests/test_validators.py::test_field_validator_validate_default_on_inheritance": "PASSED",
+        "tests/test_validators.py::test_int_overflow_validation[inf0]": "PASSED",
+        "tests/test_validators.py::test_functools_partial_validator_v2[partial_val_func2]": "PASSED",
+        "tests/test_validators.py::test_root_validator_allow_reuse_same_field": "PASSED",
+        "tests/test_validators.py::test_functools_partialmethod_validator_v1[partial_val_func2]": "PASSED",
+        "tests/test_validators.py::test_functools_partial_validator_v1[partial_values_val_func2]": "PASSED",
+        "tests/test_validators.py::test_annotated_validator_typing_cache[BeforeValidator-<lambda>]": "PASSED",
+        "tests/test_validators.py::test_use_no_fields": "PASSED",
+        "tests/test_validators.py::test_validating_assignment_values_dict": "PASSED",
+        "tests/test_validators.py::test_field_validator_bad_fields_throws_configerror": "PASSED",
+        "tests/test_validators.py::test_wildcard_validator_error[field_validator-pytest_warns1]": "PASSED",
+        "tests/test_validators.py::test_field_validator_validate_default_pre": "PASSED",
+        "tests/test_validators.py::test_wrap_validator_field_name": "PASSED",
+        "tests/test_validators.py::test_annotated_validator_after": "PASSED",
+        "tests/test_validators.py::test_custom_type_field_name_model": "PASSED",
+        "tests/test_validators.py::test_validate_pre_error": "PASSED",
+        "tests/test_validators.py::test_model_validator_returns_ignore": "PASSED",
+        "tests/test_validators.py::test_literal_validator_str_enum": "PASSED",
+        "tests/test_validators.py::test_datetime_validator": "PASSED",
+        "tests/test_validators.py::test_before_validator_field_name": "PASSED",
+        "tests/test_validators.py::test_use_bare_field_validator": "PASSED",
+        "tests/test_validators.py::test_validator_allow_reuse_different_field_3": "PASSED",
+        "tests/test_validators.py::test_functools_partial_validator_v1[partial_val_func1]": "PASSED",
+        "tests/test_validators.py::test_functools_partial_validator_v1[partial_val_func2]": "PASSED",
+        "tests/test_validators.py::test_reuse_global_validators": "PASSED",
+        "tests/test_validators.py::test_validating_assignment_dict": "PASSED",
+        "tests/test_validators.py::test_validator_always_post": "PASSED",
+        "tests/test_validators.py::test_root_validator_types": "PASSED",
+        "tests/test_validators.py::test_functools_partialmethod_validator_v1[partial_val_func1]": "PASSED",
+        "tests/test_validators.py::test_validation_each_item_invalid_type": "PASSED",
+        "tests/test_validators.py::test_root_validator_pre": "PASSED",
+        "tests/test_validators.py::test_functools_partialmethod_validator_v1_cls_method[partial_cls_val_func1]": "PASSED",
+        "tests/test_validators.py::test_field_validator_self": "PASSED",
+        "tests/test_validators.py::test_custom_type_field_name_named_tuple": "PASSED",
+        "tests/test_validators.py::test_wildcard_validators[field_validator-pytest_warns1]": "PASSED",
+        "tests/test_validators.py::test_field_validator_validate_default_optional": "PASSED",
+        "tests/test_validators.py::test_bare_root_validator": "PASSED",
+        "tests/test_validators.py::test_validator_with_underscore_name": "PASSED",
+        "tests/test_validators.py::test_deque_validation": "PASSED",
+        "tests/test_validators.py::test_validating_assignment_extra": "PASSED",
+        "tests/test_validators.py::test_validate_whole": "PASSED",
+        "tests/test_validators.py::test_inheritance_replace": "PASSED",
+        "tests/test_validators.py::test_union_literal_with_constraints": "PASSED",
+        "tests/test_validators.py::test_after_validator_field_name": "PASSED",
+        "tests/test_validators.py::test_literal_validator": "PASSED",
+        "tests/test_validators.py::test_validate_not_always": "PASSED",
+        "tests/test_validators.py::test_validate_parent": "PASSED",
+        "tests/test_validators.py::test_root_validator_skip_on_failure_valid[kwargs2]": "PASSED",
+        "tests/test_validators.py::test_int_overflow_validation[inf1]": "PASSED",
+        "tests/test_validators.py::test_validate_always": "PASSED",
+        "tests/test_validators.py::test_root_validator_classmethod[True-False]": "PASSED",
+        "tests/test_validators.py::test_validating_assignment_model_validator_before_fail": "PASSED",
+        "tests/test_validators.py::test_validator_allow_reuse_inheritance": "PASSED",
+        "tests/test_validators.py::test_annotated_validator_typing_cache[PlainValidator-<lambda>]": "PASSED",
+        "tests/test_validators.py::test_validating_assignment_ok": "PASSED",
+        "tests/test_validators.py::test_root_validator_self": "PASSED",
+        "tests/test_validators.py::test_custom_type_field_name_validate_call": "PASSED",
+        "tests/test_validators.py::test_functools_partialmethod_validator_v2_cls_method[partial_cls_val_func1]": "PASSED",
+        "tests/test_validators.py::test_use_bare": "PASSED",
+        "tests/test_validators.py::test_validating_assignment_value_change": "PASSED",
+        "tests/test_validators.py::test_functools_partial_validator_v1[partial_values_val_func1]": "PASSED",
+        "tests/test_validators.py::test_field_validator_validate_default": "PASSED",
+        "tests/test_validators.py::test_assert_raises_validation_error": "PASSED",
+        "tests/test_validators.py::test_classmethod": "PASSED",
+        "tests/test_validators.py::test_functools_partial_validator_v2[partial_info_val_func]": "PASSED",
+        "tests/test_validators.py::test_annotated_validator_builtin": "PASSED",
+        "tests/test_validators.py::test_validate_default_raises_for_basemodel": "PASSED"
+      },
+      "authoritative_snapshot": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1",
+      "snapshot_all_members_size_and_sha256_verified": true,
+      "snapshot_extra_files_not_counted_as_manifest_members": [
+        "gpu1003-pyd8567-coder-a1_closed_manifest_v1.json",
+        "sync_receipt_v3.json"
+      ],
+      "execution_review_passed": true,
+      "raw_reward": 0,
+      "failure_category": "tests_failed",
+      "failure_is_ordinary_candidate_behavior": true,
+      "infrastructure_failure_observed": false,
+      "source_change_related": true,
+      "cleanup_no_residue_verified_within_job_scope": true,
+      "actor_profile": {
+        "cpus": 2,
+        "memory_bytes": 4294967296,
+        "pids_limit": 512
+      },
+      "formal_install_execution": {
+        "uid": 54322,
+        "install_rc": 0,
+        "test_rc": 1,
+        "all_failed_install_commands": [],
+        "editable_project_install": "python -m pip install -e .",
+        "test_requirements_install": "python -m pip install -r /tmp/rh2-envrepair-testing-reqs.txt",
+        "import_path": "/testbed/pydantic/__init__.py",
+        "package_version": "2.6.0a1",
+        "fixed_offline_prerequisite": "verified",
+        "trusted_setup_restored_and_applied": true,
+        "control_surface_protect_ok": true,
+        "runner_digest_before_after": "cdcb38ab1e198b9cd561dd143e40400f292c84e3211d65ee5e13cc16744cea34"
+      },
+      "baseline_mode_scope": "tar 中三个 executable 文件原权限为0777；census/manifest采用 regular 100755/100644规范模式。逐内容及规范执行位相同，未宣称原POSIX权限逐位相同。",
+      "source_shared_entry_hash_found_in_current_source_manifest": true,
+      "actual_grader_prelaunch_raw_report_archived": false,
+      "actual_Docker_call_streams_all_archived": false,
+      "failure_analysis": {
+        "production_path": "pydantic/functional_validators.py",
+        "mechanism": "PlainValidator 新增无条件 handler(source_type)，为保留 serialization 先强制生成内部 schema，破坏 PlainValidator 可绕过内部验证/schema 的行为。",
+        "failure_references": [
+          "tests/test_validators.py::test_plain_validator_plain_serializer",
+          "tests/test_validators.py::test_plain_validator_serializer_unsupported_type_both_orders",
+          "tests/test_validators.py::test_plain_validator_unresolved_inner_forward_reference",
+          "tests/test_validators.py::test_plain_validator_typing_typeddict_inner_schema_not_required"
+        ],
+        "raw_stack": [
+          "tests/test_validators.py:2860 -> pydantic/functional_validators.py:157 -> _unknown_type_schema",
+          "tests/test_validators.py:2900 -> pydantic/functional_validators.py:157 -> _unknown_type_schema",
+          "tests/test_validators.py:2916 -> Model not fully defined",
+          "tests/test_validators.py:2925 -> pydantic/functional_validators.py:157 -> _typed_dict_schema"
+        ],
+        "errors": [
+          "PydanticSchemaGenerationError (Unsupported)",
+          "PydanticUserError (NotDefinedAnywhere8567)",
+          "PydanticUserError (typing.TypedDict on Python <3.12)"
+        ],
+        "original_P_passed": 158,
+        "F_full_nodes_passed": 0,
+        "F_full_nodes_total": 2,
+        "added_P_passed": 0,
+        "added_P_failed": 2,
+        "original_F_stopped_at_unsupported_subcase": true,
+        "later_subcases_after_unsupported_not_observed": true,
+        "public_bool_reproduction_after_patch": "{\"x\":\"0\",\"y\":\"1\"}",
+        "actor_development_limits": "首公开示例因Python3.8 typing.Annotated导入失败，模型改用typing_extensions后成功开发；另外三工具错误为自写诊断或不存在测试node。正式失败并非这些工具错误延续。只跑选中的1/1/8/11/1公开测试和2个自写测试，未跑完整正式新增行为。",
+        "fallback_claim_rejected": "公共bool示例改善不能等同于完整F通过；模型'all existing tests/backward compatibility'缺少所需边界验证。"
+      },
+      "raw_bindings": {
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/input_check.json": {
+          "sha256": "ff33c36e8e6efdb156783d2a1bf763b1844d5f248855cda4763e3db996f79fa4",
+          "bytes": 17035
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/gateway_audit.json": {
+          "sha256": "4ad10c5b1f2f8bbe0e89fdbdffeb4ac4b489e252c68af4678790fb27f429219f",
+          "bytes": 392
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/grading/report.json": {
+          "sha256": "8c4e1b63ce46edee682bd947fa70af0c91190fe42f78d7c059feb2622ef5db64",
+          "bytes": 1827
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/grading/status.json": {
+          "sha256": "ef4f130da1a4e7af394702e1dedb89ff790492a419a992cf4b09b731b29490a3",
+          "bytes": 2611
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/grading/projection.json": {
+          "sha256": "9b6d727f1b62a49669e3984665970f540030f6f7c0eb7481b37f8a3a6ea81c7c",
+          "bytes": 540
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/grading/baseline_rebuild_census.txt": {
+          "sha256": "08fe628db5cdea6c853291b4ea6ed1c888d0277860bf71119da7eb8144d392a3",
+          "bytes": 53265
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/attempt.json": {
+          "sha256": "eef6a3cab13b9da89a8f34d35c70a4aee3affa6ff42e82416984feae281078c4",
+          "bytes": 17829
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/harness/trajectory.jsonl": {
+          "sha256": "4ffefae5c54c194269933295b2e08636a475752294d675a49ab4b13d9cb41197",
+          "bytes": 436739
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/facts/prelaunch.json": {
+          "sha256": "7e29f4cd8a5ceef02a9ea8a4ee6e6ed2febe6361d3f87d3b77fe5cb310bca9ec",
+          "bytes": 2311
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/facts/activation_check.json": {
+          "sha256": "642a2622559317260c9d8b6fa662d256b93bd07bc01bd7ecfe6f331dba50e3a2",
+          "bytes": 509
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/frozen/frozen_patch.json": {
+          "sha256": "a66d90102e049dbdc11ff51948f9477afcc6169dcbee73e56a173147a4ad6e81",
+          "bytes": 48986
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/frozen/baseline_manifest.json": {
+          "sha256": "b7c0382c76bf60f132fb4ac6b060f5678e1ead5e86d0acc3cbfff0c4c313b0ab",
+          "bytes": 109163
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/frozen/baseline_census.txt": {
+          "sha256": "08fe628db5cdea6c853291b4ea6ed1c888d0277860bf71119da7eb8144d392a3",
+          "bytes": 53265
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/frozen/baseline.tar": {
+          "sha256": "c6728639451eec9b168632b1ba09af69b60848815ee1b156cd18332706cb8d19",
+          "bytes": 7096320
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/solver_prompt.txt": {
+          "sha256": "458abcd108a06689fe71cca7e18bbec90ba88d83c2ad1e1fb1d9e0a64fdef53c",
+          "bytes": 2196
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/grading/eval_logs/evallog_gpu1003-pyd8567-coder-a1_a6470f81.eval.log": {
+          "sha256": "08e8681a50bd29344f9fa067937eaed6c564ce75b5e8b7ecbf19f9e565725d05",
+          "bytes": 92191
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/grading/eval_logs/evallog_gpu1003-pyd8567-coder-a1_a6470f81.diagnostics.json": {
+          "sha256": "c889ce8db54d6886907f2df6a34267bbaffc3a99b40c428f97d1773a485eb795",
+          "bytes": 30291
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/gpu1003-pyd8567-coder-a1_closed_manifest_v1.json": {
+          "sha256": "c9399d48fe41d7b7591376b1358ffed198ba147c6e9960d29a64679dba038d8f",
+          "bytes": 70109
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/gpu1003-pyd8567-coder-a1_terminal_snapshot_v1.json": {
+          "sha256": "091cd9ab3c397ff2356af90426e0be25f1f9a99fa2888e8f0ee22a682d6c3c8b",
+          "bytes": 21251
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/gpu1003-pyd8567-coder-a1_closed_resource_v1.jsonl": {
+          "sha256": "9ba1e4f6d7f8967b88cc29f10ad205ee552fc85ca82b5882252833cc4b59f3a2",
+          "bytes": 28576
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/requests.jsonl": {
+          "sha256": "861b75fb95f4ea14bf044cf91afa34be5ecf88e0c7f07c5712763fafe05f343a",
+          "bytes": 4261998
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/responses.jsonl": {
+          "sha256": "85d93eecf3235272d06eb772e2da2f36600367fd6dbabcda6dc4b5f9797e2a68",
+          "bytes": 13755
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/diagnostics/QUEUE_V24_gpu1003-pyd8567-coder-a1_before/capture_receipt.json": {
+          "sha256": "8c59b5dd0bfdd0551b5e60a0b0587e680bc43a551b2e312d863a0a6878697a43",
+          "bytes": 1575
+        },
+        "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/diagnostics/QUEUE_V24_gpu1003-pyd8567-coder-a1_before/identity_binding_actual.json": {
+          "sha256": "a5739fc2570e82b2de7804c4d31124944b64dac9ef397d424c462ea675bbc08a",
+          "bytes": 2960
+        }
+      },
+      "policy_digest_and_excluded_census_digest_recomputed": true,
+      "baseline_private_added_test_names_absent": true
+    }
+  }
+}

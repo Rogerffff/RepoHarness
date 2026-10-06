@@ -1,0 +1,116 @@
+{
+ "instance_id": "numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb",
+ "template": "R-c",
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "        assert_array_equal(np.einsum('ti,ti->i', p, q, optimize=True),\n                           [10.] * 2)\n",
+     "new": "        assert_array_equal(np.einsum('ti,ti->i', p, q, optimize=True),\n                           [10.] * 2)\n        # the singleton operand may also come first\n        assert_array_equal(np.einsum('ti,ti->i', q, p, optimize=True),\n                           np.einsum('ti,ti->i', q, p, optimize=False))\n        assert_array_equal(np.einsum('ti,ti->i', q, p, optimize=True),\n                           [10.] * 2)\n"
+    },
+    {
+     "old": "    def test_einsum_sums_int8(self):\n",
+     "new": "        # a singleton label that is summed over (two operands)\n        x = np.array([1., 2., 3.])\n        y = np.array([5.])\n        assert_array_equal(np.einsum('i,i', x, y, optimize=True),\n                           np.einsum('i,i', x, y, optimize=False))\n        assert_array_equal(np.einsum('i,i', x, y, optimize=True), 30.)\n        a = np.arange(6.).reshape(2, 3)\n        b = np.arange(1., 5.).reshape(1, 4)\n        assert_array_equal(np.einsum('ij,jk->ik', a, b, optimize=True),\n                           np.einsum('ij,jk->ik', a, b, optimize=False))\n        assert_array_equal(np.einsum('ij,jk->ik', a, b, optimize=True),\n                           [[3., 6., 9., 12.], [12., 24., 36., 48.]])\n\n    def test_einsum_sums_int8(self):\n"
+    }
+   ]
+  }
+ ],
+ "expected_after": {
+  "TestEinSum.test_einsum_errors": "PASSED",
+  "TestEinSum.test_einsum_views": "PASSED",
+  "TestEinSum.test_einsum_sums_int8": "PASSED",
+  "TestEinSum.test_einsum_sums_uint8": "PASSED",
+  "TestEinSum.test_einsum_sums_int16": "PASSED",
+  "TestEinSum.test_einsum_sums_uint16": "PASSED",
+  "TestEinSum.test_einsum_sums_int32": "PASSED",
+  "TestEinSum.test_einsum_sums_uint32": "PASSED",
+  "TestEinSum.test_einsum_sums_int64": "PASSED",
+  "TestEinSum.test_einsum_sums_uint64": "PASSED",
+  "TestEinSum.test_einsum_sums_float16": "PASSED",
+  "TestEinSum.test_einsum_sums_float32": "PASSED",
+  "TestEinSum.test_einsum_sums_float64": "PASSED",
+  "TestEinSum.test_einsum_sums_longdouble": "PASSED",
+  "TestEinSum.test_einsum_sums_cfloat64": "PASSED",
+  "TestEinSum.test_einsum_sums_cfloat128": "PASSED",
+  "TestEinSum.test_einsum_sums_clongdouble": "PASSED",
+  "TestEinSum.test_einsum_misc": "PASSED",
+  "TestEinSum.test_einsum_broadcast": "PASSED",
+  "TestEinSum.test_einsum_fixedstridebug": "PASSED",
+  "TestEinSum.test_einsum_fixed_collapsingbug": "PASSED",
+  "TestEinSum.test_einsum_all_contig_non_contig_output": "PASSED",
+  "TestEinSum.test_small_boolean_arrays": "PASSED",
+  "TestEinSum.test_hadamard_like_products": "PASSED",
+  "TestEinSum.test_index_transformations": "PASSED",
+  "TestEinSum.test_complex": "PASSED",
+  "TestEinSum.test_collapse": "PASSED",
+  "TestEinSum.test_expand": "PASSED",
+  "TestEinSum.test_edge_cases": "PASSED",
+  "TestEinSum.test_inner_product": "PASSED",
+  "TestEinSum.test_random_cases": "PASSED",
+  "TestEinSumPath.test_memory_contraints": "PASSED",
+  "TestEinSumPath.test_long_paths": "PASSED",
+  "TestEinSumPath.test_edge_paths": "PASSED",
+  "TestEinSumPath.test_path_type_input": "PASSED"
+ },
+ "positive_control": "runs/r2e_actor_20260925/grader_cands/numpy_5e83_CA_gold_plus_blas_guard.patch",
+ "acceptance": {
+  "CA_gold_plus_blas_guard": {
+   "expected_score": 1,
+   "trial": "trials/rev_CA.json",
+   "trial_verdict": "match",
+   "patch": "runs/r2e_actor_20260925/grader_cands/numpy_5e83_CA_gold_plus_blas_guard.patch",
+   "note": "positive control (independently verified alternative, v1 section 5 / D4)"
+  },
+  "UP_upstream_bcast_nix_blas": {
+   "expected_score": 1,
+   "trial": "trials/rev_UP.json",
+   "trial_verdict": "match",
+   "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/cands/numpy_5e83_UP_upstream_bcast_nix_blas.patch",
+   "note": "second independent reasonable implementation (upstream-style); checks no false rejection"
+  },
+  "gold": {
+   "expected_score": 0,
+   "trial": "trials/rev_gold.json",
+   "trial_verdict": "mismatch",
+   "patch": "runs/r2e_static_prep_20260924/v3/private/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/gold.patch",
+   "note": "original gold fails the summed-singleton-label block (ValueError: shape-mismatch for sum, numeric.py:1289); 15 check_einsum_sums keys FAILED; recorded per v1 section 5 / D4",
+   "trial_before_revision": "trials/cur_gold.json",
+   "trial_before_revision_verdict": "match"
+  },
+  "noop": {
+   "expected_score": 0,
+   "trial": "trials/rev_noop.json",
+   "trial_verdict": "mismatch",
+   "patch": "none",
+   "note": "15 check_einsum_sums keys FAILED at the original gh-10343 assertion",
+   "trial_before_revision": "trials/cur_noop.json",
+   "trial_before_revision_verdict": "mismatch"
+  },
+  "CC_relax_one_direction": {
+   "expected_score": 0,
+   "trial": "trials/rev_CC.json",
+   "trial_verdict": "mismatch",
+   "patch": "runs/r2e_actor_20260925/grader_cands/numpy_5e83_CC_relax_one_direction.patch",
+   "note": "trigger for edit 1; was 1 before revision; 15 keys FAILED with the label 't' size error (swap assertion)",
+   "trial_before_revision": "trials/cur_CC.json",
+   "trial_before_revision_verdict": "match"
+  }
+ },
+ "parent": {
+  "hidden_test": "test_1.py",
+  "sha256": "799c5db85a3a00d89af16a0473d1464a8ebffba828dc1f5e9048db77bf18cfe8",
+  "expected_output": "unchanged (current formal material)",
+  "material_revisions": []
+ },
+ "revised_hidden_test_sha256": "18a7570132d2f0bab3a584ecd2325f4bfe921d657bac74bfde7448ac94231897",
+ "trial_image": "sha256:df792ef10616bb4d8f173695b0d4ac7c6c19107dd799be778ed13f5083a6e867",
+ "trial_recipe_id": "r2e_derive_v1+sysconfig_v1",
+ "trial_tool": "rh2/experiments/r2e_lifecycle_20260929/trial_grade.py (trial, not formal grading)",
+ "environment_check_current_material": {
+  "noop": "trials/cur_noop.json",
+  "gold": "trials/cur_gold.json"
+ },
+ "status": "draft_trialed; needs formal revision sheet, formal grading and Codex review"
+}

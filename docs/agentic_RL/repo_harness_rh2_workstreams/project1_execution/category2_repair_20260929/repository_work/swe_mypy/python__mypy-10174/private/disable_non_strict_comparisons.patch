@@ -1,0 +1,12 @@
+diff --git a/mypy/checkexpr.py b/mypy/checkexpr.py
+--- a/mypy/checkexpr.py
++++ b/mypy/checkexpr.py
+@@ -2309,6 +2309,8 @@
+         """
+         if not self.chk.options.strict_equality:
+             return False
++        if not self.chk.options.strict_optional:
++            return False
+ 
+         left, right = get_proper_types((left, right))
+ 

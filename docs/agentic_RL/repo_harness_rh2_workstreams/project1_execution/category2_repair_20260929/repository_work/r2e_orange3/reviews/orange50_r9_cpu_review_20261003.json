@@ -1,0 +1,3320 @@
+{
+  "schema_id": "category2.orange50.r9_cpu_independent_review.v1",
+  "as_of": "2026-10-03",
+  "stage": "diagnostic_cpu_acceptance_verified",
+  "reviewer_role": "non_author_result_review_subagent",
+  "scope": "只读核新R9本题CPU实际结果和必要开发验证；复用既有公开阅读／材料审查，不重跑共用101检查或实验。",
+  "task_id": "r2e_gym_subset::orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e",
+  "material_revisions": [
+    "r2e-mr-090",
+    "r2e-mr-091"
+  ],
+  "release_binding": {
+    "task_id": "r2e_gym_subset::orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e",
+    "instance_id": "orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e",
+    "material_revisions": [
+      "r2e-mr-090",
+      "r2e-mr-091"
+    ],
+    "public_bundle_digest": "sha256:7583dacfffac7ec384214af56ac1d911996bfcdd511c3e4efa4041ee534be789",
+    "grading_bundle_digest": "sha256:891b19e99e240d054c6242486bcbf8c0f6c39861f9ecb7bc4370cca823e8d95b",
+    "environment_package_digest": "sha256:e00a2994cf3ab66b3247d4308496c321e38038c05c834ee48b322f1aa8c53e16",
+    "problem_statement_sha256": "sha256:8d7ddab841c89504b41268db2e13aed59a67ac13aaa791f8c32c70a1a3a321ef",
+    "hidden_test_files": [
+      {
+        "path": "__init__.py",
+        "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "test_1.py",
+        "sha256": "sha256:126f09f984b468b637d0d22524c89857a4950178cb8574935262aeb61df43cd9"
+      }
+    ],
+    "hidden_tests_tree_sha256": "sha256:5d7df73383718cc9619636a1da9bdd1d24967a3da3baead004ee4d905a683dcc",
+    "expected_output_json_sha256": "sha256:c73cea6662f37b53861137d2bc32e784923a9041d8e644765e16f7a729e84129",
+    "run_tests_sh_sha256": "sha256:5dee57d9beda24a5401b433fa66b74f423c4ab79eb04046265b0f5447d3b1315",
+    "expected_total": 48,
+    "expected_failed_count": 0,
+    "release_id": "cat2-cpu-r2e089092-swe13-git-20261003-v1",
+    "local_release_dir": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe13_git_candidate_v1",
+    "external_manifest": {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe13_git_candidate_v1/manifest.json",
+      "sha256": "sha256:694a1cd364a4bc3348069bd9dd362c4432fbd25339b192d149a2f29d9a709230"
+    },
+    "registry": {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe13_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v20.json",
+      "sha256": "sha256:5486ec27b805f846a3b8b914ff9804ec569374df34c62f288b9c40a9c78fab79"
+    },
+    "input_pins": {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe13_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/t1_input_pins_r2e_v21.json",
+      "sha256": "sha256:be47a6dc4f2a043d4a72584b710bbb8ccc376ebabad5673001e14fcc327de27b"
+    },
+    "base_commit": "30c5657673a46e452162b1cb4fc6415baada5784",
+    "source_image_ref_by_digest": "namanjain12/orange3_final@sha256:d059adb9d88d0e75f357ec4a180f00459c1890a45ba8b4628c709d9c2e9fc721",
+    "reference_binding": {
+      "source_file": {
+        "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe13_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/validation_bundles_v0.jsonl",
+        "sha256": "sha256:763cd1b9e05025cfd0ab6bf1f03dd1536457d4e9283f1b61e56c9abbea447c11"
+      },
+      "task_line_sha256": "sha256:c4bfe93873be7fc4db272fa31ea83682371863c6e510196d3272ddedd2333e49",
+      "golden_patch_sha256": "sha256:8f3d578bfd467133d7db593389f03d1692cbe0cc1df78d2777b57d4ddefe8154",
+      "visibility": "private host grading only"
+    },
+    "actual_cpu_image": {
+      "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+      "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+      "recipe_sha256": "sha256:2e03f54f3ec0d3269c7e5fa13ca33435351b51ede9cd692fe009d4d86fcad4ce",
+      "base_recipe_id": "r2e_derive_v1+material_v2",
+      "base_recipe_sha256": "sha256:85b75ce857996b1ca8a22c579aa0b7d73dbf4ee97d97e37c65a8237ce20d0d53",
+      "facts": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_build_readback_v1/derived/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/facts.json",
+        "sha256": "sha256:e4219b34ccb68ae20ef4acb9f060fc55cdb95711a331698caf104d51aae96879"
+      },
+      "integrity_checks_passed": 21
+    },
+    "deployment_receipt": {
+      "path": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r9_publication_receipt.json",
+      "sha256": "sha256:27bfca856a58ad6a0c7f4c7ae90cda09a27f382c8c86a465f6f3d2fab0bd3180"
+    },
+    "qualification_limits": {
+      "task_cpu_matrix_complete": false,
+      "task_independent_result_review_complete": false,
+      "gpu_probe_admitted": false
+    }
+  },
+  "reference": {
+    "expected_json_sha256": "sha256:c73cea6662f37b53861137d2bc32e784923a9041d8e644765e16f7a729e84129",
+    "key_count": 48,
+    "expected_map": {
+      "AttrDescTest.test_name": "PASSED",
+      "AttrDescTest.test_reset": "PASSED",
+      "AttrDescTest.test_to_dict": "PASSED",
+      "DiscAttrTest.test_colors": "PASSED",
+      "DiscAttrTest.test_create_variable": "PASSED",
+      "DiscAttrTest.test_from_dict_coliding_values": "PASSED",
+      "DiscAttrTest.test_from_dict_exceptions": "PASSED",
+      "DiscAttrTest.test_reset": "PASSED",
+      "DiscAttrTest.test_to_dict": "PASSED",
+      "DiscAttrTest.test_values": "PASSED",
+      "ContAttrDescTest.test_create_variable": "PASSED",
+      "ContAttrDescTest.test_from_dict_exceptions": "PASSED",
+      "ContAttrDescTest.test_palette": "PASSED",
+      "ContAttrDescTest.test_reset": "PASSED",
+      "ContAttrDescTest.test_to_dict": "PASSED",
+      "TestDiscColorTableModel.test_column_count": "PASSED",
+      "TestDiscColorTableModel.test_data": "PASSED",
+      "TestDiscColorTableModel.test_reset": "PASSED",
+      "TestDiscColorTableModel.test_row_count": "PASSED",
+      "TestDiscColorTableModel.test_set_data": "PASSED",
+      "TestContColorTableModel.test_column_count": "PASSED",
+      "TestContColorTableModel.test_copy_to_all": "PASSED",
+      "TestContColorTableModel.test_data": "PASSED",
+      "TestContColorTableModel.test_reset": "PASSED",
+      "TestContColorTableModel.test_row_count": "PASSED",
+      "TestContColorTableModel.test_set_data": "PASSED",
+      "TestColorStripDelegate.test_color_combo": "PASSED",
+      "TestColorStripDelegate.test_paint": "PASSED",
+      "TestOWColor.test_commit_on_data_changed": "PASSED",
+      "TestOWColor.test_image_export": "PASSED",
+      "TestOWColor.test_invalid_input_colors": "PASSED",
+      "TestOWColor.test_load": "PASSED",
+      "TestOWColor.test_load_ignore_warning": "PASSED",
+      "TestOWColor.test_lose_data": "PASSED",
+      "TestOWColor.test_minimum_size": "PASSED",
+      "TestOWColor.test_model_content": "PASSED",
+      "TestOWColor.test_msg_base_class": "PASSED",
+      "TestOWColor.test_parse_var_defs": "PASSED",
+      "TestOWColor.test_parse_var_defs_invalid": "PASSED",
+      "TestOWColor.test_parse_var_defs_no_rename": "PASSED",
+      "TestOWColor.test_parse_var_defs_shows_warnings": "PASSED",
+      "TestOWColor.test_report": "PASSED",
+      "TestOWColor.test_reset": "PASSED",
+      "TestOWColor.test_reuse_old_settings": "PASSED",
+      "TestOWColor.test_save": "PASSED",
+      "TestOWColor.test_save_low": "PASSED",
+      "TestOWColor.test_string_variables": "PASSED",
+      "TestOWColor.test_unconditional_commit_on_new_signal": "PASSED"
+    },
+    "source_path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_build_readback_v1/private/host_grading_views.jsonl",
+    "source_sha256": "sha256:4632b750bd377d38ce903b5b8abcf5ebd96f16a0bc7855be40f7a608087ea45b"
+  },
+  "build_readback": {
+    "files_verified": 41,
+    "manifest_path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_build_readback_v1/readback_manifest.json",
+    "manifest_sha256": "sha256:d1d86b91d1d8c2fcb16739b82d6bd67fd2858af39324e178e146185f824afa14",
+    "archive_and_receipt_match": true,
+    "target_integrity_checks_passed": 21,
+    "does_not_imply_task_cpu_acceptance": true
+  },
+  "v1_failure": {
+    "files_verified": 13,
+    "stage": "before_candidate_or_grader_execution",
+    "reason": "FileNotFoundError: prepared/replay_summary.json",
+    "formal_task_attempts": 0,
+    "formal_scores": 0,
+    "summary_noop_item_is_driver_failure_only": true,
+    "evidence_root": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_failed_v1",
+    "manifest_sha256": "sha256:d409e513b024ef52b19873754a690de790365cff85ae20efc9c6ef4f9d44f45b"
+  },
+  "corrected_prepared": {
+    "prepared_manifest_sha256": "sha256:25b3007b072b2fa5ae5049e200840229677c3375e651671b4dbd502bd9cbd93c",
+    "replay_summary_sha256": "sha256:ba8a44ab59587e8b7bdabc874f58127a90a1b78b70ceefc570700ca15253c62f",
+    "host_grading_sha256": "sha256:4632b750bd377d38ce903b5b8abcf5ebd96f16a0bc7855be40f7a608087ea45b",
+    "rollout_bytes_equal_to_old_prepared": true
+  },
+  "candidate_reviews": [
+    {
+      "candidate": "noop",
+      "expected_score": 0,
+      "observed_score": 0.0,
+      "status": "verified_completed_control",
+      "files": 13,
+      "readback_failures": [],
+      "readback_manifest": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_noop_completed_v2/readback_manifest.json",
+        "sha256": "sha256:72de136eb90346b9341a0201b30d5a8ae070bf0b4bde0f736cb256b5eadf61a9"
+      },
+      "readback_receipt": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_noop_completed_v2_readback_receipt.json",
+        "sha256": "sha256:071e2ece799b6b17e10df09f530f48cbb181b379b33aa4240f744c746498616a"
+      },
+      "archive_sha256_matches": true,
+      "request_sha256_matches": true,
+      "ledger": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_noop_completed_v2/noop/ledger.jsonl",
+        "sha256": "sha256:d8d583cf877967ba18bb597ca21118050476f1c94f8247db7ea393bc8eabb430"
+      },
+      "raw_eval_log": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_noop_completed_v2/noop/eval_logs/evallog_replay-orange-50f6a758-r_15ff04f0.eval.log",
+        "sha256": "sha256:59ab82c73e7cd1cea6ef3d3321725064cafaf475e72f9894f85736f6c1f82247",
+        "ledger_digest_matches": true,
+        "partial": false
+      },
+      "expected_keys_equal": true,
+      "expected_count": 48,
+      "observed_count": 48,
+      "match_count": 47,
+      "mismatches": {
+        "TestOWColor.test_load_ignore_warning": "FAILED"
+      },
+      "missing": [],
+      "unexpected": [],
+      "observed_map": {
+        "AttrDescTest.test_name": "PASSED",
+        "AttrDescTest.test_reset": "PASSED",
+        "AttrDescTest.test_to_dict": "PASSED",
+        "DiscAttrTest.test_colors": "PASSED",
+        "DiscAttrTest.test_create_variable": "PASSED",
+        "DiscAttrTest.test_from_dict_coliding_values": "PASSED",
+        "DiscAttrTest.test_from_dict_exceptions": "PASSED",
+        "DiscAttrTest.test_reset": "PASSED",
+        "DiscAttrTest.test_to_dict": "PASSED",
+        "DiscAttrTest.test_values": "PASSED",
+        "ContAttrDescTest.test_create_variable": "PASSED",
+        "ContAttrDescTest.test_from_dict_exceptions": "PASSED",
+        "ContAttrDescTest.test_palette": "PASSED",
+        "ContAttrDescTest.test_reset": "PASSED",
+        "ContAttrDescTest.test_to_dict": "PASSED",
+        "TestDiscColorTableModel.test_column_count": "PASSED",
+        "TestDiscColorTableModel.test_data": "PASSED",
+        "TestDiscColorTableModel.test_reset": "PASSED",
+        "TestDiscColorTableModel.test_row_count": "PASSED",
+        "TestDiscColorTableModel.test_set_data": "PASSED",
+        "TestContColorTableModel.test_column_count": "PASSED",
+        "TestContColorTableModel.test_copy_to_all": "PASSED",
+        "TestContColorTableModel.test_data": "PASSED",
+        "TestContColorTableModel.test_reset": "PASSED",
+        "TestContColorTableModel.test_row_count": "PASSED",
+        "TestContColorTableModel.test_set_data": "PASSED",
+        "TestColorStripDelegate.test_color_combo": "PASSED",
+        "TestColorStripDelegate.test_paint": "PASSED",
+        "TestOWColor.test_commit_on_data_changed": "PASSED",
+        "TestOWColor.test_image_export": "PASSED",
+        "TestOWColor.test_invalid_input_colors": "PASSED",
+        "TestOWColor.test_load": "PASSED",
+        "TestOWColor.test_lose_data": "PASSED",
+        "TestOWColor.test_minimum_size": "PASSED",
+        "TestOWColor.test_model_content": "PASSED",
+        "TestOWColor.test_msg_base_class": "PASSED",
+        "TestOWColor.test_parse_var_defs": "PASSED",
+        "TestOWColor.test_parse_var_defs_invalid": "PASSED",
+        "TestOWColor.test_parse_var_defs_no_rename": "PASSED",
+        "TestOWColor.test_parse_var_defs_shows_warnings": "PASSED",
+        "TestOWColor.test_report": "PASSED",
+        "TestOWColor.test_reset": "PASSED",
+        "TestOWColor.test_reuse_old_settings": "PASSED",
+        "TestOWColor.test_save": "PASSED",
+        "TestOWColor.test_save_low": "PASSED",
+        "TestOWColor.test_string_variables": "PASSED",
+        "TestOWColor.test_unconditional_commit_on_new_signal": "PASSED",
+        "TestOWColor.test_load_ignore_warning": "FAILED"
+      },
+      "failure_location": {
+        "key": "TestOWColor.test_load_ignore_warning",
+        "file": "r2e_tests/test_1.py",
+        "line": 802,
+        "assertion": "msg_box.assert_called()",
+        "scenario": "first single unused variable",
+        "exception": "AssertionError: Expected warning to have been called."
+      },
+      "apply": {
+        "method": "noop",
+        "patch_sha256": null,
+        "stage_error": null,
+        "apply_ok": true,
+        "included_paths": [],
+        "frozen_digest": "sha256:1ffc2fccd6dc643966048a0810435c4b3c2466263e4b77661fb031364871c2b7",
+        "frozen_digest_matches": true,
+        "baseline_digest": "sha256:f2cf4b7df5add1e28b0ecc74a167a22bbdf4ed4ad4a65265f6d524a54fedb2cb",
+        "baseline_digest_matches": true,
+        "source_entries": [],
+        "patch_matches_frozen_in_memory": null
+      },
+      "image_id_actual": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+      "overlay": {
+        "derived_image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+        "derived_image_ref": "rh2-category2-orange3-c-r9-v1/orange3:50f6a758f1c6-r2e_derive_v1m2s",
+        "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+        "recipe_sha256": "sha256:2e03f54f3ec0d3269c7e5fa13ca33435351b51ede9cd692fe009d4d86fcad4ce"
+      },
+      "grading_semantics": "r2e_expected_map",
+      "failure_category": "tests_failed",
+      "import_observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/Orange/__init__.py",
+        "RH2_OBS_PKG_VERSION": "3.32.0.dev",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d"
+      },
+      "setup_budget": {
+        "before": 300.0,
+        "after": 1200.0,
+        "test_seconds": 1800.0,
+        "source": "r2e_gym_subset::orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e"
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 6.905,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "cli_footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/matrices/orange-50f6a758-r9-matrix-c-20261003-v2/noop/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "resource_policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "resource_peak_mb": 2248.68,
+      "resource_facts": null,
+      "independent_hostconfig_cgroup_measurement": false,
+      "resource_limit": "noop未在独立观察窗口；仅保留policy声明及ledger峰值。",
+      "reference_skipped": [],
+      "num_parsed_outside_segment": 0,
+      "runtime_source_loading_limit": "只有Orange包import path及正式差分评分；owcolor具体__file__／source SHA待CC诊断补齐。",
+      "resource_observation_coverage": null,
+      "matrix_complete_ledger_identity_matches_previous": true,
+      "complete_matrix_ledger_path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/matrix/noop/ledger.jsonl",
+      "cleanup_role": "candidate_container"
+    },
+    {
+      "candidate": "gold",
+      "expected_score": 1,
+      "observed_score": 1.0,
+      "status": "verified_completed_control",
+      "files": 14,
+      "readback_failures": [],
+      "readback_manifest": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_gold_completed_v2/readback_manifest.json",
+        "sha256": "sha256:be823e49d3a4f99053d94f05c775fa585e6ab960c31a475f6043cf842dcacc05"
+      },
+      "readback_receipt": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_gold_completed_v2_readback_receipt.json",
+        "sha256": "sha256:4b08974e06b6117c70629626155074ee836828de47085fcf5858dc4a6ebf74eb"
+      },
+      "archive_sha256_matches": true,
+      "request_sha256_matches": true,
+      "ledger": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_gold_completed_v2/gold/ledger.jsonl",
+        "sha256": "sha256:902d8cbec5ff2cf741d2a9c05253cefd7f858b273e40063adcce21a43256616a"
+      },
+      "raw_eval_log": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_gold_completed_v2/gold/eval_logs/evallog_replay-orange-50f6a758-r_590cb892.eval.log",
+        "sha256": "sha256:e9fc9e89453798ebf0ee2b39f227ecadecc423e1f1de1cf2497e39531c327929",
+        "ledger_digest_matches": true,
+        "partial": false
+      },
+      "expected_keys_equal": true,
+      "expected_count": 48,
+      "observed_count": 48,
+      "match_count": 48,
+      "mismatches": {},
+      "missing": [],
+      "unexpected": [],
+      "observed_map": {
+        "AttrDescTest.test_name": "PASSED",
+        "AttrDescTest.test_reset": "PASSED",
+        "AttrDescTest.test_to_dict": "PASSED",
+        "DiscAttrTest.test_colors": "PASSED",
+        "DiscAttrTest.test_create_variable": "PASSED",
+        "DiscAttrTest.test_from_dict_coliding_values": "PASSED",
+        "DiscAttrTest.test_from_dict_exceptions": "PASSED",
+        "DiscAttrTest.test_reset": "PASSED",
+        "DiscAttrTest.test_to_dict": "PASSED",
+        "DiscAttrTest.test_values": "PASSED",
+        "ContAttrDescTest.test_create_variable": "PASSED",
+        "ContAttrDescTest.test_from_dict_exceptions": "PASSED",
+        "ContAttrDescTest.test_palette": "PASSED",
+        "ContAttrDescTest.test_reset": "PASSED",
+        "ContAttrDescTest.test_to_dict": "PASSED",
+        "TestDiscColorTableModel.test_column_count": "PASSED",
+        "TestDiscColorTableModel.test_data": "PASSED",
+        "TestDiscColorTableModel.test_reset": "PASSED",
+        "TestDiscColorTableModel.test_row_count": "PASSED",
+        "TestDiscColorTableModel.test_set_data": "PASSED",
+        "TestContColorTableModel.test_column_count": "PASSED",
+        "TestContColorTableModel.test_copy_to_all": "PASSED",
+        "TestContColorTableModel.test_data": "PASSED",
+        "TestContColorTableModel.test_reset": "PASSED",
+        "TestContColorTableModel.test_row_count": "PASSED",
+        "TestContColorTableModel.test_set_data": "PASSED",
+        "TestColorStripDelegate.test_color_combo": "PASSED",
+        "TestColorStripDelegate.test_paint": "PASSED",
+        "TestOWColor.test_commit_on_data_changed": "PASSED",
+        "TestOWColor.test_image_export": "PASSED",
+        "TestOWColor.test_invalid_input_colors": "PASSED",
+        "TestOWColor.test_load": "PASSED",
+        "TestOWColor.test_load_ignore_warning": "PASSED",
+        "TestOWColor.test_lose_data": "PASSED",
+        "TestOWColor.test_minimum_size": "PASSED",
+        "TestOWColor.test_model_content": "PASSED",
+        "TestOWColor.test_msg_base_class": "PASSED",
+        "TestOWColor.test_parse_var_defs": "PASSED",
+        "TestOWColor.test_parse_var_defs_invalid": "PASSED",
+        "TestOWColor.test_parse_var_defs_no_rename": "PASSED",
+        "TestOWColor.test_parse_var_defs_shows_warnings": "PASSED",
+        "TestOWColor.test_report": "PASSED",
+        "TestOWColor.test_reset": "PASSED",
+        "TestOWColor.test_reuse_old_settings": "PASSED",
+        "TestOWColor.test_save": "PASSED",
+        "TestOWColor.test_save_low": "PASSED",
+        "TestOWColor.test_string_variables": "PASSED",
+        "TestOWColor.test_unconditional_commit_on_new_signal": "PASSED"
+      },
+      "failure_location": null,
+      "apply": {
+        "method": "git_apply",
+        "patch_sha256": "sha256:8f3d578bfd467133d7db593389f03d1692cbe0cc1df78d2777b57d4ddefe8154",
+        "stage_error": null,
+        "apply_ok": true,
+        "included_paths": [
+          "Orange/widgets/data/owcolor.py"
+        ],
+        "frozen_digest": "sha256:75abc30587abdd28a9967cfffe51f31de9694a5c184945d2ac03a995bb941125",
+        "frozen_digest_matches": true,
+        "baseline_digest": "sha256:f2cf4b7df5add1e28b0ecc74a167a22bbdf4ed4ad4a65265f6d524a54fedb2cb",
+        "baseline_digest_matches": true,
+        "source_entries": [
+          {
+            "path": "Orange/widgets/data/owcolor.py",
+            "content_digest": "sha256:14fcfc1c0e7ca3364a37f88f53072b6abab35b0d28f0e62e8a7a3cd69b6521ed",
+            "content_digest_matches": true
+          }
+        ],
+        "patch_matches_frozen_in_memory": true
+      },
+      "image_id_actual": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+      "overlay": {
+        "derived_image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+        "derived_image_ref": "rh2-category2-orange3-c-r9-v1/orange3:50f6a758f1c6-r2e_derive_v1m2s",
+        "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+        "recipe_sha256": "sha256:2e03f54f3ec0d3269c7e5fa13ca33435351b51ede9cd692fe009d4d86fcad4ce"
+      },
+      "grading_semantics": "r2e_expected_map",
+      "failure_category": null,
+      "import_observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/Orange/__init__.py",
+        "RH2_OBS_PKG_VERSION": "3.32.0.dev",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d"
+      },
+      "setup_budget": {
+        "before": 300.0,
+        "after": 1200.0,
+        "test_seconds": 1800.0,
+        "source": "r2e_gym_subset::orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e"
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 6.503,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "cli_footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/matrices/orange-50f6a758-r9-matrix-c-20261003-v2/gold/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "resource_policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "resource_peak_mb": 2138.98,
+      "resource_facts": null,
+      "independent_hostconfig_cgroup_measurement": true,
+      "resource_limit": "只独立观察gold后段的grader，未观察gold候选阶段；不外推全过程。",
+      "reference_skipped": [],
+      "num_parsed_outside_segment": 0,
+      "runtime_source_loading_limit": "只有Orange包import path及正式差分评分；owcolor具体__file__／source SHA待CC诊断补齐。",
+      "resource_observation_coverage": {
+        "first": "20261002T210208.069528Z",
+        "last": "20261002T210253.616973Z",
+        "samples": 4,
+        "containers": {
+          "ff95059c8f474f5e0d8d603a4aa7d1f8a11410b7f517dcffb1ddab7aa8cd3dd4": {
+            "name": "/rh2-grading-replay-orange-50f6a758-r-590cb892",
+            "role": "grader",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "first": "20261002T210208.069528Z",
+            "last": "20261002T210253.616973Z",
+            "samples": 4
+          }
+        },
+        "valid_cgroups": 4,
+        "unavailable_cgroups": 0,
+        "oom_seen": false
+      },
+      "matrix_complete_ledger_identity_matches_previous": true,
+      "complete_matrix_ledger_path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/matrix/gold/ledger.jsonl",
+      "cleanup_role": "candidate_container"
+    },
+    {
+      "candidate": "K1",
+      "expected_score": 1,
+      "observed_score": 1.0,
+      "status": "verified_completed_control",
+      "files": 14,
+      "readback_failures": [],
+      "readback_manifest": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_K1_completed_v2/readback_manifest.json",
+        "sha256": "sha256:fae987d3e8c7746688f02e67299a9f752fb9ff07fd7ee0e7256f60fa7e899ce8"
+      },
+      "readback_receipt": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_K1_completed_v2_readback_receipt.json",
+        "sha256": "sha256:9f160d9feabb665f7b7e896eaa0bf92837887dccbcbd1c8487ec29af370bbf6d"
+      },
+      "archive_sha256_matches": true,
+      "request_sha256_matches": true,
+      "ledger": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_K1_completed_v2/K1/ledger.jsonl",
+        "sha256": "sha256:de7cca8404aba1c33b7c7b255937984c43dbf7d9e42dac6f8fa7fdeb5f0e9847"
+      },
+      "raw_eval_log": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_K1_completed_v2/K1/eval_logs/evallog_replay-orange-50f6a758-r_97938b5c.eval.log",
+        "sha256": "sha256:189e00478cc54bd22a7c1431ff9ea8141e7a8cb83e5b8423ef8325fbb428e01e",
+        "ledger_digest_matches": true,
+        "partial": false
+      },
+      "expected_keys_equal": true,
+      "expected_count": 48,
+      "observed_count": 48,
+      "match_count": 48,
+      "mismatches": {},
+      "missing": [],
+      "unexpected": [],
+      "observed_map": {
+        "AttrDescTest.test_name": "PASSED",
+        "AttrDescTest.test_reset": "PASSED",
+        "AttrDescTest.test_to_dict": "PASSED",
+        "DiscAttrTest.test_colors": "PASSED",
+        "DiscAttrTest.test_create_variable": "PASSED",
+        "DiscAttrTest.test_from_dict_coliding_values": "PASSED",
+        "DiscAttrTest.test_from_dict_exceptions": "PASSED",
+        "DiscAttrTest.test_reset": "PASSED",
+        "DiscAttrTest.test_to_dict": "PASSED",
+        "DiscAttrTest.test_values": "PASSED",
+        "ContAttrDescTest.test_create_variable": "PASSED",
+        "ContAttrDescTest.test_from_dict_exceptions": "PASSED",
+        "ContAttrDescTest.test_palette": "PASSED",
+        "ContAttrDescTest.test_reset": "PASSED",
+        "ContAttrDescTest.test_to_dict": "PASSED",
+        "TestDiscColorTableModel.test_column_count": "PASSED",
+        "TestDiscColorTableModel.test_data": "PASSED",
+        "TestDiscColorTableModel.test_reset": "PASSED",
+        "TestDiscColorTableModel.test_row_count": "PASSED",
+        "TestDiscColorTableModel.test_set_data": "PASSED",
+        "TestContColorTableModel.test_column_count": "PASSED",
+        "TestContColorTableModel.test_copy_to_all": "PASSED",
+        "TestContColorTableModel.test_data": "PASSED",
+        "TestContColorTableModel.test_reset": "PASSED",
+        "TestContColorTableModel.test_row_count": "PASSED",
+        "TestContColorTableModel.test_set_data": "PASSED",
+        "TestColorStripDelegate.test_color_combo": "PASSED",
+        "TestColorStripDelegate.test_paint": "PASSED",
+        "TestOWColor.test_commit_on_data_changed": "PASSED",
+        "TestOWColor.test_image_export": "PASSED",
+        "TestOWColor.test_invalid_input_colors": "PASSED",
+        "TestOWColor.test_load": "PASSED",
+        "TestOWColor.test_load_ignore_warning": "PASSED",
+        "TestOWColor.test_lose_data": "PASSED",
+        "TestOWColor.test_minimum_size": "PASSED",
+        "TestOWColor.test_model_content": "PASSED",
+        "TestOWColor.test_msg_base_class": "PASSED",
+        "TestOWColor.test_parse_var_defs": "PASSED",
+        "TestOWColor.test_parse_var_defs_invalid": "PASSED",
+        "TestOWColor.test_parse_var_defs_no_rename": "PASSED",
+        "TestOWColor.test_parse_var_defs_shows_warnings": "PASSED",
+        "TestOWColor.test_report": "PASSED",
+        "TestOWColor.test_reset": "PASSED",
+        "TestOWColor.test_reuse_old_settings": "PASSED",
+        "TestOWColor.test_save": "PASSED",
+        "TestOWColor.test_save_low": "PASSED",
+        "TestOWColor.test_string_variables": "PASSED",
+        "TestOWColor.test_unconditional_commit_on_new_signal": "PASSED"
+      },
+      "failure_location": null,
+      "apply": {
+        "method": "git_apply",
+        "patch_sha256": "sha256:e0b92f37741958931e30f3a3119855162ac874460668f429c8743398fb90d907",
+        "stage_error": null,
+        "apply_ok": true,
+        "included_paths": [
+          "Orange/widgets/data/owcolor.py"
+        ],
+        "frozen_digest": "sha256:3a4fcd9de867dc312acb901c2f54de60cebd7497e64cbdfcce6152d94ea70071",
+        "frozen_digest_matches": true,
+        "baseline_digest": "sha256:f2cf4b7df5add1e28b0ecc74a167a22bbdf4ed4ad4a65265f6d524a54fedb2cb",
+        "baseline_digest_matches": true,
+        "source_entries": [
+          {
+            "path": "Orange/widgets/data/owcolor.py",
+            "content_digest": "sha256:13637a56704ac2fa58bdf400e1cbd38c0873ef2a97da112248b57922d8a3e858",
+            "content_digest_matches": true
+          }
+        ],
+        "patch_matches_frozen_in_memory": true
+      },
+      "image_id_actual": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+      "overlay": {
+        "derived_image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+        "derived_image_ref": "rh2-category2-orange3-c-r9-v1/orange3:50f6a758f1c6-r2e_derive_v1m2s",
+        "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+        "recipe_sha256": "sha256:2e03f54f3ec0d3269c7e5fa13ca33435351b51ede9cd692fe009d4d86fcad4ce"
+      },
+      "grading_semantics": "r2e_expected_map",
+      "failure_category": null,
+      "import_observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/Orange/__init__.py",
+        "RH2_OBS_PKG_VERSION": "3.32.0.dev",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d"
+      },
+      "setup_budget": {
+        "before": 300.0,
+        "after": 1200.0,
+        "test_seconds": 1800.0,
+        "source": "r2e_gym_subset::orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e"
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 8.569,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "cli_footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/matrices/orange-50f6a758-r9-matrix-c-20261003-v2/K1/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "resource_policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "resource_peak_mb": 2230.672,
+      "resource_facts": null,
+      "independent_hostconfig_cgroup_measurement": true,
+      "resource_limit": "候选与grader两容器均有真实HostConfig/cgroup观察；属于15秒周期采样，不是逐时刻覆盖。",
+      "reference_skipped": [],
+      "num_parsed_outside_segment": 0,
+      "runtime_source_loading_limit": "只有Orange包import path及正式差分评分；owcolor具体__file__／source SHA待CC诊断补齐。",
+      "resource_observation_coverage": {
+        "first": "20261002T210308.821492Z",
+        "last": "20261002T210726.169626Z",
+        "samples": 18,
+        "containers": {
+          "eca612de1acec91f508a1c673731888754a2d16a8aaddba1a3f47d3656c7b56d": {
+            "name": "/rh2-replay-cand-orange3__50f6a758f1c66b8-b2466dbc",
+            "role": "candidate",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "first": "20261002T210308.821492Z",
+            "last": "20261002T210454.980238Z",
+            "samples": 8
+          },
+          "b27b4c51e43a790a57403e0de795b35121c82185a157d414bbefcde8574d0321": {
+            "name": "/rh2-grading-replay-orange-50f6a758-r-97938b5c",
+            "role": "grader",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "first": "20261002T210510.186181Z",
+            "last": "20261002T210726.169626Z",
+            "samples": 10
+          }
+        },
+        "valid_cgroups": 18,
+        "unavailable_cgroups": 0,
+        "oom_seen": false
+      },
+      "matrix_complete_ledger_identity_matches_previous": true,
+      "complete_matrix_ledger_path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/matrix/K1/ledger.jsonl",
+      "cleanup_role": "candidate_container"
+    },
+    {
+      "candidate": "K2",
+      "expected_score": 0,
+      "observed_score": 0.0,
+      "status": "verified_completed_control",
+      "files": 14,
+      "readback_failures": [],
+      "readback_manifest": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/readback_manifest.json",
+        "sha256": "sha256:aadc3d7102496d535fff1300be532df68c65640d6eddcb754102a83983978cd6"
+      },
+      "readback_receipt": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2_readback_receipt.json",
+        "sha256": "sha256:80fd0e11d94eb01d1092186e24f6f6e9119b447d9b7d94cb3e8d67c285c80e77"
+      },
+      "archive_sha256_matches": true,
+      "request_sha256_matches": true,
+      "ledger": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/matrix/K2/ledger.jsonl",
+        "sha256": "sha256:130f4962cb8bdcdd8ffffe03fd781136d70e312d67b044f60e9cb237544efd95"
+      },
+      "raw_eval_log": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/matrix/K2/eval_logs/evallog_replay-orange-50f6a758-r_934800e7.eval.log",
+        "sha256": "sha256:10cbdac8dce4e8bde0896f59002b77363a997b3f9ccf86389e398f62349cdb46",
+        "ledger_digest_matches": true,
+        "partial": false
+      },
+      "expected_keys_equal": true,
+      "expected_count": 48,
+      "observed_count": 48,
+      "match_count": 47,
+      "mismatches": {
+        "TestOWColor.test_load_ignore_warning": "FAILED"
+      },
+      "missing": [],
+      "unexpected": [],
+      "observed_map": {
+        "AttrDescTest.test_name": "PASSED",
+        "AttrDescTest.test_reset": "PASSED",
+        "AttrDescTest.test_to_dict": "PASSED",
+        "DiscAttrTest.test_colors": "PASSED",
+        "DiscAttrTest.test_create_variable": "PASSED",
+        "DiscAttrTest.test_from_dict_coliding_values": "PASSED",
+        "DiscAttrTest.test_from_dict_exceptions": "PASSED",
+        "DiscAttrTest.test_reset": "PASSED",
+        "DiscAttrTest.test_to_dict": "PASSED",
+        "DiscAttrTest.test_values": "PASSED",
+        "ContAttrDescTest.test_create_variable": "PASSED",
+        "ContAttrDescTest.test_from_dict_exceptions": "PASSED",
+        "ContAttrDescTest.test_palette": "PASSED",
+        "ContAttrDescTest.test_reset": "PASSED",
+        "ContAttrDescTest.test_to_dict": "PASSED",
+        "TestDiscColorTableModel.test_column_count": "PASSED",
+        "TestDiscColorTableModel.test_data": "PASSED",
+        "TestDiscColorTableModel.test_reset": "PASSED",
+        "TestDiscColorTableModel.test_row_count": "PASSED",
+        "TestDiscColorTableModel.test_set_data": "PASSED",
+        "TestContColorTableModel.test_column_count": "PASSED",
+        "TestContColorTableModel.test_copy_to_all": "PASSED",
+        "TestContColorTableModel.test_data": "PASSED",
+        "TestContColorTableModel.test_reset": "PASSED",
+        "TestContColorTableModel.test_row_count": "PASSED",
+        "TestContColorTableModel.test_set_data": "PASSED",
+        "TestColorStripDelegate.test_color_combo": "PASSED",
+        "TestColorStripDelegate.test_paint": "PASSED",
+        "TestOWColor.test_commit_on_data_changed": "PASSED",
+        "TestOWColor.test_image_export": "PASSED",
+        "TestOWColor.test_invalid_input_colors": "PASSED",
+        "TestOWColor.test_load": "PASSED",
+        "TestOWColor.test_lose_data": "PASSED",
+        "TestOWColor.test_minimum_size": "PASSED",
+        "TestOWColor.test_model_content": "PASSED",
+        "TestOWColor.test_msg_base_class": "PASSED",
+        "TestOWColor.test_parse_var_defs": "PASSED",
+        "TestOWColor.test_parse_var_defs_invalid": "PASSED",
+        "TestOWColor.test_parse_var_defs_no_rename": "PASSED",
+        "TestOWColor.test_parse_var_defs_shows_warnings": "PASSED",
+        "TestOWColor.test_report": "PASSED",
+        "TestOWColor.test_reset": "PASSED",
+        "TestOWColor.test_reuse_old_settings": "PASSED",
+        "TestOWColor.test_save": "PASSED",
+        "TestOWColor.test_save_low": "PASSED",
+        "TestOWColor.test_string_variables": "PASSED",
+        "TestOWColor.test_unconditional_commit_on_new_signal": "PASSED",
+        "TestOWColor.test_load_ignore_warning": "FAILED"
+      },
+      "failure_location": {
+        "key": "TestOWColor.test_load_ignore_warning",
+        "file": "r2e_tests/test_1.py",
+        "line": 833,
+        "assertion": "msg_box.assert_called() via shown_text()",
+        "scenario": "loaded iris mixed categorical/numeric definitions",
+        "exception": "Expected warning to have been called."
+      },
+      "apply": {
+        "method": "git_apply",
+        "patch_sha256": "sha256:928a4b1276383b64c0e62aa30183c02860e1ee9cce2fe22636916f54f25def5c",
+        "stage_error": null,
+        "apply_ok": true,
+        "included_paths": [
+          "Orange/widgets/data/owcolor.py"
+        ],
+        "frozen_digest": "sha256:3f3876036c430ffbbf57769c94ad4fc8496bc61205409e74f1d5965e3739f176",
+        "frozen_digest_matches": true,
+        "baseline_digest": "sha256:f2cf4b7df5add1e28b0ecc74a167a22bbdf4ed4ad4a65265f6d524a54fedb2cb",
+        "baseline_digest_matches": true,
+        "source_entries": [
+          {
+            "path": "Orange/widgets/data/owcolor.py",
+            "content_digest": "sha256:bc62ff4b8de435d4a9838b2789c5e8625f2573991a9f2e11f257d172bdcb2af1",
+            "content_digest_matches": true
+          }
+        ],
+        "patch_matches_frozen_in_memory": true,
+        "native_rebuild_required": false,
+        "native_rebuild_basis": "唯一候选entry为Python owcolor.py；没有修改native源码或产物；沿冻结环境使用已有扩展。"
+      },
+      "image_id_actual": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+      "overlay": {
+        "derived_image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+        "derived_image_ref": "rh2-category2-orange3-c-r9-v1/orange3:50f6a758f1c6-r2e_derive_v1m2s",
+        "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+        "recipe_sha256": "sha256:2e03f54f3ec0d3269c7e5fa13ca33435351b51ede9cd692fe009d4d86fcad4ce"
+      },
+      "grading_semantics": "r2e_expected_map",
+      "failure_category": "tests_failed",
+      "import_observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/Orange/__init__.py",
+        "RH2_OBS_PKG_VERSION": "3.32.0.dev",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d"
+      },
+      "setup_budget": {
+        "before": 300.0,
+        "after": 1200.0,
+        "test_seconds": 1800.0,
+        "source": "r2e_gym_subset::orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e"
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 8.549,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "cli_footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/matrices/orange-50f6a758-r9-matrix-c-20261003-v2/K2/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "resource_policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "resource_peak_mb": 2222.348,
+      "resource_facts": null,
+      "independent_hostconfig_cgroup_measurement": true,
+      "resource_limit": "候选与grader两容器均有真实HostConfig/cgroup观察；属于15秒周期采样，不是逐时刻覆盖。",
+      "reference_skipped": [],
+      "num_parsed_outside_segment": 0,
+      "runtime_source_loading_limit": "只有Orange包import path及正式差分评分；owcolor具体__file__／source SHA待CC诊断补齐。",
+      "phases": {
+        "delta_apply": 0.383637,
+        "grader_baseline_rebuild": 5.506946,
+        "grader_cleanup": 1.896748,
+        "grader_start_and_verify": 26.489778,
+        "grader_trusted_setup": 85.666051,
+        "parser_and_report": 0.162349,
+        "test": 10.771945
+      },
+      "driver_result": {
+        "candidate": "K2",
+        "expected_score": 0,
+        "driver_exit": 0,
+        "seconds": 248.125,
+        "report": {
+          "execution_failure_evidence": [],
+          "execution_failure_stage": null,
+          "expected_match": 47,
+          "expected_total": 48,
+          "f2p_pass": null,
+          "f2p_total": null,
+          "failure_category": "tests_failed",
+          "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+          "grading_semantics": "r2e_expected_map",
+          "infra_failure_detail": null,
+          "outcome": "unresolved",
+          "p2p_fail": null,
+          "p2p_total": null,
+          "report_id": "rpt_grading_934800e7",
+          "reward": 0.0
+        },
+        "actual_budget": {
+          "before": 300.0,
+          "after": 1200.0,
+          "test_seconds": 1800.0,
+          "source": "r2e_gym_subset::orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e"
+        },
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/matrices/orange-50f6a758-r9-matrix-c-20261003-v2/K2/ledger.jsonl",
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "footer": {
+          "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/matrices/orange-50f6a758-r9-matrix-c-20261003-v2/K2/ledger.jsonl",
+          "rows": 1,
+          "manager_close": {
+            "prepare_cancelled": 0,
+            "containers_removed": [],
+            "containers_open": [],
+            "supply_open": [],
+            "cleanup_failures": [],
+            "regrade_events": 0,
+            "regrade_total": 0,
+            "regrade_declined": 0,
+            "containers_created_total": 1,
+            "containers_removed_total": 1,
+            "container_history_retained": 1,
+            "leases_total": 1
+          },
+          "halted": null,
+          "aborted": null,
+          "cleanup_failures": [],
+          "final_status": {
+            "exit_code": 0,
+            "reason": "ok",
+            "grader_containers_open": [],
+            "cleanup_failures_total": 0,
+            "cleanup_failures_resolved": false
+          }
+        },
+        "stop_reason": null
+      },
+      "resource_observation_coverage": {
+        "first": "20261002T210741.277902Z",
+        "last": "20261002T211127.855345Z",
+        "samples": 15,
+        "containers": {
+          "00a4d6c801c00d1959aafc139e139d77ffa08c5105b2642a6c79edafa74b2d1a": {
+            "name": "/rh2-replay-cand-orange3__50f6a758f1c66b8-209957b1",
+            "role": "candidate",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "first": "20261002T210741.277902Z",
+            "last": "20261002T210911.927537Z",
+            "samples": 7
+          },
+          "130cb060a5e30e6dfd0c9a3f1bbda40bb4127b986bd93d7ba0c40f12f7a93da3": {
+            "name": "/rh2-grading-replay-orange-50f6a758-r-934800e7",
+            "role": "grader",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "first": "20261002T210942.094762Z",
+            "last": "20261002T211127.855345Z",
+            "samples": 8
+          }
+        },
+        "valid_cgroups": 15,
+        "unavailable_cgroups": 0,
+        "oom_seen": false
+      },
+      "matrix_complete_ledger_identity_matches_previous": true,
+      "complete_matrix_ledger_path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/matrix/K2/ledger.jsonl",
+      "cleanup_role": "candidate_container"
+    },
+    {
+      "candidate": "K3",
+      "expected_score": 0,
+      "observed_score": 0.0,
+      "status": "verified_completed_control",
+      "files": 14,
+      "readback_failures": [],
+      "readback_manifest": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/readback_manifest.json",
+        "sha256": "sha256:aadc3d7102496d535fff1300be532df68c65640d6eddcb754102a83983978cd6"
+      },
+      "readback_receipt": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2_readback_receipt.json",
+        "sha256": "sha256:80fd0e11d94eb01d1092186e24f6f6e9119b447d9b7d94cb3e8d67c285c80e77"
+      },
+      "archive_sha256_matches": true,
+      "request_sha256_matches": true,
+      "ledger": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/matrix/K3/ledger.jsonl",
+        "sha256": "sha256:40891acc537217865796fb9b70375dfdddad10f2fac2520cdaba79ae01df33fb"
+      },
+      "raw_eval_log": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/matrix/K3/eval_logs/evallog_replay-orange-50f6a758-r_515df61e.eval.log",
+        "sha256": "sha256:06e32742df77c839c457cf0580ece5284330af9d0799f286e63a1242af679dfc",
+        "ledger_digest_matches": true,
+        "partial": false
+      },
+      "expected_keys_equal": true,
+      "expected_count": 48,
+      "observed_count": 48,
+      "match_count": 47,
+      "mismatches": {
+        "TestOWColor.test_load_ignore_warning": "FAILED"
+      },
+      "missing": [],
+      "unexpected": [],
+      "observed_map": {
+        "AttrDescTest.test_name": "PASSED",
+        "AttrDescTest.test_reset": "PASSED",
+        "AttrDescTest.test_to_dict": "PASSED",
+        "DiscAttrTest.test_colors": "PASSED",
+        "DiscAttrTest.test_create_variable": "PASSED",
+        "DiscAttrTest.test_from_dict_coliding_values": "PASSED",
+        "DiscAttrTest.test_from_dict_exceptions": "PASSED",
+        "DiscAttrTest.test_reset": "PASSED",
+        "DiscAttrTest.test_to_dict": "PASSED",
+        "DiscAttrTest.test_values": "PASSED",
+        "ContAttrDescTest.test_create_variable": "PASSED",
+        "ContAttrDescTest.test_from_dict_exceptions": "PASSED",
+        "ContAttrDescTest.test_palette": "PASSED",
+        "ContAttrDescTest.test_reset": "PASSED",
+        "ContAttrDescTest.test_to_dict": "PASSED",
+        "TestDiscColorTableModel.test_column_count": "PASSED",
+        "TestDiscColorTableModel.test_data": "PASSED",
+        "TestDiscColorTableModel.test_reset": "PASSED",
+        "TestDiscColorTableModel.test_row_count": "PASSED",
+        "TestDiscColorTableModel.test_set_data": "PASSED",
+        "TestContColorTableModel.test_column_count": "PASSED",
+        "TestContColorTableModel.test_copy_to_all": "PASSED",
+        "TestContColorTableModel.test_data": "PASSED",
+        "TestContColorTableModel.test_reset": "PASSED",
+        "TestContColorTableModel.test_row_count": "PASSED",
+        "TestContColorTableModel.test_set_data": "PASSED",
+        "TestColorStripDelegate.test_color_combo": "PASSED",
+        "TestColorStripDelegate.test_paint": "PASSED",
+        "TestOWColor.test_commit_on_data_changed": "PASSED",
+        "TestOWColor.test_image_export": "PASSED",
+        "TestOWColor.test_invalid_input_colors": "PASSED",
+        "TestOWColor.test_load": "PASSED",
+        "TestOWColor.test_lose_data": "PASSED",
+        "TestOWColor.test_minimum_size": "PASSED",
+        "TestOWColor.test_model_content": "PASSED",
+        "TestOWColor.test_msg_base_class": "PASSED",
+        "TestOWColor.test_parse_var_defs": "PASSED",
+        "TestOWColor.test_parse_var_defs_invalid": "PASSED",
+        "TestOWColor.test_parse_var_defs_no_rename": "PASSED",
+        "TestOWColor.test_parse_var_defs_shows_warnings": "PASSED",
+        "TestOWColor.test_report": "PASSED",
+        "TestOWColor.test_reset": "PASSED",
+        "TestOWColor.test_reuse_old_settings": "PASSED",
+        "TestOWColor.test_save": "PASSED",
+        "TestOWColor.test_save_low": "PASSED",
+        "TestOWColor.test_string_variables": "PASSED",
+        "TestOWColor.test_unconditional_commit_on_new_signal": "PASSED",
+        "TestOWColor.test_load_ignore_warning": "FAILED"
+      },
+      "failure_location": {
+        "key": "TestOWColor.test_load_ignore_warning",
+        "file": "r2e_tests/test_1.py",
+        "line": 833,
+        "assertion": "msg_box.assert_called() via shown_text()",
+        "scenario": "mixed categorical/numeric definitions",
+        "exception": "Expected warning to have been called."
+      },
+      "apply": {
+        "method": "git_apply",
+        "patch_sha256": "sha256:f924b3cf2bc4527c15ac7c93e9ae7b0b6079f05e3dfc810fad0e3b6bf9b21cd4",
+        "stage_error": null,
+        "apply_ok": true,
+        "included_paths": [
+          "Orange/widgets/data/owcolor.py"
+        ],
+        "frozen_digest": "sha256:5763bd1bcec2056ea22bd8b51280074b8485563a55c53c50681841439ded655c",
+        "frozen_digest_matches": true,
+        "baseline_digest": "sha256:f2cf4b7df5add1e28b0ecc74a167a22bbdf4ed4ad4a65265f6d524a54fedb2cb",
+        "baseline_digest_matches": true,
+        "source_entries": [
+          {
+            "path": "Orange/widgets/data/owcolor.py",
+            "content_digest": "sha256:388ed710ab0f9591e12fb5915c8ba541a1fa3b501eea0ca3b03c3599923245fa",
+            "content_digest_matches": true
+          }
+        ],
+        "patch_matches_frozen_in_memory": true,
+        "native_rebuild_required": false,
+        "native_rebuild_basis": "唯一候选entry为Python owcolor.py；没有修改native源码或产物；沿冻结环境使用已有扩展。"
+      },
+      "image_id_actual": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+      "overlay": {
+        "derived_image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+        "derived_image_ref": "rh2-category2-orange3-c-r9-v1/orange3:50f6a758f1c6-r2e_derive_v1m2s",
+        "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+        "recipe_sha256": "sha256:2e03f54f3ec0d3269c7e5fa13ca33435351b51ede9cd692fe009d4d86fcad4ce"
+      },
+      "grading_semantics": "r2e_expected_map",
+      "failure_category": "tests_failed",
+      "import_observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/Orange/__init__.py",
+        "RH2_OBS_PKG_VERSION": "3.32.0.dev",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d"
+      },
+      "setup_budget": {
+        "before": 300.0,
+        "after": 1200.0,
+        "test_seconds": 1800.0,
+        "source": "r2e_gym_subset::orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e"
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 6.837,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "cli_footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/matrices/orange-50f6a758-r9-matrix-c-20261003-v2/K3/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "resource_policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "resource_peak_mb": 2232.957,
+      "resource_facts": null,
+      "independent_hostconfig_cgroup_measurement": true,
+      "resource_limit": "候选与grader两容器均有真实HostConfig/cgroup观察；属于15秒周期采样，不是逐时刻覆盖。",
+      "reference_skipped": [],
+      "num_parsed_outside_segment": 0,
+      "runtime_source_loading_limit": "只有Orange包import path及正式差分评分；owcolor具体__file__／source SHA待CC诊断补齐。",
+      "phases": {
+        "delta_apply": 0.375148,
+        "grader_baseline_rebuild": 4.916694,
+        "grader_cleanup": 1.559385,
+        "grader_start_and_verify": 20.228237,
+        "grader_trusted_setup": 90.580472,
+        "parser_and_report": 0.168093,
+        "test": 8.974352
+      },
+      "driver_result": {
+        "candidate": "K3",
+        "expected_score": 0,
+        "driver_exit": 0,
+        "seconds": 246.917,
+        "report": {
+          "execution_failure_evidence": [],
+          "execution_failure_stage": null,
+          "expected_match": 47,
+          "expected_total": 48,
+          "f2p_pass": null,
+          "f2p_total": null,
+          "failure_category": "tests_failed",
+          "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+          "grading_semantics": "r2e_expected_map",
+          "infra_failure_detail": null,
+          "outcome": "unresolved",
+          "p2p_fail": null,
+          "p2p_total": null,
+          "report_id": "rpt_grading_515df61e",
+          "reward": 0.0
+        },
+        "actual_budget": {
+          "before": 300.0,
+          "after": 1200.0,
+          "test_seconds": 1800.0,
+          "source": "r2e_gym_subset::orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e"
+        },
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/matrices/orange-50f6a758-r9-matrix-c-20261003-v2/K3/ledger.jsonl",
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "footer": {
+          "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/matrices/orange-50f6a758-r9-matrix-c-20261003-v2/K3/ledger.jsonl",
+          "rows": 1,
+          "manager_close": {
+            "prepare_cancelled": 0,
+            "containers_removed": [],
+            "containers_open": [],
+            "supply_open": [],
+            "cleanup_failures": [],
+            "regrade_events": 0,
+            "regrade_total": 0,
+            "regrade_declined": 0,
+            "containers_created_total": 1,
+            "containers_removed_total": 1,
+            "container_history_retained": 1,
+            "leases_total": 1
+          },
+          "halted": null,
+          "aborted": null,
+          "cleanup_failures": [],
+          "final_status": {
+            "exit_code": 0,
+            "reason": "ok",
+            "grader_containers_open": [],
+            "cleanup_failures_total": 0,
+            "cleanup_failures_resolved": false
+          }
+        },
+        "stop_reason": null
+      },
+      "resource_observation_coverage": {
+        "first": "20261002T211142.967024Z",
+        "last": "20261002T211529.830672Z",
+        "samples": 16,
+        "containers": {
+          "d4eb2c720ed135bd40b6ae84a2e244fa66abfba7350f743a49d27a261c9e6c62": {
+            "name": "/rh2-replay-cand-orange3__50f6a758f1c66b8-985f8752",
+            "role": "candidate",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "first": "20261002T211142.967024Z",
+            "last": "20261002T211328.892586Z",
+            "samples": 8
+          },
+          "d8a2c0db1c8b5d8c3ceed0757bacc39d42c959f9128ad859384eadcae1139444": {
+            "name": "/rh2-grading-replay-orange-50f6a758-r-515df61e",
+            "role": "grader",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "first": "20261002T211344.002002Z",
+            "last": "20261002T211529.830672Z",
+            "samples": 8
+          }
+        },
+        "valid_cgroups": 16,
+        "unavailable_cgroups": 0,
+        "oom_seen": false
+      },
+      "matrix_complete_ledger_identity_matches_previous": true,
+      "complete_matrix_ledger_path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/matrix/K3/ledger.jsonl",
+      "cleanup_role": "candidate_container"
+    },
+    {
+      "candidate": "K4",
+      "expected_score": 0,
+      "observed_score": 0.0,
+      "status": "verified_completed_control",
+      "files": 14,
+      "readback_failures": [],
+      "readback_manifest": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/readback_manifest.json",
+        "sha256": "sha256:aadc3d7102496d535fff1300be532df68c65640d6eddcb754102a83983978cd6"
+      },
+      "readback_receipt": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2_readback_receipt.json",
+        "sha256": "sha256:80fd0e11d94eb01d1092186e24f6f6e9119b447d9b7d94cb3e8d67c285c80e77"
+      },
+      "archive_sha256_matches": true,
+      "request_sha256_matches": true,
+      "ledger": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/matrix/K4/ledger.jsonl",
+        "sha256": "sha256:7c1d8e846a8413f998f374b6881736f8ecf80af01af089114ff9ca379956793d"
+      },
+      "raw_eval_log": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/matrix/K4/eval_logs/evallog_replay-orange-50f6a758-r_5238fed3.eval.log",
+        "sha256": "sha256:e7fb2bb1af21a967cf69f85cc8fa9a782c0dda5b239dd0fe09c540b2cdb258a7",
+        "ledger_digest_matches": true,
+        "partial": false
+      },
+      "expected_keys_equal": true,
+      "expected_count": 48,
+      "observed_count": 48,
+      "match_count": 47,
+      "mismatches": {
+        "TestOWColor.test_load_ignore_warning": "FAILED"
+      },
+      "missing": [],
+      "unexpected": [],
+      "observed_map": {
+        "AttrDescTest.test_name": "PASSED",
+        "AttrDescTest.test_reset": "PASSED",
+        "AttrDescTest.test_to_dict": "PASSED",
+        "DiscAttrTest.test_colors": "PASSED",
+        "DiscAttrTest.test_create_variable": "PASSED",
+        "DiscAttrTest.test_from_dict_coliding_values": "PASSED",
+        "DiscAttrTest.test_from_dict_exceptions": "PASSED",
+        "DiscAttrTest.test_reset": "PASSED",
+        "DiscAttrTest.test_to_dict": "PASSED",
+        "DiscAttrTest.test_values": "PASSED",
+        "ContAttrDescTest.test_create_variable": "PASSED",
+        "ContAttrDescTest.test_from_dict_exceptions": "PASSED",
+        "ContAttrDescTest.test_palette": "PASSED",
+        "ContAttrDescTest.test_reset": "PASSED",
+        "ContAttrDescTest.test_to_dict": "PASSED",
+        "TestDiscColorTableModel.test_column_count": "PASSED",
+        "TestDiscColorTableModel.test_data": "PASSED",
+        "TestDiscColorTableModel.test_reset": "PASSED",
+        "TestDiscColorTableModel.test_row_count": "PASSED",
+        "TestDiscColorTableModel.test_set_data": "PASSED",
+        "TestContColorTableModel.test_column_count": "PASSED",
+        "TestContColorTableModel.test_copy_to_all": "PASSED",
+        "TestContColorTableModel.test_data": "PASSED",
+        "TestContColorTableModel.test_reset": "PASSED",
+        "TestContColorTableModel.test_row_count": "PASSED",
+        "TestContColorTableModel.test_set_data": "PASSED",
+        "TestColorStripDelegate.test_color_combo": "PASSED",
+        "TestColorStripDelegate.test_paint": "PASSED",
+        "TestOWColor.test_commit_on_data_changed": "PASSED",
+        "TestOWColor.test_image_export": "PASSED",
+        "TestOWColor.test_invalid_input_colors": "PASSED",
+        "TestOWColor.test_load": "PASSED",
+        "TestOWColor.test_lose_data": "PASSED",
+        "TestOWColor.test_minimum_size": "PASSED",
+        "TestOWColor.test_model_content": "PASSED",
+        "TestOWColor.test_msg_base_class": "PASSED",
+        "TestOWColor.test_parse_var_defs": "PASSED",
+        "TestOWColor.test_parse_var_defs_invalid": "PASSED",
+        "TestOWColor.test_parse_var_defs_no_rename": "PASSED",
+        "TestOWColor.test_parse_var_defs_shows_warnings": "PASSED",
+        "TestOWColor.test_report": "PASSED",
+        "TestOWColor.test_reset": "PASSED",
+        "TestOWColor.test_reuse_old_settings": "PASSED",
+        "TestOWColor.test_save": "PASSED",
+        "TestOWColor.test_save_low": "PASSED",
+        "TestOWColor.test_string_variables": "PASSED",
+        "TestOWColor.test_unconditional_commit_on_new_signal": "PASSED",
+        "TestOWColor.test_load_ignore_warning": "FAILED"
+      },
+      "failure_location": {
+        "key": "TestOWColor.test_load_ignore_warning",
+        "file": "r2e_tests/test_1.py",
+        "line": 835,
+        "assertion": "self.assertIn(\"bar\", text)",
+        "scenario": "numeric unused-variable name omitted",
+        "exception": "bar not found in warning containing foo only"
+      },
+      "apply": {
+        "method": "git_apply",
+        "patch_sha256": "sha256:71c27fda2176e2fd93c00352f5ce00ddfbb281b03d8cc7e94af6989ee056aef2",
+        "stage_error": null,
+        "apply_ok": true,
+        "included_paths": [
+          "Orange/widgets/data/owcolor.py"
+        ],
+        "frozen_digest": "sha256:90c5d8d60755a2bcc0a1655fe5a02229f19d9b98fc38107361da020843a58317",
+        "frozen_digest_matches": true,
+        "baseline_digest": "sha256:f2cf4b7df5add1e28b0ecc74a167a22bbdf4ed4ad4a65265f6d524a54fedb2cb",
+        "baseline_digest_matches": true,
+        "source_entries": [
+          {
+            "path": "Orange/widgets/data/owcolor.py",
+            "content_digest": "sha256:44aa14de7acd3ab18d551f691b500089632505b80667c1f6eaba6c5be613e12e",
+            "content_digest_matches": true
+          }
+        ],
+        "patch_matches_frozen_in_memory": true,
+        "native_rebuild_required": false,
+        "native_rebuild_basis": "唯一候选entry为Python owcolor.py；没有修改native源码或产物；沿冻结环境使用已有扩展。"
+      },
+      "image_id_actual": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+      "overlay": {
+        "derived_image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+        "derived_image_ref": "rh2-category2-orange3-c-r9-v1/orange3:50f6a758f1c6-r2e_derive_v1m2s",
+        "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+        "recipe_sha256": "sha256:2e03f54f3ec0d3269c7e5fa13ca33435351b51ede9cd692fe009d4d86fcad4ce"
+      },
+      "grading_semantics": "r2e_expected_map",
+      "failure_category": "tests_failed",
+      "import_observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/Orange/__init__.py",
+        "RH2_OBS_PKG_VERSION": "3.32.0.dev",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d"
+      },
+      "setup_budget": {
+        "before": 300.0,
+        "after": 1200.0,
+        "test_seconds": 1800.0,
+        "source": "r2e_gym_subset::orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e"
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 6.329,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "cli_footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/matrices/orange-50f6a758-r9-matrix-c-20261003-v2/K4/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "resource_policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "resource_peak_mb": 2223.438,
+      "resource_facts": null,
+      "independent_hostconfig_cgroup_measurement": true,
+      "resource_limit": "候选与grader两容器均有真实HostConfig/cgroup观察；属于15秒周期采样，不是逐时刻覆盖。",
+      "reference_skipped": [],
+      "num_parsed_outside_segment": 0,
+      "runtime_source_loading_limit": "只有Orange包import path及正式差分评分；owcolor具体__file__／source SHA待CC诊断补齐。",
+      "phases": {
+        "delta_apply": 0.390731,
+        "grader_baseline_rebuild": 5.42004,
+        "grader_cleanup": 1.830684,
+        "grader_start_and_verify": 19.575644,
+        "grader_trusted_setup": 84.52409,
+        "parser_and_report": 0.150158,
+        "test": 8.60178
+      },
+      "driver_result": {
+        "candidate": "K4",
+        "expected_score": 0,
+        "driver_exit": 0,
+        "seconds": 237.161,
+        "report": {
+          "execution_failure_evidence": [],
+          "execution_failure_stage": null,
+          "expected_match": 47,
+          "expected_total": 48,
+          "f2p_pass": null,
+          "f2p_total": null,
+          "failure_category": "tests_failed",
+          "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+          "grading_semantics": "r2e_expected_map",
+          "infra_failure_detail": null,
+          "outcome": "unresolved",
+          "p2p_fail": null,
+          "p2p_total": null,
+          "report_id": "rpt_grading_5238fed3",
+          "reward": 0.0
+        },
+        "actual_budget": {
+          "before": 300.0,
+          "after": 1200.0,
+          "test_seconds": 1800.0,
+          "source": "r2e_gym_subset::orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e"
+        },
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/matrices/orange-50f6a758-r9-matrix-c-20261003-v2/K4/ledger.jsonl",
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "footer": {
+          "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/matrices/orange-50f6a758-r9-matrix-c-20261003-v2/K4/ledger.jsonl",
+          "rows": 1,
+          "manager_close": {
+            "prepare_cancelled": 0,
+            "containers_removed": [],
+            "containers_open": [],
+            "supply_open": [],
+            "cleanup_failures": [],
+            "regrade_events": 0,
+            "regrade_total": 0,
+            "regrade_declined": 0,
+            "containers_created_total": 1,
+            "containers_removed_total": 1,
+            "container_history_retained": 1,
+            "leases_total": 1
+          },
+          "halted": null,
+          "aborted": null,
+          "cleanup_failures": [],
+          "final_status": {
+            "exit_code": 0,
+            "reason": "ok",
+            "grader_containers_open": [],
+            "cleanup_failures_total": 0,
+            "cleanup_failures_resolved": false
+          }
+        },
+        "stop_reason": null
+      },
+      "resource_observation_coverage": {
+        "first": "20261002T211559.990175Z",
+        "last": "20261002T211931.673176Z",
+        "samples": 15,
+        "containers": {
+          "f963252ee05c49d9afacae23a7cdf153f951fd128222eedfd5f3327d983ae916": {
+            "name": "/rh2-replay-cand-orange3__50f6a758f1c66b8-297e0f2c",
+            "role": "candidate",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "first": "20261002T211559.990175Z",
+            "last": "20261002T211730.638365Z",
+            "samples": 7
+          },
+          "8246c487d7d8ac6a8fa9e45f41bae5f40bdbe80f7d304571cd16f3e07db09b43": {
+            "name": "/rh2-grading-replay-orange-50f6a758-r-5238fed3",
+            "role": "grader",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "first": "20261002T211745.750119Z",
+            "last": "20261002T211931.673176Z",
+            "samples": 8
+          }
+        },
+        "valid_cgroups": 15,
+        "unavailable_cgroups": 0,
+        "oom_seen": false
+      },
+      "matrix_complete_ledger_identity_matches_previous": true,
+      "complete_matrix_ledger_path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/matrix/K4/ledger.jsonl",
+      "cleanup_role": "candidate_container"
+    },
+    {
+      "candidate": "Cdeg",
+      "expected_score": 0,
+      "observed_score": 0.0,
+      "status": "verified_completed_control",
+      "files": 14,
+      "readback_failures": [],
+      "readback_manifest": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/readback_manifest.json",
+        "sha256": "sha256:aadc3d7102496d535fff1300be532df68c65640d6eddcb754102a83983978cd6"
+      },
+      "readback_receipt": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2_readback_receipt.json",
+        "sha256": "sha256:80fd0e11d94eb01d1092186e24f6f6e9119b447d9b7d94cb3e8d67c285c80e77"
+      },
+      "archive_sha256_matches": true,
+      "request_sha256_matches": true,
+      "ledger": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/matrix/Cdeg/ledger.jsonl",
+        "sha256": "sha256:cc1c1883c385c8c5b0886b4c1920ef0cef4cf90a5e84686cff846d1526405869"
+      },
+      "raw_eval_log": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/matrix/Cdeg/eval_logs/evallog_replay-orange-50f6a758-r_a4235004.eval.log",
+        "sha256": "sha256:d704227528c2da28fc2aa27663e6d4ddd60ab82ee8468afdbb562e63bd0a7d72",
+        "ledger_digest_matches": true,
+        "partial": false
+      },
+      "expected_keys_equal": true,
+      "expected_count": 48,
+      "observed_count": 48,
+      "match_count": 47,
+      "mismatches": {
+        "TestOWColor.test_load_ignore_warning": "FAILED"
+      },
+      "missing": [],
+      "unexpected": [],
+      "observed_map": {
+        "AttrDescTest.test_name": "PASSED",
+        "AttrDescTest.test_reset": "PASSED",
+        "AttrDescTest.test_to_dict": "PASSED",
+        "DiscAttrTest.test_colors": "PASSED",
+        "DiscAttrTest.test_create_variable": "PASSED",
+        "DiscAttrTest.test_from_dict_coliding_values": "PASSED",
+        "DiscAttrTest.test_from_dict_exceptions": "PASSED",
+        "DiscAttrTest.test_reset": "PASSED",
+        "DiscAttrTest.test_to_dict": "PASSED",
+        "DiscAttrTest.test_values": "PASSED",
+        "ContAttrDescTest.test_create_variable": "PASSED",
+        "ContAttrDescTest.test_from_dict_exceptions": "PASSED",
+        "ContAttrDescTest.test_palette": "PASSED",
+        "ContAttrDescTest.test_reset": "PASSED",
+        "ContAttrDescTest.test_to_dict": "PASSED",
+        "TestDiscColorTableModel.test_column_count": "PASSED",
+        "TestDiscColorTableModel.test_data": "PASSED",
+        "TestDiscColorTableModel.test_reset": "PASSED",
+        "TestDiscColorTableModel.test_row_count": "PASSED",
+        "TestDiscColorTableModel.test_set_data": "PASSED",
+        "TestContColorTableModel.test_column_count": "PASSED",
+        "TestContColorTableModel.test_copy_to_all": "PASSED",
+        "TestContColorTableModel.test_data": "PASSED",
+        "TestContColorTableModel.test_reset": "PASSED",
+        "TestContColorTableModel.test_row_count": "PASSED",
+        "TestContColorTableModel.test_set_data": "PASSED",
+        "TestColorStripDelegate.test_color_combo": "PASSED",
+        "TestColorStripDelegate.test_paint": "PASSED",
+        "TestOWColor.test_commit_on_data_changed": "PASSED",
+        "TestOWColor.test_image_export": "PASSED",
+        "TestOWColor.test_invalid_input_colors": "PASSED",
+        "TestOWColor.test_load": "PASSED",
+        "TestOWColor.test_lose_data": "PASSED",
+        "TestOWColor.test_minimum_size": "PASSED",
+        "TestOWColor.test_model_content": "PASSED",
+        "TestOWColor.test_msg_base_class": "PASSED",
+        "TestOWColor.test_parse_var_defs": "PASSED",
+        "TestOWColor.test_parse_var_defs_invalid": "PASSED",
+        "TestOWColor.test_parse_var_defs_no_rename": "PASSED",
+        "TestOWColor.test_parse_var_defs_shows_warnings": "PASSED",
+        "TestOWColor.test_report": "PASSED",
+        "TestOWColor.test_reset": "PASSED",
+        "TestOWColor.test_reuse_old_settings": "PASSED",
+        "TestOWColor.test_save": "PASSED",
+        "TestOWColor.test_save_low": "PASSED",
+        "TestOWColor.test_string_variables": "PASSED",
+        "TestOWColor.test_unconditional_commit_on_new_signal": "PASSED",
+        "TestOWColor.test_load_ignore_warning": "FAILED"
+      },
+      "failure_location": {
+        "key": "TestOWColor.test_load_ignore_warning",
+        "file": "r2e_tests/test_1.py",
+        "line": 838,
+        "assertion": "self.assertEqual(out.domain.class_var.name, \"species\")",
+        "scenario": "matched class variable rename must still apply",
+        "exception": "iris != species"
+      },
+      "apply": {
+        "method": "git_apply",
+        "patch_sha256": "sha256:3e53e310fd06aafbb96b28a5164ef51651cc0e7579a7512aa75c3316ee4cd00b",
+        "stage_error": null,
+        "apply_ok": true,
+        "included_paths": [
+          "Orange/widgets/data/owcolor.py"
+        ],
+        "frozen_digest": "sha256:67af774580861750b5584d2dd48aa7444e3fc52f4074e14c4d3f7fb44a10340f",
+        "frozen_digest_matches": true,
+        "baseline_digest": "sha256:f2cf4b7df5add1e28b0ecc74a167a22bbdf4ed4ad4a65265f6d524a54fedb2cb",
+        "baseline_digest_matches": true,
+        "source_entries": [
+          {
+            "path": "Orange/widgets/data/owcolor.py",
+            "content_digest": "sha256:2eb9769fefe4e7bb68cdc0841d934ba9b7e42087305d7950357d59d732c0aa36",
+            "content_digest_matches": true
+          }
+        ],
+        "patch_matches_frozen_in_memory": true,
+        "native_rebuild_required": false,
+        "native_rebuild_basis": "唯一候选entry为Python owcolor.py；没有修改native源码或产物；沿冻结环境使用已有扩展。"
+      },
+      "image_id_actual": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+      "overlay": {
+        "derived_image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+        "derived_image_ref": "rh2-category2-orange3-c-r9-v1/orange3:50f6a758f1c6-r2e_derive_v1m2s",
+        "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+        "recipe_sha256": "sha256:2e03f54f3ec0d3269c7e5fa13ca33435351b51ede9cd692fe009d4d86fcad4ce"
+      },
+      "grading_semantics": "r2e_expected_map",
+      "failure_category": "tests_failed",
+      "import_observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/Orange/__init__.py",
+        "RH2_OBS_PKG_VERSION": "3.32.0.dev",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d"
+      },
+      "setup_budget": {
+        "before": 300.0,
+        "after": 1200.0,
+        "test_seconds": 1800.0,
+        "source": "r2e_gym_subset::orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e"
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 7.035,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "cli_footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/matrices/orange-50f6a758-r9-matrix-c-20261003-v2/Cdeg/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "resource_policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "resource_peak_mb": 2221.273,
+      "resource_facts": null,
+      "independent_hostconfig_cgroup_measurement": true,
+      "resource_limit": "候选与grader两容器均有真实HostConfig/cgroup观察；属于15秒周期采样，不是逐时刻覆盖。",
+      "reference_skipped": [],
+      "num_parsed_outside_segment": 0,
+      "runtime_source_loading_limit": "只有Orange包import path及正式差分评分；owcolor具体__file__／source SHA待CC诊断补齐。",
+      "phases": {
+        "delta_apply": 0.33337,
+        "grader_baseline_rebuild": 4.461611,
+        "grader_cleanup": 1.7035,
+        "grader_start_and_verify": 30.212877,
+        "grader_trusted_setup": 81.690548,
+        "parser_and_report": 0.152573,
+        "test": 9.385664
+      },
+      "driver_result": {
+        "candidate": "Cdeg",
+        "expected_score": 0,
+        "driver_exit": 0,
+        "seconds": 247.427,
+        "report": {
+          "execution_failure_evidence": [],
+          "execution_failure_stage": null,
+          "expected_match": 47,
+          "expected_total": 48,
+          "f2p_pass": null,
+          "f2p_total": null,
+          "failure_category": "tests_failed",
+          "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+          "grading_semantics": "r2e_expected_map",
+          "infra_failure_detail": null,
+          "outcome": "unresolved",
+          "p2p_fail": null,
+          "p2p_total": null,
+          "report_id": "rpt_grading_a4235004",
+          "reward": 0.0
+        },
+        "actual_budget": {
+          "before": 300.0,
+          "after": 1200.0,
+          "test_seconds": 1800.0,
+          "source": "r2e_gym_subset::orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e"
+        },
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/matrices/orange-50f6a758-r9-matrix-c-20261003-v2/Cdeg/ledger.jsonl",
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "footer": {
+          "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/matrices/orange-50f6a758-r9-matrix-c-20261003-v2/Cdeg/ledger.jsonl",
+          "rows": 1,
+          "manager_close": {
+            "prepare_cancelled": 0,
+            "containers_removed": [],
+            "containers_open": [],
+            "supply_open": [],
+            "cleanup_failures": [],
+            "regrade_events": 0,
+            "regrade_total": 0,
+            "regrade_declined": 0,
+            "containers_created_total": 1,
+            "containers_removed_total": 1,
+            "container_history_retained": 1,
+            "leases_total": 1
+          },
+          "halted": null,
+          "aborted": null,
+          "cleanup_failures": [],
+          "final_status": {
+            "exit_code": 0,
+            "reason": "ok",
+            "grader_containers_open": [],
+            "cleanup_failures_total": 0,
+            "cleanup_failures_resolved": false
+          }
+        },
+        "stop_reason": null
+      },
+      "resource_observation_coverage": {
+        "first": "20261002T211946.778440Z",
+        "last": "20261002T212348.666702Z",
+        "samples": 17,
+        "containers": {
+          "defbf6101b4863ef8c943dbdebc1a038ea89792b3b8a13d0553b77863d8a755c": {
+            "name": "/rh2-replay-cand-orange3__50f6a758f1c66b8-9f213b2a",
+            "role": "candidate",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "first": "20261002T211946.778440Z",
+            "last": "20261002T212132.701430Z",
+            "samples": 8
+          },
+          "8791d9d11667180701860b3da2c8dd99d9ef61f7fb42b1c6298b911ce25bf502": {
+            "name": "/rh2-grading-replay-orange-50f6a758-r-a4235004",
+            "role": "grader",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "first": "20261002T212147.802584Z",
+            "last": "20261002T212348.666702Z",
+            "samples": 9
+          }
+        },
+        "valid_cgroups": 16,
+        "unavailable_cgroups": 1,
+        "oom_seen": false
+      },
+      "matrix_complete_ledger_identity_matches_previous": true,
+      "complete_matrix_ledger_path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/matrix/Cdeg/ledger.jsonl",
+      "cleanup_role": "candidate_container"
+    },
+    {
+      "candidate": "K5",
+      "expected_score": 0,
+      "observed_score": 0.0,
+      "status": "verified_completed_control",
+      "files": 14,
+      "readback_failures": [],
+      "readback_manifest": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/readback_manifest.json",
+        "sha256": "sha256:aadc3d7102496d535fff1300be532df68c65640d6eddcb754102a83983978cd6"
+      },
+      "readback_receipt": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2_readback_receipt.json",
+        "sha256": "sha256:80fd0e11d94eb01d1092186e24f6f6e9119b447d9b7d94cb3e8d67c285c80e77"
+      },
+      "archive_sha256_matches": true,
+      "request_sha256_matches": true,
+      "ledger": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/matrix/K5/ledger.jsonl",
+        "sha256": "sha256:dc9fc3d0d0cae88f19224bdc92d4607ac1f048019d020cfeacb285cbea1cec48"
+      },
+      "raw_eval_log": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/matrix/K5/eval_logs/evallog_replay-orange-50f6a758-r_efa0289f.eval.log",
+        "sha256": "sha256:39d4974a933035cd7e529eb5b77bf83ca0ada310c1317308bf6d141ec16d0582",
+        "ledger_digest_matches": true,
+        "partial": false
+      },
+      "expected_keys_equal": true,
+      "expected_count": 48,
+      "observed_count": 48,
+      "match_count": 47,
+      "mismatches": {
+        "TestOWColor.test_load_ignore_warning": "FAILED"
+      },
+      "missing": [],
+      "unexpected": [],
+      "observed_map": {
+        "AttrDescTest.test_name": "PASSED",
+        "AttrDescTest.test_reset": "PASSED",
+        "AttrDescTest.test_to_dict": "PASSED",
+        "DiscAttrTest.test_colors": "PASSED",
+        "DiscAttrTest.test_create_variable": "PASSED",
+        "DiscAttrTest.test_from_dict_coliding_values": "PASSED",
+        "DiscAttrTest.test_from_dict_exceptions": "PASSED",
+        "DiscAttrTest.test_reset": "PASSED",
+        "DiscAttrTest.test_to_dict": "PASSED",
+        "DiscAttrTest.test_values": "PASSED",
+        "ContAttrDescTest.test_create_variable": "PASSED",
+        "ContAttrDescTest.test_from_dict_exceptions": "PASSED",
+        "ContAttrDescTest.test_palette": "PASSED",
+        "ContAttrDescTest.test_reset": "PASSED",
+        "ContAttrDescTest.test_to_dict": "PASSED",
+        "TestDiscColorTableModel.test_column_count": "PASSED",
+        "TestDiscColorTableModel.test_data": "PASSED",
+        "TestDiscColorTableModel.test_reset": "PASSED",
+        "TestDiscColorTableModel.test_row_count": "PASSED",
+        "TestDiscColorTableModel.test_set_data": "PASSED",
+        "TestContColorTableModel.test_column_count": "PASSED",
+        "TestContColorTableModel.test_copy_to_all": "PASSED",
+        "TestContColorTableModel.test_data": "PASSED",
+        "TestContColorTableModel.test_reset": "PASSED",
+        "TestContColorTableModel.test_row_count": "PASSED",
+        "TestContColorTableModel.test_set_data": "PASSED",
+        "TestColorStripDelegate.test_color_combo": "PASSED",
+        "TestColorStripDelegate.test_paint": "PASSED",
+        "TestOWColor.test_commit_on_data_changed": "PASSED",
+        "TestOWColor.test_image_export": "PASSED",
+        "TestOWColor.test_invalid_input_colors": "PASSED",
+        "TestOWColor.test_load": "PASSED",
+        "TestOWColor.test_lose_data": "PASSED",
+        "TestOWColor.test_minimum_size": "PASSED",
+        "TestOWColor.test_model_content": "PASSED",
+        "TestOWColor.test_msg_base_class": "PASSED",
+        "TestOWColor.test_parse_var_defs": "PASSED",
+        "TestOWColor.test_parse_var_defs_invalid": "PASSED",
+        "TestOWColor.test_parse_var_defs_no_rename": "PASSED",
+        "TestOWColor.test_parse_var_defs_shows_warnings": "PASSED",
+        "TestOWColor.test_report": "PASSED",
+        "TestOWColor.test_reset": "PASSED",
+        "TestOWColor.test_reuse_old_settings": "PASSED",
+        "TestOWColor.test_save": "PASSED",
+        "TestOWColor.test_save_low": "PASSED",
+        "TestOWColor.test_string_variables": "PASSED",
+        "TestOWColor.test_unconditional_commit_on_new_signal": "PASSED",
+        "TestOWColor.test_load_ignore_warning": "FAILED"
+      },
+      "failure_location": {
+        "key": "TestOWColor.test_load_ignore_warning",
+        "file": "r2e_tests/test_1.py",
+        "line": 819,
+        "assertion": "self.assertEqual(named, list(names), text)",
+        "scenario": "single unused variable must be named",
+        "exception": "[] != [foo]; warning text Unused variable definitions were ignored."
+      },
+      "apply": {
+        "method": "git_apply",
+        "patch_sha256": "sha256:6e8aa77a4f9226206d6f25a92357b6615eae907a62312731dfafb7cace88cf1b",
+        "stage_error": null,
+        "apply_ok": true,
+        "included_paths": [
+          "Orange/widgets/data/owcolor.py"
+        ],
+        "frozen_digest": "sha256:0cc4ea6353315079a10ab71b45e1d3c26d8a9ebaf166830acf555ffa81160232",
+        "frozen_digest_matches": true,
+        "baseline_digest": "sha256:f2cf4b7df5add1e28b0ecc74a167a22bbdf4ed4ad4a65265f6d524a54fedb2cb",
+        "baseline_digest_matches": true,
+        "source_entries": [
+          {
+            "path": "Orange/widgets/data/owcolor.py",
+            "content_digest": "sha256:4c12a264947b8e7b33551ac41f372e9feb7e9fe8bdb063a17d977a198b652b1a",
+            "content_digest_matches": true
+          }
+        ],
+        "patch_matches_frozen_in_memory": true,
+        "native_rebuild_required": false,
+        "native_rebuild_basis": "唯一候选entry为Python owcolor.py；没有修改native源码或产物；沿冻结环境使用已有扩展。"
+      },
+      "image_id_actual": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+      "overlay": {
+        "derived_image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+        "derived_image_ref": "rh2-category2-orange3-c-r9-v1/orange3:50f6a758f1c6-r2e_derive_v1m2s",
+        "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+        "recipe_sha256": "sha256:2e03f54f3ec0d3269c7e5fa13ca33435351b51ede9cd692fe009d4d86fcad4ce"
+      },
+      "grading_semantics": "r2e_expected_map",
+      "failure_category": "tests_failed",
+      "import_observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/Orange/__init__.py",
+        "RH2_OBS_PKG_VERSION": "3.32.0.dev",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d"
+      },
+      "setup_budget": {
+        "before": 300.0,
+        "after": 1200.0,
+        "test_seconds": 1800.0,
+        "source": "r2e_gym_subset::orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e"
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 9.411,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "cli_footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/matrices/orange-50f6a758-r9-matrix-c-20261003-v2/K5/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "resource_policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "resource_peak_mb": 2221.777,
+      "resource_facts": null,
+      "independent_hostconfig_cgroup_measurement": true,
+      "resource_limit": "候选与grader两容器均有真实HostConfig/cgroup观察；属于15秒周期采样，不是逐时刻覆盖。",
+      "reference_skipped": [],
+      "num_parsed_outside_segment": 0,
+      "runtime_source_loading_limit": "只有Orange包import path及正式差分评分；owcolor具体__file__／source SHA待CC诊断补齐。",
+      "phases": {
+        "delta_apply": 0.367551,
+        "grader_baseline_rebuild": 4.920281,
+        "grader_cleanup": 1.779883,
+        "grader_start_and_verify": 20.259876,
+        "grader_trusted_setup": 85.830635,
+        "parser_and_report": 0.16078,
+        "test": 12.200688
+      },
+      "driver_result": {
+        "candidate": "K5",
+        "expected_score": 0,
+        "driver_exit": 0,
+        "seconds": 243.303,
+        "report": {
+          "execution_failure_evidence": [],
+          "execution_failure_stage": null,
+          "expected_match": 47,
+          "expected_total": 48,
+          "f2p_pass": null,
+          "f2p_total": null,
+          "failure_category": "tests_failed",
+          "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+          "grading_semantics": "r2e_expected_map",
+          "infra_failure_detail": null,
+          "outcome": "unresolved",
+          "p2p_fail": null,
+          "p2p_total": null,
+          "report_id": "rpt_grading_efa0289f",
+          "reward": 0.0
+        },
+        "actual_budget": {
+          "before": 300.0,
+          "after": 1200.0,
+          "test_seconds": 1800.0,
+          "source": "r2e_gym_subset::orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e"
+        },
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/matrices/orange-50f6a758-r9-matrix-c-20261003-v2/K5/ledger.jsonl",
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "footer": {
+          "ledger": "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/matrices/orange-50f6a758-r9-matrix-c-20261003-v2/K5/ledger.jsonl",
+          "rows": 1,
+          "manager_close": {
+            "prepare_cancelled": 0,
+            "containers_removed": [],
+            "containers_open": [],
+            "supply_open": [],
+            "cleanup_failures": [],
+            "regrade_events": 0,
+            "regrade_total": 0,
+            "regrade_declined": 0,
+            "containers_created_total": 1,
+            "containers_removed_total": 1,
+            "container_history_retained": 1,
+            "leases_total": 1
+          },
+          "halted": null,
+          "aborted": null,
+          "cleanup_failures": [],
+          "final_status": {
+            "exit_code": 0,
+            "reason": "ok",
+            "grader_containers_open": [],
+            "cleanup_failures_total": 0,
+            "cleanup_failures_resolved": false
+          }
+        },
+        "stop_reason": null
+      },
+      "resource_observation_coverage": {
+        "first": "20261002T212403.777793Z",
+        "last": "20261002T212750.314281Z",
+        "samples": 16,
+        "containers": {
+          "e8957c061301db88e8c0f0c3f7b2e18ef43dc7421f52afc9974e070a6f24d522": {
+            "name": "/rh2-replay-cand-orange3__50f6a758f1c66b8-5b1d3cfa",
+            "role": "candidate",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "first": "20261002T212403.777793Z",
+            "last": "20261002T212534.393797Z",
+            "samples": 7
+          },
+          "967b049b1bd61bb19b4468297835ab238cd59dbdb139342e15b5f4d6822ebe45": {
+            "name": "/rh2-grading-replay-orange-50f6a758-r-efa0289f",
+            "role": "grader",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "first": "20261002T212549.498623Z",
+            "last": "20261002T212750.314281Z",
+            "samples": 9
+          }
+        },
+        "valid_cgroups": 16,
+        "unavailable_cgroups": 0,
+        "oom_seen": false
+      },
+      "matrix_complete_ledger_identity_matches_previous": true,
+      "complete_matrix_ledger_path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/matrix/K5/ledger.jsonl",
+      "cleanup_role": "candidate_container"
+    }
+  ],
+  "preliminary_resource_snapshot": {
+    "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_resource_latest_snapshot.json",
+    "sha256": "sha256:d9405563487956b8ebd5f93b1508c327b3e9a46a4ad5ea3fe26d880a36fdf623",
+    "snapshot": {
+      "samples": 8,
+      "last": {
+        "at": "20261002T210354.447709Z",
+        "job": "orange-50f6a758-r9-matrix-c-20261003-v2",
+        "containers": [
+          {
+            "id": "eca612de1acec91f508a1c673731888754a2d16a8aaddba1a3f47d3656c7b56d",
+            "name": "/rh2-replay-cand-orange3__50f6a758f1c66b8-b2466dbc",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "run_id": "orange-50f6a758-r9-matrix-c-20261003-v2-K1",
+            "created": "2026-10-02T21:03:08.039920637Z",
+            "state": {
+              "Status": "running",
+              "Running": true,
+              "Paused": false,
+              "Restarting": false,
+              "OOMKilled": false,
+              "Dead": false,
+              "Pid": 190199,
+              "ExitCode": 0,
+              "Error": "",
+              "StartedAt": "2026-10-02T21:03:08.1573464Z",
+              "FinishedAt": "0001-01-01T00:00:00Z"
+            },
+            "host_config": {
+              "NanoCpus": 2000000000,
+              "Memory": 4294967296,
+              "MemorySwap": 4294967296,
+              "PidsLimit": 512,
+              "NetworkMode": "none",
+              "Binds": null
+            },
+            "cgroup": {
+              "cpu.max": "200000 100000",
+              "memory.max": "4294967296",
+              "memory.swap.max": "0",
+              "pids.max": "512",
+              "memory.peak": "802238464"
+            }
+          }
+        ]
+      }
+    },
+    "covers_noop_or_gold": false,
+    "status": "历史紧凑快照，已由完整不可变observations归档核查替代；不作为当前独立事实入口。"
+  },
+  "actual_cc": {
+    "status": "completed_independently_verified",
+    "actor_scenario_v3": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_actor_inputs/orange50_public_private_control_scenario_v3.json",
+      "sha256": "sha256:31fefc2ed88587e3112f2da14c5f9fcbd73e7204b45e569fe6de947f0d9835bc",
+      "steps_equal_to_v2": true
+    },
+    "scope_note": "真实CC执行CPU stub_script；第一阶段公开base只读交付及开发验证，第二阶段私有固定gold控制诊断。不是fresh阅读、真实模型解题能力或训练链验证。actor本轮使用--no-grade，正式分数来自另行已核八方矩阵。",
+    "completed_readback": {
+      "root": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_actor_complete_v1",
+      "file_count": 70,
+      "groups": {
+        "actor": 55,
+        "job": 3,
+        "observations": 12
+      },
+      "all_file_sizes_and_sha256_verified": true,
+      "archive": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_actor_complete_v1.tgz",
+        "sha256": "sha256:13e8233661f64cb1dde1b68122c67ade899c58dc95b6e5f8e4975c32da81cfd2",
+        "bytes": 38242630
+      },
+      "manifest": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_actor_complete_v1/readback_manifest.json",
+        "sha256": "sha256:475efef800f318ee6f1b588ebcbb22446294de577fc1145a9cb301f611032060",
+        "bytes": 12790
+      },
+      "request": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_actor_complete_v1_fetch_request.json",
+        "sha256": "sha256:948d323593e9bd339b5d6571b93c9a0e431b6d8a201bf989bdf56c65811d0003",
+        "bytes": 901
+      },
+      "receipt": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_actor_complete_v1_readback_receipt.json",
+        "sha256": "sha256:524a24c4ed316553459e779e999edf9ae875e2a2a47e59ee8a200c8d55690470",
+        "bytes": 663
+      },
+      "receipt_request_archive_manifest_hashes_match": true
+    },
+    "job": {
+      "source": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_actor_complete_v1/job/status.json",
+        "sha256": "sha256:d713bb9fb3376974997e46687873db83e2fc8a2fe3921de46e2f661804918d4e",
+        "bytes": 1551
+      },
+      "id": "orange-50f6a758-r9-actor-c-20261003-v1",
+      "started_at": "2026-10-02T21:29:23Z",
+      "finished_at": "2026-10-02T21:32:46Z",
+      "status": "finished",
+      "returncode": 0
+    },
+    "execution": {
+      "result": "ran",
+      "solver": "stub_script",
+      "termination": "completed",
+      "harness_exit_code": 0,
+      "cc_version": "2.1.205",
+      "wall_seconds": 1200,
+      "max_turns": 14,
+      "max_context_len": 32768,
+      "max_new_tokens": 4096,
+      "actual_solve_seconds": 45.85,
+      "outer_probe_seconds": 200.7,
+      "assistant_events": 11,
+      "bash_tool_uses": 10,
+      "tool_results": 10,
+      "tool_use_result_ids_match_exactly": true,
+      "cc_result_subtype": "success",
+      "cc_result_is_error": false,
+      "gateway_requests": 11,
+      "trajectory_source": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_actor_complete_v1/actor/attempt/trajectory.jsonl",
+        "sha256": "sha256:79502b503a7773137291f84af125ea83e722edc64163132bb1f3324016ff3055",
+        "bytes": 89147
+      },
+      "harness_trajectory_bytes_equal": true,
+      "synthetic_usage_is_not_model_performance": true
+    },
+    "public_delivery": {
+      "prompt": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_actor_complete_v1/actor/attempt/prompt.txt",
+        "sha256": "sha256:0e229b0c6840debeb7a5015bb09f6e60d585a60e8ec02c1429f689850ee2730e",
+        "bytes": 1396
+      },
+      "statement": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/50f6a758/files/problem_statement.txt",
+        "sha256": "sha256:8d7ddab841c89504b41268db2e13aed59a67ac13aaa791f8c32c70a1a3a321ef",
+        "bytes": 1293
+      },
+      "gateway_first_raw_request": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_actor_complete_v1/actor/gateway/orange-50f6a758-r9-actor-c-20261003-v1/requests.jsonl",
+        "sha256": "sha256:a8fe6078397838c2a79589adf8d2b9b5679892cb251ac192507581ea08bd3eba",
+        "bytes": 312607
+      },
+      "stub_first_raw_request": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_actor_complete_v1/actor/stub/requests/messages_000.json",
+        "sha256": "sha256:947413981593805e213b90fdd1397012bd4eff2487d8c3c1e8e9b46441f2d865",
+        "bytes": 13997
+      },
+      "prompt_byte_identical_in_gateway_and_stub_user_text": true,
+      "statement_byte_identical_prompt_suffix": true,
+      "prefix_is_only_repo_workdir_and_base_commit_wrapper": true,
+      "development_note_matches_observed_final_public_conflict": true
+    },
+    "module_identity": {
+      "source": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_actor_complete_v1/actor/attempt/trajectory.jsonl",
+        "sha256": "sha256:79502b503a7773137291f84af125ea83e722edc64163132bb1f3324016ff3055",
+        "bytes": 89147
+      },
+      "uid": 54321,
+      "workdir": "/testbed",
+      "interpreter": "/testbed/.venv/bin/python",
+      "python": "3.7.9",
+      "numpy": "1.17.5",
+      "orange_file": "/testbed/Orange/__init__.py",
+      "owcolor_file": "/testbed/Orange/widgets/data/owcolor.py",
+      "base_source_sha256": "sha256:c5390b371d829146b8c233e9d0bc4b92ee9abd903912d9a6d15c7f1dc699f1f4",
+      "postgold_source_sha256": "sha256:14fcfc1c0e7ca3364a37f88f53072b6abab35b0d28f0e62e8a7a3cd69b6521ed",
+      "postgold_actual_source_equals_matrix_gold_frozen_source": true
+    },
+    "tool_steps": [
+      {
+        "id": "r2e_preflight",
+        "tool_use_id": "toolu_89dd832f1dcdc4c8",
+        "tool_name": "Bash",
+        "step_rc": 0,
+        "tool_result_is_error": false,
+        "tool_result_interrupted": false,
+        "explicit_numeric_bash_exit_code_field": null,
+        "pytest_summary": [],
+        "command_sha256": "sha256:7c1a7832e8f25012add46ec6316db6098232ec00beff2736509369a9b8247c18",
+        "tool_result_content_sha256": "sha256:77d22041e2752f08162d87995f7a5214d415f7fd3bcba852c905118f637edf4f"
+      },
+      {
+        "id": "actor_identity_imports",
+        "tool_use_id": "toolu_b9a398ead2419188",
+        "tool_name": "Bash",
+        "step_rc": 0,
+        "tool_result_is_error": false,
+        "tool_result_interrupted": false,
+        "explicit_numeric_bash_exit_code_field": null,
+        "pytest_summary": [],
+        "command_sha256": "sha256:d6d755c9e17357b0b093ee98ebd239738ff5314a60aa209e18439041199a63fe",
+        "tool_result_content_sha256": "sha256:01a38061a68da4adf6e4b6daba7462609e09233b680860832d27020e34d0cadc"
+      },
+      {
+        "id": "public_existing_regressions",
+        "tool_use_id": "toolu_341289fc0d856513",
+        "tool_name": "Bash",
+        "step_rc": 0,
+        "tool_result_is_error": false,
+        "tool_result_interrupted": false,
+        "explicit_numeric_bash_exit_code_field": null,
+        "pytest_summary": [
+          "5 passed, 1 warning in 3.67s"
+        ],
+        "command_sha256": "sha256:0ebd85649de64129b03ad2caad62f5dc1243b0413de41d67bd458ded6d92e8fa",
+        "tool_result_content_sha256": "sha256:a21990dc0cc35a683322cf4f27b7cd071caa35598f114bbea58b96ab7e4be35c"
+      },
+      {
+        "id": "public_issue_and_rename_contract",
+        "tool_use_id": "toolu_61183d130cfadfea",
+        "tool_name": "Bash",
+        "step_rc": 1,
+        "tool_result_is_error": false,
+        "tool_result_interrupted": false,
+        "explicit_numeric_bash_exit_code_field": null,
+        "pytest_summary": [
+          "3 failed, 2 passed, 3 deselected, 1 warning in 3.23s"
+        ],
+        "command_sha256": "sha256:1a952e649414681e08046caf095523f99265b972e7f9dd88f9c54bf45c4d9e57",
+        "tool_result_content_sha256": "sha256:87a8c54db620e21a82494503de7ffe4525f36410d7b756dbb9f90b1e83d5430b"
+      },
+      {
+        "id": "public_original_conflict",
+        "tool_use_id": "toolu_894f5c90befcc167",
+        "tool_name": "Bash",
+        "step_rc": 0,
+        "tool_result_is_error": false,
+        "tool_result_interrupted": false,
+        "explicit_numeric_bash_exit_code_field": null,
+        "pytest_summary": [
+          "1 passed, 1 warning in 3.75s"
+        ],
+        "command_sha256": "sha256:83dd9ae15645947206e21234c894eabfb1719280f9e76b3de55a3afb2beb2884",
+        "tool_result_content_sha256": "sha256:49b73ba3a1991320b40333bf1def385e475aca0cde4d15764f2627130911986d"
+      },
+      {
+        "id": "private_gold_apply",
+        "tool_use_id": "toolu_415d669cbcbb43dd",
+        "tool_name": "Bash",
+        "step_rc": 0,
+        "tool_result_is_error": false,
+        "tool_result_interrupted": false,
+        "explicit_numeric_bash_exit_code_field": null,
+        "pytest_summary": [],
+        "command_sha256": "sha256:4e43cddd28cac8c1eb25cd23da9273aa8ab764b59b52cf3c2a78407fa6eb11cf",
+        "tool_result_content_sha256": "sha256:63b0d124399ad13064dca22c17ccd401b764c479f32e2eb7ac896106a1361032"
+      },
+      {
+        "id": "private_gold_module_identity",
+        "tool_use_id": "toolu_653f6e90b1a19717",
+        "tool_name": "Bash",
+        "step_rc": 0,
+        "tool_result_is_error": false,
+        "tool_result_interrupted": false,
+        "explicit_numeric_bash_exit_code_field": null,
+        "pytest_summary": [],
+        "command_sha256": "sha256:c27d7b103dfa74ed005528921257859d295aa9bef27e46ad959d9b4d9621e38a",
+        "tool_result_content_sha256": "sha256:1b0ab08201a03677d5629be07be11f09bf836d0ae42cff0cf043a4b89d105fae"
+      },
+      {
+        "id": "private_gold_public_existing_regressions",
+        "tool_use_id": "toolu_b9a12fe9ed9c21ca",
+        "tool_name": "Bash",
+        "step_rc": 0,
+        "tool_result_is_error": false,
+        "tool_result_interrupted": false,
+        "explicit_numeric_bash_exit_code_field": null,
+        "pytest_summary": [
+          "5 passed, 1 warning in 2.96s"
+        ],
+        "command_sha256": "sha256:65bedc35b3a0a801892aea4b3145057c7963e543bb1812ee3f904cc200799413",
+        "tool_result_content_sha256": "sha256:83975ec31fa61b4d43aac7e12c0d83e87fefffb547681488156ce3e09f7cfa80"
+      },
+      {
+        "id": "private_gold_public_issue_and_rename_contract",
+        "tool_use_id": "toolu_14e809dbd099efe6",
+        "tool_name": "Bash",
+        "step_rc": 0,
+        "tool_result_is_error": false,
+        "tool_result_interrupted": false,
+        "explicit_numeric_bash_exit_code_field": null,
+        "pytest_summary": [
+          "5 passed, 3 deselected, 1 warning in 2.98s"
+        ],
+        "command_sha256": "sha256:a04e1a3ffcc948a7ce4d74013b76ef7359e324617e3040c88ca39e73f58fc30a",
+        "tool_result_content_sha256": "sha256:4318fdd226f92527eeaca6823b952068ccb1f0ed67073cbba066c36b12d85396"
+      },
+      {
+        "id": "private_gold_public_original_conflict",
+        "tool_use_id": "toolu_2a4cccb26ab06ce5",
+        "tool_name": "Bash",
+        "step_rc": 1,
+        "tool_result_is_error": false,
+        "tool_result_interrupted": false,
+        "explicit_numeric_bash_exit_code_field": null,
+        "pytest_summary": [
+          "1 failed, 1 warning in 3.03s"
+        ],
+        "command_sha256": "sha256:d01e7047b19abb19591d111efd922b98fae50689f1a2fc20fd8540f0516af28f",
+        "tool_result_content_sha256": "sha256:6ae8b2ff29b24014ff765d014ed0696ef210d9b8c99f0bfa202189cbf75ce01b"
+      }
+    ],
+    "failure_interpretation": {
+      "all_ten_steps_have_actual_rh2_step_rc": true,
+      "base_contract": {
+        "step_rc": 1,
+        "tool_result_is_error": false,
+        "failed_tests": [
+          "test_unused_categorical_definitions",
+          "test_unused_numeric_definition",
+          "test_unused_rename_preserves_valid_rename"
+        ],
+        "passed_tests": [
+          "test_duplicate_variable_renames",
+          "test_variable_name_swap"
+        ],
+        "failure_type": "warning.assert_called() AssertionError; no application exception"
+      },
+      "postgold_original_conflict": {
+        "step_rc": 1,
+        "tool_result_is_error": false,
+        "public_source_path": "Orange/widgets/data/tests/test_owcolor.py",
+        "line": 888,
+        "assertion": "msg_box.assert_not_called()",
+        "case": "matched categorical varA rename X plus unused numeric var not rename X",
+        "preceding_duplicate_rename_checks_passed": true,
+        "preceding_name_swap_check_passed": true
+      },
+      "bash_exit_code_note": "完整tool_result未暴露独立数字Exit code字段，is_error均false；两个pytest失败均有RH2_STEP_RC=1及完整traceback。不能用tool_result_errors=0或CC成功表示所有pytest通过，也不能把实际齐全的标记说成丢失。"
+    },
+    "native_export": {
+      "baseline_archive": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_actor_complete_v1/actor/attempt/frozen/baseline.tar",
+        "sha256": "sha256:a3e5e926aa2009cf1c3219d573700b33d590f6d8e5ae1359ce1b84720fc96893",
+        "bytes": 71198720
+      },
+      "baseline_manifest": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_actor_complete_v1/actor/attempt/frozen/baseline_manifest.json",
+        "sha256": "sha256:d855e1564c72306c56a19b67aefd72753c26586e291cb2f5ea13c95edab999d5",
+        "bytes": 421866
+      },
+      "baseline_archive_entries": 1661,
+      "baseline_archive_all_paths_types_modes_and_digests_independently_match_manifest": true,
+      "captured_before_solver": true,
+      "baseline_canonical_digest": "sha256:f2cf4b7df5add1e28b0ecc74a167a22bbdf4ed4ad4a65265f6d524a54fedb2cb",
+      "frozen_artifact": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_actor_complete_v1/actor/attempt/frozen/frozen_patch.json",
+        "sha256": "sha256:fb7c52795825fe982324571c822e49a0ba4bbd48245252da8bbd0b07b3ae0aa6",
+        "bytes": 38677
+      },
+      "frozen_canonical_digest": "sha256:16fe2f06d863b9d3d6e063b44534ac0ac1142f0ee76bc128627ac34bcf4247ce",
+      "entries": [
+        {
+          "path": "Orange/widgets/data/owcolor.py",
+          "operation": "modify",
+          "object_type": "regular",
+          "mode": "100644",
+          "content_digest": "sha256:14fcfc1c0e7ca3364a37f88f53072b6abab35b0d28f0e62e8a7a3cd69b6521ed"
+        }
+      ],
+      "frozen_decoded_content_digest_independently_verified": true,
+      "private_applied_gold_patch_sha256": "sha256:8f3d578bfd467133d7db593389f03d1692cbe0cc1df78d2777b57d4ddefe8154",
+      "rendered_diff": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_actor_complete_v1/actor/attempt/candidate/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e.diff",
+        "sha256": "sha256:c9437b45f649137e5aff31611750dda9c082aa100fac8beab9b2fd47117d2bf8",
+        "bytes": 1902
+      },
+      "rendered_diff_applied_in_memory_to_actual_baseline_equals_frozen_source_bytes": true,
+      "render_selfcheck_tree": "7bba534c63d6506d8fbd961cbadd2f41c247c99f",
+      "render_post_tree": "7bba534c63d6506d8fbd961cbadd2f41c247c99f",
+      "classification": "projectable",
+      "reason_codes": [],
+      "excluded_pathset_changed": true,
+      "public_test_sha256_in_actual_baseline": "sha256:c9784d7f2baa23ffce6cf4591d5f3c221a3a3c22cefe01f2ae6abc4a1fa7d8f1",
+      "public_tests_not_in_frozen_changes": true,
+      "pip_freeze_before_after_bytes_equal": true,
+      "grading_note": "actor没有另行评分；同源码私有gold已在正式矩阵48/48。"
+    },
+    "resource_observation": {
+      "observer_receipt": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_actor_complete_v1/observations/observer_receipt.json",
+        "sha256": "sha256:28fbc83162ac35c61a4d8e132c042518d9d21611c60426e81a773afbfce3c99d",
+        "bytes": 339
+      },
+      "snapshot_count": 11,
+      "unique_container_count": 2,
+      "reason": "job_finished",
+      "containers": {
+        "main": {
+          "container_id": "a084b1e9b72560f60aa2ba7cee8dfc3d1c6cb8f315dd45def6da1b391c54f73a",
+          "container_name": "/rh2r2e-orange3-50f6a758f1c66b8f4a-4c9222e2",
+          "sample_count": 11,
+          "first_sample": "20261002T213006.148982Z",
+          "last_sample": "20261002T213237.652189Z",
+          "host_config": {
+            "NanoCpus": 2000000000,
+            "Memory": 4294967296,
+            "MemorySwap": 4294967296,
+            "PidsLimit": 512,
+            "NetworkMode": "rh2r2e-orange3-50f6a758f1c66b8f4a-4c9222e2-net",
+            "Binds": null
+          },
+          "cgroup_limits": {
+            "cpu.max": "200000 100000",
+            "memory.max": "4294967296",
+            "memory.swap.max": "0",
+            "pids.max": "512"
+          },
+          "max_observed_memory_peak_bytes": 3180023808,
+          "oom_killed_observed": false
+        },
+        "relay": {
+          "container_id": "c2bfbe36a2e2ea9b60ca670c5e06a73bdeedc1d5b7bfacbc4e65bf7a80183932",
+          "container_name": "/rh2-egress-relay-orange-50f6a758-r9-actor-c-20261003-v1",
+          "sample_count": 11,
+          "first_sample": "20261002T213006.148982Z",
+          "last_sample": "20261002T213237.652189Z",
+          "host_config": {
+            "NanoCpus": 0,
+            "Memory": 268435456,
+            "MemorySwap": 268435456,
+            "PidsLimit": 64,
+            "NetworkMode": "bridge",
+            "Binds": null
+          },
+          "cgroup_limits": {
+            "cpu.max": "max 100000",
+            "memory.max": "268435456",
+            "memory.swap.max": "0",
+            "pids.max": "64"
+          },
+          "max_observed_memory_peak_bytes": 27213824,
+          "oom_killed_observed": false
+        }
+      },
+      "limits_match_across_all_captured_samples": true,
+      "network_note": "main使用隔离内部网络及模型relay，relay bridge；不同于矩阵candidate/grader的network none。relay NanoCpus=0、cpu.max=max 100000，未设2CPU配额。",
+      "coverage_note": "15秒周期旁路采样，不证明每一时刻；不回溯补齐matrix noop/gold观察缺项。"
+    },
+    "cleanup": {
+      "attempt_cleanup": {
+        "container_rm": 0,
+        "container_left": "",
+        "network_failures": [],
+        "relay_failures": [],
+        "labeled_containers_left": [],
+        "labeled_networks_left": [],
+        "cleanup_ok": true
+      },
+      "pre_drain_stop_residual": 0,
+      "gateway_drain": {
+        "session_id": "orange-50f6a758-r9-actor-c-20261003-v1",
+        "revoked": true,
+        "active_requests": 0,
+        "drained": true,
+        "ts": 1790976747.1198468
+      },
+      "session_close_original_matches_gateway_drain": true,
+      "quiescence": {
+        "at": "2026-10-02T21:32:37.098183+00:00",
+        "ok": true,
+        "snapshot_ref": "sha256:3d8821c8c286430c545fba2323d6ef760f13be177a81d00bc462b4b3ec917750",
+        "evidence": [
+          "agent_processes_zero",
+          "workspace_digest_stable_double_read"
+        ],
+        "barrier_stop": {
+          "residual": 0,
+          "kill_returned_at": 16362.507605042,
+          "kill_exit_code": 0,
+          "pkill_status": 1,
+          "kill_delivered_at": 16362.507605042,
+          "confirmed_at": 16362.670718008,
+          "observations": [
+            {
+              "issued_at": 16362.507644393,
+              "returned_at": 16362.670718008,
+              "residual": 0
+            }
+          ],
+          "observation_count": 1,
+          "timed_out": false,
+          "elapsed_seconds": 0.339,
+          "attempts": 1
+        },
+        "policy": "baseline_policy_r2e_v1"
+      },
+      "summary_residuals": {
+        "orange-50f6a758-r9-actor-c-20261003-v1": {
+          "containers": [],
+          "networks": []
+        },
+        "_clean": true
+      },
+      "endpoint_stopped_rcs": [
+        0,
+        0
+      ],
+      "interpretation": "实际main/relay/network及宿主探针stub/gateway均已收口；只覆盖本attempt标签，不外推整机或训练adapter。"
+    },
+    "evidence_sources": {
+      "summary.json": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_actor_complete_v1/actor/summary.json",
+        "sha256": "sha256:873a34312081287931b1624768b5efc5a793621c5938638e619188e0d4d74f04",
+        "bytes": 20159
+      },
+      "attempt/attempt.json": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_actor_complete_v1/actor/attempt/attempt.json",
+        "sha256": "sha256:de7c875099cefca0bc4e59c05da74716f23f1c1d0840187bdaa47e9bc914ddc6",
+        "bytes": 17378
+      },
+      "attempt/facts/prelaunch.json": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_actor_complete_v1/actor/attempt/facts/prelaunch.json",
+        "sha256": "sha256:c5e4a15f0efe0fdd2dd2da9912340a1b203912f662d440cd48926a18e1423f3e",
+        "bytes": 2344
+      },
+      "attempt/facts/agent_env_facts.txt": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_actor_complete_v1/actor/attempt/facts/agent_env_facts.txt",
+        "sha256": "sha256:ed14988af27a3e3bad0c6dfc76e1115ad6397ee3a756c3ee8b77dcb631749421",
+        "bytes": 1029
+      },
+      "attempt/facts/activation_check.json": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_actor_complete_v1/actor/attempt/facts/activation_check.json",
+        "sha256": "sha256:001784cb32eae5a404cde549444e7ae6e8242e7eed7b1975e37c306c6d1b1853",
+        "bytes": 465
+      },
+      "attempt/facts/r2e_preflight.txt": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_actor_complete_v1/actor/attempt/facts/r2e_preflight.txt",
+        "sha256": "sha256:daab0589dc3105fbc35cf60921cdfede3acf6ca4356f9c706ac5d94f08b4b057",
+        "bytes": 104
+      },
+      "attempt/facts/pip_freeze_before.txt": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_actor_complete_v1/actor/attempt/facts/pip_freeze_before.txt",
+        "sha256": "sha256:1e850d353700f51e1866179f3042e41e804c05a0c1fc682b9fb42133feec6b70",
+        "bytes": 1982
+      },
+      "attempt/facts/pip_freeze_after.txt": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_actor_complete_v1/actor/attempt/facts/pip_freeze_after.txt",
+        "sha256": "sha256:1e850d353700f51e1866179f3042e41e804c05a0c1fc682b9fb42133feec6b70",
+        "bytes": 1982
+      },
+      "gateway/orange-50f6a758-r9-actor-c-20261003-v1/session_close.jsonl": {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_actor_complete_v1/actor/gateway/orange-50f6a758-r9-actor-c-20261003-v1/session_close.jsonl",
+        "sha256": "sha256:5ad129d1c73e6c70d434e503a3da6e36b639e522a72731c3203ff3cdfd26d119",
+        "bytes": 139
+      }
+    }
+  },
+  "findings": [],
+  "pending_requirements": [],
+  "full_cpu_acceptance_passed": true,
+  "independent_result_review_complete": true,
+  "gpu_probe_admitted": false,
+  "model_results_available": false,
+  "stop_condition": "本题当前授权范围的R9诊断CPU验收及非作者结果审查已完成；不追加实验、轮询或重做fresh/common检查。",
+  "matrix_controls_passed": true,
+  "matrix_independent_review_complete": true,
+  "completed_matrix": {
+    "evidence_root": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2",
+    "manifest": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/readback_manifest.json",
+      "sha256": "sha256:aadc3d7102496d535fff1300be532df68c65640d6eddcb754102a83983978cd6"
+    },
+    "receipt": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2_readback_receipt.json",
+      "sha256": "sha256:80fd0e11d94eb01d1092186e24f6f6e9119b447d9b7d94cb3e8d67c285c80e77"
+    },
+    "files_verified": 218,
+    "file_groups": {
+      "matrix": 113,
+      "job": 3,
+      "observations": 102
+    },
+    "readback_failures": [],
+    "archive_and_request_digest_matches": true,
+    "matrix_result": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/matrix/matrix_result.json",
+      "sha256": "sha256:f784e5e72de02d57681be299061373f541e19c40aacff0bf5cc4b8559af1b848",
+      "matrix_complete": true,
+      "stop_reason": null,
+      "candidate_order": [
+        "noop",
+        "gold",
+        "K1",
+        "K2",
+        "K3",
+        "K4",
+        "Cdeg",
+        "K5"
+      ],
+      "observed_scores": [
+        0.0,
+        1.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "driver_exit_codes": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    "remote_job_status": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/job/status.json",
+      "sha256": "sha256:71c4ecd01216707f20e016e04d362729561d42748b1df7f7d5fb15ce1ed5d5bd",
+      "status": {
+        "package": "r2e_orange3",
+        "job": "orange-50f6a758-r9-matrix-c-20261003-v2",
+        "mode": "run",
+        "slot": 0,
+        "command": [
+          "env",
+          "PYTHONDONTWRITEBYTECODE=1",
+          "PYTHONPATH=/work/rh2-category2-20261003/releases/cat2-cpu-r2e089092-swe13-git-20261003-v1/repo/rh2/src",
+          "/work/rh2-category2-20261003/runtime_cpu_v2/rh2/.venv/bin/python",
+          "-B",
+          "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/scripts_v2/run_task_matrix.py",
+          "--inputs",
+          "/work/rh2-category2-20261003/packages/r2e_orange3/r9_cpu_v1/scripts_v2/matrix_inputs.json",
+          "--task",
+          "orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e",
+          "--attempt",
+          "orange-50f6a758-r9-matrix-c-20261003-v2"
+        ],
+        "cwd": "/root",
+        "started_at_utc": "2026-10-02T20:54:48Z",
+        "supervisor_pid": 184177,
+        "status": "finished",
+        "child_pid": 184178,
+        "returncode": 0,
+        "finished_at_utc": "2026-10-02T21:27:52Z"
+      }
+    },
+    "ssh_transport": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/orange-50f6a758-r9-matrix-c-20261003-v2.transport_receipt.json",
+      "sha256": "sha256:f29e5e1e1c58edf540d9fb6d88c79b740ae5e96c620d70347e720bb6d5d1473a",
+      "receipt": {
+        "request": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/orange-50f6a758-r9-matrix-c-20261003-v2.request.json",
+        "request_sha256": "d12f338c2b6dc3bfcb92693ed35f61874b58ab9f08cdabb530673abe85158a51",
+        "host": "cpu-c",
+        "job": "orange-50f6a758-r9-matrix-c-20261003-v2",
+        "returncode": 255,
+        "started_at": "2026-10-02T20:54:45.549819+00:00",
+        "ended_at": "2026-10-02T20:59:24.819351+00:00",
+        "stdout": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/orange-50f6a758-r9-matrix-c-20261003-v2.stdout.log",
+        "stderr": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/orange-50f6a758-r9-matrix-c-20261003-v2.stderr.log"
+      },
+      "classification": "SSH运输中断，remote job继续且结束0；不作题目失败或评分不完整。"
+    },
+    "aggregate_grader_cleanup": {
+      "created": 8,
+      "removed": 8,
+      "open": 0,
+      "cleanup_failures": 0,
+      "basis": "逐方真实CLI footer；不外推整机所有任务。"
+    },
+    "matrix_inputs_and_wrapper_and_plan_digest_matches": true,
+    "candidate_cleanup": {
+      "removed": 8,
+      "failures": 0,
+      "basis": "逐方ledger.cleanup均removed=true／rm:ok；该字段来自候选阶段finally，不是grader container计数。"
+    }
+  },
+  "resource_observation_review": {
+    "root": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/observations",
+    "samples": 101,
+    "unique_containers": 13,
+    "receipt": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/observations/observer_receipt.json",
+      "sha256": "sha256:bd3a2b78c1d980f19ce8f83fdf46b0632517360e776f63b692151630031c713d",
+      "content": {
+        "job": "orange-50f6a758-r9-matrix-c-20261003-v2",
+        "reason": "job_finished",
+        "samples": 101,
+        "unique_container_ids": [
+          "00a4d6c801c00d1959aafc139e139d77ffa08c5105b2642a6c79edafa74b2d1a",
+          "130cb060a5e30e6dfd0c9a3f1bbda40bb4127b986bd93d7ba0c40f12f7a93da3",
+          "8246c487d7d8ac6a8fa9e45f41bae5f40bdbe80f7d304571cd16f3e07db09b43",
+          "8791d9d11667180701860b3da2c8dd99d9ef61f7fb42b1c6298b911ce25bf502",
+          "967b049b1bd61bb19b4468297835ab238cd59dbdb139342e15b5f4d6822ebe45",
+          "b27b4c51e43a790a57403e0de795b35121c82185a157d414bbefcde8574d0321",
+          "d4eb2c720ed135bd40b6ae84a2e244fa66abfba7350f743a49d27a261c9e6c62",
+          "d8a2c0db1c8b5d8c3ceed0757bacc39d42c959f9128ad859384eadcae1139444",
+          "defbf6101b4863ef8c943dbdebc1a038ea89792b3b8a13d0553b77863d8a755c",
+          "e8957c061301db88e8c0f0c3f7b2e18ef43dc7421f52afc9974e070a6f24d522",
+          "eca612de1acec91f508a1c673731888754a2d16a8aaddba1a3f47d3656c7b56d",
+          "f963252ee05c49d9afacae23a7cdf153f951fd128222eedfd5f3327d983ae916",
+          "ff95059c8f474f5e0d8d603a4aa7d1f8a11410b7f517dcffb1ddab7aa8cd3dd4"
+        ],
+        "seconds": 1557.419,
+        "task_score_or_cleanup_claimed": false
+      }
+    },
+    "receipt_unique_ids_match": true,
+    "host_config_limits": {
+      "NanoCpus": 2000000000,
+      "Memory": 4294967296,
+      "MemorySwap": 4294967296,
+      "PidsLimit": 512,
+      "NetworkMode": "none",
+      "Binds": null
+    },
+    "cgroup_limits": {
+      "cpu.max": "200000 100000",
+      "memory.max": "4294967296",
+      "memory.swap.max": "0",
+      "pids.max": "512"
+    },
+    "limit_violations": [],
+    "coverage": {
+      "gold": {
+        "first": "20261002T210208.069528Z",
+        "last": "20261002T210253.616973Z",
+        "samples": 4,
+        "containers": {
+          "ff95059c8f474f5e0d8d603a4aa7d1f8a11410b7f517dcffb1ddab7aa8cd3dd4": {
+            "name": "/rh2-grading-replay-orange-50f6a758-r-590cb892",
+            "role": "grader",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "first": "20261002T210208.069528Z",
+            "last": "20261002T210253.616973Z",
+            "samples": 4
+          }
+        },
+        "valid_cgroups": 4,
+        "unavailable_cgroups": 0,
+        "oom_seen": false
+      },
+      "K1": {
+        "first": "20261002T210308.821492Z",
+        "last": "20261002T210726.169626Z",
+        "samples": 18,
+        "containers": {
+          "eca612de1acec91f508a1c673731888754a2d16a8aaddba1a3f47d3656c7b56d": {
+            "name": "/rh2-replay-cand-orange3__50f6a758f1c66b8-b2466dbc",
+            "role": "candidate",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "first": "20261002T210308.821492Z",
+            "last": "20261002T210454.980238Z",
+            "samples": 8
+          },
+          "b27b4c51e43a790a57403e0de795b35121c82185a157d414bbefcde8574d0321": {
+            "name": "/rh2-grading-replay-orange-50f6a758-r-97938b5c",
+            "role": "grader",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "first": "20261002T210510.186181Z",
+            "last": "20261002T210726.169626Z",
+            "samples": 10
+          }
+        },
+        "valid_cgroups": 18,
+        "unavailable_cgroups": 0,
+        "oom_seen": false
+      },
+      "K2": {
+        "first": "20261002T210741.277902Z",
+        "last": "20261002T211127.855345Z",
+        "samples": 15,
+        "containers": {
+          "00a4d6c801c00d1959aafc139e139d77ffa08c5105b2642a6c79edafa74b2d1a": {
+            "name": "/rh2-replay-cand-orange3__50f6a758f1c66b8-209957b1",
+            "role": "candidate",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "first": "20261002T210741.277902Z",
+            "last": "20261002T210911.927537Z",
+            "samples": 7
+          },
+          "130cb060a5e30e6dfd0c9a3f1bbda40bb4127b986bd93d7ba0c40f12f7a93da3": {
+            "name": "/rh2-grading-replay-orange-50f6a758-r-934800e7",
+            "role": "grader",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "first": "20261002T210942.094762Z",
+            "last": "20261002T211127.855345Z",
+            "samples": 8
+          }
+        },
+        "valid_cgroups": 15,
+        "unavailable_cgroups": 0,
+        "oom_seen": false
+      },
+      "K3": {
+        "first": "20261002T211142.967024Z",
+        "last": "20261002T211529.830672Z",
+        "samples": 16,
+        "containers": {
+          "d4eb2c720ed135bd40b6ae84a2e244fa66abfba7350f743a49d27a261c9e6c62": {
+            "name": "/rh2-replay-cand-orange3__50f6a758f1c66b8-985f8752",
+            "role": "candidate",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "first": "20261002T211142.967024Z",
+            "last": "20261002T211328.892586Z",
+            "samples": 8
+          },
+          "d8a2c0db1c8b5d8c3ceed0757bacc39d42c959f9128ad859384eadcae1139444": {
+            "name": "/rh2-grading-replay-orange-50f6a758-r-515df61e",
+            "role": "grader",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "first": "20261002T211344.002002Z",
+            "last": "20261002T211529.830672Z",
+            "samples": 8
+          }
+        },
+        "valid_cgroups": 16,
+        "unavailable_cgroups": 0,
+        "oom_seen": false
+      },
+      "K4": {
+        "first": "20261002T211559.990175Z",
+        "last": "20261002T211931.673176Z",
+        "samples": 15,
+        "containers": {
+          "f963252ee05c49d9afacae23a7cdf153f951fd128222eedfd5f3327d983ae916": {
+            "name": "/rh2-replay-cand-orange3__50f6a758f1c66b8-297e0f2c",
+            "role": "candidate",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "first": "20261002T211559.990175Z",
+            "last": "20261002T211730.638365Z",
+            "samples": 7
+          },
+          "8246c487d7d8ac6a8fa9e45f41bae5f40bdbe80f7d304571cd16f3e07db09b43": {
+            "name": "/rh2-grading-replay-orange-50f6a758-r-5238fed3",
+            "role": "grader",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "first": "20261002T211745.750119Z",
+            "last": "20261002T211931.673176Z",
+            "samples": 8
+          }
+        },
+        "valid_cgroups": 15,
+        "unavailable_cgroups": 0,
+        "oom_seen": false
+      },
+      "Cdeg": {
+        "first": "20261002T211946.778440Z",
+        "last": "20261002T212348.666702Z",
+        "samples": 17,
+        "containers": {
+          "defbf6101b4863ef8c943dbdebc1a038ea89792b3b8a13d0553b77863d8a755c": {
+            "name": "/rh2-replay-cand-orange3__50f6a758f1c66b8-9f213b2a",
+            "role": "candidate",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "first": "20261002T211946.778440Z",
+            "last": "20261002T212132.701430Z",
+            "samples": 8
+          },
+          "8791d9d11667180701860b3da2c8dd99d9ef61f7fb42b1c6298b911ce25bf502": {
+            "name": "/rh2-grading-replay-orange-50f6a758-r-a4235004",
+            "role": "grader",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "first": "20261002T212147.802584Z",
+            "last": "20261002T212348.666702Z",
+            "samples": 9
+          }
+        },
+        "valid_cgroups": 16,
+        "unavailable_cgroups": 1,
+        "oom_seen": false
+      },
+      "K5": {
+        "first": "20261002T212403.777793Z",
+        "last": "20261002T212750.314281Z",
+        "samples": 16,
+        "containers": {
+          "e8957c061301db88e8c0f0c3f7b2e18ef43dc7421f52afc9974e070a6f24d522": {
+            "name": "/rh2-replay-cand-orange3__50f6a758f1c66b8-5b1d3cfa",
+            "role": "candidate",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "first": "20261002T212403.777793Z",
+            "last": "20261002T212534.393797Z",
+            "samples": 7
+          },
+          "967b049b1bd61bb19b4468297835ab238cd59dbdb139342e15b5f4d6822ebe45": {
+            "name": "/rh2-grading-replay-orange-50f6a758-r-efa0289f",
+            "role": "grader",
+            "image_id": "sha256:64b59aea217a19436ba99182ba387e0b1fd6f2c7b0efa2ee855dce1fa15b2c87",
+            "first": "20261002T212549.498623Z",
+            "last": "20261002T212750.314281Z",
+            "samples": 9
+          }
+        },
+        "valid_cgroups": 16,
+        "unavailable_cgroups": 0,
+        "oom_seen": false
+      }
+    },
+    "noop_observed": false,
+    "gold_coverage": "grader后段4次采样／1容器；未覆盖其候选阶段或全过程。",
+    "unavailable_cgroups": [
+      {
+        "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_50_matrix_complete_v2/observations/20261002T212348.666702Z.json",
+        "sha256": "sha256:c792b54e4bd7bc021300c6dffe238bf7d47e942192d2f8ff870148ffe15a7322",
+        "id": "8791d9d11667180701860b3da2c8dd99d9ef61f7fb42b1c6298b911ce25bf502",
+        "candidate": "Cdeg",
+        "role": "grader",
+        "state": {
+          "Status": "removing",
+          "Running": false,
+          "Paused": false,
+          "Restarting": false,
+          "OOMKilled": false,
+          "Dead": true,
+          "Pid": 0,
+          "ExitCode": 137,
+          "Error": "",
+          "StartedAt": "2026-10-02T21:21:41.515313741Z",
+          "FinishedAt": "2026-10-02T21:23:47.577818028Z"
+        },
+        "cgroup": {
+          "unavailable": "container exited or no unified cgroup found"
+        }
+      }
+    ],
+    "unavailable_explanation": "唯一缺cgroup样本是Cdeg grader在20261002T212348.666702Z已处于removing、PID0、ExitCode137且OOMKilled=false。真实test段在21:23:45.162458Z完整结束，随后cleanup为rm:ok；因此该采样位于评分后清理阶段，不能把137作为test执行失败或OOM。",
+    "limitation": "旁路采样独立于ledger；ledger.resource_facts仍null。采样不证明未捕获区间，也不替代CLI清理证据。"
+  },
+  "source_files_read_at_initial_review": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/50f6a758/card.md",
+      "sha256": "sha256:7007ec9903d428874897055b7c01bcb2604a32c07f8833ce616a84c3f9a7147d"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/50f6a758/acceptance_plan.json",
+      "sha256": "sha256:a32b8100a008e403fd9c8cb7517fd0a41f58e9b4486e27bbd5ebfe98f6aaf38e"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/50f6a758/revision_draft.json",
+      "sha256": "sha256:8812bbcbca7b35873d7f375063706ef3b7f815f75f8125c74d3b4bb1053986c3"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/50f6a758/statement_draft.json",
+      "sha256": "sha256:c1eb2d72d9a30179ddcde522607468151362b8ea1c2c3e7e8b93bbdadac4cf01"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/50f6a758/r9_cpu_release_binding.json",
+      "sha256": "sha256:b063feab087ccfd9d5109e775e5e3267352f73893430831ee8525c2553fcfee8"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/preparation.md",
+      "sha256": "sha256:14cd15c796c829c0467250f8f751f979872bcb6e8c11e4a5e4a7fa3d038cc79b"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003.md",
+      "sha256": "sha256:2ddf41c1ac6975f0b83ff532561ddb2362543f101fab88680a814fd441f6ab93"
+    }
+  ],
+  "gpu_probe_admission_note": "本轮题级CPU诊断验收已完成，可作为后续probe申请的依据；未派发或批准GPU probe，不等于训练资格。",
+  "ready_for_probe_request": true,
+  "training_qualification_evaluated": false,
+  "release_binding_snapshot_note": "release_binding.qualification_limits是初始冻结绑定原文，不回写；当前运行与审查状态以本报告顶层及actual_cc字段为准。",
+  "public_development_brief_review": {
+    "status": "fact_and_visibility_scope_verified",
+    "source": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/50f6a758/public_development_brief.md",
+      "sha256": "sha256:3f5c26d655fac6246a28b967f560b13d40e1a315a8ff0fdd10083ea513116b49",
+      "bytes": 2124
+    },
+    "checked_against_actual_base_public_results": true,
+    "five_selectors_byte_match_actual_commands_after_equivalent_interpreter_path_resolution": true,
+    "python_command_resolves_to_existing_venv_in_observed_activation": true,
+    "original_public_source_and_development_note_consistent": true,
+    "external_network_statement_means_direct_external_access_denied_model_relay_exception_remains": true,
+    "no_private_gold_hidden_test_candidate_or_solution_algorithm_content": true,
+    "brief_not_part_of_this_actual_http_delivery": true,
+    "no_required_changes_identified": true,
+    "scope_note": "这里只核事实及公开可见边界，没有再次fresh阅读，也没有验证未来solver收到新brief后的表现。"
+  },
+  "limitations": [
+    "CPU stub固定控制不是真实模型成绩、fresh阅读或训练链验证；actor本轮--no-grade。",
+    "矩阵noop没有独立资源采样，gold仅grader后段4次；完整观察不回溯填补。",
+    "旁路15秒采样及标签清理回执仅证明其实际覆盖范围，不代表全机全时刻。",
+    "八方固定控制不穷尽警告格式的所有合理实现；gold缩写与K1全列名单均有真实接受证据。",
+    "公开原test_parse_var_defs_no_rename末尾旧断言与当前issue冲突，未修改原测试；开发验证应保留前面duplicate/swap检查。",
+    "新增public_development_brief仅核事实和可见边界，未在本次实际HTTP交付。",
+    "GPU probe申请/派发及训练资格未在本轮核销。"
+  ]
+}

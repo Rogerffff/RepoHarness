@@ -1,0 +1,74 @@
+{
+  "schema": "coveragepy.stage2_repeat_schedule.v1",
+  "recorded_at_utc": "2026-10-02T23:11:08.646154+00:00",
+  "task_id": "coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9",
+  "owner_thread_id": "01a0fd63-c159-7331-b391-d78dd853ec75",
+  "request_id": "r2e-coveragepy-5dbb-r068-cpu-r5-20261003-v1",
+  "status": "planned_not_dispatched",
+  "models": {
+    "coder": {
+      "existing_complete_attempts": 1,
+      "new_attempts": [
+        "gpu1003-coverage5dbb-coder-a2",
+        "gpu1003-coverage5dbb-coder-a3"
+      ],
+      "total_target": 3
+    },
+    "qwen36": {
+      "existing_complete_attempts": 1,
+      "new_attempts": [
+        "gpu1003-coverage5dbb-qwen36-a2",
+        "gpu1003-coverage5dbb-qwen36-a3"
+      ],
+      "total_target": 3
+    }
+  },
+  "new_attempts_planned": 4,
+  "new_completed_attempts": 0,
+  "existing_complete_attempts_retained_per_model": 1,
+  "source_plan": {
+    "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/stage2_repeat_plan_v1.json",
+    "sha256_at_read": "sha256:a42230050c4c67053f0413142c5499c7cb4417f042d9386b5fa2b0c659810bf3",
+    "snapshot": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_gpu/5dbb_stage2_schedule_v1/stage2_repeat_plan_v1.json",
+      "sha256": "sha256:a42230050c4c67053f0413142c5499c7cb4417f042d9386b5fa2b0c659810bf3"
+    },
+    "markdown_snapshot": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_gpu/5dbb_stage2_schedule_v1/stage2_repeat_plan_v1.md",
+      "sha256": "sha256:26e640b02ae1f626815e6e03c94c33481374b4b9c55d1969c22764be41beb7d1"
+    }
+  },
+  "threshold": {
+    "lower_bound": 27,
+    "denominator": 52,
+    "definition": "completed CPU acceptance with fixed non-author evidence reused; does not mean GPU or training qualified",
+    "evidence_snapshot": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_gpu/5dbb_stage2_schedule_v1/stage2_cpu_threshold_inventory_v1.json",
+      "sha256": "sha256:8b6e3cdb531a7b3b43ca9d9cd751f6d074b4e4cdf2840ca298b096bd18870c37"
+    },
+    "verification_scope": "GPU既有逐题验收库存复用；本题主核库存SHA及绑定，无新CPU实验或重新逐题验收"
+  },
+  "first_round_analysis": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/model_analysis_20261003.md",
+    "sha256": "sha256:682ffe16a0c6a034f092741146407c6a1ad6b1b7cd50c4f28d749649e61700fc"
+  },
+  "material_policy": "exact accepted request material/image/recipe; existing first attempts retained; reuse code3 frozen runtime for these two unless narrow compatible change explicitly recorded",
+  "budget": "probe-wide-v1 unchanged: context196608/output65536/CC240/solve10800/gateway1024; original per-task grading budgets",
+  "order": "ready unseen first arms and missing model arms before repeat jobs; repeat only at natural same-model batch boundary",
+  "required_current_checks": [
+    "read latest owner version-specific blocker/cancel/global pause",
+    "complete first-arm execution and independent owner semantic review without required repair",
+    "check effective model sampling/profile/version matches initial",
+    "fresh clean solver context; source only and public brief; raw FrozenPatch direct grade",
+    "complete evidence/resource samples/cleanup then return additional results to original owner"
+  ],
+  "stop_or_redesign": [
+    "a real semantic or environment defect blocks affected version",
+    "first coverage or missing second arm would be delayed",
+    "truncation gets linked continuation, never silently counted as another independent sample"
+  ],
+  "post_return_actions": "每条新增原FrozenPatch、正式逐键日志、结束原因及完整轨迹分别作源码语义/候选质量和七维分析；固定条件后与首轮对照，截断接续单列，未返回不计完成",
+  "current_cpu_dependency": "无明确已知CPU补跑/修复/待归档；依已有cpu_retirement_dependency_20261003.json",
+  "gpu_retirement_ready": false,
+  "limits": "登记不等于派发或完成；尚无稳定性证据，不授训练资格或模型总体排名。"
+}

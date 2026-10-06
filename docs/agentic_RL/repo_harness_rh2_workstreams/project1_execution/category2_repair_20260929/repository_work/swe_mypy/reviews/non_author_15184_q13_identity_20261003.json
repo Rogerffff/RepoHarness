@@ -1,0 +1,83 @@
+{
+  "schema": "rh2.non_author_narrow_identity_review.v1",
+  "reviewed_on": "2026-10-03",
+  "job_id": "gpu1003-mypy15184-qwen36-a1",
+  "role": "Production Tracer",
+  "status": "Q13_operational_model_lineage_supported_with_explicit_limits",
+  "conclusion": "新增Q13运营来源补充的原件、配置与40次实际生成对应关系成立，未见具体身份矛盾。仅支持运营来源推断，不将旧Q12审查冒称为已覆盖Q13，不宣称逐请求权重密码学证明或当时逐job快照。",
+  "source": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/q13_operational_identity_supplement_20261003.json",
+    "sha256": "19c5f39a5fc572be87b3bf043bc3b46ba33e732874e3f790de41c8a7a23c0646"
+  },
+  "checks": {
+    "supplement_SHA_matches_delegated_frozen_identity": true,
+    "evidence_refs": {
+      "declared": 22,
+      "present": 22,
+      "SHA_and_size_match": 22,
+      "mismatches": []
+    },
+    "fixed_input_gateway_SHA_matches_actual_config_v13": true,
+    "fixed_input_adapter_SHA_matches_services_v7_config": true,
+    "live_gateway_config_equals_fixed_except_control_key_file": true,
+    "control_key_file_present_in_fixed_config": true,
+    "control_key_file_absent_from_live_config": true,
+    "attempt_gateway_equals_live_listen": true,
+    "actual_request_seq_exactly_1_through_40": true,
+    "all_actual_requests_forward_alias_to_Qwen3_6": true,
+    "all_40_adapter_records_have_this_job_SID": true,
+    "all_request_and_adapter_timestamps_within_attempt": true,
+    "backend_40_generate_HTTP200_completions_within_attempt": true,
+    "ordered_adapter_backend_completion_times_match": true,
+    "old_Q12_review_does_not_list_this_job": true,
+    "old_Q13_flags_still_false": true,
+    "source_limits_retained": true
+  },
+  "Q13_new_increment": {
+    "request_adapter_backend_counts": [40, 40, 40],
+    "backend_one_based_lines": [553, 592],
+    "max_adapter_backend_completion_delta_seconds": 0.00397038459777832,
+    "all_deltas_nonnegative": true,
+    "attempt_started_at": "2026-10-03T00:20:18.470573+00:00",
+    "attempt_finished_at": "2026-10-03T00:22:07.807754+00:00",
+    "route": "actor 172.17.0.1:18082 gateway -> 127.0.0.1:18084 adapter -> 127.0.0.1:30001 engine",
+    "model_requested_alias": "slime-actor",
+    "actual_model_sent": "Qwen3.6-35B-A3B",
+    "request_scope": "40条/v1/messages实际生成；未把其它job或共享服务窗口计入本题。"
+  },
+  "shared_service_facts_reused_with_scope": {
+    "prior_independent_review_path": "runs/ordinary_gpu_probe_20261002/reviews/q12_retrospective_checkpoint_request_binding_v1.json",
+    "prior_independent_review_sha256": "377e8517c74a6b60c9b11c4ffbf7269fb2782209179b1766fad28269993a14dd",
+    "prior_Q12_review_jobs": [
+      "gpu1003-pydantic5662-qwen36-a1",
+      "gpu1003-pydantic6283-qwen36-a1",
+      "gpu1003-mypy10174-qwen36-a1"
+    ],
+    "engine_id": "a54917756957315013180bf66eb513d7916882609181c69522edfdf967b993e2",
+    "engine_started_at": "2026-10-02T20:54:00.096080184Z",
+    "retrospective_capture_started_at": "2026-10-03T01:02:42.250385+00:00",
+    "restart_count": 0,
+    "historical_start_and_retrospective_CID_bind_same_service": true,
+    "model_mount_read_only": true,
+    "model_repo": "Qwen/Qwen3.6-35B-A3B",
+    "download_revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+    "download_manifest_sha256": "32bd30f61860366b3783eabc9d75bee0cd28c474d9c07de8be8d9ae60a4552ab",
+    "scope": "仅复用共享CID/start/restart、下载manifest、只读挂载和HTTP服务配置的适用事实；Q13的40次请求对应关系为本轮新增独立读核。"
+  },
+  "unchanged_original_flags": {
+    "gateway_audit_checkpoint_identity_verified": false,
+    "input_check_runtime_request_and_sglang_readback_verified": false
+  },
+  "limitations": [
+    "旧turn与后端日志没有逐请求engineID签名；SID、端点和毫秒级时间对应属于运营来源推断。",
+    "事后capture晚于Q13，不能改称当时逐job快照；只读容器挂载不证明宿主目录不可变。",
+    "HTTP revision和model_checksum为null，weight_version为default；下载revision来自manifest，不是GPU权重自证。",
+    "本轮未重hash全权重、未核GPU驻留内容，不将alias或配置单独视为精确checkpoint证明。",
+    "不重核候选语义、训练资格或性能结论；既有Coder报告059c5a7b42ed0674ca5fdb7ec995e35019066c1ebc78115ffa3495ab4a15e342保持原样。"
+  ],
+  "blocking_findings": [],
+  "minimal_follow_up": "本增量可并入题主配对收口，并保持上述身份限制；无具体问题要求重复运行。",
+  "old_reports_or_evidence_or_flags_modified": false,
+  "model_CPU_container_or_project_code_execution": false,
+  "local_work": "只读原件，SHA/size重算、JSON解析和后端文本时间对应；唯一新增写入为本JSON。"
+}

@@ -1,0 +1,318 @@
+[
+  {
+    "install": "python -m pip install -e .[test] --verbose",
+    "spec_count": 17,
+    "examples": [
+      "astropy/astropy@0.1",
+      "astropy/astropy@0.2",
+      "astropy/astropy@0.3",
+      "astropy/astropy@0.4"
+    ]
+  },
+  {
+    "install": "pip install \"setuptools<66\" \"jinja2<3.1\"; printf \"1\n\" | python setup.py develop; bokeh sampledata;",
+    "spec_count": 20,
+    "examples": [
+      "bokeh/bokeh@0.10",
+      "bokeh/bokeh@0.11",
+      "bokeh/bokeh@0.1181316818",
+      "bokeh/bokeh@0.12"
+    ]
+  },
+  {
+    "install": "python -m pip install -e .; python -m pip install bokeh_sampledata;",
+    "spec_count": 4,
+    "examples": [
+      "bokeh/bokeh@3.0",
+      "bokeh/bokeh@3.3",
+      "bokeh/bokeh@3.4",
+      "bokeh/bokeh@3.5"
+    ]
+  },
+  {
+    "install": "echo 'cython<3' > /tmp/constraint.txt; export PIP_CONSTRAINT=/tmp/constraint.txt; python -m pip install -r conans/requirements.txt; python -m pip install -r conans/requirements_server.txt; python -m pip install -r conans/requirements_dev.txt ",
+    "spec_count": 27,
+    "examples": [
+      "conan-io/conan@1.33",
+      "conan-io/conan@1.34",
+      "conan-io/conan@1.35",
+      "conan-io/conan@1.36"
+    ]
+  },
+  {
+    "install": "python -m pip install -r conans/requirements.txt; python -m pip install -r conans/requirements_server.txt; python -m pip install -r conans/requirements_dev.txt ",
+    "spec_count": 7,
+    "examples": [
+      "conan-io/conan@1.60",
+      "conan-io/conan@1.61",
+      "conan-io/conan@1.62",
+      "conan-io/conan@2.1"
+    ]
+  },
+  {
+    "install": "python -m pip install --no-deps -e .",
+    "spec_count": 60,
+    "examples": [
+      "dask/dask@2.11",
+      "dask/dask@2.12",
+      "dask/dask@2.13",
+      "dask/dask@2.14"
+    ]
+  },
+  {
+    "install": "python -m pip install -e .",
+    "spec_count": 164,
+    "examples": [
+      "dbt-labs/dbt-core@0.13",
+      "dbt-labs/dbt-core@0.14",
+      "dbt-labs/dbt-core@0.15",
+      "dbt-labs/dbt-core@0.16"
+    ]
+  },
+  {
+    "install": "python setup.py install",
+    "spec_count": 11,
+    "examples": [
+      "django/django@1.10",
+      "django/django@1.11",
+      "django/django@1.4",
+      "django/django@1.5"
+    ]
+  },
+  {
+    "install": "sed -i 's|isort@git+git://github.com/timothycrosley/isort|isort@git+https://github.com/timothycrosley/isort|g' requirements/dev.txt; { tail -n1 requirements/requirements.txt | grep -q \".\" && echo \"\"; } >> requirements/requirements.txt; echo \"pip==24.0\" >> requirements/requirements.txt;pip install \"pip==24.0\"; pip install -r requirements/dev.txt; pip install -e .;",
+    "spec_count": 8,
+    "examples": [
+      "facebookresearch/hydra@0.1",
+      "facebookresearch/hydra@0.10",
+      "facebookresearch/hydra@0.11",
+      "facebookresearch/hydra@0.12"
+    ]
+  },
+  {
+    "install": "pip install -r requirements/dev.txt; pip install -e .;",
+    "spec_count": 2,
+    "examples": [
+      "facebookresearch/hydra@1.3",
+      "facebookresearch/hydra@1.4"
+    ]
+  },
+  {
+    "install": "make init",
+    "spec_count": 14,
+    "examples": [
+      "getmoto/moto@0.4",
+      "getmoto/moto@1.0",
+      "getmoto/moto@1.2",
+      "getmoto/moto@1.3"
+    ]
+  },
+  {
+    "install": "python -m pip install -r requirements/test.txt; python -m pip install -e hypothesis-python/;",
+    "spec_count": 94,
+    "examples": [
+      "hypothesisworks/hypothesis@3.55",
+      "hypothesisworks/hypothesis@3.59",
+      "hypothesisworks/hypothesis@3.60",
+      "hypothesisworks/hypothesis@3.61"
+    ]
+  },
+  {
+    "install": "python -m pip install --upgrade pip wheel GitPython; python -m pip install \"cython<3.0.0\" && python -m pip install --no-build-isolation pyyaml==5.4.1; python -m pip install git+https://github.com/iterative/mock-ssh-server.git || true; python -m pip install -r tests/requirements.txt || true; python -m pip install -r test-requirements.txt || true; python -m pip install -e \".[tests,dev,all_remotes,all,testing]\"; python -m pip install \"numpy<=1.20\"; python -m pip install \"pytest<8\";",
+    "spec_count": 125,
+    "examples": [
+      "iterative/dvc@0.1",
+      "iterative/dvc@0.12",
+      "iterative/dvc@0.13",
+      "iterative/dvc@0.14"
+    ]
+  },
+  {
+    "install": "python -m pip install --upgrade pip wheel GitPython; python -m pip install \"cython<3.0.0\" && python -m pip install --no-build-isolation pyyaml==5.4.1; python -m pip install git+https://github.com/iterative/mock-ssh-server.git || true; python -m pip install -r tests/requirements.txt || true; python -m pip install -r test-requirements.txt || true; python -m pip install -e \".[tests,dev,all_remotes,all,testing]\";",
+    "spec_count": 22,
+    "examples": [
+      "iterative/dvc@3.10",
+      "iterative/dvc@3.11",
+      "iterative/dvc@3.12",
+      "iterative/dvc@3.13"
+    ]
+  },
+  {
+    "install": "python -m pip install -e '.[dev]'",
+    "spec_count": 16,
+    "examples": [
+      "marshmallow-code/marshmallow@2.18",
+      "marshmallow-code/marshmallow@2.19",
+      "marshmallow-code/marshmallow@2.20",
+      "marshmallow-code/marshmallow@3.0"
+    ]
+  },
+  {
+    "install": "python setup.py build; python setup.py install",
+    "spec_count": 9,
+    "examples": [
+      "matplotlib/matplotlib@1.0",
+      "matplotlib/matplotlib@1.1",
+      "matplotlib/matplotlib@1.2",
+      "matplotlib/matplotlib@1.3"
+    ]
+  },
+  {
+    "install": "python -m pip install -e .; python -m pip install numpy==1.23.1 protobuf==3.20.1;",
+    "spec_count": 17,
+    "examples": [
+      "modin-project/modin@0.1",
+      "modin-project/modin@0.10",
+      "modin-project/modin@0.11",
+      "modin-project/modin@0.12"
+    ]
+  },
+  {
+    "install": "python -m pip install -e .;",
+    "spec_count": 11,
+    "examples": [
+      "modin-project/modin@0.20",
+      "modin-project/modin@0.21",
+      "modin-project/modin@0.22",
+      "modin-project/modin@0.23"
+    ]
+  },
+  {
+    "install": "python -m pip install -e .[dev]",
+    "spec_count": 3,
+    "examples": [
+      "mwaskom/seaborn@0.12",
+      "mwaskom/seaborn@0.13",
+      "mwaskom/seaborn@0.14"
+    ]
+  },
+  {
+    "install": "python -m pip install 'numpy<2'; python -m pip install -ve . --no-build-isolation -Ceditable-verbose=true; pip uninstall pytest-qt -y;",
+    "spec_count": 19,
+    "examples": [
+      "pandas-dev/pandas@0.16",
+      "pandas-dev/pandas@0.17",
+      "pandas-dev/pandas@0.18",
+      "pandas-dev/pandas@0.19"
+    ]
+  },
+  {
+    "install": "python -m pip install -ve . --no-build-isolation -Ceditable-verbose=true; pip uninstall pytest-qt -y;",
+    "spec_count": 2,
+    "examples": [
+      "pandas-dev/pandas@2.2",
+      "pandas-dev/pandas@3.0"
+    ]
+  },
+  {
+    "install": "sed -i '/^git+https:\\/\\/github.com\\/Project-MONAI\\//d' requirements-dev.txt; python -m pip install types-pkg-resources==0.1.3 pytest; pip install -r requirements-dev.txt;python setup.py develop;",
+    "spec_count": 15,
+    "examples": [
+      "project-monai/monai@0.1",
+      "project-monai/monai@0.105",
+      "project-monai/monai@0.11",
+      "project-monai/monai@0.2"
+    ]
+  },
+  {
+    "install": "python -m pip install .",
+    "spec_count": 28,
+    "examples": [
+      "psf/requests@0.11",
+      "psf/requests@0.13",
+      "psf/requests@0.14",
+      "psf/requests@0.7"
+    ]
+  },
+  {
+    "install": "python -m pip install -e .[all]",
+    "spec_count": 9,
+    "examples": [
+      "pvlib/pvlib-python@0.1",
+      "pvlib/pvlib-python@0.2",
+      "pvlib/pvlib-python@0.3",
+      "pvlib/pvlib-python@0.4"
+    ]
+  },
+  {
+    "install": "export PATH=\"$HOME/.local/bin:$PATH\"; pdm add pre-commit; make install;",
+    "spec_count": 40,
+    "examples": [
+      "pydantic/pydantic@0.10",
+      "pydantic/pydantic@0.11",
+      "pydantic/pydantic@0.13",
+      "pydantic/pydantic@0.14"
+    ]
+  },
+  {
+    "install": "python -m pip install -r test-requirements.txt; python -m pip install -e .; pip install pytest pytest-xdist; hash -r;",
+    "spec_count": 5,
+    "examples": [
+      "python/mypy@0.800",
+      "python/mypy@0.810",
+      "python/mypy@0.820",
+      "python/mypy@0.910"
+    ]
+  },
+  {
+    "install": "python -m pip install -r test-requirements.txt; python -m pip install -e .; pip install pytest pytest-xdist; hash -r",
+    "spec_count": 6,
+    "examples": [
+      "python/mypy@0.940",
+      "python/mypy@0.950",
+      "python/mypy@0.960",
+      "python/mypy@0.970"
+    ]
+  },
+  {
+    "install": "python -m pip install -r test-requirements.txt; python -m pip install -e .; hash -r",
+    "spec_count": 12,
+    "examples": [
+      "python/mypy@1.0",
+      "python/mypy@1.1",
+      "python/mypy@1.10",
+      "python/mypy@1.11"
+    ]
+  },
+  {
+    "install": "python -m pip install -v --no-use-pep517 --no-build-isolation -e .",
+    "spec_count": 5,
+    "examples": [
+      "scikit-learn/scikit-learn@0.20",
+      "scikit-learn/scikit-learn@0.21",
+      "scikit-learn/scikit-learn@0.22",
+      "scikit-learn/scikit-learn@1.3"
+    ]
+  },
+  {
+    "install": "python -m pip install -v --no-use-pep517 --no-build-isolation -e . || python -m pip install -v --no-build-isolation -e .",
+    "spec_count": 1,
+    "examples": [
+      "scikit-learn/scikit-learn@1.5"
+    ]
+  },
+  {
+    "install": "python -m pip install -v --no-build-isolation -e .",
+    "spec_count": 1,
+    "examples": [
+      "scikit-learn/scikit-learn@1.6"
+    ]
+  },
+  {
+    "install": "python -m pip install -e .[test]",
+    "spec_count": 33,
+    "examples": [
+      "sphinx-doc/sphinx@1.5",
+      "sphinx-doc/sphinx@1.6",
+      "sphinx-doc/sphinx@1.7",
+      "sphinx-doc/sphinx@1.8"
+    ]
+  },
+  {
+    "install": null,
+    "spec_count": 1,
+    "examples": [
+      "swe-bench/humaneval@1.0"
+    ]
+  }
+]

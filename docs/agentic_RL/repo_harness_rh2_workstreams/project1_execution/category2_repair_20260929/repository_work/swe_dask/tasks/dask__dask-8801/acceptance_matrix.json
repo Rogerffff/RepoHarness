@@ -1,0 +1,536 @@
+{
+  "schema": "dask_behavior_semantic_acceptance_plan.v2",
+  "as_of": "2026-10-03",
+  "instance_id": "dask__dask-8801",
+  "revision_id": "dask8801-behavior-semantic-v7-compat1",
+  "effective_test_patch": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/effective_test.patch",
+    "sha256": "a0d2794fb43dc920f7dbc00078975b9334a3040d873aa56971256f04f3dd360c"
+  },
+  "expected_results_are_not_observed_scores": true,
+  "rows": [
+    {
+      "name": "noop",
+      "patch": null,
+      "role": "unrepaired",
+      "reason": "未修复的原源码须被拒绝",
+      "priority": "first_formal_matrix",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": 0,
+      "expected_raw_behavior_score": 0,
+      "expected_diagnostic_outcome": "fail",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "gold",
+      "patch": {
+        "path": "runs/swegym_quality_batch01_20260921/private/dask__dask-8801/gold.patch",
+        "sha256": "e8124cc26138d810f2ed2ace0bcfa2ce2d0be13b4a68e7da5fabe34e6b865ce8"
+      },
+      "role": "historical_positive",
+      "reason": "应覆盖错误内容、诊断、导入、空配置和权限；新正式版本待验证",
+      "priority": "first_formal_matrix",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": 1,
+      "expected_raw_behavior_score": 1,
+      "expected_diagnostic_outcome": "pass_diagnostic_goal",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "reasonable_named_values",
+      "patch": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/reasonable_named_values.patch",
+        "sha256": "18734813e45cd3667f9ef19dd77edd383dd3348a51e5351c0989d9bcc180af28"
+      },
+      "role": "acceptance_positive_draft",
+      "reason": "正确原因不用旧同义词表；本地 API 过，完整环境及非作者接受性待核",
+      "priority": "first_formal_matrix",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": 1,
+      "expected_raw_behavior_score": 1,
+      "expected_diagnostic_outcome": "pass_diagnostic_goal",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "wrong_missing_file_reason",
+      "patch": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/wrong_missing_file_reason.patch",
+        "sha256": "059a87ac21ea907124fb05c61081696df33cbc418e1cf557d88bf0e25d2ed836"
+      },
+      "role": "new_wrong_control",
+      "reason": "文件实际存在且 YAML 合法，非映射诊断却说文件不存在；用于核原因区别草案是否仍误奖",
+      "priority": "first_formal_matrix",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": 0,
+      "expected_raw_behavior_score": 1,
+      "expected_diagnostic_outcome": "fail",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "rv_enum_types",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/rv_enum_types.patch",
+        "sha256": "5b03ae4cc66550e39f6f41cfbb9bfd927f59f0d10d7376c26312239605e23ba2"
+      },
+      "role": "known_wrong",
+      "reason": "只枚举 list/str/int，遗漏 float 1.5",
+      "priority": "first_formal_matrix",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": 0,
+      "expected_raw_behavior_score": 0,
+      "expected_diagnostic_outcome": "fail",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "wr_null_raises",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/wr_null_raises.patch",
+        "sha256": "315cf3d181f07f08f7735195c3606ff273a9f5dc828c3c6fd78344454e821e82"
+      },
+      "role": "known_wrong",
+      "reason": "将合法显式 null/文档分隔符当错误",
+      "priority": "first_formal_matrix",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": 0,
+      "expected_raw_behavior_score": 0,
+      "expected_diagnostic_outcome": "fail",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "wr_perm_fatal",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/wr_perm_fatal.patch",
+        "sha256": "201dccfb0da8016c72ff69bda956a50cab465d879280111e9bf72d1420abc9b8"
+      },
+      "role": "known_wrong",
+      "reason": "将不可读文件致命化，违背既有权限 P2P",
+      "priority": "first_formal_matrix",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": 0,
+      "expected_raw_behavior_score": 0,
+      "expected_diagnostic_outcome": "fail",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "wr_wrong_reason",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/wr_wrong_reason.patch",
+        "sha256": "3829492b810128f170813b9bcdb1dca65a6c2c121f1a0cb84e3a86c11a0daa7d"
+      },
+      "role": "known_wrong",
+      "reason": "将合法 YAML 的顶层非映射错误说成语法无效",
+      "priority": "first_formal_matrix",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": 0,
+      "expected_raw_behavior_score": 1,
+      "expected_diagnostic_outcome": "fail",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "wrong_file",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/wrong_file.patch",
+        "sha256": "45651c7ba304976d3e1e885672b3bcc3818b90f609d7fb9c9925a7784c3f3f77"
+      },
+      "role": "known_wrong",
+      "reason": "报错点名错误文件",
+      "priority": "first_formal_matrix",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": 0,
+      "expected_raw_behavior_score": 1,
+      "expected_diagnostic_outcome": "fail",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "wr_zip_misalign",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/wr_zip_misalign.patch",
+        "sha256": "d6cea0c39659dd85d52decd83cc156606916976fb237dae2e537b7d9b73b477b"
+      },
+      "role": "known_wrong",
+      "reason": "跳过空文件后 zip 错位，点名之前的正常文件",
+      "priority": "first_formal_matrix",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": 0,
+      "expected_raw_behavior_score": 1,
+      "expected_diagnostic_outcome": "fail",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "wr_zip_misalign_orempty",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/wr_zip_misalign_orempty.patch",
+        "sha256": "2e2bcde58d3c928da5172af7bce5c3ebf39c0bef1515f64966dea056f8d921ff"
+      },
+      "role": "known_wrong",
+      "reason": "跳过不可读条目后 zip 错位",
+      "priority": "first_formal_matrix",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": 0,
+      "expected_raw_behavior_score": 1,
+      "expected_diagnostic_outcome": "fail",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "wr_all_files",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/wr_all_files.patch",
+        "sha256": "9df1f92a6efca430b5775191210452f3d059ddbb12fd87a8444358ad9ed76029"
+      },
+      "role": "known_wrong",
+      "reason": "列出全部文件但未指出具体坏文件",
+      "priority": "first_formal_matrix",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": 0,
+      "expected_raw_behavior_score": 1,
+      "expected_diagnostic_outcome": "fail",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "wr_dir_named",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/wr_dir_named.patch",
+        "sha256": "e0a345d4456bbaaec1bc6f5f7c4dd7d3ed7f296a93b7a9d4b147f81291e2243a"
+      },
+      "role": "known_wrong",
+      "reason": "只点名目录而不点名坏文件",
+      "priority": "first_formal_matrix",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": 0,
+      "expected_raw_behavior_score": 1,
+      "expected_diagnostic_outcome": "fail",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "oserr_fatal",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/oserr_fatal.patch",
+        "sha256": "f5da83fe23d875bc803521d959651e008d02f316e17a4a9df1ebf435ba83892a"
+      },
+      "role": "known_wrong",
+      "reason": "目录等不可读条目也致命化",
+      "priority": "first_formal_matrix",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": 0,
+      "expected_raw_behavior_score": 0,
+      "expected_diagnostic_outcome": "fail",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "noreason",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/noreason.patch",
+        "sha256": "9672b13db7a5f2a77001be50f048a1221184e670589dd04c4294cb9a3c35e810"
+      },
+      "role": "known_wrong",
+      "reason": "只报路径，不解释内容问题",
+      "priority": "first_formal_matrix",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": 0,
+      "expected_raw_behavior_score": 1,
+      "expected_diagnostic_outcome": "fail",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "parsererror_only",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/parsererror_only.patch",
+        "sha256": "551097656544d7bd61ad556f9781919bd514ae766b774f05f25f80e386ec6d26"
+      },
+      "role": "known_wrong",
+      "reason": "ScannerError 仍抛出，所以预计原始行为分1；其可见消息未指名坏文件，应由语义裁决拒绝，不混作未抛错",
+      "priority": "first_formal_matrix",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": 0,
+      "expected_raw_behavior_score": 1,
+      "expected_diagnostic_outcome": "fail",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "import_swallow",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/import_swallow.patch",
+        "sha256": "50a50eecee8ac05fc55cf141d119f7f868f29f7072a3543a085a9cf28971ba20"
+      },
+      "role": "known_wrong",
+      "reason": "完整 import dask 吞掉错误；本地 API 检查不能代表它被拒",
+      "priority": "first_formal_matrix",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": 0,
+      "expected_raw_behavior_score": 0,
+      "expected_diagnostic_outcome": "fail",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "rv_import_warn",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/rv_import_warn.patch",
+        "sha256": "785a7f376c3156254e29c8aeb937b547ad9e006a4a730860ebac3cfd1716debd"
+      },
+      "role": "known_wrong",
+      "reason": "完整 import dask 只警告；本地 API 检查不能代表它被拒",
+      "priority": "first_formal_matrix",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": 0,
+      "expected_raw_behavior_score": 0,
+      "expected_diagnostic_outcome": "fail",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "wr_import_only",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/wr_import_only.patch",
+        "sha256": "f09b4109b9b4f7c4fa16984992072bf7e2923553146af3ed58fddac8f25e9d6d"
+      },
+      "role": "known_wrong",
+      "reason": "只在导入时诊断，加载 API 仍静默吞错",
+      "priority": "first_formal_matrix",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": 0,
+      "expected_raw_behavior_score": 0,
+      "expected_diagnostic_outcome": "fail",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "chain_cause",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/chain_cause.patch",
+        "sha256": "fc29001f253287d322bcede4e646902b7ad0a5239d6c7f918a8321563e04efda"
+      },
+      "role": "acceptance_comparison",
+      "reason": "复用不同合理异常类、异常链、聚合或措辞；CSafeLoader 仍有已登记语法措辞边界，不在本轮静默裁定",
+      "priority": "private_batch_then_formal_if_not_equivalent",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": 1,
+      "expected_raw_behavior_score": 1,
+      "expected_diagnostic_outcome": "pass_diagnostic_goal",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "gr_attr_wrap",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/gr_attr_wrap.patch",
+        "sha256": "a90afb3b97fb579ae67c38f6fa36faf330647aa6ec65b55c368d0355798cf3db"
+      },
+      "role": "acceptance_comparison",
+      "reason": "复用不同合理异常类、异常链、聚合或措辞；CSafeLoader 仍有已登记语法措辞边界，不在本轮静默裁定",
+      "priority": "private_batch_then_formal_if_not_equivalent",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": 1,
+      "expected_raw_behavior_score": 1,
+      "expected_diagnostic_outcome": "pass_diagnostic_goal",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "ok_aggregate",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/ok_aggregate.patch",
+        "sha256": "931f7d6be5d1e70f0f26ecc6833d0084e8187dfbe97438ec55f72c69bbdbc398"
+      },
+      "role": "acceptance_comparison",
+      "reason": "复用不同合理异常类、异常链、聚合或措辞；CSafeLoader 仍有已登记语法措辞边界，不在本轮静默裁定",
+      "priority": "private_batch_then_formal_if_not_equivalent",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": 1,
+      "expected_raw_behavior_score": 1,
+      "expected_diagnostic_outcome": "pass_diagnostic_goal",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "ok_object_value",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/ok_object_value.patch",
+        "sha256": "b22af73087bff3f613d3060d81b706f7022acc88f8aaf1ad5b43e8917993b4ec"
+      },
+      "role": "acceptance_comparison",
+      "reason": "复用不同合理异常类、异常链、聚合或措辞；CSafeLoader 仍有已登记语法措辞边界，不在本轮静默裁定",
+      "priority": "private_batch_then_formal_if_not_equivalent",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": 1,
+      "expected_raw_behavior_score": 1,
+      "expected_diagnostic_outcome": "pass_diagnostic_goal",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "ok_map_settings",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/ok_map_settings.patch",
+        "sha256": "34c1e84fcc4b5b03ad4f680309e25dfb6688c7c31a77eeccae4a51c0e45e585c"
+      },
+      "role": "acceptance_comparison",
+      "reason": "复用不同合理异常类、异常链、聚合或措辞；CSafeLoader 仍有已登记语法措辞边界，不在本轮静默裁定",
+      "priority": "private_batch_then_formal_if_not_equivalent",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": 1,
+      "expected_raw_behavior_score": 1,
+      "expected_diagnostic_outcome": "pass_diagnostic_goal",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "ok_dictionary_typeerror",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/ok_dictionary_typeerror.patch",
+        "sha256": "5636e8125636c48c8c3a989832428e5f1b737b739da820247f69e509a1987171"
+      },
+      "role": "acceptance_comparison",
+      "reason": "复用不同合理异常类、异常链、聚合或措辞；CSafeLoader 仍有已登记语法措辞边界，不在本轮静默裁定",
+      "priority": "private_batch_then_formal_if_not_equivalent",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": 1,
+      "expected_raw_behavior_score": 1,
+      "expected_diagnostic_outcome": "pass_diagnostic_goal",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "ok_yamlerror_subclass",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/ok_yamlerror_subclass.patch",
+        "sha256": "8af55df5abe7276044cc5b8528cd545b1e6b6e1cbae7c29c1c1a2d3fc3297659"
+      },
+      "role": "acceptance_comparison",
+      "reason": "复用不同合理异常类、异常链、聚合或措辞；CSafeLoader 仍有已登记语法措辞边界，不在本轮静默裁定",
+      "priority": "private_batch_then_formal_if_not_equivalent",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": 1,
+      "expected_raw_behavior_score": 1,
+      "expected_diagnostic_outcome": "pass_diagnostic_goal",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "gr_csafe_loader",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/gr_csafe_loader.patch",
+        "sha256": "a2c61a24db00178cb5aae640e214a0c43f3ade62d4d377e60751b7d740e55e8b"
+      },
+      "role": "acceptance_comparison",
+      "reason": "复用不同合理异常类、异常链、聚合或措辞；CSafeLoader 仍有已登记语法措辞边界，不在本轮静默裁定",
+      "priority": "private_batch_then_formal_if_not_equivalent",
+      "original_material_f2p_count": 2,
+      "historical_v6_expected_reward": null,
+      "expected_raw_behavior_score": 1,
+      "expected_diagnostic_outcome": "pending_actual_parser_equivalence",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypotheses_not_observed_scores_not_automatic_training_reward"
+    },
+    {
+      "name": "ok_falsy_empty",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/ok_falsy_empty.patch",
+        "sha256": "9ef663cc5910140395951a26a62329633c4072cb41f887a6f4d44723dddcc2d6"
+      },
+      "historical_v5_qualification": "independent_reviewer_reasonable_and_formal_score1",
+      "expected_raw_behavior_score": 1,
+      "expected_diagnostic_outcome": "pass_diagnostic_goal",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "expectations_scope": "hypothesis_not_observed_score_not_automatic_training_reward",
+      "reason": "保留原or{}的假值空配置合理分支，必须其余错误仍准确诊断"
+    },
+    {
+      "name": "wrong_falsy_extra_settings",
+      "patch": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/candidate_patches/dask8801_wrong_falsy_extra_settings.patch",
+        "sha256": "b5db588028cd58bea9ece5b72f7eb7b77cca1df694ed5d6d84a1817ef779d137"
+      },
+      "expected_raw_behavior_score": 0,
+      "expected_diagnostic_outcome": "fail_behavior",
+      "observed_raw_behavior_score": null,
+      "observed_semantic_verdict": null,
+      "observed_diagnostic_outcome": null,
+      "reason": "假值空配置分支错误注入额外配置；应由行为断言拒绝，不用语义裁决代替",
+      "expectations_scope": "hypothesis_not_observed_score_not_automatic_training_reward"
+    }
+  ],
+  "success_conditions": [
+    "冻结正式 consumer、材料、镜像、配方及真正非 root 身份；F2P/P2P 逐项在场且执行完整",
+    "确定性行为与语义裁决分别留证；行为分1不代表公开错误解释目标通过",
+    "固定 prompt/config 的新鲜非作者判定通过已知正负和未调试留出控制；每份实际模型候选独立裁决",
+    "已知 wrong_missing_file_reason 即使行为分1也必须语义拒绝；合理改写/异常链/类不误拒",
+    "封包缺失 needs_evidence；uncertain 或服务失败 needs_review，不默认0/1，不丢样本",
+    "题级诊断通过不授予自动训练 reward；保留原始诊断、裁决引用、SHA、清理与非作者验收"
+  ],
+  "known_wrong_coverage": "初始矩阵按独立机制选取；其余历史候选保留原件。接受性比较不能因私有检查通过而省略正式身份/导入等差异。",
+  "automatic_training_reward_authorized": false,
+  "prior_material_version": "dask8801-diagnostics-v6-draft"
+}

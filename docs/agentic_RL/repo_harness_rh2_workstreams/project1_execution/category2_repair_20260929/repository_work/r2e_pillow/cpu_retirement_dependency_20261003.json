@@ -1,0 +1,90 @@
+{
+  "schema": "r2e_pillow.cpu_retirement_dependency.v1",
+  "recorded_at_utc": "2026-10-02T21:50:58.451285+00:00",
+  "package_id": "r2e_pillow",
+  "owner_thread_id": "01a0fd64-1b6e-75b0-978a-2873ac32201c",
+  "cpu_host": "cpu-b",
+  "task_keys": [
+    "r2e_gym_subset::pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+    "r2e_gym_subset::pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07",
+    "r2e_gym_subset::pillow__a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90"
+  ],
+  "known_cpu_reruns": [],
+  "known_cpu_repairs": [],
+  "cpu_pending_actions": [],
+  "remote_evidence_pending_retrieval": [],
+  "local_missing_or_corrupt_artifacts": [],
+  "cpu_still_needed_for_known_work": false,
+  "owner_cpu_dependency_ready_for_retirement": true,
+  "archive_manifest": {
+    "path": "runs/category2_repair_20260929/r2e_pillow_cpu_b_20261003/cpu_retirement_archive_manifest_20261003.json",
+    "sha256": "b7ad32011287f2b4a05847a321564bf2cfb9e8d8d6c8ebbe5e0145820cb1a27b",
+    "bytes": 21329
+  },
+  "archived_input_run_file_count": 658,
+  "source_release_file_version_members_verified": 2454,
+  "cpu_acceptance_refs": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_pillow/cpu_2d01_acceptance_v1.json",
+      "sha256": "48b5ea8e6a6ee97246f77970b27b250cd26852bfe070d4861a017efda901758f",
+      "bytes": 10115
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_pillow/cpu_3a61_acceptance_v1.json",
+      "sha256": "ef60d5be2e2afeb0ffc6276625f3e88aa4903f0b73f54e59aed5f405526cc1f2",
+      "bytes": 48927
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_pillow/cpu_a682_acceptance_v1.json",
+      "sha256": "1b5621a6eecbd8da8cab3ca62306a68edb49c4de8c7b0d2761861d3239e6aa3a",
+      "bytes": 43555
+    }
+  ],
+  "remote_source_scope": [
+    {
+      "prefix": "/work/rh2-category2-20261003/packages/r2e_pillow/",
+      "mapping": "remote_source_root + manifest member path",
+      "local_manifest": "runs/category2_repair_20260929/r2e_pillow_cpu_b_20261003/2d01_cpu_core_v1/snapshot_manifest.json"
+    },
+    {
+      "prefix": "/work/rh2-category2-20261003/",
+      "mapping": "remote_source_root + manifest member path",
+      "local_manifest": "runs/category2_repair_20260929/r2e_pillow_cpu_b_20261003/3a61_cpu_core_v1/core_manifest.json"
+    },
+    {
+      "prefix": "/work/rh2-category2-20261003/",
+      "mapping": "remote_source_root + manifest member path",
+      "local_manifest": "runs/category2_repair_20260929/r2e_pillow_cpu_b_20261003/a682_matrix_core_v1/core_manifest.json"
+    },
+    {
+      "prefix": "/work/rh2-category2-20261003/",
+      "mapping": "remote_source_root + manifest member path",
+      "local_manifest": "runs/category2_repair_20260929/r2e_pillow_cpu_b_20261003/a682_actor_core_v1/core_manifest.json"
+    },
+    {
+      "prefix": "/work/rh2-category2-20261003/packages/r2e_pillow/",
+      "mapping": "remote_source_root + manifest member path",
+      "local_manifest": "runs/category2_repair_20260929/r2e_pillow_cpu_b_20261003/rgba_gif_inputs_core_v1/snapshot_manifest.json"
+    },
+    {
+      "prefix": "/work/rh2-category2-20261003/packages/r2e_pillow/inputs/pillow-cpu-inputs-v2/",
+      "mapping": "entries[].destination; archived cpu_input_manifest.json equals local cpu_input_manifest_v2.json",
+      "local_manifest": "runs/category2_repair_20260929/r2e_pillow_cpu_b_20261003/cpu_input_manifest_v2.json"
+    }
+  ],
+  "current_remote_idle_claim": {
+    "source_thread_id": "01a08bd3-b639-7c71-a1ee-f3f4d05b3a0e",
+    "kind": "publisher_reported_two_site_checks_no_jobs_containers_slots_busy",
+    "owner_did_not_repeat_site_probe": true
+  },
+  "current_owner_jobs": "旧必要CPU作业均自然结束、清理及独立验收完成，恢复后未新派CPU作业",
+  "gpu_still_needed": true,
+  "gpu_pending": [
+    "3a61/a682原请求首轮双模型结果及行为分析",
+    "固定条件第二阶段小批重复采样与稳定性分析"
+  ],
+  "future_cpu_defect_handling": "尚未返回的GPU结果可能暴露新缺陷，不属于当前已知CPU依赖。若真实发现题目/评分缺陷，按影响修订后使用剩余CPU资源定向复验；不为纯假设保留cpu-b。",
+  "cpu_shutdown_or_control_modified_by_owner": false,
+  "retirement_decision_and_control": "发布者整理cpu-b资源级回执，巡检线程核验后退租；本回执只给本包当前CPU依赖与归档事实",
+  "current_doc_checkpoint": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_pillow/preparation.md"
+}

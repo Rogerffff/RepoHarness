@@ -1,0 +1,26 @@
+{
+  "instance_id": "aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a",
+  "status": "未执行，仅静态阅读后的建议",
+  "executed": false,
+  "cwd": "/testbed",
+  "commands": [
+    {
+      "id": "public_issue_examples_py",
+      "cmd": "python - <<'PY'\nimport asyncio\nfrom unittest.mock import Mock\nfrom aiohttp.http_parser import HttpRequestParserPy\nfrom aiohttp.http_exceptions import BadHttpMessage, BadStatusLine\ncases = [\n    (f\"POST / HTTP/1.1\\r\\n{chr(255)}oo: bar\\r\\n\\r\\n\".encode(), BadHttpMessage),\n    (b\"GET\\n/path\\x0cHTTP/1.1\\r\\n\\r\\n\", BadStatusLine),\n]\nloop = asyncio.new_event_loop()\ntry:\n    for raw, expected in cases:\n        parser = HttpRequestParserPy(Mock(), loop, 2**16)\n        try:\n            parser.feed_data(raw)\n        except expected:\n            print(expected.__name__, \"rejected as expected\")\n        else:\n            raise AssertionError(f\"expected {expected.__name__}: {raw!r}\")\nfinally:\n    loop.close()\nPY",
+      "timeout_s": 30,
+      "expect": "两个公开题面输入分别抛出 BadHttpMessage、BadStatusLine；仅核对 Python parser，不替代 C 覆盖。未执行。"
+    },
+    {
+      "id": "public_parser_regression_default",
+      "cmd": "python -m pytest -q -ra -o addopts='' tests/test_http_parser.py -m 'not dev_mode'",
+      "timeout_s": 300,
+      "expect": "常规模式公开 parser 回归；保留所有所选已有测试，记录 skips/xfails 及实际 Python/C 覆盖。非 ASCII header 值、continuation、宽松响应回归不得删除或整项跳过。未执行。"
+    },
+    {
+      "id": "public_parser_regression_dev",
+      "cmd": "python -X dev -m pytest -q -ra -o addopts='' tests/test_http_parser.py -m dev_mode",
+      "timeout_s": 300,
+      "expect": "开发模式公开 parser 回归；报告原有 Python strict_headers xfail 与 C 扩展相关 skip，不将它们归为双实现通过。未执行。"
+    }
+  ]
+}

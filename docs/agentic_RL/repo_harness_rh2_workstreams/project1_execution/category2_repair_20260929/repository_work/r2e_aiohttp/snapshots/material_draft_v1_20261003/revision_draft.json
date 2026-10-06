@@ -1,0 +1,187 @@
+{
+  "schema_id": "rh2.s2_r2e.material_revisions.v2",
+  "purpose": "本地未发布草案；990起编号未预留。两项私有修订替换原目标条目，不直接追加；未来 revised_file 路径尚不存在。",
+  "revisions": [
+    {
+      "revision_id": "r2e-mr-990",
+      "instance_id": "aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a",
+      "kind": "statement_text_replace",
+      "target": "problem_statement",
+      "edits": [
+        {
+          "old": "    invalid_header = \"\\xffoo: bar\".encode()",
+          "new": "    invalid_header = \"\\xffoo: bar\""
+        }
+      ],
+      "sha256_before": "sha256:219538aa24f40ea4acb846876dd7585123a9ed2148b7abed722e166fe587eb88",
+      "sha256_after": "sha256:c3253b921246dcb9c99490b35b129269eb54cf4276f67837a6bd14d73819d731",
+      "revised_file": null,
+      "expected_change": null,
+      "decision_ref": "统一标准 v1 R-a/R-c/R-f 与当前仓库持续负责人授权；草案未发布",
+      "reason": "2026-10-03 aiohttp 续接草案；正式编号和发布由共用维护者负责",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/r2e/r2e_inventory.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/preparation.md"
+      ]
+    },
+    {
+      "revision_id": "r2e-mr-991",
+      "instance_id": "aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52",
+      "kind": "hidden_test_text_replace",
+      "target": "test_1.py",
+      "edits": [
+        {
+          "old": "\n\nclass TestShutdown:\n",
+          "new": "\n\ndef test_run_app_raises_exception_on_server_start_failure(\n    patched_loop: asyncio.AbstractEventLoop,\n) -> None:\n    # Not the issue's example: the error comes from starting the server\n    # (e.g. the port is already in use) instead of a cleanup context, and it\n    # is an OSError.  run_app() raises it, so it must not also report it.\n    patched_loop.create_server = mock.Mock(\n        side_effect=OSError(\"Address already in use\")\n    )\n    app = web.Application()\n\n    with mock.patch.object(\n        patched_loop, \"call_exception_handler\", autospec=True, spec_set=True\n    ) as m:\n        with pytest.raises(OSError, match=\"Address already in use\"):\n            web.run_app(app, print=stopper(patched_loop), loop=patched_loop)\n\n    assert not m.called\n\n\nclass TestShutdown:\n"
+        },
+        {
+          "old": "\n\nclass TestShutdown:\n",
+          "new": "\n\ndef test_run_app_cleanup_error_is_observable_after_interrupt(patched_loop) -> None:\n    # 清理异常可以抛给调用者，也可以交给异常处理器；两条路线均有效。\n    message = \"cleanup failed after interrupt\"\n    cleanup_reached = []\n    reports = []\n\n    async def context(app):\n        yield\n        cleanup_reached.append(True)\n        raise RuntimeError(message)\n\n    app = web.Application()\n    app.cleanup_ctx.append(context)\n    patched_loop.set_exception_handler(lambda loop, context: reports.append(context))\n    raised = \"\"\n    try:\n        web.run_app(\n            app, print=stopper(patched_loop), loop=patched_loop, handle_signals=False\n        )\n    except Exception as exc:\n        raised = str(exc)\n\n    assert cleanup_reached, \"cleanup context was not reached\"\n    reported = any(\n        message in str(context.get(\"exception\", \"\"))\n        or message in str(context.get(\"message\", \"\"))\n        for context in reports\n    )\n    assert message in raised or reported, \"cleanup exception was silently lost\"\n\n\nclass TestShutdown:\n"
+        }
+      ],
+      "sha256_before": "sha256:26317e3d9f2ad5ee29ac899b6a807117151eedb628350bde61f148dabe51500a",
+      "sha256_after": "sha256:5b38ccd1dd8083acbcb8db229a471517512434a5caccdddf0461f418c181910d",
+      "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/category2_20261003/test_1.py",
+      "expected_change": null,
+      "decision_ref": "统一标准 v1 R-a/R-c/R-f 与当前仓库持续负责人授权；草案未发布",
+      "reason": "2026-10-03 aiohttp 续接草案；正式编号和发布由共用维护者负责",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/r2e/r2e_inventory.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/preparation.md"
+      ]
+    },
+    {
+      "revision_id": "r2e-mr-992",
+      "instance_id": "aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52",
+      "kind": "expected_file_replace",
+      "target": "expected_output_json",
+      "edits": null,
+      "sha256_before": "sha256:a7341a36e1da6740bc37e591b636e69425528aa5fa420a24553c34d3eb29c489",
+      "sha256_after": "sha256:1bc0a6c74ee6fceb75b695d4d269c90f752deccf60b842db647a3602e1499370",
+      "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/category2_20261003/expected_output.json",
+      "expected_change": {
+        "changed": {},
+        "added": {
+          "test_run_app_raises_exception_on_server_start_failure[pyloop]": "PASSED",
+          "test_run_app_cleanup_error_is_observable_after_interrupt[pyloop]": "PASSED"
+        },
+        "removed": []
+      },
+      "decision_ref": "统一标准 v1 R-a/R-c/R-f 与当前仓库持续负责人授权；草案未发布",
+      "reason": "2026-10-03 aiohttp 续接草案；正式编号和发布由共用维护者负责",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/r2e/r2e_inventory.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/preparation.md"
+      ]
+    },
+    {
+      "revision_id": "r2e-mr-993",
+      "instance_id": "aiohttp__240da100151933883d7dea0528d45877df025b92",
+      "kind": "statement_text_replace",
+      "target": "problem_statement",
+      "edits": [
+        {
+          "old": "import unittest\nimport asyncio\nfrom aiohttp import ProxyConnector, ClientRequest\n\nclass ProxyConnectorTests(unittest.TestCase):\n    def test_request_port(self):\n        loop = asyncio.new_event_loop()\n        connector = ProxyConnector('http://proxy.example.com', loop=loop)\n        req = ClientRequest('GET', 'http://localhost:1234/path')\n        loop.run_until_complete(connector._create_connection(req))\n        print(req.path)  # Expected: 'http://localhost:1234/path'\n",
+          "new": "import asyncio\nfrom unittest import mock\nfrom aiohttp import ProxyConnector\nfrom aiohttp.client import ClientRequest\n\nloop = asyncio.new_event_loop()\ntransport, protocol = mock.Mock(), mock.Mock()\nconnected = loop.create_future()\nconnected.set_result((transport, protocol))\ntransport_loop = mock.Mock()\ntransport_loop.create_connection.return_value = connected\nconnector = ProxyConnector('http://proxy.example.com', loop=transport_loop)\ntry:\n    req = ClientRequest('GET', 'http://localhost:1234/path', loop=loop)\n    loop.run_until_complete(connector.connect(req))\n    print(req.path)\n    assert req.path == 'http://localhost:1234/path'\nfinally:\n    connector.close()\n    loop.close()\n"
+        },
+        {
+          "old": "**Example Code**\n\n",
+          "new": "**Example Code**\n\nThe example replaces the transport connection with a completed Future, so it runs without contacting the proxy. It still exercises ProxyConnector.connect().\n\n"
+        }
+      ],
+      "sha256_before": "sha256:5fd505cc8b7f564782cdb5081a308f3b8051164be85a8805dd42a2a33c33cc31",
+      "sha256_after": "sha256:d3ff12a9a27890831dcedc62d53e8c124647d6fe036c28712505ed247d7a272c",
+      "revised_file": null,
+      "expected_change": null,
+      "decision_ref": "统一标准 v1 R-a/R-c/R-f 与当前仓库持续负责人授权；草案未发布",
+      "reason": "2026-10-03 aiohttp 续接草案；正式编号和发布由共用维护者负责",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/r2e/r2e_inventory.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/preparation.md"
+      ]
+    },
+    {
+      "revision_id": "r2e-mr-994",
+      "instance_id": "aiohttp__240da100151933883d7dea0528d45877df025b92",
+      "kind": "hidden_test_text_replace",
+      "target": "test_1.py",
+      "edits": [
+        {
+          "old": "        self.assertEqual(req.path, 'http://localhost:1234/path')\n",
+          "new": "        self.assertEqual(req.path, 'http://localhost:1234/path')\n\n    @unittest.mock.patch('aiohttp.connector.ClientRequest')\n    def test_request_port_other_url(self, ClientRequestMock):\n        # Not the issue's example: another host, port and path, through the\n        # public connect() entry.  The explicit port must stay in req.path.\n        proxy_req = ClientRequest('GET', 'http://proxy.example.com')\n        ClientRequestMock.return_value = proxy_req\n\n        loop_mock = unittest.mock.Mock()\n        connector = aiohttp.ProxyConnector('http://proxy.example.com',\n                                           loop=loop_mock)\n\n        tr, proto = unittest.mock.Mock(), unittest.mock.Mock()\n        self._fake_coroutine(loop_mock.create_connection, (tr, proto))\n\n        req = ClientRequest('GET', 'http://www.python.org:8080/some/path')\n        self.loop.run_until_complete(connector.connect(req))\n        self.assertEqual(req.path, 'http://www.python.org:8080/some/path')\n\n    @unittest.mock.patch('aiohttp.connector.ClientRequest')\n    def test_https_connect_port(self, ClientRequestMock):\n        # Same as test_https_connect but with an explicit non-default port:\n        # the CONNECT target is still host:port, with the port given once.\n        loop_mock = unittest.mock.Mock()\n        proxy_req = ClientRequest('GET', 'http://proxy.example.com',\n                                  loop=loop_mock)\n        ClientRequestMock.return_value = proxy_req\n\n        proxy_resp = ClientResponse('get', 'http://proxy.example.com')\n        proxy_req.send = send_mock = unittest.mock.Mock()\n        send_mock.return_value = proxy_resp\n        proxy_resp.start = start_mock = unittest.mock.Mock()\n        self._fake_coroutine(start_mock, unittest.mock.Mock(status=200))\n\n        connector = aiohttp.ProxyConnector(\n            'http://proxy.example.com', loop=loop_mock)\n\n        tr, proto = unittest.mock.Mock(), unittest.mock.Mock()\n        self._fake_coroutine(loop_mock.create_connection, (tr, proto))\n\n        req = ClientRequest('GET', 'https://www.python.org:8443')\n        self.loop.run_until_complete(connector._create_connection(req))\n\n        self.assertEqual(proxy_req.method, 'CONNECT')\n        self.assertEqual(proxy_req.path, 'www.python.org:8443')\n"
+        },
+        {
+          "old": "    def test_tcp_connector(self):\n        with test_utils.run_server(self.loop, router=Functional) as httpd:\n            r = self.loop.run_until_complete(\n                client.request(\n                    'get', httpd.url('method', 'get'),\n                    connector=aiohttp.TCPConnector(loop=self.loop),\n                    loop=self.loop))\n            content = self.loop.run_until_complete(r.content.read())\n            content = content.decode()\n            self.assertEqual(r.status, 200)\n            r.close()\n",
+          "new": ""
+        },
+        {
+          "old": "    @unittest.skipUnless(hasattr(socket, 'AF_UNIX'), 'requires unix')\n    def test_unix_connector(self):\n        path = '/tmp/aiohttp_unix.sock'\n\n        connector = aiohttp.UnixConnector(path, loop=self.loop)\n        self.assertEqual(path, connector.path)\n\n        with test_utils.run_server(\n                self.loop, listen_addr=path, router=Functional) as httpd:\n            r = self.loop.run_until_complete(\n                client.request(\n                    'get', httpd.url('method', 'get'),\n                    connector=connector,\n                    loop=self.loop))\n            content = self.loop.run_until_complete(r.content.read())\n            content = content.decode()\n            self.assertEqual(r.status, 200)\n            r.close()\n",
+          "new": ""
+        }
+      ],
+      "sha256_before": "sha256:530b4631b50acb55a1f3cdc4db0330479299a4913f0bcabaaffd928b68e90c8d",
+      "sha256_after": "sha256:77b15aea1c9557adb5c686c4ff12055609578eecacfd754a2001cbe32dc8b18a",
+      "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/aiohttp__240da100151933883d7dea0528d45877df025b92/category2_20261003/test_1.py",
+      "expected_change": null,
+      "decision_ref": "统一标准 v1 R-a/R-c/R-f 与当前仓库持续负责人授权；草案未发布",
+      "reason": "2026-10-03 aiohttp 续接草案；正式编号和发布由共用维护者负责",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/r2e/r2e_inventory.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/preparation.md"
+      ]
+    },
+    {
+      "revision_id": "r2e-mr-995",
+      "instance_id": "aiohttp__240da100151933883d7dea0528d45877df025b92",
+      "kind": "expected_file_replace",
+      "target": "expected_output_json",
+      "edits": null,
+      "sha256_before": "sha256:5444ee2acbf99088cb932eaf1daf171855dfb3feba081b7b25fa04290bedec31",
+      "sha256_after": "sha256:8dab59950c1837a195f854e669fc3778200025beaf29431864e58a2ebe3a3c70",
+      "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/aiohttp__240da100151933883d7dea0528d45877df025b92/category2_20261003/expected_output.json",
+      "expected_change": {
+        "changed": {},
+        "added": {
+          "ProxyConnectorTests.test_request_port_other_url": "PASSED",
+          "ProxyConnectorTests.test_https_connect_port": "PASSED"
+        },
+        "removed": [
+          "HttpClientConnectorTests.test_tcp_connector",
+          "HttpClientConnectorTests.test_unix_connector"
+        ]
+      },
+      "decision_ref": "统一标准 v1 R-a/R-c/R-f 与当前仓库持续负责人授权；草案未发布",
+      "reason": "2026-10-03 aiohttp 续接草案；正式编号和发布由共用维护者负责",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/r2e/r2e_inventory.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/preparation.md"
+      ]
+    },
+    {
+      "revision_id": "r2e-mr-996",
+      "instance_id": "aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2",
+      "kind": "statement_text_replace",
+      "target": "problem_statement",
+      "edits": [
+        {
+          "old": "msg = protocol.Response(transport, 200)\nmsg.add_headers(('content-length', str(len(compressed_data))))\nmsg.add_chunking_filter(2)\nmsg.add_compression_filter('deflate')\nmsg.send_headers()\nmsg.write(b'data')\nmsg.write_eof()\n\nchunks = [chunk for chunk in write.mock_calls]\nassert all(chunks)  # This assertion fails because some chunks are empty\n",
+          "new": "import zlib\nfrom unittest import mock\nfrom aiohttp import protocol\n\npayload = b'data'\ncompressor = zlib.compressobj(wbits=-zlib.MAX_WBITS)\ncompressed_data = compressor.compress(payload) + compressor.flush()\n\n# 检查传给 write() 的实际字节，而不是 mock.call 对象本身的真值。\ntransport = mock.Mock()\nmsg = protocol.Response(transport, 200)\nmsg.add_headers(('content-length', str(len(compressed_data))))\nmsg.add_chunking_filter(2)\nmsg.add_compression_filter('deflate')\nmsg.send_headers()\nmsg.write(payload)\nmsg.write_eof()\nchunks = [call.args[0] for call in transport.write.call_args_list]\nassert all(chunks), chunks\n\n# HTTP/1.1 chunked 路径：终止块应在末尾，解压后仍有完整载荷。\ntransport = mock.Mock()\nmsg = protocol.Response(transport, 200)\nmsg.add_compression_filter('deflate')\nmsg.send_headers()\nmsg.write(payload)\nmsg.write_eof()\nwire = b''.join(call.args[0] for call in transport.write.call_args_list)\nheaders, rest = wire.split(b'\\r\\n\\r\\n', 1)\nassert b'transfer-encoding: chunked' in headers.lower()\ndata = []\nwhile True:\n    line, separator, rest = rest.partition(b'\\r\\n')\n    assert separator, 'missing chunk size'\n    size = int(line, 16)\n    if size == 0:\n        assert rest == b'\\r\\n', 'data after the terminating chunk'\n        break\n    assert len(rest) >= size + 2 and rest[size:size + 2] == b'\\r\\n'\n    data.append(rest[:size])\n    rest = rest[size + 2:]\nassert zlib.decompress(b''.join(data), -zlib.MAX_WBITS) == payload\n"
+        },
+        {
+          "old": "**Example Code:**\n",
+          "new": "**Example Code:**\nThe example checks actual write arguments and the HTTP/1.1 wire body without a network server. A zero-size terminating chunk is valid only at the end of the response.\n\n"
+        }
+      ],
+      "sha256_before": "sha256:d8fdebfed1986ce334c0fdaf74594a8a70bb205a25d4020dd11a3f2b7acf2d5a",
+      "sha256_after": "sha256:2e44793a1282a769525059d34db2238f962a5492fce581cd5290627b9dc8451c",
+      "revised_file": null,
+      "expected_change": null,
+      "decision_ref": "统一标准 v1 R-a/R-c/R-f 与当前仓库持续负责人授权；草案未发布",
+      "reason": "2026-10-03 aiohttp 续接草案；正式编号和发布由共用维护者负责",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/r2e/r2e_inventory.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/preparation.md"
+      ]
+    }
+  ]
+}

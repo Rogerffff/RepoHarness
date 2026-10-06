@@ -1,0 +1,81 @@
+{
+  "schema_id": "rh2.orange9b.r9_cpu_acceptance.v1",
+  "as_of": "2026-10-03",
+  "task_id": "r2e_gym_subset::orange3__9b5494e26f407b75e79699c9d40be6df1d80a040",
+  "status": "diagnostic_cpu_acceptance_complete",
+  "source_binding": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/9b5494e2/r9_cpu_release_binding.json",
+    "sha256": "sha256:f8bf3bafa254101590cda77d8e96f54a10018a6f483c2567c439b57f93856a12"
+  },
+  "source_snapshot_note": "冻结binding/计划及初收据保留生成时状态；本收据接续当前CPU验收。",
+  "formal_matrix": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/9b5494e2/cpu_matrix_result_20261003.json",
+    "sha256": "sha256:5c74b861e8ab284adb23ce7174a850ea7abe1806ae0dac093471aa764849f9d8"
+  },
+  "formal_controls": {
+    "noop": 0.0,
+    "gold": 1.0,
+    "V1": 1.0,
+    "V3": 1.0,
+    "V4": 1.0,
+    "V5": 1.0,
+    "W1": 0.0,
+    "V7": 0.0,
+    "P1": 0.0,
+    "G1": 0.0
+  },
+  "expected_total": 13,
+  "expected_failed_count": 2,
+  "actual_actor": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/9b5494e2/cpu_actor_result_20261003.json",
+    "sha256": "sha256:8b8d32490e1606e45a0ef5557e0a1cafeaa21fc64b3b7586f619c474c00e18bd"
+  },
+  "independent_review": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/9b5494e2/independent_cpu_review_receipt.json",
+    "sha256": "sha256:4d69daa21fda1192233824d16b2cca7f692e61818ef0f805ef2bdb3d3bd40c03"
+  },
+  "public_development_brief": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/9b5494e2/public_development_brief.md",
+    "sha256": "sha256:33d7e34f091c820c6b1456133fd53578e9b0bc7bad87b38814f358c19d5e3c06"
+  },
+  "reused_probability_calibration": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/9b5494e2/probability_precheck_v2.json",
+    "sha256": "sha256:1c643c35bdc9c94d0ee5a060da0773adfe7ab31932a37e0e033954bf18d34180"
+  },
+  "independent_calibration_reuse": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/reviews/orange9b_probability_reuse_review_20261003.json",
+    "sha256": "sha256:4d15ebf872c726d3a3e9a21d343985ef0b8a643d43a72403da63164352ff06ba"
+  },
+  "archives": [
+    {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_9b_matrix_complete_v1_readback_receipt.json",
+      "sha256": "sha256:771cb6d9c6b6f1448ae63542e7c207bba61bca9b752e27c97635ba98b285d24c"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_9b_actor_complete_v1_readback_receipt.json",
+      "sha256": "sha256:13dd1ff42a6206cab06c8648307bf5b00151e102ee59af4ab13c6dcf01811984"
+    }
+  ],
+  "formal_matrix_complete": true,
+  "actual_cc_complete": true,
+  "independent_result_review_complete": true,
+  "allowed_uses": [
+    "题目与环境质量调查",
+    "基座难度和修法诊断"
+  ],
+  "limits": [
+    "十方证明本批已知正负对照，不是穷尽正确性；模型修法另按公开要求逐份审。",
+    "13参考键精确expected含两个既有scorer FAILED；13/13是状态匹配，不能写全测试通过；pytest收集14项含1既有normalization skip，不计13评分键。",
+    "V7两个额外mismatch为旧FAILED变PASSED，不计成三个新失败；默认solver断言独立拒绝V7。",
+    "新增默认概率关系拒绝G1的OvR回归；旧020/env_v2的三组校准只支持容差与方向，最终材料/环境由本轮020092/050316实测接续。",
+    "公开默认test_LogisticRegression及L1 test_probability与L1全iris拟合按真实结果区分；base预期报错不当基础设施异常。",
+    "新公开CC为固定合成endpoint/base-only、无候选修改/评分；不作模型能力或token/费用结论。",
+    "矩阵97次/20容器与公开CC7次/2容器是有限资源旁路采样，原ledger.resource_facts为空；P1删除态137/OOMfalse单点保留，不称测试OOM或全程OOM0；relay没有CPU配额。",
+    "actor直接记录logistic模块加载路径、矩阵grader未直接记录该模块加载路径/hash；不把冻结投影与同像实际评分冒称直接模块加载SHA。",
+    "公开brief已独立核事实但未在CPU HTTP交付，GPU须交原题面和中性brief并读回；旧参数/旧配方拒绝记录保持原件。",
+    "CPU验收不等于GPU实际准入、模型成绩、训练或留出资格。"
+  ],
+  "gpu_probe_admitted": false,
+  "model_results_available": false,
+  "training_qualification_evaluated": false
+}

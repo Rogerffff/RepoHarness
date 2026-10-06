@@ -1,0 +1,144 @@
+{
+  "schema": "monai_task_material_proposal.v1",
+  "as_of": "2026-10-03",
+  "instance_id": "Project-MONAI__MONAI-2446",
+  "owner_thread_id": "01a0fd62-fb0a-7d02-877a-f9ef7ef32399",
+  "status": "static_materials_prepared_not_registered_not_cpu_accepted",
+  "revision_id_candidate": "monai2446-ndarray-shuffle-cache-cpu-v1",
+  "operation_candidate": "replace_test_patch_append_p2p",
+  "repo": "Project-MONAI/MONAI",
+  "base_commit": "05b2da61d70324c2f02b5d72429ddb7cc171b9b9",
+  "source_bindings": {
+    "public": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+      "line": 3,
+      "canonical_json_digest": "sha256:e28bef68fdde56691302cf89bf38e41ecdd122166538f6303beefda8b450b503"
+    },
+    "grading": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+      "line": 3,
+      "canonical_json_digest": "sha256:baf96ec699b48a0aa07608ed405e240571103868a92016aea4e8eb9d3579e4f0"
+    },
+    "environment": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/environment_packages_v0.jsonl",
+      "line": 3,
+      "canonical_json_digest": "sha256:91c8edeac4fe68112598b64e04800880af2bbe4584c483a44b3925dc603e0bd9"
+    }
+  },
+  "source_image_manifest_digest": "sha256:cca2571758f276aa5d82fcb372b523e2201cd10be150776badceaaa04defad6a",
+  "public_material_changed": false,
+  "test_files": [
+    {
+      "path": "tests/test_smartcachedataset.py",
+      "base_sha256": "sha256:25717b4fff4134d31bc15f5bb31b490b976c0be32636824935ad3bdad41cfa3b",
+      "base_asset": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_monai/materials/2446/base/tests/test_smartcachedataset.py"
+    }
+  ],
+  "original_test_patch": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_monai/materials/2446/original_test.patch",
+    "sha256": "sha256:23813a432d27315082c752b0d15680f724dd6ddd6c1a446044157e55e4cdbdbd",
+    "bytes": 670
+  },
+  "effective_test_patch": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_monai/materials/2446/effective_test.patch",
+    "sha256": "sha256:c413f2b150eec668aee425cf1171faedaf7fdbb8c9a3bae171328a741231b7e7",
+    "bytes": 2116
+  },
+  "extra_tests_patch": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_monai/materials/2446/extra_tests.patch",
+    "sha256": "sha256:ee401a1e15c5893c6d070c198e616bc1d6fdc35af92f6663668953ac33ceb99a",
+    "bytes": 1625
+  },
+  "references": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_monai/materials/2446/references_candidate.json",
+    "sha256": "sha256:8bff67e272af6e246f6020a1de8a915c0569e36bc623da0f5c46fdb2e7cae98e",
+    "bytes": 920
+  },
+  "counts": {
+    "original_f2p": 1,
+    "original_p2p": 2,
+    "effective_f2p": 1,
+    "effective_p2p": 3
+  },
+  "controls": {
+    "noop": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_monai/materials/2446/controls/noop.patch",
+      "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "source_file": "monai/data/dataset.py",
+      "applied_source_sha256": "sha256:22f52cd44c1b8bc2afac1111aa6824e4c563920a631c3336984a910bd264299a",
+      "execution_status": "not_executed"
+    },
+    "gold": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_monai/materials/2446/controls/gold.patch",
+      "sha256": "sha256:0c0e9e07a3d8195c75cebdac933cb628fef3425e2721f99087fea2ced6fc9f1a",
+      "bytes": 1198,
+      "source_file": "monai/data/dataset.py",
+      "applied_source_sha256": "sha256:f29bf46a6bc40e9d4e09ac1e94e46513fcec160c860ca87cbe6633f01b4e301b",
+      "execution_status": "not_executed"
+    },
+    "array_no_shuffle": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_monai/materials/2446/controls/array_no_shuffle.patch",
+      "sha256": "sha256:91bcb98b33149e93606f2e42d48de5a08fd735a4e4e1c54da0f84d04933024e0",
+      "bytes": 451,
+      "source_file": "monai/data/dataset.py",
+      "applied_source_sha256": "sha256:1653727e6f823ad96967d6f717d8a49db05b2f136e782a4f3df73f16c1ea811b",
+      "execution_status": "not_executed"
+    },
+    "alternative_list_copy": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_monai/materials/2446/controls/alternative_list_copy.patch",
+      "sha256": "sha256:f4571b4a1fd55f8047fe5a0f28384f276c2fbefaeb25a34c1cde27a9d77104c4",
+      "bytes": 379,
+      "source_file": "monai/data/dataset.py",
+      "applied_source_sha256": "sha256:2a2d2283b58328f143dfc1d226b4ddf3e132bbc68d107aa77db2f6f72ffea4bb",
+      "execution_status": "not_executed"
+    }
+  },
+  "formal_matrix_expected_not_executed": [
+    {
+      "control": "noop",
+      "expected_reward": 0,
+      "new_node_expected": "pass"
+    },
+    {
+      "control": "gold",
+      "expected_reward": 1,
+      "new_node_expected": "pass"
+    },
+    {
+      "control": "array_no_shuffle",
+      "expected_reward": 0,
+      "new_node_expected": "fail"
+    },
+    {
+      "control": "alternative_list_copy",
+      "expected_reward": 1,
+      "new_node_expected": "pass"
+    }
+  ],
+  "source_assets": [
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-2446/base/tests/test_smartcachedataset.py",
+      "sha256": "sha256:25717b4fff4134d31bc15f5bb31b490b976c0be32636824935ad3bdad41cfa3b",
+      "bytes": 4916
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-2446/base/monai/data/dataset.py",
+      "sha256": "sha256:22f52cd44c1b8bc2afac1111aa6824e4c563920a631c3336984a910bd264299a",
+      "bytes": 49592
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-2446/user_prompt.txt",
+      "sha256": "sha256:bcb23d41674d879b5f36f6a42d002f27aec3a7441268cb86eb9fba3b34d16c5a",
+      "bytes": 1135
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-2446/base_identity.json",
+      "sha256": "sha256:120fb1cca8be49f7f2802a9e1d01450a7076752e0735466d6e0ed2dbded6847d",
+      "bytes": 752
+    }
+  ],
+  "shared_consumer_gap": "当前正式 allowlist 未登记本题；需唯一维护者接入、冻结 producer/registry/code 后正式验收",
+  "production_changed": false,
+  "new_test_executed": false
+}

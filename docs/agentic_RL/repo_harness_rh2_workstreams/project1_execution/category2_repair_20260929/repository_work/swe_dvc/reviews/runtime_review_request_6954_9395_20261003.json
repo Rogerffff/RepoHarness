@@ -1,0 +1,776 @@
+{
+  "format": "swe_dvc_runtime_review_request.v1",
+  "as_of": "2026-10-03",
+  "status": "non_author_readback_completed_no_new_block_formal_acceptance_pending",
+  "scope": "非作者读取现有CPU私有诊断原件；不运行题目，不替代正式RH2评分、actor或用途资格",
+  "requested_reviewer_model": "gpt-6.1-sol",
+  "requested_reasoning_effort": "high",
+  "exclusive_report_path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/reviews/non_author_6954_9395_cpu_review_20261003.md",
+  "context_policy": "新核查者不继承作者会话；会阅读已知私有材料与已有审查，报告披露上下文，不称fresh公开读者",
+  "tasks": [
+    {
+      "instance_id": "iterative__dvc-6954",
+      "revision_id": "dvc6954-behavior-v1-draft",
+      "material_files": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-6954/revision.json",
+          "sha256": "sha256:1d6a11a8b8adfcdd4122dcd7a64aecbb6a93c8c51284b2f927157eeea42ee801",
+          "size": 7797
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-6954/original_test.patch",
+          "sha256": "sha256:e57dff1329d7ca7842d3d3d639ec1a03d401065f4286ef893af93552196087fa",
+          "size": 1465
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-6954/effective_test.patch",
+          "sha256": "sha256:52c6a71bba1b1ca9f067d9846006dc5f2af9ecb0dde107f8a4ee75519c0b33fc",
+          "size": 3162
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-6954/effective_install_recipe.json",
+          "sha256": "sha256:86bf3ff0cc0b2d90922cf031ba93b84f30dafa38b39e00ad678956bb286b47d4",
+          "size": 1500
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-6954/cpu_diagnostics_v1.json",
+          "sha256": "sha256:999eed776235c306ea78e5d9ed5a5aff236c677d691a75c3e18d7685d4a7d7ef",
+          "size": 19437
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-6954/public_tests/tests/func/params/test_show.py",
+          "sha256": "sha256:b4f326a46584b7a6e4eae8462ff5018341dee1bbaf2eaef4c5dca37bbf4436eb",
+          "size": 4907
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-6954/candidates/noop.patch",
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-6954/candidates/gold.patch",
+          "sha256": "sha256:50ed349f0cad3875991e03a9a4c9a01c0ff286cc18a00f1c221f121bcddb8116",
+          "size": 2043
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-6954/candidates/negative_int_only.patch",
+          "sha256": "sha256:4787d6e313bb413600e1f455a123c359339d101e46d4ef4e079516e6a0c2a2f8",
+          "size": 568
+        }
+      ],
+      "raw_evidence": [
+        {
+          "root": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001",
+          "review_rows": "all_rows",
+          "summary": {
+            "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/summary.json",
+            "sha256": "sha256:ee1fa42c14dc42ed43d6a2b57c9c8ad5df8b87d82db734ac69a4fecb4cc3b2d4",
+            "size": 12035
+          },
+          "image_id": "sha256:083832998996245f4f49eaab3f5f9314fe9fe23bafda7fc9641ae8cec6803c30",
+          "input_file_sha256": {
+            "candidates/gold.patch": "50ed349f0cad3875991e03a9a4c9a01c0ff286cc18a00f1c221f121bcddb8116",
+            "candidates/negative_int_only.patch": "4787d6e313bb413600e1f455a123c359339d101e46d4ef4e079516e6a0c2a2f8",
+            "candidates/noop.patch": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "card.md": "c3f1e25f943e817f69874d3f812db98e706207d2b2695938b491dc0f365e5734",
+            "effective_test.patch": "52c6a71bba1b1ca9f067d9846006dc5f2af9ecb0dde107f8a4ee75519c0b33fc",
+            "original_test.patch": "e57dff1329d7ca7842d3d3d639ec1a03d401065f4286ef893af93552196087fa",
+            "public_tests/tests/func/params/test_show.py": "b4f326a46584b7a6e4eae8462ff5018341dee1bbaf2eaef4c5dca37bbf4436eb",
+            "results.json": "87c62fb3095d19b2fd4cc404ba53000fb48f49a237bbac2e293de194b3fc6bf2",
+            "revision.json": "1d6a11a8b8adfcdd4122dcd7a64aecbb6a93c8c51284b2f927157eeea42ee801"
+          },
+          "files": [
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/commands.log",
+              "sha256": "sha256:b2cf754f567498786ed8f6c07eca7e3efeff6596e53f60e2794cfa81ecac6c75",
+              "size": 211282
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/effective/gold/applied.diff",
+              "sha256": "sha256:9da3a3a1c8b93ad9fdfc9598eb7e09c4e976d69e3df1053b96db294943019486",
+              "size": 3460
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/effective/gold/identity.json",
+              "sha256": "sha256:eccd27ebbc4c558cdf1c3fdd2f07ccdb44802f45a02348e79cdb9a677a687dbb",
+              "size": 196
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/effective/gold/initial_tree.txt",
+              "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size": 0
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/effective/gold/pytest.log",
+              "sha256": "sha256:115d2ef5f0816112528c3ccdfc481bfd801dd44410f9a86aad508561ba676656",
+              "size": 54952
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/effective/negative_int_only/applied.diff",
+              "sha256": "sha256:c4f2bca5c745516f03dd0266b22eb7a88b305991e7dea660a249d79347712f56",
+              "size": 2012
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/effective/negative_int_only/identity.json",
+              "sha256": "sha256:eccd27ebbc4c558cdf1c3fdd2f07ccdb44802f45a02348e79cdb9a677a687dbb",
+              "size": 196
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/effective/negative_int_only/initial_tree.txt",
+              "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size": 0
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/effective/negative_int_only/pytest.log",
+              "sha256": "sha256:6d0ab74f82ad94cffa830695ee080aa23070b2f07e3b8e42940d18f7127bcc9f",
+              "size": 48012
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/effective/noop/applied.diff",
+              "sha256": "sha256:27eb5428a097d7420c5ae31d388f1b35294d809ca846b5ddc5f18010f17366d3",
+              "size": 1383
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/effective/noop/collection.log",
+              "sha256": "sha256:b77302eed6ba5b11ea0bf7671528649fcf749475b43b9e0aa70924835c656847",
+              "size": 2257
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/effective/noop/identity.json",
+              "sha256": "sha256:eccd27ebbc4c558cdf1c3fdd2f07ccdb44802f45a02348e79cdb9a677a687dbb",
+              "size": 196
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/effective/noop/initial_tree.txt",
+              "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size": 0
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/effective/noop/pytest.log",
+              "sha256": "sha256:0aa67254a9a64ff2db9c7a43b2df1853c03b31299a43965a90a3d14d1ce9d58b",
+              "size": 49595
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/original/gold/applied.diff",
+              "sha256": "sha256:44314e4df30d1904a843a19d630a00d81facc94fbaf8e4f7795c168f0b4b8164",
+              "size": 2077
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/original/gold/identity.json",
+              "sha256": "sha256:eccd27ebbc4c558cdf1c3fdd2f07ccdb44802f45a02348e79cdb9a677a687dbb",
+              "size": 196
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/original/gold/initial_tree.txt",
+              "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size": 0
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/original/gold/pytest.log",
+              "sha256": "sha256:b2e852dbbce7b0b1162e3d517b300f69e35c56ff04229e7b007e101a709a495f",
+              "size": 4316
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/original/negative_int_only/applied.diff",
+              "sha256": "sha256:984a0bdcc76c9708f80f141c501c5b8dafe15b79b447820d6658b99d8f99d1a6",
+              "size": 629
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/original/negative_int_only/identity.json",
+              "sha256": "sha256:eccd27ebbc4c558cdf1c3fdd2f07ccdb44802f45a02348e79cdb9a677a687dbb",
+              "size": 196
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/original/negative_int_only/initial_tree.txt",
+              "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size": 0
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/original/negative_int_only/pytest.log",
+              "sha256": "sha256:bdc20cf45d7e5c7508c91963b9d9cd38efccfac2b0af60925860c819a4c4d8f1",
+              "size": 4316
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/original/noop/applied.diff",
+              "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size": 0
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/original/noop/collection.log",
+              "sha256": "sha256:e902b26561a9ecc8d02604e897df1f1fa9df6125a3651b23f376bf7b6bfab467",
+              "size": 1986
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/original/noop/identity.json",
+              "sha256": "sha256:eccd27ebbc4c558cdf1c3fdd2f07ccdb44802f45a02348e79cdb9a677a687dbb",
+              "size": 196
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/original/noop/initial_tree.txt",
+              "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size": 0
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/original/noop/pytest.log",
+              "sha256": "sha256:c7cdc2e7729f74bcf68fbf2f28522d51e25595ca21ffac13f853bde29eff132f",
+              "size": 5862
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc6954-diagnostic-v1-001/summary.json",
+              "sha256": "sha256:ee1fa42c14dc42ed43d6a2b57c9c8ad5df8b87d82db734ac69a4fecb4cc3b2d4",
+              "size": 12035
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "instance_id": "iterative__dvc-9395",
+      "revision_id": "dvc9395-behavior-v2-draft",
+      "material_files": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/revision.json",
+          "sha256": "sha256:fd3cc7ea289803967e41d074fca566418770c88a683589b771eaca60f973981c",
+          "size": 10847
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/original_test.patch",
+          "sha256": "sha256:1252952ed15b193e40ef7a61af5122e932a4ef97abac6ec33f48e3cc63909c71",
+          "size": 2983
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/effective_test.patch",
+          "sha256": "sha256:964c80ef786b71091fcc722d8b3fdcd8afe8ba7e3f5fb511d6cb9661a25c2777",
+          "size": 10739
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/effective_install_recipe.json",
+          "sha256": "sha256:aedc7795f25b87578d1e2e4945fe0d23318d9d16d1188f4eb28de66547757daa",
+          "size": 1729
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/cpu_diagnostics_v2.json",
+          "sha256": "sha256:92c6731166ecaf344dbcd6c5381fa06c75489401c7259246e802d19dbd456a6b",
+          "size": 11492
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/public_tests/tests/func/test_repro_multistage.py",
+          "sha256": "sha256:ca738a7a94b991881a48abdb02aa1d27565f087e5742511d1fbbd752afde99e1",
+          "size": 11832
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/public_tests/tests/func/test_run_cache.py",
+          "sha256": "sha256:0d9bfa7a96c4e29e178c89b96357ec1adae59bfa27027173f07b234b08504960",
+          "size": 5953
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/candidates/noop.patch",
+          "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "size": 0
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/candidates/gold.patch",
+          "sha256": "sha256:4a5017f1dfa6375041fd1a4ce055a5bcc1a7bedc221ccada2cc0732044667d4a",
+          "size": 974
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/candidates/c3_frozenfix.patch",
+          "sha256": "sha256:94d448480d67d7e74bc97e90266b69d99a1f58e499992dab45161491b4412040",
+          "size": 1637
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/candidates/c3_missing_only.patch",
+          "sha256": "sha256:ac0a90ac6ec289ea632582201224dfd17526b0fa1df636d0772c867d352566c6",
+          "size": 1620
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/candidates/up351_port.patch",
+          "sha256": "sha256:ca53ee797f31c61d3412e297e2aad73e0afc2d5dabb3d53bc4fab5b1f1c321c2",
+          "size": 4270
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/candidates/w_swallow3.patch",
+          "sha256": "sha256:dcc198d267a8f79072a219e6eea3921d8ce8a49083477f531c4313d411ccce2a",
+          "size": 1113
+        }
+      ],
+      "raw_evidence": [
+        {
+          "root": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004",
+          "review_rows": "original_only",
+          "summary": {
+            "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/summary.json",
+            "sha256": "sha256:b6c89da67bc02b1d6c1d800aeb8ddea5e3934cca9a2626df846939f481ed5360",
+            "size": 51975
+          },
+          "image_id": "sha256:c093861f62b8071b3c1e5b3142abd5843888421364e69dd728cb80856f621b60",
+          "input_file_sha256": {
+            "candidates/c3_frozenfix.patch": "94d448480d67d7e74bc97e90266b69d99a1f58e499992dab45161491b4412040",
+            "candidates/c3_missing_only.patch": "ac0a90ac6ec289ea632582201224dfd17526b0fa1df636d0772c867d352566c6",
+            "candidates/gold.patch": "4a5017f1dfa6375041fd1a4ce055a5bcc1a7bedc221ccada2cc0732044667d4a",
+            "candidates/noop.patch": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "candidates/up351_port.patch": "ca53ee797f31c61d3412e297e2aad73e0afc2d5dabb3d53bc4fab5b1f1c321c2",
+            "candidates/w_swallow3.patch": "dcc198d267a8f79072a219e6eea3921d8ce8a49083477f531c4313d411ccce2a",
+            "card.md": "6b2a6567d151c865ac5531658fa71b708155985e8fe460b3f06e8c25b79f35a2",
+            "effective_test.patch": "c0ae8869e619efc8491459e3c6275086945fb15625086d244b1133998bd8aca4",
+            "original_test.patch": "1252952ed15b193e40ef7a61af5122e932a4ef97abac6ec33f48e3cc63909c71",
+            "public_tests/tests/func/test_repro_multistage.py": "ca738a7a94b991881a48abdb02aa1d27565f087e5742511d1fbbd752afde99e1",
+            "public_tests/tests/func/test_run_cache.py": "0d9bfa7a96c4e29e178c89b96357ec1adae59bfa27027173f07b234b08504960",
+            "results.json": "24b4703307b2269c0e1fc3f21a3836886d9f7b7fb0017e4889cfa6c64b6e3c61",
+            "revision.json": "bc538e2d4cbf747ec211447f7c2fc0210db8ec8f65fe687ac74dda51adb47787"
+          },
+          "files": [
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/commands.log",
+              "sha256": "sha256:fcdc9c28d523cd4752aaa431fd7eebd0d92406608ab44d0f5060e1f5f859b60e",
+              "size": 2615640
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/effective/c3_frozenfix/applied.diff",
+              "sha256": "sha256:e72e55d47378267502f4bb845d1368b39ad8ec6411dd66d285ee2ad689f900ce",
+              "size": 12724
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/effective/c3_frozenfix/identity.json",
+              "sha256": "sha256:0716e0ff75906e7691ab6f392991a84fc1cab6d6556d24c5b6c80f4d8fd631d1",
+              "size": 198
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/effective/c3_frozenfix/initial_tree.txt",
+              "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size": 0
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/effective/c3_frozenfix/pytest.log",
+              "sha256": "sha256:e275d9ee5dc5c1e1e162f0ab78bc9340b07f959190013af33617a9a85eb4e51e",
+              "size": 243511
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/effective/c3_missing_only/applied.diff",
+              "sha256": "sha256:24071531cfba4de76a0645462de6a7431011b7568133fa4264c4e883b2a9bf49",
+              "size": 12703
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/effective/c3_missing_only/identity.json",
+              "sha256": "sha256:0716e0ff75906e7691ab6f392991a84fc1cab6d6556d24c5b6c80f4d8fd631d1",
+              "size": 198
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/effective/c3_missing_only/initial_tree.txt",
+              "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size": 0
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/effective/c3_missing_only/pytest.log",
+              "sha256": "sha256:bbb3db1c64f4dac98e8a3ac70e487befe4bc94593758058bee1308b2c8ba5de6",
+              "size": 251290
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/effective/gold/applied.diff",
+              "sha256": "sha256:d5f0473ba7305666ceef569109d28b0fda63d322db7fa4934578dd0703714573",
+              "size": 12091
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/effective/gold/identity.json",
+              "sha256": "sha256:0716e0ff75906e7691ab6f392991a84fc1cab6d6556d24c5b6c80f4d8fd631d1",
+              "size": 198
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/effective/gold/initial_tree.txt",
+              "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size": 0
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/effective/gold/pytest.log",
+              "sha256": "sha256:548eb2dbe2195a78447eadac9354cf2378a9ea310cdb64e3b056c03465565255",
+              "size": 255002
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/effective/noop/applied.diff",
+              "sha256": "sha256:f16f146fd24266cd17a59fc54f0fab9a31d81029537e2dc2266e66d5c21f26af",
+              "size": 11083
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/effective/noop/collection.log",
+              "sha256": "sha256:3224e9460ac26e172b5ec218a2996921530b9c63b641a54091402e02a49cdbe6",
+              "size": 3438
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/effective/noop/identity.json",
+              "sha256": "sha256:0716e0ff75906e7691ab6f392991a84fc1cab6d6556d24c5b6c80f4d8fd631d1",
+              "size": 198
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/effective/noop/initial_tree.txt",
+              "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size": 0
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/effective/noop/pytest.log",
+              "sha256": "sha256:1d21f5db9f1defcb2842795fb664af7cd4ba552eabdcf02ee179bc66eb92ffb1",
+              "size": 255321
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/effective/up351_port/applied.diff",
+              "sha256": "sha256:36c7e4962c55f8e74087f281a0fb9b6a31a17cb4a23c14dd55f91b3558b2a26c",
+              "size": 15361
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/effective/up351_port/identity.json",
+              "sha256": "sha256:0716e0ff75906e7691ab6f392991a84fc1cab6d6556d24c5b6c80f4d8fd631d1",
+              "size": 198
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/effective/up351_port/initial_tree.txt",
+              "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size": 0
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/effective/up351_port/pytest.log",
+              "sha256": "sha256:0bd08816238f2d80ae95f1ef58ee6b8a594caaf52e84270596febcc38ede1405",
+              "size": 256935
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/effective/w_swallow3/applied.diff",
+              "sha256": "sha256:dfdddc8c1fda0982bdbf418a10760887f42ccab130848d117f95c8e69f760bfa",
+              "size": 12200
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/effective/w_swallow3/identity.json",
+              "sha256": "sha256:0716e0ff75906e7691ab6f392991a84fc1cab6d6556d24c5b6c80f4d8fd631d1",
+              "size": 198
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/effective/w_swallow3/initial_tree.txt",
+              "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size": 0
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/effective/w_swallow3/pytest.log",
+              "sha256": "sha256:8d6c0db9ad1397f2960dba64f35889c351e27992b800f2f04a8d78965d3b5a0d",
+              "size": 235203
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/original/c3_frozenfix/applied.diff",
+              "sha256": "sha256:1dc0a8d79b5e3de1351a5a71f78ce8e6efa3987bf2968872d149b289b8ce3211",
+              "size": 4740
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/original/c3_frozenfix/identity.json",
+              "sha256": "sha256:0716e0ff75906e7691ab6f392991a84fc1cab6d6556d24c5b6c80f4d8fd631d1",
+              "size": 198
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/original/c3_frozenfix/initial_tree.txt",
+              "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size": 0
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/original/c3_frozenfix/pytest.log",
+              "sha256": "sha256:bf5f1a7dbe1634d78b7011a4d844d523e84172f04b4388c45ffb39502107adda",
+              "size": 152869
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/original/c3_missing_only/applied.diff",
+              "sha256": "sha256:7edb626e821ed1c948686460a5d6d325b0bd9e53665f38d2f39ec04b1a96be21",
+              "size": 4719
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/original/c3_missing_only/identity.json",
+              "sha256": "sha256:0716e0ff75906e7691ab6f392991a84fc1cab6d6556d24c5b6c80f4d8fd631d1",
+              "size": 198
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/original/c3_missing_only/initial_tree.txt",
+              "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size": 0
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/original/c3_missing_only/pytest.log",
+              "sha256": "sha256:33225896c3e3afac63f4e444ea61782382661060a7ddf75fceb4bd6607d78507",
+              "size": 152916
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/original/gold/applied.diff",
+              "sha256": "sha256:d1988da13847ea05dcd1279fd3e9a08737dc27dec010b70eca93d4f0dd19bb33",
+              "size": 4107
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/original/gold/identity.json",
+              "sha256": "sha256:0716e0ff75906e7691ab6f392991a84fc1cab6d6556d24c5b6c80f4d8fd631d1",
+              "size": 198
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/original/gold/initial_tree.txt",
+              "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size": 0
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/original/gold/pytest.log",
+              "sha256": "sha256:f486997f7a61f270b4ede1fbb5f7ab2df46ca89206085f0ea0470805c5529eff",
+              "size": 158356
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/original/noop/applied.diff",
+              "sha256": "sha256:0220f7b3598815176c3a6c7b231d998a78385978355daf50dcd939b71fca90d6",
+              "size": 3099
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/original/noop/collection.log",
+              "sha256": "sha256:4e8a3c55aec2c409c7eab18da91d73b62993bf37f0543d7f8fd99d7aa88f172d",
+              "size": 2481
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/original/noop/identity.json",
+              "sha256": "sha256:0716e0ff75906e7691ab6f392991a84fc1cab6d6556d24c5b6c80f4d8fd631d1",
+              "size": 198
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/original/noop/initial_tree.txt",
+              "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size": 0
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/original/noop/pytest.log",
+              "sha256": "sha256:4cd925507d3612472335f546615f19515359f8ca92bd68a7934345e6dcddb867",
+              "size": 173653
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/original/up351_port/applied.diff",
+              "sha256": "sha256:9b3f5be3d9c0c53b45ba829be7cfa4225c75a3f838b151d501b9766df576bf5f",
+              "size": 7377
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/original/up351_port/identity.json",
+              "sha256": "sha256:0716e0ff75906e7691ab6f392991a84fc1cab6d6556d24c5b6c80f4d8fd631d1",
+              "size": 198
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/original/up351_port/initial_tree.txt",
+              "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size": 0
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/original/up351_port/pytest.log",
+              "sha256": "sha256:59f556e93fbb828c7ec8d00a09a7cc733216d028a1365a040e074bdf897fd744",
+              "size": 160905
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/original/w_swallow3/applied.diff",
+              "sha256": "sha256:9d1a209b04e8ac0ad113ab168cc8b62c53c64a1e03058602a43d030374a8bff4",
+              "size": 4216
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/original/w_swallow3/identity.json",
+              "sha256": "sha256:0716e0ff75906e7691ab6f392991a84fc1cab6d6556d24c5b6c80f4d8fd631d1",
+              "size": 198
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/original/w_swallow3/initial_tree.txt",
+              "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size": 0
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/original/w_swallow3/pytest.log",
+              "sha256": "sha256:b8c2342faae420d5c2fe31768539a8c9f56f0956d45cd9c9db19b59bb2d1cfbc",
+              "size": 153373
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004/summary.json",
+              "sha256": "sha256:b6c89da67bc02b1d6c1d800aeb8ddea5e3934cca9a2626df846939f481ed5360",
+              "size": 51975
+            }
+          ]
+        },
+        {
+          "root": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002",
+          "review_rows": "all_rows",
+          "summary": {
+            "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/summary.json",
+            "sha256": "sha256:6ededc1ef069ea23ef7ba8b04291a7e2771e35eefd828aa762bc4f6813c97b3c",
+            "size": 30435
+          },
+          "image_id": "sha256:c093861f62b8071b3c1e5b3142abd5843888421364e69dd728cb80856f621b60",
+          "input_file_sha256": {
+            "candidates/c3_frozenfix.patch": "94d448480d67d7e74bc97e90266b69d99a1f58e499992dab45161491b4412040",
+            "candidates/c3_missing_only.patch": "ac0a90ac6ec289ea632582201224dfd17526b0fa1df636d0772c867d352566c6",
+            "candidates/gold.patch": "4a5017f1dfa6375041fd1a4ce055a5bcc1a7bedc221ccada2cc0732044667d4a",
+            "candidates/noop.patch": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "candidates/up351_port.patch": "ca53ee797f31c61d3412e297e2aad73e0afc2d5dabb3d53bc4fab5b1f1c321c2",
+            "candidates/w_swallow3.patch": "dcc198d267a8f79072a219e6eea3921d8ce8a49083477f531c4313d411ccce2a",
+            "effective_test.patch": "964c80ef786b71091fcc722d8b3fdcd8afe8ba7e3f5fb511d6cb9661a25c2777",
+            "original_test.patch": "1252952ed15b193e40ef7a61af5122e932a4ef97abac6ec33f48e3cc63909c71",
+            "public_tests/tests/func/test_repro_multistage.py": "ca738a7a94b991881a48abdb02aa1d27565f087e5742511d1fbbd752afde99e1",
+            "public_tests/tests/func/test_run_cache.py": "0d9bfa7a96c4e29e178c89b96357ec1adae59bfa27027173f07b234b08504960",
+            "revision.json": "fd3cc7ea289803967e41d074fca566418770c88a683589b771eaca60f973981c"
+          },
+          "files": [
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/commands.log",
+              "sha256": "sha256:64a5a603f47a0cd9fac803bf1d657875368e24de6c8d9dc194cd1077b125e01c",
+              "size": 1702343
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/effective/c3_frozenfix/applied.diff",
+              "sha256": "sha256:fb7ddc6b2cc3ecf812603ce1ccb6e1a83e580a80025a599fc3702cc268b0ac7d",
+              "size": 12715
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/effective/c3_frozenfix/identity.json",
+              "sha256": "sha256:362d3a655697df0908da7a5af2e65faa63ee2691bba52cd755627c392ea4d95e",
+              "size": 176
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/effective/c3_frozenfix/initial_tree.txt",
+              "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size": 0
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/effective/c3_frozenfix/pytest.log",
+              "sha256": "sha256:be582589beee6dc0043e2cdd188068dc44e32f954426ae5619828aeeae7a9f17",
+              "size": 244540
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/effective/c3_missing_only/applied.diff",
+              "sha256": "sha256:f54a365e32a3b9e6cd780344b01e72a5d680fa3d8f659fd4abb0ac447317a07d",
+              "size": 12694
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/effective/c3_missing_only/identity.json",
+              "sha256": "sha256:362d3a655697df0908da7a5af2e65faa63ee2691bba52cd755627c392ea4d95e",
+              "size": 176
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/effective/c3_missing_only/initial_tree.txt",
+              "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size": 0
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/effective/c3_missing_only/pytest.log",
+              "sha256": "sha256:c6bf62a4746849d64bf4a3a40c533b43ec4d235d4c5e2bc7022b0b8a965074c8",
+              "size": 252281
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/effective/gold/applied.diff",
+              "sha256": "sha256:abe7bfcee24397853e3c048f10ff35b413909900570c32f69d727596e0b32225",
+              "size": 12082
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/effective/gold/identity.json",
+              "sha256": "sha256:362d3a655697df0908da7a5af2e65faa63ee2691bba52cd755627c392ea4d95e",
+              "size": 176
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/effective/gold/initial_tree.txt",
+              "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size": 0
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/effective/gold/pytest.log",
+              "sha256": "sha256:e0302bdfa63d5d2acec33364399dc71dcb8f93fde42aae26019a2522f076d654",
+              "size": 298215
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/effective/noop/applied.diff",
+              "sha256": "sha256:9fc58b5b7acc7e4453929be077b3f39c02640e70e7858729ac274f8eaca3b5ce",
+              "size": 11074
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/effective/noop/collection.log",
+              "sha256": "sha256:c9a47d2312dc79823143b3c5302f4b9d16d1d8e6f8293ba61aa13f488e6ccddc",
+              "size": 3438
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/effective/noop/identity.json",
+              "sha256": "sha256:362d3a655697df0908da7a5af2e65faa63ee2691bba52cd755627c392ea4d95e",
+              "size": 176
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/effective/noop/initial_tree.txt",
+              "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size": 0
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/effective/noop/pytest.log",
+              "sha256": "sha256:0bb9a1edf962412e9598d3d71be0b3af2f1e3f99b524fe9d4f9f5cd43060d77b",
+              "size": 255594
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/effective/up351_port/applied.diff",
+              "sha256": "sha256:6486d74ee8d27048d73147199fbe261300bf3cc25a0972a525aaa1730de0abbd",
+              "size": 15352
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/effective/up351_port/identity.json",
+              "sha256": "sha256:362d3a655697df0908da7a5af2e65faa63ee2691bba52cd755627c392ea4d95e",
+              "size": 176
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/effective/up351_port/initial_tree.txt",
+              "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size": 0
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/effective/up351_port/pytest.log",
+              "sha256": "sha256:d9e2d083ac9e8a0eaa9ef67f4176fdab603a22815f952ac27791d38dffaa7ab5",
+              "size": 284990
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/effective/w_swallow3/applied.diff",
+              "sha256": "sha256:a79b17e3dea99e1870db2ed7b5576048f15ce9dd1a69c59a573343c3bcdbb79f",
+              "size": 12191
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/effective/w_swallow3/identity.json",
+              "sha256": "sha256:362d3a655697df0908da7a5af2e65faa63ee2691bba52cd755627c392ea4d95e",
+              "size": 176
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/effective/w_swallow3/initial_tree.txt",
+              "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "size": 0
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/effective/w_swallow3/pytest.log",
+              "sha256": "sha256:0ab942e9a545be3594fc15805390f0884f5d839efc2675e7b1ec665584ebc04d",
+              "size": 255910
+            },
+            {
+              "path": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002/summary.json",
+              "sha256": "sha256:6ededc1ef069ea23ef7ba8b04291a7e2771e35eefd828aa762bc4f6813c97b3c",
+              "size": 30435
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "reuse_existing_reports": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/reviews/non_author_5839_material_review_20261003.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/reviews/non_author_4166_9395_v2_review_20261003.md"
+  ],
+  "checks": [
+    "逐原日志完整节点与参考；明确计分和非参考分母，不把合成/缺席/skip当运行通过",
+    "对照真实pytest退出和失败堆栈；核行为断言失败，不把导入/collection错误当错解被拒",
+    "材料、候选、基线、依赖镜像及summary身份与当前版本相符",
+    "6954原空白节点从完整原日志逐一映射；诊断便捷summary的截断不能用于丢弃节点",
+    "9395仅复用未变original六行，旧错误API的effective六行不验为当前结果",
+    "容器清理退出、confirmed_absent与无残留；限定已有证据覆盖范围",
+    "已有材料语义意见按版本复用；发现真实遗漏或矛盾明确写finding",
+    "报告区分作者私有诊断、非作者读回、正式CPU及actor/训练/探针未完成"
+  ],
+  "authorization_basis": {
+    "user_context": "用户要求按仓库拆分并行agent，指定本批工作流并将DVC工作包交本线程持续负责",
+    "workflow_path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/remaining_workflow_20261002.md",
+    "scope": "负责人可以委派实验和复核；后续子agent使用GPT-6.1 Sol/high，非作者负责独立核查",
+    "additional_user_confirmation_required": false
+  },
+  "assigned_agent_task": "/root/dvc6954_9395_cpu_readback",
+  "reviewed_request_sha256": "sha256:144583d2426f7f45824c2e3126a40a04a40fc28fd97d2f9db950273acf6fe954",
+  "reviewed_request_snapshot": "history/runtime_review_request_6954_9395_20261003_reviewed.json",
+  "report": {
+    "path": "non_author_6954_9395_cpu_review_20261003.md",
+    "sha256": "sha256:ded53d84604bd5134ec153c6fd441460e35c52c8405c9a8ee69f9967055888b0",
+    "scope": "现有私有诊断原件非作者读回；正式评分/actor/资格/探针未验证"
+  }
+}

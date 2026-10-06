@@ -1,0 +1,55 @@
+diff --git a/tests/test_json_schema.py b/tests/test_json_schema.py
+--- a/tests/test_json_schema.py
++++ b/tests/test_json_schema.py
+@@ -5995,3 +5995,51 @@
+     assert Model.model_fields['a'].is_required()
+     assert Model.model_fields['b'].is_required()
+     assert Model.model_fields['c'].is_required()
++
++
++@pytest.mark.parametrize(
++    'field_type,default_value,expected_schema',
++    [
++        (
++            IPvAnyAddress,
++            IPv4Address('127.0.0.1'),
++            {
++                'properties': {
++                    'field': {'default': '127.0.0.1', 'format': 'ipvanyaddress', 'title': 'Field', 'type': 'string'}
++                },
++                'title': 'Model',
++                'type': 'object',
++            },
++        ),
++        (
++            IPvAnyAddress,
++            IPv6Address('::1'),
++            {
++                'properties': {
++                    'field': {'default': '::1', 'format': 'ipvanyaddress', 'title': 'Field', 'type': 'string'}
++                },
++                'title': 'Model',
++                'type': 'object',
++            },
++        ),
++    ],
++)
++def test_default_value_encoding(field_type, default_value, expected_schema):
++    class Model(BaseModel):
++        field: field_type = default_value
++
++    schema = Model.model_json_schema()
++    assert schema == expected_schema
++
++
++def test_default_encoding_preserves_stdlib_dataclass_instance():
++    import dataclasses
++
++    @dataclasses.dataclass
++    class Point:
++        x: int
++
++    class Model(BaseModel):
++        point: Point = Point(1)
++
++    assert Model.model_json_schema()['properties']['point']['default'] == {'x': 1}

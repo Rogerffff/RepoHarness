@@ -1,0 +1,22 @@
+diff --git a/tests/test_root_model.py b/tests/test_root_model.py
+--- a/tests/test_root_model.py
++++ b/tests/test_root_model.py
+@@ -310,6 +310,7 @@
+     assert RootModel[int](42) == RootModel[int](42)
+     assert RootModel[int](42) != RootModel[int](7)
+     assert RootModel[int](42) != RootModel[float](42)
++    assert RootModel[int](42) == RootModel[int].model_construct(42)
+ 
+ 
+ def test_root_model_with_private_attrs_equality():
+@@ -488,3 +489,10 @@
+     assert m.root == [RModel(1), RModel(2), BModel.model_construct(value='abc')]
+     assert m.model_dump() == [1, 2, {'value': 'abc'}]
+     assert m.model_dump_json() == '[1,2,{"value":"abc"}]'
++
++
++def test_root_model_construct_equality_nonexample():
++    class TextRoot(RootModel):
++        root: str
++
++    assert TextRoot('another') == TextRoot.model_construct('another')

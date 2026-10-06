@@ -1,0 +1,680 @@
+{
+  "task_id": "swe_gym_lite::Project-MONAI__MONAI-1121",
+  "task_revision": {
+    "name": "upstream",
+    "base_commit": "5b91f937234a69fb299f220fc4bbdd8ef51ae37d",
+    "version": "0.3",
+    "material_changes_in_this_review": false
+  },
+  "source_adapter_ref": {
+    "bundle": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-1121/public_bundle.json",
+    "grading_bundle": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/grading.json",
+    "vendor": "swegym_constants_242429c1",
+    "source_refs": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/source_refs.json"
+  },
+  "recipe_ref": {
+    "run_refs": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/run_refs.json",
+    "environment_record": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/environment_record.json",
+    "scope": "each original run has separate image/recipe/scripts identity; actual actor recipe unknown",
+    "supplemental_material_override": {
+      "review": "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack05_monai1121_material_override_review.json",
+      "review_sha256": "0f84fdac33c867526bd43e0ff2722e29723c0d51fc360c091b9e2b4582b96408",
+      "sources": [
+        {
+          "kind": "noop",
+          "file": "runs/env_recipe_repair_20260919/materials_v1/runs/Project-MONAI__MONAI-1121-noop/materials/materials.json",
+          "sha256": "57e4dd0d2e447726477a1bad5aacc755f76585e5be5b94ce04ee630fd3f85a0d",
+          "original_grading_digest": "sha256:abe5416b1174a06e1bd60a39f47f75386b1d823d5fb738396d03cd69486e6276",
+          "revised_grading_digest": "sha256:71ebb22db1929f173492d50d66d4f6488e453ae5336ace307a791e1a91a9f976",
+          "scope": "versioned diagnostic GradingEnvSpec; source prepared package preserved; refreeze before production"
+        },
+        {
+          "kind": "gold",
+          "file": "runs/env_recipe_repair_20260919/materials_v1/runs/Project-MONAI__MONAI-1121-gold/materials/materials.json",
+          "sha256": "57e4dd0d2e447726477a1bad5aacc755f76585e5be5b94ce04ee630fd3f85a0d",
+          "original_grading_digest": "sha256:abe5416b1174a06e1bd60a39f47f75386b1d823d5fb738396d03cd69486e6276",
+          "revised_grading_digest": "sha256:71ebb22db1929f173492d50d66d4f6488e453ae5336ace307a791e1a91a9f976",
+          "scope": "versioned diagnostic GradingEnvSpec; source prepared package preserved; refreeze before production"
+        }
+      ],
+      "original_test_patch_sha256": "d82fc5d7df743e2b694e098cc59bb9d03d27d1f94111c490698ed69a92b7d678",
+      "revised_test_patch_sha256": "928e345a3f5f89887542d82f5c9e1e189873cb3d45ee5e4b52a1de614c96f241",
+      "scope": "historical versioned diagnostic collection change; source frozen material preserved; actual actor and production equivalence unknown"
+    }
+  },
+  "code_snapshot_ref": {
+    "static_base": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-1121/base",
+    "base_identity": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-1121/base_identity.json",
+    "gold_ref": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/gold.patch",
+    "test_patch_ref": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/test.patch",
+    "actor_worktree": "unknown"
+  },
+  "facts_ref": {
+    "current_review": "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md",
+    "analysis_sha256": "2711d42d4bd6f6d02276d579d30492219afcc1ddd131d2110b0a7cc69fd0d062",
+    "history_delta": "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/old_findings_delta.md",
+    "authorized_history": "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_monai_1/records/Project-MONAI__MONAI-1121.json",
+    "history_sha256": "3b6d2003342f6bc369a7320d2d2a04a6964293e71adcc708329cb367dc45c0a9",
+    "runs": [
+      {
+        "candidate_kind": "gold",
+        "ledger_ref": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/env_recipe_repair_20260919/materials_v1/runs/Project-MONAI__MONAI-1121-gold/ledger.jsonl:1",
+        "log_ref": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/env_recipe_repair_20260919/materials_v1/runs/Project-MONAI__MONAI-1121-gold/eval_logs/evallog_replay-er19-mat1-Project_c30adeed.eval.log",
+        "allowed_log_lines": {
+          "line_start": 1,
+          "line_end": 1131,
+          "scope": "single-task original"
+        },
+        "input_identity": {
+          "run_id": "er19-mat1-Project-MONAI__MONAI-1121-gold",
+          "source": "swe_gym_lite",
+          "schema_id": "rh2.replay_grade_ledger.v1",
+          "started_at_utc": "2026-09-19T06:26:35.479823+00:00",
+          "image_ref": "sha256:b3bccbbee1887d67b83232c451588cb0f7226dd41f12d4af10b520b96d3e05bd",
+          "image_digest_expected": "sha256:0f5853531e10b960378077b7837b972ac46656281d87c41f15f073a06d73a481",
+          "image_id_actual": "sha256:b3bccbbee1887d67b83232c451588cb0f7226dd41f12d4af10b520b96d3e05bd",
+          "image_identity": "local_build:sha256:b3bccbbee1887d67b83232c451588cb0f7226dd41f12d4af10b520b96d3e05bd",
+          "image_local_build": true,
+          "derived_image_recipe": "verified-assets-dependencies+materials-v1",
+          "scripts_digest": "sha256:56667b0a30d20c1c968ac6756e0ec5e2ab65cd085ce2022cc7a7080ddfa5032e",
+          "baseline_policy_version": "baseline_policy_v2",
+          "policy": {
+            "candidate_writable_prefixes": [
+              "/opt/miniconda3/envs/testbed"
+            ],
+            "cpus": 2.0,
+            "grader_profile_digest": "sha256:1bb8e0cf80ce48b15401fdf79d18f4f4c08a5f01001d8b0756311c58de25c19a",
+            "memory_bytes": 4294967296,
+            "network": "deny_all",
+            "pids_limit": 512,
+            "profile_id": "rh2.grader_sandbox_profile.v1",
+            "shm_bytes": 67108864,
+            "tmpfs_bytes": 1073741824,
+            "uid": 54322,
+            "user": "rh2grader"
+          },
+          "budgets": {
+            "candidate_stage_seconds": 900.0,
+            "cleanup_seconds": 120.0,
+            "grading_deadline_seconds": 3600.0,
+            "image_pull_seconds": 1800.0
+          },
+          "resource": {
+            "mem_peak_mb": 2638.379,
+            "mem_peak_unavailable_or_zero": false
+          },
+          "resource_facts": null,
+          "reference": null
+        },
+        "evidence_scope": "historical RH2 for this task/attempt; not current actor"
+      },
+      {
+        "candidate_kind": "noop",
+        "ledger_ref": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/env_recipe_repair_20260919/materials_v1/runs/Project-MONAI__MONAI-1121-noop/ledger.jsonl:1",
+        "log_ref": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/env_recipe_repair_20260919/materials_v1/runs/Project-MONAI__MONAI-1121-noop/eval_logs/evallog_replay-er19-mat1-Project_e59e287f.eval.log",
+        "allowed_log_lines": {
+          "line_start": 1,
+          "line_end": 1162,
+          "scope": "single-task original"
+        },
+        "input_identity": {
+          "run_id": "er19-mat1-Project-MONAI__MONAI-1121-noop",
+          "source": "swe_gym_lite",
+          "schema_id": "rh2.replay_grade_ledger.v1",
+          "started_at_utc": "2026-09-19T06:17:02.231146+00:00",
+          "image_ref": "sha256:b3bccbbee1887d67b83232c451588cb0f7226dd41f12d4af10b520b96d3e05bd",
+          "image_digest_expected": "sha256:0f5853531e10b960378077b7837b972ac46656281d87c41f15f073a06d73a481",
+          "image_id_actual": "sha256:b3bccbbee1887d67b83232c451588cb0f7226dd41f12d4af10b520b96d3e05bd",
+          "image_identity": "local_build:sha256:b3bccbbee1887d67b83232c451588cb0f7226dd41f12d4af10b520b96d3e05bd",
+          "image_local_build": true,
+          "derived_image_recipe": "verified-assets-dependencies+materials-v1",
+          "scripts_digest": "sha256:56667b0a30d20c1c968ac6756e0ec5e2ab65cd085ce2022cc7a7080ddfa5032e",
+          "baseline_policy_version": "baseline_policy_v2",
+          "policy": {
+            "candidate_writable_prefixes": [
+              "/opt/miniconda3/envs/testbed"
+            ],
+            "cpus": 2.0,
+            "grader_profile_digest": "sha256:1bb8e0cf80ce48b15401fdf79d18f4f4c08a5f01001d8b0756311c58de25c19a",
+            "memory_bytes": 4294967296,
+            "network": "deny_all",
+            "pids_limit": 512,
+            "profile_id": "rh2.grader_sandbox_profile.v1",
+            "shm_bytes": 67108864,
+            "tmpfs_bytes": 1073741824,
+            "uid": 54322,
+            "user": "rh2grader"
+          },
+          "budgets": {
+            "candidate_stage_seconds": 900.0,
+            "cleanup_seconds": 120.0,
+            "grading_deadline_seconds": 3600.0,
+            "image_pull_seconds": 1800.0
+          },
+          "resource": {
+            "mem_peak_mb": 2633.566,
+            "mem_peak_unavailable_or_zero": false
+          },
+          "resource_facts": null,
+          "reference": null
+        },
+        "evidence_scope": "historical RH2 for this task/attempt; not current actor"
+      }
+    ],
+    "actual_actor_messages": "unknown",
+    "actual_actor_environment": "unknown",
+    "independent_review": {
+      "file": "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/review.md",
+      "sha256": "d8df70ea444ba5a65ef891eee8e92bb9bd4141ebc1de1eaf355aaa357610b0f2",
+      "phase": "after all package reviewer initials sealed and explicit cross_review release"
+    },
+    "coordinator_adjudication": {
+      "by": "/root",
+      "at": "2026-09-24T20:13:00.256821+00:00",
+      "report": "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack05_report.md",
+      "revision_log": "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/coordinator_revisions/pack05_monai/revision_log.json",
+      "original_read_notes": "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/reserve20_coordinator_read_notes.md"
+    },
+    "historical_material_identity_correction": {
+      "first_exposure": "after all package initials and main final delivery; reviewer received explicit supplemental release",
+      "mechanism": "tests/utils.py appends test_script_save.__test__ = False; target function/assertion bodies unchanged",
+      "comparison_ref": "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack05_monai1121_material_override_review.json",
+      "original_and_revised_grading_digests": [
+        {
+          "kind": "noop",
+          "original_grading_digest": "sha256:abe5416b1174a06e1bd60a39f47f75386b1d823d5fb738396d03cd69486e6276",
+          "revised_grading_digest": "sha256:71ebb22db1929f173492d50d66d4f6488e453ae5336ace307a791e1a91a9f976"
+        },
+        {
+          "kind": "gold",
+          "original_grading_digest": "sha256:abe5416b1174a06e1bd60a39f47f75386b1d823d5fb738396d03cd69486e6276",
+          "revised_grading_digest": "sha256:71ebb22db1929f173492d50d66d4f6488e453ae5336ace307a791e1a91a9f976"
+        }
+      ]
+    }
+  },
+  "checks": {
+    "1": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-1121/base_identity.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/grading.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack05_monai1121_material_override_review.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/env_recipe_repair_20260919/materials_v1/runs/Project-MONAI__MONAI-1121-noop/materials/materials.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/env_recipe_repair_20260919/materials_v1/runs/Project-MONAI__MONAI-1121-gold/materials/materials.json"
+      ],
+      "by": "/root",
+      "note": "静态base/patch/指定noop-gold attempt与projection绑定；actual actor身份另unknown。 协调补充：source原test.patch与历史materials-v1实际test_patch分别标识，后者额外改变helper收集；不得合并为同一材料版本。"
+    },
+    "2": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/run_refs.json"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "历史noop目标失败有原日志；限该验收输入，见逐项状态。"
+    },
+    "3": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-1121/environment_brief.md"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "未获实际actor system/user消息及工具呈现；不把题面静态可读性等同实际交付。"
+    },
+    "4": {
+      "status": "issue",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-1121/public_bundle.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "计划hints禁改测试与公开测试交付冲突；实际权限/消息unknown。"
+    },
+    "5": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/old_findings_delta.md"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "旧跨题唯一/无重复主张未核；未读共享索引或其他题。"
+    },
+    "6": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-1121/environment_brief.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/run_refs.json"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "本题历史grader依赖/资产/策略及公开开发需求已记；尚无当前actor操作证据，不外推资格。"
+    },
+    "7": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-1121/environment_brief.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/run_refs.json"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "本题历史grader依赖/资产/策略及公开开发需求已记；尚无当前actor操作证据，不外推资格。"
+    },
+    "8": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-1121/environment_brief.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/run_refs.json"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "本题历史grader依赖/资产/策略及公开开发需求已记；尚无当前actor操作证据，不外推资格。"
+    },
+    "10": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-1121/environment_brief.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/run_refs.json"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "本题历史grader依赖/资产/策略及公开开发需求已记；尚无当前actor操作证据，不外推资格。"
+    },
+    "11": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-1121/environment_brief.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/run_refs.json"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "本题历史grader依赖/资产/策略及公开开发需求已记；尚无当前actor操作证据，不外推资格。"
+    },
+    "13": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-1121/environment_brief.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/run_refs.json"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "本题历史grader依赖/资产/策略及公开开发需求已记；尚无当前actor操作证据，不外推资格。"
+    },
+    "9": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "限所引用历史noop/gold：代码投影和/testbed源码导入有证；未覆盖当前actor或任意候选。"
+    },
+    "14": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/old_findings_delta.md"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "未做同状态重复或并发实验，不由两候选对照推出稳定性。"
+    },
+    "15": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-1121/environment_brief.md"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "指定候选投影与清理有局部证据，但未核缓存/并发或真实actor候选完整交付。"
+    },
+    "16": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-1121/environment_brief.md"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "指定候选投影与清理有局部证据，但未核缓存/并发或真实actor候选完整交付。"
+    },
+    "17": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/test.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/gold.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "限历史指定源码gold：测试恢复清单与gold源码无交集、apply及投影记录成立；不证明任意候选控制面。"
+    },
+    "18": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/review.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack05_monai1121_material_override_review.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/env_recipe_repair_20260919/materials_v1/runs/Project-MONAI__MONAI-1121-noop/materials/materials.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/env_recipe_repair_20260919/materials_v1/runs/Project-MONAI__MONAI-1121-gold/materials/materials.json"
+      ],
+      "by": "/root",
+      "note": "历史materials-v1的36项expected全部执行，无expected skip/missing；40项执行属于修订收集材料，新增test_script_save.__test__=False，非未经修订的原test.patch。"
+    },
+    "19": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/grading.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/old_findings_delta.md"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "限该历史运行，逐expected状态匹配无skip/missing；实际多执行项不自动进入评分。"
+    },
+    "20": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "限原条件，noop目标失败、gold通过，所有P2P通过；不代表全部公开目标或actual actor资格。"
+    },
+    "21": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/old_findings_delta.md"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "原安装/测试RC、失败位置与逐测试状态均保留，不只看总分；旧错误与新条件分开。"
+    },
+    "23": {
+      "status": "issue",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-1121/user_prompt.txt",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/test.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "公共目标/接口与验收存在错位；见双向表。"
+    },
+    "24": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/test.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/old_findings_delta.md"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "未发现代码文本唯一性限制，合理替代空间已讨论；未实验，不证明普遍无误拒。"
+    },
+    "25": {
+      "status": "issue",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/test.patch"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "具体漏测及合理不完整实现路径见双向表；静态推断，未运行变异。"
+    },
+    "26": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/old_findings_delta.md"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "无已证gold新增回归；覆盖缺口不能冒充回归事实。"
+    },
+    "27": {
+      "status": "issue",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/gold.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "局部gold通过有证据；公开完整目标仍不被实现/验收，不能沿用旧完整pass。"
+    },
+    "28": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/old_findings_delta.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/review.md"
+      ],
+      "by": "/root",
+      "note": "额外验证限公开所有网络测试目标；AHNet未公开非零dropout参数，旧forward已置零，不能新增“dropout>0输出必须不同”的要求。"
+    },
+    "29": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-1121/environment_brief.md"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "实际actor可见消息/工作树/网络未取得；审查侧授权私有暴露单列usage。"
+    },
+    "31": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/old_findings_delta.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/run_refs.json"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "未核当前候选评分控制面可达性及完整恢复。"
+    },
+    "30": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/old_findings_delta.md"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "静态审查/历史局部对照不足以证明该项；未取得真实模型/当前actor或完整筛查偏差证据。"
+    },
+    "32": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/old_findings_delta.md"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "静态审查/历史局部对照不足以证明该项；未取得真实模型/当前actor或完整筛查偏差证据。"
+    },
+    "33": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/old_findings_delta.md"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "静态审查/历史局部对照不足以证明该项；未取得真实模型/当前actor或完整筛查偏差证据。"
+    },
+    "34": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/old_findings_delta.md"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "静态审查/历史局部对照不足以证明该项；未取得真实模型/当前actor或完整筛查偏差证据。"
+    },
+    "35": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/old_findings_delta.md"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "静态审查/历史局部对照不足以证明该项；未取得真实模型/当前actor或完整筛查偏差证据。"
+    },
+    "36": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/old_findings_delta.md"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "静态审查/历史局部对照不足以证明该项；未取得真实模型/当前actor或完整筛查偏差证据。"
+    },
+    "37": {
+      "status": "issue",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack05_monai1121_material_override_review.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/env_recipe_repair_20260919/materials_v1/runs/Project-MONAI__MONAI-1121-noop/materials/materials.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/env_recipe_repair_20260919/materials_v1/runs/Project-MONAI__MONAI-1121-gold/materials/materials.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/review.md"
+      ],
+      "by": "/root",
+      "note": "已静态确认历史修复除依赖/资产外，还添加helper __test__=False改变可信pytest收集材料；目标函数/断言未改不等于原题/生产材料等价，需显式版本化。"
+    },
+    "38": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/old_findings_delta.md"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "静态审查/历史局部对照不足以证明该项；未取得真实模型/当前actor或完整筛查偏差证据。"
+    },
+    "39": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/old_findings_delta.md"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "静态审查/历史局部对照不足以证明该项；未取得真实模型/当前actor或完整筛查偏差证据。"
+    },
+    "40": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/old_findings_delta.md"
+      ],
+      "by": "e25_main_pack05_monai",
+      "note": "静态审查/历史局部对照不足以证明该项；未取得真实模型/当前actor或完整筛查偏差证据。"
+    }
+  },
+  "issues": [
+    {
+      "category": "specification_delivery_conflict",
+      "scope": "public goal versus planned hints",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-1121/user_prompt.txt:3–5",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-1121/public_bundle.json:/public_hints",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md:需求—断言双向表"
+      ],
+      "proposed_action": "统一测试交付目标、实际提示与恢复策略；先取实际消息再判actor影响。",
+      "status": "open_static",
+      "evidence_level": "static inference and scoped historical RH2; no current execution"
+    },
+    {
+      "category": "incomplete_network_coverage",
+      "scope": "public all-networks goal",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-1121/base/monai/networks/nets/__init__.py:12–22",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/test.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/grading.json:/fail_to_pass"
+      ],
+      "proposed_action": "先明确全网络范围；不得将AHNet得分当作所有网络测试完成。",
+      "status": "open_static",
+      "evidence_level": "static inference and scoped historical RH2; no current execution"
+    },
+    {
+      "category": "reference_omission",
+      "scope": "executed discriminator tests outside expected",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/grading.json:/pass_to_pass",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md:Expected逐项对账"
+      ],
+      "proposed_action": "记录四项实际执行但不计分，纳入验收范围决策；本轮不修改expected。",
+      "status": "open_static",
+      "evidence_level": "static inference and scoped historical RH2; no current execution"
+    },
+    {
+      "category": "historical_collection_condition_gap",
+      "scope": "historical materials-v1 collection override; current actor/production validity still unverified",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/test.patch:tests/utils.py::test_script_save",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_monai_1/records/Project-MONAI__MONAI-1121.json#/checks/18",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md:开发、合法交付、原运行限制",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack05_monai1121_material_override_review.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/env_recipe_repair_20260919/materials_v1/runs/Project-MONAI__MONAI-1121-noop/materials/materials.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/env_recipe_repair_20260919/materials_v1/runs/Project-MONAI__MONAI-1121-gold/materials/materials.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/review.md"
+      ],
+      "proposed_action": "机制已由精确原件及内存补丁比较确认，不再为机制本身排CPU；规格负责人须明确具体版本采用的收集材料并单独处理生产refreeze与actor验证。",
+      "status": "resolved_static_mechanism",
+      "evidence_level": "exact original materials plus independent stdlib patch/AST comparison; no new runtime"
+    },
+    {
+      "category": "actor_environment_unobserved",
+      "scope": "current actor development",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-1121/environment_brief.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/environment_record.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/analysis_before_history.md:开发、合法交付、原运行限制"
+      ],
+      "proposed_action": "契约对齐后采集实际消息、初态、解释器、权重访问与窄公开回环；不以grader代替。",
+      "status": "unknown",
+      "evidence_level": "static inference and scoped historical RH2; no current execution"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "未改原题/评分/生产；保留原版路径规则。历史额外排除建议未自动采纳，指定gold源码与test patch路径不交叠。",
+    "evidence_refs": [
+      "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/gold.patch",
+      "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/test.patch",
+      "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-1121/old_findings_delta.md"
+    ]
+  },
+  "revision_refs": [],
+  "disposition": {
+    "state": "needs_review",
+    "scope": "static_review",
+    "reason": "公开目标/接口与验收存在具体争议；历史grader成功不能消解，当前actor仍unknown。",
+    "unique_priority_next_step": "统一“所有网络新增测试”、合法交付与评分范围，先于CPU/模型探针。",
+    "reviewer_status": "completed; independent review and coordinator adjudication attached",
+    "ready_for_probe": false,
+    "static_classification": "quality_first"
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "solver_eligible_material": false,
+    "private_exposure": [
+      "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/gold.patch",
+      "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/test.patch",
+      "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/grading.json",
+      "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/validation.json",
+      "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-1121/run_refs.json",
+      "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_monai_1/records/Project-MONAI__MONAI-1121.json"
+    ],
+    "exposure_scope": "authorized private investigator after package-wide frozen analysis and explicit history release; no reviewer/other-task history read",
+    "actual_actor_leakage": "unknown",
+    "training_or_formal_eval_approval": false,
+    "coordinator_exposure": {
+      "by": "/root",
+      "at": "2026-09-24T20:13:00.256821+00:00",
+      "scope": "public, own gold/test/grading/run originals, sealed role outputs, authorized task history; root adjudicator across packages",
+      "read_notes_ref": "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/reserve20_coordinator_read_notes.md",
+      "actual_actor_exposure": "unknown",
+      "supplemental_private_materials": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack05_monai1121_material_override_review.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/env_recipe_repair_20260919/materials_v1/runs/Project-MONAI__MONAI-1121-noop/materials/materials.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/env_recipe_repair_20260919/materials_v1/runs/Project-MONAI__MONAI-1121-gold/materials/materials.json"
+      ]
+    }
+  },
+  "costs": {
+    "tokens": null,
+    "money": null,
+    "current_cpu_seconds": null,
+    "current_elapsed_minutes": null,
+    "note": "未观察本轮成本；历史资源原字段只保留在facts_ref，不复制旧作者minutes为本轮成本。"
+  }
+}

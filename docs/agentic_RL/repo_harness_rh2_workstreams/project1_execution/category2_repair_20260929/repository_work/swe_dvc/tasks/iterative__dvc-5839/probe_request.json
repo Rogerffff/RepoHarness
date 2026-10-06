@@ -1,0 +1,241 @@
+{
+  "schema_id": "rh2.ordinary_gpu_probe.owner_request.v1",
+  "request_id": "swe-dvc5839-precision-values-r10-v1-20261003",
+  "status": "cpu_acceptance_complete_pending_executor_review",
+  "package_id": "swe_dvc",
+  "package_path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc",
+  "owner_thread_id": "01a0fd62-ca8f-7173-a3fd-0e3795c646bd",
+  "owner_thread_title": "SWE | DVC 题目修订",
+  "tasks": [
+    {
+      "task_id": "swe_gym_lite::iterative__dvc-5839",
+      "instance_id": "iterative__dvc-5839",
+      "purpose": "在修订后真实harness中观察两款基座对metrics show precision的根因定位、修法、验证和评分一致性；题主审完整轨迹及候选并负责必要修复。",
+      "allowed_uses": [
+        "版本固定的普通基座质量诊断"
+      ],
+      "limits": [
+        "旧原版固定8正式reward未知；已封私测原22全过仅作漏洞诊断。当前有效23节点正式三方0/1/0已完成，不改绑旧工件。",
+        "正式grader原件证明实际UID54322前检及执行，但没有事后完整HostConfig inspect；env_qualification=absent，本次不授予正式环境或训练资格。",
+        "公开actor完整capture为2 passed；-q不打印逐ID，helper计数null，没有独立collect-only；原基线SHA guard通过但全文及远端代码pin验证stdout未另归档。",
+        "actor实际2CPU/4GiB/cgroup等已核；8GiB writable-layer quota仅配置，未证明强制生效。",
+        "CC2.1.205实际版本及固定tarball记录可读，本次独立原件核查未重新读取tarball字节；环境actor为固定stub，无模型求解。",
+        "首轮每模型一次，不据此推断稳定能力；截断/infra/评分缺席不算能力失败，未完成模型保持待接续。",
+        "保留原mock调用断言，可能限制其它合理实现；评分0仍须根据候选行为检查假阴性。",
+        "本请求仅5839，不包含等待发布的4166/6954/9395，不授予训练或留出资格。"
+      ],
+      "source_binding": {
+        "release_id": "cat2-cpu-r2e089092-swe14-preflight-20261003-v1",
+        "local_release_dir": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe14_preflight_v1",
+        "external_manifest": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe14_preflight_v1/manifest.json",
+        "external_manifest_sha256": "sha256:00ac5c375629f59543f548fbc7b0cb3cbe7d1418f7a956d9deebcefab2e8a87c",
+        "producer_manifest": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe14_preflight_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest_swe14_preflight_20261003_v1/ingest_manifest_swe_revision_v1.json",
+          "sha256": "sha256:479fe028152d1df295258252d6c4fc8f824126eee7ac8e0aedf3bc38a09b9c1d"
+        },
+        "registry": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe14_preflight_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/dvc5839_test_patch_install_v1/material_revisions.json",
+          "sha256": "sha256:ce057d2822daf7841397d72595a1880e25367e68f284a68fcb735d040e41e809"
+        },
+        "material_revision_ids": [
+          "dvc5839-precision-values-v1"
+        ],
+        "material_bundle_files": {
+          "public_bundles_v0.jsonl": {
+            "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe14_preflight_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest_swe14_preflight_20261003_v1/public_bundles_v0.jsonl",
+            "sha256": "sha256:f6f338ef3ba0f927d8957c37c5fdb781cce42cef023cd4a9d002edf52ca01e78"
+          },
+          "environment_packages_v0.jsonl": {
+            "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe14_preflight_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest_swe14_preflight_20261003_v1/environment_packages_v0.jsonl",
+            "sha256": "sha256:d201d277dc4f915693e8910b7c0d1f07ed960c3fdc09e16625331f9b189a6fb6"
+          },
+          "grading_bundles_v2_v0.jsonl": {
+            "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe14_preflight_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest_swe14_preflight_20261003_v1/grading_bundles_v2_v0.jsonl",
+            "sha256": "sha256:aaa8a97b5ec6a6a1f328ed7c784319af7ddd87c54b1a6ee47f2f8ebed8f6c3a3"
+          },
+          "validation_bundles_v0.jsonl": {
+            "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe14_preflight_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest_swe14_preflight_20261003_v1/validation_bundles_v0.jsonl",
+            "sha256": "sha256:196fdf81e1142c431d7b60dee5082db6ccfd3ba8b65f88f686bb12b2020ad961"
+          }
+        },
+        "base_commit": "daf07451f8e8f3e76a791c696b0ea175e8ed3ac1",
+        "public_bundle_digest": "sha256:a4d44e026d6dc40e7542bc122bd8e0365c68583519f157bc48e2eb66427adba0",
+        "environment_package_digest": "sha256:7a3fc2a3619cb666dd4293d54cd83168c15642f6b0b4d14381bbfd1fafb33950",
+        "grading_bundle_digest": "sha256:9b10972c8de81eb7fedfab53973e59a18a61afa11296edadf8503781cca1db89",
+        "grading_materials_identity": "sha256:2e9a7dfb9df6b0f585a268e2b872655a334938bf8b201c0b859175e830deec99",
+        "problem_statement_sha256": "sha256:3b7dc4d964bcedb5041eb4d58285c6e9cdf48fbbb7f84613bfdb5187bdb9cbee",
+        "public_statement_revision": "unchanged",
+        "effective_test_patch": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-5839/effective_test.patch",
+          "sha256": "sha256:1acc81a67bca0511b78f515d0d777a00ceeca3725b7907ee741764d1e623540f"
+        },
+        "reference_partitions": {
+          "original_f2p": 1,
+          "added_f2p": 1,
+          "original_p2p": 21,
+          "total": 23
+        },
+        "test_command": "pytest -rA tests/unit/command/test_metrics.py",
+        "publication_support_receipt": {
+          "path": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r10/dvc5839_support_receipt.json",
+          "sha256": "sha256:212593584592dd57cb3c7eecf87863a4a9394cc2bfe58562f9a871586d8eac48"
+        },
+        "runtime_requirements": [
+          "R10 UID54322 candidate_prerequisite must be consumed by actual grading manager before revised install; R7/R8/R9 are blocked for this task",
+          "new GPU prepared summary is frozen against this producer/registry/code; never rebind old baseline or FrozenPatch",
+          "no private grading bundles, candidate controls, owner cards or release parent mounted to solver"
+        ]
+      },
+      "image": {
+        "source_ref_by_digest": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-5839@sha256:acec0512bbe9e7b08c28a7b10bab45c4db6fd2ceb6929a35373759e527be9fe7",
+        "recipe_id": "dvc5839-public-e13-pathspec081-image-v1",
+        "recipe": {
+          "path": "runs/category2_repair_20260929/repository_work/swe_dvc/gpu_assets/dvc5839_gpu_context_v1/context/Dockerfile",
+          "sha256": "sha256:10fd2f82a47d1eae9d8627486aeeb1e6d704f2c7bfa0441b418e68f2ed8511f1"
+        },
+        "build_context": "runs/category2_repair_20260929/repository_work/swe_dvc/gpu_assets/dvc5839_gpu_context_v1/context",
+        "build_arguments": {
+          "BASE_IMAGE": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-5839@sha256:acec0512bbe9e7b08c28a7b10bab45c4db6fd2ceb6929a35373759e527be9fe7"
+        },
+        "wheel_assets": [
+          {
+            "path": "runs/category2_repair_20260929/repository_work/swe_dvc/gpu_assets/dvc5839_gpu_context_v1/context/wheels/packaging-24.1-py3-none-any.whl",
+            "sha256": "sha256:5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124",
+            "bytes": 53985,
+            "source": "exact cached public wheel from CPU build; matches pinned historical SHA"
+          },
+          {
+            "path": "runs/category2_repair_20260929/repository_work/swe_dvc/gpu_assets/dvc5839_gpu_context_v1/context/wheels/setuptools-75.1.0-py3-none-any.whl",
+            "sha256": "sha256:35ab7fd3bcd95e6b7fd704e4a1539513edad446c097797f2985e0e4b960772f2",
+            "bytes": 1248506,
+            "source": "exact cached public wheel from CPU build; matches pinned historical SHA"
+          },
+          {
+            "path": "runs/category2_repair_20260929/repository_work/swe_dvc/gpu_assets/dvc5839_gpu_context_v1/context/wheels/wheel-0.36.2-py2.py3-none-any.whl",
+            "sha256": "sha256:78b5b185f0e5763c26ca1e324373aadd49182ca90e825f7853f4b2509215dc0e",
+            "bytes": 35046,
+            "source": "exact cached public wheel from CPU build; matches pinned historical SHA"
+          },
+          {
+            "path": "runs/category2_repair_20260929/repository_work/swe_dvc/gpu_assets/dvc5839_gpu_context_v1/context/wheels/pathspec-0.8.1-py2.py3-none-any.whl",
+            "sha256": "sha256:aa0cb481c4041bf52ffa7b0d8fa6cd3e88a2ca4879c533c9153882ee2556790d",
+            "bytes": 28724,
+            "source": "exact cached public wheel from CPU build; matches pinned historical SHA"
+          }
+        ],
+        "cpu_derived_image_id": "sha256:35e6260d03d9e4792df404b498ca7800a3a633eb678e27fbed9246c0fe580147",
+        "gpu_actual_image_id": null,
+        "cpu_preparation": {
+          "path": "runs/category2_repair_20260929/repository_work/swe_dvc/gpu_assets/dvc5839_gpu_context_v1/image.json",
+          "sha256": "sha256:bcaa9e29d5752221f55c9433d221d714bee34c02618dfe07793c47dcbbf3936a"
+        },
+        "context_archive": {
+          "path": "runs/category2_repair_20260929/repository_work/swe_dvc/gpu_assets/dvc5839_gpu_context_v1.tar.gz",
+          "sha256": "sha256:d454737887246b018e3557b9bbf49cdb7ca4cf5db4b899dafc5b519277526e5b"
+        },
+        "gpu_binding_policy": "Executor builds/verifies its actual image from digest+fixed context; CPU image ID is evidence, not a GPU runtime binding. Four wheel bytes identical in actor and grader; no private test/image contamination."
+      },
+      "installation_recipe": {
+        "recipe_id": "dvc5839-e13-pathspec-v1",
+        "asset_sha256": "sha256:ab738019fde666e136372f382b5b2ab169747425b575db15de8c89bba750046f",
+        "parent_recipe_sha256": "sha256:91ec94e374f8df05749e5981f75878bae3e1ed9278fc990b17572b24b92c218e",
+        "dependency_image_asset_sha256": "sha256:bcaa9e29d5752221f55c9433d221d714bee34c02618dfe07793c47dcbbf3936a",
+        "dependency_plan_asset_sha256": "sha256:8014933a03cae8d2f80181589b1c2382c929e125fc7c7d02c5edb5da229285b3",
+        "prepared_dependency_image_id": "sha256:35e6260d03d9e4792df404b498ca7800a3a633eb678e27fbed9246c0fe580147",
+        "original_install": "python -m pip install --upgrade pip wheel GitPython; python -m pip install \"cython<3.0.0\" && python -m pip install --no-build-isolation pyyaml==5.4.1; python -m pip install git+https://github.com/iterative/mock-ssh-server.git || true; python -m pip install -r tests/requirements.txt || true; python -m pip install -r test-requirements.txt || true; python -m pip install -e \".[tests,dev,all_remotes,all,testing]\"; python -m pip install \"numpy<=1.20\"; python -m pip install \"pytest<8\";",
+        "revised_install": "rh2_recipe_install() {\n  python -m pip install --no-deps pathspec==0.8.1 || return $?\n  python -m pip install -e '.[all,tests]'\n  local install_rc=$?\n  python -I -c 'import importlib.metadata as m,json; print(\"RH2_DVC_DEPS=\"+json.dumps({x:m.version(x) for x in ['\"'\"'dvc'\"'\"']}))'\n  return \"$install_rc\"\n}\nrh2_recipe_install",
+        "revised_install_sha256": "sha256:1752656dbf75f53bd9aeae13baca0c034b80ed41a3b0664c9e108bdcd8839ef4"
+      },
+      "public_delivery": {
+        "mode": "brief"
+      },
+      "public_development_brief": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-5839/public_development.md",
+        "sha256": "sha256:b768b8c5aa55e217660dbf6cebd4b5a53350f0d6e55af8e56aedb7804db0a8a7",
+        "visibility": "original public issue and neutral environment/public test instructions only"
+      },
+      "cpu_acceptance": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-5839/cpu_acceptance_r10_v1.json",
+        "sha256": "sha256:8d0b3e8b07942796116d1b9664cc8ad4f7c3f273631153ee8e15bdffbadb3c2c",
+        "formal_matrix": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-5839/formal_matrix_r10_v1.json",
+          "sha256": "sha256:fad934b76a1d4e2ba23a54930e9493323d12bce58b50216098bd3d4cb4d05be2"
+        },
+        "actor": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-5839/public_actor_r10_v1.json",
+          "sha256": "sha256:606353bcaf16daa0c0f904c9bfdb58377cce938d971e085c3c462e2e6630760a"
+        },
+        "raw_evidence_archives": [
+          {
+            "path": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal5839_r10_noop001_v1.tar.gz",
+            "sha256": "sha256:68d9e3c346c2f9f354bfbf71ed9a7e9136ca346db0a7a1cedc8d040f2f426f45"
+          },
+          {
+            "path": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal5839_r10_gold001_v1.tar.gz",
+            "sha256": "sha256:c0f891a4c5ee7df7df67009404dab528e3b1f42114faa6d28b72536540192113"
+          },
+          {
+            "path": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal5839_r10_hardcoded001_v1.tar.gz",
+            "sha256": "sha256:cf67c62425523a06d846a82952eb6b2285c1c17101e3ca9e07b6e369150d98c7"
+          },
+          {
+            "path": "runs/category2_repair_20260929/repository_work/swe_dvc/public_actor_evidence/public5839_r10_actor001_v1.tar.gz",
+            "sha256": "sha256:53a24c326b98571fd588007f16b2ce3e07ce80f7d70a37a7c68f386df255322e"
+          }
+        ],
+        "formal_positive": "gold reward1, all23 actual and parsed nodes passed",
+        "formal_negative": "noop reward0:2F failed/21P passed; fixed8 reward0:only addedF failed/original22 passed; no missing/skip/infra",
+        "actor_base": "CC controlled stub4 actual commands rc0 and2 original public tests passed; exact issue+neutral brief first delivery; actual UID54321/testbed/pathspec0.8.1",
+        "cleanup": "all candidate/grader/actor/relay/stub cleanup complete; exact job labels empty",
+        "independent_reviews": [
+          {
+            "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/reviews/non_author_formal5839_r10_runtime_review_20261003.md",
+            "sha256": "sha256:b7ca13ed796a1c532ff01904eb42e4d20c31bbd959143c6fcf7b65c6971794dc"
+          },
+          {
+            "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/reviews/non_author_actor5839_r10_runtime_review_20261003.md",
+            "sha256": "sha256:5e7524076505ded2ea5fbbab4e3e45d97038894194c2c120c0b027b229840f8a"
+          }
+        ]
+      },
+      "validated_cpu_profile": {
+        "cpu": 2,
+        "memory_bytes": 4294967296,
+        "grader_uid": 54322,
+        "actor_uid": 54321,
+        "pids_limit": 512,
+        "network": "deny_all",
+        "scope": "grader ledger/runtime policy plus actual UID preflight; actor actual image/NanoCPU/memory inspect; no after-removal grader HostConfig inspect"
+      },
+      "validated_replay_budgets": {
+        "candidate_stage_seconds": 900,
+        "grading_deadline_seconds": 3600,
+        "cleanup_seconds": 120,
+        "image_pull_seconds": 1800
+      }
+    }
+  ],
+  "model_budget": {
+    "decision_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/ordinary_probe_20260929/gpu_coordination_decisions_20261002.md",
+    "budget_id": "probe-wide-v1",
+    "attempts_per_model": 1,
+    "models": [
+      "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+      "Qwen/Qwen3.6-35B-A3B"
+    ],
+    "additional_samples": "not_requested"
+  },
+  "executor_resolves": [
+    "实际GPU冻结consumer须保留R10 candidate_prerequisite，受影响窄验证和新prepared绑定",
+    "digest+fixed context四wheel与实际GPU image ID；CPU ID不冒填GPU身份",
+    "首请求原CRLF公开issue及固定中性brief逐字保持；私有材料不进入solver",
+    "probe-wide-v1实际生效预算、模型驻留和单卡排队"
+  ],
+  "receipt_requirements": [
+    "两模型各job ID、actual code/material/image/profile/model/budget/配置与SHA",
+    "完整轨迹、实际公开首请求、原actor baseline与原FrozenPatch工件；diff仅审阅附件",
+    "原评分、23逐参考状态、完整安装/测试日志、usage/time/终止层级和异常",
+    "两层完整清理、未执行部分及原因；通过官方线程工具回告登记owner"
+  ],
+  "result_owner_policy": "成功/失败/异常均由本题主继续分析公开目标、候选语义、定位/工具/并行/验证/效率/结束原因和评分一致性；提交或执行回执不表示题目完工。"
+}

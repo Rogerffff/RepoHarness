@@ -1,0 +1,12 @@
+diff --git a/conan/tools/meson/toolchain.py b/conan/tools/meson/toolchain.py
+--- a/conan/tools/meson/toolchain.py
++++ b/conan/tools/meson/toolchain.py
+@@ -317,6 +317,8 @@
+ 
+         if self.libcxx:
+             self.cpp_args.append(self.libcxx)
++            if self._is_apple_system:
++                self.cpp_link_args.append(self.libcxx)
+         if self.gcc_cxx11_abi:
+             self.cpp_args.append("-D{}".format(self.gcc_cxx11_abi))
+ 

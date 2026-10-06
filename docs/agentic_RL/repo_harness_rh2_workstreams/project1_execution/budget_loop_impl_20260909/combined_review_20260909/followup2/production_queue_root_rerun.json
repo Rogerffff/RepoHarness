@@ -1,0 +1,126 @@
+[
+  {
+    "case": "drain_accepted_backlog",
+    "step_facts": {
+      "drained_within_timeout": true,
+      "backpressure_events": 0
+    },
+    "elapsed_seconds": 0.011,
+    "manager_calls": [
+      "first",
+      "second"
+    ],
+    "second_still_pending": false,
+    "remaining_queue_depth": 0,
+    "worker_list_cleared": true
+  },
+  {
+    "case": "drain_cancelled_backlog",
+    "step_facts": {
+      "drained_within_timeout": true,
+      "backpressure_events": 0
+    },
+    "elapsed_seconds": 0.011,
+    "manager_calls": [
+      "first",
+      "second"
+    ],
+    "second_still_pending": false,
+    "remaining_queue_depth": 0,
+    "worker_list_cleared": true
+  },
+  {
+    "case": "cancel_submitter",
+    "generate_cancelled": true,
+    "eval_calls": 1,
+    "cancelled_io": [],
+    "service_fatals": [
+      "grading_scope_termination_failed"
+    ],
+    "service_fatal_types": [
+      "GradingScopeTerminationError"
+    ],
+    "out_of_band_fatals": [
+      "grading_scope_termination_failed"
+    ],
+    "shutdown_trigger": "run_fatal",
+    "shutdown_first_cause": "GradingScopeTerminationError(grading_scope_termination_failed): grading_scope_termination_failed: 评分容器 rh2-grading-exec_F22-0aff2681 在有界收口（rm -f → kill → rm -f，预算 1.0s）后状态仍为 running——scope 无法确认终止，按 06 A4 run-halt（继续接新任务只会累积残留）。",
+    "shutdown_first_cause_origin": "trigger",
+    "shutdown_secondary_failures": [],
+    "shutdown_ok": false,
+    "shutdown_scope_failure_occurrences": 1,
+    "grading_report_outcome": null,
+    "rollout_cleanup_completed": true,
+    "cleanup_failures": [
+      "container_rm_failed:rh2-grading-exec_F22-0aff2681:daemon failed to remove container",
+      "container_rm_failed:rh2-grading-exec_F22-0aff2681:daemon failed to remove container",
+      "container_scope_termination_failed:rh2-grading-exec_F22-0aff2681:running",
+      "container_rm_failed:rh2-grading-exec_F22-0aff2681:daemon failed to remove container"
+    ],
+    "grading_containers_unremoved": 1
+  },
+  {
+    "case": "cancel_submitter_during_close",
+    "generate_cancelled": true,
+    "eval_calls": 1,
+    "cancelled_io": [],
+    "service_fatals": [
+      "grading_scope_termination_failed"
+    ],
+    "service_fatal_types": [
+      "GradingScopeTerminationError"
+    ],
+    "out_of_band_fatals": [
+      "grading_scope_termination_failed"
+    ],
+    "shutdown_trigger": "owner_close",
+    "shutdown_first_cause": "GradingScopeTerminationError(grading_scope_termination_failed): grading_scope_termination_failed: 评分容器 rh2-grading-exec_F22-4f874e1a 在有界收口（rm -f → kill → rm -f，预算 1.0s）后状态仍为 running——scope 无法确认终止，按 06 A4 run-halt（继续接新任务只会累积残留）。",
+    "shutdown_first_cause_origin": "run_fatal_during_shutdown",
+    "shutdown_secondary_failures": [],
+    "shutdown_ok": false,
+    "shutdown_scope_failure_occurrences": 1,
+    "grading_report_outcome": null,
+    "rollout_cleanup_completed": true,
+    "cleanup_failures": [
+      "container_rm_failed:rh2-grading-exec_F22-4f874e1a:daemon failed to remove container",
+      "container_rm_failed:rh2-grading-exec_F22-4f874e1a:daemon failed to remove container",
+      "container_scope_termination_failed:rh2-grading-exec_F22-4f874e1a:running",
+      "container_rm_failed:rh2-grading-exec_F22-4f874e1a:daemon failed to remove container"
+    ],
+    "grading_containers_unremoved": 1
+  },
+  {
+    "case": "cancel_worker",
+    "exception_type": "FatalExecutionInfrastructureError",
+    "reason_code": "grading_scope_termination_failed",
+    "queue_close_completed": true,
+    "original_workers_done": true,
+    "worker_list_cleared": true,
+    "eval_calls": 1,
+    "cancelled_io": [
+      "exec"
+    ],
+    "service_fatals": [
+      "grading_scope_termination_failed"
+    ],
+    "service_fatal_types": [
+      "FatalExecutionInfrastructureError"
+    ],
+    "out_of_band_fatals": [],
+    "shutdown_trigger": "run_fatal",
+    "shutdown_first_cause": "FatalExecutionInfrastructureError(grading_scope_termination_failed): grading_scope_termination_failed: 评分容器 scope 无法确认终止：grading_scope_termination_failed: 评分容器 rh2-grading-exec_F22-ae266e0a 在有界收口（rm -f → kill → rm -f，预算 1.0s）后状态仍为 running——scope 无法确认终止，按 06 A4 run-halt（继续接新任务只会累积残留）。——按 06 A4 run-halt，不得作为成员损耗继续。",
+    "shutdown_first_cause_origin": "trigger",
+    "shutdown_secondary_failures": [],
+    "shutdown_ok": false,
+    "shutdown_scope_failure_occurrences": 1,
+    "grading_report_outcome": null,
+    "rollout_cleanup_completed": true,
+    "cleanup_failures": [
+      "container_rm_failed:rh2-grading-exec_F22-ae266e0a:daemon failed to remove container",
+      "container_rm_failed:rh2-grading-exec_F22-ae266e0a:daemon failed to remove container",
+      "container_scope_termination_failed:rh2-grading-exec_F22-ae266e0a:running",
+      "container_rm_failed:rh2-grading-exec_F22-ae266e0a:daemon failed to remove container"
+    ],
+    "grading_containers_unremoved": 1
+  }
+]

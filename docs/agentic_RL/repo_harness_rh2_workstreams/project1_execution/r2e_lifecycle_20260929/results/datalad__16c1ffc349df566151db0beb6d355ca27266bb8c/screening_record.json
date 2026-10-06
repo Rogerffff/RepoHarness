@@ -1,0 +1,495 @@
+{
+ "schema_id": "rh2.r2e_screening_record.v1",
+ "task_id": "r2e_gym_subset::datalad__16c1ffc349df566151db0beb6d355ca27266bb8c",
+ "instance_id": "datalad__16c1ffc349df566151db0beb6d355ca27266bb8c",
+ "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0：无材料修订，v3–v8 材料对本题相同；expected sha256:97ecb569…，hidden_tests_tree sha256:a5ddfbe5…",
+ "source_adapter_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl 第 11 行（line_sha256 687e6ecb…）；public_bundles_v0.jsonl（line_sha256 b1c4832d…）",
+ "recipe_ref": {
+  "derived_image": "r2e_derive_v1，新机器重建，image sha256:3874afbac47a0ea6083b369f72bd3a4169e017f0cf38207e3186df2120f80062；私有行为对照记录的配方标签为 r2e_derive_v1+sysconfig_v1，镜像 ID 相同",
+  "resources": "default：2 CPU / 4 GiB / /tmp 1 GiB",
+  "grading_time_limit": "本机控制面保护时限需放宽到 1200 s（缺省 300 s 在可信 setup 阶段超时，E3）"
+ },
+ "code_snapshot_ref": "grader_version r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe；grader profile sha256:3ec1bfa8…；devcheck profile sha256:fdb8d431…；Claude Code 2.1.205（桩端点）",
+ "facts_ref": {
+  "current_material_runs": "PRIVATE_DIR/run_refs.json（09-23 / 09-24 两轮 noop 0、gold 1）",
+  "new_machine_default_limit": "runs/r2e_lifecycle_20260929/env_verify/ledger_l2_noop.jsonl#L2、ledger_l2_gold.jsonl#L2（failed_to_grade，grading_control_surface_protect_timeout_after_300s）",
+  "new_machine_relaxed_limit": "runs/r2e_lifecycle_20260929/budget_v5/ledger_noop.jsonl#L1（0，7/8）、ledger_gold.jsonl#L1（1，8/8）",
+  "devcheck": "runs/r2e_lifecycle_20260929/devcheck/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/（orig/attempt.json checks 全真；captures/*.out；private_control.json 为 gold 对照）",
+  "candidate_gradings": "runs/r2e_lifecycle_20260929/inv/datalad_16c1/ledger_{D,N,C1,C2}_budget1200.jsonl#L1 与 logs_*/",
+  "behavior_checks": "runs/r2e_lifecycle_20260929/inv/datalad_16c1/pcheck_*.json（root、不联网，不是评分）",
+  "historical_env_review": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/facts.json"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "note": "题面、base、gold、隐藏测试、expected、镜像相互对应：gold 可应用（APPLY_RC=0）；隐藏测试树摘要与评分面一致；noop 只差目标键。",
+   "evidence_refs": [
+    "PRIVATE_DIR/run_refs.json",
+    "runs/r2e_lifecycle_20260929/budget_v5/ledger_noop.jsonl#L1",
+    "runs/r2e_lifecycle_20260929/budget_v5/ledger_gold.jsonl#L1"
+   ]
+  },
+  "2": {
+   "status": "pass",
+   "note": "初态含题述问题：noop 目标键的失败信息与题面逐字一致；devcheck 以 agent 身份在 base 上复现原例（rc 1，AssertionError FILTER_KWARGS={}，停在 utils.py:1030）。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-d_ff9ede96.eval.log:120-145",
+    "runs/r2e_lifecycle_20260929/devcheck/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/orig/captures/repro_issue_example.out"
+   ]
+  },
+  "3": {
+   "status": "pass",
+   "note": "静态渲染的题面完整。小出入登记为 P4：报错文本是 assert_in 的格式，示例却写裸 assert；未说明 Test_Utils 定义在哪。模型实际收到的全文没有逐字核对（devcheck 用桩端点）。",
+   "evidence_refs": [
+    "PUBLIC_DIR/user_prompt.txt"
+   ]
+  },
+  "4": {
+   "status": "pass",
+   "note": "合法修复只涉及 datalad/interface/utils.py（替代解也可能改 datalad/support/constraints.py）。6 次候选与 gold 评分的投影 included_paths 都是该文件，无被忽略路径。",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/datalad_16c1/ledger_C1_budget1200.jsonl#L1"
+   ]
+  },
+  "5": {
+   "status": "issue",
+   "note": "X1：同仓 58ba5165、19f5b450 的公开初态含本题修复的重构版（get_result_filter）及更新后的 greatfilter/sadfilter；本题初态含 9ba5de09 的修复。两份机械扫描都没有报出。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v3/public/datalad__58ba5165234cb16de0e8463ee75097362099835f/worktree/datalad/interface/utils.py:233-240",
+    "runs/r2e_static_prep_20260924/v3/public/datalad__58ba5165234cb16de0e8463ee75097362099835f/worktree/datalad/interface/tests/test_utils.py:330-338",
+    "runs/r2e_static_prep_20260924/v3/public/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/worktree/datalad/interface/utils.py:210-217",
+    "runs/r2e_static_prep_20260924/v3/public/datalad__9ba5de094ea326e6fd5773f21c7de1776ec0fa69/worktree/datalad/interface/utils.py:769-787"
+   ]
+  },
+  "6": {
+   "status": "pass",
+   "note": "依赖齐全：Python 3.7.9、datalad 0.5.1.dev1 从 /testbed 导入、wrapt 1.16.0、nose 1.3.7、pytest 7.4.4、git 2.34.1、git-annex；无 pip，也无需安装。",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/devcheck/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/orig/captures/env_imports.out",
+    "runs/r2e_lifecycle_20260929/devcheck/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/orig/captures/env.out"
+   ]
+  },
+  "7": {
+   "status": "not_applicable",
+   "note": "不需要资产或外部数据。"
+  },
+  "8": {
+   "status": "pass",
+   "note": "devcheck 以 agent（uid 54321）身份经正式启动路径运行；评分时候选按 agent/54321 应用。",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/devcheck/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/orig/captures/env.out",
+    "runs/r2e_lifecycle_20260929/inv/datalad_16c1/ledger_D_budget1200.jsonl#L1"
+   ]
+  },
+  "9": {
+   "status": "pass",
+   "note": "测试执行的确是候选代码：gold 与 C1 日志行号随补丁后移（C1 为 generator_func:1047）；C2 调用栈经过 C2 自己的 _result_filter；D 日志有被吞断言的 debug 行。",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/datalad_16c1/logs_C1/evallog_replay-r2e-inv-16c1-C1-0_516e4496.eval.log:113",
+    "runs/r2e_lifecycle_20260929/inv/datalad_16c1/logs_C2/evallog_replay-r2e-inv-16c1-C2-0_534eccf9.eval.log:139-140",
+    "runs/r2e_lifecycle_20260929/inv/datalad_16c1/logs_D/evallog_replay-r2e-inv-16c1-D-09_03e96f24.eval.log:119-122"
+   ]
+  },
+  "10": {
+   "status": "pass",
+   "note": "devcheck 的 7 条命令都按预期完成（公开读者 5 条，加预检与环境各 1 条）：原例在 base 上复现、旧式 filter 兼容、kwargs 探针、窄公开测试 18 passed。若整文件跑 test_utils.py，会有 5 个 fixture 'path' ERROR，与本题无关，属噪声（历史 pubtests 实测）。",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/devcheck/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/orig/attempt.json",
+    "runs/r2e_lifecycle_20260929/devcheck/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/orig/captures/public_tests_narrow.out:200"
+   ]
+  },
+  "11": {
+   "status": "pass",
+   "note": "准备、解题、安装、测试四个阶段都不需要网络。"
+  },
+  "12": {
+   "status": "not_applicable",
+   "note": "无外部服务。"
+  },
+  "13": {
+   "status": "issue",
+   "note": "E3，链路问题而非题目问题：缺省 300 s 时限下，noop 与 gold 都在可信 setup 阶段超时（300.5 s），结果为 failed_to_grade / infra_failure。放宽到 1200 s 后可信 setup 为 153 s（单跑）至 210–222 s（两路并发），测试段 4–5 s。解题侧从容器启动到 init 完成约 434 s（未逐项拆分）。",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l2_noop.jsonl#L2",
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l2_gold.jsonl#L2",
+    "runs/r2e_lifecycle_20260929/budget_v5/ledger_noop.jsonl#L1",
+    "runs/r2e_lifecycle_20260929/devcheck/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/orig/attempt.json"
+   ]
+  },
+  "14": {
+   "status": "pass",
+   "note": "noop / gold 重复一致：旧机器 2 轮，新机器放宽时限 1 轮，逐键与失败原因相同。",
+   "evidence_refs": [
+    "PRIVATE_DIR/run_refs.json",
+    "runs/r2e_lifecycle_20260929/budget_v5/ledger_noop.jsonl#L1"
+   ]
+  },
+  "15": {
+   "status": "pass",
+   "note": "范围有限：每次评分都用新容器且已清理；两路并发的候选评分结果与静态预测一致。更大并发没有检查。"
+  },
+  "16": {
+   "status": "pass",
+   "note": "交付完整：APPLY_RC=0；投影文件正确；执行的补丁与附录 A 的 sha256 相同。"
+  },
+  "17": {
+   "status": "pass",
+   "note": "RESTORED=3、TEST_FILES=4。仓库测试辅助 datalad/tests/utils.py 不在恢复范围内，见第 31 项。"
+  },
+  "18": {
+   "status": "pass",
+   "note": "collected 8、解析 8、段外 0。5 个死键在测试体之前就失败，见第 19 项。"
+  },
+  "19": {
+   "status": "issue",
+   "note": "T5：5 个期望 FAILED 的死键，原因是隐藏 conftest 的 path fixture 与 @with_tempfile / @with_tree 冲突。它们在 noop、gold、D、N、C1、C2 下都是同一 TypeError，判分无害，但失去了本可拦住 N 的回归覆盖。",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/datalad_16c1/logs_C1/evallog_replay-r2e-inv-16c1-C1-0_516e4496.eval.log:140-144"
+   ]
+  },
+  "20": {
+   "status": "pass",
+   "note": "noop 与 gold 只在 test_result_filter 上不同；noop 失败原因就是题述错误。"
+  },
+  "21": {
+   "status": "pass",
+   "note": "300 s 超时被报成 failed_to_grade，没有被记成 0 分。"
+  },
+  "22": {
+   "status": "pass",
+   "note": "M3 独立 runner（来源镜像）与 RH2 逐键一致（历史对账）。",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl#L3",
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   ]
+  },
+  "23": {
+   "status": "issue",
+   "note": "P3：sadfilter 要求没传的参数不出现在 kwargs 中，题面没有这条要求；上游后来的实现与测试采用相反读法。",
+   "evidence_refs": [
+    "PRIVATE_DIR/hidden_tests/test_1.py:431-434",
+    "runs/r2e_static_prep_20260924/v3/public/datalad__58ba5165234cb16de0e8463ee75097362099835f/worktree/datalad/interface/tests/test_utils.py:330-338"
+   ]
+  },
+  "24": {
+   "status": "issue",
+   "note": "T1：合理替代解 C2 正式评分 0.0（7/8），唯一不符键是 test_result_filter，失败点是 sadfilter 收到 {'number': 4, 'dataset': None}。",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/datalad_16c1/ledger_C2_budget1200.jsonl#L1",
+    "runs/r2e_lifecycle_20260929/inv/datalad_16c1/logs_C2/evallog_replay-r2e-inv-16c1-C2-0_534eccf9.eval.log:129-153"
+   ]
+  },
+  "25": {
+   "status": "issue",
+   "note": "S1：退化候选 D（吞 filter 异常）与错误修法 N（无条件传 kwargs）正式评分都是 1.0（8/8）；核心断言只用题面示例的字面值。",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/datalad_16c1/ledger_D_budget1200.jsonl#L1",
+    "runs/r2e_lifecycle_20260929/inv/datalad_16c1/ledger_N_budget1200.jsonl#L1"
+   ]
+  },
+  "26": {
+   "status": "issue",
+   "note": "带 kwargs 调用时 Constraint 与单参数 filter 能否继续工作，没有任何活键保护：N 在正式评分得 1，但行为对照下报 TypeError。gold 对无签名的可调用对象有罕见回归，仅静态推断。",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/datalad_16c1/pcheck_filters_backcompat_N.json",
+    "runs/r2e_lifecycle_20260929/inv/datalad_16c1/pcheck_filters_backcompat_gold.json"
+   ]
+  },
+  "27": {
+   "status": "pass",
+   "note": "gold 修好了原例，并保留旧式 filter（行为对照 BACKCOMPAT_OK）。未测到的罕见回归：bool、operator.itemgetter 等拿不到签名的可调用对象会让 getfullargspec 报错（G1→T3，静态）。"
+  },
+  "28": {
+   "status": "pass",
+   "note": "拟加的 R-c 断言各有公开依据，R-b 只放宽一个没有依据的细节。尚待 Codex 复核。"
+  },
+  "29": {
+   "status": "pass",
+   "note": "预检：agent 读不到隐藏测试；git 历史已清理（HEAD 无子提交、refs 0、remote 0、reflog 0）。",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/devcheck/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/orig/captures/r2e_preflight.out"
+   ]
+  },
+  "30": {
+   "status": "pass",
+   "note": "无网络，拿不到上游修复。"
+  },
+  "31": {
+   "status": "issue",
+   "note": "通用控制面风险（E3，交 A 线）：隐藏测试的 assert_in / assert_not_in 等来自候选可改、评分时不重置的 datalad/tests/utils.py。本次各候选的 candidate_test_like_paths 都为空。"
+  },
+  "32": {
+   "status": "issue",
+   "note": "核心断言写在 filter 回调里，外层测试不检查返回结果，吞掉异常即可过关（D）。"
+  },
+  "33": {
+   "status": "unknown",
+   "note": "devcheck 只用桩端点，真实模型求解未跑。"
+  },
+  "34": {
+   "status": "not_checked"
+  },
+  "35": {
+   "status": "not_checked"
+  },
+  "36": {
+   "status": "not_checked"
+  },
+  "37": {
+   "status": "pass",
+   "note": "拟议改动是测试定义修订（R-c / R-b），要作为新材料版本登记；不需要环境修复。"
+  },
+  "38": {
+   "status": "unknown",
+   "note": "修订尚未实施与验收。"
+  },
+  "39": {
+   "status": "not_applicable",
+   "note": "只做本题特有的测试修订，不改共享组件。9ba5de09 的同类死键不在本题范围内。"
+  },
+  "40": {
+   "status": "issue",
+   "note": "流程线索：两份跨题扫描对本题是结构性漏报。gold 扫描逐字比对，而上游重构了修复；测试扫描只看新增函数名，而本题只在已有函数里加断言。建议扫描补上按函数名 / 语义的比对。"
+  }
+ },
+ "issues": [
+  {
+   "id": "I1",
+   "code": "T2",
+   "v1_step": 2,
+   "subcode": "T2c",
+   "severity": "S1",
+   "summary": "核心断言只用题面示例的字面值：greatfilter 与题面 custom_filter 是同一调用 Test_Utils().__call__(4, dataset='awesome', ...)、同一检查 'dataset' in kwargs；没有其它 kwarg、generator 模式或 Dataset 方法调用的实例。",
+   "evidence_level": "static",
+   "evidence_refs": [
+    "PRIVATE_DIR/hidden_tests/test_1.py:423-434",
+    "PUBLIC_DIR/user_prompt.txt:12-17"
+   ],
+   "status": "open",
+   "proposed_action": "R-c：新增 test_result_filter_gets_call_kwargs（card.md 附录 B.1）"
+  },
+  {
+   "id": "I2",
+   "code": "T2",
+   "v1_step": 3,
+   "subcode": "T2b",
+   "severity": "S1",
+   "summary": "退化候选 D（filter 调用处 except ValueError → except Exception）正式评分 1.0（8/8）。greatfilter 的 AssertionError 被吞，4 条结果被丢弃，外层测试不检查返回值。",
+   "violated_public_requirement": "题面期望行为：filter 应收到 dataset 并正常运行；base 文档（utils.py:864-867）规定只有假值或 ValueError 才排除结果。输入题面原例时，D 返回 []，gold 返回 [0, 1, 2, 3]。",
+   "evidence_level": "formal_grading + behavior_check",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/datalad_16c1/ledger_D_budget1200.jsonl#L1",
+    "runs/r2e_lifecycle_20260929/inv/datalad_16c1/logs_D/evallog_replay-r2e-inv-16c1-D-09_03e96f24.eval.log:119-122,139-142,144-153",
+    "runs/r2e_lifecycle_20260929/inv/datalad_16c1/pcheck_repro_issue_example_D.json",
+    "runs/r2e_lifecycle_20260929/inv/datalad_16c1/pcheck_repro_issue_example_gold.json"
+   ],
+   "status": "open",
+   "proposed_action": "R-c：在测试外层断言 filter 收到的 kwargs 取值与过滤结果（card.md 附录 B.1）"
+  },
+  {
+   "id": "I3",
+   "code": "T2",
+   "v1_step": 4,
+   "severity": "S1",
+   "summary": "候选 N（无条件执行 result_filter(res, **_kwargs)）正式评分 1.0（8/8），但调用带关键字参数时，Constraint 与单参数 filter 都会 TypeError。受影响的有 ds.create()（Create 的类级默认 filter 是 Constraint）、CLI --report-status/--report-type、公开用法 clean(dataset=ds, result_filter=lambda ...) 与 ds.save(result_filter=is_ok_dataset)。本可覆盖它的 test_dirty 等都是死键。",
+   "violated_public_requirement": "有文档、常用的公开行为：create.py:89-91、base.py:325-338、results.py:66-67，公开测试 test_clean.py:39-40、test_save.py:119。输入：Test_Utils().__call__(4, dataset='awesome', result_filter=EnsureKeyChoice('somekey', (0, 2)))。",
+   "evidence_level": "formal_grading + behavior_check + static",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/datalad_16c1/ledger_N_budget1200.jsonl#L1",
+    "runs/r2e_lifecycle_20260929/inv/datalad_16c1/pcheck_filters_backcompat_N.json",
+    "runs/r2e_lifecycle_20260929/inv/datalad_16c1/pcheck_filters_backcompat_gold.json"
+   ],
+   "status": "open",
+   "proposed_action": "R-c：新增 test_result_filter_plain_callables_with_call_kwargs（card.md 附录 B.1）"
+  },
+  {
+   "id": "I4",
+   "code": "T1",
+   "origin": "P3",
+   "severity": "misrejection",
+   "summary": "sadfilter 用 assert_not_in('dataset', kwargs) 要求没传的参数不出现在 kwargs 中，题面没有这条规定。合理替代解 C2 传全部参数并补默认值，正式评分 0.0（7/8），唯一不符键是 test_result_filter，失败点正是 sadfilter：收到 {'number': 4, 'dataset': None}。C2 的语义与上游后来的 get_allargs_as_kwargs 一致，上游后来也把同一测试改成 kwargs.get('dataset', 'bob') == None。",
+   "evidence_level": "formal_grading + behavior_check + public_upstream_code",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/datalad_16c1/ledger_C2_budget1200.jsonl#L1",
+    "runs/r2e_lifecycle_20260929/inv/datalad_16c1/logs_C2/evallog_replay-r2e-inv-16c1-C2-0_534eccf9.eval.log:129-153",
+    "runs/r2e_lifecycle_20260929/inv/datalad_16c1/pcheck_filter_kwargs_probe_C2.json",
+    "runs/r2e_lifecycle_20260929/inv/datalad_16c1/pcheck_filter_kwargs_probe_gold.json",
+    "runs/r2e_static_prep_20260924/v3/public/datalad__58ba5165234cb16de0e8463ee75097362099835f/worktree/datalad/interface/utils.py:372-379",
+    "runs/r2e_static_prep_20260924/v3/public/datalad__58ba5165234cb16de0e8463ee75097362099835f/worktree/datalad/interface/tests/test_utils.py:330-338"
+   ],
+   "status": "open",
+   "proposed_action": "R-b：把 sadfilter 改为 assert_equal(kwargs.get('dataset'), None)，只与 R-c 同批执行（card.md 附录 B.2）。单独执行会放过固定传 dataset=None 的候选 F。复核若认定为 P5，撤回 R-b 交用户，R-c 照做。"
+  },
+  {
+   "id": "I5",
+   "code": "T5",
+   "severity": "registered",
+   "summary": "5 个期望 FAILED 的死键（隐藏 conftest 的 path fixture 与 nose 风格装饰器冲突，测试体从不执行）。在 noop、gold、D、N、C1、C2 下一致，判分无害。",
+   "evidence_level": "formal_grading",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/datalad_16c1/logs_C1/evallog_replay-r2e-inv-16c1-C1-0_516e4496.eval.log:140-144"
+   ],
+   "status": "registered",
+   "proposed_action": "不改。可选 R-a：同时删掉测试与 expected 键。它们缺失的回归覆盖由 R-c 的第二个测试补上。"
+  },
+  {
+   "id": "I6",
+   "code": "G1",
+   "maps_to": "T3",
+   "severity": "registered",
+   "summary": "gold 用 getfullargspec 判断，遇到 bool、operator.itemgetter 等拿不到签名的可调用对象会报错，而 base 能用；另外只给声明了 **kwargs 的 filter 传参，这与上游后来的实现一致。罕见路径，只有静态推断。",
+   "evidence_level": "static",
+   "status": "registered"
+  },
+  {
+   "id": "I7",
+   "code": "T3",
+   "severity": "registered",
+   "summary": "按位置传 dataset、参数值是否原样传递都没有测试。",
+   "evidence_level": "static",
+   "status": "registered"
+  },
+  {
+   "id": "I8",
+   "code": "P4",
+   "severity": "registered",
+   "summary": "题面的报错文本是 assert_in 的格式，示例却写裸 assert；没说明 Test_Utils 定义在哪。公开材料能消解。",
+   "evidence_level": "static",
+   "status": "registered"
+  },
+  {
+   "id": "I9",
+   "code": "E3",
+   "severity": "chain",
+   "summary": "本机缺省 300 s 控制面保护时限在可信 setup 阶段超时（failed_to_grade），需放宽到 1200 s；解题侧启动约 434 s；隐藏测试的断言函数来自候选可改、评分时不重置的 datalad/tests/utils.py（通用）。",
+   "evidence_level": "formal_grading + devcheck + static",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l2_noop.jsonl#L2",
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l2_gold.jsonl#L2",
+    "runs/r2e_lifecycle_20260929/devcheck/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/orig/attempt.json"
+   ],
+   "status": "handed_to_A_line",
+   "proposed_action": "A 线处理 chown 开销或把放宽时限写进有效运行条件；本题事后审计标出改动 datalad/tests/ 或 .venv 的得 1 补丁。"
+  },
+  {
+   "id": "I10",
+   "code": "X1",
+   "severity": "registered",
+   "summary": "与 datalad 58ba5165、19f5b450 相关（两者初态含本题修复的重构版和更新后的测试），与 9ba5de09 相关（本题初态含其修复）；两份扫描漏报。",
+   "evidence_level": "static（公开包）",
+   "status": "registered",
+   "proposed_action": "训练时控制同族重复采样；留出按 D3 的仓库划分处理。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": []
+ },
+ "revision_refs": [],
+ "disposition": {
+  "state": "needs_repair",
+  "scope": "static_review",
+  "reason": "S1：核心断言只用题面示例的字面值（T2c）；退化候选 D 与错误修法 N 正式评分都得 1（T2b、第 4 步）。另有已证实的误拒 T1：合理替代解 C2 因 sadfilter 判 0。环境与开发条件已验（devcheck 全真），无需环境修复；本机评分需放宽控制面保护时限（E3，链路条件）。",
+  "required_revisions": "R-c 必做（进训练前）：隐藏测试新增两个测试，expected 增两个 PASSED 键。R-b 建议与 R-c 同批，不能单独执行。",
+  "acceptance_plan": "在放宽时限下，对修订后材料做 6 次正式评分：noop 0、gold 1、C1 1、C2 1（带 R-b）、D 0、N 0；可选 F 0。之后由 Codex 复核。",
+  "prior_draft": "analysis_before_history.md：暂定同为 S1 / needs_repair。读历史与实跑后没有改判，只把 R-b 从 conditional 改为建议同批，并补上 E3 时限条件。",
+  "reviewer": null
+ },
+ "usage": {
+  "intended_use": "development_diagnostic",
+  "exposure": "本记录作者读过 gold、隐藏测试、期望映射、历史环境审查与本次候选补丁；本记录不提供给模型 solver。",
+  "v1": {
+   "problem_localization": {
+    "value": "yes"
+   },
+   "capability_comparison": {
+    "value": "conditional",
+    "missing": [
+     "评分时限：本机控制面保护需放宽到 1200 s，缺省 300 s 会 failed_to_grade",
+     "若用现材料：须预登记事后审计，检查得 1 的补丁是否吞 filter 异常（D 型）、是否无条件传 kwargs（N 型）、是否改动 datalad/tests/ 或 .venv",
+     "若用现材料：只因 sadfilter 失败、且属于'传全部参数'读法（C2 型）的尝试单列为争议，原始 reward 保留"
+    ],
+    "evidence": [
+     "devcheck checks 全真",
+     "budget_v5 noop 0 / gold 1",
+     "D、N 为 1.0，C2 为 0.0"
+    ]
+   },
+   "training_candidate": {
+    "value": "no",
+    "reason": "现版本有未处理的 S1（I1–I3）和已证实的误拒（I4）",
+    "reevaluate_after": "R-c（+R-b）实施、6 次验收评分、Codex 复核"
+   },
+   "heldout_candidate": {
+    "value": "no",
+    "reason": "不满足训练候选的质量条件；修订后也只能作标明版本的自建题；X1 同族关系按 D3 仓库划分处理"
+   }
+  }
+ },
+ "costs": {
+  "tokens": null,
+  "usd": null,
+  "formal_gradings_new_machine": [
+   {
+    "run": "env_verify l2 noop",
+    "trusted_setup_s": 300.53,
+    "test_s": null,
+    "outcome": "failed_to_grade（300 s 超时）"
+   },
+   {
+    "run": "env_verify l2 gold",
+    "trusted_setup_s": 300.55,
+    "test_s": null,
+    "outcome": "failed_to_grade（300 s 超时）"
+   },
+   {
+    "run": "budget_v5 noop",
+    "trusted_setup_s": 152.84,
+    "test_s": 5.01,
+    "reward": 0.0
+   },
+   {
+    "run": "budget_v5 gold",
+    "trusted_setup_s": 152.63,
+    "test_s": 4.85,
+    "reward": 1.0
+   },
+   {
+    "run": "inv D",
+    "trusted_setup_s": 221.27,
+    "test_s": 4.08,
+    "reward": 1.0
+   },
+   {
+    "run": "inv C2",
+    "trusted_setup_s": 221.77,
+    "test_s": 4.17,
+    "reward": 0.0
+   },
+   {
+    "run": "inv N",
+    "trusted_setup_s": 210.17,
+    "test_s": 4.66,
+    "reward": 1.0
+   },
+   {
+    "run": "inv C1",
+    "trusted_setup_s": 210.92,
+    "test_s": 4.26,
+    "reward": 1.0
+   }
+  ],
+  "devcheck": {
+   "solve_s": 24.88,
+   "container_start_to_init_s": 434.4,
+   "cc_version": "2.1.205"
+  },
+  "behavior_checks_s": [
+   4.1,
+   3.7,
+   3.7,
+   3.6,
+   4.0,
+   4.0
+  ]
+ }
+}

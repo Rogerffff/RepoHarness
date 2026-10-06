@@ -1,0 +1,74 @@
+{
+  "schema_id": "rh2.ordinary_gpu_probe.owner_execution_receipt.v1",
+  "recorded_at_utc": "2026-10-02T19:04:30.092619+00:00",
+  "request": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_pillow/probe_request_2d01_v1.json",
+    "sha256": "sha256:3a42d652e11cc86769c31bed9efea035d2310f730eb70c73d5201316a66070cc"
+  },
+  "executor_thread_id": "01a0ebd7-4095-7dd1-8017-9648d7dba040",
+  "status": "two_models_executed_and_independently_reviewed_by_executor",
+  "attempts": [
+    {
+      "attempt_id": "gpu1003-pillow2d01-qwen36-a1",
+      "reward": 0,
+      "matches": 60,
+      "expected_total": 62,
+      "execution_review": {
+        "path": "runs/ordinary_gpu_probe_20261002/reviews/pillow2d01_qwen36_a1_execution_review.md",
+        "sha256": "sha256:6287c0bc4645ce16ecf69f0ba31dd0c860508bc5c5f6894e88c803b758b5ea40"
+      },
+      "execution_review_json": {
+        "path": "runs/ordinary_gpu_probe_20261002/reviews/pillow2d01_qwen36_a1_execution_review.json",
+        "sha256": "sha256:22c3360b5b7845ce5d83cb488798f7dba18fde4c126ce43d2686d8da3aff697d"
+      }
+    },
+    {
+      "attempt_id": "gpu1003-pillow2d01-coder-a1",
+      "reward": 0,
+      "matches": 60,
+      "expected_total": 62,
+      "execution_review": {
+        "path": "runs/ordinary_gpu_probe_20261002/reviews/pillow2d01_coder_a1_execution_review.md",
+        "sha256": "sha256:f00152210950e88dd7d6f275c7d7897179a2c6436939e6463bc401aad963233c"
+      },
+      "execution_review_json": {
+        "path": "runs/ordinary_gpu_probe_20261002/reviews/pillow2d01_coder_a1_execution_review.json",
+        "sha256": "sha256:80aa2f35f46ef85353ba71294afcd82f4b3ba2a6f6259f94176256361d886b18"
+      }
+    }
+  ],
+  "coder_completed_batch_manifest": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/completed_coder_secondwave_v7_manifest.json",
+    "sha256": "sha256:e02bb064aa0048fd5934d8fdaacfa00572573d9dcf5ed43d7a49c4845b104cfb",
+    "files_verified": 173,
+    "bytes_verified": 100886672,
+    "scope": "completed queue7/config/per-job logs plus unchanged adapter header; exclude mutable service stdout/stderr",
+    "all_members_SHA_size_equal": true
+  },
+  "shared_entry_record_gap": {
+    "recorded_path": "rh2/experiments/r2e_lifecycle_20260929/r2e_solve_attempt.py",
+    "recorded_sha256": "sha256:00ca849909150de02769f297374a9bbfacf2746347c425474775d9c3e22a04f9",
+    "r2e_entry": {
+      "path": "rh2/experiments/r2e_lifecycle_20260929/r2e_solve_attempt.py",
+      "sha256": "sha256:10a71cca67af24c9ab5a6de09cb1845751c643632559842bb61dbce6ebc01d5a"
+    },
+    "base_entry": {
+      "path": "rh2/experiments/base_probe_20260922/solve_attempt.py",
+      "sha256": "sha256:00ca849909150de02769f297374a9bbfacf2746347c425474775d9c3e22a04f9"
+    },
+    "cause": "CurrentPromptAttempt overwrites inherited shared_entry path with R2E entry, retains base sha256; top entry/hash correct",
+    "required_correction": "append external correction with both exact paths and SHA plus code_v3 manifest; preserve original attempt; no model rerun",
+    "minimal_next_freeze_fix": "In CurrentPromptAttempt.__init__, capture inherited entry+entry_sha256 and optional inherited shared_entry+shared_entry_sha256 before update; write immediate shared_entry AND shared_entry_sha256 from the same pair, retain both pairs in a small parent_entry_chain audit field. Do not change solver/grading/budgets; current attempts get external correction only."
+  },
+  "scope": "执行者已完成两模型各一次、原工件直评/身份/投递/预算/清理复核及回传；候选语义及最终用途由题主另记，0不是解决通过。",
+  "limits": [
+    "task-owner semantic scope separate; reward not blanket correctness",
+    "65536 is per-request cap, actual generations below cap; maxOutputTokens32000 in CC metadata does not supersede actual gateway requests",
+    "local CC costUSD is estimate, not API bill",
+    "no raw outbound SGLang sampling payload; deployment/defaults and actual behavior only",
+    "download manifest preserved, retained engine identity verified; no completion-time full weight rehash",
+    "shared_entry path/hash mismatch retained, requires external append-only correction; no model rerun",
+    "local full PreparedTaskFace.load not claimed: original synced private directory permission can differ; model/manifest/dispatch and pure binding checks used",
+    "local runtime_stage sandbox v2 not executed; actual saved grader sanitize digest matches code_v3 manifest"
+  ]
+}

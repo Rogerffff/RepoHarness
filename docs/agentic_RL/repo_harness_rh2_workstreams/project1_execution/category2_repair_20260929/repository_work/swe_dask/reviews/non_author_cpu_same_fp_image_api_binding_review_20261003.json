@@ -1,0 +1,358 @@
+{
+  "schema": "non_author_cpu_same_fp_image_api_binding_review.v1",
+  "as_of": "2026-10-03",
+  "scope": "read-only appended review of actual pregrade failure, fixed image readbacks and new immutable snapshot; no execution",
+  "worker_sha256": "3086fb2e63fdd6c984baf717c1525ce2bdf7f8693ca9954d8cc815cb817f4312",
+  "snapshot_manifest_sha256": "ceb9df15de2d8c66b4680fef4bb24c0141dfaaec75c4ecc51ea1d971acea4516",
+  "snapshot_file_count": 1100,
+  "snapshot_bytes": 145271383,
+  "code8_source_members": 1045,
+  "all_snapshot_files_verified": true,
+  "snapshot_delta": {
+    "added": [
+      "source/cpu_image_inspect_expected_v1.json"
+    ],
+    "removed": [],
+    "changed": [
+      "cpu_same_fp_regrade.py"
+    ],
+    "other_1098_files_unchanged": true
+  },
+  "conclusion": "no_static_blocker; original strict source identity preserved while CPU full Config API representation independently bound",
+  "image_comparison_scope": [
+    "Id",
+    "Architecture",
+    "Os",
+    "full Config",
+    "full RootFS"
+  ],
+  "source_identity_checks": [
+    {
+      "instance": "7305",
+      "original_FP_digest": "sha256:5e64758cd92207d53d5ed93525a9f02d4e4e067a197a066b14e836a8974959e2",
+      "original_baseline_digest": "sha256:ee9ff8a96c8c01bf8261cca50561bcf7f1db65aa3f2064d9e82e4faf3c1bec9d",
+      "image_id": "sha256:b4f186ca0a0139f4287b9203a666b9fd009af079ddad700bb2bf8019aede8b99",
+      "platform": [
+        "linux",
+        "amd64"
+      ],
+      "immutable_fields": [
+        "Id",
+        "Architecture",
+        "Os",
+        "RootFS"
+      ],
+      "all_immutable_fields_equal": true,
+      "original_config_keys": [
+        "Cmd",
+        "Env",
+        "Labels",
+        "WorkingDir"
+      ],
+      "original_config_count": 4,
+      "all_original_config_keys_present_and_equal": true,
+      "cpu_full_config_count": 17,
+      "extra_cpu_config_keys": [
+        "AttachStderr",
+        "AttachStdin",
+        "AttachStdout",
+        "Domainname",
+        "Entrypoint",
+        "Hostname",
+        "Image",
+        "OnBuild",
+        "OpenStdin",
+        "StdinOnce",
+        "Tty",
+        "User",
+        "Volumes"
+      ],
+      "cpu_expected_equals_actual_selected_fields": true,
+      "original_gpu_copy_equals_original_inputs": true,
+      "reference_total": 105,
+      "scripts_digest_original": "sha256:f5d18ea25690356ea6a30217bcf8cbef090405cd579a7164c0786a905624e900",
+      "scripts_digest_new_single_shell": "sha256:a071ed0d14c576d2029f8bdb3b4d9e9f04e679be6e5dea8633c3b63607700450",
+      "selected_env": {
+        "DASK_NUM_WORKERS": "2",
+        "OPENBLAS_NUM_THREADS": "1",
+        "OMP_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1"
+      },
+      "budgets": {
+        "whole_seconds": 3600.0,
+        "setup_seconds": 900,
+        "apply_seconds": 120.0,
+        "test_seconds": 1800.0
+      }
+    },
+    {
+      "instance": "9378",
+      "original_FP_digest": "sha256:ed5ec645234368669128c41ad3a2b9104ecf20bf346535bd22e2f60dda49df4d",
+      "original_baseline_digest": "sha256:0a68c9ecdaed99f151d4602e501d833268db1a0a9aa672957c7ca7d7e0825d94",
+      "image_id": "sha256:1e5a0ee850161b35d33d26445f73e872488a45e0e436195af239190b68574096",
+      "platform": [
+        "linux",
+        "amd64"
+      ],
+      "immutable_fields": [
+        "Id",
+        "Architecture",
+        "Os",
+        "RootFS"
+      ],
+      "all_immutable_fields_equal": true,
+      "original_config_keys": [
+        "Cmd",
+        "Env",
+        "Labels",
+        "WorkingDir"
+      ],
+      "original_config_count": 4,
+      "all_original_config_keys_present_and_equal": true,
+      "cpu_full_config_count": 17,
+      "extra_cpu_config_keys": [
+        "AttachStderr",
+        "AttachStdin",
+        "AttachStdout",
+        "Domainname",
+        "Entrypoint",
+        "Hostname",
+        "Image",
+        "OnBuild",
+        "OpenStdin",
+        "StdinOnce",
+        "Tty",
+        "User",
+        "Volumes"
+      ],
+      "cpu_expected_equals_actual_selected_fields": true,
+      "original_gpu_copy_equals_original_inputs": true,
+      "reference_total": 137,
+      "scripts_digest_original": "sha256:973844ec7101c4754a1a0d3ca73815717f75430a80a494d0dcb1d184f68bac69",
+      "scripts_digest_new_single_shell": "sha256:973844ec7101c4754a1a0d3ca73815717f75430a80a494d0dcb1d184f68bac69",
+      "selected_env": null,
+      "budgets": {
+        "whole_seconds": 3600.0,
+        "setup_seconds": 900.0,
+        "apply_seconds": 120.0,
+        "test_seconds": 1800.0
+      }
+    }
+  ],
+  "actual_old_pregrade_failure": {
+    "stage": "image inspect before manager.grade/container creation",
+    "slot": 0,
+    "returncode": 1,
+    "exact_error": "exact source image differs",
+    "serial_jobs": 1,
+    "9378_dispatched": false,
+    "own_label_container_query": {
+      "rc": 0,
+      "names": "",
+      "stderr": ""
+    },
+    "embedded_text_hash_checks": [
+      {
+        "artifact_key": "/work/rh2-category2-20261003/packages/swe_dask/environment_recovery_20261003/dask_same_fp_cpu_c_v2/serial/status.json",
+        "sha256": "1b7664d60e28dd4908d604809dfbc4eb7bcca28283876970f07eae2e1c115c5b",
+        "verified": true
+      },
+      {
+        "artifact_key": "/work/rh2-category2-20261003/packages/swe_dask/environment_recovery_20261003/dask_same_fp_cpu_c_v2/serial/dispatcher.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "verified": true
+      },
+      {
+        "artifact_key": "/work/rh2-category2-20261003/packages/swe_dask/environment_recovery_20261003/dask_same_fp_cpu_c_v2/jobs/dask7305-original-fp-cpu-recovery-20261003-v1/scheduler.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "verified": true
+      },
+      {
+        "artifact_key": "/work/rh2-category2-20261003/packages/swe_dask/environment_recovery_20261003/dask_same_fp_cpu_c_v2/jobs/dask7305-original-fp-cpu-recovery-20261003-v1/status.json",
+        "sha256": "373a1eef0771eafc75e1b50b82f289bbd878b3b14de18ce0fdf3cae308bf9ec8",
+        "verified": true
+      },
+      {
+        "artifact_key": "/work/rh2-category2-20261003/jobs/swe_dask/dask7305-original-fp-cpu-recovery-20261003-v1-q01/status.json",
+        "sha256": "0e3944ee4dfeacd71071112a1406ad4d6a4a3263caff4b9f57965786450aeb98",
+        "verified": true
+      },
+      {
+        "artifact_key": "/work/rh2-category2-20261003/jobs/swe_dask/dask7305-original-fp-cpu-recovery-20261003-v1-q01/stderr.log",
+        "sha256": "46b5cfd4108951c1e603f35754bc182f498b3265a95b307637fa9060b1555253",
+        "verified": true
+      }
+    ],
+    "new_score_created": false
+  },
+  "frozen_cpu_table_sha256": "f1969b3854a1e3ca0d56a1f517be14d4dbc72a1d3a52897c2c2d631218f2d3d0",
+  "cpu_readback_diff_sha256": "c85d39e854e12c74048139ecf9b6db39575123136e0e3f2e3c0e943d8b86967f",
+  "launcher_sha256": "c2de434864c43695ed199b8cb6e473e1c30031b1bf6ceb8cc88d5a6c7d358b81",
+  "new_namespace": "dask_same_fp_cpu_c_v3",
+  "new_job_version": "v2",
+  "stop_on_nonzero": true,
+  "limitations": [
+    "selected source fields and full Config are compared; host-local GraphDriver and other incidental inspect fields are outside this equality scope",
+    "Config.Image extra legacy field is nonempty; no blanket empty/default equivalence used",
+    "exact Docker daemon/API version cause not established",
+    "no new pure construction or candidate grading outcome verified in this append review",
+    "same original model sample; other model arm still absent; original infra/reward None preserved"
+  ],
+  "execution_by_reviewer": false,
+  "new_scores": null,
+  "training_qualification": null,
+  "sources": [
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/tools/regrade_dask7305_original_fp_threadbudget_v1_inputs.json",
+      "sha256": "d9732ce0ef99d947deb619c72a417f792946a13af3ffe235f4fb6459c606d3bc",
+      "bytes": 101172,
+      "line_count": 1645
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/tools/regrade_dask7305_original_fp_threadbudget_v1.py",
+      "sha256": "d368490c3df303791bffcf32ab36638937e767e1998c676631ab319731b48fb8",
+      "bytes": 18830,
+      "line_count": 154
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/tools/regrade_dask9378_original_fp_setup900_v1_inputs.json",
+      "sha256": "88d5d43c1e127b131dbd8be1f2330ca5e98db29fe5a8132dc5c1950fb7c80922",
+      "bytes": 37308,
+      "line_count": 660
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/tools/regrade_dask9378_original_fp_setup900_v1.py",
+      "sha256": "42c21aa85c55f81cd3e32d8bbeec37bec0efa0db54407e0d48d7ab206c620b8f",
+      "bytes": 16144,
+      "line_count": 138
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tools/cpu_same_fp_regrade.py",
+      "sha256": "3086fb2e63fdd6c984baf717c1525ce2bdf7f8693ca9954d8cc815cb817f4312",
+      "bytes": 21449,
+      "line_count": 352,
+      "reviewed_line_ranges": [
+        [
+          50,
+          108
+        ],
+        [
+          133,
+          141
+        ],
+        [
+          175,
+          185
+        ],
+        [
+          298,
+          308
+        ]
+      ]
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask_same_fp_cpu_c_v1/cpu_7305_pregrade_failed_readback_v1.json",
+      "sha256": "d3d0a5b440ca3c29f12beca7fea5666510dd573be726246a01007d81eff71c26",
+      "bytes": 5678,
+      "line_count": 1,
+      "reviewed_line_ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "json_pointers": [
+        "/own_containers"
+      ]
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask_same_fp_cpu_c_v1/cpu_exact_image_api_diff_v1.json",
+      "sha256": "c85d39e854e12c74048139ecf9b6db39575123136e0e3f2e3c0e943d8b86967f",
+      "bytes": 14654,
+      "line_count": 1,
+      "reviewed_line_ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "json_pointers": [
+        "/7305/actual",
+        "/7305/expected",
+        "/7305/diff/Config",
+        "/9378/actual",
+        "/9378/expected",
+        "/9378/diff/Config"
+      ]
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask_same_fp_cpu_c_v1/snapshot_ceb9df15de2d8c66/source/cpu_image_inspect_expected_v1.json",
+      "sha256": "f1969b3854a1e3ca0d56a1f517be14d4dbc72a1d3a52897c2c2d631218f2d3d0",
+      "bytes": 9087,
+      "line_count": 216,
+      "reviewed_line_ranges": [
+        [
+          1,
+          108
+        ],
+        [
+          109,
+          217
+        ]
+      ]
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask_same_fp_cpu_c_v1/snapshot_ceb9df15de2d8c66/snapshot_manifest.json",
+      "sha256": "ceb9df15de2d8c66b4680fef4bb24c0141dfaaec75c4ecc51ea1d971acea4516",
+      "bytes": 289890,
+      "line_count": 5512
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask_same_fp_cpu_c_v1/snapshot_b22c915de19b36f1/snapshot_manifest.json",
+      "sha256": "b22c915de19b36f1e619edb69e557e9af7a14369ba4955e27bd116bd9c4e11a5",
+      "bytes": 289714,
+      "line_count": 5507
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask_same_fp_cpu_c_v1/snapshot_b22c915de19b36f1/cpu_same_fp_regrade.py",
+      "sha256": "30db91df2afd0ad29bbe1fb296ad39e4d1df9653c774b4bb129527ec560bdbcd",
+      "bytes": 20558,
+      "line_count": 342,
+      "reviewed_line_ranges": [
+        [
+          123,
+          138
+        ],
+        [
+          169,
+          175
+        ]
+      ]
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask_same_fp_cpu_c_v1/snapshot_ceb9df15de2d8c66_build_receipt.json",
+      "sha256": "2a17dd78494d7ce4026208cd75abc43377ffbd3e7559b0992cb7b74c03993849",
+      "bytes": 712,
+      "line_count": 10
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask_same_fp_cpu_c_v1/launch_cpu_recovery_v3.py",
+      "sha256": "c2de434864c43695ed199b8cb6e473e1c30031b1bf6ceb8cc88d5a6c7d358b81",
+      "bytes": 4547,
+      "line_count": 59,
+      "reviewed_line_ranges": [
+        [
+          8,
+          48
+        ]
+      ]
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_cpu_same_fp_regrade_worker_review_20261003.md",
+      "sha256": "51dd5d3a651476fb8aaf28c9063ba97c81644151cca172d3a94565b2dde47550",
+      "bytes": 8847,
+      "line_count": 47
+    }
+  ]
+}

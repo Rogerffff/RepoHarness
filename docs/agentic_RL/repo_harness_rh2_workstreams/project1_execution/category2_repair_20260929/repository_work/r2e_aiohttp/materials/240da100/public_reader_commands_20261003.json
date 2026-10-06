@@ -1,0 +1,14 @@
+[
+  {
+    "id": "240da100_public_example",
+    "cmd": "python - <<'PY'\nimport asyncio\nfrom unittest import mock\nfrom aiohttp import ProxyConnector\nfrom aiohttp.client import ClientRequest\n\nloop = asyncio.new_event_loop()\ntransport, protocol = mock.Mock(), mock.Mock()\nconnected = loop.create_future()\nconnected.set_result((transport, protocol))\ntransport_loop = mock.Mock()\ntransport_loop.create_connection.return_value = connected\nconnector = ProxyConnector('http://proxy.example.com', loop=transport_loop)\ntry:\n    req = ClientRequest('GET', 'http://localhost:1234/path', loop=loop)\n    loop.run_until_complete(connector.connect(req))\n    print(req.path)\n    assert req.path == 'http://localhost:1234/path'\nfinally:\n    connector.close()\n    loop.close()\nPY",
+    "timeout_s": 60,
+    "expect": "未执行。公开 base 静态预期在 req.path 端口保留断言失败；修复后应保留 http://localhost:1234/path 并退出 0。环境导入与 asyncio 兼容性未知。"
+  },
+  {
+    "id": "240da100_public_regression",
+    "cmd": "python -m pytest -q tests/test_connector.py tests/test_client.py",
+    "timeout_s": 120,
+    "expect": "未执行。公开 connector/client 回归应通过，尤其无显式端口代理路径和 HTTPS CONNECT 原断言；收集与依赖未知。"
+  }
+]

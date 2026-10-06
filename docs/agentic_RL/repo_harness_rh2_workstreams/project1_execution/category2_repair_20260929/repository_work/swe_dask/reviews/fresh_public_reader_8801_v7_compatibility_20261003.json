@@ -1,0 +1,143 @@
+{
+  "schema_id": "rh2.fresh_public_reader_compatibility_review.v1",
+  "instance_id": "dask__dask-8801",
+  "review_version": "v7_compatibility",
+  "review_date": "2026-10-03",
+  "review_role": "non_author_public_reader",
+  "prior_report_sets_preserved": true,
+  "scope": {
+    "mode": "two_public_inputs_only",
+    "assessment": "public_comprehensibility_only",
+    "inputs": [
+      {
+        "path": "runs/swegym_quality_batch01_20260921/public/dask__dask-8801/public_bundle.json",
+        "sha256": "f1c4cfedac80c87186a38f2eaec23e5c47b9ed3cd5f4493dfd0ab5b9b473fec1",
+        "hash_basis": "actual_file_bytes"
+      },
+      {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/effective_statement.txt",
+        "sha256": "163aa2567aa3093617289266c3aa8ec14ac55dcc1f5088d4fb005dd0467fbb37",
+        "hash_basis": "actual_file_bytes",
+        "matches_expected_sha256": true
+      }
+    ],
+    "excluded_material_not_read": [
+      "private",
+      "source_code",
+      "patches",
+      "candidate_code",
+      "tests",
+      "revision",
+      "matrix",
+      "results",
+      "reviews",
+      "semantic_controls",
+      "parent_thread_history",
+      "other_project_files"
+    ],
+    "operations_performed": [
+      "read_two_inputs",
+      "compute_actual_input_sha256",
+      "compare_original_statement_and_line_endings",
+      "write_only_requested_compatibility_md_and_json"
+    ],
+    "tests_executed": false,
+    "cpu_experiments_executed": false,
+    "ssh_used": false,
+    "network_used": false,
+    "additional_model_api_used": false,
+    "authorization_necessity_assessed": false,
+    "implementation_correctness_assessed": false,
+    "cpu_eligibility_assessed": false
+  },
+  "text_comparison": {
+    "original_problem_statement_is_exact_utf8_prefix": false,
+    "newline_normalized_original_is_complete_prefix": true,
+    "original_content_complete": true,
+    "first_character_difference_offset": 29,
+    "original_crlf_count": 162,
+    "effective_statement_crlf_count": 0,
+    "difference_class": "crlf_to_lf_only_in_original_prefix",
+    "appended_content_location": "Expected behavior paragraphs after complete normalized original"
+  },
+  "verdict": {
+    "summary": "三类公开行为清晰，无开放公开语义阻断；原内容完整保留，但原文换行已由 CRLF 转为 LF，不能称字节原样保留。",
+    "original_public_content_preserved": true,
+    "must_be_valid_empty_cases_clear": true,
+    "other_false_valued_non_mapping_choices_clear": true,
+    "mandatory_truthful_failure_cases_clear": true,
+    "contradiction_identified": false,
+    "implementation_prescribed": false,
+    "exception_class_prescribed": false,
+    "fixed_error_wording_prescribed": false,
+    "solver_output_structure_fields_added": false,
+    "reasonable_independent_validation_plan_possible": true,
+    "open_public_blockers": []
+  },
+  "audit_notes": [
+    {
+      "id": "original_prefix_line_endings",
+      "severity": "non_blocking_provenance_note",
+      "issue": "原文 162 处 CRLF 被转为 LF，字节级前缀比较失败；统一换行后原公开问题是完整前缀。",
+      "public_reading_blocker": false,
+      "required_report_precision": "可以说原内容完整保留，不能说原题面字节完全未动。"
+    }
+  ],
+  "public_behavior_groups": {
+    "must_be_valid_and_contribute_no_settings": [
+      "empty_yaml_documents",
+      "comment_only_documents",
+      "documents_parsed_as_null",
+      "empty_mappings"
+    ],
+    "other_false_valued_non_mapping_values": {
+      "public_examples": [
+        "empty_sequences",
+        "empty_strings",
+        "numeric_zero",
+        "false"
+      ],
+      "allowed_results": [
+        "contribute_no_settings",
+        "fail_with_diagnostic_accurately_identifying_file_and_non_mapping_content"
+      ],
+      "prohibited_results": [
+        "add_settings",
+        "fail_for_unrelated_or_false_reason"
+      ],
+      "explicit_choice_not_unresolved_ambiguity": true
+    },
+    "must_fail_with_file_and_truthful_content_explanation": [
+      "readable_files_containing_invalid_yaml",
+      "top_level_non_mapping_values_outside_false_valued_compatibility_cases"
+    ],
+    "unreadable_files": "ignored",
+    "load_and_import_both_covered": true
+  },
+  "consistency_reasoning": [
+    "首段必须失败规则排除下文假值兼容情形，后文 Other 再将可选行为与必须有效的空文档、null、空映射分开。",
+    "有效 YAML 的假值非映射若被拒绝，原因须是其真实非映射内容，不能虚假称为语法错误。",
+    "false-valued 是结合 Python 场景与公开例子理解的内容分类，不指定源码必须采用 truthiness 条件。"
+  ],
+  "independent_proposed_validation_not_executed": [
+    "对必须有效的空文档、仅注释文档、解析为 null 的文档和空映射检查成功且无配置项贡献。",
+    "对其他假值非映射检查属于公开允许的两种分支，并检查不添加配置项及诊断真实性。",
+    "对无效 YAML 和其他非映射检查失败、实际文件识别与真实内容解释。",
+    "单独检查不可读文件忽略，并分别验证直接加载与新进程 import dask。"
+  ],
+  "material_caveats": [
+    "原始 issue 未给出真实配置文件内容，不能由 traceback 证明现有代码所有空值行为。",
+    "公开判断只适用于记录的实际输入 SHA。"
+  ],
+  "claims_not_made": {
+    "actual_prompt_delivery_verified": false,
+    "candidate_implementation_correctness_verified": false,
+    "existing_source_behavior_verified": false,
+    "hidden_validation_alignment_verified": false,
+    "full_tests_verified": false,
+    "runtime_pass_verified": false,
+    "authorization_necessity_determined": false,
+    "cpu_eligibility_determined": false,
+    "formal_eligibility_granted": false
+  }
+}

@@ -1,0 +1,175 @@
+{
+  "schema_id": "rh2.category2.aiohttp.owner_first_round_behavior.v1",
+  "created_at": "2026-10-03T05:08:16.019516+00:00",
+  "task_id": "r2e_gym_subset::aiohttp__240da100151933883d7dea0528d45877df025b92",
+  "request_id": "aiohttp240d-r082084-probe-wide-v1-20261003",
+  "scope": "固定两模型首轮各1；不是统一第二阶段或正式训练。",
+  "owner_first_round_analysis_complete": true,
+  "normal_solver_completions": 2,
+  "valid_formal_grades": 1,
+  "invalid_formal_grades": 1,
+  "formal_invalid_not_coerced_to_zero": true,
+  "semantic_results": [
+    {
+      "model": "qwen36",
+      "owner_verdict": "accepted_current_http_port_and_mock_connect_goal_with_scope_limits",
+      "raw_reward": 1.0,
+      "analysis": {
+        "localization": "用真实ClientRequest+完成Future+connect观察丢1234，从host/port重建absolute URI定位。",
+        "candidate_semantics": "导入HTTP_PORT，HTTP80省略，其余端口写入host_port；不改req.host和后续CONNECT端口追加。",
+        "correction": "两次Edit；stash把预置兼容层一起撤回造成SyntaxError，随后pop实际恢复，最终重新运行真实1234复现成功、Frozen仅connector。",
+        "validation": "真实HTTP1234、显式/隐式80通过，公开代理13 passed；正式33键精确匹配含其它端口和mock CONNECT。",
+        "events": {
+          "edit_request_lines": [
+            120,
+            152
+          ],
+          "stash_request_line": 260,
+          "stash_error_result_line": 264,
+          "restore_request_line": 274,
+          "restore_result_line": 278,
+          "final_real_reproduction_result_line": 314
+        },
+        "tools": {
+          "Read": 7,
+          "Bash": 10,
+          "Edit": 2,
+          "total": 19,
+          "error_flags": 1,
+          "error_interpretation": "1个error标志为旧HTTPS API；tail管道可能掩盖其它pytest非零，已按实际输出记录。"
+        },
+        "parallel": {
+          "multi_tool_generation_batches": [
+            {
+              "first_line": 7,
+              "count": 2
+            }
+          ],
+          "opportunities": "独立读源/测试与独立复现有同批机会；修改、复验、恢复有依赖。",
+          "actual_execution_overlap": "unknown；缺完整工具起止时间",
+          "stable_parallel_ability_inference": false
+        },
+        "usage": {
+          "generation_requests": 19,
+          "cc_turns": 20,
+          "input_tokens": 554448,
+          "output_tokens": 4687,
+          "input_definition": "累计逐次请求上下文，不是峰值context。"
+        },
+        "time": {
+          "solve_seconds": 38.17,
+          "cc_api_seconds": 31.541,
+          "cc_total_seconds": 34.992,
+          "trusted_init_seconds_outside_solver": 8.193,
+          "grading_seconds": 10.261,
+          "model_queue_wait": "unknown",
+          "api_pure_model_compute": "unknown",
+          "cc_non_api_pure_tool_time": "unknown"
+        }
+      },
+      "limits": [
+        "全公开connector2 failed/30 passed为已删两旧失效项；stash导致SyntaxError不是有效compat baseline对照。",
+        "扩展真实HTTPS遇到旧create_task(loop) TypeError；不能声称全部URI/HTTPS隧道/IPv6/全client-server兼容。"
+      ]
+    },
+    {
+      "model": "coder",
+      "owner_verdict": "normally_completed_invalid_final_candidate_raw_null_preserved",
+      "raw_reward": null,
+      "analysis": {
+        "localization": "真实1234复现先失败；connector按HTTP80/HTTPS443默认规则保留非默认端口，早期真实复现与13公开测试通过。",
+        "candidate_semantics": "端口修法早期有效；最终checkout三兼容文件，四处create_task回退为asyncio.async，最后整个候选不可导入。",
+        "correction": "真实HTTPS遭旧API错误后把helper改成手抄port表达式；随后撤回兼容层，最后两次自测均SyntaxError而未修正，最终仍沿用早期成功。",
+        "validation": "正式collect0/1 ERROR/test RC2，33个expected均未执行；完整solver正常结束不等于候选通过。",
+        "events": {
+          "edit_request_line": 145,
+          "edit_result_line": 149,
+          "early_real_pass_result_line": 162,
+          "public_13_passed_result_line": 175,
+          "checkout_request_line": 267,
+          "checkout_success_result_line": 271,
+          "final_actor_errors_result_lines": [
+            293,
+            306
+          ]
+        },
+        "tools": {
+          "Read": 7,
+          "Bash": 14,
+          "Write": 3,
+          "Edit": 1,
+          "total": 25,
+          "error_flags": 5,
+          "error_interpretation": "5个error标志涉及原断言、旧测试/API及最后撤回后的SyntaxError；归因分别保留。"
+        },
+        "parallel": {
+          "multi_tool_generation_batches": [],
+          "opportunities": "独立读源/测试与独立复现有同批机会；修改、复验、恢复有依赖。",
+          "actual_execution_overlap": "unknown；缺完整工具起止时间",
+          "stable_parallel_ability_inference": false
+        },
+        "usage": {
+          "generation_requests": 26,
+          "cc_turns": 26,
+          "input_tokens": 728626,
+          "output_tokens": 5209,
+          "input_definition": "累计逐次请求上下文，不是峰值context。"
+        },
+        "time": {
+          "solve_seconds": 55.654,
+          "cc_api_seconds": 48.143,
+          "cc_total_seconds": 52.307,
+          "trusted_init_seconds_outside_solver": 8.56,
+          "grading_seconds": 10.847,
+          "model_queue_wait": "unknown",
+          "api_pure_model_compute": "unknown",
+          "cc_non_api_pure_tool_time": "unknown"
+        }
+      },
+      "limits": [
+        "恢复兼容后的假想仅connector候选是否33/33未知，未清理/重新评分。",
+        "手算helper不证明真实HTTPSconnect；全connector两旧失效项不是当前33键端口回归。"
+      ]
+    }
+  ],
+  "comparison_boundaries": {
+    "same_material_public_prompt_canonical_baseline_and_image": true,
+    "named_budget": "probe-wide-v1",
+    "sampling": "各模型既定默认值；不声称两模型采样数值相同。",
+    "profiles": "UID54321/2CPU/4GiB/512pids相同；relay端口和摘要不同，不称同profile digest。",
+    "model_time_vs_environment_tool_queue": "原solver/CC API/CC总时长、trusted_init与grade分别列；API非纯模型计算，CC差额非纯工具时间，排队未知。",
+    "single_trial": "不能下稳定成功率、稳定并行能力或广泛正确性结论。",
+    "qwen_queue": "实际queue_v11，非Q10。"
+  },
+  "review_method": "主审原件/逐键核算，加GPU独立执行与一次非作者双角色窄核；已见私有，不是fresh盲审。",
+  "refs": {
+    "human_analysis": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/240d_trajectory_analysis_20261003.md",
+      "sha256": "sha256:bf12c4a908d5284755fb64d4e8f15375ace406310b2f57a5906bd82e09e1d8ec"
+    },
+    "qwen_owner_result": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/results240d_qwen36_a1_20261003.json",
+      "sha256": "sha256:e9177f0a7f3561945521f4d1c22d949d96376a1bfcd15b56992d12ba17172db0"
+    },
+    "coder_owner_result": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/results240d_coder_a1_20261003.json",
+      "sha256": "sha256:0ef3f969cc153d7bc5947a8757a46d62e7119f863774e760649c57fc80030fd7"
+    },
+    "aggregate_readback": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/aggregate_receipt_readback240d_20261003.json",
+      "sha256": "sha256:7ab5226d26e7553931c7d2e24693cd11265a0827dc937ffb3997fca92530fd2d"
+    },
+    "independent_review_acceptance": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/review_acceptance1c1_240d_gpu_first_round_20261003.json",
+      "sha256": "sha256:969c8e2b6f4e4019bf5665aa52c89b2d173392eebd9b06f25e7eca9376f25e08"
+    }
+  },
+  "requires_cpu_now": false,
+  "known_cpu_reruns": [],
+  "known_cpu_repairs": [],
+  "pending_required_cpu_archives": [],
+  "second_stage_repetition_pending": true,
+  "first_round_retry_to_force_success": false,
+  "training_or_holdout_eligibility_granted": false,
+  "next": "核收原请求并清活动交接；保留全部原候选和原分；第二阶段按统一门槛/队列同条件重复。"
+}

@@ -1,0 +1,414 @@
+{
+ "schema_id": "rh2.r2e_env_facts.v1",
+ "generated_at_utc": "2026-09-23T19:41:12Z",
+ "generator": {
+  "script": "rh2/scripts/r2e_env/collate_facts.py",
+  "sha256": "e21d4465331c7ed02c9ae9918894231324009cb9b220da5f6efd53809098d1fc"
+ },
+ "evidence_roots": [
+  "runs/r2e_rf_20260923",
+  "runs/r2e_env_repair_20260924/_rerun2"
+ ],
+ "m3_root": "runs/env_overnight_20260916/M3",
+ "identity": {
+  "task_id": "r2e_gym_subset::pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+  "instance_id": "pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+  "repo": "pillow",
+  "module": "PIL",
+  "base_commit": "5db0969f6f9873bd15aededab9ef413f043f1ea4",
+  "source_commit_hash": "2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+  "base_image_ref": "namanjain12/pillow_final:2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+  "base_image_manifest_digest": "sha256:9af0401db9ea4b616b3ca0f42d5863eef7342ab248456693ae850db9f7a117ba",
+  "derived_image_ref": "rh2-r2e-derived/pillow:2d01f7d02243-r2e_derive_v1",
+  "derived_image_id": "sha256:b4030960febe9aa6653e2cb77f73deec2fbd22265b93a1ae51309aa7b24e68b1",
+  "recipe_id": "r2e_derive_v1",
+  "recipe_sha256": "sha256:0da821a15fa389289f524c60d3a421bc940cce753e4ecf3d53560b7ab6b31df9",
+  "hidden_tests_tree_sha256": "sha256:d1a4b96545e014c490119ec3e6cf2be0330cfbe440b3644717988cb51ababf0c",
+  "run_tests_sh_sha256": "sha256:8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+  "head_commit_m3": "5db0969f6f9873bd15aededab9ef413f043f1ea4",
+  "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe"
+ },
+ "source": {
+  "expected_total": 62,
+  "expected_status_counts": {
+   "PASSED": 60,
+   "FAILED": 2
+  },
+  "expected_non_passed": {
+   "\u001b[1mTestFileTiff.test_closed_file\u001b[0m": "FAILED",
+   "\u001b[1mTestFileTiff.test_context_manager\u001b[0m": "FAILED"
+  },
+  "hidden_test_files": [
+   "__init__.py",
+   "helper.py",
+   "test_1.py"
+  ],
+  "runner_kind": "pytest",
+  "runner_prefix": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning'",
+  "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+  "problem_statement_chars": 1256,
+  "problem_statement_has_code_block": true,
+  "public_prompt_chars": 1358,
+  "public_hints_mention_conda": true
+ },
+ "environment": {
+  "python_version": "3.9.21",
+  "interpreter_source_path": "/root/.local/share/uv/python/cpython-3.9.21-linux-x86_64-gnu/bin/python3.9",
+  "interpreter_derived_path": "/opt/py/cpython-3.9.21-linux-x86_64-gnu/bin/python3.9",
+  "install_mode_m3": "path_entry",
+  "pth_line_m3": "/testbed/src",
+  "import_outside_testbed_ok_m3": true,
+  "import_path_grader": "/testbed/src/PIL/__init__.py",
+  "pkg_version_grader": "8.4.0.dev0",
+  "dirty_tree_lines": [
+   "?? install.sh",
+   "?? run_tests.sh"
+  ],
+  "testbed_owner_derived": "root",
+  "metacopy": "N"
+ },
+ "derived_image": {
+  "ok": true,
+  "failures": [],
+  "checks_total": 20,
+  "checks_failed": [],
+  "build_seconds": 14.2,
+  "base_size_bytes": 1921742914,
+  "derived_size_bytes": 2177563552,
+  "built_at_utc": "2026-09-23T14:11:17.572527Z",
+  "preflight_stdout": [
+   "RH2_PREFLIGHT_INTERPRETER=ok",
+   "RH2_PREFLIGHT_HIDDEN_TESTS=ok",
+   "RH2_PREFLIGHT_GIT_HISTORY=ok"
+  ]
+ },
+ "rh2_runs": [
+  {
+   "run_id": "r2e-rf-all-gold",
+   "ledger": "ledger_r2e_all_gold.jsonl",
+   "kind": "gold",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T15:42:08.463070+00:00",
+   "stage_error": null,
+   "reward": 1.0,
+   "outcome": "resolved",
+   "failure_category": null,
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 62,
+   "expected_total": 62,
+   "num_parsed_tests": 62,
+   "resolution": "RESOLVED_FULL",
+   "mismatched": [],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 1,
+   "test_seconds": 0.753,
+   "setup_seconds": 25.367538,
+   "grader_seconds_total": 34.227,
+   "mem_peak_mb": 502.238,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:b4030960febe9aa6653e2cb77f73deec2fbd22265b93a1ae51309aa7b24e68b1",
+   "import_path_grader": "/testbed/src/PIL/__init__.py",
+   "pkg_version_grader": "8.4.0.dev0",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_6fdf1e36.eval.log",
+   "diagnostics": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_6fdf1e36.diagnostics.json",
+   "non_passed_reasons": {
+    "TestFileTiff.test_closed_file": "FAILED: TypeError: exceptions must be derived from Warning, not <class 'NoneType'>",
+    "TestFileTiff.test_context_manager": "FAILED: TypeError: exceptions must be derived from Warning, not <class 'NoneType'>"
+   },
+   "dirty_tree_lines": [
+    " M src/PIL/TiffImagePlugin.py",
+    "?? install.sh",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": [
+    "src/PIL/TiffImagePlugin.py"
+   ]
+  },
+  {
+   "run_id": "r2e-rf-all-noop",
+   "ledger": "ledger_r2e_all_noop.jsonl",
+   "kind": "noop",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T15:42:08.772718+00:00",
+   "stage_error": null,
+   "reward": 0.0,
+   "outcome": "unresolved",
+   "failure_category": "tests_failed",
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 60,
+   "expected_total": 62,
+   "num_parsed_tests": 62,
+   "resolution": "RESOLVED_NO",
+   "mismatched": [
+    "TestFileTiff.test_photometric[1]",
+    "TestFileTiff.test_photometric[L]"
+   ],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 1,
+   "test_seconds": 0.758,
+   "setup_seconds": 25.25213,
+   "grader_seconds_total": 34.284,
+   "mem_peak_mb": 502.73,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:b4030960febe9aa6653e2cb77f73deec2fbd22265b93a1ae51309aa7b24e68b1",
+   "import_path_grader": "/testbed/src/PIL/__init__.py",
+   "pkg_version_grader": "8.4.0.dev0",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_0edb86ea.eval.log",
+   "diagnostics": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_0edb86ea.diagnostics.json",
+   "non_passed_reasons": {
+    "TestFileTiff.test_closed_file": "FAILED: TypeError: exceptions must be derived from Warning, not <class 'NoneType'>",
+    "TestFileTiff.test_context_manager": "FAILED: TypeError: exceptions must be derived from Warning, not <class 'NoneType'>",
+    "TestFileTiff.test_photometric[1]": "FAILED: assert 1 == 0",
+    "TestFileTiff.test_photometric[L]": "FAILED: assert 1 == 0"
+   },
+   "dirty_tree_lines": [
+    "?? install.sh",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": []
+  },
+  {
+   "run_id": "r2e-envrepair-rerun-gold",
+   "ledger": "ledger_gold.jsonl",
+   "kind": "gold",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T19:29:40.072964+00:00",
+   "stage_error": null,
+   "reward": 1.0,
+   "outcome": "resolved",
+   "failure_category": null,
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 62,
+   "expected_total": 62,
+   "num_parsed_tests": 62,
+   "resolution": "RESOLVED_FULL",
+   "mismatched": [],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 1,
+   "test_seconds": 0.869,
+   "setup_seconds": 30.865587,
+   "grader_seconds_total": 38.974,
+   "mem_peak_mb": 502.293,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:b4030960febe9aa6653e2cb77f73deec2fbd22265b93a1ae51309aa7b24e68b1",
+   "import_path_grader": "/testbed/src/PIL/__init__.py",
+   "pkg_version_grader": "8.4.0.dev0",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_6fe1c2f5.eval.log",
+   "diagnostics": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_6fe1c2f5.diagnostics.json",
+   "non_passed_reasons": {
+    "TestFileTiff.test_closed_file": "FAILED: TypeError: exceptions must be derived from Warning, not <class 'NoneType'>",
+    "TestFileTiff.test_context_manager": "FAILED: TypeError: exceptions must be derived from Warning, not <class 'NoneType'>"
+   },
+   "dirty_tree_lines": [
+    " M src/PIL/TiffImagePlugin.py",
+    "?? install.sh",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": [
+    "src/PIL/TiffImagePlugin.py"
+   ]
+  },
+  {
+   "run_id": "r2e-envrepair-rerun-noop",
+   "ledger": "ledger_noop.jsonl",
+   "kind": "noop",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T19:29:40.547588+00:00",
+   "stage_error": null,
+   "reward": 0.0,
+   "outcome": "unresolved",
+   "failure_category": "tests_failed",
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 60,
+   "expected_total": 62,
+   "num_parsed_tests": 62,
+   "resolution": "RESOLVED_NO",
+   "mismatched": [
+    "TestFileTiff.test_photometric[1]",
+    "TestFileTiff.test_photometric[L]"
+   ],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 1,
+   "test_seconds": 0.922,
+   "setup_seconds": 31.177328,
+   "grader_seconds_total": 39.265,
+   "mem_peak_mb": 502.703,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:b4030960febe9aa6653e2cb77f73deec2fbd22265b93a1ae51309aa7b24e68b1",
+   "import_path_grader": "/testbed/src/PIL/__init__.py",
+   "pkg_version_grader": "8.4.0.dev0",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_ff5b0a6f.eval.log",
+   "diagnostics": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_ff5b0a6f.diagnostics.json",
+   "non_passed_reasons": {
+    "TestFileTiff.test_closed_file": "FAILED: TypeError: exceptions must be derived from Warning, not <class 'NoneType'>",
+    "TestFileTiff.test_context_manager": "FAILED: TypeError: exceptions must be derived from Warning, not <class 'NoneType'>",
+    "TestFileTiff.test_photometric[1]": "FAILED: assert 1 == 0",
+    "TestFileTiff.test_photometric[L]": "FAILED: assert 1 == 0"
+   },
+   "dirty_tree_lines": [
+    "?? install.sh",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": []
+  }
+ ],
+ "latest_default_profile": {
+  "noop": "r2e-rf-all-noop",
+  "gold": "r2e-rf-all-gold"
+ },
+ "reference": {
+  "m3_facts_available": true,
+  "reconcile": [
+   {
+    "kind": "noop",
+    "ledger": "ledger_r2e_all_noop_local.jsonl",
+    "agree": true,
+    "reward_equal": true,
+    "diff_sets_equal": true,
+    "observed_maps_equal": true,
+    "reference_ledger_consistent": null,
+    "reference_log_count": 5,
+    "notes": null,
+    "reference_prime_rewards": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "ref": "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   },
+   {
+    "kind": "gold",
+    "ledger": "ledger_r2e_all_gold_local.jsonl",
+    "agree": true,
+    "reward_equal": true,
+    "diff_sets_equal": true,
+    "observed_maps_equal": true,
+    "reference_ledger_consistent": true,
+    "reference_log_count": 5,
+    "notes": null,
+    "reference_prime_rewards": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "ref": "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   }
+  ]
+ },
+ "auto_checks": {
+  "R01_identity": {
+   "status": "pass",
+   "note": "派生镜像 21 项复核通过；覆盖表 / 隐藏测试树 / 入口脚本 / HEAD 与评分面一致",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/facts.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R02_noop_shows_problem": {
+   "status": "pass",
+   "note": "noop 0 来自 2 个 mismatched 键（无 missing、无零解析）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_0edb86ea.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R08_candidate_code_effective": {
+   "status": "pass",
+   "note": "导入 /testbed/src/PIL/__init__.py；gold 62/62",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_6fdf1e36.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R12_resources": {
+   "status": "pass",
+   "note": "峰值 502 MB / 限额 4 GiB = 0.123; setup 25s test 1s",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_6fdf1e36.diagnostics.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R13_repeat_noop": {
+   "status": "pass",
+   "note": "noop 同条件 2 次 reward 与差异集合一致",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_0edb86ea.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_ff5b0a6f.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R13_repeat_gold": {
+   "status": "pass",
+   "note": "gold 同条件 2 次 reward 与差异集合一致",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_6fdf1e36.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_6fe1c2f5.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R15_reference_parse": {
+   "status": "pass",
+   "note": "2 行 agree（reward、差异集合、观测映射逐键相同）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R16_f2p_keys": {
+   "status": "pass",
+   "note": "目标键 2：['TestFileTiff.test_photometric[1]', 'TestFileTiff.test_photometric[L]']",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_0edb86ea.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_6fdf1e36.eval.log"
+   ],
+   "by": "collate_facts.py"
+  }
+ },
+ "flags": [
+  "expected_has_non_passed_keys"
+ ]
+}

@@ -1,0 +1,577 @@
+{
+  "schema": "monai.public_actor_check.v1",
+  "as_of": "2026-10-03",
+  "task_id": "Project-MONAI__MONAI-6975",
+  "host_alias": "cpu-c",
+  "release_manifest_sha256": "80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9",
+  "prepared_job": "monai-release5-prepared-20261003-3537d9d8",
+  "public_command_sha256": "c426f4ec0ac56d6a7a2c6951b1bb28bebcf5626ccf695f4463092db79ea16e0f",
+  "job": "monai-6975-actor-20261003-b7c29487",
+  "evidence_root": "runs/category2_repair_20260929/repository_work/swe_monai/cpu_c_20261003/monai-6975-actor-20261003-b7c29487",
+  "actual_image_id": "sha256:fbfdddc4edda1f0ea4c1b76a572bd95045be4bbd202b197a94e8d8ee14a73fd6",
+  "candidate_material_version": "monai6975-dataset-dict-pixels-cpu-v1+public-nifti-v1",
+  "commands_result": [
+    {
+      "id": "identity",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 1066,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "核base、CPU、解释器、实际transform.py导入与初态；NiBabel供旧Dataset测试"
+    },
+    {
+      "id": "public_nifti_original",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 1713,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "实际执行题面原LoadImaged/RandAffined直调与Dataset例子，记录资产及公开日志；随机图不互比，不代替私有像素测试"
+    },
+    {
+      "id": "lazy_value_matrix",
+      "rc": 1,
+      "status": "nonzero",
+      "expect": "nonzero",
+      "matches_expect": true,
+      "output_bytes": 4996,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "公开Compose/Dataset字典内存图像True/False/None：两次确定性Flipd的真实返回像素+有效lazy参数；wrap真实resample函数仅记录调用，不用操作长度代理、不要求唯一内部调用次数"
+    },
+    {
+      "id": "public_regression",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 9559,
+      "output_truncated_to": 200000,
+      "pytest": {
+        "passed": 56,
+        "warning": 20
+      },
+      "purpose": "base公开旧Compose/Dataset行为，使用测试自建临时NIfTI；未注入隐藏测试或外部图像"
+    }
+  ],
+  "identity": {
+    "python": "/opt/miniconda3/envs/testbed/bin/python",
+    "monai": "/testbed/monai/__init__.py",
+    "target": "/testbed/monai/transforms/transform.py",
+    "numpy": "1.24.4",
+    "torch": "2.4.1+cu121",
+    "pytest": "8.3.3",
+    "nibabel": "5.2.1",
+    "cuda": false
+  },
+  "actual_actor_uid": 54321,
+  "initial_metricsreloaded_deletion_observed": true,
+  "public_nifti_observation": {
+    "path": "tests/testing_data/ref_avg152T1_LR.nii.gz",
+    "exists": true
+  },
+  "public_nifti_actual_sha256": "c01a50caa7a563158ecda43d93a1466bfc8aa939bc16b06452ac1089c54661c8",
+  "public_nifti_results": [
+    {
+      "entry": "direct",
+      "shape": [
+        91,
+        109,
+        91
+      ],
+      "dtype": "torch.float32",
+      "device": "cpu",
+      "finite": true
+    },
+    {
+      "entry": "dataset",
+      "shape": [
+        91,
+        109,
+        91
+      ],
+      "dtype": "torch.float32",
+      "device": "cpu",
+      "finite": true
+    }
+  ],
+  "original_direct_and_dataset_logs_observed": true,
+  "lazy_value_matrix": [
+    {
+      "entry": "direct",
+      "mode": true,
+      "values": [
+        [
+          [
+            11.0,
+            10.0,
+            9.0,
+            8.0
+          ],
+          [
+            7.0,
+            6.0,
+            5.0,
+            4.0
+          ],
+          [
+            3.0,
+            2.0,
+            1.0,
+            0.0
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          [
+            11.0,
+            10.0,
+            9.0,
+            8.0
+          ],
+          [
+            7.0,
+            6.0,
+            5.0,
+            4.0
+          ],
+          [
+            3.0,
+            2.0,
+            1.0,
+            0.0
+          ]
+        ]
+      ],
+      "dtype": "torch.float32",
+      "device": "cpu",
+      "trace": [
+        [
+          {
+            "argument": true,
+            "effective": true
+          }
+        ],
+        [
+          {
+            "argument": true,
+            "effective": true
+          }
+        ]
+      ],
+      "resample_function_calls": 1,
+      "policy_ok": true,
+      "value_ok": true
+    },
+    {
+      "entry": "dataset",
+      "mode": true,
+      "values": [
+        [
+          [
+            11.0,
+            10.0,
+            9.0,
+            8.0
+          ],
+          [
+            7.0,
+            6.0,
+            5.0,
+            4.0
+          ],
+          [
+            3.0,
+            2.0,
+            1.0,
+            0.0
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          [
+            11.0,
+            10.0,
+            9.0,
+            8.0
+          ],
+          [
+            7.0,
+            6.0,
+            5.0,
+            4.0
+          ],
+          [
+            3.0,
+            2.0,
+            1.0,
+            0.0
+          ]
+        ]
+      ],
+      "dtype": "torch.float32",
+      "device": "cpu",
+      "trace": [
+        [
+          {
+            "argument": false,
+            "effective": false
+          }
+        ],
+        [
+          {
+            "argument": false,
+            "effective": false
+          }
+        ]
+      ],
+      "resample_function_calls": 0,
+      "policy_ok": false,
+      "value_ok": true
+    },
+    {
+      "entry": "direct",
+      "mode": false,
+      "values": [
+        [
+          [
+            11.0,
+            10.0,
+            9.0,
+            8.0
+          ],
+          [
+            7.0,
+            6.0,
+            5.0,
+            4.0
+          ],
+          [
+            3.0,
+            2.0,
+            1.0,
+            0.0
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          [
+            11.0,
+            10.0,
+            9.0,
+            8.0
+          ],
+          [
+            7.0,
+            6.0,
+            5.0,
+            4.0
+          ],
+          [
+            3.0,
+            2.0,
+            1.0,
+            0.0
+          ]
+        ]
+      ],
+      "dtype": "torch.float32",
+      "device": "cpu",
+      "trace": [
+        [
+          {
+            "argument": false,
+            "effective": false
+          }
+        ],
+        [
+          {
+            "argument": false,
+            "effective": false
+          }
+        ]
+      ],
+      "resample_function_calls": 0,
+      "policy_ok": true,
+      "value_ok": true
+    },
+    {
+      "entry": "dataset",
+      "mode": false,
+      "values": [
+        [
+          [
+            11.0,
+            10.0,
+            9.0,
+            8.0
+          ],
+          [
+            7.0,
+            6.0,
+            5.0,
+            4.0
+          ],
+          [
+            3.0,
+            2.0,
+            1.0,
+            0.0
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          [
+            11.0,
+            10.0,
+            9.0,
+            8.0
+          ],
+          [
+            7.0,
+            6.0,
+            5.0,
+            4.0
+          ],
+          [
+            3.0,
+            2.0,
+            1.0,
+            0.0
+          ]
+        ]
+      ],
+      "dtype": "torch.float32",
+      "device": "cpu",
+      "trace": [
+        [
+          {
+            "argument": false,
+            "effective": false
+          }
+        ],
+        [
+          {
+            "argument": false,
+            "effective": false
+          }
+        ]
+      ],
+      "resample_function_calls": 0,
+      "policy_ok": true,
+      "value_ok": true
+    },
+    {
+      "entry": "direct",
+      "mode": null,
+      "values": [
+        [
+          [
+            11.0,
+            10.0,
+            9.0,
+            8.0
+          ],
+          [
+            7.0,
+            6.0,
+            5.0,
+            4.0
+          ],
+          [
+            3.0,
+            2.0,
+            1.0,
+            0.0
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          [
+            11.0,
+            10.0,
+            9.0,
+            8.0
+          ],
+          [
+            7.0,
+            6.0,
+            5.0,
+            4.0
+          ],
+          [
+            3.0,
+            2.0,
+            1.0,
+            0.0
+          ]
+        ]
+      ],
+      "dtype": "torch.float32",
+      "device": "cpu",
+      "trace": [
+        [
+          {
+            "argument": null,
+            "effective": true
+          }
+        ],
+        [
+          {
+            "argument": null,
+            "effective": true
+          }
+        ]
+      ],
+      "resample_function_calls": 1,
+      "policy_ok": true,
+      "value_ok": true
+    },
+    {
+      "entry": "dataset",
+      "mode": null,
+      "values": [
+        [
+          [
+            11.0,
+            10.0,
+            9.0,
+            8.0
+          ],
+          [
+            7.0,
+            6.0,
+            5.0,
+            4.0
+          ],
+          [
+            3.0,
+            2.0,
+            1.0,
+            0.0
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          [
+            11.0,
+            10.0,
+            9.0,
+            8.0
+          ],
+          [
+            7.0,
+            6.0,
+            5.0,
+            4.0
+          ],
+          [
+            3.0,
+            2.0,
+            1.0,
+            0.0
+          ]
+        ]
+      ],
+      "dtype": "torch.float32",
+      "device": "cpu",
+      "trace": [
+        [
+          {
+            "argument": false,
+            "effective": false
+          }
+        ],
+        [
+          {
+            "argument": false,
+            "effective": false
+          }
+        ]
+      ],
+      "resample_function_calls": 0,
+      "policy_ok": false,
+      "value_ok": true
+    }
+  ],
+  "original_public_module_passed": 56,
+  "actual_actor_resources": {
+    "nano_cpus": 2000000000,
+    "memory": 4294967296,
+    "pids_limit": 512
+  },
+  "actual_actor_cgroup": {
+    "CG_PIDS_MAX": "512",
+    "CG_MEMORY_MAX": "4294967296",
+    "CG_SWAP_MAX": "0",
+    "CG_CPU_MAX": "200000 100000"
+  },
+  "harness_exit_code": 0,
+  "cpu_slot_returncode": 0,
+  "launcher_returncode": 0,
+  "cleanup": {
+    "container_rm": 0,
+    "network_failures": [],
+    "relay_failures": [],
+    "stub_rc": 0,
+    "labeled_containers_left": [],
+    "labeled_networks_left": [],
+    "residual_after_force": []
+  },
+  "diagnostic_checks_retained": {
+    "interpreter_in_tool_result": false,
+    "host_log_present": true,
+    "no_harness_dir_in_container": true,
+    "no_launcher_or_done_marker": true,
+    "message_start_matches_stub_requests": true,
+    "exit_code_zero": true,
+    "result_event_present": true,
+    "log_complete": true,
+    "bashenv_denied_for_agent": false,
+    "all_commands_ran": true,
+    "all_match_expect": true
+  },
+  "public_development_complete_for_candidate_image": true,
+  "formal_public_statement_delivery_proven": false,
+  "first_stub_prompt": "Devcheck run: execute exactly the tool calls you are given, then stop.",
+  "historical_blocked_material_version": "monai6975-dataset-dict-pixels-cpu-v1",
+  "new_environment_published": false,
+  "new_private_node_executed": false,
+  "formal_reward_proven": false,
+  "independently_reviewed_at_creation": false,
+  "artifact_sha256": {
+    "activation_check.json": "f4f614f01fbcc236eee8cae066452ce968b81b2f0ef7ab5c3fce9986e9b7b994",
+    "attempt.json": "74fb0e995dd82a9392c462e9c7dd34ac4c9a6c6d63d30fd0af788488f3b682d7",
+    "bounded_image_probe.json": "5c0f0bd5f66a61f9bdd28615d5cd02162e610f2dff6be2bed5c6556c2462a5fa",
+    "bringup_artifacts/cc_version_observed.json": "c2b9bcf966c47d9a00227877026cb90b76afed482fd0df4e0ac12caab786bacb",
+    "captures/identity.out": "c568c246e6130ba82d887c0d650c320ff368bd9eb33e1f63cb65d3e3a34966eb",
+    "captures/lazy_value_matrix.out": "a06752900602d6e1e902422eae164934d0b433a833c7436da1bc2da8a01d9e85",
+    "captures/public_nifti_original.out": "2e36325ac1ee3a3b09e9accc41e7bca14eb97ff4bbcd1c5510bb816f088415b8",
+    "captures/public_regression.out": "20956bce1e4c968bd5d944b5fb91e83d33bccfd9e2b66736240bb707c65f51cc",
+    "harness/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "harness/trajectory.jsonl": "8d8ae8c1d8eddb78ffa3b5aae441a7debd979973f3979a1735722c37be53b1e1",
+    "post_run_facts_root.txt": "b26da70e953d746538fb21925ccc6013356846da34651bab32daac61d7e43711",
+    "prelaunch.json": "ee1442c0b5414a50c45eb144118e61e6d6b94b3aafca49ebc3def1b1b23e84d9",
+    "stub/requests/messages_000.json": "54d4ecfd18dfd2ead09e6cf87e1becad340de62683a33df6d3b2b6d125bcb82b",
+    "stub/requests/messages_001.json": "48b6541e7ac9a39c116e8e67e15c091455562c65e28254af0c77dfb645c75606",
+    "stub/requests/messages_002.json": "9ad74d2bfd6a6e3f1f9db2a6911b9a0ae44fb947dda67c768e5823b544a7d440",
+    "stub/requests/messages_003.json": "526db21b9a66b937ca6d4883769242c97cf4d2386ae3c2d56c361ff1d2d4ec8e",
+    "stub/requests/messages_004.json": "e4e4cf1dedeed67f09e0da75ecd0edb502af8beb6b841b294181b9a37db5df68",
+    "stub/stub_log.json": "e9bbb7d5d74bbb30766ff6605d7fe66aa72dc1d39f257f132c640d776b059d49",
+    "stub_script.json": "2725f3bc0666bbf20f45250f72eae26db2b50dd0a4770713e52f8f4e806de92d",
+    "stub_stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "outer_snapshot_ref": "runs/category2_repair_20260929/repository_work/swe_monai/cpu_c_20261003/monai-6975-actor-20261003-b7c29487.snapshot-8f595a2b.json",
+  "outer_snapshot_sha256": "e4f006f267e3faf43ac6cd6109e01b55550c16579490d98b2e88e92e1102e3bd"
+}

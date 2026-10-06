@@ -1,0 +1,110 @@
+{
+  "request_id": "swe-pydantic8567-control-protect-timeout-support-v1-20261003",
+  "host": "cpu-a",
+  "observed_job": "pyd8567-formal-20261003001737-r14-b631d",
+  "release_id": "cat2-cpu-r2e089092-swe34-dvc-pyd-20261003-v1",
+  "release_manifest_sha256": "51b833975be2c3354be45b731552235a33070315f0039c8e6f54987de95f6ca8",
+  "fixed_wrapper_sha256": "b127f7309ffae3eae2bbe834c595f846104406e2f858b8073ff2182d0a2ce3c5",
+  "actual_facts": {
+    "completed_rows": [
+      {
+        "candidate": "noop",
+        "reward": 0,
+        "wrapper_checks_passed": true
+      },
+      {
+        "candidate": "gold",
+        "reward": 0,
+        "wrapper_checks_passed": true
+      }
+    ],
+    "failed_candidate": "c3_reorder",
+    "reward": null,
+    "outcome": "failed_to_grade",
+    "failure_category": "infra_failure",
+    "infra_failure_detail": "grading_control_surface_protect_timeout_after_300s",
+    "failed_docker_call": "0099",
+    "elapsed_seconds": 300.0712612,
+    "call_has_result_or_stdout": false,
+    "trusted_setup_ok": true,
+    "candidate_install_or_pytest_started": false,
+    "oom": false,
+    "memory_oom_kill_count": 0,
+    "pids_max_event_count": 0,
+    "cleanup_candidate_removed": true,
+    "grader_created_removed": 3,
+    "residual_containers_and_networks": [],
+    "outer_error_masked_first_error": true,
+    "first_error": "真实测试标记缺失",
+    "outer_error": "收尾异常或存在本run残留"
+  },
+  "phase_command": "grader-protect-control-surface v1: chown -R /testbed and /opt/miniconda3/envs/testbed, official tests root-protect; exact argv in 0099/call.json",
+  "cause_scope": "Actual timeout before tests. Archive has no protect stdout so cannot locate which chown or claim root cause; Docker/host IO hypothesis only. No task/candidate semantic failure observed here.",
+  "requested_support": [
+    "Read-only host Docker/IO/load and phase health diagnosis within shared CPU ownership; preserve original source/budgets/labels, no global interruption",
+    "Return observed cause/recovery evidence and whether same-version bounded failed-candidate regrade is safe, or affected shared code/installation version needs repair",
+    "Do not increase env_reset=300, disable protection, edit frozen R14 or original evidence; no full rerun of accepted noop/gold"
+  ],
+  "owner_actions": "Sequence stopped rc1; no actor/8316 dispatched. Owner holds its next dispatch until support response and current mypy priority consumed. No shared file/control edits. Owner will narrow regrade failed c3 and unfinished six rows under new bound input, then CPU nonauthor review.",
+  "archive": {
+    "files": 375,
+    "sha256": "5f1fa451cbbb80f809bfcf92e9f581d9c9ca5915d5aa50151afa1f7ddb79e09c"
+  },
+  "evidence": [
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8567-formal-20261003001737-r14-b631d/status.json",
+      "bytes": 21092,
+      "sha256": "855dcf7774a434f78f99954d7b7c57f53a70d9b4f11f276fe92c74ce631dcbda"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8567-formal-20261003001737-r14-b631d/c3_reorder/report.json",
+      "bytes": 2007,
+      "sha256": "c86221c976daced2f1ff466acba2b2a6ab8291d2bcc76baefe2b64a09ddd1754"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8567-formal-20261003001737-r14-b631d/c3_reorder/ledger.jsonl",
+      "bytes": 17177,
+      "sha256": "c07b0dbe139c673a54ca69031dc8c557863267c9bea0a17ba3c438d5f112737e"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8567-formal-20261003001737-r14-b631d/docker_calls/0099/call.json",
+      "bytes": 3081,
+      "sha256": "4ba33c70d7ea0aa4df4935395967bc670fc10f322e6bbd83c3b6adea12e3a471"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8567-formal-20261003001737-r14-b631d/docker_calls/0101/stdout.full",
+      "bytes": 75,
+      "sha256": "67e917589a0d72f0e6cdacce6247df6827289fd9ccbaf12be2f94f9f83e2af2c"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8567-formal-20261003001737-r14-b631d/docker_calls/0102/stdout.full",
+      "bytes": 6,
+      "sha256": "2ed27c1421e6928dbe13dbfdb5c59e1045b30341fe7ebe05700006bc5ac572c0"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8567-formal-20261003001737-r14-b631d/docker_calls/0103/call.json",
+      "bytes": 190,
+      "sha256": "1cbf91a2661db2696b3e74f851f5a7bee1a2953a02c3db498fdbfd820ee6cbcf"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8567-formal-20261003001737-r14-b631d/docker_calls/0104/call.json",
+      "bytes": 243,
+      "sha256": "1bc25e64458caaa6623f3db47eec64522564569318035233514ef3857e7699bc"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8567-formal-20261003001737-r14-b631d/docker_calls/0105/call.json",
+      "bytes": 248,
+      "sha256": "aba251c817b7f309cded652b573e248bd48bdf25111982d2624936087d03185b"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/jobs/swe_pydantic/pyd8567-formal-20261003001737-r14-b631d/status.json",
+      "bytes": 952,
+      "sha256": "b1ed5ace248486d0851645393c561153ab03d3f4214aaa3b0315f3e2e5e884f2"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/jobs/swe_pydantic/pyd8567-formal-20261003001737-r14-b631d/stderr.log",
+      "bytes": 2231,
+      "sha256": "65a56c5e2bcee0734057833becf9a299c5c37f11976ccf3fd0a55ce4539f69af"
+    }
+  ]
+}

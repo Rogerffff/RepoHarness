@@ -1,0 +1,698 @@
+{
+  "source_file": "numpy/ma/tests/test_extras.py (raw parsed_commit_content.old_file_content)",
+  "source_sha256": "sha256:c5f4b3c014b759cd83db926009d70a259f7506c6978f4290985c799bec93ae5b",
+  "residual_failed_methods": [
+    {
+      "class": "TestCov",
+      "method": "test_1d_without_missing",
+      "source_line": 1111,
+      "first_statement": "x = self.data",
+      "calls": [
+        "assert_almost_equal",
+        "cov",
+        "np.cov"
+      ]
+    },
+    {
+      "class": "TestCov",
+      "method": "test_2d_without_missing",
+      "source_line": 1119,
+      "first_statement": "x = self.data.reshape(3, 4)",
+      "calls": [
+        "assert_almost_equal",
+        "cov",
+        "np.cov",
+        "self.data.reshape"
+      ]
+    },
+    {
+      "class": "TestCov",
+      "method": "test_1d_with_missing",
+      "source_line": 1127,
+      "first_statement": "x = self.data",
+      "calls": [
+        "assert_almost_equal",
+        "cov",
+        "np.cov",
+        "x.compressed",
+        "x.mean"
+      ]
+    },
+    {
+      "class": "TestCov",
+      "method": "test_2d_with_missing",
+      "source_line": 1151,
+      "first_statement": "x = self.data",
+      "calls": [
+        "(x - x.mean(0)).filled",
+        "(x - x.mean(1)[:, None]).filled",
+        "assert_almost_equal",
+        "cov",
+        "getmaskarray",
+        "np.cov",
+        "np.dot",
+        "np.logical_not",
+        "np.logical_not(getmaskarray(x)).astype",
+        "x.mean",
+        "x.reshape"
+      ]
+    },
+    {
+      "class": "TestCorrcoef",
+      "method": "test_ddof",
+      "source_line": 1179,
+      "first_statement": "x, y = (self.data, self.data2)",
+      "calls": [
+        "assert_almost_equal",
+        "assert_warns",
+        "corrcoef",
+        "np.corrcoef",
+        "sup.filter",
+        "suppress_warnings",
+        "warnings.simplefilter"
+      ]
+    },
+    {
+      "class": "TestCorrcoef",
+      "method": "test_bias",
+      "source_line": 1195,
+      "first_statement": "x, y = (self.data, self.data2)",
+      "calls": [
+        "assert_almost_equal",
+        "assert_warns",
+        "corrcoef",
+        "np.corrcoef",
+        "sup.filter",
+        "suppress_warnings",
+        "warnings.simplefilter"
+      ]
+    },
+    {
+      "class": "TestCorrcoef",
+      "method": "test_1d_without_missing",
+      "source_line": 1208,
+      "first_statement": "x = self.data",
+      "calls": [
+        "assert_almost_equal",
+        "corrcoef",
+        "np.corrcoef",
+        "sup.filter",
+        "suppress_warnings"
+      ]
+    },
+    {
+      "class": "TestCorrcoef",
+      "method": "test_2d_without_missing",
+      "source_line": 1219,
+      "first_statement": "x = self.data.reshape(3, 4)",
+      "calls": [
+        "assert_almost_equal",
+        "corrcoef",
+        "np.corrcoef",
+        "self.data.reshape",
+        "sup.filter",
+        "suppress_warnings"
+      ]
+    },
+    {
+      "class": "TestCorrcoef",
+      "method": "test_1d_with_missing",
+      "source_line": 1230,
+      "first_statement": "x = self.data",
+      "calls": [
+        "assert_almost_equal",
+        "corrcoef",
+        "np.corrcoef",
+        "sup.filter",
+        "suppress_warnings",
+        "x.compressed",
+        "x.mean"
+      ]
+    },
+    {
+      "class": "TestCorrcoef",
+      "method": "test_2d_with_missing",
+      "source_line": 1260,
+      "first_statement": "x = self.data",
+      "calls": [
+        "assert_almost_equal",
+        "corrcoef",
+        "np.corrcoef",
+        "sup.filter",
+        "suppress_warnings",
+        "x.reshape"
+      ]
+    }
+  ],
+  "average_methods": [
+    "test_testAverage1",
+    "test_testAverage2",
+    "test_testAverage3",
+    "test_onintegers_with_mask",
+    "test_complex",
+    "test_masked_weights"
+  ],
+  "hypothesis_changed_paths": {
+    "lib/python3.10/site-packages/_hypothesis_ftz_detector.py": [
+      "e94316d26a37b3d0e12ca84a2d27a95976dd360348006eacfc5be33ee1aae8a0",
+      null
+    ],
+    "lib/python3.10/site-packages/_hypothesis_globals.py": [
+      "1b1a3c4d0bbde63022fb9dac5f6990887c4b0d97233f2f557b11e600ef91f987",
+      null
+    ],
+    "lib/python3.10/site-packages/_hypothesis_pytestplugin.py": [
+      "4674f97f8bd15392806421363b323a513225f730696dbf4696bf7fc939c5dfd4",
+      null
+    ],
+    "lib/python3.10/site-packages/hypothesis-6.124.1.dist-info/INSTALLER": [
+      "e6184ce10e266134fdcfa401e8f1a95005bcd4f18d16b62b757323e2833fe9a9",
+      null
+    ],
+    "lib/python3.10/site-packages/hypothesis-6.124.1.dist-info/LICENSE.txt": [
+      "ac89037bac63550644dce8cf32c6765e5fab9dc1a1ce94b89f8a805f341a6750",
+      null
+    ],
+    "lib/python3.10/site-packages/hypothesis-6.124.1.dist-info/METADATA": [
+      "24053bffef94f9b4210dea442e62de99415541181d46cb79d0212a9c828ed65b",
+      null
+    ],
+    "lib/python3.10/site-packages/hypothesis-6.124.1.dist-info/RECORD": [
+      "fa4763802c12f94c36ebf5212717dc6b3957f791baee79f1dc702e862366206f",
+      null
+    ],
+    "lib/python3.10/site-packages/hypothesis-6.124.1.dist-info/REQUESTED": [
+      "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      null
+    ],
+    "lib/python3.10/site-packages/hypothesis-6.124.1.dist-info/WHEEL": [
+      "227f454cdc5e3fad0a9d3906c3bc24ea624f61dfdd4128c46665dd05d30223ef",
+      null
+    ],
+    "lib/python3.10/site-packages/hypothesis-6.124.1.dist-info/entry_points.txt": [
+      "243a14b3dc356d899eeda1bf789d5c0adb2d453583ef50731bc8918be1b67871",
+      null
+    ],
+    "lib/python3.10/site-packages/hypothesis-6.124.1.dist-info/top_level.txt": [
+      "45e1ab79ab9e889e1dd48da41228a0fc22de034b03e10090e2a93ff241f5a037",
+      null
+    ],
+    "lib/python3.10/site-packages/hypothesis-6.24.1.dist-info/INSTALLER": [
+      null,
+      "e6184ce10e266134fdcfa401e8f1a95005bcd4f18d16b62b757323e2833fe9a9"
+    ],
+    "lib/python3.10/site-packages/hypothesis-6.24.1.dist-info/LICENSE.txt": [
+      null,
+      "ac89037bac63550644dce8cf32c6765e5fab9dc1a1ce94b89f8a805f341a6750"
+    ],
+    "lib/python3.10/site-packages/hypothesis-6.24.1.dist-info/METADATA": [
+      null,
+      "dbb8630096593a32a47e5854d467afa6990391e2d442ff9b6348b4438dec9d6c"
+    ],
+    "lib/python3.10/site-packages/hypothesis-6.24.1.dist-info/RECORD": [
+      null,
+      "9bda300f56fed46e7e9f175257b6d681c4a77b3c033b127a4d2cc50cfe920507"
+    ],
+    "lib/python3.10/site-packages/hypothesis-6.24.1.dist-info/REQUESTED": [
+      null,
+      "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ],
+    "lib/python3.10/site-packages/hypothesis-6.24.1.dist-info/WHEEL": [
+      null,
+      "7b0c04b9e8a8d42d977874ef4f5ee7f1d6542603afc82582b7459534b0a53fda"
+    ],
+    "lib/python3.10/site-packages/hypothesis-6.24.1.dist-info/direct_url.json": [
+      null,
+      "a8790424b8f9b4ed08d159fb36f151ad1b570d88687f26069f216c616924d299"
+    ],
+    "lib/python3.10/site-packages/hypothesis-6.24.1.dist-info/entry_points.txt": [
+      null,
+      "c463cc562edf66611cfeb59ffc4bdcd2f0fa60d1721e1e3d7930dc86be0e3156"
+    ],
+    "lib/python3.10/site-packages/hypothesis-6.24.1.dist-info/top_level.txt": [
+      null,
+      "2ec024d4ac8c016735259761d43f120128dec869de202feebf46ec030ba09b77"
+    ],
+    "lib/python3.10/site-packages/hypothesis-6.24.1.dist-info/uv_cache.json": [
+      null,
+      "6429e34d327cf2d70cb217d6e6d18f199973956b01a4c925814c8067f58b7c8d"
+    ],
+    "lib/python3.10/site-packages/hypothesis/__init__.py": [
+      "f51d13a446b923db0bdc9c65e07330bb13ab31f05680b91643090e597142b2fc",
+      "2bb51d5e4178755a097b748728db6e6b1731c85c05c92a4ff289e2b65c7f6174"
+    ],
+    "lib/python3.10/site-packages/hypothesis/_error_if_old.py": [
+      null,
+      "9625e8702553c616c81bbe49b5549efb0acca785670879a2f268c8268fd66120"
+    ],
+    "lib/python3.10/site-packages/hypothesis/_settings.py": [
+      "d3680dbd14b88dd85a2c4506a99a41327c546f986dd4412459180fa135ce1175",
+      "a7bb5f4c269532ec39730eebaff9eed94a68be865ea86927951a59ce5be513af"
+    ],
+    "lib/python3.10/site-packages/hypothesis/configuration.py": [
+      "aee1f16a85059bdfe08f2161968b331c5f30b7eff25bc150b567cc5c52f07737",
+      "18660c399d7796a1b0ab4428beecd4d35b4ef4da52f15da9251bb326cf1c114c"
+    ],
+    "lib/python3.10/site-packages/hypothesis/control.py": [
+      "2dcb691b7637cc24f05451fb12bf0c676312d0b773f25b19d740552e24fb40d2",
+      "d785e857b1b2517504e805136343900cdb31a97ad3c9c781d92d80c438fd11c0"
+    ],
+    "lib/python3.10/site-packages/hypothesis/core.py": [
+      "0b2d0f04efa0f3684bc6bb080895362b11e41c4bbe031228bca4179f05ef89e3",
+      "3886a04d63998d9a8345708c57e13bb6db071568ec81517969cbdc3209702625"
+    ],
+    "lib/python3.10/site-packages/hypothesis/database.py": [
+      "f74f842df58675dc819487d98c4dfb457f7208acdd25922a668685e3c2935d7d",
+      "e2081dc3048388a569169550f0a5a2be16bd2b764131100d0fefd596d4fd9987"
+    ],
+    "lib/python3.10/site-packages/hypothesis/entry_points.py": [
+      "a04f0f9ffef4df396b10e8b59db4e9d76986719b0d8504095afc74cffec35908",
+      "8be5c92fae3410b2d6b1fe5628804d41617113046aa11c932570c433c931382a"
+    ],
+    "lib/python3.10/site-packages/hypothesis/errors.py": [
+      "8c2dbdf117c4e17493bc6a981a4e7be95cffb8b3b01c9784ca827f4fc360d8c7",
+      "2da130e364993660df96fef2e8699e1610c512548595f15f04d9101f596941ac"
+    ],
+    "lib/python3.10/site-packages/hypothesis/executors.py": [
+      null,
+      "f7e294aae90334b34a4ccab214c7ec2e4021f1248efb7d8475b97fc2ee5aa284"
+    ],
+    "lib/python3.10/site-packages/hypothesis/extra/__init__.py": [
+      "831e043550e4af3071cb92efdc8c9fb37b6f30675631b8877e2f7907bb7ad426",
+      "5d3ace426e4c688d2b82b8da09ad4929c48fbf0fe5d52731ff0369a81200b344"
+    ],
+    "lib/python3.10/site-packages/hypothesis/extra/_array_helpers.py": [
+      "8ad847bec362065cc09c2d2949448f22114fff67f9124408a3dcc1ede7ecda3b",
+      "705f339ebcc9b614deccf3126dadd32f86204bfd5a1b240bd51bc34fcc40e990"
+    ],
+    "lib/python3.10/site-packages/hypothesis/extra/_patching.py": [
+      "a4b82d1418300c4a2dc3a3eef197c96e4139424e45d47dc81f910f528d0d826e",
+      null
+    ],
+    "lib/python3.10/site-packages/hypothesis/extra/array_api.py": [
+      "e7c042562a359f2a99f570be1ad5bd234c853ef8090c743f70537c3a6b0635a0",
+      "f1696dbcec857977c5580ed67613cf925c21ee2179402e23a7582278c11d6a41"
+    ],
+    "lib/python3.10/site-packages/hypothesis/extra/cli.py": [
+      "35b37da39d7721477aecb5379e447b68665eeab7651643aa6907daacb3cae9a2",
+      "73aa121d6c3ea90bbdc5c2a7b9342d096dc5420415ea4f3d9c81d8edd3d2a9d3"
+    ],
+    "lib/python3.10/site-packages/hypothesis/extra/codemods.py": [
+      "7bdcc64b3a35e820b1eb02a4b54d3611d15064f29bcbfc54ec7afa8e4428abc4",
+      "4b2e8b0aa1d00da02f4d7bd4a57992ccd1351aaa5dfbc0397e19020b4d8cc7fe"
+    ],
+    "lib/python3.10/site-packages/hypothesis/extra/dateutil.py": [
+      "ea0c2d6f5b16ba29e216df5af3e6185efb13dcf5ec01ac55d095f716c5bf285b",
+      "32ed9d56a22cad5691519ff7355f5534904945596707815eda46923e95934aab"
+    ],
+    "lib/python3.10/site-packages/hypothesis/extra/django/__init__.py": [
+      "dbedfb529ef7fb7292ab78c02e10e267ff27e41f9d09f86e50e06299b76c361c",
+      "c7af45549257ea4b8c61440726f800dfd09d39cc3752e43d5d3562e03935ba8c"
+    ],
+    "lib/python3.10/site-packages/hypothesis/extra/django/_fields.py": [
+      "25c9872d86237b6f71d437bd2a231726261edf12838feae3b884f64db366932c",
+      "02f08a3b91b041c0490b607c52966ce6739c3e071ec937190d5f00276a951f0c"
+    ],
+    "lib/python3.10/site-packages/hypothesis/extra/django/_impl.py": [
+      "743fad6731e2743acbdbe0716a314b5ae1ebb83b7c0b3b2feb324077798873b7",
+      "3a2cade1bb1a252a0972bf014c0af224fed40583b7ecb7249ac7f268bf664506"
+    ],
+    "lib/python3.10/site-packages/hypothesis/extra/dpcontracts.py": [
+      "c9ec621aff622c69ba83d8292df71573e71ad825ebd318c4b2acbb496ba72401",
+      "83c25218699a442ae76b1475044176803c7ee6344d2355e6fcd380e6a88e5491"
+    ],
+    "lib/python3.10/site-packages/hypothesis/extra/ghostwriter.py": [
+      "8b8d04e1c07167081132d0b8531173bd4f6b37f3930a6ef7a16c874f5a4a86b9",
+      "6b738a65217e87b4396ccc0a81a794dcdf9045e105e50e0ad0442637926bf825"
+    ],
+    "lib/python3.10/site-packages/hypothesis/extra/lark.py": [
+      "ce74db60f9cd032b1b97a3707fedde24ae619dd02578bc6dfc90055330f69aa2",
+      "1d6a4a72e31fdfdb06fb9d3c90276dc2b760dc20c31fae66c4a34ae6791aca41"
+    ],
+    "lib/python3.10/site-packages/hypothesis/extra/numpy.py": [
+      "9010f733559d11dbee69a888dcde536f7634703c9aee7231d056894c9d65ee9b",
+      "1576cdb7bf69cd32145bd4fafbd0a7ccf78c092639970e978f214a3dfbe1ca91"
+    ],
+    "lib/python3.10/site-packages/hypothesis/extra/pandas/__init__.py": [
+      "40b2284b9534650c0e55f2964cb83a93e64c748deb1b37058b113585e9b6f021",
+      "5499f75433d541f6cf940987387b30353899ebf277234597d1a585005a818bb4"
+    ],
+    "lib/python3.10/site-packages/hypothesis/extra/pandas/impl.py": [
+      "4543c9bffb646d1242172d7eb7d94908959a8b1de85134ceea7ba994a178d509",
+      "b397f5d8a0fc03fd6b7777af9e5880e84112ec4a0e4b3b3f9d07b2bf13a28709"
+    ],
+    "lib/python3.10/site-packages/hypothesis/extra/pytestplugin.py": [
+      "3a66cbf0daea9ba529cf15cf9dfcd9e32140a957c51981b364ce2ac5d3a0260e",
+      "db2631c0a30ae90537a70a913cc1a4e666f18c2ca12ffd7c5fa2885177e97507"
+    ],
+    "lib/python3.10/site-packages/hypothesis/extra/pytz.py": [
+      "253579dc1c41ecbf3e7001f67552640de068325b2e96fef4b67eae738d223256",
+      "366d50d713d15714cbc01f46c7d85eb6a16c9248f8b754452d87daa2a9beff07"
+    ],
+    "lib/python3.10/site-packages/hypothesis/extra/redis.py": [
+      "82cbb664ddc27c217ada14f46cd00d4ded0af2190aa326f402d2838a90c21f8a",
+      "6404f97fcf99d3bc32755851f0efa5a0c0488dfeafc68a183a2857079498ef7d"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/__init__.py": [
+      "831e043550e4af3071cb92efdc8c9fb37b6f30675631b8877e2f7907bb7ad426",
+      "5d3ace426e4c688d2b82b8da09ad4929c48fbf0fe5d52731ff0369a81200b344"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/cache.py": [
+      "c9d4900d124433fc0bfd101cf8b589c9980dc4b50a9f05dd951ae045fd9a24ea",
+      "78a87a853dbc2b542b8ce31b1013c58ac92d0053753c3b7382b979ce452280c1"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/cathetus.py": [
+      "abab75ea64f68f394998175d85196a0b6c20ff0ec5820543440564cecd385be5",
+      "6dfb17ce764155f05101c9cc363c66c898a619b1600c6ada622f398bff321e57"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/charmap.py": [
+      "c920b20a28a5af4cccf20b051c6e3d1fd3c37ccc7fd3716ff5b48bfe006d0dd5",
+      "1844dc640e54179838363ae07afee5fbd4a1f221066f4d95c0a8eb6d6da1dfa0"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/compat.py": [
+      "1adde03737fd8a95ba5e774647b87431d1aa6ff598f90f54458283350a89bfbb",
+      "e9d092ee30ef72a70b95f4b7dd829a536d38a98fc08be3f673f5dc8ce00dd29c"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/__init__.py": [
+      "831e043550e4af3071cb92efdc8c9fb37b6f30675631b8877e2f7907bb7ad426",
+      "5d3ace426e4c688d2b82b8da09ad4929c48fbf0fe5d52731ff0369a81200b344"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/choice.py": [
+      "53a9eaaa79659c3d493a5dc033ceac588a4ca92dac049e6c559401e76f1719c2",
+      null
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/choicetree.py": [
+      null,
+      "dd471e28d3a683501feb5d10a008ff64fa97de46c43795891f5db3c9bdc8e35d"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/data.py": [
+      "554511f562588ecc3ce5ec97343020e4842f9864d1576fa8e64380b29d364ae3",
+      "a18bb634a2820502ca712a141fc00014ca2dca650ff8ef01d64f3d6ade82d1f8"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/datatree.py": [
+      "d4567fbeea51190c7721024cf5487dbc2e88c0c4d54cd5dda9e8569f631cbe0d",
+      "6661dca28095cd950aa966d2ffc42d684a586abbb5e85b307cd6ca92dc7af7c2"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/dfa/__init__.py": [
+      "ac20a6c0717b1c0393147f7060500dbcc0756368b5cf071dd17a276dfb863424",
+      "44b83ca56ba85afb9e4a5a3b5b3b47f739ee2de98fcdd1e6c3885e3f4db09c9d"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/dfa/lstar.py": [
+      "490ca46519fbdd88b458f1c2fe6698bc7ae4957901ce7d699a0f219388b5f0b6",
+      "27c114d099af786c35ffc9b2ac03fb6b534bf9ba4e30394bb83728cab348317b"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/engine.py": [
+      "c285a31edb0595237e6bd4536a2f9f4d127abebf946aa879907d45b42cbc812d",
+      "206d2efef8604b8268d65312d02b095c23658775a14ee5cd60447e8794e79cc4"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/floats.py": [
+      "3c2ab9b93b3c6b8cc50321db1a2a548030e47e5e92ea4b93ee76f83327132b94",
+      "4ed920335a7ac153e3cb74ffbd164d8fb236cbfe25d40c851ec9462bbe99de7c"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/junkdrawer.py": [
+      "8bc6fda65b5a38bcfdab21e024754316b037659a5fab576d322497c54d64029c",
+      "512bfd1366c8e9f3f9db4edae5e4533bc94e30b01bc2677a2f248610fa9cf1b6"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/optimiser.py": [
+      "ee4df7cadcb6146f720715cea906656f1762fecc6d2395cade561b1348cacfda",
+      "5950f87440278ba69630e4e66d8b08bf3173ec2b2bcae859fb3762ec4a2cfbba"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/pareto.py": [
+      "0383cb6a787304e516f8efe25590e9c53a128c30dedd9080eded14fb34eb6096",
+      "69d0f2c1b3a184d061c04f8754de5596fc338cbe32b0ceff10481a144ff374b7"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/providers.py": [
+      "ea3652243448098ed75154ec07ce026c9b5bed37bc665798bb3d92fc63817e75",
+      null
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/shrinker.py": [
+      "c2238264d7b4b116cfa627518c5d7d1ceec5c25ddff68241079fb4167d1ec3a6",
+      "678c278c1d4bf2e910b9a3847f5dac4b381db20d46def4ed4ccfa3e3ebfc05d4"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/shrinking/__init__.py": [
+      "33003b9565470f255b3af264f30e70d4dfca22594c56152cf4f8d98677df5dae",
+      "9ff6c347ff5b8a8253c4e7acc1943816a7b5e939c8f4fcba55195c6260646c53"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/shrinking/bytes.py": [
+      "0f5dd082ebccf7b3ea4cf9d69dfac44c038dff2365ba5dc4012ae237d9c8dc20",
+      null
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/shrinking/choicetree.py": [
+      "cb1b08e60caa89893a20cf425693934c2adb1fb61ef8ba17d0550efa44d15b11",
+      null
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/shrinking/collection.py": [
+      "9a41068d1195eb5bd1bb6bc44b8ba7b99476bd8b784f4ab87868423c45b4fec3",
+      null
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/shrinking/common.py": [
+      "2435abeb8c74045cd3b3ae8b79ee3925127b64d5f374cd210d90e5bf1c4182d6",
+      "573ccabd4aea79ff08aa107a11dd4d21298de01716011ac9eb2936544e0ec607"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/shrinking/dfas.py": [
+      null,
+      "6f3e455819abddf2e733f90b5750f1277c929f89d324c1f66606d9bbdc5c1f8c"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/shrinking/floats.py": [
+      "2a238b44950b94a8489b5c23def2e5d9e001b8ade74b75b92e7dbb5fa10662c9",
+      "4af032cd00e9118184232034b3958c8947564c2a69119cf26bcbea5e2bb7df9f"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/shrinking/integer.py": [
+      "1c69006a02da086f1d889fa16b6170a4fdb77f6b5b65bdc4a55ddaf279b4b21a",
+      "e8bd2f5c1e94708234304d36fdf4c116925b4af7fd5e9619a62960bec0d1abdf"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/shrinking/learned_dfas.py": [
+      null,
+      "70f09c95966a78d82f3e6c39a80d3a6012f7b9229853517acc1fdf3aed3573e0"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/shrinking/lexical.py": [
+      null,
+      "6ad4cd6e0d9d47902f494a775abed342d2569950ed89cd73ac8874539bc5a34b"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/shrinking/ordering.py": [
+      "6ab5ae1325fbeb95abe34ce0901146ca27bd3d9354f373cd52636764cedb534e",
+      "27e32f5ad8517a2d1dfb40130aaa876a56a02550790bdb785c8147c02b30b27b"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/shrinking/string.py": [
+      "5724d37b6d5e458fe91c71a040d66194b86ddf25afd32b75280c6a09c7781d9f",
+      null
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/conjecture/utils.py": [
+      "e331dc3eb3fe1b74a1ee36e604c38be4818e780ba60e21402e2c6b21650bfaef",
+      "285100697d3595bd44f40cd94d6dae166960d446b556b625b5328e846061746f"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/coverage.py": [
+      "bb600b9da620c1dda34a4664039690600d6e32793b83069ab0c25babf9778888",
+      "606b283a7058a0b528440b1c1dd33c7e7acd44e244ec5c586477f7e5680c4b9e"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/detection.py": [
+      "9a71e52086cbebf338b8bec0db267c1add97f3b87064bd2472f2d4b1f80d14b6",
+      "0aeb12a283c3abf56dae5faa613e9384c465ca34849741b7b4da5a65844715a7"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/entropy.py": [
+      "c2035e75d20cd08dd20f5cb2773d762eca29e838b9bec95ee1ef6ee5f580c48b",
+      "1dfc76e831ebf7447fc179fcc2b8f2da9b0a7a51fc854569fa802d58f24e81f9"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/escalation.py": [
+      "074ff3977f616f40d6be6ed56491f7e5fd237249f9d740cd2957bd9355ea5d2a",
+      "111f60846ebe24e92c614b591dcda26a4da89cf3f665daeffa252011e397deb3"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/filtering.py": [
+      "aa6918b6a89a3ccdcb3f14c549a571443173bb1395a884b21230b573b7b741ff",
+      "eacc36ffedf491a67b51f26be7cb1c7196fdeded8ce0c1cd68b8c4c77e32cfe6"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/floats.py": [
+      "df06d1879e1e26b48cb8e49bfe5b4e3ca7265a10f23c108d4ac6e7f0a57869ea",
+      "c7232d7623d7b2c4e65450def8bb651c0ba32c09ab2da66560d5ec4d362f41e3"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/healthcheck.py": [
+      "3664e326003f1a91e6c2fe5275b694c3d19d9df465e2884e24742eaceb4f5f8c",
+      "d22f33891b8f599e7bc618788c371bcb2792f5600a3cf0b145cf41f09a8b4b91"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/intervalsets.py": [
+      "e43b22dc97b8d750eff5375d09c35b50e74280db926756de02cbeb2fb1dc13e0",
+      "4b10a0861e8cb4444b7b8784aa1f2856b716dc5268ab897dab0b0b5b4e9154d8"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/lazyformat.py": [
+      null,
+      "ae9d383a1a822c416bfae0a68ecb58ae697971171bd22dd8702677701cedf7c1"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/observability.py": [
+      "2ee55bfd94eeb9e0b8d5751b15ec74675060effda14ac2e04e59683dd5d1a92e",
+      null
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/reflection.py": [
+      "aa719f0da0db2e75ef51594ff62cf2a130f9b20a2a5a3185ed7c5ed212cb66e2",
+      "bd04c769cc29a78bab74662af9aa83a7d6316392f1239d1bbbb706dcc2faf326"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/scrutineer.py": [
+      "252c87f5d61e51f62504f979d94a091b2ba89282ada7a1e9e5f4ddeabc489991",
+      "401f3503cc6d0596b47eb3c07f14a97e418e560f2474cf5a9434ec2bec2514eb"
+    ],
+    "lib/python3.10/site-packages/hypothesis/internal/validation.py": [
+      "8cbb351867fd25fe50a7f83c251651f1519c57f202c3dc17b1620de5f6f5580f",
+      "bfb35e5a69d957717bf58a4e2661c38158fd08cd2446ea29ba5be7a6ea5729cd"
+    ],
+    "lib/python3.10/site-packages/hypothesis/provisional.py": [
+      "fa8357c3fa40d5a17f001a1a30a11378e7fe1011a72b5a21c88762a37d4e17e0",
+      "3549c661de66f94bf5b6b610658b1ffcd91454d404072dee28bf50ce93a72a19"
+    ],
+    "lib/python3.10/site-packages/hypothesis/reporting.py": [
+      "043d2a960976a275cf73ff578765f9c28610c9f0c639dbf027022af48cd7002d",
+      "ef7c001976e6a4a2a952edb3d08c92f7aeaef3811d1e0b8e39d06068ca7c1f6b"
+    ],
+    "lib/python3.10/site-packages/hypothesis/stateful.py": [
+      "86e66bd0142cefd205fb946ed201bfb3afb1fe8fce1482b29dc440b24c18f3d7",
+      "8c19e7a973c7ce995d159cb2929c09d9cc830af03e99f782b8844363d731c97a"
+    ],
+    "lib/python3.10/site-packages/hypothesis/statistics.py": [
+      "fd74d739963486bffd809941d3f50ff8ee4010d781c9849df2d0cdac78fb3bd2",
+      "ede1b9c05713f3ff053b5bff959314d4672e1beb90527b695b2ce88488aefa98"
+    ],
+    "lib/python3.10/site-packages/hypothesis/strategies/__init__.py": [
+      "376afc26c09cab5cabdc20ff5e0f6237d5bf25fa41d2493efd8de087e7bd5523",
+      "3ed7844de2f34fbd21cb125bbf73d2cec8e8ce3a5c7c5d1ebbbfbd87d5eda791"
+    ],
+    "lib/python3.10/site-packages/hypothesis/strategies/_internal/__init__.py": [
+      "262d9f46c61b754eba49b885494de407a2ba8cf018abde99c9847cbde0db0221",
+      "3fbd2bd4b719e74cb003285a718219bc251ac61eec766f27a753b24780cbac99"
+    ],
+    "lib/python3.10/site-packages/hypothesis/strategies/_internal/attrs.py": [
+      "0931c05cbbcf280d5eb97df9742e8049e99c8100ca6fb2445fb0b7535169fe4a",
+      "21987696250166293d9d9aa101e5e34bb763698920ee2a08023e0d1c501f67ad"
+    ],
+    "lib/python3.10/site-packages/hypothesis/strategies/_internal/collections.py": [
+      "226f96dbf2cee9cb912a707ba7b7b7c3016ee0ef780da5a144aa49f4c6fae8e0",
+      "eef898ae8c5741c2b03b850158374463f61fb35b53be96da44f11b57e9a5cfa5"
+    ],
+    "lib/python3.10/site-packages/hypothesis/strategies/_internal/core.py": [
+      "3a1af573d83165dbb9dce23fc7b4205067744e5c9e351bbf0b71907b86d3f8da",
+      "62c5812a82e49cebc9c3571fa070a50822b1bc1afd50315e3e9589ed29fffb20"
+    ],
+    "lib/python3.10/site-packages/hypothesis/strategies/_internal/datetime.py": [
+      "7f6f1ea4fe183f8ee2b6977e472058c10e809d1706311160598ae7ce4c0f0bc8",
+      "c6803dcff3c81ec20fa25dbda231a1197392116cbaae51c164590cd54c2e933d"
+    ],
+    "lib/python3.10/site-packages/hypothesis/strategies/_internal/deferred.py": [
+      "ce8764488abdd871693337bfb12482b6237324233be9d05447bf4680b1ec8480",
+      "80bbc02e731f09e91aea0540a3494bf31ca7b3ae9729b79272ce31b06c6d3ac1"
+    ],
+    "lib/python3.10/site-packages/hypothesis/strategies/_internal/featureflags.py": [
+      "9879a0fe161230b93f5525eec67921797b6695be6267b631af8a04273c6e1a46",
+      "797ad7cba005e67c10dbb85a92b8c244163a1d9eb62320f2be4036891af4e07e"
+    ],
+    "lib/python3.10/site-packages/hypothesis/strategies/_internal/flatmapped.py": [
+      "626455c2a4c0bec07ea543b17c26a52b93667efbd1f346901fd60582a7df46a0",
+      "18f4beb0b5c724bd58e6ac5c122e8820f236bd81546b0724046c3cc7a5ac2e7f"
+    ],
+    "lib/python3.10/site-packages/hypothesis/strategies/_internal/functions.py": [
+      "6ac1f0aafd0c5cd953bf6ff518d6209b6b1642857479fd401c2fd810881a9e56",
+      "e01bdf9cff304d9800c052ebc5cc975fc0ec0dca3c1b7bae8a19680efef9c584"
+    ],
+    "lib/python3.10/site-packages/hypothesis/strategies/_internal/ipaddress.py": [
+      "86dd61ed79089a496a096dc6e90bdaadc43bbbe6396c9d6f4dc20ffc8100c4ad",
+      "14193b05557fcaf78251cd2286bec2426b2e984c2610861a89cbccf326c66eee"
+    ],
+    "lib/python3.10/site-packages/hypothesis/strategies/_internal/lazy.py": [
+      "2b89029d6f035ce5aafbc9a468746274acd0d18c3ab364bbe6ef68d121652fde",
+      "5ba4d1c72677cb2883c6133528764355ec90a064aaa3b63e16ad3bfcb6d6ba93"
+    ],
+    "lib/python3.10/site-packages/hypothesis/strategies/_internal/misc.py": [
+      "fe3ff1861694a9d5faa47fd4e5b5e77be942e765fe86489f9de1de9fe60f4a87",
+      "18f8c37d36cc63a99a83b48bc67f4ce51f1786facbf16750c61a12d60b1b7d58"
+    ],
+    "lib/python3.10/site-packages/hypothesis/strategies/_internal/numbers.py": [
+      "1ba7d01237f5040efd4f3acdb179755a38ed62dd364cfefc4054da349167ab4b",
+      "bdcea4d105d5fff46aa51af0bd8845a275ab43c7ad7b95c70839d50694a3f9ac"
+    ],
+    "lib/python3.10/site-packages/hypothesis/strategies/_internal/random.py": [
+      "64ba5e85c510b17c2b0b80a330d0539b51747044bad9321c05787af4be7f14ac",
+      "b4e9d50182b92e8a0c7699ee6b0db5b24f0fea606c84795d47911ab430cae92a"
+    ],
+    "lib/python3.10/site-packages/hypothesis/strategies/_internal/recursive.py": [
+      "ecbfc1172de73fa82fefb50380432174e1cfde3e9cbd5546ff1b44626c2c4350",
+      "7ca74eb77ea568fe49cd1c52411fcce605fb589bee3cfb4f42006eab55a3c7a0"
+    ],
+    "lib/python3.10/site-packages/hypothesis/strategies/_internal/regex.py": [
+      "c06bc2f92fec14edd101a8d4bb784bfbfe4e46ab13bfaf4225ec7a4223ca234c",
+      "7c89d5d0fef7d4eb0695bc5b125ff5bf36f8a8d0fc4303cf8f4ff1bb8fc03e89"
+    ],
+    "lib/python3.10/site-packages/hypothesis/strategies/_internal/shared.py": [
+      "cff5a2cd4782e14e481fd81bdf71f6490c39cc930489b6fadcface652d5d7f5c",
+      "0807812e34e9ab76ea681743c643764370e5a69e402cdea04d92b6792ded302f"
+    ],
+    "lib/python3.10/site-packages/hypothesis/strategies/_internal/strategies.py": [
+      "3ae604f1ba81012c72bf45efd645db6c5945894b40246a306d9496e7542fbdfc",
+      "10110019513364ab9621b299426e4934e03a77f9bf4ae94a0d5d40acb6b22c03"
+    ],
+    "lib/python3.10/site-packages/hypothesis/strategies/_internal/strings.py": [
+      "821feb2327ea5108338e26e96d1d876914553627857374e3ff82d1ff33654d9c",
+      "bd227db336278b79875729c84d38c84d42fb4e8ec493ebd808c8b62a805472cc"
+    ],
+    "lib/python3.10/site-packages/hypothesis/strategies/_internal/types.py": [
+      "b2e28a849d56e51a02a380a53fac6313595a52363070a06551b13af9b7a3a307",
+      "7928a007d481700e53d6f8ed9c499b68187cd57c86ae002682e214bb4df9ebc2"
+    ],
+    "lib/python3.10/site-packages/hypothesis/strategies/_internal/utils.py": [
+      "98ab66b19d6db6cb7ab2358e1c74db90872aea9c913eda6959f5c470cbe23586",
+      "d7a4a7375556cbd4a52ed2cbdb00c1e9ac7f177e86d4f6d2bc76f13aa1b1a89e"
+    ],
+    "lib/python3.10/site-packages/hypothesis/utils/__init__.py": [
+      "38ab10f7446bc4ff4557ae9b20f56cb22c940abc65a13fbed1e8dba0bfa56cb3",
+      "3acd7223d2d3b49edca63edf4d5cc4fda4f23627fcccacdd6255b565a8aad343"
+    ],
+    "lib/python3.10/site-packages/hypothesis/utils/conventions.py": [
+      "727e00447ed5c702b2da9e06feda5fb48d817e61e4f2f93c28549d800bf58f37",
+      "93a6f265cb4f8dde7ea9c9eeee49a6e035a1f54d06e91edfa255647862148c31"
+    ],
+    "lib/python3.10/site-packages/hypothesis/utils/dynamicvariables.py": [
+      "6e1342b3c514f38654b6ca9de120f319bb27864e6a5aaa08a47b1af07ff8eb7a",
+      "6b9d2ffc7b15341c00d441c5a9922f86863a1f836dc3cc11baa875bc4c3e44d4"
+    ],
+    "lib/python3.10/site-packages/hypothesis/utils/terminal.py": [
+      "399c6fcb2f1a09a65b03b8f96804c78a9d81d2ca858ecab78823bc983568c002",
+      null
+    ],
+    "lib/python3.10/site-packages/hypothesis/vendor/__init__.py": [
+      "831e043550e4af3071cb92efdc8c9fb37b6f30675631b8877e2f7907bb7ad426",
+      "5d3ace426e4c688d2b82b8da09ad4929c48fbf0fe5d52731ff0369a81200b344"
+    ],
+    "lib/python3.10/site-packages/hypothesis/vendor/pretty.py": [
+      "d53449068de73ef799578a143a8b659329d98420020adaa3ea49c9ee931f851e",
+      "3d0fb3359fe1c676f13254caba7d317651a24d1373726650dfe76e550b8fc699"
+    ],
+    "lib/python3.10/site-packages/hypothesis/vendor/tlds-alpha-by-domain.txt": [
+      "870f6ec0839bfad33c5aacc25fae29cf9f947042c102ef04fdc93e821111d073",
+      "3acf801d36e92e414a952303fe5f432bef8ac28b368b896282cc8bcff794850d"
+    ],
+    "lib/python3.10/site-packages/hypothesis/version.py": [
+      "aa64f1e216167d8972e84264adf65c8e63a6c0fc24489b1a5b622d52480476eb",
+      "26dd0ee5b2e40864403c329996dbf8f48d8e25530c43ff2c437a038d7df53af5"
+    ]
+  },
+  "public_run_summary": "hypothesis 6.24.1 numpy_from /testbed/numpy/__init__.py\npytest 8.3.4\nPUBLIC_MODULE_RC=1\nFAILED numpy/ma/tests/test_extras.py::TestCorrcoef::test_2d_with_missing - At...\n10 failed, 78 passed in 0.43s\nTESTAVERAGE_RC=0\n6 passed in 0.03s\n?? install.sh\n?? run_tests.sh\nAGENT_PUBTEST_DONE\n",
+  "agent_probe_image_id": "sha256:b8f6f112fb3164d98174b65aea40145f7dbe59897041074e3dcc761c48481a51",
+  "derived_image_id": "sha256:b8f6f112fb3164d98174b65aea40145f7dbe59897041074e3dcc761c48481a51",
+  "datalad_B1_comparison": [
+    {
+      "kind": "noop",
+      "map": {
+        "test_name_generation": "PASSED",
+        "test_dedent": "PASSED",
+        "test_alter_interface_docs_for_cmdline": "FAILED",
+        "test_alter_interface_docs_for_api": "FAILED"
+      },
+      "equal_new_rows": 2
+    },
+    {
+      "kind": "gold",
+      "map": {
+        "test_alter_interface_docs_for_cmdline": "PASSED",
+        "test_name_generation": "PASSED",
+        "test_dedent": "PASSED",
+        "test_alter_interface_docs_for_api": "PASSED"
+      },
+      "equal_new_rows": 2
+    }
+  ]
+}

@@ -1,0 +1,253 @@
+{
+  "instance_id": "conan-io__conan-14177",
+  "owner_thread_id": "01a0fd61-bd33-7553-8a0e-cba65444cfb6",
+  "static_patch_apply": "passed",
+  "static_python_parse": "passed",
+  "project_tests_run": true,
+  "cpu_acceptance": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-14177/cpu_acceptance_r11_20261003_v1.json",
+    "sha256": "sha256:a448b0bbf9567341e03e316db5fb72c661f8b22c2480cd0544594998dac25a6d",
+    "status": "formal_cpu_accepted_after_root_and_non_author_reviews"
+  },
+  "independent_review": {
+    "status": "completed_formal_cpu_narrow_no_blocking_findings",
+    "reports": [
+      {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_14177_r11_cpu_runtime_review_20261003.md",
+        "sha256": "sha256:89d8117ff968aee3c4e9971e366d552942ca399f614f307600708c9d1cde4749",
+        "role": "Production Tracer",
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      },
+      {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_14177_r11_cpu_scope_review_20261003.md",
+        "sha256": "sha256:afc99e9ae96f5684b9a4356ff1689e130018476c0ec53d25e8cd61b8e440a238",
+        "role": "Falsifier / Simplifier",
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "high"
+      }
+    ]
+  },
+  "probe_request": {
+    "request_id": "swe-conan14177-r11-briefv2-20261003-v1",
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-14177/probe_request_20261003_r11_briefv2_v1.json",
+    "sha256": "sha256:478ba02b7ead3aabda7a6493694434c350a694c1600e0f71851eabef5d8ffff7",
+    "status": "returned_acknowledged_two_model_owner_analysis_complete",
+    "notice": {
+      "path": "runs/category2_repair_20260929/conan_cpu_20261003/brief_14177_v2_compat_20261003/new_submit_notice_tool_receipt.json",
+      "sha256": "sha256:66805e62573fd1bab65114c04fd8b0d85c694402bf06dce5c908bd8bfd394e3c"
+    }
+  },
+  "probe_results": [
+    {
+      "job_id": "gpu1003-conan14177-coder-a1",
+      "model": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+      "sample": 1,
+      "raw_score": {
+        "reward": 1,
+        "f2p": {
+          "passed": 2,
+          "total": 2
+        },
+        "p2p": {
+          "passed": 11,
+          "total": 11
+        }
+      },
+      "semantic_verdict": "correct_opt_in_filename_logging_preserving_original_patch_calls_default_metadata_and_version_semantics",
+      "candidate_findings": [
+        {
+          "priority": "P2",
+          "id": "C14177-A1-S1",
+          "finding": "demo claimed two filenames but actual output only first attempt and missing-file exception",
+          "disposition": "accepted_non_blocking_validation_statement_finding"
+        }
+      ],
+      "task_material_findings": [],
+      "owner_analysis": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-14177/probe_coder_a1_analysis_20261003.md",
+        "sha256": "sha256:7dd6eb58d262dea00686bbc6da56cb9759b3d7d07d90f2a4bfdabba61b9a5f60"
+      },
+      "semantic_independent_review": {
+        "status": "completed_no_task_material_blocker",
+        "report": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_14177_coder_a1_semantic_review_20261003.md",
+          "sha256": "sha256:abf8a8222eb42d64943e2ebec9a744f87ff62e2b0409da9be423f29def6f1f4b"
+        },
+        "scope": "non-author focused complete candidate semantics, actual projection, exact references and model validation; no CPU/GPU rerun"
+      },
+      "execution_independent_review": {
+        "status": "accepted_execution_complete_install_test_references_and_two_layer_cleanup",
+        "report": {
+          "path": "runs/ordinary_gpu_probe_20261002/reviews/conan14177_coder_a1_execution_review_v1.json",
+          "sha256": "sha256:07240bbef092bb44cbdf597c1e841573fd13832e403152df7f01a1499dd17369"
+        },
+        "scope": "completed first Coder arm execution/transport and cleanup only"
+      },
+      "paired_request_closed": true,
+      "pending_models": [
+        "Qwen/Qwen3.6-35B-A3B"
+      ],
+      "owner_analysis_json": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-14177/probe_coder_a1_analysis_20261003.json",
+        "sha256": "sha256:2ef020618829520651f4ab4862323d02dc522bac3eea38282342ee4313ca29c3"
+      },
+      "remaining": []
+    },
+    {
+      "job_id": "gpu1003-conan14177-qwen36-a1",
+      "model": "Qwen/Qwen3.6-35B-A3B",
+      "sample": 1,
+      "raw_score": {
+        "reward": 1,
+        "f2p": {
+          "passed": 2,
+          "total": 2
+        },
+        "p2p": {
+          "passed": 11,
+          "total": 11
+        }
+      },
+      "semantic_verdict": "correct_opt_in_filename_logging_preserving_original_patch_selection_and_metadata",
+      "owner_analysis": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-14177/probe_qwen36_a1_analysis_20261003.md",
+        "sha256": "sha256:b4348da244d36c355b88a9c7756f6df5ecbac9a34eec5051a90ceaa9c4137af7"
+      },
+      "owner_analysis_json": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-14177/probe_qwen36_a1_analysis_20261003.json",
+        "sha256": "sha256:50ed4cc5bff3389446cc9c0c61fdce38af67159c97a789d20921f8bd5ba858cd"
+      },
+      "semantic_independent_review": {
+        "status": "completed_no_current_task_material_blocker",
+        "report": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_14177_qwen36_a1_semantic_review_20261003.md",
+          "sha256": "sha256:381e880517cdfdf23a07c2cdb13c76a1e1e366cfa49b19b5c9160e184ec34e5b"
+        },
+        "scope": "complete candidate, projection, current public semantics and exact references; no dynamic rerun; limitations in report"
+      },
+      "execution_independent_review": {
+        "status": "execution_evidence_verified_with_scope_limits",
+        "report": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_14177_qwen36_a1_execution_review_20261003.md",
+          "sha256": "sha256:0b0cd2666f19c72d3c72d4254311a3add3e19b77bbded128883f1dc29f7d2022"
+        },
+        "scope": "current closed execution/transport/full baseline/HTTP/exact references/cleanup; resource and weight limits retained"
+      },
+      "paired_request_closed": true,
+      "remaining": [],
+      "candidate_findings": []
+    }
+  ],
+  "training_eligibility": "not_established",
+  "handover_integrity_review": {
+    "status": "completed",
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_material_review_20261003.md",
+    "sha256": "sha256:a3ce78e2711f07a9f9b16014046209b61fb11056015b08b920b2e407bdd3e06e",
+    "scope": "cloud patch identity and groups only; does not re-review cloud semantics or runtime"
+  },
+  "image_preparation": {
+    "status": "image_inputs_prepared_not_task_accepted",
+    "attempt_count": 4,
+    "prepare_job": "conan14177-image-20261003-v4",
+    "wrapper_rc": 0,
+    "image_id_actual": "sha256:4ca5aeae4e588c89008e6ca335500ffa71aea77bd6eab0b7491d514534696bb0",
+    "source_image": "xingyaoww/sweb.eval.x86_64.conan-io_s_conan-14177@sha256:e83f64f4a2761078dbd377548ff8be3f9402e65c3b3ef5a6117e4fcb6d841db8",
+    "file_hashes_checked": 8,
+    "evidence_path": "runs/category2_repair_20260929/conan_cpu_20261003/image_prepare_14177_attempts.json",
+    "receipt_path": "runs/category2_repair_20260929/conan_cpu_20261003/image_evidence_14177_v1/receipt/receipt.json",
+    "task_acceptance": false
+  },
+  "cpu_host": "cpu-a",
+  "actor_gateway_port": 18190,
+  "actor_stub_port": 18191,
+  "baseline_actor": {
+    "status": "public_baseline_actor_patch_cli_verified",
+    "scope": "original registered baseline actor development only; actual patch and requested API observation, no new formal scoring",
+    "release_id": "cat2-cpu-r2e078079-swe7-git-20261003-v1",
+    "manifest_sha256": "80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9",
+    "attempt_id": "cpu-a-conan14177-baseline-actor-r5-v1",
+    "harness_exit_code": 0,
+    "command_count": 3,
+    "public_old_tests_passed": 13,
+    "uid": 54321,
+    "file_hashes_checked": 36,
+    "evidence_path": "runs/category2_repair_20260929/conan_cpu_20261003/baseline_actor_14177_r5_v1_audit.json",
+    "complete_problem_solver_delivery_verified": false
+  },
+  "resource_need": {
+    "as_of": "2026-10-03",
+    "cpu": false,
+    "gpu": false,
+    "reason": "two first model arms and whole request analyzed and acknowledged; no current CPU/GPU task; future concrete repair separately assessed; host retirement remains cross-package",
+    "retirement_ready": false,
+    "cpu_may_be_needed_if_post_probe_repair_required": true
+  },
+  "formal_publication": {
+    "status": "published_deployed_and_formal_cpu_accepted",
+    "request_id": "publish-swe-conan14177-20261003-v1",
+    "receipt_path": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r11/conan14177_publication_receipt.json",
+    "receipt_sha256": "sha256:f924f7311cf082973e4afd57bccab472a38c1b7397eb4c95b4fb5045787fcceb",
+    "release_id": "cat2-cpu-r2e089092-swe17-dask-conan-20261003-v1",
+    "manifest_sha256": "bf1d0e8a279f996a7737de775c9a30abf3401dc34840ef54bf7e56b754991bb9",
+    "host": "cpu-a"
+  },
+  "public_brief_compatibility": {
+    "current_brief": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-14177/solver_brief_20261003_v2.md",
+      "sha256": "sha256:da4b3670c36a87e03a441055e4a18c39c6d0aa1f2f2b06f5f11dabc5710957e8"
+    },
+    "delta": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-14177/public_brief_v2_delta_20261003.json",
+      "sha256": "sha256:915b95297c286229126064b7678b47b7072eea7da34c0ecb38c97aa61685467c"
+    },
+    "fresh_public_reader": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_14177_brief_v2_fresh_public_reader_20261003.md",
+      "sha256": "sha256:e80164c2175e6966f2f12fb43e1bc3fa5f022e84e08af75d7862827b3f1dda6b"
+    },
+    "code7_input_check": "passed_local_only",
+    "CPU_acceptance_reused": true,
+    "old_request_safe_close": "receipt_and_actual_GPU_queue_container_evidence_verified_cancelled_and_acked",
+    "safe_cancel_receipt": {
+      "path": "runs/ordinary_gpu_probe_20261002/receipts/swe-conan14177-r11-briefv1-20261003-v1_model_before_safe_cancel_v1.json",
+      "sha256": "sha256:18a780653a0805aba118a6db79efed60a62c53a4c7cddf26c11c540889df64c5"
+    },
+    "first_arm_runtime_delivery": {
+      "status": "full_issue_and_brief_v2_verified_in_first_actual_gateway_request_and_public_directory_selection_executed",
+      "evidence": {
+        "path": "runs/category2_repair_20260929/conan_cpu_20261003/probe_analysis_14177_coder_a1_20261003_v1/owner_readback.json",
+        "sha256": "sha256:0e7ac8d435f56b71a5c525ffcd930018cb2aa2e6dfb1318a46af674b4c23017d"
+      },
+      "scope": "Coder a1 only; Qwen not yet delivered"
+    }
+  },
+  "probe_request_history": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-14177/probe_request_20261003_r11_v1.json",
+      "sha256": "sha256:0304952ad3c9c9cb7638f0ac0ae8bfeb2eeb613e600e78afe7df01b2b05339f4",
+      "request_id": "swe-conan14177-r11-briefv1-20261003-v1",
+      "status": "cancelled_before_model_receipt_verified_and_acked",
+      "safe_cancel_receipt": {
+        "path": "runs/ordinary_gpu_probe_20261002/receipts/swe-conan14177-r11-briefv1-20261003-v1_model_before_safe_cancel_v1.json",
+        "sha256": "sha256:18a780653a0805aba118a6db79efed60a62c53a4c7cddf26c11c540889df64c5"
+      }
+    }
+  ],
+  "probe_pair_analysis": {
+    "status": "two_model_owner_analysis_complete",
+    "report": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-14177/probe_pair_analysis_20261003.md",
+      "sha256": "sha256:45d7cef189e6b90f33587d2124cee647a64b8785293398ab13d790c674c3ce10"
+    },
+    "json": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-14177/probe_pair_analysis_20261003.json",
+      "sha256": "sha256:7babe43e0a06d2dc1ecaf6f16c01e45795cc2eded9ab86bbfbe27f6ede30c48a"
+    },
+    "receipt": {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/swe-conan14177-r11-briefv2-20261003-v1_pair_execution_receipt_v1.json",
+      "sha256": "sha256:3ad116601fa17ecc48259eaa3b098388198871e3ed0eac76485906b43be6c17a"
+    },
+    "paired_request_closed": true,
+    "pending_models": []
+  }
+}

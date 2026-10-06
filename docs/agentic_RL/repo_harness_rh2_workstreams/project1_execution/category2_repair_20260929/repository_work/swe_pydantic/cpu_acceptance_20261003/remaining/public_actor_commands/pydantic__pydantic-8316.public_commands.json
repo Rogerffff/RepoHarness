@@ -1,0 +1,23 @@
+[
+  {
+    "id": "public_identity",
+    "cmd": "python - <<'PY'\nimport sys,os,json,hashlib,importlib,pathlib\nimport pydantic,pydantic_core\nprint('RH2_SYS_EXECUTABLE=' + sys.executable)\nprint('RH2_CONDA=' + str(os.environ.get('CONDA_DEFAULT_ENV')))\nprint('PY_CHECK',json.dumps(dict(uid=os.getuid(),python=sys.executable,version=sys.version,pydantic_file=pydantic.__file__,core=pydantic_core.__version__)))\nassert os.getuid()==54321\nassert sys.version_info[:2]==(3,8)\nassert sys.executable=='/opt/miniconda3/envs/testbed/bin/python'\nassert pydantic.__file__=='/testbed/pydantic/__init__.py'\nassert pydantic_core.__version__=='2.14.5'\nexpected={'pydantic/alias_generators.py': 'f7917dc7d3f56f3ccbed9df2e45d81bc417d48c504893fabebd4969496a8ff71'}\nfor rel,sha in expected.items():\n    p=pathlib.Path('/testbed')/rel\n    assert hashlib.sha256(p.read_bytes()).hexdigest()==sha\n    assert os.access(p,os.W_OK)\nfor name in ['pydantic.alias_generators']:\n    assert importlib.import_module(name).__file__=='/testbed/'+name.replace('.','/')+'.py'\nPY",
+    "timeout_s": 90,
+    "expect": "zero",
+    "purpose": "记录实际公开actor UID/Python/core与源码导入及可写性"
+  },
+  {
+    "id": "public_goal",
+    "cmd": "python - <<'PY'\nfrom pydantic.alias_generators import to_snake\nactual=to_snake('HTTPResponse')\nprint('PUBLIC_ORIGINAL_RESULT',actual)\ntarget_equals=actual=='http_response'\nprint('TARGET_EQUALS',target_equals)\nassert target_equals, 'PUBLIC_ORIGINAL_TARGET_REPRODUCED'\nPY",
+    "timeout_s": 90,
+    "expect": "nonzero",
+    "purpose": "只复现原公开问题示例，不带私有新增断言"
+  },
+  {
+    "id": "public_existing",
+    "cmd": "python -m pytest -q tests/test_utils.py::test_snake2camel_start_lower",
+    "timeout_s": 180,
+    "expect": "zero",
+    "purpose": "已存在公开测试的小范围开发路径"
+  }
+]

@@ -1,0 +1,48 @@
+{
+  "schema": "coveragepy.cpu_matrix.v1",
+  "instance_id": "coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9",
+  "status": "planned_not_executed",
+  "formal_entry": "冻结材料后复用 RH2 正式 R2E grading manager；不得用本文件或私有脚本替代正式评分",
+  "resources": "使用正式 profile 和远端全机队列名额，不另复制资源数值",
+  "rows": [
+    {
+      "candidate": "noop",
+      "patch": null,
+      "expected_reward": 0,
+      "purpose": "未修复基线",
+      "execution_status": "not_run"
+    },
+    {
+      "candidate": "gold",
+      "patch": "runs/r2e_static_prep_20260924/v3/private/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/gold.patch",
+      "expected_reward": 1,
+      "purpose": "参考正对照",
+      "execution_status": "not_run"
+    },
+    {
+      "candidate": "CE3",
+      "patch": "runs/r2e_actor_20260925/grader_cands/coveragepy_5dbb_CE3_dedupe_by_slug.patch",
+      "expected_reward": 1,
+      "purpose": "使用原始 CE 补丁；云端重建版只作历史对照",
+      "execution_status": "not_run",
+      "historical_reconstruction": "rh2/experiments/category3_cloud_20260929/cov5dbbe/CE3.patch"
+    },
+    {
+      "candidate": "CE1",
+      "patch": "runs/r2e_actor_20260925/grader_cands/coveragepy_5dbb_CE1_dedupe_by_message.patch",
+      "expected_reward": 0,
+      "purpose": "使用原始 CE 补丁；云端重建版只作历史对照",
+      "execution_status": "not_run",
+      "historical_reconstruction": "rh2/experiments/category3_cloud_20260929/cov5dbbe/CE1.patch"
+    },
+    {
+      "candidate": "CE4",
+      "patch": "runs/r2e_actor_20260925/grader_cands/coveragepy_5dbb_CE4_first_once_silences_all.patch",
+      "expected_reward": 0,
+      "purpose": "使用原始 CE 补丁；云端重建版只作历史对照",
+      "execution_status": "not_run",
+      "historical_reconstruction": "rh2/experiments/category3_cloud_20260929/cov5dbbe/CE4.patch"
+    }
+  ],
+  "reuse_policy": "038/039 与私有评分材料保持字节不变，可复用 formal_v5；新题面需正式交付核对。换宿主做关键身份/导入与代表性正式往返，不机械重跑全部五行。"
+}

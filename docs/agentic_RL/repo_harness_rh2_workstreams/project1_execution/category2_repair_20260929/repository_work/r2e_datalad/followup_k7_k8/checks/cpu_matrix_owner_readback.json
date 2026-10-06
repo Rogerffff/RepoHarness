@@ -1,0 +1,83 @@
+{
+  "status": "pass",
+  "scope": "owner_original_artifact_readback_not_independent_review",
+  "release_id": "cat2-cpu-r2e088-swe12-git-20261003-v1",
+  "revision_id": "r2e-mr-088",
+  "image_id": "sha256:6cb609c6ef96764ae05e502b535a786aa30e45d594f971f604c881c1cbd2317a",
+  "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+  "recipe_sha256": "sha256:0385a5051574bd15668ddcc8f3d105c74edcaceff6be4a4a942d6a4d8bde46b1",
+  "hidden_tree_sha256": "sha256:2a62382c32a9def6a9ccf42c27fb938b7e4c0c0747805bafeaa605afce6b4724",
+  "job_returncode": 0,
+  "results": [
+    {
+      "candidate": "noop",
+      "raw_reward": 0.0,
+      "expected_match": 15,
+      "expected_total": 17,
+      "mismatched": [
+        "test_is_url",
+        "test_url_samples"
+      ],
+      "patch_sha256": null,
+      "delivered_paths": [],
+      "ledger_ref": "runs/category2_repair_20260929/r2e_datalad_k7k8_cpu_20261003/cpu_c_evidence/matrix/noop/ledger.jsonl",
+      "ledger_sha256": "sha256:98a8b31312ba2ef0ec3b3cbeca65826f4d0e5fb401b0960fda5ad4bd99dc75b0",
+      "log_ref": "runs/category2_repair_20260929/r2e_datalad_k7k8_cpu_20261003/cpu_c_evidence/matrix/noop/eval_logs/evallog_replay-datalad-k7k8-2026_0aaf3c1c.eval.log",
+      "log_sha256": "sha256:24bf6897a3d17c5742ce72cc4ad68cae60c0a65cfb86bf9f31138a37e76fe9e0",
+      "grader_setup_seconds": 43.414997,
+      "test_seconds": 2.809,
+      "peak_memory_mb": 557.906,
+      "test_command_rc": 1,
+      "driver_exit_code": 0,
+      "candidate_and_grader_cleanup": "confirmed",
+      "failure_assertion_excerpt": ">       _check_url('weired_url:/', scheme='ssh:implicit', hostname='weired_url', path='/')\n>           raise AssertionError(msg or \"%r != %r\" % (a, b))\nE           AssertionError: 'file:implicit' != 'ssh:implicit'\n>       ok_(is_url('weired_url:/'))\n>           raise AssertionError(msg)\nE           AssertionError: None\n>       eq_(get_local_file_url('/a~'), 'file:///a%7E')\n>           raise AssertionError(msg or \"%r != %r\" % (a, b))\nE           AssertionError: 'file:///a~' != 'file:///a%7E'"
+    },
+    {
+      "candidate": "C-A",
+      "raw_reward": 1.0,
+      "expected_match": 17,
+      "expected_total": 17,
+      "mismatched": [],
+      "patch_sha256": "sha256:a66d344f4e2075ea59b4004005e8346968ece41f2f14488776c81f0dae0eb72b",
+      "delivered_paths": [
+        "datalad/support/network.py"
+      ],
+      "ledger_ref": "runs/category2_repair_20260929/r2e_datalad_k7k8_cpu_20261003/cpu_c_evidence/matrix/C-A/ledger.jsonl",
+      "ledger_sha256": "sha256:0cb7748d7ebb56c00d3619c292414714861ee34ec27c37319859f58ee671a4ea",
+      "log_ref": "runs/category2_repair_20260929/r2e_datalad_k7k8_cpu_20261003/cpu_c_evidence/matrix/C-A/eval_logs/evallog_replay-datalad-k7k8-2026_963a10e9.eval.log",
+      "log_sha256": "sha256:0c6ba2d029627770b2c90ebf0f5cd00c8e34c9d8622f63cca60bcc476ee708cc",
+      "grader_setup_seconds": 44.174839,
+      "test_seconds": 3.203,
+      "peak_memory_mb": 560.18,
+      "test_command_rc": 1,
+      "driver_exit_code": 0,
+      "candidate_and_grader_cleanup": "confirmed",
+      "failure_assertion_excerpt": ">       eq_(get_local_file_url('/a~'), 'file:///a%7E')\n>           raise AssertionError(msg or \"%r != %r\" % (a, b))\nE           AssertionError: 'file:///a~' != 'file:///a%7E'"
+    },
+    {
+      "candidate": "gold",
+      "raw_reward": 0.0,
+      "expected_match": 15,
+      "expected_total": 17,
+      "mismatched": [
+        "test_parse_url_opts",
+        "test_url_samples"
+      ],
+      "patch_sha256": "sha256:0ceae26933f982203fd7afb8c9fbe1f0761c948c49f2ed4ded076e087493c728",
+      "delivered_paths": [
+        "datalad/support/network.py"
+      ],
+      "ledger_ref": "runs/category2_repair_20260929/r2e_datalad_k7k8_cpu_20261003/cpu_c_evidence/matrix/gold/ledger.jsonl",
+      "ledger_sha256": "sha256:a103e8d9cba05a8516d96fe160171c57dc20a0e6bd48d7d00032ebf5f97a2a4c",
+      "log_ref": "runs/category2_repair_20260929/r2e_datalad_k7k8_cpu_20261003/cpu_c_evidence/matrix/gold/eval_logs/evallog_replay-datalad-k7k8-2026_0651771c.eval.log",
+      "log_sha256": "sha256:29af8e5e2e1b83e603efd67736fc95a5d632ebcafc11d9f03c7dfc19b8c85b58",
+      "grader_setup_seconds": 45.086576,
+      "test_seconds": 3.099,
+      "peak_memory_mb": 547.465,
+      "test_command_rc": 1,
+      "driver_exit_code": 0,
+      "candidate_and_grader_cleanup": "confirmed",
+      "failure_assertion_excerpt": ">       eq_(parse_url_opts('openfmri_s3?_url=s3://b/k'),\n>                                % str(fields))\nE               ValueError: Thought that this url would point to host:path but got query and fragments: {'scheme': 'ssh:implicit', 'username': '', 'password': '', 'hostname': '', 'port': '', 'path': 'openfmri_s3', 'query': '_url=s3://b/k', 'fragment': ''}\n>       _check_url('/some/dir:x', scheme='file:implicit', path='/some/dir:x')\n>           raise AssertionError(msg or \"%r != %r\" % (a, b))\nE           AssertionError: 'ssh:implicit' != 'file:implicit'\n>       eq_(get_local_file_url('/a~'), 'file:///a%7E')\n>           raise AssertionError(msg or \"%r != %r\" % (a, b))\nE           AssertionError: 'file:///a~' != 'file:///a%7E'"
+    }
+  ]
+}

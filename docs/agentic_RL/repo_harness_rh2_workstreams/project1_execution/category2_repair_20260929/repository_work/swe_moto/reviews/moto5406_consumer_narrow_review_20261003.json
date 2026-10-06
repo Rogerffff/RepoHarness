@@ -1,0 +1,41 @@
+{
+  "schema": "moto5406.non_author_consumer_narrow_review.v1",
+  "as_of": "2026-10-03",
+  "review_scope": "旧最终隔离实现的 R-f／已有 P2P 联动、consumer 身份拒绝和 runner 静态 prepare 接缝；不是 fresh 盲审或新发布包验收",
+  "source_root": "runs/category2_repair_20260929/d6_moto5406_implementation_v1/code_v1",
+  "code_inventory_sha256": "180d02a1ccfe401153e1a5f600fb6aa2509fd699e6cd1b868686da58dc9ca689",
+  "reviewed_code_files": {
+    "rh2/src/repoharness2/envpack/bundles_v2.py": "65b20388d4374a3756cab0ed63f9b91a8c44458cfa6fb611400b9126e5c43933",
+    "rh2/src/repoharness2/envpack/swe_material_revisions.py": "d3f94cbd6e06f5d9e72b4ee50b47e44b08b7733386dabbb4bf9d348dd7be409e",
+    "rh2/src/repoharness2/envpack/spec_vendor.py": "8a3c11c617d09e3b75067e1b732b81cf07be1ea72f24aae523884586a500fa29",
+    "rh2/tests/envpack/test_moto5406_existing_p2p_revision.py": "04c8486ba5fda77f0eaa580adb3815753f2cb6f191dc5dc014e270b05c3f2507"
+  },
+  "tool_files": {
+    "public_commands.json": "978d644ce2f5ed87cbe805c7621f2635e411b100182d3ba694f1aa66bc08e001",
+    "actor_acceptance.py": "3e930c9a5588df2bd0e8e51edbf9f44381c2650dfa5be646ec3df8c9318a6ba7",
+    "actor_to_grader.py": "0c81b2a03da671995dee8f97d935430d8537f7f3a15827681ec793814aad54d2",
+    "replay_acceptance.py": "3e09534db2e184c05461f102c4f905617221a957c0c0ed50b4011632af3d925b",
+    "common.py": "134fff2db431c300158911f01778017ed73500ae796cbac25fdf47c2ac99c7d7",
+    "local_static_check.py": "8d4bfd164dbbda34cddcecb8c44d365bd1c2364f6b7ab439f380693e16d0d5dc"
+  },
+  "targeted_local_tests": {
+    "passed": 22,
+    "returncode": 0,
+    "stdout": "runs/category2_repair_20260929/moto_cpu_20261003/consumer_review_v1/targeted_tests.stdout"
+  },
+  "actual_default_runner_prepare": {
+    "returncode": 0,
+    "status": "prepared_static_join_only_no_docker",
+    "record": "runs/category2_repair_20260929/moto_cpu_20261003/consumer_review_v1/runner_prepare/recordmanifest.json"
+  },
+  "must_fix_findings": [],
+  "runtime_tests_executed": false,
+  "formal_release": false,
+  "formal_cpu_accepted": false,
+  "actor_checked": false,
+  "pending": [
+    "新 release 候选移植及其 pins／producer 的集成核对与发布",
+    "运行工具保持 DRAFT_PENDING_PRODUCER=True；发布者冻结最终可执行版本",
+    "新宿主 28 参考 0/1/0、公开示例对照、真实 CC 消息／freeze／独立 grader 和清理"
+  ]
+}

@@ -1,0 +1,138 @@
+{
+  "as_of": "2026-10-03",
+  "scope": "作者回读真实CC公开开发命令；不是基座模型能力探针或新题面实际solver交付证明",
+  "status": "author_actor_command_checks_passed_non_author_runtime_review_pending",
+  "job": "mypy-actor-r1-20261002T180207Z-3a9dcf",
+  "instance_id": "python__mypy-15184",
+  "release_id": "cat2-cpu-r2e078079-swe7-git-20261003-v1",
+  "release_manifest_sha256": "80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9",
+  "host_runtime": "runtime_cpu_v2/rh2/.venv/bin/python",
+  "actor_image_id_actual": "sha256:76b5b2646a9eb134e6349ee8e214bb84eb6030c34a234e167351acdec5dd8c54",
+  "head": "13f35ad0915e70c2c299e2eb308968c86117132d",
+  "actual_uid": 54321,
+  "activation": {
+    "role": "rollout",
+    "container_name": "rh2acc-python__mypy-15184-2a696bc8",
+    "ok": true,
+    "violations": [],
+    "inspect_facts": {},
+    "probe_facts": {
+      "ACT_EXPECTED_PREFIX": "/opt/miniconda3/envs/testbed",
+      "ACT_PYTHON": "/opt/miniconda3/envs/testbed/bin/python",
+      "ACT_SYS_EXECUTABLE": "/opt/miniconda3/envs/testbed/bin/python",
+      "ACT_SYS_PREFIX": "/opt/miniconda3/envs/testbed",
+      "ACT_CONDA_DEFAULT_ENV": "testbed",
+      "ACT_VIRTUAL_ENV": "",
+      "RH2_ACTIVATION_PROBE_OK": "1"
+    },
+    "seconds": 0.4839
+  },
+  "prelaunch": {
+    "ok": true,
+    "violations": [],
+    "mounts": [],
+    "binds": [],
+    "network_constraints_verified": true
+  },
+  "effective_profile": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmp_tmpfs_bytes": 1073741824,
+    "home_tmpfs_bytes": 268435456,
+    "writable_layer_quota_bytes": 8589934592,
+    "pids_limit": 512
+  },
+  "harness_exit_code": 0,
+  "commands": {
+    "identity": {
+      "id": "identity",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 310,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "真实actor UID、解释器与源码来源；不是新题面交付证明"
+    },
+    "public_repro": {
+      "id": "public_repro",
+      "rc": 1,
+      "status": "nonzero",
+      "expect": "nonzero",
+      "matches_expect": true,
+      "output_bytes": 113,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "公开base复现；直接记录mypy退出码，末尾没有grep/tail覆盖"
+    },
+    "public_collect": {
+      "id": "public_collect",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 603,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "公开case真实节点收集；不等于新私有节点登记"
+    },
+    "public_regression": {
+      "id": "public_regression",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 141,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "已有公开小组回归；执行到额外case不增加评分参考"
+    },
+    "tree": {
+      "id": "tree",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 41,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "HEAD与工作区变动"
+    }
+  },
+  "public_collected_nodes": [
+    "mypy/test/testcheck.py::TypeCheckSuite::check-selftype.test::testTypingSelfAssertType",
+    "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType",
+    "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertTypeGeneric",
+    "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertTypeUncheckedFunction",
+    "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertTypeUncheckedFunctionWithUntypedCheck",
+    "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertTypeNoPromoteUnion"
+  ],
+  "public_regression_passed": 6,
+  "public_reproduction": "15184新公开复现仍报C/C，mypy退出1",
+  "initial_worktree": "HEAD=13f35ad0915e70c2c299e2eb308968c86117132d\nPORCELAIN_BEGIN\nPORCELAIN_RC=0\n",
+  "worktree_after": "13f35ad0915e70c2c299e2eb308968c86117132d\n",
+  "dirty_explanation": "初态及运行后干净",
+  "untested_inherited_check": {
+    "bashenv_denied_for_agent": false,
+    "interpretation": "冻结normal场景查找RH2_BASHENV_WRITE=DENIED标记；本题公开命令清单未执行此尝试，False表示未测，不能声称该check通过。保护文件只读性由prelaunch ACTIVATION_WRITE=DENIED另证。"
+  },
+  "cleanup": {
+    "container_rm": 0,
+    "network_failures": [],
+    "relay_failures": [],
+    "stub_rc": 0,
+    "labeled_containers_left": [],
+    "labeled_networks_left": [],
+    "residual_after_force": []
+  },
+  "evidence_root": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy-actor-r1-20261002T180207Z-3a9dcf/attempt/python__mypy-15184",
+  "evidence_sha256": {
+    "attempt.json": "sha256:048c561135d77f93a0276dd86affe4a899cc01b7061a2597f0617fbdd4235cee",
+    "identity.out": "sha256:d62c134879c36340fa165d8110a09fce55d400a685c8583e08330ddf2ed3880e",
+    "public_repro.out": "sha256:46d11b67e48cec8d4d31f89210f76838d007ae964084b4f5e161629b36d70155",
+    "public_collect.out": "sha256:c3273133de3297cf6ae2e6722982c225c5e9a9a652366dc6f64e192431822679",
+    "public_regression.out": "sha256:6375632d1944791ac881419c7a46f098c1bf458b063231a54a7877e9eae4a99d",
+    "tree.out": "sha256:244923da52fbe4fb3d5f047dd31acf691d7ca1464ef334e498d35e58b10d9f0e"
+  }
+}

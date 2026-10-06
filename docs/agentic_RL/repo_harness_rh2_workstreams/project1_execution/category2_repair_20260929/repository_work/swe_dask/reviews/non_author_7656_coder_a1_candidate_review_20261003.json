@@ -1,0 +1,399 @@
+{
+  "schema_id": "swe_dask.non_author_candidate_review.v1",
+  "review_id": "non_author_7656_coder_a1_candidate_review_20261003",
+  "as_of": "2026-10-03",
+  "reviewer_role": "non_author_independent_context",
+  "job_id": "gpu1003-dask7656-coder-a1",
+  "instance_id": "dask__dask-7656",
+  "base_commit": "07d5ad0ab1bc8903554b37453f02cc8024460f2a",
+  "scope": "只本次Coder候选的正式批准范围语义、完整已有轨迹中的验证与失败结论及评分污染面；不重复全量GPU执行审查。",
+  "method": {
+    "new_cpu_or_gpu_runs": false,
+    "candidate_execution": false,
+    "archive_extraction": false,
+    "safe_tar_regular_member_reads": [
+      {
+        "name": "dask/delayed.py",
+        "bytes": 22278,
+        "sha256": "dfb4916f344567c5d4bda3a0473ac7f4dd5cf90fdebb75ce0e5dc4428edc52f8",
+        "read_method": "TarFile.extractfile regular member only; no extraction or execution"
+      },
+      {
+        "name": "dask/tests/test_delayed.py",
+        "bytes": 19254,
+        "sha256": "6ae2af0d5d911d1c573755f7a62ec487d26aeaf0edc2089fa6c4be99d8e1c672",
+        "read_method": "TarFile.extractfile regular member only; no extraction or execution"
+      },
+      {
+        "name": "dask/utils.py",
+        "bytes": 45854,
+        "sha256": "12003a0974ddc31bcfd0d41a184437aa5393f68628e6cf3588339f19d60c1484",
+        "read_method": "TarFile.extractfile regular member only; no extraction or execution"
+      }
+    ],
+    "shared_source_modified": false,
+    "originals_modified": false,
+    "trajectory_lines": 403,
+    "canonical_assistant_tool_result_content_read_in_full": true,
+    "trajectory_mirror_bytes_equal": true
+  },
+  "verdict": {
+    "formal_scope_correct": true,
+    "raw_reward": 1.0,
+    "reward_supported_by_semantics_and_references": true,
+    "status": "accept_for_single_coder_diagnostic_with_reporting_caveat",
+    "current_diagnostic_blockers": [],
+    "new_regression_observed_in_approved_scope": false,
+    "score_bypass_evidence_found": false,
+    "formal_test_pollution_evidence_found": false,
+    "candidate_adds_test_like_helpers": true,
+    "whole_two_model_task_complete": false,
+    "training_qualified": false,
+    "holdout_qualified": false
+  },
+  "approved_scope": {
+    "required": [
+      "缺失的init=False字段不妨碍delayed输入",
+      "原dataclass类型传入被调函数",
+      "init=True字段实际值正确且嵌套Delayed求值",
+      "同类init=True默认a=3对象可用"
+    ],
+    "not_added": [
+      "post_init额外行为",
+      "已存在init=False字段的状态恢复或重建支持"
+    ],
+    "basis": {
+      "task_card_lines": [
+        5,
+        7
+      ],
+      "effective_patch_lines": [
+        9,
+        12,
+        20,
+        21,
+        27,
+        29,
+        30
+      ]
+    },
+    "effective_patch_sha256": "d3b711c9eb53cbdb6477314eae82f3ae5ca49e5c052a352c7da3959289c287db"
+  },
+  "frozen_patch": {
+    "file_sha256": "c0498bb1a740d47107fd656e7d8d35bb72e0ad34dadc8c5ce7a2ac67bfed8658",
+    "canonical_sorted_compact_json_sha256": "4191ab2dc23721fecbfbbc446dba1ae7122a1e28c97e55e5525e01555f405114",
+    "entries": [
+      {
+        "path": "README.md",
+        "operation": "add",
+        "object_type": "regular",
+        "mode": "100644",
+        "content_digest": "sha256:03b1e1b6e568ec2d955b6c4d2d1c4524c32fc9ff877b95e663e9c0274e8f6c54"
+      },
+      {
+        "path": "comprehensive_test.py",
+        "operation": "add",
+        "object_type": "regular",
+        "mode": "100644",
+        "content_digest": "sha256:6f4b6ca72cf2fc50dd6cea72b6d2629a2ce842257713d12458351f4bd7236b29"
+      },
+      {
+        "path": "dask/delayed.py",
+        "operation": "modify",
+        "object_type": "regular",
+        "mode": "100644",
+        "content_digest": "sha256:dc88f58eb4a341bd6bb67dcbe88a393427168997d9312e5d4d97df8c4da7f74d"
+      },
+      {
+        "path": "debug_dataclass.py",
+        "operation": "add",
+        "object_type": "regular",
+        "mode": "100644",
+        "content_digest": "sha256:938eddf610e2261099fe6c9fe76592b335c3e2569b1a3009c421661e73f43288"
+      },
+      {
+        "path": "exact_issue_test.py",
+        "operation": "add",
+        "object_type": "regular",
+        "mode": "100644",
+        "content_digest": "sha256:4c3b7fb85ef3f2868a08251fff938d7143a5322a490df12319e9f79ff0542b91"
+      },
+      {
+        "path": "test_dataclass_init_false.py",
+        "operation": "add",
+        "object_type": "regular",
+        "mode": "100644",
+        "content_digest": "sha256:011b8cf7d265b64fe21368f9733be9d534509d54882f197fef0db6b2c1bc5beb"
+      },
+      {
+        "path": "test_dataclass_issue.py",
+        "operation": "add",
+        "object_type": "regular",
+        "mode": "100644",
+        "content_digest": "sha256:c5acb34797f2f755ce9037a41edc07d93a16d828139699f55c753da4336f3ea7"
+      },
+      {
+        "path": "test_set_field.py",
+        "operation": "add",
+        "object_type": "regular",
+        "mode": "100644",
+        "content_digest": "sha256:e08ca8dd8a37d09f4a1e837d31f8870f72af8976001a0cb6f939cbb139e921b5"
+      }
+    ],
+    "runtime_entry_path": "dask/delayed.py",
+    "runtime_entry_content_sha256": "dc88f58eb4a341bd6bb67dcbe88a393427168997d9312e5d4d97df8c4da7f74d",
+    "runtime_code_lines": {
+      "field_filter": 114,
+      "recursive_unpack": [
+        115,
+        117
+      ],
+      "reconstruct_original_type": 119,
+      "original_type_assignment": 91
+    },
+    "all_8_entries_projected": true,
+    "helper_last_write_bytes_equal_to_frozen": true
+  },
+  "formal_validation": {
+    "revision_id": "dask7656-dataclass-argument-v1",
+    "f2p": {
+      "passed": 1,
+      "total": 1
+    },
+    "p2p": {
+      "passed": 48,
+      "total": 48
+    },
+    "missing": [],
+    "skipped": [],
+    "unaccounted": [],
+    "independently_matched_49_reference_PASSED_log_entries": true,
+    "collected_tests": 52,
+    "passed_tests": 50,
+    "xfailed_tests": 2,
+    "non_reference_passed_tests": 1,
+    "xfailed_non_references": [
+      "dask/tests/test_delayed.py::test_pickle[f1]",
+      "dask/tests/test_delayed.py::test_pickle[f2]"
+    ],
+    "eval_log_lines": {
+      "trusted_formal_test_restore_and_apply": [
+        324,
+        340
+      ],
+      "test_command": 639,
+      "f2p_pass": [
+        650,
+        712
+      ],
+      "summary": 762
+    }
+  },
+  "observed_extra_failures": [
+    {
+      "kind": "default_init_false_reconstruction",
+      "trajectory_lines": [
+        110,
+        119,
+        123,
+        333,
+        342,
+        346
+      ],
+      "frozen_helper": "test_dataclass_init_false.py",
+      "helper_lines": [
+        35,
+        62
+      ],
+      "outcome": "unexpected keyword field2; MixedFields also unexpected keyword init_false_field",
+      "is_required_now": false,
+      "regression_classification": "原有构造器重建缺口；基线已有字段也作为kwargs传入，混合缺失字段时基线更早AttributeError",
+      "baseline_classification_basis": "safe baseline source comparison; no new baseline run"
+    },
+    {
+      "kind": "manually_set_init_false_reconstruction",
+      "trajectory_lines": [
+        202,
+        211,
+        215,
+        224,
+        246,
+        250
+      ],
+      "frozen_helper": "test_set_field.py",
+      "helper_lines": [
+        31,
+        40
+      ],
+      "outcome": "unexpected keyword primary_key",
+      "is_required_now": false,
+      "regression_classification": "原有缺口未修；最终第二次Edit只挪动同一筛选并加注释"
+    },
+    {
+      "kind": "debug_script_error",
+      "trajectory_lines": [
+        145,
+        154,
+        158,
+        167,
+        176,
+        180
+      ],
+      "outcome": "Field.has_default does not exist; debug script corrected",
+      "production_patch_failure": false
+    }
+  ],
+  "validation_claim_assessment": {
+    "exact_public_example_claim": "supported by trajectory 377/381",
+    "50_passed_2_xfailed_claim": "supported by trajectory 355/359; actor public tests not private revision",
+    "general_backward_compatibility_claim": "too broad; only tested public delayed file supported",
+    "known_extra_failure_in_final_summary": "omitted at399/403 although acknowledged at386",
+    "formal_private_scope_validation": "provided separately by actual grader, not by actor self-test"
+  },
+  "score_hygiene": {
+    "formal_test_modified_by_candidate": false,
+    "conftest_or_fixture_touched": false,
+    "pytest_config_or_runner_modified": false,
+    "report_hook_or_test_name_special_case_found": false,
+    "targeted_test_command": "pytest -n0 -rA --color=no dask/tests/test_delayed.py",
+    "added_root_helpers_collected_in_this_grade": false,
+    "runner_integrity_changed": false,
+    "diagnostics_test_like_paths": [
+      "comprehensive_test.py",
+      "exact_issue_test.py",
+      "test_dataclass_init_false.py",
+      "test_dataclass_issue.py",
+      "test_set_field.py"
+    ],
+    "caveat": "report.test_files_modified=false不代表没有新增test-like helper；全8项仍被原样评分。"
+  },
+  "findings": [
+    {
+      "id": "R1",
+      "priority": "P2",
+      "category": "validation_reporting",
+      "blocking_current_diagnostic_use": false,
+      "current_behavior": "模型最终回答及README省略已知默认或手动设置init=False字段仍失败，概括兼容性过宽。",
+      "invariant": "诊断结论须匹配实际验证范围并保留已知失败。",
+      "evidence": {
+        "trajectory_lines": [
+          123,
+          215,
+          250,
+          346,
+          386,
+          399,
+          403
+        ],
+        "frozen_paths_and_lines": {
+          "dask/delayed.py": [
+            114,
+            119
+          ],
+          "README.md": [
+            27,
+            29
+          ],
+          "test_dataclass_init_false.py": [
+            35,
+            62
+          ]
+        }
+      },
+      "impact": "可能将批准本题范围通过误读为全部dataclass init=False重建已支持。",
+      "recommended_disposition": "题主本次诊断收口纠正表述；额外语义留作原有缺口，不自动扩大正式oracle。",
+      "existing_reproduction_commands": [
+        "python test_dataclass_init_false.py (trajectory342)",
+        "python test_set_field.py (trajectory246)"
+      ],
+      "acceptance_condition": "题主摘要注明正式范围通过、已有字段重建仍失败且非已证新回归、单样本及其它模型/训练actor限制；保留原件。"
+    }
+  ],
+  "limits": [
+    "单Coder单样本，不能估计成功率或稳定性。",
+    "Qwen另一模型尚未运行，不能记双模型整题完成。",
+    "正式训练typed actor尚未接入，诊断image_override不等于训练actor正式注册。",
+    "未新跑CPU/GPU、未执行候选；额外输入的基线归因来自同源源码比较。",
+    "已有GPU执行审查仅用于执行范围证据，不作为候选语义结论。",
+    "不授训练或留出资格，不新增正式材料要求或准入规则。"
+  ],
+  "stop_condition": "当前单Coder诊断用途无语义阻断；只需题主记录R1和限制。额外已有字段重建语义若以后扩展，另按原决策机制办理，当前不为额外反例持续阻塞。",
+  "evidence": {
+    "task_card": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7656/card.md",
+      "sha256": "debfa2938edc375c0284d97c6e1d251adac9eef7f5b75c201172a9315190c993",
+      "bytes": 3864
+    },
+    "effective_test_patch": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7656/effective_test.patch",
+      "sha256": "d3b711c9eb53cbdb6477314eae82f3ae5ca49e5c052a352c7da3959289c287db",
+      "bytes": 1149
+    },
+    "acceptance_matrix": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7656/acceptance_matrix.json",
+      "sha256": "5da46b2ddb0407b61492c546a323a12b6b55f6417b48fd91044ff83a3a856f8f",
+      "bytes": 3137
+    },
+    "actual_prompt": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v17/results/gpu1003-dask7656-coder-a1/attempt/prompt.txt",
+      "sha256": "aaadede8cfa6a5dc0be3e9ae673951e5ed1f0067206c03ddeb90ce89dcb1d7ef",
+      "bytes": 3199
+    },
+    "frozen_patch": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v17/results/gpu1003-dask7656-coder-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "c0498bb1a740d47107fd656e7d8d35bb72e0ad34dadc8c5ce7a2ac67bfed8658",
+      "bytes": 43254
+    },
+    "baseline_tar": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v17/results/gpu1003-dask7656-coder-a1/attempt/frozen/baseline.tar",
+      "sha256": "99bfbf420a4a4d585a71ac780ac5c247883cf8f7e939b84ad64cebd2504a569b",
+      "bytes": 9144320
+    },
+    "baseline_manifest": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v17/results/gpu1003-dask7656-coder-a1/attempt/frozen/baseline_manifest.json",
+      "sha256": "0ccd7771fbeed41045d8651f3457ce6580cf0f991112a0b4b255b344f923fc92",
+      "bytes": 101793
+    },
+    "candidate_diff": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v17/results/gpu1003-dask7656-coder-a1/attempt/candidate/dask__dask-7656.diff",
+      "sha256": "6f87500991135e6e1a12a893c697ba746f37c249456a4a99ff109dbfcf7259ff",
+      "bytes": 10948
+    },
+    "trajectory": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v17/results/gpu1003-dask7656-coder-a1/attempt/trajectory.jsonl",
+      "sha256": "b8fc1465395a130f394d3d129c041304cf8280389181c204fe1f58464e35da59",
+      "bytes": 330529
+    },
+    "grading_report": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v17/results/gpu1003-dask7656-coder-a1/grading/report.json",
+      "sha256": "4a91d34d62801b74d498c81abbb1135c7373b90d9b4b2013ddbaf67dfd79dcfa",
+      "bytes": 1803
+    },
+    "grading_status": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v17/results/gpu1003-dask7656-coder-a1/grading/status.json",
+      "sha256": "1c4ae56158c29e499c7d1c5519ab247c536e07a393a13719fb73a68438a94e95",
+      "bytes": 2587
+    },
+    "scoring_projection": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v17/results/gpu1003-dask7656-coder-a1/grading/projection.json",
+      "sha256": "37dff403525b8f44a7d914e5e67ec4be7babe142dbc5469dcac7bacbf345a169",
+      "bytes": 508
+    },
+    "grading_diagnostics": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v17/results/gpu1003-dask7656-coder-a1/grading/eval_logs/evallog_gpu1003-dask7656-coder-a_87804fb0.diagnostics.json",
+      "sha256": "69d0ee924d424979ce717e7808d83c09753c282122a6ec771bd2fecf7d4f315f",
+      "bytes": 11031
+    },
+    "eval_log": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v17/results/gpu1003-dask7656-coder-a1/grading/eval_logs/evallog_gpu1003-dask7656-coder-a_87804fb0.eval.log",
+      "sha256": "e927a54e861424c8cd9d05e86af6186ff11c22fb97cb7bf8ed2269a19d051a16",
+      "bytes": 37599
+    },
+    "execution_review": {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/dask7656_coder_a1_execution_review_v1.json",
+      "sha256": "6d76e0aac1ba75c642f252a686dd6be1051290a95dc7a5ecd1335f9254f34307",
+      "bytes": 26464
+    }
+  },
+  "execution_review_scope": "只此次首Coder执行与冻结补丁/公开交付/正式逐参考/身份/清理/有限资源，不做题级候选语义终审或CPU重跑。"
+}

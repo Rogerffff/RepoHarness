@@ -1,0 +1,871 @@
+============================= test session starts ==============================
+platform linux -- Python 3.9.19, pytest-7.4.4, pluggy-1.5.0
+rootdir: /testbed
+configfile: setup.cfg
+plugins: rerunfailures-14.0, xdist-3.6.1, cov-5.0.0
+collected 14 items
+
+dask/array/tests/test_c3_rev_cases_tmp.py FFFFFFFFFFFFF.                 [100%]
+
+=================================== FAILURES ===================================
+__________________________________ test_orig ___________________________________
+
+    def test_orig():
+        array = da.from_array(np.zeros((3, 0)))
+        expected = np.zeros((3, 0))[[0]]
+>       assert_eq(array[[0]], expected)
+
+dask/array/tests/test_c3_rev_cases_tmp.py:20: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/utils.py:279: in assert_eq
+    a, adt, a_meta, a_computed = _get_dt_meta_computed(
+dask/array/utils.py:238: in _get_dt_meta_computed
+    _check_dsk(x.dask)
+dask/array/utils.py:201: in _check_dsk
+    dsk.validate()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = HighLevelGraph with 2 layers.
+<dask.highlevelgraph.HighLevelGraph object at 0x7fbe678cf400>
+ 0. array-87be02fd370f73dc8948a00205af12c0
+ 1. getitem-699560f8818a91e0d5306373fc04406d
+
+
+    def validate(self):
+        # Check dependencies
+        for layer_name, deps in self.dependencies.items():
+            if layer_name not in self.layers:
+                raise ValueError(
+                    f"dependencies[{repr(layer_name)}] not found in layers"
+                )
+            for dep in deps:
+                if dep not in self.dependencies:
+                    raise ValueError(f"{repr(dep)} not found in dependencies")
+    
+        for layer in self.layers.values():
+            assert hasattr(layer, "annotations")
+    
+        # Re-calculate all layer dependencies
+        dependencies = compute_layer_dependencies(self.layers)
+    
+        # Check keys
+        dep_key1 = self.dependencies.keys()
+        dep_key2 = dependencies.keys()
+        if dep_key1 != dep_key2:
+            raise ValueError(
+                f"incorrect dependencies keys {set(dep_key1)!r} "
+                f"expected {set(dep_key2)!r}"
+            )
+    
+        # Check values
+        for k in dep_key1:
+            if self.dependencies[k] != dependencies[k]:
+>               raise ValueError(
+                    f"incorrect dependencies[{repr(k)}]: {repr(self.dependencies[k])} "
+                    f"expected {repr(dependencies[k])}"
+                )
+E               ValueError: incorrect dependencies['getitem-699560f8818a91e0d5306373fc04406d']: {'array-87be02fd370f73dc8948a00205af12c0'} expected set()
+
+dask/highlevelgraph.py:1035: ValueError
+___________________________ test_case[c1_issue-None] ___________________________
+
+case = 'c1_issue', split = None
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+            result = da.from_array(x, chunks=chunks)[index]
+            assert isinstance(result, da.Array)
+>           assert_eq(result, x[index])
+
+dask/array/tests/test_c3_rev_cases_tmp.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/utils.py:279: in assert_eq
+    a, adt, a_meta, a_computed = _get_dt_meta_computed(
+dask/array/utils.py:238: in _get_dt_meta_computed
+    _check_dsk(x.dask)
+dask/array/utils.py:201: in _check_dsk
+    dsk.validate()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = HighLevelGraph with 2 layers.
+<dask.highlevelgraph.HighLevelGraph object at 0x7fbe651fef10>
+ 0. array-87be02fd370f73dc8948a00205af12c0
+ 1. getitem-699560f8818a91e0d5306373fc04406d
+
+
+    def validate(self):
+        # Check dependencies
+        for layer_name, deps in self.dependencies.items():
+            if layer_name not in self.layers:
+                raise ValueError(
+                    f"dependencies[{repr(layer_name)}] not found in layers"
+                )
+            for dep in deps:
+                if dep not in self.dependencies:
+                    raise ValueError(f"{repr(dep)} not found in dependencies")
+    
+        for layer in self.layers.values():
+            assert hasattr(layer, "annotations")
+    
+        # Re-calculate all layer dependencies
+        dependencies = compute_layer_dependencies(self.layers)
+    
+        # Check keys
+        dep_key1 = self.dependencies.keys()
+        dep_key2 = dependencies.keys()
+        if dep_key1 != dep_key2:
+            raise ValueError(
+                f"incorrect dependencies keys {set(dep_key1)!r} "
+                f"expected {set(dep_key2)!r}"
+            )
+    
+        # Check values
+        for k in dep_key1:
+            if self.dependencies[k] != dependencies[k]:
+>               raise ValueError(
+                    f"incorrect dependencies[{repr(k)}]: {repr(self.dependencies[k])} "
+                    f"expected {repr(dependencies[k])}"
+                )
+E               ValueError: incorrect dependencies['getitem-699560f8818a91e0d5306373fc04406d']: {'array-87be02fd370f73dc8948a00205af12c0'} expected set()
+
+dask/highlevelgraph.py:1035: ValueError
+__________________________ test_case[c1_issue-False] ___________________________
+
+case = 'c1_issue', split = False
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+            result = da.from_array(x, chunks=chunks)[index]
+            assert isinstance(result, da.Array)
+>           assert_eq(result, x[index])
+
+dask/array/tests/test_c3_rev_cases_tmp.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/utils.py:279: in assert_eq
+    a, adt, a_meta, a_computed = _get_dt_meta_computed(
+dask/array/utils.py:238: in _get_dt_meta_computed
+    _check_dsk(x.dask)
+dask/array/utils.py:201: in _check_dsk
+    dsk.validate()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = HighLevelGraph with 2 layers.
+<dask.highlevelgraph.HighLevelGraph object at 0x7fbe651aba00>
+ 0. array-87be02fd370f73dc8948a00205af12c0
+ 1. getitem-699560f8818a91e0d5306373fc04406d
+
+
+    def validate(self):
+        # Check dependencies
+        for layer_name, deps in self.dependencies.items():
+            if layer_name not in self.layers:
+                raise ValueError(
+                    f"dependencies[{repr(layer_name)}] not found in layers"
+                )
+            for dep in deps:
+                if dep not in self.dependencies:
+                    raise ValueError(f"{repr(dep)} not found in dependencies")
+    
+        for layer in self.layers.values():
+            assert hasattr(layer, "annotations")
+    
+        # Re-calculate all layer dependencies
+        dependencies = compute_layer_dependencies(self.layers)
+    
+        # Check keys
+        dep_key1 = self.dependencies.keys()
+        dep_key2 = dependencies.keys()
+        if dep_key1 != dep_key2:
+            raise ValueError(
+                f"incorrect dependencies keys {set(dep_key1)!r} "
+                f"expected {set(dep_key2)!r}"
+            )
+    
+        # Check values
+        for k in dep_key1:
+            if self.dependencies[k] != dependencies[k]:
+>               raise ValueError(
+                    f"incorrect dependencies[{repr(k)}]: {repr(self.dependencies[k])} "
+                    f"expected {repr(dependencies[k])}"
+                )
+E               ValueError: incorrect dependencies['getitem-699560f8818a91e0d5306373fc04406d']: {'array-87be02fd370f73dc8948a00205af12c0'} expected set()
+
+dask/highlevelgraph.py:1035: ValueError
+___________________________ test_case[c1_issue-True] ___________________________
+
+case = 'c1_issue', split = True
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+            result = da.from_array(x, chunks=chunks)[index]
+            assert isinstance(result, da.Array)
+>           assert_eq(result, x[index])
+
+dask/array/tests/test_c3_rev_cases_tmp.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/utils.py:279: in assert_eq
+    a, adt, a_meta, a_computed = _get_dt_meta_computed(
+dask/array/utils.py:238: in _get_dt_meta_computed
+    _check_dsk(x.dask)
+dask/array/utils.py:201: in _check_dsk
+    dsk.validate()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = HighLevelGraph with 2 layers.
+<dask.highlevelgraph.HighLevelGraph object at 0x7fbe65311700>
+ 0. array-87be02fd370f73dc8948a00205af12c0
+ 1. getitem-699560f8818a91e0d5306373fc04406d
+
+
+    def validate(self):
+        # Check dependencies
+        for layer_name, deps in self.dependencies.items():
+            if layer_name not in self.layers:
+                raise ValueError(
+                    f"dependencies[{repr(layer_name)}] not found in layers"
+                )
+            for dep in deps:
+                if dep not in self.dependencies:
+                    raise ValueError(f"{repr(dep)} not found in dependencies")
+    
+        for layer in self.layers.values():
+            assert hasattr(layer, "annotations")
+    
+        # Re-calculate all layer dependencies
+        dependencies = compute_layer_dependencies(self.layers)
+    
+        # Check keys
+        dep_key1 = self.dependencies.keys()
+        dep_key2 = dependencies.keys()
+        if dep_key1 != dep_key2:
+            raise ValueError(
+                f"incorrect dependencies keys {set(dep_key1)!r} "
+                f"expected {set(dep_key2)!r}"
+            )
+    
+        # Check values
+        for k in dep_key1:
+            if self.dependencies[k] != dependencies[k]:
+>               raise ValueError(
+                    f"incorrect dependencies[{repr(k)}]: {repr(self.dependencies[k])} "
+                    f"expected {repr(dependencies[k])}"
+                )
+E               ValueError: incorrect dependencies['getitem-699560f8818a91e0d5306373fc04406d']: {'array-87be02fd370f73dc8948a00205af12c0'} expected set()
+
+dask/highlevelgraph.py:1035: ValueError
+_____________________ test_case[c2_zero_first_axis1-None] ______________________
+
+case = 'c2_zero_first_axis1', split = None
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+            result = da.from_array(x, chunks=chunks)[index]
+            assert isinstance(result, da.Array)
+>           assert_eq(result, x[index])
+
+dask/array/tests/test_c3_rev_cases_tmp.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/utils.py:279: in assert_eq
+    a, adt, a_meta, a_computed = _get_dt_meta_computed(
+dask/array/utils.py:238: in _get_dt_meta_computed
+    _check_dsk(x.dask)
+dask/array/utils.py:201: in _check_dsk
+    dsk.validate()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = HighLevelGraph with 2 layers.
+<dask.highlevelgraph.HighLevelGraph object at 0x7fbe65325670>
+ 0. array-031599d2de7c2c0739df1348f76e881b
+ 1. getitem-9f3e7aa276b2cd217eca9fc2084942a0
+
+
+    def validate(self):
+        # Check dependencies
+        for layer_name, deps in self.dependencies.items():
+            if layer_name not in self.layers:
+                raise ValueError(
+                    f"dependencies[{repr(layer_name)}] not found in layers"
+                )
+            for dep in deps:
+                if dep not in self.dependencies:
+                    raise ValueError(f"{repr(dep)} not found in dependencies")
+    
+        for layer in self.layers.values():
+            assert hasattr(layer, "annotations")
+    
+        # Re-calculate all layer dependencies
+        dependencies = compute_layer_dependencies(self.layers)
+    
+        # Check keys
+        dep_key1 = self.dependencies.keys()
+        dep_key2 = dependencies.keys()
+        if dep_key1 != dep_key2:
+            raise ValueError(
+                f"incorrect dependencies keys {set(dep_key1)!r} "
+                f"expected {set(dep_key2)!r}"
+            )
+    
+        # Check values
+        for k in dep_key1:
+            if self.dependencies[k] != dependencies[k]:
+>               raise ValueError(
+                    f"incorrect dependencies[{repr(k)}]: {repr(self.dependencies[k])} "
+                    f"expected {repr(dependencies[k])}"
+                )
+E               ValueError: incorrect dependencies['getitem-9f3e7aa276b2cd217eca9fc2084942a0']: {'array-031599d2de7c2c0739df1348f76e881b'} expected set()
+
+dask/highlevelgraph.py:1035: ValueError
+_____________________ test_case[c2_zero_first_axis1-False] _____________________
+
+case = 'c2_zero_first_axis1', split = False
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+            result = da.from_array(x, chunks=chunks)[index]
+            assert isinstance(result, da.Array)
+>           assert_eq(result, x[index])
+
+dask/array/tests/test_c3_rev_cases_tmp.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/utils.py:279: in assert_eq
+    a, adt, a_meta, a_computed = _get_dt_meta_computed(
+dask/array/utils.py:238: in _get_dt_meta_computed
+    _check_dsk(x.dask)
+dask/array/utils.py:201: in _check_dsk
+    dsk.validate()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = HighLevelGraph with 2 layers.
+<dask.highlevelgraph.HighLevelGraph object at 0x7fbe6526ce50>
+ 0. array-031599d2de7c2c0739df1348f76e881b
+ 1. getitem-9f3e7aa276b2cd217eca9fc2084942a0
+
+
+    def validate(self):
+        # Check dependencies
+        for layer_name, deps in self.dependencies.items():
+            if layer_name not in self.layers:
+                raise ValueError(
+                    f"dependencies[{repr(layer_name)}] not found in layers"
+                )
+            for dep in deps:
+                if dep not in self.dependencies:
+                    raise ValueError(f"{repr(dep)} not found in dependencies")
+    
+        for layer in self.layers.values():
+            assert hasattr(layer, "annotations")
+    
+        # Re-calculate all layer dependencies
+        dependencies = compute_layer_dependencies(self.layers)
+    
+        # Check keys
+        dep_key1 = self.dependencies.keys()
+        dep_key2 = dependencies.keys()
+        if dep_key1 != dep_key2:
+            raise ValueError(
+                f"incorrect dependencies keys {set(dep_key1)!r} "
+                f"expected {set(dep_key2)!r}"
+            )
+    
+        # Check values
+        for k in dep_key1:
+            if self.dependencies[k] != dependencies[k]:
+>               raise ValueError(
+                    f"incorrect dependencies[{repr(k)}]: {repr(self.dependencies[k])} "
+                    f"expected {repr(dependencies[k])}"
+                )
+E               ValueError: incorrect dependencies['getitem-9f3e7aa276b2cd217eca9fc2084942a0']: {'array-031599d2de7c2c0739df1348f76e881b'} expected set()
+
+dask/highlevelgraph.py:1035: ValueError
+_____________________ test_case[c2_zero_first_axis1-True] ______________________
+
+case = 'c2_zero_first_axis1', split = True
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+            result = da.from_array(x, chunks=chunks)[index]
+            assert isinstance(result, da.Array)
+>           assert_eq(result, x[index])
+
+dask/array/tests/test_c3_rev_cases_tmp.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/utils.py:279: in assert_eq
+    a, adt, a_meta, a_computed = _get_dt_meta_computed(
+dask/array/utils.py:238: in _get_dt_meta_computed
+    _check_dsk(x.dask)
+dask/array/utils.py:201: in _check_dsk
+    dsk.validate()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = HighLevelGraph with 2 layers.
+<dask.highlevelgraph.HighLevelGraph object at 0x7fbe65311ca0>
+ 0. array-031599d2de7c2c0739df1348f76e881b
+ 1. getitem-9f3e7aa276b2cd217eca9fc2084942a0
+
+
+    def validate(self):
+        # Check dependencies
+        for layer_name, deps in self.dependencies.items():
+            if layer_name not in self.layers:
+                raise ValueError(
+                    f"dependencies[{repr(layer_name)}] not found in layers"
+                )
+            for dep in deps:
+                if dep not in self.dependencies:
+                    raise ValueError(f"{repr(dep)} not found in dependencies")
+    
+        for layer in self.layers.values():
+            assert hasattr(layer, "annotations")
+    
+        # Re-calculate all layer dependencies
+        dependencies = compute_layer_dependencies(self.layers)
+    
+        # Check keys
+        dep_key1 = self.dependencies.keys()
+        dep_key2 = dependencies.keys()
+        if dep_key1 != dep_key2:
+            raise ValueError(
+                f"incorrect dependencies keys {set(dep_key1)!r} "
+                f"expected {set(dep_key2)!r}"
+            )
+    
+        # Check values
+        for k in dep_key1:
+            if self.dependencies[k] != dependencies[k]:
+>               raise ValueError(
+                    f"incorrect dependencies[{repr(k)}]: {repr(self.dependencies[k])} "
+                    f"expected {repr(dependencies[k])}"
+                )
+E               ValueError: incorrect dependencies['getitem-9f3e7aa276b2cd217eca9fc2084942a0']: {'array-031599d2de7c2c0739df1348f76e881b'} expected set()
+
+dask/highlevelgraph.py:1035: ValueError
+__________________ test_case[c3_mid_zero_i4_multichunk-None] ___________________
+
+case = 'c3_mid_zero_i4_multichunk', split = None
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+            result = da.from_array(x, chunks=chunks)[index]
+            assert isinstance(result, da.Array)
+>           assert_eq(result, x[index])
+
+dask/array/tests/test_c3_rev_cases_tmp.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/utils.py:279: in assert_eq
+    a, adt, a_meta, a_computed = _get_dt_meta_computed(
+dask/array/utils.py:238: in _get_dt_meta_computed
+    _check_dsk(x.dask)
+dask/array/utils.py:201: in _check_dsk
+    dsk.validate()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = HighLevelGraph with 2 layers.
+<dask.highlevelgraph.HighLevelGraph object at 0x7fbe65191f40>
+ 0. array-e362def2d56a2b5e35d1c68c1c84ea95
+ 1. getitem-ee6aede5b47008e5c1c0ca9eee957570
+
+
+    def validate(self):
+        # Check dependencies
+        for layer_name, deps in self.dependencies.items():
+            if layer_name not in self.layers:
+                raise ValueError(
+                    f"dependencies[{repr(layer_name)}] not found in layers"
+                )
+            for dep in deps:
+                if dep not in self.dependencies:
+                    raise ValueError(f"{repr(dep)} not found in dependencies")
+    
+        for layer in self.layers.values():
+            assert hasattr(layer, "annotations")
+    
+        # Re-calculate all layer dependencies
+        dependencies = compute_layer_dependencies(self.layers)
+    
+        # Check keys
+        dep_key1 = self.dependencies.keys()
+        dep_key2 = dependencies.keys()
+        if dep_key1 != dep_key2:
+            raise ValueError(
+                f"incorrect dependencies keys {set(dep_key1)!r} "
+                f"expected {set(dep_key2)!r}"
+            )
+    
+        # Check values
+        for k in dep_key1:
+            if self.dependencies[k] != dependencies[k]:
+>               raise ValueError(
+                    f"incorrect dependencies[{repr(k)}]: {repr(self.dependencies[k])} "
+                    f"expected {repr(dependencies[k])}"
+                )
+E               ValueError: incorrect dependencies['getitem-ee6aede5b47008e5c1c0ca9eee957570']: {'array-e362def2d56a2b5e35d1c68c1c84ea95'} expected set()
+
+dask/highlevelgraph.py:1035: ValueError
+__________________ test_case[c3_mid_zero_i4_multichunk-False] __________________
+
+case = 'c3_mid_zero_i4_multichunk', split = False
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+            result = da.from_array(x, chunks=chunks)[index]
+            assert isinstance(result, da.Array)
+>           assert_eq(result, x[index])
+
+dask/array/tests/test_c3_rev_cases_tmp.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/utils.py:279: in assert_eq
+    a, adt, a_meta, a_computed = _get_dt_meta_computed(
+dask/array/utils.py:238: in _get_dt_meta_computed
+    _check_dsk(x.dask)
+dask/array/utils.py:201: in _check_dsk
+    dsk.validate()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = HighLevelGraph with 2 layers.
+<dask.highlevelgraph.HighLevelGraph object at 0x7fbe65167250>
+ 0. array-e362def2d56a2b5e35d1c68c1c84ea95
+ 1. getitem-ee6aede5b47008e5c1c0ca9eee957570
+
+
+    def validate(self):
+        # Check dependencies
+        for layer_name, deps in self.dependencies.items():
+            if layer_name not in self.layers:
+                raise ValueError(
+                    f"dependencies[{repr(layer_name)}] not found in layers"
+                )
+            for dep in deps:
+                if dep not in self.dependencies:
+                    raise ValueError(f"{repr(dep)} not found in dependencies")
+    
+        for layer in self.layers.values():
+            assert hasattr(layer, "annotations")
+    
+        # Re-calculate all layer dependencies
+        dependencies = compute_layer_dependencies(self.layers)
+    
+        # Check keys
+        dep_key1 = self.dependencies.keys()
+        dep_key2 = dependencies.keys()
+        if dep_key1 != dep_key2:
+            raise ValueError(
+                f"incorrect dependencies keys {set(dep_key1)!r} "
+                f"expected {set(dep_key2)!r}"
+            )
+    
+        # Check values
+        for k in dep_key1:
+            if self.dependencies[k] != dependencies[k]:
+>               raise ValueError(
+                    f"incorrect dependencies[{repr(k)}]: {repr(self.dependencies[k])} "
+                    f"expected {repr(dependencies[k])}"
+                )
+E               ValueError: incorrect dependencies['getitem-ee6aede5b47008e5c1c0ca9eee957570']: {'array-e362def2d56a2b5e35d1c68c1c84ea95'} expected set()
+
+dask/highlevelgraph.py:1035: ValueError
+__________________ test_case[c3_mid_zero_i4_multichunk-True] ___________________
+
+case = 'c3_mid_zero_i4_multichunk', split = True
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+            result = da.from_array(x, chunks=chunks)[index]
+            assert isinstance(result, da.Array)
+>           assert_eq(result, x[index])
+
+dask/array/tests/test_c3_rev_cases_tmp.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/utils.py:279: in assert_eq
+    a, adt, a_meta, a_computed = _get_dt_meta_computed(
+dask/array/utils.py:238: in _get_dt_meta_computed
+    _check_dsk(x.dask)
+dask/array/utils.py:201: in _check_dsk
+    dsk.validate()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = HighLevelGraph with 2 layers.
+<dask.highlevelgraph.HighLevelGraph object at 0x7fbe6517b9a0>
+ 0. array-e362def2d56a2b5e35d1c68c1c84ea95
+ 1. getitem-ee6aede5b47008e5c1c0ca9eee957570
+
+
+    def validate(self):
+        # Check dependencies
+        for layer_name, deps in self.dependencies.items():
+            if layer_name not in self.layers:
+                raise ValueError(
+                    f"dependencies[{repr(layer_name)}] not found in layers"
+                )
+            for dep in deps:
+                if dep not in self.dependencies:
+                    raise ValueError(f"{repr(dep)} not found in dependencies")
+    
+        for layer in self.layers.values():
+            assert hasattr(layer, "annotations")
+    
+        # Re-calculate all layer dependencies
+        dependencies = compute_layer_dependencies(self.layers)
+    
+        # Check keys
+        dep_key1 = self.dependencies.keys()
+        dep_key2 = dependencies.keys()
+        if dep_key1 != dep_key2:
+            raise ValueError(
+                f"incorrect dependencies keys {set(dep_key1)!r} "
+                f"expected {set(dep_key2)!r}"
+            )
+    
+        # Check values
+        for k in dep_key1:
+            if self.dependencies[k] != dependencies[k]:
+>               raise ValueError(
+                    f"incorrect dependencies[{repr(k)}]: {repr(self.dependencies[k])} "
+                    f"expected {repr(dependencies[k])}"
+                )
+E               ValueError: incorrect dependencies['getitem-ee6aede5b47008e5c1c0ca9eee957570']: {'array-e362def2d56a2b5e35d1c68c1c84ea95'} expected set()
+
+dask/highlevelgraph.py:1035: ValueError
+_________________________ test_case[c4_index120-None] __________________________
+
+case = 'c4_index120', split = None
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+            result = da.from_array(x, chunks=chunks)[index]
+            assert isinstance(result, da.Array)
+>           assert_eq(result, x[index])
+
+dask/array/tests/test_c3_rev_cases_tmp.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/utils.py:279: in assert_eq
+    a, adt, a_meta, a_computed = _get_dt_meta_computed(
+dask/array/utils.py:238: in _get_dt_meta_computed
+    _check_dsk(x.dask)
+dask/array/utils.py:201: in _check_dsk
+    dsk.validate()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = HighLevelGraph with 2 layers.
+<dask.highlevelgraph.HighLevelGraph object at 0x7fbe6520c6d0>
+ 0. array-87be02fd370f73dc8948a00205af12c0
+ 1. getitem-a69000d82ee656f45b82b92584760eb8
+
+
+    def validate(self):
+        # Check dependencies
+        for layer_name, deps in self.dependencies.items():
+            if layer_name not in self.layers:
+                raise ValueError(
+                    f"dependencies[{repr(layer_name)}] not found in layers"
+                )
+            for dep in deps:
+                if dep not in self.dependencies:
+                    raise ValueError(f"{repr(dep)} not found in dependencies")
+    
+        for layer in self.layers.values():
+            assert hasattr(layer, "annotations")
+    
+        # Re-calculate all layer dependencies
+        dependencies = compute_layer_dependencies(self.layers)
+    
+        # Check keys
+        dep_key1 = self.dependencies.keys()
+        dep_key2 = dependencies.keys()
+        if dep_key1 != dep_key2:
+            raise ValueError(
+                f"incorrect dependencies keys {set(dep_key1)!r} "
+                f"expected {set(dep_key2)!r}"
+            )
+    
+        # Check values
+        for k in dep_key1:
+            if self.dependencies[k] != dependencies[k]:
+>               raise ValueError(
+                    f"incorrect dependencies[{repr(k)}]: {repr(self.dependencies[k])} "
+                    f"expected {repr(dependencies[k])}"
+                )
+E               ValueError: incorrect dependencies['getitem-a69000d82ee656f45b82b92584760eb8']: {'array-87be02fd370f73dc8948a00205af12c0'} expected set()
+
+dask/highlevelgraph.py:1035: ValueError
+_________________________ test_case[c4_index120-False] _________________________
+
+case = 'c4_index120', split = False
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+            result = da.from_array(x, chunks=chunks)[index]
+            assert isinstance(result, da.Array)
+>           assert_eq(result, x[index])
+
+dask/array/tests/test_c3_rev_cases_tmp.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/utils.py:279: in assert_eq
+    a, adt, a_meta, a_computed = _get_dt_meta_computed(
+dask/array/utils.py:238: in _get_dt_meta_computed
+    _check_dsk(x.dask)
+dask/array/utils.py:201: in _check_dsk
+    dsk.validate()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = HighLevelGraph with 2 layers.
+<dask.highlevelgraph.HighLevelGraph object at 0x7fbe651e9a00>
+ 0. array-87be02fd370f73dc8948a00205af12c0
+ 1. getitem-a69000d82ee656f45b82b92584760eb8
+
+
+    def validate(self):
+        # Check dependencies
+        for layer_name, deps in self.dependencies.items():
+            if layer_name not in self.layers:
+                raise ValueError(
+                    f"dependencies[{repr(layer_name)}] not found in layers"
+                )
+            for dep in deps:
+                if dep not in self.dependencies:
+                    raise ValueError(f"{repr(dep)} not found in dependencies")
+    
+        for layer in self.layers.values():
+            assert hasattr(layer, "annotations")
+    
+        # Re-calculate all layer dependencies
+        dependencies = compute_layer_dependencies(self.layers)
+    
+        # Check keys
+        dep_key1 = self.dependencies.keys()
+        dep_key2 = dependencies.keys()
+        if dep_key1 != dep_key2:
+            raise ValueError(
+                f"incorrect dependencies keys {set(dep_key1)!r} "
+                f"expected {set(dep_key2)!r}"
+            )
+    
+        # Check values
+        for k in dep_key1:
+            if self.dependencies[k] != dependencies[k]:
+>               raise ValueError(
+                    f"incorrect dependencies[{repr(k)}]: {repr(self.dependencies[k])} "
+                    f"expected {repr(dependencies[k])}"
+                )
+E               ValueError: incorrect dependencies['getitem-a69000d82ee656f45b82b92584760eb8']: {'array-87be02fd370f73dc8948a00205af12c0'} expected set()
+
+dask/highlevelgraph.py:1035: ValueError
+_________________________ test_case[c4_index120-True] __________________________
+
+case = 'c4_index120', split = True
+
+    @pytest.mark.parametrize("split", [None, False, True])
+    @pytest.mark.parametrize("case", list(CASES))
+    def test_case(case, split):
+        x, chunks, index = CASES[case]()
+        with dask.config.set({"array.slicing.split-large-chunks": split}):
+            result = da.from_array(x, chunks=chunks)[index]
+            assert isinstance(result, da.Array)
+>           assert_eq(result, x[index])
+
+dask/array/tests/test_c3_rev_cases_tmp.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+dask/array/utils.py:279: in assert_eq
+    a, adt, a_meta, a_computed = _get_dt_meta_computed(
+dask/array/utils.py:238: in _get_dt_meta_computed
+    _check_dsk(x.dask)
+dask/array/utils.py:201: in _check_dsk
+    dsk.validate()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = HighLevelGraph with 2 layers.
+<dask.highlevelgraph.HighLevelGraph object at 0x7fbe651d63d0>
+ 0. array-87be02fd370f73dc8948a00205af12c0
+ 1. getitem-a69000d82ee656f45b82b92584760eb8
+
+
+    def validate(self):
+        # Check dependencies
+        for layer_name, deps in self.dependencies.items():
+            if layer_name not in self.layers:
+                raise ValueError(
+                    f"dependencies[{repr(layer_name)}] not found in layers"
+                )
+            for dep in deps:
+                if dep not in self.dependencies:
+                    raise ValueError(f"{repr(dep)} not found in dependencies")
+    
+        for layer in self.layers.values():
+            assert hasattr(layer, "annotations")
+    
+        # Re-calculate all layer dependencies
+        dependencies = compute_layer_dependencies(self.layers)
+    
+        # Check keys
+        dep_key1 = self.dependencies.keys()
+        dep_key2 = dependencies.keys()
+        if dep_key1 != dep_key2:
+            raise ValueError(
+                f"incorrect dependencies keys {set(dep_key1)!r} "
+                f"expected {set(dep_key2)!r}"
+            )
+    
+        # Check values
+        for k in dep_key1:
+            if self.dependencies[k] != dependencies[k]:
+>               raise ValueError(
+                    f"incorrect dependencies[{repr(k)}]: {repr(self.dependencies[k])} "
+                    f"expected {repr(dependencies[k])}"
+                )
+E               ValueError: incorrect dependencies['getitem-a69000d82ee656f45b82b92584760eb8']: {'array-87be02fd370f73dc8948a00205af12c0'} expected set()
+
+dask/highlevelgraph.py:1035: ValueError
+==================================== PASSES ====================================
+============================= slowest 10 durations =============================
+
+(10 durations < 0.005s hidden.  Use -vv to show these durations.)
+=========================== short test summary info ============================
+PASSED dask/array/tests/test_c3_rev_cases_tmp.py::test_default_warning
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_orig - ValueError: inc...
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c1_issue-None] - ...
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c1_issue-False]
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c1_issue-True] - ...
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c2_zero_first_axis1-None]
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c2_zero_first_axis1-False]
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c2_zero_first_axis1-True]
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c3_mid_zero_i4_multichunk-None]
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c3_mid_zero_i4_multichunk-False]
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c3_mid_zero_i4_multichunk-True]
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index120-None]
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index120-False]
+FAILED dask/array/tests/test_c3_rev_cases_tmp.py::test_case[c4_index120-True]
+========================= 13 failed, 1 passed in 0.71s =========================
+
+

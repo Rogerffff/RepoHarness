@@ -1,0 +1,79 @@
+{
+  "instance_id": "numpy__d805e9b66228e68a0eb14d901cd350159c49af18",
+  "status": "central_publication_pending_cpu_and_review",
+  "parent_pins": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/t1_input_pins_r2e_v12.json",
+  "parent_pins_sha256": "sha256:64d45468b421cd93b97bbe7618b9c9f54ec01fdf3b3cd76fce856a8b332a9fb0",
+  "parent_revisions": {
+    "kind": "repo_file",
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v11.json",
+    "sha256": "03acd34d7421bcf9c379612d0b8a5ce3d4292fdee0ee67327661eae5169d5c33"
+  },
+  "supersedes_hidden_revision": "r2e-mr-056",
+  "hidden_test_replacement": {
+    "kind": "hidden_test_text_replace",
+    "target": "test_1.py",
+    "revision_id": null,
+    "sha256_before": "sha256:72f865c42fba15679442951d772b9213dc4fc5d4ad16170f486ed6aac7e8deb1",
+    "sha256_after": "sha256:09d0aa6d80f85d394fc0a7971e23de8dd43a79d817749f0246693f62898bf67a",
+    "edits": [
+      {
+        "old": "        assert_equal(\n            repr(a),\n            'masked_array(data = [0 -- -- ..., 1997 1998 1999],\\n'\n            '             mask = [False  True  True ..., False False False],\\n'\n            '       fill_value = 999999)\\n'\n        )\n",
+        "new": "        assert_equal(\n            repr(a),\n            'masked_array(data = [0 -- -- ..., 1997 1998 1999],\\n'\n            '             mask = [False  True  True ..., False False False],\\n'\n            '       fill_value = 999999)\\n'\n        )\n\n        # A large 1d array other than the issue example is summarized too:\n        # the data shows the leading/trailing items with an ellipsis, and\n        # masked values at the end are shown as `--`.\n        a = np.ma.arange(100000)\n        a[-2:] = np.ma.masked\n        assert_equal(str(a), '[0 1 2 ..., 99997 -- --]')\n\n        # Below the default summarization threshold (1000 items) a 1d masked\n        # array is printed in full: no ellipsis, and no value is dropped or\n        # repeated.\n        a = np.ma.arange(500)\n        a[1:50] = np.ma.masked\n        s = str(a)\n        assert_('...' not in s)\n        assert_equal(s.replace('[', ' ').replace(']', ' ').split(),\n                     ['0'] + ['--'] * 49 + [str(i) for i in range(50, 500)])\n\n        # The printing options can be changed to force NumPy to print the\n        # entire array.  As long as the threshold is not exceeded, every item\n        # of a 1d masked array is shown: no ellipsis, and no value is dropped.\n        opts = np.get_printoptions()\n        try:\n            np.set_printoptions(threshold=2000)\n            a = np.ma.arange(2000)\n            a[1:50] = np.ma.masked\n            s = str(a)\n            assert_('...' not in s)\n            expected = ['0'] + ['--'] * 49 + [str(i) for i in range(50, 2000)]\n            assert_equal(s.replace('[', ' ').replace(']', ' ').split(),\n                         expected)\n        finally:\n            np.set_printoptions(**opts)\n"
+      },
+      {
+        "old": "            assert_equal(s.replace('[', ' ').replace(']', ' ').split(),\n                         expected)\n",
+        "new": "            assert_equal(s.replace('[', ' ').replace(']', ' ').split(),\n                         expected)\n\n\n            # 提高阈值后，仍需摘要的数组不能静默丢掉中间值。\n            # 首尾显示内容仍由原有打印选项决定。\n            a = np.ma.arange(3000)\n            a[1:50] = np.ma.masked\n            assert_equal(str(a), '[0 -- -- ..., 2997 2998 2999]')\n\n            # 保留配置指定的首尾元素；省略中间值时须有省略号。\n            # token 比较允许原有 linewidth 引起的折行。\n            np.set_printoptions(threshold=1000, edgeitems=501)\n            a = np.ma.arange(3000)\n            a[1:50] = np.ma.masked\n            s = str(a)\n            expected = (['0'] + ['--'] * 49 +\n                        [str(i) for i in range(50, 501)] + ['...'] +\n                        [str(i) for i in range(2499, 3000)])\n            assert_equal(s.replace('[', ' ').replace(']', ' ')\n                         .replace(',', ' ').split(), expected)\n"
+      }
+    ],
+    "draft_file": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_numpy/private/test_1.py",
+    "expected_change": null
+  },
+  "statement_revision": {
+    "kind": "statement_text_replace",
+    "target": "problem_statement",
+    "revision_id": null,
+    "sha256_before": "sha256:22231c8b99a65488d94abcc88da4a810122fb0b4208f47c1a6891a68c2738cf2",
+    "sha256_after": "sha256:0d6302a3be3a39d0828c4fc5cf3b9e4d70ce6099b9bc61f6cf4275aad276225e",
+    "edits": [
+      {
+        "old": "When creating and printing a large 1D masked array, the string representation does not truncate the array as expected. This results in an excessively long output, which can impact performance and readability.",
+        "new": "When printing a large 1D masked array, its data section retains more values than the ordinary array summary and omits middle values without an ellipsis. This makes it harder to see which values have been omitted."
+      },
+      {
+        "old": "The `repr` of the masked array should truncate the data after a certain number of elements, using an ellipsis to indicate omitted values. For example:",
+        "new": "The `repr` of the masked array should truncate the data after a certain number of elements, using an ellipsis to indicate omitted values. The choice between a summary and full output should follow NumPy's existing printing options; when those options request full output, values must not be silently dropped. For example:"
+      },
+      {
+        "old": "The `repr` does not properly truncate the array, displaying up to 1000 elements before cutting off. This leads to a very long and unwieldy output:\n```\nmasked_array(data = [0 -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --\n -- -- -- -- -- -- -- ..., 1997 1998 1999],\n             mask = [False  True  True ..., False False False],\n       fill_value = 999999)\n```",
+        "new": "For the example above, the initial checkout prints a data section containing 0, the 49 masked values, and 1950 through 1999. The intervening values are omitted, but the data section has no ellipsis:\n```\nmasked_array(data = [0 -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --\n -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --\n 1950 1951 1952 1953 1954 1955 1956 1957 1958 1959 1960 1961 1962 1963 1964\n 1965 1966 1967 1968 1969 1970 1971 1972 1973 1974 1975 1976 1977 1978 1979\n 1980 1981 1982 1983 1984 1985 1986 1987 1988 1989 1990 1991 1992 1993 1994\n 1995 1996 1997 1998 1999],\n             mask = [False  True  True ..., False False False],\n       fill_value = 999999)\n```"
+      }
+    ],
+    "revised_file": null,
+    "expected_change": null
+  },
+  "instructions": [
+    "由维护者分配正式编号并发布新版本；不修改旧修订单、pins 或旧测试文件。",
+    "新版本中替换本题已有 hidden_test_text_replace 条目，不能与 r2e-mr-056 并列同目标；合并 edits 从原始来源重放。",
+    "将完整新测试复制到新的版本化 s2_r2e/revisions 路径，再写该新路径；当前独占目录不满足正式 revised_file 路径约束。",
+    "旧 formalize_revisions.py 固定读历史 results 目录且拒绝同目标，不能直接拿它发布本包；现有 ingest 支持合并后的条目，无需先重构公共代码。",
+    "发布前重核当前生效父版本和本题摘要，保留其他仓库所有条目。"
+  ],
+  "confirmed_runtime_parent": {
+    "release_id": "cat2-cpu-r2e064065-swe5-20261003-v1",
+    "remote_repo": "/work/rh2-category2-20261003/releases/cat2-cpu-r2e064065-swe5-20261003-v1/repo",
+    "manifest_sha256": "sha256:282021962a92b510f077385660ac56acedcd7fac1d97e63db3baa98e4dcc057f",
+    "registry_path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v13.json",
+    "registry_sha256": "sha256:1a8fe1016b30d17a9d684099cb08fdb632e3b99800c1a9b6db427b01bd5ecd7e",
+    "pins_path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/t1_input_pins_r2e_v14.json",
+    "pins_sha256": "sha256:5b397f8db723b29b3b0dfa1d83a69ad995812a7f9cbe68d3b387f4ddfed93bac",
+    "numpy_revision_ids": [
+      "r2e-mr-056"
+    ],
+    "numpy_hidden_test_sha256": "sha256:14d78a1c74be07bf5e62a81c5383b3d408dbf597f6a54d3bfe48ac5e6d9516c7",
+    "all_four_numpy_ingest_rows_unchanged": true,
+    "local_check": "runs/category2_repair_20260929/r2e_numpy/parent_release_v1_local_check.json",
+    "remote_trusted_readback": "own_cpu_b_readback_passed_794_files_r2e48_swe216",
+    "new_numpy_material_installed": false
+  },
+  "publication_rebase_note": "初始草案从v12/v11的056生成；首CPU release已是v14/v13，但本题四份ingest行与056完全相同。实际发布以维护者当时最新版本合并，只替换本题hidden target并追加独立statement target，不回退其它题修订。"
+}

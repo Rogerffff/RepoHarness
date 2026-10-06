@@ -1,0 +1,608 @@
+{
+  "scope": "non_author_offline_same_original_FP_CPU_runtime_review",
+  "job_id": "dvc9395-original-fp-cpu-grade-20261003-v1",
+  "original_gpu_job": "gpu1003-dvc9395-coder-a1",
+  "closed_raw_count": 38,
+  "archive_members_including_manifest": 39,
+  "raw_integrity_mismatch": [],
+  "raw_reward": 0,
+  "outcome": "unresolved",
+  "failure_category": "tests_failed",
+  "pytest_actual_total": 41,
+  "pytest_passed": 37,
+  "pytest_failed": 4,
+  "formal_reference_total": 40,
+  "official_num_parsed_tests": 42,
+  "captured_logging_pseudo_entry": {
+    "eval_log_line": 2218,
+    "text": "ERROR    dvc.commands.freeze:freeze.py:19 failed to freeze ':copy-file1-file3'"
+  },
+  "reference_partitions": {
+    "bound_source_f2p": {
+      "reference_total": 2,
+      "passed": 0,
+      "failed": 2,
+      "missing": [],
+      "skipped": []
+    },
+    "added_f2p": {
+      "reference_total": 1,
+      "passed": 0,
+      "failed": 1,
+      "missing": [],
+      "skipped": []
+    },
+    "bound_source_p2p": {
+      "reference_total": 27,
+      "passed": 27,
+      "failed": 0,
+      "missing": [],
+      "skipped": []
+    },
+    "added_p2p": {
+      "reference_total": 10,
+      "passed": 10,
+      "failed": 0,
+      "missing": [],
+      "skipped": []
+    }
+  },
+  "nodes_independently_reconstructed": [
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_non_existing_stage_name",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5750
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_frozen",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5751
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_downstream",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5752
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_when_cmd_changes",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5753
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5754
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5755
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5756
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5757
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5758
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5759
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5760
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_cyclic_graph_error",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5761
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_multiple_params",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5762
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5763
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5764
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5765
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5766
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5767
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[source]",
+      "status": "PASSED",
+      "partition": "added_p2p",
+      "eval_log_line": 5768
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[output]",
+      "status": "PASSED",
+      "partition": "added_p2p",
+      "eval_log_line": 5769
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[normal]",
+      "status": "PASSED",
+      "partition": "added_p2p",
+      "eval_log_line": 5770
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[dry]",
+      "status": "PASSED",
+      "partition": "added_p2p",
+      "eval_log_line": 5771
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_pull_without_remote_preserves_modified_source",
+      "status": "PASSED",
+      "partition": "added_p2p",
+      "eval_log_line": 5772
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_pull_without_remote_still_errors_for_missing_source",
+      "status": "PASSED",
+      "partition": "added_p2p",
+      "eval_log_line": 5773
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_pull_no_run_cache_does_not_download_runs",
+      "status": "PASSED",
+      "partition": "added_p2p",
+      "eval_log_line": 5774
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_pull_existing_output_without_hash_can_run",
+      "status": "PASSED",
+      "partition": "added_p2p",
+      "eval_log_line": 5775
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_pull_changed_dependency_can_recompute",
+      "status": "PASSED",
+      "partition": "added_p2p",
+      "eval_log_line": 5776
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_pull_restores_from_http_with_local_run_cache",
+      "status": "PASSED",
+      "partition": "added_p2p",
+      "eval_log_line": 5777
+    },
+    {
+      "node_id": "tests/func/test_run_cache.py::test_push_pull",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5778
+    },
+    {
+      "node_id": "tests/func/test_run_cache.py::test_restore",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5779
+    },
+    {
+      "node_id": "tests/func/test_run_cache.py::test_save",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5780
+    },
+    {
+      "node_id": "tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5781
+    },
+    {
+      "node_id": "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5782
+    },
+    {
+      "node_id": "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5783
+    },
+    {
+      "node_id": "tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5784
+    },
+    {
+      "node_id": "tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5785
+    },
+    {
+      "node_id": "tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages",
+      "status": "PASSED",
+      "partition": "bound_source_p2p",
+      "eval_log_line": 5786
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source",
+      "status": "FAILED",
+      "partition": "bound_source_f2p",
+      "eval_log_line": 5787
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_repro_pulls_mising_import",
+      "status": "FAILED",
+      "partition": "unscored_original_import",
+      "eval_log_line": 5788
+    },
+    {
+      "node_id": "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream",
+      "status": "FAILED",
+      "partition": "added_f2p",
+      "eval_log_line": 5789
+    },
+    {
+      "node_id": "tests/func/test_run_cache.py::test_restore_pull",
+      "status": "FAILED",
+      "partition": "bound_source_f2p",
+      "eval_log_line": 5790
+    }
+  ],
+  "install_rc": 0,
+  "pytest_rc": 1,
+  "outer_candidate_exec_rc": 0,
+  "actual_uid": 54322,
+  "resource": {
+    "samples": 51,
+    "memory_peak_bytes": 1033506816,
+    "sampled_memory_current_max_bytes": 1026838528,
+    "pids_peak": 11,
+    "pids_limit": 512,
+    "cpu_max": "200000 100000",
+    "memory_events_oom": 0,
+    "memory_events_oom_kill": 0,
+    "pids_max_events": 0,
+    "OOMKilled": false,
+    "own_cgroup_read_errors": 0,
+    "resource_facts_in_official_diag": null
+  },
+  "cleanup": {
+    "created": 1,
+    "removed": 1,
+    "manager_containers_open": [],
+    "manager_supply_open": [],
+    "manager_cleanup_failures": [],
+    "runner_owned_remaining": "",
+    "after_finished_query_rc": 0,
+    "after_finished_owned_remaining": ""
+  },
+  "original_preserved": {
+    "entry_rc": 1,
+    "cleanup_ok": false,
+    "raw_reward": null,
+    "solve_seconds": 215.507
+  },
+  "new_solve": false,
+  "training_qualification": null,
+  "limitations": [
+    "不是fresh公开读者",
+    "单个原FP CPU补评分，不是重跑矩阵或新GPU solve",
+    "官方num_parsed_tests42含captured logging伪条目；pytest41和refs40另核",
+    "旧GPU失败/清理与215.507s solve保留",
+    "无信号异常路径实测、无模型稳定性/训练资格/双模型ACK"
+  ],
+  "evidence_pins": [
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/actual_candidate_uid.json",
+      "bytes": 88,
+      "sha256": "3b06a95ffe73be32c16deb3f81c46b487e33c9b94409b833de055f528d6ebf78"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/actual_container_start.json",
+      "bytes": 3098,
+      "sha256": "4abbb0a65c56a30610259ff23f8e8d315e5e166f1d4f0d96ad645781df63fb7e"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/actual_cpu_slot_admission.json",
+      "bytes": 1397,
+      "sha256": "1837c5db8532fae6fe47c5b155edfe2ee6af87d849e6cc1452b0ea5b359a52e4"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/actual_image.json",
+      "bytes": 4488,
+      "sha256": "aa86f646851454d07d9e5466ab3cf4aec7d7653e920db3c25b6280dce8b7003b"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/binding.json",
+      "bytes": 2853,
+      "sha256": "9408ce22e6c2303be3658298ab4bb1b9350e50f73de105cd9fc7ca42fa2bb260"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/complete_scripts.json",
+      "bytes": 36200,
+      "sha256": "210935ae01e26aa630209fe03073f2a6ab8b5924416595910bb369bcad5591b0"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/done.json",
+      "bytes": 154,
+      "sha256": "d1521991583586297a96efedaa56a4795d44b01500b1c588ed9ecad2531d9f5c"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/eval_logs/evallog_dvc9395-original-fp-cpu-_f3ede5fb.diagnostics.json",
+      "bytes": 14923,
+      "sha256": "83a0f2abba55d9165fa0f9ce0ddbd30139c82f57e069681a8458b115c741ca89"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/eval_logs/evallog_dvc9395-original-fp-cpu-_f3ede5fb.eval.log",
+      "bytes": 310627,
+      "sha256": "0225b10025cfd8b19c036ce8a578c28d14cc13d5e4a0fc19e1b36cb6e04cbe31"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/exec_logs/001.json",
+      "bytes": 225,
+      "sha256": "22f318eedd8684652042914ffa6f0360266cc8e63b1b67a435bf29339133d2f3"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/exec_logs/002.json",
+      "bytes": 403,
+      "sha256": "2a9e7c492d95171562c3270d622bf3f2710b09e020a41f91428f0a0673d9dae9"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/exec_logs/003.json",
+      "bytes": 70217,
+      "sha256": "741560b17fb15847386cb404b86d88a6c02c00bbfc5ae32fa98b5ce549fbc3b2"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/exec_logs/004.json",
+      "bytes": 136,
+      "sha256": "3dbf280a31fa86cfac958199e60c2ef85a26c403405c415fc26e6b17cf3d2ba0"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/exec_logs/005.json",
+      "bytes": 104,
+      "sha256": "6d58e5df3d0e29ff64bf1b52fcfed4c4fb00e434a01adf9af950c66dac0cd8a6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/exec_logs/006.json",
+      "bytes": 104,
+      "sha256": "6d58e5df3d0e29ff64bf1b52fcfed4c4fb00e434a01adf9af950c66dac0cd8a6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/exec_logs/007.json",
+      "bytes": 104,
+      "sha256": "6d58e5df3d0e29ff64bf1b52fcfed4c4fb00e434a01adf9af950c66dac0cd8a6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/exec_logs/008.json",
+      "bytes": 103,
+      "sha256": "02510b703265477539c771ccb9b9d9459310850d0b51c9f372ff66d7d9806696"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/exec_logs/009.json",
+      "bytes": 13522,
+      "sha256": "d0c4b6523aef5cf6b6f66265957d80e080ee9991f0a55c7a4ea6a8ee989d869f"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/exec_logs/010.json",
+      "bytes": 294,
+      "sha256": "43b1b242164aec561cecf149a12151b86a9c138fc7ce6447e2a0bc1ae487eee5"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/exec_logs/011.json",
+      "bytes": 321,
+      "sha256": "3e25038ae1ab4d3a8288e4c614753f78e9b9a832c927c72df2d8ea2c830e3e78"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/exec_logs/012.json",
+      "bytes": 103,
+      "sha256": "02510b703265477539c771ccb9b9d9459310850d0b51c9f372ff66d7d9806696"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/exec_logs/013.json",
+      "bytes": 162,
+      "sha256": "f4aca584be811cbf262b4da561d3c67130c0baa39f3218726b84d26a47cb2430"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/exec_logs/014.json",
+      "bytes": 103,
+      "sha256": "02510b703265477539c771ccb9b9d9459310850d0b51c9f372ff66d7d9806696"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/exec_logs/015.json",
+      "bytes": 110,
+      "sha256": "8d71a0530a7949b5287dbaf9aa70bd0b6f30a66e0bab983dbb417b36bcfbdb52"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/exec_logs/016.json",
+      "bytes": 303857,
+      "sha256": "4fea00d055c6b4144baf81efaff405af1b8a0e2a83d45813a230aff935a6fc75"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/full_reference_readback.json",
+      "bytes": 8562,
+      "sha256": "1cc46f482da04878d49e6e5dad36412e7a000a238d28d987c00126367f1a6bbc"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/input_check.json",
+      "bytes": 11350,
+      "sha256": "710d3e0b1a17a1deb09fd5d596834d4f41867736a45401cbb38d742e58aa6f0f"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/projection.json",
+      "bytes": 374,
+      "sha256": "2cea29b0aeda3edda77641b0ff221e4f8a89cf6ff2ba63ae5e310724d29f9e21"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/report.json",
+      "bytes": 1850,
+      "sha256": "643e47665e0510dfba0da453f7b2ba2f4aa6962e40816b8dd296fbbcc2815d4c"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/resource_before_cleanup.json",
+      "bytes": 713,
+      "sha256": "4110d6bbb00ec1d17ac87f7656adb63e0110b905a1ac178b635070fc71375b5d"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/resource_samples.jsonl",
+      "bytes": 33057,
+      "sha256": "5b7ca013489736bf028e8d396b2e28a83bd29e95cdfff69be6ad345ef2f0d8da"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/runtime_code_binding.json",
+      "bytes": 26277,
+      "sha256": "4511d9a43e6fafa10c8b1afc511628a6276169bb33498eafa6740fdf882268f6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/status.json",
+      "bytes": 3316,
+      "sha256": "b92bb40bfd0808e88512f08fdedbaf31b8dda53fe69c64fbed9eaa6e6a04fb70"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/summary.json",
+      "bytes": 678,
+      "sha256": "83b4df0cdc13ab7edde4004d40e01dda8a711463be7d2a2e83122cee9686d8b7"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/tasks.json",
+      "bytes": 4709,
+      "sha256": "b467515d779555207d60286094b2153920079130eb0607c59f4f6a6972618020"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/slot/status.json",
+      "bytes": 1279,
+      "sha256": "2b4da5a78a4410cf0fa7444d5c80e78698078c5fcba39d85edd85abf08b04ada"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/slot/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/slot/stdout.log",
+      "bytes": 192,
+      "sha256": "769cca275c9cef38e9bca30449a08a67471644172bce740930db815682efd9d2"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/closed_grade_readback_v1.tar.gz",
+      "sha256": "badd8d663e571bf7ac4b54c079b509c17e80f914f3b290ee2a6d7acb0a1802ef",
+      "bytes": 108706
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/closed_manifest.json",
+      "sha256": "5d106389938f110050a7a16c5205c1cb723f27851d6ba193ea8fbcd727b46fa1",
+      "bytes": 6506
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/closed_collect_receipt_v1.json",
+      "sha256": "9e4691f178bcb5b4d1aa745bbc5b4d3b3105a87c2df6fcd63aad46483e8f209f",
+      "bytes": 393
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/collect_closed.stderr",
+      "sha256": "6f15b2ac74775eafe2b7807d000338ac072a9c6d83695f56b45f3c1c6d720f60",
+      "bytes": 173
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/collect_closed_formal_grade_v1.py",
+      "sha256": "034be804cfbf189a0b6b6d0ffb0aecbd57f012a5e5c33b46325a4f2aadf39225",
+      "bytes": 3719
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/collect_closed_formal_grade_v2.py",
+      "sha256": "d1f7d080c4731309855610eb082fa2bc6fa3b94e34a4c3fab016a36de8384ff3",
+      "bytes": 3718
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/formal_cpu_process_completion_v1.json",
+      "sha256": "31be5f45cb433cc5cde4980c327710039eaa1246f13a4f223978fd4491ee78ec",
+      "bytes": 198
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/launch_intent_v1.json",
+      "sha256": "31070210c9f79daab278532bfb81fe7f1109ebb93c85584a6fc1a2a71d2a1517",
+      "bytes": 1831
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/pure_additional_direct_artifacts_v1.json",
+      "sha256": "28d9b85a55e69c550a948aecc67a7d222c507e564a9ced7964d3a92c4a060fc9",
+      "bytes": 916
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/pure_v2/projection.json",
+      "sha256": "2cea29b0aeda3edda77641b0ff221e4f8a89cf6ff2ba63ae5e310724d29f9e21",
+      "bytes": 374
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/pure_v2/tasks.json",
+      "sha256": "462b8ed02221f696986025ec4809305ac46a437d8e14bf6874b9010036f4b0f9",
+      "bytes": 4708
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/pure_v2/summary.json",
+      "sha256": "83b4df0cdc13ab7edde4004d40e01dda8a711463be7d2a2e83122cee9686d8b7",
+      "bytes": 678
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/snapshot_7c8c9bccd699a74f/source/remote/queue_v27/results/gpu1003-dvc9395-coder-a1/attempt/attempt.json",
+      "sha256": "1561b5b242bc34cc0164295ede46adcbf080a74fa0504aaf2da6ace666771ae0",
+      "bytes": 16588
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/snapshot_7c8c9bccd699a74f/source/remote/queue_v27/results/gpu1003-dvc9395-coder-a1/failure.json",
+      "sha256": "18b8cd84ec40427cd5742cce96576715c8f778da9326bf6563fc2c1fd47d5a26",
+      "bytes": 161
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/reviews/non_author_dvc9395_same_original_fp_cpu_preflight_20261003_v1.md",
+      "sha256": "b52e6f7a7630ae7f818b23f6cfef5682793385393905c5dd7e89135013d37602",
+      "bytes": 13314
+    }
+  ]
+}

@@ -1,0 +1,126 @@
+{
+  "singleton": {
+    "same_instance": true,
+    "second_constructor_value": "A",
+    "concurrent_instance_mutation": [
+      "B",
+      "B"
+    ],
+    "scope": "真实 vendored 基类的两种假设实现；不是尚未编写的 RS 子类回归"
+  },
+  "baseline": [
+    {
+      "task": "conan-io__conan-15422",
+      "variant": "bash_env_v1",
+      "bash_env": "/rh2/bash_env",
+      "python": "/opt/miniconda3/envs/testbed/bin/python",
+      "pytest": "/opt/miniconda3/envs/testbed/bin/pytest",
+      "top_level_rc": 0,
+      "step_rc": {
+        "import": 0,
+        "presets_jobs2": 1,
+        "narrow_tests_1": 0,
+        "narrow_tests_2": 0,
+        "git_status": 0
+      },
+      "container_removed": true
+    },
+    {
+      "task": "conan-io__conan-15422",
+      "variant": "original",
+      "bash_env": "",
+      "python": "/opt/miniconda3/bin/python",
+      "pytest": "",
+      "top_level_rc": 0,
+      "step_rc": {
+        "import": 1,
+        "presets_jobs2": 1,
+        "narrow_tests_1": 1,
+        "narrow_tests_2": 1,
+        "git_status": 0
+      },
+      "container_removed": true
+    },
+    {
+      "task": "getmoto__moto-5134",
+      "variant": "bash_env_v1",
+      "bash_env": "/rh2/bash_env",
+      "python": "/opt/miniconda3/envs/testbed/bin/python",
+      "pytest": "/opt/miniconda3/envs/testbed/bin/pytest",
+      "top_level_rc": 0,
+      "step_rc": {
+        "c1_import": 0,
+        "c2_exists_matrix": 1,
+        "c3_pattern_tests": 0,
+        "c3_logs_test": 0,
+        "c4_logs_delivery": 1,
+        "c5_compile": 0,
+        "git_status": 0
+      },
+      "container_removed": true
+    },
+    {
+      "task": "getmoto__moto-5134",
+      "variant": "original",
+      "bash_env": "",
+      "python": "/opt/miniconda3/bin/python",
+      "pytest": "",
+      "top_level_rc": 0,
+      "step_rc": {
+        "c1_import": 1,
+        "c2_exists_matrix": 1,
+        "c3_pattern_tests": 1,
+        "c3_logs_test": 1,
+        "c4_logs_delivery": 1,
+        "c5_compile": 0,
+        "git_status": 0
+      },
+      "container_removed": true
+    },
+    {
+      "task": "iterative__dvc-5839",
+      "variant": "bash_env_v1",
+      "bash_env": "/rh2/bash_env",
+      "python": "/opt/miniconda3/envs/testbed/bin/python",
+      "pytest": "/opt/miniconda3/envs/testbed/bin/pytest",
+      "top_level_rc": 0,
+      "step_rc": {
+        "import_plain": 0,
+        "import_from_tmp": 0,
+        "cli_matrix": 0,
+        "narrow_tests": 0,
+        "git_status": 0
+      },
+      "container_removed": true
+    },
+    {
+      "task": "iterative__dvc-5839",
+      "variant": "original",
+      "bash_env": "",
+      "python": "/opt/miniconda3/bin/python",
+      "pytest": "",
+      "top_level_rc": 0,
+      "step_rc": {
+        "import_plain": 1,
+        "import_from_tmp": 1,
+        "cli_matrix": 0,
+        "narrow_tests": 1,
+        "git_status": 0
+      },
+      "container_removed": true
+    }
+  ],
+  "transcript": {
+    "path": "runs/base_probe_20260922/remote/runs/p2_smoke/coder/conan-15422/trajectory.jsonl",
+    "jsonl_lines": 323,
+    "types": {
+      "system": 27,
+      "stream_event": 222,
+      "assistant": 48,
+      "user": 25,
+      "result": 1
+    },
+    "message_start": 26,
+    "result": 1
+  }
+}

@@ -1,0 +1,57 @@
+diff --git a/numpy/lib/histograms.py b/numpy/lib/histograms.py
+index ad72155..2d38bbd 100644
+--- a/numpy/lib/histograms.py
++++ b/numpy/lib/histograms.py
+@@ -812,7 +812,8 @@ def histogram(a, bins=10, range=None, normed=None, weights=None,
+         return n, bin_edges
+ 
+ 
+-def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
++def histogramdd(sample, bins=10, range=None, normed=None, weights=None,
++                density=None):
+     """
+     Compute the multidimensional histogram of some data.
+ 
+@@ -961,6 +962,19 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
+     core = D*(slice(1, -1),)
+     hist = hist[core]
+ 
++    # density overrides the normed keyword, as in histogram()
++    if density is not None:
++        if normed is not None:
++            warnings.warn(
++                "The normed argument is ignored when density is provided. "
++                "In future passing both will result in an error.",
++                stacklevel=2)
++        normed = density
++    elif normed is not None:
++        warnings.warn(
++            "The normed argument is deprecated, use density instead.",
++            stacklevel=2)
++
+     # Normalize if normed is True
+     if normed:
+         s = hist.sum()
+diff --git a/numpy/lib/twodim_base.py b/numpy/lib/twodim_base.py
+index cca316e..ce5e831 100644
+--- a/numpy/lib/twodim_base.py
++++ b/numpy/lib/twodim_base.py
+@@ -530,7 +530,8 @@ def vander(x, N=None, increasing=False):
+     return v
+ 
+ 
+-def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
++def histogram2d(x, y, bins=10, range=None, normed=None, weights=None,
++                density=None):
+     """
+     Compute the bi-dimensional histogram of two data samples.
+ 
+@@ -652,7 +653,7 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
+     if N != 1 and N != 2:
+         xedges = yedges = asarray(bins)
+         bins = [xedges, yedges]
+-    hist, edges = histogramdd([x, y], bins, range, normed, weights)
++    hist, edges = histogramdd([x, y], bins, range, normed, weights, density)
+     return hist, edges[0], edges[1]
+ 
+ 

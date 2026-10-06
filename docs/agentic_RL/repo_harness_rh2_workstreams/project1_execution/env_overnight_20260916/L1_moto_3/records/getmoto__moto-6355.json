@@ -1,0 +1,51 @@
+{
+ "task_id": "getmoto__moto-6355",
+ "source": "SWE-Gym lite (swe_gym_lite_full_f70b1a29)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-6355",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-6355",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-6355",
+  "base_commit": "37cb6cee94ffe294e7d02c7d252bcfb252179177",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-6355/gold/offline/a1/"
+ },
+ "public_view": {
+  "goal": "在 A 区创建 SNS topic 后，用 B 区的 client 通过完整 ARN 去 load()（GetTopicAttributes）不再报错。4.0.11 会抛 ClientError，4.1.10 不抛。要求恢复跨区不可访问。",
+  "constraints": ["题面给出完整复现片段；未要求改变跨账号行为"],
+  "unknowns_from_public_only": [
+   "题面只说 'exception ClientError used to be raised'，没给 Error Code 与 Message（不过 base 的 moto/sns/exceptions.py:18 TopicNotFound 已固定为 Code=NotFound / Message='Topic does not exist'，可从代码推出）",
+   "题面没说修复应落在 get_topic 的后端选择、还是 responses 层的区域校验",
+   "题面没说跨账号访问是否保留（base 刚在 #6330 加入跨账号）"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 只碰 tests/test_sns/test_topics_boto3.py（base 已存在）", "golden_patch 只碰 moto/sns/models.py:496"], "note": "无二进制/LFS/子模块，与题面同一问题。", "by": "L1_moto_3"},
+  "2": {"status": "pass", "evidence_refs": ["base moto/sns/models.py:493-498 `return sns_backends[parsed_arn.account][parsed_arn.region].topics[arn]`"], "note": "后端按 ARN 里的 region 解析，因此任意 region 的 client 都能拿到，确与题面所述一致。", "by": "L1_moto_3"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 1005 字符，含复现片段，无外链/图片/截断", "hints_text 一句话：'we accidentally enable cross-region access while adding cross-account access'"], "note": "hints 给了根因方向（跨账号改动带出的回归），题面没有；但题面的复现片段本身就能定位到 get_topic，缺失不致命。", "by": "L1_moto_3"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 触碰路径全集：tests/test_sns/test_topics_boto3.py"], "note": "无非测试源码路径。gold 触碰 moto/sns/models.py，非测试样路径。", "by": "L1_moto_3"},
+  "17": {"status": "pass", "evidence_refs": ["同 4"], "note": "additional_exclusions 空。", "by": "L1_moto_3"},
+  "5": {"status": "pass", "evidence_refs": ["全局索引：同 gold 文件 moto/sns/models.py 的另一题是 getmoto__moto-7584（同在本包）"], "note": "7584 的测试文件是 tests/test_sns/test_application_boto3.py、改的是 platform application 区域，与本题 get_topic 不重叠；不是重复/派生。", "by": "L1_moto_3"},
+  "23": {"status": "pass", "evidence_refs": ["F2P 断言 err['Code']=='NotFound' 且 err['Message']=='Topic does not exist'", "base moto/sns/exceptions.py:11-20 SNSNotFoundError/TopicNotFound 已固定这两个值"], "note": "精确字符串不是题面给的，但复用 base 既有的 TopicNotFound 就自动满足，属于可从代码推出的要求。", "by": "L1_moto_3"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 只做黑盒断言"], "note": "在 get_topic 换后端、或在 responses.get_topic_attributes 加区域校验并抛 TopicNotFound，都能过。不强制唯一实现。", "by": "L1_moto_3"},
+  "25": {"status": "issue", "evidence_refs": ["F2P 只走 topic.load() → GetTopicAttributes 这一条路径", "base moto/sns/models.py 里 get_topic 有 9 个调用点：488/503/522/561/598/936/969/1008 与 responses.py:165"], "note": "只在 responses.get_topic_attributes 加区域校验的窄修复能通过 F2P，但 set_topic_attributes / subscribe / publish / tag 等 8 条路径仍可跨区访问。P2P 未覆盖这些跨区场景。严重度 P3（会放过明显不完整的修复）。", "by": "L1_moto_3"},
+  "26": {"status": "pass", "evidence_refs": ["collected 25 items = F2P 1 + P2P 24，全过"], "note": "见 proposed_regression_tests。", "by": "L1_moto_3"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 单行 `parsed_arn.region` → `self.region_name`"], "note": "最小且对应。语义上保留跨账号（仍按 parsed_arn.account 取）、禁止跨区，与题面一致；因为 topics dict 以完整 ARN 为键，换到调用方 region 的 backend 后必然 KeyError → TopicNotFound。", "by": "L1_moto_3"},
+  "29": {"status": "pass", "evidence_refs": ["hints 无代码、无 PR 链接"], "note": "无静态泄漏。", "by": "L1_moto_3"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold 25 passed"], "note": "纯 mock。", "by": "L1_moto_3"},
+  "7": {"status": "issue", "evidence_refs": ["本包共性 install rc=2"], "note": "见包级 issue。", "by": "L1_moto_3"},
+  "11": {"status": "issue", "evidence_refs": ["base tests/test_sns/test_topics_boto3.py:4 是 `# import sure  # noqa ...`（被注释掉），而该文件有 67 处 `.should` 用法", "test_patch 的第一个 hunk 正是把该行取消注释", "tests/test_sns/__init__.py 为空，仓库根与 tests/ 下无 conftest.py"], "note": "**base 的这个测试文件单独跑是坏的**：不 import sure 就用 `.should` 会 AttributeError。评测流程先打 test_patch 再跑，所以 gold/empty 两次 stage1 都正常（25 passed）。但任何“在 base 上不打 test_patch 直接跑 P2P 做预检”的流程，会看到全 24 条 P2P 报错，属误判风险。", "by": "L1_moto_3"}
+ },
+ "issues": [
+  {"category": "base_test_file_broken_without_test_patch", "severity": "P2", "evidence_refs": ["base test_topics_boto3.py:4 注释掉 import sure；文件内 67 处 .should"], "proposed_action": "确认 RH2 是否有“base 上跑 P2P 预检”的步骤；若有，必须先应用 test_patch 再跑，或把这类题标出来。", "next_experiment": "在容器里对 base 直接 `pytest -n0 tests/test_sns/test_topics_boto3.py`（不打 test_patch），确认是否 24/25 条 error（预期 error）。"},
+  {"category": "test_too_permissive", "severity": "P3", "evidence_refs": ["F2P 只覆盖 GetTopicAttributes 一条路径；get_topic 有 9 个调用点"], "proposed_action": "纳入扩展回归建议，不改判分。", "next_experiment": "构造只改 responses.get_topic_attributes 的窄补丁跑 F2P+P2P，确认能通过（预期通过）。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只含测试文件；其中恢复 `import sure` 是测试文件内的依赖修复，不属于被恢复会破坏解答的源码路径。", "evidence_refs": ["test_patch 路径全集 = tests/test_sns/test_topics_boto3.py"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_sns/test_topics_boto3.py::test_topic_corresponds_to_region", "reason": "已在 P2P，直接覆盖 ARN 与 region 的对应关系。"},
+  {"id": "tests/test_sns/test_subscriptions_boto3.py、tests/test_sns/test_publishing_boto3.py", "reason": "subscribe/publish 都经 get_topic（models.py:561/936/969），是 gold 改动影响面里未被 F2P 覆盖的主要调用者。"},
+  {"id": "新增：跨区调用 set_topic_attributes / subscribe / publish 应抛 TopicNotFound", "reason": "堵住只改 responses 层的窄修复（见检查 25）。"},
+  {"id": "tests/test_sns/ 全目录 + 跨账号用例（#6330 引入）", "reason": "gold 同时触及跨账号路径，需确认未回退跨账号能力。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "题面自足、base 确有缺陷、gold 单行且对应、文件边界干净；两个问题（base 文件缺 import sure、F2P 覆盖面窄）都不影响本题的既有判分路径。"},
+ "costs": {"minutes": 15}
+}

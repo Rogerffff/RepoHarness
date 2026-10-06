@@ -1,0 +1,97 @@
+{
+  "schema": "dask7656_environment_binding_supplement.v1",
+  "request_id": "publish-swe-dask-7656-20261003-v1",
+  "scope": "fixed_existing_environment_evidence_only_original_input_and_test_material_unchanged",
+  "instance_id": "dask__dask-7656",
+  "base_commit": "07d5ad0ab1bc8903554b37453f02cc8024460f2a",
+  "base_image": "xingyaoww/sweb.eval.x86_64.dask_s_dask-7656@sha256:27d11a070a6af9472f390a39258cfafd3ddcd0a768963a4bc903c797c9d7b601",
+  "base_image_id": "sha256:3e57a70d57e3691a4f53908d694b7e4a78055ef05a176ef63a5853bd56514d72",
+  "wheel": {
+    "filename": "pandas-1.3.5-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+    "sha256": "2c21778a688d3712d35710501f8001cdbf96eb70a7c587a3d5613573299fdca6",
+    "grader_image_path": "/opt/rh2/compat-wheels/pandas-1.3.5-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+    "actor_build_copy_path": "/opt/rh2/actor-wheels/pandas-1.3.5-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+    "actor_runtime_wheel": "removed_after_install_per_verified_Dockerfile"
+  },
+  "actor": {
+    "image_id": "sha256:118f47f67994e4d4df700f427404c7620cd2c9eedf3b818f0e8b21d3276babe3",
+    "tag": "rh2-task2/swe_dask_7656_actor_dask7656-images-cpu-c-20261003-v4:20260925",
+    "purpose": "public_solver_development_preinstalled_pandas_and_activation",
+    "build_command": "/opt/miniconda3/envs/testbed/bin/python -m pip install --no-index --no-deps /opt/rh2/actor-wheels/*.whl && rm -rf /opt/rh2/actor-wheels",
+    "activation_path": "/opt/miniconda3/envs/testbed/etc/conda/activate.d/rh2-dask-distutils.sh",
+    "activation_contents": "export SETUPTOOLS_USE_DISTUTILS=stdlib\n",
+    "image_evidence": {
+      "path": "runs/category2_repair_20260929/swe_dask/image_preparation/dask7656-cpu-c-20261003-v4/remote/build/actor_build/swe_dask_7656_actor_dask7656-images-cpu-c-20261003-v4/image.json",
+      "sha256": "08fbe471c8e99710ddf5f6d4651507d076d6c6b1f0aa35baee96e6fad2f0b014"
+    },
+    "Dockerfile": {
+      "path": "runs/category2_repair_20260929/swe_dask/image_preparation/dask7656-cpu-c-20261003-v4/remote/build/actor_build/swe_dask_7656_actor_dask7656-images-cpu-c-20261003-v4/Dockerfile",
+      "sha256": "0ae8be0ac4905f7cd05033a88fe241539450876e6eec6f76f3596284f88a992f"
+    },
+    "actual_compat_capture": {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-cpu-c-20261003-v2/remote/run/actor/captures/compat_environment.out",
+      "sha256": "e4cded6ed6dbf38c53e9b302732e9f4c1deb2f4031b33fd7302f381a567d1006"
+    }
+  },
+  "grader": {
+    "image_id": "sha256:50bca237706aed5413899f7fec2123e9933de56293e8ed8169938c86a9e0559b",
+    "tag": "rh2-baseprobe/compat-v1-dask__dask-7656:dask7656-images-cpu-c-20261003-v4",
+    "purpose": "copy_wheel_only_pandas_not_preinstalled",
+    "image_evidence": {
+      "path": "runs/category2_repair_20260929/swe_dask/image_preparation/dask7656-cpu-c-20261003-v4/remote/build/grader_build/dask__dask-7656/image.json",
+      "sha256": "e486b443caab23b3c6cfddc510bd2bbb473ff09d3cdd89cdb90421ef75d30197"
+    },
+    "Dockerfile": {
+      "path": "runs/category2_repair_20260929/swe_dask/image_preparation/dask7656-cpu-c-20261003-v4/remote/build/grader_build/dask__dask-7656/context/Dockerfile",
+      "sha256": "eea5bb600626982ca4fca6d873c5b77f2858a85aa8cdc746bc172e1daae148cd"
+    },
+    "install_recipe": {
+      "path": "runs/swegym_cpu_preprobe_20260929/task_inputs/dask__dask-7656/grader_install_recipe.json",
+      "sha256": "4be37effaae78af9e724c10ccdad38c6d555b2e81ed5351b2128b48fd1927d61"
+    },
+    "exact_revised_install": "rh2_compat_install() {\n export SETUPTOOLS_USE_DISTUTILS=stdlib\n python -m pip install --no-index --find-links=/opt/rh2/compat-wheels --no-deps pandas==1.3.5 || return $?\n python -I -c 'import importlib.metadata as m,json; print(\"RH2_COMPAT_VERSIONS=\"+json.dumps({x:m.version(x) for x in ['\"'\"'pandas'\"'\"']}))'\n python -m pip install --no-deps -e .\n local original_rc=$?\n python -I -c 'import importlib.metadata as m,json; print(\"RH2_COMPAT_VERSIONS=\"+json.dumps({x:m.version(x) for x in ['\"'\"'pandas'\"'\"']}))'\n return \"$original_rc\"\n}\nrh2_compat_install",
+    "effective_commands": [
+      "export SETUPTOOLS_USE_DISTUTILS=stdlib",
+      "python -m pip install --no-index --find-links=/opt/rh2/compat-wheels --no-deps pandas==1.3.5",
+      "python -m pip install --no-deps -e ."
+    ],
+    "budget": {
+      "env_reset_timeout_seconds": 900,
+      "apply_timeout_seconds": 120,
+      "meaning": "trusted_setup execution uses env_reset; apply only writes script/self-attestation, not separate900s rule"
+    }
+  },
+  "verified_logs": {
+    "current_images_build": {
+      "path": "runs/category2_repair_20260929/swe_dask/image_preparation/dask7656-cpu-c-20261003-v4/remote/build/status.json",
+      "sha256": "bdd3060765a4781e294fe5bf9f1329181409c2534f5b30c41fd961308446deaf"
+    },
+    "historical_setup900_status": {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/dask__dask-7656/grading_setup900_v1/status.json",
+      "sha256": "acfded13973b5db8539504b651b7f98d7fb712d0277ddd02cdd381e9550bb1fb"
+    },
+    "historical_setup900_gold_budget": {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/dask__dask-7656/grading_setup900_v1/gold/budget/dask__dask-7656.json",
+      "sha256": "1be42ea05d72d43bbbddb95578c79c6331b4e17b6bb0df36bc2404c59aa9294f"
+    },
+    "historical_setup900_gold_recipe": {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/dask__dask-7656/grading_setup900_v1/gold/recipe/recipe.json",
+      "sha256": "10631d81877ed0e1b2e88598c838aa058f2321905a19e1727f07ba1424c10f65"
+    },
+    "historical_setup900_gold_eval": {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/dask__dask-7656/grading_setup900_v1/gold/eval_logs/evallog_replay-cpu29-dask7656-se_7fbfb239.eval.log",
+      "sha256": "eb84be857dad1cac130e386eb90c019483d662dd09eaf64b7f52af36f96ef522"
+    },
+    "historical_setup900_gold_ledger": {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/dask__dask-7656/grading_setup900_v1/gold/ledger.jsonl",
+      "sha256": "4316a79c08f5af1ef719f9b98386c5177ab768e59f618b2218176ce75871f17d"
+    }
+  },
+  "evidence_limits": [
+    "当前cpu-c actor/preinstalled与activation生效已实测；私有诊断用actor镜像",
+    "当前cpu-c grader为新copy-only镜像；安装配方已有历史setup900真实评分日志，不能把历史旧材料reward写作本轮新测试reward",
+    "两层镜像角色不同，不能互换；正式actor派生接法由既有入口能力接续",
+    "pip_check历史distributed/fastparquet/xarray/chest冲突未消失；仅声明已测路径有效",
+    "不重复旧root私有对照；正式安装配方与本轮新非root评分仍须绑定并验证"
+  ]
+}

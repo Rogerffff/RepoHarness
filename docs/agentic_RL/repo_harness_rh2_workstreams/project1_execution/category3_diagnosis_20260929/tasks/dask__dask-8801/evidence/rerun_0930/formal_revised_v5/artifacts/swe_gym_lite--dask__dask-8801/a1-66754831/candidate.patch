@@ -1,0 +1,24 @@
+diff --git a/dask/config.py b/dask/config.py
+--- a/dask/config.py
++++ b/dask/config.py
+@@ -179,11 +179,17 @@
+     for path in file_paths:
+         try:
+             with open(path) as f:
+-                data = yaml.safe_load(f.read()) or {}
+-                configs.append(data)
++                data = yaml.safe_load(f.read())
+         except OSError:
+             # Ignore permission errors
+-            pass
++            continue
++        except yaml.YAMLError as exc:
++            raise ValueError(f"Dask config file {path} is not valid YAML") from exc
++        if data is None:
++            continue
++        if not isinstance(data, dict):
++            raise ValueError(f"Dask config file {path} is not valid YAML")
++        configs.append(data)
+ 
+     return configs
+ 

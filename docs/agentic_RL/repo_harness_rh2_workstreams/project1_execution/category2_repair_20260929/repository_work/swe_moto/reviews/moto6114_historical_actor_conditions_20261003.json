@@ -1,0 +1,34 @@
+{
+  "schema": "moto6114.historical_actor_conditions.v1",
+  "checks": {
+    "same_source_manifest": true,
+    "same_base_commit": true,
+    "same_commands_exact": true,
+    "same_cc_tarball_sha": true,
+    "same_actor_resources": true,
+    "same_interpreter_prefix": true,
+    "old_full_logs": true,
+    "old_three_commands_complete": true,
+    "old_own_resources_zero": true,
+    "current_recipe_dockerfile_and_wheels_same": true
+  },
+  "all_compared_conditions_match": true,
+  "same_physical_image_id": false,
+  "historical_runtime_image_id": "sha256:aaf97ca9107336dc68a964386be07361bf363f3a4684998d3727d704c20cd5a0",
+  "current_runtime_image_id": "sha256:1d8dded2ee5bbe9275514fdc603116ac9f36da5e30c19b2d4ffcba4d4a9f27d5",
+  "historical_actor": "runs/swegym_cpu_preprobe_20260929/remote/results/getmoto__moto-6114/mixed-v1/actor_revised",
+  "historical_attempt_sha256": "33d42995eec21a7ee06bfaaa7a899f7c7c1ac621dc38e02565593142fb714856",
+  "commands_path": "runs/swegym_cpu_preprobe_20260929/task_inputs/getmoto__moto-6114/public_commands.json",
+  "commands_sha256": "c102412f815fea5a87c99dc8b686eddbe32c1d63bef7925939c7a0ec5416539a",
+  "historical_result": [
+    "identity rc0",
+    "target_identity DBClusterNotFoundFault rc1",
+    "public_existing 4 pass/31 deselected"
+  ],
+  "current_host_cc_path_executed": false,
+  "current_host_agent_import_checked": false,
+  "new_host_remaining": "新宿主UID54321导入及相应开发路径检查；公开任务面未改，旧公开路径可在条件等价成立后复用。",
+  "scope_limits": "历史CC是真实CC+桩，不是基座模型；image ID不同，只比较源镜像/同配方条件，不重绑历史FrozenPatch。旧devcheck没有导出FrozenPatch；不可冒称新a2g通过。",
+  "supply_readback": "moto6114_historical_actor_supply_readback_20261003.json",
+  "supply_readback_sha256": "ef9c3aba51c2a2eae237e8d098d106effd3924904009d3a4427be51b4b08679b"
+}

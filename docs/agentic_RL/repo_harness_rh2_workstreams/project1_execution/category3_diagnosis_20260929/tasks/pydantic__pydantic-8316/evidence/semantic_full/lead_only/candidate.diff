@@ -1,0 +1,14 @@
+diff --git a/pydantic/alias_generators.py b/pydantic/alias_generators.py
+index bbdaaaf12..171e79cb6 100644
+--- a/pydantic/alias_generators.py
++++ b/pydantic/alias_generators.py
+@@ -39,6 +39,8 @@ def to_snake(camel: str) -> str:
+     Returns:
+         The converted string in snake_case.
+     """
+-    snake = re.sub(r'([a-zA-Z])([0-9])', lambda m: f'{m.group(1)}_{m.group(2)}', camel)
++    # split a leading acronym from the following word: HTTPResponse -> HTTP_Response
++    snake = re.sub(r'^(_*[A-Z]+)([A-Z][a-z])', lambda m: f'{m.group(1)}_{m.group(2)}', camel)
++    snake = re.sub(r'([a-zA-Z])([0-9])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+     snake = re.sub(r'([a-z0-9])([A-Z])', lambda m: f'{m.group(1)}_{m.group(2)}', snake)
+     return snake.lower()

@@ -1,0 +1,51 @@
+{
+  "schema": "swe_pydantic5662.versioned_first_round_semantic_report.v1",
+  "request_id": "swe-pydantic5662-behavior-v1-20261003",
+  "accepted": true,
+  "raw_reward": 1,
+  "install_rc": 0,
+  "test_rc": 0,
+  "formal_reference_total": 129,
+  "owner_readback": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/coordination_20261003/5662_coder_versioned_two_model_owner_readback_v1.json",
+    "sha256": "83a467d8e28531f25758423fc3ba20b57fd0a5688a000ae97b336a5ab1c45e8e"
+  },
+  "report": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/model_audits_20261003/5662_coder_versioned_two_model_acceptance.md",
+    "sha256": "08674a39b871f9df3589030f206f5b6cb780745f6e1027621958df60b082a373"
+  },
+  "candidate": {
+    "source_semantics": "唯一生产变更是非BaseModel返回NotImplemented，保留其余相等逻辑，当前范围未见具体语义回归。公开题面明确给出修法，不作独立定位能力结论。",
+    "delivery_limits": "三个根目录附带测试实际通过，Unicode缓存生成物随FP运输；正式评分命令只收集tests/test_main.py，不把附带文件当新增正式参考。模型末总结的性能无副作用主张未经benchmark证明。",
+    "frozen_patch_digest": "sha256:5395e129ff0fa47d155d7e65da5269b4939dd950aa6e438fd200c8fa254c279d",
+    "baseline_digest": "sha256:1bfd37e6beb398513f34f757967642b601096ebfbd24fbec33e41875067555cb",
+    "source_SHA": "sha256:b39b55c58251bc1718b1f409340fc283296f0b2c8d3d436db3860dabf044db62",
+    "model_requests": 16,
+    "count_tokens_requests": 1,
+    "tool_counts": {
+      "Read": 2,
+      "Write": 3,
+      "Bash": 8,
+      "Edit": 2
+    },
+    "tools_serial": true,
+    "subagents": 0,
+    "token_total_cumulative": 334885,
+    "entry_solve_seconds": 39.45
+  },
+  "original_Qwen_regrade_accepted_and_reused": true,
+  "same_condition_two_model_solve": false,
+  "training_qualification": false,
+  "remaining": [
+    "覆盖门槛后另排重复",
+    "用途资格尚未决定"
+  ],
+  "limits": [
+    "current raw1 not semantic correctness proof",
+    "old Qwen raw1/install1 remains original; new grader1/install0 not rewritten into old record",
+    "old425a and new37260470 actor environments differ; not same-condition model comparison",
+    "baseline.environment_package_digest null and inner missing identity fields preserved; external fixed input/source references used",
+    "formal129 support does not assert correct parse for all non-reference whitespace nodeIDs",
+    "no new matrix/model/actor or remote execution"
+  ]
+}

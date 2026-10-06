@@ -1,0 +1,31 @@
+{
+ "image": "c3keep/pillow_a682:src",
+ "python_prefix": "/testbed/.venv",
+ "variants": {
+  "w_keep_trns": [
+   "git apply /in/w_keep_trns.patch"
+  ]
+ },
+ "files": {
+  "run_tests.sh": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow_a682/run_tests.sh",
+  "probe_matrix.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow_a682/probe_matrix.py",
+  "w_keep_trns.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow_a682/w_keep_trns.patch"
+ },
+ "commands": [
+  {
+   "id": "h0_orig",
+   "cmd": "rm -rf /testbed/r2e_tests && cp -r /r2e_tests /testbed/r2e_tests && sha256sum /testbed/r2e_tests/test_1.py && bash /in/run_tests.sh 2>&1; rm -rf /testbed/r2e_tests",
+   "timeout_s": 900
+  },
+  {
+   "id": "pub_tests",
+   "timeout_s": 900,
+   "cmd": "PYTHONDONTWRITEBYTECODE=1 python -m pytest Tests/test_file_gif.py Tests/test_image_convert.py -p no:cacheprovider -q --color=no 2>&1 | tail -n 15; echo \"pytest_rc=${PIPESTATUS[0]}\""
+  },
+  {
+   "id": "probe",
+   "timeout_s": 600,
+   "cmd": "rm -rf /tmp/probe && python /in/probe_matrix.py /tmp/probe 2>&1"
+  }
+ ]
+}

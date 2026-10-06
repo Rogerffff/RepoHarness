@@ -1,0 +1,48 @@
+--- source/test_1.py
++++ draft/test_1.py
+@@ -575,6 +575,26 @@
+         files = [os.path.basename(f) for f in cov.get_data().measured_files()]
+         assert "bug891.py" in files
+ 
++        # The same holds with branch coverage, for other unencodable names, and names that
++        # can be encoded (non-ASCII included) are still measured, also when they come after
++        # an unencodable one.
++        self.make_file("bug891b.py", r"""
++exec(compile("pass", "\udc80\udc81_other.py", "exec"))
++exec(compile("pass", "caf\xe9_\u4e2d.py", "exec"))
++""")
++        cov = coverage.Coverage(branch=True)
++        self.start_import_stop(cov, "bug891b")
++        cov.save()
++        files = [os.path.basename(f) for f in cov.get_data().measured_files()]
++        assert "bug891b.py" in files
++        assert "caf\xe9_\u4e2d.py" in files
++        # What was saved to the data file, read back independently.
++        saved = coverage.CoverageData()
++        saved.read()
++        saved_files = [os.path.basename(f) for f in saved.measured_files()]
++        assert "bug891b.py" in saved_files
++        assert "caf\xe9_\u4e2d.py" in saved_files
++
+ 
+ class MockingProtectionTest(CoverageTest):
+     """Tests about protecting ourselves from aggressive mocking.
+--- source/problem_statement
++++ draft/problem_statement
+@@ -7,13 +7,12 @@
+ 
+ **Example Code:**
+ ```python
+-# Create a file with a non-UTF8 encodable filename
+-exec(compile("pass", "\udcff.py", "exec"))
++import coverage
+ 
+-# Run coverage and attempt to save data
++# Run coverage while executing code whose filename cannot be encoded in UTF-8
+ cov = coverage.Coverage()
+ cov.start()
+-exec("pass")
++exec(compile("pass", "\udcff.py", "exec"))
+ cov.stop()
+ cov.save()  # This line raises UnicodeEncodeError
+ ```

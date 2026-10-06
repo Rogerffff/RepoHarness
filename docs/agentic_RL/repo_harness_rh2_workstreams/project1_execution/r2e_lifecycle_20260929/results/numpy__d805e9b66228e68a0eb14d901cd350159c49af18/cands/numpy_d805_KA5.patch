@@ -1,0 +1,25 @@
+diff --git a/numpy/ma/core.py b/numpy/ma/core.py
+--- a/numpy/ma/core.py
++++ b/numpy/ma/core.py
+@@ -3796,9 +3796,19 @@ def __str__(self):
+                     mask = m
+                     # For big arrays, to avoid a costly conversion to the
+                     # object dtype, extract the corners before the conversion.
++                    print_width = self._print_width
++                    if self.ndim == 1:
++                        # Keep more items than the summarization threshold so
++                        # that array2string still summarizes, and do not cut
++                        # at all when the array is going to be printed in full.
++                        threshold = np.get_printoptions()['threshold']
++                        if data.size > threshold:
++                            print_width = max(print_width, int(threshold) + 2)
++                        else:
++                            print_width = data.size
+                     for axis in range(self.ndim):
+-                        if data.shape[axis] > self._print_width:
+-                            ind = self._print_width // 2
++                        if data.shape[axis] > print_width:
++                            ind = print_width // 2
+                             arr = np.split(data, (ind, -ind), axis=axis)
+                             data = np.concatenate((arr[0], arr[2]), axis=axis)
+                             arr = np.split(mask, (ind, -ind), axis=axis)

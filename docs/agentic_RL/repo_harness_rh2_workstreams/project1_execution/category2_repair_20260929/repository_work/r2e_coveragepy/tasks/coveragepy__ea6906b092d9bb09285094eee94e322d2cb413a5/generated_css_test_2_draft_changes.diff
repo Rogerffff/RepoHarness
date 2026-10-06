@@ -1,0 +1,33 @@
+--- test_2_preserve_v1.py
++++ test_2_generated_css_v2_draft.py
+@@ -88,6 +88,30 @@
+             assert not_ignored == [], status.stdout
+ 
+ 
++    def test_generated_extra_css_literal_names_are_ignored(self):
++        # existing extra_css filenames are literal names, not gitignore patterns.
++        init = run_git("init", "-q", ".")
++        assert init.returncode == 0, init.stderr
++        self.make_file("main_file.py", "a = 1\n")
++        cov = coverage.Coverage()
++        self.start_import_stop(cov, "main_file")
++        for number, name in enumerate(("extra.css", "!custom.css", "#custom.css", "custom[ab].css")):
++            self.make_file(name, "body { color: navy; }\n")
++            directory = "report_css_%s" % number
++            os.makedirs(directory)
++            with open(os.path.join(directory, ".gitignore"), "w") as stream:
++                stream.write("# User-owned rules\ncustom.tmp\n")
++            cov.set_option("html:extra_css", os.path.abspath(name))
++            for generation in range(2):
++                cov.html_report(directory=directory)
++                assert os.path.isfile(os.path.join(directory, name))
++                generated = sorted(f for f in os.listdir(directory) if f != ".gitignore")
++                assert "index.html" in generated
++                for filename in generated:
++                    path = os.path.join(directory, filename)
++                    actual = run_git("check-ignore", "--no-index", "-q", "--", path)
++                    assert actual.returncode == 0, (name, generation, path, actual.stderr)
++
+ 
+ class ReportingTest(CoverageTest):
+     """Tests of some reporting behavior."""

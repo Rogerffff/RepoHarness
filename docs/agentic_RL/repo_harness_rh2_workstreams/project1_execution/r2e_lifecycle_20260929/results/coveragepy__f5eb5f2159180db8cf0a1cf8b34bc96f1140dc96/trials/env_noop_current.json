@@ -1,0 +1,33 @@
+{
+ "task": "coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96",
+ "image": "sha256:98b19b5a2ce42f98230caf958b852d58bcf898a01c61604ab93fd506caafe19c",
+ "recipe_id": "r2e_derive_v1+sysconfig_v1",
+ "patch": "none",
+ "edits": null,
+ "expected": "current",
+ "kind": "trial_not_formal_grading",
+ "test_seconds": 4.8,
+ "markers": true,
+ "observed": {
+  "JsonReportTest.test_branch_coverage": "FAILED",
+  "JsonReportTest.test_context_non_relative": "PASSED",
+  "JsonReportTest.test_context_relative": "PASSED",
+  "JsonReportTest.test_simple_line_coverage": "PASSED"
+ },
+ "n_observed": 4,
+ "log_tail": "RH2_INSTALL_SKIPPED=1\n>>>>> Start Test Output\nbringing up nodes...\nbringing up nodes...\n\n..F.                                                                     [100%]\n=================================== FAILURES ===================================\n_____________________ JsonReportTest.test_branch_coverage ______________________\n[gw1] linux -- Python 3.7.9 /testbed/.venv/bin/python\n\nself = <r2e_tests.test_1.JsonReportTest testMethod=test_branch_coverage>\n\n    def test_branch_coverage(self):\n        cov = coverage.Coverage(branch=True)\n        expected_result = {\n            'meta': {\n                \"version\": coverage.__version__,\n                \"branch_coverage\": True,\n                \"show_contexts\": False,\n            },\n            'files': {\n                'a.py': {\n                    'executed_lines': [1, 2],\n                    'missing_lines': [3],\n                    'excluded_lines': [],\n                    'summary': {\n                        'missing_lines': 1,\n                        'covered_lines': 2,\n                        'num_statements': 3,\n                        'num_branches': 2,\n                        'excluded_lines': 0,\n                        'num_partial_branches': 1,\n                        'percent_covered': 60.0\n                    }\n                }\n            },\n            'totals': {\n                'missing_lines': 1,\n                'covered_lines': 2,\n                'num_statements': 3,\n                'num_branches': 2,\n                'excluded_lines': 0,\n                'num_partial_branches': 1,\n                'percent_covered': 60.0,\n                'covered_branches': 1,\n                'missing_branches': 1\n            }\n        }\n>       self._assert_expected_json_report(cov, expected_result)\n\nr2e_tests/test_1.py:73: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <r2e_tests.test_1.JsonReportTest testMethod=test_branch_coverage>\ncov = <coverage.control.Coverage object at 0x7c4d6129f950>\nexpected_result = {'files': {'a.py': {'excluded_lines': [], 'executed_lines': [1, 2], 'missing_lines': [3], 'summary': {'covered_lines':...n': '5.0.5a0'}, 'totals': {'covered_branches': 1, 'covered_lines': 2, 'excluded_lines': 0, 'missing_branches': 1, ...}}\n\n    def _assert_expected_json_report(self, cov, expected_result):\n        \"\"\"\n        Helper for tests that handles the common ceremony so the tests can be clearly show the\n        consequences of setting various arguments.\n        \"\"\"\n        self.make_file(\"a.py\", \"\"\"\\\n            a = {'b': 1}\n            if a.get('a'):\n                b = 1\n            \"\"\")\n        a = self.start_import_stop(cov, \"a\")\n        output_path = os.path.join(self.temp_dir, \"a.json\")\n        cov.json_report(a, outfile=output_path)\n        with open(output_path) as result_file:\n            parsed_result = json.load(result_file)\n        self.assert_recent_datetime(\n            datetime.strptime(parsed_result['meta']['timestamp'], \"%Y-%m-%dT%H:%M:%S.%f\")\n        )\n        del (parsed_result['meta']['timestamp'])\n>       assert parsed_result == expected_result\nE       AssertionError: assert {'files': {'a...hes': 2, ...}} == {'files': {'a....hes': 1, ...}}\nE         Omitting 2 identical items, use -vv to show\nE         Differing items:\nE         {'totals': {'covered_lines': 2, 'excluded_lines': 0, 'missing_lines': 1, 'num_branches': 2, ...}} != {'totals': {'covered_branches': 1, 'covered_lines': 2, 'excluded_lines': 0, 'missing_branches': 1, ...}}\nE         Full diff:\nE         {'files': {'a.py': {'excluded_lines': [],\nE         'executed_lines': [1, 2],\nE         'missing_lines': [3],...\nE         \nE         ...Full output truncated (23 lines hidden), use '-vv' to show\n\nr2e_tests/test_1.py:35: AssertionError\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED r2e_tests/test_1.py::JsonReportTest::test_context_non_relative\nPASSED r2e_tests/test_1.py::JsonReportTest::test_context_relative\nPASSED r2e_tests/test_1.py::JsonReportTest::test_simple_line_coverage\nFAILED r2e_tests/test_1.py::JsonReportTest::test_branch_coverage - AssertionE...\n1 failed, 3 passed in 1.49 seconds\n>>>>> End Test Output\nRH2_TEST_RC=1\n",
+ "stderr_tail": "",
+ "expected_n": 4,
+ "missing": [],
+ "extra": [],
+ "status_diff": [
+  [
+   "JsonReportTest.test_branch_coverage",
+   "PASSED",
+   "FAILED"
+  ]
+ ],
+ "match": false,
+ "verdict": "mismatch",
+ "seconds": 32.2
+}

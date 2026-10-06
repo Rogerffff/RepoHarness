@@ -1,0 +1,74 @@
+{
+  "scope": "2026-09-24 read-only SSH verification; no container started, no machine stop/delete",
+  "records": [
+    {
+      "command": [
+        "uname",
+        "-m"
+      ],
+      "rc": 0,
+      "stdout": "x86_64\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "docker",
+        "ps",
+        "-a",
+        "--format",
+        "{{.Names}}|{{.Status}}"
+      ],
+      "rc": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "df",
+        "-h",
+        "/"
+      ],
+      "rc": 0,
+      "stdout": "Filesystem      Size  Used Avail Use% Mounted on\n/dev/vda1       193G  128G   46G  74% /\n",
+      "stderr": ""
+    },
+    {
+      "snapshot_sha256": "9eb9f47ee85f30cad223d63a17ef3c50cec986f671dddb2fd9581418f0c315d2",
+      "lines": 388,
+      "check_exit": 0,
+      "check_stdout": "",
+      "check_stderr": ""
+    },
+    {
+      "ref": "rh2-r2e-derived/coveragepy:016af5f6352d-r2e_derive_v1",
+      "id": "sha256:2020169deefdff7caa349a9c60a6660a380fd732113647fd3adb89cc51fc774d",
+      "created": "2026-09-23T13:19:36.681378261Z",
+      "descriptor": {
+        "mediaType": "application/vnd.oci.image.index.v1+json",
+        "digest": "sha256:2020169deefdff7caa349a9c60a6660a380fd732113647fd3adb89cc51fc774d",
+        "size": 856
+      },
+      "rootfs": {
+        "Type": "layers",
+        "Layers": [
+          "sha256:2573e0d8158209ed54ab25c87bcdcb00bd3d2539246960a3d592a1c599d70465",
+          "sha256:bd2c812f5193f4c8e3673dd5478abf54e52fd925f8d68e35cf92d68e8081ffd7",
+          "sha256:aee0d618085496c74c955a75bc50d9a0ab64d81f525be1ea7c917e81546d0372",
+          "sha256:5d5a930d7ce9595e900e4696504be240958b205aeaccef7fccb5e221a623891d",
+          "sha256:3c94926e5abb7c2ba716200e15a0bba6ca6ece2e66a5bbb44e66386089ece90c",
+          "sha256:c3d5570b76d8b507135c0db6eb850679a060f5b96ca902b335fdbe425cb7b23b",
+          "sha256:9404d3330d2e88aa47ed2def7f5dfc43d6d2cb7d8705fa2883dab14e3d9418e9",
+          "sha256:235bb6045a79a1b641e771dc8eee18792fe7360c8095db63acdcc512241a3bea",
+          "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
+          "sha256:8f71744c5f6354c2720a8cb1d929d2efa36f6993fcb7475207511c4b6fe6200c",
+          "sha256:42ab672df8d3c2b927c738cd182151f517688261be32b4ca5f92de9eb074dbbb",
+          "sha256:a42cbc044065d47616044d6bfcaa10f84ba8829dd139aa8f941581c343976e7e",
+          "sha256:6f0a41b7f4dac4c31ba886f21468b5f850bb28e291de75c145448639dfc9ca86",
+          "sha256:5a5ed0fdff8b3a5fd7fa8003ccd1a847679e4e7019393f383f2e6d6d04daa05d",
+          "sha256:a54db45c629359bb88337f51e0bf886bfef821e4748531af5cfc54a173dc9874",
+          "sha256:09565d750e89e942f6a7c7f5f77cd0c28e64f40870ad5fadc01c26633d6b5e56"
+        ]
+      }
+    }
+  ]
+}

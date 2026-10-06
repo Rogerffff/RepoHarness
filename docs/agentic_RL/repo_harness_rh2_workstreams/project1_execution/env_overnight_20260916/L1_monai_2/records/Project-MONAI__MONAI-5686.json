@@ -1,0 +1,243 @@
+{
+ "task_id": "swe_gym_lite::Project-MONAI__MONAI-5686",
+ "instance_id": "Project-MONAI__MONAI-5686",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_monai_2 (Claude Opus 5, 静态审查)",
+ "materials_refs": {
+  "base_commit": "25130db17751bb709e841b9727f34936a84f9093",
+  "version": "1.1",
+  "python_version": "3.8",
+  "eval_cmd": "pytest -rA  tests/test_ssim_loss.py（整文件跑）",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/Project-MONAI__MONAI-5686/{gold,empty}/offline/a1/",
+  "created_at": "2022-12-08"
+ },
+ "public_view": {
+  "目标行为": "`SSIMLoss(spatial_dims=2)(x, y, data_range)` 的输出 `requires_grad` 为 False，导致无法反传；题面给出可直接运行的 8 行复现，期望 `loss.requires_grad` 为 True。",
+  "约束": "不能改变损失数值（题面只说梯度丢了）。",
+  "公开材料无法确定的点": [
+   "梯度丢失的根因在 SSIMLoss 还是 SSIMMetric",
+   "batch>1 分支是否有同样问题（题面只给 batch=1 的例子）",
+   "修法是否允许调用 SSIMMetric 的私有方法"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.test_patch tests/test_ssim_loss.py",
+    "validation.golden_patch monai/losses/ssim_loss.py:81-95"
+   ],
+   "note": "同一 PR，目标文件 base 存在。无二进制/LFS/子模块材料。",
+   "by": "L1_monai_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base 25130db1 monai/losses/ssim_loss.py:84 调用 `SSIMMetric(...)(x, y)`（走 Metric.__call__，会 detach）",
+    "stage1 empty: test_grad_0/1 FAILED"
+   ],
+   "note": "初态确实含题面缺陷。",
+   "by": "L1_monai_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "public.problem_statement 830 字符，含可直接运行的复现"
+   ],
+   "note": "渲染完整、无外链无图片；'Screenshots'/'Environment' 是未填写的模板占位。hints_text 为空。措辞小瑕疵：Expected behavior 段写成『`loss.requires_grad` will be False. But it should be True』，前半句其实是现状不是期望。",
+   "by": "L1_monai_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.test_patch 只触碰 tests/test_ssim_loss.py"
+   ],
+   "note": "纯测试文件；gold 只碰 monai/losses/ssim_loss.py。additional_exclusions 保持空。",
+   "by": "L1_monai_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh setup 段"
+   ],
+   "note": "恢复清单只有一个纯测试文件。",
+   "by": "L1_monai_2"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "scan/monai_cross_index.txt"
+   ],
+   "note": "P2：与 **MONAI-5908** 同 gold 文件（monai/losses/ssim_loss.py）**且同测试文件**（tests/test_ssim_loss.py），相隔 7 周。5908 的 base（8a5a5509）已包含本题 gold，本题新增的 `test_grad_*` 是 5908 的 P2P 成员。两题必须划到同一侧，否则后者会泄漏前者的答案。",
+   "by": "L1_monai_2"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "public.problem_statement 的复现与期望",
+    "test_patch 的 test_grad 断言 result.requires_grad"
+   ],
+   "note": "F2P 就是题面复现的逐字搬运（同样的 x/y/data_range 构造），要求可由公开材料推出。",
+   "by": "L1_monai_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只断言 result.requires_grad"
+   ],
+   "note": "不锁 helper 名、不查字符串。多种合法实现（改 SSIMMetric 让 __call__ 保梯度、在 SSIMLoss 里直接内联计算、调 _compute_tensor）都能过。",
+   "by": "L1_monai_2"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "base tests/test_ssim_loss.py 全部用例的 x 形状都是 [1,1,10,10] 或 [1,1,10,10,10]（batch=1）",
+    "validation.golden_patch 同时改了 `x.shape[0] > 1` 分支"
+   ],
+   "note": "P2：**batch>1 分支零覆盖**。gold 改了两处调用，但 F2P 与 P2P 的输入 batch 全是 1，只修 `x.shape[0] == 1` 分支的部分修复可拿满分。另一类可通过的错误实现：在结果上加 `0 * y.sum()` 之类的假梯度——数值不变、requires_grad 变真，但没有真正修好反传路径。",
+   "by": "L1_monai_2"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.pass_to_pass 8 条 = 整文件既有用例 test2d_0..3 + test3d_0..3"
+   ],
+   "note": "P2P 等于整文件既有通过集，且**有判别力**：它们断言 SSIM 数值（1.0 / 0.0，容差 0.001），能挡住『直接返回带梯度的常量』这类破坏性实现。",
+   "by": "L1_monai_2"
+  },
+  "27": {
+   "status": "issue",
+   "evidence_refs": [
+    "validation.golden_patch 把公开调用 `SSIMMetric(...)(x,y)` 换成私有方法 `._compute_tensor(x,y)`"
+   ],
+   "note": "P3：gold 用**绕过公共 API 调私有方法**的方式回避 `Metric.__call__` 的 detach，而不是修根因（SSIMMetric 的聚合层）。上游 7 周后的 MONAI-5908 再次重写同一文件，说明这是一个过渡性修法。按 check 27 记录，不据此降低测试标准。",
+   "by": "L1_monai_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "public.problem_statement 全文；raw.hints_text 长度 0"
+   ],
+   "note": "题面不含修复代码与 PR 链接（只 @ 了两位维护者）。",
+   "by": "L1_monai_2"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 install rc=0（两侧）"
+   ],
+   "note": "离线镜像内 rc=0。",
+   "by": "L1_monai_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "scan/envscan.txt：tests/test_ssim_loss.py 只有 GPU 命中，无 DOWNLOAD/NET"
+   ],
+   "note": "数据全部现场构造（torch.ones），无权重、无外部数据。",
+   "by": "L1_monai_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "scan/envscan.txt"
+   ],
+   "note": "不需要网络。",
+   "by": "L1_monai_2"
+  },
+  "13": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 gold test 段 7.3s / 10 passed"
+   ],
+   "note": "最大张量 [1,1,10,10,10]，无多进程、无 shm 需求。",
+   "by": "L1_monai_2"
+  },
+  "14": {
+   "status": "issue",
+   "evidence_refs": [
+    "test_patch: for device in [None, \"cpu\", \"cuda\"] if torch.cuda.is_available() else [None, \"cpu\"]",
+    "`y.to(None)` 与 `y.to(\"cpu\")` 在 CPU 张量上返回同一个对象"
+   ],
+   "note": "P2（跨题机制，见 summary 仓库级第 2 条）：参数表长度直接取决于 `torch.cuda.is_available()`。CPU 机上 2 项 → `test_grad_0/1`、`test2d_0..3`、`test3d_0..3`；**有 CUDA 的机器上是 3 项 → test2d/test3d 各变成 6 条、test_grad 变成 3 条**，参考清单的条目数与含义都变。附带问题：CPU 机上 `test_grad_0` 与 `test_grad_1` 拿到的是**同一个张量对象**（`.to(None)` 与 `.to(\"cpu\")` 都是 no-op），两条 F2P 完全等价，第二条零增量覆盖。",
+   "by": "L1_monai_2"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 gold status_map.json 10 条，与 F2P+P2P 一一对应"
+   ],
+   "note": "无 SKIPPED，无伪键。",
+   "by": "L1_monai_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "batch>1 分支零覆盖",
+   "severity": "P2",
+   "evidence_refs": [
+    "全部用例 batch=1",
+    "gold 改了两个分支"
+   ],
+   "proposed_action": "补一条 batch=2 的 F2P（`x = torch.ones([2,1,10,10])/2`），直接覆盖 gold 的第二处改动。",
+   "next_experiment": "写只改 `x.shape[0]==1` 分支的部分修复，跑当前 F2P+P2P，预期 RESOLVED_FULL。"
+  },
+  {
+   "category": "参数表随 CUDA 可见性变长",
+   "severity": "P2",
+   "evidence_refs": [
+    "test_patch 与 base 的 device 列表推导"
+   ],
+   "proposed_action": "把『参考清单生成条件 = 无 CUDA』写进题级 facts，并在评分前校验机器画像一致。",
+   "next_experiment": "同镜像 CUDA 可见/不可见各跑 `pytest --collect-only -q tests/test_ssim_loss.py`，对比 ID 数量。"
+  },
+  {
+   "category": "两条 F2P 等价",
+   "severity": "P3",
+   "evidence_refs": [
+    "`.to(None)` 与 `.to(\"cpu\")` 在 CPU 张量上是 no-op"
+   ],
+   "proposed_action": "记录即可；重建参考清单时可去重。",
+   "next_experiment": "无。"
+  },
+  {
+   "category": "跨题同族（同文件同测试）",
+   "severity": "P2",
+   "evidence_refs": [
+    "scan/monai_cross_index.txt"
+   ],
+   "proposed_action": "5686 与 5908 绑为同一划分单元；两者不能一个进训练一个进评测。",
+   "next_experiment": "无。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰纯测试文件；gold 不碰测试样路径。",
+  "evidence_refs": [
+   "grading.test_patch",
+   "validation.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/test_ssim_metric.py",
+   "reason": "gold 绕过 SSIMMetric 的公共 __call__ 改调 _compute_tensor，metric 一侧的行为必须同时保持。"
+  },
+  {
+   "id": "新增：batch=2 的 SSIMLoss 梯度与数值用例",
+   "reason": "gold 第二处改动当前零覆盖。"
+  },
+  {
+   "id": "tests/test_regularization.py / 其它调用 SSIMLoss 的集成测试（若存在）",
+   "reason": "确认损失可反传后训练链路不变。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "题面自带可运行复现、F2P 逐字对应、P2P 有数值判别力；已知缺口（batch>1 无覆盖、参数表随 CUDA 变长、两条 F2P 等价）都不影响 CPU 机上的判分正确性，但必须与 5908 同侧划分。"
+ },
+ "costs": {
+  "minutes": 18
+ }
+}

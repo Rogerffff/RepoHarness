@@ -1,0 +1,29 @@
+{
+  "schema_id": "rh2.s2_r2e.material_revisions.v2",
+  "purpose": "EA69公开要求补交草案，909仅本包静态验证用，非正式编号、未预约编号；073–075私有面不变。",
+  "revisions": [
+    {
+      "revision_id": "r2e-mr-909",
+      "instance_id": "coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5",
+      "kind": "statement_text_replace",
+      "target": "problem_statement",
+      "edits": [
+        {
+          "old": "[ISSUE]\n**Title:** Missing `.gitignore` in HTML Output Directory Causes Unintended Git Tracking\n\n**Description:**\nWhen generating HTML coverage reports, the output directory does not include a `.gitignore` file. This absence leads to all static files within the directory being tracked by Git repositories, resulting in unnecessary clutter and potential repository bloat.\n\n**Example Code:**\nAfter running the coverage report generation:\n```python\ncoverage.html_report(directory='htmlcov')\n```\nThe `htmlcov` directory structure includes:\n```\nhtmlcov/\n├── index.html\n├── coverage_html.js\n├── style.css\n├── helper2_py.html\n├── main_file_py.html\n```\nHowever, without a `.gitignore` file, adding the `htmlcov` directory to a Git repository will track all these static files, which are meant to be generated and should not be version-controlled.\n\n**Expected Behavior:**\nThe HTML output directory should contain a `.gitignore` file that ignores all its contents, preventing Git from tracking the generated static files.\n\n**Actual Behavior:**\nThe HTML output directory lacks a `.gitignore` file, causing all static files to be tracked by Git when the directory is included in the repository.\n[/ISSUE]",
+          "new": "[ISSUE]\n**Title:** Missing `.gitignore` in HTML Output Directory Causes Unintended Git Tracking\n\n**Description:**\nWhen generating HTML coverage reports, the output directory does not include a `.gitignore` file. This absence leads to all static files within the directory being tracked by Git repositories, resulting in unnecessary clutter and potential repository bloat.\n\n**Example Code:**\nAfter running the coverage report generation:\n```python\ncoverage.html_report(directory='htmlcov')\n```\nThe `htmlcov` directory structure includes:\n```\nhtmlcov/\n├── index.html\n├── coverage_html.js\n├── style.css\n├── helper2_py.html\n├── main_file_py.html\n```\nHowever, without a `.gitignore` file, adding the `htmlcov` directory to a Git repository will track all these static files, which are meant to be generated and should not be version-controlled.\n\n**Expected Behavior:**\nThe HTML output directory should contain a `.gitignore` file that ignores all its contents, preventing Git from tracking the generated static files. If the output directory already contains a `.gitignore` file with user-provided content, preserve that content while ensuring that all generated HTML report files are ignored by Git. This must remain true when the report is generated again.\n\n**Actual Behavior:**\nThe HTML output directory lacks a `.gitignore` file, causing all static files to be tracked by Git when the directory is included in the repository.\n[/ISSUE]"
+        }
+      ],
+      "sha256_before": "sha256:87f805dad9c0268639721aa5e02df3a6b430ade43e91344f641eefd47d242cdf",
+      "sha256_after": "sha256:39b6b28abc08b21a76a71d8908a7e37a00040cbfc3f9d92ee12bc37b3b6a194f",
+      "revised_file": null,
+      "expected_change": null,
+      "decision_ref": "统一处理标准v1已有题级授权；r2e_inventory.md §6已明确补已有.gitignore内容保留与实际忽略效果。",
+      "reason": "将已有授权行为公开交付给solver，修正旧题面遗漏；不指定append或实现方式、不改49键。",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/remaining_workflow_20261002.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/r2e/r2e_inventory.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/public_delivery_blocker_20261003.json"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+[
+  {
+    "id": "env_python_scrapy",
+    "timeout_s": 120,
+    "expect": "zero",
+    "purpose": "确认解释器与导入来源：预计打印 /testbed/.venv/bin/python 与 3.9.21、scrapy 2.7.0 且 __file__ 为 /testbed/scrapy/__init__.py，并显示本环境 inspect.isgeneratorfunction 会穿透 functools.partial（True）。修复前后输出应相同；若 scrapy 不是从 /testbed 导入，后面的复现结论不可用。",
+    "cmd": "cd /testbed && PYTHONDONTWRITEBYTECODE=1 python -c \"import sys, functools, inspect, scrapy; print(sys.executable, sys.version.split()[0]); print('scrapy', scrapy.__version__, scrapy.__file__); print('isgeneratorfunction(partial(generator)) =', inspect.isgeneratorfunction(functools.partial(lambda x: (yield x), 1)))\""
+  },
+  {
+    "id": "private_C1_apply",
+    "timeout_s": 120,
+    "expect": "zero",
+    "purpose": "仅供CPU桩驱动的正对照开发验证，不提供给求解模型或探针上下文；核私有C1补丁字节并经agent身份应用。",
+    "cmd": "cd /testbed && PYTHONDONTWRITEBYTECODE=1 python - <<'RH2_PRIVATE_C1'\nimport base64,hashlib,subprocess\nfrom pathlib import Path\nb=base64.b64decode('ZGlmZiAtLWdpdCBhL3NjcmFweS91dGlscy9taXNjLnB5IGIvc2NyYXB5L3V0aWxzL21pc2MucHkKLS0tIGEvc2NyYXB5L3V0aWxzL21pc2MucHkKKysrIGIvc2NyYXB5L3V0aWxzL21pc2MucHkKQEAgLTEsNSArMSw2IEBACiAiIiJIZWxwZXIgZnVuY3Rpb25zIHdoaWNoIGRvbid0IGZpdCBhbnl3aGVyZSBlbHNlIiIiCiBpbXBvcnQgYXN0CitpbXBvcnQgZnVuY3Rvb2xzCiBpbXBvcnQgaW5zcGVjdAogaW1wb3J0IG9zCiBpbXBvcnQgcmUKQEAgLTIyNSw4ICsyMjYsMTIgQEAgZGVmIGlzX2dlbmVyYXRvcl93aXRoX3JldHVybl92YWx1ZShjYWxsYWJsZSk6CiAgICAgICAgIHZhbHVlID0gcmV0dXJuX25vZGUudmFsdWUKICAgICAgICAgcmV0dXJuIHZhbHVlIGlzIE5vbmUgb3IgaXNpbnN0YW5jZSh2YWx1ZSwgYXN0Lk5hbWVDb25zdGFudCkgYW5kIHZhbHVlLnZhbHVlIGlzIE5vbmUKIAotICAgIGlmIGluc3BlY3QuaXNnZW5lcmF0b3JmdW5jdGlvbihjYWxsYWJsZSk6Ci0gICAgICAgIHNyYyA9IGluc3BlY3QuZ2V0c291cmNlKGNhbGxhYmxlKQorICAgIGZ1bmMgPSBjYWxsYWJsZQorICAgIHdoaWxlIGlzaW5zdGFuY2UoZnVuYywgZnVuY3Rvb2xzLnBhcnRpYWwpOgorICAgICAgICBmdW5jID0gZnVuYy5mdW5jCisKKyAgICBpZiBpbnNwZWN0LmlzZ2VuZXJhdG9yZnVuY3Rpb24oZnVuYyk6CisgICAgICAgIHNyYyA9IGluc3BlY3QuZ2V0c291cmNlKGZ1bmMpCiAgICAgICAgIHBhdHRlcm4gPSByZS5jb21waWxlKHIiKF5bXHQgXSspIikKICAgICAgICAgY29kZSA9IHBhdHRlcm4uc3ViKCIiLCBzcmMpCiAKQEAgLTI0OSwxOCArMjU0LDIyIEBAIGRlZiB3YXJuX29uX2dlbmVyYXRvcl93aXRoX3JldHVybl92YWx1ZShzcGlkZXIsIGNhbGxhYmxlKToKICAgICBMb2dzIGEgd2FybmluZyBpZiBhIGNhbGxhYmxlIGlzIGEgZ2VuZXJhdG9yIGZ1bmN0aW9uIGFuZCBpbmNsdWRlcwogICAgIGEgJ3JldHVybicgc3RhdGVtZW50IHdpdGggYSB2YWx1ZSBkaWZmZXJlbnQgdGhhbiBOb25lCiAgICAgIiIiCisgICAgZnVuYyA9IGNhbGxhYmxlCisgICAgd2hpbGUgaXNpbnN0YW5jZShmdW5jLCBmdW5jdG9vbHMucGFydGlhbCk6CisgICAgICAgIGZ1bmMgPSBmdW5jLmZ1bmMKKyAgICBmdW5jX25hbWUgPSBnZXRhdHRyKGZ1bmMsICdfX25hbWVfXycsIHJlcHIoZnVuYykpCiAgICAgdHJ5OgogICAgICAgICBpZiBpc19nZW5lcmF0b3Jfd2l0aF9yZXR1cm5fdmFsdWUoY2FsbGFibGUpOgogICAgICAgICAgICAgd2FybmluZ3Mud2FybigKLSAgICAgICAgICAgICAgICBmJ1RoZSAie3NwaWRlci5fX2NsYXNzX18uX19uYW1lX199LntjYWxsYWJsZS5fX25hbWVfX30iIG1ldGhvZCBpcyAnCisgICAgICAgICAgICAgICAgZidUaGUgIntzcGlkZXIuX19jbGFzc19fLl9fbmFtZV9ffS57ZnVuY19uYW1lfSIgbWV0aG9kIGlzICcKICAgICAgICAgICAgICAgICAnYSBnZW5lcmF0b3IgYW5kIGluY2x1ZGVzIGEgInJldHVybiIgc3RhdGVtZW50IHdpdGggYSB2YWx1ZSAnCiAgICAgICAgICAgICAgICAgJ2RpZmZlcmVudCB0aGFuIE5vbmUuIFRoaXMgY291bGQgbGVhZCB0byB1bmV4cGVjdGVkIGJlaGF2aW91ci4gUGxlYXNlIHNlZSAnCiAgICAgICAgICAgICAgICAgJ2h0dHBzOi8vZG9jcy5weXRob24ub3JnLzMvcmVmZXJlbmNlL3NpbXBsZV9zdG10cy5odG1sI3RoZS1yZXR1cm4tc3RhdGVtZW50ICcKICAgICAgICAgICAgICAgICAnZm9yIGRldGFpbHMgYWJvdXQgdGhlIHNlbWFudGljcyBvZiB0aGUgInJldHVybiIgc3RhdGVtZW50IHdpdGhpbiBnZW5lcmF0b3JzJywKICAgICAgICAgICAgICAgICBzdGFja2xldmVsPTIsCiAgICAgICAgICAgICApCiAgICAgZXhjZXB0IEluZGVudGF0aW9uRXJyb3I6Ci0gICAgICAgIGNhbGxhYmxlX25hbWUgPSBzcGlkZXIuX19jbGFzc19fLl9fbmFtZV9fICsgIi4iICsgY2FsbGFibGUuX19uYW1lX18KKyAgICAgICAgY2FsbGFibGVfbmFtZSA9IHNwaWRlci5fX2NsYXNzX18uX19uYW1lX18gKyAiLiIgKyBmdW5jX25hbWUKICAgICAgICAgd2FybmluZ3Mud2FybigKICAgICAgICAgICAgIGYnVW5hYmxlIHRvIGRldGVybWluZSB3aGV0aGVyIG9yIG5vdCAie2NhbGxhYmxlX25hbWV9IiBpcyBhIGdlbmVyYXRvciB3aXRoIGEgcmV0dXJuIHZhbHVlLiAnCiAgICAgICAgICAgICAnVGhpcyB3aWxsIG5vdCBwcmV2ZW50IHlvdXIgY29kZSBmcm9tIHdvcmtpbmcsIGJ1dCBpdCBwcmV2ZW50cyBTY3JhcHkgZnJvbSBkZXRlY3RpbmcgJwo=')\nassert \"sha256:\"+hashlib.sha256(b).hexdigest()=='sha256:3345719910836649b43592970e37cb11b778690807b13d5fe4de5aac253a04d6'\np=Path(\"/tmp/rh2_scrapy_private_C1.patch\"); p.write_bytes(b)\nsubprocess.run([\"git\",\"apply\",\"--check\",str(p)],cwd=\"/testbed\",check=True)\nsubprocess.run([\"git\",\"apply\",str(p)],cwd=\"/testbed\",check=True)\nprint(\"RH2_PRIVATE_C1_APPLIED=1\")\nRH2_PRIVATE_C1"
+  },
+  {
+    "id": "repro_issue_example",
+    "timeout_s": 120,
+    "expect": "zero",
+    "purpose": "仅在 C1 验收容器内：文件形式复现应打印 False，退出码0；不使用 python -c 定义待检查生成器。",
+    "cmd": "cat > /tmp/r2e_partial_repro.py <<'EOF'\nimport sys\nsys.path.insert(0, \"/testbed\")\nfrom functools import partial\n\nimport scrapy\nfrom scrapy.utils.misc import is_generator_with_return_value\n\n\ndef generator_func(arg1, arg2):\n    yield {}\n\n\npartial_gen = partial(generator_func, arg1=42)\nprint(\"scrapy imported from:\", scrapy.__file__)\nresult = is_generator_with_return_value(partial_gen)\nprint(\"is_generator_with_return_value(partial_gen) ->\", repr(result))\nassert result is False, \"expected False, got %r\" % (result,)\nprint(\"OK: partial of a generator without return value -> False\")\nEOF\ncd /testbed && PYTHONDONTWRITEBYTECODE=1 python /tmp/r2e_partial_repro.py"
+  },
+  {
+    "id": "pytest_generator_return_tests",
+    "timeout_s": 300,
+    "expect": "zero",
+    "purpose": "仓库现有公开测试（4 个用例），作为非 partial 行为的回归护栏：修复前后都应 4 passed。注意 conftest.py 会在 tests/keys/ 下重新生成 git-ignore 的 localhost.key/.crt；tests/__init__.py 导入时会做一次注定失败的 DNS 查询，断网下可能多等几秒。-p no:cacheprovider 只是为了不写 .pytest_cache。",
+    "cmd": "cd /testbed && PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider -rA tests/test_utils_misc/test_return_with_argument_inside_generator.py"
+  }
+]

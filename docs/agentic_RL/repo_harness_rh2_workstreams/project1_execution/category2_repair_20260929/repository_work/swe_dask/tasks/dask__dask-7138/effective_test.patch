@@ -1,0 +1,42 @@
+diff --git a/dask/array/tests/test_routines.py b/dask/array/tests/test_routines.py
+--- a/dask/array/tests/test_routines.py
++++ b/dask/array/tests/test_routines.py
+@@ -986,6 +986,38 @@
+     assert_eq(dx[dx > 2].ravel(), x[x > 2].ravel())
+ 
+ 
++def test_ravel_with_array_like():
++    # int
++    assert_eq(np.ravel(0), da.ravel(0))
++    assert isinstance(da.ravel(0), da.core.Array)
++
++    # list
++    assert_eq(np.ravel([0, 0]), da.ravel([0, 0]))
++    assert isinstance(da.ravel([0, 0]), da.core.Array)
++
++    # tuple
++    assert_eq(np.ravel((0, 0)), da.ravel((0, 0)))
++    assert isinstance(da.ravel((0, 0)), da.core.Array)
++
++    # nested i.e. tuples in list
++    assert_eq(np.ravel([(0,), (0,)]), da.ravel([(0,), (0,)]))
++    assert isinstance(da.ravel([(0,), (0,)]), da.core.Array)
++
++    values = [[1, -2], [3, 4]]
++    result = da.ravel(values)
++    assert isinstance(result, da.core.Array)
++    assert_eq(result, np.ravel(values))
++
++
++def test_ravel_keyword_array():
++    # 既有公开签名为 ravel(array)，增加转换时仍须兼容关键字调用。
++    values = np.arange(6).reshape((2, 3))
++    array = da.from_array(values, chunks=(1, 3))
++    result = da.ravel(array=array)
++    assert isinstance(result, da.core.Array)
++    assert_eq(result, np.ravel(values))
++
++
+ @pytest.mark.parametrize("is_func", [True, False])
+ @pytest.mark.parametrize("axis", [None, 0, -1, (0, -1)])
+ def test_squeeze(is_func, axis):

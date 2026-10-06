@@ -1,0 +1,2124 @@
+{
+  "schema": "swe_pydantic.q24_coder_owner_readback.v1",
+  "read_at_utc": "2026-10-03T09:41:12.816628+00:00",
+  "request_id": "swe-pydantic8567-behavior-v1-20261003",
+  "job_id": "gpu1003-pyd8567-coder-a1",
+  "runtime": "code_v8",
+  "closed_files": 377,
+  "closed_bytes": 25272259,
+  "authority_manifest_sha256": "c9399d48fe41d7b7591376b1358ffed198ba147c6e9960d29a64679dba038d8f",
+  "full_trajectory_read": true,
+  "canonical_transcript": {
+    "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8567_coder_q24_canonical_transcript_v1.txt",
+    "lines": 2901,
+    "bytes": 131672
+  },
+  "all_formal_references_compared": 162,
+  "raw_reward": 0.0,
+  "install_rc": 0,
+  "test_rc": 1,
+  "formal_failures": [
+    "tests/test_validators.py::test_plain_validator_plain_serializer",
+    "tests/test_validators.py::test_plain_validator_serializer_unsupported_type_both_orders",
+    "tests/test_validators.py::test_plain_validator_unresolved_inner_forward_reference",
+    "tests/test_validators.py::test_plain_validator_typing_typeddict_inner_schema_not_required"
+  ],
+  "formal_successes": 158,
+  "baseline_archive_members_verified": 458,
+  "actor_grader_census_equal": true,
+  "FP_digest": "sha256:a54c75aa6a946b6cb05dede88b0b5d02ac75269a40339c073c91d8bc3eccfa90",
+  "baseline_digest": "sha256:eb494e7682db99522d57c38a96dc78b9469c0c6cbc36e33cdb811b1f25fc2d64",
+  "FP_entries": [
+    {
+      "path": "comprehensive_test.py",
+      "operation": "add",
+      "object_type": "regular",
+      "mode": "100644",
+      "content_digest": "sha256:250f4a242b5256d0938bf88c3673b65f1e935091d7856ecd7f2730d6ba18d23b",
+      "bytes": 2026
+    },
+    {
+      "path": "debug_issue.py",
+      "operation": "add",
+      "object_type": "regular",
+      "mode": "100644",
+      "content_digest": "sha256:f370cb31510f64e1057e865dd20264ca7ff7339e9a3979698de3245b32c59c84",
+      "bytes": 1791
+    },
+    {
+      "path": "fix_plain_validator.py",
+      "operation": "add",
+      "object_type": "regular",
+      "mode": "100644",
+      "content_digest": "sha256:653ee2a2a89a24789eb540f50328f2778590431c0ca4554a7edbaa1ad1347ea3",
+      "bytes": 1948
+    },
+    {
+      "path": "pydantic/functional_validators.py",
+      "operation": "modify",
+      "object_type": "regular",
+      "mode": "100644",
+      "content_digest": "sha256:b18d46faea2e2b1860efd2df442d5da60a6b4d3bbb81198f0fe220bd35a1db61",
+      "bytes": 23880
+    },
+    {
+      "path": "reproduce_issue.py",
+      "operation": "add",
+      "object_type": "regular",
+      "mode": "100644",
+      "content_digest": "sha256:db1e5658e7a85816691f5fbab45be1aefeebdbd33b9484378cec8e5f798e6d4c",
+      "bytes": 574
+    },
+    {
+      "path": "simple_test.py",
+      "operation": "add",
+      "object_type": "regular",
+      "mode": "100644",
+      "content_digest": "sha256:610be15b2b480779356cfd459050703127f17c316d878f8094aa5c76c3020960",
+      "bytes": 1058
+    },
+    {
+      "path": "test_plain_validator_serialization_fix.py",
+      "operation": "add",
+      "object_type": "regular",
+      "mode": "100644",
+      "content_digest": "sha256:36630c292ef0c66b517328bbbdf0a7a0d4f322771341ba270febd4bd82dbb88d",
+      "bytes": 2353
+    },
+    {
+      "path": "understand_schemas.py",
+      "operation": "add",
+      "object_type": "regular",
+      "mode": "100644",
+      "content_digest": "sha256:60ef423b84c71e817adb1f1f3b8604ba246f9cba93b27dfc51964829e584fdaf",
+      "bytes": 1200
+    }
+  ],
+  "projected_applied_digest": "sha256:f823ffccbbe02d39a42c3f7a7f0681ad87120840f0de3e3f211af968abd5487e",
+  "all_successful_writes_edits_and_deletions_reconstruct_FP": true,
+  "deleted_temporary_files": [],
+  "production_edits": [
+    {
+      "path": "pydantic/functional_validators.py",
+      "tool_id": "toolu_4bf9ccb142e6e3bb",
+      "result_at": "2026-10-03T09:10:39.294Z"
+    }
+  ],
+  "model_generating_requests": 44,
+  "count_tokens_calls": 0,
+  "all_generating_HTTP_200": true,
+  "public_prompt_exact_HTTP_block": true,
+  "private_patch_added_P2P_markers_absent": true,
+  "tools": {
+    "Read": 10,
+    "Write": 7,
+    "Bash": 24,
+    "Edit": 2
+  },
+  "tool_calls": 43,
+  "tool_errors": 4,
+  "tools_serial": true,
+  "child_agent_calls": 0,
+  "tokens_input_cumulative": 1090100,
+  "tokens_output_cumulative": 7246,
+  "tokens_total_cumulative": 1097346,
+  "solve_seconds": 79.529,
+  "CC_seconds": 75.945,
+  "CC_API_seconds_nested": 64.276,
+  "first_production_edit_seconds_after_first_HTTP": 38.099,
+  "grading_seconds": 248.402,
+  "resource_roles": {
+    "actor": {
+      "CID": "97a51c76fc5cfc10bfe435a6be9a667a898e917c9fc78c1aabe2af3304a9c0a3",
+      "image_ID": "sha256:bc5d796fe30c9c0150a1c15c25347a98f0a1f25bf5f8d9cb098756b38b3c2b74",
+      "samples": 7,
+      "finite_samples": 7,
+      "observed_peak_bytes": 910204928,
+      "first_ts": "2026-10-03T09:09:49.641493+00:00",
+      "last_ts": "2026-10-03T09:11:20.088492+00:00",
+      "install_samples": null,
+      "test_samples": null
+    },
+    "grader": {
+      "CID": "d8f617a01e05aeb75be03bf8cc9923af222c8c3a5174d33a1a286d35848c78bc",
+      "image_ID": "sha256:bc5d796fe30c9c0150a1c15c25347a98f0a1f25bf5f8d9cb098756b38b3c2b74",
+      "samples": 17,
+      "finite_samples": 16,
+      "observed_peak_bytes": 588345344,
+      "first_ts": "2026-10-03T09:11:35.159400+00:00",
+      "last_ts": "2026-10-03T09:15:36.268495+00:00",
+      "install_samples": 0,
+      "test_samples": 0
+    }
+  },
+  "report_peak_MiB": 653.457,
+  "unobserved_resource_intervals": "unknown",
+  "cleanup_scope": "单作业 actor/grader 及对应 relay/network/drain；不是全机PID清零",
+  "paired_probe_complete": false,
+  "Qwen_first_arm_complete": false,
+  "request_ACK": false,
+  "active_request_clear": false,
+  "new_CPU_GPU_model_calls": 0,
+  "training_eligibility_asserted": false,
+  "bindings": [
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/code_v8/rh2/experiments/ordinary_gpu_probe_20261002/entry.py",
+      "sha256": "bdf806bf8da1d5ebb4970887bfc3c7738eb3e57a75e1d07215d6d68b17e574c4",
+      "bytes": 27732
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/code_v8/rh2/experiments/ordinary_gpu_probe_20261002/serial_dispatch.py",
+      "sha256": "cb435f7390d9aeba3bad51efabf808634668263e9dfbcffae96f50a4b8f90f10",
+      "bytes": 7539
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/code_v8/rh2/experiments/ordinary_gpu_probe_20261002/spec_overrides.py",
+      "sha256": "098c21cacf4cd497a7eb7240ad2b34b2106bbd27bf14b1af200fe9ac0a3008ad",
+      "bytes": 6583
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/code_v8/rh2/src/repoharness2/adapters/slime/sandbox_profile.py",
+      "sha256": "313bfd7691c5dca775aa0e9992f13561e20936f062ddfa3d269892b6bf4895ee",
+      "bytes": 138643
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/code_v8/rh2/src/repoharness2/grading/manager.py",
+      "sha256": "1783533e1e3b66a57fcaa5a599a1da4f8e4e886318e24f040c6df91f294c1c1e",
+      "bytes": 225647
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/code_v8/source_manifest.json",
+      "sha256": "09ddb8bfdeecd3ffaa38c1048a574161ef6fa6053b2855da50166e8e8677899d",
+      "bytes": 504439
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_queue_v24_inputs_v1/inputs_manifest.json",
+      "sha256": "23abe51243d90e12bf344c01e9c61ba90f6c859d4d03d02073ae291b9d226367",
+      "bytes": 108285
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v17/gateway_binding_intent_v2.json",
+      "sha256": "bc5e0161eef55a5b9d536b30eea4775e4073eddfb301c102f00fec1f5da2b718",
+      "bytes": 22738
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v17/gateway_binding_v2.json",
+      "sha256": "386b1df244a1de64ff1e8df430752d4cdfb0903ce617ae95c0d0901bde9e1db7",
+      "bytes": 4558
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v17/gateway_coder.json",
+      "sha256": "4a0dc71e56c5c944a6a0e4591ed9832a1c5f67926dfe804d030820b2b349d5cd",
+      "bytes": 488
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v18/gateway_binding_intent_v1.json",
+      "sha256": "367758cce20414df2a1ab7cf99efc1abd96968d7669bceca63549fd9f5bf0f28",
+      "bytes": 14990
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v18/gateway_binding_v1.json",
+      "sha256": "aeec9e412d1cfeddc87fecf8f3465d91ce3a6d9ea97ae23ecd00ae9aa4e71eb8",
+      "bytes": 4560
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v19/gateway_binding_intent_v1.json",
+      "sha256": "ff67d783bb6c216386015be1b04891eca1421e60c454d63cee1c2027e7815e17",
+      "bytes": 16327
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v19/gateway_binding_v1.json",
+      "sha256": "e325f415a4e3bdc0e93259a11a40cccdae9bfac34e54512db034237c9d869c15",
+      "bytes": 4457
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v20/gateway_binding_intent_v1.json",
+      "sha256": "fe2805ce8b069aa890cb53ae027ab38cd062d4567fe4f1bdb63e29c6f9b5484f",
+      "bytes": 15715
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v20/gateway_binding_v1.json",
+      "sha256": "c10132d9dd2baea3d09b571141d231141cacc847f4e1d83e3bb3f08a9ab29833",
+      "bytes": 4866
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v21/gateway_binding_intent_v1.json",
+      "sha256": "a3d99e6dfd6f1d2e89918b38f71c1187aea84be70f67d209569dbe622c292a34",
+      "bytes": 27165
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v21/gateway_binding_v1.json",
+      "sha256": "f0316881b3f4315be57aec83eb7537c92e7f5d528b72f6c0476bf71e1f702d41",
+      "bytes": 4762
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v22/gateway_binding_intent_v1.json",
+      "sha256": "5b3adb176b5cc9590fc1462048bef70df7358237014222406619174320ff7179",
+      "bytes": 35587
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v22/gateway_binding_v1.json",
+      "sha256": "95eb670ec7e523b3d254157aab9732fc29ccbf00784206d109950b9d073d682a",
+      "bytes": 13053
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v23/fixed_inputs_manifest.json",
+      "sha256": "665ca1467e9c6835e679d0898e20dbc1d7246f994f16b9953bea986fbf079d55",
+      "bytes": 55146
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v23/gateway_binding_intent_v1.json",
+      "sha256": "f4de73a399205d483c7a113c78e386fab1c1c3c527fe7b74f858129de3b27e7a",
+      "bytes": 35019
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v23/gateway_binding_v1.json",
+      "sha256": "1f0f8c1ad8c59dd2162403efb213574e8fc8b43e2d4d5fc3bb8343dd10298633",
+      "bytes": 9883
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v23/gateway_coder.json",
+      "sha256": "f93ec7cd76e5d425c50d4a194b77f2d8814eaf5d0a0cd28e33189ed63fff0ff2",
+      "bytes": 521
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v23/tasks.json",
+      "sha256": "7d71fe0d69ab72faf9b6e88068681d6c5526d1642846233c87edc0f6f1a6f9e1",
+      "bytes": 1621
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v24/configuration_receipt.json",
+      "sha256": "ebffe80f631b371f8156b27de8489da5333d0abeef15253c0982e1a81b4a863d",
+      "bytes": 360
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v24/fixed_inputs_manifest.json",
+      "sha256": "23abe51243d90e12bf344c01e9c61ba90f6c859d4d03d02073ae291b9d226367",
+      "bytes": 108285
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v24/gateway_binding_intent_v1.json",
+      "sha256": "ecc6a418bed11b8fe96d11cfdb5dc93b0a295d58623220c933640020a363c354",
+      "bytes": 58915
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v24/gateway_binding_v1.json",
+      "sha256": "93ebd11365013cfb7d9dfc32567d5c497b3f30a82a759710f93c42b720332aa4",
+      "bytes": 11884
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v24/gateway_coder.json",
+      "sha256": "25afb317c384e917b6ce9349c4cd91ca0f4a793503c59a8607214e922ee15d8c",
+      "bytes": 516
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v24/input_checks/gpu1003-pyd8511-coder-a1/input_check.json",
+      "sha256": "056d50ea2375445fee2774716a3b3349e2dd9d83175003d1659a94dfeb337b1f",
+      "bytes": 17954
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v24/input_checks/gpu1003-pyd8567-coder-a1/input_check.json",
+      "sha256": "ff33c36e8e6efdb156783d2a1bf763b1844d5f248855cda4763e3db996f79fa4",
+      "bytes": 17035
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v24/input_checks/gpu1003-pyd9066-coder-a1/input_check.json",
+      "sha256": "9487b79d752ef0109efbc8a321ce913e6da1ec86d0d0bb91c5c7a890e5f23ffe",
+      "bytes": 35228
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v24/prior_terminal_readbacks_v5/gpu1003-conan13403-coder-a1.journal.jsonl",
+      "sha256": "2bed21df1c585a4807241f3950e0f32e4349d51dc5b0c94605574168fca59772",
+      "bytes": 4338
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v24/prior_terminal_readbacks_v5/gpu1003-conan13403-coder-a1.query.json",
+      "sha256": "6b336b6afd8ddcdd0cd78ee545b6ce9a8920c845ab643985585be9f945a4c1ff",
+      "bytes": 608
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v24/prior_terminal_readbacks_v5/gpu1003-conan13403-coder-a1.query_result.json",
+      "sha256": "88cd1cada1906ecc17eb21e8ad620749163cb5fd26797586cf10342824d4a57b",
+      "bytes": 262
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v24/prior_terminal_readbacks_v5/gpu1003-conan13403-coder-a1.success.json",
+      "sha256": "98bd963b6c699dd985fd67ea03ebb8db30cb2a310b5ac2087a889e6f7e9f6da1",
+      "bytes": 2846
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v24/pure_entry_commands.json",
+      "sha256": "23287224ee69ab4ca26d8d43076fe209205b1d63b0a5367afd1c018144a12d08",
+      "bytes": 3315
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v24/purecheck_gpu1003-pyd8511-coder-a1.json",
+      "sha256": "b59dcb65fa95f597e9da6f1dadce0675c5fbc6877ad95b4f9e95dcb95ea8252d",
+      "bytes": 1186
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v24/purecheck_gpu1003-pyd8567-coder-a1.json",
+      "sha256": "aade4128f4c83c5dc8c99c81f13e20f795807848e14b0bcfe18b5be56289e116",
+      "bytes": 1186
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v24/purecheck_gpu1003-pyd9066-coder-a1.json",
+      "sha256": "26581dd01434e0f264f1199318f22a4ba3c316b39d96168666c9a3d4c6da76f1",
+      "bytes": 1186
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/config_v24/tasks.json",
+      "sha256": "173d3456ba07c9d19a8a9e5dec4d62c359f805ff76e906d04162d15f538015a8",
+      "bytes": 1614
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/baseline_rebuild_census.txt",
+      "sha256": "54898e0c70ca9913bd80abc68386097b04ffe6086fffdc48d63f00b55868bfeb",
+      "bytes": 48146
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/eval_logs/evallog_gpu1003-dask7305-coder-o_22a382da.diagnostics.json",
+      "sha256": "bb5358eaf7d72f68422a9b5b820a28ff526c3ed28a934447dc7850d3311bf12e",
+      "bytes": 40624
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/eval_logs/evallog_gpu1003-dask7305-coder-o_22a382da.eval.log",
+      "sha256": "255d5e18bba68f2db4bd890ab2dfbba3eef518f5303f1f6fd91fe342e97a9822",
+      "bytes": 62548
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/exec_logs/001.json",
+      "sha256": "16c27192d76b758c17ab9f50a26d3e3e6ddd9bdb38ed0be0198852777f59614a",
+      "bytes": 248
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/exec_logs/002.json",
+      "sha256": "7f6103d0256581700827e77953adfa040c09f9a75728fb1095aa71818746e102",
+      "bytes": 426
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/exec_logs/003.json",
+      "sha256": "fa8c6fd2395517820ae09d07a663f6553ce7f750624ae37d84a8a83fafa2966e",
+      "bytes": 50042
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/exec_logs/004.json",
+      "sha256": "a42515eef0b7552e4e3b7318564af0e5ba946dd9cb57684279c6250dd399a8ae",
+      "bytes": 159
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/exec_logs/005.json",
+      "sha256": "d2099549c8bae0bf909c3bf05925ee83f3babefa059c7c4f636d836e3090ed68",
+      "bytes": 127
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/exec_logs/006.json",
+      "sha256": "d2099549c8bae0bf909c3bf05925ee83f3babefa059c7c4f636d836e3090ed68",
+      "bytes": 127
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/exec_logs/007.json",
+      "sha256": "d2099549c8bae0bf909c3bf05925ee83f3babefa059c7c4f636d836e3090ed68",
+      "bytes": 127
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/exec_logs/008.json",
+      "sha256": "d2099549c8bae0bf909c3bf05925ee83f3babefa059c7c4f636d836e3090ed68",
+      "bytes": 127
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/exec_logs/009.json",
+      "sha256": "d2099549c8bae0bf909c3bf05925ee83f3babefa059c7c4f636d836e3090ed68",
+      "bytes": 127
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/exec_logs/010.json",
+      "sha256": "d2099549c8bae0bf909c3bf05925ee83f3babefa059c7c4f636d836e3090ed68",
+      "bytes": 127
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/exec_logs/011.json",
+      "sha256": "d2099549c8bae0bf909c3bf05925ee83f3babefa059c7c4f636d836e3090ed68",
+      "bytes": 127
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/exec_logs/012.json",
+      "sha256": "d2099549c8bae0bf909c3bf05925ee83f3babefa059c7c4f636d836e3090ed68",
+      "bytes": 127
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/exec_logs/013.json",
+      "sha256": "d2099549c8bae0bf909c3bf05925ee83f3babefa059c7c4f636d836e3090ed68",
+      "bytes": 127
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/exec_logs/014.json",
+      "sha256": "d2099549c8bae0bf909c3bf05925ee83f3babefa059c7c4f636d836e3090ed68",
+      "bytes": 127
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/exec_logs/015.json",
+      "sha256": "d2099549c8bae0bf909c3bf05925ee83f3babefa059c7c4f636d836e3090ed68",
+      "bytes": 127
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/exec_logs/016.json",
+      "sha256": "d2099549c8bae0bf909c3bf05925ee83f3babefa059c7c4f636d836e3090ed68",
+      "bytes": 127
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/exec_logs/017.json",
+      "sha256": "d2099549c8bae0bf909c3bf05925ee83f3babefa059c7c4f636d836e3090ed68",
+      "bytes": 127
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/exec_logs/018.json",
+      "sha256": "d2099549c8bae0bf909c3bf05925ee83f3babefa059c7c4f636d836e3090ed68",
+      "bytes": 127
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/exec_logs/019.json",
+      "sha256": "d2099549c8bae0bf909c3bf05925ee83f3babefa059c7c4f636d836e3090ed68",
+      "bytes": 127
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/exec_logs/020.json",
+      "sha256": "21898ee393d0dbbe72faa19adc572b72527a543a137acf46eb90e824522cc5df",
+      "bytes": 126
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/exec_logs/021.json",
+      "sha256": "e2c59ace0aecea7976c3992dca323d7becb1c0dc7c19d2ab134f265e41ef7a32",
+      "bytes": 56223
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/exec_logs/022.json",
+      "sha256": "ab92476310d77e5c45a866478eea876cb2e77a69c9c4953040695c8f78ff3b66",
+      "bytes": 317
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/exec_logs/023.json",
+      "sha256": "ab61d2f671e37cec3b5a82ac195a52195130500b505e0dc4cc5a9e2513636d21",
+      "bytes": 344
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/exec_logs/024.json",
+      "sha256": "21898ee393d0dbbe72faa19adc572b72527a543a137acf46eb90e824522cc5df",
+      "bytes": 126
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/exec_logs/025.json",
+      "sha256": "03320c5352872bd9fdab63adaa68e0c1f3434c35be979d546e4109dff72900b3",
+      "bytes": 133
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/exec_logs/026.json",
+      "sha256": "69ce9fff2b782fa0e227476e7bf55a2c44b56cfd2407fcfd04070b7fbd629d48",
+      "bytes": 9120
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/input_check.json",
+      "sha256": "24ac09acc5558da8d3c9dacd0303bde16619bc1f6038ba2e059288aaaabe8754",
+      "bytes": 13047
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/plan.json",
+      "sha256": "7deae597317cab96ff0e5916d1216b17b49f59b2ae54472eb505fe1b48731f9d",
+      "bytes": 901
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/preflight_01.json",
+      "sha256": "172c41041a181c222c8beac9e2262ce45e4f79947c8a3a51d9ac8c776892d3a6",
+      "bytes": 205
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/preflight_02.json",
+      "sha256": "e60f88308c7ac2d67401b87b593f020483e2f6779f8ae0affbf6c1f7f86a6008",
+      "bytes": 201
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/preflight_03.json",
+      "sha256": "90d86289d3231e7514cd369fffdf2919ea22e7b0154f7311793651a0a5b1ab0f",
+      "bytes": 186
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/preflight_04.json",
+      "sha256": "7bec40f9ed83126f3a0fe0fbdedb3decc31fbaea4b84c3b0bf18c47ac328c4c3",
+      "bytes": 154
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/preflight_05.json",
+      "sha256": "05ec6b0dddef88d8a45f20c3d8d33163e37a93ba29a7aec57857b657f6831b49",
+      "bytes": 4385
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/preflight_06.json",
+      "sha256": "e79f9fc3fcf792279d0267697e39c9616c1eca0a2b3caf84e04aa35d604cdb93",
+      "bytes": 241
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/preflight_07.json",
+      "sha256": "90d86289d3231e7514cd369fffdf2919ea22e7b0154f7311793651a0a5b1ab0f",
+      "bytes": 186
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/preflight_08.json",
+      "sha256": "7bec40f9ed83126f3a0fe0fbdedb3decc31fbaea4b84c3b0bf18c47ac328c4c3",
+      "bytes": 154
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/projection.json",
+      "sha256": "7924c98862c45c5e755eace199febb2661f8fb4b3a2d21f88d9382ea68ad55b5",
+      "bytes": 761
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/report.json",
+      "sha256": "d7da5e22e2ef5eb60058c291c0d02b7bed10fb89992b5da0b35c5f99bcb8903e",
+      "bytes": 1946
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/status.json",
+      "sha256": "49f90007cd3508ffc9bc77e9ac3c17aaa9cd25a6a104b515ae00c302dcf7e738",
+      "bytes": 3101
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1/tasks.json",
+      "sha256": "df57e000e19786b8140038f4b51890686d7e120f07df1be0e42d12d2da780598",
+      "bytes": 1621
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1_failed_closed_manifest_v2.json",
+      "sha256": "7fe307c985ba178c7bf539e902159fbd81d1fba5d2fc146992a7504b3bfe7849",
+      "bytes": 16344
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1_failed_closed_resource_v2.jsonl",
+      "sha256": "9cdcfa1ead57117c83a40280cfc0eb0c4fbd0b28e432975780639581c06f23c0",
+      "bytes": 11664
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_original_fp_setup900_v1_failed_terminal_snapshot_v2.json",
+      "sha256": "554e31df3ce094cdf160fc87a13653e8ad0edc2661022e60da7daaddfcca22e9",
+      "bytes": 9849
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_originalfp_pid_exhaustion_intervention_v1/intent.json",
+      "sha256": "e911085a1cfaf61b5b6e525040cba14e38df9580908993cfd833e221bde21365",
+      "bytes": 976
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_originalfp_pid_exhaustion_intervention_v1/signal_sent.json",
+      "sha256": "116a3ddcb1221528afc878725eae29b258e28ce310e6feac16d2334095dd1604",
+      "bytes": 134
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask7305_setup900_root_defer_receipt_v1.json",
+      "sha256": "7deeaec7caf83e74d10aa1e96ffee8c3857b85c70989cabdcd7eb3b41a1864ad",
+      "bytes": 2789
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/dask9378_setup300_root_defer_receipt_v1.json",
+      "sha256": "e86c506ad16fd22ead237ac4a8582765430d2ea662c6571597b86c6a7aa28d33",
+      "bytes": 3291
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/diagnostics/QUEUE_V24_gpu1003-pyd8567-coder-a1_before/adapter_config_actual.json",
+      "sha256": "1568f2e833897101fe16e4184436147663a7a42f153ff18f65d066fe9b83eec4",
+      "bytes": 766
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/diagnostics/QUEUE_V24_gpu1003-pyd8567-coder-a1_before/adapter_inspect_actual.json",
+      "sha256": "1cc3587aff2e560ee82738862a08ecab22c29202ba1b48913e0c5fd1c43f8fdf",
+      "bytes": 1841
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/diagnostics/QUEUE_V24_gpu1003-pyd8567-coder-a1_before/adapter_inspect_after_actual.json",
+      "sha256": "1cc3587aff2e560ee82738862a08ecab22c29202ba1b48913e0c5fd1c43f8fdf",
+      "bytes": 1841
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/diagnostics/QUEUE_V24_gpu1003-pyd8567-coder-a1_before/backend_continuous_log.txt",
+      "sha256": "2733811e48c8b26d1c7a04bf81fddf7fa899a77e7d50b39d7320811f335d8916",
+      "bytes": 1401069
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/diagnostics/QUEUE_V24_gpu1003-pyd8567-coder-a1_before/capture_receipt.json",
+      "sha256": "8c59b5dd0bfdd0551b5e60a0b0587e680bc43a551b2e312d863a0a6878697a43",
+      "bytes": 1575
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/diagnostics/QUEUE_V24_gpu1003-pyd8567-coder-a1_before/download_manifest_actual.json",
+      "sha256": "5783533eae085661e3b3cde2e46ee46c9dbce0c05154d6028f6e46aa7260de39",
+      "bytes": 4505
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/diagnostics/QUEUE_V24_gpu1003-pyd8567-coder-a1_before/engine_inspect_actual.json",
+      "sha256": "6ea90e51aa7c3a61f6602806e47caaa78ba00d2dfd8631c59b28c372485d3176",
+      "bytes": 1168
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/diagnostics/QUEUE_V24_gpu1003-pyd8567-coder-a1_before/engine_inspect_after_actual.json",
+      "sha256": "6ea90e51aa7c3a61f6602806e47caaa78ba00d2dfd8631c59b28c372485d3176",
+      "bytes": 1168
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/diagnostics/QUEUE_V24_gpu1003-pyd8567-coder-a1_before/engine_template_actual.py",
+      "sha256": "d2626d30b9fa6d4953fa8e99823d76ec517c85a82137bb02d94a807cad587a09",
+      "bytes": 10653
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/diagnostics/QUEUE_V24_gpu1003-pyd8567-coder-a1_before/identity_binding_actual.json",
+      "sha256": "a5739fc2570e82b2de7804c4d31124944b64dac9ef397d424c462ea675bbc08a",
+      "bytes": 2960
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/diagnostics/QUEUE_V24_gpu1003-pyd8567-coder-a1_before/model_chat_template_actual.jinja",
+      "sha256": "5a38bfa05833266240066aedc497decc9b00cc0d3e3b8cceea98cf530196ab06",
+      "bytes": 6211
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/diagnostics/QUEUE_V24_gpu1003-pyd8567-coder-a1_before/model_file_sizes_actual.json",
+      "sha256": "a10a5d6fe23597016d4e6f40482c768416149c7a1a8e58758dc945a944a9f001",
+      "bytes": 3783
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/diagnostics/QUEUE_V24_gpu1003-pyd8567-coder-a1_before/model_info_actual.json",
+      "sha256": "a1544c97decd77edd30e6e0da5a1bc4b237a64572fe120e16d440bbc4352175d",
+      "bytes": 2105
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/diagnostics/QUEUE_V24_gpu1003-pyd8567-coder-a1_before/server_info_actual.json",
+      "sha256": "331b4fd081d5f5dc52e1b01a7a3006cb76387adb9a9c8e638160a337118d1d70",
+      "bytes": 42342
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/gpu1003-conan13403-coder-a1_closed_manifest_v1.json",
+      "sha256": "0db9eb938c14dc551edf7cc1e27fe8192d8c005934ac0580b63fb1b168645fea",
+      "bytes": 26667
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/gpu1003-conan13403-coder-a1_terminal_snapshot_v1.json",
+      "sha256": "1ab103e4b2824946430f4a81ccb9b2e08723607cce3e0d68dabc908a6d8e824a",
+      "bytes": 17834
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/gpu1003-dask7305-coder-a1_closed_manifest_v1.json",
+      "sha256": "1309a326fd4b94231c050a26c4659646286fa7a8f44e59d3b430e908dfd383a6",
+      "bytes": 33171
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/gpu1003-dask7305-coder-a1_terminal_snapshot_v1.json",
+      "sha256": "10fc0a75ac69fd121f17bbbbbf0d559d8b51a2b1e07a20f12fbcf5b0ada3eaf7",
+      "bytes": 17760
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/gpu1003-dask9378-coder-a1_closed_manifest_v1.json",
+      "sha256": "aaa3c2d6886466004a5dcb769512a0aaef059ec920276bad44ba4a5d6aa97386",
+      "bytes": 32836
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/gpu1003-dask9378-coder-a1_terminal_snapshot_v1.json",
+      "sha256": "edb4719038c53cd5094abee21f58f17693403765018f7dd35625cc41518b960b",
+      "bytes": 18007
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/gpu1003-pyd8567-coder-a1_closed_resource_v1.jsonl",
+      "sha256": "9ba1e4f6d7f8967b88cc29f10ad205ee552fc85ca82b5882252833cc4b59f3a2",
+      "bytes": 28576
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/gpu1003-pyd8567-coder-a1_terminal_snapshot_v1.json",
+      "sha256": "091cd9ab3c397ff2356af90426e0be25f1f9a99fa2888e8f0ee22a682d6c3c8b",
+      "bytes": 21251
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/migration_20261003/queue16_aio6183_collection_failure_actual_diagnosis_v1.json",
+      "sha256": "ad6aa9f8fedbfa046a04274e6e3a7a56bac1da1d0bb3e4ffc9c040d9b79ecf31",
+      "bytes": 59365
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/migration_20261003/queue16r1_aio240d_collection_failure_actual_diagnosis_v1.json",
+      "sha256": "a691148066048ac62442f06718a7a184ab53e9bacb9ba9692a4a5f0497db7327",
+      "bytes": 13486
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_new_three_code8_v1/dask7305/prepared/prepared_manifest.json",
+      "sha256": "e27dcf842f6cc4451bf6cd0aa51166ba66c9fa28e17a2da2f746b60c2e680cb3",
+      "bytes": 912
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_new_three_code8_v1/dask7305/prepared/prompts.jsonl",
+      "sha256": "b64791b853d7c41b6c9f149fa1be04340056b7f42ca69861486236f0546f190a",
+      "bytes": 3274
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_new_three_code8_v1/dask7305/prepared/rollout_task_views.jsonl",
+      "sha256": "4f40912b8a2115e60bdd033169ffc2c09e92b9b48c70b040525d6b6e34bfb155",
+      "bytes": 4399
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_new_three_code8_v1/dask7305/private/host_grading_views.jsonl",
+      "sha256": "eecfd9864893d0fa3251fa4ef2e5eeffcd6f427ad7c845864bfb504a8948b297",
+      "bytes": 24201
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_new_three_code8_v1/dask7305/summary.json",
+      "sha256": "9a4e1b74aaf3c6817e5b2a3bd6e14052f5aafb563197cd7800e0944f7696a5ea",
+      "bytes": 460
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/image_supply/Dockerfile.wheelhouse",
+      "sha256": "352caaf2eae8dc6fdb3291e9afaf85281a0b0199d6b3ee091d9e3d3247d44993",
+      "bytes": 126
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/image_supply/wheelhouse_manifest.json",
+      "sha256": "9102497a485ccef474105760d7ac82379678820c4358e8b656021d3c4ed724ff",
+      "bytes": 4521
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/prepare_overlay/docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest_swe34_dvc_pyd_combined_20261003_v1/environment_packages_v0.jsonl",
+      "sha256": "d7a965ee126a4c1728e9d8c463ecd4c07584b76fd6d11f0278e3589aa463abe1",
+      "bytes": 227255
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/prepare_overlay/docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest_swe34_dvc_pyd_combined_20261003_v1/grading_bundles_v2_v0.jsonl",
+      "sha256": "71bfeaabfa74d9473c81508ff7454afcbeaf2f2f1902b74104062ac949d1bb3a",
+      "bytes": 2770341
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/prepare_overlay/docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest_swe34_dvc_pyd_combined_20261003_v1/ingest_manifest_swe_revision_v1.json",
+      "sha256": "c4ede5293762eb209eab8551f9fa9a02e8df6f850bd2cd1ce56914bb10ea9e92",
+      "bytes": 5784
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/prepare_overlay/docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest_swe34_dvc_pyd_combined_20261003_v1/public_bundles_v0.jsonl",
+      "sha256": "f6f338ef3ba0f927d8957c37c5fdb781cce42cef023cd4a9d002edf52ca01e78",
+      "bytes": 684714
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/prepare_overlay/docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest_swe34_dvc_pyd_combined_20261003_v1/validation_bundles_v0.jsonl",
+      "sha256": "196fdf81e1142c431d7b60dee5082db6ccfd3ba8b65f88f686bb12b2020ad961",
+      "bytes": 284191
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/prepare_overlay/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/pyd8511_fixed_test_patch_e10_v1/material_revisions.json",
+      "sha256": "b1e9d803a936ed3de4637e13580dbeb767adec2285adca146535d4d5002709da",
+      "bytes": 9422
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/prepare_overlay/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/pyd8567_fixed_test_patch_e10_v1/material_revisions.json",
+      "sha256": "7c20ea52a604651976f4f467e7358f57faaa058e86338cbbc94a37154ea303d7",
+      "bytes": 11019
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/prepare_overlay/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/pyd9066_fixed_test_patch_e10_v1/material_revisions.json",
+      "sha256": "bef4023a4b614d9ae667f962ef8f2874fff87505d08464204d178a99510268f0",
+      "bytes": 7582
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8511/host_evidence/cpu_acceptance.json",
+      "sha256": "411bb248fd2e53287db834251645f5e75633f0953d790a04408f2dcc43046409",
+      "bytes": 155200
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8511/host_evidence/cpu_image_preparation.json",
+      "sha256": "665021a93f2962754bd8bc6363e0fefd5a2d88fb12d7ec741eb40efa3b487473",
+      "bytes": 5953
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8511/host_evidence/owner_request.json",
+      "sha256": "52dab640a4ab8a19a19cfa0449f4b92b3d52df82da844cc1f515432a0f6abb84",
+      "bytes": 19373
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8511/host_evidence/review_0.md",
+      "sha256": "206a0762c29ac1cef042bec235ee0e23c66f45620845d821843a9bc25b503e07",
+      "bytes": 14630
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8511/host_evidence/review_1.json",
+      "sha256": "7caf9ccb6f32fd0309fe3604dca01a0aa903925251591b965020849d9bd26786",
+      "bytes": 123298
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8511/host_evidence/review_2.md",
+      "sha256": "5fb7c355f142e344a8d9b5af1b281cbcab4af4cc3ed82ee1e46f6284978db0da",
+      "bytes": 13261
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8511/host_evidence/review_3.json",
+      "sha256": "0fecd7a336bf7aa1bb51ffb70e40d05f16ba2c62c2fb6828ada54a44f5f417df",
+      "bytes": 2706
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8511/prepared/prepared_manifest.json",
+      "sha256": "1f33198b4bb2691dc6657f4fbd02e113a7d2d5850892d7269a7becb4a65dbcee",
+      "bytes": 928
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8511/prepared/prompts.jsonl",
+      "sha256": "41b7cb65059f4f6dd2b142aaf2c14be576edf5480548aa1e3f345d348c44095c",
+      "bytes": 1778
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8511/prepared/rollout_task_views.jsonl",
+      "sha256": "1301b1c3351b32c0149973e1e8391fc73683eb83c4ec456d305df6dbac2c9923",
+      "bytes": 2911
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8511/private/host_grading_views.jsonl",
+      "sha256": "42c893e8d625abd3bdeb9088add562381ad6619893e9285b4e356c0e3781400b",
+      "bytes": 33563
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8511/summary.json",
+      "sha256": "52002311e3fceac03d3933807e29206e8e542a0ab307052f3cf66dbde230a235",
+      "bytes": 466
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8511/summary.template.json",
+      "sha256": "1e995279cd02c1fdae09375a6423a214f8af225434486e41f8d0b960f89c3cb6",
+      "bytes": 535
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8567/host_evidence/cpu_acceptance.json",
+      "sha256": "0dbc3ce32fa607d7e37b34f1557b4243e40f782dbf3c2f534e27a71d274b7c86",
+      "bytes": 500132
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8567/host_evidence/cpu_image_preparation.json",
+      "sha256": "dd879e197d689b16b24b5f1949a9dc355f8a5bfe93303657f84c6351455a6c77",
+      "bytes": 5954
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8567/host_evidence/owner_request.json",
+      "sha256": "72fdd7614fbc09241eaa2d461241f4a7784ca0ad43bfae01a2c0608f4fb6e1e2",
+      "bytes": 21737
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8567/host_evidence/review_0.md",
+      "sha256": "9a8b48e099302cf87943f5a59b33d8f40bc62c8cdbc9bd2ec81c5b90fd361c7f",
+      "bytes": 15254
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8567/host_evidence/review_1.json",
+      "sha256": "b7c5874f81851f1ddddd48f5d9203736f7bccf6bdb03024d85e5b9fb2b5eaedb",
+      "bytes": 631118
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8567/host_evidence/review_2.md",
+      "sha256": "5fb7c355f142e344a8d9b5af1b281cbcab4af4cc3ed82ee1e46f6284978db0da",
+      "bytes": 13261
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8567/host_evidence/review_3.md",
+      "sha256": "93e3978dfa0e8d3cf9f5c507ab862a06b98ad29ac9dba81d83ee1d3cf4465517",
+      "bytes": 10424
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8567/host_evidence/review_4.json",
+      "sha256": "cfe5f9e035b5570776aa663560c4c3ebefa6b1ce1963680f84dc8500ea9eca3b",
+      "bytes": 2721
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8567/prepared/prepared_manifest.json",
+      "sha256": "e563c5ed1c6cbd86e8dd02c3f339bb6fb7c1b2ab2d3c48b2617cc26281ff745a",
+      "bytes": 928
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8567/prepared/prompts.jsonl",
+      "sha256": "e9db25540855702a7e44233d01967bbee420e001f4dc85939fb7f6edd3a51063",
+      "bytes": 2731
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8567/prepared/rollout_task_views.jsonl",
+      "sha256": "4438a0fb8a0265cb350184ff9a6e67f6772035e4895213299d4807bc8c511d04",
+      "bytes": 3864
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8567/private/host_grading_views.jsonl",
+      "sha256": "830c599c5dc6a93909cf905a3d649c087da18dd10f8678fafc1cc692738d109d",
+      "bytes": 33401
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8567/summary.json",
+      "sha256": "5f7096c1615f497f7475a97a5e376b0242a0e97e2daaee26931c6ebcfa6085d0",
+      "bytes": 466
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd8567/summary.template.json",
+      "sha256": "173acac831d5a241a0837fd9d74e1292b84e7a708245a916549f2e1d5c3a5e97",
+      "bytes": 563
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd9066/host_evidence/cpu_acceptance.json",
+      "sha256": "3e05730c8b1219bf56d4692968d783cc63bb9bd26fd1b81ef540230aa11686c0",
+      "bytes": 245259
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd9066/host_evidence/cpu_image_preparation.json",
+      "sha256": "90d2939618709662f6d371f503905a725e64d3af864fec2ccd181b175a037476",
+      "bytes": 5955
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd9066/host_evidence/owner_request.json",
+      "sha256": "8ce6dd65864694476d00eef523149b5e0f00142cafa2f6e93eec409a776914a5",
+      "bytes": 19373
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd9066/host_evidence/review_0.md",
+      "sha256": "4341590c60abead5cea29867c5386f4775e8bc62610ceaddc74c191672aac182",
+      "bytes": 14974
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd9066/host_evidence/review_1.json",
+      "sha256": "f12b7fbfe5c5efb06b4c1ea638775172f309a9b1a2fb53b9be50287ec67de320",
+      "bytes": 741474
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd9066/host_evidence/review_2.md",
+      "sha256": "5fb7c355f142e344a8d9b5af1b281cbcab4af4cc3ed82ee1e46f6284978db0da",
+      "bytes": 13261
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd9066/host_evidence/review_3.json",
+      "sha256": "6c9b7622b75914a95ee5c479f359db03cf7862935a9e14004a1c7825719b4308",
+      "bytes": 2703
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd9066/prepared/prepared_manifest.json",
+      "sha256": "657541a78e23f5e3b296a943f7f55531875156ce0791495c658e468773945b35",
+      "bytes": 928
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd9066/prepared/prompts.jsonl",
+      "sha256": "e7f5b8624676aeda8ea7fe8ce74a0285ee76e59fbc2e9e236eb8d350471d4b21",
+      "bytes": 1866
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd9066/prepared/rollout_task_views.jsonl",
+      "sha256": "2c5d43170ab75c8151ab13d07447d0ceae65a2299c22fbe799a1386ad49facfe",
+      "bytes": 2999
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd9066/private/host_grading_views.jsonl",
+      "sha256": "dff1d0ccf55465d4cafcd6dd8d301f71fe960d0842f3c6cd8d372df6b1b8576e",
+      "bytes": 62578
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd9066/summary.json",
+      "sha256": "36fcae9f330a1602e61d6c37f7b454a694a8dc0767138bf7d3dd566f5f4d33fd",
+      "bytes": 466
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/prepared_pyd_three_code8_v1/pyd9066/summary.template.json",
+      "sha256": "53f0930a541ab25b9bbc7338ce858fa279c5385fe7a5128127ee35e602975b44",
+      "bytes": 535
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/pyd6283_original_fp_v2_regrade_v1/status.json",
+      "sha256": "88532d557dd017861aa86249fe50ae67a458780e68b64bd6e01ca9176e4628f1",
+      "bytes": 3054
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/pyd_three_exact_image_load_v1_inputs/pyd_three_exact_CPU_wheel_UID_applicability_v1.json",
+      "sha256": "1706d6df97553b0a46c032c068c96f218d4e9458b5adcef22ce27cddb031ff6d",
+      "bytes": 18335
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/pyd_three_exact_image_load_v1_inputs/resource_support_receipt_v1.json",
+      "sha256": "2be97049b216bfed6d1fe396cdf66fd3009bf3bd9492452655357c3400c94d86",
+      "bytes": 4021
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/pyd_three_exact_image_load_v2/actual_image_readback.json",
+      "sha256": "b4a670537b1dc495da927fcb1c2b333653ffc13b5804e14b4083508829205118",
+      "bytes": 5601
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/pyd_three_exact_image_load_v2/wheel_pyd8511_UID54321_evidence.json",
+      "sha256": "9cf96f61505940a7da4acee1b14380dec15791b9887db7597a7d37a99e6ec7bd",
+      "bytes": 2593
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/pyd_three_exact_image_load_v2/wheel_pyd8567_UID54321_evidence.json",
+      "sha256": "74a39c70678cf98de1ab35852fd127bd09a61414a63f45b19c7d468c6e113c63",
+      "bytes": 2593
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/pyd_three_exact_image_load_v2/wheel_pyd9066_UID54321_evidence.json",
+      "sha256": "bb2ec4d3e636dd2a6d25a1affdf2fb70354fbf70a3a55c516cf2907121689baa",
+      "bytes": 2593
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v16/results/gpu1003-aiohttp6183-coder-a1/attempt/attempt.json",
+      "sha256": "31f5a7dc477cf269ba19c1d2bf78ffd59090bd63c90563291c5ab9625c3d9978",
+      "bytes": 21431
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v16/results/gpu1003-aiohttp6183-coder-a1/grading/eval_logs/evallog_gpu1003-aiohttp6183-code_bbb71c81.diagnostics.json",
+      "sha256": "c4b8ed4f322320e56cfe5c6c62e9558a26ef2187b0f54ef86aa0a9e202953f57",
+      "bytes": 10005
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v16/results/gpu1003-aiohttp6183-coder-a1/grading/eval_logs/evallog_gpu1003-aiohttp6183-code_bbb71c81.eval.log",
+      "sha256": "599f6baef1045ccff31cbff9b757c8292e3989dd3c22ebc71369caa97d855b17",
+      "bytes": 3279
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v16/results/gpu1003-aiohttp6183-coder-a1/result.json",
+      "sha256": "19b44d1cf61b410782da2885db60ca98591e0c09be5b8c66a26451f06e8d074a",
+      "bytes": 2774
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v16/results/gpu1003-pillow3a61-coder-a1/attempt/attempt.json",
+      "sha256": "54a70b773e30a905cf15c0c8eca70c5670c7d5a33f8bb093c25f3b48c15800ba",
+      "bytes": 21848
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v16/results/gpu1003-pillow3a61-coder-a1/result.json",
+      "sha256": "8c32120f34f0eacc4e0420159f9f93758f49ad7290626086be8834af48331079",
+      "bytes": 2699
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v16/results/gpu1003-pillowa682-coder-a1/attempt/attempt.json",
+      "sha256": "85594c1d5380935f4941e7d663bfc9b6831d87357bf3d27ce16ec5a4fb19244a",
+      "bytes": 18648
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v16/results/gpu1003-pillowa682-coder-a1/result.json",
+      "sha256": "cdd349586e1d39ef1c82a0b92544e43a96b0ae4f30020be609289f5d2e35e9c9",
+      "bytes": 2698
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v16/state.json",
+      "sha256": "42ed8addba2908ab65e5461596eb946c753d375a2f0f68db73641d7b770d9c66",
+      "bytes": 5740
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v16r1/recovery_binding_v1.json",
+      "sha256": "3ab0aa5613aa243a1427229979a477b25f51c56fb8664e6799e99ef0f9c3ce78",
+      "bytes": 9873
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v16r1/results/gpu1003-aio1c1-coder-a1/attempt/attempt.json",
+      "sha256": "1579adb680ad0fe85ea1a9fa58441cbcc4142679389d1d6cfcd050324298fe56",
+      "bytes": 19637
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v16r1/results/gpu1003-aio1c1-coder-a1/result.json",
+      "sha256": "5bd9c5d22fb748ad6f766ff4061285d2df5fc4f746a6393f33b820711ff1d338",
+      "bytes": 2681
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v16r1/results/gpu1003-aio240d-coder-a1/attempt/attempt.json",
+      "sha256": "9377110c85e6deca393ae606b57ebb944832124798abfc60625fc35a5eead3ab",
+      "bytes": 19460
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v16r1/results/gpu1003-aio240d-coder-a1/attempt/frozen/baseline_manifest.json",
+      "sha256": "e203b26cee4a437a38d99d1d38843b9a9c6dfeaf81c2e0b021974eb83a260219",
+      "bytes": 13736
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v16r1/results/gpu1003-aio240d-coder-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "0c0cbc258d8766f8fc994a33b576d5ac24d14d410b6a83bb15e2b1dbad1f43d1",
+      "bytes": 91468
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v16r1/results/gpu1003-aio240d-coder-a1/grading/eval_logs/evallog_gpu1003-aio240d-coder-a1_be7dbfdf.diagnostics.json",
+      "sha256": "f592265889349a732eb3957a7156149f934cd9cd399408882c094718202ef6c9",
+      "bytes": 7530
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v16r1/results/gpu1003-aio240d-coder-a1/grading/eval_logs/evallog_gpu1003-aio240d-coder-a1_be7dbfdf.eval.log",
+      "sha256": "555e8e0db04ee2a6cae24d798bd6947a1bae8b4d7e31a60dad1571a4dceeb2cf",
+      "bytes": 3113
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v16r1/results/gpu1003-aio240d-coder-a1/result.json",
+      "sha256": "b27abd83d3779a467b15042d17789243ea3392a0ec0e8af4eafa92d6b6317707",
+      "bytes": 2766
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v16r1/state.json",
+      "sha256": "a65365d0727e3eece2d80589d39f31c40b7fbc3165f796b89953a2e72f5bdeab",
+      "bytes": 3853
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v16r2/recovery_binding_v1.json",
+      "sha256": "e84a5b3b4ca84c1b3a10b438158cc23cef6ba9845b86302d15ab9d1ecec114e4",
+      "bytes": 23721
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v16r2/results/gpu1003-coverage016a-coder-a1/attempt/attempt.json",
+      "sha256": "864d6e64181be3646fd54130c85078bddc0fe87795ddd4f13a2812c428144aa4",
+      "bytes": 19666
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v16r2/results/gpu1003-coverage016a-coder-a1/result.json",
+      "sha256": "0877e8dc2fb9c036da1805383b42a9fe0b97fc8641e73b87fdd530ef3894e79f",
+      "bytes": 2698
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v16r2/state.json",
+      "sha256": "46f56922c74436aded612be61b7e3e0c8f0749bb3dda2f8fc16a1aa867463f3b",
+      "bytes": 2035
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v17/requests/gpu1003-conan11594-coder-a1.json",
+      "sha256": "729088ed5879229fb890cfdd121c536c01bedcdf4c54bbc684d51e2a10379ba3",
+      "bytes": 18365
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v17/requests/gpu1003-dask7656-coder-a1.json",
+      "sha256": "5c75e103788527dbc533196dd8f0a36700de49c5a32a8fb5facf34f97f64138b",
+      "bytes": 18312
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v17/results/gpu1003-conan11594-coder-a1/attempt/attempt.json",
+      "sha256": "335cbc66015aa3974926cfefac80575f10556efbf6da54fdc9e4cdb69035b71e",
+      "bytes": 15978
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v17/results/gpu1003-conan11594-coder-a1/result.json",
+      "sha256": "b2b317e6757f15fc1e683e3c4d6a9293540e7a8996b57d8cba3472cc1d3975ef",
+      "bytes": 2653
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v17/results/gpu1003-dask7656-coder-a1/attempt/attempt.json",
+      "sha256": "f2c41f757c7df6a53752c78770e781be39191c715d509c3eda6c908dc8ce43bb",
+      "bytes": 17617
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v17/results/gpu1003-dask7656-coder-a1/result.json",
+      "sha256": "7f930a0deca0884994c6b0b3eb67d5934cb17dd8024bdbb052f1d266f9279e61",
+      "bytes": 2623
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v17/state.json",
+      "sha256": "92e62232088b168bd7dcbb488f9656da9d0e342f72d8d29bd80e9ca37b94d17f",
+      "bytes": 3734
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v18/requests/gpu1003-conan12397-coder-a1.json",
+      "sha256": "7f7c875104b566b8ee06e85f6d306ccaeadefa162d3e5c556306d9d55016dc29",
+      "bytes": 17667
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v18/requests/gpu1003-conan15422-coder-a1.json",
+      "sha256": "440d528c7e07c7de27977a62f91c235a43f29cd80668dbcec14a1181efb4adb2",
+      "bytes": 17685
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v18/results/gpu1003-conan12397-coder-a1/attempt/attempt.json",
+      "sha256": "210ee72026f4e11c36bff4ff218dfda94dfb4d1e12362ddc587fd7204a1e4682",
+      "bytes": 16440
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v18/results/gpu1003-conan12397-coder-a1/result.json",
+      "sha256": "a02d05bae6fc23ef5c669d49c664ded2a8f03e60206e19c4d5c5df3109e20228",
+      "bytes": 2632
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v18/results/gpu1003-conan15422-coder-a1/attempt/attempt.json",
+      "sha256": "3cffa1f127d5fe367358169003172f70dda0c79809efce421e038819be46cd22",
+      "bytes": 16659
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v18/results/gpu1003-conan15422-coder-a1/result.json",
+      "sha256": "a7ceb63e8daf911965804f93c8c95e9c4041332cd9a91c9fd7c111ee484b205a",
+      "bytes": 2646
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v18/state.json",
+      "sha256": "15a1a2413ac71e31b4a5d80d931f41a46a0777168586a4b78843f557f2e6d8f4",
+      "bytes": 3756
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v19/requests/gpu1003-conan14177-coder-a1.json",
+      "sha256": "5bc74a4785e6fbbbee1d3753acec4e074ceadceec13e479cfb6b1a37569f3484",
+      "bytes": 14121
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v19/results/gpu1003-conan14177-coder-a1/attempt/attempt.json",
+      "sha256": "ca76c7acae8c05f7614be46179b18f4b15e2aa8c406afa7f00e2e89711779f37",
+      "bytes": 16653
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v19/results/gpu1003-conan14177-coder-a1/result.json",
+      "sha256": "c2099f2540d724218dcdcf6b80db25cb1bd5a92d37ed10bbd2d32dd0c9e6914f",
+      "bytes": 2642
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v19/state.json",
+      "sha256": "7e4743fb333c4ca735e5094d06ee689d3480c7e44e141be388caa614d056a695",
+      "bytes": 1953
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v20/requests/gpu1003-coveragef5eb-coder-a1.json",
+      "sha256": "5e94f9ba97d80242282715594b0d2cc213b3365cd9a8ba60df8cc490ee388e1b",
+      "bytes": 18091
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v20/requests/gpu1003-dvc5839-coder-a1.json",
+      "sha256": "5f4297b2f6f7c96fc04da81789123f31ffb74c8274cdce90161911a5445c1bea",
+      "bytes": 17935
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v20/requests/gpu1003-orange4014-coder-a1.json",
+      "sha256": "a9fa3540f3288eaf9194e0d16e1d0a951ed95a8b9e9a011e8f9e315e421ae81d",
+      "bytes": 18059
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v20/requests/gpu1003-orange50-coder-a1.json",
+      "sha256": "9945702654c5f110a59a80dc34cfb170a3a7e165fb568ad59eda2eb58c13f95c",
+      "bytes": 18019
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v20/requests/gpu1003-scrapya95a-coder-a1.json",
+      "sha256": "a79cb74bf567c04b506f9f6572da2a0a12564395c9fe9aadfcb7efd0db7311da",
+      "bytes": 18036
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v20/results/gpu1003-coveragef5eb-coder-a1/attempt/attempt.json",
+      "sha256": "0295b8f67ed43002b4c8919e8d1e731f7ed5e646aae6f28576257d0aa7028892",
+      "bytes": 19583
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v20/results/gpu1003-coveragef5eb-coder-a1/result.json",
+      "sha256": "e41d60d0f27514bf4701e5c3cd83120227273774b516d5757e4c07d56319f2e5",
+      "bytes": 2695
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v20/results/gpu1003-dvc5839-coder-a1/attempt/attempt.json",
+      "sha256": "b6cafeb17780badd23a785ea9bea1210637f437c4f98d82062d7c6e335834315",
+      "bytes": 16895
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v20/results/gpu1003-dvc5839-coder-a1/result.json",
+      "sha256": "d1628c35c8f4a42f87eacb14f0e3655b77cbce51fb4b2769a5e012578aef7f69",
+      "bytes": 2626
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v20/results/gpu1003-orange4014-coder-a1/attempt/attempt.json",
+      "sha256": "ed208d67ef182f8b1159dccbd951bc6ae41c54b4bc4d15b00590947ab6116298",
+      "bytes": 19346
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v20/results/gpu1003-orange4014-coder-a1/result.json",
+      "sha256": "e57ad43b75dd3d53d396ddd496c72c671887c3f5d8ce8203dee61391bce07a63",
+      "bytes": 2703
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v20/results/gpu1003-orange50-coder-a1/attempt/attempt.json",
+      "sha256": "6c181ddf0b9dcae0e1ead3c6984749fc24fd35f10408117208dd0f7a8dd8f587",
+      "bytes": 18848
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v20/results/gpu1003-orange50-coder-a1/result.json",
+      "sha256": "c0334658eb6b46bd9f0589485042b31cb0ee2ebe3fd8ec86d091062031206d2e",
+      "bytes": 2686
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v20/results/gpu1003-scrapya95a-coder-a1/attempt/attempt.json",
+      "sha256": "c9be495719b19cee0caaa6509e36967d9c8e163f64ebf21dccb516712c76a484",
+      "bytes": 18923
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v20/results/gpu1003-scrapya95a-coder-a1/result.json",
+      "sha256": "238740815b84b39e8f9fed3f092d2843ea0c1b40ccc84fe1b7ec0b1896a8faf9",
+      "bytes": 2683
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v20/state.json",
+      "sha256": "0d9d22058368687d2eb0bb9ade1bcd7eabeab354929b27a036d26987bff9c8a7",
+      "bytes": 9390
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v21/requests/gpu1003-conan13230-coder-a1.json",
+      "sha256": "be430fdcf821f9d7ef99ecda1190ebdb36e72010619a35fb2d6724eb908dd62c",
+      "bytes": 15796
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v21/requests/gpu1003-monai3715-coder-a1.json",
+      "sha256": "f339d871e38157fc4c69463294e6fa8df2f0611e6c023950fe32d4e75f9d5f98",
+      "bytes": 15789
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v21/requests/gpu1003-moto5406-coder-a1.json",
+      "sha256": "56798c8d4dbdf2c079ca076c718031e2f380b55b2ac65bba84ed114da2ec26a7",
+      "bytes": 15751
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v21/requests/gpu1003-mypy15184-coder-a1.json",
+      "sha256": "58ec5f05665733294480b19d8672c947b27298036dd96d2b14967c97cee76f65",
+      "bytes": 15774
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v21/results/gpu1003-conan13230-coder-a1/attempt/attempt.json",
+      "sha256": "a6b726527f9417b932c9ad61393e2ca576b9eac150b5b7c9cdff89309f8f3cf8",
+      "bytes": 16654
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v21/results/gpu1003-conan13230-coder-a1/result.json",
+      "sha256": "a65c6c557afd9377204140ae8215d524967b8cffeab50fe958c115aec3bb1463",
+      "bytes": 2633
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v21/results/gpu1003-monai3715-coder-a1/attempt/attempt.json",
+      "sha256": "2c2be8cf5755d0ea84536b1b81ac6a0c6a4ad13b70e5ba669cee72e109d34841",
+      "bytes": 15906
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v21/results/gpu1003-monai3715-coder-a1/result.json",
+      "sha256": "1dad497889835de8e2340165c712f99dbf9ceda0dbcc05ae46daf7cb6a51c008",
+      "bytes": 2648
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v21/results/gpu1003-moto5406-coder-a1/attempt/attempt.json",
+      "sha256": "30a3ee7109a7b4aa7360a948e0f461c62a6a0fed502a7338055dd9d00d249215",
+      "bytes": 18177
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v21/results/gpu1003-moto5406-coder-a1/result.json",
+      "sha256": "b4e60f159f9ceb08f154c72b28c25f88ccb1923ed0783825d326a417802e7e78",
+      "bytes": 2627
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v21/results/gpu1003-mypy15184-coder-a1/attempt/attempt.json",
+      "sha256": "1494edb0fc386420e0e02414b83bff7f5f74debb0a3a29dbf217b68123b87796",
+      "bytes": 48407
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v21/results/gpu1003-mypy15184-coder-a1/result.json",
+      "sha256": "081febbd9031b08a1d6349b24e663e2a5fe082f3215116128f89e5ad6a954d4d",
+      "bytes": 2631
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v21/state.json",
+      "sha256": "5c23ad1c312d9edb1792ffba8affbe6468a979b23c499346d471d519d21a520e",
+      "bytes": 7338
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v22/requests/gpu1003-moto6114-neptune37-coder-a1.json",
+      "sha256": "b8d05e81afcc1e8118ba6bdb8aead90e3c31bab951657cbeaa91efa8f5bc762f",
+      "bytes": 15320
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v22/requests/gpu1003-pydantic5662-coder-a1.json",
+      "sha256": "ea8fb86f4f1116a1a1ab52e8ae548f68bc0124a0ce3ef1dca48e6838c19ad49b",
+      "bytes": 15219
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v22/requests/gpu1003-pydantic6283-v2-coder-a1.json",
+      "sha256": "6729c0e3dc3b7935369d9a12c97556dda8e315423ca0cd91d74ddf227487704b",
+      "bytes": 15269
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v22/requests/gpu1003-pydantic8316-coder-a1.json",
+      "sha256": "8f5d3870055a1001c451a9bf24886776f6c4392950458c6842979d9631cc5637",
+      "bytes": 15219
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v22/results/gpu1003-moto6114-neptune37-coder-a1/attempt/attempt.json",
+      "sha256": "e35e95d20694f3c55502f98ef1721b90086ac8462ea5982ca05abf536c94361f",
+      "bytes": 16813
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v22/results/gpu1003-moto6114-neptune37-coder-a1/result.json",
+      "sha256": "c65ad05e6749d9adbd0549c54eeae6365821f08bf64fed234eb5849552a72817",
+      "bytes": 2666
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v22/results/gpu1003-pydantic5662-coder-a1/attempt/attempt.json",
+      "sha256": "8520dc3e083cefd669de6a3f2b8677da12846a38bc74fdf9c4e9c48cf69b0775",
+      "bytes": 17096
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v22/results/gpu1003-pydantic5662-coder-a1/result.json",
+      "sha256": "dc892e751a645a485348824d3bf80fccfb88187679b2f32b5e58ee8d45d38cf4",
+      "bytes": 2635
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v22/results/gpu1003-pydantic6283-v2-coder-a1/attempt/attempt.json",
+      "sha256": "3f0276dfdfeecae5152e3569f1745fb08c47199c8c265a3d3f9ca8b761312e72",
+      "bytes": 18088
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v22/results/gpu1003-pydantic6283-v2-coder-a1/result.json",
+      "sha256": "f60a864d121b02c0b4da6ccaf7537c400253ae2b4979271287befef450eed94b",
+      "bytes": 2640
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v22/results/gpu1003-pydantic8316-coder-a1/attempt/attempt.json",
+      "sha256": "3f60025851fa58548ad1b5039231d8430e9c6fd02e2d20a74a18a6138c2d1026",
+      "bytes": 16447
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v22/results/gpu1003-pydantic8316-coder-a1/result.json",
+      "sha256": "c03751e9b6b33fecc1644f8aa5cd519061fef366d1b5f2afbe63cf0bff26a128",
+      "bytes": 2633
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v22/state.json",
+      "sha256": "6321feb6858cc4a71ee9a486ca4f88afe6ac6fe0b93be8f209e74b40fd87d737",
+      "bytes": 7453
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v23/requests/gpu1003-conan13403-coder-a1.json",
+      "sha256": "4e227b86da6db76749d9a4aaebfa0cd1b37561dd9fc029ed81927e7a1e4b87c9",
+      "bytes": 15628
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v23/requests/gpu1003-dask7305-coder-a1.json",
+      "sha256": "57c695a8a363fa8eaa13d8e4113286dd588b1189cc64ea4441efdd9bc8e63839",
+      "bytes": 15577
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v23/results/gpu1003-conan13403-coder-a1/attempt/attempt.json",
+      "sha256": "e4f294e6baacc0ae36d1359a9ab74a1f1b14d41e96c31bce372c12c0461426f5",
+      "bytes": 16243
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v23/results/gpu1003-conan13403-coder-a1/result.json",
+      "sha256": "d09e7e96f8849121250d847833d757efdfc35a79db8e6762f80cd0cbc0c7fbc7",
+      "bytes": 2637
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v23/results/gpu1003-dask7305-coder-a1/attempt/attempt.json",
+      "sha256": "791b9f20f0dffe68b77d0e4f0f4cfb4f2896a0d58321b26d1f459e0bc15de6b7",
+      "bytes": 19837
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v23/results/gpu1003-dask7305-coder-a1/attempt/frozen/baseline_manifest.json",
+      "sha256": "1b56ba4fb22136421aa750a599599d8ad6bf9c17b064ee79316a0444539cebc6",
+      "bytes": 100403
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v23/results/gpu1003-dask7305-coder-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "aed0ad51595a04e4746bb10e2f8baa15a9afc6c27b432e8124773d855e995844",
+      "bytes": 65001
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v23/results/gpu1003-dask7305-coder-a1/grading/baseline_rebuild_census.txt",
+      "sha256": "54898e0c70ca9913bd80abc68386097b04ffe6086fffdc48d63f00b55868bfeb",
+      "bytes": 48146
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v23/results/gpu1003-dask7305-coder-a1/grading/eval_logs/evallog_gpu1003-dask7305-coder-a_0163622a.diagnostics.json",
+      "sha256": "29cee26c76a8893efc19a1eb5f432ecbdda2b57102a411d8bc96708f80bb4841",
+      "bytes": 12268
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v23/results/gpu1003-dask7305-coder-a1/grading/eval_logs/evallog_gpu1003-dask7305-coder-a_0163622a.eval.log",
+      "sha256": "eef0e4be7d86f17c66733b9bffa25044bfc5e870b37f55f6f294311010c082f8",
+      "bytes": 53856
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v23/results/gpu1003-dask7305-coder-a1/grading/projection.json",
+      "sha256": "7924c98862c45c5e755eace199febb2661f8fb4b3a2d21f88d9382ea68ad55b5",
+      "bytes": 761
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v23/results/gpu1003-dask7305-coder-a1/grading/report.json",
+      "sha256": "75af66291c51c2c601d2e82f491641a827c8bf6f2038817104ea9d3a95b0c917",
+      "bytes": 1878
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v23/results/gpu1003-dask7305-coder-a1/grading/status.json",
+      "sha256": "9f92f49089ec60d1a2e6ba3ad749c5798d20d373ffc04b00b5642986262a9031",
+      "bytes": 2662
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v23/results/gpu1003-dask7305-coder-a1/input_check.json",
+      "sha256": "82838fdb7f02c37ea3f353e3db174c1528e2110a73d873af4b39bbce63bb9d8a",
+      "bytes": 13047
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v23/results/gpu1003-dask7305-coder-a1/result.json",
+      "sha256": "291a6aae82efe38d99b2dab9d696c3c0ca7679bf8a0ee13377a63629b933caf6",
+      "bytes": 2698
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v23/state.json",
+      "sha256": "8fe703c23f6f9a5b2f8502748a4216d9d4582827a118de461ad6668c17bda461",
+      "bytes": 3734
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v23_remainder_v1/recovery_staging_v1.json",
+      "sha256": "4d7263c1f62ed88482d13c351ee747ada85abec6ae7e67d136fec106ee52a884",
+      "bytes": 1570
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v23_remainder_v1/requests/gpu1003-dask9378-coder-a1.json",
+      "sha256": "97e8ba1098db561d43d16d0a9289856e2e82e00bef2bd4006a045190d0b4c783",
+      "bytes": 15772
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/attempt/attempt.json",
+      "sha256": "0a3eded3aefac2945326c435e390bd44425f28c1a13a5f167749090fdffc3388",
+      "bytes": 18350
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/attempt/frozen/baseline_manifest.json",
+      "sha256": "a120be76370418beb159adf6b147998c1109988a66182b7bab3ee020529c0f8c",
+      "bytes": 110627
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "b8835cb148c9aa5bca7d8a36ba3c4f2c0bd10a28f541776de2e428e3ebfe8067",
+      "bytes": 29366
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/grading/eval_logs/evallog_gpu1003-dask9378-coder-a_99b2114f.diagnostics.json",
+      "sha256": "cd8fcb4da3c26728b257f8312392d3911ee44912d5c79d096e287524b52d81d8",
+      "bytes": 13129
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/grading/eval_logs/evallog_gpu1003-dask9378-coder-a_99b2114f.eval.log",
+      "sha256": "b886dbeecf0297c7cc0b97a671b2dad1519d8fcab3ed1099e1760f39d4cf1979",
+      "bytes": 30277
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/input_check.json",
+      "sha256": "db7c184ac24a1e309b2aa50f7d7e2c6ba921fb64e6399df50b9ec676a0d22336",
+      "bytes": 13950
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/result.json",
+      "sha256": "025a08a76dcd40eec32f710342a70970a39b1fddd26beb2e13ac8141aea5d29d",
+      "bytes": 2692
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v23_remainder_v1/state.json",
+      "sha256": "81b9de842267c01374f305a74819f443c6193496afca7ee8db3246acd6e4c5aa",
+      "bytes": 1970
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/attempt.json",
+      "sha256": "eef6a3cab13b9da89a8f34d35c70a4aee3affa6ff42e82416984feae281078c4",
+      "bytes": 17829
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/bringup_artifacts/cc_version_observed.json",
+      "sha256": "c2b9bcf966c47d9a00227877026cb90b76afed482fd0df4e0ac12caab786bacb",
+      "bytes": 60
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/candidate/pydantic__pydantic-8567.diff",
+      "sha256": "e75b31ca50a503f1ee94cab2e448c796e80324e2338d8ebafc1612b084674ccd",
+      "bytes": 14806
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/cc_home.tgz",
+      "sha256": "6dcb98a8046f3e8d96681e838f64e399a66ed3af613f53050065a750d1d0e143",
+      "bytes": 51657
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/facts/activation_check.json",
+      "sha256": "642a2622559317260c9d8b6fa662d256b93bd07bc01bd7ecfe6f331dba50e3a2",
+      "bytes": 509
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/facts/agent_env_facts.txt",
+      "sha256": "8b4e87ac17fae195c5bdf65c1cd5d4014d2bebac9dbf1d99be6ca3165eda88a0",
+      "bytes": 1174
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/facts/materialize_probe.txt",
+      "sha256": "8746349b549868c1852732119bb49f57c3dead0198026556ece6ee77ab17ba6d",
+      "bytes": 165
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/facts/pip_freeze_after.txt",
+      "sha256": "a43f92693408cc1f48ccac6687b7db1a41f7eb78cbe4edb0603279020fc456f6",
+      "bytes": 2023
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/facts/pip_freeze_before.txt",
+      "sha256": "a43f92693408cc1f48ccac6687b7db1a41f7eb78cbe4edb0603279020fc456f6",
+      "bytes": 2023
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/facts/prelaunch.json",
+      "sha256": "7e29f4cd8a5ceef02a9ea8a4ee6e6ed2febe6361d3f87d3b77fe5cb310bca9ec",
+      "bytes": 2311
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/frozen/baseline.tar",
+      "sha256": "c6728639451eec9b168632b1ba09af69b60848815ee1b156cd18332706cb8d19",
+      "bytes": 7096320
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/frozen/baseline_census.txt",
+      "sha256": "08fe628db5cdea6c853291b4ea6ed1c888d0277860bf71119da7eb8144d392a3",
+      "bytes": 53265
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/frozen/baseline_manifest.json",
+      "sha256": "b7c0382c76bf60f132fb4ac6b060f5678e1ead5e86d0acc3cbfff0c4c313b0ab",
+      "bytes": 109163
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/frozen/classification.json",
+      "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6",
+      "bytes": 93
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "a66d90102e049dbdc11ff51948f9477afcc6169dcbee73e56a173147a4ad6e81",
+      "bytes": 48986
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/harness/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/harness/trajectory.jsonl",
+      "sha256": "4ffefae5c54c194269933295b2e08636a475752294d675a49ab4b13d9cb41197",
+      "bytes": 436739
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/prompt.txt",
+      "sha256": "458abcd108a06689fe71cca7e18bbec90ba88d83c2ad1e1fb1d9e0a64fdef53c",
+      "bytes": 2196
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/attempt/trajectory.jsonl",
+      "sha256": "4ffefae5c54c194269933295b2e08636a475752294d675a49ab4b13d9cb41197",
+      "bytes": 436739
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/gateway_audit.json",
+      "sha256": "4ad10c5b1f2f8bbe0e89fdbdffeb4ac4b489e252c68af4678790fb27f429219f",
+      "bytes": 392
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/grading/baseline_rebuild_census.txt",
+      "sha256": "08fe628db5cdea6c853291b4ea6ed1c888d0277860bf71119da7eb8144d392a3",
+      "bytes": 53265
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/grading/eval_logs/evallog_gpu1003-pyd8567-coder-a1_a6470f81.diagnostics.json",
+      "sha256": "c889ce8db54d6886907f2df6a34267bbaffc3a99b40c428f97d1773a485eb795",
+      "bytes": 30291
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/grading/eval_logs/evallog_gpu1003-pyd8567-coder-a1_a6470f81.eval.log",
+      "sha256": "08e8681a50bd29344f9fa067937eaed6c564ce75b5e8b7ecbf19f9e565725d05",
+      "bytes": 92191
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/grading/projection.json",
+      "sha256": "9b6d727f1b62a49669e3984665970f540030f6f7c0eb7481b37f8a3a6ea81c7c",
+      "bytes": 540
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/grading/report.json",
+      "sha256": "8c4e1b63ce46edee682bd947fa70af0c91190fe42f78d7c059feb2622ef5db64",
+      "bytes": 1827
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/grading/status.json",
+      "sha256": "ef4f130da1a4e7af394702e1dedb89ff790492a419a992cf4b09b731b29490a3",
+      "bytes": 2611
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/input_check.json",
+      "sha256": "ff33c36e8e6efdb156783d2a1bf763b1844d5f248855cda4763e3db996f79fa4",
+      "bytes": 17035
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/result.json",
+      "sha256": "517e15316b22af08e59891fd04eb084017d18a35be9a235cc33c7d4b2beb6b5e",
+      "bytes": 2647
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/queue_v24/results/gpu1003-pyd8567-coder-a1/solver_prompt.txt",
+      "sha256": "458abcd108a06689fe71cca7e18bbec90ba88d83c2ad1e1fb1d9e0a64fdef53c",
+      "bytes": 2196
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v14/coder/adapter/adapter_config.json",
+      "sha256": "1568f2e833897101fe16e4184436147663a7a42f153ff18f65d066fe9b83eec4",
+      "bytes": 766
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v14/coder/adapter/gpu1003-pyd8567-coder-a1.turns.jsonl",
+      "sha256": "6cf57805dd97ebcec0c730bb74ba81b7bf92fc9b0c0527f7f793468348484f12",
+      "bytes": 77471
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v14/coder/engine_launch_v1.json",
+      "sha256": "a5739fc2570e82b2de7804c4d31124944b64dac9ef397d424c462ea675bbc08a",
+      "bytes": 2960
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gateway_config.json",
+      "sha256": "091518171a1ea2f3a4afd25ae4eef411f56f013dab48294ae9fa808e58711549",
+      "bytes": 530
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/requests.jsonl",
+      "sha256": "861b75fb95f4ea14bf044cf91afa34be5ecf88e0c7f07c5712763fafe05f343a",
+      "bytes": 4261998
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_1.sse",
+      "sha256": "e8c330187563fddc74a72b614ef8ad24446019b3011c7ec03e63255050de91a3",
+      "bytes": 1441
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_10.sse",
+      "sha256": "3fdd7d050ae18af14598f0b5c10f5bd96d24b28497be0650e3cc8323cd22e449",
+      "bytes": 1085
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_11.sse",
+      "sha256": "800631629cb953c48f2d24a5bc47f1ae7898dca18d245b867a737ed5bab200bd",
+      "bytes": 1383
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_12.sse",
+      "sha256": "81fe2ba0e56d0b56c534a80fbb890d0424a23bfaae2186cd467398f6420a5cc6",
+      "bytes": 1488
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_13.sse",
+      "sha256": "c93081e436e507be6737a86b8fcb2b5b2a231c38f55e783bdd74b6c8dd4e8f13",
+      "bytes": 1394
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_14.sse",
+      "sha256": "0e089a7cb08fc1542dd9d386194ee3c8670ce51c4ec40627f0b3b24bd76f26da",
+      "bytes": 1491
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_15.sse",
+      "sha256": "b003c56bae218b199df7f070ec7dd38c21b77af48b5119c8aa31bb2adc0fd602",
+      "bytes": 997
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_16.sse",
+      "sha256": "313bb47d6872e64a6d862024eb7b088b8c0dabca578045eedb10564073efb3bc",
+      "bytes": 3491
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_17.sse",
+      "sha256": "897528ae2eb94d7030305a4a37a202f86d2500d5581bc8c8b4e36a138a8a65e1",
+      "bytes": 1003
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_18.sse",
+      "sha256": "2fab86f6f7f83b6dec7eb0ab64c167322d41af64779c02196d9ea473ebcb3b92",
+      "bytes": 1923
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_19.sse",
+      "sha256": "32d83aa63b908ab27fa53505c9c6b0088578e1ba2f79b7072b6210ab9779009b",
+      "bytes": 1757
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_2.sse",
+      "sha256": "170ef67c08c978cce41e4f4ab087a5a8fef2de94dfb65b132b35ec8e87bef09a",
+      "bytes": 1991
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_20.sse",
+      "sha256": "a96c90082fafe1847941ce20e648ba9ecc9faccf8165bb3f310ab61a547dcfbf",
+      "bytes": 2884
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_21.sse",
+      "sha256": "ac0fb4ad5e06597e74123d22b6fe53680ca3e28736a42ee22fff1acba81bb225",
+      "bytes": 994
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_22.sse",
+      "sha256": "a888b7f65071af83b967d62ff649b56738214eaca18ea3a8f8e21e9362b9fd48",
+      "bytes": 4318
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_23.sse",
+      "sha256": "0e38f77d2816ceb59e1dda7b61c35506b8b1bdaed31b9fa66135367cdf5bb831",
+      "bytes": 1004
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_24.sse",
+      "sha256": "cb549b24b92a0a50ab0cd3a20da72b412b77a45776c487ed9e8364011a9b8c13",
+      "bytes": 1575
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_25.sse",
+      "sha256": "ffe1f6615f59ab0d70463992a4de79f9ec5d261b0b395feacba121405f001697",
+      "bytes": 1455
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_26.sse",
+      "sha256": "ca85472cff6e50f6dfea9fd6850c31754dac76893d7c6ba50c8b7383c4477ef7",
+      "bytes": 2969
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_27.sse",
+      "sha256": "d5af7142b1abcff09a984306b2aea5bd8a7844cb3aa81e80e38a04687bedb2df",
+      "bytes": 1021
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_28.sse",
+      "sha256": "6e75a9a189a1e524205d2ed0f50b78052eb358b93665ccd1f0d3b3697a4e51c3",
+      "bytes": 3758
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_29.sse",
+      "sha256": "6123b22548a87a8b2fc318f6025f71b8fdb4f3e4465d734ce0897da68680ad28",
+      "bytes": 1338
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_3.sse",
+      "sha256": "8235c41458ae36bf2b18bc777d0848bffdbbe1f77dd30ebfe6998a3ab8a5701e",
+      "bytes": 1019
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_30.sse",
+      "sha256": "0abb56b50bade5ac1d5e21bc04aed6f5359ffcf01e60633729bc658939eede79",
+      "bytes": 1563
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_31.sse",
+      "sha256": "41a83b7ea1aad5bd1ca6a1a9dcf337621fc8f3043fb29bd455bbf09b4161e86f",
+      "bytes": 3820
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_32.sse",
+      "sha256": "0c42ab06bf42298e02899c9b4426e79e1a6daa06f0a47da1e94bc0dd4889f653",
+      "bytes": 1025
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_33.sse",
+      "sha256": "73de8c804d412c0a370da746cf53f44688e8c1fafe9c176226ea304ca0fe8e66",
+      "bytes": 1936
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_34.sse",
+      "sha256": "9409233983218db7febf508601ddd469080be435bb766299bf0353a837bec446",
+      "bytes": 1051
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_35.sse",
+      "sha256": "15b2f01bf082302c8ae0a69ea3e2e9df4b2c39d221593056de94f1b460f07445",
+      "bytes": 1485
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_36.sse",
+      "sha256": "321ec752bf6f67be8fad4ff06f56b87ef2d36aecfa587df348e4f5ba9a96a554",
+      "bytes": 1046
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_37.sse",
+      "sha256": "0f4159060a37d226b6563a0376b4321b6bbc214eaf83c93a4342809bec961c07",
+      "bytes": 1443
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_38.sse",
+      "sha256": "a5946e6286ec73b9b5d753ea4f22ad52bf0cbbd43a4031e868d7619c8b3cde99",
+      "bytes": 4056
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_39.sse",
+      "sha256": "b2dcf3a478146333e67d1a68d285f74488697eddad02b244f54c40747ce37f61",
+      "bytes": 1028
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_4.sse",
+      "sha256": "e68e7912610c0873c49c37cfa96db9e805fd0dfab544efc4bdd11f7838f4bea2",
+      "bytes": 1649
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_40.sse",
+      "sha256": "acbc7a11e74417966f98425da03f088b2a9e3267556ba06c623f68e3967351c0",
+      "bytes": 1408
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_41.sse",
+      "sha256": "653607ad2ac6e23556d109b2cc2c3e83ecbb182cfb2a4d709557e865a9a6cab9",
+      "bytes": 1487
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_42.sse",
+      "sha256": "b35f19693ccb8feaf2354280a1c2599c3ec097acddb9ecbea205049d9e7eda0b",
+      "bytes": 3993
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_43.sse",
+      "sha256": "056fc39ae109ec73c55f8e1a1729a7dbeb38fff2b43b0e1c24ace6e6d5cb67dc",
+      "bytes": 1727
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_44.sse",
+      "sha256": "e6a3e07a1347c218ff8f587ed71fed340ba15ace67e2a74ccfbcdfce3b7ce520",
+      "bytes": 2269
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_5.sse",
+      "sha256": "cdbb964d4e27023e89cc2a47ad21d4ce1b6a132d401ddb3a22c5c2118f52fa6c",
+      "bytes": 1016
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_6.sse",
+      "sha256": "b32cd030c70b397de638cd3fdd4dabb9a4fc37b484bfbe4014cef2f7e11570a0",
+      "bytes": 1869
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_7.sse",
+      "sha256": "d187d0d761eada9a121ee2e08dfaf83a3efd7fa7fae1340183335a18f6bc86e9",
+      "bytes": 1376
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_8.sse",
+      "sha256": "6a3de37417738a40640a451ce1c7dae7caf5ef741ee1f05e1f6f55424b682535",
+      "bytes": 958
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/resp_9.sse",
+      "sha256": "b3c7a303f1603ef4bab6850d397693f340c3b3331feec151f9e8f93ed106c430",
+      "bytes": 1527
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/responses.jsonl",
+      "sha256": "85d93eecf3235272d06eb772e2da2f36600367fd6dbabcda6dc4b5f9797e2a68",
+      "bytes": 13755
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/session_close.jsonl",
+      "sha256": "0b1c2169be4c2fd6ec99b9fba7e08c07a5f88542cd03996c3e360cb98a53e1be",
+      "bytes": 125
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/services_v22/coder/gateway/gpu1003-pyd8567-coder-a1/usage.json",
+      "sha256": "d4a947989f63431f402e03144e631858aa79076c10e12055ec0733be97c4eac4",
+      "bytes": 90
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/tools/bind_queue16_root_v1.py",
+      "sha256": "d1f6937389d6e71b553d5a29077bcf9706aad8537e067b7b9fd2ae3057f38ddb",
+      "bytes": 15021
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/tools/bind_queue24_root_v5.py",
+      "sha256": "80a396e221f7de4672abf3482cc89a18e9c3397042b861232f3817be471e94d6",
+      "bytes": 48583
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/tools/capture_coder_runtime_identity_v1.py",
+      "sha256": "ff2a28e3cecc2f4992ff21c538a78c543180f7c7dd344b3fbec761e616a6f1c3",
+      "bytes": 16713
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/tools/freeze_dask7305_originalfp_setup900_failed_closed_v2.py",
+      "sha256": "20225d67c1aa9ea6546179349395faa4c3a5e679e2c16873881bc41b07ffb035",
+      "bytes": 14117
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/tools/prepare_config_queue_v24_v1.py",
+      "sha256": "b531e9909dd2d7c2409cdf176008c530e85b5c6ca35b775923bae8589687c35f",
+      "bytes": 7625
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/tools/readback_queue24_inputs_v1.py",
+      "sha256": "361f54b19e891868f275a6c31d0be283534d3ff234533767a2ddbcb28e186b57",
+      "bytes": 6971
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/tools/regrade_dask7305_original_fp_setup900_v1.py",
+      "sha256": "6ddcff9be226408ea2eaffd630b80ba5dab2ced272413dd21e060e9644220459",
+      "bytes": 14713
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/tools/regrade_dask7305_original_fp_setup900_v1_inputs.json",
+      "sha256": "f12d5be5e01ddc6720ee5922f6c5ff42571733ec3df7bab0ca23b13c544f793e",
+      "bytes": 49099
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/tools/root_dispatch_one_v12.py",
+      "sha256": "45514560d96d71ee8803d33d1ea51440aaace01969cd01e558268c49dd748084",
+      "bytes": 76314
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pyd8567-coder-a1/gpu1003-pyd8567-coder-a1_closed_manifest_v1.json",
+      "sha256": "c9399d48fe41d7b7591376b1358ffed198ba147c6e9960d29a64679dba038d8f",
+      "bytes": 70109
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/reviews/non_author_8511_8567_coder_q24_execution_review_20261003.json",
+      "sha256": "519e7055a0cbc3c260c17bd0c138f8a2d3ac8c658d9eb27d58e9cb97c6737783",
+      "bytes": 76545
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/reviews/non_author_8511_8567_coder_q24_execution_review_20261003.md",
+      "sha256": "99e3180ad5e44658531d51e335949bc081e721e20bd441a3936135959ec39ea6",
+      "bytes": 15462
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/tasks/pydantic__pydantic-8567/probe_request.json",
+      "sha256": "72fdd7614fbc09241eaa2d461241f4a7784ca0ad43bfae01a2c0608f4fb6e1e2",
+      "bytes": 21737
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/q24_first_coder_execution_receipt_v1.json",
+      "sha256": "c953db78b1bf9aa46b9b0a08a08f31983051ad16762229b4951079cbe67388d4",
+      "bytes": 3767
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/q24_three_coder_closed_sha_and_transcript_index_v1.json",
+      "sha256": "971e5a5800544b9ae51232780437e6325c2a19c7de893a375248401028765126",
+      "bytes": 319178
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/q24_three_coder_owner_verified_facts_v1.json",
+      "sha256": "a523070d1bbc9b9b1af01aa97068422e46541236cb7a853c50129e71e78d20c1",
+      "bytes": 326472
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/read_q24_three_coder_owner_v1.py",
+      "sha256": "9e6707fdc611c4afc824f305252bcda56e80c9de88f68e44c32d6615e8b354d1",
+      "bytes": 14889
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8567_coder_q24_canonical_transcript_v1.txt",
+      "sha256": "152eb1b0637e5f361d7db169d15149e1101e2deb21dc4b64e9802fc9defdcadd",
+      "bytes": 131672
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8567_coder_q24_production_delta_v1.diff",
+      "sha256": "70c868f058566651b14f1cc9f69721d9a053af7170da58b80170f424331c098f",
+      "bytes": 1502
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/model_audits_20261003/8567_coder_first_arm_acceptance.md",
+      "sha256": "9b35ac94b793ead38ef6831a042d2e77bda7db0a0b3c342e6f109dcbaf8dca90",
+      "bytes": 5127
+    }
+  ],
+  "source_semantically_accepted": false,
+  "source_failure": "无条件handler(source_type)破坏PlainValidator跳过内层schema，两个Unsupported F及forward/stdlib TypedDict两个P失败。",
+  "full_candidate_delivery_defect": true,
+  "temporary_files": "debug_issue.py和fix_plain_validator.py实际运行失败仍在FP；其余5个附带文件也保留。",
+  "self_test_claim_limits": "bool示例修好不等于完整F节点通过；所选公开测试不证明完整兼容。",
+  "new_material_CPU_revision_required": false,
+  "execution_evidence_accepted": true,
+  "independent_execution_review_accepted": true,
+  "independent_review_limits": [
+    "本轮失败机制审查不证明所有合理解法或材料的完整语义覆盖；暂未发现需要改材料或重跑 CPU 的新证据。",
+    "baseline manifest 的 environment_package_digest=null，assignment 的环境 digest 非空；运行身份和同源运输通过，不补填 typed 环境资格。",
+    "正式参考 173/162 逐键完整；来源 parser 的非参考空白参数 ID 和跳过节点限制未修复，不将 reported num_parsed_tests 当成完整 pytest states。",
+    "两份资源窗口 gaps_unknown=true；8567 grader 收尾一条 PID=0、cgroup/events=null 样本保留为空，不能作无 OOM 的独立证明；其余可观察样本无 OOM/pids limit 事件。",
+    "模型服务由实际 inspect、当前 HTTP 读回、只读 /model mount、下载清单 revision 与真实请求绑定；未重算每个权重文件，也未证明 GPU 内存权重哈希。",
+    "identity_binding_actual.json 中 source_code=code_v4 是历史服务元数据；实际 adapter Cmd 仍指 code_v4，当前题级入口及 consumer 是 queue_v24/code_v8，不能混称同一代码版本。",
+    "仅 Coder 首臂收口；Qwen 未执行范围、完整两模型请求和训练资格不在本报告中核销。"
+  ],
+  "self_readback_method": "本地std库完整SHA/tar/FP/轨迹Write/Edit/deletion/HTTP/全部formal refs/CID时间窗；未运行项目、容器、模型或作者生产代码。",
+  "fixed_owner_request_sha256": "72fdd7614fbc09241eaa2d461241f4a7784ca0ad43bfae01a2c0608f4fb6e1e2"
+}

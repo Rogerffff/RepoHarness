@@ -1,0 +1,621 @@
+{
+  "schema": "swe_pydantic.non_author_remaining_runner_review.v1",
+  "as_of": "2026-10-03",
+  "reviewer_role": "non_author_narrow_review_private_context_exposed_not_fresh_public_reader",
+  "scope": "R14四题执行入口、固定输入与既有本地prepare身份；不覆盖尚未运行的正式矩阵／actor／模型",
+  "static_entry_review_passed": true,
+  "new_blocking_findings": [],
+  "formal_cpu_acceptance_passed": false,
+  "ordinary_gpu_probe_ready": false,
+  "training_eligibility_asserted": false,
+  "source_release": "cat2-cpu-r2e089092-swe34-dvc-pyd-20261003-v1",
+  "manifest_sha256": "51b833975be2c3354be45b731552235a33070315f0039c8e6f54987de95f6ca8",
+  "release_member_count": 1220,
+  "release_member_verification": "复用父线程1220成员及100发布成员检查与发布者维护／部署证据；本轮只重核manifest与3份bundle SHA",
+  "files": {
+    "run_formal.py": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/cpu_acceptance_20261003/remaining/run_formal.py",
+      "bytes": 22791,
+      "sha256": "b127f7309ffae3eae2bbe834c595f846104406e2f858b8073ff2182d0a2ce3c5"
+    },
+    "formal_inputs.json": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/cpu_acceptance_20261003/remaining/formal_inputs.json",
+      "bytes": 349851,
+      "sha256": "bea70edd55d2a316b5d92fde1a3a894e9c79363a168e2cd92c7de2d40b83ac1b"
+    },
+    "run_actor.py": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/cpu_acceptance_20261003/remaining/run_actor.py",
+      "bytes": 9473,
+      "sha256": "21caef4f953334a2b3759657ac3d5de00bd03373ffa8e40794674ddf5797f4f9"
+    },
+    "actor_inputs.json": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/cpu_acceptance_20261003/remaining/actor_inputs.json",
+      "bytes": 5103,
+      "sha256": "226ef4ab9be63c08f0ddfdd5755dc48353d87b3c24fbc3732745737cf36e3882"
+    },
+    "upload_manifest.json": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/cpu_acceptance_20261003/remaining/upload_manifest.json",
+      "bytes": 12185,
+      "sha256": "e9d29aec3f252a836a5fd49aaf3118e93248edeefa47c4bc41976cf2a0edaa67"
+    },
+    "matrix_plan.json": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/cpu_acceptance_20261003/remaining/matrix_plan.json",
+      "bytes": 13612,
+      "sha256": "9f7dbdacb9be08d275341d98105f17b07fc7cddf260b8b090380f27bba0b2ce2"
+    }
+  },
+  "publication_receipts": [
+    {
+      "path": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r14/pydantic8316_publication_receipt.json",
+      "sha256": "d5c8c27797548ccd369243050637641e9fd8265c3507887548970a66a413d83e"
+    },
+    {
+      "path": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r14/pydantic8511_publication_receipt.json",
+      "sha256": "0fecd7a336bf7aa1bb51ffb70e40d05f16ba2c62c2fb6828ada54a44f5f417df"
+    },
+    {
+      "path": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r14/pydantic8567_publication_receipt.json",
+      "sha256": "cfe5f9e035b5570776aa663560c4c3ebefa6b1ce1963680f84dc8500ea9eca3b"
+    },
+    {
+      "path": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r14/pydantic9066_publication_receipt.json",
+      "sha256": "6c9b7622b75914a95ee5c479f359db03cf7862935a9e14004a1c7825719b4308"
+    }
+  ],
+  "upload_members_independently_verified": 66,
+  "remote_input_deployment": "已有remaining_r14_upload_verified.json记66成员、精确集合及SHA通过；本轮无现场查询，不将简略回执视为逐成员远端实测",
+  "local_prepare_independently_joined": [
+    {
+      "task": "8316",
+      "reference_counts": [
+        1,
+        143
+      ],
+      "candidates": [
+        {
+          "name": "noop",
+          "reward": 0,
+          "required_count": 144,
+          "required_failed": [
+            "tests/test_utils.py::test_camel2snake[CAMELToSnake-camel_to_snake]"
+          ]
+        },
+        {
+          "name": "gold",
+          "reward": 1,
+          "required_count": 144,
+          "required_failed": []
+        },
+        {
+          "name": "keep_digit",
+          "reward": 1,
+          "required_count": 144,
+          "required_failed": []
+        },
+        {
+          "name": "scan",
+          "reward": 1,
+          "required_count": 144,
+          "required_failed": []
+        },
+        {
+          "name": "w_example_only",
+          "reward": 0,
+          "required_count": 1,
+          "required_failed": [
+            "tests/test_utils.py::test_camel2snake[CAMELToSnake-camel_to_snake]"
+          ]
+        },
+        {
+          "name": "w_acr_max8",
+          "reward": 0,
+          "required_count": 1,
+          "required_failed": [
+            "tests/test_utils.py::test_camel2snake[CAMELToSnake-camel_to_snake]"
+          ]
+        },
+        {
+          "name": "skip_if_digit",
+          "reward": 0,
+          "required_count": 1,
+          "required_failed": [
+            "tests/test_utils.py::test_camel2snake[CAMELToSnake-camel_to_snake]"
+          ]
+        },
+        {
+          "name": "no_lower_upper",
+          "reward": 0,
+          "required_count": 1,
+          "required_failed": [
+            "tests/test_utils.py::test_camel2snake[CAMELToSnake-camel_to_snake]"
+          ]
+        },
+        {
+          "name": "acr3",
+          "reward": 0,
+          "required_count": 1,
+          "required_failed": [
+            "tests/test_utils.py::test_camel2snake[CAMELToSnake-camel_to_snake]"
+          ]
+        },
+        {
+          "name": "w_last_only",
+          "reward": 0,
+          "required_count": 1,
+          "required_failed": [
+            "tests/test_utils.py::test_camel2snake[CAMELToSnake-camel_to_snake]"
+          ]
+        },
+        {
+          "name": "w_window8",
+          "reward": 0,
+          "required_count": 1,
+          "required_failed": [
+            "tests/test_utils.py::test_camel2snake[CAMELToSnake-camel_to_snake]"
+          ]
+        },
+        {
+          "name": "w_skip_nonascii",
+          "reward": 0,
+          "required_count": 1,
+          "required_failed": [
+            "tests/test_utils.py::test_camel2snake[CAMELToSnake-camel_to_snake]"
+          ]
+        },
+        {
+          "name": "no_trailing_upper",
+          "reward": 0,
+          "required_count": 1,
+          "required_failed": [
+            "tests/test_utils.py::test_camel2snake[CAMELToSnake-camel_to_snake]"
+          ]
+        },
+        {
+          "name": "skip_if_underscore",
+          "reward": 0,
+          "required_count": 1,
+          "required_failed": [
+            "tests/test_utils.py::test_camel2snake[CAMELToSnake-camel_to_snake]"
+          ]
+        },
+        {
+          "name": "w_count2",
+          "reward": 0,
+          "required_count": 1,
+          "required_failed": [
+            "tests/test_utils.py::test_camel2snake[CAMELToSnake-camel_to_snake]"
+          ]
+        },
+        {
+          "name": "only_if_no_us",
+          "reward": 0,
+          "required_count": 1,
+          "required_failed": [
+            "tests/test_utils.py::test_camel2snake[CAMELToSnake-camel_to_snake]"
+          ]
+        },
+        {
+          "name": "lower_or_start",
+          "reward": 0,
+          "required_count": 1,
+          "required_failed": [
+            "tests/test_utils.py::test_camel2snake[CAMELToSnake-camel_to_snake]"
+          ]
+        },
+        {
+          "name": "w_len_cap",
+          "reward": 0,
+          "required_count": 1,
+          "required_failed": [
+            "tests/test_utils.py::test_camel2snake[CAMELToSnake-camel_to_snake]"
+          ]
+        },
+        {
+          "name": "lower_or_start_la",
+          "reward": 0,
+          "required_count": 1,
+          "required_failed": [
+            "tests/test_utils.py::test_camel2snake[CAMELToSnake-camel_to_snake]"
+          ]
+        },
+        {
+          "name": "no_digit_split",
+          "reward": 0,
+          "required_count": 1,
+          "required_failed": [
+            "tests/test_utils.py::test_camel2snake[CAMELToSnake-camel_to_snake]"
+          ]
+        },
+        {
+          "name": "w_mid_underscore",
+          "reward": 0,
+          "required_count": 1,
+          "required_failed": [
+            "tests/test_utils.py::test_camel2snake[CAMELToSnake-camel_to_snake]"
+          ]
+        },
+        {
+          "name": "literal",
+          "reward": 0,
+          "required_count": 1,
+          "required_failed": [
+            "tests/test_utils.py::test_camel2snake[CAMELToSnake-camel_to_snake]"
+          ]
+        },
+        {
+          "name": "lead_only",
+          "reward": 0,
+          "required_count": 1,
+          "required_failed": [
+            "tests/test_utils.py::test_camel2snake[CAMELToSnake-camel_to_snake]"
+          ]
+        },
+        {
+          "name": "no_digit_upper",
+          "reward": 0,
+          "required_count": 1,
+          "required_failed": [
+            "tests/test_utils.py::test_camel2snake[CAMELToSnake-camel_to_snake]"
+          ]
+        }
+      ],
+      "revision_sha256": "8b7b214598fa34943a3276f9fbe159210869745eee38976c7b3191ddd5addc3b",
+      "materials_identity": "sha256:05c815276fd0e953aa6a6fb90cbd1a4e1d6e936d7bb1fb7f4499b0557007aaa9",
+      "grading_bundle_digest": "sha256:c66bfc32c8976e2182da3676a348ef53f43582f0a88839f3928ae95878b54aac",
+      "environment_package_digest": "sha256:8d3e5b4e37604a1fa12aaf1dae531c4de4a1e1f09bbff9cfe832047358882dac",
+      "public_bundle_digest": "sha256:0880b03743ac3a54b6c379ce2f712931ac209ef044dc77c9742aa2f9340ac4f2",
+      "prepared_manifest_sha256": "25d7eef8398f14acd402676df1c7b3104eacda4b20c04af0bf53baa9b71191ba",
+      "host_grading_sha256": "48c147dce8ca158482ea872bb429dbb0b047327e8a43b8ed85dba60e0308e234",
+      "install_recipe": "pyd8316-e10-fixed-v1",
+      "core": "2.14.5",
+      "base_id": "sha256:add19c2969be6265a7e21a070900f97f159006af42e7879861f270f39539cac4",
+      "derived_id": "sha256:f939c2664826e600f77549aee98d305dc02f705ee4f68939f5eea1db808e651d",
+      "scripts": {
+        "eval_script": "167c06f5ef853809b3cf2fc9766811f524b76d55ac897d412a4cf0a8b4acab9f",
+        "trusted_setup_script": "f52aaaef9c05aa54442fa154bd96bb4336f6c7641d4aef25435fae37d7380283",
+        "candidate_test_script": "be181d7775fec2ab1d647c2c3be340c8406ef57053e352d987ae160d030a0071",
+        "candidate_install_script": "330abc8406e14c35930fd2291b513b1903bf2684f3748f38b92be3631f379fd2",
+        "candidate_test_after_install_script": "fd57b32f65272d427b4035e7f8d40c4911dad23fb10db5d95e66239c7962a1e1",
+        "pre_candidate_observation_script": "b5c77eb26a5492467f2ed3d021ac0650ea7b061a943e00063dc26bfe9793636d",
+        "post_candidate_observation_script": "4bba86aa70a9a1521f29aa7fd2e6865278586ae5e59b705f5fa668380af21543"
+      },
+      "prepare_status": "local_prepare_identity_join_passed_not_cpu",
+      "status_sha256": "966408751f6a74a64f62ad373dcd1bec6621e8fd4091e85844bc6ab65c5402f8"
+    },
+    {
+      "task": "8511",
+      "reference_counts": [
+        1,
+        172
+      ],
+      "candidates": [
+        {
+          "name": "noop",
+          "reward": 0,
+          "required_count": 173,
+          "required_failed": [
+            "tests/test_dataclasses.py::test_repr_false[Field]"
+          ]
+        },
+        {
+          "name": "gold",
+          "reward": 0,
+          "required_count": 5,
+          "required_failed": [
+            "tests/test_dataclasses.py::test_inherited_required_field_without_local_annotations",
+            "tests/test_dataclasses.py::test_inherited_hidden_field_without_local_annotations",
+            "tests/test_dataclasses.py::test_inherited_factory_field_without_local_annotations"
+          ]
+        },
+        {
+          "name": "narrow",
+          "reward": 1,
+          "required_count": 173,
+          "required_failed": []
+        }
+      ],
+      "revision_sha256": "9b0dd24d100e5251ab5d2e4c9b1d522ca5f8e04ca60a7113c7bf960d739aca00",
+      "materials_identity": "sha256:879bf1d3bc96bd56a96b8190728fa24df0e28cece50119015d402c917abb8eb6",
+      "grading_bundle_digest": "sha256:8d81ca96708a0098896c5325e76c003b1507876eaf3425710c1ee57fc3496516",
+      "environment_package_digest": "sha256:a72f287143d76320f9979e13c023966fb1915f265f5d901d790ef87dc1b15947",
+      "public_bundle_digest": "sha256:edc64cdddc65f7fe20b6d9f7fdfd3c8fcfb77dacbd6457010e1a8b06c9d46165",
+      "prepared_manifest_sha256": "ac64d253d7077e2748773c366c3047a9d00b6ee37e4d627ccab36036d1441d31",
+      "host_grading_sha256": "42c893e8d625abd3bdeb9088add562381ad6619893e9285b4e356c0e3781400b",
+      "install_recipe": "pyd8511-e10-fixed-v1",
+      "core": "2.14.5",
+      "base_id": "sha256:b331c8fa2b55168dbce5d57753265c02d9aa2a3525761d202f3802684681b9a0",
+      "derived_id": "sha256:df6c3affb7ea6fd826f44863ec92926f7b52558dd0f1b42e05f97aec9fe8ca68",
+      "scripts": {
+        "eval_script": "5819164e86bb7e0f91540834b8b6991199156a2238b7fe31464396ee32dca08a",
+        "trusted_setup_script": "bba73b312b387982222bfe9a9c76078421239ee013af97a18b946015edf78d7b",
+        "candidate_test_script": "a0b1d43536fafb2f7d21d4a20717a219142ee0f0a566027b1c0f36100fde5e2a",
+        "candidate_install_script": "330abc8406e14c35930fd2291b513b1903bf2684f3748f38b92be3631f379fd2",
+        "candidate_test_after_install_script": "b903596308a708d26a4807078a1023fa97a0424436fd94f33c0ce2ee8c137a6d",
+        "pre_candidate_observation_script": "b5c77eb26a5492467f2ed3d021ac0650ea7b061a943e00063dc26bfe9793636d",
+        "post_candidate_observation_script": "4bba86aa70a9a1521f29aa7fd2e6865278586ae5e59b705f5fa668380af21543"
+      },
+      "prepare_status": "local_prepare_identity_join_passed_not_cpu",
+      "status_sha256": "9ef8ca65fc3287388b846f142b433cea8f51f97eef0e4e26553b1f0f593c4c6d"
+    },
+    {
+      "task": "8567",
+      "reference_counts": [
+        2,
+        160
+      ],
+      "candidates": [
+        {
+          "name": "noop",
+          "reward": 0,
+          "required_count": 162,
+          "required_failed": [
+            "tests/test_validators.py::test_plain_validator_plain_serializer",
+            "tests/test_validators.py::test_plain_validator_serializer_unsupported_type_both_orders"
+          ]
+        },
+        {
+          "name": "gold",
+          "reward": 0,
+          "required_count": 4,
+          "required_failed": [
+            "tests/test_validators.py::test_plain_validator_plain_serializer",
+            "tests/test_validators.py::test_plain_validator_serializer_unsupported_type_both_orders",
+            "tests/test_validators.py::test_plain_validator_unresolved_inner_forward_reference",
+            "tests/test_validators.py::test_plain_validator_typing_typeddict_inner_schema_not_required"
+          ]
+        },
+        {
+          "name": "c3_reorder",
+          "reward": 1,
+          "required_count": 162,
+          "required_failed": []
+        },
+        {
+          "name": "upstream261",
+          "reward": 0,
+          "required_count": 4,
+          "required_failed": [
+            "tests/test_validators.py::test_plain_validator_serializer_unsupported_type_both_orders",
+            "tests/test_validators.py::test_plain_validator_unresolved_inner_forward_reference",
+            "tests/test_validators.py::test_plain_validator_typing_typeddict_inner_schema_not_required"
+          ]
+        },
+        {
+          "name": "ok_post_attach",
+          "reward": 1,
+          "required_count": 162,
+          "required_failed": []
+        },
+        {
+          "name": "bad_nonvalidators_after_pv",
+          "reward": 0,
+          "required_count": 1,
+          "required_failed": [
+            "tests/test_validators.py::test_plain_validator_plain_serializer"
+          ]
+        },
+        {
+          "name": "c3_serpass",
+          "reward": 0,
+          "required_count": 1,
+          "required_failed": [
+            "tests/test_validators.py::test_plain_validator_plain_serializer"
+          ]
+        },
+        {
+          "name": "rv_ser_to_end",
+          "reward": 0,
+          "required_count": 1,
+          "required_failed": [
+            "tests/test_validators.py::test_plain_validator_plain_serializer"
+          ]
+        },
+        {
+          "name": "n_python_only",
+          "reward": 0,
+          "required_count": 1,
+          "required_failed": [
+            "tests/test_validators.py::test_plain_validator_plain_serializer"
+          ]
+        }
+      ],
+      "revision_sha256": "22636f9481cc93a112a768043a21cc8d9d5ae8abaf6be1fffdc96a3aa870b81a",
+      "materials_identity": "sha256:79fdb8c6fb5328a023a3f1b5ff2ade9e6fa405aec636d42755783bbb36546d0d",
+      "grading_bundle_digest": "sha256:226660fe80b744f17825835de86687ff59d179fcf78a6b5945813656771a1104",
+      "environment_package_digest": "sha256:8d64c28668f711aa8ab86fbe1bfe10ff3a24b4afc5c2a3001e8b43b8e3bcfb8d",
+      "public_bundle_digest": "sha256:f01b3794148642ee4d987fdb2e57ec142f19080378c9ced0221290542149379f",
+      "prepared_manifest_sha256": "57de838c003913141fbf2ac95ef65759640f14d9575d4350fffd67f001e8af1f",
+      "host_grading_sha256": "830c599c5dc6a93909cf905a3d649c087da18dd10f8678fafc1cc692738d109d",
+      "install_recipe": "pyd8567-e10-fixed-v1",
+      "core": "2.15.0",
+      "base_id": "sha256:abbc218b579f2221817266e312e8df981459ee1cea4e5bc4f4b120942c62cf7a",
+      "derived_id": "sha256:bc5d796fe30c9c0150a1c15c25347a98f0a1f25bf5f8d9cb098756b38b3c2b74",
+      "scripts": {
+        "eval_script": "58540751115b251431a0f6d72b75c71ed8cca1dc913a3a9c78f5bfd8e9e90dee",
+        "trusted_setup_script": "66216964dab3da80bd21f37c0a5f40efb7551febc29fce1c962e68b409e2ba08",
+        "candidate_test_script": "36e0c4f066ff4de26b248d80dd8fdccc6f5e4fd18806db78f901da188a5a6221",
+        "candidate_install_script": "330abc8406e14c35930fd2291b513b1903bf2684f3748f38b92be3631f379fd2",
+        "candidate_test_after_install_script": "3c2ff0ad4f550e77eafa7830baa8c4028c67711ea37611240d78c4b4e6ddbf29",
+        "pre_candidate_observation_script": "b5c77eb26a5492467f2ed3d021ac0650ea7b061a943e00063dc26bfe9793636d",
+        "post_candidate_observation_script": "4bba86aa70a9a1521f29aa7fd2e6865278586ae5e59b705f5fa668380af21543"
+      },
+      "prepare_status": "local_prepare_identity_join_passed_not_cpu",
+      "status_sha256": "d87439a45cb6db9a9d2933fe60b7e6223275d6cb46ade2dd7913a01d4cf7660c"
+    },
+    {
+      "task": "9066",
+      "reference_counts": [
+        2,
+        368
+      ],
+      "candidates": [
+        {
+          "name": "noop",
+          "reward": 0,
+          "required_count": 370,
+          "required_failed": [
+            "tests/test_json_schema.py::test_default_value_encoding[IPvAnyAddress-default_value1-expected_schema1]",
+            "tests/test_json_schema.py::test_default_value_encoding[IPvAnyAddress-default_value0-expected_schema0]"
+          ]
+        },
+        {
+          "name": "gold",
+          "reward": 0,
+          "required_count": 3,
+          "required_failed": [
+            "tests/test_json_schema.py::test_default_encoding_preserves_stdlib_dataclass_instance"
+          ]
+        },
+        {
+          "name": "fallback",
+          "reward": 1,
+          "required_count": 370,
+          "required_failed": []
+        },
+        {
+          "name": "upstream271",
+          "reward": 1,
+          "required_count": 370,
+          "required_failed": []
+        },
+        {
+          "name": "gold_catch_user_error",
+          "reward": 0,
+          "required_count": 3,
+          "required_failed": [
+            "tests/test_json_schema.py::test_default_encoding_preserves_stdlib_dataclass_instance"
+          ]
+        }
+      ],
+      "revision_sha256": "d59f0056995ad33db4cafc63ab9541298f8222d44daef80160ea971ff8bea17d",
+      "materials_identity": "sha256:c72cb966577c64feeb474ea27d304810ce07970af5a5271835a8c812dfeff906",
+      "grading_bundle_digest": "sha256:2140151b94af4238421f221b8bcadd9871b01a2e8d16aadd3a9951ec85e21d2d",
+      "environment_package_digest": "sha256:12cea03dbaa225292741e58dc6629710908ab124e3310e9cadd1140f1bad8650",
+      "public_bundle_digest": "sha256:0e6d29a3ac6c591724068a898c07dd4d2a8349f365fa5be9d5700072b0262517",
+      "prepared_manifest_sha256": "f1ac0e5ac15a7359c2b3fdb4e16ae8ecad8a9a008914e6e570fd8bc7100c0516",
+      "host_grading_sha256": "dff1d0ccf55465d4cafcd6dd8d301f71fe960d0842f3c6cd8d372df6b1b8576e",
+      "install_recipe": "pyd9066-e10-fixed-v1",
+      "core": "2.16.3",
+      "base_id": "sha256:5a05759a5549cc7d65c471fb5d57d8fc554485b6c178a389a1fd373111ff3f4d",
+      "derived_id": "sha256:2241ad13bceafacf38976b8cfa3d41d0b489099a11741876abba29cbe32781cb",
+      "scripts": {
+        "eval_script": "8a00f7547fad9af2a4138a4cfc215fe036b54e0c90f6ce3838c19bcbf1d6f707",
+        "trusted_setup_script": "75de6cf823356f405ef72567006400e016ae4780f7364597d6322383b5cb4de3",
+        "candidate_test_script": "b9f3828dcd228903b6e51a6cc0bb0a3e7800b41261fcaa9299fcbecacd4bddce",
+        "candidate_install_script": "330abc8406e14c35930fd2291b513b1903bf2684f3748f38b92be3631f379fd2",
+        "candidate_test_after_install_script": "a94452b5a38086dbedf2a662e68dc3c54011322c119b45c78a02c52e90054513",
+        "pre_candidate_observation_script": "b5c77eb26a5492467f2ed3d021ac0650ea7b061a943e00063dc26bfe9793636d",
+        "post_candidate_observation_script": "4bba86aa70a9a1521f29aa7fd2e6865278586ae5e59b705f5fa668380af21543"
+      },
+      "prepare_status": "local_prepare_identity_join_passed_not_cpu",
+      "status_sha256": "388e6a551163af0656cef64556964f859ee9e9424b8611271f65b5831286535e"
+    }
+  ],
+  "effective_file_identity_checks": [
+    {
+      "task": "8316",
+      "effective_file_sha256": "7dc1c199ead539bfea6725ff81fcb274b99c5add3301e059e9b9f2ad3414156a",
+      "spaces_in_references": []
+    },
+    {
+      "task": "8511",
+      "effective_file_sha256": "d5a5c1c2968f3a7e2d58e902a8d185e91fc8dcb227f359df22b227b3d3afdb90",
+      "spaces_in_references": []
+    },
+    {
+      "task": "8567",
+      "effective_file_sha256": "dbe96a1fc7ce78c9fb1453e5eb2481f381d665f99042d282d1c525edf6ed6e0c",
+      "spaces_in_references": []
+    },
+    {
+      "task": "9066",
+      "effective_file_sha256": "ab09716b68a52cb5e9d2255cb6e9aa73c6c72598cce84334e26d538b981943ed",
+      "spaces_in_references": []
+    }
+  ],
+  "method": [
+    "只读本地标准库hashlib/json/ast/re/collections",
+    "入口与旧版unified diff逐段检查",
+    "66上传成员path/bytes/SHA独立核",
+    "四回执及三bundle SHA核对",
+    "四本地prepared manifest/host/view/prompts/28脚本SHA及canonical public/grading/environment/materials摘要核",
+    "四effective patch在内存还原base公开测试、SHA及Python3.8 AST核",
+    "候选资产SHA、节点预期有效性/唯一性、正对照全参考映射核",
+    "12公开命令Python3.8 AST、6既有函数AST身份及private命名排除检查"
+  ],
+  "formal_runner_delta": [
+    "R7固定常量改为冻结输入内的R14 ID/SHA/1220精确集合",
+    "四题选择及run_id允许表",
+    "reference_totals改为len(fail_to_pass)/len(pass_to_pass)",
+    "parser_complete改名reference_parser_complete",
+    "四题实际actor尚待的范围声明"
+  ],
+  "common_runner_reuse": [
+    "non_author_6283_cpu_review_20261003.md",
+    "non_author_5662_cpu_review_20261003.md",
+    "non_author_remaining_material_review_20261003.md",
+    "non_author_8567_positive_semantics_20261003.md"
+  ],
+  "resource_and_budget": {
+    "formal_per_task_serial": true,
+    "cpus": 2,
+    "memory_bytes": 4294967296,
+    "pids_limit_expected": 512,
+    "spec_env_reset_seconds": 300,
+    "spec_apply_seconds": 120,
+    "spec_test_seconds": 1800,
+    "replay_candidate_stage_seconds": 900,
+    "replay_grading_deadline_seconds": 3600,
+    "replay_cleanup_seconds": 120,
+    "manager_close_seconds": 300,
+    "actor_wall_seconds": 1800,
+    "actor_outer_subprocess_seconds": 2400,
+    "actor_command_timeouts_seconds": [
+      90,
+      90,
+      180
+    ]
+  },
+  "actor_boundary": {
+    "formal_swe_actor": "source image remains; training typed actor not connected by R14",
+    "diagnostic_override": "exact registered derived image ID with original source snapshot and public prompt; requires actual current actor evidence",
+    "private_tests_delivered": false,
+    "actual_actor_completed": false,
+    "actual_model_completed": false,
+    "stub_only": true,
+    "bash_env_denial_tested": false,
+    "private_names_guard_8316": "empty because v3 modifies assertions inside original test name; empty guard is not proof of zero private exposure",
+    "full_role_isolation_asserted": false
+  },
+  "parser_scope": {
+    "official_counts": {
+      "8316": 144,
+      "8511": 173,
+      "8567": 162,
+      "9066": 370
+    },
+    "all_current_reference_ids_have_no_spaces": true,
+    "all_nonreference_states_complete_asserted": false,
+    "known_138_keys": "5662 prior parser returned138 keys:129 valid official+9 malformed nonreference keys, not138 complete states; same gap remains",
+    "owner_gate": "复用既有共享parser事项；带空格参数ID成为参考前修复。实际新矩阵须独立核原日志，不用num_parsed_tests替代逐ID"
+  },
+  "local_spec_equality_scope": "spec_record只比较材料identity/revision诊断、七脚本/hygiene及三个预算；不是所有GradingEnvSpec字段或实际actor相等。固定grader镜像及prerequisite共用消费由发布方既有窄验证覆盖，运行仍需核实际身份。",
+  "deferred_dispatch": {
+    "job": "pyd8511-formal-20261002230939-r14-8d68e",
+    "rc": 75,
+    "status": "deferred",
+    "log": "All CPU slots busy; retry later",
+    "task_executed": false,
+    "task_reward": null,
+    "receipt_sha256": "b794a03639211803e547c6a2274548242cf2fd36c7ebca34f38c402bbd968db5",
+    "dispatch_log_sha256": "bdb981ecb0af3aab2945cf0111863a240c0b11fe98156048a801488157c052eb"
+  },
+  "pending_existing_gates": [
+    "四题R14正式安装/core/source/import/image/退出及全部参考原件",
+    "当前有效新增断言和预期行为失败逐项实际执行",
+    "完整FrozenPatch/baseline运输与候选/manager/本run清理",
+    "四题实际公开actor开发及首消息交付，桩作用域和权限未测项",
+    "对应非作者CPU原件核查；满足后再申请普通GPU"
+  ],
+  "findings": []
+}

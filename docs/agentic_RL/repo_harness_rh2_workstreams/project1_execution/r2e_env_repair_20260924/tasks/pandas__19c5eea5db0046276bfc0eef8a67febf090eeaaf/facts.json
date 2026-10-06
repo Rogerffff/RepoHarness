@@ -1,0 +1,653 @@
+{
+ "schema_id": "rh2.r2e_env_facts.v1",
+ "generated_at_utc": "2026-09-23T19:41:12Z",
+ "generator": {
+  "script": "rh2/scripts/r2e_env/collate_facts.py",
+  "sha256": "e21d4465331c7ed02c9ae9918894231324009cb9b220da5f6efd53809098d1fc"
+ },
+ "evidence_roots": [
+  "runs/r2e_rf_20260923",
+  "runs/r2e_env_repair_20260924/_rerun2"
+ ],
+ "m3_root": "runs/env_overnight_20260916/M3",
+ "identity": {
+  "task_id": "r2e_gym_subset::pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf",
+  "instance_id": "pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf",
+  "repo": "pandas",
+  "module": "pandas",
+  "base_commit": "5abc06fbb9b9f7cf63059695bf7fa87d9b57df5c",
+  "source_commit_hash": "19c5eea5db0046276bfc0eef8a67febf090eeaaf",
+  "base_image_ref": "namanjain12/pandas_final:19c5eea5db0046276bfc0eef8a67febf090eeaaf",
+  "base_image_manifest_digest": "sha256:fe590536728ad61642019cbcdea311d95d399177e1e7746240f7c23072444366",
+  "derived_image_ref": "rh2-r2e-derived/pandas:19c5eea5db00-r2e_derive_v1",
+  "derived_image_id": "sha256:6601dd7fb90191a3addbc4140e102a53f7832b886e55fae7560a74f0216ac9dc",
+  "recipe_id": "r2e_derive_v1",
+  "recipe_sha256": "sha256:0da821a15fa389289f524c60d3a421bc940cce753e4ecf3d53560b7ab6b31df9",
+  "hidden_tests_tree_sha256": "sha256:549ad1f46d193dc372fe75456cfda7ca55b95d32e36a7447d5c0429f340faf23",
+  "run_tests_sh_sha256": "sha256:8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+  "head_commit_m3": "5abc06fbb9b9f7cf63059695bf7fa87d9b57df5c",
+  "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe"
+ },
+ "source": {
+  "expected_total": 155,
+  "expected_status_counts": {
+   "PASSED": 138,
+   "ERROR": 17
+  },
+  "expected_non_passed": {
+   "TestLoc2.test_loc_getitem_time_object": "ERROR",
+   "TestLoc2.test_loc_getitem_iterable[iter]": "ERROR",
+   "TestLoc2.test_loc_getitem_iterable[array]": "ERROR",
+   "TestLoc2.test_loc_getitem_iterable[Series]": "ERROR",
+   "TestLoc2.test_loc_getitem_iterable[Index]": "ERROR",
+   "TestLocWithMultiIndex.test_loc_preserve_names": "ERROR",
+   "TestLocSetitemWithExpansion.test_loc_setitem_categorical_column_retains_dtype": "ERROR",
+   "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[2018]": "ERROR",
+   "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[2020]": "ERROR",
+   "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[1]": "ERROR",
+   "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[1.5]": "ERROR",
+   "TestLocSeries.test_loc_getitem": "ERROR",
+   "TestLocSeries.test_loc_getitem_not_monotonic": "ERROR",
+   "TestLocSeries.test_loc_getitem_iterator": "ERROR",
+   "TestLocSeries.test_loc_setitem_boolean": "ERROR",
+   "TestLocSeries.test_loc_setitem_corner": "ERROR",
+   "TestLocSeries.test_basic_setitem_with_labels": "ERROR"
+  },
+  "hidden_test_files": [
+   "test_1.py"
+  ],
+  "runner_kind": "pytest",
+  "runner_prefix": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning'",
+  "run_tests_sh": "PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+  "problem_statement_chars": 908,
+  "problem_statement_has_code_block": true,
+  "public_prompt_chars": 1010,
+  "public_hints_mention_conda": true
+ },
+ "environment": {
+  "python_version": "3.7.9",
+  "interpreter_source_path": "/root/.local/share/uv/python/cpython-3.7.9-linux-x86_64-gnu/bin/python3.7m",
+  "interpreter_derived_path": "/opt/py/cpython-3.7.9-linux-x86_64-gnu/bin/python3.7m",
+  "install_mode_m3": "path_entry",
+  "pth_line_m3": "/testbed",
+  "import_outside_testbed_ok_m3": true,
+  "import_path_grader": "/testbed/pandas/__init__.py",
+  "pkg_version_grader": "0+untagged.25024.g5abc06f.dirty",
+  "dirty_tree_lines": [
+   "M  pandas/__init__.py",
+   "M  pandas/_version.py",
+   " D pyproject.toml",
+   " M setup.cfg",
+   "M  versioneer.py",
+   "?? install.sh",
+   "?? run_tests.sh"
+  ],
+  "testbed_owner_derived": "root",
+  "metacopy": "N"
+ },
+ "derived_image": {
+  "ok": true,
+  "failures": [],
+  "checks_total": 20,
+  "checks_failed": [],
+  "build_seconds": 1.9,
+  "base_size_bytes": 2422774054,
+  "derived_size_bytes": 3048607654,
+  "built_at_utc": "2026-09-23T14:03:54.764617Z",
+  "preflight_stdout": [
+   "RH2_PREFLIGHT_INTERPRETER=ok",
+   "RH2_PREFLIGHT_HIDDEN_TESTS=ok",
+   "RH2_PREFLIGHT_GIT_HISTORY=ok"
+  ]
+ },
+ "rh2_runs": [
+  {
+   "run_id": "r2e-rf-reps-noop",
+   "ledger": "ledger_r2e_reps_noop.jsonl",
+   "kind": "noop",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T13:33:11.254777+00:00",
+   "stage_error": null,
+   "reward": 0.0,
+   "outcome": "unresolved",
+   "failure_category": "tests_failed",
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 154,
+   "expected_total": 155,
+   "num_parsed_tests": 155,
+   "resolution": "RESOLVED_NO",
+   "mismatched": [
+    "TestLoc2.test_loc_setitem_empty_append_expands_rows_mixed_dtype"
+   ],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 1,
+   "test_seconds": 4.693,
+   "setup_seconds": 24.931274,
+   "grader_seconds_total": 43.149,
+   "mem_peak_mb": 916.633,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:e0166eb04b22e5d4c241850820f12d654abbf98c2fe0264c2f9f8f3a7b785079",
+   "import_path_grader": "/testbed/pandas/__init__.py",
+   "pkg_version_grader": "0+untagged.25024.g5abc06f.dirty",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-reps-noop-_8cc00ccd.eval.log",
+   "diagnostics": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-reps-noop-_8cc00ccd.diagnostics.json",
+   "non_passed_reasons": {
+    "TestLoc2.test_loc_getitem_time_object": "ERROR",
+    "TestLoc2.test_loc_getitem_iterable[iter]": "ERROR",
+    "TestLoc2.test_loc_getitem_iterable[array]": "ERROR",
+    "TestLoc2.test_loc_getitem_iterable[Series]": "ERROR",
+    "TestLoc2.test_loc_getitem_iterable[Index]": "ERROR",
+    "TestLocWithMultiIndex.test_loc_preserve_names": "ERROR",
+    "TestLocSetitemWithExpansion.test_loc_setitem_categorical_column_retains_dtype": "ERROR",
+    "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[2018]": "ERROR",
+    "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[2020]": "ERROR",
+    "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[1]": "ERROR",
+    "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[1.5]": "ERROR",
+    "TestLocSeries.test_loc_getitem": "ERROR",
+    "TestLocSeries.test_loc_getitem_not_monotonic": "ERROR",
+    "TestLocSeries.test_loc_getitem_iterator": "ERROR",
+    "TestLocSeries.test_loc_setitem_boolean": "ERROR",
+    "TestLocSeries.test_loc_setitem_corner": "ERROR",
+    "TestLocSeries.test_basic_setitem_with_labels": "ERROR",
+    "TestLoc2.test_loc_setitem_empty_append_expands_rows_mixed_dtype": "FAILED"
+   },
+   "dirty_tree_lines": [
+    "M  pandas/__init__.py",
+    "M  pandas/_version.py",
+    " D pyproject.toml",
+    " M setup.cfg",
+    "M  versioneer.py",
+    "?? install.sh",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": []
+  },
+  {
+   "run_id": "r2e-rf-reps-gold",
+   "ledger": "ledger_r2e_reps_gold.jsonl",
+   "kind": "gold",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T13:36:54.689143+00:00",
+   "stage_error": null,
+   "reward": 1.0,
+   "outcome": "resolved",
+   "failure_category": null,
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 155,
+   "expected_total": 155,
+   "num_parsed_tests": 155,
+   "resolution": "RESOLVED_FULL",
+   "mismatched": [],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 1,
+   "test_seconds": 4.251,
+   "setup_seconds": 21.97973,
+   "grader_seconds_total": 39.748,
+   "mem_peak_mb": 916.727,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:e0166eb04b22e5d4c241850820f12d654abbf98c2fe0264c2f9f8f3a7b785079",
+   "import_path_grader": "/testbed/pandas/__init__.py",
+   "pkg_version_grader": "0+untagged.25024.g5abc06f.dirty",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-reps-gold-_d631092e.eval.log",
+   "diagnostics": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-reps-gold-_d631092e.diagnostics.json",
+   "non_passed_reasons": {
+    "TestLoc2.test_loc_getitem_time_object": "ERROR",
+    "TestLoc2.test_loc_getitem_iterable[iter]": "ERROR",
+    "TestLoc2.test_loc_getitem_iterable[array]": "ERROR",
+    "TestLoc2.test_loc_getitem_iterable[Series]": "ERROR",
+    "TestLoc2.test_loc_getitem_iterable[Index]": "ERROR",
+    "TestLocWithMultiIndex.test_loc_preserve_names": "ERROR",
+    "TestLocSetitemWithExpansion.test_loc_setitem_categorical_column_retains_dtype": "ERROR",
+    "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[2018]": "ERROR",
+    "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[2020]": "ERROR",
+    "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[1]": "ERROR",
+    "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[1.5]": "ERROR",
+    "TestLocSeries.test_loc_getitem": "ERROR",
+    "TestLocSeries.test_loc_getitem_not_monotonic": "ERROR",
+    "TestLocSeries.test_loc_getitem_iterator": "ERROR",
+    "TestLocSeries.test_loc_setitem_boolean": "ERROR",
+    "TestLocSeries.test_loc_setitem_corner": "ERROR",
+    "TestLocSeries.test_basic_setitem_with_labels": "ERROR"
+   },
+   "dirty_tree_lines": [
+    "M  pandas/__init__.py",
+    "M  pandas/_version.py",
+    " M pandas/core/indexing.py",
+    " D pyproject.toml",
+    " M setup.cfg",
+    "M  versioneer.py",
+    "?? install.sh",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": [
+    "pandas/core/indexing.py"
+   ]
+  },
+  {
+   "run_id": "r2e-rf-all-gold",
+   "ledger": "ledger_r2e_all_gold.jsonl",
+   "kind": "gold",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T15:29:20.121578+00:00",
+   "stage_error": null,
+   "reward": 1.0,
+   "outcome": "resolved",
+   "failure_category": null,
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 155,
+   "expected_total": 155,
+   "num_parsed_tests": 155,
+   "resolution": "RESOLVED_FULL",
+   "mismatched": [],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 1,
+   "test_seconds": 4.394,
+   "setup_seconds": 28.416625,
+   "grader_seconds_total": 46.673,
+   "mem_peak_mb": 915.961,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:6601dd7fb90191a3addbc4140e102a53f7832b886e55fae7560a74f0216ac9dc",
+   "import_path_grader": "/testbed/pandas/__init__.py",
+   "pkg_version_grader": "0+untagged.25024.g5abc06f.dirty",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_c9cd4c5a.eval.log",
+   "diagnostics": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_c9cd4c5a.diagnostics.json",
+   "non_passed_reasons": {
+    "TestLoc2.test_loc_getitem_time_object": "ERROR",
+    "TestLoc2.test_loc_getitem_iterable[iter]": "ERROR",
+    "TestLoc2.test_loc_getitem_iterable[array]": "ERROR",
+    "TestLoc2.test_loc_getitem_iterable[Series]": "ERROR",
+    "TestLoc2.test_loc_getitem_iterable[Index]": "ERROR",
+    "TestLocWithMultiIndex.test_loc_preserve_names": "ERROR",
+    "TestLocSetitemWithExpansion.test_loc_setitem_categorical_column_retains_dtype": "ERROR",
+    "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[2018]": "ERROR",
+    "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[2020]": "ERROR",
+    "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[1]": "ERROR",
+    "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[1.5]": "ERROR",
+    "TestLocSeries.test_loc_getitem": "ERROR",
+    "TestLocSeries.test_loc_getitem_not_monotonic": "ERROR",
+    "TestLocSeries.test_loc_getitem_iterator": "ERROR",
+    "TestLocSeries.test_loc_setitem_boolean": "ERROR",
+    "TestLocSeries.test_loc_setitem_corner": "ERROR",
+    "TestLocSeries.test_basic_setitem_with_labels": "ERROR"
+   },
+   "dirty_tree_lines": [
+    "M  pandas/__init__.py",
+    "M  pandas/_version.py",
+    " M pandas/core/indexing.py",
+    " D pyproject.toml",
+    " M setup.cfg",
+    "M  versioneer.py",
+    "?? install.sh",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": [
+    "pandas/core/indexing.py"
+   ]
+  },
+  {
+   "run_id": "r2e-rf-all-noop",
+   "ledger": "ledger_r2e_all_noop.jsonl",
+   "kind": "noop",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T15:29:22.018557+00:00",
+   "stage_error": null,
+   "reward": 0.0,
+   "outcome": "unresolved",
+   "failure_category": "tests_failed",
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 154,
+   "expected_total": 155,
+   "num_parsed_tests": 155,
+   "resolution": "RESOLVED_NO",
+   "mismatched": [
+    "TestLoc2.test_loc_setitem_empty_append_expands_rows_mixed_dtype"
+   ],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 1,
+   "test_seconds": 4.598,
+   "setup_seconds": 28.41267,
+   "grader_seconds_total": 46.97,
+   "mem_peak_mb": 915.422,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:6601dd7fb90191a3addbc4140e102a53f7832b886e55fae7560a74f0216ac9dc",
+   "import_path_grader": "/testbed/pandas/__init__.py",
+   "pkg_version_grader": "0+untagged.25024.g5abc06f.dirty",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_f021bb69.eval.log",
+   "diagnostics": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_f021bb69.diagnostics.json",
+   "non_passed_reasons": {
+    "TestLoc2.test_loc_getitem_time_object": "ERROR",
+    "TestLoc2.test_loc_getitem_iterable[iter]": "ERROR",
+    "TestLoc2.test_loc_getitem_iterable[array]": "ERROR",
+    "TestLoc2.test_loc_getitem_iterable[Series]": "ERROR",
+    "TestLoc2.test_loc_getitem_iterable[Index]": "ERROR",
+    "TestLocWithMultiIndex.test_loc_preserve_names": "ERROR",
+    "TestLocSetitemWithExpansion.test_loc_setitem_categorical_column_retains_dtype": "ERROR",
+    "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[2018]": "ERROR",
+    "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[2020]": "ERROR",
+    "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[1]": "ERROR",
+    "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[1.5]": "ERROR",
+    "TestLocSeries.test_loc_getitem": "ERROR",
+    "TestLocSeries.test_loc_getitem_not_monotonic": "ERROR",
+    "TestLocSeries.test_loc_getitem_iterator": "ERROR",
+    "TestLocSeries.test_loc_setitem_boolean": "ERROR",
+    "TestLocSeries.test_loc_setitem_corner": "ERROR",
+    "TestLocSeries.test_basic_setitem_with_labels": "ERROR",
+    "TestLoc2.test_loc_setitem_empty_append_expands_rows_mixed_dtype": "FAILED"
+   },
+   "dirty_tree_lines": [
+    "M  pandas/__init__.py",
+    "M  pandas/_version.py",
+    " D pyproject.toml",
+    " M setup.cfg",
+    "M  versioneer.py",
+    "?? install.sh",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": []
+  },
+  {
+   "run_id": "r2e-envrepair-rerun-gold",
+   "ledger": "ledger_gold.jsonl",
+   "kind": "gold",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T19:16:39.624410+00:00",
+   "stage_error": null,
+   "reward": 1.0,
+   "outcome": "resolved",
+   "failure_category": null,
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 155,
+   "expected_total": 155,
+   "num_parsed_tests": 155,
+   "resolution": "RESOLVED_FULL",
+   "mismatched": [],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 1,
+   "test_seconds": 4.798,
+   "setup_seconds": 34.40698,
+   "grader_seconds_total": 51.392,
+   "mem_peak_mb": 915.414,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:6601dd7fb90191a3addbc4140e102a53f7832b886e55fae7560a74f0216ac9dc",
+   "import_path_grader": "/testbed/pandas/__init__.py",
+   "pkg_version_grader": "0+untagged.25024.g5abc06f.dirty",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_42752fdd.eval.log",
+   "diagnostics": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_42752fdd.diagnostics.json",
+   "non_passed_reasons": {
+    "TestLoc2.test_loc_getitem_time_object": "ERROR",
+    "TestLoc2.test_loc_getitem_iterable[iter]": "ERROR",
+    "TestLoc2.test_loc_getitem_iterable[array]": "ERROR",
+    "TestLoc2.test_loc_getitem_iterable[Series]": "ERROR",
+    "TestLoc2.test_loc_getitem_iterable[Index]": "ERROR",
+    "TestLocWithMultiIndex.test_loc_preserve_names": "ERROR",
+    "TestLocSetitemWithExpansion.test_loc_setitem_categorical_column_retains_dtype": "ERROR",
+    "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[2018]": "ERROR",
+    "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[2020]": "ERROR",
+    "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[1]": "ERROR",
+    "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[1.5]": "ERROR",
+    "TestLocSeries.test_loc_getitem": "ERROR",
+    "TestLocSeries.test_loc_getitem_not_monotonic": "ERROR",
+    "TestLocSeries.test_loc_getitem_iterator": "ERROR",
+    "TestLocSeries.test_loc_setitem_boolean": "ERROR",
+    "TestLocSeries.test_loc_setitem_corner": "ERROR",
+    "TestLocSeries.test_basic_setitem_with_labels": "ERROR"
+   },
+   "dirty_tree_lines": [
+    "M  pandas/__init__.py",
+    "M  pandas/_version.py",
+    " M pandas/core/indexing.py",
+    " D pyproject.toml",
+    " M setup.cfg",
+    "M  versioneer.py",
+    "?? install.sh",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": [
+    "pandas/core/indexing.py"
+   ]
+  },
+  {
+   "run_id": "r2e-envrepair-rerun-noop",
+   "ledger": "ledger_noop.jsonl",
+   "kind": "noop",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T19:16:44.254740+00:00",
+   "stage_error": null,
+   "reward": 0.0,
+   "outcome": "unresolved",
+   "failure_category": "tests_failed",
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 154,
+   "expected_total": 155,
+   "num_parsed_tests": 155,
+   "resolution": "RESOLVED_NO",
+   "mismatched": [
+    "TestLoc2.test_loc_setitem_empty_append_expands_rows_mixed_dtype"
+   ],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 1,
+   "test_seconds": 4.913,
+   "setup_seconds": 34.862409,
+   "grader_seconds_total": 51.707,
+   "mem_peak_mb": 915.617,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:6601dd7fb90191a3addbc4140e102a53f7832b886e55fae7560a74f0216ac9dc",
+   "import_path_grader": "/testbed/pandas/__init__.py",
+   "pkg_version_grader": "0+untagged.25024.g5abc06f.dirty",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_65679678.eval.log",
+   "diagnostics": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_65679678.diagnostics.json",
+   "non_passed_reasons": {
+    "TestLoc2.test_loc_getitem_time_object": "ERROR",
+    "TestLoc2.test_loc_getitem_iterable[iter]": "ERROR",
+    "TestLoc2.test_loc_getitem_iterable[array]": "ERROR",
+    "TestLoc2.test_loc_getitem_iterable[Series]": "ERROR",
+    "TestLoc2.test_loc_getitem_iterable[Index]": "ERROR",
+    "TestLocWithMultiIndex.test_loc_preserve_names": "ERROR",
+    "TestLocSetitemWithExpansion.test_loc_setitem_categorical_column_retains_dtype": "ERROR",
+    "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[2018]": "ERROR",
+    "TestLabelSlicing.test_loc_getitem_slice_unordered_dt_index[2020]": "ERROR",
+    "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[1]": "ERROR",
+    "TestLabelSlicing.test_loc_getitem_slice_labels_int_in_object_index[1.5]": "ERROR",
+    "TestLocSeries.test_loc_getitem": "ERROR",
+    "TestLocSeries.test_loc_getitem_not_monotonic": "ERROR",
+    "TestLocSeries.test_loc_getitem_iterator": "ERROR",
+    "TestLocSeries.test_loc_setitem_boolean": "ERROR",
+    "TestLocSeries.test_loc_setitem_corner": "ERROR",
+    "TestLocSeries.test_basic_setitem_with_labels": "ERROR",
+    "TestLoc2.test_loc_setitem_empty_append_expands_rows_mixed_dtype": "FAILED"
+   },
+   "dirty_tree_lines": [
+    "M  pandas/__init__.py",
+    "M  pandas/_version.py",
+    " D pyproject.toml",
+    " M setup.cfg",
+    "M  versioneer.py",
+    "?? install.sh",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": []
+  }
+ ],
+ "latest_default_profile": {
+  "noop": "r2e-rf-all-noop",
+  "gold": "r2e-rf-all-gold"
+ },
+ "reference": {
+  "m3_facts_available": true,
+  "reconcile": [
+   {
+    "kind": "noop",
+    "ledger": "ledger_r2e_all_noop_local.jsonl",
+    "agree": true,
+    "reward_equal": true,
+    "diff_sets_equal": true,
+    "observed_maps_equal": true,
+    "reference_ledger_consistent": null,
+    "reference_log_count": 5,
+    "notes": null,
+    "reference_prime_rewards": [
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    "ref": "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   },
+   {
+    "kind": "gold",
+    "ledger": "ledger_r2e_all_gold_local.jsonl",
+    "agree": true,
+    "reward_equal": true,
+    "diff_sets_equal": true,
+    "observed_maps_equal": true,
+    "reference_ledger_consistent": true,
+    "reference_log_count": 5,
+    "notes": null,
+    "reference_prime_rewards": [
+     1.0,
+     1.0,
+     1.0,
+     1.0,
+     1.0
+    ],
+    "ref": "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   }
+  ]
+ },
+ "auto_checks": {
+  "R01_identity": {
+   "status": "pass",
+   "note": "派生镜像 21 项复核通过；覆盖表 / 隐藏测试树 / 入口脚本 / HEAD 与评分面一致",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf/facts.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R02_noop_shows_problem": {
+   "status": "pass",
+   "note": "noop 0 来自 1 个 mismatched 键（无 missing、无零解析）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_f021bb69.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R08_candidate_code_effective": {
+   "status": "pass",
+   "note": "导入 /testbed/pandas/__init__.py；gold 155/155",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_c9cd4c5a.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R12_resources": {
+   "status": "pass",
+   "note": "峰值 916 MB / 限额 4 GiB = 0.224; setup 28s test 4s",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_c9cd4c5a.diagnostics.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R13_repeat_noop": {
+   "status": "pass",
+   "note": "noop 同条件 3 次 reward 与差异集合一致",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-reps-noop-_8cc00ccd.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_f021bb69.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_65679678.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R13_repeat_gold": {
+   "status": "pass",
+   "note": "gold 同条件 3 次 reward 与差异集合一致",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-reps-gold-_d631092e.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_c9cd4c5a.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_42752fdd.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R15_reference_parse": {
+   "status": "pass",
+   "note": "2 行 agree（reward、差异集合、观测映射逐键相同）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R16_f2p_keys": {
+   "status": "pass",
+   "note": "目标键 1：['TestLoc2.test_loc_setitem_empty_append_expands_rows_mixed_dtype']",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_f021bb69.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_c9cd4c5a.eval.log"
+   ],
+   "by": "collate_facts.py"
+  }
+ },
+ "flags": [
+  "dirty_tree_gt2",
+  "expected_has_non_passed_keys"
+ ]
+}

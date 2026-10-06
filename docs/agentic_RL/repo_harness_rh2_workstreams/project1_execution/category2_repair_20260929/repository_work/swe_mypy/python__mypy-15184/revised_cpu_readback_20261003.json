@@ -1,0 +1,1066 @@
+{
+  "as_of": "2026-10-03",
+  "instance_id": "python__mypy-15184",
+  "scope": "作者逐项回读R10正式五参考四候选；非作者核查与实际GPU公开交付另行确认",
+  "status": "author_revised_cpu_matrix_passed_non_author_increment_pending",
+  "job": "mypy15184-revised-r1-20261002T214419Z-e743aa",
+  "binding": {
+    "instance_id": "python__mypy-15184",
+    "public_digest": "sha256:77b85678b3f20ef5689e4a9b646518ae1247407ff44b250803563c11dce3ea7e",
+    "grading_digest": "sha256:3a3c4e78c7dc1b1dce9187d36d00079c4d08621f7019140e6544e77b9f2db4bf",
+    "environment_digest": "sha256:de06cc63c20f88a4691b7037dfeaeae5f31c4dc13f09cf703161cf6df2954f1e",
+    "effective_test_patch_sha256": "sha256:e6d5eb0ef39aeeb08a945d3ce6aeb340a7f8b4fd56e599247dbef3b99bf4e532",
+    "fail_to_pass": [
+      "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1",
+      "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2",
+      "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes"
+    ],
+    "pass_to_pass": [
+      "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3",
+      "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType"
+    ],
+    "base_commit": "13f35ad0915e70c2c299e2eb308968c86117132d",
+    "status": "publication_and_cpu_a_deployment_readback_verified_ready_for_matrix",
+    "release_id": "cat2-cpu-r2e089092-swe14-preflight-20261003-v1",
+    "release_manifest_sha256": "00ac5c375629f59543f548fbc7b0cb3cbe7d1418f7a956d9deebcefab2e8a87c",
+    "image_id": "sha256:76b5b2646a9eb134e6349ee8e214bb84eb6030c34a234e167351acdec5dd8c54",
+    "candidates": [
+      {
+        "name": "noop"
+      },
+      {
+        "name": "gold",
+        "patch": "cpu_acceptance_v1/mypy15184_r10/gold.patch",
+        "patch_sha256": "365adadcf2ad3dbed4dc98bf30ebda81f9c788a8ced939ff2a2abd8bfef1a280"
+      },
+      {
+        "name": "bad",
+        "patch": "cpu_acceptance_v1/mypy15184_r10/bad.patch",
+        "patch_sha256": "8e5df3cb5e3d52c5223551809cca394418ba3a5c3ee56afa1c41d27a5e5c2846"
+      },
+      {
+        "name": "top_only",
+        "patch": "cpu_acceptance_v1/mypy15184_r10/top_only.patch",
+        "patch_sha256": "707f1748338159b53465ead34075d0ae7a84c1123b576c457fc42df8fbee66ad"
+      }
+    ],
+    "expected_rewards": {
+      "noop": 0,
+      "gold": 1,
+      "bad": 0,
+      "top_only": 0
+    },
+    "owner_thread_id": "01a0fd63-1eba-7133-951d-7dd3475840a4",
+    "grading_revision": {
+      "operation": "replace_mypy15184_test_patch_append_f2p_p2p",
+      "revision_id": "mypy15184-nested-nominal-types-v2",
+      "registry_sha256": "sha256:7abfdf350875e5d28c679ac196f20c8a44efdce184fa7be00ddf97cb2009740c",
+      "parent_grading_digest": "sha256:4d06500507c04fe8fe2843025d01f53ea8b6854f9fc72e1656bf7781b7da9b18",
+      "public_bundle_digest": "sha256:77b85678b3f20ef5689e4a9b646518ae1247407ff44b250803563c11dce3ea7e",
+      "original_fail_to_pass": [
+        "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2"
+      ],
+      "original_pass_to_pass": [
+        "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3"
+      ],
+      "original_test_patch_sha256": "sha256:63e112197db7864cb74f6c827e0fff35664e98b0a407ff2bb2871eb22600bded",
+      "effective_test_patch_sha256": "sha256:e6d5eb0ef39aeeb08a945d3ce6aeb340a7f8b4fd56e599247dbef3b99bf4e532",
+      "test_files": [
+        {
+          "path": "test-data/unit/check-expressions.test",
+          "base_sha256": "sha256:f541a8781c01edf4a27209cc1569e61d1d8a4741c3d4bc381548d0b1239ce3b9"
+        }
+      ],
+      "added_fail_to_pass": [
+        "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes"
+      ],
+      "added_pass_to_pass": [
+        "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType"
+      ],
+      "absent_base_file_sha256": "sha256:5bb7154032b1aeed6372fb29b70537d45a3fa7384ea50ecb2f756ba1d5635915"
+    },
+    "vendor_eval_prefix": "pytest -n0 -rA -k",
+    "effective_test_command": "pytest -n0 -rA mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1 mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2 mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3 mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType",
+    "publication_receipt": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r10/mypy15184_publication_receipt.json",
+    "publication_receipt_sha256": "c2c0cea5c8505339c334f3fa6a30fd4626cc6a50be1b01d6640902350db2e130",
+    "deployment_receipt": "runs/category2_repair_20260929/host_setup_20261003/cpu-a/release_receipts/cat2-cpu-r2e089092-swe14-preflight-20261003-v1.json",
+    "deployment_receipt_sha256": "4f6c3c925582450ab4a91d6534231956c7c15381c873f8d9f6564f692ae48c09"
+  },
+  "binding_sha256": "sha256:a3d4a085a8d3f28db88f1184025d54018d3874bb95a2b37f9a6ca57495786bef",
+  "host_runtime": "runtime_cpu_v2/rh2/.venv/bin/python",
+  "actual_rewards": {
+    "noop": 0,
+    "gold": 1,
+    "bad": 0,
+    "top_only": 0
+  },
+  "reference_keys": 5,
+  "actual_executed_and_parsed_per_candidate": 5,
+  "missing": 0,
+  "skipped": 0,
+  "num_parsed_outside_segment": 0,
+  "matrix": {
+    "noop": {
+      "reward": 0,
+      "actual_node_status": {
+        "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1": "FAILED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2": "FAILED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes": "FAILED"
+      },
+      "partitions": {
+        "added_f2p": {
+          "references": [
+            "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes"
+          ],
+          "result": {
+            "failure": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes"
+            ],
+            "missing": [],
+            "skipped": [],
+            "success": [],
+            "unaccounted": []
+          }
+        },
+        "added_p2p": {
+          "references": [
+            "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType"
+            ],
+            "unaccounted": []
+          }
+        },
+        "original_f2p": {
+          "references": [
+            "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1",
+            "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2"
+          ],
+          "result": {
+            "failure": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1",
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2"
+            ],
+            "missing": [],
+            "skipped": [],
+            "success": [],
+            "unaccounted": []
+          }
+        },
+        "original_p2p": {
+          "references": [
+            "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3"
+            ],
+            "unaccounted": []
+          }
+        }
+      },
+      "grading_revision": {
+        "apply_ok": true,
+        "binding_version": null,
+        "environment_package_digest": "sha256:de06cc63c20f88a4691b7037dfeaeae5f31c4dc13f09cf703161cf6df2954f1e",
+        "grading_bundle_digest": "sha256:3a3c4e78c7dc1b1dce9187d36d00079c4d08621f7019140e6544e77b9f2db4bf",
+        "materials_identity": "sha256:bf000616fc92f2d7869bdb2039ab1fe0d9167e507a5bb15e6c5987ab033d8053",
+        "parent_grading_digest": "sha256:4d06500507c04fe8fe2843025d01f53ea8b6854f9fc72e1656bf7781b7da9b18",
+        "parser_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "partitions": {
+          "added_f2p": {
+            "references": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes"
+            ],
+            "result": {
+              "failure": [
+                "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes"
+              ],
+              "missing": [],
+              "skipped": [],
+              "success": [],
+              "unaccounted": []
+            }
+          },
+          "added_p2p": {
+            "references": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType"
+              ],
+              "unaccounted": []
+            }
+          },
+          "original_f2p": {
+            "references": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1",
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2"
+            ],
+            "result": {
+              "failure": [
+                "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1",
+                "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2"
+              ],
+              "missing": [],
+              "skipped": [],
+              "success": [],
+              "unaccounted": []
+            }
+          },
+          "original_p2p": {
+            "references": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3"
+              ],
+              "unaccounted": []
+            }
+          }
+        },
+        "public_bundle_digest": "sha256:77b85678b3f20ef5689e4a9b646518ae1247407ff44b250803563c11dce3ea7e",
+        "registry_sha256": "sha256:7abfdf350875e5d28c679ac196f20c8a44efdce184fa7be00ddf97cb2009740c",
+        "revision_id": "mypy15184-nested-nominal-types-v2",
+        "state": "parsed",
+        "test_command": "pytest -n0 -rA mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1 mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2 mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3 mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType"
+      },
+      "source_paths": [],
+      "candidate_patch_sha256": null,
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 6.071,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 1.647
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 1.647,
+        "segment_completed": true
+      },
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/mypy/__init__.py",
+        "RH2_OBS_PKG_VERSION": "?",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "bffa1d1e04c07d52b4d5db5941f0d97a8c71a68e29cca90c4bf5671ea66e1548",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "bffa1d1e04c07d52b4d5db5941f0d97a8c71a68e29cca90c4bf5671ea66e1548"
+      },
+      "candidate_cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "grader_cleanup_and_driver": {
+        "ledger": "/work/rh2-category2-20261003/packages/swe_mypy/attempts/mypy15184-revised-r1-20261002T214419Z-e743aa/noop/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "evidence": {
+        "ledger": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy15184-revised-r1-20261002T214419Z-e743aa/attempt/noop/ledger.jsonl",
+        "ledger_sha256": "sha256:e28712d41e72b6ea9c368004fb1f1f9ec89e67302bec00ce45790bc919c214a9",
+        "diagnostics": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy15184-revised-r1-20261002T214419Z-e743aa/attempt/noop/eval_logs/evallog_replay-swe-mypy-mypy1518_7256eb23.diagnostics.json",
+        "diagnostics_sha256": "sha256:3d3488269ac977e7508629859b5ff2764124746af3dca8cb296b49b04ef1527d",
+        "eval_log": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy15184-revised-r1-20261002T214419Z-e743aa/attempt/noop/eval_logs/evallog_replay-swe-mypy-mypy1518_7256eb23.eval.log",
+        "eval_log_sha256": "sha256:a8cc45338123ecc600a20093f506f5d55f1ef37f6834550f2bb9296e22f28abe"
+      }
+    },
+    "gold": {
+      "reward": 1,
+      "actual_node_status": {
+        "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType": "PASSED"
+      },
+      "partitions": {
+        "added_f2p": {
+          "references": [
+            "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes"
+            ],
+            "unaccounted": []
+          }
+        },
+        "added_p2p": {
+          "references": [
+            "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType"
+            ],
+            "unaccounted": []
+          }
+        },
+        "original_f2p": {
+          "references": [
+            "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1",
+            "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1",
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2"
+            ],
+            "unaccounted": []
+          }
+        },
+        "original_p2p": {
+          "references": [
+            "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3"
+            ],
+            "unaccounted": []
+          }
+        }
+      },
+      "grading_revision": {
+        "apply_ok": true,
+        "binding_version": null,
+        "environment_package_digest": "sha256:de06cc63c20f88a4691b7037dfeaeae5f31c4dc13f09cf703161cf6df2954f1e",
+        "grading_bundle_digest": "sha256:3a3c4e78c7dc1b1dce9187d36d00079c4d08621f7019140e6544e77b9f2db4bf",
+        "materials_identity": "sha256:bf000616fc92f2d7869bdb2039ab1fe0d9167e507a5bb15e6c5987ab033d8053",
+        "parent_grading_digest": "sha256:4d06500507c04fe8fe2843025d01f53ea8b6854f9fc72e1656bf7781b7da9b18",
+        "parser_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "partitions": {
+          "added_f2p": {
+            "references": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes"
+              ],
+              "unaccounted": []
+            }
+          },
+          "added_p2p": {
+            "references": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType"
+              ],
+              "unaccounted": []
+            }
+          },
+          "original_f2p": {
+            "references": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1",
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1",
+                "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2"
+              ],
+              "unaccounted": []
+            }
+          },
+          "original_p2p": {
+            "references": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3"
+              ],
+              "unaccounted": []
+            }
+          }
+        },
+        "public_bundle_digest": "sha256:77b85678b3f20ef5689e4a9b646518ae1247407ff44b250803563c11dce3ea7e",
+        "registry_sha256": "sha256:7abfdf350875e5d28c679ac196f20c8a44efdce184fa7be00ddf97cb2009740c",
+        "revision_id": "mypy15184-nested-nominal-types-v2",
+        "state": "parsed",
+        "test_command": "pytest -n0 -rA mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1 mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2 mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3 mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType"
+      },
+      "source_paths": [
+        "mypy/messages.py"
+      ],
+      "candidate_patch_sha256": "sha256:365adadcf2ad3dbed4dc98bf30ebda81f9c788a8ced939ff2a2abd8bfef1a280",
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 5.993,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 2.044
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 2.044,
+        "segment_completed": true
+      },
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/mypy/__init__.py",
+        "RH2_OBS_PKG_VERSION": "?",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "bffa1d1e04c07d52b4d5db5941f0d97a8c71a68e29cca90c4bf5671ea66e1548",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "bffa1d1e04c07d52b4d5db5941f0d97a8c71a68e29cca90c4bf5671ea66e1548"
+      },
+      "candidate_cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "grader_cleanup_and_driver": {
+        "ledger": "/work/rh2-category2-20261003/packages/swe_mypy/attempts/mypy15184-revised-r1-20261002T214419Z-e743aa/gold/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "evidence": {
+        "ledger": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy15184-revised-r1-20261002T214419Z-e743aa/attempt/gold/ledger.jsonl",
+        "ledger_sha256": "sha256:d8d4b047ffadcc86545ff1b7406937a1403e990ad0420cb6264fd00f78f32df8",
+        "diagnostics": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy15184-revised-r1-20261002T214419Z-e743aa/attempt/gold/eval_logs/evallog_replay-swe-mypy-mypy1518_233b3249.diagnostics.json",
+        "diagnostics_sha256": "sha256:e1774951c210a4c388a4b87d405f69dc199ef16e414728f9bd2338e4150dc9cc",
+        "eval_log": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy15184-revised-r1-20261002T214419Z-e743aa/attempt/gold/eval_logs/evallog_replay-swe-mypy-mypy1518_233b3249.eval.log",
+        "eval_log_sha256": "sha256:17e5c4c5c153597c788d185835564d84b505a47fa7169a1af58be052e3aff35e"
+      }
+    },
+    "bad": {
+      "reward": 0,
+      "actual_node_status": {
+        "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType": "FAILED"
+      },
+      "partitions": {
+        "added_f2p": {
+          "references": [
+            "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes"
+            ],
+            "unaccounted": []
+          }
+        },
+        "added_p2p": {
+          "references": [
+            "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType"
+          ],
+          "result": {
+            "failure": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType"
+            ],
+            "missing": [],
+            "skipped": [],
+            "success": [],
+            "unaccounted": []
+          }
+        },
+        "original_f2p": {
+          "references": [
+            "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1",
+            "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1",
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2"
+            ],
+            "unaccounted": []
+          }
+        },
+        "original_p2p": {
+          "references": [
+            "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3"
+            ],
+            "unaccounted": []
+          }
+        }
+      },
+      "grading_revision": {
+        "apply_ok": true,
+        "binding_version": null,
+        "environment_package_digest": "sha256:de06cc63c20f88a4691b7037dfeaeae5f31c4dc13f09cf703161cf6df2954f1e",
+        "grading_bundle_digest": "sha256:3a3c4e78c7dc1b1dce9187d36d00079c4d08621f7019140e6544e77b9f2db4bf",
+        "materials_identity": "sha256:bf000616fc92f2d7869bdb2039ab1fe0d9167e507a5bb15e6c5987ab033d8053",
+        "parent_grading_digest": "sha256:4d06500507c04fe8fe2843025d01f53ea8b6854f9fc72e1656bf7781b7da9b18",
+        "parser_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "partitions": {
+          "added_f2p": {
+            "references": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes"
+              ],
+              "unaccounted": []
+            }
+          },
+          "added_p2p": {
+            "references": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType"
+            ],
+            "result": {
+              "failure": [
+                "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType"
+              ],
+              "missing": [],
+              "skipped": [],
+              "success": [],
+              "unaccounted": []
+            }
+          },
+          "original_f2p": {
+            "references": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1",
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1",
+                "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2"
+              ],
+              "unaccounted": []
+            }
+          },
+          "original_p2p": {
+            "references": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3"
+              ],
+              "unaccounted": []
+            }
+          }
+        },
+        "public_bundle_digest": "sha256:77b85678b3f20ef5689e4a9b646518ae1247407ff44b250803563c11dce3ea7e",
+        "registry_sha256": "sha256:7abfdf350875e5d28c679ac196f20c8a44efdce184fa7be00ddf97cb2009740c",
+        "revision_id": "mypy15184-nested-nominal-types-v2",
+        "state": "parsed",
+        "test_command": "pytest -n0 -rA mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1 mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2 mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3 mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType"
+      },
+      "source_paths": [
+        "mypy/checkexpr.py",
+        "mypy/messages.py"
+      ],
+      "candidate_patch_sha256": "sha256:8e5df3cb5e3d52c5223551809cca394418ba3a5c3ee56afa1c41d27a5e5c2846",
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 5.931,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 2.115
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 2.115,
+        "segment_completed": true
+      },
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/mypy/__init__.py",
+        "RH2_OBS_PKG_VERSION": "?",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "bffa1d1e04c07d52b4d5db5941f0d97a8c71a68e29cca90c4bf5671ea66e1548",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "bffa1d1e04c07d52b4d5db5941f0d97a8c71a68e29cca90c4bf5671ea66e1548"
+      },
+      "candidate_cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "grader_cleanup_and_driver": {
+        "ledger": "/work/rh2-category2-20261003/packages/swe_mypy/attempts/mypy15184-revised-r1-20261002T214419Z-e743aa/bad/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "evidence": {
+        "ledger": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy15184-revised-r1-20261002T214419Z-e743aa/attempt/bad/ledger.jsonl",
+        "ledger_sha256": "sha256:e564ad131d0454dbad3731298bdae724e1606ed30cc3ecd7a701a9add40b1802",
+        "diagnostics": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy15184-revised-r1-20261002T214419Z-e743aa/attempt/bad/eval_logs/evallog_replay-swe-mypy-mypy1518_2ea87688.diagnostics.json",
+        "diagnostics_sha256": "sha256:baaa34eef39662111c220795edfff31591d5aaf43966e3509de5a9571a2bed36",
+        "eval_log": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy15184-revised-r1-20261002T214419Z-e743aa/attempt/bad/eval_logs/evallog_replay-swe-mypy-mypy1518_2ea87688.eval.log",
+        "eval_log_sha256": "sha256:2520976bb86cb0014fc91d9a8f3b3ffd36c88220718210f8954cd93fcf3fe179"
+      }
+    },
+    "top_only": {
+      "reward": 0,
+      "actual_node_status": {
+        "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes": "FAILED"
+      },
+      "partitions": {
+        "added_f2p": {
+          "references": [
+            "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes"
+          ],
+          "result": {
+            "failure": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes"
+            ],
+            "missing": [],
+            "skipped": [],
+            "success": [],
+            "unaccounted": []
+          }
+        },
+        "added_p2p": {
+          "references": [
+            "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType"
+            ],
+            "unaccounted": []
+          }
+        },
+        "original_f2p": {
+          "references": [
+            "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1",
+            "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1",
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2"
+            ],
+            "unaccounted": []
+          }
+        },
+        "original_p2p": {
+          "references": [
+            "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3"
+            ],
+            "unaccounted": []
+          }
+        }
+      },
+      "grading_revision": {
+        "apply_ok": true,
+        "binding_version": null,
+        "environment_package_digest": "sha256:de06cc63c20f88a4691b7037dfeaeae5f31c4dc13f09cf703161cf6df2954f1e",
+        "grading_bundle_digest": "sha256:3a3c4e78c7dc1b1dce9187d36d00079c4d08621f7019140e6544e77b9f2db4bf",
+        "materials_identity": "sha256:bf000616fc92f2d7869bdb2039ab1fe0d9167e507a5bb15e6c5987ab033d8053",
+        "parent_grading_digest": "sha256:4d06500507c04fe8fe2843025d01f53ea8b6854f9fc72e1656bf7781b7da9b18",
+        "parser_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "partitions": {
+          "added_f2p": {
+            "references": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes"
+            ],
+            "result": {
+              "failure": [
+                "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes"
+              ],
+              "missing": [],
+              "skipped": [],
+              "success": [],
+              "unaccounted": []
+            }
+          },
+          "added_p2p": {
+            "references": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType"
+              ],
+              "unaccounted": []
+            }
+          },
+          "original_f2p": {
+            "references": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1",
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1",
+                "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2"
+              ],
+              "unaccounted": []
+            }
+          },
+          "original_p2p": {
+            "references": [
+              "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3"
+              ],
+              "unaccounted": []
+            }
+          }
+        },
+        "public_bundle_digest": "sha256:77b85678b3f20ef5689e4a9b646518ae1247407ff44b250803563c11dce3ea7e",
+        "registry_sha256": "sha256:7abfdf350875e5d28c679ac196f20c8a44efdce184fa7be00ddf97cb2009740c",
+        "revision_id": "mypy15184-nested-nominal-types-v2",
+        "state": "parsed",
+        "test_command": "pytest -n0 -rA mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1 mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2 mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3 mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType"
+      },
+      "source_paths": [
+        "mypy/messages.py"
+      ],
+      "candidate_patch_sha256": "sha256:707f1748338159b53465ead34075d0ae7a84c1123b576c457fc42df8fbee66ad",
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 5.694,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 2.004
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 2.004,
+        "segment_completed": true
+      },
+      "observations": {
+        "RH2_OBS_IMPORT_PATH": "/testbed/mypy/__init__.py",
+        "RH2_OBS_PKG_VERSION": "?",
+        "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+        "RH2_OBS_RUNNER_DIGEST": "bffa1d1e04c07d52b4d5db5941f0d97a8c71a68e29cca90c4bf5671ea66e1548",
+        "RH2_OBS_RUNNER_DIGEST_PRE": "bffa1d1e04c07d52b4d5db5941f0d97a8c71a68e29cca90c4bf5671ea66e1548"
+      },
+      "candidate_cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "grader_cleanup_and_driver": {
+        "ledger": "/work/rh2-category2-20261003/packages/swe_mypy/attempts/mypy15184-revised-r1-20261002T214419Z-e743aa/top_only/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "evidence": {
+        "ledger": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy15184-revised-r1-20261002T214419Z-e743aa/attempt/top_only/ledger.jsonl",
+        "ledger_sha256": "sha256:abd8d92cefba8d789b4e64d1387a0ab475aaf7658420d492daf010a49bb808cf",
+        "diagnostics": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy15184-revised-r1-20261002T214419Z-e743aa/attempt/top_only/eval_logs/evallog_replay-swe-mypy-mypy1518_18eeed97.diagnostics.json",
+        "diagnostics_sha256": "sha256:8666d42da3e8233866f1306edfb9b031bfeaed58326e16135ab64499b1df5b9e",
+        "eval_log": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy15184-revised-r1-20261002T214419Z-e743aa/attempt/top_only/eval_logs/evallog_replay-swe-mypy-mypy1518_18eeed97.eval.log",
+        "eval_log_sha256": "sha256:7e9189f6a48b7817441825e21293d0bfc5f2357361b28bf6ac7f75fe0e822244"
+      }
+    }
+  },
+  "slot_status": "finished",
+  "slot_returncode": 0,
+  "wrapper_returncode": 0,
+  "finished_at_utc": "2026-10-02T21:55:18Z",
+  "evidence_root": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy15184-revised-r1-20261002T214419Z-e743aa",
+  "archive": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy15184-revised-r1-20261002T214419Z-e743aa.evidence.tgz",
+  "archive_sha256": "sha256:c7f4f34886a1284f185092fa8a4dd5ac702d0177e0e92240d349c5f2eecaa9e9",
+  "raw_file_sha256": {
+    "attempt/bad/artifacts/swe_gym_lite--python__mypy-15184/a1-f3736282/baseline_manifest.json": "sha256:22285ba7545856ab760fbc516a93af635e86bb6cf7865d79055f9e1ddcca34c0",
+    "attempt/bad/artifacts/swe_gym_lite--python__mypy-15184/a1-f3736282/candidate.patch": "sha256:8e5df3cb5e3d52c5223551809cca394418ba3a5c3ee56afa1c41d27a5e5c2846",
+    "attempt/bad/artifacts/swe_gym_lite--python__mypy-15184/a1-f3736282/classification.json": "sha256:e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6",
+    "attempt/bad/artifacts/swe_gym_lite--python__mypy-15184/a1-f3736282/frozen_patch.json": "sha256:94a5c16ce181afa79972fabc085b36153cc77d715a65c9829b24a94b48a0461b",
+    "attempt/bad/artifacts/swe_gym_lite--python__mypy-15184/a1-f3736282/projection.json": "sha256:cd600d9eb28cde011d7fd7b99e2d113e0cd2f507892d30f370d5b3bef96e27e0",
+    "attempt/bad/artifacts/swe_gym_lite--python__mypy-15184/a1-f3736282/stage.json": "sha256:3591fc83b0ec1d7e949108bf89fbf0c63822329dcd870129c8a4155a52a472cc",
+    "attempt/bad/eval_logs/evallog_replay-swe-mypy-mypy1518_2ea87688.diagnostics.json": "sha256:baaa34eef39662111c220795edfff31591d5aaf43966e3509de5a9571a2bed36",
+    "attempt/bad/eval_logs/evallog_replay-swe-mypy-mypy1518_2ea87688.eval.log": "sha256:2520976bb86cb0014fc91d9a8f3b3ffd36c88220718210f8954cd93fcf3fe179",
+    "attempt/bad/ledger.jsonl": "sha256:e564ad131d0454dbad3731298bdae724e1606ed30cc3ecd7a701a9add40b1802",
+    "attempt/bad.log": "sha256:b8494943710d091b61539ff665efa75d4e6a76deeaee4baf256fa0a3fba1e9ea",
+    "attempt/gold/artifacts/swe_gym_lite--python__mypy-15184/a1-13089433/baseline_manifest.json": "sha256:22285ba7545856ab760fbc516a93af635e86bb6cf7865d79055f9e1ddcca34c0",
+    "attempt/gold/artifacts/swe_gym_lite--python__mypy-15184/a1-13089433/candidate.patch": "sha256:365adadcf2ad3dbed4dc98bf30ebda81f9c788a8ced939ff2a2abd8bfef1a280",
+    "attempt/gold/artifacts/swe_gym_lite--python__mypy-15184/a1-13089433/classification.json": "sha256:e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6",
+    "attempt/gold/artifacts/swe_gym_lite--python__mypy-15184/a1-13089433/frozen_patch.json": "sha256:32bb2eab8c22035b68498a189ca506853c082d931330a2770566657a1f63ac61",
+    "attempt/gold/artifacts/swe_gym_lite--python__mypy-15184/a1-13089433/projection.json": "sha256:54fc677ba82cddca80b040a53ad81b23423c2e91bbf798409136c44062232098",
+    "attempt/gold/artifacts/swe_gym_lite--python__mypy-15184/a1-13089433/stage.json": "sha256:8c9940edce230f82063f050df2bd8c689cf212b1aaa45ad9ce792c0c18c7aea5",
+    "attempt/gold/eval_logs/evallog_replay-swe-mypy-mypy1518_233b3249.diagnostics.json": "sha256:e1774951c210a4c388a4b87d405f69dc199ef16e414728f9bd2338e4150dc9cc",
+    "attempt/gold/eval_logs/evallog_replay-swe-mypy-mypy1518_233b3249.eval.log": "sha256:17e5c4c5c153597c788d185835564d84b505a47fa7169a1af58be052e3aff35e",
+    "attempt/gold/ledger.jsonl": "sha256:d8d4b047ffadcc86545ff1b7406937a1403e990ad0420cb6264fd00f78f32df8",
+    "attempt/gold.log": "sha256:c178c8acc5bdd25b0a4b2eb390b0468803d96248c6678ccea0545f5e9110a9d0",
+    "attempt/material_identity.log": "sha256:3ad70cc15792851193353761a37caf2954ca883bcd1f7054cb0dc5d2faa82d0f",
+    "attempt/noop/artifacts/swe_gym_lite--python__mypy-15184/a1-c5415055/baseline_manifest.json": "sha256:22285ba7545856ab760fbc516a93af635e86bb6cf7865d79055f9e1ddcca34c0",
+    "attempt/noop/artifacts/swe_gym_lite--python__mypy-15184/a1-c5415055/classification.json": "sha256:e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6",
+    "attempt/noop/artifacts/swe_gym_lite--python__mypy-15184/a1-c5415055/frozen_patch.json": "sha256:b24219f8dd1c3d289ad154b44bf1a59282944376c9577190bf0f1449b50d4946",
+    "attempt/noop/artifacts/swe_gym_lite--python__mypy-15184/a1-c5415055/projection.json": "sha256:f0cdf4d5b04bc644548781f9d1a7780c24c2288304eda61badb39bb588ce9f89",
+    "attempt/noop/artifacts/swe_gym_lite--python__mypy-15184/a1-c5415055/stage.json": "sha256:ba50881f917304d4a3233f3afc15e184fbc81f9dc6c0cbf4832b0f7b18749463",
+    "attempt/noop/eval_logs/evallog_replay-swe-mypy-mypy1518_7256eb23.diagnostics.json": "sha256:3d3488269ac977e7508629859b5ff2764124746af3dca8cb296b49b04ef1527d",
+    "attempt/noop/eval_logs/evallog_replay-swe-mypy-mypy1518_7256eb23.eval.log": "sha256:a8cc45338123ecc600a20093f506f5d55f1ef37f6834550f2bb9296e22f28abe",
+    "attempt/noop/ledger.jsonl": "sha256:e28712d41e72b6ea9c368004fb1f1f9ec89e67302bec00ce45790bc919c214a9",
+    "attempt/noop.log": "sha256:e86b029a5ea91827d73aa0a5da67eac47965502d97222757610d216ac558b588",
+    "attempt/prepare.log": "sha256:c90125c9b7753f981a24915e2b8af17fb801025694661afa9914bbd898344f5e",
+    "attempt/prepared/prepared_manifest.json": "sha256:5539ba380c92767f20d3760f3611060843da5faca8211c64d8e51fda19a7ac9a",
+    "attempt/prepared/prompts.jsonl": "sha256:9956e3513a8441e5bb45e5dbf1e0cb0c7f2e9ffd601b005a84d65ceb4573c061",
+    "attempt/prepared/replay_summary.json": "sha256:34e19dc808e7b9657e8219d626d6acf6cd35262ffec601e53c7b24347049a1dd",
+    "attempt/prepared/rollout_task_views.jsonl": "sha256:f0e8a4d1fb9f1682f879174488ad6301041658c440a62dc66cfbbc61d7da382a",
+    "attempt/private/host_grading_views.jsonl": "sha256:1ce37a96ae9140654e5604cc6f2570345a92928315b99131cb99b0ce6e2946ff",
+    "attempt/revised_matrix.json": "sha256:5d67a92483f21c4b79ae4a3c0b71b01b9182f202b26823f409ecae8a7a2a3715",
+    "attempt/top_only/artifacts/swe_gym_lite--python__mypy-15184/a1-562bcd2f/baseline_manifest.json": "sha256:22285ba7545856ab760fbc516a93af635e86bb6cf7865d79055f9e1ddcca34c0",
+    "attempt/top_only/artifacts/swe_gym_lite--python__mypy-15184/a1-562bcd2f/candidate.patch": "sha256:707f1748338159b53465ead34075d0ae7a84c1123b576c457fc42df8fbee66ad",
+    "attempt/top_only/artifacts/swe_gym_lite--python__mypy-15184/a1-562bcd2f/classification.json": "sha256:e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6",
+    "attempt/top_only/artifacts/swe_gym_lite--python__mypy-15184/a1-562bcd2f/frozen_patch.json": "sha256:142e30f66f17f0dfd754a9def3294bb828f4089bf8ef57467f73dce6806ea5bc",
+    "attempt/top_only/artifacts/swe_gym_lite--python__mypy-15184/a1-562bcd2f/projection.json": "sha256:dd12c90b9051d1090a510e9155f505b6bda21bcb86e9f0091ea34fac7016143e",
+    "attempt/top_only/artifacts/swe_gym_lite--python__mypy-15184/a1-562bcd2f/stage.json": "sha256:49a2645b296115eff5f076aacff5303cc26ee6f75ea47197ea095f9b83b13787",
+    "attempt/top_only/eval_logs/evallog_replay-swe-mypy-mypy1518_18eeed97.diagnostics.json": "sha256:8666d42da3e8233866f1306edfb9b031bfeaed58326e16135ab64499b1df5b9e",
+    "attempt/top_only/eval_logs/evallog_replay-swe-mypy-mypy1518_18eeed97.eval.log": "sha256:7e9189f6a48b7817441825e21293d0bfc5f2357361b28bf6ac7f75fe0e822244",
+    "attempt/top_only/ledger.jsonl": "sha256:abd8d92cefba8d789b4e64d1387a0ab475aaf7658420d492daf010a49bb808cf",
+    "attempt/top_only.log": "sha256:94547bf9f54a39078f76ba98e70daa590e280f5356b4857e160cf976c45a0f8b",
+    "attempt/verify_release.log": "sha256:9ddf4ebce8d02bb87f2f8c1553a5bb9d6549c4d8e199cd41ea59736f0ed42be8",
+    "launch/py": "sha256:e8e858f1e15aad4c8990eb24029df5aa69b36f9692b20b813481605d8e3acb8d",
+    "launch/receipt.json": "sha256:2d1461205e44b7dd48f8cc9a0bee67c295ce6052b5f340b02bc7024455ce876d",
+    "launch/stderr": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "launch/stdout": "sha256:a0d81e06fbbacc03487e9b60fc40befb4ecafa3c9478d9114e0d726b29b04cae",
+    "slot/status.json": "sha256:fc1a0f85ea97eea438ec50445ae1eb0e392b3a150c02408919108fc1a4efae8b",
+    "slot/stderr.log": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "slot/stdout.log": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "limits": [
+    "本次是冻结runner正式CPU评分，没有实际模型求解轨迹。",
+    "每条成功安装命令未单列数值rc；核完整输出、失败trap和候选安装段完成。",
+    "真实CC控制入口证据复用，但新版实际solver公开首条消息仍由GPU入口核实。",
+    "四候选覆盖已知漏洞，不证明所有可能错解均被拒绝。"
+  ]
+}

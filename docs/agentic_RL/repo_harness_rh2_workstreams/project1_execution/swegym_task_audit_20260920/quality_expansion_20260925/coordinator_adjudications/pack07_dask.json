@@ -1,0 +1,101 @@
+{
+  "report": "pack07_report.md",
+  "tasks": {
+    "dask__dask-6801": {
+      "classification": "quality_first",
+      "card_replacements": [
+        [
+          "reviewer未读取，分歧未收口。",
+          "独立review及协调裁定已完成，保留需求/验收争议。"
+        ]
+      ],
+      "checks": {
+        "2": {
+          "status": "unknown",
+          "note": "公开联合写入计数未直接运行；noop F2P为read层IndexError或构图/cull的DataFrame真值ValueError，支持相关机制但不能替代计数复现。"
+        },
+        "18": {
+          "status": "pass",
+          "note": "仅所引历史pair：371 collected，8失败/355pass/1skip/7xfail至gold363pass/1skip/7xfail；4 F2P与169 P2P均有完成状态，skip/xfail在expected之外。"
+        },
+        "20": {
+          "status": "issue",
+          "note": "分差来自四个PyArrow列裁剪图结构断言，不是公开的共享上游次数；额外四个fastparquet失败不改变expected分母。"
+        },
+        "24": {
+          "status": "issue",
+          "note": "read-parquet前缀、BlockwiseParquet及columns约束可能拒绝行为等价图表示；未执行完整替代解，不宣称所有合理解必拒。"
+        },
+        "28": {
+          "status": "pass",
+          "note": "本次建议仅观察公开共享delayed计数与普通/infer阶段；不强制gold图类、任务名称或自定零次采样要求。独立目录调整明确披露。"
+        }
+      },
+      "changes": [
+        "Independent review completed; archive main final card/record before coordinator edits; preserve all sealed initials and delta/review.",
+        "Attach task-specific evidence scope and coordinator exposure; no actor or formal admission upgrade."
+      ],
+      "card_append": "协调裁定：quality_first，ready_for_probe=false。reviewer补核旧scheduler测试只设置调用flag并检查结果，不计共享上游执行次数；root已回读1857–1877确认。history中的读取图大小与调用者kwargs旧说法亦已纠正。私有计数对照使用独立目录属于需显式记录的诊断调整；当前actor条件与训练资格仍未知。"
+    },
+    "dask__dask-7138": {
+      "classification": "quality_first",
+      "card_replacements": [
+        [
+          "reviewer未读取，尚无分歧收口；",
+          "独立review及协调裁定已完成，保留关键字兼容性问题；"
+        ]
+      ],
+      "checks": {
+        "18": {
+          "status": "pass",
+          "note": "仅所引历史pair：561 collected；noop560pass/1fail、gold561pass，均92warnings且无skip/xfail；1 F2P与468 P2P全部有原状态，后续新断言在noop未到达。"
+        },
+        "28": {
+          "status": "pass",
+          "note": "保留array=来源于公开旧签名；不把asanyarray名称、零拷贝身份或不相关numpy.append支持增设为题面硬要求。"
+        }
+      },
+      "changes": [
+        "Independent review completed; archive main final card/record before coordinator edits; preserve all sealed initials and delta/review.",
+        "Attach task-specific evidence scope and coordinator exposure; no actor or formal admission upgrade."
+      ],
+      "card_append": "协调裁定：quality_first，ready_for_probe=false。保持26/27 issue，证据是旧array=绑定被签名更名破坏；转换主体及既有Array快路径仍有正证据。公开修法提示只记录引导属性，不据此量化难度或训练价值。唯一优先是维护者处理参考兼容，不为已明确的Python绑定规则另凑CPU。"
+    },
+    "dask__dask-7305": {
+      "classification": "quality_first",
+      "card_replacements": [
+        [
+          "reviewer未读，分歧未收口。",
+          "独立review及协调裁定已完成，保留验收与完整性疑点。"
+        ]
+      ],
+      "checks": {
+        "2": {
+          "status": "unknown",
+          "note": "公开partition_quantiles两uint64精确端点例未运行；现有noop的小整数F2P失败不能证明该直接例已复现。"
+        },
+        "18": {
+          "status": "pass",
+          "note": "仅历史pair：108 collected，noop104pass/1fail/3slow skip、gold105pass/3slow skip；1 F2P+104 P2P完成且无expected跳过。large_uint确为P2P，reviewer初稿错误已在后稿更正。"
+        },
+        "20": {
+          "status": "issue",
+          "note": "唯一F2P分差是小整数集合{1,2,3,4}改{1,2,4}；公开大uint直接端点未被区分，large_uint P2P两侧pass。"
+        },
+        "24": {
+          "status": "issue",
+          "note": "固定小整数内部边界集合可能误拒精确保留大整数端点而保留旧小整数行为的方案；未执行完整替代解。"
+        },
+        "28": {
+          "status": "pass",
+          "note": "后续直接端点对照源于题面及已读np.interp分支；不强制所有整数nearest、额外CSV或全仓通过，也不将dtype附问扩为未声明任务。"
+        }
+      },
+      "changes": [
+        "Independent review completed; archive main final card/record before coordinator edits; preserve all sealed initials and delta/review.",
+        "Attach task-specific evidence scope and coordinator exposure; no actor or formal admission upgrade."
+      ],
+      "card_append": "协调裁定：quality_first，ready_for_probe=false。reviewer在cross release前主动报告初稿错误，后稿首段已更正large_uint属于104个expected P2P；初稿原SHA保留。它在noop/gold均pass且先算quantiles后由min/max覆盖，身份更正不改变技术覆盖结论。nearest为有效局部修复，np.interp剩余风险归27 unknown，不称已证新增回归。"
+    }
+  }
+}

@@ -1,0 +1,15 @@
+[file->dir] RUN-FATAL reason_code='rh2_contract_validation_failed'
+[file->dir] failure_records=[('assemble', 'ValidationError', "1 validation error for FrozenPatchArtifactV1\n  Value error, 父子前缀冲突：'config' 与 'config/defa")]
+[file->dir] steps tail=['finalization_receipt_persisted', 'termination_facts_skipped_no_outcome', 'cleanup_started', 'egress_network_removed', 'cleanup_completed']
+[file->dir] outcome_v2=absent
+[file->dir] grading calls=0
+.[dir->file] RUN-FATAL reason_code='rh2_contract_validation_failed'
+[dir->file] failure_records=[('assemble', 'ValidationError', "1 validation error for FrozenPatchArtifactV1\n  Value error, 父子前缀冲突：'config' 与 'config/defa")]
+[dir->file] steps tail=['finalization_receipt_persisted', 'termination_facts_skipped_no_outcome', 'cleanup_started', 'egress_network_removed', 'cleanup_completed']
+[dir->file] outcome_v2=absent
+[dir->file] grading calls=0
+.[control modify] delivered remove_sample=[False]
+[control modify] outcome_v2={'termination_kind': 'completed', 'reason_code': None}
+[control modify] steps tail=['step9_samples_delivered', 'finalization_receipt_persisted', 'termination_facts_derived', 'cleanup_started', 'cleanup_completed']
+.
+3 passed in 0.23s

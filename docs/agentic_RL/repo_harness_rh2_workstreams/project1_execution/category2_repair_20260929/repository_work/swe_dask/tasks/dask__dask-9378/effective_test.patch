@@ -1,0 +1,28 @@
+diff --git a/dask/array/tests/test_masked.py b/dask/array/tests/test_masked.py
+--- a/dask/array/tests/test_masked.py
++++ b/dask/array/tests/test_masked.py
+@@ -427,3 +427,24 @@
+         res = da.ma.count(dx, axis=axis)
+         sol = np.ma.count(x, axis=axis)
+         assert_eq(res, sol, check_dtype=sys.platform != "win32")
++
++
++@pytest.mark.parametrize("funcname", ["ones_like", "zeros_like", "empty_like"])
++def test_like_funcs(funcname):
++    mask = np.array([[True, False], [True, True], [False, True]])
++    data = np.arange(6).reshape((3, 2))
++    a = np.ma.array(data, mask=mask)
++    d_a = da.ma.masked_array(data=data, mask=mask, chunks=2)
++
++    # 用户已选择 B：已有 ma 入口必须正确，缺失时接受顶层入口。
++    # 不要求实现新的 API。
++    da_func = getattr(da.ma, funcname) if hasattr(da.ma, funcname) else getattr(da, funcname)
++    np_func = getattr(np.ma.core, funcname)
++
++    res = da_func(d_a)
++    sol = np_func(a)
++
++    # The issue asks for mask-preserving versions: compare the element-wise mask for all three
++    assert_eq(da.ma.getmaskarray(res), np.ma.getmaskarray(sol))
++    if "empty" not in funcname:
++        assert_eq(res, sol)

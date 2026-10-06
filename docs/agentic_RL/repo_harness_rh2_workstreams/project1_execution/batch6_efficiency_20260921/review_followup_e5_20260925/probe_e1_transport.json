@@ -1,0 +1,32 @@
+{
+  "scope": "real RolloutOrchestrator and audit writer; fake driver/resources/model, controlled deadline clock",
+  "normal": {
+    "agent_user_init": {
+      "bootstrap": {
+        "mode": "reused",
+        "recheck": "ok",
+        "seconds": 0.25
+      },
+      "launch": {
+        "mode": "reused",
+        "recheck": "ok",
+        "seconds": 0.05
+      }
+    },
+    "harness_exit_code": 0,
+    "hit_by": "none",
+    "transport_equal": true
+  },
+  "deadline": {
+    "agent_user_init": {
+      "bootstrap": {
+        "mode": "reused",
+        "recheck": "ok",
+        "seconds": 0.25
+      }
+    },
+    "harness_exit_code": -1,
+    "hit_by": "harness_outer",
+    "transport_equal": true
+  }
+}

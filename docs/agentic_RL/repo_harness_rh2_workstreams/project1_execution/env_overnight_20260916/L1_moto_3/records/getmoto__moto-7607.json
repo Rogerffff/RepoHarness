@@ -1,0 +1,53 @@
+{
+ "task_id": "getmoto__moto-7607",
+ "source": "SWE-Gym lite (swe_gym_lite_full_f70b1a29)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-7607",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-7607",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-7607",
+  "base_commit": "ca24f65f2ff415a7eb7eddcea3bd8173e5d5f920",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-7607/gold/offline/a1/"
+ },
+ "public_view": {
+  "goal": "Step Functions 使用 `waitForTaskToken` 集成类型时，moto 5.0.5 的执行直接抛 States.Runtime（`cause: \"'Task'\"`），导致无法测试 send_task_success / send_task_failure。要求至少不再报这个错。",
+  "constraints": ["题面给的定义里 `:taskToken` 传的是字面量字符串 `$$.Task.Token`（不是真正的上下文引用）"],
+  "unknowns_from_public_only": [
+   "题面没说“正确行为”是什么：是应该生成 TaskToken、还是应该像 AWS 一样一直挂起",
+   "题面没说 DynamoDB 里最终应该存进什么值（F2P 断言存的是字面量 `$$.Task.Token`）",
+   "这两点的答案只在不可见的 hints 里：维护者说 AWS 也不会传真 token、用户永远拿不到 token、所以执行会一直 RUNNING"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 触碰三条路径：tests/test_stepfunctions/parser/__init__.py（放宽 expected_status 为 None）、tests/test_stepfunctions/parser/templates/services/dynamodb_task_token.json（**新建文件**）、tests/test_stepfunctions/parser/test_stepfunctions_dynamodb_integration.py（新增 F2P）", "golden_patch 只碰 moto/stepfunctions/parser/asl/component/state/exec/state_task/service/state_task_service_callback.py"], "note": "无二进制/LFS/子模块。新建的 .json 是 ASL 模板数据文件，属测试材料。", "by": "L1_moto_3"},
+  "2": {"status": "pass", "evidence_refs": ["base state_task_service_callback.py:52 `callback_id = env.context_object_manager.context_object[\"Task\"][\"Token\"]` —— 直接下标取 'Task'，未生成 token 时 KeyError", "题面 traceback 里 `cause: \"'Task'\"` 正是这个 KeyError 的字符串形式"], "note": "base 确有缺陷，且题面的 cause 值精确指向该行。", "by": "L1_moto_3"},
+  "3": {"status": "issue", "evidence_refs": ["problem_statement 3652 字符，主体是一段被 repr 压扁的巨型日志行", "hints_text 才说明：AWS 也不传真 token、用户拿不到 token、执行会一直 RUNNING，并给出 DynamoDB 里实际存的 `[{'id': {'S': '1'}, 'StepFunctionTaskToken': {'S': '$$.Task.Token'}}]`"], "note": "**P2**：判定“正确行为 = 一直挂起而不是报错”以及“DynamoDB 里存字面量”这两条，公开材料都推不出，只在 hints 里。题面只说“报错了”，不说该变成什么。", "by": "L1_moto_3"},
+  "4": {"status": "issue", "evidence_refs": ["signals 里 test_patch_paths 三条都在；但 **阶段一生成的 eval.sh:17/112 的 `git checkout <base> …` 只列了两条已存在的路径**，新建的 templates/services/dynamodb_task_token.json 不在其中；eval.sh:110 的 pytest 参数同样只有两条", "对照：test_patch 只新建文件的三道题（getmoto__moto-5885、iterative__dvc-6954、Project-MONAI__MONAI-2454）的 eval.sh:17 是 `git checkout <commit> `（**后面没有任何 pathspec**）"], "note": "**P2 文件边界漏洞**：不存在于 base 的 test_patch 路径被排除出恢复列表。后果：(a) 该 .json 路径不会被恢复，agent 若抢先创建同名文件，test_patch 的 `new file mode` hunk 会 `already exists` 失败，setup 阶段报错；(b) 对“test_patch 全是新文件”的题，checkout 退化成不带 pathspec 的 `git checkout <commit>`，等于**完全不恢复测试文件**（HEAD 本就在 base），agent 对既有测试文件的改动不会被撤销。RH2 当前接线是否沿用这份 eval.sh 生成逻辑：not_checked。全 216 题里 test_patch 新建文件的共 8 题（清单见 runs/.../test_patch_new_files.json）。", "by": "L1_moto_3"},
+  "17": {"status": "issue", "evidence_refs": ["同 4"], "note": "additional_exclusions 仍为 []（没有非测试源码被恢复覆盖），但本题暴露的是相反方向的问题：**该被恢复的测试材料没有被恢复**。建议在 RH2 侧把“test_patch 新建路径”也纳入清理（执行前删除该路径），而不是写进 additional_exclusions。", "by": "L1_moto_3"},
+  "5": {"status": "pass", "evidence_refs": ["全局索引：这三条测试路径与该 gold 文件在 216 题里只被本题使用"], "note": "无重复/派生。", "by": "L1_moto_3"},
+  "23": {"status": "issue", "evidence_refs": ["F2P 断言 DynamoDB 里存在 `{\"id\": {\"S\": \"1\"}, \"StepFunctionTaskToken\": {\"S\": \"$$.Task.Token\"}}`，且执行状态停留在 RUNNING（test_patch 把 expected_status 放宽成 None 正是为此）"], "note": "见 3：要求只在 hints 里，公开材料不充分。P2。", "by": "L1_moto_3"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 通过 DynamoDB 状态与执行状态做黑盒断言"], "note": "实现可选：像 gold 那样退化成长等待、或生成一个真 token 后仍不推进，都可能过。不强制唯一实现。", "by": "L1_moto_3"},
+  "25": {"status": "issue", "evidence_refs": ["F2P 只要求“不报错 + 写进了那条记录 + 状态仍是 RUNNING”，随后测试自己调用 stop_execution 收尾"], "note": "P3：把 `_wait_for_task_token` 整个改成立即 `return`（什么都不等）同样能过——DynamoDB 写入发生在等待之前，状态也仍是 RUNNING。也就是说“等待”这一核心语义没有被验证。", "by": "L1_moto_3"},
+  "26": {"status": "issue", "evidence_refs": ["collected 3 items = F2P 1 + P2P 2 —— 本包最小的判分集合", "gold 改的是 stepfunctions parser 里所有 .waitForTaskToken 服务集成的公共回调路径"], "note": "判分面与改动面极不相称；同目录其它 parser 集成测试（sqs/sns/lambda 等 waitForTaskToken 场景）一条都不跑。", "by": "L1_moto_3"},
+  "27": {"status": "issue", "evidence_refs": ["golden_patch 在拿不到 token 时进入 `while time.time() < mustend_at: if not env.is_running(): return; time.sleep(1)`", "moto/stepfunctions/parser/asl/component/common/timeouts/timeout.py:22 `DEFAULT_TIMEOUT_SECONDS = 99999999`（约 3.17 年）", "grep 整个 moto/stepfunctions/parser/ 目录 **没有任何 `daemon`**；执行线程在 backend/execution_worker.py:79 `Thread(target=self._execution_logic).start()` 创建，为非守护线程", "tests/test_stepfunctions/parser/__init__.py:77-93：10 次轮询失败后走 else 分支，只做 delete_state_machine + `assert False`，**从不调用 stop_execution**"], "note": "**P2 挂死风险**：gold 引入的等待循环上限是默认的 99999999 秒；只要 `env.is_running()` 不变成 False（正是 F2P 失败路径下会发生的情况——失败时测试不调用 stop_execution），这个非守护线程会一直 sleep，pytest 报完结果后进程也无法退出，整轮评测挂死到 harness 超时。gold 在成功路径上正确（stage1 2.80s 通过），但对候选补丁的失败路径极不友好。", "by": "L1_moto_3"},
+  "29": {"status": "issue", "evidence_refs": ["hints_text 给出了 AWS 的真实行为与 DynamoDB 里实际存的值，并预告 'I'll see if I can improve Moto's implementation to at least not throw an error here'"], "note": "hints 对 agent 不可见，故不是泄漏；但它承载了本题几乎全部的“期望行为”定义（见 3）。", "by": "L1_moto_3"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 gold 3 passed，2.80s"], "note": "成功路径不需要外部服务。", "by": "L1_moto_3"},
+  "7": {"status": "issue", "evidence_refs": ["本包共性 install rc=2"], "note": "见包级 issue。", "by": "L1_moto_3"},
+  "11": {"status": "issue", "evidence_refs": ["tests/test_stepfunctions/parser/__init__.py:31-50 的 aws_verified：`MOTO_TEST_ALLOW_AWS_REQUEST=true` 时直接打真实 AWS；否则在 mock_aws() 内用 `requests.post(f'http://{base_url}/moto-api/config', json={'stepfunctions': {'execute_state_machine': True}})` 打开真实执行开关", "F2P 同时挂 @aws_verified 与 @pytest.mark.aws_verified"], "note": "P2：(a) 与跨题发现 D 同类的真实 AWS 分支；(b) 即使在 mock 模式下，测试也通过一次 **真实 HTTP POST**（由 moto 的 responses 拦截）去翻转全局配置 `execute_state_machine`，该开关在测试结束后才关回去 —— 若测试中途异常退出，开关会残留为 True，影响同进程后续测试。", "by": "L1_moto_3"}
+ },
+ "issues": [
+  {"category": "harness_hang_risk", "severity": "P2", "evidence_refs": ["gold 的 99999999 秒等待循环 + 非守护线程 + 失败路径不调用 stop_execution"], "proposed_action": "为本题（以及所有 stepfunctions parser 题）设置明确的单题 wall-clock 上限并强制杀进程；在把本题纳入训练前先确认 RH2 的超时与清理路径能回收非守护线程。", "next_experiment": "打一个会让 F2P 失败的候选补丁（例如让 DynamoDB 写入不发生），跑该测试文件并计时，确认 pytest 报完结果后进程是否仍不退出（预期挂住）。"},
+  {"category": "test_patch_new_path_not_reset", "severity": "P2", "evidence_refs": ["eval.sh:17/112 的 checkout 缺少新建的 .json；只新建文件的三题 checkout 无 pathspec"], "proposed_action": "在 RH2 执行前把 test_patch 的**新建路径**先删除（而不是 checkout），并对“checkout 后面没有 pathspec”的退化命令加断言拦截。涉及 8 题，清单见 test_patch_new_files.json。", "next_experiment": "在容器里先 `touch tests/test_stepfunctions/parser/templates/services/dynamodb_task_token.json` 再跑 eval.sh，确认 `git apply` 报 already exists、setup rc 非零。"},
+  {"category": "requirement_only_in_hints", "severity": "P2", "evidence_refs": ["期望行为（一直挂起、存字面量 token）只在 hints 里"], "proposed_action": "标记为“题面不足”；若保留，建议把 hints 里维护者那段说明并入题面。", "next_experiment": "只给题面跑一次 agent，看它是否会去“生成一个真的 TaskToken”（那样会写进不同的值而被 F2P 拒）。"},
+  {"category": "grading_scope_too_narrow", "severity": "P3", "evidence_refs": ["判分集合只有 3 条用例，而 gold 改的是全部 .waitForTaskToken 集成的公共路径"], "proposed_action": "把 tests/test_stepfunctions/parser/ 其余集成测试纳入扩展回归。", "next_experiment": "无。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 三条路径都在 tests/ 下，没有非测试源码会被恢复覆盖，故按第四组 B 默认保持空。但本题需要的是相反方向的处置：新建路径 tests/test_stepfunctions/parser/templates/services/dynamodb_task_token.json 应在执行前被**删除**以保证 test_patch 可应用（见检查 4/17），这属于清理逻辑而非排除清单。", "evidence_refs": ["test_patch 路径全集 = tests/test_stepfunctions/parser/__init__.py, tests/test_stepfunctions/parser/templates/services/dynamodb_task_token.json, tests/test_stepfunctions/parser/test_stepfunctions_dynamodb_integration.py", "eval.sh:17 的 checkout 只含前后两条"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_stepfunctions/parser/ 目录下其它服务集成测试（sqs/sns/lambda 的 waitForTaskToken 场景）", "reason": "gold 改的是所有 .waitForTaskToken 集成共用的 _wait_for_task_token，当前只有 dynamodb 一条被验证。"},
+  {"id": "新增：正常拿到 TaskToken 并调用 send_task_success 的端到端用例", "reason": "gold 只在 token 缺失时改行为；正常路径必须不回退，且这是题面提到的最终目的（测试 send_task_success/send_task_failure）。"},
+  {"id": "新增：显式设置较短 TimeoutSeconds 的 waitForTaskToken 任务，断言超时后执行进入 TIMED_OUT 且线程退出", "reason": "直接钉住 gold 新循环的退出条件，同时把挂死风险变成可观测的用例（见检查 27）。"},
+  {"id": "新增：等待期间调用 stop_execution，断言线程在 1 秒级别内退出", "reason": "验证 `env.is_running()` 这条唯一的提前退出路径。"}
+ ],
+ "disposition_hint": {"state": "needs_review", "reason": "base 缺陷真实、gold 在成功路径上正确。但三件事需要裁定：期望行为只写在不可见的 hints 里；gold 引入的 99999999 秒等待 + 非守护线程在候选补丁失败时会让整轮 pytest 挂死；test_patch 的新建路径不在 eval.sh 的恢复列表里。判分集合只有 3 条，与改动面严重不相称。"},
+ "costs": {"minutes": 24}
+}

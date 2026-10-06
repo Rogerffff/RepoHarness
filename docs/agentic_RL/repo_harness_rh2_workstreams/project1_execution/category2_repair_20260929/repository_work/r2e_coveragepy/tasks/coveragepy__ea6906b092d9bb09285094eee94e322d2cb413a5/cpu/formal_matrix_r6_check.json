@@ -1,0 +1,230 @@
+{
+  "checked_at_utc": "2026-10-02T20:44:05.941927+00:00",
+  "status": "formal_matrix_author_checks_passed",
+  "release_id": "cat2-cpu-r2e080087-swe8-git-20261003-v1",
+  "job": {
+    "package": "r2e_coveragepy",
+    "job": "covea69-matrix-r6-cpub-20261003-01",
+    "mode": "run",
+    "slot": 0,
+    "command": [
+      "python3",
+      "-c",
+      "import pathlib,hashlib,subprocess,json,socket,os\nchecks={'/work/rh2-category2-20261003/releases/cat2-cpu-r2e080087-swe8-git-20261003-v1/manifest.json': 'ab0a3a13fd65e0ea4cd60541ea3b37b01196170477e25832df246f33ea208828', '/work/rh2-category2-20261003/packages/r2e_coveragepy/derived/cov_remaining_r6_v1/overlays.jsonl': '3949e42d3bea6f4e46dec287aa360c9b19d370b4816fc95aa7abf1344ee712ac', '/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/prepared/replay_summary.json': 'f28fe916a7744b0332cf0da2d2abb64dd35bb96d83afb35699c2b4f4b9028759', '/work/rh2-category2-20261003/packages/r2e_coveragepy/run_cpu_matrix_v1.py': '962da7560ab099738a261e0408962342caff6e42c7d40c8ad348066636293c13'}\nfor p,d in checks.items(): assert hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()==d,p\nassert not pathlib.Path('/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/ea69_formal_matrix01').exists(),'output exists'\nfacts=json.loads(subprocess.check_output(['docker','image','inspect','sha256:fc124163bfbbbf914f2106d640d396db75356226036c6f42eda47f71afc7c068']))[0]\nassert facts['Id']=='sha256:fc124163bfbbbf914f2106d640d396db75356226036c6f42eda47f71afc7c068'\nif 'matrix'=='public':\n sockets=[]\n try:\n  for address in [('172.17.0.1',18190),('127.0.0.1',18191)]:\n   sock=socket.socket();sock.bind(address);sockets.append(sock)\n finally:\n  for sock in sockets:sock.close()\nprint('Fixed inputs and image verified; starting original entry',flush=True)\na=['env', 'PYTHONDONTWRITEBYTECODE=1', 'PYTHONPATH=/work/rh2-category2-20261003/releases/cat2-cpu-r2e080087-swe8-git-20261003-v1/repo/rh2/src', '/work/rh2-category2-20261003/runtime_cpu_v2/rh2/.venv/bin/python', '/work/rh2-category2-20261003/packages/r2e_coveragepy/run_cpu_matrix_v1.py', '--release-root', '/work/rh2-category2-20261003/releases/cat2-cpu-r2e080087-swe8-git-20261003-v1', '--release-sha256', 'sha256:ab0a3a13fd65e0ea4cd60541ea3b37b01196170477e25832df246f33ea208828', '--prepared-summary', '/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/prepared/replay_summary.json', '--overlays', '/work/rh2-category2-20261003/packages/r2e_coveragepy/derived/cov_remaining_r6_v1/overlays.jsonl', '--inputs-dir', '/work/rh2-category2-20261003/packages/r2e_coveragepy/inputs/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5', '--out-dir', '/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/ea69_formal_matrix01', '--expected-total', '49', '--run-prefix', 'covea69-r6-matrix-01', '--cases', 'safe_append,safe_append_encoding,gold,CA,CB,CC,RE']\nos.execvp(a[0],a)\n"
+    ],
+    "cwd": "/root",
+    "started_at_utc": "2026-10-02T20:38:00Z",
+    "supervisor_pid": 221583,
+    "status": "finished",
+    "child_pid": 221584,
+    "returncode": 0,
+    "finished_at_utc": "2026-10-02T20:43:40Z"
+  },
+  "instance_id": "coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5",
+  "summary_ref": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/ea69_formal_matrix01/summary.json",
+  "summary_sha256": "sha256:8475bb30ced90218f90f82beec7e4fdb5eaf41d60455aaaa3380e2b804c9a3bc",
+  "rows": [
+    {
+      "candidate": "safe_append",
+      "reward": 1.0,
+      "match": 49,
+      "total": 49,
+      "mismatched": [],
+      "per_key_evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/cpu/matrix_safe_append_r6_per_key.json",
+      "candidate_patch_sha256": "sha256:4049a09d2d6ec220aeff034db378cc95e3f49f8572f2de110438ba059d3a68d3",
+      "projection_included_paths": [
+        "coverage/html.py"
+      ],
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 4.911,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      }
+    },
+    {
+      "candidate": "safe_append_encoding",
+      "reward": 1.0,
+      "match": 49,
+      "total": 49,
+      "mismatched": [],
+      "per_key_evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/cpu/matrix_safe_append_encoding_r6_per_key.json",
+      "candidate_patch_sha256": "sha256:8a05dd38cbafc3e2c5e20b8b506b09b168452ecb498022fe3fa2dba6012b82dc",
+      "projection_included_paths": [
+        "coverage/html.py"
+      ],
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 4.655,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      }
+    },
+    {
+      "candidate": "gold",
+      "reward": 0.0,
+      "match": 48,
+      "total": 49,
+      "mismatched": [
+        "HtmlGitignoreTest.test_existing_gitignore_is_preserved_and_report_ignored"
+      ],
+      "per_key_evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/cpu/matrix_gold_r6_per_key.json",
+      "candidate_patch_sha256": "sha256:bd20515f70a5b6732df9a021806fe82dad15bfc2b24d350cd3624814764a7f39",
+      "projection_included_paths": [
+        "coverage/html.py"
+      ],
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 4.516,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      }
+    },
+    {
+      "candidate": "CA",
+      "reward": 0.0,
+      "match": 48,
+      "total": 49,
+      "mismatched": [
+        "HtmlGitignoreTest.test_existing_gitignore_is_preserved_and_report_ignored"
+      ],
+      "per_key_evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/cpu/matrix_CA_r6_per_key.json",
+      "candidate_patch_sha256": "sha256:e6502b52d55123b806c446f66bd74796e27fdf305a2e674ab293700553348788",
+      "projection_included_paths": [
+        "coverage/html.py"
+      ],
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 4.533,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      }
+    },
+    {
+      "candidate": "CB",
+      "reward": 0.0,
+      "match": 47,
+      "total": 49,
+      "mismatched": [
+        "HtmlGitignoreTest.test_existing_gitignore_is_preserved_and_report_ignored",
+        "HtmlGitignoreTest.test_html_report_is_ignored_by_git"
+      ],
+      "per_key_evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/cpu/matrix_CB_r6_per_key.json",
+      "candidate_patch_sha256": "sha256:be5318a1c6e8239295b47345cfe976e1560dd17cf5f91a7b30aee9d76e0aac93",
+      "projection_included_paths": [
+        "coverage/html.py"
+      ],
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 4.145,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      }
+    },
+    {
+      "candidate": "CC",
+      "reward": 0.0,
+      "match": 48,
+      "total": 49,
+      "mismatched": [
+        "HtmlGitignoreTest.test_existing_gitignore_is_preserved_and_report_ignored"
+      ],
+      "per_key_evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/cpu/matrix_CC_r6_per_key.json",
+      "candidate_patch_sha256": "sha256:3de1e7236120e5dc5ddf7be721940f072e07031d1e1d080dabf2e17f0edbbb08",
+      "projection_included_paths": [
+        "coverage/html.py"
+      ],
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 4.326,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      }
+    },
+    {
+      "candidate": "RE",
+      "reward": 0.0,
+      "match": 47,
+      "total": 49,
+      "mismatched": [
+        "HtmlGitignoreTest.test_existing_gitignore_is_preserved_and_report_ignored",
+        "ReportingTest.test_no_data_to_report_on_html"
+      ],
+      "per_key_evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/cpu/matrix_RE_r6_per_key.json",
+      "candidate_patch_sha256": "sha256:4dda0d8989298691497b27c606ca471ea82922c0b39724fdf238de9b5a18b520",
+      "projection_included_paths": [
+        "coverage/html.py"
+      ],
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 4.651,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      }
+    }
+  ],
+  "executed_rows": 7,
+  "covered_planned_rows": 8,
+  "baseline_reuse": {
+    "candidate": "noop",
+    "reason": "actual public CC returned empty FrozenPatch and original formal entry graded noop under exactly the same fixed prepared/image",
+    "evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/cpu/public_delivery_r6_check.json",
+    "evidence_sha256": "sha256:2bc40329c35203407498fd56d4f435c74a70af56ee93c9d0d6c315309b339189",
+    "per_key_evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/cpu/public_artifacts_r6_per_key.json",
+    "original_evidence_root": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/ea69_public_e2e02",
+    "reward": 0,
+    "match": 41,
+    "total": 49
+  },
+  "source_matrix_sha256": "sha256:957b41ae44d5c6aeeb93387bcd31088d7cfe0a0e85dc067d35d73fe337931c5d",
+  "scope": "all planned mechanisms covered, baseline reuse explicitly recorded when actual public candidate is empty; author checks, not independent review or model result"
+}

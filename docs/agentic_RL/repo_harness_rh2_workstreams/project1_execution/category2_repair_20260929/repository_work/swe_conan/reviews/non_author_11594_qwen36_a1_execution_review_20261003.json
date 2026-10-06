@@ -1,0 +1,323 @@
+{
+  "review_id": "non-author-conan11594-qwen36-a1-execution-20261003",
+  "reviewer": "conan11594_qwen_execution_recover",
+  "review_date": "2026-10-03",
+  "status": "execution_evidence_verified_with_scope_limits",
+  "scope": "仅本次Qwen首臂执行、材料/公开交付、baseline/FP/projection、原始评分运输、运行身份/预算、terminal/cleanup与有限资源；不作候选语义或训练资格结论。",
+  "method": "本地Python标准库独立读取原件；没有导入项目模块、执行项目代码、模型调用、远端/Docker/CPU/GPU操作或测试。原件保持只读。",
+  "job_id": "gpu1003-conan11594-qwen36-a1",
+  "owner_request_id": "swe-conan11594-r12-briefv2-20261003-v1",
+  "owner_request_sha256": "274c7e394eda8da6b3dd1f2161754338a721bc4fa71f300ed9a5db237a65b581",
+  "authoritative_bundle": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-conan11594-qwen36-a1",
+  "manifest": {
+    "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-conan11594-qwen36-a1/qwen_first10_closed_v1/gpu1003-conan11594-qwen36-a1/closed_manifest.json",
+    "sha256": "380a6c4594a029a8248c98f67222e85b01079eb2c447924834cc3f30d51d0caf",
+    "files": 183,
+    "bytes": 20795215,
+    "all_files_SHA_and_size_verified": true
+  },
+  "baseline": {
+    "canonical_digest": "sha256:df11bdaf691c19123e35a09df765e698363900f926515553b629a3b7903c03f4",
+    "tar_sha256": "647d73ea72d1ed86190cac46cdc312053ccb6186f5a28e9ad2b7520bda7f5645",
+    "tar_bytes": 10311680,
+    "entries": 1243,
+    "type_counts": {
+      "regular": 1243
+    },
+    "all_type_git_mode_content_verified": true,
+    "missing": 0,
+    "duplicates": 0,
+    "policy_digest": "sha256:77527b33576220ebe06770f4372eeb400fa5b07d0e1f0aa65804373c37866c27",
+    "regular_census_matches_manifest": true,
+    "pre_and_rebuild_census_identical": true,
+    "census_sha256": "177322a7402b9edbead98100ae8440f589b1379f643cf8980291ccebed2502b3"
+  },
+  "frozen_patch": {
+    "canonical_digest": "sha256:7397e59387d0333d0152a081dc26c16854b5099293c019dcacbb6d3296b845d8",
+    "identity_verified": [
+      "task_id",
+      "rollout_execution_id",
+      "physical_attempt_id",
+      "baseline_manifest_digest",
+      "public_bundle_digest",
+      "runtime_image_digest",
+      "materialized_head"
+    ],
+    "entries": [
+      {
+        "path": "conan/tools/cmake/cmake.py",
+        "operation": "modify",
+        "object_type": "regular",
+        "mode": "100644",
+        "content_digest": "sha256:08e110a8adfee3e5dfde9fa350e6f64239a29bf37aa08e3bf67f5d67cef0421d"
+      },
+      {
+        "path": "conans/test/unittests/tools/cmake/test_cmake_test_target.py",
+        "operation": "add",
+        "object_type": "regular",
+        "mode": "100644",
+        "content_digest": "sha256:7a17ae8e64aa11e13e72fac574d084dc80969680674adf30815d9e6af65f60d8"
+      }
+    ],
+    "content_SHA_verified": true,
+    "projection": {
+      "schema_id": "rh2.fa.scoring_projection.v1",
+      "frozen_patch_digest": "sha256:7397e59387d0333d0152a081dc26c16854b5099293c019dcacbb6d3296b845d8",
+      "rollout_execution_id": "gpu1003-conan11594-qwen36-a1",
+      "physical_attempt_id": "gpu1003-conan11594-qwen36-a1#p1",
+      "included_entry_paths": [
+        "conan/tools/cmake/cmake.py",
+        "conans/test/unittests/tools/cmake/test_cmake_test_target.py"
+      ]
+    },
+    "applied_entry_set_digest": "sha256:bbd1999637c6ea27fd9322e418d8b259c4dd3a73bf48f24ffd75df12396fc93f",
+    "complete_diff_sha256": "2450b9f97dcdb0b970d149bca8a35a8cd99c5096702e40a6331e0ee9c4f9fe16",
+    "complete_diff_bytes": 6803,
+    "diff_sections": 2,
+    "diff_reconstructed_from_baseline_matches_both_FP_contents": true
+  },
+  "same_fixed_materials": {
+    "request_input_files_checked": 53,
+    "request_input_mismatches": [],
+    "fixed_target_material_map_entries": 43,
+    "fixed_target_material_map_matches_dispatch": true,
+    "effective_task_config_matches_fixed": true,
+    "prepared_manifest_sha256": "c986845ec686abd17538c6a9ef52e82c2efc37b8a686b123e3fb339a3b4dec6e",
+    "host_grading_artifact_sha256": "16b27d2a16852fc23f1a3f2e64956e86a781f98315088db7c34aaee8ef507f6b",
+    "grading_materials_identity": "sha256:fe68e56946f2eeab35c4c335f317ef2a17fb27da4af54024b3d837f2548788a4",
+    "actor_and_grader_image_id": "sha256:f3b8d6671607e167fa549c05faa860345e5256c8f834a6a711447df9dce6839f",
+    "actor_resource_slices_observed": 9,
+    "grader_resource_slices_observed": 6,
+    "same_Coder_prepared_materials_public_prompt_baseline_and_effective_grading_budget": true,
+    "fresh_prepare_claimed": false,
+    "preparation_budget_policy": null,
+    "profile_difference": "仅model_proxy_upstream: Coder172.17.0.1:18081/Qwen172.17.0.1:18082；profile digest不同。"
+  },
+  "source_identity": {
+    "code7_source_manifest_sha256": "be705a777484c70af2afe9a34b6dd288bd85c2b1f536c6d57bd59aecb4eb0352",
+    "code8_source_manifest_sha256": "09ddb8bfdeecd3ffaa38c1048a574161ef6fa6053b2855da50166e8e8677899d",
+    "code7_local_frozen_members_verified": 985,
+    "code8_local_frozen_members_verified": 1045,
+    "remote_whole_code_tree_rehashed": false,
+    "modified_paths": [
+      "rh2/experiments/ordinary_gpu_probe_20261002/entry.py",
+      "rh2/src/repoharness2/adapters/slime/prepared_task_face.py",
+      "rh2/src/repoharness2/envpack/bundles_v2.py",
+      "rh2/src/repoharness2/envpack/swe_material_revisions.py",
+      "rh2/src/repoharness2/grading/material_revision.py"
+    ],
+    "added_count": 60,
+    "deleted_count": 0,
+    "unchanged_key_transport_files": {
+      "rh2/experiments/base_probe_20260922/solve_attempt.py": "00ca849909150de02769f297374a9bbfacf2746347c425474775d9c3e22a04f9",
+      "rh2/src/repoharness2/grading/manager.py": "1783533e1e3b66a57fcaa5a599a1da4f8e4e886318e24f040c6df91f294c1c1e",
+      "rh2/src/repoharness2/grading/trusted_projection.py": "5ef126803e93e3606123a4aef4389d35bad0551a622020d1dd22f0db32224a60"
+    },
+    "code8_entry_prepare_policy_in_this_task": null
+  },
+  "public_delivery": {
+    "problem_statement_sha256": "sha256:27b3892e1c2dc35a694def6074c82739d312f7a87436a9e31cbe9e0944dd5246",
+    "base_prompt_sha256": "sha256:53659643a6a2c7be7baefbe1675a437a0262670b54a8722af06520b773cb1357",
+    "brief_sha256": "sha256:c0ab743d03d433b9fd9f23b5d152430592f3ccb38cf703acec45a45dcddaa5f7",
+    "actual_delivered_prompt_sha256": "5de84366859c5a995d424db0543d2fcde183d102d52f13197f9d98cae2c3e699",
+    "solver_prompt_equals_attempt_prompt_and_first_API_task_text": true,
+    "full_issue_present": true,
+    "full_brief_strip_present": true,
+    "newline_rule": "按原字节读取；issue内CRLF保留。brief仅strip末尾空白，不改变正文。"
+  },
+  "raw_grading": {
+    "raw_reward": 1.0,
+    "outcome": "resolved",
+    "install_RC": 0,
+    "test_RC": 0,
+    "outer_candidate_exec_RC": 0,
+    "install_skipped": false,
+    "full_install_and_test_start_end": true,
+    "eval_log_sha256": "d11b0cfe43b7d5fd9e1cb31f24e31e5cdb25712cba750f86ffa4c56b8c0363ae",
+    "logical_references": 6,
+    "raw_full_nodes": 7,
+    "all_raw_nodes_passed": true,
+    "Ninja_binding_two_exact_nodes_ALL": true,
+    "F2P_pass_total": [
+      2,
+      2
+    ],
+    "P2P_pass_total": [
+      4,
+      4
+    ],
+    "reference_missing": [],
+    "reference_skipped": [],
+    "num_parsed_outside_segment": 0,
+    "trusted_setup": {
+      "RH2_SETUP_ABSENT_TEST_FILES": "0",
+      "RH2_SETUP_APPLY_RC": "0",
+      "RH2_SETUP_EXPECTED_TEST_FILES": "1",
+      "RH2_SETUP_IRREGULAR_TEST_FILES": "",
+      "RH2_SETUP_OK": "1",
+      "RH2_SETUP_RESTORED": "0",
+      "RH2_SETUP_TEST_FILES": "1"
+    },
+    "runner_integrity_changed": false,
+    "candidate_prerequisite": {
+      "exit_code": 0,
+      "home": "/home/rh2grader",
+      "script_sha256": "sha256:bdb8f8d6694951ba761da7b9505db153ac4215c48495cb77d883aa0570373e1c",
+      "state": "verified",
+      "stderr": "",
+      "stdout": "1.10.2.git.kitware.jobserver-1\nRH2_CONAN11594_NINJA_PREREQUISITE_OK=1\n",
+      "user": "54322"
+    }
+  },
+  "model_transport": {
+    "HTTP_requests": 60,
+    "HTTP_responses": 60,
+    "SSE_files": 60,
+    "adapter_turn_rows": 60,
+    "all_sequence_1_to_60": true,
+    "all_status_200_attempt1_stream_error_null": true,
+    "stop_reason_counts": {
+      "tool_use": 59,
+      "end_turn": 1
+    },
+    "all_SSE_byte_count_events_model_stop_usage_match_response": true,
+    "adapter_usage_matches_each_HTTP_response": true,
+    "input_tokens": 1493206,
+    "output_tokens": 11831,
+    "CC_num_turns": 61,
+    "CC_version": "2.1.205",
+    "CC_modelUsage_maxOutputTokens": 32000,
+    "all_request_max_tokens": 65536,
+    "adapter_max_new_tokens": 65536,
+    "maximum_observed_prompt_tokens": 44424,
+    "maximum_observed_output_tokens": 1371,
+    "budget": {
+      "context_tokens": 196608,
+      "response_output_tokens": 65536,
+      "CC_turns": 240,
+      "solver_seconds": 10800,
+      "gateway_requests": 1024,
+      "first_byte_timeout_seconds": 1800,
+      "adapter_idle_seconds_minimum": 14400
+    },
+    "sampling_defaults": {
+      "temperature": 1.0,
+      "top_p": 0.95,
+      "top_k": 20,
+      "max_new_tokens": 65536
+    },
+    "context_length": 196608,
+    "SGLang_max_req_input_len": 196602,
+    "SGLang_version": "0.5.20",
+    "checkpoint_repo": "Qwen/Qwen3.6-35B-A3B",
+    "checkpoint_revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+    "before_after_engine_adapter_identity_exact": true,
+    "runtime_model_files_sizes_match_download_manifest": 37,
+    "individual_weight_file_hashes_repeated": false,
+    "GPU_memory_weight_hash_attestation": false
+  },
+  "terminal": {
+    "unit": "rh2-gpu1003-conan11594-qwen36-a1-qwen-first10-v1.service",
+    "entry_rc": 0,
+    "harness_rc": 0,
+    "termination": "completed",
+    "solve_seconds": 110.811,
+    "harness_log_complete": true,
+    "harness_stdout_bytes": 591025,
+    "harness_stderr_bytes": 0,
+    "registered_started_at": "2026-10-03T13:33:02.928054+00:00",
+    "registered_ended_at": "2026-10-03T13:37:14.831267+00:00",
+    "PID1_success_at": "2026-10-03T13:37:14.860325+00:00",
+    "exact_UNIT_PID1_SYSLOG_systemd_success": true,
+    "retired_unit_ExecMainStatus0_not_used_as_exit_proof": true
+  },
+  "cleanup": {
+    "actor": {
+      "container_rm": 0,
+      "container_left": "",
+      "network_failures": [],
+      "relay_failures": [],
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "cleanup_ok": true
+    },
+    "gateway_drain": {
+      "session_id": "gpu1003-conan11594-qwen36-a1",
+      "revoked": true,
+      "active_requests": 0,
+      "drained": true,
+      "ts": 1791034533.270016
+    },
+    "separate_session_close_matches_attempt_drain": true,
+    "grader": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "supply_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0,
+      "containers_created_total": 1,
+      "containers_removed_total": 1,
+      "container_history_retained": 1,
+      "leases_total": 1
+    },
+    "last_resource_slice_containers_empty": true,
+    "scope": "本job资源及session闭合；共享模型服务仍运行。"
+  },
+  "resource_scope": {
+    "slices": 19,
+    "first_at": "2026-10-03T13:32:49.259819+00:00",
+    "last_at": "2026-10-03T13:37:20.548034+00:00",
+    "max_interval_seconds": 15.084519,
+    "per_container_slice_counts": {
+      "/rh2-egress-relay-gpu1003-conan11594-qwen36-a1": 10,
+      "/rh2bp-conan-io-conan-11594-53664973": 9,
+      "/rh2-gpu-grade-gpu1003-conan11594-qwen3-a990b54f": 6
+    },
+    "sampled_maxima_only": {
+      "/rh2-egress-relay-gpu1003-conan11594-qwen36-a1": {
+        "memory_peak_bytes": 30724096,
+        "pids_peak": 7,
+        "oom_events_observed": 0,
+        "oom_kill_events_observed": 0,
+        "pids_max_events_observed": 0
+      },
+      "/rh2bp-conan-io-conan-11594-53664973": {
+        "memory_peak_bytes": 986894336,
+        "pids_peak": 26,
+        "oom_events_observed": 0,
+        "oom_kill_events_observed": 0,
+        "pids_max_events_observed": 0
+      },
+      "/rh2-gpu-grade-gpu1003-conan11594-qwen3-a990b54f": {
+        "memory_peak_bytes": 310333440,
+        "pids_peak": 8,
+        "oom_events_observed": 0,
+        "oom_kill_events_observed": 0,
+        "pids_max_events_observed": 0
+      }
+    },
+    "gap": "不是连续采样，未覆盖引擎/adapter服务cgroup、容器终点完整计数或完整GPU峰值；不得推导整体峰值、吞吐或跨模型效率。"
+  },
+  "receipts": {
+    "qwen_execution": {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/gpu1003-conan11594-qwen36-a1_execution_receipt_v1.json",
+      "sha256": "e82526fda4bae85e621aaceecd4f4d2b79789ae978af59f777d5ed16594e1770"
+    },
+    "pair_execution": {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/swe-conan11594-r12-briefv2-20261003-v1_pair_execution_receipt_v1.json",
+      "sha256": "2ba6709ce574cd4a19879c5b9378cb26e96abd141d21f1a04486ae1fd1a8d7c6"
+    },
+    "Coder_execution_review_reused": {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/conan11594_coder_a1_execution_review_v1.json",
+      "sha256": "4be7e58d6ace46c3969cb3b001792592b232669985044c672e8324b578ad7275",
+      "new_review_or_rerun": false
+    }
+  },
+  "new_blocker_in_reviewed_scope": false,
+  "candidate_semantics_reviewed": false,
+  "training_qualification_inferred": false,
+  "stop_condition": "报告与JSON落盘并给SHA后停止；不修改原件、共享账本或题主文件，不发其他Codex线程。"
+}

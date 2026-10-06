@@ -1,0 +1,59 @@
+{
+  "head": "23f5586d",
+  "mechanism": "actual manager + existing CPU Docker/gateway fixtures",
+  "reachability": "conditional_future: GradingManagerConfig.supply 尚未正式启用",
+  "cases": [
+    {
+      "owner": "returned",
+      "outcome": "resolved",
+      "reward": 1.0,
+      "cancel_owner": false,
+      "at_teardown_pause": {
+        "container_removed": true,
+        "retired_seq": 1,
+        "supply_released": true,
+        "networks_remaining": 1,
+        "pool_in_use": 1,
+        "test_started": true,
+        "gateway_released_count": 1
+      },
+      "after_close": {
+        "container_removed": true,
+        "supply_released": true,
+        "networks_remaining": 0,
+        "pool_in_use": 0,
+        "teardown_calls": 1,
+        "network_teardown_fact": [],
+        "containers_open": [],
+        "cleanup_failures": [],
+        "created_total": 1,
+        "removed_total": 1
+      }
+    },
+    {
+      "owner": "CancelledError",
+      "cancel_owner": true,
+      "at_teardown_pause": {
+        "container_removed": true,
+        "retired_seq": 1,
+        "supply_released": true,
+        "networks_remaining": 1,
+        "pool_in_use": 1,
+        "test_started": true,
+        "gateway_released_count": 1
+      },
+      "after_close": {
+        "container_removed": true,
+        "supply_released": true,
+        "networks_remaining": 1,
+        "pool_in_use": 1,
+        "teardown_calls": 1,
+        "network_teardown_fact": null,
+        "containers_open": [],
+        "cleanup_failures": [],
+        "created_total": 1,
+        "removed_total": 1
+      }
+    }
+  ]
+}

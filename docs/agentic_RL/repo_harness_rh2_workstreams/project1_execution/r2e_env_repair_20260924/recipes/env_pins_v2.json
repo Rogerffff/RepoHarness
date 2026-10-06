@@ -1,0 +1,52 @@
+{
+ "schema_id": "rh2.r2e_env_pins.v1",
+ "purpose": "R2E 逐题环境配方：在派生镜像里固定个别依赖版本（build_r2e_derived.py --env-pins 消费，配方步骤 scripts/r2e_derive/env_v1.sh）。只修阻断相关开发验证的依赖冲突；改动前后必须用真实 grader 复验隐藏测试结果不变。 v2（2026-09-24 夜）：在 v1 的 numpy 43e333e2 条目之外加 orange3 9b5494e2（T0-7，用户按双方一致建议批准 B）；numpy 条目逐字不变，v1 文件保留（numpy 现有镜像按它构建）。条目可带 env_step 选环境步骤脚本（缺省 env_v1.sh）；orange3 用 env_v2.sh，因为 env_v1 核版本用的 importlib.metadata 在 Python 3.7 上不存在。",
+ "tasks": {
+  "numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d": {
+   "pins": [
+    {
+     "dist": "hypothesis",
+     "version": "6.24.1",
+     "wheel": "hypothesis-6.24.1-py3-none-any.whl",
+     "sha256": "ecbf7197ef85f0024b8c3dc947cfbf8296a5d1e6138562fc2f04d71ac9a96333",
+     "url": "https://files.pythonhosted.org/packages/23/df/b10b922532146902e7fb1c3163d90472fd61f79688d5fb02f760504b5567/hypothesis-6.24.1-py3-none-any.whl"
+    }
+   ],
+   "venv_changed_globs": [
+    "lib/python3.10/site-packages/hypothesis/*",
+    "lib/python3.10/site-packages/hypothesis-*.dist-info/*",
+    "lib/python3.10/site-packages/_hypothesis_*",
+    "bin/hypothesis"
+   ],
+   "why": "来源镜像的 install.sh 装的是不固定版本的最新 hypothesis（6.124.1）与 pytest（8.3.4），仓库自己的 test_requirements.txt 写的是 hypothesis==6.24.1、pytest==6.2.5。新版 hypothesis 对 numpy/conftest.py 里的 HealthCheck.all() 发弃用警告，被 pytest.ini 的 filterwarnings=error 变成错误，仓库自带测试收集即失败（rc 4），与本题修复对应的 numpy/ma/tests/test_extras.py::TestAverage 不能按常规运行。只把 hypothesis 固定回 6.24.1（pytest 不动）即可收集：78 passed / 10 failed，失败在与本题无关的 TestCorrcoef / TestCov（pytest 8 不调用旧式 setup），TestAverage 6 passed；隐藏测试 noop 87/88、gold 88/88 与原镜像相同。同时把 pytest 也换回 6.2.5 能让整个模块 88 passed，但会改变评分所用的 pytest 大版本，本配方不采用（改动面更大；需要时另立 env_v2）。",
+   "evidence": [
+    "runs/r2e_t0_revisions_20260924/diag43b/",
+    "runs/r2e_env_repair_20260924/p2/pubtests/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d.log"
+   ],
+   "decided_by": "Claude 09-24 E15（T1 环境配方，属 Codex 09-24 复核建议的环境修复范围；用户 09-24 同意继续修复）"
+  },
+  "orange3__9b5494e26f407b75e79699c9d40be6df1d80a040": {
+   "env_step": "env_v2.sh",
+   "pins": [
+    {
+     "dist": "scipy",
+     "version": "1.5.4",
+     "wheel": "scipy-1.5.4-cp37-cp37m-manylinux1_x86_64.whl",
+     "sha256": "25b241034215247481f53355e05f9e25462682b13bd9191359075682adcd9554",
+     "url": "https://files.pythonhosted.org/packages/dc/7e/8f6a79b102ca1ea928bae8998b05bf5dc24a90571db13cd119f275ba6252/scipy-1.5.4-cp37-cp37m-manylinux1_x86_64.whl"
+    }
+   ],
+   "venv_changed_globs": [
+    "lib/python3.7/site-packages/scipy/*",
+    "lib/python3.7/site-packages/scipy-*.dist-info/*",
+    "lib/python3.7/site-packages/scipy.libs/*"
+   ],
+   "why": "来源镜像的 install.sh 让 uv 解析到 SciPy 1.7.3 + scikit-learn 0.22.2.post1：1.7.3 的 L-BFGS-B 把 message 解码成 str，scikit-learn 0.22 在 lbfgs 未收敛时仍对它调 .decode，test_LogisticRegression 与 test_coefficients 因此 FAILED 并被写进来源期望。诊断（E17）：SciPy 1.4.1 与 1.5.4 都没有 str 解码，这两键在 noop / gold 都 PASSED，其余键不变；两个 scorer 键在两种版本下仍 FAILED，另有原因，不因本配方改变。选 1.5.4：诊断验证过的最高兼容版本，离 1.7.3 最近；1.6.x 未测。scikit-learn、numpy 不动。",
+   "evidence": [
+    "runs/r2e_t0_batch2_20260924/diag_orange3/",
+    "runs/r2e_t0_batch2_20260924/diag_orange3/wheels_sha256.txt"
+   ],
+   "decided_by": "用户 09-24 夜按 Claude / Codex 一致建议批准 T0-7 方案 B（两键局部修复，两个 scorer 键保持未完成项）"
+  }
+ }
+}

@@ -1,0 +1,80 @@
+{
+ "task_id": "Project-MONAI__MONAI-763",
+ "source": "SWE-Gym lite / Project-MONAI/MONAI PR 763 (created_at 2020-07-15)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "b37b9208077caccfeaacd1571d1452bb33b52b17",
+  "version": "0.2", "python_version": "3.8",
+  "eval_cmd": "pytest -rA ",
+  "actual_test_cmd": "pytest -rA  tests/test_integration_segmentation_3d.py tests/test_integration_sliding_window.py tests/test_sliding_window_inference.py",
+  "f2p": ["tests/test_integration_sliding_window.py::TestIntegrationSlidingWindow::test_training"],
+  "p2p_n": 8,
+  "test_patch_paths": ["tests/test_integration_segmentation_3d.py", "tests/test_integration_sliding_window.py", "tests/test_sliding_window_inference.py"],
+  "gold_paths": ["monai/data/utils.py"],
+  "stage1": "gold=RESOLVED_FULL（9 PASSED + 1 FAILED，失败的是不计分的 test_integration_segmentation_3d）/ empty=RESOLVED_NO，rc_install=0，test 阶段 22.8s，rc=1",
+  "in_e2": ["C"]
+ },
+ "public_view": {
+  "goal": "`dense_patch_slices(image_size=(100,100), patch_size=(50,50), scan_interval=(25,25))` 返回重复的 slice（16 条里有多条重复），导致 sliding window 推理变慢。要求返回覆盖整个体积、按 scan_interval 重叠、但**不重复**的 slice 列表。",
+  "constraints": [
+   "题面 1585 字符，含完整 REPL 输出（16 行实际返回值）与明确的期望行为",
+   "题面末句『I would like to fix this problem, and add a few unit tests』表明提 issue 的人就是作者"
+  ],
+  "unknowns_from_public_only": [
+   "重复的根因是 scan_num 算多了（应当在 d*interval+patch >= image_size 时就停），题面没点破，但从 REPL 输出能推",
+   "去重方式：是改 scan_num 的计算，还是事后 set() 去重？两种都满足题面字面要求，但会影响 slice 的**顺序与数量**，进而影响 F2P 里那个精确的像素和 33621",
+   "题面没说要保持原有的 slice 顺序"
+  ],
+  "base_code_evidence": [
+   "b37b92080:monai/data/utils.py:106-109 `scan_num = [int(math.ceil(float(image_size[i]) / scan_interval[i])) ...]` —— ceil(100/25)=4，但第 3、4 个起点都被 clip 到同一位置，于是产生重复",
+   "b37b92080:tests/test_integration_segmentation_3d.py:82,85,183 `DataLoader(..., num_workers=4)`"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["三个 test_patch 目标文件在 base 均存在", "gold 目标 monai/data/utils.py 存在，hunk 上下文 20/103-113 匹配"], "note": "无二进制/LFS/子模块。", "by": "L1_monai_1"},
+  "2": {"status": "pass", "evidence_refs": ["b37b92080:monai/data/utils.py:106-109", "stage1 empty 侧 F2P FAILED"], "note": "base 确含题面所述缺陷。", "by": "L1_monai_1"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 1585 字符，含 REPL 复现与 Expected behavior 段", "raw hints_text 为空"], "note": "题面质量是本包最好的之一：有最小复现、有实际输出、有明确期望。无外链、无图片、无截断。", "by": "L1_monai_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 三个路径全是 tests/test_*.py"], "note": "无非测试源码；gold 只碰 monai/data/utils.py。additional_exclusions 保持空。", "by": "L1_monai_1"},
+  "17": {"status": "pass", "evidence_refs": ["同上，三个文件在 base 都存在"], "note": "恢复步骤可正常工作。", "by": "L1_monai_1"},
+  "5": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["runs/env_overnight_20260916/L1_monai_1/dupidx.txt：monai/data/utils.py 还被 Project-MONAI__MONAI-4688 改（L1_monai_2 的题）；tests/test_sliding_window_inference.py 还被 Project-MONAI__MONAI-907 改"], "note": "同文件不同缺陷（4688 改的是 list_data_collate，907 改 monai/inferers/utils.py）。907 的 base（2020-08-18）晚于本题（2020-07-15），所以 907 的 base 已含本题的 gold —— 划分训练/评测集时 763 与 907 需同侧或至少记录这层依赖。", "by": "L1_monai_1"},
+  "23": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["F2P 是 tests/test_integration_sliding_window.py::TestIntegrationSlidingWindow::test_training，唯一有效断言是 `np.testing.assert_allclose(np.sum(output_image), 33621)`（**无 rtol**）", "题面完全没提这个整数"], "note": "题面说的是『不要有重复 slice』，F2P 查的却是一次端到端训练+推理后输出体的**精确像素和**。任何满足题面要求但 slice 顺序/数量与 gold 不同的实现（例如事后 set 去重、或多生成一个覆盖尾部的 slice），加权融合的结果就会不同，33621 立刻对不上。公开材料完全无法预知这个数。", "by": "L1_monai_1"},
+  "24": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["F2P 用 assert_allclose(sum, 33621) 且未给 rtol（numpy 默认 rtol=1e-7）"], "note": "**强制唯一实现**：这是本包里最严格的一条。它不仅要求『去掉重复』，还要求去重后剩下的 slice 集合与 gold 逐个一致（因为 sliding_window_inference 对重叠区做加权平均，slice 集合不同→权重不同→和不同）。一个合理的替代实现『生成后 `list(dict.fromkeys(slices))` 去重』会保留 gold 丢弃的那些边缘 slice 组合吗？需要实跑确认，但风险很高。", "by": "L1_monai_1"},
+  "25": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["8 条 P2P 全是 tests/test_sliding_window_inference.py::test_sliding_window_default_0..7"], "note": "P2P 只覆盖 sliding_window_inference 的默认路径，**没有一条直接测 dense_patch_slices 本身**——而题面复现的就是这个函数。上游作者说『add a few unit tests for this function』，但 test_patch 里并没有给 dense_patch_slices 加单测，只改了三处硬编码数值。这是材料与题面承诺的落差。", "by": "L1_monai_1"},
+  "26": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["无 dense_patch_slices 直测"], "note": "见 proposed_regression_tests，第一条是必须补的。", "by": "L1_monai_1"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 两个 hunk：import first + 重写 scan_num 计算"], "note": "改动与题目精确对应；依赖 monai.utils.first（base 已有）。无无关改动。", "by": "L1_monai_1"},
+  "29": {"status": "pass", "evidence_refs": ["题面无链接、无修复代码；hints_text 为空"], "note": "无泄漏。", "by": "L1_monai_1"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 rc_install=0"], "note": "安装离线可完成。", "by": "L1_monai_1"},
+  "7": {"status": "pass", "evidence_refs": ["三个测试文件用 nib.Nifti1Image 合成数据写临时目录，不下载"], "note": "无外部资产。", "by": "L1_monai_1"},
+  "11": {"status": "pass", "evidence_refs": ["stage1 离线跑通 10 条"], "note": "测试阶段不需要网络。", "by": "L1_monai_1"},
+  "16": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["gold/offline/a1/test_output.txt 末段 `ERROR: Unexpected bus error encountered in worker. This might be caused by insufficient shared memory (shm).`", "同文件 `RuntimeError: DataLoader worker (pid 193) is killed by signal: Bus error.` 与 `RuntimeError: unable to write to file </torch_192_...>: No space left on device (28)`", "b37b92080:tests/test_integration_segmentation_3d.py:82,85,183 `num_workers=4`"], "note": "**/dev/shm 不足**：`tests/test_integration_segmentation_3d.py` 用 `DataLoader(num_workers=4)`，容器默认 64MB shm 撑不住，worker 被 Bus error 杀掉。当前**不影响判分**（这条用例既不在 F2P 也不在 P2P，因为它在两侧都失败），但它是整份评分里最耗时的用例之一，而且失败信息会被误解成题目缺陷。需要 `--shm-size` 或 `--ipc=host` 才能跑通。", "by": "L1_monai_1"},
+  "18": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["两侧 status_map.json 都含一条伪条目 {'Unexpected': 'ERROR:'}", "rh2/src/repoharness2/envpack/swegym_parsers.py:47-58 `parse_log_pytest`：`if any(line.startswith(x) for x in ('FAILED','PASSED','SKIPPED','ERROR','XFAIL')): test_status_map[line.split()[1]] = line.split()[0]`"], "note": "shm 错误行以 `ERROR: ` 开头，被 parser 当成一条测试结果记进 status_map（键 'Unexpected'、值 'ERROR:'）。本题里这个键不会与任何真实 nodeid 相撞，所以无判分影响；但它是**候选可控文本注入 status_map** 的实证——见 issues。", "by": "L1_monai_1"},
+  "20": {"status": "pass", "evidence_refs": ["gold=RESOLVED_FULL、empty=RESOLVED_NO；两侧的差异只在 F2P 那一条"], "note": "分差干净（噪声失败 test_integration_segmentation_3d 在两侧一致，已被排除出 P2P）。", "by": "L1_monai_1"}
+ },
+ "issues": [
+  {"category": "reward_hacking_surface", "severity": "P1",
+   "evidence_refs": ["rh2/src/repoharness2/envpack/swegym_parsers.py:47-58", "runs/env_probe_stage1_20260910/.../Project-MONAI__MONAI-763/{gold,empty}/offline/a1/status_map.json 的 {'Unexpected':'ERROR:'} 伪条目"],
+   "proposed_action": "parser 对**任何**以 FAILED/PASSED/SKIPPED/ERROR/XFAIL 开头的行都记一条状态，不校验第二个 token 是不是合法 nodeid。候选源码在测试期间打印的任意文本都会进 status_map；由于同键后写覆盖先写，只要注入文本出现在 pytest 的 short summary **之后**（例如 atexit 钩子、或在 teardown 里直接写 fd 1），就能把一条真实 FAILED 覆盖成 PASSED。建议在消费侧加约束：只接受形如 `<path>::<...>` 且出现在 F2P∪P2P 名单内的键。",
+   "next_experiment": "写一个最小候选：在某个源码模块里 `atexit.register(lambda: print('PASSED tests/test_x.py::T::t'))`，在真实镜像里跑一次评分，看 status_map 最终值是 PASSED 还是 FAILED。这是**跨仓库**的问题，不只 MONAI。"},
+  {"category": "shm_insufficient", "severity": "P1",
+   "evidence_refs": ["gold 日志里的 Bus error / No space left on device (28) / num_workers=4"],
+   "proposed_action": "评分容器需要 `--shm-size=2g`（或 `--ipc=host`）。当前 tests/test_integration_segmentation_3d.py 因此必然失败——虽然它不计分，但它是三个文件里最慢的，白白消耗时间。要么加 shm，要么把这个文件从测试命令里去掉（它既不含 F2P 也不含 P2P）。",
+   "next_experiment": "在带 `--shm-size=2g` 的容器里重跑本题，确认该用例转 PASSED 还是仍因硬编码 loss 数值不匹配而失败；顺便量整份评分的耗时变化。"},
+  {"category": "over_constrained_assertion", "severity": "P1",
+   "evidence_refs": ["test_patch 把 `np.sum(output_image)` 的期望从 33583 改成 33621，无 rtol", "test_integration_segmentation_3d.py 里 40 个硬编码像素均值（rtol=1e-3）"],
+   "proposed_action": "F2P 用端到端像素和做断言，等价于要求候选复刻 gold 的 slice 集合。建议把 F2P 换成/补上对 `dense_patch_slices` 的直接断言（无重复 + 覆盖完整 + 数量），把像素和降级为 P2P 或加 rtol。",
+   "next_experiment": "实现『生成后去重』的替代解法（保留原 scan_num，末尾 `list(dict.fromkeys(slices))`），跑 F2P，看 33621 是否仍然成立。这能直接判定检查 24 是 issue 还是 pass。"},
+  {"category": "missing_unit_test", "severity": "P2",
+   "evidence_refs": ["题面『add a few unit tests for this function』", "test_patch 里没有任何 dense_patch_slices 的直测"],
+   "proposed_action": "补一条 dense_patch_slices 的单测（题面给的那组参数 + 去重断言），既对应题面承诺，也让评分不必依赖端到端数值。",
+   "next_experiment": "无需实验，直接补测即可；补后在 base/gold 上各跑一次确认 fail→pass。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 三个路径全是测试文件，gold 只碰 monai/data/utils.py，无交集。", "evidence_refs": ["grading_bundles_v2_v0:Project-MONAI__MONAI-763 test_patch", "validation_bundles_v0:Project-MONAI__MONAI-763 golden_patch"]},
+ "proposed_regression_tests": [
+  {"id": "新增：dense_patch_slices((100,100),(50,50),(25,25)) 的长度、去重、覆盖断言（题面原例）", "reason": "题面的复现就是它；当前评分对这个函数零直测。"},
+  {"id": "新增：scan_interval 为 0、patch_size 大于 image_size、非整除等边界", "reason": "gold 新增的 `first(d for d in range(num) if ...)` 在 num=0 或生成器为空时会抛异常（first 的默认返回值需确认），当前无覆盖。"},
+  {"id": "tests/test_sliding_window_inference.py 全文件（8 条已在 P2P）", "reason": "dense_patch_slices 的主要调用方。"},
+  {"id": "tests/test_compute_meandice.py / tests/test_inverse 等下游（如版本内存在）", "reason": "补充：slice 集合变化会改变推理输出，需要至少一条非端到端的中间层断言。"}
+ ],
+ "disposition_hint": {"state": "needs_repair", "reason": "题面与 gold 质量都好、离线可跑、stage1 有干净分差；但 F2P 是无 rtol 的端到端像素和（很可能强制唯一实现），且评分容器缺 shm 导致最慢的那个文件必然失败。建议先做『替代实现是否仍满足 33621』的实验，再决定是补单测还是换 F2P。"},
+ "costs": {"minutes": 27}
+}

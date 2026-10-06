@@ -1,0 +1,218 @@
+{
+ "task": "coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266",
+ "image": "sha256:418dca922724d01da398cd1c025ecc7c88e7223aeab06d665af89a7517c01caf",
+ "recipe_id": "r2e_derive_v1+sysconfig_v1",
+ "patch": "/work/r2e/trials/coveragepy/97997d2c/coveragepy_9799_N1_config_file_option.patch",
+ "edits": "/work/r2e/trials/coveragepy/97997d2c/draft.json",
+ "expected": "/work/r2e/trials/coveragepy/97997d2c/expected_after.json",
+ "kind": "trial_not_formal_grading",
+ "apply": "Checking patch coverage/config.py...\nApplied patch coverage/config.py cleanly.\nRH2_APPLY_RC=0\n",
+ "edits_apply": "RH2_TRIAL_EDITS_APPLIED=1\n",
+ "test_seconds": 7.5,
+ "markers": true,
+ "observed": {
+  "ConfigFileTest.test_config_file_settings": "FAILED",
+  "ConfigFileTest.test_config_file_settings_in_setupcfg": "FAILED",
+  "ConfigFileTest.test_config_file_settings_in_setupcfg_if_coveragerc_specified": "FAILED",
+  "ConfigFileTest.test_config_file_settings_in_tox_if_coveragerc_specified": "FAILED",
+  "ConfigFileTest.test_config_file_settings_in_toxini": "FAILED",
+  "ConfigFileTest.test_no_toml_installed_explicit_toml": "PASSED",
+  "ConfigFileTest.test_no_toml_installed_no_toml": "PASSED",
+  "ConfigFileTest.test_no_toml_installed_pyproject_no_coverage": "PASSED",
+  "ConfigFileTest.test_no_toml_installed_pyproject_toml": "PASSED",
+  "ConfigFileTest.test_nocoveragerc_file_when_specified": "PASSED",
+  "ConfigFileTest.test_non_ascii": "FAILED",
+  "ConfigFileTest.test_read_prefixed_sections_from_explicit_file": "FAILED",
+  "ConfigFileTest.test_setupcfg_only_if_not_coveragerc": "FAILED",
+  "ConfigFileTest.test_setupcfg_only_if_prefixed": "FAILED",
+  "ConfigFileTest.test_tox_ini_even_if_setup_cfg": "FAILED",
+  "ConfigFileTest.test_toxini_only_if_not_coveragerc": "FAILED",
+  "ConfigFileTest.test_toxini_only_if_prefixed": "FAILED",
+  "ConfigFileTest.test_unreadable_config": "PASSED",
+  "ConfigTest.test_arguments": "PASSED",
+  "ConfigTest.test_config_file": "FAILED",
+  "ConfigTest.test_config_file_then_args": "FAILED",
+  "ConfigTest.test_data_file_from_environment": "FAILED",
+  "ConfigTest.test_debug_from_environment": "FAILED",
+  "ConfigTest.test_default_config": "PASSED",
+  "ConfigTest.test_environment_vars_in_config": "FAILED",
+  "ConfigTest.test_environment_vars_in_toml_config": "FAILED",
+  "ConfigTest.test_ignored_config_file": "PASSED",
+  "ConfigTest.test_misplaced_option": "FAILED",
+  "ConfigTest.test_missing_rcfile_from_environment": "PASSED",
+  "ConfigTest.test_named_config_file": "FAILED",
+  "ConfigTest.test_note_is_obsolete": "FAILED",
+  "ConfigTest.test_parse_errors": "PASSED",
+  "ConfigTest.test_rcfile_from_environment": "FAILED",
+  "ConfigTest.test_tilde_in_config": "FAILED",
+  "ConfigTest.test_tilde_in_toml_config": "FAILED",
+  "ConfigTest.test_toml_config_file": "FAILED",
+  "ConfigTest.test_toml_parse_errors": "PASSED",
+  "ConfigTest.test_tweak_error_checking": "PASSED",
+  "ConfigTest.test_tweak_plugin_options": "PASSED",
+  "ConfigTest.test_tweaks_after_constructor": "PASSED",
+  "ConfigTest.test_tweaks_paths_after_constructor": "PASSED",
+  "ConfigTest.test_tweaks_paths_on_config_object": "PASSED",
+  "ConfigTest.test_tweaks_paths_replaces_config_file_paths": "FAILED",
+  "ConfigTest.test_tweaks_paths_used_by_combine": "PASSED",
+  "ConfigTest.test_unknown_option": "FAILED",
+  "ConfigTest.test_unknown_option_in_other_ini_file": "FAILED",
+  "ConfigTest.test_unknown_option_toml": "FAILED"
+ },
+ "n_observed": 47,
+ "log_tail": "any_set = False\n        try:\n            for option_spec in self.CONFIG_FILE_OPTIONS:\n                was_set = self._set_attr_from_config_option(cp, *option_spec)\n                if was_set:\n                    any_set = True\n        except ValueError as err:\n>           raise CoverageException(\"Couldn't read config file %s: %s\" % (filename, err))\nE           coverage.misc.CoverageException: Couldn't read config file .coveragerc: not enough values to unpack (expected 2, got 1)\n\ncoverage/config.py:288: CoverageException\n_________________ ConfigFileTest.test_toxini_only_if_prefixed __________________\n[gw0] linux -- Python 3.7.9 /testbed/.venv/bin/python\n\nself = <r2e_tests.test_1.ConfigFileTest testMethod=test_toxini_only_if_prefixed>\n\n    def test_toxini_only_if_prefixed(self):\n>       self.check_other_config_need_prefixes(\"tox.ini\")\n\nr2e_tests/test_1.py:695: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \nr2e_tests/test_1.py:687: in check_other_config_need_prefixes\n    cov = coverage.Coverage()\ncoverage/control.py:193: in __init__\n    concurrency=concurrency, context=context,\ncoverage/config.py:520: in read_coverage_config\n    config_read = config.from_file(fname, our_file=our_file)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <coverage.config.CoverageConfig object at 0x736e2880bcd0>\nfilename = 'tox.ini', our_file = False\n\n    @contract(filename=str)\n    def from_file(self, filename, our_file):\n        \"\"\"Read configuration from a .rc file.\n    \n        `filename` is a file name to read.\n    \n        `our_file` is True if this config file is specifically for coverage,\n        False if we are examining another config file (tox.ini, setup.cfg)\n        for possible settings.\n    \n        Returns True or False, whether the file could be read, and it had some\n        coverage.py settings in it.\n    \n        \"\"\"\n        _, ext = os.path.splitext(filename)\n        if ext == '.toml':\n            cp = TomlConfigParser(our_file)\n        else:\n            cp = HandyConfigParser(our_file)\n    \n        self.attempted_config_files.append(filename)\n    \n        try:\n            files_read = cp.read(filename)\n        except (configparser.Error, TomlDecodeError) as err:\n            raise CoverageException(\"Couldn't read config file %s: %s\" % (filename, err))\n        if not files_read:\n            return False\n    \n        self.config_files_read.extend(map(os.path.abspath, files_read))\n    \n        any_set = False\n        try:\n            for option_spec in self.CONFIG_FILE_OPTIONS:\n                was_set = self._set_attr_from_config_option(cp, *option_spec)\n                if was_set:\n                    any_set = True\n        except ValueError as err:\n>           raise CoverageException(\"Couldn't read config file %s: %s\" % (filename, err))\nE           coverage.misc.CoverageException: Couldn't read config file tox.ini: not enough values to unpack (expected 2, got 1)\n\ncoverage/config.py:288: CoverageException\n==================================== PASSES ====================================\n_________________________ ConfigTest.test_parse_errors _________________________\n[gw0] linux -- Python 3.7.9 /testbed/.venv/bin/python\n----------------------------- Captured stdout call -----------------------------\nTrying '[run]\\ntimid = maybe?\\n'\nTrying 'timid = 1\\n'\nTrying '[run\\n'\nTrying '[report]\\nexclude_lines = foo(\\n'\nTrying '[report]\\npartial_branches = foo[\\n'\nTrying '[report]\\npartial_branches_always = foo***\\n'\n______________________ ConfigTest.test_toml_parse_errors _______________________\n[gw2] linux -- Python 3.7.9 /testbed/.venv/bin/python\n----------------------------- Captured stdout call -----------------------------\nTrying '[tool.coverage.run]\\ntimid = \"maybe?\"\\n'\nTrying '[tool.coverage.run\\n'\nTrying '[tool.coverage.report]\\nexclude_lines = [\"foo(\"]\\n'\nTrying '[tool.coverage.report]\\npartial_branches = [\"foo[\"]\\n'\nTrying '[tool.coverage.report]\\npartial_branches_always = [\"foo***\"]\\n'\nTrying '[tool.coverage.run]\\nconcurrency=\"foo\"'\nTrying '[tool.coverage.report]\\nprecision=1.23'\nTrying '[tool.coverage.report]\\nfail_under=\"s\"'\n=========================== short test summary info ============================\nPASSED r2e_tests/test_1.py::ConfigTest::test_arguments\nPASSED r2e_tests/test_1.py::ConfigTest::test_default_config\nPASSED r2e_tests/test_1.py::ConfigTest::test_ignored_config_file\nPASSED r2e_tests/test_1.py::ConfigTest::test_parse_errors\nPASSED r2e_tests/test_1.py::ConfigTest::test_missing_rcfile_from_environment\nPASSED r2e_tests/test_1.py::ConfigTest::test_tweak_plugin_options\nPASSED r2e_tests/test_1.py::ConfigTest::test_tweaks_after_constructor\nPASSED r2e_tests/test_1.py::ConfigTest::test_tweaks_paths_after_constructor\nPASSED r2e_tests/test_1.py::ConfigTest::test_tweaks_paths_on_config_object\nPASSED r2e_tests/test_1.py::ConfigTest::test_toml_parse_errors\nPASSED r2e_tests/test_1.py::ConfigTest::test_tweak_error_checking\nPASSED r2e_tests/test_1.py::ConfigTest::test_tweaks_paths_used_by_combine\nPASSED r2e_tests/test_1.py::ConfigFileTest::test_no_toml_installed_explicit_toml\nPASSED r2e_tests/test_1.py::ConfigFileTest::test_no_toml_installed_no_toml\nPASSED r2e_tests/test_1.py::ConfigFileTest::test_nocoveragerc_file_when_specified\nPASSED r2e_tests/test_1.py::ConfigFileTest::test_no_toml_installed_pyproject_toml\nPASSED r2e_tests/test_1.py::ConfigFileTest::test_no_toml_installed_pyproject_no_coverage\nPASSED r2e_tests/test_1.py::ConfigFileTest::test_unreadable_config\nFAILED r2e_tests/test_1.py::ConfigTest::test_config_file_then_args - coverage...\nFAILED r2e_tests/test_1.py::ConfigTest::test_data_file_from_environment - cov...\nFAILED r2e_tests/test_1.py::ConfigTest::test_config_file - coverage.misc.Cove...\nFAILED r2e_tests/test_1.py::ConfigTest::test_environment_vars_in_config - cov...\nFAILED r2e_tests/test_1.py::ConfigTest::test_named_config_file - coverage.mis...\nFAILED r2e_tests/test_1.py::ConfigTest::test_debug_from_environment - coverag...\nFAILED r2e_tests/test_1.py::ConfigTest::test_misplaced_option - AssertionErro...\nFAILED r2e_tests/test_1.py::ConfigTest::test_note_is_obsolete - coverage.misc...\nFAILED r2e_tests/test_1.py::ConfigTest::test_environment_vars_in_toml_config\nFAILED r2e_tests/test_1.py::ConfigTest::test_tilde_in_toml_config - coverage....\nFAILED r2e_tests/test_1.py::ConfigTest::test_rcfile_from_environment - covera...\nFAILED r2e_tests/test_1.py::ConfigTest::test_toml_config_file - coverage.misc...\nFAILED r2e_tests/test_1.py::ConfigTest::test_tweaks_paths_replaces_config_file_paths\nFAILED r2e_tests/test_1.py::ConfigTest::test_tilde_in_config - coverage.misc....\nFAILED r2e_tests/test_1.py::ConfigTest::test_unknown_option - AssertionError:...\nFAILED r2e_tests/test_1.py::ConfigTest::test_unknown_option_toml - AssertionE...\nFAILED r2e_tests/test_1.py::ConfigFileTest::test_config_file_settings_in_setupcfg\nFAILED r2e_tests/test_1.py::ConfigTest::test_unknown_option_in_other_ini_file\nFAILED r2e_tests/test_1.py::ConfigFileTest::test_config_file_settings - cover...\nFAILED r2e_tests/test_1.py::ConfigFileTest::test_config_file_settings_in_setupcfg_if_coveragerc_specified\nFAILED r2e_tests/test_1.py::ConfigFileTest::test_config_file_settings_in_tox_if_coveragerc_specified\nFAILED r2e_tests/test_1.py::ConfigFileTest::test_config_file_settings_in_toxini\nFAILED r2e_tests/test_1.py::ConfigFileTest::test_read_prefixed_sections_from_explicit_file\nFAILED r2e_tests/test_1.py::ConfigFileTest::test_non_ascii - coverage.misc.Co...\nFAILED r2e_tests/test_1.py::ConfigFileTest::test_setupcfg_only_if_not_coveragerc\nFAILED r2e_tests/test_1.py::ConfigFileTest::test_tox_ini_even_if_setup_cfg - ...\nFAILED r2e_tests/test_1.py::ConfigFileTest::test_setupcfg_only_if_prefixed - ...\nFAILED r2e_tests/test_1.py::ConfigFileTest::test_toxini_only_if_not_coveragerc\nFAILED r2e_tests/test_1.py::ConfigFileTest::test_toxini_only_if_prefixed - co...\n29 failed, 18 passed in 2.95 seconds\n>>>>> End Test Output\nRH2_TEST_RC=1\n",
+ "stderr_tail": "",
+ "expected_n": 47,
+ "missing": [],
+ "extra": [],
+ "status_diff": [
+  [
+   "ConfigFileTest.test_config_file_settings",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigFileTest.test_config_file_settings_in_setupcfg",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigFileTest.test_config_file_settings_in_setupcfg_if_coveragerc_specified",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigFileTest.test_config_file_settings_in_tox_if_coveragerc_specified",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigFileTest.test_config_file_settings_in_toxini",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigFileTest.test_non_ascii",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigFileTest.test_read_prefixed_sections_from_explicit_file",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigFileTest.test_setupcfg_only_if_not_coveragerc",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigFileTest.test_setupcfg_only_if_prefixed",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigFileTest.test_tox_ini_even_if_setup_cfg",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigFileTest.test_toxini_only_if_not_coveragerc",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigFileTest.test_toxini_only_if_prefixed",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigTest.test_config_file",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigTest.test_config_file_then_args",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigTest.test_data_file_from_environment",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigTest.test_debug_from_environment",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigTest.test_environment_vars_in_config",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigTest.test_environment_vars_in_toml_config",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigTest.test_misplaced_option",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigTest.test_named_config_file",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigTest.test_note_is_obsolete",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigTest.test_rcfile_from_environment",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigTest.test_tilde_in_config",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigTest.test_tilde_in_toml_config",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigTest.test_toml_config_file",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigTest.test_tweaks_paths_replaces_config_file_paths",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigTest.test_unknown_option",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigTest.test_unknown_option_in_other_ini_file",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "ConfigTest.test_unknown_option_toml",
+   "PASSED",
+   "FAILED"
+  ]
+ ],
+ "match": false,
+ "verdict": "mismatch",
+ "seconds": 85.0
+}

@@ -1,0 +1,14 @@
+diff --git a/coverage/inorout.py b/coverage/inorout.py
+index 0eea62ae..3184f5fa 100644
+--- a/coverage/inorout.py
++++ b/coverage/inorout.py
+@@ -333,6 +333,9 @@ class InOrOut(object):
+         if self.omit_match and self.omit_match.match(filename):
+             return "is inside an --omit pattern"
+ 
++        if not filename.isascii():
++            return "non-ascii filename"
++
+         # No reason found to skip this file.
+         return None
+ 

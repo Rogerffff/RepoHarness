@@ -1,0 +1,1809 @@
+{
+  "status": "reserved_not_dispatched",
+  "as_of": "2026-09-21T03:21:24.050292+08:00",
+  "scope": "11 additional development-diagnostic tasks; material preparation only; no review roles dispatched",
+  "source_files": {
+    "public": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+      "sha256": "278a52be906f4f5fe98418f5bfd6536e97b333b0fdc9bbd15cd1328ae8c5f7f3"
+    },
+    "grading": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+      "sha256": "762a3ad12a08e4c723bf5da609cf765a6a42388e01530d411dd61e82de625264"
+    },
+    "validation": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+      "sha256": "196fdf81e1142c431d7b60dee5082db6ccfd3ba8b65f88f686bb12b2020ad961"
+    }
+  },
+  "selection": {
+    "seed": "swegym-quality-batch03-20260921",
+    "sample_key": "sha256(seed + \"|\" + instance_id), ascending, first 3 per selected repo from original not_reviewed pool after excluding all batch01 and batch02 IDs",
+    "pool_source": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/task_index_216.json",
+      "sha256": "7a5925428675432c7530d85daa5740667667a97c0b433bf33ee5f7df552502c5"
+    },
+    "pool_predicate": "task_index_216.json tasks where new_review_status == \"not_reviewed\" and repo is one of the four fixed repositories",
+    "excluded_batch01": [
+      "conan-io__conan-14177",
+      "conan-io__conan-15422",
+      "dask__dask-8597",
+      "dask__dask-8801",
+      "iterative__dvc-3620",
+      "iterative__dvc-5839",
+      "iterative__dvc-9395",
+      "pydantic__pydantic-5706",
+      "pydantic__pydantic-8511",
+      "python__mypy-10424",
+      "python__mypy-12417",
+      "python__mypy-16963"
+    ],
+    "excluded_batch02": [
+      "getmoto__moto-5134",
+      "getmoto__moto-5752",
+      "getmoto__moto-7584",
+      "iterative__dvc-1681",
+      "iterative__dvc-3576",
+      "iterative__dvc-4166",
+      "pandas-dev__pandas-48106",
+      "pandas-dev__pandas-53958",
+      "pandas-dev__pandas-56849",
+      "python__mypy-10308",
+      "python__mypy-11236",
+      "python__mypy-17071"
+    ],
+    "original_not_reviewed_pools": {
+      "iterative/dvc": [
+        "iterative__dvc-1661",
+        "iterative__dvc-1681",
+        "iterative__dvc-1712",
+        "iterative__dvc-1808",
+        "iterative__dvc-1877",
+        "iterative__dvc-2126",
+        "iterative__dvc-2141",
+        "iterative__dvc-2231",
+        "iterative__dvc-2254",
+        "iterative__dvc-3315",
+        "iterative__dvc-3527",
+        "iterative__dvc-3576",
+        "iterative__dvc-3620",
+        "iterative__dvc-3665",
+        "iterative__dvc-3677",
+        "iterative__dvc-3794",
+        "iterative__dvc-4066",
+        "iterative__dvc-4124",
+        "iterative__dvc-4125",
+        "iterative__dvc-4166",
+        "iterative__dvc-4185",
+        "iterative__dvc-4719",
+        "iterative__dvc-4778",
+        "iterative__dvc-4785",
+        "iterative__dvc-4961",
+        "iterative__dvc-5004",
+        "iterative__dvc-5148",
+        "iterative__dvc-5188",
+        "iterative__dvc-5336",
+        "iterative__dvc-5822",
+        "iterative__dvc-5839",
+        "iterative__dvc-6954",
+        "iterative__dvc-9212",
+        "iterative__dvc-9391",
+        "iterative__dvc-9395"
+      ],
+      "python/mypy": [
+        "python__mypy-10174",
+        "python__mypy-10284",
+        "python__mypy-10308",
+        "python__mypy-10382",
+        "python__mypy-10392",
+        "python__mypy-10401",
+        "python__mypy-10424",
+        "python__mypy-10430",
+        "python__mypy-10478",
+        "python__mypy-10658",
+        "python__mypy-11236",
+        "python__mypy-11241",
+        "python__mypy-11352",
+        "python__mypy-11420",
+        "python__mypy-11434",
+        "python__mypy-11567",
+        "python__mypy-11707",
+        "python__mypy-11824",
+        "python__mypy-11857",
+        "python__mypy-11945",
+        "python__mypy-11966",
+        "python__mypy-12222",
+        "python__mypy-12417",
+        "python__mypy-12741",
+        "python__mypy-15131",
+        "python__mypy-15139",
+        "python__mypy-15184",
+        "python__mypy-15208",
+        "python__mypy-15413",
+        "python__mypy-15876",
+        "python__mypy-16555",
+        "python__mypy-16869",
+        "python__mypy-16905",
+        "python__mypy-16963",
+        "python__mypy-16966",
+        "python__mypy-17071",
+        "python__mypy-5617",
+        "python__mypy-9625",
+        "python__mypy-9629",
+        "python__mypy-9909"
+      ],
+      "getmoto/moto": [
+        "getmoto__moto-4799",
+        "getmoto__moto-4833",
+        "getmoto__moto-4847",
+        "getmoto__moto-4975",
+        "getmoto__moto-4990",
+        "getmoto__moto-5020",
+        "getmoto__moto-5134",
+        "getmoto__moto-5286",
+        "getmoto__moto-5321",
+        "getmoto__moto-5347",
+        "getmoto__moto-5406",
+        "getmoto__moto-5417",
+        "getmoto__moto-5478",
+        "getmoto__moto-5502",
+        "getmoto__moto-5545",
+        "getmoto__moto-5562",
+        "getmoto__moto-5620",
+        "getmoto__moto-5699",
+        "getmoto__moto-5701",
+        "getmoto__moto-5737",
+        "getmoto__moto-5752",
+        "getmoto__moto-5794",
+        "getmoto__moto-5835",
+        "getmoto__moto-5865",
+        "getmoto__moto-5885",
+        "getmoto__moto-5899",
+        "getmoto__moto-5960",
+        "getmoto__moto-5980",
+        "getmoto__moto-6022",
+        "getmoto__moto-6041",
+        "getmoto__moto-6114",
+        "getmoto__moto-6121",
+        "getmoto__moto-6157",
+        "getmoto__moto-6178",
+        "getmoto__moto-6185",
+        "getmoto__moto-6212",
+        "getmoto__moto-6226",
+        "getmoto__moto-6308",
+        "getmoto__moto-6317",
+        "getmoto__moto-6355",
+        "getmoto__moto-6387",
+        "getmoto__moto-6408",
+        "getmoto__moto-6469",
+        "getmoto__moto-6470",
+        "getmoto__moto-6508",
+        "getmoto__moto-6585",
+        "getmoto__moto-6701",
+        "getmoto__moto-6913",
+        "getmoto__moto-7105",
+        "getmoto__moto-7111",
+        "getmoto__moto-7273",
+        "getmoto__moto-7331",
+        "getmoto__moto-7335",
+        "getmoto__moto-7348",
+        "getmoto__moto-7361",
+        "getmoto__moto-7484",
+        "getmoto__moto-7495",
+        "getmoto__moto-7584",
+        "getmoto__moto-7607"
+      ],
+      "pandas-dev/pandas": [
+        "pandas-dev__pandas-48106",
+        "pandas-dev__pandas-50319",
+        "pandas-dev__pandas-51605",
+        "pandas-dev__pandas-53958",
+        "pandas-dev__pandas-56849"
+      ]
+    },
+    "batch02_frozen_pools": {
+      "iterative/dvc": [
+        "iterative__dvc-1661",
+        "iterative__dvc-1681",
+        "iterative__dvc-1712",
+        "iterative__dvc-1808",
+        "iterative__dvc-1877",
+        "iterative__dvc-2126",
+        "iterative__dvc-2141",
+        "iterative__dvc-2231",
+        "iterative__dvc-2254",
+        "iterative__dvc-3315",
+        "iterative__dvc-3527",
+        "iterative__dvc-3576",
+        "iterative__dvc-3665",
+        "iterative__dvc-3677",
+        "iterative__dvc-3794",
+        "iterative__dvc-4066",
+        "iterative__dvc-4124",
+        "iterative__dvc-4125",
+        "iterative__dvc-4166",
+        "iterative__dvc-4185",
+        "iterative__dvc-4719",
+        "iterative__dvc-4778",
+        "iterative__dvc-4785",
+        "iterative__dvc-4961",
+        "iterative__dvc-5004",
+        "iterative__dvc-5148",
+        "iterative__dvc-5188",
+        "iterative__dvc-5336",
+        "iterative__dvc-5822",
+        "iterative__dvc-6954",
+        "iterative__dvc-9212",
+        "iterative__dvc-9391"
+      ],
+      "python/mypy": [
+        "python__mypy-10174",
+        "python__mypy-10284",
+        "python__mypy-10308",
+        "python__mypy-10382",
+        "python__mypy-10392",
+        "python__mypy-10401",
+        "python__mypy-10430",
+        "python__mypy-10478",
+        "python__mypy-10658",
+        "python__mypy-11236",
+        "python__mypy-11241",
+        "python__mypy-11352",
+        "python__mypy-11420",
+        "python__mypy-11434",
+        "python__mypy-11567",
+        "python__mypy-11707",
+        "python__mypy-11824",
+        "python__mypy-11857",
+        "python__mypy-11945",
+        "python__mypy-11966",
+        "python__mypy-12222",
+        "python__mypy-12741",
+        "python__mypy-15131",
+        "python__mypy-15139",
+        "python__mypy-15184",
+        "python__mypy-15208",
+        "python__mypy-15413",
+        "python__mypy-15876",
+        "python__mypy-16555",
+        "python__mypy-16869",
+        "python__mypy-16905",
+        "python__mypy-16966",
+        "python__mypy-17071",
+        "python__mypy-5617",
+        "python__mypy-9625",
+        "python__mypy-9629",
+        "python__mypy-9909"
+      ],
+      "getmoto/moto": [
+        "getmoto__moto-4799",
+        "getmoto__moto-4833",
+        "getmoto__moto-4847",
+        "getmoto__moto-4975",
+        "getmoto__moto-4990",
+        "getmoto__moto-5020",
+        "getmoto__moto-5134",
+        "getmoto__moto-5286",
+        "getmoto__moto-5321",
+        "getmoto__moto-5347",
+        "getmoto__moto-5406",
+        "getmoto__moto-5417",
+        "getmoto__moto-5478",
+        "getmoto__moto-5502",
+        "getmoto__moto-5545",
+        "getmoto__moto-5562",
+        "getmoto__moto-5620",
+        "getmoto__moto-5699",
+        "getmoto__moto-5701",
+        "getmoto__moto-5737",
+        "getmoto__moto-5752",
+        "getmoto__moto-5794",
+        "getmoto__moto-5835",
+        "getmoto__moto-5865",
+        "getmoto__moto-5885",
+        "getmoto__moto-5899",
+        "getmoto__moto-5960",
+        "getmoto__moto-5980",
+        "getmoto__moto-6022",
+        "getmoto__moto-6041",
+        "getmoto__moto-6114",
+        "getmoto__moto-6121",
+        "getmoto__moto-6157",
+        "getmoto__moto-6178",
+        "getmoto__moto-6185",
+        "getmoto__moto-6212",
+        "getmoto__moto-6226",
+        "getmoto__moto-6308",
+        "getmoto__moto-6317",
+        "getmoto__moto-6355",
+        "getmoto__moto-6387",
+        "getmoto__moto-6408",
+        "getmoto__moto-6469",
+        "getmoto__moto-6470",
+        "getmoto__moto-6508",
+        "getmoto__moto-6585",
+        "getmoto__moto-6701",
+        "getmoto__moto-6913",
+        "getmoto__moto-7105",
+        "getmoto__moto-7111",
+        "getmoto__moto-7273",
+        "getmoto__moto-7331",
+        "getmoto__moto-7335",
+        "getmoto__moto-7348",
+        "getmoto__moto-7361",
+        "getmoto__moto-7484",
+        "getmoto__moto-7495",
+        "getmoto__moto-7584",
+        "getmoto__moto-7607"
+      ],
+      "pandas-dev/pandas": [
+        "pandas-dev__pandas-48106",
+        "pandas-dev__pandas-50319",
+        "pandas-dev__pandas-51605",
+        "pandas-dev__pandas-53958",
+        "pandas-dev__pandas-56849"
+      ]
+    },
+    "frozen_pools": {
+      "iterative/dvc": [
+        "iterative__dvc-1661",
+        "iterative__dvc-1712",
+        "iterative__dvc-1808",
+        "iterative__dvc-1877",
+        "iterative__dvc-2126",
+        "iterative__dvc-2141",
+        "iterative__dvc-2231",
+        "iterative__dvc-2254",
+        "iterative__dvc-3315",
+        "iterative__dvc-3527",
+        "iterative__dvc-3665",
+        "iterative__dvc-3677",
+        "iterative__dvc-3794",
+        "iterative__dvc-4066",
+        "iterative__dvc-4124",
+        "iterative__dvc-4125",
+        "iterative__dvc-4185",
+        "iterative__dvc-4719",
+        "iterative__dvc-4778",
+        "iterative__dvc-4785",
+        "iterative__dvc-4961",
+        "iterative__dvc-5004",
+        "iterative__dvc-5148",
+        "iterative__dvc-5188",
+        "iterative__dvc-5336",
+        "iterative__dvc-5822",
+        "iterative__dvc-6954",
+        "iterative__dvc-9212",
+        "iterative__dvc-9391"
+      ],
+      "python/mypy": [
+        "python__mypy-10174",
+        "python__mypy-10284",
+        "python__mypy-10382",
+        "python__mypy-10392",
+        "python__mypy-10401",
+        "python__mypy-10430",
+        "python__mypy-10478",
+        "python__mypy-10658",
+        "python__mypy-11241",
+        "python__mypy-11352",
+        "python__mypy-11420",
+        "python__mypy-11434",
+        "python__mypy-11567",
+        "python__mypy-11707",
+        "python__mypy-11824",
+        "python__mypy-11857",
+        "python__mypy-11945",
+        "python__mypy-11966",
+        "python__mypy-12222",
+        "python__mypy-12741",
+        "python__mypy-15131",
+        "python__mypy-15139",
+        "python__mypy-15184",
+        "python__mypy-15208",
+        "python__mypy-15413",
+        "python__mypy-15876",
+        "python__mypy-16555",
+        "python__mypy-16869",
+        "python__mypy-16905",
+        "python__mypy-16966",
+        "python__mypy-5617",
+        "python__mypy-9625",
+        "python__mypy-9629",
+        "python__mypy-9909"
+      ],
+      "getmoto/moto": [
+        "getmoto__moto-4799",
+        "getmoto__moto-4833",
+        "getmoto__moto-4847",
+        "getmoto__moto-4975",
+        "getmoto__moto-4990",
+        "getmoto__moto-5020",
+        "getmoto__moto-5286",
+        "getmoto__moto-5321",
+        "getmoto__moto-5347",
+        "getmoto__moto-5406",
+        "getmoto__moto-5417",
+        "getmoto__moto-5478",
+        "getmoto__moto-5502",
+        "getmoto__moto-5545",
+        "getmoto__moto-5562",
+        "getmoto__moto-5620",
+        "getmoto__moto-5699",
+        "getmoto__moto-5701",
+        "getmoto__moto-5737",
+        "getmoto__moto-5794",
+        "getmoto__moto-5835",
+        "getmoto__moto-5865",
+        "getmoto__moto-5885",
+        "getmoto__moto-5899",
+        "getmoto__moto-5960",
+        "getmoto__moto-5980",
+        "getmoto__moto-6022",
+        "getmoto__moto-6041",
+        "getmoto__moto-6114",
+        "getmoto__moto-6121",
+        "getmoto__moto-6157",
+        "getmoto__moto-6178",
+        "getmoto__moto-6185",
+        "getmoto__moto-6212",
+        "getmoto__moto-6226",
+        "getmoto__moto-6308",
+        "getmoto__moto-6317",
+        "getmoto__moto-6355",
+        "getmoto__moto-6387",
+        "getmoto__moto-6408",
+        "getmoto__moto-6469",
+        "getmoto__moto-6470",
+        "getmoto__moto-6508",
+        "getmoto__moto-6585",
+        "getmoto__moto-6701",
+        "getmoto__moto-6913",
+        "getmoto__moto-7105",
+        "getmoto__moto-7111",
+        "getmoto__moto-7273",
+        "getmoto__moto-7331",
+        "getmoto__moto-7335",
+        "getmoto__moto-7348",
+        "getmoto__moto-7361",
+        "getmoto__moto-7484",
+        "getmoto__moto-7495",
+        "getmoto__moto-7607"
+      ],
+      "pandas-dev/pandas": [
+        "pandas-dev__pandas-50319",
+        "pandas-dev__pandas-51605"
+      ]
+    },
+    "ranked_eligible": {
+      "iterative/dvc": [
+        {
+          "rank": 1,
+          "instance_id": "iterative__dvc-6954",
+          "sha256": "1ec6f40196ea942d2c71e5f96b384cda1f32e3617c86ca2498990a051dc11262",
+          "selected": true
+        },
+        {
+          "rank": 2,
+          "instance_id": "iterative__dvc-3665",
+          "sha256": "202711c105a99e38f7ee309635511ac27c8c769d4c69fa530214550e4172c522",
+          "selected": true
+        },
+        {
+          "rank": 3,
+          "instance_id": "iterative__dvc-4785",
+          "sha256": "25528bac79eebb9a2332c861a8ad53949ba58e00e752a5e31e13cc3b6a36d2dc",
+          "selected": true
+        },
+        {
+          "rank": 4,
+          "instance_id": "iterative__dvc-4124",
+          "sha256": "3ac561f4b2c96bf0beac357abfdbbae00583bc35ab8bf16a8c9c45a4bfe2781f",
+          "selected": false
+        },
+        {
+          "rank": 5,
+          "instance_id": "iterative__dvc-4066",
+          "sha256": "4821f4ea1ba1975abc7b7632ebb1c968dd025ae629d40bce9fc5b700c0b3836b",
+          "selected": false
+        },
+        {
+          "rank": 6,
+          "instance_id": "iterative__dvc-3527",
+          "sha256": "4b575cda6430f0e0dcc19c1ed43e1b8114087d2f71d3b047f68d74af937912ed",
+          "selected": false
+        },
+        {
+          "rank": 7,
+          "instance_id": "iterative__dvc-1808",
+          "sha256": "4c67e3c94cfab77487947c67c737caaebe9519f08a013bbf67baab9b2386f491",
+          "selected": false
+        },
+        {
+          "rank": 8,
+          "instance_id": "iterative__dvc-4778",
+          "sha256": "4cb933df3091d03e31025f6c9bed58bf178563db0ce17c5ab862371b8f3b349f",
+          "selected": false
+        },
+        {
+          "rank": 9,
+          "instance_id": "iterative__dvc-3794",
+          "sha256": "4e2a139008af639bf5de2abe6481925df8ae28209a90e36f2ee690627fa955a8",
+          "selected": false
+        },
+        {
+          "rank": 10,
+          "instance_id": "iterative__dvc-5822",
+          "sha256": "4eabf11ec4b557fd8b7ea47f2bf9c43e2ffc3d0a9daf46abf8f50a57d4aecf52",
+          "selected": false
+        },
+        {
+          "rank": 11,
+          "instance_id": "iterative__dvc-3677",
+          "sha256": "54cc9367478a2f09a4dbbc885b00d1efde7c092f2cebd9dc8094d2024ac82b6a",
+          "selected": false
+        },
+        {
+          "rank": 12,
+          "instance_id": "iterative__dvc-5188",
+          "sha256": "5a960c0e2b08cf0f93a6a56ba793a5b276000a2c20626222f42b216172ce9f05",
+          "selected": false
+        },
+        {
+          "rank": 13,
+          "instance_id": "iterative__dvc-2254",
+          "sha256": "69da3666b1d74631358edcf2fc9cfc4a0054e281385b0fd455de3ffcae3c39af",
+          "selected": false
+        },
+        {
+          "rank": 14,
+          "instance_id": "iterative__dvc-2141",
+          "sha256": "70d7dde966f10acaa776345863c101d2c1891236d793c23f4c81fff1df8f4cde",
+          "selected": false
+        },
+        {
+          "rank": 15,
+          "instance_id": "iterative__dvc-1877",
+          "sha256": "74ba338017c28a5adb8766ddd4e48024ed86104d07dad0e9a5dce322b76bb2e9",
+          "selected": false
+        },
+        {
+          "rank": 16,
+          "instance_id": "iterative__dvc-4125",
+          "sha256": "7a88a2c33966bf295b79d12a6dd69111519731a9ff23b8119c63363ae40e422d",
+          "selected": false
+        },
+        {
+          "rank": 17,
+          "instance_id": "iterative__dvc-5148",
+          "sha256": "82b9c32c0c87bf35590b3906a311ec27cd8befc770b964a9e4a64e5dfc058c5c",
+          "selected": false
+        },
+        {
+          "rank": 18,
+          "instance_id": "iterative__dvc-5004",
+          "sha256": "84f52525169547ac3be8ff86888b9ff623761ad95b2a1e8fcbd180a1fb79cef0",
+          "selected": false
+        },
+        {
+          "rank": 19,
+          "instance_id": "iterative__dvc-1712",
+          "sha256": "8f442f086654f1d08460b4d265284e29c0274c1e0496c4ff6ef7dd43ef75c2cd",
+          "selected": false
+        },
+        {
+          "rank": 20,
+          "instance_id": "iterative__dvc-1661",
+          "sha256": "97ad34a40833ed3f8e8c27eba4a218ac5dcbf1bd5f7965f5eef3cdbdf294e38a",
+          "selected": false
+        },
+        {
+          "rank": 21,
+          "instance_id": "iterative__dvc-9212",
+          "sha256": "a056b18e0f6747cf5399902fa00ba823168caaa83d407c364c5ac4b51221c2d9",
+          "selected": false
+        },
+        {
+          "rank": 22,
+          "instance_id": "iterative__dvc-2126",
+          "sha256": "b1fe871a10259c7aedc0a5403f517b4e4d9048ba56b9de5920baac9d498298ee",
+          "selected": false
+        },
+        {
+          "rank": 23,
+          "instance_id": "iterative__dvc-4961",
+          "sha256": "bfdb2a810d96fd4a738174d8f418a9cb03676d68fd2dff6e82021f253de45e8f",
+          "selected": false
+        },
+        {
+          "rank": 24,
+          "instance_id": "iterative__dvc-4185",
+          "sha256": "c438317d691dc96011ef6921be929fd4dd0a6afcc5470a7cf4cacb321c34d428",
+          "selected": false
+        },
+        {
+          "rank": 25,
+          "instance_id": "iterative__dvc-9391",
+          "sha256": "d085cbdd52284d3a626983e44febaa03abca3f8e4081b566ca4cc3810935479e",
+          "selected": false
+        },
+        {
+          "rank": 26,
+          "instance_id": "iterative__dvc-5336",
+          "sha256": "d7b19d1825d7542dc72532e7c83553b63cdd247de1146bf6209c86fddfaf9ea1",
+          "selected": false
+        },
+        {
+          "rank": 27,
+          "instance_id": "iterative__dvc-4719",
+          "sha256": "d8deec3a78ff6e5faaeac4fbe001f2e9c738955dea3130b4281d2f493610229e",
+          "selected": false
+        },
+        {
+          "rank": 28,
+          "instance_id": "iterative__dvc-2231",
+          "sha256": "deb6656d15f1a3728c7c7472fbba781e53452a20ba2e5b2be75ffd586379d8df",
+          "selected": false
+        },
+        {
+          "rank": 29,
+          "instance_id": "iterative__dvc-3315",
+          "sha256": "ec40b6c0f62c9dd6eaa5ec17863218b85a4695ce8230974a4e1411680cbf1863",
+          "selected": false
+        }
+      ],
+      "python/mypy": [
+        {
+          "rank": 1,
+          "instance_id": "python__mypy-15139",
+          "sha256": "036179128da1ee6a5830ddf02d382bdd30e3985c029923e122062378501e59d5",
+          "selected": true
+        },
+        {
+          "rank": 2,
+          "instance_id": "python__mypy-15184",
+          "sha256": "085e0c32fffa3904d543adbc76e91539d4a1258f01494905328a7f72103734b4",
+          "selected": true
+        },
+        {
+          "rank": 3,
+          "instance_id": "python__mypy-10174",
+          "sha256": "09b9fe1bc603fa9c656d23279d3a2148fc5f50294134107d3abbdaa2bed7be0d",
+          "selected": true
+        },
+        {
+          "rank": 4,
+          "instance_id": "python__mypy-5617",
+          "sha256": "0deb6811eccc8e1be13ff0cd30e06eb554c1af84403dabcc6af8e76e01627f30",
+          "selected": false
+        },
+        {
+          "rank": 5,
+          "instance_id": "python__mypy-9629",
+          "sha256": "1cbac19565f7406531fabbe8e21074d86d2d5245f5417d293c87667d55f5b968",
+          "selected": false
+        },
+        {
+          "rank": 6,
+          "instance_id": "python__mypy-11824",
+          "sha256": "1f4ade4e21da373c794c88614d3e1f203c11bdb77014d547d333ece7c3d35e07",
+          "selected": false
+        },
+        {
+          "rank": 7,
+          "instance_id": "python__mypy-9909",
+          "sha256": "1ffa809de4a9f24ccea6dec278d47df8a79845af3f26b5a4397bd8a423e0cce8",
+          "selected": false
+        },
+        {
+          "rank": 8,
+          "instance_id": "python__mypy-11567",
+          "sha256": "2c5b3488c9df59c87976963233b387c101f5dc34cd1fb9c9ab3031af1eb0370b",
+          "selected": false
+        },
+        {
+          "rank": 9,
+          "instance_id": "python__mypy-15876",
+          "sha256": "2f59f375201b25a08879df6080df345d12a7b3a750e4ca2607e021337f2dff03",
+          "selected": false
+        },
+        {
+          "rank": 10,
+          "instance_id": "python__mypy-11241",
+          "sha256": "30b5ef5409cca8c9613dc5abddf5562453915514a257a9f111f122af17a2da12",
+          "selected": false
+        },
+        {
+          "rank": 11,
+          "instance_id": "python__mypy-11352",
+          "sha256": "4188e02f76446403051955554a09c68d9218561e8c2fb0ac98f99dd168b7eabb",
+          "selected": false
+        },
+        {
+          "rank": 12,
+          "instance_id": "python__mypy-11434",
+          "sha256": "42a70aa5f54d82251bef9b001f996e3ccd326926f33156be0e23be7aa76c31ed",
+          "selected": false
+        },
+        {
+          "rank": 13,
+          "instance_id": "python__mypy-11707",
+          "sha256": "4c01493ef0770860b990bd637b3d42cc71d8b6c84ee939d4a1c2e2acae70d4ab",
+          "selected": false
+        },
+        {
+          "rank": 14,
+          "instance_id": "python__mypy-10430",
+          "sha256": "5088929e20f2d9077c25e573c118e2b489730ff573ea36f2939dff8be48e6e11",
+          "selected": false
+        },
+        {
+          "rank": 15,
+          "instance_id": "python__mypy-15131",
+          "sha256": "527f94d75e333c822c90568a6afaf1934851860f9524e58859c75c63fd6ddaa1",
+          "selected": false
+        },
+        {
+          "rank": 16,
+          "instance_id": "python__mypy-10478",
+          "sha256": "5c1d1e05f7d197694e3d1748e45356f9d0447df20aa54508bdebab0b6115388d",
+          "selected": false
+        },
+        {
+          "rank": 17,
+          "instance_id": "python__mypy-11966",
+          "sha256": "64877fc59bf222f37875bb8a7ba51d6f8eb5feacc825b3f07e1f377c0dca16ab",
+          "selected": false
+        },
+        {
+          "rank": 18,
+          "instance_id": "python__mypy-15413",
+          "sha256": "734f06aefc755d0682c1de79fc8ef717a6dd76f74943989b4b55f4b1b9ef4969",
+          "selected": false
+        },
+        {
+          "rank": 19,
+          "instance_id": "python__mypy-9625",
+          "sha256": "807acae154d06bfcdafe7e798580c0deb99d1f272c74c29d06b702b39f5cdc96",
+          "selected": false
+        },
+        {
+          "rank": 20,
+          "instance_id": "python__mypy-16966",
+          "sha256": "8ba02a3d25101701ae5694bb0f7ba40bec485c59b07d553ac836cb4660b20301",
+          "selected": false
+        },
+        {
+          "rank": 21,
+          "instance_id": "python__mypy-11420",
+          "sha256": "955a0b342f048508f769fbb8fdd28d4fc78dc35552ebcfcc7cba1c160aae0b13",
+          "selected": false
+        },
+        {
+          "rank": 22,
+          "instance_id": "python__mypy-10401",
+          "sha256": "9787d29ad7b0672cecf7c6d6509b49d8fef9118d041f92f68a29bd000a10777a",
+          "selected": false
+        },
+        {
+          "rank": 23,
+          "instance_id": "python__mypy-12222",
+          "sha256": "9a9a461498554f6d8f3ae61fcb51861d09c9d9f426c199c8b7eb1f1e38865d68",
+          "selected": false
+        },
+        {
+          "rank": 24,
+          "instance_id": "python__mypy-11945",
+          "sha256": "9dd6c56a0892aa31f15ed67aa2fb18a93cd8f6a226a18b0ad3967e7c2c985a2c",
+          "selected": false
+        },
+        {
+          "rank": 25,
+          "instance_id": "python__mypy-11857",
+          "sha256": "a5b0c45e5c393dbf5c1a0a9dc6b6f0b0916aa4179cbad907584c3854cec818ad",
+          "selected": false
+        },
+        {
+          "rank": 26,
+          "instance_id": "python__mypy-16869",
+          "sha256": "a83764b614bf6b71464b1f3be1b2dcd8ded36ed12d81d7f9eb41dde586b85cac",
+          "selected": false
+        },
+        {
+          "rank": 27,
+          "instance_id": "python__mypy-15208",
+          "sha256": "b94759d73fd515bede728dc0658c75311f940e15d5144a7f5ea9c6a2e9404164",
+          "selected": false
+        },
+        {
+          "rank": 28,
+          "instance_id": "python__mypy-10284",
+          "sha256": "bd55509892cfd8b93f890d152106565c4a0a4ad2c2d300dd3e1e572bd71ef580",
+          "selected": false
+        },
+        {
+          "rank": 29,
+          "instance_id": "python__mypy-10658",
+          "sha256": "be8e7d7a35fde53304ad76dc746437e6e86c7947059463de223acba509d32b07",
+          "selected": false
+        },
+        {
+          "rank": 30,
+          "instance_id": "python__mypy-16905",
+          "sha256": "c2c6666698200a381e518c8acf9978efd968bdfd806e8ce3b8c92bcc2eb23f43",
+          "selected": false
+        },
+        {
+          "rank": 31,
+          "instance_id": "python__mypy-16555",
+          "sha256": "d5e42f45b64db23f8fecb0e4315a68d1dd4e04ee968311b13852dac450feb802",
+          "selected": false
+        },
+        {
+          "rank": 32,
+          "instance_id": "python__mypy-10382",
+          "sha256": "dabf6f6dcfe2dd2ff8fd570c1903d0a9c3e729a9d42d8beedd9e010067d4fee0",
+          "selected": false
+        },
+        {
+          "rank": 33,
+          "instance_id": "python__mypy-10392",
+          "sha256": "e62c8bed8e6590870cc839f68bc642b228e83a4295ae700ebbc7fe6a32af4e08",
+          "selected": false
+        },
+        {
+          "rank": 34,
+          "instance_id": "python__mypy-12741",
+          "sha256": "e6956352cd3af951be7a8f78e627b49735911100c6bf04320f4f284244a93dd7",
+          "selected": false
+        }
+      ],
+      "getmoto/moto": [
+        {
+          "rank": 1,
+          "instance_id": "getmoto__moto-6185",
+          "sha256": "021eced56aecbdd749348804c91cb6c546d72a4c3d22478ecee68a1eb720062e",
+          "selected": true
+        },
+        {
+          "rank": 2,
+          "instance_id": "getmoto__moto-6408",
+          "sha256": "051002b290e3da7909998f246bd4ab51c74cc0166c24e9c77400eecfc24d5590",
+          "selected": true
+        },
+        {
+          "rank": 3,
+          "instance_id": "getmoto__moto-5960",
+          "sha256": "0a5d509c25896b3a30ad98411c74ba6253a57c21b0eebcab47c9cadd2a9b3f4d",
+          "selected": true
+        },
+        {
+          "rank": 4,
+          "instance_id": "getmoto__moto-6701",
+          "sha256": "0dcb4b96f4a4a98fecb1f8abcb0b0692fbeedc6082ba374786b39ed1d0a2a26b",
+          "selected": false
+        },
+        {
+          "rank": 5,
+          "instance_id": "getmoto__moto-5478",
+          "sha256": "127ab023d6c37949039364f6c9b0c868e3d219113cb7059c03b23a9501e98d5c",
+          "selected": false
+        },
+        {
+          "rank": 6,
+          "instance_id": "getmoto__moto-5545",
+          "sha256": "15e5fdad6d7e801e714df49102d6b0dab1f2c53590b905e2ee5abb94ae3c715b",
+          "selected": false
+        },
+        {
+          "rank": 7,
+          "instance_id": "getmoto__moto-7105",
+          "sha256": "1657c3a007502d77b06f9906011a65c998466462558534f99f868174174b6c70",
+          "selected": false
+        },
+        {
+          "rank": 8,
+          "instance_id": "getmoto__moto-6470",
+          "sha256": "16c568bbc4d5aa466799e3cf899105e7007ef4ff193951a916a160ca59c82c75",
+          "selected": false
+        },
+        {
+          "rank": 9,
+          "instance_id": "getmoto__moto-4799",
+          "sha256": "1b29e9f5fb2eb20940ff84990dc308c1e0b37361d62cf0204457994bb6918d18",
+          "selected": false
+        },
+        {
+          "rank": 10,
+          "instance_id": "getmoto__moto-6212",
+          "sha256": "1d1e622b534f9c9af8915ff1b70480e49f40222788d40838ae59f0c1acf71a5f",
+          "selected": false
+        },
+        {
+          "rank": 11,
+          "instance_id": "getmoto__moto-5737",
+          "sha256": "1d209662c43b45503bc09c9f675229eeee1df0a59710382fa7c14f36c0bf3a53",
+          "selected": false
+        },
+        {
+          "rank": 12,
+          "instance_id": "getmoto__moto-5794",
+          "sha256": "1e1939abd44e895184bb19b8c4be8b30a80b2c0221ba802c19e52ea2a54fd023",
+          "selected": false
+        },
+        {
+          "rank": 13,
+          "instance_id": "getmoto__moto-7273",
+          "sha256": "20aa1cd67db00564574e2eb034e418c4e85da43fbde53af2e910f9800376806b",
+          "selected": false
+        },
+        {
+          "rank": 14,
+          "instance_id": "getmoto__moto-7111",
+          "sha256": "29a58955418a9eeea7bb1e3ea3e7e23970f13148e865e1f7ba936e4b32a193a5",
+          "selected": false
+        },
+        {
+          "rank": 15,
+          "instance_id": "getmoto__moto-6317",
+          "sha256": "2e1d0f91b9c06d2856791f0357e8a629f2835571958c57c1008076caa8d4e321",
+          "selected": false
+        },
+        {
+          "rank": 16,
+          "instance_id": "getmoto__moto-5701",
+          "sha256": "30771bde343420a1b7678acf13372644310fe16ecfa9ea4497f9eac24f6f35d2",
+          "selected": false
+        },
+        {
+          "rank": 17,
+          "instance_id": "getmoto__moto-6469",
+          "sha256": "3549d49d0cb8bccc3808e2f3730429753527ee79e43767bbe9ed1c8dc9dc00a3",
+          "selected": false
+        },
+        {
+          "rank": 18,
+          "instance_id": "getmoto__moto-5899",
+          "sha256": "36f0c9ec98548c10a3fa757af7f262489b53c03cbba6339cb10f29462fff86d3",
+          "selected": false
+        },
+        {
+          "rank": 19,
+          "instance_id": "getmoto__moto-7495",
+          "sha256": "37b43aa4e09625bf31f99412b38e6dbfc2de41a7025bf0d8d5f731b0429cb3d5",
+          "selected": false
+        },
+        {
+          "rank": 20,
+          "instance_id": "getmoto__moto-6226",
+          "sha256": "37b88df87533153888851ce96145191c250993e3d758de0d049cb0ff5c7ad052",
+          "selected": false
+        },
+        {
+          "rank": 21,
+          "instance_id": "getmoto__moto-6508",
+          "sha256": "3a350eca393866db31f44b2fba2644217e30f74031299aef855f2eee333ea384",
+          "selected": false
+        },
+        {
+          "rank": 22,
+          "instance_id": "getmoto__moto-5406",
+          "sha256": "3fd2562dbb544dd42a79777ff07f7692d75eb330b59d440e719547fd9fb7e903",
+          "selected": false
+        },
+        {
+          "rank": 23,
+          "instance_id": "getmoto__moto-5980",
+          "sha256": "42a271450fc60b001d7cecaf1f00b6f26d8209ec8bd767a9562627532eb8cf68",
+          "selected": false
+        },
+        {
+          "rank": 24,
+          "instance_id": "getmoto__moto-5562",
+          "sha256": "48d917f0a33008f9793347064fb19dd9546ec57e995931670ad2f3c33ca7275a",
+          "selected": false
+        },
+        {
+          "rank": 25,
+          "instance_id": "getmoto__moto-4975",
+          "sha256": "5e79ce25b2e0c7a8573117be3614c46c655ecd413ff4800074bc084fc30e995e",
+          "selected": false
+        },
+        {
+          "rank": 26,
+          "instance_id": "getmoto__moto-5865",
+          "sha256": "5f707c775ea7faccad6e450110e2f486cf7d0b1b737ec7f77b5d555bc0324efa",
+          "selected": false
+        },
+        {
+          "rank": 27,
+          "instance_id": "getmoto__moto-7331",
+          "sha256": "6638384da1c000cd06c4908677f16866d3fd05bf2948eb3e6bc3ea73d4a280df",
+          "selected": false
+        },
+        {
+          "rank": 28,
+          "instance_id": "getmoto__moto-6121",
+          "sha256": "6897f87dad18513431d440656a036ae7eea50feb5e0103098d27f7da39f935b3",
+          "selected": false
+        },
+        {
+          "rank": 29,
+          "instance_id": "getmoto__moto-6387",
+          "sha256": "6f8c8afffb0ebd13f5f846e7cc10253abeb3567f5e19a1b942efd2dd1a4df691",
+          "selected": false
+        },
+        {
+          "rank": 30,
+          "instance_id": "getmoto__moto-5885",
+          "sha256": "76d0562058aa2ea033c267c1620ab15c837014eb47acdfd1af6ddac4157abd01",
+          "selected": false
+        },
+        {
+          "rank": 31,
+          "instance_id": "getmoto__moto-4833",
+          "sha256": "7c1e90ce660c2f7202714c6ec236da63c1f194aae31ab364429e64b6a318e44a",
+          "selected": false
+        },
+        {
+          "rank": 32,
+          "instance_id": "getmoto__moto-5417",
+          "sha256": "8b6c2e0a59d314a92127243b19544a4d38a84211ce32a0039a845cb3a5bc1687",
+          "selected": false
+        },
+        {
+          "rank": 33,
+          "instance_id": "getmoto__moto-6041",
+          "sha256": "8dae3eea966dc547e83e507c871fa5645853c4f7bbd5a10676c6aeff89d0f7be",
+          "selected": false
+        },
+        {
+          "rank": 34,
+          "instance_id": "getmoto__moto-4847",
+          "sha256": "8fa7ce3394c07116aca514600b20fec5fec0841a3e94a283836d05d6eb803c11",
+          "selected": false
+        },
+        {
+          "rank": 35,
+          "instance_id": "getmoto__moto-5020",
+          "sha256": "9545faabe3a0131f5c1d0abb773906d8d4aed121c59a468e087c2aa89d9910aa",
+          "selected": false
+        },
+        {
+          "rank": 36,
+          "instance_id": "getmoto__moto-5835",
+          "sha256": "962893570d2ee44e02bbdcdf1d1443681d9b12e0c55ada80434a94984a5a8f37",
+          "selected": false
+        },
+        {
+          "rank": 37,
+          "instance_id": "getmoto__moto-5286",
+          "sha256": "9854b8200296db8da18529286fbf086d855e9569eda3561b0af9c6d4a377e65c",
+          "selected": false
+        },
+        {
+          "rank": 38,
+          "instance_id": "getmoto__moto-7607",
+          "sha256": "9da68a03d770b0721770c279733a28b88233e83fb4664924c7018e53dbe07d33",
+          "selected": false
+        },
+        {
+          "rank": 39,
+          "instance_id": "getmoto__moto-6355",
+          "sha256": "9e4d1ffe04f03989275f0de688a56f2d7a8acb7c2724b1a72129b5ad39b7b29c",
+          "selected": false
+        },
+        {
+          "rank": 40,
+          "instance_id": "getmoto__moto-6157",
+          "sha256": "a7eaf10d547d82621b6a0f9f27d470862d427afa52a292fc820ed15d589e850d",
+          "selected": false
+        },
+        {
+          "rank": 41,
+          "instance_id": "getmoto__moto-7361",
+          "sha256": "adf91ac6653b648d936217b8e5b161ed12a4bfdff3153386e15522657cea26f8",
+          "selected": false
+        },
+        {
+          "rank": 42,
+          "instance_id": "getmoto__moto-7335",
+          "sha256": "b19d413f75e9cb78fef4d7f26da82d5a61fd9c969a0ecf3127b77011f242c96b",
+          "selected": false
+        },
+        {
+          "rank": 43,
+          "instance_id": "getmoto__moto-7484",
+          "sha256": "b589d096eb7c2c8918580529a8c7e7e5605169317513ceff7a586e9f353eecb7",
+          "selected": false
+        },
+        {
+          "rank": 44,
+          "instance_id": "getmoto__moto-4990",
+          "sha256": "b8a6117c27b940df5414ccf1cae605fc96316dc2b4aa2933d136b72a4c4b4be7",
+          "selected": false
+        },
+        {
+          "rank": 45,
+          "instance_id": "getmoto__moto-6022",
+          "sha256": "c0cbc02045c371eaa1bea8d90d94187a369e3d096dd27e7c134d38c06cb17577",
+          "selected": false
+        },
+        {
+          "rank": 46,
+          "instance_id": "getmoto__moto-7348",
+          "sha256": "d26549270fb7d2513364f89d1d7bd629fe593a380e7e0df8340885c121f786a7",
+          "selected": false
+        },
+        {
+          "rank": 47,
+          "instance_id": "getmoto__moto-5620",
+          "sha256": "d3562858ed9c39450658680ef4bae237c245ad72813429a9b1d417660ae77f64",
+          "selected": false
+        },
+        {
+          "rank": 48,
+          "instance_id": "getmoto__moto-6308",
+          "sha256": "d6367cce0edd69f9f00d63010a404bcbb3ff91718fcc82355301f7114867b472",
+          "selected": false
+        },
+        {
+          "rank": 49,
+          "instance_id": "getmoto__moto-6585",
+          "sha256": "d7059ac6ccf73575d5b46cafbf5291517a7468509f0d4daf1e2095660b641f81",
+          "selected": false
+        },
+        {
+          "rank": 50,
+          "instance_id": "getmoto__moto-5347",
+          "sha256": "e64f9d7fddbb821fc7b7bad00d5495ae0b8eeed197c3f1d313799790382dc786",
+          "selected": false
+        },
+        {
+          "rank": 51,
+          "instance_id": "getmoto__moto-5321",
+          "sha256": "eaf8b275cea8737611c4fa66cd30bdb15a0f04d48cfcd680c50890fd4b916f30",
+          "selected": false
+        },
+        {
+          "rank": 52,
+          "instance_id": "getmoto__moto-6178",
+          "sha256": "efd26e528272f3439a3e340433453a64217435fdf4ee3105fe82294bea746883",
+          "selected": false
+        },
+        {
+          "rank": 53,
+          "instance_id": "getmoto__moto-5699",
+          "sha256": "f5c017206f9cf35039186531f17d304f58458644f764c8631fad5122ac9cbb02",
+          "selected": false
+        },
+        {
+          "rank": 54,
+          "instance_id": "getmoto__moto-6913",
+          "sha256": "f85b4a53c07495d3a462487ae15f22d4e94602d6d109e8985432d34cc7d8b2a1",
+          "selected": false
+        },
+        {
+          "rank": 55,
+          "instance_id": "getmoto__moto-6114",
+          "sha256": "f8a306b6df381a23058c4a3989070ebd160d533772a7314c74b10ebc096fa0dc",
+          "selected": false
+        },
+        {
+          "rank": 56,
+          "instance_id": "getmoto__moto-5502",
+          "sha256": "f98144823d57a2c20dbdf9fff644fa21b4b7867b0cf3b28a7b09bb2fb7520c19",
+          "selected": false
+        }
+      ],
+      "pandas-dev/pandas": [
+        {
+          "rank": 1,
+          "instance_id": "pandas-dev__pandas-50319",
+          "sha256": "81c3e70b89153ae7151e1091434bab6965e9f159b10207092ae4bab48dc394e4",
+          "selected": true
+        },
+        {
+          "rank": 2,
+          "instance_id": "pandas-dev__pandas-51605",
+          "sha256": "8abffe10d64c26cfdf2f075eded85e56b5969da43a104d233377d57b177526bb",
+          "selected": true
+        }
+      ]
+    },
+    "requested_slots": 12,
+    "requested_per_repo": 3,
+    "selected_count": 11,
+    "pool_sizes": {
+      "iterative/dvc": {
+        "original_not_reviewed": 35,
+        "excluded_batch01": 3,
+        "excluded_batch02": 3,
+        "eligible": 29,
+        "selected": 3
+      },
+      "python/mypy": {
+        "original_not_reviewed": 40,
+        "excluded_batch01": 3,
+        "excluded_batch02": 3,
+        "eligible": 34,
+        "selected": 3
+      },
+      "getmoto/moto": {
+        "original_not_reviewed": 59,
+        "excluded_batch01": 0,
+        "excluded_batch02": 3,
+        "eligible": 56,
+        "selected": 3
+      },
+      "pandas-dev/pandas": {
+        "original_not_reviewed": 5,
+        "excluded_batch01": 0,
+        "excluded_batch02": 3,
+        "eligible": 2,
+        "selected": 2
+      }
+    },
+    "not_a_population_rate_estimator": true,
+    "size_adjustment": {
+      "repo": "pandas-dev/pandas",
+      "original_pool_count": 5,
+      "excluded_in_batch01": 0,
+      "excluded_in_batch02": 3,
+      "remaining_count": 2,
+      "selected_count": 2,
+      "reason": "原池排除已选题后仅剩2题；根任务接受本批实际目标11题/22个noop-gold引用。不是题目材料缺失，不保留待补虚构任务。",
+      "no_pool_expansion": true,
+      "no_cross_repo_replacement": true
+    }
+  },
+  "selection_input_files": {
+    "batch01_manifest": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/batch_manifest.json",
+      "sha256": "a19cfcda5df53f0aee924ecb2e2a4534535f69287e3e770a27bdcdc817683a22"
+    },
+    "batch02_manifest": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/batch_manifest.json",
+      "sha256": "26e171efc10a508c9fb7f18b6e33c3b9576f309e3999996aceff86bcb2812dcf"
+    }
+  },
+  "exporter_source": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/prepare_materials.py",
+    "sha256": "f50c00f929ac239fc50427fd3ec0b58ced14ac8c0ce90b0a22b74a586800c2b1"
+  },
+  "waves": [
+    [
+      "dvc",
+      "mypy"
+    ],
+    [
+      "moto",
+      "pandas"
+    ]
+  ],
+  "tasks": [
+    {
+      "instance_id": "iterative__dvc-6954",
+      "repo": "iterative/dvc",
+      "base_commit": "28dd39a1a0d710585ff21bf66199208b1b83cbde",
+      "package_id": "dvc",
+      "selection": "fixed_hash_sample",
+      "selection_sha256": "1ec6f40196ea942d2c71e5f96b384cda1f32e3617c86ca2498990a051dc11262",
+      "repo_mirror": "runs/env_overnight_20260916/repos/dvc",
+      "source_refs": {
+        "public": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+          "line": 143,
+          "raw_line_sha256": "3bcf87bad7caf8c89e321df8051bb82822a2e24c047a31adedcb366574fb604b",
+          "exported_file_sha256": "e2a6b8eaa289a9bf3d5d1290a01fda57991db60846472dd6258acaa307a2fa72"
+        },
+        "grading": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+          "line": 143,
+          "raw_line_sha256": "c2bc3970e8eb8e850ea0717739538b9f66b42acccef7f9e7f4cc2eff497416bb",
+          "exported_file_sha256": "4e30910d5e315c9a3e7dd187d9c9ce120a025cecf9f9db9b1fa1b7d4b56bf9e4"
+        },
+        "validation": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+          "line": 143,
+          "raw_line_sha256": "249edbc92eeb891ff3bcc58ddfd5ca50f53247096a7be4194de0a6da19c854ba",
+          "exported_file_sha256": "db9bff61aa4cb7948340ed5d7a1dbf939df37d0f84dcaf55b45d091b7f12693c"
+        }
+      },
+      "public_dir": "runs/swegym_quality_batch03_20260921_v1/public/iterative__dvc-6954",
+      "private_dir": "runs/swegym_quality_batch03_20260921_v1/private/iterative__dvc-6954",
+      "history_refs": "runs/swegym_quality_batch03_20260921_v1/history/iterative__dvc-6954/refs.json",
+      "output_dir": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-6954",
+      "environment": {
+        "status": "verified_environment_pair",
+        "evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json",
+        "task_key": "iterative__dvc-6954",
+        "selected_batch": "dvc_install_v1c",
+        "analysis": "runs/env_recipe_repair_20260919/dvc_install_v1c/analysis_68.json"
+      },
+      "environment_evidence_sha256": "f7be475de94b61ace5022c90902bba4e3fe82c2c544340e7fa6f14f136ddf0bf",
+      "history_sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_2/records/iterative__dvc-6954.json"
+      ],
+      "history_source_sha256": {
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_2/records/iterative__dvc-6954.json": "120615e351528eec5c01eaaba711929329b46029af619c21399dd79f2df14255"
+      }
+    },
+    {
+      "instance_id": "iterative__dvc-3665",
+      "repo": "iterative/dvc",
+      "base_commit": "a2de48bdfbba80a7e41e96a44c67d51ff36f0810",
+      "package_id": "dvc",
+      "selection": "fixed_hash_sample",
+      "selection_sha256": "202711c105a99e38f7ee309635511ac27c8c769d4c69fa530214550e4172c522",
+      "repo_mirror": "runs/env_overnight_20260916/repos/dvc",
+      "source_refs": {
+        "public": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+          "line": 125,
+          "raw_line_sha256": "16e2428880f96d4244a1a89927d22ae86c52f61409b1ecf1440e845e0eda3e24",
+          "exported_file_sha256": "c8c10b775d7909c3a1c9eb51eb1b47b582c4a5d9020cc3ebf050e059bf2b0d38"
+        },
+        "grading": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+          "line": 125,
+          "raw_line_sha256": "3f12c71197afa34ffea101ff5ae68e6f29235ffebbaafb11cda776a55207112d",
+          "exported_file_sha256": "e186d7075ca94d43e76c0173947fa93ecfb7d1cf2586fa2aa0fab103f85205fd"
+        },
+        "validation": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+          "line": 125,
+          "raw_line_sha256": "13b4cc63c60ef7e51fdb3124f924a715d19bddd12a4ce2a50ac8e954007a7f72",
+          "exported_file_sha256": "b84886135d4df9f6067eadb0de1fc4dce442b22f3a32a594a120081b42926af7"
+        }
+      },
+      "public_dir": "runs/swegym_quality_batch03_20260921_v1/public/iterative__dvc-3665",
+      "private_dir": "runs/swegym_quality_batch03_20260921_v1/private/iterative__dvc-3665",
+      "history_refs": "runs/swegym_quality_batch03_20260921_v1/history/iterative__dvc-3665/refs.json",
+      "output_dir": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-3665",
+      "environment": {
+        "status": "verified_environment_pair",
+        "evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json",
+        "task_key": "iterative__dvc-3665",
+        "selected_batch": "dvc_install_v1c",
+        "analysis": "runs/env_recipe_repair_20260919/dvc_install_v1c/analysis_68.json"
+      },
+      "environment_evidence_sha256": "f7be475de94b61ace5022c90902bba4e3fe82c2c544340e7fa6f14f136ddf0bf",
+      "history_sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_1/records/iterative__dvc-3665.json"
+      ],
+      "history_source_sha256": {
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_1/records/iterative__dvc-3665.json": "79e98f1ae0c15e58be15a3abe58a2dab4e4835b4610e9e2e044005cd63d4b907"
+      }
+    },
+    {
+      "instance_id": "iterative__dvc-4785",
+      "repo": "iterative/dvc",
+      "base_commit": "7da3de451f1580d0c48d7f0a82b1f96ea0e91157",
+      "package_id": "dvc",
+      "selection": "fixed_hash_sample",
+      "selection_sha256": "25528bac79eebb9a2332c861a8ad53949ba58e00e752a5e31e13cc3b6a36d2dc",
+      "repo_mirror": "runs/env_overnight_20260916/repos/dvc",
+      "source_refs": {
+        "public": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+          "line": 135,
+          "raw_line_sha256": "98e1ed14340952a2a48102975aa3c3f9cc64f89b31b23a8c3626b8ebd2661588",
+          "exported_file_sha256": "8ff0efbffb3abbe5b1be041f3f0c917d3a5e5b1c27b2e1488503b6d994f0839b"
+        },
+        "grading": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+          "line": 135,
+          "raw_line_sha256": "83f1284063ea9509497f4f7c48bba8246bcde26fe91135c1a37d35024b1a0f62",
+          "exported_file_sha256": "415316d2c92136aa6d3682f5ea43d1360a21e44e9ae3b3612a6ca9d551e418ad"
+        },
+        "validation": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+          "line": 135,
+          "raw_line_sha256": "e466728af1cf53bcffd3620bba5bba1235d643f959708ba56fa5b53e26c4e2ce",
+          "exported_file_sha256": "a1432efd343436819016d38515862b007fe7c2d4093fadacd1f5b4155684937f"
+        }
+      },
+      "public_dir": "runs/swegym_quality_batch03_20260921_v1/public/iterative__dvc-4785",
+      "private_dir": "runs/swegym_quality_batch03_20260921_v1/private/iterative__dvc-4785",
+      "history_refs": "runs/swegym_quality_batch03_20260921_v1/history/iterative__dvc-4785/refs.json",
+      "output_dir": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-4785",
+      "environment": {
+        "status": "verified_environment_pair",
+        "evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json",
+        "task_key": "iterative__dvc-4785",
+        "selected_batch": "dvc_install_v1c",
+        "analysis": "runs/env_recipe_repair_20260919/dvc_install_v1c/analysis_68.json"
+      },
+      "environment_evidence_sha256": "f7be475de94b61ace5022c90902bba4e3fe82c2c544340e7fa6f14f136ddf0bf",
+      "history_sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_2/records/iterative__dvc-4785.json"
+      ],
+      "history_source_sha256": {
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_2/records/iterative__dvc-4785.json": "d6493d1298c0156d060eb242638ce4fbda391973e715d35a9aff527f7fec8329"
+      }
+    },
+    {
+      "instance_id": "python__mypy-15139",
+      "repo": "python/mypy",
+      "base_commit": "16b936c15b074db858729ed218248ef623070e03",
+      "package_id": "mypy",
+      "selection": "fixed_hash_sample",
+      "selection_sha256": "036179128da1ee6a5830ddf02d382bdd30e3985c029923e122062378501e59d5",
+      "repo_mirror": "runs/env_overnight_20260916/repos/mypy",
+      "source_refs": {
+        "public": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+          "line": 202,
+          "raw_line_sha256": "c56f7fc12cf233340a51bcc457e1a681879fa13f8db1691552388f47ee417e2b",
+          "exported_file_sha256": "d10730f6964b6bc6bcefa7f64e7758befba4d6eb486730a2350b0f529a0fb49b"
+        },
+        "grading": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+          "line": 202,
+          "raw_line_sha256": "d63eaba71063ff4ae8b3cded6448fa37e6c3ce97c97a93fee3cf974e21ad1223",
+          "exported_file_sha256": "ac884279c7d98a6b0059e1400934e086597fd83b387b8e55037440d0a892f137"
+        },
+        "validation": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+          "line": 202,
+          "raw_line_sha256": "54fb0c9f81a07eb372037cf3ee0aaad937bb6731c43014944802cfe4d6bf6208",
+          "exported_file_sha256": "67fcaab397e20fdeb44b22941e763fe2ad88a53024151ed9a5ac316332d1b656"
+        }
+      },
+      "public_dir": "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15139",
+      "private_dir": "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-15139",
+      "history_refs": "runs/swegym_quality_batch03_20260921_v1/history/python__mypy-15139/refs.json",
+      "output_dir": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15139",
+      "environment": {
+        "status": "verified_environment_pair",
+        "evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json",
+        "task_key": "python__mypy-15139",
+        "selected_batch": "install_wave1",
+        "analysis": "runs/env_recipe_repair_20260919/install_wave1/analysis_149.json"
+      },
+      "environment_evidence_sha256": "f7be475de94b61ace5022c90902bba4e3fe82c2c544340e7fa6f14f136ddf0bf",
+      "history_sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_2/records/python__mypy-15139.json"
+      ],
+      "history_source_sha256": {
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_2/records/python__mypy-15139.json": "0dd09801121a968680d6949c50e8b266b87a475a15bd511a67dcbecf45bd4558"
+      }
+    },
+    {
+      "instance_id": "python__mypy-15184",
+      "repo": "python/mypy",
+      "base_commit": "13f35ad0915e70c2c299e2eb308968c86117132d",
+      "package_id": "mypy",
+      "selection": "fixed_hash_sample",
+      "selection_sha256": "085e0c32fffa3904d543adbc76e91539d4a1258f01494905328a7f72103734b4",
+      "repo_mirror": "runs/env_overnight_20260916/repos/mypy",
+      "source_refs": {
+        "public": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+          "line": 203,
+          "raw_line_sha256": "92516ea7b360392ca0196087a2d509d3ff37ebcdffcaf4634502d55d8a58309a",
+          "exported_file_sha256": "2b25cddb768f62d7c651206709125695c54281f4f9ee82419880ed934c9896aa"
+        },
+        "grading": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+          "line": 203,
+          "raw_line_sha256": "80312c9c879cbb60222ea0ac4b0bc34446aac3da097a251181e4e57d31740b42",
+          "exported_file_sha256": "8a4b204701f3b814e2f74c0b5aaa0230543855583c4d87e815d1adb2c4a1d531"
+        },
+        "validation": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+          "line": 203,
+          "raw_line_sha256": "4cc4023fc91ee3ed35a3425f0b2965929731de94be67ca39ba4486dd71607a9f",
+          "exported_file_sha256": "e0afc4c16cdeb8e744c0d1783c6870097ddbd5e3f8b7c787fbd49430d9ef732e"
+        }
+      },
+      "public_dir": "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184",
+      "private_dir": "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-15184",
+      "history_refs": "runs/swegym_quality_batch03_20260921_v1/history/python__mypy-15184/refs.json",
+      "output_dir": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184",
+      "environment": {
+        "status": "verified_environment_pair",
+        "evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json",
+        "task_key": "python__mypy-15184",
+        "selected_batch": "install_wave1",
+        "analysis": "runs/env_recipe_repair_20260919/install_wave1/analysis_149.json"
+      },
+      "environment_evidence_sha256": "f7be475de94b61ace5022c90902bba4e3fe82c2c544340e7fa6f14f136ddf0bf",
+      "history_sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_2/records/python__mypy-15184.json"
+      ],
+      "history_source_sha256": {
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_2/records/python__mypy-15184.json": "bc7d8133e630c143e1a12af1c719d0427f501823d9984c6239f046e5ebb74e2f"
+      }
+    },
+    {
+      "instance_id": "python__mypy-10174",
+      "repo": "python/mypy",
+      "base_commit": "c8bae06919674b9846e3ff864b0a44592db888eb",
+      "package_id": "mypy",
+      "selection": "fixed_hash_sample",
+      "selection_sha256": "09b9fe1bc603fa9c656d23279d3a2148fc5f50294134107d3abbdaa2bed7be0d",
+      "repo_mirror": "runs/env_overnight_20260916/repos/mypy",
+      "source_refs": {
+        "public": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+          "line": 177,
+          "raw_line_sha256": "4e799c4f2c547823042e96fe7c682f1667c9c22923642c0b2f3e5cef3660622f",
+          "exported_file_sha256": "cbd041e5e9e38b9043c9a46597b2d558983185e0a1742679d87ed779770bdc31"
+        },
+        "grading": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+          "line": 177,
+          "raw_line_sha256": "26fee932fba74bf9854b138fcbb7f0bdb2a762fd526301385f808f5a2c069c61",
+          "exported_file_sha256": "bf69b2f3ba59d4318b87b51240507e4a57a0767fe9e41ca64ad6cb8715a97f67"
+        },
+        "validation": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+          "line": 177,
+          "raw_line_sha256": "9efe3f9106910fd356b46dc409a4296b10500b4ac561ec5ed30b8f1c95ff0b8d",
+          "exported_file_sha256": "bb35e4393562cca32ae3f633b55c46dba8680a2d81c07b9a5d9a5da91ab3146e"
+        }
+      },
+      "public_dir": "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174",
+      "private_dir": "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174",
+      "history_refs": "runs/swegym_quality_batch03_20260921_v1/history/python__mypy-10174/refs.json",
+      "output_dir": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-10174",
+      "environment": {
+        "status": "verified_environment_pair",
+        "evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json",
+        "task_key": "python__mypy-10174",
+        "selected_batch": "install_wave1",
+        "analysis": "runs/env_recipe_repair_20260919/install_wave1/analysis_149.json"
+      },
+      "environment_evidence_sha256": "f7be475de94b61ace5022c90902bba4e3fe82c2c544340e7fa6f14f136ddf0bf",
+      "history_sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_1/records/python__mypy-10174.json"
+      ],
+      "history_source_sha256": {
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_1/records/python__mypy-10174.json": "2ca19d056f692cba31cc0d36efa98e557f840c2f4832cf1e796f2a223bb35245"
+      }
+    },
+    {
+      "instance_id": "getmoto__moto-6185",
+      "repo": "getmoto/moto",
+      "base_commit": "dc460a325839bc6797084a54afc297a2c9d87e63",
+      "package_id": "moto",
+      "selection": "fixed_hash_sample",
+      "selection_sha256": "021eced56aecbdd749348804c91cb6c546d72a4c3d22478ecee68a1eb720062e",
+      "repo_mirror": "runs/env_overnight_20260916/repos/moto",
+      "source_refs": {
+        "public": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+          "line": 87,
+          "raw_line_sha256": "4c072dd01ca6e13461372a3ed87bf154b96ff69e4043443f3fef3e4c6cc3d263",
+          "exported_file_sha256": "805cce4840d0c1625c699445a037bc828a9287d0a4a1775aa1a33520a4c14c5a"
+        },
+        "grading": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+          "line": 87,
+          "raw_line_sha256": "1f6cf98dba0047066761c58201d7d4334f486f5f927e5432cd478bbe6a75df39",
+          "exported_file_sha256": "bcb27e16295ed149f3b5e43c41e30738b6453ee140b23f4115256822525e2036"
+        },
+        "validation": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+          "line": 87,
+          "raw_line_sha256": "84915e8aeb9420e8cc11c774d5e86d1e2f62474bfb07c52699ebcad86dd58f68",
+          "exported_file_sha256": "23c8eab85d15304fcf3a91cba03af8eb59dfddff836339c1087fd1ed0a06bd42"
+        }
+      },
+      "public_dir": "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185",
+      "private_dir": "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185",
+      "history_refs": "runs/swegym_quality_batch03_20260921_v1/history/getmoto__moto-6185/refs.json",
+      "output_dir": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6185",
+      "environment": {
+        "status": "verified_environment_pair",
+        "evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json",
+        "task_key": "getmoto__moto-6185",
+        "selected_batch": "install_wave1",
+        "analysis": "runs/env_recipe_repair_20260919/install_wave1/analysis_149.json"
+      },
+      "environment_evidence_sha256": "f7be475de94b61ace5022c90902bba4e3fe82c2c544340e7fa6f14f136ddf0bf",
+      "history_sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_moto_2/records/getmoto__moto-6185.json"
+      ],
+      "history_source_sha256": {
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_moto_2/records/getmoto__moto-6185.json": "1e7993758f1bf990bb7982d275ba62bcf63acae5b297ddca838f6b0e97f6a35f"
+      }
+    },
+    {
+      "instance_id": "getmoto__moto-6408",
+      "repo": "getmoto/moto",
+      "base_commit": "1dfbeed5a72a4bd57361e44441d0d06af6a2e58a",
+      "package_id": "moto",
+      "selection": "fixed_hash_sample",
+      "selection_sha256": "051002b290e3da7909998f246bd4ab51c74cc0166c24e9c77400eecfc24d5590",
+      "repo_mirror": "runs/env_overnight_20260916/repos/moto",
+      "source_refs": {
+        "public": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+          "line": 94,
+          "raw_line_sha256": "440220be7ea4f6aa83741b98e1a02a9eeb8ea8138dd2924503e91ebb3c661cc8",
+          "exported_file_sha256": "d195f0b824555d8340301d17fa9c145e1bc82d3033a1399220e115ba87326fc2"
+        },
+        "grading": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+          "line": 94,
+          "raw_line_sha256": "c3d83fdbee10ec0a898aa8103899876e2d699ede56e4933e51ac380eb36a8411",
+          "exported_file_sha256": "2c4284d51f0d8b2eaf62e7f0206c3b218a0afeaaef1b7eb94383f758c164761f"
+        },
+        "validation": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+          "line": 94,
+          "raw_line_sha256": "34944257e062e42c8854953376a2d9f1eb4d23935186431f1f7991726d0f1640",
+          "exported_file_sha256": "e3b160e99f5ab4e64a7535c71433936ff6cc088082206ed77d61235b9a44a6cf"
+        }
+      },
+      "public_dir": "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6408",
+      "private_dir": "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6408",
+      "history_refs": "runs/swegym_quality_batch03_20260921_v1/history/getmoto__moto-6408/refs.json",
+      "output_dir": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408",
+      "environment": {
+        "status": "verified_environment_pair",
+        "evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json",
+        "task_key": "getmoto__moto-6408",
+        "selected_batch": "install_wave1",
+        "analysis": "runs/env_recipe_repair_20260919/install_wave1/analysis_149.json"
+      },
+      "environment_evidence_sha256": "f7be475de94b61ace5022c90902bba4e3fe82c2c544340e7fa6f14f136ddf0bf",
+      "history_sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_moto_3/records/getmoto__moto-6408.json"
+      ],
+      "history_source_sha256": {
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_moto_3/records/getmoto__moto-6408.json": "cfd92b37fc51e29d6be2d9ae2283913601f701fd22db1f50ed297c6aed4abe6d"
+      }
+    },
+    {
+      "instance_id": "getmoto__moto-5960",
+      "repo": "getmoto/moto",
+      "base_commit": "d1e3f50756fdaaea498e8e47d5dcd56686e6ecdf",
+      "package_id": "moto",
+      "selection": "fixed_hash_sample",
+      "selection_sha256": "0a5d509c25896b3a30ad98411c74ba6253a57c21b0eebcab47c9cadd2a9b3f4d",
+      "repo_mirror": "runs/env_overnight_20260916/repos/moto",
+      "source_refs": {
+        "public": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+          "line": 79,
+          "raw_line_sha256": "6d96395e184131eae9c2c44b5797ad70ef54348e20600d07a8f139b6eaa3e5fa",
+          "exported_file_sha256": "1cceadd574085e3ecb355ae2346fd56e6e35c57a526d520ae95a41ce55167654"
+        },
+        "grading": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+          "line": 79,
+          "raw_line_sha256": "db6a1f6063e269f59f2b081c31e4aa237feb1f3c5db03c089ae1eac895035d5a",
+          "exported_file_sha256": "c17eedd7384eb66e08bf4c86d98c362ffd294dc2aa209df0dad26957536ba293"
+        },
+        "validation": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+          "line": 79,
+          "raw_line_sha256": "bf30ea5df00b7419b62b75aec602e302fc44aabd5fdd3e08a37d9249bdc2a455",
+          "exported_file_sha256": "724987ca5f0b781954deb1e691ffd6f285be3a0706cc7b05ceaf1b95751b42d3"
+        }
+      },
+      "public_dir": "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-5960",
+      "private_dir": "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960",
+      "history_refs": "runs/swegym_quality_batch03_20260921_v1/history/getmoto__moto-5960/refs.json",
+      "output_dir": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-5960",
+      "environment": {
+        "status": "verified_environment_pair",
+        "evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json",
+        "task_key": "getmoto__moto-5960",
+        "selected_batch": "install_wave1",
+        "analysis": "runs/env_recipe_repair_20260919/install_wave1/analysis_149.json"
+      },
+      "environment_evidence_sha256": "f7be475de94b61ace5022c90902bba4e3fe82c2c544340e7fa6f14f136ddf0bf",
+      "history_sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_moto_2/records/getmoto__moto-5960.json"
+      ],
+      "history_source_sha256": {
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_moto_2/records/getmoto__moto-5960.json": "c513f621fac79a758ea04bf1dd4663de0871e9f663b20b15835580ce28ed4b5a"
+      }
+    },
+    {
+      "instance_id": "pandas-dev__pandas-50319",
+      "repo": "pandas-dev/pandas",
+      "base_commit": "1613f26ff0ec75e30828996fd9ec3f9dd5119ca6",
+      "package_id": "pandas",
+      "selection": "fixed_hash_sample",
+      "selection_sha256": "81c3e70b89153ae7151e1091434bab6965e9f159b10207092ae4bab48dc394e4",
+      "repo_mirror": "runs/env_overnight_20260916/repos/pandas",
+      "source_refs": {
+        "public": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+          "line": 153,
+          "raw_line_sha256": "0a9b31050d4a20df1fab7be0c1fa147a314407315b70d0a08c84ed8abd171b21",
+          "exported_file_sha256": "9d76f8786fb5c386311a1df4dc794f71a26335a58011b9649236a7532553ea10"
+        },
+        "grading": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+          "line": 153,
+          "raw_line_sha256": "1762e9b770214443e8641b01a47334530b1da4c3d4b4a7b2cca658868b538aa4",
+          "exported_file_sha256": "119f9d95e11842320aa2855ee1ab8ec834e72725f412065ebf25f5cf6f6116c7"
+        },
+        "validation": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+          "line": 153,
+          "raw_line_sha256": "089b0e78ab46f772fd173d1ed970d9cd67b0e1722d6b5b2d5d494054690572a5",
+          "exported_file_sha256": "c8d96de3ac7c54918ad4f9a9e6caaea2b2d09fa12dbf6ef1a5ffb83667dc87ce"
+        }
+      },
+      "public_dir": "runs/swegym_quality_batch03_20260921_v1/public/pandas-dev__pandas-50319",
+      "private_dir": "runs/swegym_quality_batch03_20260921_v1/private/pandas-dev__pandas-50319",
+      "history_refs": "runs/swegym_quality_batch03_20260921_v1/history/pandas-dev__pandas-50319/refs.json",
+      "output_dir": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/pandas-dev__pandas-50319",
+      "environment": {
+        "status": "verified_environment_pair",
+        "evidence": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json",
+        "task_key": "pandas-dev__pandas-50319",
+        "selected_batch": "reference_v1",
+        "analysis": "runs/env_recipe_repair_20260919/reference_v1/analysis_20.json"
+      },
+      "environment_evidence_sha256": "f7be475de94b61ace5022c90902bba4e3fe82c2c544340e7fa6f14f136ddf0bf",
+      "history_sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_modin_pandas/records/pandas-dev__pandas-50319.json"
+      ],
+      "history_source_sha256": {
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_modin_pandas/records/pandas-dev__pandas-50319.json": "34d3cc95d9e22ab295f4822192914fde8f7ea3eff9cf253af73940f7f58572b6"
+      }
+    },
+    {
+      "instance_id": "pandas-dev__pandas-51605",
+      "repo": "pandas-dev/pandas",
+      "base_commit": "b070d87f118709f7493dfd065a17ed506c93b59a",
+      "package_id": "pandas",
+      "selection": "fixed_hash_sample",
+      "selection_sha256": "8abffe10d64c26cfdf2f075eded85e56b5969da43a104d233377d57b177526bb",
+      "repo_mirror": "runs/env_overnight_20260916/repos/pandas",
+      "source_refs": {
+        "public": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+          "line": 154,
+          "raw_line_sha256": "3bbfbbc278886c66cf6bc4c12eaf7d4368a2337a17497d864af0d49970f6d205",
+          "exported_file_sha256": "9bc1c341a65405ebc81ee07539d57a48e82e42428dc790bc2164315c16f428de"
+        },
+        "grading": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+          "line": 154,
+          "raw_line_sha256": "1697e233eb17b79313b570570ed98e45959bade5e9f29cf76ee26a97e4500c33",
+          "exported_file_sha256": "142152e5a40523adcee47ed1ccfaa3ae6089192f5aa287ee229ee8f281d5b56b"
+        },
+        "validation": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+          "line": 154,
+          "raw_line_sha256": "1523dde7cd31d298922b1047ac0ae4cba051e931347291c0fb35b69e692ad8de",
+          "exported_file_sha256": "b57957c79e753fa6020f86277db7bc29b06fcac4e900d594aa67dabc742cc926"
+        }
+      },
+      "public_dir": "runs/swegym_quality_batch03_20260921_v1/public/pandas-dev__pandas-51605",
+      "private_dir": "runs/swegym_quality_batch03_20260921_v1/private/pandas-dev__pandas-51605",
+      "history_refs": "runs/swegym_quality_batch03_20260921_v1/history/pandas-dev__pandas-51605/refs.json",
+      "output_dir": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/pandas-dev__pandas-51605",
+      "environment": {
+        "status": "baseline_pair_no_known_environment_issue",
+        "evidence": "runs/env_recipe_repair_20260919/scope_reconciliation_20260920.json",
+        "task_key": "pandas-dev__pandas-51605",
+        "limit": "Each original noop=0 with observed target failure and no installation failure in zero audit; original gold=1 and full test command rc=0. No new quality/stability certification."
+      },
+      "environment_evidence_sha256": "3369bb0d89f3177c9e0fd03513db5787e7f6e84eb25058847284d825dccff85d",
+      "history_sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_modin_pandas/records/pandas-dev__pandas-51605.json"
+      ],
+      "history_source_sha256": {
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_modin_pandas/records/pandas-dev__pandas-51605.json": "1e1d4cbbe5b0cddbd6a3b6a4e1f334ba5338c6ded5e51356ab08ab832606f89b"
+      }
+    }
+  ],
+  "materials_version": "v1_reuses_batch02_v2_explicit_unmaterialized_gitlinks",
+  "material_output": "runs/swegym_quality_batch03_20260921_v1",
+  "material_limitations": [
+    "所有材料仅用于静态审查，不代表真实actor环境、运行或任务质量已通过。",
+    "Moto三题均有Terraform provider gitlink；精确commit记入base_identity，不取回或运行子模块。",
+    "Pandas原池已耗尽，本批实际规模11题；22个历史noop/gold证据引用，无虚构第12题。"
+  ]
+}

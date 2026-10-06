@@ -1,0 +1,13 @@
+{
+  "schema": "swe_pydantic8511.v2_targetfix_request_guard_local_failure.v1",
+  "stage": "request_local_join_before_write",
+  "actual_rc": 1,
+  "exception": "KeyError: error at generator line20",
+  "source_sha256": "80d9cef0d6bf55cf2660f8fcde65de130212b78fcf2105d5fc613d19438dda84",
+  "source_snapshot": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/generate_8511_v2_targetfix_fp_regrade_request_source_guard_attempt01.py",
+  "cause": "受审runner成功status不生成error字段；生成器直接索引可选error导致本地preflight失败，CPU真实四行已成功且独立验收通过。",
+  "CPU_rerun": false,
+  "output_created": false,
+  "model_sampling": 0,
+  "fix": "only actual[error]→actual.get(error),保持成功status/四行/独立reportSHA等全部guard。"
+}

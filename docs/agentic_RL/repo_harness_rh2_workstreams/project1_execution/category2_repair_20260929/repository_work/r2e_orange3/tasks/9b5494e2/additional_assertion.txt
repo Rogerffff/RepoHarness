@@ -1,0 +1,11 @@
+
+        # The public default is multi_class="auto" with lbfgs. On multiclass
+        # data, this preserves the explicitly requested multinomial model.
+        # Compare two observable probability predictions, not gold constants.
+        default_model = LogisticRegressionLearner()(self.iris)
+        multinomial_model = LogisticRegressionLearner(
+            multi_class="multinomial")(self.iris)
+        np.testing.assert_allclose(
+            default_model(self.iris, Model.Probs),
+            multinomial_model(self.iris, Model.Probs),
+            rtol=1e-5, atol=1e-7)

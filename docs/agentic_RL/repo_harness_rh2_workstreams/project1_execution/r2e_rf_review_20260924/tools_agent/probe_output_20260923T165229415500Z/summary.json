@@ -1,0 +1,128 @@
+{
+  "source_sha256": {
+    "rh2/scripts/reconcile_r2e.py": "c53232bec9cb24f930a9c5d0e488dc7b15d419a02eef0807ed73f8887700dd1b",
+    "rh2/scripts/build_r2e_derived.py": "0182c6126c4019e47e43077d68b52ae1d7a6bebb3e44c9e77dab6a01b5f7053a"
+  },
+  "work": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_rf_review_20260924/tools_agent/probe_output_20260923T165229415500Z",
+  "F1_status_mismatch": {
+    "agree": false,
+    "reward_equal": true,
+    "diff_sets_equal": true,
+    "observed_maps_equal": false,
+    "reference_ledger_consistent": null,
+    "m3_ledger_rewards": [],
+    "exit_code": 0
+  },
+  "F1_ledger_contradiction": {
+    "agree": true,
+    "reward_equal": true,
+    "diff_sets_equal": true,
+    "observed_maps_equal": true,
+    "reference_ledger_consistent": false,
+    "m3_ledger_rewards": [
+      1
+    ],
+    "exit_code": 0
+  },
+  "null_reward_observation": {
+    "agree": true,
+    "reward_equal": true,
+    "diff_sets_equal": true,
+    "observed_maps_equal": true,
+    "reference_ledger_consistent": true,
+    "m3_ledger_rewards": [
+      null
+    ],
+    "exit_code": 0
+  },
+  "mixed_reference_sources_observation": {
+    "agree": false,
+    "reward_equal": false,
+    "diff_sets_equal": false,
+    "observed_maps_equal": false,
+    "reference_ledger_consistent": false,
+    "m3_ledger_rewards": [
+      0
+    ],
+    "exit_code": 0
+  },
+  "F2_two_process_exclusion": {
+    "contenders": [
+      {
+        "flags": [
+          "--all"
+        ],
+        "exit_code": 2,
+        "error": "output_dir_locked"
+      },
+      {
+        "flags": [
+          "--regenerate-overlays"
+        ],
+        "exit_code": 2,
+        "error": "output_dir_locked"
+      }
+    ],
+    "owner_exit_code": 0,
+    "lock_released": true,
+    "regenerated": true
+  },
+  "F2_read_write_coverage": {
+    "events": [
+      {
+        "operation": "read",
+        "path": "results.json"
+      },
+      {
+        "operation": "write",
+        "path": "coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/facts.json"
+      },
+      {
+        "operation": "read",
+        "path": "coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/facts.json"
+      },
+      {
+        "operation": "write",
+        "path": "overlays.jsonl"
+      },
+      {
+        "operation": "write",
+        "path": "results.json"
+      },
+      {
+        "operation": "read",
+        "path": "coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/facts.json"
+      },
+      {
+        "operation": "write",
+        "path": "overlays.jsonl"
+      }
+    ],
+    "all_inside_lock": true,
+    "previous_results_preserved": true
+  },
+  "F2_exception_release": [
+    {
+      "case": "runtime_error",
+      "lock_released": true
+    },
+    {
+      "case": "keyboard_interrupt",
+      "lock_released": true
+    },
+    {
+      "case": "system_exit",
+      "lock_released": true
+    },
+    {
+      "case": "malformed_facts",
+      "lock_released": true
+    }
+  ],
+  "F2_lock_header_write_error_observation": {
+    "lock_left_behind": true,
+    "lock_bytes": 0,
+    "retry_exit_code": 2,
+    "overlays_written": false
+  }
+}

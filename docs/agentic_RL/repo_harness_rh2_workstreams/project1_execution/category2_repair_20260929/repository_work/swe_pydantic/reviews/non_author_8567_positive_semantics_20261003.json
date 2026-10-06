@@ -1,0 +1,166 @@
+{
+  "schema": "swe_pydantic.non_author_8567_positive_semantics_review.v1",
+  "as_of": "2026-10-03",
+  "reviewer": "Codex non-author subagent",
+  "revision_id": "pyd8567-order-old-behavior-v5",
+  "revision_sha256": "22636f9481cc93a112a768043a21cc8d9d5ae8abaf6be1fffdc96a3aa870b81a",
+  "effective_test_patch_sha256": "a1ed762e8f64ddaa9654c2281e66e7be993de5b6b13a27ee04e8cf3387e5bfc6",
+  "candidate_patch_sha256": {
+    "ok_post_attach": "8095d0789fc5edc5fc6d4a693aabed717e2ec26faf926fc25b79c0b1da0d6543",
+    "c3_reorder": "221bbe05b331ff83740ba64eff3a91666c5eb0b2062e80b1fa3c4e75721f86a1"
+  },
+  "report_sha256": "93e3978dfa0e8d3cf9f5c507ab862a06b98ad29ac9dba81d83ee1d3cf4465517",
+  "scope": "narrow_source_semantics_review_reusing_prior_material_checks_and_applicable_cloud_v4_evidence",
+  "context_disclosure": {
+    "fresh_blind": false,
+    "author_private_context_read": true,
+    "known_positive_and_negative_controls_seen": true,
+    "prior_four_node_evidence_reused": true,
+    "old_cloud_v4_semantics_reused": true,
+    "old_31_row_matrix_rerun": false
+  },
+  "actions": {
+    "ssh": false,
+    "docker": false,
+    "network": false,
+    "model": false,
+    "project_dependencies_imported_or_tests_run": false,
+    "fixed_publication_members_modified": false,
+    "shared_code_or_ledger_modified": false,
+    "external_thread_messages": false
+  },
+  "findings": [],
+  "conclusion": {
+    "both_can_remain_positive_control_nominees": true,
+    "public_order_problem_fix_has_real_source_mechanism": true,
+    "new_proven_public_behavior_regression": false,
+    "complete_162_reference_positive_controls_verified": false,
+    "general_semantics_verified": false,
+    "new_publication_blocker": false,
+    "ordinary_probe_ready_by_this_report": false
+  },
+  "source_trace": {
+    "apply_annotations": "base/pydantic/_internal/_generate_schema.py:1693",
+    "get_wrapped_inner_schema": "base/pydantic/_internal/_generate_schema.py:1805",
+    "plain_validator_no_handler": "base/pydantic/functional_validators.py:155",
+    "plain_serializer": "base/pydantic/functional_serializers.py:32",
+    "wrap_serializer": "base/pydantic/functional_serializers.py:75",
+    "callback_handler": "base/pydantic/_internal/_schema_generation_shared.py:66"
+  },
+  "candidates": {
+    "c3_reorder": {
+      "mechanism": "move only builtin PlainSerializer/WrapSerializer from left of last PlainValidator immediately outside it, retaining their order and other metadata order",
+      "inner_validation_handler_called_by_plain_validator": false,
+      "validation_preservation_evidence": "PlainValidator remains unmodified; other left metadata stays inside its skipped handler",
+      "serialization_priority": "right serializers stay outer; moved serializers keep relative order and use unchanged builtin setters",
+      "existing_four_nodes": "all_passed_in_reused_private_root_diagnostic",
+      "cloud_v4_independent_semantics_and_formal_31_rows": "reused_with_original_scope",
+      "cpu_formal_current_162_references": "pending"
+    },
+    "ok_post_attach": {
+      "mechanism": "after original schema build, preserve any existing serializer along builtin function wrappers; otherwise attach dropped serializers with a handler returning the already built schema",
+      "inner_source_type_handler_reconstructed": false,
+      "validation_preservation_evidence": "original PlainValidator already skipped left metadata; attachment handler returns current result instead of generating source_type",
+      "serialization_priority": "existing serializer at root or inside function-before/after/wrap prevents inner reattachment",
+      "existing_four_nodes": "all_passed_in_reused_private_root_diagnostic",
+      "old_v4_independent_reasonable_implementation_evidence": "reused_with_original_scope",
+      "generic_custom_schema_topology_support": "not_claimed",
+      "cpu_formal_current_162_references": "pending"
+    }
+  },
+  "new_behavior_evidence": {
+    "B03_unsupported_source_serializer_both_orders": "existing_private_run_pass_for_both",
+    "B06_unresolved_inner_forward_ref": "existing_private_run_pass_for_both",
+    "N3_python38_stdlib_typing_typeddict_inner": "existing_private_run_pass_for_both",
+    "four_node_scope": {
+      "scope": "readback_of_private_root_selected_nodes_not_formal_cpu_acceptance",
+      "job": "pyd8567-private-v1-20261002T180810Z-1e758",
+      "source_release": "cat2-cpu-r2e078079-swe7-git-20261003-v1",
+      "release_manifest_sha256": "80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9",
+      "image_actual": "sha256:bc5d796fe30c9c0150a1c15c25347a98f0a1f25bf5f8d9cb098756b38b3c2b74",
+      "artifact_count_verified": 56,
+      "artifact_hash_errors": [],
+      "parsed_nodes_equal_results": true,
+      "parsed_variants": {
+        "c3_reorder": {
+          "tests/test_validators.py::test_plain_validator_plain_serializer": "PASSED",
+          "tests/test_validators.py::test_plain_validator_serializer_unsupported_type_both_orders": "PASSED",
+          "tests/test_validators.py::test_plain_validator_unresolved_inner_forward_reference": "PASSED",
+          "tests/test_validators.py::test_plain_validator_typing_typeddict_inner_schema_not_required": "PASSED"
+        },
+        "gold": {
+          "tests/test_validators.py::test_plain_validator_plain_serializer": "FAILED",
+          "tests/test_validators.py::test_plain_validator_serializer_unsupported_type_both_orders": "FAILED",
+          "tests/test_validators.py::test_plain_validator_unresolved_inner_forward_reference": "FAILED",
+          "tests/test_validators.py::test_plain_validator_typing_typeddict_inner_schema_not_required": "FAILED"
+        },
+        "noop": {
+          "tests/test_validators.py::test_plain_validator_plain_serializer": "FAILED",
+          "tests/test_validators.py::test_plain_validator_serializer_unsupported_type_both_orders": "FAILED",
+          "tests/test_validators.py::test_plain_validator_unresolved_inner_forward_reference": "PASSED",
+          "tests/test_validators.py::test_plain_validator_typing_typeddict_inner_schema_not_required": "PASSED"
+        },
+        "ok_post_attach": {
+          "tests/test_validators.py::test_plain_validator_plain_serializer": "PASSED",
+          "tests/test_validators.py::test_plain_validator_serializer_unsupported_type_both_orders": "PASSED",
+          "tests/test_validators.py::test_plain_validator_unresolved_inner_forward_reference": "PASSED",
+          "tests/test_validators.py::test_plain_validator_typing_typeddict_inner_schema_not_required": "PASSED"
+        },
+        "upstream261": {
+          "tests/test_validators.py::test_plain_validator_plain_serializer": "PASSED",
+          "tests/test_validators.py::test_plain_validator_serializer_unsupported_type_both_orders": "FAILED",
+          "tests/test_validators.py::test_plain_validator_unresolved_inner_forward_reference": "FAILED",
+          "tests/test_validators.py::test_plain_validator_typing_typeddict_inner_schema_not_required": "FAILED"
+        }
+      },
+      "all_preparation_rc_zero": true,
+      "all_cleanup_confirmed_empty": true,
+      "actual_python": "3.8.19",
+      "actual_core": "2.15.0",
+      "uid": 0,
+      "cpu": 2,
+      "memory_bytes": 4294967296,
+      "pids": 512,
+      "initial_and_patched_source_identity_matches_current_material": true,
+      "formal_grade": false,
+      "FrozenPatch_exported": false,
+      "actor_permission_proof": false,
+      "complete_reference_matrix_verified": false
+    },
+    "all_source_type_schema_generation_never_runs_in_every_custom_path": "not_claimed"
+  },
+  "boundaries": {
+    "multiple_plain_validators": "base docs/concepts/validators.md:69-70 permits only one; last-PV trace is not a new public guarantee or gate",
+    "A16_A17_source_type_and_type_parameter_serializer": "prior_scope_limits_preserved",
+    "B11_decorator_form": "prior_scope_limits_preserved",
+    "custom_core_schema_wrappers_and_definition_refs": "not_expanded_into_this_task",
+    "wrap_serializer_nxt_on_unsupported_value": "do not require generic unknown-type serialization to succeed",
+    "return_type_schema_generation": "explicit serializer output schema generation is not replaced source_type validation"
+  },
+  "cpu_recommendation": {
+    "required_plan_unchanged": [
+      "formal_consumer_and_current_material_identity",
+      "all_162_effective_references_per_id_and_new_nodes",
+      "actor_transport_and_non_author_cpu_evidence_checks_from_prior_plan"
+    ],
+    "do_not_repeat": [
+      "old_v4_31_rows",
+      "already_applicable_middle_metadata_and_serializer_priority_runs"
+    ],
+    "optional_one_group": {
+      "purpose": "B03 unsupported source combined with builtin WrapSerializer, both sides of PlainValidator",
+      "first_candidate": "ok_post_attach",
+      "c3_reorder_only_if": "prior scope missing or execution conditions materially differ",
+      "validator": "lambda value: Unsupported()",
+      "serializer": "WrapSerializer(lambda value, nxt: \"custom!\", return_type=str)",
+      "observable_expectation": [
+        "validated value is Unsupported",
+        "dump_python == \"custom!\"",
+        "dump_json == b'\"custom!\"'"
+      ],
+      "not_executed": true,
+      "not_new_scoring_reference_or_gate": true
+    }
+  },
+  "stop_condition": "source semantics narrow review complete; keep both nominees, reuse old evidence, proceed to planned formal current material acceptance without new blanket reruns"
+}

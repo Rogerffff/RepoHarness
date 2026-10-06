@@ -1,0 +1,23 @@
+[
+  {
+    "id": "actor_python_identity",
+    "cmd": "cd /testbed && PYTHONDONTWRITEBYTECODE=1 python -c \"import sys,os; print('RH2_SYS_EXECUTABLE='+sys.executable); print('RH2_UID='+str(os.getuid()))\"",
+    "timeout_s": 60,
+    "expect": "zero",
+    "purpose": "核实际 CC Bash 工具中的解释器与 agent UID。"
+  },
+  {
+    "id": "actor_visible_surface",
+    "cmd": "echo RH2_BASHENV_WRITE=$( ( : >> /rh2/bash_env ) 2>/dev/null && echo WRITABLE || echo DENIED ); echo RH2_PYTHON=$(command -v python); echo RH2_BASH_ENV=$BASH_ENV",
+    "timeout_s": 60,
+    "expect": "zero",
+    "purpose": "复用启动验收需要的公开激活文件不可写标记，不读取私有材料。"
+  },
+  {
+    "id": "public_source_import_identity",
+    "timeout_s": 120,
+    "expect": "zero",
+    "purpose": "新宿主公开开发条件：实际解释器、PIL 源码路径、C 扩展及调色板/GIF 模块可导入；不消费私有材料。",
+    "cmd": "cd /testbed && PYTHONDONTWRITEBYTECODE=1 python - <<'PY'\nimport json, sys, PIL, pytest\nfrom PIL import Image, ImagePalette, GifImagePlugin\nassert sys.executable.startswith('/testbed/.venv/')\nassert PIL.__file__.startswith('/testbed/src/PIL/')\nassert ImagePalette.__file__.startswith('/testbed/src/PIL/')\nassert GifImagePlugin.__file__.startswith('/testbed/src/PIL/')\nprint(json.dumps({'executable':sys.executable,'python':sys.version.split()[0],'PIL':PIL.__version__,'PIL_path':PIL.__file__,'ImagePalette_path':ImagePalette.__file__,'GifImagePlugin_path':GifImagePlugin.__file__,'core':Image.core.__file__,'pytest':pytest.__version__}, sort_keys=True))\nPY"
+  }
+]

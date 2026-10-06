@@ -1,0 +1,16 @@
+--- rev2/test_1.py
++++ rev3/test_1.py
+@@ -42,11 +42,11 @@
+ 
+     def setUp(self):
+         # run_tests.sh runs pytest with `-W ignore` and PYTHONWARNINGS=ignore::UserWarning,
+-        # so the UserWarnings recorded below were never visible; re-enable them per test.
++        # 按测试恢复警告记录；公开断言不限定警告类别。
+         catcher = warnings.catch_warnings()
+         catcher.__enter__()
+         self.addCleanup(catcher.__exit__, None, None, None)
+-        warnings.simplefilter("always", UserWarning)
++        warnings.simplefilter("always", Warning)
+ 
+     def test_generators_return_something(self):
+         def f1():

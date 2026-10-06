@@ -1,0 +1,16 @@
+{
+  "schema_id": "rh2.public_task_bundle.v1",
+  "instance_id": "aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52",
+  "repo": "aiohttp",
+  "base_commit": "87342c791dfd4c916877ba3dffafb9345bb0491f",
+  "image": "namanjain12/aiohttp_final:1c1c0ea353041c8814a6131c3a92978dc2373e52",
+  "image_manifest_digest": "sha256:3a2a7377635207fc1c08488819e8367c329ae2727cfed28999c0919875de57fa",
+  "workdir": "/testbed",
+  "allowed_tools": [
+    "bash",
+    "edit"
+  ],
+  "problem_statement": "[ISSUE]\n**Title:** run_app() Logs Exceptions That Are Also Raised, Causing Duplicate Logging\n\n**Description**\nWhen using `run_app()` to start the aiohttp application, exceptions raised within the application context are being both raised and logged. This results in duplicate log entries for the same exception, making logs cluttered and harder to manage.\n\n**Example Code**\n\n```python\nimport asyncio\nfrom aiohttp import web\n\nasync def context(app: web.Application):\n    raise RuntimeError(\"Unexpected error occurred\")\n    yield\n\napp = web.Application()\napp.cleanup_ctx.append(context)\n\nweb.run_app(app)\n```\n\n**Expected Behavior**\nWhen an exception occurs within the application context, `run_app()` should raise the exception without logging it. This allows for centralized exception handling without redundant log entries.\n\n**Actual Behavior**\nThe exception is both raised and logged by `run_app()`, leading to duplicate log messages for the same error. For example, raising `RuntimeError(\"Unexpected error occurred\")` results in the exception being printed to the logs and propagated up the call stack.\n\n[/ISSUE]",
+  "problem_statement_sha256": "sha256:b66629f137ff1c11b95f9c4cadc257ae2963b40abdbd54a735077dbb16039d85",
+  "public_hints": "You are a software engineer fixing a real GitHub issue in the repository checked out at /testbed (your bash tool already runs there).\n- The project's Python environment is the virtualenv at /testbed/.venv: `python` and the repo's test tools already point at it. There is no network access and `pip` may be unavailable, so work with the packages that are already installed.\n- Explore the code, find the root cause, and edit NON-TEST source files to fix the issue.\n- Do NOT modify the repository's test files: the fix is judged by a separate set of tests.\n- You may run tests to verify your fix, but keep runs narrow (a single test file or module) to save time; run them from /testbed with `python -m pytest`.\n- When you are confident the fix is complete, reply with a short summary and stop calling tools."
+}

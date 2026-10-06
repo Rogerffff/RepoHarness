@@ -1,0 +1,13 @@
+--- a/coverage/html.py
++++ b/coverage/html.py
+@@ -223,6 +223,10 @@
+         # The files we provide must always be copied.
+         for static in self.STATIC_FILES:
+             shutil.copyfile(data_filename(static), os.path.join(self.directory, static))
++
++        # Preserve user rules while ignoring generated report files.
++        with open(os.path.join(self.directory, ".gitignore"), "a", encoding="utf-8") as fgi:
++            fgi.write("\n# Created by coverage.py\n*\n")
+ 
+         # The user may have extra CSS they want copied.
+         if self.extra_css:

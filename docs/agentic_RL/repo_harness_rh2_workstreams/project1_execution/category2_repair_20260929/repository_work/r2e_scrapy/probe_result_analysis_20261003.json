@@ -1,0 +1,399 @@
+{
+  "schema": "scrapy.owner_probe_analysis.v1",
+  "as_of_utc": "2026-10-03T06:38:32.631607+00:00",
+  "task_id": "r2e_gym_subset::scrapy__a95a338eeada7275a5289cf036136610ebaf07eb",
+  "request_id": "r2e-scrapy-a95a-cpu-rev4-20261003",
+  "request": {
+    "path": "runs/ordinary_gpu_probe_20261002/request_copies/r2e-scrapy-a95a-cpu-rev4-20261003.2e351e520c21.json",
+    "sha256": "2e351e520c216977d88529b1725a2af0f609a2ede7423a425c0740b2284965a0"
+  },
+  "receipt": {
+    "path": "runs/ordinary_gpu_probe_20261002/receipts/r2e-scrapy-a95a-cpu-rev4-20261003_two_model_v1.json",
+    "sha256": "2d3558f7446e92c3daf9b866c60ca3c465e89bf215b15b83baf365b6faebac86"
+  },
+  "independent_semantic_review": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/review_gpu_semantics_20261003.md",
+    "sha256": "3d3b5a9e56497b105e0653a0c29a159986895b79bc32ffce3a48dbb48cc777ee"
+  },
+  "local_derived_audit": {
+    "path": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/gpu_owner_analysis_20261003/first_pass_metrics_and_verification.json",
+    "sha256": "7d45f88a884650f3ee1b834a69fdeb0f1a7309b7aec7cb272995c01c88b949cb"
+  },
+  "scope": "公开is_generator_with_return_value要求和rev4/066/067；G1 warning接口及已登记其它残留不新增为模型要求",
+  "first_pass_execution_complete": true,
+  "owner_semantic_and_seven_dimension_analysis_complete": true,
+  "all_experiments_complete": false,
+  "new_cpu_work_required": false,
+  "needs_gpu_for_repeats": true,
+  "blocked_material_versions": [],
+  "uses": [
+    "versioned_ordinary_base_model_diagnostic_only"
+  ],
+  "training_or_heldout_qualification_granted": false,
+  "models": [
+    {
+      "model": "qwen36",
+      "job_id": "gpu1003-scrapya95a-qwen36-a1",
+      "actual_code": "code_v4",
+      "terminal_classification": "completed_with_valid_grade",
+      "raw_reward": 1.0,
+      "raw_outcome": "resolved",
+      "expected_states": {
+        "UtilsMiscPy3TestCase.test_generators_return_none": "PASSED",
+        "UtilsMiscPy3TestCase.test_generators_return_none_with_decorator": "PASSED",
+        "UtilsMiscPy3TestCase.test_generators_return_something": "PASSED",
+        "UtilsMiscPy3TestCase.test_indentation_error": "PASSED",
+        "UtilsMiscPy3TestCase.test_partial": "PASSED"
+      },
+      "semantic_verdict": "acceptable_within_public_requirement_and_rev4_scope",
+      "metrics": {
+        "input_tokens_cumulative": 119372,
+        "output_tokens_cumulative": 2779,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "max_single_request_input_tokens": 13630,
+        "max_single_request_output_tokens": 569,
+        "actual_generation_requests": 12,
+        "cc_num_turns": 14,
+        "assistant_events_not_generation_count": 34,
+        "tool_calls": {
+          "Bash": 7,
+          "Read": 4,
+          "Edit": 2
+        },
+        "tool_calls_total": 13,
+        "tool_errors": 0,
+        "solve_seconds": 24.325,
+        "cc_wall_seconds": 20.542,
+        "cc_api_seconds": 17.178,
+        "cc_wall_minus_api_seconds_not_pure_tool_time": 3.364,
+        "gateway_response_seconds_sum": 16.813,
+        "gateway_arrival_to_adapter_response_seconds_sum_not_pure_gpu_compute": 16.819,
+        "first_api_arrival_to_last_adapter_response_seconds": 20.489,
+        "actor_lifecycle_seconds_including_environment_and_cleanup": 73.361,
+        "actor_lifecycle_minus_solve_seconds_not_all_environment_time": 49.036,
+        "actor_preparation_segment_timings": {
+          "image_ready": 0.019,
+          "network_and_container": 1.179,
+          "git_sanitize": 4.0,
+          "trusted_init": 23.797,
+          "baseline_census": 0.211,
+          "quiescence": 0.518
+        },
+        "grading_timings": {
+          "schema_id": "rh2.grading_timing_record.v1",
+          "record_id": "timing_73b3f83b",
+          "trajectory_id": "gpu1003-scrapya95a-qwen36-a1",
+          "task_id": "r2e_gym_subset::scrapy__a95a338eeada7275a5289cf036136610ebaf07eb",
+          "image_pull_seconds": 0.0,
+          "env_reset_seconds": 4.392,
+          "prep_seconds": 0.449,
+          "test_seconds": 1.404,
+          "total_grading_seconds": 31.217,
+          "queue_wait_seconds": 0.0,
+          "container_peak_memory_mb": 222.391,
+          "queue_depth_at_enqueue": null,
+          "backpressure_triggered": false
+        },
+        "gpu_global_queue_wait_seconds": null
+      },
+      "actual_budget": {
+        "version": "probe-wide-v1",
+        "max_context_len": 196608,
+        "max_new_tokens": 65536,
+        "max_turns": 240,
+        "wall_seconds": 10800,
+        "max_requests_per_session": 1024,
+        "first_byte_timeout_seconds": 1800,
+        "adapter_idle_drop_seconds": 14400
+      },
+      "location": {
+        "first_symbol_result_line": 19,
+        "first_symbol_result_seconds_from_first_api_arrival": 1.274,
+        "first_source_read_result_line": 19,
+        "first_source_read_seconds_from_first_api_arrival": 1.274,
+        "tool_calls_before_first_correct_root_statement": null,
+        "first_correct_root_statement_line": null,
+        "first_correct_root_statement_generation": null,
+        "correct_root_generation_completion_seconds_from_first_api_arrival": null,
+        "qwen_wrong_root_persisted_through_final": true
+      },
+      "same_generation_batches": [
+        {
+          "tool_use_lines": [
+            11,
+            15
+          ],
+          "tools": [
+            "Bash",
+            "Read"
+          ],
+          "result_lines": [
+            19,
+            20
+          ],
+          "precise_execution_overlap": "unknown_no_per_tool_start_time"
+        },
+        {
+          "tool_use_lines": [
+            188,
+            192
+          ],
+          "tools": [
+            "Read",
+            "Read"
+          ],
+          "result_lines": [
+            196,
+            197
+          ],
+          "precise_execution_overlap": "unknown_no_per_tool_start_time"
+        }
+      ],
+      "completed_samples": 1,
+      "requested_samples": 1,
+      "raw_success_samples": 1,
+      "semantically_accepted_complete_samples": 1,
+      "invalid_samples": 0,
+      "truncated_samples": 0,
+      "stability": "insufficient_one_attempt",
+      "install_skipped": true,
+      "install_rc": null,
+      "test_rc": 0,
+      "candidate_paths": [
+        "scrapy/utils/misc.py",
+        "tests/keys/localhost.crt",
+        "tests/keys/localhost.key"
+      ],
+      "raw_patch_hygiene": {
+        "cleaned_patch_digest": "sha256:857e5daaf7f07cda934a9100b40f7e970e57013daba6d5c86b883ac7a3561634",
+        "digest_kind": "applied_entry_set",
+        "replayed_on_clean_checkout": true,
+        "test_files_modified": false,
+        "forbidden_path_touched": false,
+        "forbidden_paths": [],
+        "verdict": "clean"
+      },
+      "excluded_pathset_changed": true,
+      "limits": [
+        "one_attempt_only",
+        "no_exact_per_tool_execution_start_times",
+        "api_windows_not_pure_gpu_compute",
+        "cpu_evidence_reused_not_model_samples",
+        "G1_warning_helper_outside_current_scope",
+        "grading_material_lineage_null",
+        "qualification_ledger_absent",
+        "whole_runtime_code_differs"
+      ],
+      "behavior_analysis_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/probe_result_analysis_20261003.md"
+    },
+    {
+      "model": "coder",
+      "job_id": "gpu1003-scrapya95a-coder-a1",
+      "actual_code": "code_v7",
+      "terminal_classification": "completed_with_valid_grade",
+      "raw_reward": 1.0,
+      "raw_outcome": "resolved",
+      "expected_states": {
+        "UtilsMiscPy3TestCase.test_generators_return_none": "PASSED",
+        "UtilsMiscPy3TestCase.test_generators_return_none_with_decorator": "PASSED",
+        "UtilsMiscPy3TestCase.test_generators_return_something": "PASSED",
+        "UtilsMiscPy3TestCase.test_indentation_error": "PASSED",
+        "UtilsMiscPy3TestCase.test_partial": "PASSED"
+      },
+      "semantic_verdict": "acceptable_within_public_requirement_and_rev4_scope",
+      "metrics": {
+        "input_tokens_cumulative": 207470,
+        "output_tokens_cumulative": 3986,
+        "cache_read_input_tokens": 0,
+        "cache_creation_input_tokens": 0,
+        "max_single_request_input_tokens": 15426,
+        "max_single_request_output_tokens": 598,
+        "actual_generation_requests": 19,
+        "cc_num_turns": 19,
+        "assistant_events_not_generation_count": 34,
+        "tool_calls": {
+          "Bash": 10,
+          "Read": 2,
+          "Write": 2,
+          "Edit": 4
+        },
+        "tool_calls_total": 18,
+        "tool_errors": 0,
+        "solve_seconds": 39.058,
+        "cc_wall_seconds": 35.737,
+        "cc_api_seconds": 29.575,
+        "cc_wall_minus_api_seconds_not_pure_tool_time": 6.162,
+        "gateway_response_seconds_sum": 29.171,
+        "gateway_arrival_to_adapter_response_seconds_sum_not_pure_gpu_compute": 29.181,
+        "first_api_arrival_to_last_adapter_response_seconds": 35.682,
+        "actor_lifecycle_seconds_including_environment_and_cleanup": 87.511,
+        "actor_lifecycle_minus_solve_seconds_not_all_environment_time": 48.453,
+        "actor_preparation_segment_timings": {
+          "image_ready": 0.02,
+          "network_and_container": 1.271,
+          "git_sanitize": 3.3,
+          "trusted_init": 25.138,
+          "baseline_census": 0.213,
+          "quiescence": 0.536
+        },
+        "grading_timings": {
+          "schema_id": "rh2.grading_timing_record.v1",
+          "record_id": "timing_b8e93ae2",
+          "trajectory_id": "gpu1003-scrapya95a-coder-a1",
+          "task_id": "r2e_gym_subset::scrapy__a95a338eeada7275a5289cf036136610ebaf07eb",
+          "image_pull_seconds": 0.0,
+          "env_reset_seconds": 3.936,
+          "prep_seconds": 0.533,
+          "test_seconds": 1.336,
+          "total_grading_seconds": 31.638,
+          "queue_wait_seconds": 0.0,
+          "container_peak_memory_mb": 220.73,
+          "queue_depth_at_enqueue": null,
+          "backpressure_triggered": false
+        },
+        "gpu_global_queue_wait_seconds": null
+      },
+      "actual_budget": {
+        "version": "probe-wide-v1",
+        "max_context_len": 196608,
+        "max_new_tokens": 65536,
+        "max_turns": 240,
+        "wall_seconds": 10800,
+        "max_requests_per_session": 1024,
+        "first_byte_timeout_seconds": 1800,
+        "adapter_idle_drop_seconds": 14400
+      },
+      "location": {
+        "first_symbol_result_line": 14,
+        "first_symbol_result_seconds_from_first_api_arrival": 2.613,
+        "first_source_read_result_line": 27,
+        "first_source_read_seconds_from_first_api_arrival": 2.998,
+        "tool_calls_before_first_correct_root_statement": 3,
+        "first_correct_root_statement_line": 45,
+        "first_correct_root_statement_generation": 4,
+        "correct_root_generation_completion_seconds_from_first_api_arrival": 5.28,
+        "qwen_wrong_root_persisted_through_final": false
+      },
+      "same_generation_batches": [],
+      "completed_samples": 1,
+      "requested_samples": 1,
+      "raw_success_samples": 1,
+      "semantically_accepted_complete_samples": 1,
+      "invalid_samples": 0,
+      "truncated_samples": 0,
+      "stability": "insufficient_one_attempt",
+      "install_skipped": true,
+      "install_rc": null,
+      "test_rc": 0,
+      "candidate_paths": [
+        "scrapy/utils/misc.py",
+        "tests/keys/localhost.crt",
+        "tests/keys/localhost.key",
+        "tests/test_utils_misc/test_return_with_argument_inside_generator.py"
+      ],
+      "raw_patch_hygiene": {
+        "cleaned_patch_digest": "sha256:bfa49aabd44ae97e405790d0fd2dd8adbee1e159afd33a9a13b8dd8bf9999e46",
+        "digest_kind": "applied_entry_set",
+        "replayed_on_clean_checkout": true,
+        "test_files_modified": false,
+        "forbidden_path_touched": false,
+        "forbidden_paths": [],
+        "verdict": "clean"
+      },
+      "excluded_pathset_changed": true,
+      "limits": [
+        "one_attempt_only",
+        "no_exact_per_tool_execution_start_times",
+        "api_windows_not_pure_gpu_compute",
+        "cpu_evidence_reused_not_model_samples",
+        "G1_warning_helper_outside_current_scope",
+        "grading_material_lineage_null",
+        "qualification_ledger_absent",
+        "whole_runtime_code_differs"
+      ],
+      "behavior_analysis_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/probe_result_analysis_20261003.md"
+    }
+  ],
+  "material_comparability": {
+    "qwen_code": "code_v4",
+    "coder_code": "code_v7",
+    "manifest_sha256": {
+      "code4": "e3a33fd824021b75c9ed32fe7a82800f4158bfcf5d5a9d0ca8a8329380716469",
+      "code7": "be705a777484c70af2afe9a34b6dd288bd85c2b1f536c6d57bd59aecb4eb0352"
+    },
+    "same_critical_entry_solve_frozen_transport": [
+      {
+        "path": "rh2/experiments/ordinary_gpu_probe_20261002/entry.py",
+        "sha256": "a1efff44dc2cbedfc81d93b2da8d84a92f6c9c88b15c2a10bf96db2026a4e82c"
+      },
+      {
+        "path": "rh2/experiments/r2e_lifecycle_20260929/r2e_solve_attempt.py",
+        "sha256": "10a71cca67af24c9ab5a6de09cb1845751c643632559842bb61dbce6ebc01d5a"
+      },
+      {
+        "path": "rh2/experiments/base_probe_20260922/solve_attempt.py",
+        "sha256": "00ca849909150de02769f297374a9bbfacf2746347c425474775d9c3e22a04f9"
+      },
+      {
+        "path": "rh2/experiments/ordinary_probe_20260929/frozen_transport.py",
+        "sha256": "11c3baf1cbd4f8b9191f7825b20fcad14670f9d2309df7850754fd6e45bd3d8a"
+      }
+    ],
+    "different_shared_runtime_members": [
+      {
+        "path": "rh2/src/repoharness2/adapters/slime/prepared_task_face.py",
+        "code4_sha256": "22b854ff239c0809d3063211817bcb45153c3a1638babca093e5e1ee35a3e1e2",
+        "code7_sha256": "2120533bb29ff3fb24df202c436fc48489da123feadf3a9e5abaed63daf304c6"
+      },
+      {
+        "path": "rh2/src/repoharness2/adapters/slime/replay_grade.py",
+        "code4_sha256": "3bd574eed3da9372b8640eac48d5da0b1141375c21b6e492de822d494443ef66",
+        "code7_sha256": "7cb03bfd1a6ddcb4238f54d2a19d30d4e3e93a56ad630b81e8fb05ac031160fb"
+      },
+      {
+        "path": "rh2/src/repoharness2/envpack/bundles_v2.py",
+        "code4_sha256": "c4e0cf33f26fc6dcbee70b904d6bc3bad7834833fd93580a938a78ef947b419c",
+        "code7_sha256": "2b4823633832294a539a682341727430e163c9f4749ade3b62dd09f5e8309b74"
+      },
+      {
+        "path": "rh2/src/repoharness2/envpack/environment_overlay.py",
+        "code4_sha256": "69b519f5163114c037e32f90cb1a470f5d3444627fc86ef1da808f4efc6823a4",
+        "code7_sha256": "d3ebe16b99339264a9a6264359d0198d183ac43e982e6a4074c69f00f68f84bc"
+      },
+      {
+        "path": "rh2/src/repoharness2/envpack/spec_vendor.py",
+        "code4_sha256": "12d95baa184a524167624ac5d36124628991fe7bd24ad555e56773eb4307b06e",
+        "code7_sha256": "6662f4d896cbc034fbc01a43722a1a32f8675744b24037cad885cf047e36bcd4"
+      },
+      {
+        "path": "rh2/src/repoharness2/envpack/swe_material_revisions.py",
+        "code4_sha256": "7b2bd896e2143d459c10632a74af4df2642469d8974a83ecaad4c2513b11cedb",
+        "code7_sha256": "33499ff25067ed7e60f93e1261f77090a1449c3a13b24d4b1534ae9e74763c63"
+      },
+      {
+        "path": "rh2/src/repoharness2/grading/manager.py",
+        "code4_sha256": "b6b10f98bf0e1a7bbe4774ac705ece6bb2746da2b1ac4f20394673293f24bbb0",
+        "code7_sha256": "1783533e1e3b66a57fcaa5a599a1da4f8e4e886318e24f040c6df91f294c1c1e"
+      },
+      {
+        "path": "rh2/src/repoharness2/grading/material_revision.py",
+        "code4_sha256": "070f8f3f15f0e6b9725f78b3b48c189d4cd56b8fc0de0f6ab6210d3113bc29dd",
+        "code7_sha256": "55211aa5341353b932422a899c9d60a9e91439b37e50e93df5c2e8270b5eceda"
+      }
+    ],
+    "same_image_material_expectedmap_prompt_budgets_baseline": true,
+    "grading_scripts_digest_equal": true,
+    "candidate_prerequisite": null,
+    "limit": "共用代码不同；manager新增optional prerequisite（本题null），材料消费者有修订，不能称整棵runtime逐字同版；本题input/expected/scripts/镜像/基线实值相等。"
+  },
+  "second_phase_repeats": {
+    "status": "pending_gpu_unified_coverage_priority_schedule",
+    "dispatch_owner": "GPU",
+    "typical_target_total_per_model": 3,
+    "first_valid_attempt_counts_toward_target": true,
+    "new_requests_created": false,
+    "repeated_jobs_created": false,
+    "conditions_must_be_fixed_and_changes_separately_reported": true
+  }
+}

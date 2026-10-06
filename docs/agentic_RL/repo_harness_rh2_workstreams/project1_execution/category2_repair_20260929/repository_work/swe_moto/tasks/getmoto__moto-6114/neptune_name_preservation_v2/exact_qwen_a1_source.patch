@@ -1,0 +1,131 @@
+diff --git a/moto/rds/models.py b/moto/rds/models.py
+index 9a670c2fd4e4be8c24aa4ad385eec47ce3eb42a7..d7ce78554bab93a17b9d784ea8f8e03d012e6e9f 100644
+--- a/moto/rds/models.py
++++ b/moto/rds/models.py
+@@ -1882,18 +1882,31 @@ class RDSBackend(BaseBackend):
+     def modify_db_cluster(self, kwargs):
+         cluster_id = kwargs["db_cluster_identifier"]
+ 
++        # Check if it's a neptune cluster (via ARN or direct identifier)
++        cluster = None
+         if cluster_id in self.neptune.clusters:
++            cluster = self.neptune.clusters[cluster_id]
++        elif self.arn_regex.match(cluster_id):
++            arn_breakdown = cluster_id.split(":")
++            resource_type = arn_breakdown[-2]
++            resource_name = arn_breakdown[-1]
++            if resource_type == "cluster" and resource_name in self.neptune.clusters:
++                cluster = self.neptune.clusters[resource_name]
++
++        if cluster:
+             return self.neptune.modify_db_cluster(kwargs)
+ 
+-        cluster = self.clusters[cluster_id]
+-        del self.clusters[cluster_id]
++        cluster = self.find_cluster_from_identifier(cluster_id)
++        # Remove the cluster using its actual identifier (not ARN)
++        actual_id = cluster.db_cluster_identifier
++        del self.clusters[actual_id]
+ 
+         kwargs["db_cluster_identifier"] = kwargs.pop("new_db_cluster_identifier")
+         for k, v in kwargs.items():
+             if v is not None:
+                 setattr(cluster, k, v)
+ 
+-        cluster_id = kwargs.get("new_db_cluster_identifier", cluster_id)
++        cluster_id = kwargs.get("new_db_cluster_identifier", actual_id)
+         self.clusters[cluster_id] = cluster
+ 
+         initial_state = copy.deepcopy(cluster)  # Return status=creating
+@@ -1903,9 +1916,7 @@ class RDSBackend(BaseBackend):
+     def create_db_cluster_snapshot(
+         self, db_cluster_identifier, db_snapshot_identifier, tags=None
+     ):
+-        cluster = self.clusters.get(db_cluster_identifier)
+-        if cluster is None:
+-            raise DBClusterNotFoundError(db_cluster_identifier)
++        cluster = self.find_cluster_from_identifier(db_cluster_identifier)
+         if db_snapshot_identifier in self.cluster_snapshots:
+             raise DBClusterSnapshotAlreadyExistsError(db_snapshot_identifier)
+         if len(self.cluster_snapshots) >= int(
+@@ -1948,13 +1959,27 @@ class RDSBackend(BaseBackend):
+ 
+         return self.cluster_snapshots.pop(db_snapshot_identifier)
+ 
++    def find_cluster_from_identifier(self, cluster_identifier):
++        """Find a cluster by identifier (name or ARN). Returns the cluster or raises DBClusterNotFoundError."""
++        # Check if it's an ARN-style identifier
++        if self.arn_regex.match(cluster_identifier):
++            arn_breakdown = cluster_identifier.split(":")
++            resource_type = arn_breakdown[-2]
++            resource_name = arn_breakdown[-1]
++            if resource_type == "cluster":
++                cluster = self.clusters.get(resource_name) or self.neptune.clusters.get(resource_name)
++                if cluster:
++                    return cluster
++        else:
++            # It's a direct identifier
++            cluster = self.clusters.get(cluster_identifier) or self.neptune.clusters.get(cluster_identifier)
++            if cluster:
++                return cluster
++        raise DBClusterNotFoundError(cluster_identifier)
++
+     def describe_db_clusters(self, cluster_identifier):
+         if cluster_identifier:
+-            if cluster_identifier in self.clusters:
+-                return [self.clusters[cluster_identifier]]
+-            if cluster_identifier in self.neptune.clusters:
+-                return [self.neptune.clusters[cluster_identifier]]
+-            raise DBClusterNotFoundError(cluster_identifier)
++            return [self.find_cluster_from_identifier(cluster_identifier)]
+         return list(self.clusters.values()) + list(self.neptune.clusters.values())
+ 
+     def describe_db_cluster_snapshots(
+@@ -1974,23 +1999,21 @@ class RDSBackend(BaseBackend):
+         return list(snapshots.values())
+ 
+     def delete_db_cluster(self, cluster_identifier, snapshot_name=None):
+-        if cluster_identifier in self.clusters:
+-            if self.clusters[cluster_identifier].deletion_protection:
+-                raise InvalidParameterValue(
+-                    "Can't delete Cluster with protection enabled"
+-                )
+-            if snapshot_name:
+-                self.create_db_cluster_snapshot(cluster_identifier, snapshot_name)
+-            return self.clusters.pop(cluster_identifier)
+-        if cluster_identifier in self.neptune.clusters:
+-            return self.neptune.delete_db_cluster(cluster_identifier)
+-        raise DBClusterNotFoundError(cluster_identifier)
++        cluster = self.find_cluster_from_identifier(cluster_identifier)
++        if cluster.deletion_protection:
++            raise InvalidParameterValue(
++                "Can't delete Cluster with protection enabled"
++            )
++        if snapshot_name:
++            self.create_db_cluster_snapshot(cluster_identifier, snapshot_name)
++        # Find and remove the cluster from the correct storage
++        actual_id = cluster.db_cluster_identifier
++        if actual_id in self.clusters:
++            return self.clusters.pop(actual_id)
++        return self.neptune.clusters.pop(actual_id)
+ 
+     def start_db_cluster(self, cluster_identifier):
+-        if cluster_identifier not in self.clusters:
+-            return self.neptune.start_db_cluster(cluster_identifier)
+-            raise DBClusterNotFoundError(cluster_identifier)
+-        cluster = self.clusters[cluster_identifier]
++        cluster = self.find_cluster_from_identifier(cluster_identifier)
+         if cluster.status != "stopped":
+             raise InvalidDBClusterStateFault(
+                 "DbCluster cluster-id is not in stopped state."
+@@ -2013,9 +2036,7 @@ class RDSBackend(BaseBackend):
+         return self.create_db_cluster(new_cluster_props)
+ 
+     def stop_db_cluster(self, cluster_identifier):
+-        if cluster_identifier not in self.clusters:
+-            raise DBClusterNotFoundError(cluster_identifier)
+-        cluster = self.clusters[cluster_identifier]
++        cluster = self.find_cluster_from_identifier(cluster_identifier)
+         if cluster.status not in ["available"]:
+             raise InvalidDBClusterStateFault(
+                 "DbCluster cluster-id is not in available state."

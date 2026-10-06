@@ -1,0 +1,113 @@
+{
+  "as_of": "2026-10-03",
+  "scope": "题主在作者完整原件回读与非作者双角色核查后收口本题CPU普通探针条件；不是GPU运行准入或训练资格",
+  "instance_id": "python__mypy-10174",
+  "owner_thread_id": "01a0fd63-1eba-7133-951d-7dd3475840a4",
+  "ordinary_probe_cpu_conditions_accepted": true,
+  "executor_admission": "pending_request_intake_and_actual_gpu_version_image_public_delivery_verification",
+  "binding": {
+    "instance_id": "python__mypy-10174",
+    "public_digest": "sha256:e1cc57aeabbf0261482d0d06da3c08509d54f12c32fc06b4cc6e8eedf8b9e41c",
+    "grading_digest": "sha256:b24e783218afdcf37c4717cf2702ad195e999e120683483269ac94de10802255",
+    "effective_test_patch_sha256": "sha256:91ea4e972129deaf770ef9e72aa26d11d9bafca85229eae6931f2b22568322cf",
+    "fail_to_pass": [
+      "mypy/test/testcheck.py::TypeCheckSuite::testOverlappingAnyTypeWithoutStrictOptional"
+    ],
+    "pass_to_pass": [
+      "mypy/test/testcheck.py::TypeCheckSuite::testUnimportedHintAnyLower",
+      "mypy/test/testcheck.py::TypeCheckSuite::testUnimportedHintAny",
+      "mypy/test/testcheck.py::TypeCheckSuite::testStrictEqualityWithFixedLengthTupleInCheckWithoutStrictOptional"
+    ],
+    "status": "immutable_release_and_cpu_a_deployment_verified_ready_for_matrix",
+    "release_id": "cat2-cpu-r2e080087-swe8-git-20261003-v1",
+    "release_manifest_sha256": "ab0a3a13fd65e0ea4cd60541ea3b37b01196170477e25832df246f33ea208828",
+    "image_id": "sha256:9d63f1ddcbd277fa62d49e10d800908cfec54544e890fc5fe741d2101ca8eb7e",
+    "candidates": [
+      {
+        "name": "noop"
+      },
+      {
+        "name": "gold",
+        "patch": "input_v1/original/python__mypy-10174/private/gold.patch",
+        "patch_sha256": "7f94c5b71301dbbf5ccce1af8b274444ab5c0de5010f92109e11549154066f6c"
+      },
+      {
+        "name": "bad",
+        "patch": "input_v1/proposals/python__mypy-10174/private/disable_non_strict_comparisons.patch",
+        "patch_sha256": "07b2dc85c76973364ca1ee5d28304a40796402c7d6d4558c87964bf656187c30"
+      }
+    ],
+    "expected_rewards": {
+      "noop": 0,
+      "gold": 1,
+      "bad": 0
+    },
+    "owner_thread_id": "01a0fd63-1eba-7133-951d-7dd3475840a4",
+    "deployment_confirmation": "coordinator confirmed cpu-a/b 855 files SHA/size and trusted48/216; Git/builder exact release5"
+  },
+  "grading_materials_identity": "sha256:dca86b80c83f2e2e9c4eee8c4375952adef834008ad4cb7006ac60abeca58065",
+  "actual_revised_rewards": {
+    "noop": 0,
+    "gold": 1,
+    "bad": 0
+  },
+  "reference_keys": 4,
+  "owner_decision": "新增P2P依据既有公开strict-equality语义与精确base公开测试，仅增加no-strict-optional开关；原材料保留。正式bad仅该P2P因漏诊断失败，noop原F2P仍失败，gold全过；逐参考和完整执行身份已由原件确认。两角色无新阻塞，与题主原件核对一致。",
+  "author_evidence": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-10174/revised_cpu_readback_20261003.json",
+      "sha256": "sha256:a9329456f029fa1d64a0c77f906a61239f284008ab0fe17b8b13893de01e02d8"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-10174/actor_cpu_readback_20261003.json",
+      "sha256": "sha256:5f24cf25e9e85cbb85ad587d9e1bf3da0696a9bf0e8c7f233dfe35403f3dbddc"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-10174/original_cpu_readback_20261003.json",
+      "sha256": "sha256:28551082504d704e10519995d939e654f17041851bc34fb99efeacdee292a121"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-10174/private_behavior_readback_20261003.json",
+      "sha256": "sha256:b82039ab445081cf5fd113d984c3b48550d60556ff25fecae76e23c871ac56a2"
+    }
+  ],
+  "non_author_reviews": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/reviews/non_author_cpu_execution_trace_20261003.md",
+      "sha256": "sha256:851a72b9da0b1c828252dd506b36eafaf793f7f39519ead1b32954c7a2f21159",
+      "fresh": false,
+      "context_exposure": "作者清单、gold及私有测试/候选已见；只作非作者运行/语义核查，不充当公开fresh读者"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/reviews/non_author_cpu_falsifier_20261003.md",
+      "sha256": "sha256:4c418ea5fbf80c21f21f13942856ee17ef22670951dbf144017f8eed1b284968",
+      "fresh": false,
+      "context_exposure": "作者清单、gold及私有测试/候选已见；只作非作者运行/语义核查，不充当公开fresh读者"
+    }
+  ],
+  "material_review": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/reviews/non_author_material_review_20261003.md",
+    "sha256": "sha256:a407a83acf0c915aa1a8271ef84fd33493d00eb5f0ad7332aab720470995601d"
+  },
+  "public_development_note": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-10174/public/development_note_20261003.md",
+    "sha256": "sha256:ceb5bb45ec4565c30e0971d49bc5fb9579cfbc6c486281eb3404f600146e5de1",
+    "reviewed_by": "两非作者已核只含实际环境、公开复现和已有公开回归，不含gold/新增私有case/错误候选设计"
+  },
+  "actor_reuse": {
+    "evidence": "actor_cpu_readback_20261003.json",
+    "release5_to_release6": "公开bundle、固定base和派生镜像、Git四件和builder不变；本次仅私有测试增量，无需机械重跑公开actor",
+    "limit": "本命令清单未测RH2_BASHENV_WRITE标记；控制桩不代表模型能力"
+  },
+  "remaining_limits": [
+    "尚无本题GPU实际镜像、提示交付、模型轨迹和成绩；由统一执行者核后执行并回题主。",
+    "bashenv写入标记在本次CC命令清单中未测；prelaunch ACTIVATION_WRITE=DENIED另有实测，不冒称全面隔离。",
+    "ledger package版本观察?；实际pip安装和公开actor元数据另外证实精确版本和/testbed来源。安装未保存每条成功命令单独数字rc，全量输出与失败ERR trap支持本批安装成立。",
+    "env_qualification=absent；这里只是版本固定的普通探针CPU条件收口，训练和留出均不增加。",
+    "三候选验证覆盖已知漏判，未知合理替代补丁与其他错误形式不据此声称全覆盖。"
+  ],
+  "training_eligible": false,
+  "holdout_eligible": false,
+  "cpu_cleanup_complete": true,
+  "gpu_executed": false
+}

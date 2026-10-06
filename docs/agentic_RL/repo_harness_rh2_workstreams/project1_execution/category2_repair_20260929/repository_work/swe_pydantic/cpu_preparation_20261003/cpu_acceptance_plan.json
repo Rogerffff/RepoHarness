@@ -1,0 +1,174 @@
+{
+  "schema": "swe_pydantic.cpu_acceptance_plan.v1",
+  "as_of": "2026-10-03",
+  "status": "5662_6283_non_author_cpu_passed_probe_submitted",
+  "shared_release": {
+    "release_id": "cat2-cpu-r2e088-swe12-git-20261003-v1",
+    "manifest_sha256": "f9dfcd16c9c88e4f514512e61781856b7d6f1a71a20b64cd1843d20546c5009b",
+    "verified_host": "cpu-a",
+    "verified_members": 905,
+    "runtime": "runtime_cpu_v2"
+  },
+  "shared_consumer": "pyd5662_6283_f2p_e10_v1_registered",
+  "resources": {
+    "cpus": 2,
+    "memory_bytes": 4294967296,
+    "basis": "原按题profile；不改镜像、测试或整题预算"
+  },
+  "slot_mode": "run",
+  "candidate_execution": "one_task_one_job_matrix_serial",
+  "material_review": {
+    "path": "reviews/non_author_5662_6283_review_20261003.md",
+    "sha256": "2bf6c558f72bd47e2686b2e32e528eb88c3ad039e76a0536ef33e06964aaf382",
+    "scope": "仅5662/6283非作者静态窄核"
+  },
+  "tasks": [
+    {
+      "instance_id": "pydantic__pydantic-6283",
+      "revision_ref": "tasks/pydantic__pydantic-6283/revision.json",
+      "revision_sha256": "ee160fac81c3ad8776bed31b31f53ff9cc12a1e81377770d4632bda0b9275ff4",
+      "effective_test_patch_sha256": "785d1d6ccdbb74a141c4178f84c21ebd69e6a68ef3a57b04ab1682ee7626bc26",
+      "base_commit": "a29286609e79c79b2ecd71bc7272eea43ed9fccd",
+      "base_id": "sha256:24e9c51fedb7dc930796362c90f72e8e7a9c47d9362fa72414c6c6ff8a1a2882",
+      "derived_id": "sha256:58d0c004cec144834a01dfc160c0f4caf427a9b31fd5ad95a60d03f6f3623226",
+      "image_result_job": "pyd6283-image-v1-20261002T165553Z-c0a7c",
+      "install_recipe_ref": "tasks/pydantic__pydantic-6283/install_recipe.json",
+      "install_recipe_sha256": "6e50864b8f8976413f6fb32df2fd11060e1b190fb4161c8567810ac748e6a570",
+      "expected_reference_counts": {
+        "F2P": 2,
+        "P2P": 38
+      },
+      "matrix_expected_not_observed": [
+        {
+          "candidate": "noop",
+          "patch": "controls/noop.patch",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "source": "empty",
+          "expected_reward_not_observed": 0
+        },
+        {
+          "candidate": "gold",
+          "patch": "controls/gold.patch",
+          "sha256": "cf1db83c2966404d60f40d33ddee5aa197fe1e12f5a8147fb76076a4f541c64c",
+          "source": "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-6283/gold.patch",
+          "expected_reward_not_observed": 1
+        },
+        {
+          "candidate": "validate_construct",
+          "patch": "controls/validate_construct.patch",
+          "sha256": "a3ee895dc358cda2b3be2c1e43e09fd9cf163f29b30799cc2ab6223621bef60d",
+          "source": "runs/swegym_cpu_preprobe_20260929/task_inputs/pydantic__pydantic-6283/private_degenerate_validate_construct.patch",
+          "expected_reward_not_observed": 0
+        }
+      ],
+      "public_actor": {
+        "source_prompt_ref": "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-6283/user_prompt.txt",
+        "source_prompt_sha256": "6380f70bdfbc2bfd614fab9a77a211c50837f15165dd72bf15cd8cc31a1f8f6a",
+        "development_note_ref": "cpu_preparation_20261003/public_notes/pydantic__pydantic-6283.md",
+        "requirements": [
+          "正式公开题面及public_hints的实际消息交付；不以devcheck默认控制提示代替",
+          "正确解释器、core精确版本及/testbed源码导入；普通actor用户可写工作区",
+          "公开复现及必要公开回归命令全部执行；逐命令完整退出",
+          "gold/修订私有测试/错误候选不得进入actor容器或请求消息"
+        ]
+      },
+      "formal_checks": [
+        "受信consumer回读正确父public/grading身份与有效补丁；不用私有JSON直接替换正式登记",
+        "新F2P确实收集、执行及逐ID解析；原F2P/P2P完整且无缺失或重复",
+        "逐候选记录安装退出、源码导入、core、原分、逐参考、失败阶段及错误类别",
+        "预期拒绝来自定位的行为断言；安装、补丁、收集、超时等异常停止归因",
+        "候选FrozenPatch及对应baseline身份保留；只清理本attempt容器/网络，复查零残留"
+      ],
+      "current_status": "non_author_cpu_passed_probe_submitted"
+    },
+    {
+      "instance_id": "pydantic__pydantic-5662",
+      "revision_ref": "tasks/pydantic__pydantic-5662/revision.json",
+      "revision_sha256": "e32a0d91eda052f84cafd732195fb2766f1038d3c4c70684e1c66788f559b598",
+      "effective_test_patch_sha256": "a5f554782a82e2c312694b897e0f529b212a265e2e03acbfddd72d17429b5a63",
+      "base_commit": "0346ddb6a35770007f32815d8e4a179b778e0ef4",
+      "base_id": "sha256:96aaecfda19343d97563572c064c50f02f1ebb107417dc8c8b303df868abbf7d",
+      "derived_id": "sha256:5b15de37fee0ae9af3430a92de5de7c94f539852663c403bde0b208e67016b60",
+      "image_result_job": "pyd5662-image-v1-20261002T170421Z-c0795",
+      "install_recipe_ref": "tasks/pydantic__pydantic-5662/install_recipe.json",
+      "install_recipe_sha256": "eb87eeb91b66a6ed7550897c09ccfe29b08d6218b0ffac31ee5f42ad334e8adf",
+      "expected_reference_counts": {
+        "F2P": 2,
+        "P2P": 127
+      },
+      "matrix_expected_not_observed": [
+        {
+          "candidate": "noop",
+          "patch": "controls/noop.patch",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "source": "empty",
+          "expected_reward_not_observed": 0
+        },
+        {
+          "candidate": "gold",
+          "patch": "controls/gold.patch",
+          "sha256": "ce7da319f8273e96339afb5f8bce3bc6076d8f3f9f41741c5860aeb2b6a8c2fc",
+          "source": "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-5662/gold.patch",
+          "expected_reward_not_observed": 1
+        },
+        {
+          "candidate": "any_only",
+          "patch": "controls/any_only.patch",
+          "sha256": "f889a2d5f579b5e3237c1702f8774355251dda97bac32f5f3bda0cfa598fa05f",
+          "source": "runs/swegym_cpu_preprobe_20260929/task_inputs/pydantic__pydantic-5662/private_any_only.patch",
+          "expected_reward_not_observed": 0
+        },
+        {
+          "candidate": "all_nonmodels_equal",
+          "patch": "controls/all_nonmodels_equal.patch",
+          "sha256": "cf14e5bafc662cf37eb2b4d227db0b20e21eb41ba5274ab6a880279390d107a8",
+          "source": "runs/swegym_cpu_preprobe_20260929/task_inputs/pydantic__pydantic-5662/private_degenerate_all_nonmodels_equal.patch",
+          "expected_reward_not_observed": 0
+        }
+      ],
+      "public_actor": {
+        "source_prompt_ref": "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-5662/user_prompt.txt",
+        "source_prompt_sha256": "efb9c73f098306cc7b12e3608e71cad76ee72073a063bb71118d8f4c57a26e32",
+        "development_note_ref": "cpu_preparation_20261003/public_notes/pydantic__pydantic-5662.md",
+        "requirements": [
+          "正式公开题面及public_hints的实际消息交付；不以devcheck默认控制提示代替",
+          "正确解释器、core精确版本及/testbed源码导入；普通actor用户可写工作区",
+          "公开复现及必要公开回归命令全部执行；逐命令完整退出",
+          "gold/修订私有测试/错误候选不得进入actor容器或请求消息"
+        ]
+      },
+      "formal_checks": [
+        "受信consumer回读正确父public/grading身份与有效补丁；不用私有JSON直接替换正式登记",
+        "新F2P确实收集、执行及逐ID解析；原F2P/P2P完整且无缺失或重复",
+        "逐候选记录安装退出、源码导入、core、原分、逐参考、失败阶段及错误类别",
+        "预期拒绝来自定位的行为断言；安装、补丁、收集、超时等异常停止归因",
+        "候选FrozenPatch及对应baseline身份保留；只清理本attempt容器/网络，复查零残留"
+      ],
+      "current_status": "non_author_cpu_passed_probe_submitted",
+      "current_job": "pyd5662-formal-20261002203421-07d42"
+    }
+  ],
+  "baseline_diagnostic_release": {
+    "release_id": "cat2-cpu-r2e064065-swe5-20261003-v1",
+    "manifest_sha256": "282021962a92b510f077385660ac56acedcd7fac1d97e63db3baa98e4dcc057f",
+    "new_pydantic_material_registered": false
+  },
+  "actor_ports": {
+    "gateway": 18194,
+    "stub": 18195,
+    "basis": "协调更正的cpu-a独占端口对；同包串行"
+  },
+  "new_baseline_job_release": {
+    "release_id": "cat2-cpu-r2e088-swe12-git-20261003-v1",
+    "manifest_sha256": "f9dfcd16c9c88e4f514512e61781856b7d6f1a71a20b64cd1843d20546c5009b",
+    "verified_host": "cpu-a",
+    "verified_members": 905,
+    "runtime": "runtime_cpu_v2",
+    "new_pydantic_material_registered": true,
+    "basis": "第七版已部署，旧公开actor与R5私有诊断原身份保留"
+  },
+  "pause_checkpoint": "pause_checkpoint_20261003.md",
+  "6283_cpu_status": "non_author_cpu_passed_probe_submitted",
+  "5662_cpu_status": "non_author_cpu_passed_probe_submitted",
+  "resume_ref": "../../coordination_workflow_20261003.md"
+}

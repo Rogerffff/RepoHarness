@@ -1,0 +1,46 @@
+diff --git a/numpy/lib/histograms.py b/numpy/lib/histograms.py
+--- a/numpy/lib/histograms.py
++++ b/numpy/lib/histograms.py
+@@ -812,7 +812,8 @@
+         return n, bin_edges
+ 
+ 
+-def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
++def histogramdd(sample, bins=10, range=None, normed=False, weights=None,
++                density=None):
+     """
+     Compute the multidimensional histogram of some data.
+ 
+@@ -961,8 +962,8 @@
+     core = D*(slice(1, -1),)
+     hist = hist[core]
+ 
+-    # Normalize if normed is True
+-    if normed:
++    # Normalize if normed is True or a density argument was passed
++    if normed or density is not None:
+         s = hist.sum()
+         for i in _range(D):
+             shape = np.ones(D, int)
+diff --git a/numpy/lib/twodim_base.py b/numpy/lib/twodim_base.py
+--- a/numpy/lib/twodim_base.py
++++ b/numpy/lib/twodim_base.py
+@@ -530,7 +530,8 @@
+     return v
+ 
+ 
+-def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
++def histogram2d(x, y, bins=10, range=None, normed=False, weights=None,
++                density=None):
+     """
+     Compute the bi-dimensional histogram of two data samples.
+ 
+@@ -652,7 +653,7 @@
+     if N != 1 and N != 2:
+         xedges = yedges = asarray(bins)
+         bins = [xedges, yedges]
+-    hist, edges = histogramdd([x, y], bins, range, normed, weights)
++    hist, edges = histogramdd([x, y], bins, range, normed, weights, density)
+     return hist, edges[0], edges[1]
+ 
+ 

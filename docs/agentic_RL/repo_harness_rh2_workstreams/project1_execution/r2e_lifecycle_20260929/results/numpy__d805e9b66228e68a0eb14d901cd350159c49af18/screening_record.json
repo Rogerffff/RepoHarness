@@ -1,0 +1,656 @@
+{
+ "schema_id": "rh2.r2e_screening_record.v1",
+ "task_id": "r2e_gym_subset::numpy__d805e9b66228e68a0eb14d901cd350159c49af18",
+ "instance_id": "numpy__d805e9b66228e68a0eb14d901cd350159c49af18",
+ "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0（本题没有材料修订；lifecycle 材料 v3–v5 对本题逐字相同）",
+ "source_adapter_ref": "s2_r2e ingest v0 第 21 行：public_bundles_v0.jsonl / grading_bundles_r2e_v0.jsonl / validation_bundles_v0.jsonl（line_sha256 见 runs/r2e_static_prep_20260924/v3/private/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/grading_bundle.json、validation_bundle.json 与 runs/r2e_static_prep_20260924/v3/public/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/public_bundle.json）",
+ "recipe_ref": {
+  "derived_image_ref": "rh2-r2e-derived/numpy:d805e9b66228-r2e_derive_v1s",
+  "derived_image_id": "sha256:c080fc6b7fd0a257029bc85f803e87200a732a5f81dbce05590c6b4aa4d686b4",
+  "recipe_id": "r2e_derive_v1+sysconfig_v1",
+  "recipe_sha256": "sha256:e2e17bf12b0edf5d1f77eb315a7c8cd91e36dde70b6a272c81b04976b98a7270",
+  "resources": "默认（2 CPU / 4 GiB / /tmp 1 GiB / pids 512）；无逐题资源或环境配方",
+  "earlier_image": {
+   "derived_image_id": "sha256:fd832b05241d1fec20253f711dc63060ccd95fd9496739e38ae0630e43ec5884",
+   "recipe_id": "r2e_derive_v1",
+   "note": "09-23/24 R-f 机；只作对照"
+  }
+ },
+ "code_snapshot_ref": {
+  "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+  "grader_scripts_digest": "sha256:08fadf1f40e918b35f995776d31f1ccadaa5d6145acd2cb4351c181215adf7c5",
+  "runner_digest": "df653a7b833b635420dbaa6f20e5d246eb782a4c6b6cc88833a9ddb0a791cc0d",
+  "grader_profile": "rh2.grader_sandbox_profile.v1 / sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+  "devcheck": {
+   "layer": "experiments/r2e_actor_20260925/r2e_devcheck.py",
+   "profile_digest": "sha256:d86e18507718ea13606c1473050c410cdd79894335ffcf212e026246e7f45860",
+   "overlays_sha256": "sha256:69959557aa789ce170fb5c95357b65cf4c7b85dbe4dc1a665595dca6a3712eda",
+   "cc_version": "2.1.205 (Claude Code)"
+  }
+ },
+ "facts_ref": [
+  "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_noop.jsonl#L6（新机器正式 noop）",
+  "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_gold.jsonl#L6（新机器正式 gold）",
+  "runs/r2e_lifecycle_20260929/devcheck/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/orig/attempt.json（devcheck：真实 CC + 桩、agent 身份、正式启动路径）",
+  "runs/r2e_lifecycle_20260929/devcheck/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/private_control.json（root 一次性容器，gold 应用后的同一组公开命令）",
+  "runs/r2e_lifecycle_20260929/inv/numpy_d805/ledger_{KDE,KDC,KDF,KA5,KA5b}.jsonl#L1 与 logs_*/（候选正式评分）",
+  "runs/r2e_lifecycle_20260929/inv/numpy_d805/pcheck_{none,gold,KDE,KDC,KDF,KA5,KA5b}.json（私有行为核对，非评分）",
+  "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/facts.json（09-24 环境审查，旧镜像）"
+ ],
+ "checks": {
+  "1": {
+   "status": "pass",
+   "note": "base 25e3ebf4 是修复提交的父提交（M3 facts head_is_parent_of_fix=yes）；gold 只含 numpy/ma/core.py，隐藏测试是修复后的 test_core.py（与公开版只差 9 行）；镜像 digest 与公开包一致",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl#L39",
+    "runs/r2e_static_prep_20260924/v3/private/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/gold.patch",
+    "runs/r2e_static_prep_20260924/v3/private/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/hidden_tests/test_1.py#L454-L461"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "2": {
+   "status": "pass",
+   "note": "noop 只错目标键，失败在示例 repr 断言（test_1.py:458），实际输出 49 个 -- 与 1950…1999、无省略号；3 次（2 台镜像）一致",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl#L21",
+    "runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl#L21",
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_noop.jsonl#L6",
+    "runs/r2e_lifecycle_20260929/devcheck/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/orig/captures/repro_issue_repr.out"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "3": {
+   "status": "unknown",
+   "note": "模型实际收到的完整消息未捕获；devcheck 用桩，只证明启动与工具链",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v3/public/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/user_prompt.txt"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "4": {
+   "status": "pass",
+   "note": "修复只需 numpy/ma/core.py；gold 与 5 个候选的 projection.included_paths 都是 [\"numpy/ma/core.py\"]",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_gold.jsonl#L6",
+    "runs/r2e_lifecycle_20260929/inv/numpy_d805/ledger_KDE.jsonl#L1"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "5": {
+   "status": "issue",
+   "note": "X1：本题 gold 与隐藏断言逐字在同仓 18b7cd9d / 2f4a9650 / 43e333e2 / 5e8301c2 / d89bc4bb 的公开初态里；本题初态含 a5ea773e 的修复（重构形式）与测试",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/cross_task_gold_scan.json",
+    "runs/r2e_static_prep_20260924/cross_task_test_scan.json",
+    "runs/r2e_static_prep_20260924/v3/public/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/worktree/numpy/lib/shape_base.py#L860-L863"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "6": {
+   "status": "pass",
+   "note": "解题侧与评分侧都从 /testbed/numpy 导入 1.12.0.dev0+25e3ebf；pytest 7.4.4；无需新依赖",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/devcheck/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/orig/captures/env.out",
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_gold.jsonl#L6"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "7": {
+   "status": "not_applicable",
+   "note": "本题没有资产或数据文件",
+   "evidence_refs": [],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "8": {
+   "status": "pass",
+   "note": "actor：uid 54321 经真实 CC 跑完全部公开命令，激活文件不可写；grader：以 agent/54321 应用补丁，评分用户 54322",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/devcheck/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/orig/attempt.json",
+    "runs/r2e_lifecycle_20260929/devcheck/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/orig/captures/env.out",
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_gold.jsonl#L6"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "9": {
+   "status": "pass",
+   "note": "评分观测导入 /testbed/numpy/__init__.py；K-A5 的堆栈落在 /testbed/numpy/ma/core.py:3806，证明候选代码被执行",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_gold.jsonl#L6",
+    "runs/r2e_lifecycle_20260929/inv/numpy_d805/pcheck_KA5.json"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "10": {
+   "status": "pass",
+   "note": "devcheck 8 条命令全部按预期：复现 rc 1（base 输出与题面 Actual 不同）、相关公开测试 6 passed、test_core.py 229 passed（1.73 s）、10^7 元素 repr 0.002 s；gold 下复现 rc 0",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/devcheck/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/orig/attempt.json",
+    "runs/r2e_lifecycle_20260929/devcheck/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/private_control.json"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "11": {
+   "status": "pass",
+   "note": "准备、解题、安装 / 构建、测试四个阶段都不需要网络；devcheck DNS_EXTERNAL=DENIED；评分 network=deny_all",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/devcheck/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/orig/prelaunch.json",
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_gold.jsonl#L6"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "12": {
+   "status": "not_applicable",
+   "note": "无外部服务",
+   "evidence_refs": [],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "13": {
+   "status": "pass",
+   "note": "评分峰值 283–294 MB / 4 GiB；测试 3–5 s；devcheck 全部命令 18.6 s",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_noop.jsonl#L6",
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_gold.jsonl#L6",
+    "runs/r2e_lifecycle_20260929/devcheck/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/orig/attempt.json"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "14": {
+   "status": "pass",
+   "note": "noop / gold 在旧镜像 2 次、新镜像 1 次逐键一致；M3 参考 gold 2 次；目标键确定性，约 8 个回归键用未设种子的 np.random 但与同数据结果比较",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl#L21",
+    "runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl#L21",
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl#L21",
+    "runs/r2e_env_repair_20260924/_rerun2/ledger_gold.jsonl#L21",
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_noop.jsonl#L6",
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_gold.jsonl#L6"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "16": {
+   "status": "pass",
+   "note": "gold 与 K-DE / K-DC / K-DF / K-A5 / K-A5b 都由 agent/54321 git_apply 成功，projection 只含 numpy/ma/core.py",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_gold.jsonl#L6",
+    "runs/r2e_lifecycle_20260929/inv/numpy_d805/ledger_KDE.jsonl#L1",
+    "runs/r2e_lifecycle_20260929/inv/numpy_d805/ledger_KA5b.jsonl#L1"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "17": {
+   "status": "pass",
+   "note": "RH2_SETUP_RESTORED=2、TEST_FILES=3、SETUP_OK=1；隐藏测试树 sha 088fe58b…",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/numpy_d805/logs_KDE/evallog_replay-r2e-inv-d805-KDE-_098ad5e4.eval.log#L1-L14"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "18": {
+   "status": "pass",
+   "note": "collected 229、parsed 229，segment_completed=true",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_gold.jsonl#L6"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "19": {
+   "status": "pass",
+   "note": "229 键全 PASSED，无撞键（单文件）；键集严格相等",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v3/private/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/expected_output.json",
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_gold.jsonl#L6"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "20": {
+   "status": "pass",
+   "note": "noop 与 gold 只差目标键 TestMaskedArray.test_str_repr",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_noop.jsonl#L6",
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_gold.jsonl#L6"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "21": {
+   "status": "pass",
+   "note": "失败原因可见：noop 为 AssertionError；K-A5 为 ValueError（候选自身错误）",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_noop.jsonl#L6",
+    "runs/r2e_lifecycle_20260929/inv/numpy_d805/logs_KA5/evallog_replay-r2e-inv-d805-KA5-_e04847ad.eval.log#L28-L80"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "22": {
+   "status": "pass",
+   "note": "M3 独立 runner 在来源镜像上 gold 229 passed ×2；旧对账 agree",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/M3/gold_ledger/logs_r2e/numpy/d805e9b66228/gold/a1/test_output.txt",
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "23": {
+   "status": "issue",
+   "note": "P4：题面 Actual 块（31 个 -- 加 ..., 1997 1998 1999；\"displaying up to 1000 elements\"）与 base 实际输出不符；照 Expected 修即可，公开材料能消解",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v3/public/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/user_prompt.txt#L27-L34",
+    "runs/r2e_lifecycle_20260929/devcheck/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/orig/captures/repro_issue_repr.out"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "24": {
+   "status": "pass",
+   "note": "唯一新断言的期望串由题面 Expected 原样给出；合理替代解 K-A5b（协调者修正一行、主审核对）得 1.0",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v3/public/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/user_prompt.txt#L21-L25",
+    "runs/r2e_lifecycle_20260929/inv/numpy_d805/ledger_KA5b.jsonl#L1"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "25": {
+   "status": "issue",
+   "note": "S1：T2c（只测示例字面值）＋T2b（退化候选 K-DE 得 1.0）＋第 4 步（K-DC、K-DF 得 1.0 并在 n=500 / n=100000 上违例）",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v3/private/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/hidden_tests/test_1.py#L454-L461",
+    "runs/r2e_lifecycle_20260929/inv/numpy_d805/ledger_KDE.jsonl#L1",
+    "runs/r2e_lifecycle_20260929/inv/numpy_d805/ledger_KDC.jsonl#L1",
+    "runs/r2e_lifecycle_20260929/inv/numpy_d805/ledger_KDF.jsonl#L1",
+    "runs/r2e_lifecycle_20260929/inv/numpy_d805/pcheck_KDE.json",
+    "runs/r2e_lifecycle_20260929/inv/numpy_d805/pcheck_KDC.json",
+    "runs/r2e_lifecycle_20260929/inv/numpy_d805/pcheck_KDF.json"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "26": {
+   "status": "pass",
+   "note": "打印类回归（小数组、0 维、结构化、mvoid、自定义显示、matrix 冒烟）有保护；子类打印（test_subclassing.py）与 numpy/core arrayprint 不在评分内，登记 T3",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v3/private/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/hidden_tests/test_1.py#L80-L88",
+    "runs/r2e_static_prep_20260924/v3/private/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/hidden_tests/test_1.py#L651-L669",
+    "runs/r2e_static_prep_20260924/v3/private/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/hidden_tests/test_1.py#L756-L803"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "27": {
+   "status": "pass",
+   "note": "gold 在默认打印选项下对一维完整正确；G1（S2）：threshold 调到 > 1500 时仍静默丢值，多维未改（题外）；上游后续版本保留同一设计",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v3/private/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/gold.patch",
+    "runs/r2e_static_prep_20260924/v3/public/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd/worktree/numpy/ma/core.py#L3839-L3852"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "28": {
+   "status": "not_checked",
+   "note": "R-c 两处断言待独立复核与 Codex 复核（第 2 处采用的读法见 card.md §6）",
+   "evidence_refs": [],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "29": {
+   "status": "pass",
+   "note": "新镜像 devcheck：git_sanitize refs 0 / remotes 0 / reflog 0 / unreachable 0，HEAD=25e3ebf4；预检 HIDDEN_TESTS、GIT_HISTORY ok（跨题包含另见 5）",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/devcheck/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/orig/attempt.json"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "30": {
+   "status": "pass",
+   "note": "解题容器只经 relay 网络，外部 DNS 被拒",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/devcheck/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/orig/prelaunch.json"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "31": {
+   "status": "issue",
+   "note": "通用通道：隐藏测试从 numpy/ma/testutils.py 与 numpy.testing 导入断言函数，候选可改且评分时不重置；只登记并建议事后审计，不加排除规则",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v3/private/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/hidden_tests/test_1.py#L22-L28"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "32": {
+   "status": "pass",
+   "note": "断言检查的是实际 repr / str 输出，不是静态匹配",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v3/private/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/hidden_tests/test_1.py#L447-L461"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "33": {
+   "status": "unknown",
+   "note": "devcheck 证明真实 CC 的启动、工具调用与退出；真实模型求解与经 CC 的交付未测",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/devcheck/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/orig/attempt.json"
+   ],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "37": {
+   "status": "not_checked",
+   "note": "R-c 是测试标准修订（不改环境、不改题面），待实施",
+   "evidence_refs": [],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "39": {
+   "status": "not_applicable",
+   "note": "修订只影响本题隐藏测试",
+   "evidence_refs": [],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  },
+  "40": {
+   "status": "not_applicable",
+   "note": "单题记录",
+   "evidence_refs": [],
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）"
+  }
+ },
+ "issues": [
+  {
+   "id": "d805-1",
+   "v1_code": "T2c",
+   "severity": "S1",
+   "category": "test_quality",
+   "scope": "task",
+   "summary": "核心要求（大的一维掩码数组的 str/repr 按 numpy 规则摘要、省略处用省略号）只有一个直接断言，且完全是题面示例字面值（np.ma.arange(2000)、a[1:50]）",
+   "evidence_level": "静态（确定）",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v3/private/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/hidden_tests/test_1.py#L454-L461",
+    "runs/r2e_static_prep_20260924/v3/public/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/user_prompt.txt#L11-L25"
+   ],
+   "proposed_action": "R-c 第 1 处：追加 n=100000、末尾两个值被掩的 str 断言（见 card.md 附录 A）",
+   "status": "confirmed"
+  },
+  {
+   "id": "d805-2",
+   "v1_code": "T2b",
+   "severity": "S1",
+   "category": "test_quality",
+   "scope": "task",
+   "summary": "退化候选 K-DE（只把截取量写成 750、不改截取条件）正式评分 1.0（229/229），但 n=500 时每个值显示两次（1000 个 token）",
+   "evidence_level": "当前 CPU（正式评分＋私有行为核对）",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/numpy_d805/ledger_KDE.jsonl#L1",
+    "runs/r2e_lifecycle_20260929/inv/numpy_d805/logs_KDE/evallog_replay-r2e-inv-d805-KDE-_098ad5e4.eval.log#L73",
+    "runs/r2e_lifecycle_20260929/inv/numpy_d805/pcheck_KDE.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/cands/numpy_d805_KDE.patch"
+   ],
+   "proposed_action": "R-c 第 2 处（card.md 附录 A）：追加 n=500 全量显示的 token 断言（无省略号、不缺不重）。依据：Expected 的\"用省略号标出被省略的值\"、set_printoptions 对 threshold 的文档、core.py:3797-3798 注释与 1.11 发布说明（截角只是优化）",
+   "status": "confirmed"
+  },
+  {
+   "id": "d805-3",
+   "v1_code": "T2（v1 §4 第 4 步）",
+   "severity": "S1",
+   "category": "test_quality",
+   "scope": "task",
+   "summary": "审查中构造的部分修复 K-DC（只在 size > threshold 时放宽）与 K-DF（只把截取门槛提高到 size > 10000）都得 1.0；K-DC 在 n=500 仍静默丢 400 个值，K-DF 在 n=100000 仍只显示 100 个值且无省略号",
+   "evidence_level": "当前 CPU（正式评分＋私有行为核对）",
+   "evidence_refs": [
+    "runs/r2e_lifecycle_20260929/inv/numpy_d805/ledger_KDC.jsonl#L1",
+    "runs/r2e_lifecycle_20260929/inv/numpy_d805/ledger_KDF.jsonl#L1",
+    "runs/r2e_lifecycle_20260929/inv/numpy_d805/pcheck_KDC.json",
+    "runs/r2e_lifecycle_20260929/inv/numpy_d805/pcheck_KDF.json"
+   ],
+   "proposed_action": "同一轮 R-c：K-DC 由第 2 处拦下，K-DF 由第 1 处拦下",
+   "status": "confirmed"
+  },
+  {
+   "id": "d805-4",
+   "v1_code": "G1→T3",
+   "severity": "S2",
+   "category": "gold_completeness",
+   "scope": "task",
+   "summary": "gold 在用户把 threshold 调到 > 1500（如 sys.maxsize）时，n=2000 只显示 1500 个值且无省略号；多维数组行为未改（标题限定一维，题外）",
+   "evidence_level": "静态＋仿真",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v3/private/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/gold.patch",
+    "runs/r2e_static_prep_20260924/v3/public/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd/worktree/numpy/ma/core.py#L3839-L3852"
+   ],
+   "proposed_action": "登记，按 v1 §8 抽查；不补断言（题面未要求，gold 也通不过）",
+   "status": "registered"
+  },
+  {
+   "id": "d805-5",
+   "v1_code": "T3",
+   "severity": "S2",
+   "category": "coverage",
+   "scope": "task",
+   "summary": "评分只含 test_core.py：子类打印（test_subclassing.py 的 test_subclass_repr / test_subclass_str）与 numpy/core 打印测试不在评分内",
+   "evidence_level": "静态",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v3/private/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/hidden_tests/test_1.py",
+    "runs/r2e_static_prep_20260924/v3/public/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/worktree/numpy/ma/tests/test_subclassing.py#L318-L341"
+   ],
+   "proposed_action": "登记；解题者可用公开测试自测",
+   "status": "registered"
+  },
+  {
+   "id": "d805-6",
+   "v1_code": "P4",
+   "severity": null,
+   "category": "prompt_quality",
+   "scope": "task",
+   "summary": "题面 Actual 块与 base 实际输出不符（写成 31 个 -- 后接省略号、\"up to 1000 elements\"；实际是 49 个 --、1950…1999、没有省略号）；Expected 正确，照 Expected 修即得 1",
+   "evidence_level": "当前 CPU（devcheck 复现输出）＋历史日志",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v3/public/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/user_prompt.txt#L27-L34",
+    "runs/r2e_lifecycle_20260929/devcheck/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/orig/captures/repro_issue_repr.out",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_0338a8c6.eval.log#L78"
+   ],
+   "proposed_action": "登记；可选 R-f：把 Actual 块换成 base 实际输出并删去 \"up to 1000 elements\"（不阻塞训练候选）",
+   "status": "registered"
+  },
+  {
+   "id": "d805-7",
+   "v1_code": "X1",
+   "severity": null,
+   "category": "task_relation",
+   "scope": "repo:numpy",
+   "summary": "本题 gold 与隐藏断言逐字在同仓 5 题（18b7cd9d、2f4a9650、43e333e2、5e8301c2、d89bc4bb）的公开初态里；本题初态含 a5ea773e 的修复（shape_base.py:860-863，重构形式，逐字扫描漏报）与测试",
+   "evidence_level": "机械扫描＋逐题 grep 核对",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/cross_task_gold_scan.json",
+    "runs/r2e_static_prep_20260924/cross_task_test_scan.json",
+    "runs/r2e_static_prep_20260924/v3/public/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/worktree/numpy/lib/shape_base.py#L860-L863",
+    "runs/r2e_static_prep_20260924/v3/public/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/worktree/numpy/lib/tests/test_shape_base.py#L357-L361"
+   ],
+   "proposed_action": "登记关联；训练时控制重复采样；留出按仓库整组",
+   "status": "registered"
+  },
+  {
+   "id": "d805-8",
+   "v1_code": "E3（通用）",
+   "severity": null,
+   "category": "grading_boundary",
+   "scope": "r2e_generic",
+   "summary": "隐藏测试依赖候选可改的 numpy/ma/testutils.py 与 numpy/testing，评分不重置",
+   "evidence_level": "静态",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v3/private/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/hidden_tests/test_1.py#L22-L28"
+   ],
+   "proposed_action": "交 A 线通用处理；本题建议事后审计标记改动 numpy/ma/testutils.py 或 numpy/testing/** 的补丁；不加排除规则",
+   "status": "registered"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "没有证据需要额外排除路径；testutils 通道只登记（issues d805-8）",
+  "evidence_refs": [],
+  "applied_version": null
+ },
+ "revision_refs": [],
+ "disposition": {
+  "state": "needs_repair",
+  "scope": "static_review",
+  "reason": "题意 / 测试：S1（T2c 确定；T2b 与第 4 步已由正式评分确认：K-DE、K-DC、K-DF 都得 1.0）。修法在 v1 预授权模板 R-c 内（两处断言，期望映射不变），修订版按 card.md §4 验收并经 Codex 复核后再定。环境：新镜像 devcheck 13 项全真、正式 noop 0 / gold 1，环境条件不是阻塞项。原版结果全部保留",
+  "evidence_refs": [
+   "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_noop.jsonl#L6",
+   "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_gold.jsonl#L6",
+   "runs/r2e_lifecycle_20260929/devcheck/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/orig/attempt.json",
+   "runs/r2e_lifecycle_20260929/inv/numpy_d805/ledger_KDE.jsonl#L1",
+   "runs/r2e_lifecycle_20260929/inv/numpy_d805/ledger_KDC.jsonl#L1",
+   "runs/r2e_lifecycle_20260929/inv/numpy_d805/ledger_KDF.jsonl#L1",
+   "runs/r2e_lifecycle_20260929/inv/numpy_d805/ledger_KA5b.jsonl#L1"
+  ],
+  "reviewer": null
+ },
+ "usage": {
+  "intended_use": "development_diagnostic",
+  "exposure_notes": "主审读过 gold、隐藏测试、期望映射、历史环境记录与全部运行日志；K-DE / K-DC / K-DF / K-A5 / K-A5b 是审查者构造的特权补丁（K-A5b 由协调者修正一行），不算独立求解；公开读者产物只据公开包",
+  "v1": {
+   "problem_localization": {
+    "value": "yes",
+    "evidence": [
+     "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_noop.jsonl#L6",
+     "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_gold.jsonl#L6",
+     "runs/r2e_lifecycle_20260929/devcheck/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/orig/attempt.json"
+    ]
+   },
+   "capability_comparison": {
+    "value": "conditional",
+    "missing": "在 R-c 落地前使用原版材料时，对得 1 的补丁预先登记两条事后审计（runs/r2e_lifecycle_20260929/inv/numpy_d805/private_check_6_3.py：n=500 全量显示且不缺不重；n=100000 为 '[0 1 2 ..., 99997 -- --]'），原始 reward 与语义结果分列；R-c 验收后此条件取消。池级：模型实际收到的消息与 Qwen adapter 链路未验（环境卡 §2）",
+    "evidence": [
+     "runs/r2e_lifecycle_20260929/devcheck/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/orig/attempt.json",
+     "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_noop.jsonl#L6",
+     "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_gold.jsonl#L6",
+     "runs/r2e_lifecycle_20260929/inv/numpy_d805/pcheck_gold.json"
+    ]
+   },
+   "training_candidate": {
+    "value": "no",
+    "missing": "未处理 S1（d805-1/2/3）。R-c 实施并验收（正对照 gold、K-A5b 为 1；noop、K-DE、K-DC、K-DF 为 0；键集 229 严格相等）、Codex 复核、独立复核完成后可改为 yes；S2（d805-4/5）、X1、P4 已登记",
+    "evidence": [
+     "runs/r2e_lifecycle_20260929/inv/numpy_d805/ledger_KDE.jsonl#L1",
+     "runs/r2e_lifecycle_20260929/inv/numpy_d805/ledger_KDC.jsonl#L1",
+     "runs/r2e_lifecycle_20260929/inv/numpy_d805/ledger_KDF.jsonl#L1"
+    ]
+   },
+   "heldout_candidate": {
+    "value": "no",
+    "missing": "当前有未修 S1；修订后只能作标明版本的自建评测，并须按仓库整组留出（同仓 5 题初态含本题答案，本题初态含 a5ea773e 答案）",
+    "evidence": [
+     "runs/r2e_static_prep_20260924/cross_task_gold_scan.json"
+    ]
+   }
+  }
+ },
+ "costs": {
+  "container_wall_seconds": null,
+  "agent_tokens": null,
+  "human_decisions": 0,
+  "source_refs": [
+   "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_noop.jsonl#L6",
+   "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_gold.jsonl#L6",
+   "runs/r2e_lifecycle_20260929/devcheck/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/orig/attempt.json",
+   "runs/r2e_lifecycle_20260929/inv/numpy_d805/run.log"
+  ],
+  "observed_timings": {
+   "devcheck_solve_seconds": 18.62,
+   "grader_test_seconds": {
+    "noop": 4.55,
+    "gold": 4.263,
+    "KDE": 5.109,
+    "KDC": 3.278,
+    "KDF": 3.036,
+    "KA5": 3.887,
+    "KA5b": 3.005
+   },
+   "grader_trusted_setup_seconds": 44.7,
+   "public_test_file_seconds": 1.73
+  },
+  "note": "R-c 在 v1 D4 预授权模板内，无需用户决定；没有 token 观测"
+ },
+ "solver_conditions": {
+  "interpreter": "/testbed/.venv/bin/python 3.7.9（镜像 ENV）",
+  "import": "numpy 就地构建、未装进 venv：/testbed 须在 sys.path 上（在 /testbed 下用 python -c / python -m pytest）",
+  "pip": "absent",
+  "network": "none",
+  "public_verification": "题面示例即复现（base rc 1 → gold rc 0）；numpy/ma/tests/test_core.py 229 passed 约 1.7 s；diag_sizes 可自查 n=500",
+  "evidence_refs": [
+   "runs/r2e_lifecycle_20260929/devcheck/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/orig/captures/env.out",
+   "runs/r2e_lifecycle_20260929/devcheck/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/orig/captures/import_version.out",
+   "runs/r2e_lifecycle_20260929/devcheck/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/orig/captures/pytest_ma_core_full.out"
+  ]
+ },
+ "candidate_runs": [
+  {
+   "id": "noop",
+   "material": "current",
+   "reward": 0.0,
+   "match": "228/229",
+   "ref": "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_noop.jsonl#L6",
+   "pcheck": "n500 100 False False / n1e5 False 100"
+  },
+  {
+   "id": "gold",
+   "material": "current",
+   "reward": 1.0,
+   "match": "229/229",
+   "ref": "runs/r2e_lifecycle_20260929/env_verify/ledger_l0_gold.jsonl#L6",
+   "pcheck": "n500 500 False True / n1e5 True 7"
+  },
+  {
+   "id": "K-DE",
+   "role": "v1 第 3 步退化候选",
+   "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/cands/numpy_d805_KDE.patch",
+   "patch_sha256": "sha256:f416c7226d6f7664bbf35cb6c22916265882854f984566cd09ed0b5526056cc4",
+   "reward": 1.0,
+   "match": "229/229",
+   "ref": "runs/r2e_lifecycle_20260929/inv/numpy_d805/ledger_KDE.jsonl#L1",
+   "pcheck": "n500 1000 False False / n1e5 True 7",
+   "violation": "n=500 每个值显示两次"
+  },
+  {
+   "id": "K-DC",
+   "role": "部分修复",
+   "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/cands/numpy_d805_KDC.patch",
+   "patch_sha256": "sha256:84766bcaa893b0fe52ff65c9ee7a681a72939508e2387607aca74cdf21d2d832",
+   "reward": 1.0,
+   "match": "229/229",
+   "ref": "runs/r2e_lifecycle_20260929/inv/numpy_d805/ledger_KDC.jsonl#L1",
+   "pcheck": "n500 100 False False / n1e5 True 7",
+   "violation": "n=500 静默丢 400 个值"
+  },
+  {
+   "id": "K-DF",
+   "role": "部分修复",
+   "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/cands/numpy_d805_KDF.patch",
+   "patch_sha256": "sha256:2657247d5b4c6c67671073c57a1fded6e908a50c967bc19cd8d3bb8f993c9ff1",
+   "reward": 1.0,
+   "match": "229/229",
+   "ref": "runs/r2e_lifecycle_20260929/inv/numpy_d805/ledger_KDF.jsonl#L1",
+   "pcheck": "n500 500 False True / n1e5 False 100",
+   "violation": "n=100000 只显示 100 个值、无省略号"
+  },
+  {
+   "id": "K-A5",
+   "role": "主审原稿的合理替代解（有错）",
+   "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/cands/numpy_d805_KA5.patch",
+   "patch_sha256": "sha256:25f82c212d33b4298ebc2bbd1a438861e8d4fb87ddb08ae86940751729313870",
+   "reward": 0.0,
+   "match": "228/229",
+   "ref": "runs/r2e_lifecycle_20260929/inv/numpy_d805/ledger_KA5.jsonl#L1",
+   "pcheck": "n500 行后抛 ValueError",
+   "note": "补丁自身错误：numpy/ma/core.py 模块里 max 是 numpy.ma.max（core.py:6274），max(print_width, int(threshold)+2) 把第二个参数当 axis，抛 ValueError: 'axis' entry is out of bounds；不是误拒证据"
+  },
+  {
+   "id": "K-A5b",
+   "role": "合理替代解（正对照）",
+   "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/cands/numpy_d805_KA5b.patch",
+   "patch_sha256": "sha256:0cde371bd6e2729bed10e4fee8f5df3034acb93379ab4af8396de3690aa51b43",
+   "reward": 1.0,
+   "match": "229/229",
+   "ref": "runs/r2e_lifecycle_20260929/inv/numpy_d805/ledger_KA5b.jsonl#L1",
+   "pcheck": "n500 500 False True / n1e5 True 7",
+   "note": "协调者只改 K-A5 的 max 那一行（改为条件表达式），其余逐字不变；主审核对 diff 后认可：语义等于内置 max，保留截角优化且在自定义 threshold 下不丢值"
+  }
+ ],
+ "review_notes": [
+  {
+   "by": "inv_r2e（Claude 私有主审，2026-09-29）",
+   "at": "2026-09-29",
+   "change": "读历史前初判 analysis_before_history.md（needs_review）→ 实跑后改为 needs_repair；K-A5 原稿错误由 K-A5b 替代；理由见 old_findings_delta.md §3"
+  }
+ ]
+}

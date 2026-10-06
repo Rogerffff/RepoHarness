@@ -1,0 +1,484 @@
+{
+  "schema": "swegym_cpu_partial_result.v1",
+  "date": "2026-09-29",
+  "instance_id": "Project-MONAI__MONAI-5932",
+  "run": "mixed-v1",
+  "state": "actor_private_complete_formal_pending",
+  "review_kind": "owner readback; independent review pending",
+  "base_commit": "3c8f6c6b94ba26f8c9df5b7c96089494de6f69cb",
+  "image": {
+    "id": "sha256:833da815aeee5132d737c83e3af72b822b5a2e0498368287014919cef084dd49",
+    "repo_digests": [
+      "xingyaoww/sweb.eval.x86_64.project-monai_s_monai-5932@sha256:84a4d4afe3f663633da40359ddb8ff5c0e951144e103bed27b907481f9cee6f4"
+    ],
+    "repair": "none; original image/install recipe retained"
+  },
+  "actor": {
+    "result": "ran",
+    "checks": {
+      "interpreter_in_tool_result": false,
+      "host_log_present": true,
+      "no_harness_dir_in_container": true,
+      "no_launcher_or_done_marker": true,
+      "message_start_matches_stub_requests": true,
+      "exit_code_zero": true,
+      "result_event_present": true,
+      "log_complete": true,
+      "bashenv_denied_for_agent": false,
+      "all_commands_ran": true,
+      "all_match_expect": true
+    },
+    "cleanup": {
+      "container_rm": 0,
+      "network_failures": [],
+      "relay_failures": [],
+      "stub_rc": 0,
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "residual_after_force": []
+    },
+    "profile": {
+      "cpus": 2.0,
+      "memory_bytes": 4294967296,
+      "tmp_tmpfs_bytes": 1073741824,
+      "home_tmpfs_bytes": 268435456,
+      "writable_layer_quota_bytes": 8589934592,
+      "pids_limit": 512
+    },
+    "cc": "2.1.205 (Claude Code)",
+    "commands": [
+      {
+        "id": "identity",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 535,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "实际actor身份、激活、工作区加载、版本与可写性；不单独当开发合格"
+      },
+      {
+        "id": "short_first",
+        "rc": 1,
+        "status": "nonzero",
+        "expect": "nonzero",
+        "matches_expect": true,
+        "output_bytes": 1184,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "公开数值原例/交换顺序，各命令独立，记录目标SyntaxError与实际数值"
+      },
+      {
+        "id": "long_first",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 16,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "公开数值原例/交换顺序，各命令独立，记录目标SyntaxError与实际数值"
+      },
+      {
+        "id": "public_existing",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 6175,
+        "output_truncated_to": 200000,
+        "pytest": {
+          "passed": 18,
+          "warning": 26
+        },
+        "purpose": "公开窄解析器回归，逐项解释skip/失败"
+      }
+    ],
+    "identity": {
+      "cwd": "/testbed",
+      "home": "/home/agent",
+      "monai": "/testbed/monai/__init__.py",
+      "path": "/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "uid": 54321,
+      "versions": {
+        "monai": "1.1.0+50.g3c8f6c6b.dirty",
+        "numpy": "1.24.4",
+        "parameterized": "0.9.0",
+        "pytest": "8.3.3",
+        "torch": "1.13.1"
+      }
+    },
+    "initial_worktree": "HEAD=3c8f6c6b94ba26f8c9df5b7c96089494de6f69cb\nPORCELAIN_BEGIN\n M requirements-dev.txt\nPORCELAIN_RC=0\n",
+    "initial_worktree_interpretation": "requirements-dev.txt already modified before actor; not pristine. Historical record identifies MetricsReloaded URL removal; current actor capture lists path but does not include full diff.",
+    "short_first_failure": "target SyntaxError from replacing shorter identifier inside longer identifier; not dependency import/collection failure",
+    "long_first_result": 4,
+    "public_tests": {
+      "passed": 18,
+      "warnings": 26,
+      "failed": 0,
+      "skipped": 0
+    },
+    "prompt_scope": "Devcheck control text, not proved complete formal issue/public_hints delivery"
+  },
+  "private": {
+    "scope": "root behavior only; not actor permissions",
+    "image": "sha256:833da815aeee5132d737c83e3af72b822b5a2e0498368287014919cef084dd49",
+    "variants": {
+      "base": {
+        "container": "rh2-cpu29-private-6c30aaedbdf8",
+        "started_at": 1790622010.6040938,
+        "preparation": [
+          {
+            "step": "git config --global --add safe.directory /testbed",
+            "rc": 0
+          },
+          {
+            "step": "python - <<'PY_CHECK'\nimport os,sys,json,pathlib,subprocess,importlib.metadata as m\nimport numpy,torch,monai\nprint('PY_CHECK',sys.executable)\nprint(json.dumps({'uid':os.getuid(),'cwd':os.getcwd(),'home':os.environ.get('HOME'),'path':os.environ.get('PATH'),'monai':monai.__file__,'versions':{x:m.version(x) for x in ['numpy','torch','monai','parameterized','pytest']}},sort_keys=True))\nassert pathlib.Path(monai.__file__).resolve().is_relative_to(pathlib.Path('/testbed')) if hasattr(pathlib.Path(), 'is_relative_to') else str(pathlib.Path(monai.__file__).resolve()).startswith('/testbed/')\nprint(subprocess.check_output(['git','rev-parse','HEAD'],text=True));print(subprocess.check_output(['git','status','--porcelain'],text=True))\nfor f in ['monai', '/tmp']:\n print('writable',f,os.access(f,os.W_OK))\nPY_CHECK",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'monai/bundle/reference_resolver.py'\"'\"', '\"'\"'c3c197d829de11bb7c4ca85e8e46350c60c4d92397494811d3e3eec2079e245e'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          }
+        ],
+        "commands": [
+          {
+            "id": "short_first",
+            "rc": 1,
+            "seconds": 6.071974737999881,
+            "stdout_bytes": 0,
+            "stderr_bytes": 1184
+          },
+          {
+            "id": "long_first",
+            "rc": 0,
+            "seconds": 6.0433554999999615,
+            "stdout_bytes": 16,
+            "stderr_bytes": 0
+          }
+        ],
+        "status": "executed_interpret_separately",
+        "cleanup": {
+          "rm_rc": 0,
+          "query_rc": 0,
+          "remaining": [],
+          "stderr": ""
+        },
+        "finished_at": 1790622032.6163802
+      },
+      "gold": {
+        "container": "rh2-cpu29-private-9a1825be2f12",
+        "started_at": 1790622032.6174297,
+        "preparation": [
+          {
+            "step": "git config --global --add safe.directory /testbed",
+            "rc": 0
+          },
+          {
+            "step": "python - <<'PY_CHECK'\nimport os,sys,json,pathlib,subprocess,importlib.metadata as m\nimport numpy,torch,monai\nprint('PY_CHECK',sys.executable)\nprint(json.dumps({'uid':os.getuid(),'cwd':os.getcwd(),'home':os.environ.get('HOME'),'path':os.environ.get('PATH'),'monai':monai.__file__,'versions':{x:m.version(x) for x in ['numpy','torch','monai','parameterized','pytest']}},sort_keys=True))\nassert pathlib.Path(monai.__file__).resolve().is_relative_to(pathlib.Path('/testbed')) if hasattr(pathlib.Path(), 'is_relative_to') else str(pathlib.Path(monai.__file__).resolve()).startswith('/testbed/')\nprint(subprocess.check_output(['git','rev-parse','HEAD'],text=True));print(subprocess.check_output(['git','status','--porcelain'],text=True))\nfor f in ['monai', '/tmp']:\n print('writable',f,os.access(f,os.W_OK))\nPY_CHECK",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'monai/bundle/reference_resolver.py'\"'\"', '\"'\"'c3c197d829de11bb7c4ca85e8e46350c60c4d92397494811d3e3eec2079e245e'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          },
+          {
+            "step": "git apply --check /in/gold.patch",
+            "rc": 0
+          },
+          {
+            "step": "git apply /in/gold.patch",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'monai/bundle/reference_resolver.py'\"'\"', '\"'\"'fc8481487a9ddc33e1b7ff718b240866ae5e891af3c2f5eefa286f7d263c9b6d'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          }
+        ],
+        "commands": [
+          {
+            "id": "short_first",
+            "rc": 0,
+            "seconds": 6.488063652999699,
+            "stdout_bytes": 16,
+            "stderr_bytes": 0
+          },
+          {
+            "id": "long_first",
+            "rc": 0,
+            "seconds": 6.175605689999429,
+            "stdout_bytes": 16,
+            "stderr_bytes": 0
+          }
+        ],
+        "status": "executed_interpret_separately",
+        "cleanup": {
+          "rm_rc": 0,
+          "query_rc": 0,
+          "remaining": [],
+          "stderr": ""
+        },
+        "finished_at": 1790622055.8281274
+      },
+      "degenerate": {
+        "container": "rh2-cpu29-private-e21d0f5483d0",
+        "started_at": 1790622055.8299162,
+        "preparation": [
+          {
+            "step": "git config --global --add safe.directory /testbed",
+            "rc": 0
+          },
+          {
+            "step": "python - <<'PY_CHECK'\nimport os,sys,json,pathlib,subprocess,importlib.metadata as m\nimport numpy,torch,monai\nprint('PY_CHECK',sys.executable)\nprint(json.dumps({'uid':os.getuid(),'cwd':os.getcwd(),'home':os.environ.get('HOME'),'path':os.environ.get('PATH'),'monai':monai.__file__,'versions':{x:m.version(x) for x in ['numpy','torch','monai','parameterized','pytest']}},sort_keys=True))\nassert pathlib.Path(monai.__file__).resolve().is_relative_to(pathlib.Path('/testbed')) if hasattr(pathlib.Path(), 'is_relative_to') else str(pathlib.Path(monai.__file__).resolve()).startswith('/testbed/')\nprint(subprocess.check_output(['git','rev-parse','HEAD'],text=True));print(subprocess.check_output(['git','status','--porcelain'],text=True))\nfor f in ['monai', '/tmp']:\n print('writable',f,os.access(f,os.W_OK))\nPY_CHECK",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'monai/bundle/reference_resolver.py'\"'\"', '\"'\"'c3c197d829de11bb7c4ca85e8e46350c60c4d92397494811d3e3eec2079e245e'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          },
+          {
+            "step": "git apply --check /in/degenerate_reverse_order.patch",
+            "rc": 0
+          },
+          {
+            "step": "git apply /in/degenerate_reverse_order.patch",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'monai/bundle/reference_resolver.py'\"'\"', '\"'\"'bd0d4a13404a980ac00822601d2245cb73d003238c599c83a8771d793a21bc0a'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          }
+        ],
+        "commands": [
+          {
+            "id": "short_first",
+            "rc": 0,
+            "seconds": 6.442196262000834,
+            "stdout_bytes": 16,
+            "stderr_bytes": 0
+          },
+          {
+            "id": "long_first",
+            "rc": 1,
+            "seconds": 6.225880074999623,
+            "stdout_bytes": 0,
+            "stderr_bytes": 1146
+          }
+        ],
+        "status": "executed_interpret_separately",
+        "cleanup": {
+          "rm_rc": 0,
+          "query_rc": 0,
+          "remaining": [],
+          "stderr": ""
+        },
+        "finished_at": 1790622079.942399
+      }
+    },
+    "matrix": {
+      "base": {
+        "short_first": "target SyntaxError",
+        "long_first": 4
+      },
+      "gold": {
+        "short_first": 4,
+        "long_first": 4
+      },
+      "degenerate": {
+        "short_first": 4,
+        "long_first": "target SyntaxError"
+      }
+    },
+    "source_post_sha256": {
+      "base": "c3c197d829de11bb7c4ca85e8e46350c60c4d92397494811d3e3eec2079e245e",
+      "gold": "fc8481487a9ddc33e1b7ff718b240866ae5e891af3c2f5eefa286f7d263c9b6d",
+      "degenerate": "bd0d4a13404a980ac00822601d2245cb73d003238c599c83a8771d793a21bc0a"
+    }
+  },
+  "formal": {
+    "noop": {
+      "state": "started_without_terminal_ledger_in_reviewed_snapshot",
+      "reward": null
+    },
+    "gold": {
+      "state": "not_completed_in_reviewed_snapshot",
+      "reward": null
+    },
+    "degenerate": {
+      "state": "not_completed_in_reviewed_snapshot",
+      "reward": null
+    }
+  },
+  "allowed_use": "public development conditions and behavior diagnosis; formal reward/coverage and model/training qualification unproved",
+  "remaining": [
+    "formal noop/gold/degenerate actual exports/install/test/references/cleanup",
+    "frozen parser cross-check and resource interpretation",
+    "independent review",
+    "formal issue/public_hints delivery",
+    "full dependency health and current initial requirements-dev diff not newly inventoried",
+    "model/GPU/budget/training conditions separately governed"
+  ],
+  "evidence": [
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/status.json",
+      "bytes": 7269,
+      "sha256": "ef9ab038c87247490ab5be4a56825699c289ead5ab8a8010d0f27b60db09bef2"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/original_image.json",
+      "bytes": 3912,
+      "sha256": "9f8f8e160e0f4134587d517b8056755ab3f5a8cbad6d6b8abe94415f9a81db60"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/actor_original/attempt.json",
+      "bytes": 14013,
+      "sha256": "d82833286faaf95da95724d04744ebd300ed1414fb6155c21f16826ef02851d5"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/actor_original/post_run_facts_root.txt",
+      "bytes": 1073,
+      "sha256": "deda79a759b77ee97073b4918e07260419ccf968daba99ebac487ff3736787c2"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/actor_original/stub/requests/messages_000.json",
+      "bytes": 12521,
+      "sha256": "a49655ae8f05466249828e02f1128f3d782b9d7368ec0f18478d07ec67ccb85c"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior_spec.json",
+      "bytes": 6434,
+      "sha256": "49271f6f9ee62c0d6a845c7c3da73b96482be23c0b8f171163516531c2fb3d78"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/summary.json",
+      "bytes": 8077,
+      "sha256": "39354efcf68511360dbee4a34405fd7af106a86cafde6679ea5f1e50a12af20c"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/actor_original/captures/identity.out",
+      "bytes": 535,
+      "sha256": "8b3d78672205dea7da86c9f03eeb93c2c5a806ba44500d45e7cf0a83eeef5f73"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/actor_original/captures/long_first.out",
+      "bytes": 16,
+      "sha256": "29bbfb90f680a9f7e61ee61f5011bb977f71b3b9ef84ea8cc346493482805bc5"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/actor_original/captures/public_existing.out",
+      "bytes": 6175,
+      "sha256": "6d0bafe94c231e6be18311218dd4d32178cbdab820e6911f3a402eff0fefab91"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/actor_original/captures/short_first.out",
+      "bytes": 1184,
+      "sha256": "e9a7f22c066983403e28bf508947ce34926675d48d238cca0b79ce056c61e552"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/base/long_first.out",
+      "bytes": 16,
+      "sha256": "29bbfb90f680a9f7e61ee61f5011bb977f71b3b9ef84ea8cc346493482805bc5"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/base/prep_0.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/base/prep_1.out",
+      "bytes": 480,
+      "sha256": "55cc19cedbf4bd773826bff7522968cccf61399582b04e781ddaf23059885648"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/base/prep_2.out",
+      "bytes": 111,
+      "sha256": "25d70cb2004f9836dafd5e6a68a24eec520173fb48ecdce20d508fd01763a88b"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/base/short_first.out",
+      "bytes": 1184,
+      "sha256": "e9a7f22c066983403e28bf508947ce34926675d48d238cca0b79ce056c61e552"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/degenerate/long_first.out",
+      "bytes": 1146,
+      "sha256": "2b6a06340207bfc75348bf05a75ed70afcc845444771eda94d0ff646d7c4788b"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/degenerate/prep_0.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/degenerate/prep_1.out",
+      "bytes": 480,
+      "sha256": "55cc19cedbf4bd773826bff7522968cccf61399582b04e781ddaf23059885648"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/degenerate/prep_2.out",
+      "bytes": 111,
+      "sha256": "25d70cb2004f9836dafd5e6a68a24eec520173fb48ecdce20d508fd01763a88b"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/degenerate/prep_3.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/degenerate/prep_4.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/degenerate/prep_5.out",
+      "bytes": 111,
+      "sha256": "88df650d03f83b764e26aed3d24a07cc6409531f1a05e429f93093020db455b3"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/degenerate/short_first.out",
+      "bytes": 16,
+      "sha256": "29bbfb90f680a9f7e61ee61f5011bb977f71b3b9ef84ea8cc346493482805bc5"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/gold/long_first.out",
+      "bytes": 16,
+      "sha256": "29bbfb90f680a9f7e61ee61f5011bb977f71b3b9ef84ea8cc346493482805bc5"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/gold/prep_0.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/gold/prep_1.out",
+      "bytes": 480,
+      "sha256": "55cc19cedbf4bd773826bff7522968cccf61399582b04e781ddaf23059885648"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/gold/prep_2.out",
+      "bytes": 111,
+      "sha256": "25d70cb2004f9836dafd5e6a68a24eec520173fb48ecdce20d508fd01763a88b"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/gold/prep_3.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/gold/prep_4.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/gold/prep_5.out",
+      "bytes": 111,
+      "sha256": "ff1f50a9e8d01d5d6d546f4b94bf4f76c628585795d084999334b571687b7918"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-5932/mixed-v1/private_behavior/gold/short_first.out",
+      "bytes": 16,
+      "sha256": "29bbfb90f680a9f7e61ee61f5011bb977f71b3b9ef84ea8cc346493482805bc5"
+    }
+  ]
+}

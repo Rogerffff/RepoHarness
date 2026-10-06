@@ -1,0 +1,65 @@
+{
+ "image": "c3keep/coveragepy_f5eb:src",
+ "python_prefix": "/testbed/.venv",
+ "variants": {
+  "FC": [
+   "git apply /in/FC.patch"
+  ]
+ },
+ "files": {
+  "run_tests.sh": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov_f5eb/run_tests.sh",
+  "probe_matrix.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov_f5eb/probe_matrix.py",
+  "hidden_test_1_v8_rc.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov_f5eb/hidden_test_1_v8_rc.py",
+  "hidden_test_1_hist_rb.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov_f5eb/hidden_test_1_hist_rb.py",
+  "hidden_test_1_rc2.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov_f5eb/hidden_test_1_rc2.py",
+  "hidden_test_1_rb2.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov_f5eb/hidden_test_1_rb2.py",
+  "FC.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/cov_f5eb/FC.patch"
+ },
+ "commands": [
+  {
+   "id": "h0_orig",
+   "cmd": "rm -rf /testbed/r2e_tests && cp -r /r2e_tests /testbed/r2e_tests && sha256sum /testbed/r2e_tests/test_1.py && bash /in/run_tests.sh 2>&1; rm -rf /testbed/r2e_tests",
+   "timeout_s": 900
+  },
+  {
+   "id": "h1_v8rc",
+   "cmd": "rm -rf /testbed/r2e_tests && cp -r /r2e_tests /testbed/r2e_tests && cp /in/hidden_test_1_v8_rc.py /testbed/r2e_tests/test_1.py && sha256sum /testbed/r2e_tests/test_1.py && bash /in/run_tests.sh 2>&1; rm -rf /testbed/r2e_tests",
+   "timeout_s": 900
+  },
+  {
+   "id": "h2_histrb",
+   "cmd": "rm -rf /testbed/r2e_tests && cp -r /r2e_tests /testbed/r2e_tests && cp /in/hidden_test_1_hist_rb.py /testbed/r2e_tests/test_1.py && sha256sum /testbed/r2e_tests/test_1.py && bash /in/run_tests.sh 2>&1; rm -rf /testbed/r2e_tests",
+   "timeout_s": 900
+  },
+  {
+   "id": "h3_rc2",
+   "cmd": "rm -rf /testbed/r2e_tests && cp -r /r2e_tests /testbed/r2e_tests && cp /in/hidden_test_1_rc2.py /testbed/r2e_tests/test_1.py && sha256sum /testbed/r2e_tests/test_1.py && bash /in/run_tests.sh 2>&1; rm -rf /testbed/r2e_tests",
+   "timeout_s": 900
+  },
+  {
+   "id": "h4_rb2",
+   "cmd": "rm -rf /testbed/r2e_tests && cp -r /r2e_tests /testbed/r2e_tests && cp /in/hidden_test_1_rb2.py /testbed/r2e_tests/test_1.py && sha256sum /testbed/r2e_tests/test_1.py && bash /in/run_tests.sh 2>&1; rm -rf /testbed/r2e_tests",
+   "timeout_s": 900
+  },
+  {
+   "id": "pub_test_json",
+   "timeout_s": 900,
+   "cmd": "PYTHONDONTWRITEBYTECODE=1 python -m pytest tests/test_json.py -rA -o cache_dir=/tmp/rh2_pytest_cache 2>&1"
+  },
+  {
+   "id": "probe",
+   "timeout_s": 600,
+   "cmd": "rm -rf /tmp/probe && python /in/probe_matrix.py /tmp/probe 2>&1"
+  },
+  {
+   "id": "h3u_rc2",
+   "cmd": "rm -rf /testbed/r2e_tests && cp -r /r2e_tests /testbed/r2e_tests && cp /in/hidden_test_1_rc2.py /testbed/r2e_tests/test_1.py && sha256sum /testbed/r2e_tests/test_1.py && chmod 755 /root && chown -R 54322:54322 /testbed && rm -rf /tmp/u54322 && mkdir -p /tmp/u54322 && chown 54322:54322 /tmp/u54322 && HOME=/tmp/u54322 TMPDIR=/tmp/u54322 setpriv --reuid=54322 --regid=54322 --clear-groups bash /in/run_tests.sh 2>&1; rm -rf /testbed/r2e_tests",
+   "timeout_s": 900
+  },
+  {
+   "id": "h4u_rb2",
+   "cmd": "rm -rf /testbed/r2e_tests && cp -r /r2e_tests /testbed/r2e_tests && cp /in/hidden_test_1_rb2.py /testbed/r2e_tests/test_1.py && sha256sum /testbed/r2e_tests/test_1.py && chmod 755 /root && chown -R 54322:54322 /testbed && rm -rf /tmp/u54322 && mkdir -p /tmp/u54322 && chown 54322:54322 /tmp/u54322 && HOME=/tmp/u54322 TMPDIR=/tmp/u54322 setpriv --reuid=54322 --regid=54322 --clear-groups bash /in/run_tests.sh 2>&1; rm -rf /testbed/r2e_tests",
+   "timeout_s": 900
+  }
+ ]
+}

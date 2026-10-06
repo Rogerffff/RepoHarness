@@ -1,0 +1,236 @@
+{
+  "schema": "swe_pydantic.owner_shared_cpu_support_input.v1",
+  "request_id": "swe-pydantic8316-control-protect-timeout-support-v1-20261003",
+  "host": "cpu-a",
+  "observed_job": "pyd8316-formal-20261003020938-r14-d2baf",
+  "release_id": "cat2-cpu-r2e089092-swe34-dvc-pyd-20261003-v1",
+  "release_manifest_sha256": "51b833975be2c3354be45b731552235a33070315f0039c8e6f54987de95f6ca8",
+  "fixed_wrapper_sha256": "b127f7309ffae3eae2bbe834c595f846104406e2f858b8073ff2182d0a2ce3c5",
+  "fixed_inputs_sha256": "bea70edd55d2a316b5d92fde1a3a894e9c79363a168e2cd92c7de2d40b83ac1b",
+  "actual_facts": {
+    "completed_rows": [
+      {
+        "candidate": "noop",
+        "reward": 0.0,
+        "wrapper_checks_passed": true,
+        "review": {
+          "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8316-formal-20261003020938-r14-d2baf/noop/review.json",
+          "bytes": 52808,
+          "sha256": "da7e8aefdb449223f733dbaea2ff0be5d85291a0f9da0d7f1371dee5dc726ec4"
+        }
+      },
+      {
+        "candidate": "gold",
+        "reward": 1.0,
+        "wrapper_checks_passed": true,
+        "review": {
+          "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8316-formal-20261003020938-r14-d2baf/gold/review.json",
+          "bytes": 52796,
+          "sha256": "c3700ea7a102f8b83a734087a1b913c865bf853a31082024d2738964a96b42e6"
+        }
+      },
+      {
+        "candidate": "keep_digit",
+        "reward": 1.0,
+        "wrapper_checks_passed": true,
+        "review": {
+          "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8316-formal-20261003020938-r14-d2baf/keep_digit/review.json",
+          "bytes": 52796,
+          "sha256": "89df84c77dea04ff374dee631e0cdaebd47e43fecbacc826f51e97c6d7115ba0"
+        }
+      },
+      {
+        "candidate": "scan",
+        "reward": 1.0,
+        "wrapper_checks_passed": true,
+        "review": {
+          "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8316-formal-20261003020938-r14-d2baf/scan/review.json",
+          "bytes": 52796,
+          "sha256": "38c86674aa44a6fb4d3f234c45488f480f6fd1fd6f74baf04c26d43547c90190"
+        }
+      },
+      {
+        "candidate": "w_example_only",
+        "reward": 0.0,
+        "wrapper_checks_passed": true,
+        "review": {
+          "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8316-formal-20261003020938-r14-d2baf/w_example_only/review.json",
+          "bytes": 52808,
+          "sha256": "fc1ba84a14e10537bc462c400dde75d17c9111c1187e7337ca6f8600e358cb32"
+        }
+      }
+    ],
+    "failed_candidate": "w_acr_max8",
+    "reward": null,
+    "outcome": "failed_to_grade",
+    "failure_category": "infra_failure",
+    "infra_failure_detail": "grading_control_surface_protect_timeout_after_300s",
+    "failed_docker_call": "0210",
+    "elapsed_seconds": 300.1102182865143,
+    "call_has_result_or_stdout": false,
+    "trusted_setup": {
+      "RH2_SETUP_ABSENT_TEST_FILES": "0",
+      "RH2_SETUP_APPLY_RC": "0",
+      "RH2_SETUP_EXPECTED_TEST_FILES": "1",
+      "RH2_SETUP_IRREGULAR_TEST_FILES": "",
+      "RH2_SETUP_OK": "1",
+      "RH2_SETUP_RESTORED": "1",
+      "RH2_SETUP_TEST_FILES": "1"
+    },
+    "candidate_install_or_pytest_started": false,
+    "oom": false,
+    "memory_oom_kill_count": 0,
+    "pids_max_event_count": 0,
+    "candidate_cleanup_removed": true,
+    "grader_created_removed": 6,
+    "residual_containers_and_networks": [],
+    "outer_error_masked_first_error": true,
+    "first_error": "真实测试标记缺失",
+    "outer_error": "RuntimeError('收尾异常或存在本run残留')",
+    "unfinished_candidates": 19,
+    "actor_executed": false
+  },
+  "repeated_failure_context": {
+    "previous_8567_support_request": "swe-pydantic8567-control-protect-timeout-support-v1-20261003",
+    "previous_support_accepted": true,
+    "previous_protect_only_seconds": 149.041,
+    "8567_bounded_seven_formal_success": true,
+    "8567_latest_protect_seconds": 282.782,
+    "new_8316_failure_does_not_revoke_completed_8567_CPU_review": true,
+    "same_version_diagnostic_success_is_not_permanent_remediation": true
+  },
+  "phase_command": "grader-protect-control-surface v1; recursive chown candidate/testbed interpreter prefix and official test protection; exact argv in0210/call.json",
+  "cause_scope": "Actual protection timeout before installation/tests, no phase stdout/result. Cannot locate which chown or claim root cause. No task/candidate behavior scoring occurred.",
+  "requested_support": [
+    "维护者核cpu-a Docker/IO/load及阶段健康，保留实际原件、labels和原300秒，不干扰在途或已提交GPU。",
+    "鉴于再次超时，请返回同版本有界接续是否安全及依据；如需共享保护效率修复，给单独新版本及受影响窄验方案，不热改R14、旧任务、原FP或语义边界。",
+    "不要只以一次protection-only成功宣布永久恢复，不增300秒、不禁保护或绕槽，不全量重跑已完成五行。"
+  ],
+  "owner_actions": "原24行自然停止并归档；自有下次CPU派发hold（包括6283v2），不修改共享control/配方/资源；非作者只核五行复用和失败null。8567普通探针已提交，GPU不受此hold。",
+  "archive": {
+    "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/pyd8316-formal-20261003020938-r14-d2baf.tar.gz",
+    "bytes": 869088,
+    "sha256": "38b4e27b7a3bd583283c3e1b3fcf5b0facafc8a480a328c77c748b17fd972126",
+    "files": 759
+  },
+  "evidence": [
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8316-formal-20261003020938-r14-d2baf/status.json",
+      "bytes": 23041,
+      "sha256": "b74913479c6142ef8d79ecb966eaff16a8345e4a603d4e91a6afc133069c4f4e"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8316-formal-20261003020938-r14-d2baf/w_acr_max8/report.json",
+      "bytes": 1996,
+      "sha256": "de5de69b6261c3a176262140149019a5cdc0dd106e05a9bb071974898dabe66b"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8316-formal-20261003020938-r14-d2baf/w_acr_max8/ledger.jsonl",
+      "bytes": 15465,
+      "sha256": "bb8b557a25eaab5e5a279b1cc10d0116bad2799479552ca044748bd762c09c39"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8316-formal-20261003020938-r14-d2baf/eval_logs/evallog_replay-pyd8316-formal-20_c16db04f.diagnostics.json",
+      "bytes": 14109,
+      "sha256": "ecc70258a50d3011b5f17455cf050facebade8dc857cd0c70b22496c63cd68fe"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8316-formal-20261003020938-r14-d2baf/docker_calls/0210/call.json",
+      "bytes": 3071,
+      "sha256": "46e5d2f4824075af55ea8ec837e2a70fdfde59e674f92957e8382ab58c1b656a"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8316-formal-20261003020938-r14-d2baf/docker_calls/0215/call.json",
+      "bytes": 243,
+      "sha256": "5a0bf92f3d97989d1449b5a37eedfd5540f2b7bd1ec38d0d15291fb51215ebfc"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8316-formal-20261003020938-r14-d2baf/docker_calls/0215/stdout.full",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8316-formal-20261003020938-r14-d2baf/docker_calls/0216/call.json",
+      "bytes": 248,
+      "sha256": "531f0977a59d2dd92d2386dc1d569cc7f54efa86388e9fb8d5317f3d767291c6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8316-formal-20261003020938-r14-d2baf/docker_calls/0216/stdout.full",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/jobs/swe_pydantic/pyd8316-formal-20261003020938-r14-d2baf/status.json",
+      "bytes": 952,
+      "sha256": "9db720a49f6a3a2332cc40dc8e62821542844b6a87e92f00e808ffc08d5b4c09"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/jobs/swe_pydantic/pyd8316-formal-20261003020938-r14-d2baf/stderr.log",
+      "bytes": 2231,
+      "sha256": "65a56c5e2bcee0734057833becf9a299c5c37f11976ccf3fd0a55ce4539f69af"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8316-formal-20261003020938-r14-d2baf/docker_calls/0211/stderr.full",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8316-formal-20261003020938-r14-d2baf/docker_calls/0211/stdout.full",
+      "bytes": 10,
+      "sha256": "f281f2558d8b93daecd9b18b152f62907e10cf9ee7dc38a7fef2cbef3c3b0ae9"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8316-formal-20261003020938-r14-d2baf/docker_calls/0211/call.json",
+      "bytes": 449,
+      "sha256": "b8eb5dbce68e07052d93e5af320fbc6a4ab3f73a88062eae67a28e25ce7ea392"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8316-formal-20261003020938-r14-d2baf/docker_calls/0212/stderr.full",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8316-formal-20261003020938-r14-d2baf/docker_calls/0212/stdout.full",
+      "bytes": 75,
+      "sha256": "67e917589a0d72f0e6cdacce6247df6827289fd9ccbaf12be2f94f9f83e2af2c"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8316-formal-20261003020938-r14-d2baf/docker_calls/0212/call.json",
+      "bytes": 571,
+      "sha256": "be9bd4694accf005447236d73a505710ac451991e6f8737acd36a5fd96c1e62e"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8316-formal-20261003020938-r14-d2baf/docker_calls/0213/stderr.full",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8316-formal-20261003020938-r14-d2baf/docker_calls/0213/stdout.full",
+      "bytes": 6,
+      "sha256": "2ed27c1421e6928dbe13dbfdb5c59e1045b30341fe7ebe05700006bc5ac572c0"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8316-formal-20261003020938-r14-d2baf/docker_calls/0213/call.json",
+      "bytes": 223,
+      "sha256": "d184af29fb44ac29c7fcf6a2732f9135e88754a9a2488d841c52d9a601b083b7"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8316-formal-20261003020938-r14-d2baf/docker_calls/0214/stderr.full",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8316-formal-20261003020938-r14-d2baf/docker_calls/0214/stdout.full",
+      "bytes": 53,
+      "sha256": "804279251bb9e3e7ed6af89f1b576ceb28bfbcda59f4523d1d6308fa99484a7f"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v2/outputs/pyd8316-formal-20261003020938-r14-d2baf/docker_calls/0214/call.json",
+      "bytes": 190,
+      "sha256": "84f21e5515ca35bece55c8b4626f636de982fd3f835264b1de37c3ddcaa53b04"
+    }
+  ],
+  "non_author_partial_review": "pending",
+  "gpu_probe_ready": false,
+  "training_eligibility_asserted": false
+}

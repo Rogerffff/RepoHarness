@@ -1,0 +1,23 @@
+diff --git a/aiohttp/http_parser.py b/aiohttp/http_parser.py
+--- a/aiohttp/http_parser.py
++++ b/aiohttp/http_parser.py
+@@ -65,7 +65,9 @@ ASCIISET: Final[Set[str]] = set(string.printable)
+ #     token = 1*tchar
+ METHRE: Final[Pattern[str]] = re.compile(r"[!#$%&'*+\-.^_`|~0-9A-Za-z]+")
+ VERSRE: Final[Pattern[str]] = re.compile(r"HTTP/(\d).(\d)")
+-HDRRE: Final[Pattern[bytes]] = re.compile(rb"[\x00-\x1F\x7F()<>@,;:\[\]={} \t\"\\]")
++HDRRE: Final[Pattern[bytes]] = re.compile(
++    rb"[\x00-\x1F\x7F()<>@,;:\[\]={} \t\"\\]|\xc3\xbf"
++)
+ HEXDIGIT = re.compile(rb"[0-9a-fA-F]+")
+ 
+ 
+@@ -546,6 +548,8 @@ class HttpRequestParser(HttpParser[RawRequestMessage]):
+     def parse_message(self, lines: List[bytes]) -> RawRequestMessage:
+         # request line
+         line = lines[0].decode("utf-8", "surrogateescape")
++        if "\n" in line or "\x0c" in line:
++            raise BadStatusLine(line)
+         try:
+             method, path, version = line.split(maxsplit=2)
+         except ValueError:

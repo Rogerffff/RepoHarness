@@ -1,0 +1,23 @@
+[
+  {
+    "id": "public_identity",
+    "cmd": "python - <<'PY'\nimport os,sys,pathlib,json,hashlib\nimport pydantic,pydantic_core\nprint('PY_CHECK',json.dumps(dict(uid=os.getuid(),python=sys.executable,version=sys.version,pydantic_file=pydantic.__file__,core=pydantic_core.__version__)))\nassert os.getuid()==54321\nassert sys.version_info[:2]==(3,8)\nassert str(pathlib.Path(pydantic.__file__).resolve()).startswith('/testbed/')\nassert pydantic_core.__version__=='0.42.0'\nassert os.access('pydantic/main.py',os.W_OK)\nassert hashlib.sha256(pathlib.Path('pydantic/main.py').read_bytes()).hexdigest()=='627bf18d6c5b6b7d204c4a97fc70316c7290aeda77d2984ab9e19005f1bc261d'\nPY",
+    "timeout_s": 60,
+    "expect": "zero",
+    "purpose": "按公开base身份核UID/Python/core/源码导入与可写性"
+  },
+  {
+    "id": "public_goal",
+    "cmd": "python - <<'PY'\nfrom pydantic import RootModel\nclass R(RootModel):\n root:int\na,b=R(42),R.model_construct(42)\nprint('TARGET_EQUALS',a==b)\nassert a==b, 'PUBLIC_ORIGINAL_TARGET_REPRODUCED'\nPY",
+    "timeout_s": 60,
+    "expect": "nonzero",
+    "purpose": "仅复现原公开示例；基线已知行为失败不是新评分结果"
+  },
+  {
+    "id": "public_existing",
+    "cmd": "python -m pytest -q tests/test_root_model.py",
+    "timeout_s": 300,
+    "expect": "zero",
+    "purpose": "在实际actor环境运行已有公开测试，不使用修订私有断言"
+  }
+]

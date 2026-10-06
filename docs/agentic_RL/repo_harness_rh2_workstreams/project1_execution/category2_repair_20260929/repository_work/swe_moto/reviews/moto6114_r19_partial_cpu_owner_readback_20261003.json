@@ -1,0 +1,583 @@
+{
+  "schema": "swe_moto.r19.remaining3.partial_owner_readback.v1",
+  "as_of": "2026-10-03T04:37:07.818661+00:00",
+  "job_id": "moto6114-cpu-fb987905af02",
+  "parent_returncode": 1,
+  "all71_files_SHA_verified": true,
+  "runtime_inputs_byte_equal_completed_noop": {
+    "ref": "runs/category2_repair_20260929/moto_cpu_20261003/moto6114-cpu-fb987905af02_evidence/output/runtime_inputs.json",
+    "sha256": "c4e27ea4a78f76d3c6761975a103079ef0d9e4f4dac73242729a4bc9dbf8cf33",
+    "bytes": 6827
+  },
+  "controls": {
+    "gold": {
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 1,
+        "f2p_total": 1,
+        "failure_category": null,
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+moto6114-cluster-identity-neptune-preservation-v2",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "resolved",
+        "p2p_fail": 0,
+        "p2p_total": 36,
+        "report_id": "rpt_grading_47b1a2ce",
+        "reward": 1.0
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 11.244,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 8.408
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 8.408,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "grading_revision": {
+        "apply_ok": true,
+        "binding_version": null,
+        "environment_package_digest": "sha256:941bebb539b3974ff894822f9920fdd07227f6a8cf08eaa5c31173f90ea206b2",
+        "grading_bundle_digest": "sha256:0d7a09c24df12b581adc180c577da3c947d6446ab64ec9f01789b4cc08f5afd6",
+        "materials_identity": "sha256:ea5d966eb5dfe35b9b4a8a4f5732d7fdf4c8383bc2558302a5d60c4f795ab29e",
+        "parent_grading_digest": "sha256:8110bc80927d9465ffd27fd2353429cf05a80a03b2fefd0ca195c8d57a4992a4",
+        "parser_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "partitions": {
+          "added_p2p": {
+            "references": [
+              "tests/test_rds/test_rds_clusters.py::test_rds_facade_preserves_neptune_name_start",
+              "tests/test_rds/test_rds_clusters.py::test_rds_facade_preserves_neptune_name_delete"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/test_rds/test_rds_clusters.py::test_rds_facade_preserves_neptune_name_start",
+                "tests/test_rds/test_rds_clusters.py::test_rds_facade_preserves_neptune_name_delete"
+              ],
+              "unaccounted": []
+            }
+          },
+          "original_f2p": {
+            "references": [
+              "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_after_creation"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_after_creation"
+              ],
+              "unaccounted": []
+            }
+          },
+          "original_p2p": {
+            "references": [
+              "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_without_stopping",
+              "tests/test_rds/test_rds_clusters.py::test_modify_db_cluster_needs_long_master_user_password",
+              "tests/test_rds/test_rds_clusters.py::test_modify_db_cluster_new_cluster_identifier",
+              "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot_fails_for_unknown_snapshot",
+              "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_after_stopping",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot_fails_for_unknown_cluster",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_long_master_user_password",
+              "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster",
+              "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_that_is_protected",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot_copy_tags",
+              "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster__verify_default_properties",
+              "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_initial",
+              "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_enable_http_endpoint_valid",
+              "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_do_snapshot",
+              "tests/test_rds/test_rds_clusters.py::test_add_tags_to_cluster",
+              "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster_already_stopped",
+              "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_snapshots",
+              "tests/test_rds/test_rds_clusters.py::test_add_tags_to_cluster_snapshot",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot",
+              "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_unknown_cluster",
+              "tests/test_rds/test_rds_clusters.py::test_restore_db_cluster_from_snapshot_and_override_params",
+              "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot_fails_for_existed_target_snapshot",
+              "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_fails_for_non_existent_cluster",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_database_name",
+              "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_snapshot",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_additional_parameters",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_master_user_password",
+              "tests/test_rds/test_rds_clusters.py::test_restore_db_cluster_from_snapshot",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_master_username",
+              "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_unknown_cluster",
+              "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster_unknown_cluster",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_enable_http_endpoint_invalid"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_without_stopping",
+                "tests/test_rds/test_rds_clusters.py::test_modify_db_cluster_needs_long_master_user_password",
+                "tests/test_rds/test_rds_clusters.py::test_modify_db_cluster_new_cluster_identifier",
+                "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot_fails_for_unknown_snapshot",
+                "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_after_stopping",
+                "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot_fails_for_unknown_cluster",
+                "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_long_master_user_password",
+                "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster",
+                "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_that_is_protected",
+                "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot_copy_tags",
+                "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot",
+                "tests/test_rds/test_rds_clusters.py::test_create_db_cluster__verify_default_properties",
+                "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_initial",
+                "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster",
+                "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_enable_http_endpoint_valid",
+                "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_do_snapshot",
+                "tests/test_rds/test_rds_clusters.py::test_add_tags_to_cluster",
+                "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster_already_stopped",
+                "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_snapshots",
+                "tests/test_rds/test_rds_clusters.py::test_add_tags_to_cluster_snapshot",
+                "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot",
+                "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_unknown_cluster",
+                "tests/test_rds/test_rds_clusters.py::test_restore_db_cluster_from_snapshot_and_override_params",
+                "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot_fails_for_existed_target_snapshot",
+                "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_fails_for_non_existent_cluster",
+                "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_database_name",
+                "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_snapshot",
+                "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_additional_parameters",
+                "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_master_user_password",
+                "tests/test_rds/test_rds_clusters.py::test_restore_db_cluster_from_snapshot",
+                "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_master_username",
+                "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_unknown_cluster",
+                "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster_unknown_cluster",
+                "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_enable_http_endpoint_invalid"
+              ],
+              "unaccounted": []
+            }
+          }
+        },
+        "public_bundle_digest": "sha256:6c8f45da003f8e8d1e065d1801afa4659c43cbb212e319a5d07a84922af5f0f2",
+        "registry_sha256": "sha256:6aecd8d4f9eb40b0a82af7faae73121dc2a0292122876166765f9ecd4a5d8bd1",
+        "revision_id": "moto6114-cluster-identity-neptune-preservation-v2",
+        "state": "parsed",
+        "test_command": "pytest -n0 -rA tests/test_rds/test_rds_clusters.py"
+      },
+      "trusted_setup": {
+        "RH2_SETUP_ABSENT_TEST_FILES": "0",
+        "RH2_SETUP_APPLY_RC": "0",
+        "RH2_SETUP_EXPECTED_TEST_FILES": "1",
+        "RH2_SETUP_IRREGULAR_TEST_FILES": "",
+        "RH2_SETUP_OK": "1",
+        "RH2_SETUP_RESTORED": "1",
+        "RH2_SETUP_TEST_FILES": "1"
+      },
+      "phase_segments_seconds": {
+        "delta_apply": 0.373815,
+        "grader_baseline_rebuild": 1.148245,
+        "grader_cleanup": null,
+        "grader_start_and_verify": 34.482913,
+        "grader_trusted_setup": 218.957849,
+        "parser_and_report": null,
+        "test": 21.098699
+      },
+      "candidate_stage_error": null,
+      "FP_summary": {
+        "task_id": "swe_gym_lite::getmoto__moto-6114",
+        "public_bundle_digest": "sha256:6c8f45da003f8e8d1e065d1801afa4659c43cbb212e319a5d07a84922af5f0f2",
+        "runtime_image_digest": "sha256:1d8dded2ee5bbe9275514fdc603116ac9f36da5e30c19b2d4ffcba4d4a9f27d5",
+        "materialized_head": "f01709f9ba656e7cf4399bcd1a0a07fd134b0aec",
+        "excluded_pathset_changed": false,
+        "entries": [
+          {
+            "path": "moto/rds/models.py",
+            "operation": "modify",
+            "object_type": "regular",
+            "mode": "100644",
+            "content_digest": "sha256:00e61d1980f71fb4b0f37fa8e517a1fd3778c8ac5d687e4847d27217c5bc1c5b"
+          }
+        ]
+      }
+    },
+    "wrong_first": {
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 0,
+        "f2p_total": 1,
+        "failure_category": "tests_failed",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+moto6114-cluster-identity-neptune-preservation-v2",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": 0,
+        "p2p_total": 36,
+        "report_id": "rpt_grading_2d4a9a6a",
+        "reward": 0.0
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 11.661,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 9.644
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 9.644,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "grading_revision": {
+        "apply_ok": true,
+        "binding_version": null,
+        "environment_package_digest": "sha256:941bebb539b3974ff894822f9920fdd07227f6a8cf08eaa5c31173f90ea206b2",
+        "grading_bundle_digest": "sha256:0d7a09c24df12b581adc180c577da3c947d6446ab64ec9f01789b4cc08f5afd6",
+        "materials_identity": "sha256:ea5d966eb5dfe35b9b4a8a4f5732d7fdf4c8383bc2558302a5d60c4f795ab29e",
+        "parent_grading_digest": "sha256:8110bc80927d9465ffd27fd2353429cf05a80a03b2fefd0ca195c8d57a4992a4",
+        "parser_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "partitions": {
+          "added_p2p": {
+            "references": [
+              "tests/test_rds/test_rds_clusters.py::test_rds_facade_preserves_neptune_name_start",
+              "tests/test_rds/test_rds_clusters.py::test_rds_facade_preserves_neptune_name_delete"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/test_rds/test_rds_clusters.py::test_rds_facade_preserves_neptune_name_start",
+                "tests/test_rds/test_rds_clusters.py::test_rds_facade_preserves_neptune_name_delete"
+              ],
+              "unaccounted": []
+            }
+          },
+          "original_f2p": {
+            "references": [
+              "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_after_creation"
+            ],
+            "result": {
+              "failure": [
+                "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_after_creation"
+              ],
+              "missing": [],
+              "skipped": [],
+              "success": [],
+              "unaccounted": []
+            }
+          },
+          "original_p2p": {
+            "references": [
+              "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_without_stopping",
+              "tests/test_rds/test_rds_clusters.py::test_modify_db_cluster_needs_long_master_user_password",
+              "tests/test_rds/test_rds_clusters.py::test_modify_db_cluster_new_cluster_identifier",
+              "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot_fails_for_unknown_snapshot",
+              "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_after_stopping",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot_fails_for_unknown_cluster",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_long_master_user_password",
+              "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster",
+              "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_that_is_protected",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot_copy_tags",
+              "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster__verify_default_properties",
+              "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_initial",
+              "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_enable_http_endpoint_valid",
+              "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_do_snapshot",
+              "tests/test_rds/test_rds_clusters.py::test_add_tags_to_cluster",
+              "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster_already_stopped",
+              "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_snapshots",
+              "tests/test_rds/test_rds_clusters.py::test_add_tags_to_cluster_snapshot",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot",
+              "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_unknown_cluster",
+              "tests/test_rds/test_rds_clusters.py::test_restore_db_cluster_from_snapshot_and_override_params",
+              "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot_fails_for_existed_target_snapshot",
+              "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_fails_for_non_existent_cluster",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_database_name",
+              "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_snapshot",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_additional_parameters",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_master_user_password",
+              "tests/test_rds/test_rds_clusters.py::test_restore_db_cluster_from_snapshot",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_master_username",
+              "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_unknown_cluster",
+              "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster_unknown_cluster",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_enable_http_endpoint_invalid"
+            ],
+            "result": {
+              "failure": [],
+              "missing": [],
+              "skipped": [],
+              "success": [
+                "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_without_stopping",
+                "tests/test_rds/test_rds_clusters.py::test_modify_db_cluster_needs_long_master_user_password",
+                "tests/test_rds/test_rds_clusters.py::test_modify_db_cluster_new_cluster_identifier",
+                "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot_fails_for_unknown_snapshot",
+                "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_after_stopping",
+                "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot_fails_for_unknown_cluster",
+                "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_long_master_user_password",
+                "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster",
+                "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_that_is_protected",
+                "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot_copy_tags",
+                "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot",
+                "tests/test_rds/test_rds_clusters.py::test_create_db_cluster__verify_default_properties",
+                "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_initial",
+                "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster",
+                "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_enable_http_endpoint_valid",
+                "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_do_snapshot",
+                "tests/test_rds/test_rds_clusters.py::test_add_tags_to_cluster",
+                "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster_already_stopped",
+                "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_snapshots",
+                "tests/test_rds/test_rds_clusters.py::test_add_tags_to_cluster_snapshot",
+                "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot",
+                "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_unknown_cluster",
+                "tests/test_rds/test_rds_clusters.py::test_restore_db_cluster_from_snapshot_and_override_params",
+                "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot_fails_for_existed_target_snapshot",
+                "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_fails_for_non_existent_cluster",
+                "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_database_name",
+                "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_snapshot",
+                "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_additional_parameters",
+                "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_master_user_password",
+                "tests/test_rds/test_rds_clusters.py::test_restore_db_cluster_from_snapshot",
+                "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_master_username",
+                "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_unknown_cluster",
+                "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster_unknown_cluster",
+                "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_enable_http_endpoint_invalid"
+              ],
+              "unaccounted": []
+            }
+          }
+        },
+        "public_bundle_digest": "sha256:6c8f45da003f8e8d1e065d1801afa4659c43cbb212e319a5d07a84922af5f0f2",
+        "registry_sha256": "sha256:6aecd8d4f9eb40b0a82af7faae73121dc2a0292122876166765f9ecd4a5d8bd1",
+        "revision_id": "moto6114-cluster-identity-neptune-preservation-v2",
+        "state": "parsed",
+        "test_command": "pytest -n0 -rA tests/test_rds/test_rds_clusters.py"
+      },
+      "trusted_setup": {
+        "RH2_SETUP_ABSENT_TEST_FILES": "0",
+        "RH2_SETUP_APPLY_RC": "0",
+        "RH2_SETUP_EXPECTED_TEST_FILES": "1",
+        "RH2_SETUP_IRREGULAR_TEST_FILES": "",
+        "RH2_SETUP_OK": "1",
+        "RH2_SETUP_RESTORED": "1",
+        "RH2_SETUP_TEST_FILES": "1"
+      },
+      "phase_segments_seconds": {
+        "delta_apply": 0.413914,
+        "grader_baseline_rebuild": 1.188296,
+        "grader_cleanup": null,
+        "grader_start_and_verify": 34.342906,
+        "grader_trusted_setup": 203.052865,
+        "parser_and_report": null,
+        "test": 22.933889
+      },
+      "candidate_stage_error": null,
+      "FP_summary": {
+        "task_id": "swe_gym_lite::getmoto__moto-6114",
+        "public_bundle_digest": "sha256:6c8f45da003f8e8d1e065d1801afa4659c43cbb212e319a5d07a84922af5f0f2",
+        "runtime_image_digest": "sha256:1d8dded2ee5bbe9275514fdc603116ac9f36da5e30c19b2d4ffcba4d4a9f27d5",
+        "materialized_head": "f01709f9ba656e7cf4399bcd1a0a07fd134b0aec",
+        "excluded_pathset_changed": false,
+        "entries": [
+          {
+            "path": "moto/rds/models.py",
+            "operation": "modify",
+            "object_type": "regular",
+            "mode": "100644",
+            "content_digest": "sha256:a5e0c305e9981b61209a2fc3bc4e2c40944fade972a4ff28b5ed0fc54b81815e"
+          }
+        ]
+      }
+    },
+    "exact_qwen": {
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": null,
+        "f2p_total": null,
+        "failure_category": "infra_failure",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+moto6114-cluster-identity-neptune-preservation-v2",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": "grading_control_surface_protect_timeout_after_300s",
+        "outcome": "failed_to_grade",
+        "p2p_fail": null,
+        "p2p_total": null,
+        "report_id": "rpt_grading_4550fe54",
+        "reward": null
+      },
+      "install": null,
+      "test": null,
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "grading_revision": {
+        "apply_ok": null,
+        "binding_version": null,
+        "environment_package_digest": "sha256:941bebb539b3974ff894822f9920fdd07227f6a8cf08eaa5c31173f90ea206b2",
+        "grading_bundle_digest": "sha256:0d7a09c24df12b581adc180c577da3c947d6446ab64ec9f01789b4cc08f5afd6",
+        "materials_identity": "sha256:ea5d966eb5dfe35b9b4a8a4f5732d7fdf4c8383bc2558302a5d60c4f795ab29e",
+        "parent_grading_digest": "sha256:8110bc80927d9465ffd27fd2353429cf05a80a03b2fefd0ca195c8d57a4992a4",
+        "parser_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "partitions": {
+          "added_p2p": {
+            "references": [
+              "tests/test_rds/test_rds_clusters.py::test_rds_facade_preserves_neptune_name_start",
+              "tests/test_rds/test_rds_clusters.py::test_rds_facade_preserves_neptune_name_delete"
+            ],
+            "result": null
+          },
+          "original_f2p": {
+            "references": [
+              "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_after_creation"
+            ],
+            "result": null
+          },
+          "original_p2p": {
+            "references": [
+              "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_without_stopping",
+              "tests/test_rds/test_rds_clusters.py::test_modify_db_cluster_needs_long_master_user_password",
+              "tests/test_rds/test_rds_clusters.py::test_modify_db_cluster_new_cluster_identifier",
+              "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot_fails_for_unknown_snapshot",
+              "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_after_stopping",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot_fails_for_unknown_cluster",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_long_master_user_password",
+              "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster",
+              "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_that_is_protected",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot_copy_tags",
+              "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster__verify_default_properties",
+              "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_initial",
+              "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_enable_http_endpoint_valid",
+              "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_do_snapshot",
+              "tests/test_rds/test_rds_clusters.py::test_add_tags_to_cluster",
+              "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster_already_stopped",
+              "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_snapshots",
+              "tests/test_rds/test_rds_clusters.py::test_add_tags_to_cluster_snapshot",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot",
+              "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_unknown_cluster",
+              "tests/test_rds/test_rds_clusters.py::test_restore_db_cluster_from_snapshot_and_override_params",
+              "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot_fails_for_existed_target_snapshot",
+              "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_fails_for_non_existent_cluster",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_database_name",
+              "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_snapshot",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_additional_parameters",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_master_user_password",
+              "tests/test_rds/test_rds_clusters.py::test_restore_db_cluster_from_snapshot",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_master_username",
+              "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_unknown_cluster",
+              "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster_unknown_cluster",
+              "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_enable_http_endpoint_invalid"
+            ],
+            "result": null
+          }
+        },
+        "public_bundle_digest": "sha256:6c8f45da003f8e8d1e065d1801afa4659c43cbb212e319a5d07a84922af5f0f2",
+        "registry_sha256": "sha256:6aecd8d4f9eb40b0a82af7faae73121dc2a0292122876166765f9ecd4a5d8bd1",
+        "revision_id": "moto6114-cluster-identity-neptune-preservation-v2",
+        "state": "not_evaluated",
+        "test_command": "pytest -n0 -rA tests/test_rds/test_rds_clusters.py"
+      },
+      "trusted_setup": {
+        "RH2_SETUP_ABSENT_TEST_FILES": "0",
+        "RH2_SETUP_APPLY_RC": "0",
+        "RH2_SETUP_EXPECTED_TEST_FILES": "1",
+        "RH2_SETUP_IRREGULAR_TEST_FILES": "",
+        "RH2_SETUP_OK": "1",
+        "RH2_SETUP_RESTORED": "1",
+        "RH2_SETUP_TEST_FILES": "1"
+      },
+      "phase_segments_seconds": {
+        "delta_apply": 0.39684,
+        "grader_baseline_rebuild": 1.141249,
+        "grader_cleanup": null,
+        "grader_start_and_verify": 35.848572,
+        "grader_trusted_setup": 301.463553,
+        "parser_and_report": null,
+        "test": null
+      },
+      "candidate_stage_error": null,
+      "FP_summary": {
+        "task_id": "swe_gym_lite::getmoto__moto-6114",
+        "public_bundle_digest": "sha256:6c8f45da003f8e8d1e065d1801afa4659c43cbb212e319a5d07a84922af5f0f2",
+        "runtime_image_digest": "sha256:1d8dded2ee5bbe9275514fdc603116ac9f36da5e30c19b2d4ffcba4d4a9f27d5",
+        "materialized_head": "f01709f9ba656e7cf4399bcd1a0a07fd134b0aec",
+        "excluded_pathset_changed": false,
+        "entries": [
+          {
+            "path": "moto/rds/models.py",
+            "operation": "modify",
+            "object_type": "regular",
+            "mode": "100644",
+            "content_digest": "sha256:05e9b6a1d3f57caaeba1a616fa3a1a9529ffa6f6aa6d91be9a5963a239b5171d"
+          }
+        ]
+      }
+    }
+  },
+  "successful_controls_only_raw_readback": {
+    "ref": "runs/category2_repair_20260929/moto_cpu_20261003/moto6114-cpu-fb987905af02_author_partial_raw_readback_r19_v1.json",
+    "sha256": "3087d72ca245f9509cce4b290589fc121bfc3a2b9c699e22cfab214c478d2d85",
+    "bytes": 29380
+  },
+  "all_owned_resources_absent": {
+    "ref": "runs/category2_repair_20260929/moto_cpu_20261003/moto6114-cpu-fb987905af02_finished_absence_readback_v1.json",
+    "sha256": "668e14fb1f96a44602154f79b3b7ef490126fca2ccc82d6abd4f732e517cf90a",
+    "bytes": 1253
+  },
+  "exact_qwen_failure": "control_surface_protect timeout300; no install/test/reference verdict; original report infra/null preserved",
+  "formal_new37_cpu_accepted": false,
+  "model_attempts": 0,
+  "original_old_Qwen_FP_rebound": false
+}

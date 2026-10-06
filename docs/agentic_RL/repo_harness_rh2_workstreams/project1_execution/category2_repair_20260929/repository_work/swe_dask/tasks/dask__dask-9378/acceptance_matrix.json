@@ -1,0 +1,96 @@
+{
+  "schema": "dask_acceptance_plan.v1",
+  "as_of": "2026-10-03",
+  "instance_id": "dask__dask-9378",
+  "revision_id": "dask9378-mask-route-b-v1",
+  "effective_test_patch": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-9378/effective_test.patch",
+    "sha256": "9fc1a9d5ae885d9cc30388a875ab7ed629081de7ba7bdcc8571f3aca604a248a"
+  },
+  "expected_results_are_not_observed_scores": true,
+  "rows": [
+    {
+      "name": "noop",
+      "patch": null,
+      "role": "unrepaired",
+      "expected_reward": 0,
+      "reason": "未修复的原源码须被拒绝",
+      "priority": "first_formal_matrix",
+      "observed_reward_on_this_revision": null,
+      "original_material_f2p_count": 3
+    },
+    {
+      "name": "gold",
+      "patch": {
+        "path": "runs/swegym_quality_expansion_20260925/private/dask__dask-9378/gold.patch",
+        "sha256": "073b18f02989f88149150a829716cf3266809c27b34b270011732fa23f65ee7a"
+      },
+      "role": "historical_positive",
+      "expected_reward": 1,
+      "reason": "已有 ma 入口的 mask 与 ones/zeros 值均须正确",
+      "priority": "first_formal_matrix",
+      "observed_reward_on_this_revision": null,
+      "original_material_f2p_count": 3
+    },
+    {
+      "name": "toplevel_only",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask9378/toplevel_only.patch",
+        "sha256": "f9762bb1efe32385811e6ffcfeaeb6f10de9e4a3b8bcabc819c6efef0b770752"
+      },
+      "role": "alternative_positive",
+      "expected_reward": 1,
+      "reason": "用户选 B，ma 入口缺失时接受顶层正确路线",
+      "priority": "first_formal_matrix",
+      "observed_reward_on_this_revision": null,
+      "original_material_f2p_count": 3
+    },
+    {
+      "name": "ma_mask_none",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask9378/ma_mask_none.patch",
+        "sha256": "41244f3d5f91bb1330bd64b158b7c86bc46020aaa9f76e05985f9424ed3f5083"
+      },
+      "role": "known_wrong",
+      "expected_reward": 0,
+      "reason": "ma 入口存在，但丢失逐元素 mask",
+      "priority": "first_formal_matrix",
+      "observed_reward_on_this_revision": null,
+      "original_material_f2p_count": 3
+    },
+    {
+      "name": "ma_mask_invert",
+      "patch": {
+        "path": "rh2/experiments/category3_cloud_20260929/dask9378/ma_mask_invert.patch",
+        "sha256": "c9f68c60088a9da698acd14313cb8abbda235efe572d724bfaccf1e9574ebe5e"
+      },
+      "role": "known_wrong",
+      "expected_reward": 0,
+      "reason": "ma 入口存在，但翻转逐元素 mask",
+      "priority": "first_formal_matrix",
+      "observed_reward_on_this_revision": null,
+      "original_material_f2p_count": 3
+    },
+    {
+      "name": "wrong_values_seven",
+      "patch": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-9378/wrong_values_seven.patch",
+        "sha256": "bca6623d0eb764b9edfc45838c0a28eeb5afe94f31d28abc8ccd0e815b4bd89b"
+      },
+      "role": "new_wrong_control",
+      "expected_reward": 0,
+      "reason": "mask 正确但 ones/zeros 值变为 7；本轮新构造，不冒充旧 invert_values7",
+      "priority": "first_formal_matrix",
+      "observed_reward_on_this_revision": null,
+      "original_material_f2p_count": 3
+    }
+  ],
+  "success_conditions": [
+    "固定材料身份、镜像、执行入口、安装配方与身份",
+    "有效正对照为 1；未修复及各已知错解为 0",
+    "安装和测试实际执行、参考无缺席；逐项参考状态和失败断言符合预期",
+    "保存完整评分账本、输出、候选和清理结果",
+    "非作者核公开依据、正对照及本轮实际结果"
+  ],
+  "known_wrong_coverage": "初始矩阵按独立机制选取；其余历史候选保留原件。接受性比较不能因私有检查通过而省略正式身份/导入等差异。"
+}

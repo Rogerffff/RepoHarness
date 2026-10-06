@@ -1,0 +1,1929 @@
+{
+  "schema_id": "coveragepy.non_author_cpu_review.v1",
+  "reviewed_at_utc": "2026-10-02T20:37:05.277377+00:00",
+  "instance_id": "coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae",
+  "verdict": "通过",
+  "ordinary_base_probe_task_cpu_conditions": true,
+  "blockers": [],
+  "reviewer": {
+    "identity": "Codex 非作者 subagent /root/coveragepy_016a_cpu_review",
+    "authored_materials": false,
+    "fresh_public_reader": false,
+    "scope": "本轮R6正式落地、实际CPU和公开交付的离线原件核查",
+    "contact": "已接触本题公开与私有材料、候选、作者摘要及指定旧独立审查；必要共用文件只对目标行作语义核对。未用其他题私有方案作判定。",
+    "execution": "本机标准库读取、SHA/size、JSON/AST、固定parser纯函数、独立摘要解析、Git binary literal内存解码；未SSH、Docker、模型调用、项目测试、实验或新增角色链。"
+  },
+  "source_binding": {
+    "release_id": "cat2-cpu-r2e080087-swe8-git-20261003-v1",
+    "manifest_sha256": "sha256:ab0a3a13fd65e0ea4cd60541ea3b37b01196170477e25832df246f33ea208828",
+    "material_revision_ids": [
+      "r2e-mr-001",
+      "r2e-mr-086",
+      "r2e-mr-087"
+    ],
+    "public_bundle_digest": "sha256:d09f71a6227b9bcf1cc08e68b55c76a21238e7f537e16d8a5411c2dc2fa32c2b",
+    "grading_bundle_digest": "sha256:6e3e191519d10a7b026b953049660621c5172c929c69eae68ee958236a8c20db",
+    "statement_sha256": "sha256:e654fab906c8c9b5a994aed85c7e924c2389f10842dc319d0249060d3ee7d1e1",
+    "hidden_tests_tree_sha256": "sha256:15796de8622f48cbed98e7bccf6adc97844aed017250a75ebcf8622772c90576",
+    "expected_output_json_sha256": "sha256:f353157ec8e86a79e172920a44f6cbbdc8d1bb049c77f8292f7bd70dfc713e3e",
+    "run_tests_sh_sha256": "sha256:8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+    "expected_total": 15,
+    "base_commit": "5bb5da50b182583036b7808bb32f2c8c191d9d26",
+    "source_ref_by_digest": "namanjain12/coveragepy_final@sha256:71895ed487c4080a40879049ec72d6eb53daf5356c6a7abb321ba46105a05a39",
+    "derived_image_id": "sha256:07a8684c42e242e1f9277011780f825411a52a439bce1cd1ce2daec3df477514",
+    "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+    "recipe_sha256": "sha256:98a6ecb6b08fc8e2e832dead72e644e3b55a7cfaa74eac59aac44ab48edb9916"
+  },
+  "machine_checks": [
+    {
+      "check": "固定release",
+      "result": "manifest给定SHA相同，855成员size/SHA逐文件相同；pins对应registry和输入文件摘要相同。"
+    },
+    {
+      "check": "正式001/086/087与host prepared",
+      "result": "从固定raw重放3项文本修订，唯一old命中、before/after摘要一致；statement/test与题主材料逐字相同，001仅改变MockingProtection状态，expected仍15键。host grading/public逐行内容与release ingest目标行相同；prepared_manifest/private文件实际SHA与replay_summary绑定一致。"
+    },
+    {
+      "check": "gold身份",
+      "result": "固定parser.extract_gold_patch从raw parsed_commit重建字节，与原gold.patch及固定validation golden_patch完全相同。"
+    },
+    {
+      "check": "正式14行",
+      "result": "原始summary段固定parser与核查者独立regex解析一致，逐键与expected、作者摘要及原ledger对拍；candidate输入SHA/应用路径、test完整段、日志SHA、退出、失败类型、镜像/recipe、导入、runner摘要、grade_driver收尾/清理与标签残留记录核对通过。"
+    },
+    {
+      "check": "derived身份",
+      "result": "独立重建086的manifest.tsv并结合实际context脚本SHA，重算base和sysconfig配方身份与原facts相同；原build记录源digest、086应用树与输出image；原integrity日志A/B/D相同，C各文件去shebang摘要相同，21项facts通过。"
+    },
+    {
+      "check": "实际公开交付",
+      "result": "首messages_000包含完整现行statement及rendered prompt；agent54321、预检/activation/import正确，原CC轨迹命令及工具结果实际存在。"
+    },
+    {
+      "check": "四命令",
+      "result": "读者原件与actor计划cmd/timeout_s逐字相同；固定runner追加echo与30秒传输裕量，CC轨迹省去cd /testbed &&，原cwd/agent facts为/testbed，timeout与stub输入一致。"
+    },
+    {
+      "check": "FrozenPatch往返",
+      "result": "两份53248字节SQLite数据的content_b64/content_digest、两份FrozenPatch entries和两份baseline均一致；baseline census重建334entries和2960排除路径摘要；transport SHA与ledger相同且独立base85+zlib解码两块literal得到相同数据库字节。"
+    },
+    {
+      "check": "公开brief",
+      "result": "人工读取仅含环境事实/解释器与公开pytest命令；未泄露gold、候选方案、隐藏测试或评分。"
+    }
+  ],
+  "formal_matrix": {
+    "rows": [
+      {
+        "candidate": "base",
+        "candidate_input": null,
+        "apply_method": "noop",
+        "apply_user": "agent/54321",
+        "included_paths": [],
+        "reward": 0.0,
+        "match": 14,
+        "total": 15,
+        "mismatched": [
+          "ExecTest.test_unencodable_filename"
+        ],
+        "expected": {
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_threading": "PASSED",
+          "ThreadingTest.test_thread_run": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "ExecTest.test_unencodable_filename": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED"
+        },
+        "observed": {
+          "ThreadingTest.test_thread_run": "PASSED",
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_threading": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED",
+          "ExecTest.test_unencodable_filename": "FAILED"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 1,
+          "seconds": 4.507,
+          "segment_completed": true
+        },
+        "failure_category": "tests_failed",
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/base/ledger.jsonl",
+          "sha256": "sha256:b9ee2d7c90a11901a38fd79a55ce5e1f6afef7b546541ea1550710f0f9a2a01e",
+          "bytes": 5875
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/base/eval_logs/evallog_replay-cov016a-r6-matrix_56e1670a.eval.log",
+          "sha256": "sha256:51115cf3027c299b859931fc0b2e56f276940d71c08a0ee4affb405f891afec3",
+          "bytes": 5463
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/base/eval_logs/evallog_replay-cov016a-r6-matrix_56e1670a.diagnostics.json",
+          "sha256": "sha256:f918a9c7448c5694f9b6ff8b2a1170a9db735e4c4befede31fe46b2c1237f358",
+          "bytes": 3796
+        },
+        "grade_driver_log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/base/grade.log",
+          "sha256": "sha256:037fa02ebfa05d30a5e29529ebd02a1f6143c3b2f522b6bfe639206c2c5a08fb",
+          "bytes": 890
+        },
+        "author_per_key": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/cpu/matrix_base_r6_per_key.json",
+          "sha256": "sha256:3b4f7e577fae67cd8bf797435464ba813154ec61a878133466841fae86202cde",
+          "bytes": 3456
+        }
+      },
+      {
+        "candidate": "gold",
+        "candidate_input": {
+          "path": "rh2/experiments/category3_cloud_20260929/cov016/gold.patch",
+          "sha256": "sha256:fa506eaa00a0ff3d8b0873647bf2e1c070402085652b1a386a981b18b35162f2",
+          "bytes": 570
+        },
+        "apply_method": "git_apply",
+        "apply_user": "agent/54321",
+        "included_paths": [
+          "coverage/inorout.py"
+        ],
+        "reward": 1.0,
+        "match": 15,
+        "total": 15,
+        "mismatched": [],
+        "expected": {
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_threading": "PASSED",
+          "ThreadingTest.test_thread_run": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "ExecTest.test_unencodable_filename": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED"
+        },
+        "observed": {
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_thread_run": "PASSED",
+          "ThreadingTest.test_threading": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "ExecTest.test_unencodable_filename": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 0,
+          "seconds": 4.079,
+          "segment_completed": true
+        },
+        "failure_category": null,
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/gold/ledger.jsonl",
+          "sha256": "sha256:deb2a5268ef9c8bad0b2ead85a1936d48d0c78c2e2d115a1fcace4baf59f288d",
+          "bytes": 6103
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/gold/eval_logs/evallog_replay-cov016a-r6-matrix_5ee7f4a4.eval.log",
+          "sha256": "sha256:e6a4752a414447911d77d0712a9ba873764b6fc209b4e6fb075d3285826c96fa",
+          "bytes": 3246
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/gold/eval_logs/evallog_replay-cov016a-r6-matrix_5ee7f4a4.diagnostics.json",
+          "sha256": "sha256:184384d5f1ba68be52a412f697a5f4361e69f969cb5f1b7a225c7a2ef4e80557",
+          "bytes": 3752
+        },
+        "grade_driver_log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/gold/grade.log",
+          "sha256": "sha256:ec73ec19e347f3919c96b7a4002f8ad2474fd15a5f70141faa8e95d3849edb2d",
+          "bytes": 893
+        },
+        "author_per_key": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/cpu/matrix_gold_r6_per_key.json",
+          "sha256": "sha256:3f9093353f74f41d30ef0dfd5082e5e5ca4cab6f966109e384b49aed82814139",
+          "bytes": 3401
+        }
+      },
+      {
+        "candidate": "skip_write",
+        "candidate_input": {
+          "path": "rh2/experiments/category3_cloud_20260929/cov016/skip_write.patch",
+          "sha256": "sha256:d09186a5338524f9e7aad348a981163cf3c6d90e1aadcf49017e3673413ebb98",
+          "bytes": 1402
+        },
+        "apply_method": "git_apply",
+        "apply_user": "agent/54321",
+        "included_paths": [
+          "coverage/sqldata.py"
+        ],
+        "reward": 1.0,
+        "match": 15,
+        "total": 15,
+        "mismatched": [],
+        "expected": {
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_threading": "PASSED",
+          "ThreadingTest.test_thread_run": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "ExecTest.test_unencodable_filename": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED"
+        },
+        "observed": {
+          "ThreadingTest.test_threading": "PASSED",
+          "RecursionTest.test_long_recursion": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "ThreadingTest.test_thread_run": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "ExecTest.test_unencodable_filename": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 0,
+          "seconds": 3.716,
+          "segment_completed": true
+        },
+        "failure_category": null,
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/skip_write/ledger.jsonl",
+          "sha256": "sha256:0f31173883a2a2c35049e53a7edeb73716321a353bbf2e19fe58c62c44d647a9",
+          "bytes": 6128
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/skip_write/eval_logs/evallog_replay-cov016a-r6-matrix_6dfe899e.eval.log",
+          "sha256": "sha256:6349f0c817b75509651f745badf52befa393f6b6ebf5365dcb96d00ada910a9c",
+          "bytes": 3246
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/skip_write/eval_logs/evallog_replay-cov016a-r6-matrix_6dfe899e.diagnostics.json",
+          "sha256": "sha256:c99516ffc425e051dc712f3dd3fd38dde92ebc19d4c2d994de9637054aae34a8",
+          "bytes": 3759
+        },
+        "grade_driver_log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/skip_write/grade.log",
+          "sha256": "sha256:5482756e95e2517234f90d57c95fc59cbe58869bea7571b380c047cf0fcb569c",
+          "bytes": 899
+        },
+        "author_per_key": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/cpu/matrix_skip_write_r6_per_key.json",
+          "sha256": "sha256:011c64e01b078e17bda1a13fdc037454d4e6954d4d858c0017813dda98a25976",
+          "bytes": 3425
+        }
+      },
+      {
+        "candidate": "convert",
+        "candidate_input": {
+          "path": "rh2/experiments/category3_cloud_20260929/cov016/convert.patch",
+          "sha256": "sha256:465dadd317d4a57189325b356b2a689ae0c489ec0189a2f23fc4ab460c0be287",
+          "bytes": 790
+        },
+        "apply_method": "git_apply",
+        "apply_user": "agent/54321",
+        "included_paths": [
+          "coverage/sqldata.py"
+        ],
+        "reward": 1.0,
+        "match": 15,
+        "total": 15,
+        "mismatched": [],
+        "expected": {
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_threading": "PASSED",
+          "ThreadingTest.test_thread_run": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "ExecTest.test_unencodable_filename": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED"
+        },
+        "observed": {
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_threading": "PASSED",
+          "ThreadingTest.test_thread_run": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "ExecTest.test_unencodable_filename": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 0,
+          "seconds": 3.853,
+          "segment_completed": true
+        },
+        "failure_category": null,
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/convert/ledger.jsonl",
+          "sha256": "sha256:7165d4393c3bef99db090d52948ea885decce5cf970faa3443946da132595cde",
+          "bytes": 6116
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/convert/eval_logs/evallog_replay-cov016a-r6-matrix_92f4ef0d.eval.log",
+          "sha256": "sha256:429742740dcf0c78880a9f36327c56f6953587a1c07d08576674af03f27a0e61",
+          "bytes": 3250
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/convert/eval_logs/evallog_replay-cov016a-r6-matrix_92f4ef0d.diagnostics.json",
+          "sha256": "sha256:17a7faf12b4ec8d8147176c04cc42b8e64472af60018057571ee2d07d828b9f7",
+          "bytes": 3756
+        },
+        "grade_driver_log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/convert/grade.log",
+          "sha256": "sha256:80e1681d8b243316614753009f9f531a7f70422bdd119e3d08e0a68480da1eb8",
+          "bytes": 896
+        },
+        "author_per_key": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/cpu/matrix_convert_r6_per_key.json",
+          "sha256": "sha256:2acf5f2ecdfb8e43af4bfdcb6f5bd6dce664e54bcd8c3de41502d60ffc24e295",
+          "bytes": 3413
+        }
+      },
+      {
+        "candidate": "lines_only",
+        "candidate_input": {
+          "path": "rh2/experiments/category3_cloud_20260929/cov016/lines_only.patch",
+          "sha256": "sha256:c388c2e2a3ac599b359f3e04174427234e4d26455fdff43c3fa3aae1ffb8f901",
+          "bytes": 941
+        },
+        "apply_method": "git_apply",
+        "apply_user": "agent/54321",
+        "included_paths": [
+          "coverage/sqldata.py"
+        ],
+        "reward": 0.0,
+        "match": 14,
+        "total": 15,
+        "mismatched": [
+          "ExecTest.test_unencodable_filename"
+        ],
+        "expected": {
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_threading": "PASSED",
+          "ThreadingTest.test_thread_run": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "ExecTest.test_unencodable_filename": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED"
+        },
+        "observed": {
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_threading": "PASSED",
+          "ThreadingTest.test_thread_run": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED",
+          "ExecTest.test_unencodable_filename": "FAILED"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 1,
+          "seconds": 3.821,
+          "segment_completed": true
+        },
+        "failure_category": "tests_failed",
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/lines_only/ledger.jsonl",
+          "sha256": "sha256:4b2519e970e1c45bad6ba543820ee4e63b319765b55d487feedbeba36564f67b",
+          "bytes": 6172
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/lines_only/eval_logs/evallog_replay-cov016a-r6-matrix_4375844f.eval.log",
+          "sha256": "sha256:e84f47af688ae5dfed6472a714f51efafdd7a7841328c744d253753f364211f2",
+          "bytes": 6172
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/lines_only/eval_logs/evallog_replay-cov016a-r6-matrix_4375844f.diagnostics.json",
+          "sha256": "sha256:ad2d1f262b66ee2b228c100750eea20f88e3f04fe9a72206e91163e852ae076c",
+          "bytes": 3800
+        },
+        "grade_driver_log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/lines_only/grade.log",
+          "sha256": "sha256:add65c2a0aeb672077a8e6ae0a8e586ef9e5cd0cf0331796c3751b8dea949709",
+          "bytes": 901
+        },
+        "author_per_key": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/cpu/matrix_lines_only_r6_per_key.json",
+          "sha256": "sha256:6be842d0f73ce6bf08debd7ace48b28133987c894fd152c168e2025d0514d277",
+          "bytes": 3480
+        }
+      },
+      {
+        "candidate": "ascii_only",
+        "candidate_input": {
+          "path": "rh2/experiments/category3_cloud_20260929/cov016/ascii_only.patch",
+          "sha256": "sha256:327edd64dd1e63f3fad880b8615e7e0dfe1114bf5660f3427a1668e343d47942",
+          "bytes": 447
+        },
+        "apply_method": "git_apply",
+        "apply_user": "agent/54321",
+        "included_paths": [
+          "coverage/inorout.py"
+        ],
+        "reward": 0.0,
+        "match": 14,
+        "total": 15,
+        "mismatched": [
+          "ExecTest.test_unencodable_filename"
+        ],
+        "expected": {
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_threading": "PASSED",
+          "ThreadingTest.test_thread_run": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "ExecTest.test_unencodable_filename": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED"
+        },
+        "observed": {
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_thread_run": "PASSED",
+          "ThreadingTest.test_threading": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED",
+          "ExecTest.test_unencodable_filename": "FAILED"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 1,
+          "seconds": 4.792,
+          "segment_completed": true
+        },
+        "failure_category": "tests_failed",
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/ascii_only/ledger.jsonl",
+          "sha256": "sha256:b7d62109873331cc44536b286c9e8897c56247a16b0ede9939240af944791cf7",
+          "bytes": 6174
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/ascii_only/eval_logs/evallog_replay-cov016a-r6-matrix_9558d41e.eval.log",
+          "sha256": "sha256:4e72df5197822073380eed245eb12fc9f62f2d1875fbad52a8c3f595bbaaf2f0",
+          "bytes": 4974
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/ascii_only/eval_logs/evallog_replay-cov016a-r6-matrix_9558d41e.diagnostics.json",
+          "sha256": "sha256:b68fa4618193d0d60bb4009fbc15f19ebfcbb489e0c3228a050758f75e9c38f2",
+          "bytes": 3802
+        },
+        "grade_driver_log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/ascii_only/grade.log",
+          "sha256": "sha256:fe416488695b3f53bba69118ca7fb7097a506541341ed1a912b9fb889d1ce16c",
+          "bytes": 901
+        },
+        "author_per_key": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/cpu/matrix_ascii_only_r6_per_key.json",
+          "sha256": "sha256:993c5acbdb6e8c8958aaf166f4cd90ef96a7474bb7c850d31d0c3d4f1c7773a8",
+          "bytes": 3480
+        }
+      },
+      {
+        "candidate": "catch_save",
+        "candidate_input": {
+          "path": "rh2/experiments/category3_cloud_20260929/cov016/catch_save.patch",
+          "sha256": "sha256:80dc187c2acdc61bfa820d59a833fa032e6a8eb6adaa7354680c9838f32cabde",
+          "bytes": 592
+        },
+        "apply_method": "git_apply",
+        "apply_user": "agent/54321",
+        "included_paths": [
+          "coverage/control.py"
+        ],
+        "reward": 0.0,
+        "match": 14,
+        "total": 15,
+        "mismatched": [
+          "ExecTest.test_unencodable_filename"
+        ],
+        "expected": {
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_threading": "PASSED",
+          "ThreadingTest.test_thread_run": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "ExecTest.test_unencodable_filename": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED"
+        },
+        "observed": {
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_thread_run": "PASSED",
+          "ThreadingTest.test_threading": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED",
+          "ExecTest.test_unencodable_filename": "FAILED"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 1,
+          "seconds": 4.252,
+          "segment_completed": true
+        },
+        "failure_category": "tests_failed",
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/catch_save/ledger.jsonl",
+          "sha256": "sha256:e85096116edd36b62a67dbe1e6df58e0ca2d74871775a29329e0ec10a036498b",
+          "bytes": 6173
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/catch_save/eval_logs/evallog_replay-cov016a-r6-matrix_cdd96a7a.eval.log",
+          "sha256": "sha256:b1a9306dfa6f09ecdbdf6f46b868c50ba96d21f9d279be21d0356be56608f23d",
+          "bytes": 5509
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/catch_save/eval_logs/evallog_replay-cov016a-r6-matrix_cdd96a7a.diagnostics.json",
+          "sha256": "sha256:05b4ffdb6daa6d3a79b6b6dfdf0f3af7258295f8361084b20a8ee6073c0289ea",
+          "bytes": 3800
+        },
+        "grade_driver_log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/catch_save/grade.log",
+          "sha256": "sha256:0b0ac35eb22c931dfb3beae4d35888da61982cd07c61f68fe468ade9ddd8593e",
+          "bytes": 901
+        },
+        "author_per_key": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/cpu/matrix_catch_save_r6_per_key.json",
+          "sha256": "sha256:e70df9b005e37a3d779a27fe21105e0d3f81cdb2815395220fb77720e03e1068",
+          "bytes": 3480
+        }
+      },
+      {
+        "candidate": "wr_swallow_flush",
+        "candidate_input": {
+          "path": "rh2/experiments/category3_cloud_20260929/cov016/wr_swallow_flush.patch",
+          "sha256": "sha256:602827583836d2639e21f467986d9520d2ed7c1af102ea0241fcb299cb6dc7b4",
+          "bytes": 809
+        },
+        "apply_method": "git_apply",
+        "apply_user": "agent/54321",
+        "included_paths": [
+          "coverage/collector.py"
+        ],
+        "reward": 0.0,
+        "match": 14,
+        "total": 15,
+        "mismatched": [
+          "ExecTest.test_unencodable_filename"
+        ],
+        "expected": {
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_threading": "PASSED",
+          "ThreadingTest.test_thread_run": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "ExecTest.test_unencodable_filename": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED"
+        },
+        "observed": {
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_thread_run": "PASSED",
+          "ThreadingTest.test_threading": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED",
+          "ExecTest.test_unencodable_filename": "FAILED"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 1,
+          "seconds": 4.173,
+          "segment_completed": true
+        },
+        "failure_category": "tests_failed",
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/wr_swallow_flush/ledger.jsonl",
+          "sha256": "sha256:bc03fdd03185b52e8877f5094c0a72318cb90643d690aabb47be6a9917f2f0f7",
+          "bytes": 6196
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/wr_swallow_flush/eval_logs/evallog_replay-cov016a-r6-matrix_3b99e31a.eval.log",
+          "sha256": "sha256:afa62b904b357d0b5891a7f135e09afb0c5b8e4144e706c4af9fb7e9d67968ce",
+          "bytes": 5181
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/wr_swallow_flush/eval_logs/evallog_replay-cov016a-r6-matrix_3b99e31a.diagnostics.json",
+          "sha256": "sha256:6c8c973772ccd3bfe6054e7457aae1fd824bcfe65ca3d85733b30d1d5355bb2d",
+          "bytes": 3804
+        },
+        "grade_driver_log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/wr_swallow_flush/grade.log",
+          "sha256": "sha256:ef57e7f96cc4297316ec3dd78f83dd19f2adce1413234b7d991443e887c1e790",
+          "bytes": 907
+        },
+        "author_per_key": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/cpu/matrix_wr_swallow_flush_r6_per_key.json",
+          "sha256": "sha256:336f32a6c9a17e07239aa3fef646b6dd0323be78a8d394bc6cf8d3960b06f65e",
+          "bytes": 3504
+        }
+      },
+      {
+        "candidate": "wr_loop_abort",
+        "candidate_input": {
+          "path": "rh2/experiments/category3_cloud_20260929/cov016/wr_loop_abort.patch",
+          "sha256": "sha256:e130198cb6f028e96a188d3439bf7ea0942db7e2177e68bec18a4ad84300b0c9",
+          "bytes": 3143
+        },
+        "apply_method": "git_apply",
+        "apply_user": "agent/54321",
+        "included_paths": [
+          "coverage/sqldata.py"
+        ],
+        "reward": 0.0,
+        "match": 14,
+        "total": 15,
+        "mismatched": [
+          "ExecTest.test_unencodable_filename"
+        ],
+        "expected": {
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_threading": "PASSED",
+          "ThreadingTest.test_thread_run": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "ExecTest.test_unencodable_filename": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED"
+        },
+        "observed": {
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_thread_run": "PASSED",
+          "ThreadingTest.test_threading": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED",
+          "ExecTest.test_unencodable_filename": "FAILED"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 1,
+          "seconds": 4.454,
+          "segment_completed": true
+        },
+        "failure_category": "tests_failed",
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/wr_loop_abort/ledger.jsonl",
+          "sha256": "sha256:b556b796054f7ab0babba8d01bed08ee544f9b409cf9d241d698baea5357cd9c",
+          "bytes": 6186
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/wr_loop_abort/eval_logs/evallog_replay-cov016a-r6-matrix_dda71d25.eval.log",
+          "sha256": "sha256:7894bc1d26a224eaa7e84ae5bfef26649e709332c39a8d87449cc6a47e9a0070",
+          "bytes": 4974
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/wr_loop_abort/eval_logs/evallog_replay-cov016a-r6-matrix_dda71d25.diagnostics.json",
+          "sha256": "sha256:699af2a8e1088f7a37e085d75f4180e437e655070c7567241d7a920c790b0202",
+          "bytes": 3805
+        },
+        "grade_driver_log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/wr_loop_abort/grade.log",
+          "sha256": "sha256:0ebc2c785c1ea504f9cdb0fb397316f795e8a2650a600e4eabfb64c62623c20e",
+          "bytes": 904
+        },
+        "author_per_key": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/cpu/matrix_wr_loop_abort_r6_per_key.json",
+          "sha256": "sha256:d77d3570328da0bbad1aabc8a7d15c8ef636d804fb07efc03ac8b9f4c64cb971",
+          "bytes": 3492
+        }
+      },
+      {
+        "candidate": "wr_latin1",
+        "candidate_input": {
+          "path": "rh2/experiments/category3_cloud_20260929/cov016/wr_latin1.patch",
+          "sha256": "sha256:22d4c841087d477d00b6158bf4f49d3bd5d18ce18c7d3c77fb6fdac67cc0518d",
+          "bytes": 506
+        },
+        "apply_method": "git_apply",
+        "apply_user": "agent/54321",
+        "included_paths": [
+          "coverage/inorout.py"
+        ],
+        "reward": 0.0,
+        "match": 14,
+        "total": 15,
+        "mismatched": [
+          "ExecTest.test_unencodable_filename"
+        ],
+        "expected": {
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_threading": "PASSED",
+          "ThreadingTest.test_thread_run": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "ExecTest.test_unencodable_filename": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED"
+        },
+        "observed": {
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_threading": "PASSED",
+          "ThreadingTest.test_thread_run": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED",
+          "ExecTest.test_unencodable_filename": "FAILED"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 1,
+          "seconds": 3.851,
+          "segment_completed": true
+        },
+        "failure_category": "tests_failed",
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/wr_latin1/ledger.jsonl",
+          "sha256": "sha256:c913004095a43b377f9e80fdfb00b39aea2f5e5e4e20665efd6752a3496feb64",
+          "bytes": 6168
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/wr_latin1/eval_logs/evallog_replay-cov016a-r6-matrix_8de899a8.eval.log",
+          "sha256": "sha256:a4e5818007d48bc8416f1d3ba2a6fb40c15b9fd9f332151200eb7dcc8e854226",
+          "bytes": 4974
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/wr_latin1/eval_logs/evallog_replay-cov016a-r6-matrix_8de899a8.diagnostics.json",
+          "sha256": "sha256:2eed9714c8467134340f14d7299df777b411c79c46f598903cf535e21a3fd410",
+          "bytes": 3797
+        },
+        "grade_driver_log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/wr_latin1/grade.log",
+          "sha256": "sha256:675242b76e230c630298599759e5d44c5b012f175bab673444a6e08c9a797f4f",
+          "bytes": 900
+        },
+        "author_per_key": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/cpu/matrix_wr_latin1_r6_per_key.json",
+          "sha256": "sha256:ae3ff733852c3dabfb2ebcd231095b20d24c172853e6c5a1d158972b4a99340a",
+          "bytes": 3476
+        }
+      },
+      {
+        "candidate": "wr_hardcode",
+        "candidate_input": {
+          "path": "rh2/experiments/category3_cloud_20260929/cov016/wr_hardcode.patch",
+          "sha256": "sha256:9c9a2d36be091dfc7c91c5c1866b8685ae1e6260c0a15179546ef40156c521af",
+          "bytes": 449
+        },
+        "apply_method": "git_apply",
+        "apply_user": "agent/54321",
+        "included_paths": [
+          "coverage/inorout.py"
+        ],
+        "reward": 0.0,
+        "match": 14,
+        "total": 15,
+        "mismatched": [
+          "ExecTest.test_unencodable_filename"
+        ],
+        "expected": {
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_threading": "PASSED",
+          "ThreadingTest.test_thread_run": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "ExecTest.test_unencodable_filename": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED"
+        },
+        "observed": {
+          "ThreadingTest.test_threading": "PASSED",
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_thread_run": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED",
+          "ExecTest.test_unencodable_filename": "FAILED"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 1,
+          "seconds": 4.455,
+          "segment_completed": true
+        },
+        "failure_category": "tests_failed",
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/wr_hardcode/ledger.jsonl",
+          "sha256": "sha256:6c26dbbfdf18b8f35cdc1f45ca681135a490bbcf652c003411cb2dbee1055ff0",
+          "bytes": 6176
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/wr_hardcode/eval_logs/evallog_replay-cov016a-r6-matrix_5b4f1282.eval.log",
+          "sha256": "sha256:e5b4421b039562d1295846f971112e4a0d86c154b6da143f65afe15d6e7c07b4",
+          "bytes": 6176
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/wr_hardcode/eval_logs/evallog_replay-cov016a-r6-matrix_5b4f1282.diagnostics.json",
+          "sha256": "sha256:050699540e2ead2f7a2c3d8830e54d66cfbaaeb4e3090360534dfe5d8dccf39c",
+          "bytes": 3802
+        },
+        "grade_driver_log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/wr_hardcode/grade.log",
+          "sha256": "sha256:6ae074bff6ec3516d6cda1748b8c03be07366ab37eeb102e37215d3fb6049275",
+          "bytes": 902
+        },
+        "author_per_key": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/cpu/matrix_wr_hardcode_r6_per_key.json",
+          "sha256": "sha256:2963d93a5a566444c3d4f8d1989249f08706ab6f48d43fef2523ee9acda5ce6c",
+          "bytes": 3484
+        }
+      },
+      {
+        "candidate": "rv_skip_write",
+        "candidate_input": {
+          "path": "rh2/experiments/category3_cloud_20260929/cov016/rv_skip_write.patch",
+          "sha256": "sha256:3a9e51bb96f4e025ac49376679325bb4b559e0ab882113829e96f09382f97088",
+          "bytes": 2367
+        },
+        "apply_method": "git_apply",
+        "apply_user": "agent/54321",
+        "included_paths": [
+          "coverage/sqldata.py"
+        ],
+        "reward": 1.0,
+        "match": 15,
+        "total": 15,
+        "mismatched": [],
+        "expected": {
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_threading": "PASSED",
+          "ThreadingTest.test_thread_run": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "ExecTest.test_unencodable_filename": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED"
+        },
+        "observed": {
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_threading": "PASSED",
+          "ThreadingTest.test_thread_run": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "ExecTest.test_unencodable_filename": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 0,
+          "seconds": 4.181,
+          "segment_completed": true
+        },
+        "failure_category": null,
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/rv_skip_write/ledger.jsonl",
+          "sha256": "sha256:425218ad87f90437af24b9d6fe62493e88e6f2c7ef82a3e44b215e39b5c6ee30",
+          "bytes": 6137
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/rv_skip_write/eval_logs/evallog_replay-cov016a-r6-matrix_2f37c8e6.eval.log",
+          "sha256": "sha256:30e11bdd41d8bd7652a0de103894f6ae8ceadd0c247fc18251ea173fcc5b6fcb",
+          "bytes": 3250
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/rv_skip_write/eval_logs/evallog_replay-cov016a-r6-matrix_2f37c8e6.diagnostics.json",
+          "sha256": "sha256:e991b2f760d596aaeca34fcbab4ced48f38987eebff7ef2492886d2bcea3b1bc",
+          "bytes": 3760
+        },
+        "grade_driver_log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/rv_skip_write/grade.log",
+          "sha256": "sha256:f8a363d63590a8ec59ec3ade2cd90ed4bd1f0bd5cdf5019ebd1ec33efc23015b",
+          "bytes": 902
+        },
+        "author_per_key": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/cpu/matrix_rv_skip_write_r6_per_key.json",
+          "sha256": "sha256:922ff3206e81587989ae0a9266412c4246eb4fa251b873cb338509f8f4d342c0",
+          "bytes": 3437
+        }
+      },
+      {
+        "candidate": "rv_convert",
+        "candidate_input": {
+          "path": "rh2/experiments/category3_cloud_20260929/cov016/rv_convert.patch",
+          "sha256": "sha256:fe802dc1997644b9082208bf7a35dc3fe1da93a059f1a17c5b48e2e391fc79f5",
+          "bytes": 881
+        },
+        "apply_method": "git_apply",
+        "apply_user": "agent/54321",
+        "included_paths": [
+          "coverage/sqldata.py"
+        ],
+        "reward": 1.0,
+        "match": 15,
+        "total": 15,
+        "mismatched": [],
+        "expected": {
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_threading": "PASSED",
+          "ThreadingTest.test_thread_run": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "ExecTest.test_unencodable_filename": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED"
+        },
+        "observed": {
+          "ThreadingTest.test_thread_run": "PASSED",
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_threading": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "ExecTest.test_unencodable_filename": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 0,
+          "seconds": 4.051,
+          "segment_completed": true
+        },
+        "failure_category": null,
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/rv_convert/ledger.jsonl",
+          "sha256": "sha256:71252218c3c42a7a4204848bf495dcff6cbf21a4a002cfaaa5a1626d389c89b0",
+          "bytes": 6125
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/rv_convert/eval_logs/evallog_replay-cov016a-r6-matrix_93c689e9.eval.log",
+          "sha256": "sha256:9c12885313f9447615fa8edcc553f0656269ce10a17ce4afbed23db8316958a1",
+          "bytes": 3246
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/rv_convert/eval_logs/evallog_replay-cov016a-r6-matrix_93c689e9.diagnostics.json",
+          "sha256": "sha256:68eca5bcec975522ada2da7519c34e6a69daea2d51a04a1d878a66c16d739a4c",
+          "bytes": 3758
+        },
+        "grade_driver_log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/rv_convert/grade.log",
+          "sha256": "sha256:95169b2692247d107cd21525973701369424b01bcb83b98a509687266f3aa76e",
+          "bytes": 899
+        },
+        "author_per_key": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/cpu/matrix_rv_convert_r6_per_key.json",
+          "sha256": "sha256:2bc89e529f15494f4cc4b60c9c58aec6df5ac437dde04cc20719d4bfb9d4f664",
+          "bytes": 3425
+        }
+      },
+      {
+        "candidate": "rv_collector_warn",
+        "candidate_input": {
+          "path": "rh2/experiments/category3_cloud_20260929/cov016/rv_collector_warn.patch",
+          "sha256": "sha256:7cf7daa6524905540484cabb230c475a292ff342e2c46c2b48d087d10ac76468",
+          "bytes": 685
+        },
+        "apply_method": "git_apply",
+        "apply_user": "agent/54321",
+        "included_paths": [
+          "coverage/collector.py"
+        ],
+        "reward": 1.0,
+        "match": 15,
+        "total": 15,
+        "mismatched": [],
+        "expected": {
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_threading": "PASSED",
+          "ThreadingTest.test_thread_run": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "ExecTest.test_unencodable_filename": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED"
+        },
+        "observed": {
+          "RecursionTest.test_long_recursion": "PASSED",
+          "ThreadingTest.test_threading": "PASSED",
+          "ThreadingTest.test_thread_run": "PASSED",
+          "RecursionTest.test_short_recursion": "PASSED",
+          "RecursionTest.test_long_recursion_recovery": "PASSED",
+          "PyexpatTest.test_pyexpat": "PASSED",
+          "DoctestTest.test_doctest": "PASSED",
+          "ExceptionTest.test_exception": "PASSED",
+          "GettraceTest.test_round_trip_in_untraced_function": "PASSED",
+          "GettraceTest.test_setting_new_trace_function": "PASSED",
+          "ExecTest.test_unencodable_filename": "PASSED",
+          "GettraceTest.test_atexit_gettrace": "PASSED",
+          "ExecTest.test_correct_filename": "PASSED",
+          "MockingProtectionTest.test_os_path_exists": "PASSED",
+          "MemoryLeakTest.test_for_leaks": "PASSED"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 0,
+          "seconds": 4.236,
+          "segment_completed": true
+        },
+        "failure_category": null,
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/rv_collector_warn/ledger.jsonl",
+          "sha256": "sha256:3a77b258792f54171c995b13035a5b66277e284344a36a2c9c58f2308f12f0ae",
+          "bytes": 6157
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/rv_collector_warn/eval_logs/evallog_replay-cov016a-r6-matrix_1df6f6ea.eval.log",
+          "sha256": "sha256:b73f17c2763244a9a1ebb958dcd3e63af23ceefa23d2041d302b1bcde2ba2dc4",
+          "bytes": 3860
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/rv_collector_warn/eval_logs/evallog_replay-cov016a-r6-matrix_1df6f6ea.diagnostics.json",
+          "sha256": "sha256:f1364b9e66cf1ed8284a77764fa0263a2e5a01a73712705109293e1cb7aa4a47",
+          "bytes": 3765
+        },
+        "grade_driver_log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/rv_collector_warn/grade.log",
+          "sha256": "sha256:54fa5abc53a4c856b4456bc3ff6289a3b6f262b0a198cba4e0ebe5f40b41be7b",
+          "bytes": 906
+        },
+        "author_per_key": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/cpu/matrix_rv_collector_warn_r6_per_key.json",
+          "sha256": "sha256:43620c18e8cd4801a4b12a34ff41a414c30ba64b4cdc733042106c0dc13f935f",
+          "bytes": 3453
+        }
+      }
+    ],
+    "budgets": {
+      "candidate_stage_seconds": 900.0,
+      "cleanup_seconds": 120.0,
+      "grading_deadline_seconds": 3600.0,
+      "image_pull_seconds": 1800.0
+    },
+    "grader_policy": {
+      "candidate_writable_prefixes": [
+        "/opt/miniconda3/envs/testbed"
+      ],
+      "cpus": 2.0,
+      "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+      "memory_bytes": 4294967296,
+      "network": "deny_all",
+      "pids_limit": 512,
+      "profile_id": "rh2.grader_sandbox_profile.v1",
+      "shm_bytes": 67108864,
+      "tmpfs_bytes": 1073741824,
+      "uid": 54322,
+      "user": "rh2grader"
+    },
+    "positive_count": 6,
+    "negative_count": 8,
+    "only_negative_mismatch": "ExecTest.test_unencodable_filename"
+  },
+  "public_delivery": {
+    "solver": "public_stub_no_model",
+    "command_rcs": {
+      "r2e_preflight": "0",
+      "environment_probe": "0",
+      "statement_example": "1",
+      "normal_file_save": "0",
+      "public_regressions": "0"
+    },
+    "public_regressions": "154 passed, 1 skipped",
+    "candidate_binary_objects": [
+      {
+        "path": ".coverage",
+        "bytes": 53248,
+        "sha256": "sha256:17e684ddea0db06a55980b4986239c9e82c3aecf17c9217b6dcf2bc78541caca",
+        "sqlite_header": true
+      },
+      {
+        "path": "tests/modules/.coverage",
+        "bytes": 53248,
+        "sha256": "sha256:a4fde0f025854630cb099fc2835a08953c3c333c6a89cdd97015a1ff0659e768",
+        "sqlite_header": true
+      }
+    ],
+    "nonempty": true,
+    "not_pure_noop": true,
+    "grade": {
+      "execution_failure_evidence": [],
+      "execution_failure_stage": null,
+      "expected_match": 14,
+      "expected_total": 15,
+      "f2p_pass": null,
+      "f2p_total": null,
+      "failure_category": "tests_failed",
+      "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+      "grading_semantics": "r2e_expected_map",
+      "infra_failure_detail": null,
+      "outcome": "unresolved",
+      "p2p_fail": null,
+      "p2p_total": null,
+      "report_id": "rpt_grading_bde3931a",
+      "reward": 0.0
+    },
+    "test": {
+      "exec_exit_code": 0,
+      "rc": 1,
+      "seconds": 3.956,
+      "segment_completed": true
+    },
+    "roundtrip": {
+      "ok": true,
+      "identity_equal": {
+        "task_id": true,
+        "workdir": true,
+        "public_bundle_digest": true,
+        "materialized_head": true,
+        "task_base_commit": true,
+        "policy": true,
+        "policy_digest": true,
+        "image_ids": true
+      },
+      "image_ids": [
+        "sha256:07a8684c42e242e1f9277011780f825411a52a439bce1cd1ce2daec3df477514",
+        "sha256:07a8684c42e242e1f9277011780f825411a52a439bce1cd1ce2daec3df477514"
+      ],
+      "baseline_entries_equal": true,
+      "patch_entries_equal": true,
+      "excluded_evidence_matches": true,
+      "excluded_path_differences": [],
+      "excluded_difference_allowed": true,
+      "transport_digest_equal": true,
+      "candidate_excluded_pathset_changed": [
+        true,
+        false
+      ]
+    },
+    "actor_profile_digest": "sha256:7442237a391bf6e257972085aa9fffaa0574800d64294f830454eaea493296ba",
+    "actor_profile": {
+      "profile_id": "rh2.rollout_sandbox_profile.v1",
+      "schema_id": "rh2.sandbox_profile.v1",
+      "agent_user": "agent",
+      "agent_uid": 54321,
+      "trusted_init_caps": [
+        "CHOWN",
+        "DAC_OVERRIDE",
+        "DAC_READ_SEARCH",
+        "FOWNER",
+        "KILL"
+      ],
+      "pids_limit": 512,
+      "cpus": 2.0,
+      "memory_bytes": 4294967296,
+      "swap_bytes": 0,
+      "tmp_tmpfs_bytes": 1073741824,
+      "home_tmpfs_bytes": 268435456,
+      "tmpfs_mount_flags": "exec,nosuid,nodev",
+      "writable_layer_quota_bytes": 8589934592,
+      "require_writable_layer_quota": false,
+      "network": {
+        "mode": "isolated_internal_network_per_attempt",
+        "egress_subnet_pool": "10.212.0.0/16",
+        "egress_subnet_prefix": 29,
+        "relay_image": "python@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea",
+        "relay_alias": "rh2-egress-relay",
+        "model_proxy_listen_port": 18001,
+        "model_proxy_upstream": "172.17.0.1:18190",
+        "internal_services": [],
+        "forbidden_probe_targets": [
+          "169.254.169.254:80",
+          "1.1.1.1:443",
+          "8.8.8.8:53",
+          "172.17.0.1:18001"
+        ]
+      },
+      "hidden_paths": [
+        "/root"
+      ],
+      "bind_mounts_allowed": [],
+      "workdir": "/testbed",
+      "security_opt": [
+        "no-new-privileges"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "init": true
+    },
+    "budget": {
+      "wall_seconds": 1200,
+      "max_turns": 9,
+      "max_context_len": 32768,
+      "max_new_tokens": 4096,
+      "file_read_max_output_tokens": null
+    },
+    "grade_budget_audit": {
+      "before": 300.0,
+      "after": 300.0,
+      "test_seconds": 1800.0,
+      "source": "r2e_gym_subset::coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae"
+    }
+  },
+  "failed_dispatch": {
+    "evidence_root": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/dispatch_guard_failed01",
+    "returncode": 1,
+    "reason": "prepared_manifest SHA被错误当作replay_summary文件SHA，前置assert拒绝；原job命令与stderr保存，零CC/评分，后续02新job正确执行。",
+    "not_test_failure": true,
+    "rerun_required": false
+  },
+  "reused_reviews": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/reviews/non_author_016a_material_review_20261003.md",
+      "sha256": "sha256:ad1ebc7975c8a8285703b5142b719067c1e3e090806e8b466ff4617ce3a656cb",
+      "bytes": 3616
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/public_reader_review_20261003.md",
+      "sha256": "sha256:0ae430ec9e1b6025644b32effde6e4666e9eedd362d79c9225ee5768797e1cd7",
+      "bytes": 6273
+    }
+  ],
+  "reuse_boundary": "复用本题v2材料的静态语义结论和公开阅读；本輪实际矩阵/交付另从原件核验。共用builder/Git行为沿冻结版既有验证，不重开审查链。",
+  "limits": [
+    "CPU固定候选与CC桩不计模型求解结果。",
+    "仅题级普通基座探针CPU条件通过；GPU链路、模型/次数/预算实际执行仍由统一执行者处理。",
+    "不授予训练资格，不形成无版本标注的原benchmark成绩。",
+    "本核查者未登录CPU宿主，实际远端行为依据保存原件；不把文档/静态模拟冒作现场验证。",
+    "派生镜像原build context的material文件/manifest.tsv未在本地原件副本中保留；本轮从正式086独立重建配方摘要并与build日志/facts/setup树核对。",
+    "本地副本未含pre-solver baseline.tar，未重做档案提取；核对两端baseline/census、实际归档元数据及transport数据库字节。",
+    "未重核Docker daemon build限额，镜像构建资源不从验证容器profile推定。"
+  ],
+  "remaining_items": [
+    "作者同步题卡/results_manifest历史暂停与待核标记，引用本次审查；无需因此重复CPU。",
+    "题主固定probe_request并按现行流程交统一GPU执行者；实际模型结果与用途分析尚缺。"
+  ],
+  "evidence": [
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/manifest.json",
+      "sha256": "sha256:ab0a3a13fd65e0ea4cd60541ea3b37b01196170477e25832df246f33ea208828",
+      "bytes": 170366
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v18.json",
+      "sha256": "sha256:4e379ab64f382897be6531030041f59798ac697f8f6d84f015eda4876a27d179",
+      "bytes": 396047
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/t1_input_pins_r2e_v19.json",
+      "sha256": "sha256:34528bd130cb003d8c1d5aa4cfb275a1390e9ec138c406adc0a6bcc740a63e1b",
+      "bytes": 1309
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/rh2/src/repoharness2/envpack/r2e_parsers.py",
+      "sha256": "sha256:339b7c80cca516dc7d1bcf9c11e3ff9a42f1bc993b5027a0d06c41c85d024b58",
+      "bytes": 10622
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/rh2/scripts/build_r2e_derived.py",
+      "sha256": "sha256:5af7dc214976336ea440674bc4416cfa0a805881463798e05ebbb3e33af19471",
+      "bytes": 53128
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/prepared/prepared_manifest.json",
+      "sha256": "sha256:0f8e89800b5678529c5ee852657fc6bff5c95143cb192086d958de8e1df3d79f",
+      "bytes": 1846
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/prepared/replay_summary.json",
+      "sha256": "sha256:f28fe916a7744b0332cf0da2d2abb64dd35bb96d83afb35699c2b4f4b9028759",
+      "bytes": 642
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/prepared/rollout_task_views.jsonl",
+      "sha256": "sha256:92aadf9d60b23de4d33db68b4cf2150a020c8feda1667e80af2592773d07caee",
+      "bytes": 9007
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/prepared/prompts.jsonl",
+      "sha256": "sha256:ab8a1abbf471700569273ef456fb24f859ba44fbdd37a64e3e62b5f67a085ea7",
+      "bytes": 5326
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/private/host_grading_views.jsonl",
+      "sha256": "sha256:78b28860a8019d85dbc96c223eb3a90e79606511dcdc10e1d1482c5e8609c195",
+      "bytes": 9695
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/derived/overlays.jsonl",
+      "sha256": "sha256:3949e42d3bea6f4e46dec287aa360c9b19d370b4816fc95aa7abf1344ee712ac",
+      "bytes": 2832
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/derived/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/facts.json",
+      "sha256": "sha256:051f0988f306db7a3d5b0551b1b5e41a5935d23b1407d2f12d776862ec4afaca",
+      "bytes": 5845
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/derived/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/build.log",
+      "sha256": "sha256:8619df3bed9efe26d7a79395f4f33765d3d37f35d175dc00e025bbd920222080",
+      "bytes": 3497
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/derived/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/integrity_base.txt",
+      "sha256": "sha256:c3593b597bc13f6ed5795832b7475212df1868b9248628bfb7c3f6d73c857e04",
+      "bytes": 398730
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/derived/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/integrity_derived.txt",
+      "sha256": "sha256:2610d70d8200d0477eec601f2f5f976a0fdf810f2b287d28666a8bce716812ed",
+      "bytes": 398689
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/derived/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/context/Dockerfile",
+      "sha256": "sha256:9f6bcb0b2b0d4ad268f75bc567419db5734a83e9830879f7bb9e8b00d92e4a8e",
+      "bytes": 376
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/derived/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/context/recipe_v1.sh",
+      "sha256": "sha256:0da821a15fa389289f524c60d3a421bc940cce753e4ecf3d53560b7ab6b31df9",
+      "bytes": 5982
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/derived/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/context/material_v2.sh",
+      "sha256": "sha256:0d259ae34ca823ca3fcb29c46e09f6e5d0b149690a5336ec491a14b94a769a3d",
+      "bytes": 2775
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/derived/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/context/sysconfig_v1.sh",
+      "sha256": "sha256:63ab3356e80bb6d9bccb682060c2769c03fc68a7b8273ece632eb5628347cc33",
+      "bytes": 2093
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/summary.json",
+      "sha256": "sha256:c104bdc48ca2d856eacb6742545af8a7e9cbc63b55a5de514b91c78f2cb2f70d",
+      "bytes": 42561
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/job/status.json",
+      "sha256": "sha256:c9bbdcc14c80696ba1a2f66e7d11d333fae50c4a6f8d81da1e8d2b90686b272d",
+      "bytes": 2907
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/job/stdout.log",
+      "sha256": "sha256:30194342029c03aaeb6d0233f55d995beec2a037d49b64e23771a11de0695c06",
+      "bytes": 1889
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_formal_matrix01/job/stderr.log",
+      "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_public_e2e01/summary.json",
+      "sha256": "sha256:ac78593432035a010fce9ba8d3840d947c29dbae334e9ded9d005337b7bd9f85",
+      "bytes": 17585
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_public_e2e01/stub_script.json",
+      "sha256": "sha256:a2c58e93aa3df8bf2f525dc971af937b28cfa1700eaedabe5e1bdeea1773d88c",
+      "bytes": 3276
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_public_e2e01/stub/requests/messages_000.json",
+      "sha256": "sha256:3bc1587640b46536f89cf4d88f7b4002cdad3b3e2526f367e9e09d93605ebde9",
+      "bytes": 13727
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_public_e2e01/attempt/prompt.txt",
+      "sha256": "sha256:6fe556b077447647feba609e8731dd2ab765e3a0b1b105e0c611edfa5cf770f7",
+      "bytes": 1244
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_public_e2e01/attempt/trajectory.jsonl",
+      "sha256": "sha256:6846327b8e10cd1aa940449604ecf3ce164ef776ae77b4f0f86d3f592fee10d5",
+      "bytes": 28306
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_public_e2e01/attempt/attempt.json",
+      "sha256": "sha256:44c2c406a929d08a876f02490db658137b56d91ee6422f89538e4b6b0c7be91e",
+      "bytes": 17618
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_public_e2e01/attempt/facts/prelaunch.json",
+      "sha256": "sha256:0fb129e6265e56fb500a55a89cbea6253fa644bff60fce4c8a71308a0edd8afa",
+      "bytes": 2344
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_public_e2e01/attempt/facts/agent_env_facts.txt",
+      "sha256": "sha256:deb2e21f591bf4b0bb81da0fff5474c3e7c3b1d7b33e53e24564fa3d6c65bfe0",
+      "bytes": 1017
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_public_e2e01/attempt/facts/activation_check.json",
+      "sha256": "sha256:5b41c5620865d4bd3b9a32f391ac93ae33ec8a622f0194fea79817d4a7790fec",
+      "bytes": 465
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_public_e2e01/attempt/facts/r2e_preflight.txt",
+      "sha256": "sha256:daab0589dc3105fbc35cf60921cdfede3acf6ca4356f9c706ac5d94f08b4b057",
+      "bytes": 104
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_public_e2e01/attempt/frozen/frozen_patch.json",
+      "sha256": "sha256:df9747ba26bd1a8b35c90a56ff9879003ccbff41b2f9459b7533f8f25d8363e8",
+      "bytes": 143135
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_public_e2e01/attempt/frozen/baseline_manifest.json",
+      "sha256": "sha256:8d8c12c7cd1bdf6076dfe374a93a304e442d12a3e0bba45b06079f7a1e87b096",
+      "bytes": 77407
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_public_e2e01/attempt/frozen/baseline_census.txt",
+      "sha256": "sha256:1bfb59e6a220de8f9c799a40222b6996d1f051f3fba18331c0bb95a213418111",
+      "bytes": 242093
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_public_e2e01/grade_cc/probe_audit/baseline_census.txt",
+      "sha256": "sha256:1bfb59e6a220de8f9c799a40222b6996d1f051f3fba18331c0bb95a213418111",
+      "bytes": 242093
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_public_e2e01/grade_cc/probe_audit/budget.json",
+      "sha256": "sha256:4d63bf5c0c9380f78f4441bf987e66af45220985a7a1c13fb60472daac3295fc",
+      "bytes": 139
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_public_e2e01/grade_cc/roundtrip.json",
+      "sha256": "sha256:c7899617486c403a89acb1826ab9af8582859f785206286aa2a02a4bbb2f6a7a",
+      "bytes": 668
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_public_e2e01/grade_cc/ledger.jsonl",
+      "sha256": "sha256:d954f7c811f0b2bc9c7dc18066d886ff9ece91576bff3c4454571dae62e94f33",
+      "bytes": 6181
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_public_e2e01/grade_cc/eval_logs/evallog_replay-cov016a-r6-public_bde3931a.eval.log",
+      "sha256": "sha256:7ecaf2d8149628aca2261b6b14576a7a9a8cf12e4f12d545ea9e9fe114fc7694",
+      "bytes": 5463
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_public_e2e01/grade_cc/grade.log",
+      "sha256": "sha256:fff0687aa6838793ad886fce5ca5232ac73edd7ecf246f9b5dc62a428087a12e",
+      "bytes": 2197
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_public_e2e01/job/status.json",
+      "sha256": "sha256:fb95eb3dc5aca78657d56ebd1166df08ccabf4b2ab4a66a8e6da0458d7139ba0",
+      "bytes": 3022
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_public_e2e01/job/stdout.log",
+      "sha256": "sha256:3bbf1eeaff6fcceba73f7e2db19d9200660d144102f4edb2394b0e1e3382bf3c",
+      "bytes": 1021
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_public_e2e01/job/stderr.log",
+      "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_public_e2e01/attempt/candidate/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae.diff",
+      "sha256": "sha256:f26509a500e1fab8559242c998ce15d7535f0692846867f7f2b59397679b8dbb",
+      "bytes": 4790
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_public_e2e01/grade_cc/artifacts/r2e_gym_subset--coveragepy__016af5f6352d69206ac8f7537c2b1882/a1-7fa41496/baseline_manifest.json",
+      "sha256": "sha256:8d8c12c7cd1bdf6076dfe374a93a304e442d12a3e0bba45b06079f7a1e87b096",
+      "bytes": 77407
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/016a_public_e2e01/grade_cc/artifacts/r2e_gym_subset--coveragepy__016af5f6352d69206ac8f7537c2b1882/a1-7fa41496/frozen_patch.json",
+      "sha256": "sha256:92e51a64a399b3a7b2ed48c46b0780bf284e1b45c15d6b55738de23ed55e7684",
+      "bytes": 143246
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/dispatch_guard_failed01/job/status.json",
+      "sha256": "sha256:7c42468000c70eacd2c395b9bd55c416c5e622d547f5e0f09b1d322e6353f744",
+      "bytes": 3029
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/dispatch_guard_failed01/job/stdout.log",
+      "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/dispatch_guard_failed01/job/stderr.log",
+      "sha256": "sha256:9b3ebd40c9c48c0fd2b03667f6533e0c8a58865f5b62610c84ca85f1331d4e43",
+      "bytes": 192
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/card.md",
+      "sha256": "sha256:60284ea855e33ea0fbc5dc1294930d3b56a61cc3eb86d9e80cc99ea92afbfaf1",
+      "bytes": 4051
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/results_manifest.json",
+      "sha256": "sha256:2568061e70a21054acf26fad7eb5ae1b8bd5d386874543d5b4a53e7967d04452",
+      "bytes": 9442
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/cpu/cpu_acceptance_r6_v1.json",
+      "sha256": "sha256:10756b5b1e34c752628d49bdc356926c23b8e5f0d555ad7e9768781286e39d4a",
+      "bytes": 6239
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/cpu/formal_matrix_r6_check.json",
+      "sha256": "sha256:a051c44c5df6a5929a87e7e71bc82f9ac3d19e71f22345984bbcb4ad92a5f99b",
+      "bytes": 15455
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/cpu/public_delivery_r6_check.json",
+      "sha256": "sha256:d7160073ce49a11d7bf5ae5602ad397920bfc2eec9602c75d47ca0a3ef722445",
+      "bytes": 10546
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/cpu/prepared_r6_identity_check.json",
+      "sha256": "sha256:476f5a9861d242b0dcc9f61c2f0ee1285e3f403ec006a3060777b1146089b5dc",
+      "bytes": 3373
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/cpu/derived_r6_v1.json",
+      "sha256": "sha256:9b5a0aea5230578c80d6c6d6622f6e4adfca6aae3388e24020bcc20f7b0044d9",
+      "bytes": 12731
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/public_reader_review_20261003.md",
+      "sha256": "sha256:0ae430ec9e1b6025644b32effde6e4666e9eedd362d79c9225ee5768797e1cd7",
+      "bytes": 6273
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/reviews/non_author_016a_material_review_20261003.md",
+      "sha256": "sha256:ad1ebc7975c8a8285703b5142b719067c1e3e090806e8b466ff4617ce3a656cb",
+      "bytes": 3616
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/public_devbrief_20261003.md",
+      "sha256": "sha256:e984241ad9a577d78277443afecdcf20c1651a42ff953fb61bb2936287118756",
+      "bytes": 661
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/public_reader_commands_20261003.json",
+      "sha256": "sha256:88a73fa2650f34752ca04eabdbb5a454214a2d46695393f7cedcdab285e6c971",
+      "bytes": 2241
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/devcheck/commands_fresh_reader_actor.json",
+      "sha256": "sha256:af734727c876ac8dcf5c26c5ad0e74f2dc9f45c503c604673b372d697c72030d",
+      "bytes": 2423
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/materials/statement_v1.txt",
+      "sha256": "sha256:e654fab906c8c9b5a994aed85c7e924c2389f10842dc319d0249060d3ee7d1e1",
+      "bytes": 1138
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/materials/test_1_v2.py",
+      "sha256": "sha256:ccdd7d89bb17177ab5922577be001e1f3000c0a2f53be8ec10eba2b3b849706b",
+      "bytes": 22591
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_image_facts_m3_48.json",
+      "sha256": "sha256:f81815e820a1c43a5e5c63734866633f08fe4d13d16ad9c3d012ac5ce2d82977",
+      "bytes": 670965
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl",
+      "sha256": "sha256:dc90e8c1485ae5401f8ec9c60c74a2f9d631805ccb482719aced33d84c817adb",
+      "bytes": 25859654
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/vendor/prime_envs_r2e_gym_taskset_c4d04dfe.py",
+      "sha256": "sha256:b928139eb0e9b4da9ca5d0ad927e17cf32727a6d18bc444ed57d63ca1a273bed",
+      "bytes": 15783
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_subset.revision",
+      "sha256": "sha256:0f9676eed9eef9f8675734bed5e8248bdf208699f40d0d92cefc73b5fb0bd363",
+      "bytes": 41
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl",
+      "sha256": "sha256:00f7f6667a9793b62eba635b92f2e3c3eb22de284af2d37f7c9ff7baf2b2925b",
+      "bytes": 251098
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/validation_bundles_v0.jsonl",
+      "sha256": "sha256:763cd1b9e05025cfd0ab6bf1f03dd1536457d4e9283f1b61e56c9abbea447c11",
+      "bytes": 75135
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl",
+      "sha256": "sha256:424e59624f57f244e004bfccfeb8ba5164b534d853bcebdbf64419da35ff505e",
+      "bytes": 122731
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/environment_packages_v0.jsonl",
+      "sha256": "sha256:f9d28466e73e2f49f7bcce0f38e2cee0baa79fc381c6e1a99fb3e688c953720b",
+      "bytes": 53334
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/rh2/experiments/r2e_lifecycle_20260929/r2e_probe_e2e.py",
+      "sha256": "sha256:a5b23b49f126b76a1512a3a6f184bb7e16276c4e9cf137dc7cdc46d3af4ee4fc",
+      "bytes": 30486
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/coordination_workflow_20261003.md",
+      "sha256": "sha256:8c31ca019257691de98dd3261179ece54c44bf767f54b1c438a4230d5e5406aa",
+      "bytes": 10608
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/remaining_workflow_20261002.md",
+      "sha256": "sha256:821653cf7d0828f311c7b44dfc071f40c50aaa96724f17a589e8f43f8251dcae",
+      "bytes": 19815
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+diff --git a/dask/array/slicing.py b/dask/array/slicing.py
+index 3b614c67c..a8a6b054d 100644
+--- a/dask/array/slicing.py
++++ b/dask/array/slicing.py
+@@ -641,6 +641,17 @@ def take(outname, inname, chunks, index, itemsize, axis=0):
+     other_chunks = [chunks[i] for i in range(len(chunks)) if i != axis]
+     other_numel = np.prod([sum(x) for x in other_chunks])
+ 
++    if other_numel == 0:
++        # Every row is empty: build the (empty) output blocks directly
++        # instead of reading them from the input.
++        chunks2 = list(chunks)
++        chunks2[axis] = tuple(len(index_list) for _, index_list in plan)
++        dsk = {}
++        for idx in product(*[range(len(c)) for c in chunks2]):
++            shape = tuple(c[i] for c, i in zip(chunks2, idx))
++            dsk[(outname,) + idx] = (np.zeros, shape)
++        return tuple(chunks2), dsk
++
+     if math.isnan(other_numel):
+         warnsize = maxsize = math.inf
+     else:

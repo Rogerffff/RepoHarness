@@ -1,0 +1,63 @@
+{
+  "schema": "datalad_pair_first_round_analysis_v1",
+  "as_of": "2026-10-03",
+  "request_id": "r2e-datalad-6b6f-r088-20261003-v1",
+  "material_version": "r2e-mr-088",
+  "budget_version": "probe-wide-v1",
+  "status": "first_round_diagnostic_complete_two_incorrect",
+  "candidate_semantic_correct_count": 0,
+  "requested_models_complete_count": 2,
+  "requested_models_total": 2,
+  "initial_arms": [
+    {
+      "job_id": "gpu1003-datalad088-qwen36-a1",
+      "model": "Qwen3.6-35B-A3B",
+      "raw": 0,
+      "normal_complete": true,
+      "semantic_correct": false,
+      "expected_match": "16/17",
+      "cause": "escaped-colon local path misclassified SSH; empty host causes string reconstruction assertion",
+      "analysis_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/model_probe_reviews/qwen36_a1_owner_analysis_20261003.json",
+      "analysis_sha256": "sha256:9cb617765539d5923f727be850157f0f874e7a6808aa3e7e1d2cb26459887559"
+    },
+    {
+      "job_id": "gpu1003-datalad088-coder-a1",
+      "model": "Qwen3-Coder-30B-A3B-Instruct",
+      "raw": 0,
+      "normal_complete": true,
+      "semantic_correct": false,
+      "expected_match": "16/17",
+      "cause": "escaped-colon local path enters new elif, split length1 skips assignment and file fallback; scheme remains empty",
+      "analysis_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/model_probe_reviews/coder_a1_owner_analysis_20261003.json",
+      "analysis_sha256": "sha256:c714adc691a22dbfc3726db4bbd3ce8592ad783c7b194c9437ca3cfc59fefe59"
+    }
+  ],
+  "pair_report_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/model_probe_reviews/pair_first_round_analysis_20261003.md",
+  "pair_report_sha256": "sha256:19390ab2f363d33dc957760b86674e0daf9b1134ea4a64db059d69ff4f2a7587",
+  "execution_receipt_ref": "runs/ordinary_gpu_probe_20261002/migration_20261003/r2e-datalad-6b6f-r088-20261003-v1_pair_execution_receipt_v1.json",
+  "execution_receipt_sha256": "sha256:2b7911d2ebc949c85a51bb7be16d95ec26c87b90d8e0b4c3512385019eea9e1b",
+  "owner_ack": {
+    "request_id": "r2e-datalad-6b6f-r088-20261003-v1",
+    "status": "returned",
+    "acknowledged": true,
+    "ack_or_clear": true,
+    "active_request_id": null,
+    "all_requested_models_complete": true,
+    "pending_first_models": [],
+    "request_revision_after_ack": 5,
+    "progress_revision_after_clear": 9,
+    "repeat_stage": "deferred_coverage_first_no_extra_samples_requested",
+    "current_policy_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/overnight_watch_20261003.md"
+  },
+  "new_material_blocker": false,
+  "new_cpu_or_gpu_retry_dependency": false,
+  "purpose": "versioned_baseline_diagnostic_only",
+  "training_or_holdout_qualification": false,
+  "general_model_comparison_qualification": false,
+  "stability": "not_established_single_sample_per_model",
+  "current_policy_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/overnight_watch_20261003.md",
+  "default_repeats_required": false,
+  "extra_sampling_requested": false,
+  "signal": "both partial fixes missed local-path/control-flow invariant; useful task-level diagnosis, no dataset-wide or training-gain claim",
+  "source_count_caveat": "two models on one task, not two independent tasks; selected diagnostic not unbiased source success rate"
+}

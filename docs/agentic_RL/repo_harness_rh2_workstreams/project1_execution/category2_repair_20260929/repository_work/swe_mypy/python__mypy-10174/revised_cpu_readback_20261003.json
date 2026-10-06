@@ -1,0 +1,508 @@
+{
+  "as_of": "2026-10-03",
+  "instance_id": "python__mypy-10174",
+  "scope": "作者逐项回读已发布修订的冻结runner正式CPU矩阵；非作者核查另附",
+  "status": "author_revised_cpu_matrix_passed_non_author_increment_review_pending",
+  "job": "mypy10174-revised-r3-20261002T182535Z-f641d8",
+  "binding": {
+    "instance_id": "python__mypy-10174",
+    "public_digest": "sha256:e1cc57aeabbf0261482d0d06da3c08509d54f12c32fc06b4cc6e8eedf8b9e41c",
+    "grading_digest": "sha256:b24e783218afdcf37c4717cf2702ad195e999e120683483269ac94de10802255",
+    "effective_test_patch_sha256": "sha256:91ea4e972129deaf770ef9e72aa26d11d9bafca85229eae6931f2b22568322cf",
+    "fail_to_pass": [
+      "mypy/test/testcheck.py::TypeCheckSuite::testOverlappingAnyTypeWithoutStrictOptional"
+    ],
+    "pass_to_pass": [
+      "mypy/test/testcheck.py::TypeCheckSuite::testUnimportedHintAnyLower",
+      "mypy/test/testcheck.py::TypeCheckSuite::testUnimportedHintAny",
+      "mypy/test/testcheck.py::TypeCheckSuite::testStrictEqualityWithFixedLengthTupleInCheckWithoutStrictOptional"
+    ],
+    "status": "immutable_release_and_cpu_a_deployment_verified_ready_for_matrix",
+    "release_id": "cat2-cpu-r2e080087-swe8-git-20261003-v1",
+    "release_manifest_sha256": "ab0a3a13fd65e0ea4cd60541ea3b37b01196170477e25832df246f33ea208828",
+    "image_id": "sha256:9d63f1ddcbd277fa62d49e10d800908cfec54544e890fc5fe741d2101ca8eb7e",
+    "candidates": [
+      {
+        "name": "noop"
+      },
+      {
+        "name": "gold",
+        "patch": "input_v1/original/python__mypy-10174/private/gold.patch",
+        "patch_sha256": "7f94c5b71301dbbf5ccce1af8b274444ab5c0de5010f92109e11549154066f6c"
+      },
+      {
+        "name": "bad",
+        "patch": "input_v1/proposals/python__mypy-10174/private/disable_non_strict_comparisons.patch",
+        "patch_sha256": "07b2dc85c76973364ca1ee5d28304a40796402c7d6d4558c87964bf656187c30"
+      }
+    ],
+    "expected_rewards": {
+      "noop": 0,
+      "gold": 1,
+      "bad": 0
+    },
+    "owner_thread_id": "01a0fd63-1eba-7133-951d-7dd3475840a4",
+    "deployment_confirmation": "coordinator confirmed cpu-a/b 855 files SHA/size and trusted48/216; Git/builder exact release5"
+  },
+  "binding_sha256": "sha256:e00b74789c7b7588a17e3f1d4d06bd87ff03db7d26588c55558de7b9cf8a9c02",
+  "host_runtime": "runtime_cpu_v2/rh2/.venv/bin/python",
+  "grading_revision_id": "mypy10174-strict-equality-v1",
+  "grading_materials_identity": "sha256:dca86b80c83f2e2e9c4eee8c4375952adef834008ad4cb7006ac60abeca58065",
+  "reference_keys": 4,
+  "collect_executed_and_parsed": 4,
+  "missing": 0,
+  "skipped": 0,
+  "num_parsed_outside_segment": 0,
+  "actual_rewards": {
+    "noop": 0,
+    "gold": 1,
+    "bad": 0
+  },
+  "conclusion": "原三参考保留；noop仅原F2P失败，gold四键通过，源码错误候选仅新增P2P失败，漏判从1降0；并非安装/执行/解析失败",
+  "actor_reuse": {
+    "evidence": "actor_cpu_readback_20261003.json",
+    "release5_to_release6": "公开bundle、固定base和派生镜像、Git四件和builder不变；本次仅私有测试增量，无需机械重跑公开actor",
+    "limit": "本命令清单未测RH2_BASHENV_WRITE标记；控制桩不代表模型能力"
+  },
+  "profile": {
+    "cpus": 2,
+    "memory_bytes": 4294967296,
+    "grader_uid": 54322,
+    "network": "deny_all"
+  },
+  "matrix": {
+    "noop": {
+      "reward": 0,
+      "f2p_pass": 0,
+      "p2p_fail": 0,
+      "actual_node_status": {
+        "mypy/test/testcheck.py::TypeCheckSuite::testStrictEqualityWithFixedLengthTupleInCheckWithoutStrictOptional": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::testUnimportedHintAny": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::testUnimportedHintAnyLower": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::testOverlappingAnyTypeWithoutStrictOptional": "FAILED"
+      },
+      "partitions": {
+        "added_p2p": {
+          "references": [
+            "mypy/test/testcheck.py::TypeCheckSuite::testStrictEqualityWithFixedLengthTupleInCheckWithoutStrictOptional"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "mypy/test/testcheck.py::TypeCheckSuite::testStrictEqualityWithFixedLengthTupleInCheckWithoutStrictOptional"
+            ],
+            "unaccounted": []
+          }
+        },
+        "original_f2p": {
+          "references": [
+            "mypy/test/testcheck.py::TypeCheckSuite::testOverlappingAnyTypeWithoutStrictOptional"
+          ],
+          "result": {
+            "failure": [
+              "mypy/test/testcheck.py::TypeCheckSuite::testOverlappingAnyTypeWithoutStrictOptional"
+            ],
+            "missing": [],
+            "skipped": [],
+            "success": [],
+            "unaccounted": []
+          }
+        },
+        "original_p2p": {
+          "references": [
+            "mypy/test/testcheck.py::TypeCheckSuite::testUnimportedHintAnyLower",
+            "mypy/test/testcheck.py::TypeCheckSuite::testUnimportedHintAny"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "mypy/test/testcheck.py::TypeCheckSuite::testUnimportedHintAnyLower",
+              "mypy/test/testcheck.py::TypeCheckSuite::testUnimportedHintAny"
+            ],
+            "unaccounted": []
+          }
+        }
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 5.726,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 2.904
+      },
+      "import_path": "/testbed/mypy/__init__.py",
+      "runner_digest": "2f4655b6933a219bb88c823bdc724ed84e84c89a2a23b39c1f399cb1da2b61c4",
+      "runner_unchanged": true,
+      "source_paths": [],
+      "candidate_patch_sha256": null,
+      "projectable": true,
+      "candidate_cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "grader_cleanup_and_driver": {
+        "ledger": "/work/rh2-category2-20261003/packages/swe_mypy/attempts/mypy10174-revised-r3-20261002T182535Z-f641d8/noop/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "evidence": {
+        "ledger": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-revised-r3-20261002T182535Z-f641d8/attempt/noop/ledger.jsonl",
+        "ledger_sha256": "sha256:d161f50013ac5ecf982f0be29c48eac66c63ef50148923222523ff65fba4208b",
+        "diagnostics": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-revised-r3-20261002T182535Z-f641d8/attempt/noop/eval_logs/evallog_replay-swe-mypy-mypy1017_6ac37ad3.diagnostics.json",
+        "diagnostics_sha256": "sha256:6beb824abc56e2eed18d67876c01d40b07dd5ba68eb69622f3afa6c5c096628f",
+        "eval_log": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-revised-r3-20261002T182535Z-f641d8/attempt/noop/eval_logs/evallog_replay-swe-mypy-mypy1017_6ac37ad3.eval.log",
+        "eval_log_sha256": "sha256:095e8008b8f47aeb8bf66da0ecfe0fb206d77ce90e797ab948f2ad6f53723619"
+      }
+    },
+    "gold": {
+      "reward": 1,
+      "f2p_pass": 1,
+      "p2p_fail": 0,
+      "actual_node_status": {
+        "mypy/test/testcheck.py::TypeCheckSuite::testOverlappingAnyTypeWithoutStrictOptional": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::testStrictEqualityWithFixedLengthTupleInCheckWithoutStrictOptional": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::testUnimportedHintAny": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::testUnimportedHintAnyLower": "PASSED"
+      },
+      "partitions": {
+        "added_p2p": {
+          "references": [
+            "mypy/test/testcheck.py::TypeCheckSuite::testStrictEqualityWithFixedLengthTupleInCheckWithoutStrictOptional"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "mypy/test/testcheck.py::TypeCheckSuite::testStrictEqualityWithFixedLengthTupleInCheckWithoutStrictOptional"
+            ],
+            "unaccounted": []
+          }
+        },
+        "original_f2p": {
+          "references": [
+            "mypy/test/testcheck.py::TypeCheckSuite::testOverlappingAnyTypeWithoutStrictOptional"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "mypy/test/testcheck.py::TypeCheckSuite::testOverlappingAnyTypeWithoutStrictOptional"
+            ],
+            "unaccounted": []
+          }
+        },
+        "original_p2p": {
+          "references": [
+            "mypy/test/testcheck.py::TypeCheckSuite::testUnimportedHintAnyLower",
+            "mypy/test/testcheck.py::TypeCheckSuite::testUnimportedHintAny"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "mypy/test/testcheck.py::TypeCheckSuite::testUnimportedHintAnyLower",
+              "mypy/test/testcheck.py::TypeCheckSuite::testUnimportedHintAny"
+            ],
+            "unaccounted": []
+          }
+        }
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 7.419,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 3.944
+      },
+      "import_path": "/testbed/mypy/__init__.py",
+      "runner_digest": "2f4655b6933a219bb88c823bdc724ed84e84c89a2a23b39c1f399cb1da2b61c4",
+      "runner_unchanged": true,
+      "source_paths": [
+        "mypy/meet.py"
+      ],
+      "candidate_patch_sha256": "sha256:7f94c5b71301dbbf5ccce1af8b274444ab5c0de5010f92109e11549154066f6c",
+      "projectable": true,
+      "candidate_cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "grader_cleanup_and_driver": {
+        "ledger": "/work/rh2-category2-20261003/packages/swe_mypy/attempts/mypy10174-revised-r3-20261002T182535Z-f641d8/gold/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "evidence": {
+        "ledger": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-revised-r3-20261002T182535Z-f641d8/attempt/gold/ledger.jsonl",
+        "ledger_sha256": "sha256:2991f3d3347af039412e483b422e2dea6d768a3a88b4f0280bfdb3347107f67d",
+        "diagnostics": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-revised-r3-20261002T182535Z-f641d8/attempt/gold/eval_logs/evallog_replay-swe-mypy-mypy1017_e69d6f86.diagnostics.json",
+        "diagnostics_sha256": "sha256:b3d8e8dac518311ab5ba9a6c354841981894546080bde0c0c7716c4691ab4f44",
+        "eval_log": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-revised-r3-20261002T182535Z-f641d8/attempt/gold/eval_logs/evallog_replay-swe-mypy-mypy1017_e69d6f86.eval.log",
+        "eval_log_sha256": "sha256:83b462a9f3ec99584a796eed7e3646bbea2faad05eaadd8f7f320d841af73858"
+      }
+    },
+    "bad": {
+      "reward": 0,
+      "f2p_pass": 1,
+      "p2p_fail": 1,
+      "actual_node_status": {
+        "mypy/test/testcheck.py::TypeCheckSuite::testOverlappingAnyTypeWithoutStrictOptional": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::testUnimportedHintAny": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::testUnimportedHintAnyLower": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::testStrictEqualityWithFixedLengthTupleInCheckWithoutStrictOptional": "FAILED"
+      },
+      "partitions": {
+        "added_p2p": {
+          "references": [
+            "mypy/test/testcheck.py::TypeCheckSuite::testStrictEqualityWithFixedLengthTupleInCheckWithoutStrictOptional"
+          ],
+          "result": {
+            "failure": [
+              "mypy/test/testcheck.py::TypeCheckSuite::testStrictEqualityWithFixedLengthTupleInCheckWithoutStrictOptional"
+            ],
+            "missing": [],
+            "skipped": [],
+            "success": [],
+            "unaccounted": []
+          }
+        },
+        "original_f2p": {
+          "references": [
+            "mypy/test/testcheck.py::TypeCheckSuite::testOverlappingAnyTypeWithoutStrictOptional"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "mypy/test/testcheck.py::TypeCheckSuite::testOverlappingAnyTypeWithoutStrictOptional"
+            ],
+            "unaccounted": []
+          }
+        },
+        "original_p2p": {
+          "references": [
+            "mypy/test/testcheck.py::TypeCheckSuite::testUnimportedHintAnyLower",
+            "mypy/test/testcheck.py::TypeCheckSuite::testUnimportedHintAny"
+          ],
+          "result": {
+            "failure": [],
+            "missing": [],
+            "skipped": [],
+            "success": [
+              "mypy/test/testcheck.py::TypeCheckSuite::testUnimportedHintAnyLower",
+              "mypy/test/testcheck.py::TypeCheckSuite::testUnimportedHintAny"
+            ],
+            "unaccounted": []
+          }
+        }
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 6.103,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 3.035
+      },
+      "import_path": "/testbed/mypy/__init__.py",
+      "runner_digest": "2f4655b6933a219bb88c823bdc724ed84e84c89a2a23b39c1f399cb1da2b61c4",
+      "runner_unchanged": true,
+      "source_paths": [
+        "mypy/checkexpr.py"
+      ],
+      "candidate_patch_sha256": "sha256:07b2dc85c76973364ca1ee5d28304a40796402c7d6d4558c87964bf656187c30",
+      "projectable": true,
+      "candidate_cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "grader_cleanup_and_driver": {
+        "ledger": "/work/rh2-category2-20261003/packages/swe_mypy/attempts/mypy10174-revised-r3-20261002T182535Z-f641d8/bad/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "evidence": {
+        "ledger": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-revised-r3-20261002T182535Z-f641d8/attempt/bad/ledger.jsonl",
+        "ledger_sha256": "sha256:4c0f32b69c1c3cbb686ad3800873e8b3a26ae7235a69b048f91f396e65ad789f",
+        "diagnostics": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-revised-r3-20261002T182535Z-f641d8/attempt/bad/eval_logs/evallog_replay-swe-mypy-mypy1017_141d6c38.diagnostics.json",
+        "diagnostics_sha256": "sha256:69225cbc41cd3a871aa39a62506007c094edc22f68a693ff0c6f75611177573c",
+        "eval_log": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-revised-r3-20261002T182535Z-f641d8/attempt/bad/eval_logs/evallog_replay-swe-mypy-mypy1017_141d6c38.eval.log",
+        "eval_log_sha256": "sha256:22b82d1c4eba253f16f4154df57d31d16a752d41d7c1d363dd99ba9c6058beb4"
+      }
+    }
+  },
+  "slot_status": "finished",
+  "slot_returncode": 0,
+  "wrapper_returncode": 0,
+  "finished_at_utc": "2026-10-02T18:33:14Z",
+  "evidence_root": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-revised-r3-20261002T182535Z-f641d8",
+  "archive": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-revised-r3-20261002T182535Z-f641d8.evidence.tgz",
+  "archive_sha256": "sha256:fdf053f08922562526074eacb659d5132b017b167e1a49d9f0c3ed45a9e7e955",
+  "raw_file_sha256": {
+    "attempt/bad/artifacts/swe_gym_lite--python__mypy-10174/a1-013784b8/baseline_manifest.json": "sha256:44956786d25ff9f282fe6cab495119631c46b65efc5243f2d95847492d796401",
+    "attempt/bad/artifacts/swe_gym_lite--python__mypy-10174/a1-013784b8/candidate.patch": "sha256:07b2dc85c76973364ca1ee5d28304a40796402c7d6d4558c87964bf656187c30",
+    "attempt/bad/artifacts/swe_gym_lite--python__mypy-10174/a1-013784b8/classification.json": "sha256:e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6",
+    "attempt/bad/artifacts/swe_gym_lite--python__mypy-10174/a1-013784b8/frozen_patch.json": "sha256:77ac6076f96562e311d0d2e145098737ffe8a39a1e027c4766659b90fd3c57dd",
+    "attempt/bad/artifacts/swe_gym_lite--python__mypy-10174/a1-013784b8/projection.json": "sha256:1d004107fea76d2bc4bdf5401f26faea502a801ac471d5a2c486a71f354578b5",
+    "attempt/bad/artifacts/swe_gym_lite--python__mypy-10174/a1-013784b8/stage.json": "sha256:924721ca2ad90bf074e91b30cbe23c7bbf70600450211d63c52955d65a14dbad",
+    "attempt/bad/eval_logs/evallog_replay-swe-mypy-mypy1017_141d6c38.diagnostics.json": "sha256:69225cbc41cd3a871aa39a62506007c094edc22f68a693ff0c6f75611177573c",
+    "attempt/bad/eval_logs/evallog_replay-swe-mypy-mypy1017_141d6c38.eval.log": "sha256:22b82d1c4eba253f16f4154df57d31d16a752d41d7c1d363dd99ba9c6058beb4",
+    "attempt/bad/ledger.jsonl": "sha256:4c0f32b69c1c3cbb686ad3800873e8b3a26ae7235a69b048f91f396e65ad789f",
+    "attempt/bad.log": "sha256:a52820b65a21757233715234745f4123f4ebea8424bd902b609f7bd9fb02ae2c",
+    "attempt/gold/artifacts/swe_gym_lite--python__mypy-10174/a1-ec71aea0/baseline_manifest.json": "sha256:44956786d25ff9f282fe6cab495119631c46b65efc5243f2d95847492d796401",
+    "attempt/gold/artifacts/swe_gym_lite--python__mypy-10174/a1-ec71aea0/candidate.patch": "sha256:7f94c5b71301dbbf5ccce1af8b274444ab5c0de5010f92109e11549154066f6c",
+    "attempt/gold/artifacts/swe_gym_lite--python__mypy-10174/a1-ec71aea0/classification.json": "sha256:e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6",
+    "attempt/gold/artifacts/swe_gym_lite--python__mypy-10174/a1-ec71aea0/frozen_patch.json": "sha256:c8df385c446fad280d3eb4e52d9f222ca9c3a3ce33a03bddabb2d6297ec53808",
+    "attempt/gold/artifacts/swe_gym_lite--python__mypy-10174/a1-ec71aea0/projection.json": "sha256:4b3356030a548f8b13fc5ac22060ce0ca73841b6084c93c2149d06eb5079d2d0",
+    "attempt/gold/artifacts/swe_gym_lite--python__mypy-10174/a1-ec71aea0/stage.json": "sha256:05e9aa0c63b061e480cf886c3befdbf82e1b7479392a77f284dc414a7904fbf2",
+    "attempt/gold/eval_logs/evallog_replay-swe-mypy-mypy1017_e69d6f86.diagnostics.json": "sha256:b3d8e8dac518311ab5ba9a6c354841981894546080bde0c0c7716c4691ab4f44",
+    "attempt/gold/eval_logs/evallog_replay-swe-mypy-mypy1017_e69d6f86.eval.log": "sha256:83b462a9f3ec99584a796eed7e3646bbea2faad05eaadd8f7f320d841af73858",
+    "attempt/gold/ledger.jsonl": "sha256:2991f3d3347af039412e483b422e2dea6d768a3a88b4f0280bfdb3347107f67d",
+    "attempt/gold.log": "sha256:f222908cf9477e864eb52519cfd1f3cfec62c73b84955cdc578b13db78f844e1",
+    "attempt/material_identity.log": "sha256:a9e865969967b0042249adc660fbe22554416f14005429d9e043ca7d2d0092bd",
+    "attempt/noop/artifacts/swe_gym_lite--python__mypy-10174/a1-0e884cdb/baseline_manifest.json": "sha256:44956786d25ff9f282fe6cab495119631c46b65efc5243f2d95847492d796401",
+    "attempt/noop/artifacts/swe_gym_lite--python__mypy-10174/a1-0e884cdb/classification.json": "sha256:e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6",
+    "attempt/noop/artifacts/swe_gym_lite--python__mypy-10174/a1-0e884cdb/frozen_patch.json": "sha256:2a09050322d88aa99cec7e81e2973c9ed177bb8cdc45e7595ea9a7790f4c1dd8",
+    "attempt/noop/artifacts/swe_gym_lite--python__mypy-10174/a1-0e884cdb/projection.json": "sha256:da12cf090308921629113aa6428eaf3fbc14595d793c0b857f64084480b74c9e",
+    "attempt/noop/artifacts/swe_gym_lite--python__mypy-10174/a1-0e884cdb/stage.json": "sha256:6492d2f8445abd7e65435a961de0681399b930b84146f3d9c1b7d918281ead3a",
+    "attempt/noop/eval_logs/evallog_replay-swe-mypy-mypy1017_6ac37ad3.diagnostics.json": "sha256:6beb824abc56e2eed18d67876c01d40b07dd5ba68eb69622f3afa6c5c096628f",
+    "attempt/noop/eval_logs/evallog_replay-swe-mypy-mypy1017_6ac37ad3.eval.log": "sha256:095e8008b8f47aeb8bf66da0ecfe0fb206d77ce90e797ab948f2ad6f53723619",
+    "attempt/noop/ledger.jsonl": "sha256:d161f50013ac5ecf982f0be29c48eac66c63ef50148923222523ff65fba4208b",
+    "attempt/noop.log": "sha256:87c34311b72c8f1c8c95031c4d62853f1eaa3a3b770b2862a41962093ecf4527",
+    "attempt/prepare.log": "sha256:c56534f4b35c09845de6b63501690710e361bc7296b77c8319563e1af9bb52c9",
+    "attempt/prepared/prepared_manifest.json": "sha256:54ddb36d25290e1daa12a0dfc8e5f58e71ce3b6c3ce8af9f14ca0c5831aa0ffe",
+    "attempt/prepared/prompts.jsonl": "sha256:568c6a2a38530a94f23f2fa6aa8fdc63d12a83d69a40ccc9049976251c1318c4",
+    "attempt/prepared/replay_summary.json": "sha256:d72dfd36d6e31585d258ba02fb546dcd82267b6f01133ff90c4c8aa27606ab7e",
+    "attempt/prepared/rollout_task_views.jsonl": "sha256:e8271cd66d4ee280c1b508f6672cbf8e1bfea27646778b352774c1167e444318",
+    "attempt/private/host_grading_views.jsonl": "sha256:a9e4d375a3f127a53944f92b4badb48d9a1834e5bd455ac36ff8416ea61f5ea8",
+    "attempt/revised_matrix.json": "sha256:3bbd642bcf89549c670690ef31164c121a82c06ab3af37dfd0ad7a7c6ca01541",
+    "attempt/verify_release.log": "sha256:188012802d1a4ea5ff361d3de5b10bf34ad92af093b0ad8f929486d5d9879c6f",
+    "launch/py": "sha256:de906c6a3a267abee57f64543070795b0bc28832a2c8e6386e5468bbe45ccbec",
+    "launch/receipt.json": "sha256:bc6704ca5ac3c083447abf6b6de4b6b693821302a436095e74d5eb02272a7c09",
+    "launch/stderr": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "launch/stdout": "sha256:484ea87660c4f058fea1cb6b287e02b7b4df26131065e6411498174f7404d2f9",
+    "slot/status.json": "sha256:d461e7933225ac13209b5aaf1d936415df571dd2badc654a45e1d1efdf9fab29",
+    "slot/stderr.log": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "slot/stdout.log": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

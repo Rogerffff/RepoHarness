@@ -1,0 +1,212 @@
+{
+  "schema_id": "conan.owner.model_analysis.v1",
+  "as_of": "2026-10-03T07:13:39.285701+00:00",
+  "request_id": "swe-conan13230-r11-briefv2-20261003-v1",
+  "job_id": "gpu1003-conan13230-coder-a1",
+  "model": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+  "sample": 1,
+  "material_version": "conan13230-private-test-v1",
+  "budget_version": "probe-wide-v1",
+  "raw_score": {
+    "reward": 1,
+    "f2p": {
+      "passed": 3,
+      "total": 3
+    },
+    "p2p": {
+      "passed": 34,
+      "total": 34
+    }
+  },
+  "semantic_verdict": "correct_host_OS_Apple_helper_root_cause_fix_within_public_configuration_diagnostic_scope",
+  "candidate_findings": [
+    {
+      "id": "P2-1",
+      "priority": "P2",
+      "finding": "native mock has no behavioral assertion; declared unit/native coverage exceeds actual scope",
+      "disposition": "no_fix_accept_residual_risk"
+    },
+    {
+      "id": "P2-2",
+      "priority": "P2",
+      "finding": "print-only reproducer, functional autoreconf rc127 with truncated output and Apple skips do not prove compilation; final summary omits these limits",
+      "disposition": "no_fix_accept_residual_risk"
+    }
+  ],
+  "task_material_findings": [],
+  "semantic_independent_review": {
+    "status": "completed_no_task_material_blocker",
+    "report": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_13230_coder_a1_semantic_review_20261003.md",
+      "sha256": "sha256:0648b1c34c0c4372c7520af48aea7de904f3df491487db36af2568b946645aa2"
+    },
+    "scope": "focused complete candidate, actual projection, host/Apple semantics, 37 actual references and model verification; no CPU/GPU rerun"
+  },
+  "execution_independent_review": {
+    "status": "execution_complete_valid_raw1_owner_semantics_pending",
+    "report": {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/conan13230_coder_a1_execution_review_v1.json",
+      "sha256": "sha256:e757a65bf924ce2342959c28732cc3f2dbf32557ed4d55974d00108122286660"
+    },
+    "scope": "first-arm execution/transport, installation, exact references and cleanup; candidate semantics separately reviewed"
+  },
+  "owner_analysis": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-13230/probe_coder_a1_analysis_20261003.md",
+    "sha256": "sha256:d85fc67aefad267e8ffdf45bee614eae7a3099d300ce460b355fbe3e533cf1a2"
+  },
+  "owner_readback": {
+    "path": "runs/category2_repair_20260929/conan_cpu_20261003/probe_analysis_13230_coder_a1_20261003_v1/owner_readback.json",
+    "sha256": "sha256:d8a43beafb889e1f062cc1f6d2ce6943001f4608d8bc2506f0e3b98edddf2532"
+  },
+  "trajectory": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v21/results/gpu1003-conan13230-coder-a1/attempt/trajectory.jsonl",
+    "sha256": "0e5c7bccfbe0d6e6b2be83301464cae05309ef4ef6806702e295728c3d5bb426",
+    "bytes": 330222
+  },
+  "complete_candidate": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v21/results/gpu1003-conan13230-coder-a1/attempt/candidate/conan-io__conan-13230.diff",
+    "sha256": "7357af090963eae6efe14ac5de2d1baf026e8fe969551e1833fc06f409736ded",
+    "bytes": 6497
+  },
+  "frozen_patch": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v21/results/gpu1003-conan13230-coder-a1/attempt/frozen/frozen_patch.json",
+    "sha256": "a0e62fc2ca87391f1834c5ba33a3e69cf1b9dd59d986b234f4b256941f421d7a",
+    "bytes": 24868
+  },
+  "scoring_projection": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v21/results/gpu1003-conan13230-coder-a1/grading/projection.json",
+    "sha256": "55272ffc770920e6b9e7f5b96a7e9dcfa5b181c913b4e43e7ffd2e19457f103d",
+    "bytes": 398
+  },
+  "dimensions": {
+    "method": {
+      "heading": "方法",
+      "analysis": "行71正确指出Macos build不应令Linux host带Apple flags；生产最终导入并调用`is_apple_os(self._conanfile)`，helper读取host的`settings.os`，四Apple目标与公开helper一致。外层`cross_building()`及实际SDK要求、`-arch`／`-isysroot`构造保留，原compiler与triplet代码未变。Linux配置中的`-m64`仍在，不能把移除Apple参数解释为清空所有flags。native不交叉的旧路径保留；本次没有重定义native的全部Apple行为。\n\n脚本在改前读实际AutotoolsToolchain的CFLAGS／CXXFLAGS／LDFLAGS，看到Apple参数；改后同脚本三者只余`-m64`，是类构造／配置范围的前后证据，不是实际GNU交叉编译。错误分支仅打印ERROR、不返回非零，证明来自前后输出，不来自脚本退出0。公开issue明确实际交叉toolchain不必存在，本题配置诊断不以openssl编译完成为前提；仍不能据此声称完整原生产构建已复验。"
+    },
+    "localization": {
+      "heading": "定位",
+      "analysis": "工具1找autotools路径，工具2读对生产类，随后读cross helper、Apple helper和公开回归。首次相关源码读取距第一请求 **1.415秒**；正确根因行71对应第六响应完成 **7.478秒**，是5工具后的响应完成上界，非首次产生判断的精确时刻。行88完成改前复现，之后才修生产。\n\n首次Edit误指另一个`autotools.py`，因未读过被拒；读该文件后模型确认路径错误，再回到已经读过的`autotoolstoolchain.py`导入helper和改条件。错误没有写入错误模块，但增加一次无关Read和Edit尝试。目标定位正确与操作选错文件分别记录。"
+    },
+    "tools": {
+      "heading": "工具与纠错",
+      "analysis": "22实际工具：**Bash10、Read6、Write2、Edit4**；原轨迹保留3个`is_error=true`：行101选错文件的Edit拒绝、行201新增native例错误断言、行262GNU功能测试失败。\n\n行201的Linux／iOS新例已通过，native例却错误要求不交叉时应有本交叉分支的Apple flags。再读cross helper后，行223去掉该错误断言、改说明，没有改生产或删旧测试；但未换成正确行为断言，最后只是初始化与打印。因此native最多是构造smoke，不能当完整回归。两份脚本留在最终FP和实际投影，不按辅助文件名忽略其质量。\n\n行262可见`autoreconf()`返回127，工具原内容本身含“1851 characters truncated”；未显示具体缺失程序。行267称缺autoreconf是模型归因，没有`which`／修复后重验，不能独立证明究竟缺哪个exe或基线是否通过。本次失败未被shell掩盖；按配置诊断范围记录，不扩修固定镜像或判37参考结果失效。"
+    },
+    "parallel": {
+      "heading": "并行",
+      "analysis": "23响应前22各一个工具，最后结束，无实际重叠。生产类读取后，cross helper、Apple helper及公开测试的只读检查可独立进行；本次没有并行，CC／adapter多工具并发能力未独立建立。复现、编辑、改后验证与新例纠错依赖前一步。pytest和Conan客户端共用工作树／缓存，不直接列为可安全并行的命令。"
+    },
+    "verification": {
+      "heading": "验证",
+      "analysis": "| 轨迹行 | 实际结果与边界 |\n| --- | --- |\n| 84→88、149→153 | 同脚本改前出现Apple参数、改后只余`-m64`；打印式复现，非编译／链接 |\n| 162→166 | 原AutotoolsToolchain公开unit模块34P、0.13秒 |\n| 175→179 | GNU目录筛选16P／62 deselected、0.12秒；不是全目录78P |\n| 197→201、223、232→236 | mock Linux否定／iOS Apple参数非空断言通过，后者未精确核两类参数；native错断言失败后被删除，最终仅构造／打印 |\n| 245→249 | 五个公开integration例P、0.50秒；配置／环境生成范围 |\n| 258→262 | functional triplet试验1F、0.12秒，autoreconf阶段127；无成功configure／build |\n| 271→275 | Apple functional8 skipped、0.03秒，Linux环境未执行这些本体 |\n| 可信grader | 固定3F／34P全P，真实逐key无缺席／跳过；辅助脚本不作为参考 |\n\n最终行280所称既有unit通过限于已选择模块；未披露最终摘要中的functional失败／skip，native正确性陈述也超过无断言的新例。两项记验证与披露不足，不把raw1当oracle。真实SDK／Apple构建及GNU交叉编译未知；本次配置修法有源码、前后原件和独立可信节点支持，无须重复旧CPU或追加普通样本来证明脚本陈述。"
+    },
+    "efficiency": {
+      "heading": "效率",
+      "analysis": "求解 **51.047秒**，harness48.096秒；CC47.482秒／API43.882秒，差3.600秒不是纯工具时间。23回合累计输入 **502,828**／输出 **5,138 tokens**，最大单输入32,422；gateway、adapter和CC核一致。首次复现有用；错文件Read、重复cross helper读取、冗余长源码与缺断言脚本可减少，不据单样本作模型总体排名。\n\nGit清理14.641秒、可信初始化7.990秒等准备单列；评分总91.633秒、reset15.483秒／prep0.379秒／测试2.507秒／队列0秒，不计入模型求解。23实际gateway请求输出上限65536；CC32000是元数据。声明196608上下文／240回合／3小时未触及，不证明极限容量；CC费用2.64259美元为估算，非本地GPU账单。"
+    },
+    "termination_and_stability": {
+      "heading": "结束与稳定性",
+      "analysis": "`completed/success/end_turn`、harness0，23响应HTTP200且无stream error、截断或拒绝；actor／grader／gateway收尾已核。15有限资源样本有未知间隔，短安装／测试窗口无样本，不把未知写零或推全程峰值。配对Qwen39.548秒与本臂51.047秒只描述各一次尝试，且实际runtime分别code5／code7，不用于性能或成功率排名。两模型原评分通过不建立训练资格。"
+    }
+  },
+  "metrics": {
+    "model_turns": 23,
+    "tool_calls": 22,
+    "tool_counts": {
+      "Bash": 10,
+      "Read": 6,
+      "Write": 2,
+      "Edit": 4
+    },
+    "reported_tool_errors": 3,
+    "error_rows": [
+      101,
+      201,
+      262
+    ],
+    "cumulative_input_tokens": 502828,
+    "cumulative_output_tokens": 5138,
+    "largest_request_input_tokens": 32422,
+    "solve_seconds": 51.047,
+    "harness_exec_seconds": 48.096,
+    "cc_duration_seconds": 47.482,
+    "cc_api_duration_seconds": 43.882,
+    "cc_non_api_residual_seconds_not_pure_tool_time": 3.6,
+    "first_relevant_source_read_since_first_request_seconds": 1.4148292541503906,
+    "initial_correct_root_location_response_completion_since_first_request_seconds": 7.478093147277832,
+    "diagnosis_response_trajectory_row": 71,
+    "environment_preparation_stage_seconds": {
+      "image_ready": 0.021,
+      "network_and_container": 1.269,
+      "git_sanitize": 14.641,
+      "trusted_init": 7.99,
+      "baseline_census": 0.153,
+      "quiescence": 0.392
+    },
+    "grading_timing": {
+      "schema_id": "rh2.grading_timing_record.v1",
+      "record_id": "timing_c4e0dc35",
+      "trajectory_id": "gpu1003-conan13230-coder-a1",
+      "task_id": "swe_gym_lite::conan-io__conan-13230",
+      "image_pull_seconds": 0.0,
+      "env_reset_seconds": 15.483,
+      "prep_seconds": 0.379,
+      "test_seconds": 2.507,
+      "total_grading_seconds": 91.633,
+      "queue_wait_seconds": 0.0,
+      "container_peak_memory_mb": 319.469,
+      "queue_depth_at_enqueue": null,
+      "backpressure_triggered": false
+    },
+    "cc_cost_usd_builtin_estimate_not_compute_bill": 2.64259
+  },
+  "reference_states": {
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_apple_arch_flag": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_apple_isysrootflag": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_apple_min_os_flag": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_architecture_flag[config0]": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_architecture_flag[config1]": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_build_type_flag[msvc]": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_cppstd": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_crossbuild_from_macos_to_non_apple_os": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_custom_cflags": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_custom_cxxflags": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_custom_defines": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_custom_host_triple": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_custom_ldflags": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_cxx11_abi_define": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_extra_flags_via_conf": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_fpic": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_invalid_target_triple": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config0]": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config10]": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config11]": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config12]": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config13]": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config1]": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config2]": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config3]": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config4]": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config5]": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config6]": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config7]": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config8]": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config9]": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_linux_host_from_macos_has_no_apple_cflags[no_sdk]": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_linux_host_from_macos_has_no_apple_cflags[sdk_sentinel]": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_modify_environment": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_ndebug": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_sysrootflag": "PASSED",
+    "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_target_triple": "PASSED"
+  },
+  "non_reference_platform_skips": [],
+  "actual_gateway_output_limits": [
+    65536
+  ],
+  "candidate_repair_required_for_success": false,
+  "task_material_changes_required": false,
+  "CPU_or_model_rerun_required": false,
+  "ordinary_additional_samples": "deferred_coverage_first",
+  "paired_request_closed": true,
+  "pending_models": [],
+  "training_eligibility": "not_established"
+}

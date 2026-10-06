@@ -1,0 +1,68 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.4, pytest-8.3.2, pluggy-1.5.0
+rootdir: /testbed
+configfile: setup.cfg
+plugins: xdist-3.6.1, cov-5.0.0, ordering-0.6
+collected 36 items
+
+tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py ............. [ 36%]
+....................F..                                                  [100%]
+
+=================================== FAILURES ===================================
+____________________ test_put_item__string_as_integer_value ____________________
+tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py:970: in test_put_item__string_as_integer_value
+    with pytest.raises(ClientError) as exc:
+E   Failed: DID NOT RAISE <class 'botocore.exceptions.ClientError'>
+=============================== warnings summary ===============================
+tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py: 103 warnings
+  /opt/miniconda3/envs/testbed/lib/python3.12/site-packages/botocore/auth.py:424: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    datetime_now = datetime.datetime.utcnow()
+
+tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py: 28 warnings
+  /testbed/moto/dynamodb/models/table.py:274: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    self.created_at = datetime.datetime.utcnow()
+
+tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py: 28 warnings
+  /testbed/moto/core/utils.py:182: DeprecationWarning: datetime.datetime.utcfromtimestamp() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.fromtimestamp(timestamp, datetime.UTC).
+    epoch = datetime.datetime.utcfromtimestamp(0)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_query_gsi_with_wrong_key_attribute_names_throws_exception
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_query_table_with_wrong_key_attribute_names_throws_exception
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_empty_expressionattributenames
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_empty_expressionattributenames_with_empty_projection
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_empty_expressionattributenames_with_projection
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_item_range_key_set
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_batch_get_item_non_existing_table
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_batch_write_item_non_existing_table
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_create_table_with_redundant_attributes
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_create_table_with_missing_attributes
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_create_table_with_redundant_and_missing_attributes
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_put_item_wrong_attribute_type
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_hash_key_cannot_use_begins_with_operations
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_hash_key_can_only_use_equals_operations[<]
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_hash_key_can_only_use_equals_operations[<=]
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_hash_key_can_only_use_equals_operations[>]
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_hash_key_can_only_use_equals_operations[>=]
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_creating_table_with_0_local_indexes
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_creating_table_with_0_global_indexes
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_multiple_transactions_on_same_item
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_transact_write_items__too_many_transactions
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_item_non_existent_table
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_item_with_duplicate_expressions[set example_column = :example_column, example_column = :example_column]
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_item_with_duplicate_expressions[set example_column = :example_column ADD x :y set example_column = :example_column]
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_put_item_wrong_datatype
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_put_item_empty_set
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_expression_with_trailing_comma
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_batch_put_item_with_empty_value
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_query_begins_with_without_brackets
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_transact_write_items_multiple_operations_fail
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_transact_write_items_with_empty_gsi_key
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_primary_key_with_sortkey
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_primary_key
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_gsi_key_cannot_be_empty
+PASSED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_list_append_errors_for_unknown_attribute_value
+FAILED tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_put_item__string_as_integer_value
+================== 1 failed, 35 passed, 159 warnings in 2.43s ==================

@@ -1,0 +1,15 @@
+# 最小正式消费接缝（提案，尚未实施）
+
+已有公开East1测试未被原命令执行。本题需要“追加既有节点P2P”，不应把MONAI/Pyd的完整test_patch替换型当模板制造额外补丁。建议独立操作 append_swe_existing_p2p、revision_id=moto5406-existing-east1-p2p-v1；最终名字与类型由实施Brief确定，本文件不登记或激活它。
+
+登记必须封闭到getmoto__moto-5406、getmoto/moto、固定base、唯一文件tests/test_dynamodb/test_dynamodb_create_table.py与唯一无参数化node。输入字段只需固定原test_patch SHA、parent grading/public digest、普通基线文件SHA、added_pass_to_pass和公开依据；不能接受自由shell、-k选择表达式、任意runtime文件或node别名。原1F2P与26P2P原顺序恢复父身份，test_patch与eval_cmd完整不变；新P2P必须只有登记节点且不与原集合重复/交集。
+
+类型需要明确的 baseline_files 属性，把额外公开文件纳入现有恢复、普通文件/SHA检查和hygiene。单shell及split-install均须先恢复base原公开文件、核SHA，再应用不变的原test_patch；候选篡改、符号链接和缺件均拒或由可信恢复纠正，不能候选自行提供oracle。现有共用builder的 _v2_test_files / _v2_restore_lines / _v2_revision_baseline_checks 已读取该属性，应该可复用；最终必须以实际新spec证明，不能只靠类型构造。
+
+最少预期生产变化是 envpack/bundles_v2.py 新封闭类型/父恢复、envpack/swe_material_revisions.py 独立题级登记pin+新ingest、envpack/spec_vendor.py 的明确operation分支：原derive_test_command原样，再加一个空格与固定node。不能通过扩大原test_patch触碰路径来间接调命令，不能运行整个12测试额外文件。安装 derive_install_command_for_bundle 保持vendor原make init，题面/public/validation保持，独立注册表避免五道既验题身份字节变化。
+
+prepared_task_face与grading/material_revision的既有P2P context预计可直接消费 original_fail_to_pass/original_pass_to_pass/added_pass_to_pass/test_command；原诊断 original_f2p/original_p2p/added_p2p天然对应。没有理由修改reward/manager/parser/权限/公开schema。若实际builder测试暴露必须改之处，按最窄接缝明示，不能暗中wrapper或覆写生成脚本。
+
+生产测试应验证错题/节点/路径/基线SHA/父/原patch/顺序/分区、登记pin及全输出重放；原方法AST/字节不变、只选择现成node的实际命令，真实setup恢复及hygiene，actor/replay同builder/三种脚本、旧qualification与旧新prepared混配拒绝。相对冻结基线215其余行及已验五题材料/脚本/context/None成功失败诊断保持字节；源216及public/validation/重复簇全字节不变。改动应独立树+完整inventory/root非作者复核，再进入有限CPU矩阵。
+
+本目录不实现以上代码、不改变正式引用、不取得CPU通过或训练资格。原/新选择与命令、安装、节点SHA、正负对照及验收矩阵均在materials_manifest.json和generated/提案文件中。

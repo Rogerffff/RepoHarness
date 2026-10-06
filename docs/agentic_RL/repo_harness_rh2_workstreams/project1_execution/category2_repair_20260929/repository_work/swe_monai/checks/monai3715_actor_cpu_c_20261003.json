@@ -1,0 +1,190 @@
+{
+  "schema": "monai.public_actor_check.v1",
+  "as_of": "2026-10-03",
+  "task_id": "Project-MONAI__MONAI-3715",
+  "job": "monai-3715-actor-20261003-1bc7e2d2",
+  "host_alias": "cpu-c",
+  "evidence_root": "runs/category2_repair_20260929/repository_work/swe_monai/cpu_c_20261003/monai-3715-actor-20261003-1bc7e2d2",
+  "release_manifest_sha256": "80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9",
+  "prepared_job": "monai-release5-prepared-20261003-3537d9d8",
+  "actual_image_id": "sha256:6cbdf6b5eefbe27e97db5839aa8586584cc57f20759fb6c408690fddc8202e38",
+  "public_command_sha256": "f0944cffd8311ec07e4951ca3f04158f38ac41e33f4e990cff7e3c3d9b082b69",
+  "commands_result": [
+    {
+      "id": "identity",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 225,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "真实公开actor的CPU、解释器、来源、导入与可写性；不含私有材料"
+    },
+    {
+      "id": "enum_train",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 236,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "真实非空公开Evaluator运行；字符串base需查unsupported mode异常，不把任意非零当题面复现"
+    },
+    {
+      "id": "enum_eval",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 202,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "真实非空公开Evaluator运行；字符串base需查unsupported mode异常，不把任意非零当题面复现"
+    },
+    {
+      "id": "string_train",
+      "rc": 1,
+      "status": "nonzero",
+      "expect": "nonzero",
+      "matches_expect": true,
+      "output_bytes": 406,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "真实非空公开Evaluator运行；字符串base需查unsupported mode异常，不把任意非零当题面复现"
+    },
+    {
+      "id": "string_eval",
+      "rc": 1,
+      "status": "nonzero",
+      "expect": "nonzero",
+      "matches_expect": true,
+      "output_bytes": 404,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "真实非空公开Evaluator运行；字符串base需查unsupported mode异常，不把任意非零当题面复现"
+    },
+    {
+      "id": "public_existing",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 3327,
+      "output_truncated_to": 200000,
+      "pytest": {
+        "passed": 2,
+        "warning": 17
+      },
+      "purpose": "未注入隐藏测试的原公开模块"
+    }
+  ],
+  "identity": {
+    "cuda": false,
+    "cwd": "/testbed",
+    "ignite": "0.4.8",
+    "monai": "/testbed/monai/__init__.py",
+    "numpy": "1.24.4",
+    "torch": "1.13.1+cu117",
+    "uid": 54321
+  },
+  "base_string_failures_verified_as_intended_unsupported_mode": true,
+  "enum_train_eval_actual_forward_and_gradient_verified": true,
+  "original_public_module_passed": 2,
+  "actual_actor_cpu_memory_from_inspect": {
+    "nano_cpus": 2000000000,
+    "memory_bytes": 4294967296
+  },
+  "effective_profile": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmp_tmpfs_bytes": 1073741824,
+    "home_tmpfs_bytes": 268435456,
+    "writable_layer_quota_bytes": 8589934592,
+    "pids_limit": 512
+  },
+  "bounded_image_probe": {
+    "scope": "resource flags only for original root image_facts probe",
+    "frozen_entry_sha256": "75399297da458697ebcd17e6ca79aad90b56e4dbdda3214a4c70f82a4b389160",
+    "shim_sha256": "f5afc1428f12b10d6fbb042e5a9d954c91216ed402d78385c5c43b8c0c342e6f",
+    "docker_run_requests": [
+      [
+        "run",
+        "--cpus",
+        "2",
+        "--memory",
+        "4g",
+        "--pids-limit",
+        "512",
+        "--label",
+        "rh2.package=swe_monai",
+        "--rm",
+        "--network",
+        "none",
+        "--label",
+        "rh2.run_id=monai-3715-actor-20261003-1bc7e2d2",
+        "--entrypoint",
+        "bash",
+        "sha256:6cbdf6b5eefbe27e97db5839aa8586584cc57f20759fb6c408690fddc8202e38",
+        "-c",
+        "cd /testbed && echo HEAD=$(git rev-parse HEAD) && echo PORCELAIN_BEGIN && git status --porcelain; echo PORCELAIN_RC=$?"
+      ]
+    ]
+  },
+  "cleanup": {
+    "container_rm": 0,
+    "network_failures": [],
+    "relay_failures": [],
+    "stub_rc": 0,
+    "labeled_containers_left": [],
+    "labeled_networks_left": [],
+    "residual_after_force": []
+  },
+  "diagnostic_checks_retained": {
+    "interpreter_in_tool_result": false,
+    "host_log_present": true,
+    "no_harness_dir_in_container": true,
+    "no_launcher_or_done_marker": true,
+    "message_start_matches_stub_requests": true,
+    "exit_code_zero": true,
+    "result_event_present": true,
+    "log_complete": true,
+    "bashenv_denied_for_agent": false,
+    "all_commands_ran": true,
+    "all_match_expect": true
+  },
+  "scope_limits": [
+    "scripted public commands through actual CC stub; no model solve",
+    "generic interpreter_in_tool_result and bashenv_denied_for_agent false retained; direct identity capture separately checked, no claim of full platform guard acceptance",
+    "new private node name absent from observed actor requests and harness artifacts; this is a bounded disclosure check, not a universal leakage proof"
+  ],
+  "formal_reward_proven": false,
+  "independently_reviewed": false,
+  "artifact_sha256": {
+    "activation_check.json": "9f125f4cbd6ff9615af10439e8717745aead40aaa7f6398a41d6abaec8480a25",
+    "attempt.json": "2d008edf515b167cd26846302123bb564a4f0804938271f5f51c698d53e63c87",
+    "bounded_image_probe.json": "447ec545259c3378a62f857ed3aee7a2de0e1a941743cc2592297f1e58296def",
+    "bringup_artifacts/cc_version_observed.json": "c2b9bcf966c47d9a00227877026cb90b76afed482fd0df4e0ac12caab786bacb",
+    "captures/enum_eval.out": "5a0fac86b7694abad56e58eb9bc26641072f59becd878e157171de51343e14a1",
+    "captures/enum_train.out": "15ca9b6ce1b285aff6876822bc8cad0fdb33ce382ea8082e0ab62de836aa88e0",
+    "captures/identity.out": "e73bb2176b455de32320d67639afe7daa201b85548872dc9c749c8ca96fca1cb",
+    "captures/public_existing.out": "50693e7946a258984d8c590006d02e8ef4485c6b9473caa3a5329ba6756e1c62",
+    "captures/string_eval.out": "d7a6501ac2e99b144537da4494fcd08373a3258020e0f11b36a737ecaf43f630",
+    "captures/string_train.out": "08295b5f602b8f3aafe5c417464e99840cf495d209c1d646248629ca28b49fe9",
+    "harness/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "harness/trajectory.jsonl": "05ef77d4a56e2d273f1b9cca44d5743726fca015029bf1688a8c40416e56e5c0",
+    "post_run_facts_root.txt": "9787e05f132e26d2cc8eefb272b913121427ee96d4b42c4bbceb0e275ee8c21b",
+    "prelaunch.json": "ac7a6eb013345ac926fd965fadbb3dcefe40923142e1ac0d427031d9d87e2277",
+    "stub/requests/messages_000.json": "4886e03428db9548947c1b0bc6fb6e22eec25ca1677be9d64f2e61142524618f",
+    "stub/requests/messages_001.json": "3d0bc6f186985e737a67591737deb53c3d716889081f706f00f1f0a21b7a854f",
+    "stub/requests/messages_002.json": "ccd56faaa9cb7d6d9a4827e8ee9cfd2554aef8ef61ccef8510f5712fabfdb074",
+    "stub/requests/messages_003.json": "e46bfc924af4e5043867dd5de11b1a8b7c76e54e51931cc335fd43dbbfc4d0fd",
+    "stub/requests/messages_004.json": "01cba151515204648faf87bc652b9bd09af415f8e6b458e9a7a1a77aa5bddff3",
+    "stub/requests/messages_005.json": "1bae9a1c159f2b999c4499e861b593c55e3d243df21a8fc35ddde5cb19ca5455",
+    "stub/requests/messages_006.json": "ff963fe8adcc3036eafd16018117dce273e1e58beab7257e9de492feb2722860",
+    "stub/stub_log.json": "554df256d721b61d830e6698ff3aaf6b2720ca2ea13748eede7c7a87eb8c37ce",
+    "stub_script.json": "7b4b2d55de5fc98e4ec41ef208a21794dd84e1095bf58f2349289b351f1993f2",
+    "stub_stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

@@ -1,0 +1,827 @@
+{
+  "schema_id": "rh2.category2.aiohttp.gpu_owner_readback.v1",
+  "as_of": "2026-10-02T18:34:44.508661+00:00",
+  "instance_id": "aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a",
+  "owner_thread_id": "01a0fd63-99aa-7af0-94bb-591d3c151b17",
+  "attempt_id": "gpu1003-aiohttp4075-qwen36-a1",
+  "solver_configured": "qwen36",
+  "budget_version": "probe-wide-v1",
+  "solve_seconds": 104.545,
+  "status": "owner_semantics_acceptable_within_fixed_python_scope",
+  "actual_model_attempt": true,
+  "training_or_holdout_qualification": false,
+  "parser": {
+    "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/rh2/src/repoharness2/envpack/r2e_parsers.py",
+    "sha256": "sha256:339b7c80cca516dc7d1bcf9c11e3ff9a42f1bc993b5027a0d06c41c85d024b58"
+  },
+  "public_statement": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/materials/4075c653/problem_statement.txt",
+    "sha256": "sha256:c3253b921246dcb9c99490b35b129269eb54cf4276f67837a6bd14d73819d731"
+  },
+  "neutral_brief": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/public/4075_development_brief.md",
+    "sha256": "sha256:fe294eaf24f7f8a29bb71dcaa614697ae729b2f46144eef818ba5512e5c1b9b3"
+  },
+  "actual_first_request": {
+    "gateway_log": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v3/qwen36/gateway/gpu1003-aiohttp4075-qwen36-a1/requests.jsonl",
+      "sha256": "sha256:89a5d4deb677136411c98cfd52fddea4c3a4a7ba9d208f0ac68a3342628cb354"
+    },
+    "matched_user_message_indices": [
+      0
+    ],
+    "statement_full_bytes_matched": true,
+    "brief_matching_policy": "entry strips leading/trailing whitespace; all brief content matches brief.strip()"
+  },
+  "grading_materials": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/prepared_aiohttp4075_v1/private/host_grading_views.jsonl",
+    "sha256": "sha256:0bf18fa6d3dbc2c2a80db4b7c0b14e3d5546572385a46a90139c7e421e2ce7db"
+  },
+  "expected_map_sha256": "sha256:fdabd74b34e463b84e09abb2998b33ee5a7906fa2e7d662673ba73d376880491",
+  "hidden_tree_sha256": "sha256:3ff70876554bee932635b48cbf85bd988ac5b83df3e46a871b29ca1418d210d4",
+  "test_entry_sha256": "sha256:8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+  "frozen_patch_digest": "sha256:39992fc3a41efdd5ea95f5715e3ca2c0a1e33917d8acb05727241d6adde29d6e",
+  "baseline_manifest_digest": "sha256:501ddeeb0782244d4efc54dd5243048d387d447719f189c65df4d2f71d0daa2c",
+  "candidate_diff": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v6/results/gpu1003-aiohttp4075-qwen36-a1/attempt/candidate/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a.diff",
+    "sha256": "sha256:8e91985dfc2962967ea3039f908f7f533606d218e3461bea11381bbd8b061c88"
+  },
+  "frozen_content_digest": "sha256:f1cded1517c4a9a3d10daceb113221aceb2d0eacd071977ee69a18c3ad4168cd",
+  "review_diff_replayed_against_actual_baseline_matches_frozen_content": true,
+  "runtime_image_id": "sha256:9a9a39c86c3533aab15177278a76a24c6960f26920abbc94e7c189ab08c1c177",
+  "recipe_sha256": "sha256:e139ba5708390eca37d126e49637de55a69348a572e59f0dc914fba0b4e7db32",
+  "formal_grade": {
+    "reward": 1.0,
+    "expected_match": 136,
+    "expected_total": 136,
+    "observed_counts": {
+      "PASSED": 133,
+      "FAILED": 3
+    },
+    "failed_keys": [
+      "test_c_parser_loaded",
+      "test_invalid_character[pyloop]",
+      "test_invalid_linebreak[pyloop]"
+    ],
+    "test_returncode": 1,
+    "log": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v6/results/gpu1003-aiohttp4075-qwen36-a1/grading/eval_logs/evallog_gpu1003-aiohttp4075-qwen_9faffb94.eval.log",
+      "sha256": "sha256:ce0e5ddcf35a1df5c69c6dcfb9040e90c3ca7ac218955abce8263e10bc5b060a"
+    },
+    "full_segment_recomputed": true,
+    "observed": {
+      "TestDeflateBuffer.test_empty_body": "PASSED",
+      "TestDeflateBuffer.test_feed_data": "PASSED",
+      "TestDeflateBuffer.test_feed_data_err": "PASSED",
+      "TestDeflateBuffer.test_feed_eof": "PASSED",
+      "TestDeflateBuffer.test_feed_eof_err_deflate": "PASSED",
+      "TestDeflateBuffer.test_feed_eof_no_err_brotli": "PASSED",
+      "TestDeflateBuffer.test_feed_eof_no_err_gzip": "PASSED",
+      "TestParsePayload.test_http_payload_brotli": "PASSED",
+      "TestParsePayload.test_http_payload_parser_deflate": "PASSED",
+      "TestParsePayload.test_http_payload_parser_deflate_light": "PASSED",
+      "TestParsePayload.test_http_payload_parser_deflate_no_hdrs": "PASSED",
+      "TestParsePayload.test_http_payload_parser_deflate_split": "PASSED",
+      "TestParsePayload.test_http_payload_parser_deflate_split_err": "PASSED",
+      "TestParsePayload.test_http_payload_parser_length": "PASSED",
+      "TestParsePayload.test_http_payload_parser_length_zero": "PASSED",
+      "TestParsePayload.test_parse_chunked_payload_size_error": "PASSED",
+      "TestParsePayload.test_parse_chunked_payload_split_end": "PASSED",
+      "TestParsePayload.test_parse_chunked_payload_split_end2": "PASSED",
+      "TestParsePayload.test_parse_chunked_payload_split_end_trailers": "PASSED",
+      "TestParsePayload.test_parse_chunked_payload_split_end_trailers2": "PASSED",
+      "TestParsePayload.test_parse_chunked_payload_split_end_trailers3": "PASSED",
+      "TestParsePayload.test_parse_chunked_payload_split_end_trailers4": "PASSED",
+      "TestParsePayload.test_parse_eof_payload": "PASSED",
+      "TestParsePayload.test_parse_length_payload_eof": "PASSED",
+      "TestParsePayload.test_parse_no_body": "PASSED",
+      "test_bad_chunked_py[pyloop]": "PASSED",
+      "test_bad_headers[py-parser-pyloop-Bar: abc\\ndef]": "PASSED",
+      "test_bad_headers[py-parser-pyloop-Baz: abc\\x00def]": "PASSED",
+      "test_bad_headers[py-parser-pyloop-Content-Length: +256]": "PASSED",
+      "test_bad_headers[py-parser-pyloop-Content-Length: -5]": "PASSED",
+      "test_bad_headers[py-parser-pyloop-Foo : bar]": "PASSED",
+      "test_bad_headers[py-parser-pyloop-Foo: abc\\rdef]": "PASSED",
+      "test_bad_headers[py-parser-pyloop-Foo\\t: bar]": "PASSED",
+      "test_bad_headers[py-parser-pyloop-\\xffoo: bar]": "PASSED",
+      "test_bad_headers[py-parser-pyloop-nonascii-mid-name]": "PASSED",
+      "test_c_parser_loaded": "FAILED",
+      "test_compression_brotli[py-parser-pyloop]": "PASSED",
+      "test_compression_deflate[py-parser-pyloop]": "PASSED",
+      "test_compression_empty[py-parser-pyloop]": "PASSED",
+      "test_compression_gzip[py-parser-pyloop]": "PASSED",
+      "test_compression_unknown[py-parser-pyloop]": "PASSED",
+      "test_conn_close[py-parser-pyloop]": "PASSED",
+      "test_conn_close_1_0[py-parser-pyloop]": "PASSED",
+      "test_conn_default_1_0[py-parser-pyloop]": "PASSED",
+      "test_conn_default_1_1[py-parser-pyloop]": "PASSED",
+      "test_conn_keep_alive_1_0[py-parser-pyloop]": "PASSED",
+      "test_conn_keep_alive_1_1[py-parser-pyloop]": "PASSED",
+      "test_conn_other_1_0[py-parser-pyloop]": "PASSED",
+      "test_conn_other_1_1[py-parser-pyloop]": "PASSED",
+      "test_conn_upgrade[py-parser-pyloop]": "PASSED",
+      "test_content_length_transfer_encoding[py-parser-pyloop]": "PASSED",
+      "test_cve_2023_37276[py-parser-pyloop]": "PASSED",
+      "test_headers_connect[py-parser-pyloop]": "PASSED",
+      "test_headers_content_length_err_1[py-parser-pyloop]": "PASSED",
+      "test_headers_content_length_err_2[py-parser-pyloop]": "PASSED",
+      "test_headers_multi_feed[py-parser-pyloop]": "PASSED",
+      "test_headers_old_websocket_key1[py-parser-pyloop]": "PASSED",
+      "test_headers_split_field[py-parser-pyloop]": "PASSED",
+      "test_http_request_bad_status_line[py-parser-pyloop]": "PASSED",
+      "test_http_request_bad_status_line_other_whitespace[py-parser-pyloop-ff-separator]": "PASSED",
+      "test_http_request_bad_status_line_other_whitespace[py-parser-pyloop-vt-separator]": "PASSED",
+      "test_http_request_bad_status_line_whitespace[py-parser-pyloop]": "PASSED",
+      "test_http_request_chunked_payload[py-parser-pyloop]": "PASSED",
+      "test_http_request_chunked_payload_and_next_message[py-parser-pyloop]": "PASSED",
+      "test_http_request_chunked_payload_chunks[py-parser-pyloop]": "PASSED",
+      "test_http_request_ctl_in_target_rejected[py-parser-pyloop-cr-in-target]": "PASSED",
+      "test_http_request_ctl_in_target_rejected[py-parser-pyloop-ff-in-target]": "PASSED",
+      "test_http_request_ctl_in_target_rejected[py-parser-pyloop-lf-in-target]": "PASSED",
+      "test_http_request_ctl_in_target_rejected[py-parser-pyloop-tab-in-target]": "PASSED",
+      "test_http_request_max_status_line[py-parser-pyloop-40965]": "PASSED",
+      "test_http_request_max_status_line[py-parser-pyloop-8191]": "PASSED",
+      "test_http_request_max_status_line_under_limit[py-parser-pyloop]": "PASSED",
+      "test_http_request_parser[py-parser-pyloop]": "PASSED",
+      "test_http_request_parser_bad_ascii_uri[py-parser-pyloop]": "PASSED",
+      "test_http_request_parser_bad_method[py-parser-pyloop]": "PASSED",
+      "test_http_request_parser_bad_nonascii_uri[py-parser-pyloop]": "PASSED",
+      "test_http_request_parser_bad_version[py-parser-pyloop]": "PASSED",
+      "test_http_request_parser_bad_version_number[py-parser-pyloop]": "PASSED",
+      "test_http_request_parser_non_utf8[py-parser-pyloop]": "PASSED",
+      "test_http_request_parser_two_slashes[py-parser-pyloop]": "PASSED",
+      "test_http_request_parser_utf8[py-parser-pyloop]": "PASSED",
+      "test_http_request_upgrade[py-parser-pyloop]": "PASSED",
+      "test_http_response_parser_bad[py-parser-pyloop]": "PASSED",
+      "test_http_response_parser_bad_chunked_lax[py-parser-pyloop]": "PASSED",
+      "test_http_response_parser_bad_crlf[py-parser-pyloop]": "PASSED",
+      "test_http_response_parser_bad_status_line_too_long[py-parser-pyloop-40962]": "PASSED",
+      "test_http_response_parser_bad_status_line_too_long[py-parser-pyloop-8191]": "PASSED",
+      "test_http_response_parser_bad_version[py-parser-pyloop]": "PASSED",
+      "test_http_response_parser_bad_version_number[py-parser-pyloop]": "PASSED",
+      "test_http_response_parser_code_above_999[py-parser-pyloop]": "PASSED",
+      "test_http_response_parser_code_not_int[py-parser-pyloop]": "PASSED",
+      "test_http_response_parser_code_under_100[py-parser-pyloop]": "PASSED",
+      "test_http_response_parser_lenient_headers[py-parser-pyloop]": "PASSED",
+      "test_http_response_parser_no_reason[py-parser-pyloop]": "PASSED",
+      "test_http_response_parser_status_line_under_limit[py-parser-pyloop]": "PASSED",
+      "test_http_response_parser_utf8[py-parser-pyloop]": "PASSED",
+      "test_invalid_character[pyloop]": "FAILED",
+      "test_invalid_header[py-parser-pyloop]": "PASSED",
+      "test_invalid_linebreak[pyloop]": "FAILED",
+      "test_invalid_name[py-parser-pyloop]": "PASSED",
+      "test_max_header_field_size[py-parser-pyloop-40960]": "PASSED",
+      "test_max_header_field_size[py-parser-pyloop-8191]": "PASSED",
+      "test_max_header_field_size_under_limit[py-parser-pyloop]": "PASSED",
+      "test_max_header_value_size[py-parser-pyloop-40960]": "PASSED",
+      "test_max_header_value_size[py-parser-pyloop-8191]": "PASSED",
+      "test_max_header_value_size_continuation[py-parser-pyloop-40965]": "PASSED",
+      "test_max_header_value_size_continuation[py-parser-pyloop-8191]": "PASSED",
+      "test_max_header_value_size_continuation_under_limit[py-parser-pyloop]": "PASSED",
+      "test_max_header_value_size_under_limit[py-parser-pyloop]": "PASSED",
+      "test_parse[py-parser-pyloop]": "PASSED",
+      "test_parse_body[py-parser-pyloop]": "PASSED",
+      "test_parse_body_with_CRLF[py-parser-pyloop]": "PASSED",
+      "test_parse_chunked_payload_chunk_extension[py-parser-pyloop]": "PASSED",
+      "test_parse_delayed[py-parser-pyloop]": "PASSED",
+      "test_parse_headers[py-parser-pyloop]": "PASSED",
+      "test_parse_headers_longline[py-parser-pyloop]": "PASSED",
+      "test_parse_headers_multi[py-parser-pyloop]": "PASSED",
+      "test_parse_length_payload[py-parser-pyloop]": "PASSED",
+      "test_parse_no_length_payload[py-parser-pyloop]": "PASSED",
+      "test_parse_payload_response_without_body[py-parser-pyloop]": "PASSED",
+      "test_parse_uri_percent_encoded[py-parser-pyloop-/path#frag%20-/path-query4-frag ]": "PASSED",
+      "test_parse_uri_percent_encoded[py-parser-pyloop-/path#frag%2520-/path-query5-frag%20]": "PASSED",
+      "test_parse_uri_percent_encoded[py-parser-pyloop-/path%23frag-/path#frag-query0-]": "PASSED",
+      "test_parse_uri_percent_encoded[py-parser-pyloop-/path%2523frag-/path%23frag-query1-]": "PASSED",
+      "test_parse_uri_percent_encoded[py-parser-pyloop-/path?key=value%23frag-/path-query2-]": "PASSED",
+      "test_parse_uri_percent_encoded[py-parser-pyloop-/path?key=value%2523frag-/path-query3-]": "PASSED",
+      "test_parse_uri_utf8[py-parser-pyloop]": "PASSED",
+      "test_parse_uri_utf8_percent_encoded[py-parser-pyloop]": "PASSED",
+      "test_partial_url[py-parser-pyloop]": "PASSED",
+      "test_request_chunked[py-parser-pyloop]": "PASSED",
+      "test_request_te_chunked123[py-parser-pyloop]": "PASSED",
+      "test_request_te_chunked_with_content_length[py-parser-pyloop]": "PASSED",
+      "test_unpaired_surrogate_in_header_py[pyloop]": "PASSED",
+      "test_url_absolute[py-parser-pyloop]": "PASSED",
+      "test_url_connect[py-parser-pyloop]": "PASSED",
+      "test_whitespace_before_header[py-parser-pyloop]": "PASSED"
+    }
+  },
+  "semantic_findings": [],
+  "semantics": [
+    "字段名用完整ASCII token匹配拒非ASCII输入，保留原值处理；请求/响应共用字段名入口均覆盖。",
+    "请求行在解码与split前拒绝0x00–0x1f，覆盖当前LF/FF/CR/TAB/VT断言，没有只匹配题面字面串。",
+    "最初全ASCII请求行方案误拒UTF-8；公开回归揭示2失败后，最终候选取消高字节拒绝，原公开parser124项恢复。",
+    "最终工件只修改aiohttp/http_parser.py；临时复现脚本已删除，未修改测试/隐藏runner/依赖。"
+  ],
+  "trajectory": {
+    "file": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v6/results/gpu1003-aiohttp4075-qwen36-a1/attempt/trajectory.jsonl",
+      "sha256": "sha256:dbeda816a3146411a02e50c9aa6c9441792feb7a3678a6c1259ca70f7f38d432"
+    },
+    "relevant_output_evidence": [
+      {
+        "line": 397,
+        "tool_use_id": "toolu_2859cf283c7df2cf",
+        "text": "Sending request: b'POST / HTTP/1.1\\r\\n\\xc3\\xbfoo: bar\\r\\n\\r\\n'\nSUCCESS: Raised InvalidHeader: 400, message:\n  Invalid HTTP header: b'\\xc3\\xbfoo'"
+      },
+      {
+        "line": 398,
+        "tool_use_id": "toolu_63cdf164a7e0395e",
+        "text": "Sending status line: b'GET\\n/path\\x0cHTTP/1.1\\r\\n\\r\\n'\nSUCCESS: Raised BadStatusLine: 400, message:\n  Bad status line 'GET\\n/path\\x0cHTTP/1.1'"
+      },
+      {
+        "line": 416,
+        "tool_use_id": "toolu_95fd2ba64c3b625c",
+        "text": "Sending request: b'POST / HTTP/1.1\\r\\n\\xffoo: bar\\r\\n\\r\\n'\nSUCCESS: Raised InvalidHeader: 400, message:\n  Invalid HTTP header: b'\\xffoo'"
+      },
+      {
+        "line": 436,
+        "tool_use_id": "toolu_f5291c0912902b48",
+        "text": "C parser not importable; using the Python parser test path\ns.ss...........s.....................................................F.. [ 55%]\n.............................F.s.........................                [100%]\n=================================== FAILURES ===================================\n_________ test_http_request_parser_bad_nonascii_uri[py-parser-pyloop] __________\n\nparser = <aiohttp.http_parser.HttpRequestParser object at 0x713a57e64c40>\n\n    def test_http_request_parser_bad_nonascii_uri(parser: Any) -> None:\n        with pytest.raises(http_exceptions.InvalidURLError):\n>           parser.feed_data(b\"GET \\xff HTTP/1.1\\r\\n\\r\\n\")\n\ntests/test_http_parser.py:768: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \naiohttp/http_parser.py:325: in feed_data\n    msg: _MsgT = self.parse_message(self._lines)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <aiohttp.http_parser.HttpRequestParser object at 0x713a57e64c40>\nlines = []\n\n    def parse_message(self, lines: List[bytes]) -> RawRequestMessage:\n        # request line\n        raw_line = lines[0]\n        # Validate that status line doesn't contain control characters\n        # RFC 7230: request-line = method SP request-target SP HTTP-version CRLF\n        # Status line should only contain visible ASCII characters (0x20-0x7E)\n        if any(b < 0x20 or b > 0x7E for b in raw_line):\n>           raise BadStatusLine(raw_line.decode(\"utf-8\", \"surrogateescape\"))\nE           aiohttp.http_exceptions.BadStatusLine: 400, message:\nE             Bad status line 'GET \\udcff HTTP/1.1'\n\naiohttp/http_parser.py:557: BadStatusLine\n____________________ test_parse_uri_utf8[py-parser-pyloop] _____________________\n\nparser = <aiohttp.http_parser.HttpRequestParser object at 0x713a57e2d940>\n\n    def test_parse_uri_utf8(parser) -> None:\n        if not isinstance(parser, HttpRequestParserPy):\n            pytest.xfail(\"Not valid HTTP. Maybe update py-parser to reject later.\")\n        text = (\"GET /путь?ключ=знач#фраг HTTP/1.1\\r\\n\\r\\n\").encode()\n>       messages, upgrade, tail = parser.feed_data(text)\n\ntests/test_http_parser.py:1090: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \naiohttp/http_parser.py:325: in feed_data\n    msg: _MsgT = self.parse_message(self._lines)\n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\nself = <aiohttp.http_parser.HttpRequestParser object at 0x713a57e2d940>\nlines = []\n\n    def parse_message(self, lines: List[bytes]) -> RawRequestMessage:\n        # request line\n        raw_line = lines[0]\n        # Validate that status line doesn't contain control characters\n        # RFC 7230: request-line = method SP request-target SP HTTP-version CRLF\n        # Status line should only contain visible ASCII characters (0x20-0x7E)\n        if any(b < 0x20 or b > 0x7E for b in raw_line):\n>           raise BadStatusLine(raw_line.decode(\"utf-8\", \"surrogateescape\"))\nE           aiohttp.http_exceptions.BadStatusLine: 400, message:\nE             Bad status line 'GET /путь?ключ=знач#фраг HTTP/1.1'\n\naiohttp/http_parser.py:557: BadStatusLine\n=========================== short test summary info ============================\nFAILED tests/test_http_parser.py::test_http_request_parser_bad_nonascii_uri[py-parser-pyloop]\nFAILED tests/test_http_parser.py::test_parse_uri_utf8[py-parser-pyloop] - aio...\nSKIPPED [1] tests/test_http_parser.py:99: Extentions available but not imported\nSKIPPED [1] tests/test_http_parser.py:125: Only tests C parser.\nSKIPPED [1] tests/test_http_parser.py:145: Only tests C parser.\nSKIPPED [1] tests/test_http_parser.py:232: C based HTTP parser not available\nSKIPPED [1] tests/test_http_parser.py:1113: C based HTTP parser not available\n2 failed, 122 passed, 5 skipped, 3 deselected in 3.38s"
+      },
+      {
+        "line": 468,
+        "tool_use_id": "toolu_f3c3dd7ece8a6502",
+        "text": "Sending request: b'POST / HTTP/1.1\\r\\n\\xc3\\xbfoo: bar\\r\\n\\r\\n'\nSUCCESS: Raised InvalidHeader: 400, message:\n  Invalid HTTP header: b'\\xc3\\xbfoo'\nSending status line: b'GET\\n/path\\x0cHTTP/1.1\\r\\n\\r\\n'\nSUCCESS: Raised BadStatusLine: 400, message:\n  Bad status line 'GET\\n/path\\x0cHTTP/1.1'"
+      },
+      {
+        "line": 484,
+        "tool_use_id": "toolu_188fed8083dd80cc",
+        "text": "C parser not importable; using the Python parser test path\ns.ss...........s........................................................ [ 55%]\n...............................s.........................                [100%]\n=========================== short test summary info ============================\nSKIPPED [1] tests/test_http_parser.py:99: Extentions available but not imported\nSKIPPED [1] tests/test_http_parser.py:125: Only tests C parser.\nSKIPPED [1] tests/test_http_parser.py:145: Only tests C parser.\nSKIPPED [1] tests/test_http_parser.py:232: C based HTTP parser not available\nSKIPPED [1] tests/test_http_parser.py:1113: C based HTTP parser not available\n124 passed, 5 skipped, 3 deselected in 3.20s"
+      },
+      {
+        "line": 534,
+        "tool_use_id": "toolu_6968172772beeaff",
+        "text": "Sending request: b'POST / HTTP/1.1\\r\\n\\xc3\\xbfoo: bar\\r\\n\\r\\n'\nSUCCESS: Raised InvalidHeader: 400, message:\n  Invalid HTTP header: b'\\xc3\\xbfoo'\nSending status line: b'GET\\n/path\\x0cHTTP/1.1\\r\\n\\r\\n'\nSUCCESS: Raised BadStatusLine: 400, message:\n  Bad status line 'GET\\n/path\\x0cHTTP/1.1'"
+      },
+      {
+        "line": 586,
+        "tool_use_id": "toolu_2c7db6a946e789eb",
+        "text": "C parser not importable; using the Python parser test path\ns.ss...........s........................................................ [ 55%]\n...............................s.........................                [100%]\n=========================== short test summary info ============================\nSKIPPED [1] tests/test_http_parser.py:99: Extentions available but not imported\nSKIPPED [1] tests/test_http_parser.py:125: Only tests C parser.\nSKIPPED [1] tests/test_http_parser.py:145: Only tests C parser.\nSKIPPED [1] tests/test_http_parser.py:232: C based HTTP parser not available\nSKIPPED [1] tests/test_http_parser.py:1113: C based HTTP parser not available\n124 passed, 5 skipped, 3 deselected in 3.22s"
+      }
+    ],
+    "tools": [
+      {
+        "line": 15,
+        "id": "toolu_5dd6e54d1e3fd4f4",
+        "name": "Bash",
+        "input": {
+          "command": "find /testbed -type f -name \"*.py\" | grep -E \"(http_parser|parser)\" | head -20"
+        }
+      },
+      {
+        "line": 19,
+        "id": "toolu_6e09e28c68d20c45",
+        "name": "Bash",
+        "input": {
+          "command": "ls -la /testbed/"
+        }
+      },
+      {
+        "line": 34,
+        "id": "toolu_85c2cdfe3daa37ea",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/aiohttp/http_parser.py"
+        }
+      },
+      {
+        "line": 52,
+        "id": "toolu_3383f93999e2d70c",
+        "name": "Write",
+        "input": {
+          "file_path": "/testbed/test_invalid_header.py",
+          "content": "\"\"\"Test invalid header with invalid character.\"\"\"\nimport asyncio\nfrom unittest import mock\nfrom aiohttp import http_parser\nfrom aiohttp.http_exceptions import BadHttpMessage, InvalidHeader\n\ndef test_invalid_header(parser):\n    \"\"\"Test that headers with invalid characters raise an exception.\"\"\"\n    invalid_header = \"\\xffoo: bar\"\n    request = f\"POST / HTTP/1.1\\r\\n{invalid_header}\\r\\n\\r\\n\".encode()\n    print(f\"Sending request: {request!r}\")\n    try:\n        parser.feed_data(request)\n        # Need to return to complete parsing\n        result = parser.feed_eof()\n        print(f\"Result: {result}\")\n        print(\"ERROR: No exception raised!\")\n    except (BadHttpMessage, InvalidHeader) as e:\n        print(f\"SUCCESS: Raised {type(e).__name__}: {e}\")\n    except Exception as e:\n        print(f\"UNEXPECTED: Raised {type(e).__name__}: {e}\")\n\n# Create parser\nloop = asyncio.new_event_loop()\ntry:\n    parser = http_parser.HttpRequestParserPy(mock.Mock(), loop, 2**16)\n    test_invalid_header(parser)\nfinally:\n    loop.close()\n"
+        }
+      },
+      {
+        "line": 56,
+        "id": "toolu_a47a96db0752bc02",
+        "name": "Write",
+        "input": {
+          "file_path": "/testbed/test_malformed_status.py",
+          "content": "\"\"\"Test malformed status line.\"\"\"\nimport asyncio\nfrom unittest import mock\nfrom aiohttp import http_parser\nfrom aiohttp.http_exceptions import BadStatusLine\n\ndef test_malformed_status_line(parser):\n    \"\"\"Test that malformed status lines raise an exception.\"\"\"\n    malformed_status = b\"GET\\n/path\\x0cHTTP/1.1\\r\\n\\r\\n\"\n    print(f\"Sending status line: {malformed_status!r}\")\n    try:\n        parser.feed_data(malformed_status)\n        # Need to return to complete parsing\n        result = parser.feed_eof()\n        print(f\"Result: {result}\")\n        print(\"ERROR: No exception raised!\")\n    except BadStatusLine as e:\n        print(f\"SUCCESS: Raised BadStatusLine: {e}\")\n    except Exception as e:\n        print(f\"OTHER: Raised {type(e).__name__}: {e}\")\n\n# Create parser\nloop = asyncio.new_event_loop()\ntry:\n    parser = http_parser.HttpRequestParserPy(mock.Mock(), loop, 2**16)\n    test_malformed_status_line(parser)\nfinally:\n    loop.close()\n"
+        }
+      },
+      {
+        "line": 71,
+        "id": "toolu_94cef785e7eeb583",
+        "name": "Bash",
+        "input": {
+          "command": "python test_invalid_header.py"
+        }
+      },
+      {
+        "line": 75,
+        "id": "toolu_a4e87654d02cb294",
+        "name": "Bash",
+        "input": {
+          "command": "python test_malformed_status.py"
+        }
+      },
+      {
+        "line": 94,
+        "id": "toolu_5366c9b1f1957132",
+        "name": "Bash",
+        "input": {
+          "command": "python -c \"\n# When we have a string with \\xff and encode to bytes\ns = '\\xffoo: bar'\nprint(f'String repr: {s!r}')\nprint(f'Encoded: {s.encode()!r}')\nprint(f'Encoded surrogateescape: {s.encode(errors=\\\"surrogateescape\\\")!r}')\n\n# Direct bytes\nb = b'\\xffoo: bar'\nprint(f'Bytes: {b!r}')\n\""
+        }
+      },
+      {
+        "line": 112,
+        "id": "toolu_28a450aa8f3f84e9",
+        "name": "Bash",
+        "input": {
+          "command": "grep -n \"BadStatusLine\\|BadHttpMessage\\|InvalidHeader\" /testbed/tests/test_http_parser.py | head -50"
+        }
+      },
+      {
+        "line": 116,
+        "id": "toolu_5fbd980bf27946f5",
+        "name": "Bash",
+        "input": {
+          "command": "grep -n \"HDRRE\\|invalid.*header\\|header.*invalid\" /testbed/tests/test_http_parser.py -i | head -30"
+        }
+      },
+      {
+        "line": 131,
+        "id": "toolu_b13b4f5c5bfd31ce",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/tests/test_http_parser.py",
+          "offset": 255,
+          "limit": 40
+        }
+      },
+      {
+        "line": 135,
+        "id": "toolu_83cfb302db0b3ebc",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/tests/test_http_parser.py",
+          "offset": 555,
+          "limit": 30
+        }
+      },
+      {
+        "line": 139,
+        "id": "toolu_9538591502326010",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/tests/test_http_parser.py",
+          "offset": 670,
+          "limit": 40
+        }
+      },
+      {
+        "line": 155,
+        "id": "toolu_4c99907ebf3bfeb5",
+        "name": "Bash",
+        "input": {
+          "command": "python -c \"\n# Check how split handles the bytes\nline = b'GET\\n/path\\x0cHTTP/1.1'\ndecoded = line.decode('utf-8', 'surrogateescape')\nprint(f'Decoded: {decoded!r}')\nparts = decoded.split(maxsplit=2)\nprint(f'Parts: {parts}')\nprint(f'Number of parts: {len(parts)}')\n\""
+        }
+      },
+      {
+        "line": 173,
+        "id": "toolu_93d95b18433ae015",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/aiohttp/http_exceptions.py"
+        }
+      },
+      {
+        "line": 177,
+        "id": "toolu_04e52f30be1ff814",
+        "name": "Bash",
+        "input": {
+          "command": "grep -n \"ASCIISET\\|string.printable\" /testbed/aiohttp/http_parser.py"
+        }
+      },
+      {
+        "line": 192,
+        "id": "toolu_23a50ddb3e11e1da",
+        "name": "Bash",
+        "input": {
+          "command": "grep -n \"ASCIISET\" /testbed/aiohttp/http_parser.py"
+        }
+      },
+      {
+        "line": 206,
+        "id": "toolu_cad06d15700ab9a4",
+        "name": "Bash",
+        "input": {
+          "command": "python -c \"\nimport string\nprint('string.printable:', repr(string.printable))\nprint('Contains \\\\n:', '\\\\n' in string.printable)\nprint('Contains \\\\x0c:', '\\\\x0c' in string.printable)\nprint('Contains \\\\xff:', '\\\\xff' in string.printable)\n\""
+        }
+      },
+      {
+        "line": 224,
+        "id": "toolu_794e9ce007ff64cf",
+        "name": "Bash",
+        "input": {
+          "command": "ls -la /testbed/aiohttp/ | grep -E \"_http|parser\""
+        }
+      },
+      {
+        "line": 228,
+        "id": "toolu_b14b7d192dfe3877",
+        "name": "Bash",
+        "input": {
+          "command": "python -c \"\n# Check if C parser is available\ntry:\n    from aiohttp import _http_parser\n    print('C parser available')\n    print(f'HttpRequestParser: {_http_parser.HttpRequestParser}')\nexcept ImportError:\n    print('C parser not available')\n\""
+        }
+      },
+      {
+        "line": 243,
+        "id": "toolu_3fbd6c52f5e2104b",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/aiohttp/_http_parser.pyx"
+        }
+      },
+      {
+        "line": 261,
+        "id": "toolu_dda61734d53107a8",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/aiohttp/http_parser.py",
+          "limit": 100,
+          "offset": 540
+        }
+      },
+      {
+        "line": 279,
+        "id": "toolu_5f2ccb6012845b88",
+        "name": "Edit",
+        "input": {
+          "replace_all": false,
+          "file_path": "/testbed/aiohttp/http_parser.py",
+          "old_string": "_ASCIISET: Final[Set[str]] = set(string.printable)\n\n# See https://www.rfc-editor.org/rfc/rfc9110.html#name-overview\n# and https://www.rfc-editor.org/rfc/rfc9110.html#name-tokens\n#\n#     method = token\n#     tchar = \"!\" / \"#\" / \"$\" / \"%\" / \"&\" / \"'\" / \"*\" / \"+\" / \"-\" / \".\" /\n#             \"^\" / \"_\" / \"`\" / \"|\" / \"~\" / DIGIT / ALPHA\n#     token = 1*tchar\nMETHRE: Final[Pattern[str]] = re.compile(r\"[!#$%&'*+\\-.^_`|~0-9A-Za-z]+\")\nVERSRE: Final[Pattern[str]] = re.compile(r\"HTTP/(\\d).(\\d)\")\nHDRRE: Final[Pattern[bytes]] = re.compile(rb\"[\\x00-\\x1F\\x7F()<>@,;:\\[\\]={} \\t\\\"\\\\]\")",
+          "new_string": "ASCIISET: Final[Set[str]] = set(string.printable)\n\n# See https://www.rfc-editor.org/rfc/rfc9110.html#name-overview\n# and https://www.rfc-editor.org/rfc/rfc9110.html#name-tokens\n#\n#     method = token\n#     tchar = \"!\" / \"#\" / \"$\" / \"%\" / \"&\" / \"'\" / \"*\" / \"+\" / \"-\" / \".\" /\n#             \"^\" / \"_\" / \"`\" / \"|\" / \"~\" / DIGIT / ALPHA\n#     token = 1*tchar\nMETHRE: Final[Pattern[str]] = re.compile(r\"[!#$%&'*+\\-.^_`|~0-9A-Za-z]+\")\nVERSRE: Final[Pattern[str]] = re.compile(r\"HTTP/(\\d).(\\d)\")\nHDRRE: Final[Pattern[bytes]] = re.compile(rb\"[\\x00-\\x1F\\x7F()<>@,;:\\[\\]={} \\t\\\"\\\\]\")\n\n# Regex to match valid HTTP header field-name (token per RFC 7230)\n# This ensures header names only contain ASCII token characters\nHDRNAME_RE: Final[Pattern[bytes]] = re.compile(rb\"[!#$%&'*+\\-.^_`|~0-9A-Za-z]+\")"
+        }
+      },
+      {
+        "line": 293,
+        "id": "toolu_7e8224d5861b99af",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/aiohttp/http_parser.py",
+          "limit": 75,
+          "offset": 55
+        }
+      },
+      {
+        "line": 307,
+        "id": "toolu_b2fc352351a6ba0a",
+        "name": "Edit",
+        "input": {
+          "replace_all": false,
+          "file_path": "/testbed/aiohttp/http_parser.py",
+          "old_string": "METHRE: Final[Pattern[str]] = re.compile(r\"[!#$%&'*+\\-.^_`|~0-9A-Za-z]+\")\nVERSRE: Final[Pattern[str]] = re.compile(r\"HTTP/(\\d).(\\d)\")\nHDRRE: Final[Pattern[bytes]] = re.compile(rb\"[\\x00-\\x1F\\x7F()<>@,;:\\[\\]={} \\t\\\"\\\\]\")\nHEXDIGIT = re.compile(rb\"[0-9a-fA-F]+\")",
+          "new_string": "METHRE: Final[Pattern[str]] = re.compile(r\"[!#$%&'*+\\-.^_`|~0-9A-Za-z]+\")\nVERSRE: Final[Pattern[str]] = re.compile(r\"HTTP/(\\d).(\\d)\")\nHDRRE: Final[Pattern[bytes]] = re.compile(rb\"[\\x00-\\x1F\\x7F()<>@,;:\\[\\]={} \\t\\\"\\\\]\")\nHDRNAME_RE: Final[Pattern[bytes]] = re.compile(rb\"[!#$%&'*+\\-.^_`|~0-9A-Za-z]+\")\nHEXDIGIT = re.compile(rb\"[0-9a-fA-F]+\")"
+        }
+      },
+      {
+        "line": 325,
+        "id": "toolu_320ac5b4bd401520",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/aiohttp/http_parser.py",
+          "limit": 50,
+          "offset": 140
+        }
+      },
+      {
+        "line": 339,
+        "id": "toolu_7514e47e43800f40",
+        "name": "Edit",
+        "input": {
+          "replace_all": false,
+          "file_path": "/testbed/aiohttp/http_parser.py",
+          "old_string": "            # https://www.rfc-editor.org/rfc/rfc9112.html#section-5.1-2\n            if {bname[0], bname[-1]} & {32, 9}:  # {\" \", \"\\t\"}\n                raise InvalidHeader(line)\n\n            bvalue = bvalue.lstrip(b\" \\t\")\n            if HDRRE.search(bname):\n                raise InvalidHeader(bname)",
+          "new_string": "            # https://www.rfc-editor.org/rfc/rfc9112.html#section-5.1-2\n            if {bname[0], bname[-1]} & {32, 9}:  # {\" \", \"\\t\"}\n                raise InvalidHeader(line)\n\n            bvalue = bvalue.lstrip(b\" \\t\")\n            if HDRRE.search(bname):\n                raise InvalidHeader(bname)\n            # Ensure header name is valid ASCII token per RFC 7230\n            if not HDRNAME_RE.fullmatch(bname):\n                raise InvalidHeader(bname)"
+        }
+      },
+      {
+        "line": 357,
+        "id": "toolu_0e9fb4b5f4884651",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/aiohttp/http_parser.py",
+          "limit": 40,
+          "offset": 546
+        }
+      },
+      {
+        "line": 371,
+        "id": "toolu_5eae4a019dc22f93",
+        "name": "Edit",
+        "input": {
+          "replace_all": false,
+          "file_path": "/testbed/aiohttp/http_parser.py",
+          "old_string": "    def parse_message(self, lines: List[bytes]) -> RawRequestMessage:\n        # request line\n        line = lines[0].decode(\"utf-8\", \"surrogateescape\")\n        try:\n            method, path, version = line.split(maxsplit=2)\n        except ValueError:\n            raise BadStatusLine(line) from None",
+          "new_string": "    def parse_message(self, lines: List[bytes]) -> RawRequestMessage:\n        # request line\n        raw_line = lines[0]\n        # Validate that status line doesn't contain control characters\n        # RFC 7230: request-line = method SP request-target SP HTTP-version CRLF\n        # Status line should only contain visible ASCII characters (0x20-0x7E)\n        if any(b < 0x20 or b > 0x7E for b in raw_line):\n            raise BadStatusLine(raw_line.decode(\"utf-8\", \"surrogateescape\"))\n\n        line = raw_line.decode(\"utf-8\", \"surrogateescape\")\n        try:\n            method, path, version = line.split(maxsplit=2)\n        except ValueError:\n            raise BadStatusLine(line) from None"
+        }
+      },
+      {
+        "line": 389,
+        "id": "toolu_2859cf283c7df2cf",
+        "name": "Bash",
+        "input": {
+          "command": "python test_invalid_header.py"
+        }
+      },
+      {
+        "line": 393,
+        "id": "toolu_63cdf164a7e0395e",
+        "name": "Bash",
+        "input": {
+          "command": "python test_malformed_status.py"
+        }
+      },
+      {
+        "line": 412,
+        "id": "toolu_95fd2ba64c3b625c",
+        "name": "Bash",
+        "input": {
+          "command": "python -c \"\nimport asyncio\nfrom unittest import mock\nfrom aiohttp import http_parser\nfrom aiohttp.http_exceptions import InvalidHeader\n\ndef test_raw_invalid_header(parser):\n    '''Test with raw bytes \\\\xff in header name.'''\n    request = b'POST / HTTP/1.1\\r\\n\\xffoo: bar\\r\\n\\r\\n'\n    print(f'Sending request: {request!r}')\n    try:\n        parser.feed_data(request)\n        result = parser.feed_eof()\n        print(f'Result: {result}')\n        print('ERROR: No exception raised!')\n    except InvalidHeader as e:\n        print(f'SUCCESS: Raised InvalidHeader: {e}')\n    except Exception as e:\n        print(f'OTHER: Raised {type(e).__name__}: {e}')\n\nloop = asyncio.new_event_loop()\ntry:\n    parser = http_parser.HttpRequestParserPy(mock.Mock(), loop, 2**16)\n    test_raw_invalid_header(parser)\nfinally:\n    loop.close()\n\""
+        }
+      },
+      {
+        "line": 430,
+        "id": "toolu_f5291c0912902b48",
+        "name": "Bash",
+        "input": {
+          "command": "cd /testbed\nif python -c \"import aiohttp._http_parser\" 2>/dev/null; then\n    echo 'C parser importable'\nelse\n    export AIOHTTP_NO_EXTENSIONS=1\n    echo 'C parser not importable; using the Python parser test path'\nfi\nPYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider \\\n    -o addopts=\"\" -m \"not dev_mode\" -q -rfEs tests/test_http_parser.py 2>&1 | head -100",
+          "timeout": 300000
+        }
+      },
+      {
+        "line": 450,
+        "id": "toolu_0470430783d6939a",
+        "name": "Edit",
+        "input": {
+          "replace_all": false,
+          "file_path": "/testbed/aiohttp/http_parser.py",
+          "old_string": "    def parse_message(self, lines: List[bytes]) -> RawRequestMessage:\n        # request line\n        raw_line = lines[0]\n        # Validate that status line doesn't contain control characters\n        # RFC 7230: request-line = method SP request-target SP HTTP-version CRLF\n        # Status line should only contain visible ASCII characters (0x20-0x7E)\n        if any(b < 0x20 or b > 0x7E for b in raw_line):\n            raise BadStatusLine(raw_line.decode(\"utf-8\", \"surrogateescape\"))\n\n        line = raw_line.decode(\"utf-8\", \"surrogateescape\")",
+          "new_string": "    def parse_message(self, lines: List[bytes]) -> RawRequestMessage:\n        # request line\n        raw_line = lines[0]\n        # Validate that status line doesn't contain control characters\n        # RFC 7230: request-line = method SP request-target SP HTTP-version CRLF\n        # Status line should not contain control characters (0x00-0x1F except SP 0x20)\n        # Note: High bytes (0x80+) are allowed as they may be part of UTF-8 encoded URIs\n        if any(b < 0x20 for b in raw_line):\n            raise BadStatusLine(raw_line.decode(\"utf-8\", \"surrogateescape\"))\n\n        line = raw_line.decode(\"utf-8\", \"surrogateescape\")"
+        }
+      },
+      {
+        "line": 464,
+        "id": "toolu_f3c3dd7ece8a6502",
+        "name": "Bash",
+        "input": {
+          "command": "python test_invalid_header.py && python test_malformed_status.py"
+        }
+      },
+      {
+        "line": 478,
+        "id": "toolu_188fed8083dd80cc",
+        "name": "Bash",
+        "input": {
+          "command": "cd /testbed\nif python -c \"import aiohttp._http_parser\" 2>/dev/null; then\n    echo 'C parser importable'\nelse\n    export AIOHTTP_NO_EXTENSIONS=1\n    echo 'C parser not importable; using the Python parser test path'\nfi\nPYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider \\\n    -o addopts=\"\" -m \"not dev_mode\" -q -rfEs tests/test_http_parser.py 2>&1 | tail -30",
+          "timeout": 300000
+        }
+      },
+      {
+        "line": 498,
+        "id": "toolu_79ff16fbc140cbab",
+        "name": "Bash",
+        "input": {
+          "command": "python -c \"\nimport asyncio\nfrom unittest import mock\nfrom aiohttp import http_parser\nfrom aiohttp.http_exceptions import BadStatusLine, InvalidHeader\n\n# Test edge cases\n\nloop = asyncio.new_event_loop()\ntry:\n    # Test 1: Normal request should still work\n    print('Test 1: Normal request')\n    parser = http_parser.HttpRequestParserPy(mock.Mock(), loop, 2**16)\n    request = b'GET /path HTTP/1.1\\r\\nHost: example.com\\r\\n\\r\\n'\n    parser.feed_data(request)\n    result = parser.feed_eof()\n    print(f'  OK: {result is not None}')\n\n    # Test 2: Request with high bytes in header value should still work\n    print('Test 2: Header value with UTF-8')\n    parser = http_parser.HttpRequestParserPy(mock.Mock(), loop, 2**16)\n    request = 'GET /path HTTP/1.1\\r\\nX-Custom: ÿoo\\r\\n\\r\\n'.encode()\n    parser.feed_data(request)\n    result = parser.feed_eof()\n    print(f'  OK: {result is not None}')\n\n    # Test 3: Status line with newline should fail\n    print('Test 3: Status line with newline')\n    parser = http_parser.HttpRequestParserPy(mock.Mock(), loop, 2**16)\n    request = b'GET\\n/path HTTP/1.1\\r\\n\\r\\n'\n    try:\n        parser.feed_data(request)\n        print('  FAILED: No exception raised')\n    except BadStatusLine:\n        print('  OK: BadStatusLine raised')\n\n    # Test 4: Header name with control char should fail\n    print('Test 4: Header name with tab')\n    parser = http_parser.HttpRequestParserPy(mock.Mock(), loop, 2**16)\n    request = b'GET / HTTP/1.1\\r\\n\\tfoo: bar\\r\\n\\r\\n'\n    try:\n        parser.feed_data(request)\n        print('  FAILED: No exception raised')\n    except InvalidHeader:\n        print('  OK: InvalidHeader raised')\n\n    # Test 5: Valid header name should work\n    print('Test 5: Valid header name')\n    parser = http_parser.HttpRequestParserPy(mock.Mock(), loop, 2**16)\n    request = b'GET / HTTP/1.1\\r\\nX-Custom-Header: value\\r\\n\\r\\n'\n    parser.feed_data(request)\n    result = parser.feed_eof()\n    print(f'  OK: {result is not None}')\n\n    # Test 6: High byte in header name should fail\n    print('Test 6: High byte in header name')\n    parser = http_parser.HttpRequestParserPy(mock.Mock(), loop, 2**16)\n    request = b'GET / HTTP/1.1\\r\\n\\xff: bar\\r\\n\\r\\n'\n    try:\n        parser.feed_data(request)\n        print('  FAILED: No exception raised')\n    except InvalidHeader:\n        print('  OK: InvalidHeader raised')\n\n    # Test 7: Valid header with special chars should work\n    print('Test 7: Valid header with special chars')\n    parser = http_parser.HttpRequestParserPy(mock.Mock(), loop, 2**16)\n    request = b'GET / HTTP/1.1\\r\\nX-Test_Header: value\\r\\n\\r\\n'\n    parser.feed_data(request)\n    result = parser.feed_eof()\n    print(f'  OK: {result is not None}')\n\n    print('All edge case tests completed!')\nfinally:\n    loop.close()\n\""
+        }
+      },
+      {
+        "line": 512,
+        "id": "toolu_4e1c83704d8fda30",
+        "name": "Bash",
+        "input": {
+          "command": "python -c \"\nimport asyncio\nfrom unittest import mock\nfrom aiohttp import http_parser\n\nloop = asyncio.new_event_loop()\ntry:\n    parser = http_parser.HttpRequestParserPy(mock.Mock(), loop, 2**16)\n    request = b'GET /path HTTP/1.1\\r\\nHost: example.com\\r\\n\\r\\n'\n    messages, upgraded, tail = parser.feed_data(request)\n    print(f'Messages: {messages}')\n    print(f'Upgraded: {upgraded}')\n    print(f'Tail: {tail}')\n    if messages:\n        msg, payload = messages[0]\n        print(f'Method: {msg.method}')\n        print(f'Path: {msg.path}')\n        print(f'Headers: {dict(msg.headers)}')\nfinally:\n    loop.close()\n\""
+        }
+      },
+      {
+        "line": 530,
+        "id": "toolu_6968172772beeaff",
+        "name": "Bash",
+        "input": {
+          "command": "python test_invalid_header.py && python test_malformed_status.py"
+        }
+      },
+      {
+        "line": 548,
+        "id": "toolu_1ba2af5adc514c91",
+        "name": "Bash",
+        "input": {
+          "command": "python -c \"\nimport asyncio\nfrom unittest import mock\nfrom aiohttp import http_parser\n\nloop = asyncio.new_event_loop()\ntry:\n    # Test response parser\n    print('Test: Response parser with valid response')\n    parser = http_parser.HttpResponseParserPy(mock.Mock(), loop, 2**16)\n    request = b'HTTP/1.1 200 OK\\r\\nContent-Length: 0\\r\\n\\r\\n'\n    messages, upgraded, tail = parser.feed_data(request)\n    if messages:\n        msg = messages[0][0]\n        print(f'  Version: {msg.version}')\n        print(f'  Code: {msg.code}')\n        print(f'  Reason: {msg.reason}')\n        print('  OK')\n    \n    # Test response with invalid status line\n    print('Test: Response parser with newline in status line')\n    parser = http_parser.HttpResponseParserPy(mock.Mock(), loop, 2**16)\n    request = b'HTTP/1.1\\r\\n200\\r\\n\\r\\n'  # This should work - different format\n    messages, upgraded, tail = parser.feed_data(request)\n    print(f'  Messages: {messages}')\nfinally:\n    loop.close()\n\""
+        }
+      },
+      {
+        "line": 562,
+        "id": "toolu_c614b891774e759b",
+        "name": "Bash",
+        "input": {
+          "command": "rm /testbed/test_invalid_header.py /testbed/test_malformed_status.py"
+        }
+      },
+      {
+        "line": 580,
+        "id": "toolu_2c7db6a946e789eb",
+        "name": "Bash",
+        "input": {
+          "command": "cd /testbed\nif python -c \"import aiohttp._http_parser\" 2>/dev/null; then\n    echo 'C parser importable'\nelse\n    export AIOHTTP_NO_EXTENSIONS=1\n    echo 'C parser not importable; using the Python parser test path'\nfi\nPYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider \\\n    -o addopts=\"\" -m \"not dev_mode\" -q -rfEs tests/test_http_parser.py 2>&1",
+          "timeout": 300000
+        }
+      },
+      {
+        "line": 600,
+        "id": "toolu_faf3e337f4be2c37",
+        "name": "Bash",
+        "input": {
+          "command": "git diff aiohttp/http_parser.py"
+        }
+      }
+    ]
+  },
+  "cleanup": {
+    "actor_quiescence": {
+      "at": "2026-10-02T18:25:41.754913+00:00",
+      "ok": true,
+      "snapshot_ref": "sha256:7dc2c381d04dad0ff4a747830026a99f96eb25e5792c8d3ff94e735543f76403",
+      "evidence": [
+        "agent_processes_zero",
+        "workspace_digest_stable_double_read"
+      ],
+      "barrier_stop": {
+        "residual": 0,
+        "kill_returned_at": 10090.064297478,
+        "kill_exit_code": 0,
+        "pkill_status": 1,
+        "kill_delivered_at": 10090.064297478,
+        "confirmed_at": 10090.120597728,
+        "observations": [
+          {
+            "issued_at": 10090.064316456,
+            "returned_at": 10090.120597728,
+            "residual": 0
+          }
+        ],
+        "observation_count": 1,
+        "timed_out": false,
+        "elapsed_seconds": 0.112,
+        "attempts": 1
+      },
+      "policy": "baseline_policy_r2e_v1"
+    },
+    "gateway_drain": {
+      "session_id": "gpu1003-aiohttp4075-qwen36-a1",
+      "revoked": true,
+      "active_requests": 0,
+      "drained": true,
+      "ts": 1790965540.9567268
+    },
+    "manager_close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "supply_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0,
+      "containers_created_total": 1,
+      "containers_removed_total": 1,
+      "container_history_retained": 1,
+      "leases_total": 1
+    },
+    "executor_cleanup_ok": true
+  },
+  "limit": [
+    "136/136是133 PASSED与3个固定C-only FAILED状态均匹配，不能称136全PASS。",
+    "沿已有独立验收范围核当前修复，没有认定全HTTP协议正确；0x7f及其它未登记协议边界仍非本轮完整协议覆盖声明。",
+    "配置solver为qwen36；gateway报告slime-actor别名，本读回未独立核GPU实际checkpoint，服务身份由统一执行者的证据负责。",
+    "这是题主语义与原件读回，非fresh解题、非另一个作者的独立结果审查，Coder结果仍待返回。"
+  ],
+  "downloaded_executor_evidence": {
+    "attempt/attempt.json": {
+      "size": 17388,
+      "sha256": "sha256:3cb52d252bca96bcd0112fb89b39a98dc1155b5065f7b240516f942e664d5ec5"
+    },
+    "attempt/bringup_artifacts/cc_version_observed.json": {
+      "size": 60,
+      "sha256": "sha256:c2b9bcf966c47d9a00227877026cb90b76afed482fd0df4e0ac12caab786bacb"
+    },
+    "attempt/candidate/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a.diff": {
+      "size": 1981,
+      "sha256": "sha256:8e91985dfc2962967ea3039f908f7f533606d218e3461bea11381bbd8b061c88"
+    },
+    "attempt/cc_home.tgz": {
+      "size": 67408,
+      "sha256": "sha256:39cbcdf84f0961ee71602c03e15e33bf1350c26deb111aa4be73cf31908daf4c"
+    },
+    "attempt/facts/activation_check.json": {
+      "size": 465,
+      "sha256": "sha256:8071ead846f4b6685c86dd1974d5f40217c84d99c996d5c170a66e0eb5d40a26"
+    },
+    "attempt/facts/agent_env_facts.txt": {
+      "size": 1055,
+      "sha256": "sha256:093bbaebb04d9357a03fa9e4b4b15bf0401fc79af2af6bc128c3355d39c8d4bb"
+    },
+    "attempt/facts/materialize_probe.txt": {
+      "size": 213,
+      "sha256": "sha256:90614ec695ff3c975d3cafd1e5acbf7ab8e9dca8a7b8709003943db4e5548cfc"
+    },
+    "attempt/facts/pip_freeze_after.txt": {
+      "size": 1884,
+      "sha256": "sha256:fc39fd1cd2e4ad32efe716dc0dee33a09a432fa17bc06c1b2792c93eba69ff48"
+    },
+    "attempt/facts/pip_freeze_before.txt": {
+      "size": 1884,
+      "sha256": "sha256:fc39fd1cd2e4ad32efe716dc0dee33a09a432fa17bc06c1b2792c93eba69ff48"
+    },
+    "attempt/facts/prelaunch.json": {
+      "size": 2405,
+      "sha256": "sha256:77c089758cad5f7f857aa57254ae893bada485bb7a267763b7af0f0da81754be"
+    },
+    "attempt/facts/r2e_preflight.txt": {
+      "size": 104,
+      "sha256": "sha256:daab0589dc3105fbc35cf60921cdfede3acf6ca4356f9c706ac5d94f08b4b057"
+    },
+    "attempt/frozen/baseline.tar": {
+      "size": 6010880,
+      "sha256": "sha256:cbaf27a5648dd1f6dda78cea45828a1268d1bd96bbab0acae6203c5b35fa69c1"
+    },
+    "attempt/frozen/baseline_census.txt": {
+      "size": 593863,
+      "sha256": "sha256:aa5912c07027932dbb4df11fa80fe20dbfabbe796f60cf6add649b899b34503b"
+    },
+    "attempt/frozen/baseline_manifest.json": {
+      "size": 66734,
+      "sha256": "sha256:39ec96c676e66c277e6531c0e774d11b37a3d049b33c2a4db56c5bc861cd1fbd"
+    },
+    "attempt/frozen/classification.json": {
+      "size": 92,
+      "sha256": "sha256:f5ffbaced0b3236a35e0fc6319c51b3077006f339e8a219377b606e8e26bce15"
+    },
+    "attempt/frozen/frozen_patch.json": {
+      "size": 48351,
+      "sha256": "sha256:879c03539e86894d632e2663c52a73e62c18447eee4dc21a37c6ebfd97e1cc68"
+    },
+    "attempt/harness/stderr.log": {
+      "size": 0,
+      "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "attempt/harness/trajectory.jsonl": {
+      "size": 630960,
+      "sha256": "sha256:dbeda816a3146411a02e50c9aa6c9441792feb7a3678a6c1259ca70f7f38d432"
+    },
+    "attempt/prompt.txt": {
+      "size": 2807,
+      "sha256": "sha256:ada20dc86122bf92fb6b1276950064cd5f285fbc06eba3a0379d8499039aad75"
+    },
+    "attempt/trajectory.jsonl": {
+      "size": 630960,
+      "sha256": "sha256:dbeda816a3146411a02e50c9aa6c9441792feb7a3678a6c1259ca70f7f38d432"
+    },
+    "gateway_audit.json": {
+      "size": 397,
+      "sha256": "sha256:5f396d7743de62b01698ab64bc497a4da0352efaeb0aa89dd5347f476476c8cf"
+    },
+    "grading/baseline_rebuild_census.txt": {
+      "size": 593863,
+      "sha256": "sha256:aa5912c07027932dbb4df11fa80fe20dbfabbe796f60cf6add649b899b34503b"
+    },
+    "grading/eval_logs/evallog_gpu1003-aiohttp4075-qwen_9faffb94.diagnostics.json": {
+      "size": 3711,
+      "sha256": "sha256:c667c49452a4ae0ee0b7e11f95b631410a2dbe89a7d4b72b0e7dcfe0e5b0a10d"
+    },
+    "grading/eval_logs/evallog_gpu1003-aiohttp4075-qwen_9faffb94.eval.log": {
+      "size": 36791,
+      "sha256": "sha256:ce0e5ddcf35a1df5c69c6dcfb9040e90c3ca7ac218955abce8263e10bc5b060a"
+    },
+    "grading/projection.json": {
+      "size": 332,
+      "sha256": "sha256:8bb528beab7ed6f4d4da9d35f52820bc56f1cf85c61153ae562260e10297527e"
+    },
+    "grading/report.json": {
+      "size": 1874,
+      "sha256": "sha256:5eb48014e82d3cf803baca2bc49724c54c31de71bb59ab7ca6b7ae1c69515bb7"
+    },
+    "grading/status.json": {
+      "size": 2658,
+      "sha256": "sha256:641f5cdc50c6f7fcea036087ca6a3c29234c303beace5e7a3e8739e7fac2eed2"
+    },
+    "input_check.json": {
+      "size": 2578,
+      "sha256": "sha256:7a2b31ad537333be3e581c843680ae60382482b8ece218ea94214aa2d14d635c"
+    },
+    "result.json": {
+      "size": 2694,
+      "sha256": "sha256:902ec1085f4f0c536c242caedb08840ebbde62972e9368431639750144783927"
+    },
+    "solver_prompt.txt": {
+      "size": 2807,
+      "sha256": "sha256:ada20dc86122bf92fb6b1276950064cd5f285fbc06eba3a0379d8499039aad75"
+    }
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "schema": "moto6114.p2p_preservation_proposal.v1",
+  "status": "proposed_not_published_not_cpu_validated",
+  "source_public_change": false,
+  "base_commit": "f01709f9ba656e7cf4399bcd1a0a07fd134b0aec",
+  "parent_revision": "moto6114-cluster-identity-v1",
+  "proposed_revision_id": "moto6114-cluster-identity-neptune-preservation-v2",
+  "original_f2p_preserved": [
+    "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_after_creation"
+  ],
+  "original_34_p2p_preserved": [
+    "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_without_stopping",
+    "tests/test_rds/test_rds_clusters.py::test_modify_db_cluster_needs_long_master_user_password",
+    "tests/test_rds/test_rds_clusters.py::test_modify_db_cluster_new_cluster_identifier",
+    "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot_fails_for_unknown_snapshot",
+    "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_after_stopping",
+    "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot_fails_for_unknown_cluster",
+    "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_long_master_user_password",
+    "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster",
+    "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_that_is_protected",
+    "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot_copy_tags",
+    "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot",
+    "tests/test_rds/test_rds_clusters.py::test_create_db_cluster__verify_default_properties",
+    "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_initial",
+    "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster",
+    "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_enable_http_endpoint_valid",
+    "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_do_snapshot",
+    "tests/test_rds/test_rds_clusters.py::test_add_tags_to_cluster",
+    "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster_already_stopped",
+    "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_snapshots",
+    "tests/test_rds/test_rds_clusters.py::test_add_tags_to_cluster_snapshot",
+    "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_snapshot",
+    "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_unknown_cluster",
+    "tests/test_rds/test_rds_clusters.py::test_restore_db_cluster_from_snapshot_and_override_params",
+    "tests/test_rds/test_rds_clusters.py::test_copy_db_cluster_snapshot_fails_for_existed_target_snapshot",
+    "tests/test_rds/test_rds_clusters.py::test_describe_db_cluster_fails_for_non_existent_cluster",
+    "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_database_name",
+    "tests/test_rds/test_rds_clusters.py::test_delete_db_cluster_snapshot",
+    "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_additional_parameters",
+    "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_master_user_password",
+    "tests/test_rds/test_rds_clusters.py::test_restore_db_cluster_from_snapshot",
+    "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_needs_master_username",
+    "tests/test_rds/test_rds_clusters.py::test_start_db_cluster_unknown_cluster",
+    "tests/test_rds/test_rds_clusters.py::test_stop_db_cluster_unknown_cluster",
+    "tests/test_rds/test_rds_clusters.py::test_create_db_cluster_with_enable_http_endpoint_invalid"
+  ],
+  "added_p2p": [
+    "tests/test_rds/test_rds_clusters.py::test_rds_facade_preserves_neptune_name_start",
+    "tests/test_rds/test_rds_clusters.py::test_rds_facade_preserves_neptune_name_delete"
+  ],
+  "proposed_counts": {
+    "f2p": 1,
+    "p2p": 36,
+    "total": 37
+  },
+  "effective_patch": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-6114/neptune_name_preservation_v2/proposed_effective_test.patch",
+    "sha256": "2a9661d78743cf5e36f8363e308d63260ab2076bf4bc1d68de8a9e5fd226dda4",
+    "bytes": 2748
+  },
+  "source_base_test": {
+    "path": "runs/swegym_quality_batch04_20260921_v1/public/getmoto__moto-6114/base/tests/test_rds/test_rds_clusters.py",
+    "sha256": "5d8d00b39173ff60d8a7f0273787d4d8fcd2231a3fdc231113a70f9531f99e34",
+    "bytes": 27917
+  },
+  "old_effective_patch_preserved_as_prefix_behavior": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-6114/revised_test_draft_v1.patch",
+    "sha256": "fe211059864c661a557758f5c5ed4106016c767cbe98eaef4718733008a87d5f",
+    "bytes": 1336
+  },
+  "actual_model_patch_unchanged": {
+    "job": "gpu1003-moto6114-qwen36-a1",
+    "diff_sha256": "bb5eab97577260270def73fc06f8a0aa4917727cb9348afbe871f5905b2eb747"
+  },
+  "scope": "Only existing public-base RDS façade Neptune name delegation, not new ARN write APIs/account-region AWS contracts. Old F/P and ARN identity assertions preserved.",
+  "cpu_minimal_countercheck_tools": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tools/moto6114_neptune_name_diagnostic_v1/manifest.json",
+  "runtime_execution": false,
+  "original_scores_and_frozen_identities_immutable": true,
+  "recommended_cpu_controls": [
+    "noop=0 expected existingF fail/new2P pass",
+    "gold=1 expected all37 pass",
+    "wrong_first=0 expected existing identityF fail/new2P pass",
+    "original Qwen a1 exact source=0 expected new2P fail/old35pass; not yet executed"
+  ]
+}

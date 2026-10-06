@@ -1,0 +1,504 @@
+{
+  "instance_id": "python__mypy-15139",
+  "reviewed_at_utc": "2026-09-28T20:07:08.897086+00:00",
+  "state": "actor_private_complete_formal_pending",
+  "scope": "CPU actor and private behavior partial; no model or training qualification",
+  "base_commit": "16b936c15b074db858729ed218248ef623070e03",
+  "actor": {
+    "actor_original": {
+      "image": "xingyaoww/sweb.eval.x86_64.python_s_mypy-15139:latest",
+      "base_commit": "16b936c15b074db858729ed218248ef623070e03",
+      "commands_result": [
+        {
+          "id": "identity_import",
+          "rc": 0,
+          "status": "rc0",
+          "expect": "zero",
+          "matches_expect": true,
+          "output_bytes": 370,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "确认实际 mypy 源码、解释器及是否被扩展模块遮蔽"
+        },
+        {
+          "id": "issue_original",
+          "rc": 1,
+          "status": "nonzero",
+          "expect": "any",
+          "matches_expect": true,
+          "output_bytes": 218,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "题面三行真实 CLI；完整 note/error 与 RC 是判据，非零本身不是环境失败"
+        },
+        {
+          "id": "policy_modern",
+          "rc": 1,
+          "status": "nonzero",
+          "expect": "nonzero",
+          "matches_expect": true,
+          "output_bytes": 173,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "公开 Type[Any] 赋值错误在现代默认显示路径，必须看到目标 assignment error"
+        },
+        {
+          "id": "policy_force",
+          "rc": 1,
+          "status": "nonzero",
+          "expect": "nonzero",
+          "matches_expect": true,
+          "output_bytes": 173,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "公开强制大写政策，错误中的 Type[Any] 不应丢失"
+        },
+        {
+          "id": "policy_old",
+          "rc": 1,
+          "status": "nonzero",
+          "expect": "nonzero",
+          "matches_expect": true,
+          "output_bytes": 173,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "公开旧目标版本兼容政策；仍应显示 Type[Any]"
+        },
+        {
+          "id": "public_regression",
+          "rc": 0,
+          "status": "rc0",
+          "expect": "zero",
+          "matches_expect": true,
+          "output_bytes": 1199,
+          "output_truncated_to": 200000,
+          "pytest": {
+            "passed": 6,
+            "deselected": 6346
+          },
+          "purpose": "实际 base 存在的公开 Type[Any] 与既有 lowercase 测试；不注入隐藏测试"
+        }
+      ],
+      "container_inspect": "sha256:d086e512d094e2790867fe5a30333e43defc76ae59709b9f0aff8ae7d26670b1 2000000000 4294967296",
+      "effective_profile": {
+        "cpus": 2.0,
+        "memory_bytes": 4294967296,
+        "tmp_tmpfs_bytes": 1073741824,
+        "home_tmpfs_bytes": 268435456,
+        "writable_layer_quota_bytes": 8589934592,
+        "pids_limit": 512
+      },
+      "harness_exit_code": 0,
+      "termination": "returned",
+      "solve_seconds": 26.688,
+      "wall_seconds": 1800,
+      "cc_version_observed": "2.1.205 (Claude Code)",
+      "post_run_facts": {
+        "RH2_HARNESS_DIR": "ABSENT",
+        "RH2_RUN_SH": "ABSENT",
+        "RH2_RUN_DONE": "ABSENT",
+        "RH2_GIT_STATUS_LINES": "0",
+        "RH2_AGENT_PROCS": "0",
+        "RH2_NEWER_FILES": "118"
+      },
+      "cleanup": {
+        "container_rm": 0,
+        "network_failures": [],
+        "relay_failures": [],
+        "stub_rc": 0,
+        "labeled_containers_left": [],
+        "labeled_networks_left": [],
+        "residual_after_force": []
+      },
+      "launch_log_complete": true,
+      "captures": {
+        "identity_import": "uid=54321(agent) gid=54321(agent) groups=54321(agent)\n/testbed\n16b936c15b074db858729ed218248ef623070e03\nPYTHON /opt/miniconda3/envs/testbed/bin/python 3.11.9 (main, Apr 19 2024, 16:48:06) [GCC 11.2.0]\nMYPY_VERSION 1.4.0+dev.16b936c15b074db858729ed218248ef623070e03\nmypy /testbed/mypy/__init__.py\nmypy.messages /testbed/mypy/messages.py\nmypy.types /testbed/mypy/types.py\n",
+        "issue_original": "<string>:2: note: Revealed type is \"Type[builtins.type]\"\n<string>:3: error: Value of type \"Type[type]\" is not indexable  [index]\n<string>:3: note: Revealed type is \"Any\"\nFound 1 error in 1 file (checked 1 source file)\n",
+        "policy_force": "<string>:3: error: Incompatible types in assignment (expression has type \"Type[Any]\", variable has type \"int\")  [assignment]\nFound 1 error in 1 file (checked 1 source file)\n",
+        "policy_modern": "<string>:3: error: Incompatible types in assignment (expression has type \"Type[Any]\", variable has type \"int\")  [assignment]\nFound 1 error in 1 file (checked 1 source file)\n",
+        "policy_old": "<string>:3: error: Incompatible types in assignment (expression has type \"Type[Any]\", variable has type \"int\")  [assignment]\nFound 1 error in 1 file (checked 1 source file)\n",
+        "public_regression": "============================= test session starts ==============================\nplatform linux -- Python 3.11.9, pytest-8.3.2, pluggy-1.5.0\nrootdir: /testbed\nconfigfile: pytest.ini\nplugins: xdist-3.6.1, forked-1.6.0, cov-5.0.0\ncollected 6352 items / 6346 deselected / 6 selected\n\nmypy/test/testcheck.py ......                                            [100%]\n\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-lowercase.test::testTupleLowercaseSettingOff\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-lowercase.test::testTupleLowercaseSettingOn\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-lowercase.test::testListLowercaseSettingOff\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-lowercase.test::testListLowercaseSettingOn\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-classes.test::testTypeUsingTypeCTypeAnyMember\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-classes.test::testTypeUsingTypeCTypeAnyMemberFallback\n====================== 6 passed, 6346 deselected in 0.56s ======================\n"
+      }
+    },
+    "actor_revised": {
+      "image": "sha256:6f59c19c80626a6a4ea88286b128cd4754f821b3816eeb7364283b50423a51e8",
+      "base_commit": "16b936c15b074db858729ed218248ef623070e03",
+      "commands_result": [
+        {
+          "id": "identity_import",
+          "rc": 0,
+          "status": "rc0",
+          "expect": "zero",
+          "matches_expect": true,
+          "output_bytes": 370,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "确认实际 mypy 源码、解释器及是否被扩展模块遮蔽"
+        },
+        {
+          "id": "issue_original",
+          "rc": 1,
+          "status": "nonzero",
+          "expect": "any",
+          "matches_expect": true,
+          "output_bytes": 218,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "题面三行真实 CLI；完整 note/error 与 RC 是判据，非零本身不是环境失败"
+        },
+        {
+          "id": "policy_modern",
+          "rc": 1,
+          "status": "nonzero",
+          "expect": "nonzero",
+          "matches_expect": true,
+          "output_bytes": 173,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "公开 Type[Any] 赋值错误在现代默认显示路径，必须看到目标 assignment error"
+        },
+        {
+          "id": "policy_force",
+          "rc": 1,
+          "status": "nonzero",
+          "expect": "nonzero",
+          "matches_expect": true,
+          "output_bytes": 173,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "公开强制大写政策，错误中的 Type[Any] 不应丢失"
+        },
+        {
+          "id": "policy_old",
+          "rc": 1,
+          "status": "nonzero",
+          "expect": "nonzero",
+          "matches_expect": true,
+          "output_bytes": 173,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "公开旧目标版本兼容政策；仍应显示 Type[Any]"
+        },
+        {
+          "id": "public_regression",
+          "rc": 0,
+          "status": "rc0",
+          "expect": "zero",
+          "matches_expect": true,
+          "output_bytes": 1199,
+          "output_truncated_to": 200000,
+          "pytest": {
+            "passed": 6,
+            "deselected": 6346
+          },
+          "purpose": "实际 base 存在的公开 Type[Any] 与既有 lowercase 测试；不注入隐藏测试"
+        }
+      ],
+      "container_inspect": "sha256:6f59c19c80626a6a4ea88286b128cd4754f821b3816eeb7364283b50423a51e8 2000000000 4294967296",
+      "effective_profile": {
+        "cpus": 2.0,
+        "memory_bytes": 4294967296,
+        "tmp_tmpfs_bytes": 1073741824,
+        "home_tmpfs_bytes": 268435456,
+        "writable_layer_quota_bytes": 8589934592,
+        "pids_limit": 512
+      },
+      "harness_exit_code": 0,
+      "termination": "returned",
+      "solve_seconds": 26.854,
+      "wall_seconds": 1800,
+      "cc_version_observed": "2.1.205 (Claude Code)",
+      "post_run_facts": {
+        "RH2_HARNESS_DIR": "ABSENT",
+        "RH2_RUN_SH": "ABSENT",
+        "RH2_RUN_DONE": "ABSENT",
+        "RH2_GIT_STATUS_LINES": "0",
+        "RH2_AGENT_PROCS": "0",
+        "RH2_NEWER_FILES": "118"
+      },
+      "cleanup": {
+        "container_rm": 0,
+        "network_failures": [],
+        "relay_failures": [],
+        "stub_rc": 0,
+        "labeled_containers_left": [],
+        "labeled_networks_left": [],
+        "residual_after_force": []
+      },
+      "launch_log_complete": true,
+      "captures": {
+        "identity_import": "uid=54321(agent) gid=54321(agent) groups=54321(agent)\n/testbed\n16b936c15b074db858729ed218248ef623070e03\nPYTHON /opt/miniconda3/envs/testbed/bin/python 3.11.9 (main, Apr 19 2024, 16:48:06) [GCC 11.2.0]\nMYPY_VERSION 1.4.0+dev.16b936c15b074db858729ed218248ef623070e03\nmypy /testbed/mypy/__init__.py\nmypy.messages /testbed/mypy/messages.py\nmypy.types /testbed/mypy/types.py\n",
+        "issue_original": "<string>:2: note: Revealed type is \"Type[builtins.type]\"\n<string>:3: error: Value of type \"Type[type]\" is not indexable  [index]\n<string>:3: note: Revealed type is \"Any\"\nFound 1 error in 1 file (checked 1 source file)\n",
+        "policy_force": "<string>:3: error: Incompatible types in assignment (expression has type \"Type[Any]\", variable has type \"int\")  [assignment]\nFound 1 error in 1 file (checked 1 source file)\n",
+        "policy_modern": "<string>:3: error: Incompatible types in assignment (expression has type \"Type[Any]\", variable has type \"int\")  [assignment]\nFound 1 error in 1 file (checked 1 source file)\n",
+        "policy_old": "<string>:3: error: Incompatible types in assignment (expression has type \"Type[Any]\", variable has type \"int\")  [assignment]\nFound 1 error in 1 file (checked 1 source file)\n",
+        "public_regression": "============================= test session starts ==============================\nplatform linux -- Python 3.11.9, pytest-8.3.2, pluggy-1.5.0\nrootdir: /testbed\nconfigfile: pytest.ini\nplugins: xdist-3.6.1, forked-1.6.0, cov-5.0.0\ncollected 6352 items / 6346 deselected / 6 selected\n\nmypy/test/testcheck.py ......                                            [100%]\n\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-lowercase.test::testTupleLowercaseSettingOff\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-lowercase.test::testTupleLowercaseSettingOn\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-lowercase.test::testListLowercaseSettingOff\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-lowercase.test::testListLowercaseSettingOn\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-classes.test::testTypeUsingTypeCTypeAnyMember\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-classes.test::testTypeUsingTypeCTypeAnyMemberFallback\n====================== 6 passed, 6346 deselected in 0.63s ======================\n"
+      }
+    }
+  },
+  "private_behavior": {
+    "base": {
+      "command_rc": {
+        "identity_import": 0,
+        "issue_original": 1,
+        "policy_modern": 1,
+        "policy_force": 1,
+        "policy_old": 1,
+        "public_regression": 0
+      },
+      "captures": {
+        "identity_import": "uid=0(root) gid=0(root) groups=0(root)\n/testbed\n16b936c15b074db858729ed218248ef623070e03\nPYTHON /opt/miniconda3/envs/testbed/bin/python 3.11.9 (main, Apr 19 2024, 16:48:06) [GCC 11.2.0]\nMYPY_VERSION 1.4.0+dev.16b936c15b074db858729ed218248ef623070e03\nmypy /testbed/mypy/__init__.py\nmypy.messages /testbed/mypy/messages.py\nmypy.types /testbed/mypy/types.py\n\n",
+        "issue_original": "<string>:2: note: Revealed type is \"Type[builtins.type]\"\n<string>:3: error: Value of type \"Type[type]\" is not indexable  [index]\n<string>:3: note: Revealed type is \"Any\"\nFound 1 error in 1 file (checked 1 source file)\n\n",
+        "policy_force": "<string>:3: error: Incompatible types in assignment (expression has type \"Type[Any]\", variable has type \"int\")  [assignment]\nFound 1 error in 1 file (checked 1 source file)\n\n",
+        "policy_modern": "<string>:3: error: Incompatible types in assignment (expression has type \"Type[Any]\", variable has type \"int\")  [assignment]\nFound 1 error in 1 file (checked 1 source file)\n\n",
+        "policy_old": "<string>:3: error: Incompatible types in assignment (expression has type \"Type[Any]\", variable has type \"int\")  [assignment]\nFound 1 error in 1 file (checked 1 source file)\n\n",
+        "public_regression": "============================= test session starts ==============================\nplatform linux -- Python 3.11.9, pytest-8.3.2, pluggy-1.5.0\nrootdir: /testbed\nconfigfile: pytest.ini\nplugins: xdist-3.6.1, forked-1.6.0, cov-5.0.0\ncollected 6352 items / 6346 deselected / 6 selected\n\nmypy/test/testcheck.py ......                                            [100%]\n\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-lowercase.test::testTupleLowercaseSettingOff\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-lowercase.test::testTupleLowercaseSettingOn\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-lowercase.test::testListLowercaseSettingOff\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-lowercase.test::testListLowercaseSettingOn\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-classes.test::testTypeUsingTypeCTypeAnyMember\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-classes.test::testTypeUsingTypeCTypeAnyMemberFallback\n====================== 6 passed, 6346 deselected in 0.53s ======================\n\n"
+      },
+      "preparation": [],
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      },
+      "identity_limit": "git apply rc and source import path observed; applied whole-file SHA not exported in this private run"
+    },
+    "gold": {
+      "command_rc": {
+        "identity_import": 0,
+        "issue_original": 1,
+        "policy_modern": 1,
+        "policy_force": 1,
+        "policy_old": 1,
+        "public_regression": 0
+      },
+      "captures": {
+        "identity_import": "uid=0(root) gid=0(root) groups=0(root)\n/testbed\n16b936c15b074db858729ed218248ef623070e03\n M mypy/messages.py\nPYTHON /opt/miniconda3/envs/testbed/bin/python 3.11.9 (main, Apr 19 2024, 16:48:06) [GCC 11.2.0]\nMYPY_VERSION 1.4.0+dev.16b936c15b074db858729ed218248ef623070e03.dirty\nmypy /testbed/mypy/__init__.py\nmypy.messages /testbed/mypy/messages.py\nmypy.types /testbed/mypy/types.py\n\n",
+        "issue_original": "<string>:2: note: Revealed type is \"Type[builtins.type]\"\n<string>:3: error: Value of type \"type[type]\" is not indexable  [index]\n<string>:3: note: Revealed type is \"Any\"\nFound 1 error in 1 file (checked 1 source file)\n\n",
+        "policy_force": "<string>:3: error: Incompatible types in assignment (expression has type \"Type[Any]\", variable has type \"int\")  [assignment]\nFound 1 error in 1 file (checked 1 source file)\n\n",
+        "policy_modern": "<string>:3: error: Incompatible types in assignment (expression has type \"type[Any]\", variable has type \"int\")  [assignment]\nFound 1 error in 1 file (checked 1 source file)\n\n",
+        "policy_old": "<string>:3: error: Incompatible types in assignment (expression has type \"Type[Any]\", variable has type \"int\")  [assignment]\nFound 1 error in 1 file (checked 1 source file)\n\n",
+        "public_regression": "============================= test session starts ==============================\nplatform linux -- Python 3.11.9, pytest-8.3.2, pluggy-1.5.0\nrootdir: /testbed\nconfigfile: pytest.ini\nplugins: xdist-3.6.1, forked-1.6.0, cov-5.0.0\ncollected 6352 items / 6346 deselected / 6 selected\n\nmypy/test/testcheck.py ......                                            [100%]\n\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-lowercase.test::testTupleLowercaseSettingOff\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-lowercase.test::testTupleLowercaseSettingOn\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-lowercase.test::testListLowercaseSettingOff\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-lowercase.test::testListLowercaseSettingOn\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-classes.test::testTypeUsingTypeCTypeAnyMember\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-classes.test::testTypeUsingTypeCTypeAnyMemberFallback\n====================== 6 passed, 6346 deselected in 0.60s ======================\n\n"
+      },
+      "preparation": [
+        {
+          "step": "git apply /in/gold.patch",
+          "rc": 0
+        }
+      ],
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      },
+      "identity_limit": "git apply rc and source import path observed; applied whole-file SHA not exported in this private run"
+    },
+    "unconditional_lowercase": {
+      "command_rc": {
+        "identity_import": 0,
+        "issue_original": 1,
+        "policy_modern": 1,
+        "policy_force": 1,
+        "policy_old": 1,
+        "public_regression": 1
+      },
+      "captures": {
+        "identity_import": "uid=0(root) gid=0(root) groups=0(root)\n/testbed\n16b936c15b074db858729ed218248ef623070e03\n M mypy/messages.py\nPYTHON /opt/miniconda3/envs/testbed/bin/python 3.11.9 (main, Apr 19 2024, 16:48:06) [GCC 11.2.0]\nMYPY_VERSION 1.4.0+dev.16b936c15b074db858729ed218248ef623070e03.dirty\nmypy /testbed/mypy/__init__.py\nmypy.messages /testbed/mypy/messages.py\nmypy.types /testbed/mypy/types.py\n\n",
+        "issue_original": "<string>:2: note: Revealed type is \"Type[builtins.type]\"\n<string>:3: error: Value of type \"type[type]\" is not indexable  [index]\n<string>:3: note: Revealed type is \"Any\"\nFound 1 error in 1 file (checked 1 source file)\n\n",
+        "policy_force": "<string>:3: error: Incompatible types in assignment (expression has type \"type[Any]\", variable has type \"int\")  [assignment]\nFound 1 error in 1 file (checked 1 source file)\n\n",
+        "policy_modern": "<string>:3: error: Incompatible types in assignment (expression has type \"type[Any]\", variable has type \"int\")  [assignment]\nFound 1 error in 1 file (checked 1 source file)\n\n",
+        "policy_old": "<string>:3: error: Incompatible types in assignment (expression has type \"type[Any]\", variable has type \"int\")  [assignment]\nFound 1 error in 1 file (checked 1 source file)\n\n",
+        "public_regression": "============================= test session starts ==============================\nplatform linux -- Python 3.11.9, pytest-8.3.2, pluggy-1.5.0\nrootdir: /testbed\nconfigfile: pytest.ini\nplugins: xdist-3.6.1, forked-1.6.0, cov-5.0.0\ncollected 6352 items / 6346 deselected / 6 selected\n\nmypy/test/testcheck.py ....F.                                            [100%]\n\n=================================== FAILURES ===================================\n_______________________ testTypeUsingTypeCTypeAnyMember ________________________\ndata: /testbed/test-data/unit/check-classes.test:3377:\nFailed: Unexpected type checker output (/testbed/test-data/unit/check-classes.test, line 3377)\n----------------------------- Captured stderr call -----------------------------\nExpected:\n  main:6: note: Revealed type is \"Any\"\n  main:8: error: Incompatible types in assignment (expression has type \"Type[Any]\", variable has type \"int\") (diff)\nActual:\n  main:6: note: Revealed type is \"Any\"\n  main:8: error: Incompatible types in assignment (expression has type \"type[Any]\", variable has type \"int\") (diff)\n\nAlignment of first line difference:\n  E: ...xpression has type \"Type[Any]\", variable has type \"int\")\n  A: ...xpression has type \"type[Any]\", variable has type \"int\")\n                            ^\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-lowercase.test::testTupleLowercaseSettingOff\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-lowercase.test::testTupleLowercaseSettingOn\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-lowercase.test::testListLowercaseSettingOff\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-lowercase.test::testListLowercaseSettingOn\nPASSED mypy/test/testcheck.py::TypeCheckSuite::check-classes.test::testTypeUsingTypeCTypeAnyMemberFallback\nFAILED mypy/test/testcheck.py::TypeCheckSuite::check-classes.test::testTypeUsingTypeCTypeAnyMember\n================= 1 failed, 5 passed, 6346 deselected in 0.54s =================\n\n"
+      },
+      "preparation": [
+        {
+          "step": "git apply /in/unconditional_lowercase.patch",
+          "rc": 0
+        }
+      ],
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      },
+      "identity_limit": "git apply rc and source import path observed; applied whole-file SHA not exported in this private run"
+    }
+  },
+  "formal": {
+    "status": "not_reviewed_in_progress",
+    "reward": null,
+    "reference_f2p": [
+      "mypy/test/testcheck.py::TypeCheckSuite::check-lowercase.test::testTypeLowercaseSettingOff"
+    ],
+    "reference_p2p": []
+  },
+  "limitations": [
+    "Private root behavior is not actor qualification",
+    "Private runs record patch apply/import paths but not complete applied-source SHA; await formal frozen export identity",
+    "Original CLI still mixes Type and type under gold; public alias choice/disambiguation boundary unresolved",
+    "No source test/material revision; no unconditional comparison or training eligibility"
+  ],
+  "pending": [
+    "Complete formal noop/gold/unconditional_lowercase export, install/test RC, every reference, full logs and cleanup",
+    "Compare formal frozen source bytes with input patches and private behavior basis",
+    "Independent review and root parser/transport confirmation",
+    "Resolve original public display scope before accepting full repair; D6 implementation remains unimplemented"
+  ],
+  "actor_build": {
+    "name": "cpu29_actor_python_mypy_15139_v1",
+    "instance_id": "python__mypy-15139",
+    "image": "xingyaoww/sweb.eval.x86_64.python_s_mypy-15139@sha256:a41d688fba76599fcc2bfbfbfe580e864c0c4c6a8ee6ce7edec9b83b34bd0037",
+    "python": "/opt/miniconda3/envs/testbed/bin/python",
+    "pins": [
+      "setuptools==72.1.0",
+      "wheel==0.43.0",
+      "typing-extensions==4.12.2",
+      "mypy-extensions==1.0.0",
+      "tomli==2.0.1",
+      "types-psutil==6.0.0.20240621",
+      "types-setuptools==74.0.0.20240830",
+      "types-typed-ast==1.5.8.7",
+      "packaging==24.1"
+    ],
+    "expected_wheels": {
+      "tomli-2.0.1-py3-none-any.whl": "939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc",
+      "packaging-24.1-py3-none-any.whl": "5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124",
+      "wheel-0.43.0-py3-none-any.whl": "55c570405f142630c6b9f72fe09d9b67cf1477fcf543ae5b8dcb1f5b7377da81",
+      "types_psutil-6.0.0.20240621-py3-none-any.whl": "b02f05d2c4141cd5926d82d8b56e4292a4d8f483d8a3400b73edf153834a3c64",
+      "typing_extensions-4.12.2-py3-none-any.whl": "04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d",
+      "setuptools-72.1.0-py3-none-any.whl": "5a03e1860cf56bb6ef48ce186b0e557fdba433237481a9a625176c2831be15d1",
+      "types_typed_ast-1.5.8.7-py3-none-any.whl": "97bdd9b4228f96c6904a76e10a050305ddadb529bd35e4d8234711e09c41b543",
+      "mypy_extensions-1.0.0-py3-none-any.whl": "4392f6c0eb8a5668a69e23d168ffa70f0be9ccfd32b5cc2d26a34ae5b844552d",
+      "types_setuptools-74.0.0.20240830-py3-none-any.whl": "3ccb05f218012b6d1643f15c3395fced6a290a32bc49338b0e93ece73585a5a2"
+    },
+    "basis": "公开开发依赖对齐历史有效 grader 条件；只安装第三方依赖，不修改 /testbed 代码。",
+    "base_id": "sha256:d086e512d094e2790867fe5a30333e43defc76ae59709b9f0aff8ae7d26670b1",
+    "tag": "rh2-task2/cpu29_actor_python_mypy_15139_v1:20260925",
+    "image_id": "sha256:6f59c19c80626a6a4ea88286b128cd4754f821b3816eeb7364283b50423a51e8",
+    "base_layers_preserved": true,
+    "wheels": {
+      "mypy_extensions-1.0.0-py3-none-any.whl": "4392f6c0eb8a5668a69e23d168ffa70f0be9ccfd32b5cc2d26a34ae5b844552d",
+      "packaging-24.1-py3-none-any.whl": "5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124",
+      "setuptools-72.1.0-py3-none-any.whl": "5a03e1860cf56bb6ef48ce186b0e557fdba433237481a9a625176c2831be15d1",
+      "tomli-2.0.1-py3-none-any.whl": "939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc",
+      "types_psutil-6.0.0.20240621-py3-none-any.whl": "b02f05d2c4141cd5926d82d8b56e4292a4d8f483d8a3400b73edf153834a3c64",
+      "types_setuptools-74.0.0.20240830-py3-none-any.whl": "3ccb05f218012b6d1643f15c3395fced6a290a32bc49338b0e93ece73585a5a2",
+      "types_typed_ast-1.5.8.7-py3-none-any.whl": "97bdd9b4228f96c6904a76e10a050305ddadb529bd35e4d8234711e09c41b543",
+      "typing_extensions-4.12.2-py3-none-any.whl": "04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d",
+      "wheel-0.43.0-py3-none-any.whl": "55c570405f142630c6b9f72fe09d9b67cf1477fcf543ae5b8dcb1f5b7377da81"
+    },
+    "files_sha256": {},
+    "freeze_removed": [],
+    "freeze_added": [],
+    "pip_check_rc": 0,
+    "pip_check": "No broken requirements found.\n",
+    "worktree_after": "HEAD=16b936c15b074db858729ed218248ef623070e03\nPORCELAIN_RC=0\n"
+  },
+  "grader_build": {
+    "style": "install_wave1",
+    "base_image": "xingyaoww/sweb.eval.x86_64.python_s_mypy-15139@sha256:a41d688fba76599fcc2bfbfbfe580e864c0c4c6a8ee6ce7edec9b83b34bd0037",
+    "base_id": "sha256:d086e512d094e2790867fe5a30333e43defc76ae59709b9f0aff8ae7d26670b1",
+    "base_repo_digests": [
+      "xingyaoww/sweb.eval.x86_64.python_s_mypy-15139@sha256:a41d688fba76599fcc2bfbfbfe580e864c0c4c6a8ee6ce7edec9b83b34bd0037"
+    ],
+    "historical_base_id": "sha256:d086e512d094e2790867fe5a30333e43defc76ae59709b9f0aff8ae7d26670b1",
+    "base_id_matches_history": true,
+    "tag": "rh2-baseprobe/install-wave1-python__mypy-15139:20260929-followups-v1",
+    "image_id": "sha256:cd4daa3006893bd929df21e8174f709049c754926f897eb5630e51524275fccb",
+    "recipe": "ARG BASE_IMAGE\nFROM ${BASE_IMAGE}\nCOPY wheels/ /opt/rh2/build-wheels/\nENV PIP_NO_INDEX=1 PIP_FIND_LINKS=/opt/rh2/build-wheels\n",
+    "base_layers_preserved": true,
+    "wheels": {
+      "mypy_extensions-1.0.0-py3-none-any.whl": "4392f6c0eb8a5668a69e23d168ffa70f0be9ccfd32b5cc2d26a34ae5b844552d",
+      "packaging-24.1-py3-none-any.whl": "5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124",
+      "setuptools-72.1.0-py3-none-any.whl": "5a03e1860cf56bb6ef48ce186b0e557fdba433237481a9a625176c2831be15d1",
+      "tomli-2.0.1-py3-none-any.whl": "939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc",
+      "types_psutil-6.0.0.20240621-py3-none-any.whl": "b02f05d2c4141cd5926d82d8b56e4292a4d8f483d8a3400b73edf153834a3c64",
+      "types_setuptools-74.0.0.20240830-py3-none-any.whl": "3ccb05f218012b6d1643f15c3395fced6a290a32bc49338b0e93ece73585a5a2",
+      "types_typed_ast-1.5.8.7-py3-none-any.whl": "97bdd9b4228f96c6904a76e10a050305ddadb529bd35e4d8234711e09c41b543",
+      "typing_extensions-4.12.2-py3-none-any.whl": "04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d",
+      "wheel-0.43.0-py3-none-any.whl": "55c570405f142630c6b9f72fe09d9b67cf1477fcf543ae5b8dcb1f5b7377da81"
+    },
+    "expected_wheel_mismatch": {},
+    "pins": [
+      "setuptools==72.1.0",
+      "wheel==0.43.0",
+      "typing-extensions==4.12.2",
+      "mypy-extensions==1.0.0",
+      "tomli==2.0.1",
+      "types-psutil==6.0.0.20240621",
+      "types-setuptools==74.0.0.20240830",
+      "types-typed-ast==1.5.8.7",
+      "packaging==24.1"
+    ]
+  },
+  "cpu_setup_budget": {
+    "instance_id": "python__mypy-15139",
+    "before": 300.0,
+    "after": 900.0,
+    "test_seconds_unchanged": 1800.0,
+    "scope": "CPU host preparation/reset/observation budget only; whole-grading CLI deadline independent",
+    "reason": "observed overlay2 metacopy=N prefix chown preparation timeout; no kernel or permission change"
+  },
+  "observed_input_sha256": {
+    "actor_build_plan.json": "c5d3eb847c50a51d3d8d28b03c0ca7d5d77e77ce07b4779753aa2b75c8adcd7b",
+    "gold.patch": "581a925ac3731600ced8561881f41bf083dd569b192dad1ce1f5370c88c9cfc5",
+    "grader_build_plan.json": "ea1e6654dc55d45940404d1407f2e8f00e4a09cf6e519ec7932c4066584659e3",
+    "grader_install_recipe.json": "6222f0cca020e9113a9a38e357d3be6f6d6aa3d290ee3d4e203db8d757167740",
+    "historical_image.json": "0232c087ce4e840acde5ac6210d5ea3c8ba58a98043e8c8d6bde62db066d2ad1",
+    "private_semantic_spec.template.json": "b3862adb7a4e601120a5ae025d049dea02dd0443c94737922c8a0e9f83123673",
+    "public_commands.json": "2052dde6ed7a01491cf7dbecd7cb06008a7a1733fe4fd96e55bec5ccb8f7d764",
+    "unconditional_lowercase.patch": "029eb13736037ea83f19f32c72c731c305b56e56aff61bd620fdec450d19a0b0"
+  },
+  "evidence_sha256": {
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/actor_original/attempt.json": "a7e2513101c3020b3787f1da3112dcf57b8f1617bc727eac2cc15060eef70147",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/actor_original/activation_check.json": "24491293f76b69d3ef7ed14e503fc8cd0184fc03771e3e85eefdb3c6e4c36eac",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/actor_original/prelaunch.json": "0e01c23d26acb6016058d20a3041cb73a14d9371eebad87cec1c37374fe123dc",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/actor_original/captures/identity_import.out": "6016f2822eeb3c9a55bb4fa841dfa9fd6f71985b9f21cd9cce34979e847c868d",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/actor_original/captures/issue_original.out": "83ceffc7865a5d4a1d887ee819cd18e7b7c2d11c3b8806d5accabf746e4c281c",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/actor_original/captures/policy_force.out": "5cd5853242b7b0e27994c9cab3eb706a3abf23e854e161c5087289288678ad21",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/actor_original/captures/policy_modern.out": "5cd5853242b7b0e27994c9cab3eb706a3abf23e854e161c5087289288678ad21",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/actor_original/captures/policy_old.out": "5cd5853242b7b0e27994c9cab3eb706a3abf23e854e161c5087289288678ad21",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/actor_original/captures/public_regression.out": "b3d3049c583f90d160cf2b27922ca9eea07719ce15beee8abd9dacaef3c73d67",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/actor_revised/attempt.json": "fe38a6816b9c8beacb1ec88177ca5147b75c804a24613ebe97cfe4e4ffe276d7",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/actor_revised/activation_check.json": "c24bb1acb806810220d9e0b2ee0ae503078e1c5a0df7e4c627b16641ea87c3f6",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/actor_revised/prelaunch.json": "7fde8c82cccdfc208b0f5ff6d040d5f3702188f5fe5809f65d4446747fab5f5a",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/actor_revised/captures/identity_import.out": "6016f2822eeb3c9a55bb4fa841dfa9fd6f71985b9f21cd9cce34979e847c868d",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/actor_revised/captures/issue_original.out": "83ceffc7865a5d4a1d887ee819cd18e7b7c2d11c3b8806d5accabf746e4c281c",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/actor_revised/captures/policy_force.out": "5cd5853242b7b0e27994c9cab3eb706a3abf23e854e161c5087289288678ad21",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/actor_revised/captures/policy_modern.out": "5cd5853242b7b0e27994c9cab3eb706a3abf23e854e161c5087289288678ad21",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/actor_revised/captures/policy_old.out": "5cd5853242b7b0e27994c9cab3eb706a3abf23e854e161c5087289288678ad21",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/actor_revised/captures/public_regression.out": "609d33a75a4e9ddd181697d924a316b60557ee248634abff3b637c4b77317717",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior/base_run/base/matrix.out": "2ed01f84a17357fccbd314b5396b1463be7355b78c70099440a9421986441714",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior_base_spec.json": "d4f914d93b541d902d7eb5a0dc9dba91639976e17932db568596cf29cd12790d",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior/base_run/summary.json": "5d55da4ea51b83fa5a28125f70e5308dc4e4f488b2df3b46295b5c95acf27f4c",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior/base/identity_import.out": "76bd9bc3fd751c34c31b9c889bd646223624d43851f07c9c90e35c0a1c70022f",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior/base/issue_original.out": "6ff2a2e7b77ea5e96663a16a78ac613a6769967071c152fdda206130101aac10",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior/base/policy_force.out": "e1b0cdc527eb6843262adff219bf0010bebdd6cb17937adab67282591c428fbb",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior/base/policy_modern.out": "e1b0cdc527eb6843262adff219bf0010bebdd6cb17937adab67282591c428fbb",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior/base/policy_old.out": "e1b0cdc527eb6843262adff219bf0010bebdd6cb17937adab67282591c428fbb",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior/base/public_regression.out": "150f0456075195869dc5a3d5f68028892bd7a1fa50359b171fde8fa20a1e5938",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior/gold_run/gold/matrix.out": "673b0ed35d6cdec32a00381e4ed9731b75c4db9d83e41e20c01d094e5b3560cc",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior_gold_spec.json": "46f37aaa27d7b98bd0af63e6eec4305e5284d7fe83058516cb10e4057c858c6d",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior/gold_run/summary.json": "d2b036a195282d0d766de01dfd73486cadaa1def185ec095905de7b40a69c65f",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior/gold/identity_import.out": "86165f75f51ffc86e124c36630d6c51e7e85b48449ba39241a639c7bd2735855",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior/gold/issue_original.out": "54f3f78dc8526f09f0623be6bbd8c6f7ef5c5a50636d974202b2278269442f8d",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior/gold/policy_force.out": "e1b0cdc527eb6843262adff219bf0010bebdd6cb17937adab67282591c428fbb",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior/gold/policy_modern.out": "e75ab4e3fe0bb94c5f81836e441a9e4ee0483c35c8c5540cb4191f20d21ddb00",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior/gold/policy_old.out": "e1b0cdc527eb6843262adff219bf0010bebdd6cb17937adab67282591c428fbb",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior/gold/public_regression.out": "52d3accefc38489d68868f6408979ec61e641a1b42eefd7475954dad2be3a636",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior/unconditional_lowercase_run/unconditional_lowercase/matrix.out": "2c65f65739926eaf8519f2b9155ca1eba330003f94915703797f2745f88bced7",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior_unconditional_lowercase_spec.json": "ed30ce91a90f7cd029f11a09f7a44969fb483ac535ab33cadc377a053c0acf17",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior/unconditional_lowercase_run/summary.json": "be826c22c4ba76adae329e8f487a6fb96a70be1d79f5a861cc7a8e2a0fde0f9e",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior/unconditional_lowercase/identity_import.out": "86165f75f51ffc86e124c36630d6c51e7e85b48449ba39241a639c7bd2735855",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior/unconditional_lowercase/issue_original.out": "54f3f78dc8526f09f0623be6bbd8c6f7ef5c5a50636d974202b2278269442f8d",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior/unconditional_lowercase/policy_force.out": "e75ab4e3fe0bb94c5f81836e441a9e4ee0483c35c8c5540cb4191f20d21ddb00",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior/unconditional_lowercase/policy_modern.out": "e75ab4e3fe0bb94c5f81836e441a9e4ee0483c35c8c5540cb4191f20d21ddb00",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior/unconditional_lowercase/policy_old.out": "e75ab4e3fe0bb94c5f81836e441a9e4ee0483c35c8c5540cb4191f20d21ddb00",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/private_behavior/unconditional_lowercase/public_regression.out": "06e6387be92789de8c869596a2aceac1e901c059f51306a59d6940733c7fa0c3",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/actor_build/cpu29_actor_python_mypy_15139_v1/image.json": "e260562d9a104e007b072d821ff2339cf1cbb0683ce93db6d977558efda7f041",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/grader_build/python__mypy-15139/image.json": "1ee8002dec341c9899d43d25470651097ebb1146d79fcd99f628d4192e977619",
+    "runs/swegym_cpu_preprobe_20260929/remote/results/python__mypy-15139/followups_v1/noop/budget/python__mypy-15139.json": "885faf14de92cfbfba032ebefebceaf54eb25d1f1491c7ba11425a6421700bab"
+  }
+}

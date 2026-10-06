@@ -1,0 +1,8 @@
+{
+  "instance_id": "modin-project__modin-5940",
+  "original_install": "python -m pip install -e .;",
+  "revised_install": "python -I -m pip install --no-index --find-links=/opt/rh2/compat-wheels --no-deps moto==4.2.14 || exit $?\npython -m pip install -e .;",
+  "test_timeout_seconds": 3600,
+  "decision": "E22",
+  "reason": "Restore original moto_server s3 CLI with Moto4.2.14, verified candidate-UID local S3 roundtrip. Original tests/refs unchanged; stale external asset/xfail issue remains independent."
+}

@@ -1,0 +1,245 @@
+{
+  "schema_id": "category2.orange.qwen_first_owner_analysis.v1",
+  "created_at": "2026-10-03T03:33:15.630822+00:00",
+  "owner_thread_id": "01a0fd63-ef54-7691-87db-e5124474f714",
+  "task_id": "r2e_gym_subset::orange3__4014f2483e3bab0621c9ae0f994947c008183253",
+  "job_id": "gpu1003-orange4014-qwen36-a1",
+  "model": "Qwen/Qwen3.6-35B-A3B",
+  "request_id": "r2e-orange4014-r089-cpu-native-sysconfig-v1-20261003",
+  "author_complete": true,
+  "new_behavior_independent_review_complete": false,
+  "reused_original_execution_and_semantic_review": true,
+  "required_new_material_or_consumer_fixes": [],
+  "seven_dimensions": {
+    "method": {
+      "verdict": "source_mechanism_and_original_formal_score_support_public_requirement",
+      "only_source_edit_count": 1,
+      "evidence_lines": [
+        137,
+        151,
+        201,
+        205,
+        219,
+        223
+      ]
+    },
+    "localization": {
+      "prompt_already_provides_location_and_development_hints": true,
+      "earliest_source_grounded_hypothesis_line": 63,
+      "earliest_reproduction_result_line": 75,
+      "corrective_feedback": "thinking109 incorrectly attributes printed equal values to distribution rounding; repr117 and thinking123 correct; midpoint131 confirms duplicate thresholds",
+      "event_times_are_generation_plus_tool_roundtrip": true
+    },
+    "tools": {
+      "count": 26,
+      "by_name": {
+        "Bash": 21,
+        "Read": 4,
+        "Edit": 1
+      },
+      "tool_errors": [
+        {
+          "call": 71,
+          "result": 75
+        }
+      ],
+      "observed_hidden_or_network_channel": false,
+      "test_or_control_modification": false
+    },
+    "parallel": {
+      "max_tools_per_assistant_message": 1,
+      "first_batch_two_independent_tools": false,
+      "actual_overlap_observed": null,
+      "parallel_ability_evaluated": false,
+      "reason": "call timestamps absent; result timestamps alone do not establish overlap"
+    },
+    "validation": {
+      "original_frozen_patch_scored": true,
+      "formal_score": {
+        "reward": 1,
+        "expected_matched": 27,
+        "expected_total": 27,
+        "test_rc": 0
+      },
+      "installation_skipped": true,
+      "installation_rc": null,
+      "extension_path_directly_printed": false,
+      "independent_source_only_rebuild": false,
+      "model_custom_tests": "ordinary/low-distinct/100to4 asserts;315 normal n<llen print and329 mixed numeric assertion are not precision-failing before/after for that branch;385 comparisons only printed",
+      "pipefail_missing_for_piped_pytest": true
+    },
+    "efficiency": {
+      "timing_and_usage": {
+        "solve_seconds": 86.681,
+        "CC_total_seconds": 83.279,
+        "CC_API_seconds": 65.0,
+        "CC_turns": 27,
+        "gateway_generations": 27,
+        "all_http_requests": 28,
+        "usage": {
+          "input_tokens": 641074,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "output_tokens": 10290,
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "",
+          "iterations": [],
+          "speed": "standard"
+        },
+        "actor_preparation_timings": {
+          "image_ready": 0.02,
+          "network_and_container": 1.257,
+          "git_sanitize": 12.425,
+          "trusted_init": 203.903,
+          "baseline_census": 1.359,
+          "quiescence": 2.629
+        },
+        "formal_grader_timings": {
+          "schema_id": "rh2.grading_timing_record.v1",
+          "record_id": "timing_51137f1f",
+          "trajectory_id": "gpu1003-orange4014-qwen36-a1",
+          "task_id": "r2e_gym_subset::orange3__4014f2483e3bab0621c9ae0f994947c008183253",
+          "image_pull_seconds": 0.0,
+          "env_reset_seconds": 13.123,
+          "prep_seconds": 1.59,
+          "test_seconds": 2.471,
+          "total_grading_seconds": 199.618,
+          "queue_wait_seconds": 0.0,
+          "container_peak_memory_mb": 2073.328,
+          "queue_depth_at_enqueue": null,
+          "backpressure_triggered": false
+        },
+        "formal_grader_phases": null,
+        "whole_dispatched_job_seconds": 529.055722,
+        "queue_wait_before_dispatch": null,
+        "first_generation_request_unix": 1790995363.206074
+      },
+      "single_generation_max_input": 34247,
+      "single_generation_max_output": 1279,
+      "pure_tool_seconds": null,
+      "observed_redundancy": "repeated consideration of patch location/deduplication; final source Read and second full26 test without source change",
+      "estimated_saved_seconds": null
+    },
+    "termination_and_stability": {
+      "termination": "completed",
+      "budget_truncation_observed": false,
+      "qwen_completion": {
+        "completed": 1,
+        "attempted": 1
+      },
+      "qwen_semantic_supported": {
+        "supported": 1,
+        "completed": 1
+      },
+      "coder": {
+        "completed": 0,
+        "planned": 1,
+        "status": "pending_not_failed"
+      },
+      "stable_ability_evaluated": false,
+      "paired_first_round_complete": false
+    }
+  },
+  "evidence_refs": {
+    "author_md": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/4014f248/probe_qwen_first_analysis_20261003.md",
+      "sha256": "sha256:02d18e3234322e24461ccd92938de405813a364a5b6191cf06d4f61c00eecdd1",
+      "bytes": 11394
+    },
+    "author_evidence": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/q15_orange50_4014_qwen_first_author_evidence_v1.json",
+      "sha256": "sha256:a128bdc798a59159fadd1b7b4965ca4add9a2c7cd96598986e05da354cd440f2",
+      "bytes": 334065
+    },
+    "original_independent_review": {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/q15_orange4014_qwen36_a1_execution_semantic_review_v1.json",
+      "sha256": "sha256:12bf75a1d0b4939886dde2bb1695b6bfcacb07a5e43cb5c1e0676652a745d613",
+      "bytes": 198797
+    },
+    "closed_manifest": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/gpu1003-orange4014-qwen36-a1_closed_manifest_v1.json",
+      "sha256": "sha256:41fde8e329042f62f22eb14f58795c4d987d49ecc3ce40a58f6e52fd56a8e8d9",
+      "bytes": 17697
+    },
+    "attempt": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v15/results/gpu1003-orange4014-qwen36-a1/attempt/attempt.json",
+      "sha256": "sha256:b128b95073a5d4406f9f6b6d48c643445ec21cf4a7d65946b89a49a2beeee20a",
+      "bytes": 19896
+    },
+    "trajectory": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v15/results/gpu1003-orange4014-qwen36-a1/attempt/harness/trajectory.jsonl",
+      "sha256": "sha256:b5ae2114fdb81e0128f166d292db0223594acb58dd52e6c28c3cf1e5a9bf77f5",
+      "bytes": 311594
+    },
+    "frozen_patch": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v15/results/gpu1003-orange4014-qwen36-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "sha256:b11d6d63aa98eebb201443c030fcf35a9023afc3ef22c5f94aeec36d5f078280",
+      "bytes": 1704343
+    },
+    "baseline_tar": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v15/results/gpu1003-orange4014-qwen36-a1/attempt/frozen/baseline.tar",
+      "sha256": "sha256:30c686f37404035b838d6c3d373da374424f8cdd4638d3a500e2f86b0a36d59b",
+      "bytes": 68526080
+    },
+    "result": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v15/results/gpu1003-orange4014-qwen36-a1/result.json",
+      "sha256": "sha256:00dccf3afba6311c622c14ab29e8d8d3d450ca68c8b9d1d01381fff0046a7085",
+      "bytes": 2692
+    },
+    "prompt": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v15/results/gpu1003-orange4014-qwen36-a1/solver_prompt.txt",
+      "sha256": "sha256:a277e518ddfa7fe3514c35841eebfd735358e87c032d14365aee45d92ebde53e",
+      "bytes": 3353
+    },
+    "gateway": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v13/qwen36/gateway/gpu1003-orange4014-qwen36-a1/requests.jsonl",
+      "sha256": "sha256:80119a7ffc4ed222028a5767f2e722ac713fb016143b79b6e62b08e6f27eaf8c",
+      "bytes": 2240953
+    },
+    "terminal_snapshot": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/gpu1003-orange4014-qwen36-a1_terminal_snapshot_v1.json",
+      "sha256": "sha256:160e8e99fe65e357e2ca62b89bce43423788dc05ea981f92cda39c4dff73c790",
+      "bytes": 13536
+    }
+  },
+  "verified_closed_file_count": 89,
+  "verified_closed_bytes": 81147426,
+  "actual_source_binding": {
+    "code_manifest_sha256": "sha256:e3a33fd824021b75c9ed32fe7a82800f4158bfcf5d5a9d0ca8a8329380716469",
+    "entry_sha256": "sha256:a1efff44dc2cbedfc81d93b2da8d84a92f6c9c88b15c2a10bf96db2026a4e82c",
+    "actor_actual_id": "sha256:255669f41a10dcf6a8c4fae6f121532da65d4f68cec5b53930b4f609e89624df",
+    "source_actual_id": "sha256:1a659146d6947ada9f152e97e8f2e17be70f471fda962833facc666450c6990d",
+    "grader_pinned_identity": "local_build:sha256:255669f41a10dcf6a8c4fae6f121532da65d4f68cec5b53930b4f609e89624df",
+    "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+    "revision": [
+      "r2e-mr-089"
+    ]
+  },
+  "actual_budget": {
+    "version": "probe-wide-v1",
+    "max_context_len": 196608,
+    "max_new_tokens": 65536,
+    "max_turns": 240,
+    "wall_seconds": 10800,
+    "max_requests_per_session": 1024,
+    "first_byte_timeout_seconds": 1800,
+    "adapter_idle_drop_seconds": 14400
+  },
+  "limits": [
+    "Qwen来源绑定沿本次作业前实际capture、固定revision `995ad96eacd98c81ed38be0c5b274b04031597b0`、只读模型mount及下载manifest（SHA `32bd30f61860366b3783eabc9d75bee0cd28c474d9c07de8be8d9ae60a4552ab`），不是物理GPU权重证明。HTTP revision/checksum为null、weight_version默认，无逐POST engine/权重attestation；manifest宣称40但列37文件的局限保留。",
+    "资源只有约15秒有限宿主样本，有CPU throttle，不证明完整峰值、最低内存或全程无干扰；退出容器的无效内存样本不能读作0。原schema的env_qualification缺失、material identity/revision部分为null，本轮用外部固定材料/运行证据关联，不能冒称typed训练合同已接通。gateway first-byte 1800与common.py sock_read 900不同，不证明全链1800边界。本次用途为题目/环境和基座修法诊断，不授予训练或留出资格。"
+  ],
+  "paired_request_complete": false,
+  "request_should_remain_claimed": true,
+  "active_request_should_remain": true,
+  "training_or_holdout_qualification_granted": false,
+  "no_new_project_or_model_execution": true
+}

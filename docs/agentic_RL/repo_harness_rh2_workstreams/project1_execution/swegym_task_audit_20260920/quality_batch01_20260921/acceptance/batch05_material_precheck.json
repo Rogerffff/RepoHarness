@@ -1,0 +1,50 @@
+{
+  "checked_at": "2026-09-21T07:05:49.994541+08:00",
+  "result": "passed",
+  "manifest_sha256": "ea9421d30ba7bbf9078dc42967f8f5eaa7cc0554a7db19b6aa85bb48d1be9174",
+  "tasks": [
+    "python__mypy-11707",
+    "getmoto__moto-5406"
+  ],
+  "source_rows": 6,
+  "prompts_byte_identical": 2,
+  "historical_log_refs": [
+    {
+      "task": "python__mypy-11707",
+      "candidate": "gold",
+      "log": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11707/gold/eval_logs/evallog_replay-er19-iw1-python___bab5562a.eval.log",
+      "sha256": "e4aeeba767741438779a16c3ca753049183bd412e2dfa822374bf771098603c0"
+    },
+    {
+      "task": "python__mypy-11707",
+      "candidate": "noop",
+      "log": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11707/noop/eval_logs/evallog_replay-er19-iw1-python___521f6047.eval.log",
+      "sha256": "231d81906905f1f462e655a8b9f534153b9ecd1ca0c66611b17a14fc11ab37e1"
+    },
+    {
+      "task": "getmoto__moto-5406",
+      "candidate": "noop",
+      "log": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/eval_logs/evallog_replay-f216-baseline01-w_390d6d0a.eval.log",
+      "sha256": "638770be004f76b18eb6a7282a74ed9067f6ba144b94823b19b064aec78e0cd5"
+    },
+    {
+      "task": "getmoto__moto-5406",
+      "candidate": "gold",
+      "log": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/eval_logs/evallog_replay-f216-baseline01-w_c94b9e6b.eval.log",
+      "sha256": "d7b295655202fa21a634d4da33269d0f6265ff81ccc678b2ba78f57a50f53b9f"
+    }
+  ],
+  "environment_file_count": 36,
+  "prior_excluded_task_count": 38,
+  "eligible_pool_counts": {
+    "python/mypy": 30,
+    "getmoto/moto": 52
+  },
+  "base_verification": "reuse helper material_check: 3426 blobs; root did not repeat full export",
+  "verification_note": "Initial root check assumed ledger candidate string; inspected schema and corrected to candidate.kind. No source mismatch found.",
+  "limitations": [
+    "Moto Terraform gitlink commit only; assess relevance",
+    "Moto baseline actual image ID unknown",
+    "no project/runtime execution"
+  ]
+}

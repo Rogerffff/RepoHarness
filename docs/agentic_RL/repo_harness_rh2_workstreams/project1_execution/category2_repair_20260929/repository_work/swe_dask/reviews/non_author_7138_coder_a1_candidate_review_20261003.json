@@ -1,0 +1,541 @@
+{
+  "schema": "non_author_coder_candidate_review.v1",
+  "review_date": "2026-10-03",
+  "task_id": "swe_gym_lite::dask__dask-7138",
+  "attempt_id": "gpu1003-dask7138-coder-a1",
+  "reviewer_role": "non-author independent reviewer",
+  "context_disclosure": {
+    "reused_existing_reviewer_context": true,
+    "prior_context": [
+      "Dask7656 first Coder semantic review",
+      "Dask7305 same-FP CPU recovery review",
+      "Dask9378 first Coder semantic and same-FP CPU recovery reviews"
+    ],
+    "this_task_first_seen_in_this_review": true,
+    "authored_candidate_or_formal_matrix": false,
+    "prior_harness_knowledge_not_substitute_for_current_evidence": true,
+    "unrelated_private_semantics_in_508_bundle_not_reviewed": true,
+    "59_line_previously_accepted_matrix_not_reaudited": true
+  },
+  "scope": {
+    "closed_bundle_files_read_or_hashed": 508,
+    "new_cpu_gpu_tests_or_model_runs": 0,
+    "ssh_docker_commands": 0,
+    "archive_filesystem_extraction": false,
+    "candidate_execution": false,
+    "original_or_shared_source_changes": 0,
+    "additions_only": [
+      "this new JSON report",
+      "this new Markdown report"
+    ],
+    "external_materials_explicitly_authorized": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7138/probe_request.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7138/card.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7138/revision.json"
+    ]
+  },
+  "decision": {
+    "positional_array_like_route": "statically sound and supported by observed public self-tests",
+    "current_approved_scope_complete": false,
+    "candidate_static_blocker": "P1: renaming array to array_like breaks existing array= keyword required by added P2P.",
+    "formal_raw_reward": null,
+    "formal_outcome": "failed_to_grade",
+    "formal_failure_category": "infra_failure",
+    "qualification": null,
+    "training_qualification": null,
+    "same_FP_setup900_static_input_blockers": [],
+    "same_FP_setup900_execution_qualification": "not reviewed or executed; future worker/current CPU image/profile/reference/cleanup evidence not provided in this sealed package.",
+    "semantic_result_not_preassigned": true
+  },
+  "closure": {
+    "manifest_sha256": "8df01ab39be672264d938cccd1679121d20dda8a6be3f1af822b59db004d05ab",
+    "manifest_rows_verified": 508,
+    "manifest_bytes_verified": 37710899,
+    "manifest_errors": [],
+    "receipt_sha256": "7810ca6f7920f0abb37dfc8d6aff147ccde59d78cade61ffb54115940f82a247",
+    "receipt_508_mapping_rows_verified": true,
+    "authoritative_path_used": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1",
+    "legacy_remote_partial_mirror_not_used": true,
+    "two_legacy_differences_preserved": "queue_v16r1/state.json and queue_v17/requests/gpu1003-dask7656-coder-a1.json; original receipt preserved, unrelated semantics not reviewed",
+    "navigation_files_absent_from_GPU_bundle_not_closure_failure": true
+  },
+  "identity": {
+    "frozen_patch_canonical_digest": "sha256:451557c761f6f47f984e06695b51f66591f7ecaa8589c1188c1a5e7c6a5365e4",
+    "frozen_patch_file_sha256": "e18d7c5d01354d64d05832def64d9b29b4f282070f50d9b30b3f4794f522c09e",
+    "baseline_canonical_digest": "sha256:1bb7df741c80d1271ab92408e0277d129c0b866011b218b79a8295bc38ad49b2",
+    "baseline_safe_members_verified": 425,
+    "frozen_patch_entries": 5,
+    "successful_write_edit_replay_matches_all_final_FP_entries": true,
+    "final_production_path": "dask/array/routines.py",
+    "final_production_sha256": "b75b57d049fa0f00ac30ffc30293333043880798ad0fa8030e06ce31bce79cea",
+    "final_ravel_lines": [
+      1197,
+      1198
+    ],
+    "final_ravel_signature": "def ravel(array_like):",
+    "final_ravel_body": "return asanyarray(array_like).reshape((-1,))",
+    "raw_FP_public_test_modified": true,
+    "scoring_projection_entries": 4,
+    "excluded_raw_entry": "dask/array/tests/test_routines.py",
+    "projection_FP_digest_matches": true,
+    "cleaned_applied_entry_digest": "sha256:538d9c68eba274359da2b13d779be4ca1874afc24d3ca368fe21648a3a3e39ef",
+    "actual_grader_baseline_census_equals_actor_baseline": true,
+    "base_commit": "9bb586a6b8fac1983b7cea3ab399719f93dbbb29",
+    "actor_actual_image_id": "sha256:fdd298b61309ae2df4cb9f528351526b7b3817c42fc34f47f98152a92a520881",
+    "grader_actual_image_id": "sha256:625b404c6c1c40da31df4edfea6052a10fbd30b7fb49d58072b6ee2b215fab13",
+    "source_manifest_digest": "sha256:91df52cb66bb64003ecf4721832eae373c701536aa3dcb85ddc7d9e0ea757736",
+    "materials_identity": "sha256:3e94408ef02d1c2fb6c9113a5c86920325280b2a80962bf579d98087e283136e",
+    "grading_revision": "dask7138-array-keyword-v1",
+    "reference_partitions": {
+      "original_f2p": 1,
+      "original_p2p": 468,
+      "added_p2p": 1,
+      "total": 470
+    },
+    "private_effective_test_patch_equals_published_registry": true,
+    "published_patch_sha256": "2f3c5c539816149a06b6c460b5d79d6b3223f452cd5862bcdbac41faf76bc44a",
+    "outer_probe_request_bytes_equal_closed_owner_request": true,
+    "outer_revision_effective_refs_and_patch_sha_equal_actual_materials": true,
+    "outer_revision_old_preparation_state_not_used_as_actual_execution_state": true
+  },
+  "successful_mutation_replay": [
+    {
+      "tool_line": 84,
+      "result_line": 88,
+      "operation": "Write",
+      "path": "test_ravel_issue.py",
+      "sha256_after": "9526b76f0b00f0a7e2c2d3333c93983dbc94164cdcc4582010134ceb4387dd4a"
+    },
+    {
+      "tool_line": 106,
+      "result_line": 110,
+      "operation": "Edit",
+      "path": "dask/array/routines.py",
+      "old_string_unique": true,
+      "sha256_after": "b75b57d049fa0f00ac30ffc30293333043880798ad0fa8030e06ce31bce79cea"
+    },
+    {
+      "tool_line": 132,
+      "result_line": 136,
+      "operation": "Write",
+      "path": "comprehensive_ravel_test.py",
+      "sha256_after": "8f31c44192888c7fb99a7eaff674de6de4213f71b1bffdbdb41f2c4afe2a8dde"
+    },
+    {
+      "tool_line": 206,
+      "result_line": 210,
+      "operation": "Edit",
+      "path": "dask/array/tests/test_routines.py",
+      "old_string_unique": true,
+      "sha256_after": "48b1542651e6cb47f91e4d9183cbaef952a0f98a40612f3ccaf4e7a4ce014cd8"
+    },
+    {
+      "tool_line": 271,
+      "result_line": 275,
+      "operation": "Write",
+      "path": "final_verification.py",
+      "sha256_after": "4f2ae00b72c09cf2512d6d874e71c4a4d92e3dd9056c92a0f2e899a0e12bbdee"
+    }
+  ],
+  "observed_self_tests": [
+    {
+      "tool_line": 93,
+      "result_line": 97,
+      "scope": "Before production Edit; list raises AttributeError caught by script, Dask array works.",
+      "failure_not_hidden_by_exit0": true
+    },
+    {
+      "tool_line": 119,
+      "result_line": 123,
+      "scope": "After production Edit; issue list and Dask array values match."
+    },
+    {
+      "tool_line": 141,
+      "result_line": 145,
+      "scope": "6 Python/NumPy cases plus existing Dask array values match; script prints comparisons/catches exceptions, not all assertion-enforced."
+    },
+    {
+      "tool_line": 219,
+      "result_line": 223,
+      "scope": "new public test_ravel_array_like assertion node",
+      "passed": 1
+    },
+    {
+      "tool_line": 232,
+      "result_line": 236,
+      "scope": "existing test_ravel",
+      "passed": 1
+    },
+    {
+      "tool_line": 245,
+      "result_line": 249,
+      "scope": "existing test_ravel_1D_no_op",
+      "passed": 1
+    },
+    {
+      "tool_line": 258,
+      "result_line": 262,
+      "scope": "pytest -k ravel in actor public file; includes earlier3nodes",
+      "collected": 561,
+      "selected": 11,
+      "passed": 11,
+      "deselected": 550,
+      "not_formal_470_reference_run": true
+    },
+    {
+      "tool_line": 280,
+      "result_line": 284,
+      "scope": "Final exact original issue list example prints [0 0]."
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "priority": "P1",
+      "title": "Preserve existing array= keyword when converting array-like input",
+      "evidence_strength": "static source and Python argument binding; no new runtime counterexample executed",
+      "trajectory_lines": [
+        106,
+        110
+      ],
+      "FrozenPatch_digest": "sha256:451557c761f6f47f984e06695b51f66591f7ecaa8589c1188c1a5e7c6a5365e4",
+      "FrozenPatch_path": "dask/array/routines.py",
+      "FrozenPatch_lines": [
+        1197,
+        1198
+      ],
+      "baseline_signature": "def ravel(array):",
+      "final_signature": "def ravel(array_like):",
+      "decorator_basis": "baseline dask/utils.py685–695 attaches docstring then returns the original method, without keyword aliasing.",
+      "counterexample": "da.ravel(array=da.from_array(values, chunks=(1,3))) from current test_ravel_keyword_array; final signature has no array parameter or **kwargs, so Python binding raises TypeError before the conversion body.",
+      "scope": "approved current added P2P, not a new all-NumPy requirement",
+      "new_regression_statically_confirmed": true,
+      "formal_test_result": null,
+      "blocks": "current full candidate correctness claim, not same-FP regrade dispatch",
+      "minimal_future_fix": "keep existing array parameter name while calling asanyarray(array); any fix must be a new candidate and must not replace this original FP."
+    },
+    {
+      "id": "F2",
+      "priority": "P2",
+      "title": "Final verification claim exceeds actual tests and misses keyword regression",
+      "trajectory_lines": [
+        262,
+        302,
+        306
+      ],
+      "actual": "11 selected public items pass;550 deselected; no array= self-test or formal test execution.",
+      "claimed": "all existing tests pass; full backward compatibility; exactly NumPy API",
+      "assessment": "core positional examples supported; all-regression/full-compatibility conclusion not supported and contradicted by F1. No deception motive inferred."
+    }
+  ],
+  "execution": {
+    "actor_termination": "completed",
+    "harness_exit_code": 0,
+    "solve_seconds": 48.03,
+    "CC_result_duration_ms": 44374,
+    "model_turns": 25,
+    "tool_calls": 24,
+    "tool_call_breakdown": {
+      "Bash": 13,
+      "Read": 6,
+      "Write": 3,
+      "Edit": 2
+    },
+    "tool_result_errors": 0,
+    "budget": {
+      "version": "probe-wide-v1",
+      "max_context_len": 196608,
+      "max_new_tokens": 65536,
+      "max_turns": 240,
+      "wall_seconds": 10800,
+      "max_requests_per_session": 1024,
+      "first_byte_timeout_seconds": 1800,
+      "adapter_idle_drop_seconds": 14400
+    },
+    "budget_exhausted": false,
+    "gateway_generation_requests": 25,
+    "HTTP_generation_max_tokens_all": 65536,
+    "gateway_actual_model_sent": "Qwen3-Coder-30B-A3B-Instruct",
+    "model_alias": "slime-actor",
+    "input_tokens_total": 865585,
+    "output_tokens_total": 3642,
+    "modelUsage_maxOutputTokens_metadata": 32000,
+    "modelUsage_metadata_not_used_as_HTTP_request_cap": true,
+    "runtime_capture_current": true,
+    "checkpoint_identity_verified_in_gateway_audit": false,
+    "current_capture_full_weights_rehashed": false,
+    "GPU_weight_attestation": false,
+    "actor_UID_actual": 54321,
+    "actor_actual_profile": {
+      "cpus": 2,
+      "memory_bytes": 4294967296,
+      "pids_limit": 512,
+      "activation": "testbed",
+      "writable_environment_prefix": false
+    },
+    "grader_budgets": {
+      "whole_seconds": 3600.0,
+      "setup_seconds": 300.0,
+      "apply_seconds": 120.0,
+      "test_seconds": 1800.0
+    },
+    "grader_candidate_UID_actual_execution": "not started, no independent id-u; do not substitute configured policy for actual candidate exec",
+    "grading_setup_failure": "grading_control_surface_protect_timeout_after_300s",
+    "grading_install_started": false,
+    "grading_test_started": false,
+    "candidate_segment": null,
+    "grading_revision_state": "not_evaluated",
+    "all_470_reference_results": null,
+    "report_entry_exit_code": 3,
+    "queue_status": "attention",
+    "not_counted_as_model_failure": true
+  },
+  "cleanup_and_integrity": {
+    "actor_cleanup": {
+      "container_rm": 0,
+      "container_left": "",
+      "network_failures": [],
+      "relay_failures": [],
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "cleanup_ok": true
+    },
+    "actor_pre_drain_stop_residual": 0,
+    "actor_gateway_drain": {
+      "session_id": "gpu1003-dask7138-coder-a1",
+      "revoked": true,
+      "active_requests": 0,
+      "drained": true,
+      "ts": 1791023924.931918
+    },
+    "actor_quiescence": "agent processes zero + workspace stable double-read",
+    "grader_manager_close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "supply_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0,
+      "containers_created_total": 1,
+      "containers_removed_total": 1,
+      "container_history_retained": 1,
+      "leases_total": 1
+    },
+    "grader_cleanup_ok": true,
+    "resource_closed_samples": 28,
+    "resource_gaps_unknown": true,
+    "last_resource_own_containers": [],
+    "matched_actor_sampled_pids_peak": 37,
+    "matched_grader_sampled_pids_peak": 8,
+    "matched_actor_grader_sampled_PID_quota_events": 0,
+    "matched_actor_grader_sampled_OOM_or_kill_events": 0,
+    "whole_host_resource_cleanup_claim": false,
+    "formal_raw_test_entry_excluded_by_projection": true,
+    "trusted_test_restore_and_apply_ok": true,
+    "trusted_setup_attestation_log_lines": [
+      393,
+      405
+    ],
+    "patch_hygiene_clean": true,
+    "test_files_modified_in_scored_projection": false,
+    "conftest_or_fixture_touch": [],
+    "grading_bypass_evidence_found": false,
+    "runner_integrity_changed": null,
+    "final_runner_integrity_not_verified_due_pretest_timeout": true
+  },
+  "public_evidence": {
+    "prompt_SHA": "b02c916a8faba2fe3718f1e67a58d230df7863c8abd4864ec7e78781200f46c8",
+    "solver_prompt_byte_equal": true,
+    "first_HTTP_prompt_lines_equal_after_CRLF_normalization": true,
+    "first_HTTP_prompt_has_CRLF_count": 24,
+    "semantic_extra_content_found": false,
+    "public_issue_contains_asanyarray_conversion_direction": true,
+    "private_keyword_test_or_CPU_matrix_not_sent_to_solver": true,
+    "baseline_core_asanyarray_lines": [
+      4058,
+      4095
+    ],
+    "baseline_asanyarray_Array_identity_return_lines": [
+      4085,
+      4086
+    ]
+  },
+  "recovery_assessment": {
+    "same_original_FP_setup900_is_reviewable": true,
+    "frozen_source_baseline_projection_material_bindings_verified": true,
+    "static_input_or_FP_transport_blockers": [],
+    "known_semantic_failure_expected": "added keyword P2P is statically incompatible",
+    "predicted_reward_not_written_as_actual": true,
+    "new_CPU_recovery_worker_or_current_image_profile_run_not_in_evidence": true,
+    "required_future_evidence": [
+      "same canonical FP and baseline, unchanged4-entry projection/materials470refs",
+      "only setup900 change; same complete script digest and derived grader recipe/image/profile",
+      "actual install/test ranges and all470refs",
+      "candidate UIDactual, resource events and own cleanup"
+    ],
+    "original_None_preserved": true
+  },
+  "limits": [
+    "本reviewer复用已有Dask/harness上下文，本题首次读取；独立于本题候选作者，但不是无历史上下文的全新盲审。",
+    "508闭包内其它题历史文件只核闭合SHA，不展开私有语义；59行矩阵不重审。",
+    "单Coder单样本，另一既定模型臂未在本封包结束；无成功率或稳定性外推。",
+    "原题面已给转换方向，不能把迅速定位单独解释为无引导能力。",
+    "正式训练typed actor未接入；qualification/training qualification None。",
+    "关键字回归是静态必然绑定错误，不冒称实际新跑TypeError或正式raw0。",
+    "setup300 infra/None不可计模型失败；setup900当前无实际CPU分和新worker验收。",
+    "离散资源记录有gaps_unknown，不能替代连续资源或全链runner终局核查。",
+    "gateway checkpoint_identity_verified=false和未重hash全部权重/GPU attestation保留，不以当前服务捕获升级这些字段。"
+  ],
+  "evidence": {
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/gpu1003-dask7138-coder-a1_closed_manifest_v1.json": {
+      "sha256": "8df01ab39be672264d938cccd1679121d20dda8a6be3f1af822b59db004d05ab",
+      "bytes": 96249
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/sync_receipt_v3.json": {
+      "sha256": "7810ca6f7920f0abb37dfc8d6aff147ccde59d78cade61ffb54115940f82a247",
+      "bytes": 327727
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/gpu1003-dask7138-coder-a1_terminal_snapshot_v1.json": {
+      "sha256": "77e8d4660f7c11568f3f626a98cae5ccc5b1cd4aea505bc7b594e9fb4d2de209",
+      "bytes": 32679
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/gpu1003-dask7138-coder-a1_closed_resource_v1.jsonl": {
+      "sha256": "8f86482ae50efca756f5a658564068dc09056d3dfb8f6f5f326290ef135e73ba",
+      "bytes": 27620
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/queue_v26/results/gpu1003-dask7138-coder-a1/attempt/frozen/frozen_patch.json": {
+      "sha256": "e18d7c5d01354d64d05832def64d9b29b4f282070f50d9b30b3f4794f522c09e",
+      "bytes": 148315
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/queue_v26/results/gpu1003-dask7138-coder-a1/attempt/frozen/baseline_manifest.json": {
+      "sha256": "65c898817a5017b5d3f8f5085cef04250a7d1696504231247e1c5d92bb5c253f",
+      "bytes": 99708
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/queue_v26/results/gpu1003-dask7138-coder-a1/attempt/frozen/baseline.tar": {
+      "sha256": "c0fa7c73238e9ba94567e8c91f24abd3d80c7b58bf9bc6b784ed62e3f7824180",
+      "bytes": 8816640
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/queue_v26/results/gpu1003-dask7138-coder-a1/attempt/candidate/dask__dask-7138.diff": {
+      "sha256": "48c7e17fb7888272c10900f265a78f1d9c170b736cd52096d522426dc053c93d",
+      "bytes": 5635
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/queue_v26/results/gpu1003-dask7138-coder-a1/attempt/trajectory.jsonl": {
+      "sha256": "672cd15c527cfe5f931c1b88db5397e0017a82be816c6a48e7bd2aee731981b4",
+      "bytes": 443599
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/queue_v26/results/gpu1003-dask7138-coder-a1/attempt/harness/trajectory.jsonl": {
+      "sha256": "672cd15c527cfe5f931c1b88db5397e0017a82be816c6a48e7bd2aee731981b4",
+      "bytes": 443599
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/queue_v26/results/gpu1003-dask7138-coder-a1/attempt/attempt.json": {
+      "sha256": "b4fc28b4186d49789b1e1765edb59d7a242f6d20fe7adff23cb07062341e7a57",
+      "bytes": 16893
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/queue_v26/results/gpu1003-dask7138-coder-a1/attempt/prompt.txt": {
+      "sha256": "b02c916a8faba2fe3718f1e67a58d230df7863c8abd4864ec7e78781200f46c8",
+      "bytes": 1592
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/queue_v26/results/gpu1003-dask7138-coder-a1/attempt/facts/prelaunch.json": {
+      "sha256": "3edbacb8c6cf76947d89e9c49175f08ec233baf7a8dcd89b86e88cc0c7eee5b6",
+      "bytes": 2223
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/queue_v26/results/gpu1003-dask7138-coder-a1/attempt/facts/activation_check.json": {
+      "sha256": "9b0796ea520df7440b5d8d2658a0acc64875abcdab1264eefb12bf7b7cfc7b4a",
+      "bytes": 501
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/queue_v26/results/gpu1003-dask7138-coder-a1/attempt/facts/agent_env_facts.txt": {
+      "sha256": "520b415374af499faecbcc5d1f1bf6651bd6f58662aa5894d818a18d0d2dbd00",
+      "bytes": 1174
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/queue_v26/results/gpu1003-dask7138-coder-a1/attempt/frozen/classification.json": {
+      "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6",
+      "bytes": 93
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/queue_v26/results/gpu1003-dask7138-coder-a1/grading/projection.json": {
+      "sha256": "4a5ab1639dff44d9e3c9399fcbcf7a3bbd16e96754e2157ef04c3eef09a8b89a",
+      "bytes": 415
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/queue_v26/results/gpu1003-dask7138-coder-a1/grading/report.json": {
+      "sha256": "f94224785111770ceade4a28548dbf4ec0fe7eb79163112e75faf2a23c6c44b2",
+      "bytes": 1874
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/queue_v26/results/gpu1003-dask7138-coder-a1/grading/status.json": {
+      "sha256": "3966bee03c6c5cdf36466352ef366a00bfb143b744b6d4de980c1d99e0f45cca",
+      "bytes": 2658
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/queue_v26/results/gpu1003-dask7138-coder-a1/grading/baseline_rebuild_census.txt": {
+      "sha256": "34f55413b7b21a169e177bdc6071e3b92aa1b72502ba32f638073ec37018921f",
+      "bytes": 47817
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/queue_v26/results/gpu1003-dask7138-coder-a1/grading/eval_logs/evallog_gpu1003-dask7138-coder-a_0dad7b25.eval.log": {
+      "sha256": "400d215b74b0275f8d13e0899d43685e7a7376e170ec010c869071c0a6ed50bb",
+      "bytes": 15268
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/queue_v26/results/gpu1003-dask7138-coder-a1/grading/eval_logs/evallog_gpu1003-dask7138-coder-a_0dad7b25.diagnostics.json": {
+      "sha256": "82a28b807f060a7fa9ec158701d342d2ca84abfc7d9f9ed0d9688443f1c18862",
+      "bytes": 41110
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/queue_v26/results/gpu1003-dask7138-coder-a1/input_check.json": {
+      "sha256": "55f26069c4718b1780ced6ee80b43d237c6b3b6c0282742d0e26eba4099b0e00",
+      "bytes": 43716
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/queue_v26/results/gpu1003-dask7138-coder-a1/result.json": {
+      "sha256": "b0ab30e96395ae96a4cb0f6304f993ee58eaad3de7a043691fb2ef0bc21bf3fb",
+      "bytes": 2694
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/queue_v26/results/gpu1003-dask7138-coder-a1/gateway_audit.json": {
+      "sha256": "11691796c6a3e8f61037cc9e11a8536b5b64bc368225a883d793fdfb3f0cb210",
+      "bytes": 393
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/q26_binder_image_readback_merge_v1/actual_image_readback.json": {
+      "sha256": "a551f7ef9b0d2d2157fa53174495800bea9930df33b1568e4135f77fed4ef88a",
+      "bytes": 22740
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/diagnostics/QUEUE_V26_gpu1003-dask7138-coder-a1_before/capture_receipt.json": {
+      "sha256": "b32a2dec8b4be842eaeada66d4dc1a68844132f69471d72a032d4be132f6858f",
+      "bytes": 1575
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/diagnostics/QUEUE_V26_gpu1003-dask7138-coder-a1_before/identity_binding_actual.json": {
+      "sha256": "a5739fc2570e82b2de7804c4d31124944b64dac9ef397d424c462ea675bbc08a",
+      "bytes": 2960
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/services_v24/coder/gateway/gpu1003-dask7138-coder-a1/requests.jsonl": {
+      "sha256": "2ca0623d1ab385630e4d878e12091c26d4f211e2fea8b38bd1f9d61e1345864f",
+      "bytes": 3032350
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/services_v24/coder/gateway/gpu1003-dask7138-coder-a1/usage.json": {
+      "sha256": "82b0564768258109ac1e6490d2d12c411f1686ba6f41d7fdce32c70a1bc8c6b0",
+      "bytes": 89
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/config_v26/tasks.json": {
+      "sha256": "894aea54b005303cb66e065d36bd07ef51c3e978816d4c5147c233222650b608",
+      "bytes": 2583
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/prepared_dask_pandas_four_code8_v1/dask7138/host_evidence/owner_request.json": {
+      "sha256": "819534ee0ada1c63ec2a2ad4a37a22f97aa4642e8ac010ad7083b3a421b123da",
+      "bytes": 15160
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/prepared_dask_pandas_four_code8_v1/dask7138/private/host_grading_views.jsonl": {
+      "sha256": "865452a80389ee3975faa5ffbd1a5a101f7039e7a3a5a704e5964acc44fe1e79",
+      "bytes": 75877
+    },
+    "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/prepared_dask_pandas_four_code8_v1/prepare_overlay/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/dask7138_fixed_test_patch_v1/material_revisions.json": {
+      "sha256": "c6a9d747f0ed3a2ad49851ec524389786e703f8bc3572e65be26374126714d13",
+      "bytes": 5397
+    },
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7138/probe_request.json": {
+      "sha256": "819534ee0ada1c63ec2a2ad4a37a22f97aa4642e8ac010ad7083b3a421b123da",
+      "bytes": 15160
+    },
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7138/card.md": {
+      "sha256": "fa132b5c9b43dd2f09875f5b0ab72cf348e5621c824a69fa40a1407e8757f48b",
+      "bytes": 4098
+    },
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7138/revision.json": {
+      "sha256": "fb29e9e0f0a6457d974256b95678b753f9c700e7051c5fb3d8c2dfec61b767cc",
+      "bytes": 77633
+    }
+  }
+}

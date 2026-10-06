@@ -1,0 +1,679 @@
+{
+  "schema": "swe_moto.fixed_publication_input.v1",
+  "request_id": "swe-moto6185-publish-fc65a52722f4-20261003-v1",
+  "task_key": "swe_gym_lite::getmoto__moto-6185",
+  "package_id": "swe_moto",
+  "cpu_host": "cpu-a",
+  "material_version": "moto6185-nested-s-v3@sha256:fc65a52722f47a6d458465d2e4a529caa057c2f238453d1659efdfef42bc332d",
+  "scope": "正式材料登记、生产consumer与CPU部署；不是题级语义终审或GPU实验请求",
+  "revision_request": {
+    "schema": "moto.revision_request.draft.v1",
+    "as_of": "2026-10-03",
+    "status": "prepared_not_published",
+    "instance_id": "getmoto__moto-6185",
+    "owner": {
+      "thread_id": "01a0fd61-fbf9-7d83-860e-c6627bcd3d7f",
+      "thread_title": "SWE | Moto 题目修订",
+      "host_id": "local"
+    },
+    "shared_maintainer_thread_id": "01a08bd3-b639-7c71-a1ee-f3f4d05b3a0e",
+    "formal_revision_activated": false,
+    "cpu_validation": "not_run",
+    "solver_visibility": "private_only",
+    "proposed_revision_id": "moto6185-nested-s-v3",
+    "requested_capability": "采用既有 v3，修嵌套 S 漏测并保留真实类型校验",
+    "base_commit": "dc460a325839bc6797084a54afc297a2c9d87e63",
+    "source_grading": {
+      "path": "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/grading.json",
+      "sha256": "bcb27e16295ed149f3b5e43c41e30738b6453ee140b23f4115256822525e2036",
+      "bytes": 5498
+    },
+    "parent_grading_digest": "sha256:8b4ae329a238752ef2d78511fbba59448fafe83c0054d6ebb9d8e695604ab17a",
+    "source_public": {
+      "path": "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/public_bundle.json",
+      "sha256": "805cce4840d0c1625c699445a037bc828a9287d0a4a1775aa1a33520a4c14c5a",
+      "bytes": 3809
+    },
+    "source_public_digest": "sha256:2a2ae08fcef35f245257572088bc8f79d3eb0827f8025f358e93764c085e5a15",
+    "public_change": false,
+    "original_test_patch": {
+      "path": "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/test.patch",
+      "sha256": "506b3670e0f825d6f622a180c5187e76fcbcb6584afe5088058ec84e5127fc52",
+      "bytes": 1318
+    },
+    "effective_test_patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto6185/revised_test_v3.patch",
+      "sha256": "fc65a52722f47a6d458465d2e4a529caa057c2f238453d1659efdfef42bc332d",
+      "bytes": 4425
+    },
+    "source_base_identity": {
+      "path": "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/base_identity.json",
+      "sha256": "c4c56cd5e0718c6a0c845b5e9f67d5dc8239f7d5c9340ce1caa43d20afe21dbc",
+      "bytes": 799
+    },
+    "base_test_file": {
+      "path": "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/base/tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py",
+      "sha256": "c352657163863c0748ce59b1469a29e0fc9447eaf7628cd53371e008b0cd1c75",
+      "bytes": 39637
+    },
+    "test_file_exists_in_base": true,
+    "original_fail_to_pass": [
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_put_item__string_as_integer_value"
+    ],
+    "original_pass_to_pass": [
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_query_gsi_with_wrong_key_attribute_names_throws_exception",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_primary_key",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_creating_table_with_0_local_indexes",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_expression_with_trailing_comma",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_hash_key_can_only_use_equals_operations[<]",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_gsi_key_cannot_be_empty",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_creating_table_with_0_global_indexes",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_empty_expressionattributenames_with_empty_projection",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_create_table_with_missing_attributes",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_hash_key_can_only_use_equals_operations[<=]",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_batch_put_item_with_empty_value",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_batch_get_item_non_existing_table",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_hash_key_can_only_use_equals_operations[>=]",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_empty_expressionattributenames",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_create_table_with_redundant_and_missing_attributes",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_put_item_wrong_datatype",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_query_begins_with_without_brackets",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_put_item_wrong_attribute_type",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_hash_key_cannot_use_begins_with_operations",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_transact_write_items_multiple_operations_fail",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_item_range_key_set",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_multiple_transactions_on_same_item",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_batch_write_item_non_existing_table",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_query_table_with_wrong_key_attribute_names_throws_exception",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_item_with_duplicate_expressions[set",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_list_append_errors_for_unknown_attribute_value",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_create_table_with_redundant_attributes",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_item_non_existent_table",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_hash_key_can_only_use_equals_operations[>]",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_put_item_empty_set",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_primary_key_with_sortkey",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_empty_expressionattributenames_with_projection",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_transact_write_items_with_empty_gsi_key",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_transact_write_items__too_many_transactions"
+    ],
+    "proposed_fail_to_pass": [
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_put_item__string_as_integer_value"
+    ],
+    "proposed_pass_to_pass": [
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_query_gsi_with_wrong_key_attribute_names_throws_exception",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_primary_key",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_creating_table_with_0_local_indexes",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_expression_with_trailing_comma",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_hash_key_can_only_use_equals_operations[<]",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_gsi_key_cannot_be_empty",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_creating_table_with_0_global_indexes",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_empty_expressionattributenames_with_empty_projection",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_create_table_with_missing_attributes",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_hash_key_can_only_use_equals_operations[<=]",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_batch_put_item_with_empty_value",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_batch_get_item_non_existing_table",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_hash_key_can_only_use_equals_operations[>=]",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_empty_expressionattributenames",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_create_table_with_redundant_and_missing_attributes",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_put_item_wrong_datatype",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_query_begins_with_without_brackets",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_put_item_wrong_attribute_type",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_hash_key_cannot_use_begins_with_operations",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_transact_write_items_multiple_operations_fail",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_item_range_key_set",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_multiple_transactions_on_same_item",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_batch_write_item_non_existing_table",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_query_table_with_wrong_key_attribute_names_throws_exception",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_item_with_duplicate_expressions[set",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_list_append_errors_for_unknown_attribute_value",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_create_table_with_redundant_attributes",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_item_non_existent_table",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_hash_key_can_only_use_equals_operations[>]",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_put_item_empty_set",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_primary_key_with_sortkey",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_empty_expressionattributenames_with_projection",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_transact_write_items_with_empty_gsi_key",
+      "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_transact_write_items__too_many_transactions"
+    ],
+    "added_fail_to_pass": [],
+    "added_pass_to_pass": [],
+    "source_test_command": "pytest -n0 -rA tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py",
+    "proposed_test_command": "pytest -n0 -rA tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py",
+    "selection_derivation": "spec_vendor.py derive_test_command 的当前源码路径；未执行新版正式消费",
+    "changed_functions": [
+      "test_put_item__string_as_integer_value"
+    ],
+    "added_functions": [],
+    "identity_note": "canonical digest 按源模型导出的完整 JSON 重算；由发布者在实际模型消费时再核",
+    "independent_review": "reuse_cloud_review_stop_condition",
+    "release_remaining": [
+      "受限登记与材料身份／恢复／保护接入",
+      "冻结的实际命令／安装／镜像／配方",
+      "CPU正式评分与相应actor验证"
+    ],
+    "node_identity_remaining": "历史36执行节点／35解析键；须核参数节点及参考绑定",
+    "source_refs": {
+      "path": "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/source_refs.json",
+      "sha256": "cfb328194eb2112d66c746f1552a3531f56cb3dc3d585a1a01b42609510e06d0",
+      "bytes": 961
+    }
+  },
+  "acceptance_matrix": {
+    "schema": "moto.acceptance_matrix.plan.v1",
+    "as_of": "2026-10-03",
+    "instance_id": "getmoto__moto-6185",
+    "status": "not_run",
+    "material_request": "revision_request.json",
+    "reference_counts": {
+      "fail_to_pass": 1,
+      "pass_to_pass": 34
+    },
+    "controls": [
+      {
+        "name": "noop",
+        "role": "noop",
+        "patch": null,
+        "expected_reward": 0
+      },
+      {
+        "name": "gold",
+        "role": "gold_known_incomplete",
+        "patch": {
+          "path": "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/gold.patch",
+          "sha256": "868fd2d166ddc9e3bb4028fe491ef6dbb9b45b160ef53d7d05ed3cc9647979e1",
+          "bytes": 1395
+        },
+        "expected_reward": 0,
+        "expected_reward_evidence": "云端 v3 私有模拟；非本轮正式评分"
+      },
+      {
+        "name": "ctx",
+        "role": "positive",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto6185/ctx.patch",
+          "sha256": "139572e876978ca20c34280a51282364c17505f5746283db1eacb8824ea63c45",
+          "bytes": 1434
+        },
+        "expected_reward": 1,
+        "expected_reward_evidence": "云端 v3 私有模拟；非本轮正式评分"
+      },
+      {
+        "name": "ctx_list",
+        "role": "alternative_compatibility",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto6185/ctx_list.patch",
+          "sha256": "9169306dae030c8ea349e56d39ba92f1bd0483bb87e669a256b6c32155f51c44",
+          "bytes": 1644
+        },
+        "expected_reward": 1,
+        "expected_reward_evidence": "云端 v3 私有模拟；非本轮正式评分"
+      },
+      {
+        "name": "depth2",
+        "role": "known_wrong",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto6185/depth2.patch",
+          "sha256": "2bdf47a660368c157e74aaa78601e700c07332933284f7f5a89fdee414c03915",
+          "bytes": 1121
+        },
+        "expected_reward": 0,
+        "expected_reward_evidence": "云端 v3 私有模拟；非本轮正式评分"
+      },
+      {
+        "name": "list_as_names",
+        "role": "known_wrong",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto6185/list_as_names.patch",
+          "sha256": "f4a791b589b1a35fceaebec5491b6cdcd88e80c48ac32055653c71b7ece845fb",
+          "bytes": 1639
+        },
+        "expected_reward": 0,
+        "expected_reward_evidence": "云端 v3 私有模拟；非本轮正式评分"
+      },
+      {
+        "name": "null_only",
+        "role": "known_wrong",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto6185/null_only.patch",
+          "sha256": "23b58b21a2fb08c734d1d76a8edbb917a4d82478b7cfe0ddaff0856589827066",
+          "bytes": 655
+        },
+        "expected_reward": 0,
+        "expected_reward_evidence": "云端 v3 私有模拟；非本轮正式评分"
+      },
+      {
+        "name": "parity",
+        "role": "positive",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto6185/parity.patch",
+          "sha256": "d7ca0fd9fa09693588cedd9ff4bbc1e58638115c27c0379468cf5428a4e50f9b",
+          "bytes": 1236
+        },
+        "expected_reward": 1,
+        "expected_reward_evidence": "云端 v3 私有模拟；非本轮正式评分"
+      },
+      {
+        "name": "rootkey",
+        "role": "known_wrong",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto6185/rootkey.patch",
+          "sha256": "0232a04f17c99ff6038dbb550f19f019b192afdbe97a5246210ff2d40d458b89",
+          "bytes": 1365
+        },
+        "expected_reward": 0,
+        "expected_reward_evidence": "云端 v3 私有模拟；非本轮正式评分"
+      },
+      {
+        "name": "shape",
+        "role": "known_wrong",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto6185/shape.patch",
+          "sha256": "36f1b5d72156e2cf084f26ca481c41d988fbe4f623fb9bf6aa2191196a79b025",
+          "bytes": 1084
+        },
+        "expected_reward": 0,
+        "expected_reward_evidence": "云端 v3 私有模拟；非本轮正式评分"
+      },
+      {
+        "name": "siblings",
+        "role": "known_wrong",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto6185/siblings.patch",
+          "sha256": "c39acf3b51c4d45e457deee138f104221cce7706113dad884499faf012a9a0af",
+          "bytes": 746
+        },
+        "expected_reward": 0,
+        "expected_reward_evidence": "云端 v3 私有模拟；非本轮正式评分"
+      },
+      {
+        "name": "skip_s_subtree",
+        "role": "known_wrong",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto6185/skip_s_subtree.patch",
+          "sha256": "c273d7e372167499b0e80ec57dc484b6b07311f99c1e602f7e0e6a75be768afc",
+          "bytes": 1043
+        },
+        "expected_reward": 0,
+        "expected_reward_evidence": "云端 v3 私有模拟；非本轮正式评分"
+      },
+      {
+        "name": "swallow",
+        "role": "known_wrong",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto6185/swallow.patch",
+          "sha256": "35a765d8fca32558922d8e9d06ac9ec13f3849b598a065e9d5935b5002573881",
+          "bytes": 733
+        },
+        "expected_reward": 0,
+        "expected_reward_evidence": "云端 v3 私有模拟；非本轮正式评分"
+      },
+      {
+        "name": "top_only",
+        "role": "known_wrong",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto6185/top_only.patch",
+          "sha256": "1d82e10dfce44606dd4a1b369b4e78cce1b58573538088818e78cf8ec1715eed",
+          "bytes": 1157
+        },
+        "expected_reward": 0,
+        "expected_reward_evidence": "云端 v3 私有模拟；非本轮正式评分"
+      },
+      {
+        "name": "rv_break_after_s",
+        "role": "known_wrong",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_break_after_s.patch",
+          "sha256": "487023425d882229251de48bc9a5d111d10033f54fbcc8dc3b401727d97cf863",
+          "bytes": 1161
+        },
+        "expected_reward": 0,
+        "expected_reward_evidence": "云端 v3 私有模拟；非本轮正式评分"
+      },
+      {
+        "name": "rv_depth4",
+        "role": "known_wrong",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_depth4.patch",
+          "sha256": "ae21146f48d83f6d0acf46546722cd9d75f99d4e7d779890293ff2de392069e4",
+          "bytes": 1175
+        },
+        "expected_reward": 0,
+        "expected_reward_evidence": "云端 v3 私有模拟；非本轮正式评分"
+      },
+      {
+        "name": "rv_dynamotype",
+        "role": "observation_not_positive",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_dynamotype.patch",
+          "sha256": "2d73d9d782eac8c7701ddfd94918f44df0bd12ed3f108a604e173afe367473e7",
+          "bytes": 2495
+        },
+        "expected_reward": 1,
+        "expected_reward_evidence": "云端 v3 私有模拟；非本轮正式评分"
+      },
+      {
+        "name": "rv_scalar_s",
+        "role": "known_wrong",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_scalar_s.patch",
+          "sha256": "e068f41a6e9fec5cd43d44d406f25adce7cc9176094af56bb2ae98c5ef86d457",
+          "bytes": 1767
+        },
+        "expected_reward": 0,
+        "expected_reward_evidence": "云端 v3 私有模拟；非本轮正式评分"
+      },
+      {
+        "name": "rv_shape_key",
+        "role": "known_wrong",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_shape_key.patch",
+          "sha256": "d0c1275343e37364c2cf498da6873a468574d8c048062a38cdd82c12ccee04c3",
+          "bytes": 1815
+        },
+        "expected_reward": 0,
+        "expected_reward_evidence": "云端 v3 私有模拟；非本轮正式评分"
+      },
+      {
+        "name": "rv_swallow_attr",
+        "role": "known_wrong",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_swallow_attr.patch",
+          "sha256": "9d37f01bbaf924417cc7889e2864c4ed1acee834157b39a44dc37e40eb1a4435",
+          "bytes": 792
+        },
+        "expected_reward": 0,
+        "expected_reward_evidence": "云端 v3 私有模拟；非本轮正式评分"
+      },
+      {
+        "name": "rv_tagparent",
+        "role": "known_wrong",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_tagparent.patch",
+          "sha256": "9d4c841f0232b34c61ed053d7f79a48bbfe03bdbd3ffed2a7527e8d90af91b40",
+          "bytes": 1429
+        },
+        "expected_reward": 0,
+        "expected_reward_evidence": "云端 v3 私有模拟；非本轮正式评分"
+      },
+      {
+        "name": "rv_top_or_null",
+        "role": "known_wrong",
+        "patch": {
+          "path": "rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_top_or_null.patch",
+          "sha256": "5d441c3e35d6de99bab5a259b4d229e4eb2b5ba6edf161ee017ad3cbbc26b8e7",
+          "bytes": 1192
+        },
+        "expected_reward": 0,
+        "expected_reward_evidence": "云端 v3 私有模拟；非本轮正式评分"
+      }
+    ],
+    "formal_run_count": 22,
+    "new_host_identity_check": true,
+    "shared_code_snapshot": null,
+    "cpu_host": null,
+    "resource_limits": "按本题既有配方和总协调全机名额落实，不使用旧SSH或无约束并发",
+    "required_evidence": [
+      "实际固定材料／镜像／代码／配方",
+      "安装与测试完整执行／逐参考状态／退出码",
+      "新增或修正断言的真实执行与目标失败位置",
+      "完整日志、工件、异常及两层清理",
+      "有效正对照与非作者核查"
+    ],
+    "reuse_or_targeted_actor_validation": "5406修订公开消息及原例；6185/7584补缺失actor命令；其余只补新宿主身份和受影响路径",
+    "never_send_to_solver": [
+      "gold",
+      "负对照",
+      "私有测试断言",
+      "题主分析"
+    ],
+    "probe_submission": "not_submitted",
+    "matrix_size_reason": "沿既有独立复核要求保留22行；不擅自删除有不同机制的候选，不新增重复轮次"
+  },
+  "source_and_candidate_refs": {
+    "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/grading.json": {
+      "path": "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/grading.json",
+      "sha256": "bcb27e16295ed149f3b5e43c41e30738b6453ee140b23f4115256822525e2036",
+      "bytes": 5498
+    },
+    "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/public_bundle.json": {
+      "path": "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/public_bundle.json",
+      "sha256": "805cce4840d0c1625c699445a037bc828a9287d0a4a1775aa1a33520a4c14c5a",
+      "bytes": 3809
+    },
+    "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/test.patch": {
+      "path": "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/test.patch",
+      "sha256": "506b3670e0f825d6f622a180c5187e76fcbcb6584afe5088058ec84e5127fc52",
+      "bytes": 1318
+    },
+    "rh2/experiments/category3_cloud_20260929/moto6185/revised_test_v3.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto6185/revised_test_v3.patch",
+      "sha256": "fc65a52722f47a6d458465d2e4a529caa057c2f238453d1659efdfef42bc332d",
+      "bytes": 4425
+    },
+    "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/base_identity.json": {
+      "path": "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/base_identity.json",
+      "sha256": "c4c56cd5e0718c6a0c845b5e9f67d5dc8239f7d5c9340ce1caa43d20afe21dbc",
+      "bytes": 799
+    },
+    "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/base/tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py": {
+      "path": "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/base/tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py",
+      "sha256": "c352657163863c0748ce59b1469a29e0fc9447eaf7628cd53371e008b0cd1c75",
+      "bytes": 39637
+    },
+    "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/source_refs.json": {
+      "path": "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/source_refs.json",
+      "sha256": "cfb328194eb2112d66c746f1552a3531f56cb3dc3d585a1a01b42609510e06d0",
+      "bytes": 961
+    },
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-6185/revision_request.json": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-6185/revision_request.json",
+      "sha256": "c95914f69106e4adfa0e076a4e660db8f0d7d0f5804ffdfd1656531c5b090ca0",
+      "bytes": 11361
+    },
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-6185/acceptance_matrix.json": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-6185/acceptance_matrix.json",
+      "sha256": "ded62eac3d489a05fccbbffaa3d215219add82e22b6c0f4c1d9a0dbe1b3e3bf3",
+      "bytes": 9936
+    },
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-6185/card.md": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-6185/card.md",
+      "sha256": "746563e4aa0823bd3bd30ff466e4dcd962be5bbc3fc3cd709adc38ef78e7c686",
+      "bytes": 1586
+    },
+    "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/gold.patch": {
+      "path": "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/gold.patch",
+      "sha256": "868fd2d166ddc9e3bb4028fe491ef6dbb9b45b160ef53d7d05ed3cc9647979e1",
+      "bytes": 1395
+    },
+    "rh2/experiments/category3_cloud_20260929/moto6185/ctx.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto6185/ctx.patch",
+      "sha256": "139572e876978ca20c34280a51282364c17505f5746283db1eacb8824ea63c45",
+      "bytes": 1434
+    },
+    "rh2/experiments/category3_cloud_20260929/moto6185/ctx_list.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto6185/ctx_list.patch",
+      "sha256": "9169306dae030c8ea349e56d39ba92f1bd0483bb87e669a256b6c32155f51c44",
+      "bytes": 1644
+    },
+    "rh2/experiments/category3_cloud_20260929/moto6185/depth2.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto6185/depth2.patch",
+      "sha256": "2bdf47a660368c157e74aaa78601e700c07332933284f7f5a89fdee414c03915",
+      "bytes": 1121
+    },
+    "rh2/experiments/category3_cloud_20260929/moto6185/list_as_names.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto6185/list_as_names.patch",
+      "sha256": "f4a791b589b1a35fceaebec5491b6cdcd88e80c48ac32055653c71b7ece845fb",
+      "bytes": 1639
+    },
+    "rh2/experiments/category3_cloud_20260929/moto6185/null_only.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto6185/null_only.patch",
+      "sha256": "23b58b21a2fb08c734d1d76a8edbb917a4d82478b7cfe0ddaff0856589827066",
+      "bytes": 655
+    },
+    "rh2/experiments/category3_cloud_20260929/moto6185/parity.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto6185/parity.patch",
+      "sha256": "d7ca0fd9fa09693588cedd9ff4bbc1e58638115c27c0379468cf5428a4e50f9b",
+      "bytes": 1236
+    },
+    "rh2/experiments/category3_cloud_20260929/moto6185/rootkey.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto6185/rootkey.patch",
+      "sha256": "0232a04f17c99ff6038dbb550f19f019b192afdbe97a5246210ff2d40d458b89",
+      "bytes": 1365
+    },
+    "rh2/experiments/category3_cloud_20260929/moto6185/shape.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto6185/shape.patch",
+      "sha256": "36f1b5d72156e2cf084f26ca481c41d988fbe4f623fb9bf6aa2191196a79b025",
+      "bytes": 1084
+    },
+    "rh2/experiments/category3_cloud_20260929/moto6185/siblings.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto6185/siblings.patch",
+      "sha256": "c39acf3b51c4d45e457deee138f104221cce7706113dad884499faf012a9a0af",
+      "bytes": 746
+    },
+    "rh2/experiments/category3_cloud_20260929/moto6185/skip_s_subtree.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto6185/skip_s_subtree.patch",
+      "sha256": "c273d7e372167499b0e80ec57dc484b6b07311f99c1e602f7e0e6a75be768afc",
+      "bytes": 1043
+    },
+    "rh2/experiments/category3_cloud_20260929/moto6185/swallow.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto6185/swallow.patch",
+      "sha256": "35a765d8fca32558922d8e9d06ac9ec13f3849b598a065e9d5935b5002573881",
+      "bytes": 733
+    },
+    "rh2/experiments/category3_cloud_20260929/moto6185/top_only.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto6185/top_only.patch",
+      "sha256": "1d82e10dfce44606dd4a1b369b4e78cce1b58573538088818e78cf8ec1715eed",
+      "bytes": 1157
+    },
+    "rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_break_after_s.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_break_after_s.patch",
+      "sha256": "487023425d882229251de48bc9a5d111d10033f54fbcc8dc3b401727d97cf863",
+      "bytes": 1161
+    },
+    "rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_depth4.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_depth4.patch",
+      "sha256": "ae21146f48d83f6d0acf46546722cd9d75f99d4e7d779890293ff2de392069e4",
+      "bytes": 1175
+    },
+    "rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_dynamotype.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_dynamotype.patch",
+      "sha256": "2d73d9d782eac8c7701ddfd94918f44df0bd12ed3f108a604e173afe367473e7",
+      "bytes": 2495
+    },
+    "rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_scalar_s.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_scalar_s.patch",
+      "sha256": "e068f41a6e9fec5cd43d44d406f25adce7cc9176094af56bb2ae98c5ef86d457",
+      "bytes": 1767
+    },
+    "rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_shape_key.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_shape_key.patch",
+      "sha256": "d0c1275343e37364c2cf498da6873a468574d8c048062a38cdd82c12ccee04c3",
+      "bytes": 1815
+    },
+    "rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_swallow_attr.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_swallow_attr.patch",
+      "sha256": "9d37f01bbaf924417cc7889e2864c4ed1acee834157b39a44dc37e40eb1a4435",
+      "bytes": 792
+    },
+    "rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_tagparent.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_tagparent.patch",
+      "sha256": "9d4c841f0232b34c61ed053d7f79a48bbfe03bdbd3ffed2a7527e8d90af91b40",
+      "bytes": 1429
+    },
+    "rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_top_or_null.patch": {
+      "path": "rh2/experiments/category3_cloud_20260929/moto6185/review/candidates/rv_top_or_null.patch",
+      "sha256": "5d441c3e35d6de99bab5a259b4d229e4eb2b5ba6edf161ee017ad3cbbc26b8e7",
+      "bytes": 1192
+    }
+  },
+  "actual_image_preparation": {
+    "source": {
+      "ref": {
+        "path": "runs/category2_repair_20260929/moto_cpu_20261003/image6185_source_receipt.json",
+        "sha256": "a6f559fcd2dc580dc894b0046e6a125416becc2f5d8fe2630831a274382323e0",
+        "bytes": 765
+      },
+      "contents": {
+        "instance_id": "getmoto__moto-6185",
+        "requested_image": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6185@sha256:ade7d85a8ef82a6d87940dd9c8d486e50b27dcc33e968e55f50421adf6864eda",
+        "started_at_utc": "2026-10-02T17:52:14.627620+00:00",
+        "scope": "image_preparation_only",
+        "formal_cpu_accepted": false,
+        "pull_returncode": 0,
+        "actual_image_id": "sha256:47443b04543c5fa25c85bb4e86c871f1f98ea0df9e254b2ca8fac9f9bdb19325",
+        "repo_digests": [
+          "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6185@sha256:ade7d85a8ef82a6d87940dd9c8d486e50b27dcc33e968e55f50421adf6864eda"
+        ],
+        "architecture": "amd64",
+        "os": "linux",
+        "size_bytes": 2807548659,
+        "layer_count": 13,
+        "manifest_digest_matches": true,
+        "finished_at_utc": "2026-10-02T17:52:40.973749+00:00"
+      }
+    },
+    "derived": {
+      "ref": {
+        "path": "runs/category2_repair_20260929/moto_cpu_20261003/image6185_derived_receipt.json",
+        "sha256": "1a187dafc8e123c0573a68b76b8718eda4f9145502d0cd5a957f41d46980fcf1",
+        "bytes": 1439
+      },
+      "contents": {
+        "instance_id": "getmoto__moto-6185",
+        "scope": "image_preparation_only",
+        "formal_cpu_accepted": false,
+        "started_at_utc": "2026-10-02T17:52:41.193879+00:00",
+        "returncode": 0,
+        "base_digest": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6185@sha256:ade7d85a8ef82a6d87940dd9c8d486e50b27dcc33e968e55f50421adf6864eda",
+        "base_id": "sha256:47443b04543c5fa25c85bb4e86c871f1f98ea0df9e254b2ca8fac9f9bdb19325",
+        "derived_tag": "rh2-swe-moto-20261003/moto6185:b200899bd2e5",
+        "dockerfile_sha256": "352caaf2eae8dc6fdb3291e9afaf85281a0b0199d6b3ee091d9e3d3247d44993",
+        "wheel_manifest_sha256": "660fa7aa83d8c3cedeb5e188ef7a4de0621e6011a37be48958813a6c50425a55",
+        "wheels": [
+          {
+            "name": "packaging-24.1-py3-none-any.whl",
+            "sha256": "5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124",
+            "bytes": 53985
+          },
+          {
+            "name": "wheel-0.43.0-py3-none-any.whl",
+            "sha256": "55c570405f142630c6b9f72fe09d9b67cf1477fcf543ae5b8dcb1f5b7377da81",
+            "bytes": 65775
+          },
+          {
+            "name": "setuptools-72.1.0-py3-none-any.whl",
+            "sha256": "5a03e1860cf56bb6ef48ce186b0e557fdba433237481a9a625176c2831be15d1",
+            "bytes": 2337965
+          }
+        ],
+        "original_vendor_install": "make init",
+        "derived_id": "sha256:79d39d611186289b10956c2f845af1272218a1f4cf8fc00382c7c6ab4eced35d",
+        "base_layers_preserved": true,
+        "offline_env_present": true,
+        "finished_at_utc": "2026-10-02T17:52:42.359341+00:00"
+      }
+    }
+  },
+  "independent_material_evidence": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-6185/card.md",
+      "sha256": "746563e4aa0823bd3bd30ff466e4dcd962be5bbc3fc3cd709adc38ef78e7c686",
+      "bytes": 1586
+    }
+  ],
+  "requested_consumer": "replace_test_patch_preserve_refs",
+  "public_change": false,
+  "formal_revised_cpu_accepted": false,
+  "required_delivery": [
+    "冻结producer／registry与有效public/env/grading/material身份",
+    "原参考不删不换；5960只追加明确F2P，35/96/20题保持原分区",
+    "固定原安装与完整选择器、恢复/保护集合和实际镜像/配方",
+    "在cpu-a部署读回与正式prepare入口",
+    "5960/6185实际collection、参数合键和参考绑定仍须题主CPU核验，不私改parser掩盖问题"
+  ],
+  "boundaries": [
+    "沿用已有审查，云端v3诊断不冒称正式CPU",
+    "gold或已知漏洞候选满分不等于合法正对照；以既定矩阵实际判断",
+    "gold、负对照和私有断言不进入solver"
+  ]
+}

@@ -1,0 +1,267 @@
+bringing up nodes...
+bringing up nodes...
+
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+_____________________ JsonReportTest.test_branch_coverage ______________________
+[gw0] linux -- Python 3.7.9 /testbed/.venv/bin/python
+
+self = <tests.test_json.JsonReportTest testMethod=test_branch_coverage>
+
+    def test_branch_coverage(self):
+        cov = coverage.Coverage(branch=True)
+        expected_result = {
+            'meta': {
+                "version": coverage.__version__,
+                "branch_coverage": True,
+                "show_contexts": False,
+            },
+            'files': {
+                'a.py': {
+                    'executed_lines': [1, 2],
+                    'missing_lines': [3],
+                    'excluded_lines': [],
+                    'summary': {
+                        'missing_lines': 1,
+                        'covered_lines': 2,
+                        'num_statements': 3,
+                        'num_branches': 2,
+                        'excluded_lines': 0,
+                        'num_partial_branches': 1,
+                        'percent_covered': 60.0
+                    }
+                }
+            },
+            'totals': {
+                'missing_lines': 1,
+                'covered_lines': 2,
+                'num_statements': 3,
+                'num_branches': 2,
+                'excluded_lines': 0,
+                'num_partial_branches': 1,
+                'percent_covered': 60.0
+            }
+        }
+>       self._assert_expected_json_report(cov, expected_result)
+
+tests/test_json.py:71: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_json.JsonReportTest testMethod=test_branch_coverage>
+cov = <coverage.control.Coverage object at 0x7fc09f350190>
+expected_result = {'files': {'a.py': {'excluded_lines': [], 'executed_lines': [1, 2], 'missing_lines': [3], 'summary': {'covered_lines':...'version': '5.0.5a0'}, 'totals': {'covered_lines': 2, 'excluded_lines': 0, 'missing_lines': 1, 'num_branches': 2, ...}}
+
+    def _assert_expected_json_report(self, cov, expected_result):
+        """
+        Helper for tests that handles the common ceremony so the tests can be clearly show the
+        consequences of setting various arguments.
+        """
+        self.make_file("a.py", """\
+            a = {'b': 1}
+            if a.get('a'):
+                b = 1
+            """)
+        a = self.start_import_stop(cov, "a")
+        output_path = os.path.join(self.temp_dir, "a.json")
+        cov.json_report(a, outfile=output_path)
+        with open(output_path) as result_file:
+            parsed_result = json.load(result_file)
+        self.assert_recent_datetime(
+            datetime.strptime(parsed_result['meta']['timestamp'], "%Y-%m-%dT%H:%M:%S.%f")
+        )
+        del (parsed_result['meta']['timestamp'])
+>       assert parsed_result == expected_result
+E       AssertionError: assert {'files': {'a...hes': 1, ...}} == {'files': {'a....hes': 2, ...}}
+E         Omitting 2 identical items, use -vv to show
+E         Differing items:
+E         {'totals': {'covered_branches': 1, 'covered_lines': 2, 'excluded_lines': 0, 'missing_branches': 1, ...}} != {'totals': {'covered_lines': 2, 'excluded_lines': 0, 'missing_lines': 1, 'num_branches': 2, ...}}
+E         Full diff:
+E         {'files': {'a.py': {'excluded_lines': [],
+E         'executed_lines': [1, 2],
+E         'missing_lines': [3],...
+E         
+E         ...Full output truncated (23 lines hidden), use '-vv' to show
+
+tests/test_json.py:35: AssertionError
+_____________________ JsonReportTest.test_context_relative _____________________
+[gw2] linux -- Python 3.7.9 /testbed/.venv/bin/python
+
+self = <tests.test_json.JsonReportTest testMethod=test_context_relative>
+
+    def test_context_relative(self):
+>       self.run_context_test(relative_files=True)
+
+tests/test_json.py:157: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_json.py:151: in run_context_test
+    self._assert_expected_json_report(cov, expected_result)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_json.JsonReportTest testMethod=test_context_relative>
+cov = <coverage.control.Coverage object at 0x7ff0245ec7d0>
+expected_result = {'files': {'a.py': {'contexts': {'1': ['cool_test'], '2': ['cool_test']}, 'excluded_lines': [], 'executed_lines': [1, ...ersion': '5.0.5a0'}, 'totals': {'covered_lines': 2, 'excluded_lines': 0, 'missing_lines': 1, 'num_statements': 3, ...}}
+
+    def _assert_expected_json_report(self, cov, expected_result):
+        """
+        Helper for tests that handles the common ceremony so the tests can be clearly show the
+        consequences of setting various arguments.
+        """
+        self.make_file("a.py", """\
+            a = {'b': 1}
+            if a.get('a'):
+                b = 1
+            """)
+        a = self.start_import_stop(cov, "a")
+        output_path = os.path.join(self.temp_dir, "a.json")
+        cov.json_report(a, outfile=output_path)
+        with open(output_path) as result_file:
+            parsed_result = json.load(result_file)
+        self.assert_recent_datetime(
+            datetime.strptime(parsed_result['meta']['timestamp'], "%Y-%m-%dT%H:%M:%S.%f")
+        )
+        del (parsed_result['meta']['timestamp'])
+>       assert parsed_result == expected_result
+E       AssertionError: assert {'files': {'a...hes': 0, ...}} == {'files': {'a....nts': 3, ...}}
+E         Omitting 2 identical items, use -vv to show
+E         Differing items:
+E         {'totals': {'covered_branches': 0, 'covered_lines': 2, 'excluded_lines': 0, 'missing_branches': 0, ...}} != {'totals': {'covered_lines': 2, 'excluded_lines': 0, 'missing_lines': 1, 'num_statements': 3, ...}}
+E         Full diff:
+E         {'files': {'a.py': {'contexts': {'1': ['cool_test'], '2': ['cool_test']},
+E         'excluded_lines': [],
+E         'executed_lines': [1, 2],...
+E         
+E         ...Full output truncated (20 lines hidden), use '-vv' to show
+
+tests/test_json.py:35: AssertionError
+___________________ JsonReportTest.test_context_non_relative ___________________
+[gw1] linux -- Python 3.7.9 /testbed/.venv/bin/python
+
+self = <tests.test_json.JsonReportTest testMethod=test_context_non_relative>
+
+    def test_context_non_relative(self):
+>       self.run_context_test(relative_files=False)
+
+tests/test_json.py:154: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_json.py:151: in run_context_test
+    self._assert_expected_json_report(cov, expected_result)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_json.JsonReportTest testMethod=test_context_non_relative>
+cov = <coverage.control.Coverage object at 0x7f7995766710>
+expected_result = {'files': {'a.py': {'contexts': {'1': ['cool_test'], '2': ['cool_test']}, 'excluded_lines': [], 'executed_lines': [1, ...ersion': '5.0.5a0'}, 'totals': {'covered_lines': 2, 'excluded_lines': 0, 'missing_lines': 1, 'num_statements': 3, ...}}
+
+    def _assert_expected_json_report(self, cov, expected_result):
+        """
+        Helper for tests that handles the common ceremony so the tests can be clearly show the
+        consequences of setting various arguments.
+        """
+        self.make_file("a.py", """\
+            a = {'b': 1}
+            if a.get('a'):
+                b = 1
+            """)
+        a = self.start_import_stop(cov, "a")
+        output_path = os.path.join(self.temp_dir, "a.json")
+        cov.json_report(a, outfile=output_path)
+        with open(output_path) as result_file:
+            parsed_result = json.load(result_file)
+        self.assert_recent_datetime(
+            datetime.strptime(parsed_result['meta']['timestamp'], "%Y-%m-%dT%H:%M:%S.%f")
+        )
+        del (parsed_result['meta']['timestamp'])
+>       assert parsed_result == expected_result
+E       AssertionError: assert {'files': {'a...hes': 0, ...}} == {'files': {'a....nts': 3, ...}}
+E         Omitting 2 identical items, use -vv to show
+E         Differing items:
+E         {'totals': {'covered_branches': 0, 'covered_lines': 2, 'excluded_lines': 0, 'missing_branches': 0, ...}} != {'totals': {'covered_lines': 2, 'excluded_lines': 0, 'missing_lines': 1, 'num_statements': 3, ...}}
+E         Full diff:
+E         {'files': {'a.py': {'contexts': {'1': ['cool_test'], '2': ['cool_test']},
+E         'excluded_lines': [],
+E         'executed_lines': [1, 2],...
+E         
+E         ...Full output truncated (20 lines hidden), use '-vv' to show
+
+tests/test_json.py:35: AssertionError
+___________________ JsonReportTest.test_simple_line_coverage ___________________
+[gw0] linux -- Python 3.7.9 /testbed/.venv/bin/python
+
+self = <tests.test_json.JsonReportTest testMethod=test_simple_line_coverage>
+
+    def test_simple_line_coverage(self):
+        cov = coverage.Coverage()
+        expected_result = {
+            'meta': {
+                "version": coverage.__version__,
+                "branch_coverage": False,
+                "show_contexts": False,
+            },
+            'files': {
+                'a.py': {
+                    'executed_lines': [1, 2],
+                    'missing_lines': [3],
+                    'excluded_lines': [],
+                    'summary': {
+                        'excluded_lines': 0,
+                        'missing_lines': 1,
+                        'covered_lines': 2,
+                        'num_statements': 3,
+                        'percent_covered': 66.66666666666667
+                    }
+                }
+            },
+            'totals': {
+                'excluded_lines': 0,
+                'missing_lines': 1,
+                'covered_lines': 2,
+                'num_statements': 3,
+                'percent_covered': 66.66666666666667
+            }
+        }
+>       self._assert_expected_json_report(cov, expected_result)
+
+tests/test_json.py:103: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_json.JsonReportTest testMethod=test_simple_line_coverage>
+cov = <coverage.control.Coverage object at 0x7fc09d719750>
+expected_result = {'files': {'a.py': {'excluded_lines': [], 'executed_lines': [1, 2], 'missing_lines': [3], 'summary': {'covered_lines':...ersion': '5.0.5a0'}, 'totals': {'covered_lines': 2, 'excluded_lines': 0, 'missing_lines': 1, 'num_statements': 3, ...}}
+
+    def _assert_expected_json_report(self, cov, expected_result):
+        """
+        Helper for tests that handles the common ceremony so the tests can be clearly show the
+        consequences of setting various arguments.
+        """
+        self.make_file("a.py", """\
+            a = {'b': 1}
+            if a.get('a'):
+                b = 1
+            """)
+        a = self.start_import_stop(cov, "a")
+        output_path = os.path.join(self.temp_dir, "a.json")
+        cov.json_report(a, outfile=output_path)
+        with open(output_path) as result_file:
+            parsed_result = json.load(result_file)
+        self.assert_recent_datetime(
+            datetime.strptime(parsed_result['meta']['timestamp'], "%Y-%m-%dT%H:%M:%S.%f")
+        )
+        del (parsed_result['meta']['timestamp'])
+>       assert parsed_result == expected_result
+E       AssertionError: assert {'files': {'a...hes': 0, ...}} == {'files': {'a....nts': 3, ...}}
+E         Omitting 2 identical items, use -vv to show
+E         Differing items:
+E         {'totals': {'covered_branches': 0, 'covered_lines': 2, 'excluded_lines': 0, 'missing_branches': 0, ...}} != {'totals': {'covered_lines': 2, 'excluded_lines': 0, 'missing_lines': 1, 'num_statements': 3, ...}}
+E         Full diff:
+E         {'files': {'a.py': {'excluded_lines': [],
+E         'executed_lines': [1, 2],
+E         'missing_lines': [3],...
+E         
+E         ...Full output truncated (19 lines hidden), use '-vv' to show
+
+tests/test_json.py:35: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_json.py::JsonReportTest::test_branch_coverage - AssertionEr...
+FAILED tests/test_json.py::JsonReportTest::test_context_relative - AssertionE...
+FAILED tests/test_json.py::JsonReportTest::test_context_non_relative - Assert...
+FAILED tests/test_json.py::JsonReportTest::test_simple_line_coverage - Assert...
+4 failed in 1.21 seconds

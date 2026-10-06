@@ -1,0 +1,70 @@
+def test_run_app_cancelled_coroutine_cleans_resources(loop) -> None:
+    # 保留公开 coroutine 取消的传播与资源收尾；不限定内部任务组织。
+    state = {"events": []}
+
+    async def pending_worker():
+        try:
+            state["events"].append("worker_started")
+            await asyncio.Event().wait()
+        finally:
+            state["events"].append("worker_cleanup")
+
+    async def open_generator():
+        try:
+            state["events"].append("generator_started")
+            yield None
+        finally:
+            state["events"].append("generator_cleanup")
+
+    async def cancelled_app_factory():
+        state["worker"] = loop.create_task(pending_worker())
+        await asyncio.sleep(0)
+        # 保持强引用，并实际进入 generator，避免 GC 代替库的清理。
+        state["generator"] = open_generator()
+        await state["generator"].__anext__()
+        main = asyncio.current_task()
+        state["main"] = main
+        main.cancel()
+        await asyncio.sleep(0)
+        raise AssertionError("coroutine cancellation did not propagate")
+
+    try:
+        with pytest.raises(asyncio.CancelledError):
+            web.run_app(
+                cancelled_app_factory(), loop=loop, handle_signals=False, print=None
+            )
+
+        # 此快照及全部语义断言都在观察者补清理之前。
+        worker = state["worker"]
+        generator = state["generator"]
+        print("cancelled coroutine cleanup snapshot:", {
+            "main_done": state["main"].done(),
+            "main_cancelled": state["main"].cancelled(),
+            "worker_done": worker.done(),
+            "worker_cancelled": worker.cancelled(),
+            "generator_closed": generator.ag_frame is None,
+            "loop_closed": loop.is_closed(),
+            "pending_tasks": len(asyncio.all_tasks(loop)),
+            "events": list(state["events"]),
+        })
+        assert worker.done()
+        assert "worker_cleanup" in state["events"]
+        assert generator.ag_frame is None
+        assert "generator_cleanup" in state["events"]
+        assert loop.is_closed()
+        assert not asyncio.all_tasks(loop)
+    finally:
+        # 只回收测试失败时遗留的资源，不能用于满足前面的断言。
+        if not loop.is_closed():
+            try:
+                tasks = list(asyncio.all_tasks(loop))
+                for task in tasks:
+                    task.cancel()
+                if tasks:
+                    loop.run_until_complete(
+                        asyncio.gather(*tasks, return_exceptions=True)
+                    )
+                loop.run_until_complete(loop.shutdown_asyncgens())
+            finally:
+                loop.close()
+        asyncio.set_event_loop(None)

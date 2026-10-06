@@ -1,0 +1,1352 @@
+{
+  "schema_id": "rh2.r2e_pillow_cpu_acceptance.v1",
+  "as_of": "2026-10-03",
+  "instance_id": "pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07",
+  "status": "cpu_acceptance_complete_non_author_pass_pending_probe",
+  "cpu_host": "cpu-b",
+  "release_id": "cat2-cpu-r2e078079-swe7-git-20261003-v1",
+  "release_manifest_sha256": "sha256:80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9",
+  "build_release_id": "cat2-cpu-r2e070077-swe6-20261003-v1",
+  "build_release_manifest_sha256": "sha256:621e73660ea5685b9a77c353e7f4f3664d7eefa073aed8454bae1ae3e32f388f",
+  "material_revision_ids": [
+    "r2e-mr-070",
+    "r2e-mr-071"
+  ],
+  "hidden_tests_tree_sha256": "sha256:9305a1b07a873927dd32d3fca434e5dba43a3f28049b05f9304f47520661cd04",
+  "expected_output_json_sha256": "sha256:af126a3c513f11efd3f78a89ff5f601a1c9bf401d078d43d569b2dfcc6650304",
+  "expected_total": 74,
+  "cpu_derived_image_id": "sha256:56a40ec99ee6068646af7f2d1a46c065d43f7fa5da65d39a4b398eb8b1cebf2a",
+  "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+  "recipe_sha256": "sha256:88d9f6ee342c58f19964d41dda99db4b975e364eed58cbbbc68dd9e1f7fda81f",
+  "integrity_checks": {
+    "total": 21,
+    "failed": 0,
+    "facts": {
+      "path": "runs/category2_repair_20260929/r2e_pillow_cpu_b_20261003/rgba_gif_inputs_core_v1/derived/pillow3a61a682-build-20261002T175714Z/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/facts.json",
+      "sha256": "sha256:5081aa47d2003a03a0e84fac46df6ea2b9858febea7d60143309e328326ae03c"
+    }
+  },
+  "formal_controls": [
+    {
+      "candidate": "noop",
+      "expected_reward": 0,
+      "recomputed_reward": 0.0,
+      "expected_match": 71,
+      "expected_total": 74,
+      "expected_keys_equal": true,
+      "mismatches": [
+        {
+          "key": "TestImage.test_remap_palette",
+          "expected": "PASSED",
+          "observed": "FAILED"
+        },
+        {
+          "key": "TestImage.test_remap_palette_rgba_reorder",
+          "expected": "PASSED",
+          "observed": "FAILED"
+        },
+        {
+          "key": "TestImage.test_remap_palette_rgba_transparency",
+          "expected": "PASSED",
+          "observed": "FAILED"
+        }
+      ],
+      "raw_source_patch_sha256": null,
+      "ledger_sha256": "sha256:fe81871d6843d9f69a13ada2ad6770786e3a2d014dbda308886df8337f4ec6d7",
+      "eval_log_sha256": "sha256:4aeaa8ffa2b7249924c7f2b25e9f404e05f52f8a583e5eea4400f519da56b00a",
+      "stop_reason": null,
+      "agent_apply": "agent/54321",
+      "derived_image_id": "sha256:56a40ec99ee6068646af7f2d1a46c065d43f7fa5da65d39a4b398eb8b1cebf2a",
+      "footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_pillow/acceptance/pillow3a61-accept-20261002T181422Z/matrix/noop/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": 71,
+        "expected_total": 74,
+        "f2p_pass": null,
+        "f2p_total": null,
+        "failure_category": "tests_failed",
+        "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+        "grading_semantics": "r2e_expected_map",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": null,
+        "p2p_total": null,
+        "report_id": "rpt_grading_854a2e4a",
+        "reward": 0.0
+      }
+    },
+    {
+      "candidate": "C1",
+      "expected_reward": 1,
+      "recomputed_reward": 1.0,
+      "expected_match": 74,
+      "expected_total": 74,
+      "expected_keys_equal": true,
+      "mismatches": [],
+      "raw_source_patch_sha256": "sha256:da1193af5bd57ea6dd7a52dc581120d230f40375848e28de8798e9959a6414fa",
+      "ledger_sha256": "sha256:35f78863ca3563c504add60436421a738341b1e2836847f25fd60ec47a2670a8",
+      "eval_log_sha256": "sha256:2d06e9a2a4c9090a9a1b1ae97435960aed8c2317f60b80f75a56394b96014934",
+      "stop_reason": null,
+      "agent_apply": "agent/54321",
+      "derived_image_id": "sha256:56a40ec99ee6068646af7f2d1a46c065d43f7fa5da65d39a4b398eb8b1cebf2a",
+      "footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_pillow/acceptance/pillow3a61-accept-20261002T181422Z/matrix/C1/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": 74,
+        "expected_total": 74,
+        "f2p_pass": null,
+        "f2p_total": null,
+        "failure_category": null,
+        "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+        "grading_semantics": "r2e_expected_map",
+        "infra_failure_detail": null,
+        "outcome": "resolved",
+        "p2p_fail": null,
+        "p2p_total": null,
+        "report_id": "rpt_grading_bb67a887",
+        "reward": 1.0
+      }
+    },
+    {
+      "candidate": "gold",
+      "expected_reward": 0,
+      "recomputed_reward": 0.0,
+      "expected_match": 73,
+      "expected_total": 74,
+      "expected_keys_equal": true,
+      "mismatches": [
+        {
+          "key": "TestImage.test_remap_palette_rgba_transparency",
+          "expected": "PASSED",
+          "observed": "FAILED"
+        }
+      ],
+      "raw_source_patch_sha256": "sha256:2edc27cd2e6468a67e4ab220608b715b1a5d9c17cfb616a15a5702840a109b01",
+      "ledger_sha256": "sha256:c0c483cb0f74f7ac36de7f7dcbbfa5737e844164ef42f5826439ccb240eec9da",
+      "eval_log_sha256": "sha256:74dd30d61dbf790c5bd8cc153b1d5baa659981babe2263a93ce82f79b6526def",
+      "stop_reason": null,
+      "agent_apply": "agent/54321",
+      "derived_image_id": "sha256:56a40ec99ee6068646af7f2d1a46c065d43f7fa5da65d39a4b398eb8b1cebf2a",
+      "footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_pillow/acceptance/pillow3a61-accept-20261002T181422Z/matrix/gold/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": 73,
+        "expected_total": 74,
+        "f2p_pass": null,
+        "f2p_total": null,
+        "failure_category": "tests_failed",
+        "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+        "grading_semantics": "r2e_expected_map",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": null,
+        "p2p_total": null,
+        "report_id": "rpt_grading_9972ca70",
+        "reward": 0.0
+      }
+    },
+    {
+      "candidate": "A1u",
+      "expected_reward": 0,
+      "recomputed_reward": 0.0,
+      "expected_match": 73,
+      "expected_total": 74,
+      "expected_keys_equal": true,
+      "mismatches": [
+        {
+          "key": "TestImage.test_remap_palette_rgba_transparency",
+          "expected": "PASSED",
+          "observed": "FAILED"
+        }
+      ],
+      "raw_source_patch_sha256": "sha256:cffca928dd8bda5625116773a15668b98394b598e031e08f5720b07348b8757f",
+      "ledger_sha256": "sha256:6ce1581dedcb0eda4d69dd571cf6ea6978d76aafdf2a680a1761cd7d92e46690",
+      "eval_log_sha256": "sha256:ce7d61aca4b4cfc6c717cd3d7e7faf50f70b6a78472a9ec90b33814a61d98272",
+      "stop_reason": null,
+      "agent_apply": "agent/54321",
+      "derived_image_id": "sha256:56a40ec99ee6068646af7f2d1a46c065d43f7fa5da65d39a4b398eb8b1cebf2a",
+      "footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_pillow/acceptance/pillow3a61-accept-20261002T181422Z/matrix/A1u/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": 73,
+        "expected_total": 74,
+        "f2p_pass": null,
+        "f2p_total": null,
+        "failure_category": "tests_failed",
+        "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+        "grading_semantics": "r2e_expected_map",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": null,
+        "p2p_total": null,
+        "report_id": "rpt_grading_f843a4a6",
+        "reward": 0.0
+      }
+    },
+    {
+      "candidate": "U11",
+      "expected_reward": 1,
+      "recomputed_reward": 1.0,
+      "expected_match": 74,
+      "expected_total": 74,
+      "expected_keys_equal": true,
+      "mismatches": [],
+      "raw_source_patch_sha256": "sha256:1d48f9addb6d419cc47c832b1ecefc31b45c03494e8178cde33b7548f2126c0f",
+      "ledger_sha256": "sha256:982904f1c9a4713bd485897a06856c95a38655c8c7070dd2d3d7e53470753578",
+      "eval_log_sha256": "sha256:0fe10d43013396cb46af698aed7af6e8da39ef988df5d6aa05a64dfbf776711b",
+      "stop_reason": null,
+      "agent_apply": "agent/54321",
+      "derived_image_id": "sha256:56a40ec99ee6068646af7f2d1a46c065d43f7fa5da65d39a4b398eb8b1cebf2a",
+      "footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_pillow/acceptance/pillow3a61-accept-20261002T181422Z/matrix/U11/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": 74,
+        "expected_total": 74,
+        "f2p_pass": null,
+        "f2p_total": null,
+        "failure_category": null,
+        "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+        "grading_semantics": "r2e_expected_map",
+        "infra_failure_detail": null,
+        "outcome": "resolved",
+        "p2p_fail": null,
+        "p2p_total": null,
+        "report_id": "rpt_grading_2bf8b7d6",
+        "reward": 1.0
+      }
+    },
+    {
+      "candidate": "G_del",
+      "expected_reward": 1,
+      "recomputed_reward": 1.0,
+      "expected_match": 74,
+      "expected_total": 74,
+      "expected_keys_equal": true,
+      "mismatches": [],
+      "raw_source_patch_sha256": "sha256:77cde372cc466010861ee001d7d45f16703f13ac347bec8a275c076b3d57059c",
+      "ledger_sha256": "sha256:6a582e8b006eea96fb3948034269d762a9f584c776c85ef4bead222cdf8b777b",
+      "eval_log_sha256": "sha256:a7f8a660eca16b232225269e7e73f50d4a2ea78fbdc44dd4c4f6443747a17f8f",
+      "stop_reason": null,
+      "agent_apply": "agent/54321",
+      "derived_image_id": "sha256:56a40ec99ee6068646af7f2d1a46c065d43f7fa5da65d39a4b398eb8b1cebf2a",
+      "footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_pillow/acceptance/pillow3a61-accept-20261002T181422Z/matrix/G_del/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": 74,
+        "expected_total": 74,
+        "f2p_pass": null,
+        "f2p_total": null,
+        "failure_category": null,
+        "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+        "grading_semantics": "r2e_expected_map",
+        "infra_failure_detail": null,
+        "outcome": "resolved",
+        "p2p_fail": null,
+        "p2p_total": null,
+        "report_id": "rpt_grading_7e879718",
+        "reward": 1.0
+      }
+    },
+    {
+      "candidate": "G_cim",
+      "expected_reward": 1,
+      "recomputed_reward": 1.0,
+      "expected_match": 74,
+      "expected_total": 74,
+      "expected_keys_equal": true,
+      "mismatches": [],
+      "raw_source_patch_sha256": "sha256:16478214e8e2ef8007061ae2ca641ecf194a8173b49743ee7a08458bd8b2d1ab",
+      "ledger_sha256": "sha256:f3e6de31dbf977ceb6e54e70a33bdaa5738be8bb78a1147341eb8a33ea1beb1e",
+      "eval_log_sha256": "sha256:5c18d5bc28f8e663d457e7af0de321beb465f5eaa91ff98bc7edc310369af5ed",
+      "stop_reason": null,
+      "agent_apply": "agent/54321",
+      "derived_image_id": "sha256:56a40ec99ee6068646af7f2d1a46c065d43f7fa5da65d39a4b398eb8b1cebf2a",
+      "footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_pillow/acceptance/pillow3a61-accept-20261002T181422Z/matrix/G_cim/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": 74,
+        "expected_total": 74,
+        "f2p_pass": null,
+        "f2p_total": null,
+        "failure_category": null,
+        "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+        "grading_semantics": "r2e_expected_map",
+        "infra_failure_detail": null,
+        "outcome": "resolved",
+        "p2p_fail": null,
+        "p2p_total": null,
+        "report_id": "rpt_grading_0f566540",
+        "reward": 1.0
+      }
+    },
+    {
+      "candidate": "HYB",
+      "expected_reward": 1,
+      "recomputed_reward": 1.0,
+      "expected_match": 74,
+      "expected_total": 74,
+      "expected_keys_equal": true,
+      "mismatches": [],
+      "raw_source_patch_sha256": "sha256:b9b364b32d8c2c4c5c5876b3d5b240bcd720f70b32af89d9284e50dcdff2596b",
+      "ledger_sha256": "sha256:165295a720903a532008a108b273cfd1498a426d6fa7efc027bc537a775b8b2a",
+      "eval_log_sha256": "sha256:9325ed38092ff5930cae06646fa3920df0254d70d7f8baf61b11db77221e2bd2",
+      "stop_reason": null,
+      "agent_apply": "agent/54321",
+      "derived_image_id": "sha256:56a40ec99ee6068646af7f2d1a46c065d43f7fa5da65d39a4b398eb8b1cebf2a",
+      "footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_pillow/acceptance/pillow3a61-accept-20261002T181422Z/matrix/HYB/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": 74,
+        "expected_total": 74,
+        "f2p_pass": null,
+        "f2p_total": null,
+        "failure_category": null,
+        "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+        "grading_semantics": "r2e_expected_map",
+        "infra_failure_detail": null,
+        "outcome": "resolved",
+        "p2p_fail": null,
+        "p2p_total": null,
+        "report_id": "rpt_grading_46013f95",
+        "reward": 1.0
+      }
+    },
+    {
+      "candidate": "G_gif",
+      "expected_reward": 1,
+      "recomputed_reward": 1.0,
+      "expected_match": 74,
+      "expected_total": 74,
+      "expected_keys_equal": true,
+      "mismatches": [],
+      "raw_source_patch_sha256": "sha256:4e9680c27f19b99750c39791ca4989db3b4a02837d9802c2c8215f8695aa5e76",
+      "ledger_sha256": "sha256:c0c28a8daec2088973ce603ff7617a3f85735cf0fb0507eccf0ab10fa3f0de97",
+      "eval_log_sha256": "sha256:fd4bde82cd42b36b4c8bffec4bcddaae7ba7253c85fc1059fdac5db11cfe3cff",
+      "stop_reason": null,
+      "agent_apply": "agent/54321",
+      "derived_image_id": "sha256:56a40ec99ee6068646af7f2d1a46c065d43f7fa5da65d39a4b398eb8b1cebf2a",
+      "footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_pillow/acceptance/pillow3a61-accept-20261002T181422Z/matrix/G_gif/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": 74,
+        "expected_total": 74,
+        "f2p_pass": null,
+        "f2p_total": null,
+        "failure_category": null,
+        "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+        "grading_semantics": "r2e_expected_map",
+        "infra_failure_detail": null,
+        "outcome": "resolved",
+        "p2p_fail": null,
+        "p2p_total": null,
+        "report_id": "rpt_grading_a62552fc",
+        "reward": 1.0
+      }
+    },
+    {
+      "candidate": "A0K",
+      "expected_reward": 0,
+      "recomputed_reward": 0.0,
+      "expected_match": 73,
+      "expected_total": 74,
+      "expected_keys_equal": true,
+      "mismatches": [
+        {
+          "key": "TestImage.test_remap_palette_rgba_transparency",
+          "expected": "PASSED",
+          "observed": "FAILED"
+        }
+      ],
+      "raw_source_patch_sha256": "sha256:ced6e5fbffb7afb4d1bf2948c8d73673bafbbd1e1fd7fb0b8f5436e3c027b4e6",
+      "ledger_sha256": "sha256:1ebd08d921452dc81ee7aad28b09c9f179491e2689d0b5e6c0a685529c2ca67c",
+      "eval_log_sha256": "sha256:d61575ff86d90d574092c3a8b17f38f7764b7e805d2fc0590eb3bbe49f57b751",
+      "stop_reason": null,
+      "agent_apply": "agent/54321",
+      "derived_image_id": "sha256:56a40ec99ee6068646af7f2d1a46c065d43f7fa5da65d39a4b398eb8b1cebf2a",
+      "footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_pillow/acceptance/pillow3a61-accept-20261002T181422Z/matrix/A0K/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": 73,
+        "expected_total": 74,
+        "f2p_pass": null,
+        "f2p_total": null,
+        "failure_category": "tests_failed",
+        "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+        "grading_semantics": "r2e_expected_map",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": null,
+        "p2p_total": null,
+        "report_id": "rpt_grading_fae2bbbf",
+        "reward": 0.0
+      }
+    },
+    {
+      "candidate": "A0D",
+      "expected_reward": 0,
+      "recomputed_reward": 0.0,
+      "expected_match": 73,
+      "expected_total": 74,
+      "expected_keys_equal": true,
+      "mismatches": [
+        {
+          "key": "TestImage.test_remap_palette_rgba_transparency",
+          "expected": "PASSED",
+          "observed": "FAILED"
+        }
+      ],
+      "raw_source_patch_sha256": "sha256:86ab0fb5459a93d7d2eaf898f9004350af6f9aad81ee8f4699235670ac496f28",
+      "ledger_sha256": "sha256:d37f914a205a5187b8671a85c73cb3090e5c0ee674722979dba48c376af7aa08",
+      "eval_log_sha256": "sha256:562db47ab4e0720477c3925e129b7d515312be2d32c52f97e46067abe7f97dd3",
+      "stop_reason": null,
+      "agent_apply": "agent/54321",
+      "derived_image_id": "sha256:56a40ec99ee6068646af7f2d1a46c065d43f7fa5da65d39a4b398eb8b1cebf2a",
+      "footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_pillow/acceptance/pillow3a61-accept-20261002T181422Z/matrix/A0D/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": 73,
+        "expected_total": 74,
+        "f2p_pass": null,
+        "f2p_total": null,
+        "failure_category": "tests_failed",
+        "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+        "grading_semantics": "r2e_expected_map",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": null,
+        "p2p_total": null,
+        "report_id": "rpt_grading_c9b8396a",
+        "reward": 0.0
+      }
+    },
+    {
+      "candidate": "FB",
+      "expected_reward": 0,
+      "recomputed_reward": 0.0,
+      "expected_match": 73,
+      "expected_total": 74,
+      "expected_keys_equal": true,
+      "mismatches": [
+        {
+          "key": "TestImage.test_remap_palette_rgba_transparency",
+          "expected": "PASSED",
+          "observed": "FAILED"
+        }
+      ],
+      "raw_source_patch_sha256": "sha256:4c3c7ca8ebf3347ea30de5e1dd330585f1b0abed04bfaeabab0e8ef591a23a27",
+      "ledger_sha256": "sha256:5a3f8427af1b64d8b109fc5e89affb6f8c9f4c38f721df22c6560175f2a176fe",
+      "eval_log_sha256": "sha256:ea1985270ac6268c1de976719263575139be1e3d3f93bcfc33e9ac8ee59b58de",
+      "stop_reason": null,
+      "agent_apply": "agent/54321",
+      "derived_image_id": "sha256:56a40ec99ee6068646af7f2d1a46c065d43f7fa5da65d39a4b398eb8b1cebf2a",
+      "footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_pillow/acceptance/pillow3a61-accept-20261002T181422Z/matrix/FB/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": 73,
+        "expected_total": 74,
+        "f2p_pass": null,
+        "f2p_total": null,
+        "failure_category": "tests_failed",
+        "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+        "grading_semantics": "r2e_expected_map",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": null,
+        "p2p_total": null,
+        "report_id": "rpt_grading_572b1766",
+        "reward": 0.0
+      }
+    },
+    {
+      "candidate": "DROP",
+      "expected_reward": 0,
+      "recomputed_reward": 0.0,
+      "expected_match": 73,
+      "expected_total": 74,
+      "expected_keys_equal": true,
+      "mismatches": [
+        {
+          "key": "TestImage.test_remap_palette_rgba_transparency",
+          "expected": "PASSED",
+          "observed": "FAILED"
+        }
+      ],
+      "raw_source_patch_sha256": "sha256:e8aa2b1781715fb91cb4d9fe1ab81a1b4496a4f57f8741165f60cfb745bdc6f7",
+      "ledger_sha256": "sha256:2397c248e0e663b7d86c2776318f88e61f279b0a39f7884947b8580dd8b93412",
+      "eval_log_sha256": "sha256:8f21d618e3e1b3de4c2b8b8d663d8cf6018d8552232ff17cd23aca23504374c1",
+      "stop_reason": null,
+      "agent_apply": "agent/54321",
+      "derived_image_id": "sha256:56a40ec99ee6068646af7f2d1a46c065d43f7fa5da65d39a4b398eb8b1cebf2a",
+      "footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_pillow/acceptance/pillow3a61-accept-20261002T181422Z/matrix/DROP/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": 73,
+        "expected_total": 74,
+        "f2p_pass": null,
+        "f2p_total": null,
+        "failure_category": "tests_failed",
+        "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+        "grading_semantics": "r2e_expected_map",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": null,
+        "p2p_total": null,
+        "report_id": "rpt_grading_e82a721e",
+        "reward": 0.0
+      }
+    },
+    {
+      "candidate": "G_small",
+      "expected_reward": 0,
+      "recomputed_reward": 0.0,
+      "expected_match": 73,
+      "expected_total": 74,
+      "expected_keys_equal": true,
+      "mismatches": [
+        {
+          "key": "TestImage.test_remap_palette_rgba_transparency",
+          "expected": "PASSED",
+          "observed": "FAILED"
+        }
+      ],
+      "raw_source_patch_sha256": "sha256:8014a9e120e84a6e5070580d59af29a42a78f886e9816b663b07bbaa7569b887",
+      "ledger_sha256": "sha256:0f55d86c83b3e321cab6e7b0a590f62b9f4c3feb0f770348d0133ec7555fbd2a",
+      "eval_log_sha256": "sha256:3d034bdd46c0c196118ba3f5ee326d71b282d02ccc9ab1feac243e51ef842fc3",
+      "stop_reason": null,
+      "agent_apply": "agent/54321",
+      "derived_image_id": "sha256:56a40ec99ee6068646af7f2d1a46c065d43f7fa5da65d39a4b398eb8b1cebf2a",
+      "footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_pillow/acceptance/pillow3a61-accept-20261002T181422Z/matrix/G_small/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": 73,
+        "expected_total": 74,
+        "f2p_pass": null,
+        "f2p_total": null,
+        "failure_category": "tests_failed",
+        "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+        "grading_semantics": "r2e_expected_map",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": null,
+        "p2p_total": null,
+        "report_id": "rpt_grading_367838d7",
+        "reward": 0.0
+      }
+    },
+    {
+      "candidate": "W1",
+      "expected_reward": 0,
+      "recomputed_reward": 0.0,
+      "expected_match": 72,
+      "expected_total": 74,
+      "expected_keys_equal": true,
+      "mismatches": [
+        {
+          "key": "TestImage.test_remap_palette_rgba_gif_save",
+          "expected": "PASSED",
+          "observed": "FAILED"
+        },
+        {
+          "key": "TestImage.test_remap_palette_rgba_transparency",
+          "expected": "PASSED",
+          "observed": "FAILED"
+        }
+      ],
+      "raw_source_patch_sha256": "sha256:812e6eae4bb73b5bbcd1f54e324858e620d2af1c730db0c77e413f63043f0dac",
+      "ledger_sha256": "sha256:7836676c53189d580227b2acd20452dd996b563ffafae41e8a41096f82d9cc61",
+      "eval_log_sha256": "sha256:c716f8fcb526bceac088c3cb50fb40b1d1e0916c7e005c491e6234356aa47586",
+      "stop_reason": null,
+      "agent_apply": "agent/54321",
+      "derived_image_id": "sha256:56a40ec99ee6068646af7f2d1a46c065d43f7fa5da65d39a4b398eb8b1cebf2a",
+      "footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_pillow/acceptance/pillow3a61-accept-20261002T181422Z/matrix/W1/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": 72,
+        "expected_total": 74,
+        "f2p_pass": null,
+        "f2p_total": null,
+        "failure_category": "tests_failed",
+        "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+        "grading_semantics": "r2e_expected_map",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": null,
+        "p2p_total": null,
+        "report_id": "rpt_grading_d6f34b02",
+        "reward": 0.0
+      }
+    },
+    {
+      "candidate": "W2",
+      "expected_reward": 0,
+      "recomputed_reward": 0.0,
+      "expected_match": 71,
+      "expected_total": 74,
+      "expected_keys_equal": true,
+      "mismatches": [
+        {
+          "key": "TestImage.test_remap_palette",
+          "expected": "PASSED",
+          "observed": "FAILED"
+        },
+        {
+          "key": "TestImage.test_remap_palette_rgba_reorder",
+          "expected": "PASSED",
+          "observed": "FAILED"
+        },
+        {
+          "key": "TestImage.test_remap_palette_rgba_transparency",
+          "expected": "PASSED",
+          "observed": "FAILED"
+        }
+      ],
+      "raw_source_patch_sha256": "sha256:5d1ff19993df72209a23258849578876c6a169516baad4db69ca59bd841e8535",
+      "ledger_sha256": "sha256:47a430f8f4041f68e789b794820ade0ac0ed10a328734830e057ed74fa038d15",
+      "eval_log_sha256": "sha256:a5b960372a8425cfa3763a2a50889f3c08c6fceb7fe005c180d75a9f1ffd5d75",
+      "stop_reason": null,
+      "agent_apply": "agent/54321",
+      "derived_image_id": "sha256:56a40ec99ee6068646af7f2d1a46c065d43f7fa5da65d39a4b398eb8b1cebf2a",
+      "footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_pillow/acceptance/pillow3a61-accept-20261002T181422Z/matrix/W2/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": 71,
+        "expected_total": 74,
+        "f2p_pass": null,
+        "f2p_total": null,
+        "failure_category": "tests_failed",
+        "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+        "grading_semantics": "r2e_expected_map",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": null,
+        "p2p_total": null,
+        "report_id": "rpt_grading_87f70f98",
+        "reward": 0.0
+      }
+    },
+    {
+      "candidate": "W3",
+      "expected_reward": 0,
+      "recomputed_reward": 0.0,
+      "expected_match": 72,
+      "expected_total": 74,
+      "expected_keys_equal": true,
+      "mismatches": [
+        {
+          "key": "TestImage.test_remap_palette_rgba_reorder",
+          "expected": "PASSED",
+          "observed": "FAILED"
+        },
+        {
+          "key": "TestImage.test_remap_palette_rgba_transparency",
+          "expected": "PASSED",
+          "observed": "FAILED"
+        }
+      ],
+      "raw_source_patch_sha256": "sha256:42a5cf6d5c20673454b4ecfd3e9f6d8391de7020210b3051c284bf2b1376b4e0",
+      "ledger_sha256": "sha256:1b107997762ce192f7b53e4d0a875ca423a92a0431e9a7ed4b510255a1e8c19d",
+      "eval_log_sha256": "sha256:653f179c41074d8536377083e2d71c61e29c50bf55bb702697d24629a3c8ddad",
+      "stop_reason": null,
+      "agent_apply": "agent/54321",
+      "derived_image_id": "sha256:56a40ec99ee6068646af7f2d1a46c065d43f7fa5da65d39a4b398eb8b1cebf2a",
+      "footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_pillow/acceptance/pillow3a61-accept-20261002T181422Z/matrix/W3/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": 72,
+        "expected_total": 74,
+        "f2p_pass": null,
+        "f2p_total": null,
+        "failure_category": "tests_failed",
+        "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+        "grading_semantics": "r2e_expected_map",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": null,
+        "p2p_total": null,
+        "report_id": "rpt_grading_9b97ca69",
+        "reward": 0.0
+      }
+    },
+    {
+      "candidate": "W5",
+      "expected_reward": 0,
+      "recomputed_reward": 0.0,
+      "expected_match": 71,
+      "expected_total": 74,
+      "expected_keys_equal": true,
+      "mismatches": [
+        {
+          "key": "TestImage.test_remap_palette",
+          "expected": "PASSED",
+          "observed": "FAILED"
+        },
+        {
+          "key": "TestImage.test_remap_palette_rgba_reorder",
+          "expected": "PASSED",
+          "observed": "FAILED"
+        },
+        {
+          "key": "TestImage.test_remap_palette_rgba_transparency",
+          "expected": "PASSED",
+          "observed": "FAILED"
+        }
+      ],
+      "raw_source_patch_sha256": "sha256:2ac5d1846250e9ad20355a5d0c1c25d062216baa862be75da88c29ccaee68b3e",
+      "ledger_sha256": "sha256:e0045cafdb22a397ba4ed7150a8bd9eb8d124f0f21b32d3e8a343655deaed883",
+      "eval_log_sha256": "sha256:85400e65b802f5199fe45b382ee36bb8e862152e415fd1d89fe9aa0b6e519205",
+      "stop_reason": null,
+      "agent_apply": "agent/54321",
+      "derived_image_id": "sha256:56a40ec99ee6068646af7f2d1a46c065d43f7fa5da65d39a4b398eb8b1cebf2a",
+      "footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_pillow/acceptance/pillow3a61-accept-20261002T181422Z/matrix/W5/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": 71,
+        "expected_total": 74,
+        "f2p_pass": null,
+        "f2p_total": null,
+        "failure_category": "tests_failed",
+        "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+        "grading_semantics": "r2e_expected_map",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": null,
+        "p2p_total": null,
+        "report_id": "rpt_grading_1f907671",
+        "reward": 0.0
+      }
+    }
+  ],
+  "formal_raw_audit": {
+    "path": "runs/category2_repair_20260929/r2e_pillow_cpu_b_20261003/3a61_formal_raw_audit_v1.json",
+    "sha256": "sha256:6e9db38992b9f3add4248b009446c869d5b216f836de1b30caecdb14c3c83a38"
+  },
+  "formal_counts": {
+    "total": 18,
+    "positive": 6,
+    "negative": 12
+  },
+  "actor": {
+    "job": "pillow3a61-accept-20261002T181422Z",
+    "attempt": {
+      "path": "runs/category2_repair_20260929/r2e_pillow_cpu_b_20261003/3a61_cpu_core_v1/packages/r2e_pillow/acceptance/pillow3a61-accept-20261002T181422Z/actor/attempt.json",
+      "sha256": "sha256:dbe6f2d4a08060b799d0b9f9691190c1f0398d315a633dc6c9958180b5c2934a"
+    },
+    "harness_exit_code": 0,
+    "checks": {
+      "interpreter_in_tool_result": true,
+      "host_log_present": true,
+      "no_harness_dir_in_container": true,
+      "no_launcher_or_done_marker": true,
+      "message_start_matches_stub_requests": true,
+      "exit_code_zero": true,
+      "result_event_present": true,
+      "log_complete": true,
+      "bashenv_denied_for_agent": true,
+      "all_commands_ran": true,
+      "all_match_expect": true,
+      "r2e_preflight_ok": true,
+      "image_is_overlay_derived_id": true
+    },
+    "commands_result": [
+      {
+        "id": "r2e_preflight",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "any",
+        "matches_expect": true,
+        "output_bytes": 88,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "R2E rollout 预检（agent 身份，经 CC Bash）"
+      },
+      {
+        "id": "actor_python_identity",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 59,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "核实际 CC Bash 工具中的解释器与 agent UID。"
+      },
+      {
+        "id": "actor_visible_surface",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 89,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "复用启动验收需要的公开激活文件不可写标记，不读取私有材料。"
+      },
+      {
+        "id": "public_source_import_identity",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 334,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "新宿主公开开发条件：实际解释器、PIL 源码路径、C 扩展及调色板/GIF 模块可导入；不消费私有材料。"
+      }
+    ],
+    "actual_Bash_calls": 4,
+    "actual_tool_results": 4,
+    "stub_requests": 5,
+    "public_import_facts": {
+      "GifImagePlugin_path": "/testbed/src/PIL/GifImagePlugin.py",
+      "ImagePalette_path": "/testbed/src/PIL/ImagePalette.py",
+      "PIL": "9.2.0.dev0",
+      "PIL_path": "/testbed/src/PIL/__init__.py",
+      "core": "/testbed/src/PIL/_imaging.cpython-39-x86_64-linux-gnu.so",
+      "executable": "/testbed/.venv/bin/python",
+      "pytest": "8.3.4",
+      "python": "3.9.21"
+    },
+    "effective_profile": {
+      "cpus": 2.0,
+      "memory_bytes": 4294967296,
+      "tmp_tmpfs_bytes": 1073741824,
+      "home_tmpfs_bytes": 268435456,
+      "writable_layer_quota_bytes": 8589934592,
+      "pids_limit": 512
+    },
+    "cleanup": {
+      "container_rm": 0,
+      "network_failures": [],
+      "relay_failures": [],
+      "stub_rc": 0,
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "residual_after_force": []
+    },
+    "is_model_result": false,
+    "scope": "换宿主的真实CC身份、隐藏材料不可见与源码导入；接续既有公开开发验收，不机械重做未改的公开阅读"
+  },
+  "evidence_core_manifests": [
+    {
+      "path": "runs/category2_repair_20260929/r2e_pillow_cpu_b_20261003/3a61_cpu_core_v1/core_manifest.json",
+      "sha256": "sha256:48318e494eb81213ec07cf7e6039f10352ee6d3ecddc7ef28389e7977b50495f"
+    }
+  ],
+  "prepared_inputs_core_manifest_sha256": "sha256:f39e40d4d74af646dce1635b410ad9fe352e1a49e9e0fc91bcd1f826ca9c02e9",
+  "non_author_result_review": {
+    "live_report": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_pillow/reviews/non_author_cpu_results_20261003.md",
+    "immutable_snapshot": {
+      "path": "runs/category2_repair_20260929/r2e_pillow_cpu_b_20261003/review_snapshots/3a61_cpu_result_review_v1.md",
+      "sha256": "sha256:73d2939605ff5c0416e9bc194c1d2b96d4c25524945419824b7929ddc35e04a8"
+    },
+    "result": "PASS",
+    "private_context": true,
+    "fresh_public_reader": false,
+    "scope": "原件SHA/size、固定候选、逐参考日志重解析、实际CC工具/身份/投递/退出与清理"
+  },
+  "model_admission": "普通诊断；训练/留出资格未新增，同仓答案包含关系保留"
+}

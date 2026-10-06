@@ -1,0 +1,499 @@
+{
+  "task_id": "getmoto__moto-5406",
+  "task_revision": "upstream; base_commit=87683a786f0d3a0280c92ea01fecce8a3dd4b0fd; source_version=4.0",
+  "source_adapter_ref": {
+    "grading": "runs/swegym_quality_batch05_20260921_v1/private/getmoto__moto-5406/grading.json",
+    "validation": "runs/swegym_quality_batch05_20260921_v1/private/getmoto__moto-5406/validation.json",
+    "host_grading_view": "runs/full216_rh2_diagnostic_20260919/remote/replay/private/host_grading_views.jsonl:63",
+    "spec_vendor_id": "swegym_constants_242429c1",
+    "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+    "grading_semantics": "swe_f2p_p2p"
+  },
+  "recipe_ref": {
+    "inventory": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/environment_replay_inventory.json#tasks[instance_id=getmoto__moto-5406]",
+    "family": "baseline01",
+    "install_wave1": false,
+    "actual_entry": "campaign.py -> worker.py -> default ReplayGrader.replay_one",
+    "driver_config": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/config.json",
+    "image_ref": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-5406:latest",
+    "image_digest_expected": "sha256:727caa5dba157d41b1e839a5044106f0ad7ea1fe824c9a5f562e2f74113339d6",
+    "image_id_actual": null,
+    "image_identity_note": "原账本identity为期望digest，不是实际image ID观测。",
+    "derived_image_recipe": null,
+    "recipe_override": null,
+    "materials_override": null,
+    "reference_bindings_override": null,
+    "observed_install_command": "make init",
+    "observed_test_command": "pytest -n0 -rA tests/test_dynamodb/test_dynamodb_table_without_range_key.py",
+    "grader_policy": {
+      "user": "rh2grader",
+      "uid": 54322,
+      "cpus": 2.0,
+      "memory_bytes": 4294967296,
+      "network": "deny_all",
+      "pids_limit": 512,
+      "shm_bytes": 67108864,
+      "tmpfs_bytes": 1073741824,
+      "candidate_writable_prefixes": [
+        "/opt/miniconda3/envs/testbed"
+      ]
+    },
+    "candidate_apply_user": "agent/54321",
+    "actor_runtime_status": "unknown; not verified in this review"
+  },
+  "code_snapshot_ref": {
+    "public_base": "runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406/base_identity.json",
+    "base_commit": "87683a786f0d3a0280c92ea01fecce8a3dd4b0fd",
+    "archive": "runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz",
+    "archive_scope": "相关成员只由tarfile.extractfile读取；未解包或执行；哈希和阅读区段见封存初稿。",
+    "sealed_analysis": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/analysis_before_history.md",
+      "sha256": "35beb534748cc6d850550deecc699230c5399f5549dcc780701fd4d313bb4fcb"
+    }
+  },
+  "facts_ref": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/public_read.md",
+      "sha256": "8328456f849f833c40063144697030e2a101684256ea61d387eecc5d8fee4ac9",
+      "role": "public reader; pre-private seal"
+    },
+    {
+      "path": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/ledger.jsonl",
+      "line": 1,
+      "run_id": "f216-baseline01-w04-3",
+      "task_id": "swe_gym_lite::getmoto__moto-5406",
+      "attempt": 1,
+      "candidate": "noop",
+      "evidence_level": "existing original RH2 baseline execution",
+      "line_sha256_without_newline": "dcb82a661211950c1e8f43621505d369027f87495411bf500131dd5c6b81bb9f",
+      "reward": 0.0,
+      "f2p_pass": 0,
+      "f2p_total": 1,
+      "p2p_fail": 0,
+      "p2p_total": 26,
+      "test_rc": 1,
+      "install_rc_last_command": 0,
+      "resource": {
+        "mem_peak_mb": 250.824
+      },
+      "resource_unit_note": "保留原字段，单位实现未核，不转换为MiB。",
+      "eval_log": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/eval_logs/evallog_replay-f216-baseline01-w_390d6d0a.eval.log",
+      "eval_log_sha256": "638770be004f76b18eb6a7282a74ed9067f6ba144b94823b19b064aec78e0cd5"
+    },
+    {
+      "path": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/ledger.jsonl",
+      "line": 2,
+      "run_id": "f216-baseline01-w04-3",
+      "task_id": "swe_gym_lite::getmoto__moto-5406",
+      "attempt": 1,
+      "candidate": "gold",
+      "evidence_level": "existing original RH2 baseline execution",
+      "line_sha256_without_newline": "d135061f70ce610c47c33ddcfd3de6c99a7f1ab9bfaecae336c9b31a582baf11",
+      "reward": 1.0,
+      "f2p_pass": 1,
+      "f2p_total": 1,
+      "p2p_fail": 0,
+      "p2p_total": 26,
+      "test_rc": 0,
+      "install_rc_last_command": 0,
+      "resource": {
+        "mem_peak_mb": 230.828
+      },
+      "resource_unit_note": "保留原字段，单位实现未核，不转换为MiB。",
+      "eval_log": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/eval_logs/evallog_replay-f216-baseline01-w_c94b9e6b.eval.log",
+      "eval_log_sha256": "d7b295655202fa21a634d4da33269d0f6265ff81ccc678b2ba78f57a50f53b9f"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/old_findings_delta.md",
+      "scope": "仅自身旧记录；显式解封后比对",
+      "old_record": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_moto_2/records/getmoto__moto-5406.json",
+      "old_record_sha256": "45a4a1f22dda7e16297942724f00774776f2a5e16b3a2074cdbe01611648dd78"
+    },
+    {
+      "kind": "independent_review_completed",
+      "initial": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/reviewer_initial.md",
+      "initial_sha256": "b70d8a8044e7894f49a012bded1921e2a9018faf7c939a770d64876ae3343afc",
+      "review": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/review.md",
+      "review_sha256": "b34b7be2207f306eaf7855168762458b45103bec9ac01eab8808fa74447108fa",
+      "by": "/root/b5_review_moto5406",
+      "scope": "original-only independent initial sealed before actual cross release; final cross review completed; no new runtime"
+    }
+  ],
+  "checks": {
+    "1": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406/base_identity.json",
+        "runs/swegym_quality_batch05_20260921_v1/private/getmoto__moto-5406/grading.json",
+        "runs/swegym_quality_batch05_20260921_v1/private/getmoto__moto-5406/validation.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/analysis_before_history.md#2",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/ledger.jsonl:1-2"
+      ],
+      "by": "B5 private investigator; static review 2026-09-21; existing baseline evidence only",
+      "note": "公开/私有版本和补丁匹配；原actual image ID为null，当前镜像不可据期望digest填已验。"
+    },
+    "2": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406/base/moto/dynamodb/models/__init__.py:398-414,452,568-569",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/eval_logs/evallog_replay-f216-baseline01-w_390d6d0a.eval.log:683-693,753-775"
+      ],
+      "by": "B5 private investigator; static review 2026-09-21; existing baseline evidence only",
+      "note": "限原baseline：noop在目标地区ARN比较失败。完整原例的名字笔误另列。"
+    },
+    "3": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406/user_prompt.txt:39,54,56",
+        "runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406/environment_brief.md:3-6,20-26",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/review.md"
+      ],
+      "by": "B5_coordinator_after_independent_review",
+      "note": "已核静态prompt/public bundle；实际solver渲染消息、公开路径可读和hints投递未捕获。原件表名笔误归check23，不视为已验证的实际消息故障。"
+    },
+    "4": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/ledger.jsonl:2",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/analysis_before_history.md#7"
+      ],
+      "by": "B5 private investigator; static review 2026-09-21; existing baseline evidence only",
+      "note": "合法源码修复已有原gold交付证据，不需修改官方恢复文件；非任意候选或当前actor权限认证。"
+    },
+    "5": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/old_findings_delta.md"
+      ],
+      "by": "B5 private investigator; static review 2026-09-21; existing baseline evidence only",
+      "note": "自身旧记录的跨题去重结论未核实；本轮不访问其它题或聚合。"
+    },
+    "6": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/eval_logs/evallog_replay-f216-baseline01-w_390d6d0a.eval.log:338,638-646",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/eval_logs/evallog_replay-f216-baseline01-w_c94b9e6b.eval.log:364,664-672",
+        "runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406/base/Makefile:17-19"
+      ],
+      "by": "B5 private investigator; static review 2026-09-21; existing baseline evidence only",
+      "note": "原baseline make init及导入/测试完成；不等于当前actor依赖与安装权限通过。"
+    },
+    "7": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406/base_identity.json",
+        "runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406/base/tests/test_dynamodb/test_dynamodb_table_without_range_key.py:1-577",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/analysis_before_history.md#6",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/review.md"
+      ],
+      "by": "B5_coordinator_after_independent_review",
+      "note": "最小mock无需额外权重/数据集/真实AWS服务，Terraform子模块不参与该路径；仍需实际actor可读botocore服务模型等必要安装资产。原grader成功不等于当前actor资产齐全。"
+    },
+    "8": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/environment_replay_inventory.json#common.grader_policy",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/ledger.jsonl:1-2",
+        "runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406/environment_brief.md:8-12"
+      ],
+      "by": "B5 private investigator; static review 2026-09-21; existing baseline evidence only",
+      "note": "原grader54322及candidate apply agent54321有记录；实际actor的UID/HOME/PATH/权限未验。"
+    },
+    "9": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/ledger.jsonl:1-2",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/eval_logs/evallog_replay-f216-baseline01-w_c94b9e6b.eval.log:165-186,704-735"
+      ],
+      "by": "B5 private investigator; static review 2026-09-21; existing baseline evidence only",
+      "note": "原评分观测moto来源/testbed，gold源码投影与目标断言变化相符；不扩大到未来actor。"
+    },
+    "10": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406/base/CONTRIBUTING.md:19-28",
+        "runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406/environment_brief.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/analysis_before_history.md#6"
+      ],
+      "by": "B5 private investigator; static review 2026-09-21; existing baseline evidence only",
+      "note": "公开开发入口和建议最小复现已具备，实际actor未执行。"
+    },
+    "11": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406/base/moto/core/models.py:64-118,388-403",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/ledger.jsonl:1-2",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/analysis_before_history.md#6"
+      ],
+      "by": "B5 private investigator; static review 2026-09-21; existing baseline evidence only",
+      "note": "最小mock无真实AWS交互；原grader deny_all完成安装/测试。准备依赖和正式actor网络另核。"
+    },
+    "13": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/ledger.jsonl:1-2",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/old_findings_delta.md"
+      ],
+      "by": "B5 private investigator; static review 2026-09-21; existing baseline evidence only",
+      "note": "原resource.mem_peak_mb=250.824/230.828；单位实现未核，不标MiB。仅原两次无已观测资源阻断，actor资源未验。"
+    },
+    "16": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/ledger.jsonl:2",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/eval_logs/evallog_replay-f216-baseline01-w_c94b9e6b.eval.log:165-186"
+      ],
+      "by": "B5 private investigator; static review 2026-09-21; existing baseline evidence only",
+      "note": "限原gold两处文本源码修改：投影路径准确、ignored_paths空；未测试所有文件形状。"
+    },
+    "17": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch05_20260921_v1/private/getmoto__moto-5406/test.patch",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/eval_logs/evallog_replay-f216-baseline01-w_390d6d0a.eval.log:161-201",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/eval_logs/evallog_replay-f216-baseline01-w_c94b9e6b.eval.log:187-227",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/analysis_before_history.md#7"
+      ],
+      "by": "B5 private investigator; static review 2026-09-21; existing baseline evidence only",
+      "note": "仅官方T文件恢复/注入成功，不覆盖模型修复；不增加排除规则。"
+    },
+    "18": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/eval_logs/evallog_replay-f216-baseline01-w_390d6d0a.eval.log:651-823",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/eval_logs/evallog_replay-f216-baseline01-w_c94b9e6b.eval.log:677-735",
+        "runs/swegym_quality_batch05_20260921_v1/private/getmoto__moto-5406/grading.json"
+      ],
+      "by": "B5 private investigator; static review 2026-09-21; existing baseline evidence only",
+      "note": "原两次收集27项并有逐项执行结果、目标断言与完整退出路径；不是只依赖解析数量。"
+    },
+    "19": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch05_20260921_v1/private/getmoto__moto-5406/grading.json",
+        "runs/swegym_quality_batch05_20260921_v1/private/getmoto__moto-5406/test.patch",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/ledger.jsonl:1-2",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/old_findings_delta.md"
+      ],
+      "by": "B5 private investigator; static review 2026-09-21; existing baseline evidence only",
+      "note": "补丁后27个ID=1F2P+26P2P，reference_missing/skipped空；22项P2P改名、4项保留原名，旧名称全缺失主张错误。"
+    },
+    "20": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/eval_logs/evallog_replay-f216-baseline01-w_390d6d0a.eval.log:683-693,753-775,819-823",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/eval_logs/evallog_replay-f216-baseline01-w_c94b9e6b.eval.log:704-735",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/ledger.jsonl:1-2"
+      ],
+      "by": "B5 private investigator; static review 2026-09-21; existing baseline evidence only",
+      "note": "原noop0/gold1分差来自East1/East2 ARN目标；无安装/收集失败解释该分差。"
+    },
+    "23": {
+      "status": "issue",
+      "evidence_refs": [
+        "runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406/user_prompt.txt",
+        "runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406/base/moto/dynamodb/models/__init__.py:398-414,568-569",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/public_read.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/analysis_before_history.md#1-3"
+      ],
+      "by": "B5 private investigator; static review 2026-09-21; existing baseline evidence only",
+      "note": "核心要求公开可推断；表名笔误需消解。改名不使P2P旧行为保护失效，不要求修所有邻近地区常量。"
+    },
+    "24": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch05_20260921_v1/private/getmoto__moto-5406/test.patch",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/analysis_before_history.md#4",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/review.md"
+      ],
+      "by": "B5_coordinator_after_independent_review",
+      "note": "完整静态断言审查未见无公开依据的内部实现绑定，构造期直接按region计算table_arn是合理非gold路线；未执行合法替代解验收。unknown不是已发现误拒，不要求穷举合法实现。"
+    },
+    "25": {
+      "status": "issue",
+      "evidence_refs": [
+        "runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406/base/tests/test_dynamodb/test_dynamodb_table_without_range_key.py:66-67",
+        "runs/swegym_quality_batch05_20260921_v1/private/getmoto__moto-5406/test.patch",
+        "runs/swegym_quality_batch05_20260921_v1/private/getmoto__moto-5406/grading.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/analysis_before_history.md#4"
+      ],
+      "by": "B5 private investigator; static review 2026-09-21; existing baseline evidence only",
+      "note": "唯一地区ARN断言East2；常量改East2可能满分，仍是静态反例候选，未观察其实际reward。"
+    },
+    "26": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406/base/tests/test_dynamodb/test_dynamodb_create_table.py:11-119",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/analysis_before_history.md#3-5",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/review.md"
+      ],
+      "by": "B5_coordinator_after_independent_review",
+      "note": "未发现gold新增回归的具体证据；相关调用者已静态审查，扩展base/gold对照尚未执行。未评分的旧East1 ARN行为属于check25覆盖缺口，不是已证gold回归。"
+    },
+    "27": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch05_20260921_v1/private/getmoto__moto-5406/gold.patch",
+        "runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406/base/moto/dynamodb/models/__init__.py:499-605,1052-1107,1200-1207,1821-1853",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/eval_logs/evallog_replay-f216-baseline01-w_c94b9e6b.eval.log:704-735"
+      ],
+      "by": "B5 private investigator; static review 2026-09-21; existing baseline evidence only",
+      "note": "静态目标修复合理且原27项通过；无新依赖/夹带，完整原例及扩展消费者未执行。"
+    },
+    "29": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406/public_bundle.json",
+        "runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406/environment_brief.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/old_findings_delta.md"
+      ],
+      "by": "B5 private investigator; static review 2026-09-21; existing baseline evidence only",
+      "note": "当前hints无L569/GitHub源码链接；旧可见性判断过时。真实actor文件/镜像/history/挂载未验，不能断言无泄漏。"
+    },
+    "31": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/analysis_before_history.md#7",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/ledger.jsonl:1-2"
+      ],
+      "by": "B5 private investigator; static review 2026-09-21; existing baseline evidence only",
+      "note": "本题官方文件恢复及原runner摘要有证据，未重审/攻击共享评分控制面。"
+    },
+    "32": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406/base/tests/test_dynamodb/test_dynamodb_table_without_range_key.py:12-72",
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/eval_logs/evallog_replay-f216-baseline01-w_390d6d0a.eval.log:683-693",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/analysis_before_history.md#3"
+      ],
+      "by": "B5 private investigator; static review 2026-09-21; existing baseline evidence only",
+      "note": "核心测试通过boto3调用检查公开输出，不比较gold文本；单区域覆盖缺口另记check25。"
+    },
+    "33": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/analysis_before_history.md#6-8"
+      ],
+      "by": "B5 private investigator; static review 2026-09-21; existing baseline evidence only",
+      "note": "未做模型或正式Claude Code工具链执行；直接应用gold仅支持部分交付/评分证据。"
+    },
+    "38": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/old_findings_delta.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/review.md"
+      ],
+      "by": "B5_coordinator_after_independent_review",
+      "note": "独立静态复核与协调者状态收口已完成；后续CPU负对照、干净重建/运行复验仍未做，故维持unknown。"
+    }
+  },
+  "issues": [
+    {
+      "category": "tests_may_accept_incorrect_region_constant",
+      "scope": "check25; semantic coverage of original scorer; no demonstrated gold regression",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/analysis_before_history.md#3-5",
+        "runs/swegym_quality_batch05_20260921_v1/private/getmoto__moto-5406/grading.json",
+        "runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406/base/tests/test_dynamodb/test_dynamodb_create_table.py:43-45"
+      ],
+      "proposed_action": "唯一优先未来CPU实验：在明确原baseline来源条件中，将_generate_arn地区常量改成us-east-2，记录原27项RH2结果及公开East1 ARN断言，并与base/gold对照。未确认前不声称错误候选已满分；确认后再版本化补地区回归。",
+      "status": "pending_cpu_counterexample; static evidence only"
+    },
+    {
+      "category": "public_example_table_name_mismatch",
+      "scope": "check23; static issue text; actual actor delivery remains check3 unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406/user_prompt.txt:39,54,56"
+      ],
+      "proposed_action": "保持原件；如修订题面，仅统一实际表名与预期ARN，并记录版本。核心地区要求可由公开源码消解，不能照错误字面值要求任意表叫test_table。",
+      "status": "confirmed_static; no revision applied"
+    },
+    {
+      "category": "actor_development_conditions_unverified",
+      "scope": "check8/check10/check33; actual solver workflow",
+      "evidence_refs": [
+        "runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406/environment_brief.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/analysis_before_history.md#6"
+      ],
+      "proposed_action": "未来在实际actor入口核UID/HOME/cwd/PATH、依赖来源和最小公开复现。原grader成功不代填actor pass；不要求全仓或所有扩展覆盖后才可安排有限模型诊断。",
+      "status": "unknown; pending_actor_verification"
+    },
+    {
+      "category": "original_actual_image_id_missing",
+      "scope": "check1; original baseline image provenance",
+      "evidence_refs": [
+        "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/ledger.jsonl:1-2",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/environment_replay_inventory.json#tasks[instance_id=getmoto__moto-5406]"
+      ],
+      "proposed_action": "保留image_id_actual=null与期望manifest digest的区别。未来运行另记实际image ID和可达配方/路径，不冒用install_wave1。",
+      "status": "known_missing_fact; not an observed environment failure"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "合法修复为普通模型源码；官方恢复仅覆盖T测试文件。没有证据支持新增排除；共享控制面没有本轮全面验收。",
+    "evidence_refs": [
+      "runs/swegym_quality_batch05_20260921_v1/private/getmoto__moto-5406/test.patch",
+      "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/ledger.jsonl:2",
+      "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/eval_logs/evallog_replay-f216-baseline01-w_c94b9e6b.eval.log:187-227",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/analysis_before_history.md#7"
+    ],
+    "applied_version": "unchanged upstream task; no new exclusions"
+  },
+  "revision_refs": [],
+  "disposition": {
+    "state": "needs_review",
+    "scope": "static_review",
+    "reason": "独立静态复核完成：公开核心目标和gold可解释，原baseline noop因目标ARN失败、gold27项通过。唯一地区ARN断言可漏收常量替换，故暂不列模型优先候选，先做单个East2常量负对照与公开East1回归。该安排不拒绝整题，也不把全部扩展回归作为任何模型观察的前置。未来有限模型诊断仍可在actor基本条件有证据且通过补丁人工复核时安排；原reward不能单独认证完整修复。当前actor未验，历史actual image ID继续null。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/analysis_before_history.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/old_findings_delta.md",
+      "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-3/ledger.jsonl:1-2",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/review.md"
+    ],
+    "reviewer": {
+      "status": "completed_independent_review",
+      "by": "/root/b5_review_moto5406",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/reviewer_initial.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/review.md"
+      ],
+      "initial_sha256": "b70d8a8044e7894f49a012bded1921e2a9018faf7c939a770d64876ae3343afc",
+      "review_sha256": "b34b7be2207f306eaf7855168762458b45103bec9ac01eab8808fa74447108fa"
+    }
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "exposure_notes": "公开读者先行封存；本主审先见当前gold、隐藏test patch、grading/validation及原baseline执行证据并独立封存初判，再经协调者显式解封唯一自身旧记录。未读其它题/聚合质量分析/reviewer或未授权历史。该上下文和产物不可提供给未来solver，不是独立盲解、训练/评测批准或模型能力证据。",
+    "approved_for_training_or_formal_evaluation": false,
+    "solver_context_eligible": false,
+    "coordinator_exposure_notes": "协调者已见本批两题及前批私有审查；本记录不是solver输入。reviewer独立初判后才读本题公开读者/主审/旧记录。"
+  },
+  "costs": {
+    "container_wall_seconds": null,
+    "agent_tokens": null,
+    "human_decisions": null,
+    "source_refs": [],
+    "note": "本轮仅静态审查，无新容器/模型执行；未观测成本不填0，旧记录minutes不迁移。"
+  },
+  "coordinator_resolution": {
+    "at": "2026-09-20T23:35:51.041722+00:00",
+    "decision": "not_prioritized_pending_scoring_calibration",
+    "next_cpu_queue_id": "moto5406-region-constant-calibration",
+    "accepted_review_changes": [
+      "check3/7/24/26改unknown并保留已核静态或历史子结论",
+      "静态表名问题归23，地区覆盖疑点归25，不称gold已回归",
+      "独立复核已完成但check38保持unknown，未冒称干净运行复验",
+      "公开稿流测试路径以tests/test_dynamodbstreams/test_dynamodbstreams.py为准",
+      "Table未保存region用于ARN生成；region仍用于默认加密键，不能说参数完全丢弃",
+      "所有资源峰值后稿仅保留原mem_peak_mb字段，单位实现未核"
+    ],
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/old_findings_delta.md",
+      "runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406/base/moto/dynamodb/models/__init__.py:469-473",
+      "runs/swegym_quality_batch05_20260921_v1/public/getmoto__moto-5406/base/tests/test_dynamodbstreams/test_dynamodbstreams.py"
+    ],
+    "remaining_disagreement": "无未解决的核心静态结论分歧；错误候选实际得分/回归、当前actor条件与目标镜像可达性仍未知。"
+  }
+}

@@ -1,0 +1,21 @@
+[ISSUE]
+**Title:** TypeError when using `once` parameter with `_warn` method
+
+**Description:**
+When attempting to mark warnings to display only once by using the `once` parameter, a `TypeError` is raised. This issue occurs because the `_warn` method does not recognize the `once` keyword argument.
+
+**Example Code:**
+```python
+cov = coverage.Coverage()
+cov.load()
+cov._warn("Warning, warning 1!", slug="bot", once=True)
+cov._warn("Warning, warning 2!", slug="bot", once=True)
+```
+
+**Expected Behavior:**
+Warnings marked with `once=True` should be displayed only once each, preventing duplicate warnings from appearing. As with `disable_warnings`, a warning is identified by its `slug` (the short name shown in parentheses after the message): once a `once=True` warning has been displayed, later `once=True` warnings with the same slug are not displayed, even if their message text is different. `once=True` warnings with different slugs are each still displayed once.
+
+**Actual Behavior:**
+A `TypeError` is raised with the message: `_warn() got an unexpected keyword argument 'once'`
+
+[/ISSUE]

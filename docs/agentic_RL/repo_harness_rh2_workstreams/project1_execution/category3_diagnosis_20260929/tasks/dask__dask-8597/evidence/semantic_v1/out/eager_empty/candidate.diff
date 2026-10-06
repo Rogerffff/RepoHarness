@@ -1,0 +1,15 @@
+diff --git a/dask/array/core.py b/dask/array/core.py
+index 9b320cae6..adf79d947 100644
+--- a/dask/array/core.py
++++ b/dask/array/core.py
+@@ -1830,6 +1830,10 @@ class Array(DaskMethodsMixin):
+         )
+ 
+         index2 = normalize_index(index, self.shape)
++        # An array without elements holds no data: compute NumPy's result on an
++        # empty stand-in of the same shape and wrap it as a dask array.
++        if 0 in self.shape and not any(isinstance(i, Array) for i in index2):
++            return from_array(np.empty(self.shape, dtype=self.dtype)[index2])
+         dependencies = {self.name}
+         for i in index2:
+             if isinstance(i, Array):

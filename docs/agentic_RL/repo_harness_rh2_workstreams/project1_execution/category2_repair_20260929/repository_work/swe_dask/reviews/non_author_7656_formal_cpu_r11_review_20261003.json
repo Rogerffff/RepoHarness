@@ -1,0 +1,1471 @@
+{
+  "schema": "non_author_dask7656_formal_cpu_r11_review.v1",
+  "as_of": "2026-10-03",
+  "review_status": "bounded_formal_scoring_matrix_verified",
+  "instance_id": "dask__dask-7656",
+  "revision_id": "dask7656-dataclass-argument-v1",
+  "independence_and_scope": [
+    "核查者未参与本轮作者修改、CPU运行或发布；此前已接触 gold 与私有报告，本次是非作者证据核查，不是公开盲审。",
+    "只写本报告与同名 JSON，原有审查保留；未 SSH、重跑 CPU、新 Docker、网络调用或读取 8801 新材料/标签。",
+    "本机只调用固定 release 的模型/脚本渲染/摘要函数，使用现有 Python 3.12.13；未执行被渲染的安装/测试 shell。真实 CPU 原件自身记录 Linux Python 3.9.19/pytest 8.3.2。",
+    "root 受信 setup/materialize/sanitize/基线重建和测试文件恢复是宿主权限；补丁写入/应用为 agent 54321，评分安装/测试为 54322。54321 由账本与冻结 agent_ws 执行路径核实，本轮没有独立 id -u 输出；54322 还有实际受信隔离前置 probe 的 geteuid()==54322 断言和成功输出。",
+    "本轮 formal replay 的 candidate.kind=cc 仅为 patch 输入的类型标签，不代表启动 Claude Code 或 LLM。",
+    "env_qualification=absent 保留；本轮是完成且参考完整的正常正负评分结果，无 infra_failure，不能由此生成 typed actor 训练资格。",
+    "发布/GPU已确认固定 118f47 镜像可通过现有 image_override 接诊断探针（父线程交接信息）；本核查未审实际 GPU 部署回执或新的 actor 作业。R11 rollout 仍 source，不能把上述接法写成 typed 正式训练 actor 已实现。"
+  ],
+  "conclusion": {
+    "formal_cpu_matrix_accepted": true,
+    "reward_vector": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "all_reference_states_complete": true,
+    "p2p_all_actual_passed": true,
+    "reproduced_scoring_blockers": [],
+    "new_actor_readiness_verified": false,
+    "model_probe_completed": false,
+    "typed_formal_training_actor_implemented": false,
+    "automatic_training_qualification_granted": false
+  },
+  "readback_integrity": {
+    "manifest": {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/readback_manifest.json",
+      "sha256": "3abf25308efe4aa6e014c72698b93302fd5cb66fe360314ac47c8c089c9de302",
+      "bytes": 10839
+    },
+    "members_verified": 57,
+    "total_member_bytes": 819881,
+    "mismatches": [],
+    "excluded": [],
+    "actual_members": [
+      {
+        "path": "attempt_01.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "attempt_01.stdout",
+        "sha256": "8352f3f9e122ca6101ccbb16b5ecbd3ccba9a62aad26273276d9eb4779c89603",
+        "bytes": 81
+      },
+      {
+        "path": "config.json",
+        "sha256": "1bba2d4a732a79069310f5655064aca6eee37081ea89cfdbc6ff487528fcd284",
+        "bytes": 1385
+      },
+      {
+        "path": "launch_receipt.json",
+        "sha256": "3f3c8c30d74377e743de7b6d15d09e50d04a4a8232c75076f8544985e6837778",
+        "bytes": 365
+      },
+      {
+        "path": "queue.lock",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "queue.py",
+        "sha256": "b78f5a14382f9d2ca165fe2613d933b55397bfe9edcea856fc7f425e890dd942",
+        "bytes": 3016
+      },
+      {
+        "path": "run/formal_binding.json",
+        "sha256": "d788a12d2f61a88cc12a8511befb6772c49937db28aabd44c110598811c4dcae",
+        "bytes": 4945
+      },
+      {
+        "path": "run/gold/artifacts/swe_gym_lite--dask__dask-7656/a1-c59fc12c/baseline_manifest.json",
+        "sha256": "e9cf34ce97b04f7447ee2f7dd1f99fd455990f84a5179a8ec8614fd0d484e999",
+        "bytes": 101793
+      },
+      {
+        "path": "run/gold/artifacts/swe_gym_lite--dask__dask-7656/a1-c59fc12c/candidate.patch",
+        "sha256": "2f6f59d094834f3e8db2d1e5332f1415ff65d151678d5cc6c6590f1883de63e9",
+        "bytes": 1007
+      },
+      {
+        "path": "run/gold/artifacts/swe_gym_lite--dask__dask-7656/a1-c59fc12c/classification.json",
+        "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6",
+        "bytes": 93
+      },
+      {
+        "path": "run/gold/artifacts/swe_gym_lite--dask__dask-7656/a1-c59fc12c/frozen_patch.json",
+        "sha256": "1c7b7e218215b470602f2cd2ba5b562906869d9da8d50da4975c69b7a3407ce6",
+        "bytes": 31011
+      },
+      {
+        "path": "run/gold/artifacts/swe_gym_lite--dask__dask-7656/a1-c59fc12c/projection.json",
+        "sha256": "0b740d6a5955ed444c2fd41ad05599935329bac6cd95c19e90c4bac502ea84ac",
+        "bytes": 414
+      },
+      {
+        "path": "run/gold/artifacts/swe_gym_lite--dask__dask-7656/a1-c59fc12c/stage.json",
+        "sha256": "52513fce60150af95e3189f8b97535c5e21a9df511d91446ad95c590db7d729b",
+        "bytes": 843
+      },
+      {
+        "path": "run/gold/eval_logs/evallog_replay-dask7656-formal-c_010877bf.diagnostics.json",
+        "sha256": "f1f3d0b741dc128a324a7a96dd30eaf106a013f255cc0de90280efe984963906",
+        "bytes": 10941
+      },
+      {
+        "path": "run/gold/eval_logs/evallog_replay-dask7656-formal-c_010877bf.eval.log",
+        "sha256": "59d31ea03d3d477a4c61b0a5d9fb29b22e87351868250919dfba61cee71485e1",
+        "bytes": 37761
+      },
+      {
+        "path": "run/gold/ledger.jsonl",
+        "sha256": "df018835ba0ea5101a3a89a7d5609b61916948a3c05ada40108fa3def5699fc6",
+        "bytes": 11912
+      },
+      {
+        "path": "run/grade_gold.log",
+        "sha256": "d8a1d5ed2374e62b6503492d651f2614086402964900447c2e7081899a301253",
+        "bytes": 861
+      },
+      {
+        "path": "run/grade_noop.log",
+        "sha256": "6f3578d517fc2be4ada96bce60db1fbdb6797abf68bdb18995b13bc4d7e999b1",
+        "bytes": 858
+      },
+      {
+        "path": "run/grade_opaque.log",
+        "sha256": "c129bb3e2f4e93534e0650d6c31a0b7e52d2f289b8c1f7c52615c05131f25746",
+        "bytes": 865
+      },
+      {
+        "path": "run/grade_wrong_result_type.log",
+        "sha256": "7345190f22b83f70cc373c50e100772bbad7421e612046be1e7c6ea8eb8479f4",
+        "bytes": 876
+      },
+      {
+        "path": "run/noop/artifacts/swe_gym_lite--dask__dask-7656/a1-feffc05d/baseline_manifest.json",
+        "sha256": "e9cf34ce97b04f7447ee2f7dd1f99fd455990f84a5179a8ec8614fd0d484e999",
+        "bytes": 101793
+      },
+      {
+        "path": "run/noop/artifacts/swe_gym_lite--dask__dask-7656/a1-feffc05d/classification.json",
+        "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6",
+        "bytes": 93
+      },
+      {
+        "path": "run/noop/artifacts/swe_gym_lite--dask__dask-7656/a1-feffc05d/frozen_patch.json",
+        "sha256": "2e24b95ac06483daadfcd64da52c2e1c44b61dc31aa628166b079861488d05fe",
+        "bytes": 734
+      },
+      {
+        "path": "run/noop/artifacts/swe_gym_lite--dask__dask-7656/a1-feffc05d/projection.json",
+        "sha256": "a4d479bea6db96c815593d863403f7687c97709a68c4b97ecf89488a39d1c0d2",
+        "bytes": 392
+      },
+      {
+        "path": "run/noop/artifacts/swe_gym_lite--dask__dask-7656/a1-feffc05d/stage.json",
+        "sha256": "a5a3542449f413372c02139feac6b820fbb711879e1f5812b192b87cf74b5631",
+        "bytes": 838
+      },
+      {
+        "path": "run/noop/eval_logs/evallog_replay-dask7656-formal-c_0f5cc548.diagnostics.json",
+        "sha256": "38f5767c41f31a808a5764f1e5c4e3fd928e2e8daecf001288cb41bbab6a4b39",
+        "bytes": 10939
+      },
+      {
+        "path": "run/noop/eval_logs/evallog_replay-dask7656-formal-c_0f5cc548.eval.log",
+        "sha256": "1be0d2834618d0ec182ce7de020ae0910fbe97d1554db0068591a30c84ee155f",
+        "bytes": 38484
+      },
+      {
+        "path": "run/noop/ledger.jsonl",
+        "sha256": "bfae1f70aa14331da19bfd00120a9fcee4a56875f4e97a64533600687d4f6eac",
+        "bytes": 11684
+      },
+      {
+        "path": "run/opaque/artifacts/swe_gym_lite--dask__dask-7656/a1-929ffa8a/baseline_manifest.json",
+        "sha256": "e9cf34ce97b04f7447ee2f7dd1f99fd455990f84a5179a8ec8614fd0d484e999",
+        "bytes": 101793
+      },
+      {
+        "path": "run/opaque/artifacts/swe_gym_lite--dask__dask-7656/a1-929ffa8a/candidate.patch",
+        "sha256": "f6a357f6b5a69c91d4d9b5e40d3df13e79e0099f75265537a9ffa1241b1cae84",
+        "bytes": 388
+      },
+      {
+        "path": "run/opaque/artifacts/swe_gym_lite--dask__dask-7656/a1-929ffa8a/classification.json",
+        "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6",
+        "bytes": 93
+      },
+      {
+        "path": "run/opaque/artifacts/swe_gym_lite--dask__dask-7656/a1-929ffa8a/frozen_patch.json",
+        "sha256": "eae615787dffd8b442fc2fff001fa65d16c2844ea9bd0f344793b073f19004e5",
+        "bytes": 30459
+      },
+      {
+        "path": "run/opaque/artifacts/swe_gym_lite--dask__dask-7656/a1-929ffa8a/projection.json",
+        "sha256": "6b4e90fba1d9613de3a6cfd739b98f87bc04a0338cfc1a066fa57154f501bd2d",
+        "bytes": 418
+      },
+      {
+        "path": "run/opaque/artifacts/swe_gym_lite--dask__dask-7656/a1-929ffa8a/stage.json",
+        "sha256": "8591ef9814ac98eb1856d01ccddf156f7b6ca3b40687aaf9a6536072c1f23eee",
+        "bytes": 843
+      },
+      {
+        "path": "run/opaque/eval_logs/evallog_replay-dask7656-formal-c_d53cab87.diagnostics.json",
+        "sha256": "0e0e445e18261cb07d0075e8653937d8c1a4ea0f16a2bcabb4a4719673c69a24",
+        "bytes": 10940
+      },
+      {
+        "path": "run/opaque/eval_logs/evallog_replay-dask7656-formal-c_d53cab87.eval.log",
+        "sha256": "8830d01261e0ee9ae376a8b72f459d6759c7863ece0069b0a078e0222d13e971",
+        "bytes": 39745
+      },
+      {
+        "path": "run/opaque/ledger.jsonl",
+        "sha256": "4e8fbe1534f34dfa478e9708522e7771c48602b0ff4118e0b50d197b3e837a19",
+        "bytes": 12012
+      },
+      {
+        "path": "run/prepare.log",
+        "sha256": "ab385350d72ae50a7e2aab7555ae10c65cad765984f0f6b5e9f7541a8ca1681e",
+        "bytes": 512
+      },
+      {
+        "path": "run/prepared/prepared_manifest.json",
+        "sha256": "f88d310045bded5ddeb75b82cd11f1058da870e1cfc0ae1e25187145e77e7879",
+        "bytes": 912
+      },
+      {
+        "path": "run/prepared/prompts.jsonl",
+        "sha256": "93e3f17b7fd49166b2affc2b666d94924cbd8c5177d479a20b14c64abb350a7a",
+        "bytes": 3838
+      },
+      {
+        "path": "run/prepared/replay_summary.json",
+        "sha256": "5c272e93c1c05d2ce8e031341fb2de823ad61ed1a0c615efbeac6a772b1c378b",
+        "bytes": 511
+      },
+      {
+        "path": "run/prepared/rollout_task_views.jsonl",
+        "sha256": "771b5593b3650032b9a278fdd81578ab1e91e344c27d505ce9bf1538e90afe29",
+        "bytes": 4963
+      },
+      {
+        "path": "run/private/host_grading_views.jsonl",
+        "sha256": "d0e54b5146d58591936dcd2b867062590218d3a03aa52d12706460a7cc379f7f",
+        "bytes": 10038
+      },
+      {
+        "path": "run/status.json",
+        "sha256": "9ed5a8fac0bd59e7d25ba1e73aabda33f7fa44dc9e57926d32093b5f7b43afd0",
+        "bytes": 29994
+      },
+      {
+        "path": "run/verify_release.log",
+        "sha256": "6c8a41a337fce1460cfb7188bd2c9c573f0b747e941f662d31b9b06160c167d8",
+        "bytes": 188
+      },
+      {
+        "path": "run/wrong_result_type/artifacts/swe_gym_lite--dask__dask-7656/a1-3cbecdd4/baseline_manifest.json",
+        "sha256": "e9cf34ce97b04f7447ee2f7dd1f99fd455990f84a5179a8ec8614fd0d484e999",
+        "bytes": 101793
+      },
+      {
+        "path": "run/wrong_result_type/artifacts/swe_gym_lite--dask__dask-7656/a1-3cbecdd4/candidate.patch",
+        "sha256": "d422554ec399b5540bc3492c8fcddf0b2c06246ec842545f6fb33ff7cc38d066",
+        "bytes": 797
+      },
+      {
+        "path": "run/wrong_result_type/artifacts/swe_gym_lite--dask__dask-7656/a1-3cbecdd4/classification.json",
+        "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6",
+        "bytes": 93
+      },
+      {
+        "path": "run/wrong_result_type/artifacts/swe_gym_lite--dask__dask-7656/a1-3cbecdd4/frozen_patch.json",
+        "sha256": "f5bd9d713c42cba223823bd00d6cf0d3f14566fc1c3eed305eaea60fd2a7e6dd",
+        "bytes": 30789
+      },
+      {
+        "path": "run/wrong_result_type/artifacts/swe_gym_lite--dask__dask-7656/a1-3cbecdd4/projection.json",
+        "sha256": "717199f326975212ad2c140d9c0c81f7becb82329cba27308c120887346c10a2",
+        "bytes": 440
+      },
+      {
+        "path": "run/wrong_result_type/artifacts/swe_gym_lite--dask__dask-7656/a1-3cbecdd4/stage.json",
+        "sha256": "9fce142a03a1c87e745ef7293e974cc2297a1cc7795d84a68ea4150644c0b725",
+        "bytes": 842
+      },
+      {
+        "path": "run/wrong_result_type/eval_logs/evallog_replay-dask7656-formal-c_1f834a07.diagnostics.json",
+        "sha256": "17deb4c492ce2477161d8b696b2b025dd230684cf671a67e44e75468776558bf",
+        "bytes": 10952
+      },
+      {
+        "path": "run/wrong_result_type/eval_logs/evallog_replay-dask7656-formal-c_1f834a07.eval.log",
+        "sha256": "0e15776c7e949dba1821f20277cfbcfd47e90f3877af32042a87a699c09a64cd",
+        "bytes": 40124
+      },
+      {
+        "path": "run/wrong_result_type/ledger.jsonl",
+        "sha256": "bb5f011c2fa81be694676efb36c85db1625eb75e28fb5662b9801c80c8081f4f",
+        "bytes": 12057
+      },
+      {
+        "path": "scheduler.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "scheduler.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "status.json",
+        "sha256": "b66346183e90adf0daad0fe459c2a6b55f1fddfaa04549260d3e5b81fe8ed5e2",
+        "bytes": 363
+      }
+    ]
+  },
+  "formal_binding": {
+    "host_grading_view_json_sha256": "c57f2ca9bc96ba6b3277b57706759f0e3a4cdad3b33cfb1cc77ba34ee63f4e0f",
+    "host_grading_artifact_sha256": "d0e54b5146d58591936dcd2b867062590218d3a03aa52d12706460a7cc379f7f",
+    "grading_bundle_digest": "sha256:f8a8a49e3ebf538982c8af57b9544186502c8b8ce9a5a5e257d9a41f29ced8c6",
+    "environment_package_digest": "sha256:fd2310ca4c525c7e7e03a19e21d644ac716724759391317517b5db95360813b1",
+    "grading_materials_identity": "sha256:d7a8f86cd375efc81608438799cd8eee7c8b96772b78fbe85c366fc57de859ed",
+    "grading_revision": {
+      "revision_id": "dask7656-dataclass-argument-v1",
+      "registry_sha256": "sha256:e8a832f4113a5b9a7e4addf12626d4d0780d03984cff4bb0865d2e3966df8636",
+      "parent_grading_digest": "sha256:0744a3d545f3750fecca0da7d774d21d91e404cb557b58ac2b6ff6aa1ff86565",
+      "grading_bundle_digest": "sha256:f8a8a49e3ebf538982c8af57b9544186502c8b8ce9a5a5e257d9a41f29ced8c6",
+      "public_bundle_digest": "sha256:2068dc302ace22b69daf8c247c43e888203dfe3db51816a320283e49096abdfe",
+      "environment_package_digest": "sha256:fd2310ca4c525c7e7e03a19e21d644ac716724759391317517b5db95360813b1",
+      "parser_version": "swebench-4.1.0+swegym_parsers@242429c1",
+      "binding_version": null,
+      "materials_identity": "sha256:d7a8f86cd375efc81608438799cd8eee7c8b96772b78fbe85c366fc57de859ed",
+      "test_command": "pytest -n0 -rA  --color=no dask/tests/test_delayed.py",
+      "state": "not_evaluated",
+      "apply_ok": null,
+      "partitions": {
+        "original_f2p": {
+          "references": [
+            "dask/tests/test_delayed.py::test_delayed_with_dataclass"
+          ],
+          "result": null
+        },
+        "original_p2p": {
+          "references": [
+            "dask/tests/test_delayed.py::test_pickle[f0]",
+            "dask/tests/test_delayed.py::test_finalize_name",
+            "dask/tests/test_delayed.py::test_literates",
+            "dask/tests/test_delayed.py::test_keys_from_array",
+            "dask/tests/test_delayed.py::test_attributes",
+            "dask/tests/test_delayed.py::test_delayed_decorator_on_method",
+            "dask/tests/test_delayed.py::test_cloudpickle[f1]",
+            "dask/tests/test_delayed.py::test_pure",
+            "dask/tests/test_delayed.py::test_common_subexpressions",
+            "dask/tests/test_delayed.py::test_nout_with_tasks[x4]",
+            "dask/tests/test_delayed.py::test_delayed_errors",
+            "dask/tests/test_delayed.py::test_lists",
+            "dask/tests/test_delayed.py::test_delayed",
+            "dask/tests/test_delayed.py::test_custom_delayed",
+            "dask/tests/test_delayed.py::test_delayed_name_on_call",
+            "dask/tests/test_delayed.py::test_iterators",
+            "dask/tests/test_delayed.py::test_literates_keys",
+            "dask/tests/test_delayed.py::test_cloudpickle[f0]",
+            "dask/tests/test_delayed.py::test_dask_layers",
+            "dask/tests/test_delayed.py::test_name_consistent_across_instances",
+            "dask/tests/test_delayed.py::test_nout",
+            "dask/tests/test_delayed.py::test_sensitive_to_partials",
+            "dask/tests/test_delayed.py::test_kwargs",
+            "dask/tests/test_delayed.py::test_attribute_of_attribute",
+            "dask/tests/test_delayed.py::test_delayed_compute_forward_kwargs",
+            "dask/tests/test_delayed.py::test_callable_obj",
+            "dask/tests/test_delayed.py::test_lists_are_concrete",
+            "dask/tests/test_delayed.py::test_to_task_dask",
+            "dask/tests/test_delayed.py::test_nout_with_tasks[x2]",
+            "dask/tests/test_delayed.py::test_delayed_visualise_warn",
+            "dask/tests/test_delayed.py::test_methods",
+            "dask/tests/test_delayed.py::test_method_getattr_call_same_task",
+            "dask/tests/test_delayed.py::test_delayed_method_descriptor",
+            "dask/tests/test_delayed.py::test_cloudpickle[f2]",
+            "dask/tests/test_delayed.py::test_nout_with_tasks[x0]",
+            "dask/tests/test_delayed.py::test_nout_with_tasks[x3]",
+            "dask/tests/test_delayed.py::test_delayed_callable",
+            "dask/tests/test_delayed.py::test_delayed_name",
+            "dask/tests/test_delayed.py::test_np_dtype_of_delayed",
+            "dask/tests/test_delayed.py::test_delayed_picklable",
+            "dask/tests/test_delayed.py::test_delayed_optimize",
+            "dask/tests/test_delayed.py::test_traverse_false",
+            "dask/tests/test_delayed.py::test_nout_with_tasks[x1]",
+            "dask/tests/test_delayed.py::test_array_bag_delayed",
+            "dask/tests/test_delayed.py::test_operators",
+            "dask/tests/test_delayed.py::test_dask_layers_to_delayed",
+            "dask/tests/test_delayed.py::test_pure_global_setting",
+            "dask/tests/test_delayed.py::test_array_delayed"
+          ],
+          "result": null
+        }
+      }
+    },
+    "image_id": "sha256:50bca237706aed5413899f7fec2123e9933de56293e8ed8169938c86a9e0559b",
+    "setup_seconds": 900,
+    "prepared_manifest_sha256": "f88d310045bded5ddeb75b82cd11f1058da870e1cfc0ae1e25187145e77e7879"
+  },
+  "version_assets": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7656/formal_cpu_readback_r11_20261003.json",
+      "sha256": "c797ac322d6771023a74b22b0a844ffa8f3234281254bbd92b8226c8358a557d",
+      "bytes": 12634
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/readback_manifest.json",
+      "sha256": "3abf25308efe4aa6e014c72698b93302fd5cb66fe360314ac47c8c089c9de302",
+      "bytes": 10839
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/run/status.json",
+      "sha256": "9ed5a8fac0bd59e7d25ba1e73aabda33f7fa44dc9e57926d32093b5f7b43afd0",
+      "bytes": 29994
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/run/formal_binding.json",
+      "sha256": "d788a12d2f61a88cc12a8511befb6772c49937db28aabd44c110598811c4dcae",
+      "bytes": 4945
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/run/prepared/prepared_manifest.json",
+      "sha256": "f88d310045bded5ddeb75b82cd11f1058da870e1cfc0ae1e25187145e77e7879",
+      "bytes": 912
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/run/prepared/prompts.jsonl",
+      "sha256": "93e3f17b7fd49166b2affc2b666d94924cbd8c5177d479a20b14c64abb350a7a",
+      "bytes": 3838
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/run/prepared/rollout_task_views.jsonl",
+      "sha256": "771b5593b3650032b9a278fdd81578ab1e91e344c27d505ce9bf1538e90afe29",
+      "bytes": 4963
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/run/private/host_grading_views.jsonl",
+      "sha256": "d0e54b5146d58591936dcd2b867062590218d3a03aa52d12706460a7cc379f7f",
+      "bytes": 10038
+    },
+    {
+      "path": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r11/dask7656_publication_receipt.json",
+      "sha256": "512169719aef4512873e4f9f7308e1d5081ed23d35047cc412a49d946cc39adc",
+      "bytes": 3187
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/manifest.json",
+      "sha256": "bf1d0e8a279f996a7737de775c9a30abf3401dc34840ef54bf7e56b754991bb9",
+      "bytes": 201258
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/verify_release.py",
+      "sha256": "fc00b2c9fa46febf0cecc63dbc5edc5f578598ab31233b7e263bba8ca25d52c8",
+      "bytes": 898
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7656/revision.json",
+      "sha256": "0b70310018821b5cff83d81a89bcfdca820a198b85c94d246ed91e37500cfcd3",
+      "bytes": 9139
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7656/acceptance_matrix.json",
+      "sha256": "5da46b2ddb0407b61492c546a323a12b6b55f6417b48fd91044ff83a3a856f8f",
+      "bytes": 3137
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7656/effective_test.patch",
+      "sha256": "d3b711c9eb53cbdb6477314eae82f3ae5ca49e5c052a352c7da3959289c287db",
+      "bytes": 1149
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7656/effective_test.py",
+      "sha256": "45947718a1d33637e37a61781a80af280910bba53599f0e6de8952a5fd31403d",
+      "bytes": 19654
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tools/cpu_formal_matrix.py",
+      "sha256": "c9c04b8852ce6bbc0692e4710295e535f9a28f5835b66f3a9bffac4570e009ba",
+      "bytes": 9869
+    }
+  ],
+  "release_files_locally_sha_verified": [
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/dask7656_test_patch_preserve_refs_v1/actor_Dockerfile",
+      "sha256": "0ae8be0ac4905f7cd05033a88fe241539450876e6eec6f76f3596284f88a992f",
+      "bytes": 491
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/dask7656_test_patch_preserve_refs_v1/actor_image.json",
+      "sha256": "08fbe471c8e99710ddf5f6d4651507d076d6c6b1f0aa35baee96e6fad2f0b014",
+      "bytes": 2117
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/dask7656_test_patch_preserve_refs_v1/base_identity.json",
+      "sha256": "b1cd3417b1a951fcefd344edb668ac0154042a07a3154ebec4bd2f7956ef591a",
+      "bytes": 797
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/dask7656_test_patch_preserve_refs_v1/effective_test.patch",
+      "sha256": "d3b711c9eb53cbdb6477314eae82f3ae5ca49e5c052a352c7da3959289c287db",
+      "bytes": 1149
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/dask7656_test_patch_preserve_refs_v1/effective_test.py",
+      "sha256": "45947718a1d33637e37a61781a80af280910bba53599f0e6de8952a5fd31403d",
+      "bytes": 19654
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/dask7656_test_patch_preserve_refs_v1/environment_supplement.json",
+      "sha256": "647372e7f4feef4545231dd090fa279d09b59673ec126b9ee825e54d1eeb17d7",
+      "bytes": 6779
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/dask7656_test_patch_preserve_refs_v1/grader_Dockerfile",
+      "sha256": "eea5bb600626982ca4fca6d873c5b77f2858a85aa8cdc746bc172e1daae148cd",
+      "bytes": 71
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/dask7656_test_patch_preserve_refs_v1/grader_image.json",
+      "sha256": "e486b443caab23b3c6cfddc510bd2bbb473ff09d3cdd89cdb90421ef75d30197",
+      "bytes": 1044
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/dask7656_test_patch_preserve_refs_v1/install_recipe.json",
+      "sha256": "4be37effaae78af9e724c10ccdad38c6d555b2e81ed5351b2128b48fd1927d61",
+      "bytes": 869
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/dask7656_test_patch_preserve_refs_v1/material_revisions.json",
+      "sha256": "e8a832f4113a5b9a7e4addf12626d4d0780d03984cff4bb0865d2e3966df8636",
+      "bytes": 4761
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/dask7656_test_patch_preserve_refs_v1/original_test.patch",
+      "sha256": "30702af1cfec8658313396009c5d9d24a9d5410c57d3cb654bf6dd9e63c9a35d",
+      "bytes": 628
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/dask7656_test_patch_preserve_refs_v1/public_tests/dask__dask-7656/dask/tests/test_delayed.py",
+      "sha256": "6ae2af0d5d911d1c573755f7a62ec487d26aeaf0edc2089fa6c4be99d8e1c672",
+      "bytes": 19254
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/repo/rh2/scripts/replay_grade.py",
+      "sha256": "d36fa3367415e573305a7a03619f51e7cbd358627569f3844d5c203b70d66db3",
+      "bytes": 9423
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/repo/rh2/src/repoharness2/adapters/slime/prepared_task_face.py",
+      "sha256": "a2e9a955032989eed642e6057ebd2f47cc627c6afe3e1f1fc235bef95f0ec7ca",
+      "bytes": 45399
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/repo/rh2/src/repoharness2/adapters/slime/replay_grade.py",
+      "sha256": "df9b26dc81938239dc4c45c5466c0b08c5505f4c724ba331e482862a3834c178",
+      "bytes": 52550
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/repo/rh2/src/repoharness2/adapters/slime/sandbox_profile.py",
+      "sha256": "313bfd7691c5dca775aa0e9992f13561e20936f062ddfa3d269892b6bf4895ee",
+      "bytes": 138643
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/repo/rh2/src/repoharness2/contracts/_base.py",
+      "sha256": "7194bdd008f819a1215b2ef050e4f3ac85d99685f7668bf869cd2633d049e0c0",
+      "bytes": 4640
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/repo/rh2/src/repoharness2/contracts/frozen_patch.py",
+      "sha256": "8d7720cbc4912d7de3f46779926e8bd5688f80a6b4cb1a7b2472bc2cc05c6310",
+      "bytes": 8180
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/repo/rh2/src/repoharness2/envpack/bundles_v2.py",
+      "sha256": "b80b8f5a6f7b2f4c89d5dc3fa3e76d8c2fb6fd9d59ab1db8b94ba3742906b77b",
+      "bytes": 77825
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/repo/rh2/src/repoharness2/envpack/prepared_tasks.py",
+      "sha256": "3b44b28cdb8dece281369cd94ef255a1687a54519415533328c76d15d08ca1fc",
+      "bytes": 24598
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/repo/rh2/src/repoharness2/envpack/spec_vendor.py",
+      "sha256": "d830eac79a5413a00c0a430bb2bbf3571c71618b6da09cbfaaf56c34aa32010d",
+      "bytes": 14057
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/repo/rh2/src/repoharness2/envpack/swe_material_revisions.py",
+      "sha256": "6b116da862e6d080e17a0679d202e0bbd35544d96e169cf9dbe1aba565fe88cf",
+      "bytes": 65140
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/repo/rh2/src/repoharness2/envpack/training_view.py",
+      "sha256": "ea3d7d7958e4f4396b8e895b3f657a5a9ffd3fd605b129fbf194997f6efd76bd",
+      "bytes": 27256
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/repo/rh2/src/repoharness2/grading/manager.py",
+      "sha256": "1783533e1e3b66a57fcaa5a599a1da4f8e4e886318e24f040c6df91f294c1c1e",
+      "bytes": 225647
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe17_dask_conan_v1/repo/rh2/src/repoharness2/grading/material_revision.py",
+      "sha256": "88abc81970eb8896b00d03040163685a16cd6c02283319441b648ff25fd253f5",
+      "bytes": 10940
+    }
+  ],
+  "release_verify_scope": {
+    "local_related_files": 25,
+    "verify_release_file_sha_matched_manifest": true,
+    "actual_remote_verify_log_reports": {
+      "checksummed_files": 980,
+      "r2e_count": 48,
+      "swe_count": 216,
+      "status": "material_and_source_readback_passed_cpu_not_run"
+    },
+    "remote_report_not_replaced_by_local_full_release_recheck": true
+  },
+  "local_recomputed_identity": {
+    "host_view_json_ascii_default_sha256": "c57f2ca9bc96ba6b3277b57706759f0e3a4cdad3b33cfb1cc77ba34ee63f4e0f",
+    "host_view_ascii_note": "cpu_formal_matrix uses json.dumps(sort_keys=True,separators=(comma,colon)) default ensure_ascii=True; different from generic canonical digest ensure_ascii=False. Both are explicit distinct encodings, not identity mismatch.",
+    "grading_bundle_digest": "sha256:f8a8a49e3ebf538982c8af57b9544186502c8b8ce9a5a5e257d9a41f29ced8c6",
+    "environment_package_digest": "sha256:fd2310ca4c525c7e7e03a19e21d644ac716724759391317517b5db95360813b1",
+    "grading_materials_identity": "sha256:d7a8f86cd375efc81608438799cd8eee7c8b96772b78fbe85c366fc57de859ed",
+    "scripts_digest": "sha256:88333443f1861b2e4f412f084e8138a4e6354e1110266f951916eda774ba6661",
+    "trusted_setup_script_sha256": "sha256:1bdec8873b265e3175eea8d5aa1b1fe7a16bc79b5bd2d4937db559122864ea90",
+    "candidate_test_script_sha256": "sha256:68a4d54b94c244132cb9dee6b59bb48682dc05035c802523f101961660f39fb6",
+    "candidate_install_script_sha256": "sha256:9f92f11770d22fdf51acbd8d5676c2e37eb8f5158b81ee98a80ec57da66df050",
+    "candidate_prerequisite_script_sha256": "sha256:25d7be46c85be44e63f9c4691376903591712fbefe2879043fab11c7751437c4",
+    "eval_script_sha256": "sha256:c03309a3f2921a7f6176afce036f29f70d8392f66b1a8ac6e3d595c9c49951fc",
+    "frozen_patch_digests_match_all_four": true,
+    "bound_image": "sha256:50bca237706aed5413899f7fec2123e9933de56293e8ed8169938c86a9e0559b",
+    "bound_setup_seconds": 900
+  },
+  "actual_install_verification": {
+    "recipe_id": "dask7656-e11-pandas135-stdlib-v1",
+    "exact_e11_body_sha256": "26cb808ebe8177028372a351c4704332a3d02e1aa34e3b8a170eb7f0b92047be",
+    "recipe_asset_sha256": "4be37effaae78af9e724c10ccdad38c6d555b2e81ed5351b2128b48fd1927d61",
+    "wrapper": "export PIP_NO_INDEX=1; export PIP_FIND_LINKS=/opt/rh2/compat-wheels before unchanged fixed E11 body",
+    "stdlib_distutils_export_present": true,
+    "offline_pandas_135_and_original_editable_install_present": true,
+    "pandas_actual_compat_versions_before_after": "1.3.5",
+    "wheel_sha256": "2c21778a688d3712d35710501f8001cdbf96eb70a7c587a3d5613573299fdca6",
+    "trusted_wheel_file_sha_checked": true,
+    "nonroot_54322_wheel_bytes_check_success_all_four": true,
+    "installation_executed_all_four": true,
+    "failed_install_commands_all_four": [],
+    "install_rc_all_four": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "test_rc_vector": [
+      1,
+      0,
+      1,
+      1
+    ],
+    "test_complete_all_four": true,
+    "first_and_last_test_segment_order_valid": true
+  },
+  "rows": [
+    {
+      "candidate": "noop",
+      "run_id": "dask7656-formal-cpu-c-20261003-v1-noop",
+      "formal_reward": 0.0,
+      "f2p_pass": 0,
+      "f2p_total": 1,
+      "p2p_pass": 48,
+      "p2p_total": 48,
+      "reference_count": 49,
+      "reference_missing": [],
+      "reference_skipped": [],
+      "reference_statuses_from_actual_test_segment": {
+        "dask/tests/test_delayed.py::test_delayed_with_dataclass": "FAILED",
+        "dask/tests/test_delayed.py::test_pickle[f0]": "PASSED",
+        "dask/tests/test_delayed.py::test_finalize_name": "PASSED",
+        "dask/tests/test_delayed.py::test_literates": "PASSED",
+        "dask/tests/test_delayed.py::test_keys_from_array": "PASSED",
+        "dask/tests/test_delayed.py::test_attributes": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_decorator_on_method": "PASSED",
+        "dask/tests/test_delayed.py::test_cloudpickle[f1]": "PASSED",
+        "dask/tests/test_delayed.py::test_pure": "PASSED",
+        "dask/tests/test_delayed.py::test_common_subexpressions": "PASSED",
+        "dask/tests/test_delayed.py::test_nout_with_tasks[x4]": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_errors": "PASSED",
+        "dask/tests/test_delayed.py::test_lists": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed": "PASSED",
+        "dask/tests/test_delayed.py::test_custom_delayed": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_name_on_call": "PASSED",
+        "dask/tests/test_delayed.py::test_iterators": "PASSED",
+        "dask/tests/test_delayed.py::test_literates_keys": "PASSED",
+        "dask/tests/test_delayed.py::test_cloudpickle[f0]": "PASSED",
+        "dask/tests/test_delayed.py::test_dask_layers": "PASSED",
+        "dask/tests/test_delayed.py::test_name_consistent_across_instances": "PASSED",
+        "dask/tests/test_delayed.py::test_nout": "PASSED",
+        "dask/tests/test_delayed.py::test_sensitive_to_partials": "PASSED",
+        "dask/tests/test_delayed.py::test_kwargs": "PASSED",
+        "dask/tests/test_delayed.py::test_attribute_of_attribute": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_compute_forward_kwargs": "PASSED",
+        "dask/tests/test_delayed.py::test_callable_obj": "PASSED",
+        "dask/tests/test_delayed.py::test_lists_are_concrete": "PASSED",
+        "dask/tests/test_delayed.py::test_to_task_dask": "PASSED",
+        "dask/tests/test_delayed.py::test_nout_with_tasks[x2]": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_visualise_warn": "PASSED",
+        "dask/tests/test_delayed.py::test_methods": "PASSED",
+        "dask/tests/test_delayed.py::test_method_getattr_call_same_task": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_method_descriptor": "PASSED",
+        "dask/tests/test_delayed.py::test_cloudpickle[f2]": "PASSED",
+        "dask/tests/test_delayed.py::test_nout_with_tasks[x0]": "PASSED",
+        "dask/tests/test_delayed.py::test_nout_with_tasks[x3]": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_callable": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_name": "PASSED",
+        "dask/tests/test_delayed.py::test_np_dtype_of_delayed": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_picklable": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_optimize": "PASSED",
+        "dask/tests/test_delayed.py::test_traverse_false": "PASSED",
+        "dask/tests/test_delayed.py::test_nout_with_tasks[x1]": "PASSED",
+        "dask/tests/test_delayed.py::test_array_bag_delayed": "PASSED",
+        "dask/tests/test_delayed.py::test_operators": "PASSED",
+        "dask/tests/test_delayed.py::test_dask_layers_to_delayed": "PASSED",
+        "dask/tests/test_delayed.py::test_pure_global_setting": "PASSED",
+        "dask/tests/test_delayed.py::test_array_delayed": "PASSED"
+      },
+      "unreferenced_module_statuses": {
+        "dask/tests/test_delayed.py::test_check_meta_flag": "PASSED",
+        "dask/tests/test_delayed.py::test_pickle[f1]": "XFAIL",
+        "dask/tests/test_delayed.py::test_pickle[f2]": "XFAIL"
+      },
+      "module_summary": "1 failed, 49 passed, 2 xfailed",
+      "ledger": {
+        "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/run/noop/ledger.jsonl",
+        "sha256": "bfae1f70aa14331da19bfd00120a9fcee4a56875f4e97a64533600687d4f6eac",
+        "bytes": 11684
+      },
+      "eval_log": {
+        "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/run/noop/eval_logs/evallog_replay-dask7656-formal-c_0f5cc548.eval.log",
+        "sha256": "1be0d2834618d0ec182ce7de020ae0910fbe97d1554db0068591a30c84ee155f",
+        "bytes": 38484
+      },
+      "diagnostics": {
+        "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/run/noop/eval_logs/evallog_replay-dask7656-formal-c_0f5cc548.diagnostics.json",
+        "sha256": "38f5767c41f31a808a5764f1e5c4e3fd928e2e8daecf001288cb41bbab6a4b39",
+        "bytes": 10939
+      },
+      "candidate_patch": null,
+      "frozen_patch": {
+        "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/run/noop/artifacts/swe_gym_lite--dask__dask-7656/a1-feffc05d/frozen_patch.json",
+        "sha256": "2e24b95ac06483daadfcd64da52c2e1c44b61dc31aa628166b079861488d05fe",
+        "bytes": 734
+      },
+      "frozen_patch_digest": "sha256:b79d62bd705520c0828a49dcba0f1fb5d5e8b15768b4709c2aad1b5a2d155896",
+      "included_entry_paths": [],
+      "candidate_apply_user": "agent/54321",
+      "candidate_apply_method": "noop",
+      "grader_uid": 54322,
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 12.123,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 3.628
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 3.628,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "manager_close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "supply_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0,
+        "containers_created_total": 1,
+        "containers_removed_total": 1,
+        "container_history_retained": 1,
+        "leases_total": 1
+      },
+      "final_status": {
+        "exit_code": 0,
+        "reason": "ok",
+        "grader_containers_open": [],
+        "cleanup_failures_total": 0,
+        "cleanup_failures_resolved": false
+      },
+      "image_id_actual": "sha256:50bca237706aed5413899f7fec2123e9933de56293e8ed8169938c86a9e0559b",
+      "recipe": "dask7656-e11-pandas135-stdlib-v1",
+      "scripts_digest": "sha256:88333443f1861b2e4f412f084e8138a4e6354e1110266f951916eda774ba6661",
+      "grading_materials_identity": "sha256:d7a8f86cd375efc81608438799cd8eee7c8b96772b78fbe85c366fc57de859ed",
+      "failure_evidence": {
+        "location": "dask/delayed.py::unpack_collections getattr(expr, f.name)",
+        "exception": "AttributeError: ADataClass has no attribute b",
+        "boundary": "在构造 with_class 时提前失败；新增类型/值断言与后续默认值分支未执行。"
+      },
+      "resource": {
+        "mem_peak_mb": 3458.445,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "declared_policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "env_qualification": "absent",
+      "runner_integrity_changed": false,
+      "phase_seconds": {
+        "delta_apply": 0.16669,
+        "grader_baseline_rebuild": 0.434997,
+        "grader_cleanup": 5.310498,
+        "grader_start_and_verify": 31.707896,
+        "grader_trusted_setup": 187.586477,
+        "parser_and_report": 4.950973,
+        "test": 17.427319
+      }
+    },
+    {
+      "candidate": "gold",
+      "run_id": "dask7656-formal-cpu-c-20261003-v1-gold",
+      "formal_reward": 1.0,
+      "f2p_pass": 1,
+      "f2p_total": 1,
+      "p2p_pass": 48,
+      "p2p_total": 48,
+      "reference_count": 49,
+      "reference_missing": [],
+      "reference_skipped": [],
+      "reference_statuses_from_actual_test_segment": {
+        "dask/tests/test_delayed.py::test_delayed_with_dataclass": "PASSED",
+        "dask/tests/test_delayed.py::test_pickle[f0]": "PASSED",
+        "dask/tests/test_delayed.py::test_finalize_name": "PASSED",
+        "dask/tests/test_delayed.py::test_literates": "PASSED",
+        "dask/tests/test_delayed.py::test_keys_from_array": "PASSED",
+        "dask/tests/test_delayed.py::test_attributes": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_decorator_on_method": "PASSED",
+        "dask/tests/test_delayed.py::test_cloudpickle[f1]": "PASSED",
+        "dask/tests/test_delayed.py::test_pure": "PASSED",
+        "dask/tests/test_delayed.py::test_common_subexpressions": "PASSED",
+        "dask/tests/test_delayed.py::test_nout_with_tasks[x4]": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_errors": "PASSED",
+        "dask/tests/test_delayed.py::test_lists": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed": "PASSED",
+        "dask/tests/test_delayed.py::test_custom_delayed": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_name_on_call": "PASSED",
+        "dask/tests/test_delayed.py::test_iterators": "PASSED",
+        "dask/tests/test_delayed.py::test_literates_keys": "PASSED",
+        "dask/tests/test_delayed.py::test_cloudpickle[f0]": "PASSED",
+        "dask/tests/test_delayed.py::test_dask_layers": "PASSED",
+        "dask/tests/test_delayed.py::test_name_consistent_across_instances": "PASSED",
+        "dask/tests/test_delayed.py::test_nout": "PASSED",
+        "dask/tests/test_delayed.py::test_sensitive_to_partials": "PASSED",
+        "dask/tests/test_delayed.py::test_kwargs": "PASSED",
+        "dask/tests/test_delayed.py::test_attribute_of_attribute": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_compute_forward_kwargs": "PASSED",
+        "dask/tests/test_delayed.py::test_callable_obj": "PASSED",
+        "dask/tests/test_delayed.py::test_lists_are_concrete": "PASSED",
+        "dask/tests/test_delayed.py::test_to_task_dask": "PASSED",
+        "dask/tests/test_delayed.py::test_nout_with_tasks[x2]": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_visualise_warn": "PASSED",
+        "dask/tests/test_delayed.py::test_methods": "PASSED",
+        "dask/tests/test_delayed.py::test_method_getattr_call_same_task": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_method_descriptor": "PASSED",
+        "dask/tests/test_delayed.py::test_cloudpickle[f2]": "PASSED",
+        "dask/tests/test_delayed.py::test_nout_with_tasks[x0]": "PASSED",
+        "dask/tests/test_delayed.py::test_nout_with_tasks[x3]": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_callable": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_name": "PASSED",
+        "dask/tests/test_delayed.py::test_np_dtype_of_delayed": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_picklable": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_optimize": "PASSED",
+        "dask/tests/test_delayed.py::test_traverse_false": "PASSED",
+        "dask/tests/test_delayed.py::test_nout_with_tasks[x1]": "PASSED",
+        "dask/tests/test_delayed.py::test_array_bag_delayed": "PASSED",
+        "dask/tests/test_delayed.py::test_operators": "PASSED",
+        "dask/tests/test_delayed.py::test_dask_layers_to_delayed": "PASSED",
+        "dask/tests/test_delayed.py::test_pure_global_setting": "PASSED",
+        "dask/tests/test_delayed.py::test_array_delayed": "PASSED"
+      },
+      "unreferenced_module_statuses": {
+        "dask/tests/test_delayed.py::test_check_meta_flag": "PASSED",
+        "dask/tests/test_delayed.py::test_pickle[f1]": "XFAIL",
+        "dask/tests/test_delayed.py::test_pickle[f2]": "XFAIL"
+      },
+      "module_summary": "50 passed, 2 xfailed",
+      "ledger": {
+        "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/run/gold/ledger.jsonl",
+        "sha256": "df018835ba0ea5101a3a89a7d5609b61916948a3c05ada40108fa3def5699fc6",
+        "bytes": 11912
+      },
+      "eval_log": {
+        "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/run/gold/eval_logs/evallog_replay-dask7656-formal-c_010877bf.eval.log",
+        "sha256": "59d31ea03d3d477a4c61b0a5d9fb29b22e87351868250919dfba61cee71485e1",
+        "bytes": 37761
+      },
+      "diagnostics": {
+        "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/run/gold/eval_logs/evallog_replay-dask7656-formal-c_010877bf.diagnostics.json",
+        "sha256": "f1f3d0b741dc128a324a7a96dd30eaf106a013f255cc0de90280efe984963906",
+        "bytes": 10941
+      },
+      "candidate_patch": {
+        "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/run/gold/artifacts/swe_gym_lite--dask__dask-7656/a1-c59fc12c/candidate.patch",
+        "sha256": "2f6f59d094834f3e8db2d1e5332f1415ff65d151678d5cc6c6590f1883de63e9",
+        "bytes": 1007
+      },
+      "frozen_patch": {
+        "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/run/gold/artifacts/swe_gym_lite--dask__dask-7656/a1-c59fc12c/frozen_patch.json",
+        "sha256": "1c7b7e218215b470602f2cd2ba5b562906869d9da8d50da4975c69b7a3407ce6",
+        "bytes": 31011
+      },
+      "frozen_patch_digest": "sha256:08c0dd41ac34eb7feec64336d3f6969e9909b66390f0db3f73e6f362c9dd8f2f",
+      "included_entry_paths": [
+        "dask/delayed.py"
+      ],
+      "candidate_apply_user": "agent/54321",
+      "candidate_apply_method": "git_apply",
+      "grader_uid": 54322,
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 11.512,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 3.906
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 3.906,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "manager_close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "supply_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0,
+        "containers_created_total": 1,
+        "containers_removed_total": 1,
+        "container_history_retained": 1,
+        "leases_total": 1
+      },
+      "final_status": {
+        "exit_code": 0,
+        "reason": "ok",
+        "grader_containers_open": [],
+        "cleanup_failures_total": 0,
+        "cleanup_failures_resolved": false
+      },
+      "image_id_actual": "sha256:50bca237706aed5413899f7fec2123e9933de56293e8ed8169938c86a9e0559b",
+      "recipe": "dask7656-e11-pandas135-stdlib-v1",
+      "scripts_digest": "sha256:88333443f1861b2e4f412f084e8138a4e6354e1110266f951916eda774ba6661",
+      "grading_materials_identity": "sha256:d7a8f86cd375efc81608438799cd8eee7c8b96772b78fbe85c366fc57de859ed",
+      "failure_evidence": {
+        "location": "test_delayed_with_dataclass both explicit Delayed and default value branches",
+        "exception": null,
+        "boundary": "整个测试通过，包含两个 compute(scheduler=\"sync\") 分支；不扩大为任意 dataclass 输入均被证明正确。"
+      },
+      "resource": {
+        "mem_peak_mb": 1989.586,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "declared_policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "env_qualification": "absent",
+      "runner_integrity_changed": false,
+      "phase_seconds": {
+        "delta_apply": 0.351917,
+        "grader_baseline_rebuild": 0.450464,
+        "grader_cleanup": 3.597154,
+        "grader_start_and_verify": 31.445386,
+        "grader_trusted_setup": 153.503453,
+        "parser_and_report": 4.548538,
+        "test": 17.16272
+      }
+    },
+    {
+      "candidate": "wrong_result_type",
+      "run_id": "dask7656-formal-cpu-c-20261003-v1-wrong_result_type",
+      "formal_reward": 0.0,
+      "f2p_pass": 0,
+      "f2p_total": 1,
+      "p2p_pass": 48,
+      "p2p_total": 48,
+      "reference_count": 49,
+      "reference_missing": [],
+      "reference_skipped": [],
+      "reference_statuses_from_actual_test_segment": {
+        "dask/tests/test_delayed.py::test_delayed_with_dataclass": "FAILED",
+        "dask/tests/test_delayed.py::test_pickle[f0]": "PASSED",
+        "dask/tests/test_delayed.py::test_finalize_name": "PASSED",
+        "dask/tests/test_delayed.py::test_literates": "PASSED",
+        "dask/tests/test_delayed.py::test_keys_from_array": "PASSED",
+        "dask/tests/test_delayed.py::test_attributes": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_decorator_on_method": "PASSED",
+        "dask/tests/test_delayed.py::test_cloudpickle[f1]": "PASSED",
+        "dask/tests/test_delayed.py::test_pure": "PASSED",
+        "dask/tests/test_delayed.py::test_common_subexpressions": "PASSED",
+        "dask/tests/test_delayed.py::test_nout_with_tasks[x4]": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_errors": "PASSED",
+        "dask/tests/test_delayed.py::test_lists": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed": "PASSED",
+        "dask/tests/test_delayed.py::test_custom_delayed": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_name_on_call": "PASSED",
+        "dask/tests/test_delayed.py::test_iterators": "PASSED",
+        "dask/tests/test_delayed.py::test_literates_keys": "PASSED",
+        "dask/tests/test_delayed.py::test_cloudpickle[f0]": "PASSED",
+        "dask/tests/test_delayed.py::test_dask_layers": "PASSED",
+        "dask/tests/test_delayed.py::test_name_consistent_across_instances": "PASSED",
+        "dask/tests/test_delayed.py::test_nout": "PASSED",
+        "dask/tests/test_delayed.py::test_sensitive_to_partials": "PASSED",
+        "dask/tests/test_delayed.py::test_kwargs": "PASSED",
+        "dask/tests/test_delayed.py::test_attribute_of_attribute": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_compute_forward_kwargs": "PASSED",
+        "dask/tests/test_delayed.py::test_callable_obj": "PASSED",
+        "dask/tests/test_delayed.py::test_lists_are_concrete": "PASSED",
+        "dask/tests/test_delayed.py::test_to_task_dask": "PASSED",
+        "dask/tests/test_delayed.py::test_nout_with_tasks[x2]": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_visualise_warn": "PASSED",
+        "dask/tests/test_delayed.py::test_methods": "PASSED",
+        "dask/tests/test_delayed.py::test_method_getattr_call_same_task": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_method_descriptor": "PASSED",
+        "dask/tests/test_delayed.py::test_cloudpickle[f2]": "PASSED",
+        "dask/tests/test_delayed.py::test_nout_with_tasks[x0]": "PASSED",
+        "dask/tests/test_delayed.py::test_nout_with_tasks[x3]": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_callable": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_name": "PASSED",
+        "dask/tests/test_delayed.py::test_np_dtype_of_delayed": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_picklable": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_optimize": "PASSED",
+        "dask/tests/test_delayed.py::test_traverse_false": "PASSED",
+        "dask/tests/test_delayed.py::test_nout_with_tasks[x1]": "PASSED",
+        "dask/tests/test_delayed.py::test_array_bag_delayed": "PASSED",
+        "dask/tests/test_delayed.py::test_operators": "PASSED",
+        "dask/tests/test_delayed.py::test_dask_layers_to_delayed": "PASSED",
+        "dask/tests/test_delayed.py::test_pure_global_setting": "PASSED",
+        "dask/tests/test_delayed.py::test_array_delayed": "PASSED"
+      },
+      "unreferenced_module_statuses": {
+        "dask/tests/test_delayed.py::test_check_meta_flag": "PASSED",
+        "dask/tests/test_delayed.py::test_pickle[f1]": "XFAIL",
+        "dask/tests/test_delayed.py::test_pickle[f2]": "XFAIL"
+      },
+      "module_summary": "1 failed, 49 passed, 2 xfailed",
+      "ledger": {
+        "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/run/wrong_result_type/ledger.jsonl",
+        "sha256": "bb5f011c2fa81be694676efb36c85db1625eb75e28fb5662b9801c80c8081f4f",
+        "bytes": 12057
+      },
+      "eval_log": {
+        "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/run/wrong_result_type/eval_logs/evallog_replay-dask7656-formal-c_1f834a07.eval.log",
+        "sha256": "0e15776c7e949dba1821f20277cfbcfd47e90f3877af32042a87a699c09a64cd",
+        "bytes": 40124
+      },
+      "diagnostics": {
+        "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/run/wrong_result_type/eval_logs/evallog_replay-dask7656-formal-c_1f834a07.diagnostics.json",
+        "sha256": "17deb4c492ce2477161d8b696b2b025dd230684cf671a67e44e75468776558bf",
+        "bytes": 10952
+      },
+      "candidate_patch": {
+        "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/run/wrong_result_type/artifacts/swe_gym_lite--dask__dask-7656/a1-3cbecdd4/candidate.patch",
+        "sha256": "d422554ec399b5540bc3492c8fcddf0b2c06246ec842545f6fb33ff7cc38d066",
+        "bytes": 797
+      },
+      "frozen_patch": {
+        "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/run/wrong_result_type/artifacts/swe_gym_lite--dask__dask-7656/a1-3cbecdd4/frozen_patch.json",
+        "sha256": "f5bd9d713c42cba223823bd00d6cf0d3f14566fc1c3eed305eaea60fd2a7e6dd",
+        "bytes": 30789
+      },
+      "frozen_patch_digest": "sha256:1b5d8f0dd95cc13b5a81bb434ede7214ad4dc69f8378f6ae94ab9b7286be27a2",
+      "included_entry_paths": [
+        "dask/delayed.py"
+      ],
+      "candidate_apply_user": "agent/54321",
+      "candidate_apply_method": "git_apply",
+      "grader_uid": 54322,
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 12.106,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 3.854
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 3.854,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "manager_close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "supply_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0,
+        "containers_created_total": 1,
+        "containers_removed_total": 1,
+        "container_history_retained": 1,
+        "leases_total": 1
+      },
+      "final_status": {
+        "exit_code": 0,
+        "reason": "ok",
+        "grader_containers_open": [],
+        "cleanup_failures_total": 0,
+        "cleanup_failures_resolved": false
+      },
+      "image_id_actual": "sha256:50bca237706aed5413899f7fec2123e9933de56293e8ed8169938c86a9e0559b",
+      "recipe": "dask7656-e11-pandas135-stdlib-v1",
+      "scripts_digest": "sha256:88333443f1861b2e4f412f084e8138a4e6354e1110266f951916eda774ba6661",
+      "grading_materials_identity": "sha256:d7a8f86cd375efc81608438799cd8eee7c8b96772b78fbe85c366fc57de859ed",
+      "failure_evidence": {
+        "location": "dask/tests/test_delayed.py:114 return_nested isinstance(obj[\"a\"], ADataClass)",
+        "exception": "AssertionError: isinstance(namespace(a=3), types.ADataClass) is False",
+        "boundary": "新增类型断言实际触发；值断言及默认值分支未执行。"
+      },
+      "resource": {
+        "mem_peak_mb": 1961.672,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "declared_policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "env_qualification": "absent",
+      "runner_integrity_changed": false,
+      "phase_seconds": {
+        "delta_apply": 0.399667,
+        "grader_baseline_rebuild": 0.461867,
+        "grader_cleanup": 6.076172,
+        "grader_start_and_verify": 32.134122,
+        "grader_trusted_setup": 156.745246,
+        "parser_and_report": 6.214794,
+        "test": 17.70169
+      }
+    },
+    {
+      "candidate": "opaque",
+      "run_id": "dask7656-formal-cpu-c-20261003-v1-opaque",
+      "formal_reward": 0.0,
+      "f2p_pass": 0,
+      "f2p_total": 1,
+      "p2p_pass": 48,
+      "p2p_total": 48,
+      "reference_count": 49,
+      "reference_missing": [],
+      "reference_skipped": [],
+      "reference_statuses_from_actual_test_segment": {
+        "dask/tests/test_delayed.py::test_delayed_with_dataclass": "FAILED",
+        "dask/tests/test_delayed.py::test_pickle[f0]": "PASSED",
+        "dask/tests/test_delayed.py::test_finalize_name": "PASSED",
+        "dask/tests/test_delayed.py::test_literates": "PASSED",
+        "dask/tests/test_delayed.py::test_keys_from_array": "PASSED",
+        "dask/tests/test_delayed.py::test_attributes": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_decorator_on_method": "PASSED",
+        "dask/tests/test_delayed.py::test_cloudpickle[f1]": "PASSED",
+        "dask/tests/test_delayed.py::test_pure": "PASSED",
+        "dask/tests/test_delayed.py::test_common_subexpressions": "PASSED",
+        "dask/tests/test_delayed.py::test_nout_with_tasks[x4]": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_errors": "PASSED",
+        "dask/tests/test_delayed.py::test_lists": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed": "PASSED",
+        "dask/tests/test_delayed.py::test_custom_delayed": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_name_on_call": "PASSED",
+        "dask/tests/test_delayed.py::test_iterators": "PASSED",
+        "dask/tests/test_delayed.py::test_literates_keys": "PASSED",
+        "dask/tests/test_delayed.py::test_cloudpickle[f0]": "PASSED",
+        "dask/tests/test_delayed.py::test_dask_layers": "PASSED",
+        "dask/tests/test_delayed.py::test_name_consistent_across_instances": "PASSED",
+        "dask/tests/test_delayed.py::test_nout": "PASSED",
+        "dask/tests/test_delayed.py::test_sensitive_to_partials": "PASSED",
+        "dask/tests/test_delayed.py::test_kwargs": "PASSED",
+        "dask/tests/test_delayed.py::test_attribute_of_attribute": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_compute_forward_kwargs": "PASSED",
+        "dask/tests/test_delayed.py::test_callable_obj": "PASSED",
+        "dask/tests/test_delayed.py::test_lists_are_concrete": "PASSED",
+        "dask/tests/test_delayed.py::test_to_task_dask": "PASSED",
+        "dask/tests/test_delayed.py::test_nout_with_tasks[x2]": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_visualise_warn": "PASSED",
+        "dask/tests/test_delayed.py::test_methods": "PASSED",
+        "dask/tests/test_delayed.py::test_method_getattr_call_same_task": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_method_descriptor": "PASSED",
+        "dask/tests/test_delayed.py::test_cloudpickle[f2]": "PASSED",
+        "dask/tests/test_delayed.py::test_nout_with_tasks[x0]": "PASSED",
+        "dask/tests/test_delayed.py::test_nout_with_tasks[x3]": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_callable": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_name": "PASSED",
+        "dask/tests/test_delayed.py::test_np_dtype_of_delayed": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_picklable": "PASSED",
+        "dask/tests/test_delayed.py::test_delayed_optimize": "PASSED",
+        "dask/tests/test_delayed.py::test_traverse_false": "PASSED",
+        "dask/tests/test_delayed.py::test_nout_with_tasks[x1]": "PASSED",
+        "dask/tests/test_delayed.py::test_array_bag_delayed": "PASSED",
+        "dask/tests/test_delayed.py::test_operators": "PASSED",
+        "dask/tests/test_delayed.py::test_dask_layers_to_delayed": "PASSED",
+        "dask/tests/test_delayed.py::test_pure_global_setting": "PASSED",
+        "dask/tests/test_delayed.py::test_array_delayed": "PASSED"
+      },
+      "unreferenced_module_statuses": {
+        "dask/tests/test_delayed.py::test_check_meta_flag": "PASSED",
+        "dask/tests/test_delayed.py::test_pickle[f1]": "XFAIL",
+        "dask/tests/test_delayed.py::test_pickle[f2]": "XFAIL"
+      },
+      "module_summary": "1 failed, 49 passed, 2 xfailed",
+      "ledger": {
+        "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/run/opaque/ledger.jsonl",
+        "sha256": "4e8fbe1534f34dfa478e9708522e7771c48602b0ff4118e0b50d197b3e837a19",
+        "bytes": 12012
+      },
+      "eval_log": {
+        "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/run/opaque/eval_logs/evallog_replay-dask7656-formal-c_d53cab87.eval.log",
+        "sha256": "8830d01261e0ee9ae376a8b72f459d6759c7863ece0069b0a078e0222d13e971",
+        "bytes": 39745
+      },
+      "diagnostics": {
+        "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/run/opaque/eval_logs/evallog_replay-dask7656-formal-c_d53cab87.diagnostics.json",
+        "sha256": "0e0e445e18261cb07d0075e8653937d8c1a4ea0f16a2bcabb4a4719673c69a24",
+        "bytes": 10940
+      },
+      "candidate_patch": {
+        "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/run/opaque/artifacts/swe_gym_lite--dask__dask-7656/a1-929ffa8a/candidate.patch",
+        "sha256": "f6a357f6b5a69c91d4d9b5e40d3df13e79e0099f75265537a9ffa1241b1cae84",
+        "bytes": 388
+      },
+      "frozen_patch": {
+        "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7656-formal-cpu-c-20261003-v1/remote/run/opaque/artifacts/swe_gym_lite--dask__dask-7656/a1-929ffa8a/frozen_patch.json",
+        "sha256": "eae615787dffd8b442fc2fff001fa65d16c2844ea9bd0f344793b073f19004e5",
+        "bytes": 30459
+      },
+      "frozen_patch_digest": "sha256:392eb5c4db16aa6d6ca535d34454d9b64380a2bef8744c7b7c20fb11f7d6a4b8",
+      "included_entry_paths": [
+        "dask/delayed.py"
+      ],
+      "candidate_apply_user": "agent/54321",
+      "candidate_apply_method": "git_apply",
+      "grader_uid": 54322,
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 9.149,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 3.376
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 3.376,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "manager_close": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "supply_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0,
+        "containers_created_total": 1,
+        "containers_removed_total": 1,
+        "container_history_retained": 1,
+        "leases_total": 1
+      },
+      "final_status": {
+        "exit_code": 0,
+        "reason": "ok",
+        "grader_containers_open": [],
+        "cleanup_failures_total": 0,
+        "cleanup_failures_resolved": false
+      },
+      "image_id_actual": "sha256:50bca237706aed5413899f7fec2123e9933de56293e8ed8169938c86a9e0559b",
+      "recipe": "dask7656-e11-pandas135-stdlib-v1",
+      "scripts_digest": "sha256:88333443f1861b2e4f412f084e8138a4e6354e1110266f951916eda774ba6661",
+      "grading_materials_identity": "sha256:d7a8f86cd375efc81608438799cd8eee7c8b96772b78fbe85c366fc57de859ed",
+      "failure_evidence": {
+        "location": "dask/tests/test_delayed.py:115 return_nested assert obj[\"a\"].a == 3",
+        "exception": "TypeError: Truth of Delayed objects is not supported",
+        "boundary": "类型断言已通过，值仍为 Delayed；比较结果在 assert 中转真值失败，不能写成数值比较产生 False；后续默认值分支未执行。"
+      },
+      "resource": {
+        "mem_peak_mb": 1976.297,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "declared_policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "env_qualification": "absent",
+      "runner_integrity_changed": false,
+      "phase_seconds": {
+        "delta_apply": 0.352244,
+        "grader_baseline_rebuild": 0.457096,
+        "grader_cleanup": 2.549869,
+        "grader_start_and_verify": 32.672307,
+        "grader_trusted_setup": 130.136136,
+        "parser_and_report": 4.564158,
+        "test": 14.25249
+      }
+    }
+  ],
+  "remaining_probe_evidence": [
+    {
+      "id": "probe_actual_actor_identity",
+      "needed": "实际探针作业记录部署代码/公开材料/profile、inspect 后的 actor sha256:118f47f67994e4d4df700f427404c7620cd2c9eedf3b818f0e8b21d3276babe3、image_override 生效与候选非 root UID；保留公开输入、首请求/工具执行和模型轨迹。",
+      "scope": "后续诊断探针实际回执，不要求为已有 override 能力重建 typed actor。"
+    },
+    {
+      "id": "probe_score_transport",
+      "needed": "模型产出的 frozen patch 与正式 grader50bca/E11/新 test patch/材料 identity 对齐，实际评分完整日志、参考状态、reward 运输与清理回执。",
+      "scope": "本 CPU 矩阵可复用评分侧资格；未有模型探针结果。"
+    },
+    {
+      "id": "formal_training_actor",
+      "needed": "若后续声明正式训练 actor 支持，仍需被正式 actor 消费的 typed 镜像/激活/环境身份及相应准入实现、部署与验证。",
+      "scope": "R11 source actor 和诊断 image_override 不替代该证据。"
+    }
+  ],
+  "limits": [
+    "只验收实际四个候选、固定 R11 prepared/consumer/脚本/镜像，不穷举所有 dataclass 修法。",
+    "模块 52 个结果包含 3 个未进入 1F48P 评分参考的节点；2 XFAIL 均为未引用节点，没有把它们冒充为48P通过。",
+    "root setup 日志是受信宿主 setup 的证据，不是 root 私有诊断 reward，也不是本轮正式 actor 运行。",
+    "cleanup依据四份原件 manager_close/final_status 与 ledger removed；未独立实时查询 CPU Docker 容器。",
+    "旧 actor43/旧公开 stub 未复用为本轮 actor/LLM 验证。"
+  ]
+}

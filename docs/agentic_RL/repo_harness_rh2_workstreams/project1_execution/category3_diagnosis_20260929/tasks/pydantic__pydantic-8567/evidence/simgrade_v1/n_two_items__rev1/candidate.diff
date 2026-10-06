@@ -1,0 +1,112 @@
+diff --git a/pydantic/_internal/_generate_schema.py b/pydantic/_internal/_generate_schema.py
+index 169ffa5fb..ae1d4af85 100644
+--- a/pydantic/_internal/_generate_schema.py
++++ b/pydantic/_internal/_generate_schema.py
+@@ -1706,6 +1706,8 @@ class GenerateSchema:
+         res = self._get_prepare_pydantic_annotations_for_known_type(source_type, tuple(annotations))
+         if res is not None:
+             source_type, annotations = res
++        if len(annotations) == 2:
++            annotations = _move_serializers_after_plain_validator(annotations)
+ 
+         pydantic_js_annotation_functions: list[GetJsonSchemaFunction] = []
+ 
+@@ -1943,6 +1945,26 @@ _VALIDATOR_F_MATCH: Mapping[
+ }
+ 
+ 
++def _move_serializers_after_plain_validator(annotations: list[Any]) -> list[Any]:
++    """A `PlainValidator` replaces the inner schema, so annotated serializers placed before it would be dropped.
++
++    Move them right after the (last) plain validator, keeping their relative order.
++    """
++    from ..functional_serializers import PlainSerializer, WrapSerializer
++    from ..functional_validators import PlainValidator
++
++    plain = [i for i, a in enumerate(annotations) if isinstance(a, PlainValidator)]
++    if not plain:
++        return annotations
++    last = plain[-1]
++    before = annotations[:last]
++    moved = [a for a in before if isinstance(a, (PlainSerializer, WrapSerializer))]
++    if not moved:
++        return annotations
++    kept = [a for a in before if not isinstance(a, (PlainSerializer, WrapSerializer))]
++    return kept + [annotations[last]] + moved + annotations[last + 1 :]
++
++
+ def apply_validators(
+     schema: core_schema.CoreSchema,
+     validators: Iterable[Decorator[RootValidatorDecoratorInfo]]
+diff --git a/tests/test_validators.py b/tests/test_validators.py
+index 013566ae2..563e5b243 100644
+--- a/tests/test_validators.py
++++ b/tests/test_validators.py
+@@ -20,12 +20,14 @@ from pydantic import (
+     ConfigDict,
+     Field,
+     GetCoreSchemaHandler,
++    PlainSerializer,
+     PydanticDeprecatedSince20,
+     PydanticUserError,
+     TypeAdapter,
+     ValidationError,
+     ValidationInfo,
+     ValidatorFunctionWrapHandler,
++    WithJsonSchema,
+     errors,
+     field_validator,
+     model_validator,
+@@ -2806,3 +2808,52 @@ def test_validate_default_raises_for_dataclasses() -> None:
+             'ctx': {'error': IsInstance(AssertionError)},
+         },
+     ]
++
++
++def test_plain_validator_plain_serializer() -> None:
++    """https://github.com/pydantic/pydantic/issues/8512"""
++    ser_type = str
++    serializer = PlainSerializer(lambda x: ser_type(int(x)), return_type=ser_type)
++    validator = PlainValidator(lambda x: bool(int(x)))
++
++    class Blah(BaseModel):
++        foo: Annotated[bool, validator, serializer]
++        bar: Annotated[bool, serializer, validator]
++
++    blah = Blah(foo='0', bar='1')
++    data = blah.model_dump()
++    assert isinstance(data['foo'], ser_type)
++    assert isinstance(data['bar'], ser_type)
++
++    # Whatever its position, the serializer is used, in python and in JSON mode; validation is unchanged.
++    assert blah.foo is False
++    assert blah.bar is True
++    assert data == {'foo': '0', 'bar': '1'}
++    assert blah.model_dump_json() == '{"foo":"0","bar":"1"}'
++
++    # Same with another type and serializer (`when_used='json'`), a validator taking `info`,
++    # and a JSON schema given for the plain validator.
++    class Other(BaseModel):
++        x: Annotated[
++            int,
++            PlainSerializer(lambda x: f'{x:,}', return_type=str, when_used='json'),
++            PlainValidator(lambda v, info: int(v)),
++            WithJsonSchema({'type': 'integer'}, mode='validation'),
++        ]
++
++    other = Other(x='1234')
++    assert other.x == 1234
++    assert other.model_dump() == {'x': 1234}
++    assert other.model_dump_json() == '{"x":"1,234"}'
++
++    # A plain validator replaces the inner validation logic, so it keeps working for a type
++    # pydantic cannot generate a schema for.
++    class Unsupported:
++        pass
++
++    class WithUnsupported(BaseModel):
++        u: Annotated[Unsupported, PlainValidator(lambda v: Unsupported())]
++
++    m = WithUnsupported(u='abc')
++    assert isinstance(m.u, Unsupported)
++    assert isinstance(m.model_dump()['u'], Unsupported)

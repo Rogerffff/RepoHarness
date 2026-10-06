@@ -1,0 +1,74 @@
+{"case": "stable:Enum_int", "group": "R1", "norm": "'enum'", "ok": true}
+{"case": "distinct:Enum_int", "group": "R2", "ok": false}
+{"case": "strict:Enum_int", "group": "R1", "ok": false}
+{"case": "stable:Flag_single", "group": "R1", "norm": "'enum'", "ok": true}
+{"case": "distinct:Flag_single", "group": "R2", "ok": false}
+{"case": "strict:Flag_single", "group": "R1", "ok": false}
+{"case": "stable:IntEnum", "group": "R1", "norm": "<IColor.RED: 1>", "ok": true}
+{"case": "distinct:IntEnum", "group": "R2", "ok": true}
+{"case": "strict:IntEnum", "group": "R1", "ok": true}
+{"case": "stable:IntFlag_single", "group": "R1", "norm": "<IPerm.R: 1>", "ok": true}
+{"case": "distinct:IntFlag_single", "group": "R2", "ok": true}
+{"case": "strict:IntFlag_single", "group": "R1", "ok": true}
+{"case": "stable:str_mixin", "group": "R1", "norm": "<SColor.RED: 'red'>", "ok": true}
+{"case": "distinct:str_mixin", "group": "R2", "ok": true}
+{"case": "strict:str_mixin", "group": "R1", "ok": true}
+{"case": "stable:tuple_value", "group": "R1", "norm": "'enum'", "ok": true}
+{"case": "distinct:tuple_value", "group": "R2", "ok": false}
+{"case": "strict:tuple_value", "group": "R1", "ok": false}
+{"case": "stable:dict_value", "group": "R1", "norm": "'enum'", "ok": true}
+{"case": "distinct:dict_value", "group": "R2", "ok": false}
+{"case": "strict:dict_value", "group": "R1", "ok": false}
+{"case": "stable:frozenset_value", "group": "R1", "norm": "'enum'", "ok": true}
+{"case": "distinct:frozenset_value", "group": "R2", "ok": false}
+{"case": "strict:frozenset_value", "group": "R1", "ok": false}
+{"case": "stable:object_value", "group": "R1", "norm": "'enum'", "ok": true}
+{"case": "distinct:object_value", "group": "R2", "ok": false}
+{"case": "strict:object_value", "group": "R1", "ok": false}
+{"case": "stable:container", "group": "R1", "ok": false}
+{"case": "alias:same_member", "group": "R1", "ok": true}
+{"case": "xclass:same_name_value(Color.RED~Light.RED)", "group": "R2", "norm": ["'enum'", "'enum'"], "ok": false}
+{"case": "xclass:same_value(Color.RED~Shape.CIRCLE)", "group": "R2", "ok": false}
+{"case": "xclass:IntEnum(IColor.RED~Color.RED)", "group": "R2", "ok": true}
+{"case": "raw:Color.RED~1", "group": "R2", "ok": true}
+{"case": "raw:Color.RED~'RED'", "group": "R2", "ok": true}
+{"case": "raw:Color.RED~'Color.RED'", "group": "R2-edge", "ok": true}
+{"case": "flag:combo~combo(R|W~R|X)", "group": "R2", "norm": ["'enum'", "'enum'"], "ok": false}
+{"case": "flag:combo~empty(R|W~Perm(0))", "group": "R2", "norm": "'enum'", "ok": false}
+{"case": "flag:combo_stable", "group": "R1", "ok": true}
+{"case": "intflag:combo~combo", "group": "R2", "ok": true}
+{"case": "consequence:xclass type_name(Color.RED, Light.RED)", "got": ["Color", "Color"], "group": "R2", "keys_equal": true, "ok": false}
+{"case": "consequence:xclass type_name(Color.RED, Shape.CIRCLE)", "got": ["Color", "Color"], "group": "R2", "keys_equal": true, "ok": false}
+{"case": "consequence:raw type_name(Color.RED, 1)", "got": ["Color", "int"], "group": "R2", "keys_equal": false, "ok": true}
+{"case": "consequence:flag value_of(R|W, R|X)", "got": [3, 3], "group": "R2", "keys_equal": true, "ok": false}
+{"case": "consequence:flag value_of(R|W, Perm(0))", "got": [3, 3], "group": "R2", "keys_equal": true, "ok": false}
+{"case": "crossproc:Color.RED", "group": "R1-crossproc", "ok": true}
+{"case": "crossproc:Perm.R | Perm.W", "group": "R1-crossproc", "ok": true}
+{"case": "crossproc:IColor.RED", "group": "R1-crossproc", "ok": true}
+{"case": "crossproc:SColor.RED", "group": "R1-crossproc", "ok": true}
+{"case": "crossproc:Planet.EARTH", "group": "R1-crossproc", "ok": true}
+{"case": "crossproc:Conf.A", "group": "R1-crossproc", "ok": true}
+{"case": "crossproc:Tags.A", "group": "R1-crossproc", "ok": true}
+{"case": "crossproc:Sentinel.MISSING", "group": "R1-crossproc", "ok": true}
+{"case": "crossproc:Hooked.A", "group": "R1-crossproc", "ok": true}
+{"case": "hook:__dask_tokenize__ honored", "group": "hook", "honored": false, "norm": "'enum'", "ok": null}
+{"case": "register:user normalize_token.register(MyEnum) wins", "group": "hook", "norm": "('registered', 'A')", "ok": true}
+{"IColor.RED": "<IColor.RED: 1>", "IPerm.R|W": "<IPerm.W|R: 3>", "SColor.RED": "<SColor.RED: 'red'>", "case": "mixin:IntEnum/IntFlag/str normalized text", "group": "info", "ok": null, "tok_IColor.RED": "39298ae74c114eecc86e951b47cd8000"}
+{"case": "class:Enum class objects A.Color~B.Color (pre-existing)", "equal": true, "group": "info", "norm": "<enum 'Color'>", "ok": null}
+{"case": "class:plain class objects A.Plain~B.Plain", "equal": false, "group": "info", "norm": "<class 'audit_a.Plain'>", "ok": null}
+{"A": "'enum'", "B": "'enum'", "case": "norm:gold-like representation of A.Color.RED", "group": "info", "ok": null}
+{"case": "samename:token A.Color.RED~B.Color.RED", "group": "samename", "ok": null, "stable_a": true, "tokens_equal": true}
+{"case": "samename:pure delayed which() compute together sync", "got": ["audit_a", "audit_a"], "group": "samename", "key": "which-4e97765b5cdf8576cdef945b852f39dd", "keys_equal": true, "ok": false}
+{"case": "samename:pure delayed which() compute together threads", "got": ["audit_a", "audit_a"], "group": "samename", "key": "which-4e97765b5cdf8576cdef945b852f39dd", "keys_equal": true, "ok": false}
+{"case": "samename:pure delayed computed separately", "got": ["audit_a", "audit_b"], "group": "samename", "ok": true}
+{"case": "samename:pure delayed e.describe() compute together", "got": ["audit_a", "audit_a"], "group": "samename", "keys_equal": true, "ok": false}
+{"case": "samename:default (impure) delayed", "got": ["audit_a", "audit_b"], "group": "samename", "keys_equal": false, "ok": true}
+{"case": "samename:Delayed == operator (always pure)", "got": [true, true], "group": "samename", "keys_equal": true, "ok": false}
+{"case": "samename:Delayed [] getitem (always pure)", "got": ["from audit_a", "from audit_a"], "group": "samename", "keys_equal": true, "ok": false}
+{"case": "samename:map_blocks(color=...) names and results", "group": "samename", "names_equal": true, "ok": false, "r1": [100, 101, 102, 103], "r2": [100, 101, 102, 103], "x1_minus_x2": [0, 0, 0, 0]}
+{"case": "samename:IntEnum IColor.RED (base path unchanged)", "got": ["audit_a", "audit_a"], "group": "samename", "keys_equal": true, "norm": "<IColor.RED: 1>", "ok": false, "tokens_equal": true}
+{"case": "samename:Flag Perm.R", "got": ["audit_a", "audit_a"], "group": "samename", "keys_equal": true, "norm": "'enum'", "ok": false, "tokens_equal": true}
+{"case": "samename:user __dask_tokenize__ hook Hook.A", "got": ["audit_a", "audit_a"], "group": "samename", "keys_equal": true, "norm": "'enum'", "ok": false, "tokens_equal": true}
+{"case": "samename:nested Reader.Mode.FAST~Writer.Mode.FAST (same module)", "group": "samename-info", "norm": ["'enum'", "'enum'"], "ok": null, "tokens_equal": true}
+{"case": "samename:local classes from the same function (like the test)", "enum_enum_equal": true, "enum_flag_equal": true, "group": "samename-info", "norm": "'enum'", "ok": null}
+{"case": "_env", "dask": "2022.6.0+16.gaa801de0f.dirty", "dask_file": "/testbed/dask/__init__.py", "group": "info", "numpy": "1.24.4", "ok": null, "python": "3.10.14"}

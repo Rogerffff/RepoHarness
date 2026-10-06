@@ -1,0 +1,19 @@
+diff --git a/dask/array/core.py b/dask/array/core.py
+--- a/dask/array/core.py
++++ b/dask/array/core.py
+@@ -1830,6 +1830,15 @@
+         )
+ 
+         index2 = normalize_index(index, self.shape)
++        # An empty array has no data to gather: replace integer lists by the
++        # slice they span, which avoids the fancy-indexing machinery.
++        if 0 in self.shape:
++            index2 = tuple(
++                slice(int(i.min()), int(i.max()) + 1)
++                if isinstance(i, np.ndarray) and i.dtype.kind in "iu" and i.size
++                else i
++                for i in index2
++            )
+         dependencies = {self.name}
+         for i in index2:
+             if isinstance(i, Array):

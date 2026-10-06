@@ -1,0 +1,134 @@
+{
+  "schema": "swe_moto.r18.uid_public_actor.owner_readback.v1",
+  "job_id": "moto6408-actor-ab7e8c1ffbbd",
+  "task_id": "swe_gym_lite::getmoto__moto-6408",
+  "transport_manifest": {
+    "ref": "runs/category2_repair_20260929/moto_cpu_20261003/moto6408-actor-ab7e8c1ffbbd_evidence/transport_manifest.json",
+    "sha256": "2d8640a542c1c5e06fedc037e8f0bc27b124c9a9e66e0951cff8d9eff1770dfb",
+    "bytes": 4047
+  },
+  "file_count": 25,
+  "all_original_sha256_and_bytes_rechecked": true,
+  "trajectory": {
+    "ref": "runs/category2_repair_20260929/moto_cpu_20261003/moto6408-actor-ab7e8c1ffbbd_evidence/output/harness/trajectory.jsonl",
+    "sha256": "952726c9f54e35a60d9e92115548693fa9571c059619376b667b7375e590e991",
+    "bytes": 27399
+  },
+  "trajectory_rows": 61,
+  "all_original_commands_and_results_exact": true,
+  "actual_prompt_exact": true,
+  "actual_first_request": {
+    "ref": "runs/category2_repair_20260929/moto_cpu_20261003/moto6408-actor-ab7e8c1ffbbd_evidence/output/stub/requests/messages_000.json",
+    "sha256": "bc32b473fa882b898c58b054f90fd190a2f92283cdafd8fd557f9cb7a58786b0",
+    "bytes": 14332
+  },
+  "public_prompt_sha256": "2e130fceb4237c21e81155c8f54d6c96ad87e1a7476ca5a3c544ab3ef6c81aea",
+  "actual_uid": 54321,
+  "actual_image_id": "sha256:f00e022c3edf2dd23121abab802e401a64ee9e98598f07fb37a83d5c4c2012a1",
+  "commands": [
+    {
+      "id": "INSTALL",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 21561,
+      "output_truncated_to": null,
+      "full_output_sha256": "903d9b32f7382d0c018badff46d01af5ccd30ec0945abd41d77de351451d420a",
+      "pytest": null,
+      "purpose": "原公开开发说明make init；真实CC开发用户安装，不注入私有材料"
+    },
+    {
+      "id": "C1",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 80,
+      "output_truncated_to": null,
+      "full_output_sha256": "ab0967c0cce76e574754091ac6f87e0715d1ab255d05b0930be45c22a961a83d",
+      "pytest": null,
+      "purpose": "原公开读者原命令；实际语义与完整输出另核，非自主模型求解"
+    },
+    {
+      "id": "C2",
+      "rc": 1,
+      "status": "nonzero",
+      "expect": "nonzero",
+      "matches_expect": true,
+      "output_bytes": 259,
+      "output_truncated_to": null,
+      "full_output_sha256": "3cbee7c06b7f9fd434e89cde4b6e3ea28d8696a2db45fd97260bbf7d13faf58a",
+      "pytest": null,
+      "purpose": "原公开读者原命令；实际语义与完整输出另核，非自主模型求解"
+    },
+    {
+      "id": "C3a",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 982,
+      "output_truncated_to": null,
+      "full_output_sha256": "85aa4b49b446c6d327a988c8bca32f50c8e6b30e03693ded555a1544f55cc3ca",
+      "pytest": null,
+      "purpose": "原公开读者原命令；实际语义与完整输出另核，非自主模型求解"
+    },
+    {
+      "id": "C3b",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 2025,
+      "output_truncated_to": null,
+      "full_output_sha256": "9881a4c3fcfbc44e7c73578ddd7bd677d9430bcd350fe0fbad309e98ba7016df",
+      "pytest": null,
+      "purpose": "原公开读者原命令；实际语义与完整输出另核，非自主模型求解"
+    }
+  ],
+  "legacy_false_flags": {
+    "interpreter_in_tool_result": false,
+    "bashenv_denied_for_agent": false
+  },
+  "prelaunch": {
+    "ref": "runs/category2_repair_20260929/moto_cpu_20261003/moto6408-actor-ab7e8c1ffbbd_evidence/output/prelaunch.json",
+    "sha256": "c587ac21b5105af192d2227611a9e3e9858b5ccd6830dc856d36d758e5accb36",
+    "bytes": 2300
+  },
+  "activation": {
+    "ref": "runs/category2_repair_20260929/moto_cpu_20261003/moto6408-actor-ab7e8c1ffbbd_evidence/output/activation_check.json",
+    "sha256": "73fb9643db872f68959ebfcdb426723effe20413035d8a64063b248103bf1bf3",
+    "bytes": 506
+  },
+  "post_run_role": "agent_uid_54321",
+  "owned_cleanup": {
+    "container_rm": 0,
+    "network_failures": [],
+    "relay_failures": [],
+    "stub_rc": 0,
+    "labeled_containers_left": [],
+    "labeled_networks_left": [],
+    "residual_after_force": []
+  },
+  "behavior_acceptance": "full public output read; exact expected original bug",
+  "limitations": [
+    "real CC plus deterministic stub; not autonomous model or FrozenPatch/a2g",
+    "public -q totals preserve exact command but no verbose node census",
+    "target module hash is separately proved by actual UID helper"
+  ],
+  "formal_cpu_accepted": false,
+  "model_attempts": 0,
+  "status": "actual_public_development_passed_pending_final_non_author",
+  "behavior": {
+    "INSTALL": "21561 bytes full; original make init exit0, editable Moto twice succeeded; two user-bin PATH warnings only",
+    "C1": "testbed interpreter/local Moto; boto3/botocore1.35.9",
+    "C2": "both manifests distinct before operations; image put/reassign/read all completed; final line30 initial_image != new_image assertion failed, no early helper/SDK/collection failure",
+    "C3a": "19passed/76deselected/90warnings",
+    "C3b": "95passed/356warnings; original public module, not revised private96"
+  },
+  "actual_cc_version": "2.1.205",
+  "uid_job_id": "moto6408-uid-f1109eba8347",
+  "uid_readback_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/reviews/moto6408_r18_uid_install_owner_readback_20261003.json",
+  "scope": "real CC+deterministic stub five original public operations; separately actual UID make init/module/SDK; not autonomous model or FP/a2g/typed training"
+}

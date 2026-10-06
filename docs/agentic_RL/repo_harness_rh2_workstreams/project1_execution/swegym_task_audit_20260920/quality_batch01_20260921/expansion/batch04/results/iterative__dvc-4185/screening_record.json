@@ -1,0 +1,394 @@
+{
+  "task_id": "iterative__dvc-4185",
+  "task_revision": "upstream",
+  "source_adapter_ref": {
+    "source": "swe_gym_lite",
+    "grading_bundle": "runs/swegym_quality_batch04_20260921_v1/private/iterative__dvc-4185/grading.json",
+    "schema_id": "rh2.private_grading_bundle.v2",
+    "spec_vendor_id": "swegym_constants_242429c1"
+  },
+  "recipe_ref": {
+    "file": "runs/env_recipe_repair_20260919/dvc_install_v1c/recipes/iterative__dvc-4185.json",
+    "label": "dvc-install-v1:iterative__dvc-4185",
+    "reference_bindings": "runs/env_recipe_repair_20260919/dvc_install_v1c/reference_bindings_v1.json#tasks['iterative__dvc-4185']",
+    "runtime_scope": "historical RH2 grader; actor not verified",
+    "shared_initial_delta": {
+      "file": "setup.py",
+      "before": "moto==1.3.14.dev464",
+      "after": "moto==1.3.14",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/eval_logs/evallog_replay-er19-dv1-iterativ_92136cb3.eval.log:132-139",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/eval_logs/evallog_replay-er19-dv1-iterativ_92136cb3.eval.log:482-495",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/eval_logs/evallog_replay-er19-dv1-iterativ_24d09737.eval.log:500-509"
+      ]
+    },
+    "note": "固定离线 networkx==2.3+rh2.1 后 editable .[all,tests]；历史两侧均含 moto 预改，非 pristine base。"
+  },
+  "code_snapshot_ref": {
+    "base_commit": "0899b277c02082ffc24bb732e8a7cf3ef4333948",
+    "base_tree": "faa685976839d33d073296f5561daf8284cf2e40",
+    "base_identity": "runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185/base_identity.json",
+    "gold_patch_sha256": "e7e7e3a57a260031662358552a139407eac46a7bc133fdb30a4881dfb097289d",
+    "frozen_harness": "runs/env_recipe_repair_20260919/frozen_sources/dvc.tar.gz",
+    "note": "本轮只读归档入口，没有解包导入；正式 actor HEAD/资产未验。"
+  },
+  "facts_ref": [
+    {
+      "file": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/ledger.jsonl",
+      "line": 1,
+      "role": "gold",
+      "evidence_level": "historical_real_RH2",
+      "conditions": "derived image sha256:fff47cb990a42b0f174cf646d339681682c7538bf3caf6792ea5ceab216e5b96; moto shared prechange; dvc_install_v1c; reference-bindings-v1; rh2grader/54322; 2 CPU; memory_bytes=4294967296; deny_all",
+      "result": "F2P=7/7; P2P=22/22; reward=1; installation rc=0; test rc=0; reference missing=0",
+      "log": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/eval_logs/evallog_replay-er19-dv1-iterativ_24d09737.eval.log",
+      "log_lines": "930-938,1980,2007-2020",
+      "mem_peak_mb": 386.82,
+      "unit_note": "保留 ledger 原字段，未核单位实现，不换写 MiB。"
+    },
+    {
+      "file": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/ledger.jsonl",
+      "line": 1,
+      "role": "noop",
+      "evidence_level": "historical_real_RH2",
+      "conditions": "与 gold 相同环境预改/配方/绑定，不含 gold 修复",
+      "result": "F2P=0/7; P2P=22/22; reward=0; installation rc=0; test rc=1",
+      "log": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/eval_logs/evallog_replay-er19-dv1-iterativ_92136cb3.eval.log",
+      "log_lines": "903,913-921,924-1184,2181-2185",
+      "mem_peak_mb": 482.152,
+      "unit_note": "保留 ledger 原字段，未核单位实现。"
+    },
+    {
+      "file": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/results/iterative__dvc-4185/analysis_before_history.md",
+      "sha256": "46933a127ba240a729f8fbcd230c21fb3e37f012e17c58795eba6e30b44d88cf",
+      "scope": "history 前封存，含完整双向映射、阅读范围及未执行下一实验"
+    },
+    {
+      "file": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/results/iterative__dvc-4185/old_findings_delta.md",
+      "scope": "history 解封后差分；补正资源字段与共享 moto 预改；旧缺当前键应 new 建议纠错"
+    },
+    {
+      "file": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/environment_replay_inventory.json",
+      "selector": "common + tasks['iterative__dvc-4185']",
+      "scope": "目标镜像/新 summary/build payload 仍待准备，非当前运行证据"
+    },
+    {
+      "file": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/results/iterative__dvc-4185/review.md",
+      "sha256": "d9c5de7bf21e8b521f1ccd49aad80f453d9c59338c1fda8b256389787380f5dc",
+      "role": "independent_reviewer",
+      "evidence_level": "static_cross_review"
+    }
+  ],
+  "checks": {
+    "1": {
+      "status": "pass",
+      "note": "公开 base、grading、test/gold 身份对应；pass 限静态材料一致性，历史执行另含已记录 moto 预改。",
+      "evidence_refs": [
+        "runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185/base_identity.json",
+        "runs/swegym_quality_batch04_20260921_v1/private/iterative__dvc-4185/grading.json",
+        "runs/swegym_quality_batch04_20260921_v1/private/iterative__dvc-4185/validation.json",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/ledger.jsonl:1"
+      ],
+      "by": "static_review"
+    },
+    "2": {
+      "status": "pass",
+      "note": "base 真值过滤路径及历史 noop 七个实际断言失败相符；不是仅 parser 缺席。",
+      "evidence_refs": [
+        "runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185/base/dvc/dependency/param.py:43-77",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/eval_logs/evallog_replay-er19-dv1-iterativ_92136cb3.eval.log:924-1184"
+      ],
+      "by": "static + historical_real_RH2"
+    },
+    "3": {
+      "status": "unknown",
+      "note": "未捕获真实 solver rendered messages；静态 user_prompt 不能给此项 pass。",
+      "evidence_refs": [
+        "runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185/environment_brief.md",
+        "runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185/user_prompt.txt"
+      ],
+      "by": "static_review"
+    },
+    "4": {
+      "status": "pass",
+      "note": "test.patch 仅两个测试文件，gold 为业务源码；限定材料检查，不推成平台安全通过。",
+      "evidence_refs": [
+        "runs/swegym_quality_batch04_20260921_v1/private/iterative__dvc-4185/test.patch",
+        "runs/swegym_quality_batch04_20260921_v1/private/iterative__dvc-4185/gold.patch"
+      ],
+      "by": "static_review"
+    },
+    "5": {
+      "status": "not_checked",
+      "note": "没有读取其他题或关系原件，不以同包版本/路径唯一证明无派生关系。",
+      "evidence_refs": [],
+      "by": "static_review"
+    },
+    "6": {
+      "status": "unknown",
+      "note": "09-19 grader 安装已核；真实 actor 是否消费配方、激活解释器及源码导入路径待验。",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/recipes/iterative__dvc-4185.json",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/ledger.jsonl:1",
+        "runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185/environment_brief.md"
+      ],
+      "by": "static_review"
+    },
+    "7": {
+      "status": "unknown",
+      "note": "核心小例无需原业务数据；真实 actor 的依赖/离线 wheel 与运行资产未验。",
+      "evidence_refs": [
+        "runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185/base/setup.py:49-134",
+        "runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185/base/tests/conftest.py:3-6"
+      ],
+      "by": "static_review"
+    },
+    "11": {
+      "status": "unknown",
+      "note": "核心参数语义可本地验证；grader deny_all 两个远端非参考项跳过，不证明正式 actor 网络/资产条件。",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/eval_logs/evallog_replay-er19-dv1-iterativ_24d09737.eval.log:2014-2016"
+      ],
+      "by": "static_review"
+    },
+    "17": {
+      "status": "pass",
+      "note": "本题恢复两官方测试文件，未覆盖 gold 业务源码；gold 投影仅 param.py 且 ignored_paths 空。",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/recipe/eval_script.after.sh",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/ledger.jsonl:1"
+      ],
+      "by": "static + historical_real_RH2"
+    },
+    "19": {
+      "status": "pass",
+      "note": "仅对 dvc_install_v1c+reference-bindings-v1：反斜杠 P2P 有实际 PASSED node，显式绑定后参考缺席=0；旧未绑定 parser 不适用此 pass。",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/eval_logs/evallog_replay-er19-dv1-iterativ_24d09737.eval.log:1980",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/recipe/iterative__dvc-4185.reference.json",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/ledger.jsonl:1"
+      ],
+      "by": "historical_real_RH2"
+    },
+    "23": {
+      "status": "pass",
+      "note": "题意明确列出 status 与 commit 两个目标，公开源码可定位；此 pass 只指目标可理解，不表示 gold/验收满足两者。范围缺口记 25/27。",
+      "evidence_refs": [
+        "runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185/user_prompt.txt:107-109",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/results/iterative__dvc-4185/public_read.md"
+      ],
+      "by": "static_review"
+    },
+    "24": {
+      "status": "unknown",
+      "note": "哨兵/映射投影及参数专用变化判断是合理替代路线；未执行替代解，未证所有合法解接受，亦无已实证误拒。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/results/iterative__dvc-4185/analysis_before_history.md",
+        "runs/swegym_quality_batch04_20260921_v1/private/iterative__dvc-4185/test.patch"
+      ],
+      "by": "static_review"
+    },
+    "25": {
+      "status": "issue",
+      "note": "七 F2P 仅测不变为空，参数 commit 和真变化分类未覆盖；status 恒空与 lock 缺键误补 None 是具体静态漏测候选，未证实际满分。",
+      "evidence_refs": [
+        "runs/swegym_quality_batch04_20260921_v1/private/iterative__dvc-4185/grading.json",
+        "runs/swegym_quality_batch04_20260921_v1/private/iterative__dvc-4185/test.patch:80-94",
+        "runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185/base/dvc/dependency/param.py:63-75"
+      ],
+      "by": "static_review"
+    },
+    "26": {
+      "status": "issue",
+      "note": "历史 gold 两文件 49 passed 不等于关键回归参考充足；22 P2P 无参数 commit/status 变值，相关 loader/repro/commit 公开回归未执行。",
+      "evidence_refs": [
+        "runs/swegym_quality_batch04_20260921_v1/private/iterative__dvc-4185/grading.json",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/eval_logs/evallog_replay-er19-dv1-iterativ_24d09737.eval.log:1986-2016",
+        "runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185/base/tests/func/test_commit.py",
+        "runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185/base/tests/func/test_repro_multistage.py:473-527"
+      ],
+      "by": "static_review"
+    },
+    "27": {
+      "status": "issue",
+      "note": "gold 仅改 fill_values；commit→changed_entries→继承 changed_checksum 的 None vs 文件 MD5 比较未改。是强静态漏修证据，尚未 CPU 重放。",
+      "evidence_refs": [
+        "runs/swegym_quality_batch04_20260921_v1/private/iterative__dvc-4185/gold.patch",
+        "runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185/base/dvc/repo/commit.py:39-48",
+        "runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185/base/dvc/stage/__init__.py:397-411",
+        "runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185/base/dvc/output/base.py:168-195"
+      ],
+      "by": "static_review"
+    },
+    "29": {
+      "status": "unknown",
+      "note": "真实 actor 镜像文件/refs/祖先/预装资产未知；本轮已暴露 gold、隐藏测试、运行结果和旧记录。旧 raw hints 原件未开放且未核实，不能据此判当前泄漏或无泄漏。",
+      "evidence_refs": [
+        "runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185/environment_brief.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/results/iterative__dvc-4185/old_findings_delta.md"
+      ],
+      "by": "static_review"
+    },
+    "33": {
+      "status": "not_checked",
+      "note": "未执行真实模型。",
+      "evidence_refs": [],
+      "by": "static_review"
+    },
+    "34": {
+      "status": "not_checked",
+      "note": "未执行真实模型。",
+      "evidence_refs": [],
+      "by": "static_review"
+    },
+    "35": {
+      "status": "not_checked",
+      "note": "没有真实模型成功/失败分布观测。",
+      "evidence_refs": [],
+      "by": "static_review"
+    },
+    "36": {
+      "status": "not_checked",
+      "note": "没有本轮模型 token/费用或 CPU 实验成本观测。",
+      "evidence_refs": [],
+      "by": "static_review"
+    }
+  },
+  "issues": [
+    {
+      "id": "I1",
+      "severity": "high",
+      "category": "explicit_goal_missing_from_gold_and_tests",
+      "evidence_level": "static_inference",
+      "note": "题面第 1 项参数 commit 误报的调用链仍存在；历史 gold RH2=1 不能证明完成全部目标。",
+      "evidence_refs": [
+        "runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185/user_prompt.txt:107-109",
+        "runs/swegym_quality_batch04_20260921_v1/private/iterative__dvc-4185/gold.patch",
+        "runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185/base/dvc/stage/__init__.py:397-411",
+        "runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185/base/dvc/output/base.py:168-195"
+      ],
+      "next_experiment": "固定moto共享预改、镜像、recipe+bindings；base/gold两阶段重载后核false status及truthy参数非force commit，记录info/hash，附start改值正向控制。未执行。",
+      "scope": "public_requirement_and_gold_completeness",
+      "status": "strong_static_pending_cpu",
+      "proposed_action": "优先固定同环境 base/gold 的公开双症状对照：重载后嵌套false状态与未变真值参数commit；仅附start改值正向控制。"
+    },
+    {
+      "id": "I2",
+      "severity": "medium",
+      "category": "one_sided_status_coverage",
+      "evidence_level": "static_inference",
+      "note": "status 恒空可满足七 F2P 的断言而破坏真变化检测；合理缺失语义是当前键缺失→deleted，当前有键但 lock 无记录→new。未运行错误候选，不声称 RH2 接受。",
+      "evidence_refs": [
+        "runs/swegym_quality_batch04_20260921_v1/private/iterative__dvc-4185/test.patch:80-94",
+        "runs/swegym_quality_batch04_20260921_v1/private/iterative__dvc-4185/grading.json",
+        "runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185/base/dvc/dependency/param.py:63-75"
+      ],
+      "scope": "task_specific_test_coverage",
+      "status": "static_gap_unexecuted",
+      "proposed_action": "保留恒空status错误候选与缺键语义证据，首轮公开双症状诊断后再安排针对性校准；不在首轮扩大矩阵。"
+    },
+    {
+      "id": "I3",
+      "severity": "medium",
+      "category": "actor_and_replay_conditions_unverified",
+      "evidence_level": "historical_real_RH2 + static_limit",
+      "note": "既有运行是指定 base 加 setup.py moto 预改、离线 networkx backport/安装和 ID 绑定；当前 actor 镜像、消息、包/资产与新重放路径未验。",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/eval_logs/evallog_replay-er19-dv1-iterativ_92136cb3.eval.log:132-139",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/eval_logs/evallog_replay-er19-dv1-iterativ_92136cb3.eval.log:482-495",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/eval_logs/evallog_replay-er19-dv1-iterativ_24d09737.eval.log:500-509",
+        "runs/swegym_quality_batch04_20260921_v1/public/iterative__dvc-4185/environment_brief.md"
+      ],
+      "scope": "actor_environment_and_replay_preparation",
+      "status": "unknown_pending_validation",
+      "proposed_action": "单独核真实actor消息/镜像/依赖/权限与可见资产；准备可达派生镜像、重定位summary和冻结入口后才可执行。"
+    },
+    {
+      "id": "M1",
+      "severity": "info",
+      "category": "sealed_draft_metadata_correction",
+      "evidence_level": "original_ledger",
+      "note": "主审和reviewer封存初稿均将mem_peak_mb换称MiB，未核单位实现；delta与最终review留痕更正，封存稿不回写。",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/noop/ledger.jsonl:1",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/results/iterative__dvc-4185/old_findings_delta.md"
+      ],
+      "scope": "audit_metadata",
+      "status": "documented_correction",
+      "proposed_action": "封存稿不回写；最终稿保留ledger原字段mem_peak_mb及精确值，不推断MiB。"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": [],
+    "official_restored_files": [
+      "tests/func/test_run_multistage.py",
+      "tests/unit/dependency/test_params.py"
+    ],
+    "rationale": "只核具体官方恢复；合法源码方案不需扩排除。public_hints 禁改测试的真实消息适用待验，不擅自取消。",
+    "evidence_refs": [
+      "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/recipe/eval_script.after.sh",
+      "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4185/gold/ledger.jsonl:1"
+    ]
+  },
+  "revision_refs": [],
+  "disposition": {
+    "state": "needs_review",
+    "scope": "static_review",
+    "reason": "暂缓普通能力probe：公开commit目标未被gold或冻结评分覆盖的强静态证据需先做双症状base/gold诊断；并非仅剩actor验收。真实actor和新重放条件仍未知。",
+    "priority_next_step": "同环境base/gold公开双症状最小对照；保留一个start改值正向控制，尚未执行。",
+    "reviewer_status": "completed_and_incorporated",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/results/iterative__dvc-4185/analysis_before_history.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/results/iterative__dvc-4185/old_findings_delta.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/results/iterative__dvc-4185/review.md"
+    ],
+    "reviewer": "/root/b4_review_dvc4185",
+    "static_candidate": "not_prioritized_pending_semantic_diagnostic"
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "solver_eligible_context": false,
+    "exposure": [
+      "gold patch",
+      "hidden test patch and grading references",
+      "historical RH2 results and recipe/binding audits",
+      "sealed public reading",
+      "single-task historical quality record after explicit unsealing"
+    ],
+    "independence_note": "history 前稿先封存；环境原件已含结果，独立不等于 result blind。真实 actor 资产泄漏仍未知。",
+    "not_authorized_as": [
+      "training approval",
+      "final evaluation approval",
+      "ready_for_probe"
+    ],
+    "history_refs": [
+      "runs/swegym_quality_batch04_20260921_v1/history/iterative__dvc-4185/refs.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dvc_1/records/iterative__dvc-4185.json"
+    ],
+    "exposure_notes": [
+      "主审和独立reviewer初稿在历史/交叉材料解封前分别封存；私有环境原件已有gold/noop结果，不是result blind。",
+      "已见隐藏测试、gold、既有运行与质量历史；这些材料不能进入solver上下文。正式actor可见资产未知。"
+    ],
+    "reviewer_status": "completed_and_incorporated"
+  },
+  "costs": {
+    "tokens": null,
+    "cost_usd": null,
+    "wall_time_seconds": null,
+    "cpu_experiment_seconds": null,
+    "note": "未执行新 CPU/模型实验；无工具观测成本，不沿用旧 minutes。历史运行字段保留在 facts_ref。"
+  },
+  "coordinator_resolution": {
+    "at": "2026-09-20T22:55:06.427097+00:00",
+    "decision": "not_prioritized_pending_semantic_diagnostic",
+    "review_sha256": "d9c5de7bf21e8b521f1ccd49aad80f453d9c59338c1fda8b256389787380f5dc",
+    "sealed_drafts_changed": false,
+    "reviewer_reconciliation": [
+      "认可公开双目标缺口，先诊断再排普通能力probe。",
+      "首轮仅保留start改值正向控制；删键/未跟踪字段和恒空status反例留后续，问题记录不删除。",
+      "KeyError仅在基类status返回空映射等条件下有风险；普通无md5参数仍可能返回new，不能称覆盖changed_checksum必然报错。",
+      "两份初稿资源单位的后稿更正已纳入。"
+    ]
+  }
+}

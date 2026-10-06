@@ -1,0 +1,57 @@
+{
+ "task_id": "getmoto__moto-6121",
+ "source": "SWE-Gym lite (s2 ingest v0)",
+ "task_revision": "upstream",
+ "by": "L1_moto_2 (Opus 5, 静态审查, 2026-09-16)",
+ "materials_refs": {
+  "snapshot": "runs/env_overnight_20260916/L1_moto_2/mat/getmoto__moto-6121/",
+  "base_commit": "3adbb8136a3ae81f7d5cb403f4d0a3aa100ee16f",
+  "version": "4.1",
+  "eval_cmd": "pytest -n0 -rA",
+  "repo_level": "docs/.../env_overnight_20260916/L1_moto_2/repo_level_findings.md",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-6121/{empty,gold}/offline/a1/"
+ },
+ "public_view": {
+  "目标行为": "mock 的 S3 GetObject 响应要带 accept-ranges: bytes（boto3 侧体现为响应里的 AcceptRanges 键）。",
+  "约束": "只改 moto/ 源码。",
+  "公开材料可推断": "base 的 `_key_response_get` 只 update key.metadata 与 key.response_dict，没有 AcceptRanges（3adbb8136a 全仓 `git grep AcceptRanges -- moto/s3/responses.py` 为 0 命中）。加一行即可。题面给出了期望与实际响应的完整对比，指向明确。",
+  "公开材料无法确定的点": [
+   "题面没说 HeadObject 是否也要带（那是 6157 的范围，见检查 5）。",
+   "题面给的是 HTTP 头小写 `accept-ranges`，而 F2P 断言的是 `res.headers.get(\"AcceptRanges\")`——moto 内部用驼峰键名再由框架转成 HTTP 头；求解者需要读 base 代码才知道该写哪种形式。"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-6121/test.patch", "mat/getmoto__moto-6121/gold.patch"], "note": "test_patch 只改 tests/test_s3/test_server.py（base 存在），gold 只碰 moto/s3/responses.py（base 存在）。", "by": "static"},
+  "2": {"status": "pass", "evidence_refs": ["3adbb8136a 全仓 `git grep AcceptRanges -- moto/s3/responses.py` = 0 命中"], "note": "base 确无该头。stage1 empty=RESOLVED_NO 印证。", "by": "static+stage1"},
+  "3": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-6121/problem_statement.txt"], "note": "题面 2045 字符，含期望/实际响应完整对比与依赖版本，无外链/截断。", "by": "static"},
+  "4": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-6121/test.patch"], "note": "合法解在 moto/s3/responses.py。", "by": "static"},
+  "5": {"status": "issue", "evidence_refs": ["docs/.../s2/ingest/duplicate_clusters_v0.json", "mat/getmoto__moto-6121/problem_statement.txt", "mat/getmoto__moto-6157/problem_statement.txt"], "note": "**与 getmoto__moto-6157 是同一个 GitHub issue 拆成的两次提交。** 两题的 problem_statement **sha256 完全相同**，判分文件同为 tests/test_s3/test_server.py、改的测试函数同为 test_s3_server_bucket_create、F2P ID 列表逐字相同（3 条）、gold 都是往 moto/s3/responses.py 加同一行 `response_headers.update({\"AcceptRanges\": \"bytes\"})`（6121 加在 GetObject，6157 加在 HeadObject）。6121 的 base 是 6157 base 的祖先（相隔 23 个提交）。现有的 duplicate_clusters_v0.json 只有 2 个簇、按 base_commit 归组，因此**漏掉了这一对**。作为训练/评测样本，两题几乎不独立。", "by": "static"},
+  "6": {"status": "issue", "evidence_refs": ["repo_level_findings.md#R2"], "note": "4.1，离线 make init rc=2（共性）。", "by": "stage1"},
+  "9": {"status": "pass", "evidence_refs": ["repo_level_findings.md#R3"], "note": "仓库级共性证据。", "by": "static+stage1"},
+  "11": {"status": "issue", "evidence_refs": ["repo_level_findings.md#R9", "runs/env_probe_stage1_20260910/.../getmoto__moto-6121/gold/offline/a1/test_output.txt"], "note": "判分跑整个 tests/test_s3/test_server.py，其中 test_s3_server_post_cors_multiple_origins 会起 ThreadedMotoServer(port=6789) 并用 requests 访问 http://testcors.localhost:6789/，离线容器无法解析 testcors.localhost，必然失败。gold 与 empty 两次运行都是 `1 failed, 12 passed`、测试阶段 rc=1。该失败不在参考集内，因此不影响判分。详见 R9。", "by": "stage1"},
+  "13": {"status": "issue", "evidence_refs": ["repo_level_findings.md#R9"], "note": "同上：该测试还要求能绑定本地 TCP 端口 6789。当前容器里失败发生在 DNS 解析阶段，端口绑定能力未被验证到；若并发跑多题且都用固定端口 6789，还存在端口冲突风险（本包未验证，标为需要实验）。", "by": "stage1"},
+  "17": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-6121/test.patch"], "note": "只恢复 1 个纯测试文件。", "by": "static"},
+  "18": {"status": "issue", "evidence_refs": ["repo_level_findings.md#R9"], "note": "测试阶段退出码 rc=1 却判 RESOLVED_FULL；说明 pytest rc 在本配方下不能当健康度信号，需在事实层单列\"参考集外失败\"。", "by": "stage1"},
+  "19": {"status": "issue", "evidence_refs": ["repo_level_findings.md#R8", "runs/env_probe_stage1_20260910/.../getmoto__moto-6121/gold/offline/a1/test_output.txt"], "note": "F2P 的 `tests/test_s3/test_server.py::test_s3_server_bucket_create[baz` 是截断 ID，真实 ID 是 `...[baz bar]`。当前一一对应未塌缩，但这是 reward 判据依赖不稳定 ID 的实例。另外日志 13 条结果行 vs 参考集 12 个 ID，多出来的正是 R9 那条失败。", "by": "static+stage1"},
+  "23": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-6121/problem_statement.txt", "mat/getmoto__moto-6121/test.patch"], "note": "F2P 检查的正是题面要求的 accept-ranges 头。", "by": "static"},
+  "24": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-6121/test.patch"], "note": "只断言响应头的值，不约束实现位置。", "by": "static"},
+  "25": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-6121/test.patch", "mat/getmoto__moto-6157/gold.patch"], "note": "判分只检查 GetObject 路径；把这行加在更靠外的公共出口（例如所有 S3 响应都加）同样通过，加在 HeadObject 反而不通过。判分不区分\"恰好正确\"与\"过度施加\"。另外正因为判分只看 GetObject，本题与 6157 才能作为两道独立题存在（见检查 5）。", "by": "static"},
+  "26": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-6121/grading.json"], "note": "判分集合只有 12 个 ID 且全在 server 模式测试文件里；S3 的主力测试（tests/test_s3/test_s3.py 等）完全不参与。见 proposed_regression_tests。", "by": "static"},
+  "27": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-6121/gold.patch"], "note": "gold 一行、无夹带、与题面对应。范围只覆盖 GetObject，HeadObject 由 6157 补 —— 这是上游把一个 issue 分两次修的结果，不算本题缺陷。", "by": "static"},
+  "29": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-6121/hints.txt"], "note": "hints 只有欢迎语与\"标为 enhancement\"。", "by": "static"},
+  "7": {"status": "not_applicable", "evidence_refs": [], "note": "无外部资产。", "by": "static"}
+ },
+ "issues": [
+  {"category": "重复/派生题未被检出", "severity": "P2", "evidence_refs": ["docs/.../s2/ingest/duplicate_clusters_v0.json", "两题 problem_statement sha256 相同"], "proposed_action": "把 6121/6157 登记为同族（同一 issue 的两次提交）；去重检测的判据从 base_commit 扩展为 problem_statement 摘要 + 判分文件 + F2P 集合的组合。划分训练/留出时两题必须同侧。", "next_experiment": "在 216 题全池上按 problem_statement sha256 与 F2P 集合重跑一次去重，看还有多少对被漏掉。"},
+  {"category": "参考集外的环境性失败", "severity": "P2", "evidence_refs": ["repo_level_findings.md#R9"], "proposed_action": "容器准备阶段给 /etc/hosts 加 `127.0.0.1 testcors.localhost`；同时在 facts 层单列\"参考集外失败数/原因\"。", "next_experiment": "加 hosts 条目后重跑该文件，预期 13 passed、测试阶段 rc=0，且 F2P/P2P 结果不变。"},
+  {"category": "参考 ID 身份", "severity": "P3", "evidence_refs": ["repo_level_findings.md#R8"], "proposed_action": "同 R8。", "next_experiment": "同 R8。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只碰 1 个纯测试文件。", "evidence_refs": ["mat/getmoto__moto-6121/test.patch"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_s3/test_s3.py -k get_object", "reason": "S3 GetObject 的主力测试文件（decorator 模式而非 server 模式），验证新增响应头不会破坏 boto3 侧解析；完全不在判分集合内。"},
+  {"id": "tests/test_s3/test_s3_multipart.py", "reason": "分段下载/Range 请求路径，与 accept-ranges 语义直接相关。"},
+  {"id": "tests/test_s3/test_server.py::test_s3_server_post_cors_multiple_origins", "reason": "R9 的失败项；修好 hosts 后应作为环境健康度对照长期观察。"}
+ ],
+ "disposition_hint": {"state": "needs_review", "reason": "题目本身简单清楚、gold 正确；需要裁定的是两件环境/池子层面的事：与 6157 的同族关系未被去重检测发现（P2），以及判分文件里有一条离线必失败的测试使测试阶段 rc=1（P2，当前不影响判分）。"},
+ "costs": {"minutes": 25, "note": "含 R9 与 6121/6157 同族关系的一次性调查。"}
+}

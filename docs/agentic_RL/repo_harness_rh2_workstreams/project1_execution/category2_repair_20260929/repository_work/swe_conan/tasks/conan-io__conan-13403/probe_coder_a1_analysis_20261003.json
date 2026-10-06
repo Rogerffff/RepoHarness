@@ -1,0 +1,220 @@
+{
+  "schema_id": "conan.owner.model_analysis.v1",
+  "as_of": "2026-10-03",
+  "request_id": "swe-conan13403-r12-briefv1-20261003-v1",
+  "job_id": "gpu1003-conan13403-coder-a1",
+  "model": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+  "sample": 1,
+  "material_version": "conan13403-cloud-test-v4-gnu-v2",
+  "actual_code_snapshot": "code_v8",
+  "budget_version": "probe-wide-v1",
+  "raw_score": {
+    "reward": 1,
+    "f2p": {
+      "passed": 1,
+      "total": 1
+    },
+    "p2p": {
+      "passed": 0,
+      "total": 0
+    }
+  },
+  "semantic_verdict": "correct_selectable_source_relative_or_absolute_autoreconf_folder_with_default_args_single_run_exception_and_caller_cwd_preserved",
+  "candidate_findings": [
+    {
+      "id": "P2-1",
+      "priority": "P2",
+      "finding": "selftest never calls autoreconf; new-folder real GNU success and final broad validation claims are not established; functional failures preserved",
+      "scope": "auxiliary script and model validation/claims; no production or formal grading blocker",
+      "disposition": "no_fix_accept_residual_risk"
+    },
+    {
+      "id": "P2-2",
+      "priority": "P2",
+      "finding": "final example labels a source-relative build_script_folder as build-relative",
+      "scope": "model final usage example; implementation retains existing source-relative configure convention",
+      "disposition": "no_fix_accept_residual_risk"
+    }
+  ],
+  "task_material_findings": [],
+  "semantic_independent_review": {
+    "status": "completed_no_task_material_blocker",
+    "report": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_13403_coder_a1_semantic_review_20261003.md",
+      "sha256": "sha256:32e013c1dd45dc40afccbfed27188a54fb4a1e44b396f47f4f2138972c284352"
+    },
+    "scope": "non-author focused whole candidate/projection, public issue/base, unique trusted reference and entire model trajectory; no CPU/GPU rerun",
+    "owner_disposition": "both P2 accepted as no_fix_accept_residual_risk; original test deletion suspicion rejected_with_evidence"
+  },
+  "execution_independent_review": {
+    "status": "accepted_first_coder_arm_execution_evidence",
+    "decision": "execution evidence accepted for Coder first arm, original raw1 preserved; Qwen first arm not executed, no returned or training qualification",
+    "report": {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/conan13403_coder_a1_execution_review_v1.json",
+      "sha256": "sha256:151decc3f1e8c9a8b771e37c662a9686ffc0f085845607e6c0762cc94e1d8409"
+    },
+    "scope": "completed first Coder arm execution/transport only; no whole request closure or training qualification"
+  },
+  "owner_analysis": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-13403/probe_coder_a1_analysis_20261003.md",
+    "sha256": "sha256:380abebfcf454c8f331931264c530c6ec5443f479cb008c4d3153f824d6c7708"
+  },
+  "owner_readback": {
+    "path": "runs/category2_repair_20260929/conan_cpu_20261003/probe_analysis_13403_coder_a1_20261003_v1/owner_readback.json",
+    "sha256": "sha256:c227d67c5590a8d075acc9bd4d877532af8c6b38dac2701c97b26146a4a4cd75"
+  },
+  "partial_receipt": {
+    "path": "runs/ordinary_gpu_probe_20261002/receipts/swe-conan13403-r12-briefv1-20261003-v1_partial_coder_a1_v1.json",
+    "sha256": "sha256:ab1d5b4975346eac84c04013ab41821a296418ffe1149db9e621ca74a7c3fd58"
+  },
+  "partial_receipt_owner_readback": {
+    "path": "runs/category2_repair_20260929/conan_cpu_20261003/probe_analysis_13403_coder_a1_20261003_v1/partial_receipt_readback.json",
+    "sha256": "sha256:6865206522deefda7d9bcc3169ea19a90aa36c7ee72fb796e7f7df65069b1f41"
+  },
+  "trajectory": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23/results/gpu1003-conan13403-coder-a1/attempt/trajectory.jsonl",
+    "sha256": "76760a411f65d56c2d02cc564f1e4ab880937a29a438cd5a73689c6f4cf09872",
+    "bytes": 342741
+  },
+  "complete_candidate": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23/results/gpu1003-conan13403-coder-a1/attempt/candidate/conan-io__conan-13403.diff",
+    "sha256": "a1dd6f69d494906ee9221a8f592f08ac172c3c6c67c557b042026b8acef25814",
+    "bytes": 4042
+  },
+  "frozen_patch": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23/results/gpu1003-conan13403-coder-a1/attempt/frozen/frozen_patch.json",
+    "sha256": "ab1a80a89773002538fcfa9e0933fdd556b9fb674b53a88358b9ac254e0b21ac",
+    "bytes": 12564
+  },
+  "scoring_projection": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23/results/gpu1003-conan13403-coder-a1/grading/projection.json",
+    "sha256": "6a0a067a94a05bd548e6a3caf238c6f22922fbf0580736b9218984ba32f57775",
+    "bytes": 364
+  },
+  "closed_manifest": {
+    "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/gpu1003-conan13403-coder-a1_closed_manifest_v1.json",
+    "sha256": "0db9eb938c14dc551edf7cc1e27fe8192d8c005934ac0580b63fb1b168645fea",
+    "bytes": 26667
+  },
+  "files_checked": 138,
+  "bytes_checked": 12567859,
+  "base_commit": "55163679ad1fa933f671ddf186e53b92bf39bbdb",
+  "frozen_patch_canonical_digest": "4e88d1e2ed520dffd01397e3534ec05c008c00d098b49a0a6836c6913328df97",
+  "baseline_canonical_digest": "025760d35c701c25f189a4303579d2e2b337d11c1af63855112075d899859077",
+  "complete_issue_and_brief_in_first_actual_gateway_request": true,
+  "prompt": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23/results/gpu1003-conan13403-coder-a1/attempt/prompt.txt",
+    "sha256": "88c598cd67a46643a39399f3460244f1bfc91ab15b9f066d34dfb32b3cfb1850",
+    "bytes": 2711
+  },
+  "brief": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-13403/solver_brief_20261003_v1.md",
+    "sha256": "4deeac2d97519ad9c0dfd9d2e0ba15bb6b034e0a5736d96cf2e86bfa0f1b37c5",
+    "bytes": 1389
+  },
+  "dimensions": {
+    "method": {
+      "heading": "方法",
+      "analysis": "生产加`autoreconf(self, args=None, build_script_folder=None)`，保留args第一个位置参数。非空folder用`os.path.join(source_folder, folder)`，省略／None／空串仍source；绝对folder按join行为选择绝对目录，与已有configure的路径逻辑一致。run命令仍拼原默认`_autoreconf_args`和额外args，在原`chdir()`内调用一次。公共context manager的`finally`恢复调用者实际cwd，异常不吞掉；不改recipe的source／build属性。\n\n题面允许指定configure.ac所在位置，不要求默认改为caller cwd。传绝对`conanfile.build_folder`即可选择build；caller已经chdir(build)再给相对`some/subfolder`仍解析source下目录。模型最终行275／288示例的“会在build找”不准确；是说明P2，不据此新增与既有configure相冲突的参数语义。没有测试识别、评分绕过或扩大原要求。"
+    },
+    "localization": {
+      "heading": "定位",
+      "analysis": "工具1找到GNU实现，工具2读对生产源码，工具3读旧公开测试。首次相关源码读取距第一模型请求 **1.403秒**；行45正确定位source目录硬编码和configure对照，对应第四响应完成 **2.901秒**，是3工具后的完成上界，不是最早生成判断的精确时刻。再读用例后行75一次生产编辑即成为最终实现，后续没有生产回退。\n\n没有在修改前实际调用新目录复现；读取旧实现与既有公开用例是定位依据。后续两个functional使用默认参数，不是原issue所选build目录的前后复现。"
+    },
+    "tools": {
+      "heading": "工具与纠错",
+      "analysis": "22次工具：**Bash12、Read4、Edit5、Write1**；其中生产Edit1、公开测试Edit4。原`is_error=true`有5次：行118／170／183为自己新增例缺真实目录及不合适的错误断言，行235／248为GNU功能试验失败。未用shell掩盖。\n\n行101新例指向不存在`/path/to/sources`，默认调用先失败，未到新参数；行140改成简化默认调用，行153又换成signature例，用不存在`./some/subfolder`调用，捕获异常后错误地要求文本含“argument”等字眼。行170及更广目录行183仍失败。行192删掉的是自己新增失败例，恢复原公开模块字节，没删原回归或修改生产来吞错；但也放弃了新增参数的有效自测。\n\n最终独立脚本在临时cwd生成toolchain配置、构造对象并打印默认／新参数成功，**没有一次`autoreconf()`调用，也没有签名检查或行为断言**。即使旧API也能打印这些成功句；行270退出0仅证明脚本执行。它含捕获异常与总成功文字，并将cwd留在退出后被删除的TemporaryDirectory内，不能当新参数、目录、run或恢复的验证器。本次独立进程随即结束，正式grader未执行它；脚本作为原候选保留，正式评分依据来自独立可信参考。"
+    },
+    "parallel": {
+      "heading": "并行",
+      "analysis": "23响应前22各一个工具、最后结束，实际无重叠。生产读完后，公开unit与functional用例可独立只读；本次串行，CC／adapter多工具并发支持未独立建立，能力不可判断。新增例修改、失败分析、恢复旧测试与其后的pytest有顺序依赖；Conan工作树／缓存及测试自身cwd操作共用，不直接列这些测试为安全并行机会。"
+    },
+    "verification": {
+      "heading": "验证",
+      "analysis": "| 轨迹行 | 实际结果与范围 |\n| --- | --- |\n| 88→92 | 改后原公开configure例1P、0.16秒；不调用新autoreconf功能 |\n| 114→118、166→170、179→183 | 新例分别1F／1P、1F／1P、1F／78P；目录不存在／错误消息断言，GNU目录输出曾截断，但完整footer存在 |\n| 192、205→209、218→222 | 删除自己的新例后，原unit1P、0.09秒；GNUunit目录78P、0.16秒，同一例有重叠，非全仓回归 |\n| 231→235 | option_checking到build→autoreconf --force --install；automake因LIBTOOL未定义退出1，测试1F、1.87秒 |\n| 244→248 | arguments_override到autoreconf --verbose --install、aclocal／autoconf／automake；同类错误退出1，测试1F、1.83秒 |\n| 266→270 | 两次对象构造及成功打印，未调用autoreconf，非新接口／行为测试 |\n| 279→283 | 最后git diff核生产改动，完整候选另包含未跟踪的新脚本 |\n| 可信grader | 当前唯一1F参考完整PASS，内部受控calls独立核所选目录、args、次数、异常／cwd；零P2P范围保持 |\n\n两个functional日志完整可见`Libtool library used but 'LIBTOOL' is undefined`及LT_INIT/aclocal建议，不是“缺autoreconf”。真实GNU链路可达，但构建未完成，且两者都调用默认路径；新增folder没有真实GNU成功运行。模型称失败与改动无关，当前原件没有基线对照来独立证明该归因，也未确定准确缺失包／宏配置。默认路径源码未改变是有限静态依据，不把失败改写成通过或当前评分误拒。\n\n最终“所有既有unit通过”仅在GNU目录78例内成立；“新参数 works／完全解决”不能由该自测支持，生产语义另由源码与可信受控参考核。受控参考不是一次完整GNU端到端，旧21候选矩阵和旧实际actor证据不在本轮重跑。"
+    },
+    "efficiency": {
+      "heading": "效率",
+      "analysis": "求解 **64.881秒**，harness61.962秒；CC61.334秒／API53.839秒，差7.495秒不是纯工具时间。23回合累计输入 **421,855**／输出 **6,668 tokens**，最大单输入34,238；gateway、adapter和CC一致。根因定位快、生产改动一次完成；三个失败验证和四次测试编辑未得到有效新例，最后假阳性脚本及重复总结可减少。观察仅适用本次，不作一般能力排名。\n\nGit清理14.667秒、可信初始化8.151秒等准备单列；评分总91.158秒、reset15.322秒／prep0.333秒／测试2.025秒／队列0秒，不混入求解。23实际gateway输出预算均65536，CC32000只是元数据。196608上下文／240回合／3小时未触及，不能证明极限容量。CC费用2.275975美元是自动估算，非GPU账单。"
+    },
+    "termination_and_stability": {
+      "heading": "结束与稳定性",
+      "analysis": "`completed/success/end_turn`、harness0，23gateway响应HTTP200且无stream error、截断／拒绝。actor／grader收尾及gateway revoked／drained／active0已核，只证明本job终态。15个有限资源切片按实际角色：actor／relay各7、grader6，安装／测试窗口0样本；未知间隙与测试内存不写零，也不把host GPU内存当项目测试配额。仅一次Coder，Qwen3.6首次与整项回执尚缺，不下稳定性或训练资格结论。"
+    }
+  },
+  "metrics": {
+    "model_turns": 23,
+    "tool_calls": 22,
+    "tool_counts": {
+      "Bash": 12,
+      "Read": 4,
+      "Edit": 5,
+      "Write": 1
+    },
+    "reported_tool_errors": 5,
+    "error_rows": [
+      118,
+      170,
+      183,
+      235,
+      248
+    ],
+    "cumulative_input_tokens": 421855,
+    "cumulative_output_tokens": 6668,
+    "largest_request_input_tokens": 34238,
+    "solve_seconds": 64.881,
+    "harness_exec_seconds": 61.962,
+    "cc_duration_seconds": 61.334,
+    "cc_api_duration_seconds": 53.839,
+    "cc_non_api_residual_seconds_not_pure_tool_time": 7.495,
+    "first_relevant_source_read_since_first_request_seconds": 1.4026269912719727,
+    "initial_correct_root_location_response_completion_since_first_request_seconds": 2.901385545730591,
+    "diagnosis_response_trajectory_row": 45,
+    "environment_preparation_stage_seconds": {
+      "image_ready": 0.021,
+      "network_and_container": 1.297,
+      "git_sanitize": 14.667,
+      "trusted_init": 8.151,
+      "baseline_census": 0.155,
+      "quiescence": 0.391
+    },
+    "grading_timing": {
+      "schema_id": "rh2.grading_timing_record.v1",
+      "record_id": "timing_1fe5317c",
+      "trajectory_id": "gpu1003-conan13403-coder-a1",
+      "task_id": "swe_gym_lite::conan-io__conan-13403",
+      "image_pull_seconds": 0.0,
+      "env_reset_seconds": 15.322,
+      "prep_seconds": 0.333,
+      "test_seconds": 2.025,
+      "total_grading_seconds": 91.158,
+      "queue_wait_seconds": 0.0,
+      "container_peak_memory_mb": 318.762,
+      "queue_depth_at_enqueue": null,
+      "backpressure_triggered": false
+    },
+    "cc_cost_usd_builtin_estimate_not_compute_bill": 2.275975
+  },
+  "reference_states": {
+    "conans/test/unittests/tools/gnu/autotools_test.py::test_source_folder_works": "PASSED"
+  },
+  "raw_eval_log": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23/results/gpu1003-conan13403-coder-a1/grading/eval_logs/evallog_gpu1003-conan13403-coder_1fe5317c.eval.log",
+    "sha256": "f3ffb739f0961de00f8fd946c3b3da40b38963da3b41e8b1b822b0892f386b62",
+    "bytes": 36875
+  },
+  "formal_reference_scope": "one F2P key, zero P2P; multi-branch command/cwd recorder does not run real GNU; no GNU build success inferred",
+  "non_reference_platform_skips": [],
+  "actual_gateway_output_limits": [
+    65536
+  ],
+  "candidate_repair_required_for_success": false,
+  "task_material_changes_required": false,
+  "CPU_or_model_rerun_required": false,
+  "ordinary_additional_samples": "deferred_coverage_first",
+  "paired_request_closed": false,
+  "pending_models": [
+    "Qwen/Qwen3.6-35B-A3B"
+  ],
+  "training_eligibility": "not_established"
+}

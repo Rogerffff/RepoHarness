@@ -1,0 +1,37 @@
+[
+  {
+    "id": "identity",
+    "cmd": "set -e\nid\npython - <<'PYENV'\nimport sys, pathlib, importlib.metadata as md, mypy\nprint('RH2_SYS_EXECUTABLE='+sys.executable)\nprint('MYPY_SOURCE='+str(mypy.__file__))\nassert pathlib.Path(mypy.__file__).resolve().is_relative_to('/testbed')\nfor name in ('mypy','pytest','pytest-xdist','typing-extensions','setuptools','wheel','packaging'):\n    try: print(name+'='+md.version(name))\n    except md.PackageNotFoundError: print(name+'=<not-installed>')\nPYENV",
+    "timeout_s": 120,
+    "expect": "zero",
+    "purpose": "真实actor UID、解释器与源码来源；不是新题面交付证明"
+  },
+  {
+    "id": "public_repro",
+    "cmd": "set -e\nD=$(mktemp -d /tmp/mypy-public.XXXX)\ncd \"$D\"\ncat > a.py <<'PYA'\nclass C: ...\nPYA\ncat > b.py <<'PYB'\nclass C: ...\nPYB\ncat > t.py <<'PYT'\nimport a, b\nfrom typing_extensions import assert_type\ndef g(x: a.C) -> None:\n    assert_type(x, b.C)\nPYT\npython -m mypy --cache-dir=\"$D/cache\" t.py",
+    "timeout_s": 300,
+    "expect": "nonzero",
+    "purpose": "公开base复现；直接记录mypy退出码，末尾没有grep/tail覆盖"
+  },
+  {
+    "id": "public_collect",
+    "cmd": "python -m pytest --collect-only -q --color=no -p no:cacheprovider mypy/test/testcheck.py -k 'AssertType'",
+    "timeout_s": 300,
+    "expect": "zero",
+    "purpose": "公开case真实节点收集；不等于新私有节点登记"
+  },
+  {
+    "id": "public_regression",
+    "cmd": "python -m pytest -n 2 -q --color=no -p no:cacheprovider mypy/test/testcheck.py -k 'AssertType'",
+    "timeout_s": 900,
+    "expect": "zero",
+    "purpose": "已有公开小组回归；执行到额外case不增加评分参考"
+  },
+  {
+    "id": "tree",
+    "cmd": "set -e\ngit rev-parse HEAD\ngit status --porcelain",
+    "timeout_s": 60,
+    "expect": "zero",
+    "purpose": "HEAD与工作区变动"
+  }
+]

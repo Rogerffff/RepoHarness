@@ -1,0 +1,351 @@
+{
+  "schema": "dask8801_non_author_readback_tool_preflight_review.v1",
+  "state": "limited_tool_preflight_passed",
+  "as_of": "2026-10-03",
+  "actual_CPU_or_messages_or_semantic_verified": false,
+  "actual_author_outputs_touched": false,
+  "final_recovered_file_checks": {
+    "tool_SHA": "7d31edc355114a86266f94cefc0d320327928c5e9e600719c8c03e1a63f8af4b",
+    "scope": "synthetic recovered-files checks only; check_inputs replaced with fixed local matrix/revision, stopped before semantic jobs via path guard; no CPU/no actual raw data",
+    "cases": [
+      {
+        "case": "healthy_synthetic_boundary",
+        "exception": "ReachedSemanticPhase",
+        "error": "ReachedSemanticPhase('all pre-job checks passed; stopped by independent guard')",
+        "reached_semantic_creation_boundary": true,
+        "guard_prevented_any_semantic_directory_or_report": true
+      },
+      {
+        "case": "missing_readback_manifest",
+        "exception": "AssertionError",
+        "error": "AssertionError()",
+        "reached_semantic_creation_boundary": false,
+        "guard_prevented_any_semantic_directory_or_report": true
+      },
+      {
+        "case": "empty_transport_members",
+        "exception": "AssertionError",
+        "error": "AssertionError()",
+        "reached_semantic_creation_boundary": false,
+        "guard_prevented_any_semantic_directory_or_report": true
+      },
+      {
+        "case": "escaping_log_path",
+        "exception": "AssertionError",
+        "error": "AssertionError()",
+        "reached_semantic_creation_boundary": false,
+        "guard_prevented_any_semantic_directory_or_report": true
+      },
+      {
+        "case": "observed_ledger_SHA_mismatch",
+        "exception": "AssertionError",
+        "error": "AssertionError()",
+        "reached_semantic_creation_boundary": false,
+        "guard_prevented_any_semantic_directory_or_report": true
+      },
+      {
+        "case": "observed_log_SHA_mismatch",
+        "exception": "AssertionError",
+        "error": "AssertionError()",
+        "reached_semantic_creation_boundary": false,
+        "guard_prevented_any_semantic_directory_or_report": true
+      },
+      {
+        "case": "state_wrong_attempt",
+        "exception": "AssertionError",
+        "error": "AssertionError()",
+        "reached_semantic_creation_boundary": false,
+        "guard_prevented_any_semantic_directory_or_report": true
+      },
+      {
+        "case": "missing_one_ledger",
+        "exception": "AssertionError",
+        "error": "AssertionError('实际消费原件不在运输清单中: run/noop/ledger.jsonl')",
+        "reached_semantic_creation_boundary": false,
+        "guard_prevented_any_semantic_directory_or_report": true
+      },
+      {
+        "case": "duplicate_ledger_entry",
+        "exception": "AssertionError",
+        "error": "AssertionError()",
+        "reached_semantic_creation_boundary": false,
+        "guard_prevented_any_semantic_directory_or_report": true
+      },
+      {
+        "case": "cleanup_not_confirmed",
+        "exception": "AssertionError",
+        "error": "AssertionError()",
+        "reached_semantic_creation_boundary": false,
+        "guard_prevented_any_semantic_directory_or_report": true
+      },
+      {
+        "case": "install_not_complete",
+        "exception": "AssertionError",
+        "error": "AssertionError()",
+        "reached_semantic_creation_boundary": false,
+        "guard_prevented_any_semantic_directory_or_report": true
+      },
+      {
+        "case": "source_ID_falsely_filled",
+        "exception": "AssertionError",
+        "error": "AssertionError()",
+        "reached_semantic_creation_boundary": false,
+        "guard_prevented_any_semantic_directory_or_report": true
+      },
+      {
+        "case": "reference_missing",
+        "exception": "KeyError",
+        "error": "KeyError('dask/tests/test_config.py::test_collect_yaml_permission_errors[file]')",
+        "reached_semantic_creation_boundary": false,
+        "guard_prevented_any_semantic_directory_or_report": true
+      },
+      {
+        "case": "wrong_candidate_run",
+        "exception": "AssertionError",
+        "error": "AssertionError()",
+        "reached_semantic_creation_boundary": false,
+        "guard_prevented_any_semantic_directory_or_report": true
+      },
+      {
+        "case": "missing_formal_row",
+        "exception": "AssertionError",
+        "error": "AssertionError()",
+        "reached_semantic_creation_boundary": false,
+        "guard_prevented_any_semantic_directory_or_report": true
+      },
+      {
+        "case": "duplicate_transport_member",
+        "exception": "AssertionError",
+        "error": "AssertionError()",
+        "reached_semantic_creation_boundary": false,
+        "guard_prevented_any_semantic_directory_or_report": true
+      },
+      {
+        "case": "unlisted_existing_ledger",
+        "exception": "AssertionError",
+        "error": "AssertionError('实际消费原件不在运输清单中: run/noop/ledger.jsonl')",
+        "reached_semantic_creation_boundary": false,
+        "guard_prevented_any_semantic_directory_or_report": true
+      },
+      {
+        "case": "wrong_manifest_attempt",
+        "exception": "AssertionError",
+        "error": "AssertionError()",
+        "reached_semantic_creation_boundary": false,
+        "guard_prevented_any_semantic_directory_or_report": true
+      }
+    ]
+  },
+  "path_and_input_checks": [
+    {
+      "name": "ordinary_raw_file_accepts",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "closed_raw_reject_.",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "closed_raw_reject_absolute_raw_path",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "closed_raw_reject_../one",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "closed_raw_reject_inside/../../one",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "closed_raw_file_symlink_rejected",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "closed_raw_parent_symlink_escape_rejected",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "closed_raw_root_symlink_rejected",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "closed_raw_ancestor_symlink_rejected",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "transport_known_member_consumes",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "transport_unknown_member_rejected",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "transport_wrong_size_rejected",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "transport_wrong_SHA_rejected",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "transport_size_bool_rejected",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "transport_empty_rejected",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "transport_duplicate_rejected",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "transport_absolute_path_rejected",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "transport_dotdot_path_rejected",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "transport_self_reference_rejected",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "transport_excluded_entries_rejected",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "bad_fixed_revision_SHA_rejected",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "write_new_existing_evidence_not_overwritten",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "actual_semantic_directory_not_created",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "actual_CPU_report_not_created",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "tool_final_SHA",
+      "actual": "7d31edc355114a86266f94cefc0d320327928c5e9e600719c8c03e1a63f8af4b",
+      "expected": "7d31edc355114a86266f94cefc0d320327928c5e9e600719c8c03e1a63f8af4b",
+      "passed": true
+    },
+    {
+      "name": "tool_no_verdict_or_calibration_file_read",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "tool_preserves_behavior_semantic_split",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    },
+    {
+      "name": "source_ID_null_explicit",
+      "actual": true,
+      "expected": true,
+      "passed": true
+    }
+  ],
+  "historical_issue": {
+    "tool_SHA": "ef7c0ec681c090485ba2eae3828513ceaae68b07364e641824357117b869ae78",
+    "scope": "static code plus exact log path expression reproduction, not actual CPU evidence",
+    "example": "REMOTE / ../prior/eval.log maps to RAW / ../prior/eval.log; resolve escapes RAW",
+    "missing_checks": [
+      "consumer membership in nonempty unique readback manifest",
+      "formal_rows ledger/eval SHA crosscheck",
+      "fixed attempt and per-candidate run identity"
+    ],
+    "author_fix_independently_rechecked": true
+  },
+  "source_sha256": {
+    "runs/category2_repair_20260929/swe_dask/finalize_8801_formal_behavior_r16_20261003.py": "7d31edc355114a86266f94cefc0d320327928c5e9e600719c8c03e1a63f8af4b",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/revision.json": "fddedb82581076d5b7277693fb3bef44aa73c0a5216e3c243e3ee0133167b87e",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/acceptance_matrix.json": "02668ef71feef69b0db6c8e0f8b7723de11397bde3723abb2a562b18615d4f81",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/semantic_controls/judge_config_v3_bound.json": "7e7e861112af22ec7be814a084e395070a5806777eff908dd02c746e8c8acfea",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/semantic_judge_prompt_v3.txt": "9d49671b56ae155f9183d8a0280ff7e779959de2697cdf3887ba4f558f2c19c1",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tools/judge_job_from_formal_log.py": "1a4c9a97470b026772961b9f7981a6f910d9f142e41e5ffbf8ff8c7486a51d12",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tools/config_diagnostic_protocol.py": "7886a70ac59d051eca4459c6e32d94b77159c6890341183041dc73df03d1292a",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tools/validate_semantic_verdicts.py": "4880feba7ace4e133475a8ceeb4d3b23b7d38fff764065e5d69bb59baa1e196b",
+    "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe40_dask8801_v1/manifest.json": "f98eddad0c75df00e8e8352d52819d602a06d5e5ccb8d40feacb8c2658a2b80a"
+  },
+  "independent_check_inputs_only": {
+    "state": "fixed_local_inputs_verified_only",
+    "cpu_result_verified": false,
+    "semantic_verdicts_created": false,
+    "rows": 29,
+    "exit_code": 0,
+    "release_members_checked_by_tool": 1369
+  },
+  "runtime": {
+    "python": "3.12.13",
+    "requested_executable": "rh2/.venv/bin/python"
+  },
+  "limitations": [
+    "Synthetic healthy 29-row/45-reference fixture is stopped before mkdir by independent guard; no anonymous semantic job or CPU readback report was produced.",
+    "Recovered-file tests replaced check_inputs with fixed actual matrix/revision; fixed-input path independently ran --check-inputs-only.",
+    "No actual CPU/SSH/Docker, real messages_000 delivery, fresh semantic judgment, or training/probe qualification verified.",
+    "The tool checks local copied files against readback manifest; source authenticity/remote transport provenance still needs actual independent CPU readback."
+  ],
+  "all_checks_passed": true,
+  "current_tool_SHA_stable_at_finish": true
+}

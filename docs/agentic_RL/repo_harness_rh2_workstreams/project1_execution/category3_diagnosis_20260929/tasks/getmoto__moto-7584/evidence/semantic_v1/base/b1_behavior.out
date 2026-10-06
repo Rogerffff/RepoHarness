@@ -1,0 +1,49 @@
+{
+ "statement_example": {
+  "endpoint": "arn:aws:sns:us-east-1:123456789012:endpoint/GCM/test/4aae8668-644d-48e4-804a-f0e5a27f44ff",
+  "first": {
+   "raised": false,
+   "value": "arn:aws:sns:us-east-1:123456789012:test-topic:9945c324-b8b6-43ad-9342-099fb7d58c7a"
+  },
+  "second_after_delete": {
+   "raised": false,
+   "value": "arn:aws:sns:us-east-1:123456789012:test-topic:9945c324-b8b6-43ad-9342-099fb7d58c7a"
+  }
+ },
+ "deleted_never_subscribed": {
+  "endpoint": "arn:aws:sns:us-east-1:123456789012:endpoint/GCM/test/8e1d55b8-4a4f-4dd3-bfcb-58e2929d1e94",
+  "subscribe": {
+   "raised": false,
+   "value": "arn:aws:sns:us-east-1:123456789012:test-topic:35effb37-a27e-46d4-a819-b12cae5ec30d"
+  }
+ },
+ "never_created_endpoint": {
+  "endpoint": "arn:aws:sns:us-east-1:123456789012:endpoint/GCM/test/00000000-0000-0000-0000-000000000000",
+  "subscribe": {
+   "raised": false,
+   "value": "arn:aws:sns:us-east-1:123456789012:test-topic:d5de030a-2b04-4c39-8cff-49d384d93719"
+  }
+ },
+ "valid_twice": {
+  "first": {
+   "raised": false,
+   "value": "arn:aws:sns:us-east-1:123456789012:test-topic:562d16c7-639a-42f3-bfbc-76f3377a4537"
+  },
+  "second": {
+   "raised": false,
+   "value": "arn:aws:sns:us-east-1:123456789012:test-topic:562d16c7-639a-42f3-bfbc-76f3377a4537"
+  },
+  "same_arn": true,
+  "listed": 1
+ },
+ "other_protocols": {
+  "sqs": {
+   "raised": false,
+   "value": "arn:aws:sns:us-east-1:123456789012:t2:f9be1249-6f2e-4714-882e-858215c89224"
+  },
+  "email": {
+   "raised": false,
+   "value": "arn:aws:sns:us-east-1:123456789012:t2:33de211a-8a4c-44a7-83a4-5968f62d54c1"
+  }
+ }
+}

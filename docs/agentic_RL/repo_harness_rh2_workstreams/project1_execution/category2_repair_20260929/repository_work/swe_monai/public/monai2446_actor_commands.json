@@ -1,0 +1,30 @@
+[
+  {
+    "id": "identity",
+    "cmd": "python - <<'PY_CHECK'\nimport os,sys,json,pathlib,subprocess,importlib.metadata as m\nimport numpy,torch,monai\nprint('PY_CHECK',sys.executable)\nprint(json.dumps({'uid':os.getuid(),'cwd':os.getcwd(),'home':os.environ.get('HOME'),'path':os.environ.get('PATH'),'monai':monai.__file__,'versions':{x:m.version(x) for x in ['numpy','torch','monai','parameterized','pytest']}},sort_keys=True))\nassert pathlib.Path(monai.__file__).resolve().is_relative_to(pathlib.Path('/testbed')) if hasattr(pathlib.Path(), 'is_relative_to') else str(pathlib.Path(monai.__file__).resolve()).startswith('/testbed/')\nprint(subprocess.check_output(['git','rev-parse','HEAD'],text=True));print(subprocess.check_output(['git','status','--porcelain'],text=True))\nfor f in ['monai', '/tmp']:\n print('writable',f,os.access(f,os.W_OK))\nPY_CHECK",
+    "timeout_s": 180,
+    "expect": "zero",
+    "purpose": "实际actor身份、激活、工作区加载、版本与可写性；不单独当开发合格"
+  },
+  {
+    "id": "nibabel",
+    "cmd": "python - <<'PY_CHECK'\nimport nibabel;print(nibabel.__version__); assert nibabel.__version__=='4.0.2'\nPY_CHECK",
+    "timeout_s": 180,
+    "expect": "zero",
+    "purpose": "确认历史兼容依赖到actor"
+  },
+  {
+    "id": "public_smartcache",
+    "cmd": "python - <<'PY_CHECK'\nimport json,numpy as np\nfrom monai.data import SmartCacheDataset\nrows=[]\nfor shuffle in (True,False):\n data=[np.array([i]) for i in range(5)]\n before=np.stack(data).copy(); expected=before.copy()\n if shuffle: np.random.RandomState(0).shuffle(expected)\n dataset=SmartCacheDataset(data=data,transform=None,cache_rate=.5,replace_rate=.4,shuffle=shuffle,seed=0,num_init_workers=1,progress=False)\n rows.append({'shuffle':shuffle,'before':before.tolist(),'caller_after':np.stack(data).tolist(),'internal':np.stack(dataset.data).tolist(),'cache':[dataset[j].tolist() for j in range(len(dataset))],'input_preserved':bool(np.array_equal(np.stack(data),before)),'internal_correct':bool(np.array_equal(np.stack(dataset.data),expected)),'cache_correct':bool(np.array_equal(np.stack([dataset[j] for j in range(len(dataset))]),expected[:2]))})\nprint('SMARTCACHE_RESULTS='+json.dumps(rows))\nassert all(r['input_preserved'] and r['internal_correct'] and r['cache_correct'] for r in rows), 'public input ownership/shuffle requirement failed'\n\nPY_CHECK",
+    "timeout_s": 180,
+    "expect": "nonzero",
+    "purpose": "base应真实触发原列表被修改；需检查结构化结果，不能把任意nonzero当目标复现"
+  },
+  {
+    "id": "public_existing",
+    "cmd": "python -m pytest -rA tests/test_smartcachedataset.py",
+    "timeout_s": 300,
+    "expect": "zero",
+    "purpose": "公开旧模块，含shape、shuffle和替换；无隐藏test_patch"
+  }
+]

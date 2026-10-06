@@ -1,0 +1,46 @@
+diff --git a/pydantic/functional_serializers.py b/pydantic/functional_serializers.py
+index 849dfe5c4..8cc0f2651 100644
+--- a/pydantic/functional_serializers.py
++++ b/pydantic/functional_serializers.py
+@@ -13,6 +13,8 @@ from . import PydanticUndefinedAnnotation
+ from ._internal import _decorators, _internal_dataclass
+ from .annotated_handlers import GetCoreSchemaHandler
+ 
++_LAST_SERIALIZATION: list = [None]
++
+ 
+ @dataclasses.dataclass(**_internal_dataclass.slots_true, frozen=True)
+ class PlainSerializer:
+@@ -53,6 +55,7 @@ class PlainSerializer:
+             return_schema=return_schema,
+             when_used=self.when_used,
+         )
++        _LAST_SERIALIZATION[0] = schema['serialization']
+         return schema
+ 
+ 
+diff --git a/pydantic/functional_validators.py b/pydantic/functional_validators.py
+index 091452846..0928f9d66 100644
+--- a/pydantic/functional_validators.py
++++ b/pydantic/functional_validators.py
+@@ -153,13 +153,18 @@ class PlainValidator:
+     func: core_schema.NoInfoValidatorFunction | core_schema.WithInfoValidatorFunction
+ 
+     def __get_pydantic_core_schema__(self, source_type: Any, handler: _GetCoreSchemaHandler) -> core_schema.CoreSchema:
++        from .functional_serializers import _LAST_SERIALIZATION
++
++        serialization = _LAST_SERIALIZATION[0]
+         info_arg = _inspect_validator(self.func, 'plain')
+         if info_arg:
+             func = cast(core_schema.WithInfoValidatorFunction, self.func)
+-            return core_schema.with_info_plain_validator_function(func, field_name=handler.field_name)
++            return core_schema.with_info_plain_validator_function(
++                func, field_name=handler.field_name, serialization=serialization
++            )
+         else:
+             func = cast(core_schema.NoInfoValidatorFunction, self.func)
+-            return core_schema.no_info_plain_validator_function(func)
++            return core_schema.no_info_plain_validator_function(func, serialization=serialization)
+ 
+ 
+ @dataclasses.dataclass(frozen=True, **_internal_dataclass.slots_true)

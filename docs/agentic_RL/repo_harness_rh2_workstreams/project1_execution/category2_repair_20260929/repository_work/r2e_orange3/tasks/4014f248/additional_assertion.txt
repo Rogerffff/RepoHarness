@@ -1,0 +1,9 @@
+
+        # Changing the scale of clearly distinct input values must preserve
+        # equal-frequency partitioning. Rounding distinct thresholds to zero
+        # must not turn a nonconstant variable into a single interval.
+        X = (np.arange(100, dtype=float) * 1e-12).reshape((100, 1))
+        table = data.Table.from_numpy(None, X)
+        var = discretize.EqualFreq(n=4)(table, table.domain[0])
+        bins = var.compute_value.transform(X.flatten())
+        np.testing.assert_array_equal(bins, np.repeat(np.arange(4), 25))

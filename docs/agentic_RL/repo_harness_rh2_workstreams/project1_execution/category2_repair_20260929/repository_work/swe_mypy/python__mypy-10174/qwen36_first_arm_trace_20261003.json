@@ -1,0 +1,355 @@
+{
+  "schema": "swe_mypy.model_trace_readback.v1",
+  "task_id": "swe_gym_lite::python__mypy-10174",
+  "job": "gpu1003-mypy10174-qwen36-a1",
+  "observed_at_utc": "2026-10-02T23:59:57.088480+00:00",
+  "state": "partial_request_trace_observed_install_and_runtime_identity_not_closed",
+  "assigned_model": "Qwen/Qwen3.6-35B-A3B",
+  "model_checkpoint_identity_verified_by_gateway_audit": false,
+  "runtime_model_aliases": [
+    "slime-actor"
+  ],
+  "model_attempts_observed": 1,
+  "ordinary_request_complete": false,
+  "original_score": 1.0,
+  "original_score_scope": "历史GPU四参考通过，editable安装RC1未核销；CPU窄重评分另存，不回写此原件。",
+  "raw_artifacts": {
+    "attempt/attempt.json": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-mypy10174-qwen36-a1/attempt/attempt.json",
+      "sha256": "e95f02e1c8711bd23a1583636a660cd9ee981a0b4506601b07a1d460268b8b14",
+      "bytes": 31920
+    },
+    "attempt/harness/trajectory.jsonl": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-mypy10174-qwen36-a1/attempt/harness/trajectory.jsonl",
+      "sha256": "64666a6e63baa992e27514c8d6274f8bd37db90897029d8a66b1962724c60f09",
+      "bytes": 843165
+    },
+    "gateway_audit.json": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-mypy10174-qwen36-a1/gateway_audit.json",
+      "sha256": "8bc5ce7c2c12f48f00cfd32bfda0aa3cc774f0773715e7030ec498f0002deb60",
+      "bytes": 396
+    },
+    "input_check.json": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-mypy10174-qwen36-a1/input_check.json",
+      "sha256": "0cf98214560effd424152f8da0b7f66977f24771399a940622f9a054af524541",
+      "bytes": 4487
+    },
+    "result.json": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-mypy10174-qwen36-a1/result.json",
+      "sha256": "54fc676de29d2b7f7f6d9e28a83a8c419787308589e451bbd47550eb64d2b02a",
+      "bytes": 2627
+    },
+    "attempt/frozen/frozen_patch.json": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-mypy10174-qwen36-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "d72699b958fc0f688d5e6c4d4fd5e93006bd18c4a4ea86a2f76c998a4bbeae07",
+      "bytes": 3717637
+    },
+    "attempt/frozen/baseline_manifest.json": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-mypy10174-qwen36-a1/attempt/frozen/baseline_manifest.json",
+      "sha256": "5fab6a0f7932073ac2f47d0c69e950c8e0e64949c4d043da4227918395b2a958",
+      "bytes": 352300
+    },
+    "grading/projection.json": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-mypy10174-qwen36-a1/grading/projection.json",
+      "sha256": "8d61762ccbf5de9a0a3667d7e1cac48cd81d686b0246298843118d4133f8c77d",
+      "bytes": 2430
+    }
+  },
+  "termination": {
+    "attempt": "completed",
+    "harness_exit_code": 0,
+    "harness_log_complete": true,
+    "cc_terminal_reason": "completed",
+    "stop_reason": "end_turn"
+  },
+  "usage_as_reported_by_cc": {
+    "input_tokens": 2234730,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "output_tokens": 19196,
+    "server_tool_use": {
+      "web_search_requests": 0,
+      "web_fetch_requests": 0
+    },
+    "service_tier": "standard",
+    "cache_creation": {
+      "ephemeral_1h_input_tokens": 0,
+      "ephemeral_5m_input_tokens": 0
+    },
+    "inference_geo": "",
+    "iterations": [],
+    "speed": "standard"
+  },
+  "reported_cc_cost_usd": 11.653549999999997,
+  "cost_scope": "CC根据别名报告的估值，非租赁GPU账单/实际API支付。",
+  "counts": {
+    "jsonl_events": 1227,
+    "assistant_events": 175,
+    "unique_assistant_message_ids": 87,
+    "tool_calls": 86,
+    "tool_names": {
+      "Bash": 73,
+      "Read": 10,
+      "Edit": 3
+    },
+    "cc_turns": 87,
+    "gateway_model_requests": 87,
+    "tool_result_error_flags": 11
+  },
+  "time_as_reported_seconds": {
+    "solve_seconds": 273.65,
+    "cc_duration": 270.101,
+    "cc_api_duration": 125.916,
+    "attempt_total": 313.714952
+  },
+  "time_scope": "解题/CC/API时间可能嵌套，不能相加；无逐工具事件墙钟，首次定位耗时未知。环境、评分和CPU排队另计。",
+  "output_budget": {
+    "requested_limits": [
+      65536
+    ],
+    "first_request_max_tokens": 65536,
+    "cc_model_usage_descriptor_max_output_tokens": 32000,
+    "descriptor_is_runtime_readback": false
+  },
+  "selected_tool_events": [
+    {
+      "ordinal": 2,
+      "jsonl_line": 25,
+      "tool": "Bash",
+      "result_line": 29,
+      "tool_use_id": "toolu_c2d3815e4b0526db"
+    },
+    {
+      "ordinal": 5,
+      "jsonl_line": 67,
+      "tool": "Bash",
+      "result_line": 71,
+      "tool_use_id": "toolu_1950be1160c812eb"
+    },
+    {
+      "ordinal": 22,
+      "jsonl_line": 305,
+      "tool": "Bash",
+      "result_line": 309,
+      "tool_use_id": "toolu_9d16b31361973b07"
+    },
+    {
+      "ordinal": 25,
+      "jsonl_line": 347,
+      "tool": "Bash",
+      "result_line": 351,
+      "tool_use_id": "toolu_28baeab9b9053ebb"
+    },
+    {
+      "ordinal": 26,
+      "jsonl_line": 361,
+      "tool": "Read",
+      "result_line": 365,
+      "tool_use_id": "toolu_83fa09bfaeaa4421"
+    },
+    {
+      "ordinal": 28,
+      "jsonl_line": 389,
+      "tool": "Read",
+      "result_line": 393,
+      "tool_use_id": "toolu_e9f4ad5331fe2fa3"
+    },
+    {
+      "ordinal": 36,
+      "jsonl_line": 501,
+      "tool": "Bash",
+      "result_line": 505,
+      "tool_use_id": "toolu_436f5951f9ba2c9e"
+    },
+    {
+      "ordinal": 37,
+      "jsonl_line": 515,
+      "tool": "Bash",
+      "result_line": 519,
+      "tool_use_id": "toolu_04c470f12862b9f2"
+    },
+    {
+      "ordinal": 38,
+      "jsonl_line": 529,
+      "tool": "Bash",
+      "result_line": 533,
+      "tool_use_id": "toolu_5a928c7415580399"
+    },
+    {
+      "ordinal": 43,
+      "jsonl_line": 599,
+      "tool": "Bash",
+      "result_line": 603,
+      "tool_use_id": "toolu_d8e6aaadb36d93c4"
+    },
+    {
+      "ordinal": 44,
+      "jsonl_line": 613,
+      "tool": "Bash",
+      "result_line": 617,
+      "tool_use_id": "toolu_f63d16072b26e3b2"
+    },
+    {
+      "ordinal": 50,
+      "jsonl_line": 697,
+      "tool": "Bash",
+      "result_line": 701,
+      "tool_use_id": "toolu_eb390b562902dbfb"
+    },
+    {
+      "ordinal": 52,
+      "jsonl_line": 725,
+      "tool": "Bash",
+      "result_line": 729,
+      "tool_use_id": "toolu_6ba827143b834f42"
+    },
+    {
+      "ordinal": 54,
+      "jsonl_line": 753,
+      "tool": "Bash",
+      "result_line": 757,
+      "tool_use_id": "toolu_a894e3d9a82da48c"
+    },
+    {
+      "ordinal": 56,
+      "jsonl_line": 781,
+      "tool": "Edit",
+      "result_line": 785,
+      "tool_use_id": "toolu_fc6ae044054747a3"
+    },
+    {
+      "ordinal": 57,
+      "jsonl_line": 795,
+      "tool": "Bash",
+      "result_line": 799,
+      "tool_use_id": "toolu_8b2ba957dd1b18c0"
+    },
+    {
+      "ordinal": 58,
+      "jsonl_line": 809,
+      "tool": "Bash",
+      "result_line": 813,
+      "tool_use_id": "toolu_15d46f472b86fe07"
+    },
+    {
+      "ordinal": 59,
+      "jsonl_line": 823,
+      "tool": "Bash",
+      "result_line": 827,
+      "tool_use_id": "toolu_5b3a824264fb42ac"
+    },
+    {
+      "ordinal": 60,
+      "jsonl_line": 837,
+      "tool": "Bash",
+      "result_line": 841,
+      "tool_use_id": "toolu_059580ed3323b4ec"
+    },
+    {
+      "ordinal": 61,
+      "jsonl_line": 851,
+      "tool": "Bash",
+      "result_line": 855,
+      "tool_use_id": "toolu_042c7690bf913ab7"
+    },
+    {
+      "ordinal": 66,
+      "jsonl_line": 921,
+      "tool": "Bash",
+      "result_line": 925,
+      "tool_use_id": "toolu_46d296e5188551a8"
+    },
+    {
+      "ordinal": 69,
+      "jsonl_line": 963,
+      "tool": "Bash",
+      "result_line": 969,
+      "tool_use_id": "toolu_65934bc6f90dcec3"
+    },
+    {
+      "ordinal": 70,
+      "jsonl_line": 979,
+      "tool": "Bash",
+      "result_line": 983,
+      "tool_use_id": "toolu_8618b4e05e20a141"
+    },
+    {
+      "ordinal": 75,
+      "jsonl_line": 1049,
+      "tool": "Edit",
+      "result_line": 1053,
+      "tool_use_id": "toolu_c5152d44fb24fdb8"
+    },
+    {
+      "ordinal": 76,
+      "jsonl_line": 1063,
+      "tool": "Bash",
+      "result_line": 1067,
+      "tool_use_id": "toolu_805dc953f4f141c4"
+    },
+    {
+      "ordinal": 81,
+      "jsonl_line": 1133,
+      "tool": "Edit",
+      "result_line": 1137,
+      "tool_use_id": "toolu_12b18cbe9f1b46c2"
+    },
+    {
+      "ordinal": 82,
+      "jsonl_line": 1147,
+      "tool": "Bash",
+      "result_line": 1151,
+      "tool_use_id": "toolu_5ff4b27f79183f59"
+    },
+    {
+      "ordinal": 83,
+      "jsonl_line": 1161,
+      "tool": "Bash",
+      "result_line": 1165,
+      "tool_use_id": "toolu_b724d69f5c8b1731"
+    },
+    {
+      "ordinal": 84,
+      "jsonl_line": 1175,
+      "tool": "Bash",
+      "result_line": 1181,
+      "tool_use_id": "toolu_481cfb8be5ff3e1f"
+    },
+    {
+      "ordinal": 85,
+      "jsonl_line": 1191,
+      "tool": "Bash",
+      "result_line": 1195,
+      "tool_use_id": "toolu_8e8080756df2dafd"
+    },
+    {
+      "ordinal": 86,
+      "jsonl_line": 1209,
+      "tool": "Bash",
+      "result_line": 1213,
+      "tool_use_id": "toolu_0b71512785e1c7aa"
+    }
+  ],
+  "parallel_observation": {
+    "multi_tool_assistant_messages": 0,
+    "tool_level_overlap_observed": false,
+    "per_tool_timestamps_available": false,
+    "assessment": "87轮均单工具或最终结束；测试命令自身用-n2/-n4。可独立的文件/测试检索未合批，但执行层实际并发能力未经本题核实，不能从串行结果推断模型具备/不具备并行能力。"
+  },
+  "candidate_projection_scope": {
+    "frozen_entries": 51,
+    "ordinary_mypy_cache_entries": 49,
+    "source_modify": "mypy/meet.py",
+    "protected_test_modify": "test-data/unit/check-expressions.test",
+    "projected_paths": 50,
+    "protected_test_projected": false
+  },
+  "limits": [
+    "单次观测，尚无重复稳定性证据。",
+    "Coder首臂未运行，整个请求未返回。",
+    "输入/输出token为多轮累计，input含重复上下文，不能当作唯一上下文长度。",
+    "两次全testcheck输出含通过摘要，但shell管道缺pipefail；不据工具is_error=false证明pytest退出0。",
+    "原grader安装失败；源码消费/同候选重评分必须引用后续独立证据。",
+    "gateway_audit checkpoint_identity_verified=false与service_readback config_only=true必须由GPU方以运行材料补证，题主不根据alias认定实际checkpoint。"
+  ]
+}

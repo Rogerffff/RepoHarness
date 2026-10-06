@@ -1,0 +1,2105 @@
+{
+  "schema": "moto.task_results.v1",
+  "instance_id": "getmoto__moto-5960",
+  "as_of": "2026-10-03T16:25:13.339104+00:00",
+  "status": "two_model_first_round_complete_owner_analyzed",
+  "owner": {
+    "thread_id": "01a0fd61-fbf9-7d83-860e-c6627bcd3d7f",
+    "thread_title": "SWE | Moto 题目修订",
+    "host_id": "local"
+  },
+  "offline_evidence": "../../offline_checks.json",
+  "new_runtime_attempts": [
+    {
+      "job_id": "moto5960-cpu-6a6dd8d309c3",
+      "scope": "R13 limited noop original install/reference check before remaining controls",
+      "status": "completed_original_install_blocked",
+      "selected_controls": [
+        "noop"
+      ],
+      "formal_cpu_accepted": false,
+      "job_returncode": 0,
+      "install_exit_code": 2,
+      "test_exit_code": 1,
+      "raw_reward": 0
+    },
+    {
+      "job_id": "moto5960-cpu-eeaa3dd27a5d",
+      "scope": "R18 fixed noop original install/reference preflight",
+      "status": "completed_owner_all_checks_passed",
+      "selected_controls": [
+        "noop"
+      ],
+      "job_returncode": 0,
+      "install_exit_code": 0,
+      "test_exit_code": 1,
+      "raw_reward": 0,
+      "formal_cpu_accepted": false,
+      "owner_readback": {
+        "ref": "runs/category2_repair_20260929/moto_cpu_20261003/moto5960-cpu-eeaa3dd27a5d_author_raw_readback_r18_v1.json",
+        "sha256": "f9ebad705ef687e07f8f9283af476c910dc33d44bf78e597b0dc724aa7b7b6e3",
+        "bytes": 52539
+      },
+      "owner_report": {
+        "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-5960/cpu_noop_preflight_r18_20261003.md",
+        "sha256": "281dac63e6e534d1161227dcd57ac5f029b29f70a7de9539983ca0bd1c6bc037",
+        "bytes": 1795
+      }
+    },
+    {
+      "job_id": "moto5960-cpu-66515b832d45",
+      "scope": "R18 remaining two controls after noop make init0",
+      "selected_controls": [
+        "gold",
+        "omit_keys_only"
+      ],
+      "status": "completed_all_owner_checks_passed",
+      "formal_cpu_accepted": false,
+      "job_returncode": 0,
+      "all_candidate_install_exit_codes": 0,
+      "raw_rewards": [
+        1,
+        0
+      ],
+      "all_reference_unique_counts": 158,
+      "transport_files": 60
+    },
+    {
+      "job_id": "moto5960-uid-a680fa8321a6",
+      "scope": "actual UID54321 original public make init/activation/module/profile",
+      "status": "completed_owner_uid_install_all_checks_passed",
+      "formal_cpu_accepted": false,
+      "actual_cc": false,
+      "job_returncode": 0,
+      "public_make_init_returncode": 0,
+      "owner_readback": {
+        "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/reviews/moto5960_r18_uid_install_owner_readback_20261003.json",
+        "sha256": "72e47f213f226cc45f7c63892c743ce6c00aca73af5926449deacffabdeb13d8",
+        "bytes": 2008
+      }
+    },
+    {
+      "job_id": "moto5960-actor-668cd16294ae",
+      "scope": "R18 real CC with deterministic stub original public INSTALL and five reader commands",
+      "status": "completed_parent0_public_commands_owner_passed_non_author_pending",
+      "model_attempts": 0,
+      "returncode": 0,
+      "transport": {
+        "ref": "runs/category2_repair_20260929/moto_cpu_20261003/moto5960-actor-668cd16294ae_transport_receipt.json",
+        "sha256": "070fe3a64810dc595b533fb8edbf3328e362efe9001ef5dc7a9a8c83450cfc1c",
+        "bytes": 556
+      }
+    }
+  ],
+  "new_model_attempts": [
+    {
+      "job_id": "gpu1003-moto5960-coder-a1",
+      "request_id": "swe-moto5960-gsi-scan-r18-20261003-v1",
+      "model": "Qwen3-Coder-30B-A3B-Instruct",
+      "attempt_index": 1,
+      "material_revision_id": "moto5960-gsi-scan-keys-only-v1",
+      "raw_reward": 1,
+      "reference_count": 158,
+      "actual_test_count": 159,
+      "f2p": {
+        "passed": 3,
+        "total": 3
+      },
+      "p2p": {
+        "failed": 0,
+        "total": 155
+      },
+      "candidate_segment": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 4.727,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 13.617
+      },
+      "model_budget": {
+        "version": "probe-wide-v1",
+        "max_context_len": 196608,
+        "max_new_tokens": 65536,
+        "max_turns": 240,
+        "wall_seconds": 10800,
+        "max_requests_per_session": 1024,
+        "first_byte_timeout_seconds": 1800,
+        "adapter_idle_drop_seconds": 14400
+      },
+      "grade_budgets": {
+        "whole_seconds": 1800.0,
+        "setup_seconds": 300.0,
+        "apply_seconds": 120.0,
+        "test_seconds": 1800.0
+      },
+      "source": {
+        "authoritative_closed_bundle": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-moto5960-coder-a1",
+        "closed_manifest": {
+          "ref": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-moto5960-coder-a1/gpu1003-moto5960-coder-a1_closed_manifest_v1.json",
+          "sha256": "a6f7aa70a4cb58cf1e112373d16691b816170711da7b6f631614ccd50fa74a6b",
+          "bytes": 122984
+        },
+        "code_snapshot": "code_v8",
+        "source_manifest_sha256": "09ddb8bfdeecd3ffaa38c1048a574161ef6fa6053b2855da50166e8e8677899d",
+        "fixed_inputs_manifest_sha256": "18daed50fe16dcde3fde48dd5222d3038c6d7084ad894172f99f7a95b96425a2",
+        "actor_grader_image": "sha256:4bafbb6965ff41c0f6eb50a73f831e7b62c41b5beda6ffad957fbc926c2359ac",
+        "material_identity": "sha256:0fb164e025a6f9ef9298b7edcb0a013ac2260dad1fcbab71c80e5d66f592f8cc",
+        "owner_input_sha256": "c4baeddb4ef991d6787755ba23caef56cc385011305700295696f07796a8a964"
+      },
+      "frozen": {
+        "form": "frozen_patch_v1+verified_git_transport",
+        "export_ok": true,
+        "empty": false,
+        "frozen_export_ok": true,
+        "frozen_patch_digest": "sha256:d3c083e61d95d73ef99f7f434d8b8a6165489a60c06ccc6c35dc6d1f1689b3a4",
+        "baseline_manifest_digest": "sha256:aa86897423c3db376fa681fec311742d54e61f3e9674c20024dfb613abcb2f6c",
+        "entry_count": 3,
+        "entries": [
+          {
+            "path": "comprehensive_gsi_test.py",
+            "operation": "add",
+            "object_type": "regular",
+            "mode": "100644",
+            "content_digest": "sha256:d1031c95467846b2d2efc1a67b349c47cc2b33107426e0f305ad0991c33f343e"
+          },
+          {
+            "path": "moto/dynamodb/models/table.py",
+            "operation": "modify",
+            "object_type": "regular",
+            "mode": "100644",
+            "content_digest": "sha256:5f6826072cd01345f25a789a6df38e7c4a03701a75a58d667484330146bc9b41"
+          },
+          {
+            "path": "test_gsi_projection_issue.py",
+            "operation": "add",
+            "object_type": "regular",
+            "mode": "100644",
+            "content_digest": "sha256:19694f4977e159a3940938725e96d8bf1d28d763fc891cb329f7576a620b4158"
+          }
+        ],
+        "files": [
+          "comprehensive_gsi_test.py",
+          "moto/dynamodb/models/table.py",
+          "test_gsi_projection_issue.py"
+        ],
+        "excluded_pathset_changed": false,
+        "classification": {
+          "verdict": "projectable",
+          "reasons": []
+        },
+        "unsafe": false,
+        "export_segments": {
+          "post_census": 0.25323469399882015,
+          "artifact_capture": 0.053401136996399146
+        },
+        "post_omitted_cache": {
+          "dirs": 15,
+          "files": 71
+        },
+        "render": {
+          "base_tree": "af7f4858bc14702d35166ebb33b2db885130a4b0",
+          "post_tree": "966236f075f9afedf8578008b8509c7d8c205bda",
+          "selfcheck_apply_cached_tree": "966236f075f9afedf8578008b8509c7d8c205bda",
+          "selfcheck_ok": true,
+          "forced_binary_paths": [],
+          "attributes_mode": "none",
+          "diff_headers": 3,
+          "files_in_patch": [
+            "comprehensive_gsi_test.py",
+            "moto/dynamodb/models/table.py",
+            "test_gsi_projection_issue.py"
+          ],
+          "binary_hunks": 0,
+          "git_version": "git version 2.43.0",
+          "bytes": 10731,
+          "sha256": "sha256:0284277999db1223585deda092d40e82c6fed2ebbd97ff41e3b1451188abf59b",
+          "path": "candidate/getmoto__moto-5960.diff",
+          "baseline_paths_fetched": 1,
+          "baseline_bytes_source": "actual_pre_solver_archive"
+        },
+        "bytes": 10731,
+        "sha256": "sha256:0284277999db1223585deda092d40e82c6fed2ebbd97ff41e3b1451188abf59b"
+      },
+      "model_transport": {
+        "input_tokens": 937083,
+        "output_tokens": 5622,
+        "max_input_tokens": 42876,
+        "max_output_tokens": 1276,
+        "CC_turns": 32,
+        "HTTP_generations": 32,
+        "HTTP_total": 34,
+        "HTTP_count_tokens": 2,
+        "all_SSE_usage_complete": true,
+        "tool_calls": 31,
+        "tool_counts": {
+          "Bash": 17,
+          "Read": 10,
+          "Write": 3,
+          "Edit": 1
+        },
+        "tool_error_count": 5,
+        "solver_seconds": 65.338,
+        "CC_duration_seconds": 61.742,
+        "CC_API_duration_seconds": 54.239,
+        "multi_tool_message_batches": [],
+        "terminal": "completed_end_turn"
+      },
+      "semantic_status": "current_GSI_scan_projection_correct_stored_items_copied_before_projection",
+      "semantic_reward_override": null,
+      "target_semantically_correct": true,
+      "owner_analysis": {
+        "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-5960/coder_a1_analysis_20261003.md",
+        "sha256": "3358ab90a3ae5561ebdf010dc3e78162a0bbb518cfde7a902630131368cb63ef",
+        "bytes": 6932
+      },
+      "owner_raw_readback": {
+        "ref": "runs/category2_repair_20260929/moto_cpu_20261003/moto5960_coder_a1_owner_readback_20261003.json",
+        "sha256": "35995f2f4df2f94a6c6b67099dc815bec02b910503fd3a409fbd59b2542ae8f6",
+        "bytes": 273682
+      },
+      "result": {
+        "ref": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-moto5960-coder-a1/queue_v27/results/gpu1003-moto5960-coder-a1/result.json",
+        "sha256": "1581b0f11968e2e8d3b4a75c9962b578f5dee0d984d2208bd2b2e6f9976407bf",
+        "bytes": 2629
+      },
+      "candidate_diff": {
+        "ref": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-moto5960-coder-a1/queue_v27/results/gpu1003-moto5960-coder-a1/attempt/candidate/getmoto__moto-5960.diff",
+        "sha256": "0284277999db1223585deda092d40e82c6fed2ebbd97ff41e3b1451188abf59b",
+        "bytes": 10731
+      },
+      "trajectory": {
+        "ref": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-moto5960-coder-a1/queue_v27/results/gpu1003-moto5960-coder-a1/attempt/harness/trajectory.jsonl",
+        "sha256": "e5ecebf3c5bbfcfbdebce9d949cdc2fee99e8f03ccc49720d908d792cb907fb7",
+        "bytes": 467111
+      },
+      "manager_grading_timing_record": {
+        "schema_id": "rh2.grading_timing_record.v1",
+        "record_id": "timing_a1ba1c54",
+        "trajectory_id": "gpu1003-moto5960-coder-a1",
+        "task_id": "swe_gym_lite::getmoto__moto-5960",
+        "image_pull_seconds": 0.0,
+        "env_reset_seconds": 14.373,
+        "prep_seconds": 0.499,
+        "test_seconds": 18.94,
+        "total_grading_seconds": 254.615,
+        "queue_wait_seconds": 0.0,
+        "container_peak_memory_mb": 866.012,
+        "queue_depth_at_enqueue": null,
+        "backpressure_triggered": false
+      },
+      "phase_segments_seconds": {
+        "delta_apply": 0.233013,
+        "grader_baseline_rebuild": 0.261375,
+        "grader_cleanup": null,
+        "grader_start_and_verify": 14.377121,
+        "grader_trusted_setup": 219.547726,
+        "parser_and_report": null,
+        "test": 18.939508
+      },
+      "resources": {
+        "source": {
+          "ref": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-moto5960-coder-a1/gpu1003-moto5960-coder-a1_closed_resource_v1.jsonl",
+          "sha256": "58399a7a68567c9f6ec272e042c52d042e6a9df8bdd30f12b865e6f55409b037",
+          "bytes": 29075
+        },
+        "rows": 27,
+        "roles": {
+          "actor": {
+            "CID": "2989263e4b5b0942087db735fbc74f973c4676ec9017c4e4c0557d7c66399f21",
+            "image_id": "sha256:4bafbb6965ff41c0f6eb50a73f831e7b62c41b5beda6ffad957fbc926c2359ac",
+            "samples": 8,
+            "memory_current_max": 875892736,
+            "memory_peak_max": 958357504,
+            "install_samples": 0,
+            "test_samples": 0
+          },
+          "relay": {
+            "CID": "4ecee1d062b1ba63a81a4e8a15f7a6a5a18e010f3f964f35120e9d701485357f",
+            "image_id": "sha256:ec7d6c95cd3692a2e2d228a8b1ca74e4025b54121fcc4c5da6f09cfa473315ad",
+            "samples": 8,
+            "memory_current_max": 17625088,
+            "memory_peak_max": 27598848,
+            "install_samples": 0,
+            "test_samples": 0
+          },
+          "grader": {
+            "CID": "0afc32d7c92d4007f691838dabce5a58d9cee293097ee81bd284f25be5fff8b5",
+            "image_id": "sha256:4bafbb6965ff41c0f6eb50a73f831e7b62c41b5beda6ffad957fbc926c2359ac",
+            "samples": 17,
+            "memory_current_max": 886538240,
+            "memory_peak_max": 908079104,
+            "install_samples": 1,
+            "test_samples": 1
+          }
+        },
+        "foreign_name_points_excluded": {},
+        "report_peak_MiB_separate": 866.012
+      },
+      "actual_cleanup": {
+        "actor": {
+          "container_rm": 0,
+          "container_left": "",
+          "network_failures": [],
+          "relay_failures": [],
+          "labeled_containers_left": [],
+          "labeled_networks_left": [],
+          "cleanup_ok": true
+        },
+        "gateway": {
+          "session_id": "gpu1003-moto5960-coder-a1",
+          "revoked": true,
+          "active_requests": 0,
+          "drained": true,
+          "ts": 1791020321.4733546
+        },
+        "manager": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "pre_drain": {
+          "residual": 0,
+          "kill_returned_at": 64870.471068171,
+          "kill_exit_code": 0,
+          "pkill_status": 1,
+          "kill_delivered_at": 64870.471068171,
+          "confirmed_at": 64870.52115916,
+          "observations": [
+            {
+              "issued_at": 64870.471089408,
+              "returned_at": 64870.52115916,
+              "residual": 0
+            }
+          ],
+          "observation_count": 1,
+          "timed_out": false,
+          "elapsed_seconds": 0.102,
+          "attempts": 1
+        }
+      },
+      "two_model_request_complete": false,
+      "stable_performance_established": false,
+      "training_qualification": false,
+      "ordinary_repeats": "held_first_round_priority",
+      "CPU_fix_needed_from_this_attempt": false
+    },
+    {
+      "job_id": "gpu1003-moto5960-qwen36-a1",
+      "request_id": "swe-moto5960-gsi-scan-r18-20261003-v1",
+      "model": "Qwen3.6-35B-A3B",
+      "attempt_index": 1,
+      "material_revision_id": "moto5960-gsi-scan-keys-only-v1",
+      "raw_reward": 1,
+      "reference_count": 158,
+      "actual_test_count": 159,
+      "f2p": {
+        "passed": 3,
+        "total": 3
+      },
+      "p2p": {
+        "failed": 0,
+        "total": 155
+      },
+      "candidate_segment": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 4.654,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 13.118
+      },
+      "model_budget": {
+        "version": "probe-wide-v1",
+        "max_context_len": 196608,
+        "max_new_tokens": 65536,
+        "max_turns": 240,
+        "wall_seconds": 10800,
+        "max_requests_per_session": 1024,
+        "first_byte_timeout_seconds": 1800,
+        "adapter_idle_drop_seconds": 14400
+      },
+      "grade_budgets": {
+        "whole_seconds": 1800.0,
+        "setup_seconds": 300.0,
+        "apply_seconds": 120.0,
+        "test_seconds": 1800.0
+      },
+      "source": {
+        "authoritative_closed_bundle": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-moto5960-qwen36-a1",
+        "closed_manifest": {
+          "ref": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-moto5960-qwen36-a1/qwen_next12_closed_v1/gpu1003-moto5960-qwen36-a1/closed_manifest.json",
+          "sha256": "b7434a3e54739b482f47dece50fae130b40e455056b539cf6ec36f45df908386",
+          "bytes": 88770
+        },
+        "code_snapshot": "code_v8",
+        "fixed_inputs_manifest_sha256": "2f20d2710e4700274b463bd6471890991d8a71ee4b732134e2592e8c09c07231",
+        "actor_grader_image": "sha256:4bafbb6965ff41c0f6eb50a73f831e7b62c41b5beda6ffad957fbc926c2359ac",
+        "material_identity": "sha256:0fb164e025a6f9ef9298b7edcb0a013ac2260dad1fcbab71c80e5d66f592f8cc",
+        "owner_input_sha256": "c4baeddb4ef991d6787755ba23caef56cc385011305700295696f07796a8a964",
+        "actual_pre_run_instant_model_capture": {
+          "started_at": "2026-10-03T15:35:53.898087+00:00",
+          "ended_at": "2026-10-03T15:35:54.057731+00:00",
+          "actual_live_service_captured": true,
+          "identity_binding_path": "/work/ordinary_gpu_probe_20261002/services_qwen_code8_v1/qwen36/engine_launch_v1.json",
+          "identity_binding_sha256": "603bec65f047c9b87967c58be43b8933ef3b662f9eab7052ac8ee64c3ae9e9f7",
+          "checkpoint_manifest_sha256": "32bd30f61860366b3783eabc9d75bee0cd28c474d9c07de8be8d9ae60a4552ab",
+          "engine_template_sha256": "e981d378662f2a39d50bb1043d3544744b3bf8877d6a007c9d99b2b9c1f527e5",
+          "model_chat_template_sha256": "e84f32a23fdda27689f868aa4a1a5621f41133e51a48d7f3efcbea2839574259",
+          "actual_adapter_config_sha256": "39f78df905b32cbb4bdc3783b993a763af76e5f355ef818c8749284fa98c2b09",
+          "engine_id": "5a023c27c62bb2f37cf060429a59f96b726d1b404cf756bc8052564037bf3349",
+          "engine_started_at": "2026-10-03T13:24:03.233754906Z",
+          "engine_pid": 999327,
+          "restart_count": 0,
+          "adapter_id": "aff52a71c621b2520b42350259a2992a18c0ed40ea209906357d3c2a552fc36d",
+          "adapter_started_at": "2026-10-03T13:26:58.312905352Z",
+          "adapter_pid": 1000924,
+          "adapter_restart_count": 0,
+          "model_mount_read_only": true,
+          "canonical_model_mount": "/mnt/volume1/ordinary_gpu_probe_20261002/models/Qwen3.6-35B-A3B",
+          "service_config_and_actual_HTTP_readback_match": true,
+          "model_generation_or_project_code_ran": false,
+          "individual_weight_file_hashes_repeated": false,
+          "weight_file_count_sizes_checked": 37,
+          "current_capture_not_relabelled_historical_job_time": true,
+          "GPU_memory_weight_hash_attestation": false
+        }
+      },
+      "frozen": {
+        "form": "frozen_patch_v1+verified_git_transport",
+        "export_ok": true,
+        "empty": false,
+        "frozen_export_ok": true,
+        "frozen_patch_digest": "sha256:0211100d9b1b7b0eadbf2c0c05698dac373398306dbbba1490616ff9b5997f30",
+        "baseline_manifest_digest": "sha256:aa86897423c3db376fa681fec311742d54e61f3e9674c20024dfb613abcb2f6c",
+        "entry_count": 1,
+        "entries": [
+          {
+            "path": "moto/dynamodb/models/table.py",
+            "operation": "modify",
+            "object_type": "regular",
+            "mode": "100644",
+            "content_digest": "sha256:be213ffa2df68086e737c1a5a717390bf41ec855da5d37211150dc236a42d6b6"
+          }
+        ],
+        "files": [
+          "moto/dynamodb/models/table.py"
+        ],
+        "excluded_pathset_changed": false,
+        "classification": {
+          "verdict": "projectable",
+          "reasons": []
+        },
+        "unsafe": false,
+        "export_segments": {
+          "post_census": 0.25537258699478116,
+          "artifact_capture": 0.05171133299882058
+        },
+        "post_omitted_cache": {
+          "dirs": 51,
+          "files": 257
+        },
+        "render": {
+          "base_tree": "af7f4858bc14702d35166ebb33b2db885130a4b0",
+          "post_tree": "8feb8e0a2138cd507e0bfd8ad2280a32f965957f",
+          "selfcheck_apply_cached_tree": "8feb8e0a2138cd507e0bfd8ad2280a32f965957f",
+          "selfcheck_ok": true,
+          "forced_binary_paths": [],
+          "attributes_mode": "none",
+          "diff_headers": 1,
+          "files_in_patch": [
+            "moto/dynamodb/models/table.py"
+          ],
+          "binary_hunks": 0,
+          "git_version": "git version 2.43.0",
+          "bytes": 737,
+          "sha256": "sha256:eb908d668f3a8b0ccc47965ed5bcff21c51e83f5699f201385199dfd66aee5b0",
+          "path": "candidate/getmoto__moto-5960.diff",
+          "baseline_paths_fetched": 1,
+          "baseline_bytes_source": "actual_pre_solver_archive"
+        },
+        "bytes": 737,
+        "sha256": "sha256:eb908d668f3a8b0ccc47965ed5bcff21c51e83f5699f201385199dfd66aee5b0"
+      },
+      "model_transport": {
+        "input_tokens": 737488,
+        "output_tokens": 7428,
+        "max_input_tokens": 41232,
+        "max_output_tokens": 1016,
+        "CC_turns": 25,
+        "HTTP_generations": 25,
+        "HTTP_total": 27,
+        "HTTP_count_tokens": 2,
+        "all_SSE_usage_complete": true,
+        "tool_calls": 24,
+        "tool_counts": {
+          "Bash": 17,
+          "Read": 6,
+          "Edit": 1
+        },
+        "tool_error_count": 1,
+        "flagged_error_call_lines": [
+          117
+        ],
+        "selfchecks": [
+          {
+            "call_line": 11,
+            "result_line": 15,
+            "footers": [],
+            "pipeline": true,
+            "assertions": [],
+            "result_sha256": "7f1eff207abda4403d6587a146d45260b8bde3bda745598befaf45ec57cb3532",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 25,
+            "result_line": 29,
+            "footers": [],
+            "pipeline": false,
+            "assertions": [],
+            "result_sha256": "ad9bde917279fce38ff39910a9227ca46fa0d94ac82e992b996c0148000b723b",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 117,
+            "result_line": 121,
+            "footers": [],
+            "pipeline": false,
+            "assertions": [
+              "assert sorted(items[0].keys()) == sorted(['id', 'attr2']), f'Failed: {sorted(items[0].keys())}'"
+            ],
+            "result_sha256": "dc9c8f75540de8d62eea6820249c34fe9dc0ea2b743a6f0751a8a73a67ffae7c",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 149,
+            "result_line": 153,
+            "footers": [],
+            "pipeline": false,
+            "assertions": [
+              "assert sorted(items[0].keys()) == sorted(['id', 'attr2']), f'Failed: {sorted(items[0].keys())}'"
+            ],
+            "result_sha256": "5593bba33d54805fcb1e5daf74310c06f1b2d50cd6b38c3430d4f05fe715db3b",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 167,
+            "result_line": 171,
+            "footers": [],
+            "pipeline": false,
+            "assertions": [
+              "assert sorted(items[0].keys()) == sorted(['id', 'seq']), f'Failed: {sorted(items[0].keys())}'"
+            ],
+            "result_sha256": "cba07e888631f253478f95eb1d35bf8ecf04105586b578ab82f6c188dd55d99b",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 185,
+            "result_line": 189,
+            "footers": [],
+            "pipeline": false,
+            "assertions": [
+              "assert sorted(items[0].keys()) == sorted(['id', 'attr1', 'attr2']), f'Failed: {sorted(items[0].keys())}'"
+            ],
+            "result_sha256": "cf9587931405e3354bf119d879d08f36e7035da3c9a60776e61ef7d3a9a5da52",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 199,
+            "result_line": 203,
+            "footers": [],
+            "pipeline": false,
+            "assertions": [
+              "assert sorted(items[0].keys()) == sorted(['id', 'attr1', 'attr2']), f'Failed: {sorted(items[0].keys())}'"
+            ],
+            "result_sha256": "cf9587931405e3354bf119d879d08f36e7035da3c9a60776e61ef7d3a9a5da52",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 217,
+            "result_line": 221,
+            "footers": [],
+            "pipeline": false,
+            "assertions": [
+              "assert sorted(items[0].keys()) == sorted(['id', 'lsi_key']), f'Failed: {sorted(items[0].keys())}'"
+            ],
+            "result_sha256": "92299f39ef5610b332b4180cf0d2035a8c59570180484754cbbb18d057733d46",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 235,
+            "result_line": 239,
+            "footers": [
+              "=============== 11 passed, 147 deselected, 74 warnings in 0.86s ================"
+            ],
+            "pipeline": true,
+            "assertions": [],
+            "result_sha256": "d4bdec8af8d808d8ac54853ef8be69aba7a7c71bf6fcbd2f064b92847db3a896",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 249,
+            "result_line": 253,
+            "footers": [
+              "================ 8 passed, 150 deselected, 53 warnings in 0.64s ================"
+            ],
+            "pipeline": true,
+            "assertions": [],
+            "result_sha256": "3c8a251bf13bf9c61cf656acc1a8c4c42387414381f7c75d1a077011bf615a75",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 267,
+            "result_line": 271,
+            "footers": [],
+            "pipeline": true,
+            "assertions": [],
+            "result_sha256": "a0cae59137d5322217c023278a8bd307f37879fa036300836749a7d8d31b4771",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 281,
+            "result_line": 285,
+            "footers": [],
+            "pipeline": true,
+            "assertions": [],
+            "result_sha256": "4d30bed1c0176c7d395332fb5c9fce74868c19c23dbe3c2e3b643c6d79cd6ffb",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 295,
+            "result_line": 299,
+            "footers": [
+              "=============== 13 passed, 145 deselected, 87 warnings in 0.91s ================"
+            ],
+            "pipeline": true,
+            "assertions": [],
+            "result_sha256": "d4a0d30354a2171676317a0a9427e8b074875641caacec2ba5a4b6a6d8254f0d",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 309,
+            "result_line": 315,
+            "footers": [
+              "=============== 16 passed, 412 deselected, 118 warnings in 2.68s ==============="
+            ],
+            "pipeline": true,
+            "assertions": [],
+            "result_sha256": "737fc340763101005f0c0831675acb589039fda778a154ee621903177b33fa67",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 325,
+            "result_line": 329,
+            "footers": [
+              "================ 1 passed, 427 deselected, 5 warnings in 1.33s ================="
+            ],
+            "pipeline": true,
+            "assertions": [],
+            "result_sha256": "c7ebbbe15c02af38eb86e3a78bd49e298a35f8c0bea943704f72bc9d728f5f4d",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 361,
+            "result_line": 365,
+            "footers": [
+              "======================== 2 passed, 10 warnings in 0.24s ========================"
+            ],
+            "pipeline": true,
+            "assertions": [],
+            "result_sha256": "0477cc03f51586c6795880848fa3d9454bea8a992c293ec10ecfdf88dec2e44d",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 375,
+            "result_line": 379,
+            "footers": [],
+            "pipeline": false,
+            "assertions": [
+              "assert sorted(items[0].keys()) == sorted(['id', 'attr2'])",
+              "assert sorted(items[0].keys()) == sorted(['id', 'seq'])"
+            ],
+            "result_sha256": "7553ba77501a0fb65fe751ba05fffdb5e53a54370786811831cfb5be6a6e3ff8",
+            "operational_issue_unflagged": false
+          }
+        ],
+        "solver_seconds": 67.382,
+        "CC_duration_seconds": 63.761,
+        "CC_API_duration_seconds": 49.276,
+        "multi_tool_message_batches": [],
+        "terminal": "completed_end_turn"
+      },
+      "semantic_status": "correct_current_scan_projects_every_index_result_on_deepcopy_preserves_table_data",
+      "target_semantically_correct": true,
+      "semantic_reward_override": null,
+      "owner_analysis": {
+        "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-5960/qwen_a1_analysis_20261004.md",
+        "sha256": "92088da63251baae7ff78c9990865c7585f8649299555e43649be0792f2182f3",
+        "bytes": 7061
+      },
+      "owner_raw_readback": {
+        "ref": "runs/category2_repair_20260929/moto_cpu_20261003/moto5960_qwen36_a1_owner_readback_20261004.json",
+        "sha256": "90e8d6a28ad56eb15ca8cfb1186bbba2a69d7e8bd606049c1854f31f63ce3b07",
+        "bytes": 215380
+      },
+      "execution_receipt": {
+        "ref": "runs/ordinary_gpu_probe_20261002/migration_20261003/moto5960_qwen36_execution_receipt_v1/execution_receipt.json",
+        "sha256": "65fa8c057908a42321da7309e075791c01666b518b9f93b8a0bf38ab07524c87",
+        "bytes": 138537
+      },
+      "result": {
+        "ref": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-moto5960-qwen36-a1/queue_qwen_next12_v1/results/gpu1003-moto5960-qwen36-a1/result.json",
+        "sha256": "b2e5f50597929bb0f089a455aa5135bb799443ea1508beaa297668e3f3e8e9a9",
+        "bytes": 2631
+      },
+      "candidate_diff": {
+        "ref": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-moto5960-qwen36-a1/queue_qwen_next12_v1/results/gpu1003-moto5960-qwen36-a1/attempt/candidate/getmoto__moto-5960.diff",
+        "sha256": "eb908d668f3a8b0ccc47965ed5bcff21c51e83f5699f201385199dfd66aee5b0",
+        "bytes": 737
+      },
+      "trajectory": {
+        "ref": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-moto5960-qwen36-a1/queue_qwen_next12_v1/results/gpu1003-moto5960-qwen36-a1/attempt/harness/trajectory.jsonl",
+        "sha256": "8456db13cb0d01b44460abe3d721b8cfbc7fbacd9d1512e3dc7bde8df3fee930",
+        "bytes": 424264
+      },
+      "manager_grading_timing_record": {
+        "schema_id": "rh2.grading_timing_record.v1",
+        "record_id": "timing_626a33d1",
+        "trajectory_id": "gpu1003-moto5960-qwen36-a1",
+        "task_id": "swe_gym_lite::getmoto__moto-5960",
+        "image_pull_seconds": 0.0,
+        "env_reset_seconds": 14.11,
+        "prep_seconds": 0.384,
+        "test_seconds": 18.378,
+        "total_grading_seconds": 248.829,
+        "queue_wait_seconds": 0.0,
+        "container_peak_memory_mb": 869.055,
+        "queue_depth_at_enqueue": null,
+        "backpressure_triggered": false
+      },
+      "phase_segments_seconds": {
+        "delta_apply": 0.124558,
+        "grader_baseline_rebuild": 0.255311,
+        "grader_cleanup": null,
+        "grader_start_and_verify": 14.113635,
+        "grader_trusted_setup": 215.135737,
+        "parser_and_report": null,
+        "test": 18.377896
+      },
+      "resources": {
+        "source": {
+          "ref": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-moto5960-qwen36-a1/qwen_next12_closed_v1/gpu1003-moto5960-qwen36-a1/resources.jsonl",
+          "sha256": "59d83b3cd72f70755d8f411ca47f6f426cf3cba53fe3cc4dc4e9c9873f7fcfc3",
+          "bytes": 28304
+        },
+        "rows": 26,
+        "roles": {
+          "actor": {
+            "CID": "1bb7c0d51dba77508e3a701827622aadc68b492bb753f0953822f1bdc43b41ed",
+            "image_id": "sha256:4bafbb6965ff41c0f6eb50a73f831e7b62c41b5beda6ffad957fbc926c2359ac",
+            "samples": 7,
+            "memory_current_max": 880201728,
+            "memory_peak_max": 1034739712,
+            "install_samples": 0,
+            "test_samples": 0
+          },
+          "relay": {
+            "CID": "6701b24bb371c1376cea6bdfe79e5d89b8589f65b0c5abac252b0de26c01c54f",
+            "image_id": "sha256:ec7d6c95cd3692a2e2d228a8b1ca74e4025b54121fcc4c5da6f09cfa473315ad",
+            "samples": 7,
+            "memory_current_max": 17571840,
+            "memory_peak_max": 27688960,
+            "install_samples": 0,
+            "test_samples": 0
+          },
+          "grader": {
+            "CID": "9174ea9bb7981b48e85162274da888735458f1ec9af9a49088e0d6a4104744d1",
+            "image_id": "sha256:4bafbb6965ff41c0f6eb50a73f831e7b62c41b5beda6ffad957fbc926c2359ac",
+            "samples": 17,
+            "memory_current_max": 889360384,
+            "memory_peak_max": 911269888,
+            "install_samples": 0,
+            "test_samples": 1
+          }
+        },
+        "foreign_name_points_excluded": {
+          "/rh2-gpu-grade-gpu1003-pandas50319-qwen-5f6a14d1": 1
+        },
+        "report_peak_MiB_separate": 869.055
+      },
+      "actual_cleanup": {
+        "actor": {
+          "container_rm": 0,
+          "container_left": "",
+          "network_failures": [],
+          "relay_failures": [],
+          "labeled_containers_left": [],
+          "labeled_networks_left": [],
+          "cleanup_ok": true
+        },
+        "gateway": {
+          "session_id": "gpu1003-moto5960-qwen36-a1",
+          "revoked": true,
+          "active_requests": 0,
+          "drained": true,
+          "ts": 1791041869.5335586
+        },
+        "pre_drain": {
+          "residual": 0,
+          "kill_returned_at": 86418.53063102,
+          "kill_exit_code": 0,
+          "pkill_status": 1,
+          "kill_delivered_at": 86418.53063102,
+          "confirmed_at": 86418.58179917,
+          "observations": [
+            {
+              "issued_at": 86418.53065235,
+              "returned_at": 86418.58179917,
+              "residual": 0
+            }
+          ],
+          "observation_count": 1,
+          "timed_out": false,
+          "elapsed_seconds": 0.102,
+          "attempts": 1
+        },
+        "manager": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        }
+      },
+      "two_model_current_first_round_complete": true,
+      "stable_performance_established": false,
+      "training_qualification": false,
+      "ordinary_repeats": "held_first_round_priority",
+      "CPU_fix_needed_from_this_attempt": false
+    }
+  ],
+  "formal_cpu_accepted": true,
+  "probe_submitted": true,
+  "disposition": "两模型首次原1／1，159实际／158解析全过；Qwen逐索引项投影前复制，与Coder当前行为一致，复制分支不同。模型第一项自测和LSI INCLUDE未经独立验证的表述单列。 当前无需题目／环境修复，普通追加暂缓，单次不证明稳定或训练资格。",
+  "historical_evidence_reused": true,
+  "shared_intake_status": "board_publish_request_sent_pending_receipt",
+  "shared_intake_as_of": "2026-10-03",
+  "independent_review_status": "fixed_R18_actual_CPU_UID_real_public_CC_passed",
+  "cpu_preparation_evidence": "../../cpu_preparation.json",
+  "independent_review_evidence": {
+    "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/reviews/moto5960_final_cpu_non_author_20261003.md",
+    "sha256": "f9da4c33ab813b0b6e5c9bff02d4cb57eda45a0104050b890d6b560f25aef35d",
+    "bytes": 23106
+  },
+  "work_state": "current_two_model_first_round_closeout",
+  "publication_request": {
+    "request_id": "swe-moto5960-publish-b9a656bde376-20261003-v1",
+    "status": "returned_receipt_verified_and_acknowledged",
+    "input_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/publication_requests/swe-moto5960-publish-b9a656bde376-20261003-v1/input.json",
+    "input_sha256": "aecd238ec94c4ae555ad698abf5ef6484df76758b8639609619c34843f4c0c18",
+    "notification_sent": true,
+    "delivery_receipt": "runs/category2_repair_20260929/moto_cpu_20261003/publish_four_notification_20261003.json",
+    "formal_cpu_accepted": false,
+    "receipt_ref": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r13/moto5960_publication_receipt.json",
+    "receipt_sha256": "3a6344e698ffb1408b7f0536b214c7737abf9979c5471db7a05373920ea16fa0"
+  },
+  "resource_dependencies": {
+    "cpu_still_needed": false,
+    "gpu_still_needed": false,
+    "reason": "Moto六题当前首轮无剩余必做CPU或GPU任务；有效模型0不改为infra；本字段仅消除Moto依赖，不处置共享机器。",
+    "model_completion": "all current first arms and owner source/trajectory analyses complete; ordinary repeats held",
+    "retirement_ready": true,
+    "retirement_scope": "Moto current first round only; no global retirement authorization"
+  },
+  "model_analysis": {
+    "status": "two_model_first_round_owner_analyzed",
+    "required_dimensions": [
+      "root_cause_and_patch_semantics",
+      "localization_steps_and_correction",
+      "tool_inputs_errors_and_retries",
+      "parallel_opportunities_and_actual_executor_support",
+      "reproduction_regression_and_boundary_verification",
+      "tokens_turns_tool_calls_and_time_breakdown",
+      "termination_and_same_condition_stability"
+    ],
+    "evidence_policy": "link actual attempt and trajectory step/tool events, candidate and tests; no invented score",
+    "parallel_no_opportunity_or_serial_executor": "not_judgable",
+    "single_attempt_stability": "not_established",
+    "completion_rates": "keep original attempts and truncated/infra denominators, separate complete semantic correctness",
+    "repeat_stage": "held_by_current_user_first_round_priority; historical input repeat proposal not executed",
+    "next_action": "本题两模型首次及题主审计完成，普通追加暂缓；保持有效模型失败和范围限制。",
+    "current_Coder_first_attempt": {
+      "job_id": "gpu1003-moto5960-coder-a1",
+      "request_id": "swe-moto5960-gsi-scan-r18-20261003-v1",
+      "model": "Qwen3-Coder-30B-A3B-Instruct",
+      "attempt_index": 1,
+      "material_revision_id": "moto5960-gsi-scan-keys-only-v1",
+      "raw_reward": 1,
+      "reference_count": 158,
+      "actual_test_count": 159,
+      "f2p": {
+        "passed": 3,
+        "total": 3
+      },
+      "p2p": {
+        "failed": 0,
+        "total": 155
+      },
+      "candidate_segment": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 4.727,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 13.617
+      },
+      "model_budget": {
+        "version": "probe-wide-v1",
+        "max_context_len": 196608,
+        "max_new_tokens": 65536,
+        "max_turns": 240,
+        "wall_seconds": 10800,
+        "max_requests_per_session": 1024,
+        "first_byte_timeout_seconds": 1800,
+        "adapter_idle_drop_seconds": 14400
+      },
+      "grade_budgets": {
+        "whole_seconds": 1800.0,
+        "setup_seconds": 300.0,
+        "apply_seconds": 120.0,
+        "test_seconds": 1800.0
+      },
+      "source": {
+        "authoritative_closed_bundle": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-moto5960-coder-a1",
+        "closed_manifest": {
+          "ref": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-moto5960-coder-a1/gpu1003-moto5960-coder-a1_closed_manifest_v1.json",
+          "sha256": "a6f7aa70a4cb58cf1e112373d16691b816170711da7b6f631614ccd50fa74a6b",
+          "bytes": 122984
+        },
+        "code_snapshot": "code_v8",
+        "source_manifest_sha256": "09ddb8bfdeecd3ffaa38c1048a574161ef6fa6053b2855da50166e8e8677899d",
+        "fixed_inputs_manifest_sha256": "18daed50fe16dcde3fde48dd5222d3038c6d7084ad894172f99f7a95b96425a2",
+        "actor_grader_image": "sha256:4bafbb6965ff41c0f6eb50a73f831e7b62c41b5beda6ffad957fbc926c2359ac",
+        "material_identity": "sha256:0fb164e025a6f9ef9298b7edcb0a013ac2260dad1fcbab71c80e5d66f592f8cc",
+        "owner_input_sha256": "c4baeddb4ef991d6787755ba23caef56cc385011305700295696f07796a8a964"
+      },
+      "frozen": {
+        "form": "frozen_patch_v1+verified_git_transport",
+        "export_ok": true,
+        "empty": false,
+        "frozen_export_ok": true,
+        "frozen_patch_digest": "sha256:d3c083e61d95d73ef99f7f434d8b8a6165489a60c06ccc6c35dc6d1f1689b3a4",
+        "baseline_manifest_digest": "sha256:aa86897423c3db376fa681fec311742d54e61f3e9674c20024dfb613abcb2f6c",
+        "entry_count": 3,
+        "entries": [
+          {
+            "path": "comprehensive_gsi_test.py",
+            "operation": "add",
+            "object_type": "regular",
+            "mode": "100644",
+            "content_digest": "sha256:d1031c95467846b2d2efc1a67b349c47cc2b33107426e0f305ad0991c33f343e"
+          },
+          {
+            "path": "moto/dynamodb/models/table.py",
+            "operation": "modify",
+            "object_type": "regular",
+            "mode": "100644",
+            "content_digest": "sha256:5f6826072cd01345f25a789a6df38e7c4a03701a75a58d667484330146bc9b41"
+          },
+          {
+            "path": "test_gsi_projection_issue.py",
+            "operation": "add",
+            "object_type": "regular",
+            "mode": "100644",
+            "content_digest": "sha256:19694f4977e159a3940938725e96d8bf1d28d763fc891cb329f7576a620b4158"
+          }
+        ],
+        "files": [
+          "comprehensive_gsi_test.py",
+          "moto/dynamodb/models/table.py",
+          "test_gsi_projection_issue.py"
+        ],
+        "excluded_pathset_changed": false,
+        "classification": {
+          "verdict": "projectable",
+          "reasons": []
+        },
+        "unsafe": false,
+        "export_segments": {
+          "post_census": 0.25323469399882015,
+          "artifact_capture": 0.053401136996399146
+        },
+        "post_omitted_cache": {
+          "dirs": 15,
+          "files": 71
+        },
+        "render": {
+          "base_tree": "af7f4858bc14702d35166ebb33b2db885130a4b0",
+          "post_tree": "966236f075f9afedf8578008b8509c7d8c205bda",
+          "selfcheck_apply_cached_tree": "966236f075f9afedf8578008b8509c7d8c205bda",
+          "selfcheck_ok": true,
+          "forced_binary_paths": [],
+          "attributes_mode": "none",
+          "diff_headers": 3,
+          "files_in_patch": [
+            "comprehensive_gsi_test.py",
+            "moto/dynamodb/models/table.py",
+            "test_gsi_projection_issue.py"
+          ],
+          "binary_hunks": 0,
+          "git_version": "git version 2.43.0",
+          "bytes": 10731,
+          "sha256": "sha256:0284277999db1223585deda092d40e82c6fed2ebbd97ff41e3b1451188abf59b",
+          "path": "candidate/getmoto__moto-5960.diff",
+          "baseline_paths_fetched": 1,
+          "baseline_bytes_source": "actual_pre_solver_archive"
+        },
+        "bytes": 10731,
+        "sha256": "sha256:0284277999db1223585deda092d40e82c6fed2ebbd97ff41e3b1451188abf59b"
+      },
+      "model_transport": {
+        "input_tokens": 937083,
+        "output_tokens": 5622,
+        "max_input_tokens": 42876,
+        "max_output_tokens": 1276,
+        "CC_turns": 32,
+        "HTTP_generations": 32,
+        "HTTP_total": 34,
+        "HTTP_count_tokens": 2,
+        "all_SSE_usage_complete": true,
+        "tool_calls": 31,
+        "tool_counts": {
+          "Bash": 17,
+          "Read": 10,
+          "Write": 3,
+          "Edit": 1
+        },
+        "tool_error_count": 5,
+        "solver_seconds": 65.338,
+        "CC_duration_seconds": 61.742,
+        "CC_API_duration_seconds": 54.239,
+        "multi_tool_message_batches": [],
+        "terminal": "completed_end_turn"
+      },
+      "semantic_status": "current_GSI_scan_projection_correct_stored_items_copied_before_projection",
+      "semantic_reward_override": null,
+      "target_semantically_correct": true,
+      "owner_analysis": {
+        "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-5960/coder_a1_analysis_20261003.md",
+        "sha256": "3358ab90a3ae5561ebdf010dc3e78162a0bbb518cfde7a902630131368cb63ef",
+        "bytes": 6932
+      },
+      "owner_raw_readback": {
+        "ref": "runs/category2_repair_20260929/moto_cpu_20261003/moto5960_coder_a1_owner_readback_20261003.json",
+        "sha256": "35995f2f4df2f94a6c6b67099dc815bec02b910503fd3a409fbd59b2542ae8f6",
+        "bytes": 273682
+      },
+      "result": {
+        "ref": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-moto5960-coder-a1/queue_v27/results/gpu1003-moto5960-coder-a1/result.json",
+        "sha256": "1581b0f11968e2e8d3b4a75c9962b578f5dee0d984d2208bd2b2e6f9976407bf",
+        "bytes": 2629
+      },
+      "candidate_diff": {
+        "ref": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-moto5960-coder-a1/queue_v27/results/gpu1003-moto5960-coder-a1/attempt/candidate/getmoto__moto-5960.diff",
+        "sha256": "0284277999db1223585deda092d40e82c6fed2ebbd97ff41e3b1451188abf59b",
+        "bytes": 10731
+      },
+      "trajectory": {
+        "ref": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-moto5960-coder-a1/queue_v27/results/gpu1003-moto5960-coder-a1/attempt/harness/trajectory.jsonl",
+        "sha256": "e5ecebf3c5bbfcfbdebce9d949cdc2fee99e8f03ccc49720d908d792cb907fb7",
+        "bytes": 467111
+      },
+      "manager_grading_timing_record": {
+        "schema_id": "rh2.grading_timing_record.v1",
+        "record_id": "timing_a1ba1c54",
+        "trajectory_id": "gpu1003-moto5960-coder-a1",
+        "task_id": "swe_gym_lite::getmoto__moto-5960",
+        "image_pull_seconds": 0.0,
+        "env_reset_seconds": 14.373,
+        "prep_seconds": 0.499,
+        "test_seconds": 18.94,
+        "total_grading_seconds": 254.615,
+        "queue_wait_seconds": 0.0,
+        "container_peak_memory_mb": 866.012,
+        "queue_depth_at_enqueue": null,
+        "backpressure_triggered": false
+      },
+      "phase_segments_seconds": {
+        "delta_apply": 0.233013,
+        "grader_baseline_rebuild": 0.261375,
+        "grader_cleanup": null,
+        "grader_start_and_verify": 14.377121,
+        "grader_trusted_setup": 219.547726,
+        "parser_and_report": null,
+        "test": 18.939508
+      },
+      "resources": {
+        "source": {
+          "ref": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-moto5960-coder-a1/gpu1003-moto5960-coder-a1_closed_resource_v1.jsonl",
+          "sha256": "58399a7a68567c9f6ec272e042c52d042e6a9df8bdd30f12b865e6f55409b037",
+          "bytes": 29075
+        },
+        "rows": 27,
+        "roles": {
+          "actor": {
+            "CID": "2989263e4b5b0942087db735fbc74f973c4676ec9017c4e4c0557d7c66399f21",
+            "image_id": "sha256:4bafbb6965ff41c0f6eb50a73f831e7b62c41b5beda6ffad957fbc926c2359ac",
+            "samples": 8,
+            "memory_current_max": 875892736,
+            "memory_peak_max": 958357504,
+            "install_samples": 0,
+            "test_samples": 0
+          },
+          "relay": {
+            "CID": "4ecee1d062b1ba63a81a4e8a15f7a6a5a18e010f3f964f35120e9d701485357f",
+            "image_id": "sha256:ec7d6c95cd3692a2e2d228a8b1ca74e4025b54121fcc4c5da6f09cfa473315ad",
+            "samples": 8,
+            "memory_current_max": 17625088,
+            "memory_peak_max": 27598848,
+            "install_samples": 0,
+            "test_samples": 0
+          },
+          "grader": {
+            "CID": "0afc32d7c92d4007f691838dabce5a58d9cee293097ee81bd284f25be5fff8b5",
+            "image_id": "sha256:4bafbb6965ff41c0f6eb50a73f831e7b62c41b5beda6ffad957fbc926c2359ac",
+            "samples": 17,
+            "memory_current_max": 886538240,
+            "memory_peak_max": 908079104,
+            "install_samples": 1,
+            "test_samples": 1
+          }
+        },
+        "foreign_name_points_excluded": {},
+        "report_peak_MiB_separate": 866.012
+      },
+      "actual_cleanup": {
+        "actor": {
+          "container_rm": 0,
+          "container_left": "",
+          "network_failures": [],
+          "relay_failures": [],
+          "labeled_containers_left": [],
+          "labeled_networks_left": [],
+          "cleanup_ok": true
+        },
+        "gateway": {
+          "session_id": "gpu1003-moto5960-coder-a1",
+          "revoked": true,
+          "active_requests": 0,
+          "drained": true,
+          "ts": 1791020321.4733546
+        },
+        "manager": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "pre_drain": {
+          "residual": 0,
+          "kill_returned_at": 64870.471068171,
+          "kill_exit_code": 0,
+          "pkill_status": 1,
+          "kill_delivered_at": 64870.471068171,
+          "confirmed_at": 64870.52115916,
+          "observations": [
+            {
+              "issued_at": 64870.471089408,
+              "returned_at": 64870.52115916,
+              "residual": 0
+            }
+          ],
+          "observation_count": 1,
+          "timed_out": false,
+          "elapsed_seconds": 0.102,
+          "attempts": 1
+        }
+      },
+      "two_model_request_complete": false,
+      "stable_performance_established": false,
+      "training_qualification": false,
+      "ordinary_repeats": "held_first_round_priority",
+      "CPU_fix_needed_from_this_attempt": false
+    },
+    "qwen_first_attempt": {
+      "job_id": "gpu1003-moto5960-qwen36-a1",
+      "request_id": "swe-moto5960-gsi-scan-r18-20261003-v1",
+      "model": "Qwen3.6-35B-A3B",
+      "attempt_index": 1,
+      "material_revision_id": "moto5960-gsi-scan-keys-only-v1",
+      "raw_reward": 1,
+      "reference_count": 158,
+      "actual_test_count": 159,
+      "f2p": {
+        "passed": 3,
+        "total": 3
+      },
+      "p2p": {
+        "failed": 0,
+        "total": 155
+      },
+      "candidate_segment": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 4.654,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 13.118
+      },
+      "model_budget": {
+        "version": "probe-wide-v1",
+        "max_context_len": 196608,
+        "max_new_tokens": 65536,
+        "max_turns": 240,
+        "wall_seconds": 10800,
+        "max_requests_per_session": 1024,
+        "first_byte_timeout_seconds": 1800,
+        "adapter_idle_drop_seconds": 14400
+      },
+      "grade_budgets": {
+        "whole_seconds": 1800.0,
+        "setup_seconds": 300.0,
+        "apply_seconds": 120.0,
+        "test_seconds": 1800.0
+      },
+      "source": {
+        "authoritative_closed_bundle": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-moto5960-qwen36-a1",
+        "closed_manifest": {
+          "ref": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-moto5960-qwen36-a1/qwen_next12_closed_v1/gpu1003-moto5960-qwen36-a1/closed_manifest.json",
+          "sha256": "b7434a3e54739b482f47dece50fae130b40e455056b539cf6ec36f45df908386",
+          "bytes": 88770
+        },
+        "code_snapshot": "code_v8",
+        "fixed_inputs_manifest_sha256": "2f20d2710e4700274b463bd6471890991d8a71ee4b732134e2592e8c09c07231",
+        "actor_grader_image": "sha256:4bafbb6965ff41c0f6eb50a73f831e7b62c41b5beda6ffad957fbc926c2359ac",
+        "material_identity": "sha256:0fb164e025a6f9ef9298b7edcb0a013ac2260dad1fcbab71c80e5d66f592f8cc",
+        "owner_input_sha256": "c4baeddb4ef991d6787755ba23caef56cc385011305700295696f07796a8a964",
+        "actual_pre_run_instant_model_capture": {
+          "started_at": "2026-10-03T15:35:53.898087+00:00",
+          "ended_at": "2026-10-03T15:35:54.057731+00:00",
+          "actual_live_service_captured": true,
+          "identity_binding_path": "/work/ordinary_gpu_probe_20261002/services_qwen_code8_v1/qwen36/engine_launch_v1.json",
+          "identity_binding_sha256": "603bec65f047c9b87967c58be43b8933ef3b662f9eab7052ac8ee64c3ae9e9f7",
+          "checkpoint_manifest_sha256": "32bd30f61860366b3783eabc9d75bee0cd28c474d9c07de8be8d9ae60a4552ab",
+          "engine_template_sha256": "e981d378662f2a39d50bb1043d3544744b3bf8877d6a007c9d99b2b9c1f527e5",
+          "model_chat_template_sha256": "e84f32a23fdda27689f868aa4a1a5621f41133e51a48d7f3efcbea2839574259",
+          "actual_adapter_config_sha256": "39f78df905b32cbb4bdc3783b993a763af76e5f355ef818c8749284fa98c2b09",
+          "engine_id": "5a023c27c62bb2f37cf060429a59f96b726d1b404cf756bc8052564037bf3349",
+          "engine_started_at": "2026-10-03T13:24:03.233754906Z",
+          "engine_pid": 999327,
+          "restart_count": 0,
+          "adapter_id": "aff52a71c621b2520b42350259a2992a18c0ed40ea209906357d3c2a552fc36d",
+          "adapter_started_at": "2026-10-03T13:26:58.312905352Z",
+          "adapter_pid": 1000924,
+          "adapter_restart_count": 0,
+          "model_mount_read_only": true,
+          "canonical_model_mount": "/mnt/volume1/ordinary_gpu_probe_20261002/models/Qwen3.6-35B-A3B",
+          "service_config_and_actual_HTTP_readback_match": true,
+          "model_generation_or_project_code_ran": false,
+          "individual_weight_file_hashes_repeated": false,
+          "weight_file_count_sizes_checked": 37,
+          "current_capture_not_relabelled_historical_job_time": true,
+          "GPU_memory_weight_hash_attestation": false
+        }
+      },
+      "frozen": {
+        "form": "frozen_patch_v1+verified_git_transport",
+        "export_ok": true,
+        "empty": false,
+        "frozen_export_ok": true,
+        "frozen_patch_digest": "sha256:0211100d9b1b7b0eadbf2c0c05698dac373398306dbbba1490616ff9b5997f30",
+        "baseline_manifest_digest": "sha256:aa86897423c3db376fa681fec311742d54e61f3e9674c20024dfb613abcb2f6c",
+        "entry_count": 1,
+        "entries": [
+          {
+            "path": "moto/dynamodb/models/table.py",
+            "operation": "modify",
+            "object_type": "regular",
+            "mode": "100644",
+            "content_digest": "sha256:be213ffa2df68086e737c1a5a717390bf41ec855da5d37211150dc236a42d6b6"
+          }
+        ],
+        "files": [
+          "moto/dynamodb/models/table.py"
+        ],
+        "excluded_pathset_changed": false,
+        "classification": {
+          "verdict": "projectable",
+          "reasons": []
+        },
+        "unsafe": false,
+        "export_segments": {
+          "post_census": 0.25537258699478116,
+          "artifact_capture": 0.05171133299882058
+        },
+        "post_omitted_cache": {
+          "dirs": 51,
+          "files": 257
+        },
+        "render": {
+          "base_tree": "af7f4858bc14702d35166ebb33b2db885130a4b0",
+          "post_tree": "8feb8e0a2138cd507e0bfd8ad2280a32f965957f",
+          "selfcheck_apply_cached_tree": "8feb8e0a2138cd507e0bfd8ad2280a32f965957f",
+          "selfcheck_ok": true,
+          "forced_binary_paths": [],
+          "attributes_mode": "none",
+          "diff_headers": 1,
+          "files_in_patch": [
+            "moto/dynamodb/models/table.py"
+          ],
+          "binary_hunks": 0,
+          "git_version": "git version 2.43.0",
+          "bytes": 737,
+          "sha256": "sha256:eb908d668f3a8b0ccc47965ed5bcff21c51e83f5699f201385199dfd66aee5b0",
+          "path": "candidate/getmoto__moto-5960.diff",
+          "baseline_paths_fetched": 1,
+          "baseline_bytes_source": "actual_pre_solver_archive"
+        },
+        "bytes": 737,
+        "sha256": "sha256:eb908d668f3a8b0ccc47965ed5bcff21c51e83f5699f201385199dfd66aee5b0"
+      },
+      "model_transport": {
+        "input_tokens": 737488,
+        "output_tokens": 7428,
+        "max_input_tokens": 41232,
+        "max_output_tokens": 1016,
+        "CC_turns": 25,
+        "HTTP_generations": 25,
+        "HTTP_total": 27,
+        "HTTP_count_tokens": 2,
+        "all_SSE_usage_complete": true,
+        "tool_calls": 24,
+        "tool_counts": {
+          "Bash": 17,
+          "Read": 6,
+          "Edit": 1
+        },
+        "tool_error_count": 1,
+        "flagged_error_call_lines": [
+          117
+        ],
+        "selfchecks": [
+          {
+            "call_line": 11,
+            "result_line": 15,
+            "footers": [],
+            "pipeline": true,
+            "assertions": [],
+            "result_sha256": "7f1eff207abda4403d6587a146d45260b8bde3bda745598befaf45ec57cb3532",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 25,
+            "result_line": 29,
+            "footers": [],
+            "pipeline": false,
+            "assertions": [],
+            "result_sha256": "ad9bde917279fce38ff39910a9227ca46fa0d94ac82e992b996c0148000b723b",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 117,
+            "result_line": 121,
+            "footers": [],
+            "pipeline": false,
+            "assertions": [
+              "assert sorted(items[0].keys()) == sorted(['id', 'attr2']), f'Failed: {sorted(items[0].keys())}'"
+            ],
+            "result_sha256": "dc9c8f75540de8d62eea6820249c34fe9dc0ea2b743a6f0751a8a73a67ffae7c",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 149,
+            "result_line": 153,
+            "footers": [],
+            "pipeline": false,
+            "assertions": [
+              "assert sorted(items[0].keys()) == sorted(['id', 'attr2']), f'Failed: {sorted(items[0].keys())}'"
+            ],
+            "result_sha256": "5593bba33d54805fcb1e5daf74310c06f1b2d50cd6b38c3430d4f05fe715db3b",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 167,
+            "result_line": 171,
+            "footers": [],
+            "pipeline": false,
+            "assertions": [
+              "assert sorted(items[0].keys()) == sorted(['id', 'seq']), f'Failed: {sorted(items[0].keys())}'"
+            ],
+            "result_sha256": "cba07e888631f253478f95eb1d35bf8ecf04105586b578ab82f6c188dd55d99b",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 185,
+            "result_line": 189,
+            "footers": [],
+            "pipeline": false,
+            "assertions": [
+              "assert sorted(items[0].keys()) == sorted(['id', 'attr1', 'attr2']), f'Failed: {sorted(items[0].keys())}'"
+            ],
+            "result_sha256": "cf9587931405e3354bf119d879d08f36e7035da3c9a60776e61ef7d3a9a5da52",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 199,
+            "result_line": 203,
+            "footers": [],
+            "pipeline": false,
+            "assertions": [
+              "assert sorted(items[0].keys()) == sorted(['id', 'attr1', 'attr2']), f'Failed: {sorted(items[0].keys())}'"
+            ],
+            "result_sha256": "cf9587931405e3354bf119d879d08f36e7035da3c9a60776e61ef7d3a9a5da52",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 217,
+            "result_line": 221,
+            "footers": [],
+            "pipeline": false,
+            "assertions": [
+              "assert sorted(items[0].keys()) == sorted(['id', 'lsi_key']), f'Failed: {sorted(items[0].keys())}'"
+            ],
+            "result_sha256": "92299f39ef5610b332b4180cf0d2035a8c59570180484754cbbb18d057733d46",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 235,
+            "result_line": 239,
+            "footers": [
+              "=============== 11 passed, 147 deselected, 74 warnings in 0.86s ================"
+            ],
+            "pipeline": true,
+            "assertions": [],
+            "result_sha256": "d4bdec8af8d808d8ac54853ef8be69aba7a7c71bf6fcbd2f064b92847db3a896",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 249,
+            "result_line": 253,
+            "footers": [
+              "================ 8 passed, 150 deselected, 53 warnings in 0.64s ================"
+            ],
+            "pipeline": true,
+            "assertions": [],
+            "result_sha256": "3c8a251bf13bf9c61cf656acc1a8c4c42387414381f7c75d1a077011bf615a75",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 267,
+            "result_line": 271,
+            "footers": [],
+            "pipeline": true,
+            "assertions": [],
+            "result_sha256": "a0cae59137d5322217c023278a8bd307f37879fa036300836749a7d8d31b4771",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 281,
+            "result_line": 285,
+            "footers": [],
+            "pipeline": true,
+            "assertions": [],
+            "result_sha256": "4d30bed1c0176c7d395332fb5c9fce74868c19c23dbe3c2e3b643c6d79cd6ffb",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 295,
+            "result_line": 299,
+            "footers": [
+              "=============== 13 passed, 145 deselected, 87 warnings in 0.91s ================"
+            ],
+            "pipeline": true,
+            "assertions": [],
+            "result_sha256": "d4a0d30354a2171676317a0a9427e8b074875641caacec2ba5a4b6a6d8254f0d",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 309,
+            "result_line": 315,
+            "footers": [
+              "=============== 16 passed, 412 deselected, 118 warnings in 2.68s ==============="
+            ],
+            "pipeline": true,
+            "assertions": [],
+            "result_sha256": "737fc340763101005f0c0831675acb589039fda778a154ee621903177b33fa67",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 325,
+            "result_line": 329,
+            "footers": [
+              "================ 1 passed, 427 deselected, 5 warnings in 1.33s ================="
+            ],
+            "pipeline": true,
+            "assertions": [],
+            "result_sha256": "c7ebbbe15c02af38eb86e3a78bd49e298a35f8c0bea943704f72bc9d728f5f4d",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 361,
+            "result_line": 365,
+            "footers": [
+              "======================== 2 passed, 10 warnings in 0.24s ========================"
+            ],
+            "pipeline": true,
+            "assertions": [],
+            "result_sha256": "0477cc03f51586c6795880848fa3d9454bea8a992c293ec10ecfdf88dec2e44d",
+            "operational_issue_unflagged": false
+          },
+          {
+            "call_line": 375,
+            "result_line": 379,
+            "footers": [],
+            "pipeline": false,
+            "assertions": [
+              "assert sorted(items[0].keys()) == sorted(['id', 'attr2'])",
+              "assert sorted(items[0].keys()) == sorted(['id', 'seq'])"
+            ],
+            "result_sha256": "7553ba77501a0fb65fe751ba05fffdb5e53a54370786811831cfb5be6a6e3ff8",
+            "operational_issue_unflagged": false
+          }
+        ],
+        "solver_seconds": 67.382,
+        "CC_duration_seconds": 63.761,
+        "CC_API_duration_seconds": 49.276,
+        "multi_tool_message_batches": [],
+        "terminal": "completed_end_turn"
+      },
+      "semantic_status": "correct_current_scan_projects_every_index_result_on_deepcopy_preserves_table_data",
+      "target_semantically_correct": true,
+      "semantic_reward_override": null,
+      "owner_analysis": {
+        "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-5960/qwen_a1_analysis_20261004.md",
+        "sha256": "92088da63251baae7ff78c9990865c7585f8649299555e43649be0792f2182f3",
+        "bytes": 7061
+      },
+      "owner_raw_readback": {
+        "ref": "runs/category2_repair_20260929/moto_cpu_20261003/moto5960_qwen36_a1_owner_readback_20261004.json",
+        "sha256": "90e8d6a28ad56eb15ca8cfb1186bbba2a69d7e8bd606049c1854f31f63ce3b07",
+        "bytes": 215380
+      },
+      "execution_receipt": {
+        "ref": "runs/ordinary_gpu_probe_20261002/migration_20261003/moto5960_qwen36_execution_receipt_v1/execution_receipt.json",
+        "sha256": "65fa8c057908a42321da7309e075791c01666b518b9f93b8a0bf38ab07524c87",
+        "bytes": 138537
+      },
+      "result": {
+        "ref": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-moto5960-qwen36-a1/queue_qwen_next12_v1/results/gpu1003-moto5960-qwen36-a1/result.json",
+        "sha256": "b2e5f50597929bb0f089a455aa5135bb799443ea1508beaa297668e3f3e8e9a9",
+        "bytes": 2631
+      },
+      "candidate_diff": {
+        "ref": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-moto5960-qwen36-a1/queue_qwen_next12_v1/results/gpu1003-moto5960-qwen36-a1/attempt/candidate/getmoto__moto-5960.diff",
+        "sha256": "eb908d668f3a8b0ccc47965ed5bcff21c51e83f5699f201385199dfd66aee5b0",
+        "bytes": 737
+      },
+      "trajectory": {
+        "ref": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-moto5960-qwen36-a1/queue_qwen_next12_v1/results/gpu1003-moto5960-qwen36-a1/attempt/harness/trajectory.jsonl",
+        "sha256": "8456db13cb0d01b44460abe3d721b8cfbc7fbacd9d1512e3dc7bde8df3fee930",
+        "bytes": 424264
+      },
+      "manager_grading_timing_record": {
+        "schema_id": "rh2.grading_timing_record.v1",
+        "record_id": "timing_626a33d1",
+        "trajectory_id": "gpu1003-moto5960-qwen36-a1",
+        "task_id": "swe_gym_lite::getmoto__moto-5960",
+        "image_pull_seconds": 0.0,
+        "env_reset_seconds": 14.11,
+        "prep_seconds": 0.384,
+        "test_seconds": 18.378,
+        "total_grading_seconds": 248.829,
+        "queue_wait_seconds": 0.0,
+        "container_peak_memory_mb": 869.055,
+        "queue_depth_at_enqueue": null,
+        "backpressure_triggered": false
+      },
+      "phase_segments_seconds": {
+        "delta_apply": 0.124558,
+        "grader_baseline_rebuild": 0.255311,
+        "grader_cleanup": null,
+        "grader_start_and_verify": 14.113635,
+        "grader_trusted_setup": 215.135737,
+        "parser_and_report": null,
+        "test": 18.377896
+      },
+      "resources": {
+        "source": {
+          "ref": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-moto5960-qwen36-a1/qwen_next12_closed_v1/gpu1003-moto5960-qwen36-a1/resources.jsonl",
+          "sha256": "59d83b3cd72f70755d8f411ca47f6f426cf3cba53fe3cc4dc4e9c9873f7fcfc3",
+          "bytes": 28304
+        },
+        "rows": 26,
+        "roles": {
+          "actor": {
+            "CID": "1bb7c0d51dba77508e3a701827622aadc68b492bb753f0953822f1bdc43b41ed",
+            "image_id": "sha256:4bafbb6965ff41c0f6eb50a73f831e7b62c41b5beda6ffad957fbc926c2359ac",
+            "samples": 7,
+            "memory_current_max": 880201728,
+            "memory_peak_max": 1034739712,
+            "install_samples": 0,
+            "test_samples": 0
+          },
+          "relay": {
+            "CID": "6701b24bb371c1376cea6bdfe79e5d89b8589f65b0c5abac252b0de26c01c54f",
+            "image_id": "sha256:ec7d6c95cd3692a2e2d228a8b1ca74e4025b54121fcc4c5da6f09cfa473315ad",
+            "samples": 7,
+            "memory_current_max": 17571840,
+            "memory_peak_max": 27688960,
+            "install_samples": 0,
+            "test_samples": 0
+          },
+          "grader": {
+            "CID": "9174ea9bb7981b48e85162274da888735458f1ec9af9a49088e0d6a4104744d1",
+            "image_id": "sha256:4bafbb6965ff41c0f6eb50a73f831e7b62c41b5beda6ffad957fbc926c2359ac",
+            "samples": 17,
+            "memory_current_max": 889360384,
+            "memory_peak_max": 911269888,
+            "install_samples": 0,
+            "test_samples": 1
+          }
+        },
+        "foreign_name_points_excluded": {
+          "/rh2-gpu-grade-gpu1003-pandas50319-qwen-5f6a14d1": 1
+        },
+        "report_peak_MiB_separate": 869.055
+      },
+      "actual_cleanup": {
+        "actor": {
+          "container_rm": 0,
+          "container_left": "",
+          "network_failures": [],
+          "relay_failures": [],
+          "labeled_containers_left": [],
+          "labeled_networks_left": [],
+          "cleanup_ok": true
+        },
+        "gateway": {
+          "session_id": "gpu1003-moto5960-qwen36-a1",
+          "revoked": true,
+          "active_requests": 0,
+          "drained": true,
+          "ts": 1791041869.5335586
+        },
+        "pre_drain": {
+          "residual": 0,
+          "kill_returned_at": 86418.53063102,
+          "kill_exit_code": 0,
+          "pkill_status": 1,
+          "kill_delivered_at": 86418.53063102,
+          "confirmed_at": 86418.58179917,
+          "observations": [
+            {
+              "issued_at": 86418.53065235,
+              "returned_at": 86418.58179917,
+              "residual": 0
+            }
+          ],
+          "observation_count": 1,
+          "timed_out": false,
+          "elapsed_seconds": 0.102,
+          "attempts": 1
+        },
+        "manager": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        }
+      },
+      "two_model_current_first_round_complete": true,
+      "stable_performance_established": false,
+      "training_qualification": false,
+      "ordinary_repeats": "held_first_round_priority",
+      "CPU_fix_needed_from_this_attempt": false
+    },
+    "current_first_round_complete": true,
+    "all_current_first_attempts_complete": true,
+    "current_first_round_report": {
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-5960/two_model_first_round_analysis_20261004.md",
+      "sha256": "3f4bc20ce55f67d84a1eb10f6ca0b4dbbb2b9cdefd5039a678bcd528389c563b",
+      "bytes": 3073
+    },
+    "remaining": "Moto六题当前双模型首次及题主分析全部完成；无剩余首轮分析或本次需CPU修复事项，普通追加暂缓。"
+  },
+  "public_dev_brief_preparation": {
+    "ref": "public_dev_brief.md",
+    "sha256": "86e66282608e8e0dfb49ac79f687b9bdbbf0552fb9c27044b67954fb198a7d94",
+    "status": "neutral_text_non_author_passed_not_runtime_validation",
+    "independent_review_ref": "../../reviews/moto_four_public_briefs_non_author_20261003.md",
+    "independent_review_sha256": "658702bd5cff6aa664d46f0c2a2dfead466942842200fadb744e839210a31e70",
+    "actual_interpreter_activation_import_and_install": "actual_UID54321_and_real_CC_passed_independently_accepted"
+  },
+  "current_checkpoint": {
+    "updated_at": "2026-10-03T03:45:21.380298+00:00",
+    "release_id": "cat2-cpu-r2e093-swe40-moto-offline-20261003-v1",
+    "release_manifest_sha256": "a84bdc339618e010440df3728c982b2d1d141b1f8295f69761984386ee3a512e",
+    "local_default_prepare": "passed_original_public_patch_reference_scripts_budget_exact",
+    "grader_actual_image_id": "sha256:4bafbb6965ff41c0f6eb50a73f831e7b62c41b5beda6ffad957fbc926c2359ac",
+    "tools_manifest": {
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tools/moto_two_r18_offline_matrix_v1/manifest.json",
+      "sha256": "58e4b113ef1b98c3f5ce3df56cb7a654b9c2f4d425bd5f6b65e8c21eb49457d0",
+      "bytes": 649
+    },
+    "tools_non_author": "passed_no_startup_blocker",
+    "actual_candidate_make_init_executed": true,
+    "formal_cpu_accepted": true,
+    "actor_executed": true,
+    "scope": "new ENV future validation; R13 failed installation and scores preserved in historical_source_checkpoint_r13",
+    "reference_counts": {
+      "f2p": 3,
+      "p2p": 155
+    },
+    "tools_transported": true,
+    "transport_receipt": {
+      "ref": "runs/category2_repair_20260929/moto_cpu_20261003/moto_two_r18_offline_tools_transport_receipt.json",
+      "sha256": "8f305e0730e51a679ba6701cc041d3a5626cb7e0be69b67dfbcffc25a31dd24c",
+      "bytes": 151
+    },
+    "tools_review": {
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/reviews/moto_two_r18_offline_tools_non_author_20261003.md",
+      "sha256": "517ce1da2b1eb78df43d68426af4761fa0ea9ef05c8e1f25d85cb0083d063aae",
+      "bytes": 18416
+    },
+    "actual_uid_install_tools": {
+      "manifest_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tools/moto_two_r18_offline_uid_install_v1/manifest.json",
+      "manifest_sha256": "7761a5da501bdc76aaf804cc6a05ac9f3b0c1e0e4193f9248670d98c0cd41560",
+      "static_review": {
+        "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/reviews/moto_two_r18_offline_tools_non_author_20261003.md",
+        "sha256": "517ce1da2b1eb78df43d68426af4761fa0ea9ef05c8e1f25d85cb0083d063aae",
+        "bytes": 18416
+      },
+      "executed": true,
+      "original_public_install_command": "make init",
+      "actual_cc": false,
+      "model_attempts": 0,
+      "parent_returncode": 0,
+      "actual_uid": 54321,
+      "install_exit_code": 0,
+      "owner_readback": {
+        "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/reviews/moto5960_r18_uid_install_owner_readback_20261003.json",
+        "sha256": "72e47f213f226cc45f7c63892c743ce6c00aca73af5926449deacffabdeb13d8",
+        "bytes": 2008
+      }
+    },
+    "completed_noop_job_id": "moto5960-cpu-eeaa3dd27a5d",
+    "noop_install_exit_code": 0,
+    "noop_test_exit_code": 1,
+    "noop_raw_reward": 0,
+    "noop_raw_collection_count": 159,
+    "noop_parsed_unique_count": 158,
+    "owner_noop_report": {
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-5960/cpu_noop_preflight_r18_20261003.md",
+      "sha256": "281dac63e6e534d1161227dcd57ac5f029b29f70a7de9539983ca0bd1c6bc037",
+      "bytes": 1795
+    },
+    "owner_noop_raw_readback": {
+      "ref": "runs/category2_repair_20260929/moto_cpu_20261003/moto5960-cpu-eeaa3dd27a5d_author_raw_readback_r18_v1.json",
+      "sha256": "f9ebad705ef687e07f8f9283af476c910dc33d44bf78e597b0dc724aa7b7b6e3",
+      "bytes": 52539
+    },
+    "own_cli_footer_and_residual_queries_verified": true,
+    "running_job_id": null,
+    "running_selected_controls": [],
+    "completed_remaining_job_id": "moto5960-cpu-66515b832d45",
+    "combined_control_count": 3,
+    "combined_raw_rewards": [
+      0,
+      1,
+      0
+    ],
+    "combined_runtime_inputs_byte_equal": true,
+    "matrix_owner_report": {
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-5960/cpu_matrix_owner_readback_r18_20261003.md",
+      "sha256": "ef7852c866f4a11edaf339661161df1e68b5c1a07ee56158862ce8b6ded0e260",
+      "bytes": 2196
+    },
+    "uid_job_id": "moto5960-uid-a680fa8321a6",
+    "uid_owner_readback": {
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/reviews/moto5960_r18_uid_install_owner_readback_20261003.json",
+      "sha256": "72e47f213f226cc45f7c63892c743ce6c00aca73af5926449deacffabdeb13d8",
+      "bytes": 2008
+    },
+    "public_cc_job_id": "moto5960-actor-668cd16294ae",
+    "public_cc_owner_readback": {
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/reviews/moto5960_r18_uid_public_actor_owner_readback_20261003.json",
+      "sha256": "32a1452597a46b762811a96ba071ade7592ce4e9b0d19d0d900baac1751b94b1",
+      "bytes": 6064
+    },
+    "final_non_author_review": {
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/reviews/moto5960_final_cpu_non_author_20261003.md",
+      "sha256": "f9da4c33ab813b0b6e5c9bff02d4cb57eda45a0104050b890d6b560f25aef35d",
+      "bytes": 23106
+    },
+    "actor_checked": true
+  },
+  "environment_supply_publication": {
+    "request_id": "swe-moto5960-offline-env-publish-20261003-v1",
+    "input": {
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/publication_requests/swe-moto5960-offline-env-publish-20261003-v1/input.json",
+      "sha256": "de6510d19c7c6aab880640d08f404f22a04890fd0725c20354673fbc29988123",
+      "bytes": 23922
+    },
+    "status": "returned_receipt_verified_acknowledged_active_cleared",
+    "cpu_acceptance": false,
+    "static_non_author_review": {
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/reviews/moto5960_source_noop_and_env_supply_non_author_20261003.md",
+      "sha256": "2f4d1ee96ed210597ecb58d93d73c0a115f3761ebfd09ae45bb9bb75cb62f703",
+      "bytes": 14146
+    },
+    "notification": "actual_direct_tool_delivery_recorded_in_board",
+    "supply_checkpoint": {
+      "producer": "shared_publication_owner",
+      "actual_derived_image_id": "sha256:4bafbb6965ff41c0f6eb50a73f831e7b62c41b5beda6ffad957fbc926c2359ac",
+      "source_config_id": "sha256:c67dbd356fcaa937ebff4b3fe0d78e4ea78211888233a4e5f07da95eddfe079d",
+      "scope": "COPY-only supply; no make init or project/task acceptance",
+      "cleanup_status": "verified_absent",
+      "receipt": {
+        "ref": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/support/moto5960_copy_supply_v1/remote_build_attempt01/build_supply_receipt.json",
+        "sha256": "8c6ca1a142a9b98b672e594cb865a99372122c0b7db4ec95ca710d1a5d692daf",
+        "bytes": 14498
+      },
+      "owner_full_publication_receipt_accepted": true,
+      "make_init_validated": false
+    },
+    "publication_receipt": {
+      "ref": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r18/moto5960_publication_receipt.json",
+      "sha256": "1ac77b9e7b27b2061c83a342d0e2ee5ae6764d9b1c7fbfc5d5eff9eb5097ff11",
+      "bytes": 3108
+    },
+    "owner_publication_readback": {
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/reviews/moto_r18_offline_publication_owner_readback_20261003.json",
+      "sha256": "8185f1973877a21fadcc77b733c102939479238bd988871e7e52c1a8b0af0f9c",
+      "bytes": 4037
+    }
+  },
+  "historical_source_checkpoint_r13": {
+    "updated_at": "2026-10-02T23:51:23.412800+00:00",
+    "release_id": "cat2-cpu-r2e089092-swe27-pandas-moto-20261003-v1",
+    "release_manifest_sha256": "3fad18daff8db219294e10cbf08d4424d68cf7000d008bb983cba4bdc427b641",
+    "local_default_consumer_readback": "exact match; not remote project test execution",
+    "reference_counts": {
+      "f2p": 3,
+      "p2p": 155
+    },
+    "grader_actual_image_id": "sha256:c67dbd356fcaa937ebff4b3fe0d78e4ea78211888233a4e5f07da95eddfe079d",
+    "tools_manifest_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tools/moto_four_r13_matrix_v1/manifest.json",
+    "tools_manifest_sha256": "a72d5d57e6c85f12105642ac1ef91e1aa18e618afb39ddd93133184850b7ef99",
+    "tools_independent_review": {
+      "status": "static_review_passed_no_startup_blocker",
+      "report_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/reviews/moto_four_r13_matrix_tools_non_author_20261003.md",
+      "report_sha256": "988d7b579248efdcd47effd7a0d4b4749eb6954dd660c3fa6c788f16c319ac1f",
+      "scope": "tools and fixed consumer only; no task/actor result acceptance"
+    },
+    "formal_cpu_accepted": false,
+    "actor_executed": false,
+    "model_attempts": 0,
+    "uid_preparation": {
+      "tools_manifest_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tools/moto_four_r13_uid_v1/manifest.json",
+      "tools_manifest_sha256": "c4b77468ff9d75e273499de6e88e4ff67519627b7a0042f7c590190fce0c310c",
+      "static_review_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/reviews/moto_four_r13_uid_tools_non_author_20261003.md",
+      "static_review_sha256": "39c041a7ab7d07a4da894994f700f6dee0cc7aabe315d7fc58006cde5ee21da7",
+      "startup_blocker_fixed": true,
+      "execution": "not_run",
+      "real_cc": false
+    },
+    "original_counterexample_preparation": {
+      "tools_manifest_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tools/moto_original_negative_r5_v1/manifest.json",
+      "tools_manifest_sha256": "fbf832aafaf0fa89cc2feb9a2b51bfeba77ad054cb76f846f4cfc1f645aa9a1c",
+      "review_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/reviews/moto_original_negative_r5_tools_non_author_20261003.md",
+      "review_sha256": "91b5aec54ab8fdc3b41f07c5c117fcf82f3c136beb7d89da3317900ce94bd193",
+      "static_review_no_startup_blocker": true,
+      "transported": false,
+      "executed": false,
+      "expected_original_reward": null,
+      "scope": "R5 original material single counterexample only, not revised CPU/actor/training/model acceptance",
+      "whole_grading_deadline_seconds": 1800,
+      "original_cli_default_deadline_seconds": 3600
+    },
+    "matrix_tools_v2_preparation": {
+      "manifest": {
+        "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tools/moto_four_r13_matrix_v2/manifest.json",
+        "sha256": "6cd02683d46370adf553531064f29d99a1e9da47ebf9f3c909f1bc6fdb9d1fd3",
+        "bytes": 791
+      },
+      "review": {
+        "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/reviews/moto_four_r13_matrix_v2_tools_non_author_20261003.md",
+        "sha256": "5142cd231fd2d0b0dafbd8954c384b06b8915ab9a915c4e968bf1175e5064471",
+        "bytes": 8820
+      },
+      "static_review_no_blocker": true,
+      "transported": true,
+      "executed": true,
+      "scope": "normal score outcome guard only; no CPU result acceptance",
+      "execution_scope": "single noop completed; original install blocked; not all controls accepted"
+    },
+    "selected_controls": [
+      "noop"
+    ],
+    "completed_job_id": "moto5960-cpu-6a6dd8d309c3",
+    "install_exit_code": 2,
+    "test_exit_code": 1,
+    "wrapper_exit_code": 0,
+    "raw_reward": 0,
+    "raw_collection_count": 159,
+    "raw_summary_count": 159,
+    "parsed_unique_count": 158,
+    "duplicate_parameter_rows": "two distinct space-containing nodes both PASSED; existing parser key merge preserved",
+    "remaining_controls": "gold and omit_scan_projection not executed because original install failed",
+    "owner_readback": {
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-5960/cpu_readback_r13_source_noop_20261003.md",
+      "sha256": "4dd53803f95fee119df376279a7b6f57c1014cbee8ee958508c9ec9417de59d7",
+      "bytes": 2882
+    }
+  },
+  "local_dispatch_attempts": [
+    {
+      "scope": "remaining gold/omit invocation arguments",
+      "status": "local_argument_validation_rejected_before_transport_no_job",
+      "cause": "--controls uses separate argv items; comma string rejected",
+      "remote_executed": false,
+      "task_failure": false
+    }
+  ],
+  "cpu_acceptance": {
+    "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-5960/cpu_acceptance_20261003.md",
+    "sha256": "b0241868116d2a20585f72ea7a168e4f04de43426a9803feca0057d0b24c5cd4",
+    "bytes": 2496
+  },
+  "probe_submission": {
+    "request_id": "swe-moto5960-gsi-scan-r18-20261003-v1",
+    "fixed_input": {
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-5960/probe_request.json",
+      "sha256": "c4baeddb4ef991d6787755ba23caef56cc385011305700295696f07796a8a964",
+      "bytes": 17275
+    },
+    "official_notification": {
+      "ref": "runs/category2_repair_20260929/moto_cpu_20261003/moto5960_probe_notification_20261003.json",
+      "sha256": "8dc3058bc337655f16d08325d1a8a71c60988b6bd51a31d6f51da8e6584b495f",
+      "bytes": 111
+    },
+    "request_status": "returned",
+    "all_requested_models_complete": true,
+    "models_executed": true,
+    "first_model_executed": true,
+    "both_models_executed": true,
+    "request_revision": 5,
+    "current_Coder_first_job_id": "gpu1003-moto5960-coder-a1",
+    "current_Qwen_first_pending": false,
+    "current_Qwen_first_job_id": "gpu1003-moto5960-qwen36-a1",
+    "two_model_owner_analyzed": true,
+    "pair_receipt": {
+      "ref": "runs/ordinary_gpu_probe_20261002/migration_20261003/swe-moto5960-gsi-scan-r18-20261003-v1_pair_execution_receipt_v1.json",
+      "sha256": "de9e365aa3a7d7a266caefdf6599b601ce1252c51c4404e60c3c2e52690bffe1",
+      "bytes": 3802
+    },
+    "completion_scope": "two approved current first arms only; ordinary repeats held",
+    "acknowledged_at": "2026-10-03T16:25:13.543318+00:00"
+  },
+  "current_sampling_policy": {
+    "as_of": "2026-10-03T06:22:26.361511+00:00",
+    "scope": "GPU executor current first-round priority; frozen request repeat metadata retained",
+    "ordinary_unstarted_repeats": "temporarily_held",
+    "required": "remaining first model coverage and owner semantic/trajectory analysis; targeted repeats only on actual evidence or later executor/user decision",
+    "retirement": "no automatic destroy/rental authorization inferred from coverage"
+  },
+  "current_model_checkpoint": {
+    "as_of": "2026-10-03T16:25:13.339104+00:00",
+    "owner_source_and_trajectory_audit_completed": true,
+    "current_two_model_first_complete": true,
+    "per_model_current_target_correct": {
+      "Coder": true,
+      "Qwen3.6": true
+    },
+    "all_current_first_attempts_target_correct": true,
+    "CPU_fix_needed_from_this_attempt": false,
+    "valid_normal_model_failure": false,
+    "next_action": "Moto六题首轮全部收口，保持原有效0／历史证据和范围限制；普通追加暂缓。"
+  },
+  "two_model_execution_receipt": {
+    "ref": "runs/ordinary_gpu_probe_20261002/migration_20261003/swe-moto5960-gsi-scan-r18-20261003-v1_pair_execution_receipt_v1.json",
+    "sha256": "de9e365aa3a7d7a266caefdf6599b601ce1252c51c4404e60c3c2e52690bffe1",
+    "bytes": 3802
+  },
+  "two_model_owner_analysis": {
+    "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-5960/two_model_first_round_analysis_20261004.md",
+    "sha256": "3f4bc20ce55f67d84a1eb10f6ca0b4dbbb2b9cdefd5039a678bcd528389c563b",
+    "bytes": 3073
+  }
+}

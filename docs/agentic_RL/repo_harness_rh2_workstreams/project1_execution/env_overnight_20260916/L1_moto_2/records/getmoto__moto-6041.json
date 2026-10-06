@@ -1,0 +1,57 @@
+{
+ "task_id": "getmoto__moto-6041",
+ "source": "SWE-Gym lite (s2 ingest v0)",
+ "task_revision": "upstream",
+ "by": "L1_moto_2 (Opus 5, 静态审查, 2026-09-16)",
+ "materials_refs": {
+  "snapshot": "runs/env_overnight_20260916/L1_moto_2/mat/getmoto__moto-6041/",
+  "base_commit": "84174e129d5a0182282a5f8719426d16cddb019b",
+  "version": "4.1",
+  "eval_cmd": "pytest -n0 -rA",
+  "repo_level": "docs/.../env_overnight_20260916/L1_moto_2/repo_level_findings.md"
+ },
+ "public_view": {
+  "目标行为": "ec2 describe_security_group_rules 要真正应用 Filters（例如 group-id），只返回匹配安全组的规则，而不是所有安全组的规则。",
+  "约束": "只改 moto/ 源码。",
+  "公开材料可推断": "base 的 responses 层用 `filters = self._get_param(\"Filter\")`（84174e129d:moto/ec2/responses/security_groups.py:196），而 EC2 查询串里 filter 的形式是 `Filter.1.Name/Filter.1.Value.1`，`_get_param(\"Filter\")` 取不到，于是 filters 恒为 None，backend 的 `if filters:` 分支不生效（models/security_groups.py:540-541）。同文件其它 describe_* 方法用的是 `self._filters_from_querystring()`，可直接对照发现。",
+  "公开材料无法确定的点": [
+   "题面没说不受支持的 filter 名该如何处理（见检查 27：修好之后，未登记的 filter key 会直接 KeyError）。",
+   "题面没说 SecurityGroupRuleIds 参数是否也要支持。"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-6041/test.patch", "mat/getmoto__moto-6041/gold.patch"], "note": "test_patch 只碰 tests/test_ec2/test_security_groups.py（base 存在），gold 只碰 moto/ec2/responses/security_groups.py（base 存在）。", "by": "static"},
+  "2": {"status": "pass", "evidence_refs": ["84174e129d:moto/ec2/responses/security_groups.py:196", "84174e129d:moto/ec2/models/security_groups.py:540-541"], "note": "base 的 filters 恒为 None，缺陷确在。stage1 empty=RESOLVED_NO 印证。", "by": "static+stage1"},
+  "3": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-6041/problem_statement.txt"], "note": "题面 1314 字符，含完整复现与期望/实际，无外链/截断。", "by": "static"},
+  "4": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-6041/test.patch"], "note": "合法解在 moto/ec2/responses/security_groups.py。", "by": "static"},
+  "5": {"status": "pass", "evidence_refs": ["本包 5980/6022 同为 EC2 但不同模块"], "note": "非派生。", "by": "static"},
+  "6": {"status": "issue", "evidence_refs": ["repo_level_findings.md#R2"], "note": "4.1，离线 make init rc=2（共性）。", "by": "stage1"},
+  "9": {"status": "pass", "evidence_refs": ["repo_level_findings.md#R3"], "note": "仓库级共性证据。", "by": "static+stage1"},
+  "11": {"status": "pass", "evidence_refs": ["84174e129d:tests/test_ec2/test_security_groups.py:1245,1323,1370"], "note": "settings.TEST_SERVER_MODE 是本地开关；无 network marker、无真实端点。", "by": "static"},
+  "17": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-6041/test.patch"], "note": "只恢复 1 个纯测试文件。", "by": "static"},
+  "19": {"status": "issue", "evidence_refs": ["repo_level_findings.md#R8"], "note": "P2P 含 2 个截断参数化 ID（`test_sec_group_rule_limit[Without`、`test_sec_group_rule_limit[Use`）。阶段一日志核对为一一对应、未塌缩。", "by": "static+stage1"},
+  "23": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-6041/problem_statement.txt", "mat/getmoto__moto-6041/test.patch"], "note": "F2P 的场景（按 group-id 过滤只返回该组的默认出站规则）与题面一致；断言的默认出站规则内容（IsEgress/IpProtocol=-1/CidrIpv4=0.0.0.0/0）是 AWS 常识且 base 代码可查。", "by": "static"},
+  "24": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-6041/test.patch"], "note": "只断言 API 结果，不约束实现；自己解析查询串或改调 _filters_from_querystring 都能通过。", "by": "static"},
+  "25": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-6041/test.patch"], "note": "F2P 只有\"一个新建 SG + group-id 过滤\"这一个场景，不覆盖\"多个 SG 时过滤正确\"或\"不传过滤器时返回全部\"。一个把 describe_security_group_rules 写死成\"只返回 GroupId 参数对应组\"的实现也能过。防护偏弱但不至于放过明显错误。", "by": "static"},
+  "26": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-6041/test.patch", "84174e129d:moto/ec2/models/security_groups.py:151-175,440-441"], "note": "**test_patch 删掉了会被 gold 打破的既有覆盖。** 原 test_create_and_describe_security_grp_rule 创建一条 ingress 规则，再用 `Filters=[{\"Name\": \"ip-permission-id\", ...}]` 查询并逐字段断言。base 上它能过，是因为 filters 恒为 None、过滤被忽略。gold 生效后，`ip-permission-id` 并不在 SecurityGroup.filters 登记表里（84174e129d:moto/ec2/models/security_groups.py:151-175），`matches_filter` 会执行 `self.filters[key](filter_value)` 直接抛 KeyError（同文件 440-441）。test_patch 的做法是**整段重写该测试**、换成 group-id 场景，于是既丢掉了 ingress 规则字段（IpProtocol/FromPort/ToPort/CidrIpv4）的断言，也没有为\"不支持的 filter 名\"新增任何期望行为。", "by": "static"},
+  "27": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-6041/gold.patch", "84174e129d:moto/ec2/models/security_groups.py:440-441", "master:moto/ec2/responses/security_groups.py:145-151", "master:moto/ec2/models/security_groups.py:91,709-715"], "note": "gold 一行改动方向正确但不完整：(a) 未登记的 filter 名从\"被静默忽略\"变成\"抛 KeyError\"，没有任何优雅降级或 InvalidParameterValue；(b) 仍不支持 SecurityGroupRuleIds，也没有规则级过滤。旁证：upstream master 已把这块重写成 `describe_security_group_rules(sg_rule_ids, filters)` 并新增 `security-group-rule-id` 规则级过滤（master:moto/ec2/responses/security_groups.py:145-151、master:moto/ec2/models/security_groups.py:91,709-715）。顺带说明：被删测试用的 `ip-permission-id` 在 AWS 的 DescribeSecurityGroupRules 里本来也不是合法 filter 名，所以删它本身可以辩护；问题在于没有任何替代覆盖。", "by": "static"},
+  "28": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-6041/test.patch"], "note": "判分材料通过重写测试消除了参考解引入的失败，而不是为新行为补断言。这属于\"用改测试掩盖回归\"，应在题级事实里显式标注。", "by": "static"},
+  "29": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-6041/hints.txt"], "note": "hints_text 直接给出完整的一行修复（`filters = self._get_param(\"Filter\")` → `filters = self._filters_from_querystring()`）与上游文件行号链接。按约定 hints 不可见，当前无泄漏；这是又一个\"hints 若并入题面即送答案\"的样本。", "by": "static"},
+  "7": {"status": "not_applicable", "evidence_refs": [], "note": "无外部资产。", "by": "static"}
+ },
+ "issues": [
+  {"category": "改测试掩盖回归", "severity": "P2", "evidence_refs": ["mat/getmoto__moto-6041/test.patch", "84174e129d:moto/ec2/models/security_groups.py:151-175,440-441"], "proposed_action": "在题级事实里标注\"F2P 由既有测试整段重写而来，原断言被删除\"；扩展回归里补回 ingress 规则字段断言与\"不支持的 filter 名\"的期望行为。不改原 F2P/P2P 参考。", "next_experiment": "在 gold 之上执行 `describe_security_group_rules(Filters=[{\"Name\":\"ip-permission-id\",\"Values\":[<rule-id>]}])`，预期 KeyError（500），据此确认回归存在并决定期望行为。"},
+  {"category": "判分覆盖偏弱", "severity": "P3", "evidence_refs": ["mat/getmoto__moto-6041/test.patch"], "proposed_action": "扩展回归加\"多 SG 下过滤正确\"与\"不传过滤器返回全部\"。", "next_experiment": "见 proposed_regression_tests。"},
+  {"category": "安装配方与离线条件不匹配", "severity": "P2", "evidence_refs": ["repo_level_findings.md#R2"], "proposed_action": "见 R2。", "next_experiment": "见 R2。"},
+  {"category": "参考 ID 身份", "severity": "P3", "evidence_refs": ["repo_level_findings.md#R8"], "proposed_action": "同 R8。", "next_experiment": "同 R8。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只碰 1 个纯测试文件。", "evidence_refs": ["mat/getmoto__moto-6041/test.patch"]},
+ "proposed_regression_tests": [
+  {"id": "新增：两个 SG 各建 ingress 规则，按 group-id 过滤断言只返回其中一个组的规则", "reason": "覆盖 F2P 未测的\"多组下过滤正确\"；当前 F2P 只有单个新建 SG。"},
+  {"id": "新增：describe_security_group_rules() 不传 Filters，断言返回所有组的规则", "reason": "防止实现把\"无过滤器\"误当成\"空结果\"。"},
+  {"id": "tests/test_ec2/test_security_groups.py::test_authorize_all_protocols_with_no_port_specification", "reason": "紧邻被重写测试的 ingress 规则创建路径，找回被删断言覆盖的字段语义。"},
+  {"id": "tests/test_ec2/test_security_groups.py -k describe", "reason": "describe_security_groups 与 rules 共用同一套 filters 登记表，验证 _filters_from_querystring 改动没有影响组级查询。"}
+ ],
+ "disposition_hint": {"state": "needs_review", "reason": "环境可用、题面充分、gold 方向正确；但判分材料用整段重写测试的方式消除了参考解引入的 KeyError 回归（P2），且没有为新行为补任何断言。需要裁定是接受原版并外挂扩展回归，还是做带版本的修订。"},
+ "costs": {"minutes": 22}
+}

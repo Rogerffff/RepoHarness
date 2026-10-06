@@ -1,0 +1,19 @@
+diff --git a/pydantic/root_model.py b/pydantic/root_model.py
+index 2736cd852d91f0f884601cb10b3cfb5820708d5d..da8b5fd3704e3fc3ff0f783fd3f2f410246cefdd 100644
+--- a/pydantic/root_model.py
++++ b/pydantic/root_model.py
+@@ -58,7 +58,13 @@ class RootModel(BaseModel, typing.Generic[RootModelRootType]):
+         Raises:
+             NotImplemented: If the model is not a subclass of `RootModel`.
+         """
+-        return super().model_construct(root=root, _fields_set=_fields_set)
++        m = super().model_construct(root=root, _fields_set=_fields_set)
++        # RootModel sets __pydantic_extra__ and __pydantic_private__ at class level,
++        # but model_construct sets them on the instance, which pollutes __dict__.
++        # We remove them from __dict__ to match the behavior of __init__.
++        m.__dict__.pop('__pydantic_extra__', None)
++        m.__dict__.pop('__pydantic_private__', None)
++        return m
+ 
+     def __eq__(self, other: Any) -> bool:
+         if not isinstance(other, RootModel):

@@ -1,0 +1,24 @@
+diff --git a/pandas/core/frame.py b/pandas/core/frame.py
+--- a/pandas/core/frame.py
++++ b/pandas/core/frame.py
+@@ -100,6 +100,7 @@
+     is_iterator,
+     is_list_like,
+     is_named_tuple,
++    is_numeric_dtype,
+     is_object_dtype,
+     is_scalar,
+     is_sequence,
+@@ -8325,6 +8326,12 @@
+             out_dtype = "bool" if filter_type == "bool" else None
+ 
+             def blk_func(values):
++                if (
++                    name == "mean"
++                    and isinstance(values, ExtensionArray)
++                    and is_numeric_dtype(values.dtype)
++                ):
++                    return values._reduce(name, skipna=skipna, **kwds)
+                 if values.ndim == 1 and not isinstance(values, np.ndarray):
+                     # we can't pass axis=1
+                     return op(values, axis=0, skipna=skipna, **kwds)

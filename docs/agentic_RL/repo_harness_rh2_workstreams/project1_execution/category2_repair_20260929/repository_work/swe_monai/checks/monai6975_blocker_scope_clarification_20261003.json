@@ -1,0 +1,95 @@
+{
+  "schema": "monai6975.blocker_identity_clarification.v1",
+  "as_of": "2026-10-03T15:37:00+08:00",
+  "reason": "GPU准备发现裸测试修订ID同时用于新COPY环境，旧总账阻断匹配歧义；本次只细化旧缺图环境范围。",
+  "historical_blocked_material_version": "monai6975-dataset-dict-pixels-cpu-v1",
+  "historical_blocker": "真实actor缺少题面原NIfTI；必须恢复固定官方资产、核原例，并另记环境材料版本后探针。外层RC0不能核销。",
+  "old_failed_job": "monai-6975-actor-20261003-723cd019",
+  "old_scope": {
+    "material_revision_id": "monai6975-dataset-dict-pixels-cpu-v1",
+    "source_image_ref": "xingyaoww/sweb.eval.x86_64.project-monai_s_monai-6975@sha256:0a529471d25c944c76e598474d7a665b20edc2ee95b1a2f30bf9c36fd8db6055",
+    "observed_cpu_image_id": "sha256:789cb5d10d9b343a2e8b656581697a7127b56a0d467b1cc5b8779a79a0ff0727",
+    "public_nifti_path": "tests/testing_data/ref_avg152T1_LR.nii.gz",
+    "public_nifti_present": false,
+    "blocking_reason": "公开题面原图缺失，原例无法执行；不是该测试修订本身的语义缺陷"
+  },
+  "blocked_version_exact_scope": [
+    "monai6975-dataset-dict-pixels-cpu-v1+vendor-nifti-absent@sha256:0a529471d25c944c76e598474d7a665b20edc2ee95b1a2f30bf9c36fd8db6055"
+  ],
+  "block_entire_test_revision": false,
+  "current_validated_combination": {
+    "material_version": "monai6975-dataset-dict-pixels-cpu-v1+public-nifti-v1",
+    "material_revision_id": "monai6975-dataset-dict-pixels-cpu-v1",
+    "grading_materials_identity": "sha256:790984d103cffad557230cb0188b5c3a5e3e9d6728f3d3a37defeb84cbbc20f6",
+    "environment_package_digest": "sha256:248b10f8b0d447c3d25965f85fdca8fe06879f759bcd7ce05195ec6e7d482843",
+    "environment_binding_sha256": "cd5a58a4be3acd202757606e3f0f2614718599d9f481acc7083ab539db474a56",
+    "cpu_validated_image_id": "sha256:fbfdddc4edda1f0ea4c1b76a572bd95045be4bbd202b197a94e8d8ee14a73fd6",
+    "official_asset_sha256": "c01a50caa7a563158ecda43d93a1466bfc8aa939bc16b06452ac1089c54661c8",
+    "copy_target": "/testbed/tests/testing_data/ref_avg152T1_LR.nii.gz",
+    "formal_cpu_rewards": [
+      0,
+      1,
+      0
+    ],
+    "references_per_row": 64,
+    "independent_cpu_review_preserved": true
+  },
+  "probe_request_unchanged": {
+    "request_id": "swe-monai6975-r15-dict-pixels-public-nifti-20261003-v1",
+    "input_sha256": "db75fe723a73f2db160439b271023c033fc82316d03cfdab3c81a37f6d1a91e3"
+  },
+  "GPU_conditions": [
+    "只对R15已固定COPY环境组合解释为不受旧缺图阻断，不全面解除旧vendor环境阻断。",
+    "GPU仍核本机实际镜像/13来源层+COPY/官方资产SHA和非root公开原例，不能冒称CPU ID已在GPU存在。",
+    "不得回退source vendor缺图环境、修改固定请求或复用旧FrozenPatch重绑定；训练资格未授予。"
+  ],
+  "new_CPU_runs": 0,
+  "new_model_runs": 0,
+  "evidence": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_monai/checks/monai6975_actor_original_cpu_c_20261003.json",
+      "sha256": "eb29ef3b9460f0e35684241ac9bab42149e683cf68980221ceac1f48b12d9e87",
+      "bytes": 12612
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/swe_monai/cpu_c_20261003/monai-6975-actor-20261003-723cd019/captures/public_nifti_original.out",
+      "sha256": "6bae92dc56b06021fcb0988e70a6acd86a85c46c8765c650468ac9f025a7dde6",
+      "bytes": 551
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_monai/checks/monai6975_public_asset_image_cpu_c_20261003.json",
+      "sha256": "7b17a9d8ca65a0870842c5aa9bd4f88ef447ea1f2ea469786d297eb6311eaca9",
+      "bytes": 5258
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_monai/checks/monai6975_actor_public_asset_cpu_c_20261003.json",
+      "sha256": "5eb87bdecb19237dcaadd2e2e359848026ed3a56e05708d12500a13ff1614252",
+      "bytes": 13707
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_monai/reviews/non_author_public_asset_runtime_review_20261003.md",
+      "sha256": "af91e9e87da3678430a17d709403dc2e032f341de3fb1255698a01cd5256d09f",
+      "bytes": 13808
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_monai/checks/monai6975_formal_r15_cpu_c_20261003.json",
+      "sha256": "0cb7757c35855da2b7eb92105e11a4f4fa7fa33b857f50747d59f367f958bb69",
+      "bytes": 38210
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_monai/reviews/non_author_monai6975_formal_r15_review_20261003.md",
+      "sha256": "2d6b9c32c4e7e8c644c9fd697c3aa8b3448b504e2f09dca0e245eb3a36231dc2",
+      "bytes": 18752
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_monai/materials/6975/probe_request_r15_v1.json",
+      "sha256": "db75fe723a73f2db160439b271023c033fc82316d03cfdab3c81a37f6d1a91e3",
+      "bytes": 14579
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe39_dask_monai_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/monai2446_6975_fixed_v1/Project-MONAI__MONAI-6975/environment_binding.json",
+      "sha256": "cd5a58a4be3acd202757606e3f0f2614718599d9f481acc7083ab539db474a56",
+      "bytes": 2010
+    }
+  ]
+}

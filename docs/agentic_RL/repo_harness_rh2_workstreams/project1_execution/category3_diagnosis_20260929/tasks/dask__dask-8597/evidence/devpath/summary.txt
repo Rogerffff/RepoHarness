@@ -1,0 +1,13 @@
+actor_setup rc=0 (pip check 预期仍报 base 原有的 distributed/dask 版本冲突)
+actor env rc=0 expect=zero
+actor mcve rc=1 expect=nonzero
+actor narrow rc=0 expect=zero
+actor file rc=0 expect=any
+actor tree rc=0 expect=zero
+actor_after_edit rc=0
+origimage env rc=0 expect=zero
+origimage mcve rc=1 expect=nonzero
+origimage narrow rc=1 expect=zero
+origimage file rc=1 expect=any
+origimage tree rc=0 expect=zero
+done

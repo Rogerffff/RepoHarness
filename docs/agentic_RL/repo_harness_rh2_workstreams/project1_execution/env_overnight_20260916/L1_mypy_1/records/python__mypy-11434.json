@@ -1,0 +1,61 @@
+{
+ "task_id": "python__mypy-11434",
+ "source": "SWE-Gym lite / python/mypy PR 11434",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "2907a4dea939e20ff39ef7d9ff85ae1a199a0ee8", "version": "0.920", "python_version": "3.9",
+  "eval_cmd": "pytest -n0 -rA -k",
+  "f2p": ["testTypeVarWithTypedDictBoundInIndexExpression", "testTypeVarWithUnionTypedDictBoundInIndexExpression"],
+  "p2p": ["testTypeVarWithTypedDictValueInIndexExpression", "testSelfTypeVarIndexExpr"],
+  "test_patch_paths": ["test-data/unit/check-typevar-values.test"], "gold_paths": ["mypy/checkexpr.py"],
+  "stage1": "无 stage1 记录（signals.stage1 = null）"
+ },
+ "public_view": {
+  "goal": "`T = TypeVar(\"T\", bound=Data)`（Data 是 TypedDict），函数里 `data[\"x\"]` 被推成 `object` 而不是 `int`，导致 `data[\"x\"] + 1` 报 Unsupported operand types。要求索引结果按 bound 的 TypedDict 解析。",
+  "constraints": ["题面给出完整最小复现与报错文本", "题面只涉及 bound 是单个 TypedDict 的情形"],
+  "unknowns_from_public_only": [
+   "bound 是 `Union[Data, Dict[str, str]]` 时结果该是什么？题面未提（F2P 要求 `Union[builtins.int, builtins.str*]`）",
+   "用 value 约束 `TypeVar(\"T\", Data, Dict[str, str])`（而不是 bound）时的行为？题面未提（P2P 覆盖）",
+   "当 bound 自己就有 __getitem__ 时（自定义 Indexable 类）应当保持原有行为？题面未提（P2P 覆盖）"
+  ],
+  "base_code_evidence": [
+   "2907a4dea:mypy/checkexpr.py:2961-2971 visit_index_with_type 的 elif 链里没有 TypeVarType 分支，TypeVar 直接落到 check_method_call_by_name('__getitem__', ...)，于是走 TypedDict 的 fallback typing._TypedDict（继承 Mapping[str, object]）",
+   "2907a4dea:mypy/checkexpr.py:3993 has_member 在 base 已存在 → gold 不依赖未交付改动",
+   "2907a4dea:test-data/unit/check-typevar-values.test 在 base 有 46 个 case"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 目标 check-typevar-values.test 在 base 存在；gold 目标 mypy/checkexpr.py 上下文匹配"], "note": "无二进制/LFS/子模块。", "by": "L1_mypy_1"},
+  "2": {"status": "pass", "evidence_refs": ["base visit_index_with_type 无 TypeVarType 分支"], "note": "静态确认；无 stage1 实跑佐证。", "by": "L1_mypy_1"},
+  "3": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["problem_statement 666 字符，完整；hints_text 1141 字符，里面 msullivan 直接写出修法：'I think it should be pretty easy to make `visit_index_with_type` in `checkexpr.py` try recursively indexing into its bound'"], "note": "题面本身完整准确。但 hints 里给出了精确到函数名与递归策略的修法提示，而 hints 不可见——这意味着可见材料与 upstream 实际得到的提示量差距很大。", "by": "L1_mypy_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 只触碰 test-data/unit/check-typevar-values.test"], "note": "无非测试源码。additional_exclusions 保持空。", "by": "L1_mypy_1"},
+  "17": {"status": "pass", "evidence_refs": ["同上；gold 只改 mypy/checkexpr.py"], "note": "无覆盖风险。", "by": "L1_mypy_1"},
+  "5": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["dupidx.txt：check-typevar-values.test 只被本题触碰；mypy/checkexpr.py 是本题、16555、16963、9629 四题的 gold 路径（其余三题不在本包）"], "note": "非重复题。", "by": "L1_mypy_1"},
+  "23": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["F2P 的 testTypeVarWithUnionTypedDictBoundInIndexExpression 断言 `Union[builtins.int, builtins.str*]`", "题面只给了单个 TypedDict bound 的例子"], "note": "Union bound 的期望结果（尤其 `builtins.str*` 上的推断星号）无法从题面推出。不过它是'按 bound 递归索引'这一自然实现的直接后果，属于要求超出题面但方向一致。", "by": "L1_mypy_1"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 只断言 reveal_type 结果，不引用 gold 的 has_member 判定"], "note": "未强制唯一实现（只要按 bound 递归解析即可）。", "by": "L1_mypy_1"},
+  "25": {"status": "pass", "evidence_refs": ["P2P 的 testSelfTypeVarIndexExpr 构造了一个 bound 自带 __getitem__ 的类（Indexable），正是 gold 的 `not self.has_member(upper_bound, \"__getitem__\")` 守卫要保护的场景", "P2P 的 testTypeVarWithTypedDictValueInIndexExpression 覆盖 value 约束（而非 bound）的写法"], "note": "**本包里 P2P 设计得最贴切的一题**（与 10392 并列）：两条 P2P 都是针对新分支的边界条件构造的反向用例——去掉 has_member 守卫会让 testSelfTypeVarIndexExpr 失败。虽然它们也是 test_patch 新增的，但确实有判别力。", "by": "L1_mypy_1"},
+  "26": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["P2P 两条都是新增用例，check-typevar-values.test 的 46 条既有 case 一条都没进"], "note": "边界条件覆盖得好，但既有行为仍无保护。建议扩到同文件全量，见 proposed_regression_tests。", "by": "L1_mypy_1"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 只加 3 行 elif；has_member 在 base 已存在"], "note": "与本题对应、不依赖未交付改动、无题外改动。", "by": "L1_mypy_1"},
+  "29": {"status": "pass", "evidence_refs": ["problem_statement 无 PR/commit 链接、无修复代码"], "note": "题面无泄漏（修法提示只在不可见的 hints 里）。", "by": "L1_mypy_1"},
+  "6": {"status": "not_checked", "evidence_refs": [], "note": "无 stage1 记录。", "by": "L1_mypy_1"},
+  "7": {"status": "pass", "evidence_refs": ["case 用 fixtures/tuple.pyi、dict.pyi、classmethod.pyi，均在仓库内"], "note": "无外部资产。", "by": "L1_mypy_1"},
+  "11": {"status": "pass", "evidence_refs": ["case 正文无 URL"], "note": "不需要网络。", "by": "L1_mypy_1"},
+  "18": {"status": "pass", "evidence_refs": ["kcheck_all.txt：无子串过选"], "note": "选择无歧义。", "by": "L1_mypy_1"},
+  "19": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["testTypeVarWithUnionTypedDictBoundInIndexExpression、testTypeVarWithTypedDictValueInIndexExpression、testSelfTypeVarIndexExpr 三条 case 各写了**两个** [builtins ...] 段（tuple.pyi + dict.pyi / tuple.pyi + classmethod.pyi）", "mypy/test/data.py:69-75：两个 builtins 段都写向同一目标路径 base_path/builtins.pyi，后者覆盖前者"], "note": "与 python__mypy-10284 同型的测试数据卫生问题：实际只有后一个 fixture 生效。当前测试仍通过，属潜在脆弱点。", "by": "L1_mypy_1"},
+  "20": {"status": "not_checked", "evidence_refs": [], "note": "无 stage1。", "by": "L1_mypy_1"}
+ },
+ "issues": [
+  {"category": "grading_coverage", "severity": "P3", "evidence_refs": ["P2P 两条都是新增用例；同文件 46 条既有 case 未纳入"], "proposed_action": "把 check-typevar-values.test 既有 46 条补进 P2P。", "next_experiment": "gold 上跑该文件全量取基线通过集。"},
+  {"category": "test_data_fragility", "severity": "P3", "evidence_refs": ["三条 case 有重复 [builtins ...] 段"], "proposed_action": "合并为单个 fixture 声明；不影响当前判分。", "next_experiment": "无（读 data.py:69-75 即可确认）。"},
+  {"category": "visible_vs_upstream_info_gap", "severity": "P3", "evidence_refs": ["hints_text 直接点名 visit_index_with_type 与递归 bound 的策略"], "proposed_action": "仅记录：upstream 贡献者是在拿到这条提示后动手的，我们的 agent 没有。评估难度时应把这一点计入。", "next_experiment": "无。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只触碰纯测试数据文件 test-data/unit/check-typevar-values.test。", "evidence_refs": ["grading_bundles_v2_v0:python__mypy-11434 test_patch"]},
+ "proposed_regression_tests": [
+  {"id": "test-data/unit/check-typevar-values.test 既有全部 46 个 case", "reason": "同文件，覆盖 TypeVar 约束/bound 的既有语义。"},
+  {"id": "test-data/unit/check-typeddict.test", "reason": "gold 让 TypeVar 索引改走 TypedDict 路径，TypedDict 索引语义是直接下游。"},
+  {"id": "test-data/unit/check-selftype.test", "reason": "self 类型的 TypeVar 带 bound 且 bound 自带 __getitem__ 的场景，正是 has_member 守卫的保护对象。"},
+  {"id": "test-data/unit/check-expressions.test 中索引表达式相关 case", "reason": "visit_index_with_type 是所有索引表达式的公共入口。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "题面完整、gold 三行且不依赖未交付改动、F2P 断言对外行为、**P2P 两条是针对新分支边界条件构造的反向用例（有真实判别力）**。缺口只是既有用例未纳入回归，以及重复 [builtins] 段的卫生问题。"},
+ "costs": {"minutes": 17}
+}

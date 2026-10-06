@@ -1,0 +1,44 @@
+[
+  {
+    "id": "identity",
+    "cmd": "python - <<'PY_CHECK'\nimport os,sys,json,pathlib,subprocess\nimport monai,numpy,torch,pytest\nimport importlib.metadata as m\nprint('PY_CHECK',sys.executable)\nprint(json.dumps({'uid':os.getuid(),'cwd':os.getcwd(),'monai':monai.__file__,'numpy':numpy.__version__,'torch':torch.__version__,'ignite':m.version('pytorch-ignite'),'cuda':torch.cuda.is_available()},sort_keys=True))\nassert sys.executable=='/opt/miniconda3/envs/testbed/bin/python'\nassert str(pathlib.Path(monai.__file__).resolve()).startswith('/testbed/monai/')\nassert subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()=='d36b835b226ab95ffae5780629a5304d8df5883e'\nassert os.getuid()!=0 and not torch.cuda.is_available()\nprint(subprocess.check_output(['git','status','--porcelain'],text=True))\nprint('WORKSPACE_WRITABLE',os.access('/testbed/monai',os.W_OK))\nassert os.access('/testbed/monai',os.W_OK)\nPY_CHECK",
+    "timeout_s": 180,
+    "expect": "zero",
+    "purpose": "真实公开actor的CPU、解释器、来源、导入与可写性；不含私有材料"
+  },
+  {
+    "id": "enum_train",
+    "cmd": "python - <<'PY_CHECK'\nimport json,torch\nfrom monai.engines import SupervisedEvaluator\nfrom monai.utils import ForwardMode\nclass PublicExampleNetwork(torch.nn.Module):\n    def forward(self,image):\n        print('PUBLIC_FORWARD',json.dumps({'training':self.training,'grad_enabled':torch.is_grad_enabled()}),flush=True)\n        return image*2\nimage=torch.tensor([[1.0,2.0]],requires_grad=True)\nmode=ForwardMode.TRAIN\nprint('PUBLIC_EVALUATOR_MODE',str(mode),flush=True)\nevaluator=SupervisedEvaluator(device=torch.device('cpu'),val_data_loader=[{'image':image,'label':torch.zeros_like(image)}],epoch_length=1,network=PublicExampleNetwork(),decollate=False,mode=mode)\nevaluator.run()\nprediction=evaluator.state.output['pred']\nprint('PUBLIC_EVALUATOR_RESULT',json.dumps({'mode':str(mode),'prediction':prediction.detach().tolist(),'requires_grad':prediction.requires_grad}),flush=True)\nif mode in ('train',ForwardMode.TRAIN):\n    gradient=torch.autograd.grad(prediction.sum(),image)[0]\n    print('PUBLIC_INPUT_GRADIENT',gradient.tolist(),flush=True)\nPY_CHECK",
+    "timeout_s": 180,
+    "expect": "zero",
+    "purpose": "真实非空公开Evaluator运行；字符串base需查unsupported mode异常，不把任意非零当题面复现"
+  },
+  {
+    "id": "enum_eval",
+    "cmd": "python - <<'PY_CHECK'\nimport json,torch\nfrom monai.engines import SupervisedEvaluator\nfrom monai.utils import ForwardMode\nclass PublicExampleNetwork(torch.nn.Module):\n    def forward(self,image):\n        print('PUBLIC_FORWARD',json.dumps({'training':self.training,'grad_enabled':torch.is_grad_enabled()}),flush=True)\n        return image*2\nimage=torch.tensor([[1.0,2.0]],requires_grad=True)\nmode=ForwardMode.EVAL\nprint('PUBLIC_EVALUATOR_MODE',str(mode),flush=True)\nevaluator=SupervisedEvaluator(device=torch.device('cpu'),val_data_loader=[{'image':image,'label':torch.zeros_like(image)}],epoch_length=1,network=PublicExampleNetwork(),decollate=False,mode=mode)\nevaluator.run()\nprediction=evaluator.state.output['pred']\nprint('PUBLIC_EVALUATOR_RESULT',json.dumps({'mode':str(mode),'prediction':prediction.detach().tolist(),'requires_grad':prediction.requires_grad}),flush=True)\nif mode in ('train',ForwardMode.TRAIN):\n    gradient=torch.autograd.grad(prediction.sum(),image)[0]\n    print('PUBLIC_INPUT_GRADIENT',gradient.tolist(),flush=True)\nPY_CHECK",
+    "timeout_s": 180,
+    "expect": "zero",
+    "purpose": "真实非空公开Evaluator运行；字符串base需查unsupported mode异常，不把任意非零当题面复现"
+  },
+  {
+    "id": "string_train",
+    "cmd": "python - <<'PY_CHECK'\nimport json,torch\nfrom monai.engines import SupervisedEvaluator\nfrom monai.utils import ForwardMode\nclass PublicExampleNetwork(torch.nn.Module):\n    def forward(self,image):\n        print('PUBLIC_FORWARD',json.dumps({'training':self.training,'grad_enabled':torch.is_grad_enabled()}),flush=True)\n        return image*2\nimage=torch.tensor([[1.0,2.0]],requires_grad=True)\nmode='train'\nprint('PUBLIC_EVALUATOR_MODE',str(mode),flush=True)\nevaluator=SupervisedEvaluator(device=torch.device('cpu'),val_data_loader=[{'image':image,'label':torch.zeros_like(image)}],epoch_length=1,network=PublicExampleNetwork(),decollate=False,mode=mode)\nevaluator.run()\nprediction=evaluator.state.output['pred']\nprint('PUBLIC_EVALUATOR_RESULT',json.dumps({'mode':str(mode),'prediction':prediction.detach().tolist(),'requires_grad':prediction.requires_grad}),flush=True)\nif mode in ('train',ForwardMode.TRAIN):\n    gradient=torch.autograd.grad(prediction.sum(),image)[0]\n    print('PUBLIC_INPUT_GRADIENT',gradient.tolist(),flush=True)\nPY_CHECK",
+    "timeout_s": 180,
+    "expect": "nonzero",
+    "purpose": "真实非空公开Evaluator运行；字符串base需查unsupported mode异常，不把任意非零当题面复现"
+  },
+  {
+    "id": "string_eval",
+    "cmd": "python - <<'PY_CHECK'\nimport json,torch\nfrom monai.engines import SupervisedEvaluator\nfrom monai.utils import ForwardMode\nclass PublicExampleNetwork(torch.nn.Module):\n    def forward(self,image):\n        print('PUBLIC_FORWARD',json.dumps({'training':self.training,'grad_enabled':torch.is_grad_enabled()}),flush=True)\n        return image*2\nimage=torch.tensor([[1.0,2.0]],requires_grad=True)\nmode='eval'\nprint('PUBLIC_EVALUATOR_MODE',str(mode),flush=True)\nevaluator=SupervisedEvaluator(device=torch.device('cpu'),val_data_loader=[{'image':image,'label':torch.zeros_like(image)}],epoch_length=1,network=PublicExampleNetwork(),decollate=False,mode=mode)\nevaluator.run()\nprediction=evaluator.state.output['pred']\nprint('PUBLIC_EVALUATOR_RESULT',json.dumps({'mode':str(mode),'prediction':prediction.detach().tolist(),'requires_grad':prediction.requires_grad}),flush=True)\nif mode in ('train',ForwardMode.TRAIN):\n    gradient=torch.autograd.grad(prediction.sum(),image)[0]\n    print('PUBLIC_INPUT_GRADIENT',gradient.tolist(),flush=True)\nPY_CHECK",
+    "timeout_s": 180,
+    "expect": "nonzero",
+    "purpose": "真实非空公开Evaluator运行；字符串base需查unsupported mode异常，不把任意非零当题面复现"
+  },
+  {
+    "id": "public_existing",
+    "cmd": "python -m pytest -rA --color=no tests/test_prepare_batch_default.py",
+    "timeout_s": 360,
+    "expect": "zero",
+    "purpose": "未注入隐藏测试的原公开模块"
+  }
+]

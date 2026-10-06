@@ -1,0 +1,119 @@
+{
+  "schema_id": "conan.owner.pair_analysis.v1",
+  "as_of": "2026-10-03T14:31:04.896189+00:00",
+  "request_id": "swe-conan12397-r12-briefv1-20261003-v1",
+  "scope": "two first attempts owner analysis; no stability, real full build or training qualification",
+  "receipt": {
+    "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/swe-conan12397-r12-briefv1-20261003-v1_pair_execution_receipt_v1.json",
+    "sha256": "sha256:61651ec6bb95e53264ea5d2b05b92e877faac4ef0fa5646a66339a72f37df2a9"
+  },
+  "receipt_readback": {
+    "path": "runs/category2_repair_20260929/conan_cpu_20261003/probe_analysis_12397_qwen36_a1_20261003_v1/pair_receipt_readback.json",
+    "sha256": "sha256:b1412524f7ab638632c2c156682e2c9933f1c467b87f515dafc73a4d802602e1"
+  },
+  "owner_analysis": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-12397/probe_pair_analysis_20261003.md",
+    "sha256": "sha256:01939f6234df5c44050b78060bb8c422afb15567a22509162649b383403e0093"
+  },
+  "first_arm_analyses": {
+    "coder": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-12397/probe_coder_a1_analysis_20261003.json",
+      "sha256": "sha256:90cac3c09e77a13ac1d0f7c986ebdbe7cb2710efbc9fab63b7d47c7bfb881ce9"
+    },
+    "qwen36": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-12397/probe_qwen36_a1_analysis_20261003.json",
+      "sha256": "sha256:0a247fbdd57cdaf35d436770e976b8bf2472923a74fe386a0346875762c8dcd6"
+    }
+  },
+  "semantic_reviews": {
+    "coder": {
+      "status": "completed_no_task_material_blocker",
+      "report": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_12397_coder_a1_semantic_review_20261003.md",
+        "sha256": "sha256:2f4c908570dcf42f69da5fd6304f870f92ad6574d13b54327bbab08e879d0c3e"
+      },
+      "scope": "non-author focused candidate semantics, exact references, model trajectory/validation; no CPU/GPU rerun"
+    },
+    "qwen36": {
+      "status": "completed_no_current_task_material_blocker",
+      "report": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_12397_qwen36_a1_semantic_review_20261003.md",
+        "sha256": "sha256:4f2d12eb8e49c3247cab6412be3a353f790ee70e97ac367b8bd144cdd137fd4e"
+      },
+      "scope": "complete candidate, projection, current public semantics and exact references; no dynamic rerun; limitations in report"
+    }
+  },
+  "execution_reviews": {
+    "coder": {
+      "status": "accepted_full_install_test_references_and_two_layer_cleanup",
+      "report": {
+        "path": "runs/ordinary_gpu_probe_20261002/reviews/conan12397_coder_a1_execution_review_v1.json",
+        "sha256": "sha256:50dcfde7ea30ba413df03a3ec2ed9e0596df7170c8d4b3b0a53dfa803f691d56"
+      },
+      "scope": "completed first Coder arm execution/transport only"
+    },
+    "qwen36": {
+      "status": "execution_evidence_verified_with_scope_limits",
+      "report": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_12397_qwen36_a1_execution_review_20261003.md",
+        "sha256": "sha256:3ba4ee33d2dbb6e1e9328e7cb4a216de4b87e7c9708619e14ab6d07cb27fef42"
+      },
+      "scope": "current closed execution/transport/full baseline/HTTP/exact references/cleanup; resource and weight limits retained"
+    }
+  },
+  "both_reference_scores": {
+    "coder": {
+      "reward": 1,
+      "f2p": {
+        "passed": 2,
+        "total": 2
+      },
+      "p2p": {
+        "passed": 2,
+        "total": 2
+      }
+    },
+    "qwen36": {
+      "reward": 1,
+      "f2p": {
+        "passed": 2,
+        "total": 2
+      },
+      "p2p": {
+        "passed": 2,
+        "total": 2
+      }
+    }
+  },
+  "candidate_findings": {
+    "coder": [
+      {
+        "priority": "P2",
+        "finding": "final validation statement exceeds actual execution scope"
+      }
+    ],
+    "qwen36": [
+      {
+        "id": "C12397-Q36-A1-S1",
+        "priority": "P2",
+        "finding": "head pipelines hide pytest failures; final omits setup/VS/mock failures and compiler deselection scope",
+        "disposition": "accepted"
+      }
+    ]
+  },
+  "task_material_findings": [],
+  "runtime_versions": {
+    "coder": "code7",
+    "qwen36": "code8"
+  },
+  "entire_runtime_same": false,
+  "same_material_image_full_baseline_public_prompt_references_budgets": true,
+  "entire_profile_same": false,
+  "prior_first_arm_snapshot_bytes_preserved": true,
+  "owner_request_closeout": "two_model_owner_analysis_complete_returned_ACK_and_active_pointer_cleared",
+  "CPU_or_model_rerun_required": false,
+  "ordinary_additional_samples": "deferred_coverage_first",
+  "paired_request_closed": true,
+  "pending_models": [],
+  "training_eligibility": "not_established"
+}

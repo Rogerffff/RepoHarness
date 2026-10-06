@@ -1,0 +1,39 @@
+{
+  "name": "coveragepy_5dbb_public_delivery_v1",
+  "task": "coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9",
+  "purpose": "固定公开题面经 PreparedTaskFace、真实 Claude Code 和桩端点交付；只执行公开环境检查、题面复现与公开测试。此剧本不执行求解修改。",
+  "steps": [
+    {
+      "kind": "bash_r2e_preflight"
+    },
+    {
+      "kind": "bash",
+      "id": "env",
+      "command": "id; echo VIRTUAL_ENV=$VIRTUAL_ENV; echo RH2_BASHENV_WRITE=$( ( : >> /rh2/bash_env ) 2>/dev/null && echo WRITABLE || echo DENIED ); python -c 'import sys; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable)'; python -c 'import coverage; print(\"cwd=testbed coverage\", coverage.__file__, coverage.__version__)'; (cd /tmp && python -c 'import coverage; print(\"cwd=tmp coverage\", coverage.__file__)'); python -m pip --version 2>&1 | head -1; python -m pytest --version 2>&1 | head -1; git status --porcelain=v1; echo PORCELAIN_RC=$?",
+      "timeout_ms": 270000
+    },
+    {
+      "kind": "bash",
+      "id": "mcve_statement",
+      "command": "cd \"$(mktemp -d)\" && python - <<'PY'\nimport coverage\ncov = coverage.Coverage()\ncov.load()\ncov._warn(\"Warning, warning 1!\", slug=\"bot\", once=True)\ncov._warn(\"Warning, warning 2!\", slug=\"bot\", once=True)\nPY\n",
+      "timeout_ms": 330000
+    },
+    {
+      "kind": "bash",
+      "id": "mcve_statement_pythonpath",
+      "command": "cd \"$(mktemp -d)\" && PYTHONPATH=/testbed python -c 'import coverage; print(coverage.__file__); cov = coverage.Coverage(); cov.load(); cov._warn(\"Warning, warning 1!\", slug=\"bot\", once=True)'",
+      "timeout_ms": 330000
+    },
+    {
+      "kind": "bash",
+      "id": "test_warn",
+      "command": "python -m pytest -o addopts=\"\" -p no:cacheprovider --color=no -rfE tests/test_api.py tests/test_testing.py -k warn",
+      "timeout_ms": 600000
+    }
+  ],
+  "solve": {
+    "wall_seconds": 1200,
+    "max_context_len": 32768,
+    "max_new_tokens": 4096
+  }
+}

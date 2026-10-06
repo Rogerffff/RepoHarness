@@ -1,0 +1,509 @@
+{
+  "schema": "pyd8793_next_materials.v1",
+  "as_of_utc": "2026-09-30T06:54:32.610531+00:00",
+  "status": "prepared_not_implemented_not_activated_not_executed_not_runtime_schema",
+  "instance_id": "pydantic__pydantic-8793",
+  "task_id": "swe_gym_lite::pydantic__pydantic-8793",
+  "repo": "pydantic/pydantic",
+  "base_commit": "832225b90672c68e2d4067bd0ffecf834d62b48b",
+  "base_tree": "11e57c7275fdd5baa73461a82eeee828ea47e522",
+  "source_bindings": {
+    "public": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+      "line": 171,
+      "canonical_json_digest": "sha256:afeb51eab6819a3af1efb73d54d77473eb1fe640db3026c3aa6142136a40656b"
+    },
+    "grading": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+      "line": 171,
+      "canonical_json_digest": "sha256:9b21be8de161d1185870b7ec25dd65ac43663b979c0ecdd446a0416c6e84c31b"
+    },
+    "validation": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+      "line": 171,
+      "canonical_json_digest": "sha256:6d4e3bd027f9811728b31c883c6d05291f001e324b0652281b37b05b88d7a3cc"
+    },
+    "environment": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/environment_packages_v0.jsonl",
+      "line": 171,
+      "canonical_json_digest": "sha256:3d9d721e973c47f17dae74eeee1a8b29b663fac2515a243bf1ce232df47be0fb"
+    }
+  },
+  "source_environment_package_digest": "sha256:3d9d721e973c47f17dae74eeee1a8b29b663fac2515a243bf1ce232df47be0fb",
+  "image_manifest_digest": "sha256:bdd9a2ddbca3a265f115d7f704eff78d39282f38d5be34bb8e338b717cc41b5c",
+  "raw_archive_sha256": "sha256:f769d97d42aaaa29abc965add499d66c9a38350c1bb20fa0a844e13ae5c9ba7f",
+  "proposal": {
+    "revision_id_candidate": "pyd8793-assigned-default-v1",
+    "operation_needed": "extend existing trusted replace_test_patch_append_p2p whitelist for this exact task/file/node; no generic parser change",
+    "public_bundle_changed": false,
+    "original_f2p_preserved": true,
+    "original_p2p_preserved": true,
+    "test_files": [
+      "tests/test_json_schema.py"
+    ],
+    "extra_patch_applies_to": "base plus original_test.patch",
+    "effective_patch_applies_to": "immutable base",
+    "added_p2p": [
+      "tests/test_json_schema.py::test_create_model_annotated_preserves_assigned_default"
+    ],
+    "expected_vendor_command": "pytest -rA --tb=short -vv -o console_output_style=classic --no-header tests/test_json_schema.py",
+    "parser_binding_change_needed": false,
+    "counts": {
+      "original_f2p": 3,
+      "original_p2p": 364,
+      "original_total": 367,
+      "added_p2p": 1,
+      "effective_f2p": 3,
+      "effective_p2p": 365,
+      "effective_total": 368
+    }
+  },
+  "frozen_source_assets": {
+    "source/original_public.json": {
+      "source": "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/public_bundle.json",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/source/original_public.json",
+      "sha256": "1ccf2c73ad2237addd6c49861d43118031f417694a4c0d22bb61b99d8dd62599",
+      "bytes": 3336
+    },
+    "source/base_identity.json": {
+      "source": "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/base_identity.json",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/source/base_identity.json",
+      "sha256": "e935085761b42a1efdada6a985575b6bcfc0626257ad179f61297dc11b91ba41",
+      "bytes": 749
+    },
+    "source/original_grading.json": {
+      "source": "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/grading.json",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/source/original_grading.json",
+      "sha256": "98d88e359bbcf38e11d775564fe91f27667df829b4adb7bc4efe2c5b4e6e1719",
+      "bytes": 30972
+    },
+    "original_test.patch": {
+      "source": "runs/swegym_quality_expansion_20260925/private/pydantic__pydantic-8793/test.patch",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/original_test.patch",
+      "sha256": "9998aa0c19304a159da5642bc3df24a6ab3b9de129f8ac4f6bd71c2e140041a8",
+      "bytes": 3071
+    },
+    "controls/gold.patch": {
+      "source": "runs/swegym_cpu_preprobe_20260929/task_inputs/pydantic__pydantic-8793/private_gold.patch",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/controls/gold.patch",
+      "sha256": "db816cd4802bd14e7428d09fff82141fdb3a2ee631a7fe3b809a12f701df273e",
+      "bytes": 830
+    },
+    "controls/forced_required.patch": {
+      "source": "runs/swegym_cpu_preprobe_20260929/task_inputs/pydantic__pydantic-8793/private_degenerate_force_required.patch",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/controls/forced_required.patch",
+      "sha256": "248e5947705576b7b12499d96bb2ad327a09c1edb3561e72af19b4b125e6185f",
+      "bytes": 390
+    },
+    "source/base/tests/test_json_schema.py": {
+      "source": "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/base/tests/test_json_schema.py",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/source/base/tests/test_json_schema.py",
+      "sha256": "099b2eff32c497de17dc8b64d8987c0e3325c9ea039dd2116f1539d7bdd99777",
+      "bytes": 188364
+    },
+    "source/base/tests/test_annotated.py": {
+      "source": "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/base/tests/test_annotated.py",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/source/base/tests/test_annotated.py",
+      "sha256": "ced46bab99735494c33ee41c4fdd5ac1beaae989a8b9c5ca011ff075b6778537",
+      "bytes": 15073
+    },
+    "source/base/tests/test_create_model.py": {
+      "source": "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/base/tests/test_create_model.py",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/source/base/tests/test_create_model.py",
+      "sha256": "0495c75e31b2eacd77bf7f4da8e86802c8858b78b4f80ab53c92ae010eac9c04",
+      "bytes": 18685
+    },
+    "source/base/pydantic/fields.py": {
+      "source": "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/base/pydantic/fields.py",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/source/base/pydantic/fields.py",
+      "sha256": "4eca0a15ab7ccefb1d2eec69f1a614573b9de5336b19a08688dd6f8e18b2f922",
+      "bytes": 45930
+    },
+    "source/base/docs/concepts/fields.md": {
+      "source": "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/base/docs/concepts/fields.md",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/source/base/docs/concepts/fields.md",
+      "sha256": "1175b646f2ad2af397791780d3eb6211b68905ef037fc9f07bdbd773475b840f",
+      "bytes": 20133
+    },
+    "environment/public_commands.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/task_inputs/pydantic__pydantic-8793/public_commands.json",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/environment/public_commands.json",
+      "sha256": "efc9196878c81786d949aa4e5e7501fd92bf1b6568f7c7d2ba9f3660e6f9ca9a",
+      "bytes": 3584
+    },
+    "environment/public_required.py": {
+      "source": "runs/swegym_cpu_preprobe_20260929/task_inputs/pydantic__pydantic-8793/public_required.py",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/environment/public_required.py",
+      "sha256": "cf614924e8165be848e9cda1f6bf42e64cf40cd1afe2e82cbcf0822202271a03",
+      "bytes": 1403
+    },
+    "environment/install_recipe.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/task_inputs/pydantic__pydantic-8793/install_recipe.json",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/environment/install_recipe.json",
+      "sha256": "d0b4d169e11a5cd78720d0d11f44a56a964adc18a7705cee7226f18f98f5a9a7",
+      "bytes": 958
+    },
+    "environment/recipe_restore.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/task_inputs/pydantic__pydantic-8793/recipe_restore.json",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/environment/recipe_restore.json",
+      "sha256": "920ac0e267b27e6027a8a7f1df6b434a09e8f47c997374b917e674a775ed54bb",
+      "bytes": 1032
+    },
+    "environment/candidate_install.sh": {
+      "source": "runs/swegym_cpu_preprobe_20260929/task_inputs/pydantic__pydantic-8793/candidate_install.sh",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/environment/candidate_install.sh",
+      "sha256": "b3010c99cc1109adec4322d33b70ea778a899ae93ebdce93317cd2e109e904d9",
+      "bytes": 584
+    },
+    "environment/Dockerfile.wheelhouse": {
+      "source": "runs/swegym_cpu_preprobe_20260929/task_inputs/pydantic__pydantic-8793/Dockerfile.wheelhouse",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/environment/Dockerfile.wheelhouse",
+      "sha256": "352caaf2eae8dc6fdb3291e9afaf85281a0b0199d6b3ee091d9e3d3247d44993",
+      "bytes": 126
+    },
+    "environment/fetch_wheels.py": {
+      "source": "runs/swegym_cpu_preprobe_20260929/task_inputs/pydantic__pydantic-8793/fetch_wheels.py",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/environment/fetch_wheels.py",
+      "sha256": "ebc88f82058b167e7b3010ae8fe985fa9a3fb7c22e9ea330d09839b413b69065",
+      "bytes": 1019
+    },
+    "environment/wheelhouse_manifest.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/task_inputs/pydantic__pydantic-8793/wheelhouse_manifest.json",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/environment/wheelhouse_manifest.json",
+      "sha256": "0ef853306ded144618bda0522e0bf81c5822888826c937fc2f3b316cb0782049",
+      "bytes": 4521
+    },
+    "environment/build_plan.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/task_inputs/pydantic__pydantic-8793/build_plan.json",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/environment/build_plan.json",
+      "sha256": "d24974354efba68f8823bdc686cc61787598146aa42752a240328789e19dc58e",
+      "bytes": 1990
+    },
+    "environment/input_manifest.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/task_inputs/pydantic__pydantic-8793/input_manifest.json",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/environment/input_manifest.json",
+      "sha256": "318c8e1135e23eadf4f6002166c2074e1bcd2020bae5bf006d9bd3e5703f3885",
+      "bytes": 3299
+    },
+    "history/calibration_v1/status.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/status.json",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/history/calibration_v1/status.json",
+      "sha256": "b474091055a515e636d64c9167943463d563202874870258bbcc24a53eb1f710",
+      "bytes": 7134
+    },
+    "history/calibration_v1/image.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/image.json",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/history/calibration_v1/image.json",
+      "sha256": "e0f4ee0caade080408ad4f4d9848fcb3ad187cfaf2d2789eb7d5a0c74e75f47f",
+      "bytes": 373
+    },
+    "history/calibration_v1/fetch_wheels.log": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/fetch_wheels.log",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/history/calibration_v1/fetch_wheels.log",
+      "sha256": "d56b14791565b418fdeba293cdef658bd78aa84f9d7cbad4d484f08efdd3c8cb",
+      "bytes": 852
+    },
+    "history/calibration_v1/build_grader.log": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/build_grader.log",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/history/calibration_v1/build_grader.log",
+      "sha256": "d54f4ab4d5517c9162ae6c3c99e9a4fe59bf63e9e241faafab847200451a847b",
+      "bytes": 1305
+    },
+    "history/calibration_v1/pull_base.log": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/pull_base.log",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/history/calibration_v1/pull_base.log",
+      "sha256": "a1641561c32c6307e6452403411bea522d7d55b3fa54d72c939d3e36e8b0b6be",
+      "bytes": 570
+    },
+    "history/calibration_v1/private_behavior/summary.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/private_behavior/summary.json",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/history/calibration_v1/private_behavior/summary.json",
+      "sha256": "1a4a45e6224fdebacc531be927c9c93361b086c2d8b82f51f3f02366ff68d624",
+      "bytes": 3787
+    },
+    "history/calibration_v1/private_behavior_spec.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/private_behavior_spec.json",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/history/calibration_v1/private_behavior_spec.json",
+      "sha256": "2f107ec3aff9f87eb0e72f75f12857c00e8c26c8612867bac7243519f5d3c39f",
+      "bytes": 3729
+    },
+    "history/private_behavior/base/public_defaults.out": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/private_behavior/base/public_defaults.out",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/history/private_behavior/base/public_defaults.out",
+      "sha256": "beb773756a4f540e9505fae3d90e0ce71ad4c0742349348cd9a5bb24a56122af",
+      "bytes": 19
+    },
+    "history/private_behavior/base/public_existing_tests.out": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/private_behavior/base/public_existing_tests.out",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/history/private_behavior/base/public_existing_tests.out",
+      "sha256": "3008d20fd826ac33c33837cf1693557ddeebb8ea9877cb198fd6e9e1d696a91d",
+      "bytes": 214
+    },
+    "history/private_behavior/base/public_required.out": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/private_behavior/base/public_required.out",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/history/private_behavior/base/public_required.out",
+      "sha256": "5cf1efae1a4e210608a764e041721c51187b8652a17392bd57844e9a310698c0",
+      "bytes": 899
+    },
+    "history/private_behavior/gold/public_defaults.out": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/private_behavior/gold/public_defaults.out",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/history/private_behavior/gold/public_defaults.out",
+      "sha256": "beb773756a4f540e9505fae3d90e0ce71ad4c0742349348cd9a5bb24a56122af",
+      "bytes": 19
+    },
+    "history/private_behavior/gold/public_existing_tests.out": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/private_behavior/gold/public_existing_tests.out",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/history/private_behavior/gold/public_existing_tests.out",
+      "sha256": "973799a08d47ab4edbafd624cee31eab5afa00f7310dd460706f4976f2474154",
+      "bytes": 214
+    },
+    "history/private_behavior/gold/public_required.out": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/private_behavior/gold/public_required.out",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/history/private_behavior/gold/public_required.out",
+      "sha256": "dd0e5c7cebfe984038dc4153076f8b50383c51471bbf6a506944b7058600e98f",
+      "bytes": 454
+    },
+    "history/private_behavior/forced_required/public_defaults.out": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/private_behavior/forced_required/public_defaults.out",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/history/private_behavior/forced_required/public_defaults.out",
+      "sha256": "754f289d5cd80c5d30a902a998de95291332f5cdef392b093de0be267e72580c",
+      "bytes": 426
+    },
+    "history/private_behavior/forced_required/public_existing_tests.out": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/private_behavior/forced_required/public_existing_tests.out",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/history/private_behavior/forced_required/public_existing_tests.out",
+      "sha256": "ec298d217ffe11e2ead9e272b57769ff36692c7e646c3c70fa98e14c433ef96d",
+      "bytes": 9064
+    },
+    "history/private_behavior/forced_required/public_required.out": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/private_behavior/forced_required/public_required.out",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/history/private_behavior/forced_required/public_required.out",
+      "sha256": "dd0e5c7cebfe984038dc4153076f8b50383c51471bbf6a506944b7058600e98f",
+      "bytes": 454
+    },
+    "history/result.json": {
+      "source": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/pydantic__pydantic-8793/result.json",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/history/result.json",
+      "sha256": "07a7a9d6f8fef92fb2c258e96e3658348a662ba4c6642354070d4657c0696974",
+      "bytes": 20079
+    },
+    "history/formal/noop/ledger.jsonl": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/noop/ledger.jsonl",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/history/formal/noop/ledger.jsonl",
+      "sha256": "8fb75b7d40b1c894d7421b99d9e10fe6ef0c39d80ae96e73de8238fde9694c39",
+      "bytes": 4732
+    },
+    "history/formal/noop/evallog_replay-cpu29-cal-pydanti_ee27b994.eval.log": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/noop/eval_logs/evallog_replay-cpu29-cal-pydanti_ee27b994.eval.log",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/history/formal/noop/evallog_replay-cpu29-cal-pydanti_ee27b994.eval.log",
+      "sha256": "5a383e68d72f30c4e7d1d433537b2bf5eea9e4fee720b74fc8a4e9402ce2edfb",
+      "bytes": 76077
+    },
+    "history/formal/noop/frozen_patch.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/noop/artifacts/swe_gym_lite--pydantic__pydantic-8793/a1-e4be31f1/frozen_patch.json",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/history/formal/noop/frozen_patch.json",
+      "sha256": "8b506f16378b1376369eed5c5af48781a01c1debcc2e93c239d221f298926c60",
+      "bytes": 756
+    },
+    "history/formal/gold/ledger.jsonl": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/gold/ledger.jsonl",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/history/formal/gold/ledger.jsonl",
+      "sha256": "d32d35b4c6c95fac493ee6622ed5db3a6e547cf31efa24e967b08e35e7a89fc1",
+      "bytes": 4888
+    },
+    "history/formal/gold/evallog_replay-cpu29-cal-pydanti_60d69a7b.eval.log": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/gold/eval_logs/evallog_replay-cpu29-cal-pydanti_60d69a7b.eval.log",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/history/formal/gold/evallog_replay-cpu29-cal-pydanti_60d69a7b.eval.log",
+      "sha256": "583b69c57b96dfbd439df23e993ddee9b3bdcb0755b1911c3339283df11dec1d",
+      "bytes": 66694
+    },
+    "history/formal/gold/frozen_patch.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/gold/artifacts/swe_gym_lite--pydantic__pydantic-8793/a1-9bc6e129/frozen_patch.json",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/history/formal/gold/frozen_patch.json",
+      "sha256": "d848c4574c138e2d0f05b39329a54015fb56e27db19f840794d57c55443cd73d",
+      "bytes": 62616
+    },
+    "history/formal/forced_required/ledger.jsonl": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/forced_required/ledger.jsonl",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/history/formal/forced_required/ledger.jsonl",
+      "sha256": "f725a31df9aca22eeed234bfa5ef4db9ddad387396ea61d4cae38dbaa6c7ffd0",
+      "bytes": 4950
+    },
+    "history/formal/forced_required/evallog_replay-cpu29-cal-pydanti_bdffb287.eval.log": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/forced_required/eval_logs/evallog_replay-cpu29-cal-pydanti_bdffb287.eval.log",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/history/formal/forced_required/evallog_replay-cpu29-cal-pydanti_bdffb287.eval.log",
+      "sha256": "5908550515ca26a99ac7662bb71e69026a87febccf50eede2425317a76ebd287",
+      "bytes": 66386
+    },
+    "history/formal/forced_required/frozen_patch.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/calibration_v1/forced_required/artifacts/swe_gym_lite--pydantic__pydantic-8793/a1-ec527b3c/frozen_patch.json",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/history/formal/forced_required/frozen_patch.json",
+      "sha256": "f2b0a9981f65daf308c9a7a389fc12ab765d4753494162fce58f6d798353e33e",
+      "bytes": 62358
+    },
+    "source/source_public_row.jsonl": {
+      "source": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+      "source_line": 171,
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/source/source_public_row.jsonl",
+      "sha256": "1ccf2c73ad2237addd6c49861d43118031f417694a4c0d22bb61b99d8dd62599",
+      "bytes": 3336
+    },
+    "source/source_grading_row.jsonl": {
+      "source": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+      "source_line": 171,
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/source/source_grading_row.jsonl",
+      "sha256": "98d88e359bbcf38e11d775564fe91f27667df829b4adb7bc4efe2c5b4e6e1719",
+      "bytes": 30972
+    },
+    "source/source_validation_row.jsonl": {
+      "source": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+      "source_line": 171,
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/source/source_validation_row.jsonl",
+      "sha256": "e3b35068ff48595212a67abf9899ee77994e627f6d895e4407e4bbc1bf775bb3",
+      "bytes": 1054
+    },
+    "source/source_environment_row.jsonl": {
+      "source": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/environment_packages_v0.jsonl",
+      "source_line": 171,
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/source/source_environment_row.jsonl",
+      "sha256": "52dfca0d3b6986cdc0b1764e23fff22ba3ff0bb522bc91e82cb17245bb1b4e99",
+      "bytes": 1069
+    },
+    "source/base/pyproject.toml": {
+      "source": "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-8793/base/pyproject.toml",
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/source/base/pyproject.toml",
+      "sha256": "cfc5d303365fc8aedb75d4a1c7b88d9a31c500f448cb79ce774fd88fa02381bc",
+      "bytes": 7814
+    }
+  },
+  "generated_assets": {
+    "extra_tests.patch": {
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/extra_tests.patch",
+      "sha256": "3e05a1e8cd4971511dbd1a81101037d1c6106fc908f76815d0b8fc58011889e5",
+      "bytes": 766
+    },
+    "effective_test.patch": {
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/effective_test.patch",
+      "sha256": "fbd9e64f29c2123ac1ee26519c31bf5a83b5e10d5e4558da0701e91a50313812",
+      "bytes": 3542
+    },
+    "references_candidate.json": {
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/references_candidate.json",
+      "sha256": "0fd01dfe9a038fe5bff225865328f2003080a7de57b384de902d87a8550773a9",
+      "bytes": 58199
+    },
+    "controls/noop.patch": {
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/controls/noop.patch",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "patch_commands.json": {
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/patch_commands.json",
+      "sha256": "acb7f0600f6953e44200a6f225095c78b88f5a021fa907eb44ae1f03547f63eb",
+      "bytes": 13401
+    },
+    "existing_node_analysis.json": {
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/existing_node_analysis.json",
+      "sha256": "0e69c7a9fdf6240246f70658d90f708ddbb8fde7515dfc75473f87ccdd1694ce",
+      "bytes": 999
+    },
+    "inspection/original_patched_test_json_schema.py": {
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/inspection/original_patched_test_json_schema.py",
+      "sha256": "111a68067006f0fec77dfea7cb1cc6067a72cf3dfeed8a68c14959ff7bcbbf6b",
+      "bytes": 190202
+    },
+    "inspection/effective_test_json_schema.py": {
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/inspection/effective_test_json_schema.py",
+      "sha256": "3af6c898539bb3f8314b92f6fae52155707a112f701d9eb14492967da5c7ef0d",
+      "bytes": 190559
+    },
+    "environment_reuse.json": {
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/environment_reuse.json",
+      "sha256": "2baa473527cd394e2282b0f81de2e9b723e7db05a2e089bada2bf6b5affaf56b",
+      "bytes": 11777
+    },
+    "static_checks.json": {
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/static_checks.json",
+      "sha256": "ecfab7739238a7b54b8a4f0a014b02752f6a2944204b66fa91ce1b3ae8278275",
+      "bytes": 707
+    },
+    "build_materials.py": {
+      "path": "runs/category2_repair_20260929/swe_materials/pyd8793_next/build_materials.py",
+      "sha256": "ed1e4b434a0ad3d461a895997d1173cd66eee45ccf1bbc861093e59576ae3c8f",
+      "bytes": 13940
+    }
+  },
+  "static_checks": {
+    "source_rows_match_frozen_public_grading": true,
+    "original_patch_and_gold_exact": true,
+    "original_references_preserved": true,
+    "added_node_unique_and_unparameterized": true,
+    "effective_equals_original_plus_extra": true,
+    "original_test_ast_preserved": true,
+    "patch_application_checks": 5,
+    "controls_applied_source_sha256": {
+      "gold": "d813d8cc32cb50056a1197e5972af774304ee40e347b100fc01fc4f1449530f1",
+      "forced_required": "5e46653351a916e9e2d070d1d882624ee6c5308b1c941bf9a9b6b230fc1b01c5"
+    },
+    "synthetic_fixture_note": "inspection Git commit is locally generated for patch application only; real base identity remains pinned original commit, no claim this fixture is actor repo"
+  },
+  "historical_evidence": {
+    "cpu_result": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/pydantic__pydantic-8793/result.json",
+    "independent_review": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/pydantic8793_result_review.md",
+    "old_formal_rewards": {
+      "noop": 0.0,
+      "gold": 1.0,
+      "forced_required": 1.0
+    },
+    "private_default_behavior": {
+      "base": "passed PUBLIC_DEFAULTS_OK",
+      "gold": "passed PUBLIC_DEFAULTS_OK",
+      "forced_required": "Defaults.x missing ValidationError before factory check"
+    }
+  },
+  "expected_not_observed": {
+    "new_node_status": {
+      "noop": "PASSED",
+      "gold": "PASSED",
+      "forced_required": "FAILED"
+    },
+    "effective_reward": {
+      "noop": 0,
+      "gold": 1,
+      "forced_required": 0
+    },
+    "reference_total": 368
+  },
+  "not_done": [
+    "trusted schema/registry/ingest implementation",
+    "real pytest collection or project test execution",
+    "new CPU matrix",
+    "new actor original-artifact direct grade",
+    "independent next-slice acceptance",
+    "shared activation or training eligibility"
+  ],
+  "activation_dependency": "root closes current MONAI CPU slice before this task implementation",
+  "environment_reuse": "runs/category2_repair_20260929/swe_materials/pyd8793_next/environment_reuse.json",
+  "implementation_basis_snapshot": {
+    "envpack/bundles_v2.py": {
+      "path": "runs/category2_repair_20260929/d6_monai_implementation_v1/code/rh2/src/repoharness2/envpack/bundles_v2.py",
+      "sha256": "33cf94a393e39e74d485a11ba430b194610e269e2b3b712e905025212d1d9a48",
+      "bytes": 34234
+    },
+    "envpack/swe_material_revisions.py": {
+      "path": "runs/category2_repair_20260929/d6_monai_implementation_v1/code/rh2/src/repoharness2/envpack/swe_material_revisions.py",
+      "sha256": "5abdcd928cd00d1b393b2ebc1c647171b86dfbb136335b39768d63320ce1defa",
+      "bytes": 16469
+    },
+    "envpack/spec_vendor.py": {
+      "path": "runs/category2_repair_20260929/d6_monai_implementation_v1/code/rh2/src/repoharness2/envpack/spec_vendor.py",
+      "sha256": "d2a7cde06f6a31a87b64a7c4bb97d1a7b81ae25e7a69a4f66869baa6b41948ae",
+      "bytes": 11457
+    },
+    "adapters/slime/prepared_task_face.py": {
+      "path": "runs/category2_repair_20260929/d6_monai_implementation_v1/code/rh2/src/repoharness2/adapters/slime/prepared_task_face.py",
+      "sha256": "b81407d2f1e2d049e5737825a278f4de34ce9cad418302c34b3cdc1c4a7ea9fa",
+      "bytes": 41756
+    }
+  }
+}

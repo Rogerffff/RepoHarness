@@ -1,0 +1,817 @@
+{
+  "schema": "non_author_source_image_matrix_adapter_r15_review.v1",
+  "as_of": "2026-10-03",
+  "review_status": "bounded_adapter_source_identity_static_review_and_single_old_helper_noop_evidence_complete",
+  "conclusion": {
+    "new_helper_branch_matches_frozen_r15_semantics": true,
+    "concrete_reproduced_image_wiring_blockers": [],
+    "new_helper_source_cpu_verified": false,
+    "old_helper_path_fixed": false,
+    "single_noop_formal_reward": 0,
+    "references_complete": 137,
+    "f2p_failures": 3,
+    "p2p_actual_passed": 134,
+    "full_matrix_qualification_granted": false,
+    "probe_or_training_qualification_granted": false
+  },
+  "independence_and_scope": {
+    "not_author_or_cpu_operator": true,
+    "prior_private_gold_and_report_exposure": true,
+    "not_public_blind_review": true,
+    "writes_only_two_review_files": true,
+    "cpu_ssh_docker_network_jobs_executed": false,
+    "local_check_scope": "内存AST分支 + R15原方法的mock Docker返回；未执行Docker子进程或任何安装/测试shell。",
+    "other_repository_task_materials_read": false
+  },
+  "version_assets": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tools/cpu_formal_matrix_source_identity_v2.py",
+      "sha256": "05080362f74eeba0cfacee4a51c2002a1806d2a387ee571bfb69ca695140e962",
+      "bytes": 11781
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tools/cpu_formal_matrix.py",
+      "sha256": "208430d5b5a87121c8473cb209858f95089e2716613325919028dcfa9d55c85d",
+      "bytes": 10775
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-formal-cpu-c-20261003-v1/remote/readback_manifest.json",
+      "sha256": "c73858cd16fe9fb6174c57c073cbc1893b46d165f5de6987950d886a7308bdbf",
+      "bytes": 4403
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe39_dask_monai_v1/manifest.json",
+      "sha256": "2b788d1ce84228a27894e04886ade347e91993f48ddc9bdeeb8f92de4aa92917",
+      "bytes": 285271
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe39_dask_monai_v1/repo/rh2/src/repoharness2/grading/manager.py",
+      "sha256": "1783533e1e3b66a57fcaa5a599a1da4f8e4e886318e24f040c6df91f294c1c1e",
+      "bytes": 225647
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe39_dask_monai_v1/repo/rh2/src/repoharness2/adapters/slime/replay_grade.py",
+      "sha256": "715076023e58d12cfcbc974a48ec2e979aa889bf9877862bb2aaf75620414595",
+      "bytes": 54803
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe39_dask_monai_v1/repo/rh2/src/repoharness2/adapters/slime/prepared_task_face.py",
+      "sha256": "2120533bb29ff3fb24df202c436fc48489da123feadf3a9e5abaed63daf304c6",
+      "bytes": 69207
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe39_dask_monai_v1/repo/rh2/src/repoharness2/adapters/slime/sandbox_profile.py",
+      "sha256": "313bfd7691c5dca775aa0e9992f13561e20936f062ddfa3d269892b6bf4895ee",
+      "bytes": 138643
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe39_dask_monai_v1/repo/rh2/src/repoharness2/envpack/materialize.py",
+      "sha256": "96e7ddf7ad77d1d2b07f2bec234131e5dea22343d4d98a94f80f6a998afd33bc",
+      "bytes": 13417
+    }
+  ],
+  "current_helper_path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tools/cpu_formal_matrix_source_identity_v2.py",
+  "new_helper_sha256": "05080362f74eeba0cfacee4a51c2002a1806d2a387ee571bfb69ca695140e962",
+  "restored_old_helper_sha256": "208430d5b5a87121c8473cb209858f95089e2716613325919028dcfa9d55c85d",
+  "move_identity": "新独立v2路径字节与核查开始时原路径上的050 helper精确相同；旧路径恢复208原件，旧脚本不称已修复。",
+  "actual_readback": {
+    "manifest": {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-formal-cpu-c-20261003-v1/remote/readback_manifest.json",
+      "sha256": "c73858cd16fe9fb6174c57c073cbc1893b46d165f5de6987950d886a7308bdbf",
+      "bytes": 4403
+    },
+    "members_verified": 25,
+    "total_member_bytes": 297126,
+    "mismatches": [],
+    "excluded": [],
+    "queue_status": "stopped_needs_diagnosis",
+    "members": [
+      {
+        "path": "attempt_01.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "attempt_01.stdout",
+        "sha256": "e795b69597394bb29668ecea7590fcf2d33acf798ecee6115af3670fa1b3dbd8",
+        "bytes": 81
+      },
+      {
+        "path": "config.json",
+        "sha256": "36b39e2af58a624c37b62f093a777cb444ddbeda794db4b7440c43d773d72bb8",
+        "bytes": 1385
+      },
+      {
+        "path": "queue.lock",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "run/formal_binding.json",
+        "sha256": "d2ecbf95127c84bd581ce0d8ccc70c2a4bce441c969224b5dda9d873702c3e78",
+        "bytes": 12189
+      },
+      {
+        "path": "run/grade_noop.log",
+        "sha256": "305e74ce080537da0804073c2f72d4158af68cac3d763bdecd05ea37d8060134",
+        "bytes": 858
+      },
+      {
+        "path": "run/noop/artifacts/swe_gym_lite--dask__dask-9378/a1-23d7831e/baseline_manifest.json",
+        "sha256": "a4885fdeb12addefcd864dedd855674c7ce16134c191bdf74f8a46729cae6378",
+        "bytes": 110627
+      },
+      {
+        "path": "run/noop/artifacts/swe_gym_lite--dask__dask-9378/a1-23d7831e/classification.json",
+        "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6",
+        "bytes": 93
+      },
+      {
+        "path": "run/noop/artifacts/swe_gym_lite--dask__dask-9378/a1-23d7831e/frozen_patch.json",
+        "sha256": "0bcd11a4fee2d5c3624b74155ea6aa63e25cd0515c24c5466a45d6c0d535fa44",
+        "bytes": 734
+      },
+      {
+        "path": "run/noop/artifacts/swe_gym_lite--dask__dask-9378/a1-23d7831e/projection.json",
+        "sha256": "d811b0c55f6f9c86f616ef2420d63b91740468d2052a06a570bad47041164830",
+        "bytes": 392
+      },
+      {
+        "path": "run/noop/artifacts/swe_gym_lite--dask__dask-9378/a1-23d7831e/stage.json",
+        "sha256": "cf90baa31f539034a44e5b5534f9bbe72913c811ed1c5844249647fab34fc73a",
+        "bytes": 837
+      },
+      {
+        "path": "run/noop/eval_logs/evallog_replay-dask9378-formal-c_0725faa2.diagnostics.json",
+        "sha256": "e741e53840319782929102ae92358d9c6a4648091f76d5492446547dee730733",
+        "bytes": 24099
+      },
+      {
+        "path": "run/noop/eval_logs/evallog_replay-dask9378-formal-c_0725faa2.eval.log",
+        "sha256": "96c971374f2ae14e4a4370aafa9b47d334b4b227cd2af907d3470cb8476884ab",
+        "bytes": 77974
+      },
+      {
+        "path": "run/noop/ledger.jsonl",
+        "sha256": "f9a59b8dcfe6973a6587755716177734a6935936a520ab4f2d251130cb0c4a44",
+        "bytes": 24076
+      },
+      {
+        "path": "run/prepare.log",
+        "sha256": "b4ee113559df3126d9535d16067f63d291da2ce2adb85928ec1b7da001fefbff",
+        "bytes": 512
+      },
+      {
+        "path": "run/prepared/prepared_manifest.json",
+        "sha256": "8be6389250795937a53d0e1f5a502dc5e2e14f68eef293a43973345e3f0b2341",
+        "bytes": 912
+      },
+      {
+        "path": "run/prepared/prompts.jsonl",
+        "sha256": "43c8b44267abf58581c44c54a8001ad46a68432a7264bc12b6cfb27981efcf8f",
+        "bytes": 1425
+      },
+      {
+        "path": "run/prepared/replay_summary.json",
+        "sha256": "7b44584c12825c6080803e963ce9c44ff8776ce6a2cd10e8d9cbea0e1752b58d",
+        "bytes": 511
+      },
+      {
+        "path": "run/prepared/rollout_task_views.jsonl",
+        "sha256": "3c561bb6019712ce3b1b9d6bb268e3506d9cd8e476a5efaca914422c6714927d",
+        "bytes": 2550
+      },
+      {
+        "path": "run/private/host_grading_views.jsonl",
+        "sha256": "018185dd213e190809d28ae83687518cf6b40a2bda3fd3ef5c843fea3a7e1f85",
+        "bytes": 21481
+      },
+      {
+        "path": "run/status.json",
+        "sha256": "f16bfb37a6558cefe72bdc47a9e7e61f9cdc9bc955b0599218197c5a2c33e0b5",
+        "bytes": 15830
+      },
+      {
+        "path": "run/verify_release.log",
+        "sha256": "1d6e13b49d00a09df70941aa02d6d2e4b507aede95acd7d7aeb447a20f50075e",
+        "bytes": 189
+      },
+      {
+        "path": "scheduler.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "scheduler.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "status.json",
+        "sha256": "86f2323f2cfc31ffde4a99496ab9290f34f3355533b72a12f24aa30f9dd2b34c",
+        "bytes": 371
+      }
+    ]
+  },
+  "source_identity_semantics": {
+    "manifest_digest": "sha256:d59dc8d2aa23abc26c301754af4623f7bbad5d798713a6c5caa2d2113b6691b1",
+    "configured_source_image_id_expected": "sha256:1e5a0ee850161b35d33d26445f73e872488a45e0e436195af239190b68574096",
+    "configured_source_id_is_not_old_run_observed_container_id": true,
+    "old_ledger_image_id_actual": null,
+    "old_ledger_image_identity": "sha256:d59dc8d2aa23abc26c301754af4623f7bbad5d798713a6c5caa2d2113b6691b1",
+    "old_ledger_image_digest_expected": "sha256:d59dc8d2aa23abc26c301754af4623f7bbad5d798713a6c5caa2d2113b6691b1",
+    "source_image_inspect_new_helper_raw_artifact_present": false,
+    "prepare_gate": "单次 tag image inspect 要求恰好一项、Id精确等于config、RepoDigests含@expected manifest，并保存原始JSON；失败/缺字段/损坏直接中止。",
+    "row_gate": "source必须image_id_actual为None、image_identity=image_digest_expected=spec.image_manifest_digest、image_local_build精确为False；local_build维持实际config ID精确匹配。",
+    "source_config_id_inspected_field_meaning": "新helper字段标识prepare时tag inspect的configID，不是运行中容器ID；不补填ledger image_id_actual。",
+    "running_container_authority": "R15 SWEGradingManager._verify_image_digest先inspect运行中grader容器的.Image，然后针对该ID查询RepoDigests；启动后、checkout/安装/测试前校验，错误/空/损坏/查询失败抛GradingInfraError。",
+    "no_stale_tag_only_approval": "helper初始tag inspect不替代逐评分容器manifest校验；tag漂移到错manifest会被R15实际容器校验拒绝。",
+    "same_repo_digest_predicate": "helper以endswith(@expected digest)命中；manager以rpartition(@)[2]等于expected命中。正常Docker RepoDigests条目下相符；不扩展成任意恶意Docker输出的共同安全审计。",
+    "old_run_repo_digest_evidence_limit": "25原件未保存容器.Image/RepoDigests的raw stdout；依据冻结R15代码的强制调用顺序、无infra失败且完成实际评分，推断该受信校验通过，不声称独立取得容器configID原始证据。"
+  },
+  "bounded_in_memory_checks": {
+    "helper_actual_ast_branch_checks": [
+      {
+        "name": "prepare_source_valid_config_and_digest",
+        "accepted": true,
+        "matched_expected": true
+      },
+      {
+        "name": "prepare_source_wrong_config",
+        "accepted": false,
+        "matched_expected": true
+      },
+      {
+        "name": "prepare_source_wrong_digest",
+        "accepted": false,
+        "matched_expected": true
+      },
+      {
+        "name": "prepare_source_empty_digests",
+        "accepted": false,
+        "matched_expected": true
+      },
+      {
+        "name": "prepare_source_missing_digests",
+        "accepted": false,
+        "matched_expected": true
+      },
+      {
+        "name": "prepare_source_missing_id",
+        "accepted": false,
+        "matched_expected": true
+      },
+      {
+        "name": "prepare_source_empty_inspect",
+        "accepted": false,
+        "matched_expected": true
+      },
+      {
+        "name": "prepare_source_multiple_inspect",
+        "accepted": false,
+        "matched_expected": true
+      },
+      {
+        "name": "row_source_null_exact_digest",
+        "accepted": true,
+        "matched_expected": true
+      },
+      {
+        "name": "row_source_non_null_config",
+        "accepted": false,
+        "matched_expected": true
+      },
+      {
+        "name": "row_source_wrong_identity",
+        "accepted": false,
+        "matched_expected": true
+      },
+      {
+        "name": "row_source_wrong_expected_digest",
+        "accepted": false,
+        "matched_expected": true
+      },
+      {
+        "name": "row_source_missing_image_id_actual",
+        "accepted": false,
+        "matched_expected": true
+      },
+      {
+        "name": "row_source_missing_image_identity",
+        "accepted": false,
+        "matched_expected": true
+      },
+      {
+        "name": "row_source_missing_image_digest_expected",
+        "accepted": false,
+        "matched_expected": true
+      },
+      {
+        "name": "local_build_config_exact",
+        "accepted": true,
+        "matched_expected": true
+      },
+      {
+        "name": "local_build_config_wrong",
+        "accepted": false,
+        "matched_expected": true
+      },
+      {
+        "name": "local_build_config_null",
+        "accepted": false,
+        "matched_expected": true
+      }
+    ],
+    "r15_actual_unbound_manager_method_checks": [
+      {
+        "name": "match",
+        "accepted": true,
+        "matched_expected": true
+      },
+      {
+        "name": "missing_container_image",
+        "accepted": false,
+        "matched_expected": true
+      },
+      {
+        "name": "wrong_digest",
+        "accepted": false,
+        "matched_expected": true
+      },
+      {
+        "name": "empty_digests",
+        "accepted": false,
+        "matched_expected": true
+      },
+      {
+        "name": "null_digests",
+        "accepted": false,
+        "matched_expected": true
+      },
+      {
+        "name": "broken_json",
+        "accepted": false,
+        "matched_expected": true
+      },
+      {
+        "name": "digest_inspect_failed",
+        "accepted": false,
+        "matched_expected": true
+      }
+    ],
+    "checks_passed": 25,
+    "docker_calls_mocked": true,
+    "tested_code_sha256": "05080362f74eeba0cfacee4a51c2002a1806d2a387ee571bfb69ca695140e962",
+    "not_cpu_task_or_live_docker_validation": true
+  },
+  "formal_binding": {
+    "host_grading_view_json_sha256": "d4293f4ea9838a313bd9e09eb6b21d53211784d83a8a0e214ff73504876381d4",
+    "host_grading_artifact_sha256": "018185dd213e190809d28ae83687518cf6b40a2bda3fd3ef5c843fea3a7e1f85",
+    "grading_bundle_digest": "sha256:26ae813940ea2b3f8654ba39ecdfc9a5a73c4e7bbe519844321d78fbe132d8e7",
+    "environment_package_digest": "sha256:ed78bee0067cd35dfd7db0160a60bd195e1ebd0fb464e38e8413759c4d524986",
+    "grading_materials_identity": "sha256:2823a332c83a6a37ce56e3cb1816fa7d267788b4616b28f76be8c4896fc915c4",
+    "grading_revision": {
+      "revision_id": "dask9378-mask-route-b-v1",
+      "registry_sha256": "sha256:0bff171663a71176b75371d4e68dcdb1deec3fe520f60c69554d7a3b40b5e1d5",
+      "parent_grading_digest": "sha256:c38ca93fdd5582ee9c93cff21f5c3d8861a369a110f8fff6191fb0063e9e0a5b",
+      "grading_bundle_digest": "sha256:26ae813940ea2b3f8654ba39ecdfc9a5a73c4e7bbe519844321d78fbe132d8e7",
+      "public_bundle_digest": "sha256:1c2541744ca463d35e97a1fdd86df8c512787953f5b410a43de3a92d5dfba242",
+      "environment_package_digest": "sha256:ed78bee0067cd35dfd7db0160a60bd195e1ebd0fb464e38e8413759c4d524986",
+      "parser_version": "swebench-4.1.0+swegym_parsers@242429c1",
+      "binding_version": null,
+      "materials_identity": "sha256:2823a332c83a6a37ce56e3cb1816fa7d267788b4616b28f76be8c4896fc915c4",
+      "test_command": "pytest -n0 -rA  --color=no dask/array/tests/test_masked.py",
+      "state": "not_evaluated",
+      "apply_ok": null,
+      "partitions": {
+        "original_f2p": {
+          "references": [
+            "dask/array/tests/test_masked.py::test_like_funcs[empty_like]",
+            "dask/array/tests/test_masked.py::test_like_funcs[zeros_like]",
+            "dask/array/tests/test_masked.py::test_like_funcs[ones_like]"
+          ],
+          "result": null
+        },
+        "original_p2p": {
+          "references": [
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>4]",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>1]",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>12]",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>0]",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>7]",
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>11]",
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>20]",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>6]",
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>14]",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>25]",
+            "dask/array/tests/test_masked.py::test_reductions_allmasked[prod-f8]",
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>2]",
+            "dask/array/tests/test_masked.py::test_reductions_allmasked[sum-i8]",
+            "dask/array/tests/test_masked.py::test_creation_functions",
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>17]",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>6]",
+            "dask/array/tests/test_masked.py::test_arg_reductions[argmax]",
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>18]",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>18]",
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>7]",
+            "dask/array/tests/test_masked.py::test_reductions_allmasked[prod-i8]",
+            "dask/array/tests/test_masked.py::test_reductions[mean-i8]",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>16]",
+            "dask/array/tests/test_masked.py::test_reductions[any-i8]",
+            "dask/array/tests/test_masked.py::test_tokenize_masked_array",
+            "dask/array/tests/test_masked.py::test_set_fill_value",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>14]",
+            "dask/array/tests/test_masked.py::test_filled",
+            "dask/array/tests/test_masked.py::test_reductions_allmasked[any-f8]",
+            "dask/array/tests/test_masked.py::test_reductions[max-i8]",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>18]",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>14]",
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>5]",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>21]",
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>19]",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>22]",
+            "dask/array/tests/test_masked.py::test_reductions_allmasked[any-i8]",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>1]",
+            "dask/array/tests/test_masked.py::test_cumulative",
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>23]",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>16]",
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>21]",
+            "dask/array/tests/test_masked.py::test_reductions[any-f8]",
+            "dask/array/tests/test_masked.py::test_arithmetic_results_in_masked",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>10]",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>20]",
+            "dask/array/tests/test_masked.py::test_reductions_allmasked[max-f8]",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>21]",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>23]",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>25]",
+            "dask/array/tests/test_masked.py::test_reductions[std-f8]",
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>1]",
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>10]",
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>24]",
+            "dask/array/tests/test_masked.py::test_arg_reductions[argmin]",
+            "dask/array/tests/test_masked.py::test_reductions_allmasked[mean-f8]",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>11]",
+            "dask/array/tests/test_masked.py::test_reductions[sum-f8]",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>11]",
+            "dask/array/tests/test_masked.py::test_reductions_allmasked[std-i8]",
+            "dask/array/tests/test_masked.py::test_reductions_allmasked[min-f8]",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>0]",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>2]",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>19]",
+            "dask/array/tests/test_masked.py::test_reductions[all-i8]",
+            "dask/array/tests/test_masked.py::test_reductions_allmasked[all-i8]",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>3]",
+            "dask/array/tests/test_masked.py::test_reductions[prod-i8]",
+            "dask/array/tests/test_masked.py::test_reductions_allmasked[var-f8]",
+            "dask/array/tests/test_masked.py::test_reductions_allmasked[sum-f8]",
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>26]",
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>3]",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>17]",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>8]",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>13]",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>8]",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>3]",
+            "dask/array/tests/test_masked.py::test_mixed_output_type",
+            "dask/array/tests/test_masked.py::test_from_array_masked_array",
+            "dask/array/tests/test_masked.py::test_masked_array",
+            "dask/array/tests/test_masked.py::test_count",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>26]",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>19]",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>4]",
+            "dask/array/tests/test_masked.py::test_average_weights_with_masked_array[False]",
+            "dask/array/tests/test_masked.py::test_reductions[all-f8]",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>24]",
+            "dask/array/tests/test_masked.py::test_accessors",
+            "dask/array/tests/test_masked.py::test_average_weights_with_masked_array[True]",
+            "dask/array/tests/test_masked.py::test_reductions[var-f8]",
+            "dask/array/tests/test_masked.py::test_reductions[mean-f8]",
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>0]",
+            "dask/array/tests/test_masked.py::test_reductions_allmasked[min-i8]",
+            "dask/array/tests/test_masked.py::test_tensordot",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>5]",
+            "dask/array/tests/test_masked.py::test_reductions[max-f8]",
+            "dask/array/tests/test_masked.py::test_reductions_allmasked[std-f8]",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>12]",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>7]",
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>22]",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>5]",
+            "dask/array/tests/test_masked.py::test_reductions[var-i8]",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>24]",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>15]",
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>12]",
+            "dask/array/tests/test_masked.py::test_reductions_allmasked[mean-i8]",
+            "dask/array/tests/test_masked.py::test_reductions_allmasked[all-f8]",
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>9]",
+            "dask/array/tests/test_masked.py::test_reductions[prod-f8]",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>9]",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>17]",
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>13]",
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>8]",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>9]",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>10]",
+            "dask/array/tests/test_masked.py::test_copy_deepcopy",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>2]",
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>15]",
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>25]",
+            "dask/array/tests/test_masked.py::test_reductions[min-i8]",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>15]",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>20]",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>13]",
+            "dask/array/tests/test_masked.py::test_reductions[sum-i8]",
+            "dask/array/tests/test_masked.py::test_reductions_allmasked[var-i8]",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>23]",
+            "dask/array/tests/test_masked.py::test_reductions_allmasked[max-i8]",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>22]",
+            "dask/array/tests/test_masked.py::test_reductions[min-f8]",
+            "dask/array/tests/test_masked.py::test_mixed_random[<lambda>4]",
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>6]",
+            "dask/array/tests/test_masked.py::test_basic[<lambda>26]",
+            "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>16]",
+            "dask/array/tests/test_masked.py::test_reductions[std-i8]"
+          ],
+          "result": null
+        }
+      }
+    },
+    "image_id": "sha256:1e5a0ee850161b35d33d26445f73e872488a45e0e436195af239190b68574096",
+    "image_local_build": false,
+    "image_manifest_digest": "sha256:d59dc8d2aa23abc26c301754af4623f7bbad5d798713a6c5caa2d2113b6691b1",
+    "setup_seconds": 300.0,
+    "prepared_manifest_sha256": "8be6389250795937a53d0e1f5a502dc5e2e14f68eef293a43973345e3f0b2341"
+  },
+  "local_readonly_recomputation": {
+    "source_spec_image_local_build": false,
+    "source_spec_image_local_build_id": null,
+    "source_spec_manifest_digest": "sha256:d59dc8d2aa23abc26c301754af4623f7bbad5d798713a6c5caa2d2113b6691b1",
+    "setup_seconds": 300.0,
+    "host_view_json_ascii_default_sha256": "d4293f4ea9838a313bd9e09eb6b21d53211784d83a8a0e214ff73504876381d4",
+    "material_identity": "sha256:2823a332c83a6a37ce56e3cb1816fa7d267788b4616b28f76be8c4896fc915c4",
+    "scripts_digest": "sha256:973844ec7101c4754a1a0d3ca73815717f75430a80a494d0dcb1d184f68bac69",
+    "effective_test_patch_sha256": "9fc1a9d5ae885d9cc30388a875ab7ed629081de7ba7bdcc8571f3aca604a248a",
+    "all_equal_to_original_bindings": true
+  },
+  "single_noop": {
+    "ledger": {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-formal-cpu-c-20261003-v1/remote/run/noop/ledger.jsonl",
+      "sha256": "f9a59b8dcfe6973a6587755716177734a6935936a520ab4f2d251130cb0c4a44",
+      "bytes": 24076
+    },
+    "eval_log": {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-formal-cpu-c-20261003-v1/remote/run/noop/eval_logs/evallog_replay-dask9378-formal-c_0725faa2.eval.log",
+      "sha256": "96c971374f2ae14e4a4370aafa9b47d334b4b227cd2af907d3470cb8476884ab",
+      "bytes": 77974
+    },
+    "diagnostics": {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-formal-cpu-c-20261003-v1/remote/run/noop/eval_logs/evallog_replay-dask9378-formal-c_0725faa2.diagnostics.json",
+      "sha256": "e741e53840319782929102ae92358d9c6a4648091f76d5492446547dee730733",
+      "bytes": 24099
+    },
+    "run_id": "dask9378-formal-cpu-c-20261003-v1-noop",
+    "formal_reward": 0.0,
+    "f2p_pass": 0,
+    "f2p_total": 3,
+    "p2p_pass": 134,
+    "p2p_total": 134,
+    "references_actual_test_segment": {
+      "dask/array/tests/test_masked.py::test_tokenize_masked_array": "PASSED",
+      "dask/array/tests/test_masked.py::test_from_array_masked_array": "PASSED",
+      "dask/array/tests/test_masked.py::test_copy_deepcopy": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>0]": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>1]": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>2]": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>3]": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>4]": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>5]": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>6]": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>7]": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>9]": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>10]": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>11]": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>12]": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>13]": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>14]": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>15]": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>16]": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>17]": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>18]": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>19]": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>20]": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>21]": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>22]": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>23]": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>24]": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>25]": "PASSED",
+      "dask/array/tests/test_masked.py::test_basic[<lambda>26]": "PASSED",
+      "dask/array/tests/test_masked.py::test_tensordot": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>0]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>1]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>2]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>3]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>4]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>5]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>6]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>7]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>9]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>10]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>11]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>12]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>13]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>14]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>15]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>16]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>17]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>18]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>19]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>20]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>21]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>22]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>23]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>24]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>25]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_concatenate[<lambda>26]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>0]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>1]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>2]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>3]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>4]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>5]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>6]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>7]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>9]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>10]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>11]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>12]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>13]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>14]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>15]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>16]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>17]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>18]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>19]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>20]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>21]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>22]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>23]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>24]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>25]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_random[<lambda>26]": "PASSED",
+      "dask/array/tests/test_masked.py::test_mixed_output_type": "PASSED",
+      "dask/array/tests/test_masked.py::test_creation_functions": "PASSED",
+      "dask/array/tests/test_masked.py::test_filled": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions[sum-i8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions[sum-f8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions[prod-i8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions[prod-f8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions[mean-i8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions[mean-f8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions[var-i8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions[var-f8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions[std-i8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions[std-f8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions[min-i8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions[min-f8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions[max-i8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions[max-f8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions[any-i8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions[any-f8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions[all-i8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions[all-f8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions_allmasked[sum-i8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions_allmasked[sum-f8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions_allmasked[prod-i8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions_allmasked[prod-f8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions_allmasked[mean-i8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions_allmasked[mean-f8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions_allmasked[var-i8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions_allmasked[var-f8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions_allmasked[std-i8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions_allmasked[std-f8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions_allmasked[min-i8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions_allmasked[min-f8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions_allmasked[max-i8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions_allmasked[max-f8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions_allmasked[any-i8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions_allmasked[any-f8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions_allmasked[all-i8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_reductions_allmasked[all-f8]": "PASSED",
+      "dask/array/tests/test_masked.py::test_arg_reductions[argmin]": "PASSED",
+      "dask/array/tests/test_masked.py::test_arg_reductions[argmax]": "PASSED",
+      "dask/array/tests/test_masked.py::test_cumulative": "PASSED",
+      "dask/array/tests/test_masked.py::test_accessors": "PASSED",
+      "dask/array/tests/test_masked.py::test_masked_array": "PASSED",
+      "dask/array/tests/test_masked.py::test_set_fill_value": "PASSED",
+      "dask/array/tests/test_masked.py::test_average_weights_with_masked_array[False]": "PASSED",
+      "dask/array/tests/test_masked.py::test_average_weights_with_masked_array[True]": "PASSED",
+      "dask/array/tests/test_masked.py::test_arithmetic_results_in_masked": "PASSED",
+      "dask/array/tests/test_masked.py::test_count": "PASSED",
+      "dask/array/tests/test_masked.py::test_like_funcs[ones_like]": "FAILED",
+      "dask/array/tests/test_masked.py::test_like_funcs[zeros_like]": "FAILED",
+      "dask/array/tests/test_masked.py::test_like_funcs[empty_like]": "FAILED"
+    },
+    "reference_missing": [],
+    "reference_skipped": [],
+    "module_summary": "3 failed, 134 passed in 11.72s",
+    "failure_reason": "三个原F2P均在新增mask比较断言assert_eq(da.ma.getmaskarray(res),np.ma.getmaskarray(sol))失败：实际全False与参考非平凡mask不同。",
+    "nonroot_apply_user": "agent/54321",
+    "grader_uid": 54322,
+    "identity_evidence_limit": "54321/54322按ledger与冻结agent_ws/manager候选exec -u路径核查；本source题无额外geteuid前置probe，未伪称有独立id -u原件。",
+    "install": {
+      "candidate_exec_exit_code": 0,
+      "candidate_segment_completed": true,
+      "install_failed_commands": [],
+      "install_rc_last_command": 0,
+      "install_seconds": 3.143,
+      "install_skipped": false,
+      "log_partial": false,
+      "markers_seen": [
+        "RH2_INSTALL_RC",
+        "RH2_TEST_RC",
+        "RH2_TS_INSTALL_END",
+        "RH2_TS_INSTALL_START",
+        "RH2_TS_TEST_END",
+        "RH2_TS_TEST_START"
+      ],
+      "test_rc": 1,
+      "test_seconds": 13.878
+    },
+    "test": {
+      "exec_exit_code": 0,
+      "rc": 1,
+      "seconds": 13.878,
+      "segment_completed": true
+    },
+    "runner_integrity_changed": false,
+    "observed_import_path": "/testbed/dask/__init__.py",
+    "actual_runtime": "Linux Python3.10.14 / pytest8.3.2",
+    "candidate_cleanup": {
+      "detail": "",
+      "removed": true,
+      "steps": [
+        "rm:ok"
+      ]
+    },
+    "grader_manager_close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "supply_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0,
+      "containers_created_total": 1,
+      "containers_removed_total": 1,
+      "container_history_retained": 1,
+      "leases_total": 1
+    },
+    "final_status": {
+      "exit_code": 0,
+      "reason": "ok",
+      "grader_containers_open": [],
+      "cleanup_failures_total": 0,
+      "cleanup_failures_resolved": false
+    },
+    "resource": {
+      "mem_peak_mb": 4096.0,
+      "mem_peak_unavailable_or_zero": false
+    },
+    "resource_limit_scope": "账本peak4096MB接近记录的4GiB限额；完整测试与无infra失败不等于其他候选有资源余量。",
+    "projection": {
+      "frozen_patch_digest": "sha256:b2997927a8bdff3356dc4fd6b1431aeac04341e629fdc2076d431fd2eccc9cb1",
+      "ignored_paths": [],
+      "included_paths": [],
+      "unsupported_shape_reasons": []
+    },
+    "old_wrapper_terminal_status": "stopped_needs_diagnosis",
+    "old_wrapper_error": "AssertionError()",
+    "old_wrapper_formal_rows": [],
+    "old_wrapper_steps": [
+      {
+        "name": "verify_release",
+        "returncode": 0
+      },
+      {
+        "name": "prepare",
+        "returncode": 0
+      },
+      {
+        "name": "grade_noop",
+        "returncode": 0
+      }
+    ],
+    "terminal_meaning": "正式grader完成noop及清理；旧wrapper的image_id_actual=configID断言失败，未把该行加入formal_rows，矩阵未完成。"
+  },
+  "remaining_required_evidence": [
+    "新 helper source 分支必须由新不可变作业实际运行，保存 source_image_inspect.json 的原始 Id/RepoDigests 与正式consumer/material绑定；当前25原件没有该文件。",
+    "9378完整矩阵的正对照和其他负对照尚未在本审查原件中执行，必须实际回收逐行参考/安装/评分/清理后另做结果验收。",
+    "父线程报告快照c58d4ad6fd35eab8已启动，使用其冻结050字节和原相对名；本报告不读取其新运行结果，也不把“已启动”写成“已通过”。未来新launch应指独立v2路径。"
+  ],
+  "limitations": [
+    "只核source接续变化、冻结R15实际镜像校验及9378第一noop，未重审题面/全矩阵语义/共享grader全面安全。",
+    "未来source_config_id_inspected仅初始tag观测；不保证其等于每个后续容器configID，不扩写成实际容器ID。",
+    "原1次noop评分0保留；新helper实际CPU结果不能由内存mock检查替代。"
+  ]
+}

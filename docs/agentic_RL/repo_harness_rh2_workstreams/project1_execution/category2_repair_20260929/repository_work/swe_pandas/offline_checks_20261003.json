@@ -1,0 +1,749 @@
+{
+  "as_of": "2026-10-03",
+  "status": "offline_preparation_only",
+  "code": {
+    "parser": {
+      "path": "rh2/src/repoharness2/envpack/swegym_parsers.py",
+      "sha256": "sha256:995bb6aae58a94f9553946c2f9aea59a158ad4fdf4d7fc0137802c11362b2276"
+    },
+    "diagnostic_binding": {
+      "path": "rh2/experiments/env_recipe_repair_20260919/reference_bindings.py",
+      "sha256": "sha256:088f6f24574d7d52b9dbe37060e4474802c2b74130f05a0702fde5b49be5f4cd"
+    }
+  },
+  "binding_checks": [
+    {
+      "instance_id": "pandas-dev__pandas-48106",
+      "parent_binding_groups": 3,
+      "binding_groups": 5,
+      "added_groups": {
+        "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_loc_setitem_datetimeindex_tz[datetime.timezone(datetime.timedelta(days=-1,": [
+          "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_loc_setitem_datetimeindex_tz[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-idxer1]",
+          "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_loc_setitem_datetimeindex_tz[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-var]"
+        ],
+        "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1,": [
+          "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-DataFrame-2020-01-02 23:59:59.999999999]",
+          "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-DataFrame-None]",
+          "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-Series-2020-01-02 23:59:59.999999999]",
+          "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-Series-None]"
+        ]
+      },
+      "parent_source_rows": [
+        {
+          "kind": "grading",
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+          "line": 152,
+          "raw_line_sha256": "sha256:6c167fbe041f8937df7d53ad309d9192953ee99ff7474fda8469883227ed8be4",
+          "historical_hash_recorded": false,
+          "export_equal_to_source": true,
+          "canonical_digest": "sha256:3c5e123be70f030ed8355e8b9aa8b51c32651c33d2c7a3da34724080f0f1127f"
+        },
+        {
+          "kind": "public",
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+          "line": 152,
+          "raw_line_sha256": "sha256:8d7d46592adf312db910ba19706952896f6be9e3910f3de78518cc778770a85d",
+          "historical_hash_recorded": false,
+          "export_equal_to_source": true,
+          "canonical_digest": "sha256:23ec7b2316ca1852adbf2b80c998895f02f73e49d7848d407a6777c5c6a067f7"
+        }
+      ],
+      "historical_replay": {
+        "gold": {
+          "log": {
+            "path": "runs/env_recipe_repair_20260919/pandas_meta_v3/tasks/pandas-dev__pandas-48106/gold/eval_logs/evallog_replay-er19-pandas_meta__1160016c.eval.log",
+            "sha256": "sha256:70ed347fc4d9589d3b0908b0f33919568acf08c6ab2c85b1bbd5cc19366475e9"
+          },
+          "reference_count": 1036,
+          "missing_references": [],
+          "new_alias_states": {
+            "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_loc_setitem_datetimeindex_tz[datetime.timezone(datetime.timedelta(days=-1,": "PASSED",
+            "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1,": "PASSED"
+          },
+          "f2p_state_counts": {
+            "PASSED": 16,
+            "FAILED": 0,
+            "XFAIL": 0,
+            "SKIPPED": 0,
+            "ERROR": 0
+          },
+          "scope": "历史日志在当前解析/诊断绑定函数上的软件回放，不是重新评分或容器执行"
+        },
+        "noop": {
+          "log": {
+            "path": "runs/env_recipe_repair_20260919/pandas_meta_v3/tasks/pandas-dev__pandas-48106/noop/eval_logs/evallog_replay-er19-pandas_meta__67b00d26.eval.log",
+            "sha256": "sha256:588be0a87ea6cde725bf24d2b277b4737ca7fdd70762fa67976248af176798a9"
+          },
+          "reference_count": 1036,
+          "missing_references": [],
+          "new_alias_states": {
+            "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_loc_setitem_datetimeindex_tz[datetime.timezone(datetime.timedelta(days=-1,": "PASSED",
+            "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1,": "PASSED"
+          },
+          "f2p_state_counts": {
+            "PASSED": 0,
+            "FAILED": 16,
+            "XFAIL": 0,
+            "SKIPPED": 0,
+            "ERROR": 0
+          },
+          "scope": "历史日志在当前解析/诊断绑定函数上的软件回放，不是重新评分或容器执行"
+        }
+      },
+      "synthetic_controls": [
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_loc_setitem_datetimeindex_tz[datetime.timezone(datetime.timedelta(days=-1,",
+          "case": "all_pass",
+          "bound": "PASSED"
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_loc_setitem_datetimeindex_tz[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_loc_setitem_datetimeindex_tz[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-idxer1]",
+          "case": "FAILED",
+          "legacy_alias": "FAILED",
+          "bound": "FAILED"
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_loc_setitem_datetimeindex_tz[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_loc_setitem_datetimeindex_tz[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-idxer1]",
+          "case": "ERROR",
+          "legacy_alias": "ERROR",
+          "bound": "ERROR"
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_loc_setitem_datetimeindex_tz[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_loc_setitem_datetimeindex_tz[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-idxer1]",
+          "case": "SKIPPED",
+          "legacy_alias": "SKIPPED",
+          "bound": "SKIPPED"
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_loc_setitem_datetimeindex_tz[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_loc_setitem_datetimeindex_tz[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-idxer1]",
+          "case": "XFAIL",
+          "legacy_alias": "XFAIL",
+          "bound": "XFAIL"
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_loc_setitem_datetimeindex_tz[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_loc_setitem_datetimeindex_tz[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-idxer1]",
+          "case": "missing",
+          "legacy_alias": "PASSED",
+          "bound": null
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_loc_setitem_datetimeindex_tz[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_loc_setitem_datetimeindex_tz[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-var]",
+          "case": "FAILED",
+          "legacy_alias": "FAILED",
+          "bound": "FAILED"
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_loc_setitem_datetimeindex_tz[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_loc_setitem_datetimeindex_tz[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-var]",
+          "case": "ERROR",
+          "legacy_alias": "ERROR",
+          "bound": "ERROR"
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_loc_setitem_datetimeindex_tz[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_loc_setitem_datetimeindex_tz[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-var]",
+          "case": "SKIPPED",
+          "legacy_alias": "SKIPPED",
+          "bound": "SKIPPED"
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_loc_setitem_datetimeindex_tz[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_loc_setitem_datetimeindex_tz[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-var]",
+          "case": "XFAIL",
+          "legacy_alias": "XFAIL",
+          "bound": "XFAIL"
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_loc_setitem_datetimeindex_tz[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestLocBaseIndependent::test_loc_setitem_datetimeindex_tz[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-var]",
+          "case": "missing",
+          "legacy_alias": "PASSED",
+          "bound": null
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1,",
+          "case": "all_pass",
+          "bound": "PASSED"
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-DataFrame-2020-01-02 23:59:59.999999999]",
+          "case": "FAILED",
+          "legacy_alias": "FAILED",
+          "bound": "FAILED"
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-DataFrame-2020-01-02 23:59:59.999999999]",
+          "case": "ERROR",
+          "legacy_alias": "ERROR",
+          "bound": "ERROR"
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-DataFrame-2020-01-02 23:59:59.999999999]",
+          "case": "SKIPPED",
+          "legacy_alias": "SKIPPED",
+          "bound": "SKIPPED"
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-DataFrame-2020-01-02 23:59:59.999999999]",
+          "case": "XFAIL",
+          "legacy_alias": "XFAIL",
+          "bound": "XFAIL"
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-DataFrame-2020-01-02 23:59:59.999999999]",
+          "case": "missing",
+          "legacy_alias": "PASSED",
+          "bound": null
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-DataFrame-None]",
+          "case": "FAILED",
+          "legacy_alias": "FAILED",
+          "bound": "FAILED"
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-DataFrame-None]",
+          "case": "ERROR",
+          "legacy_alias": "ERROR",
+          "bound": "ERROR"
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-DataFrame-None]",
+          "case": "SKIPPED",
+          "legacy_alias": "SKIPPED",
+          "bound": "SKIPPED"
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-DataFrame-None]",
+          "case": "XFAIL",
+          "legacy_alias": "XFAIL",
+          "bound": "XFAIL"
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-DataFrame-None]",
+          "case": "missing",
+          "legacy_alias": "PASSED",
+          "bound": null
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-Series-2020-01-02 23:59:59.999999999]",
+          "case": "FAILED",
+          "legacy_alias": "FAILED",
+          "bound": "FAILED"
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-Series-2020-01-02 23:59:59.999999999]",
+          "case": "ERROR",
+          "legacy_alias": "ERROR",
+          "bound": "ERROR"
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-Series-2020-01-02 23:59:59.999999999]",
+          "case": "SKIPPED",
+          "legacy_alias": "SKIPPED",
+          "bound": "SKIPPED"
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-Series-2020-01-02 23:59:59.999999999]",
+          "case": "XFAIL",
+          "legacy_alias": "XFAIL",
+          "bound": "XFAIL"
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-Series-2020-01-02 23:59:59.999999999]",
+          "case": "missing",
+          "legacy_alias": "PASSED",
+          "bound": null
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-Series-None]",
+          "case": "FAILED",
+          "legacy_alias": "FAILED",
+          "bound": "FAILED"
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-Series-None]",
+          "case": "ERROR",
+          "legacy_alias": "ERROR",
+          "bound": "ERROR"
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-Series-None]",
+          "case": "SKIPPED",
+          "legacy_alias": "SKIPPED",
+          "bound": "SKIPPED"
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-Series-None]",
+          "case": "XFAIL",
+          "legacy_alias": "XFAIL",
+          "bound": "XFAIL"
+        },
+        {
+          "alias": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1,",
+          "node": "pandas/tests/indexing/test_loc.py::TestPartialStringSlicing::test_loc_getitem_partial_slice_non_monotonicity[datetime.timezone(datetime.timedelta(days=-1, seconds=82800), 'foo')-Series-None]",
+          "case": "missing",
+          "legacy_alias": "PASSED",
+          "bound": null
+        }
+      ]
+    },
+    {
+      "instance_id": "pandas-dev__pandas-50319",
+      "parent_binding_groups": 1,
+      "binding_groups": 3,
+      "added_groups": {
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30": [
+          "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30 00:00:00-%Y-%m-%d %H:%M:%S]",
+          "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30 00:00:00.000000-%Y-%m-%d %H:%M:%S.%f]"
+        ],
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1": [
+          "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 00:00:00-%Y-%d-%m %H:%M:%S-True-None]",
+          "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 00:00:00-%Y-%m-%d %H:%M:%S-False-None]",
+          "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 0:0:0-%Y-%d-%m %H:%M:%S-True-None]",
+          "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 0:0:0-%Y-%m-%d %H:%M:%S-False-None]"
+        ]
+      },
+      "parent_source_rows": [
+        {
+          "kind": "grading",
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+          "line": 153,
+          "raw_line_sha256": "sha256:1762e9b770214443e8641b01a47334530b1da4c3d4b4a7b2cca658868b538aa4",
+          "historical_hash_recorded": true,
+          "export_equal_to_source": true,
+          "canonical_digest": "sha256:d37caa1d070ef67c1487e31485f8a5463d81761393acd88294aeaf99cc9ee17d"
+        },
+        {
+          "kind": "public",
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+          "line": 153,
+          "raw_line_sha256": "sha256:0a9b31050d4a20df1fab7be0c1fa147a314407315b70d0a08c84ed8abd171b21",
+          "historical_hash_recorded": true,
+          "export_equal_to_source": true,
+          "canonical_digest": "sha256:5c94214a75aca9417902ae115febdacf58f52a1a9a5f553631234c67832a7d27"
+        }
+      ],
+      "historical_replay": {
+        "gold": {
+          "log": {
+            "path": "runs/env_recipe_repair_20260919/reference_v1/runs/pandas-dev__pandas-50319-gold/eval_logs/evallog_replay-er19-ref-v1-panda_c332d5e5.eval.log",
+            "sha256": "sha256:48bba71fe66e379c3e42c8086860852460054196ca2c3b082df641e74ce4b89f"
+          },
+          "reference_count": 110,
+          "missing_references": [],
+          "new_alias_states": {
+            "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30": "PASSED",
+            "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1": "PASSED"
+          },
+          "f2p_state_counts": {
+            "PASSED": 1,
+            "FAILED": 0,
+            "XFAIL": 0,
+            "SKIPPED": 0,
+            "ERROR": 0
+          },
+          "scope": "历史日志在当前解析/诊断绑定函数上的软件回放，不是重新评分或容器执行"
+        },
+        "noop": {
+          "log": {
+            "path": "runs/env_recipe_repair_20260919/reference_v1/runs/pandas-dev__pandas-50319-noop/eval_logs/evallog_replay-er19-ref-v1-panda_55456694.eval.log",
+            "sha256": "sha256:83ac6be555387a8d9c650c70a3f4274648e54629d379b9a12098d96c7a038390"
+          },
+          "reference_count": 110,
+          "missing_references": [],
+          "new_alias_states": {
+            "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30": "PASSED",
+            "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1": "PASSED"
+          },
+          "f2p_state_counts": {
+            "PASSED": 0,
+            "FAILED": 1,
+            "XFAIL": 0,
+            "SKIPPED": 0,
+            "ERROR": 0
+          },
+          "scope": "历史日志在当前解析/诊断绑定函数上的软件回放，不是重新评分或容器执行"
+        }
+      },
+      "synthetic_controls": [
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30",
+          "case": "all_pass",
+          "bound": "PASSED"
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30 00:00:00-%Y-%m-%d %H:%M:%S]",
+          "case": "FAILED",
+          "legacy_alias": "FAILED",
+          "bound": "FAILED"
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30 00:00:00-%Y-%m-%d %H:%M:%S]",
+          "case": "ERROR",
+          "legacy_alias": "ERROR",
+          "bound": "ERROR"
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30 00:00:00-%Y-%m-%d %H:%M:%S]",
+          "case": "SKIPPED",
+          "legacy_alias": "SKIPPED",
+          "bound": "SKIPPED"
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30 00:00:00-%Y-%m-%d %H:%M:%S]",
+          "case": "XFAIL",
+          "legacy_alias": "XFAIL",
+          "bound": "XFAIL"
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30 00:00:00-%Y-%m-%d %H:%M:%S]",
+          "case": "missing",
+          "legacy_alias": "PASSED",
+          "bound": null
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30 00:00:00.000000-%Y-%m-%d %H:%M:%S.%f]",
+          "case": "FAILED",
+          "legacy_alias": "FAILED",
+          "bound": "FAILED"
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30 00:00:00.000000-%Y-%m-%d %H:%M:%S.%f]",
+          "case": "ERROR",
+          "legacy_alias": "ERROR",
+          "bound": "ERROR"
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30 00:00:00.000000-%Y-%m-%d %H:%M:%S.%f]",
+          "case": "SKIPPED",
+          "legacy_alias": "SKIPPED",
+          "bound": "SKIPPED"
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30 00:00:00.000000-%Y-%m-%d %H:%M:%S.%f]",
+          "case": "XFAIL",
+          "legacy_alias": "XFAIL",
+          "bound": "XFAIL"
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30 00:00:00.000000-%Y-%m-%d %H:%M:%S.%f]",
+          "case": "missing",
+          "legacy_alias": "PASSED",
+          "bound": null
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1",
+          "case": "all_pass",
+          "bound": "PASSED"
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 00:00:00-%Y-%d-%m %H:%M:%S-True-None]",
+          "case": "FAILED",
+          "legacy_alias": "FAILED",
+          "bound": "FAILED"
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 00:00:00-%Y-%d-%m %H:%M:%S-True-None]",
+          "case": "ERROR",
+          "legacy_alias": "ERROR",
+          "bound": "ERROR"
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 00:00:00-%Y-%d-%m %H:%M:%S-True-None]",
+          "case": "SKIPPED",
+          "legacy_alias": "SKIPPED",
+          "bound": "SKIPPED"
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 00:00:00-%Y-%d-%m %H:%M:%S-True-None]",
+          "case": "XFAIL",
+          "legacy_alias": "XFAIL",
+          "bound": "XFAIL"
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 00:00:00-%Y-%d-%m %H:%M:%S-True-None]",
+          "case": "missing",
+          "legacy_alias": "PASSED",
+          "bound": null
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 00:00:00-%Y-%m-%d %H:%M:%S-False-None]",
+          "case": "FAILED",
+          "legacy_alias": "FAILED",
+          "bound": "FAILED"
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 00:00:00-%Y-%m-%d %H:%M:%S-False-None]",
+          "case": "ERROR",
+          "legacy_alias": "ERROR",
+          "bound": "ERROR"
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 00:00:00-%Y-%m-%d %H:%M:%S-False-None]",
+          "case": "SKIPPED",
+          "legacy_alias": "SKIPPED",
+          "bound": "SKIPPED"
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 00:00:00-%Y-%m-%d %H:%M:%S-False-None]",
+          "case": "XFAIL",
+          "legacy_alias": "XFAIL",
+          "bound": "XFAIL"
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 00:00:00-%Y-%m-%d %H:%M:%S-False-None]",
+          "case": "missing",
+          "legacy_alias": "PASSED",
+          "bound": null
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 0:0:0-%Y-%d-%m %H:%M:%S-True-None]",
+          "case": "FAILED",
+          "legacy_alias": "FAILED",
+          "bound": "FAILED"
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 0:0:0-%Y-%d-%m %H:%M:%S-True-None]",
+          "case": "ERROR",
+          "legacy_alias": "ERROR",
+          "bound": "ERROR"
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 0:0:0-%Y-%d-%m %H:%M:%S-True-None]",
+          "case": "SKIPPED",
+          "legacy_alias": "SKIPPED",
+          "bound": "SKIPPED"
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 0:0:0-%Y-%d-%m %H:%M:%S-True-None]",
+          "case": "XFAIL",
+          "legacy_alias": "XFAIL",
+          "bound": "XFAIL"
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 0:0:0-%Y-%d-%m %H:%M:%S-True-None]",
+          "case": "missing",
+          "legacy_alias": "PASSED",
+          "bound": null
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 0:0:0-%Y-%m-%d %H:%M:%S-False-None]",
+          "case": "FAILED",
+          "legacy_alias": "FAILED",
+          "bound": "FAILED"
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 0:0:0-%Y-%m-%d %H:%M:%S-False-None]",
+          "case": "ERROR",
+          "legacy_alias": "ERROR",
+          "bound": "ERROR"
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 0:0:0-%Y-%m-%d %H:%M:%S-False-None]",
+          "case": "SKIPPED",
+          "legacy_alias": "SKIPPED",
+          "bound": "SKIPPED"
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 0:0:0-%Y-%m-%d %H:%M:%S-False-None]",
+          "case": "XFAIL",
+          "legacy_alias": "XFAIL",
+          "bound": "XFAIL"
+        },
+        {
+          "alias": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1",
+          "node": "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 0:0:0-%Y-%m-%d %H:%M:%S-False-None]",
+          "case": "missing",
+          "legacy_alias": "PASSED",
+          "bound": null
+        }
+      ]
+    }
+  ],
+  "test_revision_checks": {
+    "instance_id": "pandas-dev__pandas-50319",
+    "patch_checks": [
+      {
+        "candidate": "none_fallback",
+        "patch": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/tasks/pandas-dev__pandas-50319/candidates/none_fallback.patch",
+          "sha256": "sha256:eab59f565bc7a7a6f3c40192774468457cf89a3c45640decb2f2c8035c5473f6"
+        },
+        "git_apply_check": "passed",
+        "cython_compile": "not_run"
+      },
+      {
+        "candidate": "bad_format",
+        "patch": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/tasks/pandas-dev__pandas-50319/candidates/bad_format.patch",
+          "sha256": "sha256:00aafc40dd24c4b00233d7b13fc621017e4f12ae31a15a019f0fea1e8f497bf9"
+        },
+        "git_apply_check": "passed",
+        "cython_compile": "not_run"
+      },
+      {
+        "candidate": "reported_only_none",
+        "patch": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/tasks/pandas-dev__pandas-50319/candidates/reported_only_none.patch",
+          "sha256": "sha256:2339ea2766c1e8146f468d30949031e15b5a3f63b5d7c2af36fcd63487c091d4"
+        },
+        "git_apply_check": "passed",
+        "cython_compile": "not_run"
+      },
+      {
+        "candidate": "constant_none",
+        "patch": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/tasks/pandas-dev__pandas-50319/candidates/constant_none.patch",
+          "sha256": "sha256:1f223f792bcb08fd15ab90aecff103146b92c1aebb6d15a8b9c1679162b1e2f5"
+        },
+        "git_apply_check": "passed",
+        "cython_compile": "not_run"
+      },
+      {
+        "candidate": "gold",
+        "patch": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/tasks/pandas-dev__pandas-50319/candidates/gold.patch",
+          "sha256": "sha256:70ca3fa70b50975e2fe34f0f790e66f9f7c7a1453220c0bf6d69d30d145214ec"
+        },
+        "git_apply_check": "passed",
+        "cython_compile": "not_run"
+      }
+    ],
+    "test_patch_git_apply_check": "passed",
+    "effective_test_ast": "passed",
+    "oracle_return_value_controls": [
+      {
+        "case": "reported",
+        "return_value_control": "none",
+        "accepted": true
+      },
+      {
+        "case": "another-dot-date",
+        "return_value_control": "none",
+        "accepted": true
+      },
+      {
+        "case": "reported",
+        "return_value_control": "valid_format",
+        "accepted": true
+      },
+      {
+        "case": "another-dot-date",
+        "return_value_control": "valid_format",
+        "accepted": true
+      },
+      {
+        "case": "reported",
+        "return_value_control": "wrong_format",
+        "accepted": false
+      },
+      {
+        "case": "another-dot-date",
+        "return_value_control": "wrong_format",
+        "accepted": false
+      },
+      {
+        "case": "reported",
+        "return_value_control": "wrong_date",
+        "accepted": false
+      },
+      {
+        "case": "another-dot-date",
+        "return_value_control": "wrong_date",
+        "accepted": false
+      },
+      {
+        "case": "reported",
+        "return_value_control": "false",
+        "accepted": false
+      },
+      {
+        "case": "another-dot-date",
+        "return_value_control": "false",
+        "accepted": false
+      },
+      {
+        "case": "reported",
+        "return_value_control": "zero",
+        "accepted": false
+      },
+      {
+        "case": "another-dot-date",
+        "return_value_control": "zero",
+        "accepted": false
+      },
+      {
+        "case": "reported",
+        "return_value_control": "empty_string",
+        "accepted": false
+      },
+      {
+        "case": "another-dot-date",
+        "return_value_control": "empty_string",
+        "accepted": false
+      }
+    ],
+    "existing_parseable_format_guard_rejects_none": true,
+    "runtime_candidate_results": "not_run"
+  },
+  "limits": [
+    "绑定使用已有诊断函数，不是 Pandas 正式 D6 接线验收。",
+    "合成状态与返回值替身仅检查软件语义，未证明真实候选错分或运行结果。",
+    "未执行 pandas、Cython 编译、Docker、SSH 或模型；无 CPU/GPU 正式验收。"
+  ]
+}

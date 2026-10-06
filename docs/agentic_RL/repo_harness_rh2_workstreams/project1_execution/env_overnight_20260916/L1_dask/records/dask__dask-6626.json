@@ -1,0 +1,222 @@
+{
+ "task_id": "dask__dask-6626",
+ "source": "SWE-Gym lite (dask/dask 2.25)",
+ "task_revision": "upstream",
+ "materials_refs": [
+  "s2/ingest/public_bundles_v0.jsonl (problem_statement 1687 字符; image xingyaoww/sweb.eval.x86_64.dask_s_dask-6626:latest)",
+  "s2/ingest/grading_bundles_v2_v0.jsonl (test_patch; F2P=1; P2P=14; eval_cmd 'pytest -n0 -rA  --color=no'; version 2.25)",
+  "s2/ingest/validation_bundles_v0.jsonl (golden_patch, 1 行)",
+  "s2/raw/swe_gym_lite_full_f70b1a29.jsonl (hints_text 1608 字符)",
+  "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/dask__dask-6626/{gold,empty}/offline/a1/"
+ ],
+ "public_view": {
+  "goal": "dd.from_pandas(df).set_index('i') 之后，category 列的 `.cat.categories` 在 dask 元数据侧变成 Index(['a','b'])，而 compute() 之后是 Index([])；两种写法（先 set_index 再 from_pandas / 先 from_pandas 再 set_index）结果应一致。",
+  "constraints": [
+   "题面给出两段完整可运行代码与各自输出，可直接复现。",
+   "题面明确期望：两段代码结果相同。"
+  ],
+  "unknown_from_public": [
+   "'a','b' 从哪来题面没说 —— 实际来自 dask 构造 meta_nonempty 时用 _nonempty_index 生成的占位值。要定位到 dask/dataframe/utils.py::_nonempty_series 需要自己调试。",
+   "题面没说修复应落在 meta 构造侧还是 set_index 侧；而 F2P 只检查 meta_nonempty 的行为（见检查 24/25）。"
+  ],
+  "by": "L1_dask"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "56cd4597630feb1b01501c16d52aa862dd257a83:dask/dataframe/utils.py:555-559",
+    "56cd4597630feb1b01501c16d52aa862dd257a83:dask/dataframe/tests/test_utils_dataframe.py:123-158"
+   ],
+   "note": "test_patch 只改 dask/dataframe/tests/test_utils_dataframe.py，gold 只改 dask/dataframe/utils.py，base 均存在；同一问题（空 categories 时 cats=None 让 pd.Categorical 从占位数据推断出 'a','b'）。无二进制/LFS/子模块。",
+   "by": "L1_dask"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "56cd4597630feb1b01501c16d52aa862dd257a83:dask/dataframe/utils.py:558（cats = None）"
+   ],
+   "note": "base 的 `cats = None` 让 pd.Categorical(data, categories=None) 从 `_nonempty_index(s.cat.categories)` 产生的 ['a','b'] 推断类别，题面缺陷成立；empty 侧 F2P FAILED 印证。",
+   "by": "L1_dask"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "s2/raw/swe_gym_lite_full_f70b1a29.jsonl:dask__dask-6626.hints_text"
+   ],
+   "note": "题面完整、无截断、无外链图片。但 hints（1608 字符，不可见）含**定位级信息**：维护者的判断 'we're inappropriately converting UNKNOWN_CATEGORIES to known categories with the data from meta_nonempty'，以及报告者贴出的 pdb 跟踪（core.py:5174 _emulate → 5190 make_meta）。题面完全没有这些指向。",
+   "by": "L1_dask"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-6626.test_patch"
+   ],
+   "note": "test_patch 仅碰 dask/dataframe/tests/test_utils_dataframe.py（纯测试）；gold 仅碰 dask/dataframe/utils.py（纯源码）。",
+   "by": "L1_dask"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "同上"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "L1_dask"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dask/prescan.json"
+   ],
+   "note": "本包内唯一改 dask/dataframe/utils.py 的题，测试文件也不与他题共用。",
+   "by": "L1_dask"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-6626.test_patch"
+   ],
+   "note": "F2P 断言 `len(df3['K'].cat.categories) == 0`，即 meta_nonempty 对全 None 的 category 列不得凭空造类别 —— 这可以从题面推出。但题面的**具体场景（set_index）在 F2P 里完全不出现**：F2P 直接调 meta_nonempty，不经 from_pandas/set_index。也就是说“题面原例是否被修好”没有任何断言覆盖。",
+   "by": "L1_dask"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-6626.test_patch",
+    "56cd4597630feb1b01501c16d52aa862dd257a83:dask/dataframe/tests/test_utils_dataframe.py:172-190"
+   ],
+   "note": "**强制了修复位置**：F2P 直接对 `meta_nonempty(df2)` 断言，任何在 set_index / shuffle / make_meta 层做的等效修复都拿不到分。好的一面是不锁具体写法：`cats = s.cat.categories[:0]`、`cats = pd.Index([], dtype=s.cat.categories.dtype)` 等价实现都能过，且 P2P 的 test_meta_nonempty_empty_categories 用 `type(res.cat.categories) is type(s.cat.categories)` 对 f8/M8[ns] 做类型检查，能拦住写死 `pd.Index([])`（object 类型）的偷懒实现——这是本包 P2P 判别力最实的一处。",
+   "by": "L1_dask"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-6626.fail_to_pass"
+   ],
+   "note": "F2P 是被修改的既有大杂烩用例 test_meta_nonempty（一条 ID 覆盖 11 列断言），新增判据只有一行 `len(...)==0`。题面原例（set_index 后 `df1['col1'].cat.categories`）不被覆盖；若真实根因在别处，本题会“修好测试没修好 bug”。反向也成立：只让 `_nonempty_series` 在空类别时返回空 Categorical 即可满分。",
+   "by": "L1_dask"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "56cd4597630feb1b01501c16d52aa862dd257a83:dask/dataframe/tests/test_utils_dataframe.py:440-460"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_dask"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "validation_bundles_v0.jsonl:dask__dask-6626.golden_patch"
+   ],
+   "note": "gold 只有 1 行（`cats = None` → `cats = s.cat.categories[:0]`），无无关改动、不依赖未交付改动，且保留了 categories 的 dtype。",
+   "by": "L1_dask"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-6626.problem_statement"
+   ],
+   "note": "题面不含修复代码、无 PR/commit 号。hints 里也没有可直接抄的补丁（只有定位线索）。",
+   "by": "L1_dask"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-6626/gold/offline/a1/test_output.txt:431-434,440-470"
+   ],
+   "note": "安装 rc=0。但**工具链错配**：镜像是 Python 3.8.19 + pytest-8.3.2，而 dask 2.25 是 2020 年的代码，`pytest.warns(None)` 在 pytest 8 已被移除 → test_nonempty_series_sparse 直接 TypeError。即“该版本历史工具链已恢复”不成立（见 repo_level_findings.md#R3）。",
+   "by": "L1_dask"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "56cd4597630feb1b01501c16d52aa862dd257a83:dask/dataframe/tests/test_utils_dataframe.py"
+   ],
+   "note": "全文件无 mark.network / URL / requests / boto3 / s3fs / importorskip；只依赖 pandas+numpy。",
+   "by": "L1_dask"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-6626/gold/offline/a1/status_map.json"
+   ],
+   "note": "gold 侧 16 条结果行、0 SKIPPED、0 伪键；F2P+14 条 P2P 全 PASSED。不存在“F2P 因缺可选依赖被 skip”的风险。",
+   "by": "L1_dask"
+  },
+  "8": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-6626/gold/offline/a1/test_output.txt:511"
+   ],
+   "note": "**P2P 只有 14 条**，而与本题最相关的同族用例 `test_nonempty_series_sparse`（直接测 _nonempty_series 的另一分支）在镜像里恒 FAILED（pytest 8 的 pytest.warns(None)），因而被自动排除出参考集 —— 回归保护正好缺在最该保护的地方。",
+   "by": "L1_dask"
+  },
+  "9": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-6626/{gold,empty}/offline/a1/status_map.json"
+   ],
+   "note": "empty→F2P FAILED，gold→PASSED，P2P 两侧全 PASSED。",
+   "by": "L1_dask"
+  }
+ },
+ "issues": [
+  {
+   "category": "要求与判据错位",
+   "severity": "P2",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-6626.problem_statement",
+    "grading_bundles_v2_v0.jsonl:dask__dask-6626.test_patch"
+   ],
+   "proposed_action": "补一条以题面原例为形状的 F2P（dd.from_pandas(...).set_index('i') 后断言 `.cat.categories` 为空），让“题面被修好”可被验证。",
+   "next_experiment": "在 gold 树上跑题面两段代码，确认两者输出一致；在 base 上确认不一致。"
+  },
+  {
+   "category": "回归保护缺口（工具链错配导致）",
+   "severity": "P2",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-6626/gold/offline/a1/test_output.txt:440-470"
+   ],
+   "proposed_action": "要么把 pytest 钉回该版本 CI 的历史区间（dask 2.25 用 pytest<7），要么接受 test_nonempty_series_sparse 恒失败并在题级记录里标注回归缺口。属仓库级问题，见 repo_level_findings.md#R3。",
+   "next_experiment": "在镜像里 `pip install 'pytest<7'` 后重跑该文件，统计恢复多少条可用 P2P。"
+  },
+  {
+   "category": "强制修复位置",
+   "severity": "P3",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-6626.test_patch"
+   ],
+   "proposed_action": "仅记录；本题 gold 位置确是根因，强制不算错，但要意识到这会惩罚“在调用侧修好”的合理解答。",
+   "next_experiment": "无。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰测试文件，gold 只碰源码；按第四组 B 默认保持空。",
+  "evidence_refs": [
+   "grading_bundles_v2_v0.jsonl:dask__dask-6626.test_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "dask/dataframe/tests/test_utils_dataframe.py::test_meta_nonempty_empty_categories",
+   "reason": "已在 P2P；对 O/f8/M8[ns] 三种 categories dtype 做类型检查，是拦住“写死空 object Index”的唯一屏障，必须保留。"
+  },
+  {
+   "id": "dask/dataframe/tests/test_utils_dataframe.py::test_nonempty_series_sparse",
+   "reason": "同函数的另一分支，当前因 pytest 8 恒失败被排除；修好工具链后应纳入 P2P。"
+  },
+  {
+   "id": "dask/dataframe/tests/test_categorical.py::test_categorical_set_index / test_unknown_categoricals",
+   "reason": "题面场景（set_index + 未知/空 categories）的直接下游，能验证“题面被修好”，当前完全不在参考集内。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_review",
+  "reason": "材料一致、gold 精准、P2P 里有真正有判别力的同族用例；但 F2P 不覆盖题面场景，且最相关的同函数回归用例因 pytest 8 工具链错配被排除。补一条 set_index 形状的断言即可进探针。"
+ },
+ "costs": {
+  "minutes": 22
+ }
+}

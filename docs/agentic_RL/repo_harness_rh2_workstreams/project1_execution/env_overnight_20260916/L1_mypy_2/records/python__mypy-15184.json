@@ -1,0 +1,254 @@
+{
+ "task_id": "python__mypy-15184",
+ "source": "SWE-Gym lite / python/mypy PR 15184（修 assert_type 的 'Expression is of type \"X\", not \"X\"'）",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "13f35ad0915e70c2c299e2eb308968c86117132d",
+  "version": "1.4",
+  "python_version": "3.11",
+  "eval_cmd": "pytest -n0 -rA -k",
+  "f2p": [
+   "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1",
+   "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2"
+  ],
+  "p2p": [
+   "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3"
+  ],
+  "gold_paths": [
+   "mypy/messages.py"
+  ],
+  "test_patch_paths": [
+   "test-data/unit/check-assert-type-fail.test（新建文件）"
+  ],
+  "runtime_evidence": "无（不在 stage1 样本、in_e2 空、无 DeepSeek 候选）"
+ },
+ "public_view": {
+  "goal": "assert_type 失败时，源类型与目标类型短名相同（typing.SupportsIndex vs typing_extensions.SupportsIndex）会输出 'Expression is of type \"SupportsIndex\", not \"SupportsIndex\"'；要求输出全限定名。",
+  "constraints": [
+   "题面给完整复现与实际输出，无外链、无图片、无截断",
+   "题面后半段还抛出一个**未决问题**：'perhaps assert_type() should consider two protocols that define identical methods to be the same'，并说 'Curious what other people think'——这部分不是需求"
+  ],
+  "unknowns_from_public_only": [
+   "'全限定名'到什么程度：`array.array[int]` 与 `__main__.array` 这种（F2P 要求的）还是 `typing.SupportsIndex`？题面例子里两个名字都来自第三方模块，推不出 __main__ 前缀的写法",
+   "名字不冲突时要不要也全限定（F2P 的第三条 testAssertTypeFail3 要求**不要**），题面没说",
+   "题面后半段的 protocol 结构等价问题要不要一起做，题面自己也没结论"
+  ],
+  "base_code_evidence": [
+   "13f35ad09:mypy/messages.py:1658-1663 assert_type_fail 各自调用 format_type(source_type)/format_type(target_type)，不做消歧",
+   "13f35ad09:mypy/messages.py:2638-2652 已有 format_type_distinctly(*types, options, bare=False)，文档串明写 '要求同短名的不同类型格式化成不同字符串' —— gold 需要的能力在 base 现成"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "test_patch 是 `new file mode`，新建 test-data/unit/check-assert-type-fail.test",
+    "diff 末尾 `\\ No newline at end of file`"
+   ],
+   "note": "材料对应正确（gold 目标 mypy/messages.py 在 base 存在、hunk 逐行一致），无二进制/LFS/子模块。唯一卫生问题是新文件缺末尾换行。另注意：新建 .test 文件不需要在 mypy/test/testcheck.py 的 files 列表里登记吗——13f35ad09 的 TypeCheckSuite 用目录扫描（find_test_files），所以新文件能被自动收集；若换成老版本的显式 files 列表就会漏收，这类题在移植到其它 base 时要复查。",
+   "by": "L1_mypy_2"
+  },
+  "2": {
+   "status": "unknown",
+   "evidence_refs": [
+    "raw hints_text 里有一条上游评论：'This code doesn't produce any errors in current master branch. Is this fixed already...'，随后原作者承认 'The original repro case is a bit convoluted, not sure why I didn't do something simpler'",
+    "F2P 换用了一套完全不同的复现（import array as arr + 自定义 class array）"
+   ],
+   "note": "**题面给出的复现在 base 上很可能已经不报错**（上游自己这么说），因此'初态含题面所述缺陷'这一条静态无法确认。缺陷本身（同短名不消歧）在 base 成立（messages.py:1658-1663），但题面那段代码未必能触发。需要实跑题面原样代码确认。",
+   "by": "L1_mypy_2"
+  },
+  "3": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "hints_text 1894 字符，含 Jukka 的实现提示：'to fix this, it may be sufficient to use `format_type_distinctly` to convert the types to strings when generating the error message'",
+    "hints 还包含 '题面复现在 master 上不再报错' 这条关键更正"
+   ],
+   "note": "hints 同时含（a）近乎逐字的 gold 方案与（b）题面失效的更正，两条都对 agent 不可见。这是本包信息不对称最严重的一题之一。",
+   "by": "L1_mypy_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只新建 test-data/unit/check-assert-type-fail.test"
+   ],
+   "note": "无非测试源码；gold 不碰测试样路径。",
+   "by": "L1_mypy_2"
+  },
+  "17": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "同 file_rules"
+   ],
+   "note": "仓库级。",
+   "by": "L1_mypy_2"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "40 题里只有本题 test_patch 新建 check-assert-type-fail.test"
+   ],
+   "note": "无重复；同为 messages.py 的还有 12222/15139/15876，改的函数不同。",
+   "by": "L1_mypy_2"
+  },
+  "23": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "F2P 要求 `\"array.array[int]\", not \"__main__.array\"` 与 `\"__main__.array.array\"`"
+   ],
+   "note": "'__main__.' 这个前缀、以及嵌套类写成 '__main__.array.array' 的形式，公开材料完全推不出来——它是 format_type_distinctly 提高 verbosity 后的副产物。只有猜到要用现成的 format_type_distinctly 才能自然得到。",
+   "by": "L1_mypy_2"
+  },
+  "24": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "F2P 两条逐字断言全限定名字符串"
+   ],
+   "note": "实际上把实现锁到 format_type_distinctly 这一条路：自己写一个'短名冲突就加模块前缀'的实现，很难逐字产出 'array.array[int]'（注意源类型也被提升了 verbosity，而它本身并不冲突）与 '__main__.array.array'。",
+   "by": "L1_mypy_2"
+  },
+  "25": {
+   "status": "pass",
+   "evidence_refs": [
+    "P2P testAssertTypeFail3 要求名字不冲突时输出保持短名 `\"array[int]\", not \"int\"`"
+   ],
+   "note": "这条 P2P 少见地有判别力：它堵住了'一律输出全限定名'这种最省事的假修复。虽然它同样是 test_patch 新增文件里被 -k 选到的邻居，但功能上正好是 F2P 的对偶。",
+   "by": "L1_mypy_2"
+  },
+  "26": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "assert_type 的既有用例在 check-expressions.test / check-typeddict.test 等文件里，均未入 P2P"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_mypy_2"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 只改 assert_type_fail 一个函数；format_type_distinctly 在 13f35ad09:mypy/messages.py:2638 已存在且签名含 options 关键字"
+   ],
+   "note": "gold 正确、完整、无题外改动、不依赖未交付改动。它只解决了题面的第一半（全限定名），题面后半段的 protocol 等价问题上游没做，也没进 F2P——这点是对的（那本来就是开放讨论）。",
+   "by": "L1_mypy_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 无 PR/commit 链接、无修复代码"
+   ],
+   "note": "题面无泄漏；hints 有近乎逐字的方案但不可见。",
+   "by": "L1_mypy_2"
+  },
+  "6": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "未实跑安装。",
+   "by": "L1_mypy_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "三条 case 只用 [builtins fixtures/tuple.pyi]，在仓库内；`import array` 用的是 typeshed 自带 stub"
+   ],
+   "note": "无外部权重/数据依赖。",
+   "by": "L1_mypy_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "case 正文无网络调用"
+   ],
+   "note": "纯离线。",
+   "by": "L1_mypy_2"
+  },
+  "18": {
+   "status": "pass",
+   "evidence_refs": [
+    "kscan.json:python__mypy-15184 三条 over_select 均为空"
+   ],
+   "note": "注意 -k 'testAssertTypeFail1 or testAssertTypeFail2 or testAssertTypeFail3' 三条都选到了，没有遗漏。",
+   "by": "L1_mypy_2"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "nodeid 4 段；13f35ad09:mypy/test/data.py 含 DataFileCollector"
+   ],
+   "note": "形状一致。",
+   "by": "L1_mypy_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "stale_problem_statement",
+   "severity": "P1",
+   "evidence_refs": [
+    "hints_text 中上游评论称题面复现在 master 上已不报错；作者承认复现写得绕",
+    "F2P 改用 array.array/__main__.array 复现"
+   ],
+   "proposed_action": "实跑题面那段代码在 base 上的输出；若确实不报错，本题的 public_view 与评分就对不上，应把题面换成 F2P 用的那套复现。",
+   "next_experiment": "base 镜像里对题面代码直接跑 mypy，看是否出现 'Expression is of type \"SupportsIndex\", not \"SupportsIndex\"'。"
+  },
+  {
+   "category": "requirement_underspecified",
+   "severity": "P2",
+   "evidence_refs": [
+    "F2P 的 '__main__.array.array' 形式无法从题面推出"
+   ],
+   "proposed_action": "把'复用 format_type_distinctly'这条写进题面，或把 F2P 断言放宽成'两个名字必须不同'。",
+   "next_experiment": "自写一版'短名冲突才加模块前缀'的实现，跑 F2P 确认 testAssertTypeFail1 因源类型未提升 verbosity 而失败。"
+  },
+  {
+   "category": "test_hygiene",
+   "severity": "P3",
+   "evidence_refs": [
+    "test_patch 新文件缺末尾换行"
+   ],
+   "proposed_action": "补换行（不影响判分，仅卫生）。",
+   "next_experiment": "无。"
+  },
+  {
+   "category": "file_boundary",
+   "severity": "P1",
+   "evidence_refs": [
+    "rh2/src/repoharness2/grading/manager.py:656/672/581"
+   ],
+   "proposed_action": "建议把 mypy/test/* 与 test-data/* 纳入 hygiene 保护（40 题 gold 均不触碰）。",
+   "next_experiment": "构造只改 mypy/test/helpers.py::assert_string_arrays_equal 的候选 patch 走一次评分，确认当前会判满分。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 test-data/unit/ 下的 .test 数据文件，gold 只碰 mypy/ 源码，两者无交集，按第四组 B 默认保持空。仓库级建议（需用户裁定、对 40 题统一生效）：把 'mypy/test/*' 与 'test-data/*' 加入 hygiene.test_globs——40 题 gold 无一触碰这两处（已对 validation_bundles 全量核对），而当前 agent 改 mypy/test/helpers.py、mypy/test/data.py 或 test-data/unit/fixtures/*.pyi 既不被 eval 的 git checkout 还原，也不被判 rejected_test_tampering。副作用：agent 在 test-data/ 下建临时文件会让整份提交作废，需一并决定。",
+  "evidence_refs": [
+   "rh2/src/repoharness2/grading/manager.py:656、:672、:581",
+   "rh2/src/repoharness2/contracts/grading.py:118-121"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "grep 'assert_type' 命中的全部既有 case（check-expressions.test、check-typeddict.test、check-python310.test 等）",
+   "reason": "gold 改的是 assert_type 失败消息的唯一构造点。"
+  },
+  {
+   "id": "grep 'format_type_distinctly' 现有调用点对应的测试（参数不匹配、重载选择等消息）",
+   "reason": "确认复用该函数没有把 verbosity 提升带到别处。"
+  },
+  {
+   "id": "testAssertTypeFail3（已在 P2P）保留",
+   "reason": "唯一堵住'一律全限定名'的护栏。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_review",
+  "reason": "gold 干净、P2P 罕见地有判别力；但题面复现按上游自述已失效，且 F2P 的字符串形式只有用 format_type_distinctly 才能自然产出。先跑一次题面原样代码确认初态，再决定是换题面还是放宽断言。"
+ },
+ "costs": {
+  "minutes": 25
+ }
+}

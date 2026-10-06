@@ -1,0 +1,26 @@
+diff --git a/pydantic/functional_validators.py b/pydantic/functional_validators.py
+index 091452846..68325c38c 100644
+--- a/pydantic/functional_validators.py
++++ b/pydantic/functional_validators.py
+@@ -153,7 +153,21 @@ class PlainValidator:
+     func: core_schema.NoInfoValidatorFunction | core_schema.WithInfoValidatorFunction
+ 
+     def __get_pydantic_core_schema__(self, source_type: Any, handler: _GetCoreSchemaHandler) -> core_schema.CoreSchema:
++        # (rebuild of the first review's rv_before_sem) when the inner schema can be generated, run the function
++        # first and then the inner validation (before-validator semantics); otherwise keep the plain validator.
++        from .errors import PydanticSchemaGenerationError
++
++        try:
++            inner = handler(source_type)
++        except PydanticSchemaGenerationError:
++            inner = None
+         info_arg = _inspect_validator(self.func, 'plain')
++        if inner is not None:
++            if info_arg:
++                with_info = cast(core_schema.WithInfoValidatorFunction, self.func)
++                return core_schema.with_info_before_validator_function(with_info, inner, field_name=handler.field_name)
++            no_info = cast(core_schema.NoInfoValidatorFunction, self.func)
++            return core_schema.no_info_before_validator_function(no_info, inner)
+         if info_arg:
+             func = cast(core_schema.WithInfoValidatorFunction, self.func)
+             return core_schema.with_info_plain_validator_function(func, field_name=handler.field_name)

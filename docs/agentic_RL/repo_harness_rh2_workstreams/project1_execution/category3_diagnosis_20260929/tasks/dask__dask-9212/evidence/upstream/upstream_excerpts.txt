@@ -1,0 +1,58 @@
+# upstream dask normalize_enum (raw.githubusercontent.com/dask/dask/<tag>/<path>, fetched 2026-09-30; corroboration only, not public basis)
+b11b039bf38f2195a1ffe90da663e679dda6fe175725add1fd6cabccd5868401  up_2022.7.0_base.py
+bf896e33536e4f60802419046e147da0ceb44c72878290ad7abe9b9fb5d918df  up_2023.12.1_base.py
+fab95d3baec01d8f1924b7f90a5fab433e4dc05b8774251bbc3d96f4cac81c92  up_2024.2.0_base.py
+ffb4a549c8fbfcbccfdb0a48b1625e8677d109a448cac1ee5e0385ada58e66f6  up_2025.9.1_base.py
+edc3202efc148a7a472941647854dc0c22a1cef77326beed543251bd593234e7  up_2025.9.1_tokenize.py
+=== up_2022.7.0_base.py
+1006:@normalize_token.register(Enum)
+1007-def normalize_enum(e):
+1008-    return type(e).__name__, e.name, e.value
+1009-
+=== up_2023.12.1_base.py
+1072:@normalize_token.register(Enum)
+1073-def normalize_enum(e):
+1074-    return type(e).__name__, e.name, e.value
+1075-
+=== up_2024.2.0_base.py
+1140:@normalize_token.register(Enum)
+1141-def normalize_enum(e):
+1142-    return _normalize_seq_func((type(e), e.name, e.value))
+1143-
+=== up_2024.2.0_base.py normalize_type
+1056:def normalize_type(typ):
+1057-    # This allows for some ambiguity in case a type is redefined in a local
+1058-    # scope of a module however, defining this further breaks tokenization for
+1059-    # local objects entirely
+1060-    return typ.__name__, typ.__module__
+1061-
+=== up_2025.9.1: no Enum registration in base.py/tokenize.py (grep -c Enum):
+up_2025.9.1_base.py:0
+up_2025.9.1_tokenize.py:0
+=== up_2025.9.1_tokenize.py normalize_object
+@normalize_token.register(object)
+def normalize_object(o):
+    method = getattr(o, "__dask_tokenize__", None)
+    if method is not None and not isinstance(o, type):
+        return method()
+
+    if type(o) is object:
+        return _normalize_pure_object(o)
+
+    if isinstance(o, type):
+        copyreg._slotnames(o)
+
+    if dataclasses.is_dataclass(o) and not isinstance(o, type):
+        return _normalize_dataclass(o)
+
+    try:
+        return _normalize_pickle(o)
+    except Exception:
+        _maybe_raise_nondeterministic(
+            f"Object {o!r} cannot be deterministically hashed. This likely "
+            "indicates that the object cannot be serialized deterministically."
+        )
+        return uuid.uuid4().hex
+
+
+_seen_objects = set()

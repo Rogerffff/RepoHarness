@@ -1,0 +1,48 @@
+{
+  "schema": "category2_orange3_preparation.v1",
+  "as_of": "2026-10-03",
+  "instance_id": "orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e",
+  "status": "draft_not_published_not_cpu_accepted",
+  "parent_registry": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v11.json",
+    "sha256": "sha256:03acd34d7421bcf9c379612d0b8a5ce3d4292fdee0ee67327661eae5169d5c33"
+  },
+  "parent_material_revisions": [],
+  "parent_test": {
+    "source": {
+      "path": "runs/r2e_static_prep_20260924/v3/private/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/hidden_tests/test_1.py",
+      "sha256": "sha256:01178a720815c613dbd8c639293da3de676f7dbc0d9cbbee11dd80390cbda519"
+    },
+    "effective_sha256": "sha256:01178a720815c613dbd8c639293da3de676f7dbc0d9cbbee11dd80390cbda519"
+  },
+  "operation_from_source": {
+    "kind": "hidden_test_text_replace",
+    "target": "test_1.py",
+    "edits": [
+      {
+        "old": "    def test_load_ignore_warning(self, msg_box):\n        self.widget._parse_var_defs(dict(categorical={}, numeric={}))\n        msg_box.assert_not_called()\n\n        no_change = dict(renamed_values={}, colors={})\n        for names, message in (\n                ((\"foo\",),\n                 \"'foo'\"),\n                ((\"foo\", \"bar\"),\n                 \"'foo' and 'bar'\"),\n                ((\"foo\", \"bar\", \"baz\"),\n                 \"'foo', 'bar' and 'baz'\"),\n                ((\"foo\", \"bar\", \"baz\", \"qux\"),\n                 \"'foo', 'bar', 'baz' and 'qux'\"),\n                ((\"foo\", \"bar\", \"baz\", \"qux\", \"quux\"),\n                 \"'foo', 'bar', 'baz', 'qux' and 'quux'\"),\n                ((\"foo\", \"bar\", \"baz\", \"qux\", \"quux\", \"corge\"),\n                 \"'foo', 'bar', 'baz', 'qux' and 2 other\"),\n                ((\"foo\", \"bar\", \"baz\", \"qux\", \"quux\", \"corge\", \"grault\"),\n                 \"'foo', 'bar', 'baz', 'qux' and 3 other\")):\n            self.widget._parse_var_defs(dict(\n                categorical=dict.fromkeys(names, no_change),\n                numeric={}))\n            self.assertIn(message, msg_box.call_args[0][2])\n",
+        "new": "    def test_load_ignore_warning(self, msg_box):\n        self.widget._parse_var_defs(dict(categorical={}, numeric={}))\n        msg_box.assert_not_called()\n\n        def shown_text():\n            msg_box.assert_called()\n            # Permit either positional or keyword text and multiple warnings.\n            return \"\\n\".join(\n                call[0][2] if len(call[0]) >= 3 else call[1].get(\"text\", \"\")\n                for call in msg_box.call_args_list)\n\n        no_change = dict(renamed_values={}, colors={})\n        all_names = (\"foo\", \"bar\", \"baz\", \"qux\", \"quux\", \"corge\", \"grault\")\n        for n in range(1, len(all_names) + 1):\n            names = all_names[:n]\n            msg_box.reset_mock()\n            self.widget._parse_var_defs(dict(\n                categorical=dict.fromkeys(names, no_change),\n                numeric={}))\n            text = shown_text()\n            named = [name for name in names if name in text]\n            if n <= 2:\n                self.assertEqual(named, list(names), text)\n            else:\n                # Long lists may be abbreviated. No punctuation, order,\n                # truncation threshold or omitted-count wording is prescribed.\n                self.assertTrue(named, text)\n\n        # A mixed file must report unused definitions in either section while\n        # continuing to apply definitions for variables present in the data.\n        self.send_signal(self.widget.Inputs.data, self.iris)\n        msg_box.reset_mock()\n        self.widget._parse_var_defs(\n            {\"categorical\": {\"iris\": {\"rename\": \"species\"},\n                             \"foo\": {\"renamed_values\": {}}},\n             \"numeric\": {\"bar\": {\"colors\": \"linear_viridis\"}}})\n        text = shown_text()\n        self.assertIn(\"foo\", text)\n        self.assertIn(\"bar\", text)\n        out = self.get_output(self.widget.Outputs.data)\n        self.assertIsNotNone(out)\n        self.assertEqual(out.domain.class_var.name, \"species\")\n"
+      }
+    ],
+    "sha256_before": "sha256:01178a720815c613dbd8c639293da3de676f7dbc0d9cbbee11dd80390cbda519",
+    "sha256_after": "sha256:126f09f984b468b637d0d22524c89857a4950178cb8574935262aeb61df43cd9",
+    "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/50f6a758/files/r2e_tests/test_1.py",
+    "expected_change": null
+  },
+  "revision_id": null,
+  "expected": {
+    "sha256": "sha256:c73cea6662f37b53861137d2bc32e784923a9041d8e644765e16f7a729e84129",
+    "key_count": 48,
+    "non_passed": {},
+    "changed": false
+  },
+  "changed_method": "TestOWColor.test_load_ignore_warning",
+  "local_checks": {
+    "python37_ast": true,
+    "other_methods_ast_equal": 51,
+    "source_replacement_matches_full_file": true
+  },
+  "independent_revision_review": "pending",
+  "formal_cpu_acceptance": "pending",
+  "public_revision": "statement_draft.json"
+}

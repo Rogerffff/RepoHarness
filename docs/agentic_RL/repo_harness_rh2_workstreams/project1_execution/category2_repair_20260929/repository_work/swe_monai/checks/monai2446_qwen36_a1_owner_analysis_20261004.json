@@ -1,0 +1,575 @@
+{
+  "schema": "monai.probe_first_attempt_owner_analysis.v1",
+  "as_of": "2026-10-03T16:44:35.737814+00:00",
+  "task_id": "swe_gym_lite::Project-MONAI__MONAI-2446",
+  "request_id": "swe-monai2446-r15-shuffle-cache-nib4-20261003-v1",
+  "owner_input_sha256": "22aea4dfe7a04e2f8f7b5669a8fb1bdf70137537941cc8a251cb3f0113d88cd2",
+  "job_id": "gpu1003-monai2446-qwen36-a1",
+  "model": "Qwen3.6-35B-A3B",
+  "checkpoint_revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+  "solve_runtime": "code_v8",
+  "service_source_code": "code_v8",
+  "status": "owner_analyzed_non_author_semantic_review_pending",
+  "raw_reward": 1,
+  "candidate_semantics": "randomize复制外层list并返回；constructor接收局部data后传父类；公开列表保持、shuffle/cache参考通过。方法协议改变，外部直接调用/旧override兼容未验。",
+  "full_FP_paths": [
+    "monai/data/dataset.py"
+  ],
+  "frozen_patch_digest": "sha256:a63fc2c57b55acbe551041ee3c2ab7646ed2c6e6142b8d326590f5b03abbe153",
+  "baseline_manifest_digest": "sha256:8de0d2139b533d32fce8238e98e9aa8680f773611e6988d1b036cd83e8b8e570",
+  "material_revision_id": "monai2446-ndarray-shuffle-cache-cpu-v1",
+  "grading_materials_identity": "sha256:7b12ba8af3b62aee6ceba5d5d94255efabd68614dc91514994b22bfcdc87752a",
+  "actor_image_recorded": "sha256:28959a332c8a17ebfb2db681d3afaf79f8fd6e845ba51406fc7772f32453bcdd",
+  "formal_references_all_passed": [
+    "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_shuffle_ndarray_list_and_cache_cpu",
+    "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_datalist",
+    "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_shuffle",
+    "tests/test_smartcachedataset.py::TestSmartCacheDataset::test_update_cache"
+  ],
+  "formal_module_test_count": 9,
+  "formal_install_test_complete": true,
+  "trajectory_event_count": 331,
+  "calls": [
+    {
+      "event_line": 11,
+      "id": "toolu_dcffd8586aa17dca",
+      "tool": "Bash",
+      "input": {
+        "command": "find /testbed -type f -name \"*.py\" | xargs grep -l \"SmartCacheDataset\" | head -20"
+      },
+      "result_event_line": 15,
+      "is_error": false,
+      "result_sha256": "be925521a1230ed246855a7adea3b168b1edddb77c278a93f751c423223bfb42"
+    },
+    {
+      "event_line": 25,
+      "id": "toolu_eb9eac892c02ef4b",
+      "tool": "Read",
+      "input": {
+        "file_path": "/testbed/monai/data/dataset.py"
+      },
+      "result_event_line": 29,
+      "is_error": false,
+      "result_sha256": "6379a6c790aa716b3c6a2ff10b57af3298d05b57a95c722ed5d989876b030028"
+    },
+    {
+      "event_line": 43,
+      "id": "toolu_4dda433b16b1654c",
+      "tool": "Read",
+      "input": {
+        "file_path": "/testbed/monai/data/dataset.py",
+        "offset": 668,
+        "limit": 55
+      },
+      "result_event_line": 47,
+      "is_error": false,
+      "result_sha256": "c2f87624b10f4963aeb79a377cc8ba54826e5c84de1e08a60a2d005e5739f431"
+    },
+    {
+      "event_line": 61,
+      "id": "toolu_f5487e6d13756ba8",
+      "tool": "Bash",
+      "input": {
+        "command": "python -c \"\nimport numpy as np\nfrom monai.data import SmartCacheDataset\n\ndata_list = list(np.array([i]) for i in range(5))\nprint('Original datalist:', data_list)\nSmartCacheDataset(\n    data=data_list,\n    transform=None,\n    cache_rate=0.5,\n    replace_rate=0.4,\n    shuffle=True,\n)\nprint('Datalist after dataset:', data_list)\n\""
+      },
+      "result_event_line": 65,
+      "is_error": false,
+      "result_sha256": "3cbe8becffbe73de776d934e797781ebef4bc73b2b4c6194632c046827a2177e"
+    },
+    {
+      "event_line": 79,
+      "id": "toolu_f8e79e93be1330c9",
+      "tool": "Edit",
+      "input": {
+        "replace_all": false,
+        "file_path": "/testbed/monai/data/dataset.py",
+        "old_string": "    def __init__(\n        self,\n        data: Sequence,\n        transform: Union[Sequence[Callable], Callable],\n        replace_rate: float,\n        cache_num: int = sys.maxsize,\n        cache_rate: float = 1.0,\n        num_init_workers: Optional[int] = None,\n        num_replace_workers: Optional[int] = None,\n        progress: bool = True,\n        shuffle: bool = True,\n        seed: int = 0,\n    ) -> None:\n        if shuffle:\n            self.set_random_state(seed=seed)\n            self.randomize(data)\n\n        super().__init__(data, transform, cache_num, cache_rate, num_init_workers, progress)",
+        "new_string": "    def __init__(\n        self,\n        data: Sequence,\n        transform: Union[Sequence[Callable], Callable],\n        replace_rate: float,\n        cache_num: int = sys.maxsize,\n        cache_rate: float = 1.0,\n        num_init_workers: Optional[int] = None,\n        num_replace_workers: Optional[int] = None,\n        progress: bool = True,\n        shuffle: bool = True,\n        seed: int = 0,\n    ) -> None:\n        if shuffle:\n            self.set_random_state(seed=seed)\n            self.data = self.randomize(data)\n        else:\n            self.data = data\n\n        super().__init__(data, transform, cache_num, cache_rate, num_init_workers, progress)"
+      },
+      "result_event_line": 83,
+      "is_error": false,
+      "result_sha256": "07ac1d11c09c54a1d45efee87970cdc53ed37335d27a09aa8d6ab8cd89087452"
+    },
+    {
+      "event_line": 93,
+      "id": "toolu_75f4133ea3d3578b",
+      "tool": "Edit",
+      "input": {
+        "replace_all": false,
+        "file_path": "/testbed/monai/data/dataset.py",
+        "old_string": "    def randomize(self, data: Sequence) -> None:\n        try:\n            self.R.shuffle(data)\n        except TypeError as e:\n            warnings.warn(f\"input data can't be shuffled in SmartCacheDataset with numpy.random.shuffle(): {e}.\")",
+        "new_string": "    def randomize(self, data: Sequence) -> Sequence:\n        try:\n            data_copy = list(data)\n            self.R.shuffle(data_copy)\n            return data_copy\n        except TypeError as e:\n            warnings.warn(f\"input data can't be shuffled in SmartCacheDataset with numpy.random.shuffle(): {e}.\")\n            return data"
+      },
+      "result_event_line": 97,
+      "is_error": false,
+      "result_sha256": "07ac1d11c09c54a1d45efee87970cdc53ed37335d27a09aa8d6ab8cd89087452"
+    },
+    {
+      "event_line": 111,
+      "id": "toolu_ac3895263f529145",
+      "tool": "Bash",
+      "input": {
+        "command": "python -c \"\nimport numpy as np\nfrom monai.data import SmartCacheDataset\n\ndata_list = list(np.array([i]) for i in range(5))\nprint('Original datalist:', data_list)\nSmartCacheDataset(\n    data=data_list,\n    transform=None,\n    cache_rate=0.5,\n    replace_rate=0.4,\n    shuffle=True,\n)\nprint('Datalist after dataset:', data_list)\n# Check if original data is preserved\nexpected = [np.array([0]), np.array([1]), np.array([2]), np.array([3]), np.array([4])]\nassert all(np.array_equal(data_list[i], expected[i]) for i in range(len(data_list))), 'Data was modified!'\nprint('SUCCESS: Original datalist is preserved!')\n\""
+      },
+      "result_event_line": 115,
+      "is_error": false,
+      "result_sha256": "7d8d73099642a5d143fa441ba1c62408d3679239b09087f57b7312e2c670983e"
+    },
+    {
+      "event_line": 129,
+      "id": "toolu_2fb33898b13dfdd4",
+      "tool": "Bash",
+      "input": {
+        "command": "python -c \"\nimport numpy as np\nfrom monai.data import SmartCacheDataset\n\ndata_list = list(np.array([i]) for i in range(5))\nprint('Original datalist:', data_list)\n\nscd = SmartCacheDataset(\n    data=data_list,\n    transform=None,\n    cache_rate=0.5,\n    replace_rate=0.4,\n    shuffle=True,\n    seed=42,  # for reproducibility\n)\nprint('Original datalist after creating dataset:', data_list)\nprint('Dataset internal data:', scd.data)\nprint('Dataset length:', len(scd))\n\n# Verify original data is unchanged\nexpected = [np.array([0]), np.array([1]), np.array([2]), np.array([3]), np.array([4])]\nassert all(np.array_equal(data_list[i], expected[i]) for i in range(len(data_list))), 'Data was modified!'\n# The internal data should be shuffled (different from original order)\nprint('SUCCESS: Original datalist is preserved, internal data is shuffled.')\n\""
+      },
+      "result_event_line": 133,
+      "is_error": false,
+      "result_sha256": "8db5e526933325bf8152046c7fa7b71efe6eb82fe5badceb31ae0617d78e2be7"
+    },
+    {
+      "event_line": 147,
+      "id": "toolu_8f74f43bd01c59e4",
+      "tool": "Bash",
+      "input": {
+        "command": "python -m pytest tests/test_smartcachedataset.py -v 2>&1 | head -100"
+      },
+      "result_event_line": 153,
+      "is_error": false,
+      "result_sha256": "17d8e760665c70e5802cfaf35631c0985745729f100ee6540fb9b81a3f9614d6"
+    },
+    {
+      "event_line": 167,
+      "id": "toolu_cece2f27deb17382",
+      "tool": "Read",
+      "input": {
+        "file_path": "/testbed/tests/test_smartcachedataset.py"
+      },
+      "result_event_line": 171,
+      "is_error": false,
+      "result_sha256": "1b4097518f7238140dc7435fcfc8208fe7f5b7e94aea0b600d05e7cbf35c2dde"
+    },
+    {
+      "event_line": 185,
+      "id": "toolu_46744492238ba1a3",
+      "tool": "Bash",
+      "input": {
+        "command": "python -c \"\nimport numpy as np\nfrom monai.data import SmartCacheDataset\n\ntest_data = [{'image': f'test_image{i}.nii.gz'} for i in range(20)]\nprint('Original test_data order:', [d['image'] for d in test_data])\n\ndataset = SmartCacheDataset(\n    data=test_data,\n    transform=None,\n    replace_rate=0.1,\n    cache_num=16,\n    num_init_workers=4,\n    num_replace_workers=4,\n    shuffle=True,\n    seed=123,\n)\n\nprint('Original test_data after dataset:', [d['image'] for d in test_data])\nprint('Dataset internal data order:', [d['image'] for d in dataset.data])\nprint('dataset[15]:', dataset[15])\n\ndataset.start()\nfor i in range(3):\n    dataset.update_cache()\n    print(f'After update {i+1}, dataset[15]:', dataset[15]['image'])\n\ndataset.shutdown()\n\""
+      },
+      "result_event_line": 189,
+      "is_error": false,
+      "result_sha256": "62caef07212280df19d77a59ae048239e004289216c73ead7109a528ceacdbff"
+    },
+    {
+      "event_line": 203,
+      "id": "toolu_0a468bfba1a9b49c",
+      "tool": "Edit",
+      "input": {
+        "replace_all": false,
+        "file_path": "/testbed/monai/data/dataset.py",
+        "old_string": "    def __init__(\n        self,\n        data: Sequence,\n        transform: Union[Sequence[Callable], Callable],\n        replace_rate: float,\n        cache_num: int = sys.maxsize,\n        cache_rate: float = 1.0,\n        num_init_workers: Optional[int] = None,\n        num_replace_workers: Optional[int] = None,\n        progress: bool = True,\n        shuffle: bool = True,\n        seed: int = 0,\n    ) -> None:\n        if shuffle:\n            self.set_random_state(seed=seed)\n            self.data = self.randomize(data)\n        else:\n            self.data = data\n\n        super().__init__(data, transform, cache_num, cache_rate, num_init_workers, progress)",
+        "new_string": "    def __init__(\n        self,\n        data: Sequence,\n        transform: Union[Sequence[Callable], Callable],\n        replace_rate: float,\n        cache_num: int = sys.maxsize,\n        cache_rate: float = 1.0,\n        num_init_workers: Optional[int] = None,\n        num_replace_workers: Optional[int] = None,\n        progress: bool = True,\n        shuffle: bool = True,\n        seed: int = 0,\n    ) -> None:\n        if shuffle:\n            self.set_random_state(seed=seed)\n            data = self.randomize(data)\n\n        super().__init__(data, transform, cache_num, cache_rate, num_init_workers, progress)"
+      },
+      "result_event_line": 207,
+      "is_error": false,
+      "result_sha256": "07ac1d11c09c54a1d45efee87970cdc53ed37335d27a09aa8d6ab8cd89087452"
+    },
+    {
+      "event_line": 221,
+      "id": "toolu_f32c706cbf26e4be",
+      "tool": "Bash",
+      "input": {
+        "command": "python -c \"\nimport numpy as np\nfrom monai.data import SmartCacheDataset\n\ntest_data = [{'image': f'test_image{i}.nii.gz'} for i in range(20)]\nprint('Original test_data order:', [d['image'] for d in test_data])\n\ndataset = SmartCacheDataset(\n    data=test_data,\n    transform=None,\n    replace_rate=0.1,\n    cache_num=16,\n    num_init_workers=4,\n    num_replace_workers=4,\n    shuffle=True,\n    seed=123,\n)\n\nprint('Original test_data after dataset:', [d['image'] for d in test_data])\nprint('Dataset internal data order:', [d['image'] for d in dataset.data])\nprint('dataset[15]:', dataset[15])\n\ndataset.start()\nfor i in range(3):\n    dataset.update_cache()\n    print(f'After update {i+1}, dataset[15]:', dataset[15]['image'])\n\ndataset.shutdown()\n\""
+      },
+      "result_event_line": 225,
+      "is_error": false,
+      "result_sha256": "4c3820aa39efb1db7d70997511eb94984dcb9595700675f6632ed3def8ad4147"
+    },
+    {
+      "event_line": 239,
+      "id": "toolu_e78856781b9d74c4",
+      "tool": "Bash",
+      "input": {
+        "command": "python -m pytest tests/test_smartcachedataset.py -v 2>&1 | tail -30"
+      },
+      "result_event_line": 245,
+      "is_error": false,
+      "result_sha256": "dbe9ee2063e53f55e30cb29e7ccd0114f121c2ed3adf1e79ef0728df921ddc29"
+    },
+    {
+      "event_line": 259,
+      "id": "toolu_005382c734cc8c8e",
+      "tool": "Bash",
+      "input": {
+        "command": "python -c \"\nimport numpy as np\nfrom monai.data import SmartCacheDataset\n\ndata_list = list(np.array([i]) for i in range(5))\nprint('original datalist:', data_list)\nSmartCacheDataset(\n    data=data_list,\n    transform=None,\n    cache_rate=0.5,\n    replace_rate=0.4,\n    shuffle=True,\n)\nprint('datalist after dataset:', data_list)\n# Verify the data is unchanged\nexpected = [np.array([i]) for i in range(5)]\nassert all(np.array_equal(data_list[i], expected[i]) for i in range(len(data_list))), 'BUG: Data was modified!'\nprint('SUCCESS: Original datalist is not modified!')\n\""
+      },
+      "result_event_line": 263,
+      "is_error": false,
+      "result_sha256": "a88776fc5763510edefa775066911d0dc8cc9d9c075b4f5fd640eeace43819fb"
+    },
+    {
+      "event_line": 277,
+      "id": "toolu_a91bca8d8640c474",
+      "tool": "Bash",
+      "input": {
+        "command": "python -m pytest tests/test_cachedataset.py -v 2>&1 | tail -30"
+      },
+      "result_event_line": 283,
+      "is_error": false,
+      "result_sha256": "8d52b680d98178df82b1e51215fc3eb197e96f0d1da782e20edd041f816ed431"
+    },
+    {
+      "event_line": 293,
+      "id": "toolu_6c2c041e0d7142fd",
+      "tool": "Bash",
+      "input": {
+        "command": "python -m pytest tests/test_handler_smartcache.py -v 2>&1 | tail -20"
+      },
+      "result_event_line": 299,
+      "is_error": false,
+      "result_sha256": "6bec9156feed6cddb44c4154a46f068904c0f53c39566978c5339a1853427afc"
+    },
+    {
+      "event_line": 313,
+      "id": "toolu_c053f843e0ec9ce0",
+      "tool": "Read",
+      "input": {
+        "file_path": "/testbed/monai/data/dataset.py",
+        "offset": 668,
+        "limit": 55
+      },
+      "result_event_line": 317,
+      "is_error": false,
+      "result_sha256": "85c0b876665e8bed3a07082815962296c714947a3c5dc66ec79f7fba209ebc0b"
+    }
+  ],
+  "read_outputs_byte_verified": [
+    {
+      "event_line": 25,
+      "path": "monai/data/dataset.py",
+      "numbered_lines_verified": 1138
+    },
+    {
+      "event_line": 43,
+      "path": "monai/data/dataset.py",
+      "numbered_lines_verified": 55
+    },
+    {
+      "event_line": 167,
+      "path": "tests/test_smartcachedataset.py",
+      "numbered_lines_verified": 132
+    },
+    {
+      "event_line": 313,
+      "path": "monai/data/dataset.py",
+      "numbered_lines_verified": 55
+    }
+  ],
+  "first_precise_localization_event_line": 39,
+  "edit_event_lines": [
+    79,
+    93,
+    203
+  ],
+  "candidate_versions": 2,
+  "model_verification": {
+    "before_reproduction": [
+      61,
+      65
+    ],
+    "first_fix_preserves_caller": [
+      111,
+      115
+    ],
+    "incorrect_unconditional_internal_shuffle_success": [
+      129,
+      133
+    ],
+    "actual_old_regression_failure": [
+      147,
+      153
+    ],
+    "parent_overwrite_correctly_diagnosed_at": 199,
+    "corrected_cache_output": [
+      221,
+      225
+    ],
+    "final_asserted_public_reproduction": [
+      259,
+      263
+    ],
+    "public_smartcache_tests": 7,
+    "public_cache_tests": 17,
+    "public_handler_tests": 1,
+    "pytest_pipeline_exit_is_not_test_exit": true,
+    "visible_real_footers_checked": true,
+    "formal_new_node_top_level_ndarray_input": false
+  },
+  "metrics": {
+    "CC_turns": 19,
+    "tool_calls": 18,
+    "model_generations": 19,
+    "HTTP_requests": 20,
+    "count_tokens_requests": 1,
+    "input_tokens_sum": 446780,
+    "output_tokens_sum": 5789,
+    "max_single_input_tokens": 32198,
+    "max_single_output_tokens": 945,
+    "CC_duration_seconds": 73.692,
+    "CC_API_seconds": 37.59,
+    "entry_solve_seconds": 77.264,
+    "grading_total_seconds": 408.025,
+    "trusted_setup_seconds": 377.2036,
+    "candidate_install_seconds": 14.346,
+    "candidate_test_seconds": 6.791
+  },
+  "parallel_conclusion": "单一tool_use串行；未试执行器并行，不能判断并行能力。",
+  "budget": {
+    "context_limit": 196608,
+    "actual_HTTP_max_tokens": [
+      65536
+    ],
+    "turns_limit": 240,
+    "solve_seconds_limit": 10800,
+    "CC_display_maxOutputTokens": 32000,
+    "display_mismatch_retained": true,
+    "length_truncation_observed": false
+  },
+  "execution_receipt_readback": {
+    "sourcepaths_SHA_bytes_verified": 34,
+    "full_transport_scope_reused": {
+      "authoritative_bundle": "closed_snapshots/gpu1003-monai2446-qwen36-a1",
+      "source_manifest_relative": "qwen_next12_closed_v1/gpu1003-monai2446-qwen36-a1/closed_manifest.json",
+      "all_member_size_SHA_reverified": true,
+      "files": 394,
+      "bytes": 49383838,
+      "manifest_sha256": "aed8456172e67c855e8b2478022cf6ffea1eda4af92e5b0526745cd233673226",
+      "sync_receipt_sha256": "1c1f6aab9d7d95b93d13c83a5687b491e8b9e4c7e2bccb86766033050ae005fa"
+    },
+    "terminal_proof": "current_complete_RC0_plus_exact_PID1_success_journal",
+    "model_binding_capture_verified": true,
+    "individual_weights_rehashed": false,
+    "GPU_memory_weight_attestation": false
+  },
+  "new_task_environment_blocker_found": false,
+  "training_or_holdout_qualified": false,
+  "limits": [
+    "新增正式节点输入为list[np.ndarray]，未直接运行顶层ndarray或外部自定义子类。",
+    "初版133错误SUCCESS只检查调用方保持；真实旧回归153失败，203改正，最终正式结果不掩盖早期错误。",
+    "机械执行回执无语义/训练资格；原stdout信任边界不由此离线核查改变。",
+    "37资源样本有未知间隔；4GiB记录不是最低内存证明，env_qualification仍absent。",
+    "累计输入不是单次上下文；权重仅复用下载manifest与运行配置/只读挂载/文件数大小绑定，没有GPU内存权重证明。",
+    "首轮一次无解决率估计；不重复求解/重新评分/改写任何原证据。"
+  ],
+  "evidence": [
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/sync_receipt_v4.json",
+      "sha256": "1c1f6aab9d7d95b93d13c83a5687b491e8b9e4c7e2bccb86766033050ae005fa",
+      "bytes": 309886
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/qwen_next12_closed_v1/gpu1003-monai2446-qwen36-a1/closed_manifest.json",
+      "sha256": "aed8456172e67c855e8b2478022cf6ffea1eda4af92e5b0526745cd233673226",
+      "bytes": 93543
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/queue_qwen_next12_v1/requests/gpu1003-monai2446-qwen36-a1.json",
+      "sha256": "493f515c022ff779d057372f45f18a6ac6cc3129e46f04cf956d2acd6a7b91c9",
+      "bytes": 66049
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/qwen_next12_closed_v1/gpu1003-monai2446-qwen36-a1/terminal_snapshot.json",
+      "sha256": "86ed4c9af13377f9997d30512456856e1d843be425a75af6c78622314da96ca9",
+      "bytes": 69227
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/queue_qwen_next12_v1/results/gpu1003-monai2446-qwen36-a1/attempt/attempt.json",
+      "sha256": "8827f285295e652d34a06447d7eacea7b95e129267018ffa1bf547dcd5b1520a",
+      "bytes": 15932
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/queue_qwen_next12_v1/results/gpu1003-monai2446-qwen36-a1/result.json",
+      "sha256": "7320b95f49cb53dceb30cc9a690569d9ea6e708bf4175c8537180302f00113ee",
+      "bytes": 2651
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/queue_qwen_next12_v1/results/gpu1003-monai2446-qwen36-a1/input_check.json",
+      "sha256": "eef6891f324a3612e31718852e8e83db5cab387f31c48d585e03442cd02057a7",
+      "bytes": 4227
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/diagnostics/QUEUE_QWEN_NEXT12_V1_gpu1003-monai2446-qwen36-a1_before/current_terminal_evidence_v3/success.json",
+      "sha256": "ec68ed470f7f0f4098a58d84c57778f081f77b799efb467298bd65c35a8f999d",
+      "bytes": 5463
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/diagnostics/QUEUE_QWEN_NEXT12_V1_gpu1003-monai2446-qwen36-a1_before/current_terminal_evidence_v3/journal.jsonl",
+      "sha256": "c6b0bb5f253c7c17da179f86f649bac67637e957208fc75d75c59ccec6183896",
+      "bytes": 4512
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/config_qwen_next12_v1/tasks.json",
+      "sha256": "fa70ee0dadcfb3bba27ebf38cb2da27e31107e006a33cb78e1f28694e2571a05",
+      "bytes": 8814
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/config_qwen_next12_v1/fixed_inputs_manifest.json",
+      "sha256": "2f20d2710e4700274b463bd6471890991d8a71ee4b732134e2592e8c09c07231",
+      "bytes": 1066240
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/prepared_remaining_eight_code8_v1/monai2446/summary.json",
+      "sha256": "db6874f6b1c19a355170644a9094440a04bd5e212162f57b567ac5eaac71cdd6",
+      "bytes": 531
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/prepared_remaining_eight_code8_v1/monai2446/private/host_grading_views.jsonl",
+      "sha256": "5020d44f0165fc3caea607efce60616e7ce5818c99aeb5ebf2c01cdd39c742fa",
+      "bytes": 39900
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/prepared_remaining_eight_code8_v1/monai2446/host_evidence/owner_request.json",
+      "sha256": "22aea4dfe7a04e2f8f7b5669a8fb1bdf70137537941cc8a251cb3f0113d88cd2",
+      "bytes": 15482
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/qwen_next_group12_code8_v1/evidence/monai2446/owner_request.json",
+      "sha256": "22aea4dfe7a04e2f8f7b5669a8fb1bdf70137537941cc8a251cb3f0113d88cd2",
+      "bytes": 15482
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/diagnostics/QUEUE_QWEN_NEXT12_V1_gpu1003-monai2446-qwen36-a1_before/capture_receipt.json",
+      "sha256": "8bae50973ec215e51141314a56ea466be2702159db76858e7d98c37b8d6430c8",
+      "bytes": 1574
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/config_qwen_next12_v1/gateway_qwen36.json",
+      "sha256": "a5cfe97ada78492116d751ea053068034e7f8cbea484cead6ae1253fdfc5ddbe",
+      "bytes": 823
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/next12-v1/gpu1003-monai2446-qwen36-a1/session_close.jsonl",
+      "sha256": "8fa892b018729791ebbc0ecccc49ddad6ec66ae89f2c16fd10759f6a6574534c",
+      "bytes": 128
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/queue_qwen_next12_v1/results/gpu1003-monai2446-qwen36-a1/gateway_audit.json",
+      "sha256": "f599ce9fd9cc43df230f94a70d6c64d5275fdb002d4cb7d47e6c3b9050b8d2bb",
+      "bytes": 416
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/services_qwen_code8_v1/qwen36/engine_launch_v1.json",
+      "sha256": "603bec65f047c9b87967c58be43b8933ef3b662f9eab7052ac8ee64c3ae9e9f7",
+      "bytes": 3069
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/diagnostics/QUEUE_QWEN_NEXT12_V1_gpu1003-monai2446-qwen36-a1_before/engine_inspect_actual.json",
+      "sha256": "d9e5c4b34b20e57f0a4f60e7e4dd2acd097f627c5572fb75221c368728ed53c0",
+      "bytes": 1156
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/diagnostics/QUEUE_QWEN_NEXT12_V1_gpu1003-monai2446-qwen36-a1_before/engine_inspect_after_actual.json",
+      "sha256": "d9e5c4b34b20e57f0a4f60e7e4dd2acd097f627c5572fb75221c368728ed53c0",
+      "bytes": 1156
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/diagnostics/QUEUE_QWEN_NEXT12_V1_gpu1003-monai2446-qwen36-a1_before/adapter_inspect_actual.json",
+      "sha256": "e93c40b01c8dbb38e64a0ecc69c7348c274ece07630359da46b8970308f843d7",
+      "bytes": 1857
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/diagnostics/QUEUE_QWEN_NEXT12_V1_gpu1003-monai2446-qwen36-a1_before/adapter_inspect_after_actual.json",
+      "sha256": "e93c40b01c8dbb38e64a0ecc69c7348c274ece07630359da46b8970308f843d7",
+      "bytes": 1857
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/queue_qwen_next12_v1/results/gpu1003-monai2446-qwen36-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "35d0c2898365ea7754581d0864c07f236d9b4f48f9b5c8c0a25b9f59f4cc7588",
+      "bytes": 67145
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/queue_qwen_next12_v1/results/gpu1003-monai2446-qwen36-a1/attempt/frozen/baseline_manifest.json",
+      "sha256": "e62ca9ede9d4e8434de91684fd7a84830e85f44f92475d149540a7ece7d8c578",
+      "bytes": 171976
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/queue_qwen_next12_v1/results/gpu1003-monai2446-qwen36-a1/grading/projection.json",
+      "sha256": "a3df56576f4d90c02d33d267ef5acfdc467fb689e80c7214f02ad0b894a5f8df",
+      "bytes": 327
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/queue_qwen_next12_v1/results/gpu1003-monai2446-qwen36-a1/grading/baseline_rebuild_census.txt",
+      "sha256": "93888489c893710796fa5be5c1c66c716a9cd5c7f0e9fbbedae28c634027b82a",
+      "bytes": 82132
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/queue_qwen_next12_v1/results/gpu1003-monai2446-qwen36-a1/grading/report.json",
+      "sha256": "bd61a06a507247bf5293fc1e391ec89fc74ff60b731eec4abd8b2080647f2ff1",
+      "bytes": 1831
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/queue_qwen_next12_v1/results/gpu1003-monai2446-qwen36-a1/grading/status.json",
+      "sha256": "6a3e4df608b4284d691c2337e6e273f0663e2db92fed472475d60d7e2f8c0329",
+      "bytes": 2615
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/queue_qwen_next12_v1/results/gpu1003-monai2446-qwen36-a1/grading/eval_logs/evallog_gpu1003-monai2446-qwen36_99371b60.eval.log",
+      "sha256": "ac40020cae53546a13db6b186320273893352ce5a03beeb417ebe2a928577ee2",
+      "bytes": 49873
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/queue_qwen_next12_v1/results/gpu1003-monai2446-qwen36-a1/grading/eval_logs/evallog_gpu1003-monai2446-qwen36_99371b60.diagnostics.json",
+      "sha256": "9e9f5b6ea954909e5316cad33f70c2b901d57d9585fd2d10b38810b1dba6ec90",
+      "bytes": 6044
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/config_qwen_next12_v1/purecheck_gpu1003-monai2446-qwen36-a1.json",
+      "sha256": "5f9a04f3f10eddae4b1fc0ae6fa507c6a95ef2209d136c8873385bb06c957f03",
+      "bytes": 1077
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/prepared_remaining_eight_code8_v1/monai2446/prepared/rollout_task_views.jsonl",
+      "sha256": "5a5394bd52c423cf06341a78f5f980c7bbed085bd6f2738b8b9736b971bc8b12",
+      "bytes": 5740
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/queue_qwen_next12_v1/results/gpu1003-monai2446-qwen36-a1/attempt/harness/trajectory.jsonl",
+      "sha256": "f415e8f1bd1a8441505f20eb55e0342a975a5e2a59bdec7e756798c7e40b0778",
+      "bytes": 458187
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/queue_qwen_next12_v1/results/gpu1003-monai2446-qwen36-a1/attempt/frozen/baseline.tar",
+      "sha256": "831a920e5dbe1a1f878e32928d38dfd6ae232df3f4f7dceb1413ba22d5b906f7",
+      "bytes": 16609280
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/queue_qwen_next12_v1/results/gpu1003-monai2446-qwen36-a1/attempt/candidate/Project-MONAI__MONAI-2446.diff",
+      "sha256": "65c47bb4338151e0fc9e4cfebeb246d1a52efd7e96f97ade1189547854ac91e9",
+      "bytes": 1162
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/queue_qwen_next12_v1/results/gpu1003-monai2446-qwen36-a1/solver_prompt.txt",
+      "sha256": "bcb23d41674d879b5f36f6a42d002f27aec3a7441268cb86eb9fba3b34d16c5a",
+      "bytes": 1135
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/next12-v1/gpu1003-monai2446-qwen36-a1/usage.json",
+      "sha256": "69ba0cfdc486ec883bc1cebf8274d0a5d50d34f40d64a53cd98ba669231faea1",
+      "bytes": 89
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/next12-v1/gpu1003-monai2446-qwen36-a1/requests.jsonl",
+      "sha256": "65b776708d3cd417e962be5bc4704c0e58d2b6929afa270ef60371b30a82e9c9",
+      "bytes": 1765658
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai2446-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/next12-v1/gpu1003-monai2446-qwen36-a1/responses.jsonl",
+      "sha256": "9ba18dc259cada81bdb0ec2953ab4469e5ae070b4e2dce750b062cba6133ed5b",
+      "bytes": 6212
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/monai2446_qwen36_execution_receipt_v1/execution_receipt.json",
+      "sha256": "b30ce70faf2f4545eeb2cdac90b469a8f1bb038d6a574286ac46a00d2b659fe5",
+      "bytes": 52122
+    }
+  ]
+}

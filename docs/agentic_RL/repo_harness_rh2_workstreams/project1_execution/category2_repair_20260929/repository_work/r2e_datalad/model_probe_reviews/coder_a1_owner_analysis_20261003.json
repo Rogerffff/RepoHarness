@@ -1,0 +1,241 @@
+{
+  "schema": "datalad_owner_model_analysis_v1",
+  "as_of": "2026-10-03",
+  "job_id": "gpu1003-datalad088-coder-a1",
+  "task_id": "r2e_gym_subset::datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb",
+  "owner_thread_id": "01a0fd64-754d-7a90-8e97-2ae0f2907bb7",
+  "model_route": "Qwen3-Coder-30B-A3B-Instruct",
+  "material_version": "r2e-mr-088",
+  "budget_version": "probe-wide-v1",
+  "first_or_repeat": "first",
+  "scope": "one_complete_initial_arm_only",
+  "status": "owner_and_independent_analysis_complete_candidate_incorrect",
+  "candidate": {
+    "raw_reward": 0,
+    "expected_status_match_count": 16,
+    "expected_status_total_count": 17,
+    "status_counts": {
+      "PASSED": 15,
+      "FAILED": 2
+    },
+    "xfail_unscored": 1,
+    "mismatched": [
+      "test_url_samples"
+    ],
+    "fixed_issue_example": true,
+    "semantic_correct": false,
+    "regression": "escaped-colon local path enters new elif, split length1 skips assignment and file fallback; scheme remains empty",
+    "regression_case_was_already_in_065": true,
+    "new_088_query_assertion": "passed",
+    "new_088_absolute_path_assertion": "not_executed_due_to_earlier_function_failure",
+    "fixed_expected_tilde_failed": "expected status matched; not new regression",
+    "public_test_modified_and_kept_in_frozen_projection": false
+  },
+  "seven_dimensions": {
+    "method_and_cause": {
+      "conclusion": "correct partial urlparse diagnosis; local scheme fallback lost when escaped colon does not split",
+      "tool_generations": [
+        3,
+        5,
+        8,
+        9
+      ],
+      "trajectory_lines": [
+        36,
+        40,
+        62,
+        66,
+        101,
+        105,
+        114,
+        118
+      ],
+      "source_symbols": [
+        "URL._set_from_str",
+        "_split_colon",
+        "URL.__str_ssh__"
+      ]
+    },
+    "localization_and_correction": {
+      "file_provided_by_issue": true,
+      "first_read_generation": 1,
+      "first_read_result_line": 14,
+      "first_file_read_seconds": 0.55,
+      "first_runtime_confirmed_partial_cause_generation": 5,
+      "first_runtime_confirmed_partial_cause_seconds": 6.175,
+      "first_partial_edit_seconds": 12.623,
+      "first_complete_correct_solution": null,
+      "wrong_classifier_corrected": false
+    },
+    "tool_quality": {
+      "tool_counts": {
+        "Read": 3,
+        "Bash": 11,
+        "Edit": 1
+      },
+      "tool_result_errors": 1,
+      "tool_error_reason": "complete public pytest exit1 on known tilde compatibility; not infra",
+      "conclusions": [
+        "read correct files and reproduced issue",
+        "targeted reads/parsing and successive pytest overlap can batch",
+        "public pytest kept real exit code and complete footer",
+        "postedit true asserts cover issue and common paths",
+        "no escaped-colon input or split-length1 fallback invariant was tested",
+        "python resolved actual existing venv; -B/-W ignore omitted",
+        "excluded_pathset_changed true preserved; cause not independently attributed"
+      ]
+    },
+    "parallel": {
+      "opportunities": [
+        "independent read-only files and parsing comparisons",
+        "postedit field/string/is_url checks"
+      ],
+      "actual_tools_per_generation": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0
+      ],
+      "actual_tool_overlap": false,
+      "multi_tool_execution_overlap_verified": false,
+      "model_parallel_capability": "不可判断：执行层多工具并发未触发/独立核验，单臂不能推稳定能力"
+    },
+    "verification": {
+      "public_test": "16 PASSED/1 FAILED/1 XFAIL, complete footer; tilde known in brief",
+      "tested_issue_fields_and_is_url": false,
+      "escaped_colon_boundary_tested_by_model": false,
+      "complete_formal_hidden_results": true,
+      "final_all_tests_pass_claim": "final accurately described known tilde failure; broad backward compatibility claim exceeds coverage",
+      "tested_issue_fields_with_assert": true,
+      "direct_is_url_assert": false,
+      "public_test_modified": false
+    },
+    "efficiency": {
+      "generations": 16,
+      "input_tokens_sum": 297378,
+      "output_tokens_sum": 3328,
+      "max_single_input_tokens": 24309,
+      "max_single_output_tokens": 628,
+      "first_request_to_last_adapter_response_seconds": 31.775,
+      "gateway_http_response_seconds_sum": 27.201,
+      "cc_duration_seconds": 31.839,
+      "cc_api_duration_seconds": 27.651,
+      "driver_solve_seconds": 35.238,
+      "actor_attempt_elapsed_seconds": 179.321,
+      "actor_preparation_phase_seconds": {
+        "image_ready": 0.02,
+        "network_and_container": 1.295,
+        "git_sanitize": 0.952,
+        "trusted_init": 119.217,
+        "baseline_census": 0.763,
+        "quiescence": 1.794
+      },
+      "grader_phase_seconds": {
+        "delta_apply": 0.134709,
+        "grader_baseline_rebuild": 0.707979,
+        "grader_cleanup": null,
+        "grader_start_and_verify": 1.567106,
+        "grader_trusted_setup": 111.41414,
+        "parser_and_report": null,
+        "test": 1.462457
+      },
+      "job_resource_window_seconds": 326.004,
+      "queue_wait_seconds": null,
+      "exact_tool_runtime_seconds": null,
+      "timing_caveat": "tool result时间含调度/执行/记录开销；adapter/HTTP/CC/driver区间不同且相互包含，不可相加。队列等待及工具精确执行时间没有对应原件。"
+    },
+    "termination_and_stability": {
+      "normal_complete": true,
+      "budget_truncated": false,
+      "infra_failure": false,
+      "cleanup_closed": true,
+      "regrade_count": 0,
+      "same_condition_repeat_count": 0,
+      "stability_conclusion": "insufficient single sample"
+    }
+  },
+  "denominators": {
+    "Coder_initial_budget_completion": {
+      "numerator": 1,
+      "denominator": 1
+    },
+    "Coder_initial_raw_success": {
+      "numerator": 0,
+      "denominator": 1
+    },
+    "Coder_complete_sample_semantic_correctness": {
+      "numerator": 0,
+      "denominator": 1
+    },
+    "Coder_truncated_or_infra": {
+      "numerator": 0,
+      "denominator": 1
+    },
+    "requested_models_with_received_first_result": {
+      "numerator": 2,
+      "denominator": 2
+    }
+  },
+  "original_readback": {
+    "member_count": 492,
+    "total_bytes": 45488623,
+    "all_sha_and_size_pass": true,
+    "snapshot_ref": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-datalad088-coder-a1",
+    "metrics_ref": "runs/category2_repair_20260929/r2e_datalad_model_probe_20261003/coder_a1/owner_original_metrics.json",
+    "metrics_sha256": "sha256:69147f0348e90c3b667d3312acb97277519fc0c549883293c039fb9eb07e6617",
+    "eval_log": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-datalad088-coder-a1/queue_v29/results/gpu1003-datalad088-coder-a1/grading/eval_logs/evallog_gpu1003-datalad088-coder_e526cbc1.eval.log",
+      "bytes": 8404,
+      "sha256": "0bb28e54d225e839cb320537720fbf54abcc7564c2b4e500c8e3cac546a493ec"
+    },
+    "actual_runtime_image": "sha256:c5d390400a668256e8946daeefe9758a9064f64d518418727cdb013a907ec346",
+    "baseline_environment_package_digest": null,
+    "excluded_pathset_changed": true,
+    "classification": "projectable",
+    "reason_codes": [],
+    "excluded_change_independent_cause_attribution": null,
+    "remote_calls": 0,
+    "model_runs": 0,
+    "cpu_reruns": 0
+  },
+  "reports": {
+    "owner_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/model_probe_reviews/coder_a1_owner_analysis_20261003.md",
+    "owner_sha256": "sha256:28867615818c5352e65e32b33ad8670f7f0c2d13a8d4bb3b0f1a5c4ba7c019e9",
+    "independent_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/model_probe_reviews/coder_a1_independent_review_20261003.md",
+    "independent_sha256": "sha256:354bd5b4d2088846d9bc0e2767ede813d9ca1cf60015db09fb293513cf986e83",
+    "operator_ref": "runs/ordinary_gpu_probe_20261002/migration_20261003/gpu1003-datalad088-coder-a1_execution_receipt_v1.json"
+  },
+  "use": {
+    "allowed": "versioned_baseline_diagnostic_only",
+    "training_or_holdout": false,
+    "formal_gate_blocker": "baseline environment_package_digest=null; CPU replay lineage/ledger identity gap remains",
+    "model_identity_limit": "route/config/frozen checkpoint lineage, no independent GPU-resident weight hash attestation"
+  },
+  "new_material_blocker_found": false,
+  "new_cpu_repair_dependency": false,
+  "request": {
+    "request_id": "r2e-datalad-6b6f-r088-20261003-v1",
+    "status": "returned",
+    "acknowledged": true,
+    "ack_or_clear": true,
+    "active_request_id": null,
+    "all_requested_models_complete": true,
+    "pending_first_models": [],
+    "request_revision_after_ack": 5,
+    "progress_revision_after_clear": 9,
+    "repeat_stage": "deferred_coverage_first_no_extra_samples_requested",
+    "current_policy_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/overnight_watch_20261003.md"
+  }
+}

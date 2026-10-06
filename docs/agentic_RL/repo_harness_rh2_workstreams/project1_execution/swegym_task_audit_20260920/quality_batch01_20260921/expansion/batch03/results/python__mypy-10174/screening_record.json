@@ -1,0 +1,548 @@
+{
+  "task_id": "python__mypy-10174",
+  "task_revision": "upstream",
+  "source_adapter_ref": {
+    "source_refs": "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/source_refs.json",
+    "source_lines": {
+      "public": 177,
+      "grading": 177,
+      "validation": 177
+    },
+    "historical_archive": "runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz",
+    "read_members": [
+      {
+        "member": "src/repoharness2/envpack/spec_vendor.py",
+        "sha256": "8e0037b27c87268ed7df97ef64d261d0e6dac7375bc85fd5badd0fecdb94d41d",
+        "range": "183-197"
+      },
+      {
+        "member": "src/repoharness2/adapters/slime/prepared_task_face.py",
+        "sha256": "3a3d7bcab18e8a83f99104180e065ed32d8ecbce5d1bd4aaa7f8bd72b001aa27",
+        "range": "185-211,305-330"
+      },
+      {
+        "member": "src/repoharness2/envpack/scoring.py",
+        "sha256": "b6c8b9bd3e9cac604bc0d03b0b243ef9646de369e94bb6a65e60eadd3a64f5ab",
+        "range": "189-270"
+      },
+      {
+        "member": "src/repoharness2/envpack/swegym_parsers.py",
+        "sha256": "995bb6aae58a94f9553946c2f9aea59a158ad4fdf4d7fc0137802c11362b2276",
+        "range": "88"
+      }
+    ],
+    "method": "read-only existing archive member text in memory; no extraction/import/execution; current ROOT/rh2 not used as historical source"
+  },
+  "recipe_ref": {
+    "image_record": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/image.json",
+    "environment_record": "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/environment_record.json",
+    "inventory_scopes": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/environment_replay_inventory.json#common",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/environment_replay_inventory.json#families.install_wave1",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/environment_replay_inventory.json#tasks[instance_id=python__mypy-10174]"
+    ],
+    "derived_image_id": "sha256:1a440521871061d2e8db3fa660c7bf1a225d7fed9ac82d70dbda6cd726af7369",
+    "historical_harness": "baseline.tar.gz",
+    "scope": "COPY offline wheels and ENV layer only; original spec installation/test commands; no recipe/materials/bindings overrides",
+    "historical_conditions": "Python3.9.19; grader rh2grader54322, apply agent54321; deny_all; 2CPU/4GiB; tmp1GiB; formal actor unknown"
+  },
+  "code_snapshot_ref": {
+    "base_commit": "c8bae06919674b9846e3ff864b0a44592db888eb",
+    "base_tree": "465ff7bfb889519de37d2ddc384fda40f39240a7",
+    "public_base": "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base",
+    "base_identity": "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base_identity.json",
+    "gold": "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/gold.patch",
+    "gold_sha256": "7f94c5b71301dbbf5ccce1af8b274444ab5c0de5010f92109e11549154066f6c",
+    "test": "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/test.patch",
+    "version": "0.820"
+  },
+  "facts_ref": {
+    "run_refs": "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/run_refs.json",
+    "environment_summary_exposure": "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/environment_record.json#verified_environment_pair was visible before history; independently checked exact original records",
+    "gold": {
+      "ledger": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/gold/ledger.jsonl",
+      "line": 1,
+      "candidate": "gold",
+      "log": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/gold/eval_logs/evallog_replay-er19-iw1-python___f589d38e.eval.log",
+      "execution_lines": "521-539",
+      "collected": 9422,
+      "executed_nodes": 3,
+      "parsed_keys": 3,
+      "f2p_reference": 1,
+      "p2p_reference": 2,
+      "reward": 1,
+      "rc_test": 0,
+      "source": "historical real RH2 ledger plus raw log; not current CPU"
+    },
+    "noop": {
+      "ledger": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/noop/ledger.jsonl",
+      "line": 1,
+      "candidate": "noop",
+      "log": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/noop/eval_logs/evallog_replay-er19-iw1-python___e59bc664.eval.log",
+      "execution_lines": "494-527",
+      "collected": 9422,
+      "executed_nodes": 3,
+      "parsed_keys": 3,
+      "f2p_reference": 1,
+      "p2p_reference": 2,
+      "reward": 0,
+      "rc_test": 1,
+      "source": "historical real RH2 ledger plus raw log; target assertion failure"
+    },
+    "per_id": [
+      {
+        "id": "mypy/test/testcheck.py::TypeCheckSuite::testOverlappingAnyTypeWithoutStrictOptional",
+        "role": "F2P",
+        "noop": "FAILED",
+        "gold": "PASSED",
+        "decisive_assertion": "empty expected diagnostics; Optional[Any] vs int non-overlap actual in noop"
+      },
+      {
+        "id": "mypy/test/testcheck.py::TypeCheckSuite::testUnimportedHintAnyLower",
+        "role": "P2P",
+        "noop": "PASSED",
+        "gold": "PASSED",
+        "decisive_assertion": "undefined any and typing.Any import note"
+      },
+      {
+        "id": "mypy/test/testcheck.py::TypeCheckSuite::testUnimportedHintAny",
+        "role": "P2P",
+        "noop": "PASSED",
+        "gold": "PASSED",
+        "decisive_assertion": "undefined Any and typing.Any import note"
+      }
+    ],
+    "reference_missing": [],
+    "reference_skipped": [],
+    "outside_markers": 0,
+    "selector_note": "2 -k terms select3 via Any prefix; all3 frozen references, no unscored extra nodes",
+    "read_scope": "All official assertions and required helpers/fixtures; scoped caller/public regression reads in sealed analysis; no source-runner parity, actor, current CPU, repeat/concurrency or model trajectory",
+    "independent_review": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-10174/review.md",
+      "sha256": "715e42ad096ee1af3871bac51fe2ee821d1737198408771580d24b7b7d5cca70",
+      "role": "independent_review_after_package_seal"
+    }
+  },
+  "checks": {
+    "1": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base_identity.json",
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/source_refs.json",
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/grading.json",
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/validation.json",
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/gold.patch",
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/test.patch"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "本题身份及patch目标已核，材料清单验收沿用父协调者；不声称本轮重做全部blob验证。"
+    },
+    "2": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/noop/eval_logs/evallog_replay-er19-iw1-python___e59bc664.eval.log:494-527",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base/mypy/meet.py:164-176",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base/mypy/types.py:1777-1783,1801-1806"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "真实历史no-op在目标空诊断断言失败；精确中间类型流是静态推断。未另跑原CLI。"
+    },
+    "3": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/public_bundle.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-10174/public_read.md"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "导出的公开需求完整；正式actor实际渲染消息及端到端输入未核。"
+    },
+    "4": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/test.patch",
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/gold.patch",
+        "runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz!src/repoharness2/adapters/slime/prepared_task_face.py:185-211,305-330"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "检查范围为本题恢复与合法源码交付；test_globs为空，官方仅check-expressions.test，不覆盖meet/checkexpr。"
+    },
+    "5": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/gold.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15139/base/mypy/meet.py:300-312",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/base/mypy/meet.py:300-312",
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-15139/gold.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/base/mypy/messages.py:2519-2521",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-10174/review.md"
+      ],
+      "by": "coordinator /root bounded source comparison after independent review",
+      "note": "已核15184公开base包含15139的TypeType显示核心，两个1.4题base包含10174的Optional/Any顺序修复；仅源码包含，不证明Git祖先、重复任务或真实泄漏，完整重复/留出划分未知。"
+    },
+    "6": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/gold/eval_logs/evallog_replay-er19-iw1-python___f589d38e.eval.log:430-511",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/noop/eval_logs/evallog_replay-er19-iw1-python___e59bc664.eval.log:403-484",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/image.json"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "09-19原spec requirements+editable及额外pytest安装成功；COPY/ENV本身不作安装证据，不外推当前actor资产。"
+    },
+    "7": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base/test-data/unit/fixtures/tuple.pyi:1-47",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base/test-data/unit/fixtures/typing-full.pyi:1-170",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base/test-data/unit/lib-stub/builtins.pyi:1-22",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/gold/eval_logs/evallog_replay-er19-iw1-python___f589d38e.eval.log:521-539"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "官方所用fixture全文已读并有历史执行；扩展公开回归的全部fixture未穷尽。"
+    },
+    "8": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/environment_record.json",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/gold/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/noop/ledger.jsonl:1"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "历史grader rh2grader/54322与apply agent/54321不同；正式actor UID/HOME/PATH/权限未知。"
+    },
+    "9": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/gold/eval_logs/evallog_replay-er19-iw1-python___f589d38e.eval.log:466-511",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/noop/eval_logs/evallog_replay-er19-iw1-python___e59bc664.eval.log:439-484",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/gold/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/noop/ledger.jsonl:1"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "范围限历史gold/no-op：成功editable和源码导入观测、目标行为分差一致；正式actor源码是否生效未知。"
+    },
+    "10": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base/mypy/checkexpr.py:2293-2353",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base/mypy/meet.py:130-218",
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/environment_record.json"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "已给出公开复现、原开关对照和开发需求；未按正式actor执行。"
+    },
+    "11": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/gold/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/noop/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/image.json"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "仅历史候选安装/测试deny_all下成功；wheel准备及实际actor网络路径未验。测试无外部服务依赖。"
+    },
+    "13": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/gold/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/noop/ledger.jsonl:1"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "历史2CPU/4GiB和约124/128MiB峰值未见OOM；单次不证明正式actor期限或并发资源足够。"
+    },
+    "14": {
+      "status": "not_checked",
+      "evidence_refs": [],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "没有重复同状态评分；禁止将一次gold/no-op对照称为重复稳定性。"
+    },
+    "15": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/gold/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/noop/ledger.jsonl:1"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "历史cleanup removed=true；缓存复用、连续运行与并发未验。"
+    },
+    "16": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/gold/ledger.jsonl:1",
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/gold.patch"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "范围限本题历史gold投影：included mypy/meet.py、ignored空；未验证所有提交形态。"
+    },
+    "17": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/noop/eval_logs/evallog_replay-er19-iw1-python___e59bc664.eval.log:229",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/gold/eval_logs/evallog_replay-er19-iw1-python___f589d38e.eval.log:256",
+        "runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz!src/repoharness2/adapters/slime/prepared_task_face.py:185-211,305-330"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "官方精确恢复1文件，expected/restored/test_files=1，apply_rc0/setup_ok1/protect_ok1；无源码误恢复。"
+    },
+    "18": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/gold/eval_logs/evallog_replay-er19-iw1-python___f589d38e.eval.log:521-539",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/noop/eval_logs/evallog_replay-er19-iw1-python___e59bc664.eval.log:494-527",
+        "runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz!src/repoharness2/envpack/spec_vendor.py:183-197"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "9422收集、3执行；2个-k词因Any前缀命中AnyLower形成3节点，均属于冻结1F2P+2P2P。"
+    },
+    "19": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/grading.json",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/gold/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/noop/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz!src/repoharness2/envpack/swegym_parsers.py:88",
+        "runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz!src/repoharness2/envpack/scoring.py:189-270"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "mypy0.820原runner为三段ID；解析3与参考3一致，missing/skipped空、段外0；未拿新版本四段ID替换。"
+    },
+    "20": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/noop/eval_logs/evallog_replay-er19-iw1-python___e59bc664.eval.log:514-521",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/gold/eval_logs/evallog_replay-er19-iw1-python___f589d38e.eval.log:532-534",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/gold/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/noop/ledger.jsonl:1"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "真实历史noop F2P0/1、P2P2/2→0；gold F2P1/1、P2P2/2→1。分差源于目标误报，非安装失败或固定rc1规则。"
+    },
+    "22": {
+      "status": "not_checked",
+      "evidence_refs": [],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "未做独立来源runner与RH2对账；旧stage1只读到旧报告二手摘要。"
+    },
+    "23": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/public_bundle.json",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base/docs/source/command_line.rst:562-580",
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/test.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base/mypy/checkexpr.py:2307"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "F2P期望可由公开原例与Any重叠语义推出；flags是inline配置的等效形式，不是私有新要求。"
+    },
+    "24": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/test.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base/mypy/test/testcheck.py:137-234"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "已检查完整新增断言：只要求真实build全部诊断空，没有helper名、调用顺序、内部结构断言；合法替代路径未执行。"
+    },
+    "25": {
+      "status": "issue",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/test.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base/test-data/unit/check-expressions.test:2764-2780",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base/mypy/checkexpr.py:2293-2353"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "静态具体漏测路线：non-strict optional下关闭dangerous_comparison可能过1/2且丢真不重叠诊断；尚未形成运行的满分错误解反例。"
+    },
+    "26": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base/mypy/meet.py:53-76",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base/mypy/checker.py:4128-4148,4326-4356,4498-4516,4963-4994",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base/test-data/unit/check-expressions.test:2397-2677,2764-2780",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base/test-data/unit/check-isinstance.test:1869-1926,2213-2262"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "相关调用者与公开旧行为已查；官方2P2P与overlap无直接回归关系，未运行扩展回归、未证明gold破坏。"
+    },
+    "27": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/gold.patch",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/gold/eval_logs/evallog_replay-er19-iw1-python___f589d38e.eval.log:521-539",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base/mypy/meet.py:130-218",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base/mypy/types.py:1777-1783,1801-1806"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "有限结论：gold移动同一双侧Any guard修复目标并通过原F2P，静态未发现错误；共享函数全部组合未证。"
+    },
+    "28": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base/docs/source/command_line.rst:562-580",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base/test-data/unit/check-expressions.test:2764-2769"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "建议的同配置固定tuple负例来自公开strict-equality旧行为；未引入风格/API新要求，未修改oracle。"
+    },
+    "29": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/public_bundle.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_1/records/python__mypy-10174.json#checks.29"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "题面未见修复答案；未查正式actor Git对象、镜像、缓存和挂载，旧“无泄漏”不能继承。"
+    },
+    "31": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz!src/repoharness2/adapters/slime/prepared_task_face.py:305-330",
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/test.patch"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "已核official恢复范围；runner/helper/config其它控制面未做本轮攻击验证，无具体新增路径排除。"
+    },
+    "32": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base/mypy/test/testcheck.py:137-234",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base/mypy/test/helpers.py:44-58,117",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/noop/eval_logs/evallog_replay-er19-iw1-python___e59bc664.eval.log:508-516"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "测试真实类型检查和诊断比对，不匹配gold源码；验证目标有依据，但缺相关负对照另记25。"
+    },
+    "33": {
+      "status": "not_checked",
+      "evidence_refs": [],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "没有真实solver/Claude Code贯通；grader应用gold不算盲解。"
+    },
+    "37": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/test.patch",
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/gold.patch",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-10174/analysis_before_history.md"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "仅写审查四产物；原材料、reward和expected均未修改；CPU建议未执行，revision_refs为空。"
+    },
+    "38": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/environment_replay_inventory.json#common",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/environment_replay_inventory.json#families.install_wave1",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/environment_replay_inventory.json#tasks[instance_id=python__mypy-10174]",
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/run_refs.json"
+      ],
+      "by": "B3 fresh private investigator / b3_investigate_mypy",
+      "note": "原始引用与环境归档可定位；当前镜像、缺失的原wheel payload、路径迁移和正式actor复验未做；reviewer未读。"
+    }
+  },
+  "issues": [
+    {
+      "category": "possible_incomplete_fix_acceptance",
+      "scope": "task / F2P1 P2P2 coverage",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/test.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base/test-data/unit/check-expressions.test:2764-2780",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base/mypy/checkexpr.py:2293-2353"
+      ],
+      "proposed_action": "One priority CPU experiment, not executed: clean base/gold plus one candidate short-circuiting dangerous_comparison to False only under non-strict optional; compare official1/2 reward and public same-switch fixed-tuple negative. Preserve comparison-overlap in base/gold; if candidate scores1 while losing it, record concrete counterexample before separate test revision. No mandatory second lawful patch or three fake patches.",
+      "status": "open_static_inference_not_executed"
+    },
+    {
+      "category": "relevant_regression_evidence_gap",
+      "scope": "shared is_overlapping_types / strict optional and narrowing",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base/mypy/checker.py:4128-4148,4326-4356,4498-4516,4963-4994",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-10174/base/test-data/unit/check-isinstance.test:1869-1926,2213-2262",
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/grading.json"
+      ],
+      "proposed_action": "After resolving the priority experiment, choose source-supported strict-optional and narrowing contrasts if needed; do not infer gold breakage or mandate full-repository tests from missing P2P.",
+      "status": "open_not_dynamically_verified"
+    },
+    {
+      "category": "formal_actor_and_replay_assets_unverified",
+      "scope": "development workflow and current replay conditions",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/environment_record.json",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/image.json",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/gold/ledger.jsonl:1",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/environment_replay_inventory.json#common"
+      ],
+      "proposed_action": "未来固定grader诊断先核该次grader身份、解释器/源码/依赖、镜像资产与新重定位输入；正式actor消息/工具/写权限验收另作为模型开发门槛。历史grader成功不是actor资格。",
+      "status": "open_unknown"
+    },
+    {
+      "category": "historical_claims_exceed_verified_scope",
+      "scope": "history reconciliation only",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_1/records/python__mypy-10174.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-10174/old_findings_delta.md"
+      ],
+      "proposed_action": "Retain task-level coverage concern; do not import unverified40-task statistics, risk ranking, neighbor-task relationship, global no-leak claim or old18-minute cost. Do not change reward/expected from this static record.",
+      "status": "documented_scope_limit"
+    },
+    {
+      "category": "cross_task_source_relationship",
+      "scope": "Mypy authorized three-task public-source containment",
+      "evidence_refs": [
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/gold.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15139/base/mypy/meet.py:300-312",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/base/mypy/meet.py:300-312",
+        "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-15139/gold.patch",
+        "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/base/mypy/messages.py:2519-2521",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-10174/review.md"
+      ],
+      "proposed_action": "记录两1.4 base含10174关键排序、15184含15139 TypeType分支；未核Git谱系，不因此合并任务或宣称重复/实际solver泄漏。",
+      "status": "observed_static_source_containment"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "Official test.patch touches only test-data/unit/check-expressions.test; historical test_globs empty. No concrete new control-plane bypass or legitimate-answer collision demonstrated; no blanket helper/config/test exclusions.",
+    "evidence_refs": [
+      "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/test.patch",
+      "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/gold/eval_logs/evallog_replay-er19-iw1-python___f589d38e.eval.log:256",
+      "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10174/noop/eval_logs/evallog_replay-er19-iw1-python___e59bc664.eval.log:229",
+      "runs/env_recipe_repair_20260919/frozen_sources/baseline.tar.gz!src/repoharness2/adapters/slime/prepared_task_face.py:305-330"
+    ],
+    "applied_version": "unchanged upstream / historical baseline official exact-path recovery"
+  },
+  "revision_refs": [],
+  "disposition": {
+    "state": "needs_review",
+    "scope": "static_review",
+    "reason": "受限静态开发诊断候选：原目标/gold/历史0-1分差可解释，2P2P不保护严格比较；一个关闭非strict-optional比较的过宽候选可校准具体漏测，未观测满分反例。",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-10174/analysis_before_history.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-10174/old_findings_delta.md",
+      "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-10174/run_refs.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-10174/review.md"
+    ],
+    "reviewer": "/root/b3_review_mypy; coordinator /root adjudication",
+    "reviewed_at_utc": "2026-09-20T22:00:16.557202+00:00",
+    "static_recommendation": "limited_static_candidate"
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "exposure_notes": [
+      "Public reader artifact read first, then this task source/private test/gold/grading/validation and environment_record including verified_environment_pair summaries; exact original run evidence followed.",
+      "Sealed analysis saved UTC2026-09-20T21:30:43.290121+00:00 SHA256 d1f6f217d865901b32575afab76ef58cd42be5c104c867b5fd07f97c5e443b0a. History release UTC2026-09-20T21:30:59.391928, then only refs.json and its single old record read; sealed analysis not edited.",
+      "Old record names neighbors10424/10658/15876 and reports global40-task facts; no neighbor records, aggregates or referenced old auxiliary files accessed. These lines are exposure, not independent evidence.",
+      "No reviewer, real solver trajectory, external answer, project execution/import/test/install, network/Docker/SSH or current CPU. Only authorized static evidence reads and four review artifacts. Do not provide private audit to solver."
+    ],
+    "coordinator_review_note": "三份独立初判全部封存后才开放结论；最终card/record收束，public/main/reviewer封存稿及delta/review保留原字节。固定grader诊断与正式模型开发资格分开。"
+  },
+  "costs": {
+    "container_wall_seconds": null,
+    "agent_tokens": null,
+    "human_decisions": null,
+    "source_refs": [
+      "No current CPU executed or metered model/tool-cost record; old report18-minute claim not reused."
+    ]
+  },
+  "reviewed_at_utc": "2026-09-20T21:35:11.383597+00:00"
+}

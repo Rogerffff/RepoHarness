@@ -1,0 +1,1485 @@
+{
+  "schema": "category2_start_v1",
+  "source_snapshot_sha256": "bb506abf0af0c055bae73704443e0167fbb75989ac1d1a7337c20772018893ea",
+  "source_as_of": "2026-09-29T13:41:27.724461+08:00",
+  "status": "inspection_and_first_batch_preparation",
+  "scope": "Only original category2: SWE28/R2E13; no category3 dispatch; no GPU run",
+  "tasks": [
+    {
+      "source": "SWE",
+      "batch": "original40",
+      "instance_id": "conan-io__conan-15422",
+      "short_name": "conan-15422",
+      "repo": "conan-io/conan",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "C"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "真实得 1 的候选漏掉默认 jobs 或多配置路径；开发工具与 G1 exec 已修。",
+      "next_action": "补默认 jobs、多配置生成器及所用 CMake/schema 兼容验收；正确修法通过、已存漏修候选被拒后再进普通探针。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-15422/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/dvc_conan_dask.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "ordinary_probe_review_v2": {
+        "source": "SWE",
+        "key": "conan-15422",
+        "old_category": 1,
+        "new_category": 2,
+        "reason": "已有真实满分候选漏掉公开要求的默认 jobs 与多配置路径，不能再以事后审计豁免。",
+        "why_no_required_repair": null,
+        "next_action": "补默认 jobs、多配置生成器及所用 CMake/schema 兼容验收；正确修法通过、已存漏修候选被拒后再进普通探针。",
+        "evidence_refs": [
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-15422/card.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/dvc_conan_dask.md"
+        ]
+      },
+      "historical_probe_pool_19": true,
+      "prior_current_use": {
+        "diagnostic": "yes",
+        "comparison": "conditional",
+        "training": "no",
+        "holdout": "no"
+      },
+      "previous_repairs": [
+        "新增真实conan入口与官方CMake3.23.5，actor_v2真实configure/build和集成可运行。",
+        "G1提交83760b15已修exec挂载；conan_rc的原2失败变2通过，选择组10通过/8跳过/27未选，pytest自身rc0。旧noexec不再列未修。"
+      ]
+    },
+    {
+      "source": "SWE",
+      "batch": "original40",
+      "instance_id": "iterative__dvc-4166",
+      "short_name": "dvc-4166",
+      "repo": "iterative/dvc",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "R"
+      ],
+      "suspected_issue_tags": [
+        "B"
+      ],
+      "current_situation": "pathspec 与 networkx 开发修订已验；需要固定与 grader 一致的版本及初态。",
+      "next_action": "固定已验 pathspec/networkx 配方，核当前材料的节点身份；消除合键并补同名文件／目录对照，复验 gold 和只裁尾斜杠的部分修法。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/iterative__dvc-4166/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/dvc_conan_dask.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "ordinary_probe_review_v2": {
+        "source": "SWE",
+        "key": "dvc-4166",
+        "old_category": 1,
+        "new_category": 2,
+        "reason": "目录规则已有明确公开依据，但已验日志存在参数节点合键，文件／目录成对判据也未完整保护。",
+        "why_no_required_repair": null,
+        "next_action": "固定已验 pathspec/networkx 配方，核当前材料的节点身份；消除合键并补同名文件／目录对照，复验 gold 和只裁尾斜杠的部分修法。",
+        "evidence_refs": [
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/iterative__dvc-4166/card.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/dvc_conan_dask.md"
+        ]
+      },
+      "historical_probe_pool_19": true,
+      "prior_current_use": {
+        "diagnostic": "yes",
+        "comparison": "conditional",
+        "training": "conditional",
+        "holdout": "conditional"
+      },
+      "previous_repairs": [
+        "actor_dvc4166_v1固定pathspec0.8.1并对networkx2.3作与grader2.3+rh2.1代码等价兼容修复，pip check0、ignore29通过。",
+        "公开assert修正：*+!scripts在gold也隐藏内部文件，符合gitignore；/*+!/scripts/才是base缺陷，gold恢复。"
+      ]
+    },
+    {
+      "source": "SWE",
+      "batch": "original40",
+      "instance_id": "iterative__dvc-5839",
+      "short_name": "dvc-5839",
+      "repo": "iterative/dvc",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "C"
+      ],
+      "suspected_issue_tags": [
+        "B"
+      ],
+      "current_situation": "开发依赖已修；模型失败已确认为舍入语义过度修改，没有已证评分假阳性。",
+      "next_action": "把已跑的默认／4／8 CLI 实际数值断言纳入验收；核 gold、真实成功候选与硬编码8候选。硬编码候选得分仍未实测，不预填。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-5839/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/dvc_conan_dask.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "ordinary_probe_review_v2": {
+        "source": "SWE",
+        "key": "dvc-5839",
+        "old_category": 1,
+        "new_category": 2,
+        "reason": "CLI 的任意 precision 和默认值是明确要求；现有 F2P 只验实参8，helper 的 P2P 不等于 CLI 值传递已受保护。",
+        "why_no_required_repair": null,
+        "next_action": "把已跑的默认／4／8 CLI 实际数值断言纳入验收；核 gold、真实成功候选与硬编码8候选。硬编码候选得分仍未实测，不预填。",
+        "evidence_refs": [
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-5839/card.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/dvc_conan_dask.md"
+        ]
+      },
+      "historical_probe_pool_19": true,
+      "prior_current_use": {
+        "diagnostic": "yes",
+        "comparison": "conditional",
+        "training": "conditional",
+        "holdout": "no"
+      },
+      "previous_repairs": [
+        "actor_dvc5839_v2固定pathspec0.8.1，原CLI五种参数redefinition错误消除；五种CLI内部rc0、窄2测通过。",
+        "09-25行为原件补齐默认/4/8/2、Markdown/JSON：10个成功候选与gold逐项一致；DS两失败是有效数字替代小数位真实回归。"
+      ]
+    },
+    {
+      "source": "SWE",
+      "batch": "original40",
+      "instance_id": "iterative__dvc-6954",
+      "short_name": "dvc-6954",
+      "repo": "iterative/dvc",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "C"
+      ],
+      "suspected_issue_tags": [
+        "B"
+      ],
+      "current_situation": "pygit2 已补；六条有效模型尝试通过公开数值与锁文件检查，另一次为 infra。",
+      "next_action": "加入已验证的负 float／容器负值及必要 lock 行为验收，复验 gold 和 int-only 候选；保留非法表达式不扩题的决定。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-6954/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/dvc_conan_dask.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "ordinary_probe_review_v2": {
+        "source": "SWE",
+        "key": "dvc-6954",
+        "old_category": 1,
+        "new_category": 2,
+        "reason": "负数参数公开要求不限于负整数；现有正式目标只覆盖整数，同一通路的负 float 已有可复用行为证据。",
+        "why_no_required_repair": null,
+        "next_action": "加入已验证的负 float／容器负值及必要 lock 行为验收，复验 gold 和 int-only 候选；保留非法表达式不扩题的决定。",
+        "evidence_refs": [
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-6954/card.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/dvc_conan_dask.md"
+        ]
+      },
+      "historical_probe_pool_19": true,
+      "prior_current_use": {
+        "diagnostic": "yes",
+        "comparison": "conditional",
+        "training": "conditional",
+        "holdout": "no"
+      },
+      "previous_repairs": [
+        "actor_dvc6954_v1固定pygit21.14.1/libgit2 1.7.2，GIT_OBJ_COMMIT恢复；git_rev可运行，params功能24通过、序列化2通过、pip check0。",
+        "09-25三方/自然候选行为补齐负int/float/nested、lock、不变跳过、改值重跑与dvc run；6个成功在题面范围与gold一致。",
+        "DS初次流中断已标infra并重跑，不能把其noop0混入模型失败分母。"
+      ]
+    },
+    {
+      "source": "SWE",
+      "batch": "original40",
+      "instance_id": "python__mypy-10174",
+      "short_name": "mypy-10174",
+      "repo": "python/mypy",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "C"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "公开开发验证通过；过宽关闭比较检查只是尚未运行的疑点。",
+      "next_action": "补同开关下真实不重叠比较的公开负例，验证 gold 保留诊断、关闭全部比较的候选被拒；不把尚未跑的错误候选写成已误奖。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-10174/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/mypy_pydantic.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "ordinary_probe_review_v2": {
+        "source": "SWE",
+        "key": "mypy-10174",
+        "old_category": 1,
+        "new_category": 2,
+        "reason": "停止误报仍须保留真正不重叠比较的诊断；具体公开负例已定位，但不在冻结参考内。",
+        "why_no_required_repair": null,
+        "next_action": "补同开关下真实不重叠比较的公开负例，验证 gold 保留诊断、关闭全部比较的候选被拒；不把尚未跑的错误候选写成已误奖。",
+        "evidence_refs": [
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-10174/card.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/mypy_pydantic.md"
+        ]
+      },
+      "historical_probe_pool_19": true,
+      "prior_current_use": {
+        "diagnostic": "yes",
+        "comparison": "conditional",
+        "training": "no",
+        "holdout": "no"
+      },
+      "previous_repairs": [
+        "任务二正式 actor 原例和 32 项相关回归、私有 gold 原例已验，旧原例待验消项。"
+      ]
+    },
+    {
+      "source": "SWE",
+      "batch": "original40",
+      "instance_id": "python__mypy-10424",
+      "short_name": "mypy-10424",
+      "repo": "python/mypy",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "C",
+        "R"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "关闭收窄的错误补丁得 1，公开回归四项失败；安装子命令 rc=1 曾被段末 rc=0 掩盖。",
+      "next_action": "将现成普通收窄测试接入版本化 P2P，并收口候选安装子命令失败；正确解与已知错解对照通过后进入普通探针。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-10424/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/mypy_pydantic.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "ordinary_probe_review_v2": {
+        "source": "SWE",
+        "key": "mypy-10424",
+        "old_category": 1,
+        "new_category": 2,
+        "reason": "关闭收窄的错误候选已得1且破坏四项公开旧行为，修法已明确。",
+        "why_no_required_repair": null,
+        "next_action": "将现成普通收窄测试接入版本化 P2P，并收口候选安装子命令失败；正确解与已知错解对照通过后进入普通探针。",
+        "evidence_refs": [
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-10424/card.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/mypy_pydantic.md"
+        ]
+      },
+      "historical_probe_pool_19": true,
+      "prior_current_use": {
+        "diagnostic": "yes",
+        "comparison": "conditional",
+        "training": "no",
+        "holdout": "no"
+      },
+      "previous_repairs": [
+        "历史离线安装配方和 gold/noop 控制已完成；R4 语义实验现已完成，不能继续标为未做。"
+      ]
+    },
+    {
+      "source": "SWE",
+      "batch": "original40",
+      "instance_id": "python__mypy-15184",
+      "short_name": "mypy-15184",
+      "repo": "python/mypy",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "P"
+      ],
+      "suspected_issue_tags": [
+        "B"
+      ],
+      "current_situation": "题面原例在 base 上已成功；公开替代复现可用，旧决定保留该限制，现按普通探针标准先修说明。",
+      "next_action": "以有公开依据且已验证的同名类例中性修订复现说明，保持限定名目标，补新公开读者及正确／错误行为核对。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/mypy_pydantic.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "ordinary_probe_review_v2": {
+        "source": "SWE",
+        "key": "mypy-15184",
+        "old_category": 1,
+        "new_category": 2,
+        "reason": "题面原例在当前 base 不复现，公开替代复现已验证；继续让模型自行发现原例失配不是对该缺陷的处理。",
+        "why_no_required_repair": null,
+        "next_action": "以有公开依据且已验证的同名类例中性修订复现说明，保持限定名目标，补新公开读者及正确／错误行为核对。",
+        "evidence_refs": [
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/card.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/mypy_pydantic.md"
+        ]
+      },
+      "historical_probe_pool_19": true,
+      "prior_current_use": {
+        "diagnostic": "yes",
+        "comparison": "conditional",
+        "training": "no",
+        "holdout": "no"
+      },
+      "previous_repairs": [
+        "任务二原例默认/目标 3.8/3.11 实测 Success；目标 3.7 为 SupportsIndex 缺失，不能当目标复现。",
+        "公开可追溯 a.C/b.C 替代例 base 报 C/not C、gold 报限定名，6 项旧测通过。"
+      ]
+    },
+    {
+      "source": "SWE",
+      "batch": "original40",
+      "instance_id": "python__mypy-17071",
+      "short_name": "mypy-17071",
+      "repo": "python/mypy",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "C",
+        "R"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "禁用 unbound 检查可得 1，却接受真实未绑定类型；安装子命令失败仍需单列。",
+      "next_action": "把已有真正 unbound 负例接入正式参考，同时核候选安装；成功修法通过、禁用检查候选被拒后再探针。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-17071/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/mypy_pydantic.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "ordinary_probe_review_v2": {
+        "source": "SWE",
+        "key": "mypy-17071",
+        "old_category": 1,
+        "new_category": 2,
+        "reason": "禁用 unbound 检查的错误候选已得1，普通未绑定类型必须仍被拒。",
+        "why_no_required_repair": null,
+        "next_action": "把已有真正 unbound 负例接入正式参考，同时核候选安装；成功修法通过、禁用检查候选被拒后再探针。",
+        "evidence_refs": [
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-17071/card.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/mypy_pydantic.md"
+        ]
+      },
+      "historical_probe_pool_19": true,
+      "prior_current_use": {
+        "diagnostic": "yes",
+        "comparison": "conditional",
+        "training": "no",
+        "holdout": "no"
+      },
+      "previous_repairs": [
+        "任务二开发复现和 4 份成功模型补丁的公开回归/负例核验已完成。"
+      ]
+    },
+    {
+      "source": "SWE",
+      "batch": "original40",
+      "instance_id": "getmoto__moto-5406",
+      "short_name": "moto-5406",
+      "repo": "getmoto/moto",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "C"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "恒返回 East2 ARN 的错误补丁得 1；公开 East1 行为失败。",
+      "next_action": "把已有双地区断言接入有版本的 SWE 修订机制，复验正确／错误对照。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/getmoto__moto-5406/result.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/moto_pandas.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/root_progress_review.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "historical_probe_pool_19": false,
+      "prior_current_use": {
+        "diagnostic": "yes",
+        "comparison": "conditional",
+        "training": "no",
+        "holdout": "no"
+      },
+      "previous_repairs": [
+        "不是install_wave1；实际原make init完成。no-op/gold/恒East2评分0/1/1，27参考×3完整，真实导出源码与私有行为字节一致；安装和两层清理核验完成。"
+      ]
+    },
+    {
+      "source": "SWE",
+      "batch": "original40",
+      "instance_id": "getmoto__moto-5960",
+      "short_name": "moto-5960",
+      "repo": "getmoto/moto",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "C",
+        "R"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "GSI KEYS_ONLY 核心断言缺失；参数节点合键已见，尚未造成当前对照错分。",
+      "next_action": "补 INCLUDE／KEYS_ONLY 的字段集合验收，核引用节点身份，运行 gold 与漏修 KEYS_ONLY 候选后再进入普通探针。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-5960/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/moto_pandas.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "ordinary_probe_review_v2": {
+        "source": "SWE",
+        "key": "moto-5960",
+        "old_category": 1,
+        "new_category": 2,
+        "reason": "公开核心 GSI KEYS_ONLY 路径缺决定性断言，已有 actor/gold 行为对照，不能只安排成功补丁后检。",
+        "why_no_required_repair": null,
+        "next_action": "补 INCLUDE／KEYS_ONLY 的字段集合验收，核引用节点身份，运行 gold 与漏修 KEYS_ONLY 候选后再进入普通探针。",
+        "evidence_refs": [
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-5960/card.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/moto_pandas.md"
+        ]
+      },
+      "historical_probe_pool_19": true,
+      "prior_current_use": {
+        "diagnostic": "yes",
+        "comparison": "conditional",
+        "training": "no",
+        "holdout": "no"
+      },
+      "previous_repairs": [
+        "正式actor原例可复现、目标失败与工具依赖可区分。"
+      ]
+    },
+    {
+      "source": "SWE",
+      "batch": "original40",
+      "instance_id": "getmoto__moto-6114",
+      "short_name": "moto-6114",
+      "repo": "getmoto/moto",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "C"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "按 B ARN 返回 A、数量仍为 1 的错误补丁得满分。",
+      "next_action": "新增对象 Identifier／ARN 身份断言，经 D6 版本入口复验。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/getmoto__moto-6114/result.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/results/getmoto__moto-6114/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/moto_pandas.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/root_progress_review.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "historical_probe_pool_19": false,
+      "prior_current_use": {
+        "diagnostic": "yes",
+        "comparison": "conditional",
+        "training": "no",
+        "holdout": "no"
+      },
+      "previous_repairs": [
+        "恢复旧install_wave1资产：COPY setuptools72.1.0/wheel0.43.0/packaging24.1 wheel及离线环境，未预先RUN安装；不是已观测actor故障修复。",
+        "派生层三方原make init真实完成，noop/gold/wrong_first=0/1/1，35参考×3完整；完整投影源码与私有字节一致，安装/两层清理完成。"
+      ]
+    },
+    {
+      "source": "SWE",
+      "batch": "original40",
+      "instance_id": "getmoto__moto-6408",
+      "short_name": "moto-6408",
+      "repo": "getmoto/moto",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "C"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "公开开发条件可用；首项断言未完整约束 tag 归属，尚无错误候选得分证据。",
+      "next_action": "补现有两镜像完整标签集合与对象归属断言，核正确解、只改返回排序和误删其它标签的候选；新目的镜像的邻接旧缺陷另定范围。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/moto_pandas.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "ordinary_probe_review_v2": {
+        "source": "SWE",
+        "key": "moto-6408",
+        "old_category": 1,
+        "new_category": 2,
+        "reason": "当前原序列首项正确不证明标签唯一归属及其它标签保留，这属于明确任务要求的覆盖缺口。",
+        "why_no_required_repair": null,
+        "next_action": "补现有两镜像完整标签集合与对象归属断言，核正确解、只改返回排序和误删其它标签的候选；新目的镜像的邻接旧缺陷另定范围。",
+        "evidence_refs": [
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/card.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/moto_pandas.md"
+        ]
+      },
+      "historical_probe_pool_19": true,
+      "prior_current_use": {
+        "diagnostic": "yes",
+        "comparison": "conditional",
+        "training": "conditional",
+        "holdout": "conditional"
+      },
+      "previous_repairs": [
+        "原正式actor工具、checkout与局部开发条件已核；历史actor未知项在这一范围内消解。"
+      ]
+    },
+    {
+      "source": "SWE",
+      "batch": "original40",
+      "instance_id": "pandas-dev__pandas-48106",
+      "short_name": "pandas-48106",
+      "repo": "pandas-dev/pandas",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "R"
+      ],
+      "suspected_issue_tags": [
+        "B"
+      ],
+      "current_situation": "安装及三组 Period 绑定已修；两组 tz 别名仍合键，当前成员均通过。",
+      "next_action": "核当前版本两组 tz 引用绑定，补独立身份／混合状态对照并完成版本验收；不将历史0/1追溯改分。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-48106/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/moto_pandas.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "ordinary_probe_review_v2": {
+        "source": "SWE",
+        "key": "pandas-48106",
+        "old_category": 1,
+        "new_category": 2,
+        "reason": "三组 Period 修订未处理剩余两组 tz 节点合键；当前都PASS不能消除未来混合状态被覆盖的风险。",
+        "why_no_required_repair": null,
+        "next_action": "核当前版本两组 tz 引用绑定，补独立身份／混合状态对照并完成版本验收；不将历史0/1追溯改分。",
+        "evidence_refs": [
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-48106/card.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/moto_pandas.md"
+        ]
+      },
+      "historical_probe_pool_19": true,
+      "prior_current_use": {
+        "diagnostic": "yes",
+        "comparison": "conditional",
+        "training": "conditional",
+        "holdout": "conditional"
+      },
+      "previous_repairs": [
+        "grader pandas_meta_v3实际源码安装/pip check成功；reference_bindings_v1的3组Period别名共7完整节点真实被wrapper消费，noop0/gold1、P2P1020全命中，旧恒零判断失效。",
+        "正式actor导入/开发路径另已验证；未把grader54322当actor54321。"
+      ]
+    },
+    {
+      "source": "SWE",
+      "batch": "original40",
+      "instance_id": "pandas-dev__pandas-50319",
+      "short_name": "pandas-50319",
+      "repo": "pandas-dev/pandas",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "T",
+        "R"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "题面明示返回 None 或猜出格式均可，测试仅接受格式；另有参数合键记录。",
+      "next_action": "构造保留其它行为的 None 路线，按公开允许范围修验收并做正负对照；不再仅以 P5 暂挂。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/pandas-dev__pandas-50319/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/moto_pandas.md",
+        "runs/swegym_quality_batch03_20260921_v1/public/pandas-dev__pandas-50319/user_prompt.txt"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "historical_probe_pool_19": false,
+      "prior_current_use": {
+        "diagnostic": "yes",
+        "comparison": "no",
+        "training": "no",
+        "holdout": "no"
+      },
+      "previous_repairs": [
+        "reference_v1绑定真实消费，gold历史恒失败说法已失效；修复参考身份不消除题意冲突。"
+      ]
+    },
+    {
+      "source": "SWE",
+      "batch": "original40",
+      "instance_id": "pydantic__pydantic-8511",
+      "short_name": "pydantic-8511",
+      "repo": "pydantic/pydantic",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "C",
+        "G",
+        "R"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "gold 在字段继承组合引入 TypeError，窄修可用；两者原评分均 1，安装也并非全成功。",
+      "next_action": "以已核窄修作正对照，将三类继承保护接入正式验收，收口安装失败并复验；保留原 gold 失败事实。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/pydantic__pydantic-8511/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/mypy_pydantic.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "ordinary_probe_review_v2": {
+        "source": "SWE",
+        "key": "pydantic-8511",
+        "old_category": 1,
+        "new_category": 2,
+        "reason": "gold 及满分候选的继承 TypeError 已实证，窄修正对照也已可用，既有审计许可不能替代修复。",
+        "why_no_required_repair": null,
+        "next_action": "以已核窄修作正对照，将三类继承保护接入正式验收，收口安装失败并复验；保留原 gold 失败事实。",
+        "evidence_refs": [
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/pydantic__pydantic-8511/card.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/mypy_pydantic.md"
+        ]
+      },
+      "historical_probe_pool_19": true,
+      "prior_current_use": {
+        "diagnostic": "yes",
+        "comparison": "conditional",
+        "training": "no",
+        "holdout": "no"
+      },
+      "previous_repairs": [
+        "R4 原例与继承矩阵已完成；窄修候选原例和继承控制均通过，正式 reward 1。"
+      ]
+    },
+    {
+      "source": "SWE",
+      "batch": "new32",
+      "instance_id": "Project-MONAI__MONAI-2446",
+      "short_name": "MONAI-2446",
+      "repo": "Project-MONAI/MONAI",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "C"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "NiBabel 开发缺口已修；只保外部数组顺序、破坏内部 shuffle／cache 的补丁得 1。",
+      "next_action": "将已有同输入内外行为对照接入版本化验收并复验。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/Project-MONAI__MONAI-2446/result.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-2446/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-2446/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-2446/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/root_progress_review.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true
+    },
+    {
+      "source": "SWE",
+      "batch": "new32",
+      "instance_id": "Project-MONAI__MONAI-3715",
+      "short_name": "MONAI-3715",
+      "repo": "Project-MONAI/MONAI",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "C"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "公开 train 目标没有决定性验收，当前主要覆盖 eval。",
+      "next_action": "补 forward 时 training／梯度及退出恢复的行为断言；核 actor 后验正确与退化候选。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-3715/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-3715/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-3715/review.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true
+    },
+    {
+      "source": "SWE",
+      "batch": "new32",
+      "instance_id": "Project-MONAI__MONAI-4583",
+      "short_name": "MONAI-4583",
+      "repo": "Project-MONAI/MONAI",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "C"
+      ],
+      "suspected_issue_tags": [
+        "R"
+      ],
+      "current_situation": "只修 2D 的补丁得 1，公开稀疏 3D 标签仍错误；CPU 范围已固定。",
+      "next_action": "纳入已跑的 2D／3D 标签及 dtype 断言，保留 CPU／CUDA 身份条件。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/Project-MONAI__MONAI-4583/result.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-4583/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-4583/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-4583/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/root_progress_review.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true
+    },
+    {
+      "source": "SWE",
+      "batch": "new32",
+      "instance_id": "Project-MONAI__MONAI-5932",
+      "short_name": "MONAI-5932",
+      "repo": "Project-MONAI/MONAI",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "C"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "反转顺序的错误修法得 1，另一长短引用顺序失败。",
+      "next_action": "将已有双顺序、真实解析值对照纳入验收并复验。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/Project-MONAI__MONAI-5932/result.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-5932/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-5932/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-5932/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/root_progress_review.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true
+    },
+    {
+      "source": "SWE",
+      "batch": "new32",
+      "instance_id": "Project-MONAI__MONAI-6975",
+      "short_name": "MONAI-6975",
+      "repo": "Project-MONAI/MONAI",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "C"
+      ],
+      "suspected_issue_tags": [
+        "T"
+      ],
+      "current_situation": "退化补丁正确打印 lazy／resample 信息却丢掉返回图像，仍得 1。",
+      "next_action": "按已跑 direct／Dataset 矩阵核实际像素并修验收；沿用验证过的准备预算。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/Project-MONAI__MONAI-6975/result.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-6975/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-6975/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-6975/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/root_progress_review.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true
+    },
+    {
+      "source": "SWE",
+      "batch": "new32",
+      "instance_id": "conan-io__conan-11594",
+      "short_name": "conan-11594",
+      "repo": "conan-io/conan",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "C"
+      ],
+      "suspected_issue_tags": [
+        "T"
+      ],
+      "current_situation": "Ninja 已补；Release 变 Debug 的错误补丁仍得 1。",
+      "next_action": "补真实构建配置及执行 marker 验收，避免只核命令字符串。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/conan-io__conan-11594/result.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-11594/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-11594/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-11594/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/root_progress_review.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true
+    },
+    {
+      "source": "SWE",
+      "batch": "new32",
+      "instance_id": "conan-io__conan-13230",
+      "short_name": "conan-13230",
+      "repo": "conan-io/conan",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "C"
+      ],
+      "suspected_issue_tags": [
+        "T"
+      ],
+      "current_situation": "Android-only 修法得 1，公开 Linux host 路径仍生成错误 xcrun flags。",
+      "next_action": "用真实双 profile 的 Linux flags 对照补验收，不安装无关 SDK。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/conan-io__conan-13230/result.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-13230/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-13230/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-13230/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/root_progress_review.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true
+    },
+    {
+      "source": "SWE",
+      "batch": "new32",
+      "instance_id": "conan-io__conan-12397",
+      "short_name": "conan-12397",
+      "repo": "conan-io/conan",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "C"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "cpp 键匹配不完整、Linux native Clang 路径缺测，公开目标明确。",
+      "next_action": "按完整键名检查 Apple／Linux 生成结果，验证只修 objcpp 的错解被拒。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-12397/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-12397/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-12397/review.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true
+    },
+    {
+      "source": "SWE",
+      "batch": "new32",
+      "instance_id": "dask__dask-7656",
+      "short_name": "dask-7656",
+      "repo": "dask/dask",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "C",
+        "H"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "错误候选改变传给 delayed 函数的 dataclass 参数类型仍得 1；题面自带修法提示。",
+      "next_action": "把已有类型及字段值行为断言接入正式验收，报告提示程度。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/dask__dask-7656/result.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7656/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7656/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7656/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/root_progress_review.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true
+    },
+    {
+      "source": "SWE",
+      "batch": "new32",
+      "instance_id": "dask__dask-7138",
+      "short_name": "dask-7138",
+      "repo": "dask/dask",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "G",
+        "B",
+        "H"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "gold 重命名参数会破坏旧 array= 调用；题面包含修法提示。",
+      "next_action": "保留旧关键字签名验证兼容实现，加入该回归控制并核 actor。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7138/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7138/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7138/review.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true
+    },
+    {
+      "source": "SWE",
+      "batch": "new32",
+      "instance_id": "pydantic__pydantic-6283",
+      "short_name": "pydantic-6283",
+      "repo": "pydantic/pydantic",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "C"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "验证式构造退化已被原 P2P 拒绝，但目标相等性仍只直接验示例；非 42 控制已跑。",
+      "next_action": "保留不验证构造护栏，补已验证的非示例相等性及必要私有字段组合。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/pydantic__pydantic-6283/result.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-6283/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-6283/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-6283/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/root_progress_review.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true
+    },
+    {
+      "source": "SWE",
+      "batch": "new32",
+      "instance_id": "pydantic__pydantic-5662",
+      "short_name": "pydantic-5662",
+      "repo": "pydantic/pydantic",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "C"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "ANY-only 修法得 1，一般 matcher 委托仍错误。",
+      "next_action": "将已验证的一般 matcher 与 dict／object 控制接入验收。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/pydantic__pydantic-5662/result.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5662/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5662/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5662/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/root_progress_review.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true
+    },
+    {
+      "source": "SWE",
+      "batch": "new32",
+      "instance_id": "pydantic__pydantic-8793",
+      "short_name": "pydantic-8793",
+      "repo": "pydantic/pydantic",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "C"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "强制 required 的补丁得 1，却破坏公开默认值 5 和两项旧测试。",
+      "next_action": "补已有默认值及旧行为断言，经正式版本入口复验。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/pydantic__pydantic-8793/result.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/root_progress_review.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true
+    },
+    {
+      "source": "R2E",
+      "batch": "r2e48",
+      "instance_id": "aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52",
+      "short_name": "aiohttp__1c1c0ea3",
+      "repo": "aiohttp",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "B"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "示例拟合缺口已修；Ctrl+C 后吞 cleanup 错误的 S2 候选仍得 1。",
+      "next_action": "复用公开旧行为及现成后检，补cleanup错误被抛出或被报告的行为断言，允许gold与C1两条路线、拒绝C3；正式复验后再探针。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/results/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/card.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "ordinary_probe_review_v2": {
+        "source": "R2E",
+        "key": "aiohttp__1c1c0ea3",
+        "old_category": 1,
+        "new_category": 2,
+        "reason": "C3静默丢失cleanup错误已实证；原例修好不应豁免已经定位的错误保留行为，只登记S2不足以消除此项。",
+        "why_no_required_repair": null,
+        "next_action": "复用公开旧行为及现成后检，补cleanup错误被抛出或被报告的行为断言，允许gold与C1两条路线、拒绝C3；正式复验后再探针。",
+        "evidence_refs": [
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/probe_card.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/revision_plan.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/results/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/card.md"
+        ]
+      },
+      "author_board_state": "probe_ready",
+      "previous_environment_state": "environment_qualified"
+    },
+    {
+      "source": "R2E",
+      "batch": "r2e48",
+      "instance_id": "aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2",
+      "short_name": "aiohttp__61833518",
+      "repo": "aiohttp",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "P",
+        "B",
+        "E"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "chunked 核心验收已修；题面断言无效、真实 socket 路径有旧版本兼容限制。",
+      "next_action": "修订可追溯的公开复现说明，恢复相关客户端／服务端开发兼容或给出并验证等效公开路径；保持压缩/chunked目标与核心修订不变。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "ordinary_probe_review_v2": {
+        "source": "R2E",
+        "key": "aiohttp__61833518",
+        "old_category": 1,
+        "new_category": 2,
+        "reason": "示例断言恒真且路径描述不准，真实客户端／服务端又有旧asyncio兼容故障；mock开发通过未修好这些已知路径。",
+        "why_no_required_repair": null,
+        "next_action": "修订可追溯的公开复现说明，恢复相关客户端／服务端开发兼容或给出并验证等效公开路径；保持压缩/chunked目标与核心修订不变。",
+        "evidence_refs": [
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/probe_card.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/revision_plan.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+        ]
+      },
+      "author_board_state": "probe_ready",
+      "previous_environment_state": "environment_qualified"
+    },
+    {
+      "source": "R2E",
+      "batch": "r2e48",
+      "instance_id": "coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5",
+      "short_name": "coveragepy__ea6906b0",
+      "repo": "coveragepy",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "B",
+        "G"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "gitignore 与无数据核心检查已补；gold 覆盖用户已有 gitignore 的边缘问题仍登记。",
+      "next_action": "加入已有.gitignore内容保留与忽略效果对照，验证安全合并或其它合理修法；核公开open替身是否误拒encoding写法，一并窄收口。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "ordinary_probe_review_v2": {
+        "source": "R2E",
+        "key": "coveragepy__ea6906b0",
+        "old_category": 1,
+        "new_category": 2,
+        "reason": "生成报告时覆盖用户已有.gitignore是已经定位的破坏性行为，不能以边缘路径登记代替处理。",
+        "why_no_required_repair": null,
+        "next_action": "加入已有.gitignore内容保留与忽略效果对照，验证安全合并或其它合理修法；核公开open替身是否误拒encoding写法，一并窄收口。",
+        "evidence_refs": [
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/probe_card.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/revision_plan.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+        ]
+      },
+      "author_board_state": "probe_ready",
+      "previous_environment_state": "environment_qualified"
+    },
+    {
+      "source": "R2E",
+      "batch": "r2e48",
+      "instance_id": "orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237",
+      "short_name": "orange3__22e98f8f",
+      "repo": "orange3",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "closeout",
+      "reason_label": "主要剩独立验收、版本登记或卡片收口",
+      "confirmed_issue_tags": [
+        "H",
+        "P"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "题面含答案及错误 Actual；删除答案的草案已审，退化候选已正式被拒。",
+      "next_action": "让新公开读者验修订题面，落版本并核实际交付及准备预算。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_orange3.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "author_board_state": "on_hold",
+      "previous_environment_state": "environment_qualified"
+    },
+    {
+      "source": "R2E",
+      "batch": "r2e48",
+      "instance_id": "orange3__4014f2483e3bab0621c9ae0f994947c008183253",
+      "short_name": "orange3__4014f248",
+      "repo": "orange3",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "B",
+        "P"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "编译环境和核心退化验收已修；小量级容差合并仍有 S2 风险，准备预算为 1200 秒。",
+      "next_action": "纳入已有小量级分割回归控制，核gold及C3，再按最终入口复验build/pyx_only与准备预算；不再仅把C3列为后检。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__4014f2483e3bab0621c9ae0f994947c008183253/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__4014f2483e3bab0621c9ae0f994947c008183253/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "ordinary_probe_review_v2": {
+        "source": "R2E",
+        "key": "orange3__4014f248",
+        "old_category": 1,
+        "new_category": 2,
+        "reason": "容差合并候选满分却破坏有公开依据的小量级分割，属于已知可修缺陷；还有编译题入口和准备预算待验收。",
+        "why_no_required_repair": null,
+        "next_action": "纳入已有小量级分割回归控制，核gold及C3，再按最终入口复验build/pyx_only与准备预算；不再仅把C3列为后检。",
+        "evidence_refs": [
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__4014f2483e3bab0621c9ae0f994947c008183253/probe_card.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__4014f2483e3bab0621c9ae0f994947c008183253/revision_plan.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+        ]
+      },
+      "author_board_state": "probe_ready",
+      "previous_environment_state": "environment_qualified"
+    },
+    {
+      "source": "R2E",
+      "batch": "r2e48",
+      "instance_id": "orange3__9b5494e26f407b75e79699c9d40be6df1d80a040",
+      "short_name": "orange3__9b5494e2",
+      "repo": "orange3",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "implementation_dependency",
+      "reason_label": "题级修法明确，等待共用实现支持",
+      "confirmed_issue_tags": [
+        "C",
+        "R"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "核心验收仍需窄补；新 material 配方摘要与批准绑定不兼容。",
+      "next_action": "补已指出的 G1 回归断言，修共用摘要绑定后完成候选矩阵与卡片。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_orange3.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__9b5494e26f407b75e79699c9d40be6df1d80a040/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "author_board_state": "on_hold",
+      "previous_environment_state": "grading_ok_open_items"
+    },
+    {
+      "source": "R2E",
+      "batch": "r2e48",
+      "instance_id": "aiohttp__240da100151933883d7dea0528d45877df025b92",
+      "short_name": "aiohttp__240da100",
+      "repo": "aiohttp",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "B",
+        "P",
+        "E"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "端口与 CONNECT 核心漏判已修；原例导入／协程兼容有误，部分公开文件不能收集。",
+      "next_action": "按已核mock等效复现修订公开说明，并核两死键的移除或恢复方案；用已有正确/错误候选及SC1复验，不扩大默认端口/Host等未定范围。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/public_read.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "ordinary_probe_review_v2": {
+        "source": "R2E",
+        "key": "aiohttp__240da100",
+        "old_category": 1,
+        "new_category": 2,
+        "reason": "原例顶层导入及协程调用不能运行，且期望FAILED的兼容死键仍在，不能只等模型偶然翻转再处理。",
+        "why_no_required_repair": null,
+        "next_action": "按已核mock等效复现修订公开说明，并核两死键的移除或恢复方案；用已有正确/错误候选及SC1复验，不扩大默认端口/Host等未定范围。",
+        "evidence_refs": [
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/probe_card.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/card.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/revision_plan.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/screening_record.json",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/review.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/public_read.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+        ]
+      },
+      "author_board_state": "probe_ready",
+      "previous_environment_state": "environment_qualified"
+    },
+    {
+      "source": "R2E",
+      "batch": "r2e48",
+      "instance_id": "aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a",
+      "short_name": "aiohttp__4075c653",
+      "repo": "aiohttp",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "closeout",
+      "reason_label": "主要剩独立验收、版本登记或卡片收口",
+      "confirmed_issue_tags": [
+        "G"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "正式七方及 actor 七命令均已完成；新版 gold 为 0，四种替代实现为 1，尚缺最终卡。",
+      "next_action": "读取已回传完整证据、封存替代正对照与当前材料身份，补卡；不重跑已结束矩阵。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/public_read.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "author_board_state": "revising",
+      "previous_environment_state": "environment_qualified"
+    },
+    {
+      "source": "R2E",
+      "batch": "r2e48",
+      "instance_id": "datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb",
+      "short_name": "datalad__6b6fa389",
+      "repo": "datalad",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "C",
+        "T",
+        "G"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "合理 URL 解 C-A 得 0，绕过实际解析的 D-eq 得 1；gold 还存在边缘回归。",
+      "next_action": "完成独立复核，将字段直查、非示例及合理分类约束修订后跑正式矩阵。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/public_read.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "author_board_state": "investigating",
+      "previous_environment_state": "environment_qualified"
+    },
+    {
+      "source": "R2E",
+      "batch": "r2e48",
+      "instance_id": "numpy__d805e9b66228e68a0eb14d901cd350159c49af18",
+      "short_name": "numpy__d805e9b6",
+      "repo": "numpy",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "B",
+        "P"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "打印阈值验收已修，K-A5b 替代静默丢值的 gold；题面 Actual 和未测阈值族仍有局限。",
+      "next_action": "补n=3000/threshold=2000的保值摘要对照，核K-A5b与混合截断候选；中性修订Actual说明并复验，不扩题外二维。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/public_read.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "ordinary_probe_review_v2": {
+        "source": "R2E",
+        "key": "numpy__d805e9b6",
+        "old_category": 1,
+        "new_category": 2,
+        "reason": "同一一维打印目标的n>threshold>=1500已有具体静态丢值路线和清楚断言，题面Actual也已证不符；无需等模型撞出才修。",
+        "why_no_required_repair": null,
+        "next_action": "补n=3000/threshold=2000的保值摘要对照，核K-A5b与混合截断候选；中性修订Actual说明并复验，不扩题外二维。",
+        "evidence_refs": [
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/probe_card.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/card.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/revision_plan.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/screening_record.json",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/review.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/public_read.md",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+        ]
+      },
+      "author_board_state": "probe_ready",
+      "previous_environment_state": "environment_qualified"
+    },
+    {
+      "source": "R2E",
+      "batch": "r2e48",
+      "instance_id": "orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e",
+      "short_name": "orange3__50f6a758",
+      "repo": "orange3",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "C",
+        "T",
+        "P",
+        "O"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "全列变量名被误拒，多种不警告错解得 1；题面症状及旧公开断言也有偏差。",
+      "next_action": "落实窄 R-b＋R-c，完整审阅 C-deg 并复验；补最终卡。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/public_read.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "author_board_state": "investigating",
+      "previous_environment_state": "environment_qualified"
+    },
+    {
+      "source": "R2E",
+      "batch": "r2e48",
+      "instance_id": "pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+      "short_name": "pillow__2d01f7d0",
+      "repo": "pillow",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "E"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "正式九方已完成，FillOrder 误拒修订有效；两项公开测试仍因 pytest.warns(None) 失败。",
+      "next_action": "修开发兼容或验证等效命令，审已完成证据后补卡；不把 devcheck 写成全过。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/public_read.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "author_board_state": "revising",
+      "previous_environment_state": "environment_qualified"
+    },
+    {
+      "source": "R2E",
+      "batch": "r2e48",
+      "instance_id": "scrapy__a95a338eeada7275a5289cf036136610ebaf07eb",
+      "short_name": "scrapy__a95a338e",
+      "repo": "scrapy",
+      "next_action_category": 2,
+      "next_action_category_label": "先完成明确修复或验收收口",
+      "reason_code": "repair",
+      "reason_label": "具体修法和验证方向已明确",
+      "confirmed_issue_tags": [
+        "C",
+        "G",
+        "R"
+      ],
+      "suspected_issue_tags": [],
+      "current_situation": "partial 包装绑定方法仍需覆盖，原 gold 不能作完整正对照；警告死键需恢复有效。",
+      "next_action": "核最新版草案／试跑摘要，使用 C1 完成剩余矩阵、复核和材料落地。",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/screening_record.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/public_read.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/status_check_20260929.md"
+      ],
+      "classification_is_recommendation_not_new_admission": true,
+      "author_board_state": "revising",
+      "previous_environment_state": "environment_qualified"
+    }
+  ]
+}

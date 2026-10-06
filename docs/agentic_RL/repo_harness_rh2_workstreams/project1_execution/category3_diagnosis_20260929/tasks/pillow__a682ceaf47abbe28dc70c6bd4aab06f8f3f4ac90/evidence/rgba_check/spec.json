@@ -1,0 +1,21 @@
+{
+ "image": "c3keep/pillow_a682:src",
+ "python_prefix": "/testbed/.venv",
+ "variants": {
+  "base": [],
+  "gold": [
+   "git apply /in/gold.patch"
+  ]
+ },
+ "files": {
+  "gold.patch": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow_a682/gold.patch",
+  "rgba_check.py": "/home/user/RepoHarness/rh2/experiments/category3_cloud_20260929/pillow_a682/rgba_check.py"
+ },
+ "commands": [
+  {
+   "id": "rgba",
+   "cmd": "python /in/rgba_check.py 2>&1",
+   "timeout_s": 120
+  }
+ ]
+}

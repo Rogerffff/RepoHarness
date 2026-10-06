@@ -1,0 +1,950 @@
+{
+  "schema": "non_author_dask8801_reason_oracle_review.v1",
+  "as_of": "2026-10-03",
+  "instance_id": "dask__dask-8801",
+  "material_revision": "dask8801-diagnostics-v6-draft",
+  "review_status": "design_review_complete_no_oracle_implemented_or_validated",
+  "review_scope": {
+    "non_author": true,
+    "author_change_participation": false,
+    "historical_execution_participation": false,
+    "fresh_public_blind_review": false,
+    "private_gold_and_candidates_exposure": true,
+    "read_only_static_analysis": true,
+    "executed_cpu": false,
+    "executed_ssh": false,
+    "executed_dask_or_pytest": false,
+    "called_model_judge": false,
+    "spawned_other_agents": false,
+    "formal_reward": null,
+    "gpu_or_training_eligibility": null
+  },
+  "conclusion": {
+    "existing_v6_reason_gate": "known_false_accept_remains_blocking",
+    "minimal_automatic_design_available": true,
+    "design": "deterministic_behavior_checks_plus_trusted_fixture_facts_plus_frozen_semantic_diagnostic_judge",
+    "ordinary_behavior_or_exception_structure_alone_sufficient": false,
+    "wordlist_expansion_required": false,
+    "new_solver_exception_class_format_or_structured_fields_required": false,
+    "new_grader_implementation_and_adoption_decision_required": true,
+    "proposal_not_adopted_or_validated": true,
+    "formal_consumer_full_dask_import_original_nonroot_permissions": "pending_parent_execution_and_verification"
+  },
+  "public_goal": {
+    "bad_content": "loading including import dask fails, names offending file and explains content problem",
+    "preserved_behavior": [
+      "unreadable files ignored",
+      "empty configurations valid"
+    ],
+    "allowed_acceptance": [
+      "reasonable paraphrases",
+      "general or custom exception classes",
+      "visible explicit or implicit exception chains",
+      "aggregated diagnostics"
+    ],
+    "not_prescribed": [
+      "fixed English keywords",
+      "mandatory exception type",
+      "mandatory cause",
+      "fixed outer message",
+      "solver supplied machine fields"
+    ]
+  },
+  "paired_patch_proof": {
+    "positive_candidate": "reasonable_named_values",
+    "negative_candidate": "wrong_missing_file_reason",
+    "only_difference_is_one_fstring_literal": true,
+    "positive_literal": "f\"The contents of {path!r} cannot be used: expected a collection of named values.\"",
+    "negative_literal": "f\"Cannot load {path!r}: the configuration file does not exist.\"",
+    "same_behavior": [
+      "open file",
+      "yaml.safe_load",
+      "OSError ignored",
+      "non-None non-dict branch",
+      "ValueError",
+      "correct offending path",
+      "same collect_yaml calls"
+    ],
+    "observed_isolated_check_results": "both pass all four groups",
+    "inference": "behavior and causal branch prove rejection due to nonmapping, but do not establish displayed reason truth",
+    "does_not_prove": "universal impossibility of deterministic natural language algorithms"
+  },
+  "existing_oracle_findings": [
+    {
+      "version": "v5",
+      "rule": "strip offending path then any of dict/map/key/object/type_name in lower message",
+      "counterexample": "reasonable_named_values",
+      "finding": "correct explanation does not contain the required terms; static false rejection"
+    },
+    {
+      "version": "v6",
+      "rule": "msg differs from syntax_header or visible distinct cause exists",
+      "counterexample": "wrong_missing_file_reason",
+      "finding": "a false missing-file message differs from syntax message and passes actual local check"
+    },
+    {
+      "rule": "require exception class, cause, typed attribute or fixed message",
+      "finding": "adds a public restriction and rejects accepted custom/no-chain implementations"
+    },
+    {
+      "rule": "full traceback provided to reason classifier",
+      "finding": "source code can disclose actual type branch despite wrong displayed reason; exclude source frames and locals"
+    }
+  ],
+  "reused_local_evidence": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/local_config_checks.json",
+    "sha256": "eaac566e4a3b9384959bab46013f4158699f59826756e32f654a2a663dd24a28",
+    "row_count": 44,
+    "patch_count": 43,
+    "verified_patch_sha_mismatch_count": 0,
+    "scope": "isolated_config_api_only_not_full_dask_not_formal_grader",
+    "runtime": {
+      "python": "3.12.13",
+      "system": "Darwin",
+      "pyyaml": "6.0.3",
+      "pytest": "9.1.1",
+      "identity": "local_non_root"
+    },
+    "omitted": [
+      "full import dask subprocess",
+      "remaining P2P",
+      "actor identity and materials transport",
+      "formal score"
+    ],
+    "selected_observed_rows": [
+      {
+        "candidate": "gold",
+        "path": "runs/swegym_quality_batch01_20260921/private/dask__dask-8801/gold.patch",
+        "sha256": "e8124cc26138d810f2ed2ace0bcfa2ce2d0be13b4a68e7da5fabe34e6b865ce8",
+        "isolated_checks_pass": true,
+        "checks": {
+          "malformed": {
+            "status": "pass"
+          },
+          "non_mapping_empty_null": {
+            "status": "pass"
+          },
+          "permission_directory": {
+            "status": "pass"
+          },
+          "permission_file": {
+            "status": "pass"
+          }
+        }
+      },
+      {
+        "candidate": "reasonable_named_values",
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/reasonable_named_values.patch",
+        "sha256": "18734813e45cd3667f9ef19dd77edd383dd3348a51e5351c0989d9bcc180af28",
+        "isolated_checks_pass": true,
+        "checks": {
+          "malformed": {
+            "status": "pass"
+          },
+          "non_mapping_empty_null": {
+            "status": "pass"
+          },
+          "permission_directory": {
+            "status": "pass"
+          },
+          "permission_file": {
+            "status": "pass"
+          }
+        }
+      },
+      {
+        "candidate": "wrong_missing_file_reason",
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/wrong_missing_file_reason.patch",
+        "sha256": "059a87ac21ea907124fb05c61081696df33cbc418e1cf557d88bf0e25d2ed836",
+        "isolated_checks_pass": true,
+        "checks": {
+          "malformed": {
+            "status": "pass"
+          },
+          "non_mapping_empty_null": {
+            "status": "pass"
+          },
+          "permission_directory": {
+            "status": "pass"
+          },
+          "permission_file": {
+            "status": "pass"
+          }
+        }
+      },
+      {
+        "candidate": "chain_cause",
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/chain_cause.patch",
+        "sha256": "fc29001f253287d322bcede4e646902b7ad0a5239d6c7f918a8321563e04efda",
+        "isolated_checks_pass": true,
+        "checks": {
+          "malformed": {
+            "status": "pass"
+          },
+          "non_mapping_empty_null": {
+            "status": "pass"
+          },
+          "permission_directory": {
+            "status": "pass"
+          },
+          "permission_file": {
+            "status": "pass"
+          }
+        }
+      },
+      {
+        "candidate": "gr_attr_wrap",
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/gr_attr_wrap.patch",
+        "sha256": "a90afb3b97fb579ae67c38f6fa36faf330647aa6ec65b55c368d0355798cf3db",
+        "isolated_checks_pass": true,
+        "checks": {
+          "malformed": {
+            "status": "pass"
+          },
+          "non_mapping_empty_null": {
+            "status": "pass"
+          },
+          "permission_directory": {
+            "status": "pass"
+          },
+          "permission_file": {
+            "status": "pass"
+          }
+        }
+      },
+      {
+        "candidate": "gr_csafe_loader",
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/gr_csafe_loader.patch",
+        "sha256": "a2c61a24db00178cb5aae640e214a0c43f3ade62d4d377e60751b7d740e55e8b",
+        "isolated_checks_pass": false,
+        "checks": {
+          "malformed": {
+            "status": "fail",
+            "exception": "AssertionError",
+            "detail": ""
+          },
+          "non_mapping_empty_null": {
+            "status": "pass"
+          },
+          "permission_directory": {
+            "status": "pass"
+          },
+          "permission_file": {
+            "status": "pass"
+          }
+        }
+      },
+      {
+        "candidate": "import_swallow",
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/import_swallow.patch",
+        "sha256": "50a50eecee8ac05fc55cf141d119f7f868f29f7072a3543a085a9cf28971ba20",
+        "isolated_checks_pass": true,
+        "checks": {
+          "malformed": {
+            "status": "pass"
+          },
+          "non_mapping_empty_null": {
+            "status": "pass"
+          },
+          "permission_directory": {
+            "status": "pass"
+          },
+          "permission_file": {
+            "status": "pass"
+          }
+        }
+      },
+      {
+        "candidate": "noreason",
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/noreason.patch",
+        "sha256": "9672b13db7a5f2a77001be50f048a1221184e670589dd04c4294cb9a3c35e810",
+        "isolated_checks_pass": false,
+        "checks": {
+          "malformed": {
+            "status": "fail",
+            "exception": "AssertionError",
+            "detail": ""
+          },
+          "non_mapping_empty_null": {
+            "status": "fail",
+            "exception": "AssertionError",
+            "detail": ""
+          },
+          "permission_directory": {
+            "status": "pass"
+          },
+          "permission_file": {
+            "status": "pass"
+          }
+        }
+      },
+      {
+        "candidate": "ok_aggregate",
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/ok_aggregate.patch",
+        "sha256": "931f7d6be5d1e70f0f26ecc6833d0084e8187dfbe97438ec55f72c69bbdbc398",
+        "isolated_checks_pass": true,
+        "checks": {
+          "malformed": {
+            "status": "pass"
+          },
+          "non_mapping_empty_null": {
+            "status": "pass"
+          },
+          "permission_directory": {
+            "status": "pass"
+          },
+          "permission_file": {
+            "status": "pass"
+          }
+        }
+      },
+      {
+        "candidate": "ok_dictionary_typeerror",
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/ok_dictionary_typeerror.patch",
+        "sha256": "5636e8125636c48c8c3a989832428e5f1b737b739da820247f69e509a1987171",
+        "isolated_checks_pass": true,
+        "checks": {
+          "malformed": {
+            "status": "pass"
+          },
+          "non_mapping_empty_null": {
+            "status": "pass"
+          },
+          "permission_directory": {
+            "status": "pass"
+          },
+          "permission_file": {
+            "status": "pass"
+          }
+        }
+      },
+      {
+        "candidate": "ok_map_settings",
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/ok_map_settings.patch",
+        "sha256": "34c1e84fcc4b5b03ad4f680309e25dfb6688c7c31a77eeccae4a51c0e45e585c",
+        "isolated_checks_pass": true,
+        "checks": {
+          "malformed": {
+            "status": "pass"
+          },
+          "non_mapping_empty_null": {
+            "status": "pass"
+          },
+          "permission_directory": {
+            "status": "pass"
+          },
+          "permission_file": {
+            "status": "pass"
+          }
+        }
+      },
+      {
+        "candidate": "ok_object_value",
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/ok_object_value.patch",
+        "sha256": "b22af73087bff3f613d3060d81b706f7022acc88f8aaf1ad5b43e8917993b4ec",
+        "isolated_checks_pass": true,
+        "checks": {
+          "malformed": {
+            "status": "pass"
+          },
+          "non_mapping_empty_null": {
+            "status": "pass"
+          },
+          "permission_directory": {
+            "status": "pass"
+          },
+          "permission_file": {
+            "status": "pass"
+          }
+        }
+      },
+      {
+        "candidate": "ok_yamlerror_subclass",
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/ok_yamlerror_subclass.patch",
+        "sha256": "8af55df5abe7276044cc5b8528cd545b1e6b6e1cbae7c29c1c1a2d3fc3297659",
+        "isolated_checks_pass": true,
+        "checks": {
+          "malformed": {
+            "status": "pass"
+          },
+          "non_mapping_empty_null": {
+            "status": "pass"
+          },
+          "permission_directory": {
+            "status": "pass"
+          },
+          "permission_file": {
+            "status": "pass"
+          }
+        }
+      },
+      {
+        "candidate": "rv_import_warn",
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/rv_import_warn.patch",
+        "sha256": "785a7f376c3156254e29c8aeb937b547ad9e006a4a730860ebac3cfd1716debd",
+        "isolated_checks_pass": true,
+        "checks": {
+          "malformed": {
+            "status": "pass"
+          },
+          "non_mapping_empty_null": {
+            "status": "pass"
+          },
+          "permission_directory": {
+            "status": "pass"
+          },
+          "permission_file": {
+            "status": "pass"
+          }
+        }
+      },
+      {
+        "candidate": "wr_wrong_reason",
+        "path": "rh2/experiments/category3_cloud_20260929/dask8801/wr_wrong_reason.patch",
+        "sha256": "3829492b810128f170813b9bcdb1dca65a6c2c121f1a0cb84e3a86c11a0daa7d",
+        "isolated_checks_pass": false,
+        "checks": {
+          "malformed": {
+            "status": "pass"
+          },
+          "non_mapping_empty_null": {
+            "status": "fail",
+            "exception": "AssertionError",
+            "detail": ""
+          },
+          "permission_directory": {
+            "status": "pass"
+          },
+          "permission_file": {
+            "status": "pass"
+          }
+        }
+      }
+    ],
+    "successful_rows_contain_actual_diagnostic_messages": false,
+    "cannot_recover_actual_visible_diagnostics_from_pass_flags": true
+  },
+  "minimal_design": {
+    "behavior_gate": {
+      "cases": [
+        "malformed YAML {",
+        "malformed YAML tab indentation",
+        "valid nonmapping [1234]",
+        "valid nonmapping hello",
+        "valid nonmapping 1234",
+        "valid nonmapping 1.5",
+        "directory input",
+        "direct file input",
+        "good mapping",
+        "empty",
+        "comment only",
+        "null",
+        "document separator",
+        "unreadable entry",
+        "true nonroot file and directory permissions",
+        "fresh full import dask",
+        "remaining original P2P"
+      ],
+      "not_run_means": "needs_evidence, never semantic model substitution"
+    },
+    "capture": {
+      "api": "extract actual visible exception messages and chain from caught object",
+      "import": "trusted child-process instrumentation captures unhandled exception without converting actual failure into success; preserve raw stderr and original import behavior",
+      "visible_chain": "explicit cause, otherwise context if not suppressed; aggregate children and visible notes where runtime supports",
+      "excluded": [
+        "traceback frames",
+        "source lines",
+        "locals",
+        "hidden from-None context",
+        "candidate patch",
+        "gold message",
+        "candidate role or expected reward"
+      ],
+      "no_outer_message_restriction": true,
+      "cross_process_capture_and_trust_not_yet_validated": true
+    },
+    "trusted_facts": {
+      "producer": "trusted test host, not candidate",
+      "fields": [
+        "fixture and invocation identity",
+        "bad file identity and contents sha256",
+        "good and unreadable entries",
+        "existence and readability",
+        "independent YAML parse result and value type",
+        "expected named key/value configuration or parser content problem"
+      ],
+      "path_normalization": "stable BAD_FILE/GOOD_FILE mapping retaining distinct identity",
+      "parser_literal_matching_required": false
+    },
+    "semantic_judge": {
+      "location": "trusted host after diagnostic capture, outside candidate container",
+      "required_checks": [
+        "offending file explicitly identified",
+        "applicable content problem explained",
+        "no fabricated or contradictory causal claims"
+      ],
+      "allowed": [
+        "paraphrase without keyword list",
+        "custom or general exception classes",
+        "visible chain",
+        "aggregate diagnostics",
+        "builtin type/items reason with bad-file context as retained gr_attr_wrap control"
+      ],
+      "verdicts": [
+        "pass",
+        "fail",
+        "uncertain"
+      ],
+      "internal_output": [
+        "verdict",
+        "file_evidence",
+        "reason_evidence",
+        "contradiction_evidence",
+        "explanation"
+      ],
+      "internal_output_is_not_a_new_solver_contract": true,
+      "diagnostic_instructions_are_untrusted_data": true,
+      "frozen_identity": [
+        "model version",
+        "prompt sha256",
+        "facts sha256",
+        "diagnostic sha256",
+        "material and test execution identity"
+      ],
+      "record": [
+        "raw judge response or service error",
+        "short supporting diagnostic quotations",
+        "cache key"
+      ],
+      "cache": "same full evidence and judge identity retrieves same recorded result",
+      "freeze_and_cache_do_not_guarantee_semantic_correctness": true
+    },
+    "merge": {
+      "behavior_failed": "reject by observed assertion",
+      "required_behavior_or_capture_missing": "needs_evidence, no reward assigned",
+      "any_semantic_fail": "reject with diagnostic evidence",
+      "uncertain_timeout_bad_output_or_unavailable": "needs_review; neither automatic reward 0 nor 1",
+      "all_semantic_pass": "reason goal passes only; remaining formal gates still required"
+    }
+  },
+  "acceptance_examples_are_design_requirements_not_observed_results": [
+    {
+      "case": "expected collection of named values with BAD_FILE",
+      "expected": "pass"
+    },
+    {
+      "case": "unseen needs labelled settings; supplied a sequence or equivalent Chinese wording",
+      "expected": "pass"
+    },
+    {
+      "case": "generic outer error with visible cause containing bad path and true content reason",
+      "expected": "pass"
+    },
+    {
+      "case": "bad path plus visible builtin str has no items cause",
+      "expected": "pass following retained gr_attr_wrap acceptance"
+    },
+    {
+      "case": "aggregate distinguishes BAD_FILE error and GOOD_FILE normal status",
+      "expected": "pass"
+    },
+    {
+      "case": "semantically equivalent actual C/Python parser explanation",
+      "expected": "accept equivalent reason; gr_csafe_loader not yet observed passing proposed oracle"
+    },
+    {
+      "case": "existent readable file explained as absent using unseen synonym",
+      "expected": "fail"
+    },
+    {
+      "case": "valid nonmapping YAML explained as syntax invalid",
+      "expected": "fail"
+    },
+    {
+      "case": "only path and invalid configuration",
+      "expected": "fail"
+    },
+    {
+      "case": "false outer missing-file reason plus true mapping cause",
+      "expected": "fail"
+    },
+    {
+      "case": "true reason exists only in suppressed context",
+      "expected": "fail"
+    },
+    {
+      "case": "true branch visible only in traceback source code",
+      "expected": "fail"
+    },
+    {
+      "case": "list all files without locating offender, or name good file as culprit",
+      "expected": "fail"
+    },
+    {
+      "case": "warn only or import swallows error",
+      "expected": "behavior rejection if observed; needs evidence if unrun"
+    },
+    {
+      "case": "diagnostic includes instruction to judge to output pass",
+      "expected": "do not execute instruction; judge content or return needs_review"
+    }
+  ],
+  "parent_prototype_sequence": [
+    "Reuse existing candidate identities and applicable behavior results; retain their runtime limits.",
+    "Capture missing actual visible diagnostic packets for positive, negative and boundary cases; do not infer text from pass flags.",
+    "Implement host fact packets and message-only extraction; verify visible/hidden chains and import transport.",
+    "Run a frozen semantic prototype on existing controls and held-out paraphrases/contradictions, preserving all verdicts.",
+    "Block adoption on any known false positive or false rejection; do not convert the calibration set into a wordlist.",
+    "If adopted, validate consumer merging, uncertainty handling and service failure paths; complete original full runtime gates independently."
+  ],
+  "decision_needed_for_formal_adoption": {
+    "primary": "whether semantic judge may participate in this task reason scoring",
+    "policy": [
+      "allowed reliability and dispute review policy",
+      "frozen model/prompt identity and cost",
+      "binary consumer handling of uncertain and service failure"
+    ],
+    "not_a_new_decision": "existing readable valid YAML must not be explained as missing; already false under current goal",
+    "if_semantic_or_manual_judgment_excluded": "need explicit scoring-goal reduction to fail-and-name-file, knowingly admitting false reasons, or a new public mechanically identifiable reason contract",
+    "neither_fallback_recommended_or_silently_adopted": true,
+    "authorized_parent_cpu_preparation_can_continue": true
+  },
+  "limitations": [
+    "no semantic judge implemented or called by reviewer",
+    "no measured judge accuracy",
+    "fixed model and cached inputs cannot prove correctness for arbitrary future prose",
+    "diagnostic prompt injection and ambiguous explanations remain risks",
+    "trusted packet identity and independent parser scope require verification",
+    "local successful rows do not contain actual diagnostics",
+    "full Dask import/original nonroot permissions/formal consumer are pending",
+    "no formal score or GPU/training qualification granted"
+  ],
+  "material_assets": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "de76dc6bab84209f40053433a68f82ff6feaf4708199473f1a67410f93d6d99c",
+      "bytes": 7626
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/coordination_workflow_20261003.md",
+      "sha256": "cf05cff793d8d7d6fe683d653b7e51b30f36d95a78f135a298a774bfde40d7be",
+      "bytes": 10720
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/card.md",
+      "sha256": "6fa1c7804e0bf1f9ddf506332dab8aa157840b4db13b1f48dccd0034ece44e31",
+      "bytes": 3147
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/revision.json",
+      "sha256": "b5e6ddb3ee04075943d8448e9157ec80994429028144c9a8701522482ecf2602",
+      "bytes": 9208
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/acceptance_matrix.json",
+      "sha256": "862185a953b1c6369b56168d9ff40523e4a42e0ce09e13a87cb8c050066cbd0d",
+      "bytes": 15686
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/effective_statement.txt",
+      "sha256": "edb3ed739433955926b0219c2842e127ca6ff55f0606ba43026c4f2817171eb6",
+      "bytes": 8197
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/statement_revision.json",
+      "sha256": "dfde462a16718e752aeadf40e41c5650f7b83b3f83a73278c18af43562a1adba",
+      "bytes": 404
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/effective_test.py",
+      "sha256": "cd8d5ed48d7e45579acd58f5266b3a26e5d329615e45730f86c85d9c73abac45",
+      "bytes": 19847
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/effective_test.patch",
+      "sha256": "d28c2ece03b0546a9e7d7789cbc35d418f491610b40f1e5533b2d20e8d0aba87",
+      "bytes": 4514
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/local_config_checks.json",
+      "sha256": "eaac566e4a3b9384959bab46013f4158699f59826756e32f654a2a663dd24a28",
+      "bytes": 28093
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tools/check_config_acceptance.py",
+      "sha256": "de0494ff079378650e9d083f32501b9a1741b111e57237400152f4068e7c26ab",
+      "bytes": 5680
+    },
+    {
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/test_config_revised_v5.py",
+      "sha256": "a99027c471af6835a8a860a40bfb5cfab96a8113063baf6fdf6b6f0bbef9f947",
+      "bytes": 19342
+    },
+    {
+      "path": "runs/swegym_quality_batch01_20260921/public/dask__dask-8801/public_bundle.json",
+      "sha256": "f1c4cfedac80c87186a38f2eaec23e5c47b9ed3cd5f4493dfd0ab5b9b473fec1",
+      "bytes": 9382
+    }
+  ],
+  "verified_candidate_assets": [
+    {
+      "candidate": "gold",
+      "path": "runs/swegym_quality_batch01_20260921/private/dask__dask-8801/gold.patch",
+      "sha256": "e8124cc26138d810f2ed2ace0bcfa2ce2d0be13b4a68e7da5fabe34e6b865ce8",
+      "bytes": 1591
+    },
+    {
+      "candidate": "reasonable_named_values",
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/reasonable_named_values.patch",
+      "sha256": "18734813e45cd3667f9ef19dd77edd383dd3348a51e5351c0989d9bcc180af28",
+      "bytes": 1417
+    },
+    {
+      "candidate": "wrong_missing_file_reason",
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/wrong_missing_file_reason.patch",
+      "sha256": "059a87ac21ea907124fb05c61081696df33cbc418e1cf557d88bf0e25d2ed836",
+      "bytes": 1398
+    },
+    {
+      "candidate": "chain_cause",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/chain_cause.patch",
+      "sha256": "fc29001f253287d322bcede4e646902b7ad0a5239d6c7f918a8321563e04efda",
+      "bytes": 1381
+    },
+    {
+      "candidate": "gold_plain",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/gold_plain.patch",
+      "sha256": "f4747aafaedb25f1232f84b2ed830052d304a90238ce7665cb927b6ed04aa6ac",
+      "bytes": 1489
+    },
+    {
+      "candidate": "gr_attr_wrap",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/gr_attr_wrap.patch",
+      "sha256": "a90afb3b97fb579ae67c38f6fa36faf330647aa6ec65b55c368d0355798cf3db",
+      "bytes": 599
+    },
+    {
+      "candidate": "gr_basename_only",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/gr_basename_only.patch",
+      "sha256": "b528ccd7b1f7332dab80f10698fa2d57b4157720443d216ddc44cc2d049ede1d",
+      "bytes": 1529
+    },
+    {
+      "candidate": "gr_csafe_loader",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/gr_csafe_loader.patch",
+      "sha256": "a2c61a24db00178cb5aae640e214a0c43f3ade62d4d377e60751b7d740e55e8b",
+      "bytes": 1513
+    },
+    {
+      "candidate": "import_swallow",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/import_swallow.patch",
+      "sha256": "50a50eecee8ac05fc55cf141d119f7f868f29f7072a3543a085a9cf28971ba20",
+      "bytes": 1687
+    },
+    {
+      "candidate": "list_str_only",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/list_str_only.patch",
+      "sha256": "b1fd568ca39493584d9267608754e8d0a2726df45fa76bbe1be94dd7f3a075a8",
+      "bytes": 1473
+    },
+    {
+      "candidate": "lists_only",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/lists_only.patch",
+      "sha256": "5836819d386e3e930a2bc09ac8a73b44db358e49975ba15f28fdd0883b7a1075",
+      "bytes": 1466
+    },
+    {
+      "candidate": "none_raises",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/none_raises.patch",
+      "sha256": "f5435db5b1f15323437980b457975a925767b8f5c523584f9a1c94975c48fa2b",
+      "bytes": 1470
+    },
+    {
+      "candidate": "noreason",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/noreason.patch",
+      "sha256": "9672b13db7a5f2a77001be50f048a1221184e670589dd04c4294cb9a3c35e810",
+      "bytes": 1279
+    },
+    {
+      "candidate": "ok_aggregate",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/ok_aggregate.patch",
+      "sha256": "931f7d6be5d1e70f0f26ecc6833d0084e8187dfbe97438ec55f72c69bbdbc398",
+      "bytes": 1060
+    },
+    {
+      "candidate": "ok_dictionary_typeerror",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/ok_dictionary_typeerror.patch",
+      "sha256": "5636e8125636c48c8c3a989832428e5f1b737b739da820247f69e509a1987171",
+      "bytes": 800
+    },
+    {
+      "candidate": "ok_falsy_empty",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/ok_falsy_empty.patch",
+      "sha256": "9ef663cc5910140395951a26a62329633c4072cb41f887a6f4d44723dddcc2d6",
+      "bytes": 754
+    },
+    {
+      "candidate": "ok_map_settings",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/ok_map_settings.patch",
+      "sha256": "34c1e84fcc4b5b03ad4f680309e25dfb6688c7c31a77eeccae4a51c0e45e585c",
+      "bytes": 951
+    },
+    {
+      "candidate": "ok_object_value",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/ok_object_value.patch",
+      "sha256": "b22af73087bff3f613d3060d81b706f7022acc88f8aaf1ad5b43e8917993b4ec",
+      "bytes": 1377
+    },
+    {
+      "candidate": "ok_yamlerror_subclass",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/ok_yamlerror_subclass.patch",
+      "sha256": "8af55df5abe7276044cc5b8528cd545b1e6b6e1cbae7c29c1c1a2d3fc3297659",
+      "bytes": 1536
+    },
+    {
+      "candidate": "oserr_fatal",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/oserr_fatal.patch",
+      "sha256": "f5da83fe23d875bc803521d959651e008d02f316e17a4a9df1ebf435ba83892a",
+      "bytes": 1415
+    },
+    {
+      "candidate": "parsererror_only",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/parsererror_only.patch",
+      "sha256": "551097656544d7bd61ad556f9781919bd514ae766b774f05f25f80e386ec6d26",
+      "bytes": 1507
+    },
+    {
+      "candidate": "rv_dir_only",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/rv_dir_only.patch",
+      "sha256": "dcb3bea83b1c772bad5e39a8ed00186adc1cf146a37c6d17d564311e42c941a4",
+      "bytes": 2828
+    },
+    {
+      "candidate": "rv_enum_types",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/rv_enum_types.patch",
+      "sha256": "5b03ae4cc66550e39f6f41cfbb9bfd927f59f0d10d7376c26312239605e23ba2",
+      "bytes": 1478
+    },
+    {
+      "candidate": "rv_import_warn",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/rv_import_warn.patch",
+      "sha256": "785a7f376c3156254e29c8aeb937b547ad9e006a4a730860ebac3cfd1716debd",
+      "bytes": 2551
+    },
+    {
+      "candidate": "rv_kv_pairs",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/rv_kv_pairs.patch",
+      "sha256": "98fa9e8c00bf84cfd0dfbeeb20d55eb37cd8fdc92e30a86ebddb93c4070177da",
+      "bytes": 1429
+    },
+    {
+      "candidate": "silent_skip",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/silent_skip.patch",
+      "sha256": "5025d1d374c534148a57c7932e2d4d0e70ff3bb8d1590f41b38a7e0ef9f4a1bd",
+      "bytes": 1159
+    },
+    {
+      "candidate": "str_only",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/str_only.patch",
+      "sha256": "7082b2c2190bc46481a5f8d4ff719634c65e2f13f3518f2a80d4fb053242162a",
+      "bytes": 1465
+    },
+    {
+      "candidate": "stream_load",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/stream_load.patch",
+      "sha256": "3fd4550bcb7647d61ca09e2374afabc34c739ee429f92250c54ef9ee9beda4cc",
+      "bytes": 1297
+    },
+    {
+      "candidate": "syn_plain",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/syn_plain.patch",
+      "sha256": "e195ebd13593b2cd58db60af964cc1bef59735e5b6a80ea4cf9846fb901e54a2",
+      "bytes": 1410
+    },
+    {
+      "candidate": "syn_repr",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/syn_repr.patch",
+      "sha256": "63e69ecd225d817b6fce705db2a85cbe29dcaee1d82f6ed0535b3548a8313ec7",
+      "bytes": 1414
+    },
+    {
+      "candidate": "typeerror",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/typeerror.patch",
+      "sha256": "42bcc96663616da108a1766975a637b507857c275e9b659e3e1b3b4fa310e393",
+      "bytes": 1492
+    },
+    {
+      "candidate": "typeonly",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/typeonly.patch",
+      "sha256": "a5f408df0ea4f7f85ce0786b8d6835f7b46e3c01c3e370245bd5820f12bd2c5b",
+      "bytes": 1304
+    },
+    {
+      "candidate": "warn_skip",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/warn_skip.patch",
+      "sha256": "fe55486bb3046ffe98058d2f9b7986c18fc51763ebd64da6b8da8064853e1cf0",
+      "bytes": 1412
+    },
+    {
+      "candidate": "wr_all_files",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/wr_all_files.patch",
+      "sha256": "9df1f92a6efca430b5775191210452f3d059ddbb12fd87a8444358ad9ed76029",
+      "bytes": 1172
+    },
+    {
+      "candidate": "wr_dir_named",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/wr_dir_named.patch",
+      "sha256": "e0a345d4456bbaaec1bc6f5f7c4dd7d3ed7f296a93b7a9d4b147f81291e2243a",
+      "bytes": 874
+    },
+    {
+      "candidate": "wr_import_only",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/wr_import_only.patch",
+      "sha256": "f09b4109b9b4f7c4fa16984992072bf7e2923553146af3ed58fddac8f25e9d6d",
+      "bytes": 1909
+    },
+    {
+      "candidate": "wr_null_raises",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/wr_null_raises.patch",
+      "sha256": "315cf3d181f07f08f7735195c3606ff273a9f5dc828c3c6fd78344454e821e82",
+      "bytes": 1076
+    },
+    {
+      "candidate": "wr_open_unguarded",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/wr_open_unguarded.patch",
+      "sha256": "07c8edbf8d50c268cd3c77a80ec801ee929121464bfe254d2d6a9498dbd888fc",
+      "bytes": 939
+    },
+    {
+      "candidate": "wr_perm_fatal",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/wr_perm_fatal.patch",
+      "sha256": "201dccfb0da8016c72ff69bda956a50cab465d879280111e9bf72d1420abc9b8",
+      "bytes": 1649
+    },
+    {
+      "candidate": "wr_wrong_reason",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/wr_wrong_reason.patch",
+      "sha256": "3829492b810128f170813b9bcdb1dca65a6c2c121f1a0cb84e3a86c11a0daa7d",
+      "bytes": 776
+    },
+    {
+      "candidate": "wr_zip_misalign",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/wr_zip_misalign.patch",
+      "sha256": "d6cea0c39659dd85d52decd83cc156606916976fb237dae2e537b7d9b73b477b",
+      "bytes": 1057
+    },
+    {
+      "candidate": "wr_zip_misalign_orempty",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/wr_zip_misalign_orempty.patch",
+      "sha256": "2e2bcde58d3c928da5172af7bce5c3ebf39c0bef1515f64966dea056f8d921ff",
+      "bytes": 945
+    },
+    {
+      "candidate": "wrong_file",
+      "path": "rh2/experiments/category3_cloud_20260929/dask8801/wrong_file.patch",
+      "sha256": "45651c7ba304976d3e1e885672b3bcc3818b90f609d7fb9c9925a7784c3f3f77",
+      "bytes": 722
+    }
+  ],
+  "report_markdown": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_8801_reason_oracle_20261003.md"
+}

@@ -1,0 +1,46 @@
+{
+  "name": "coveragepy_016a_public_delivery_v1",
+  "task": "coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae",
+  "purpose": "只交付固定公开题面并执行新公开读者给出的环境、示例及公开回归命令；不执行求解修改。",
+  "steps": [
+    {
+      "kind": "bash_r2e_preflight"
+    },
+    {
+      "kind": "bash",
+      "id": "environment_probe",
+      "command": "cd /testbed && python - <<'PY'\nimport sys, sqlite3, coverage\nprint(sys.executable)\nprint(sys.version)\nprint(coverage.__file__)\nprint(sqlite3.sqlite_version)\nprint(dict(coverage.Coverage().sys_info()).get('CTracer'))\nPY",
+      "timeout_ms": 60000
+    },
+    {
+      "kind": "bash",
+      "id": "statement_example",
+      "command": "cd /testbed && python - <<'PY'\nimport coverage\ncov = coverage.Coverage()\ncov.start()\nexec(compile(\"pass\", \"\\udcff.py\", \"exec\"))\ncov.stop()\ncov.save()\nPY",
+      "timeout_ms": 60000
+    },
+    {
+      "kind": "bash",
+      "id": "normal_file_save",
+      "command": "cd /testbed && python - <<'PY'\nimport os, tempfile, coverage\nwith tempfile.TemporaryDirectory() as task_tmp:\n    cov = coverage.Coverage(config_file=False, data_file=os.path.join(task_tmp, '.coverage'))\n    cov.start()\n    exec(compile('pass', os.path.join(task_tmp, 'ordinary.py'), 'exec'), {})\n    cov.stop()\n    cov.save()\n    loaded = coverage.Coverage(config_file=False, data_file=os.path.join(task_tmp, '.coverage'))\n    loaded.load()\n    data = loaded.get_data()\n    files = list(data.measured_files())\n    assert len(files) == 1, files\n    assert data.lines(files[0]) == [1], data.lines(files[0])\nPY",
+      "timeout_ms": 60000
+    },
+    {
+      "kind": "bash",
+      "id": "public_regressions",
+      "command": "cd /testbed && python -m pytest -o addopts= tests/test_api.py tests/test_data.py tests/test_oddball.py",
+      "timeout_ms": 210000
+    }
+  ],
+  "solve": {
+    "wall_seconds": 1200,
+    "max_context_len": 32768,
+    "max_new_tokens": 4096
+  },
+  "public_command_provenance": {
+    "source": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/public_reader_commands_20261003.json",
+    "sha256": "sha256:88a73fa2650f34752ca04eabdbb5a454214a2d46695393f7cedcdab285e6c971",
+    "actor_syntax_source": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/devcheck/commands_fresh_reader_actor.json",
+    "command_strings_changed": false,
+    "execution_status": "not_run"
+  }
+}

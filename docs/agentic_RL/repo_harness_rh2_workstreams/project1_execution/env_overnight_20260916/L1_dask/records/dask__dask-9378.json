@@ -1,0 +1,216 @@
+{
+ "task_id": "dask__dask-9378",
+ "source": "SWE-Gym lite (dask/dask 2022.8)",
+ "task_revision": "upstream",
+ "materials_refs": [
+  "s2/ingest/public_bundles_v0.jsonl (problem_statement 893 字符)",
+  "s2/ingest/grading_bundles_v2_v0.jsonl (F2P=3; P2P=134)",
+  "s2/ingest/validation_bundles_v0.jsonl (golden_patch)",
+  "s2/raw/swe_gym_lite_full_f70b1a29.jsonl (hints_text 1032 字符)",
+  "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/dask__dask-9378/{gold,empty}/offline/a1/"
+ ],
+ "public_view": {
+  "goal": "为 masked dask array 提供保留掩码的 `ones_like` / `zeros_like` / `empty_like`；当前 `da.ones_like(masked)` 丢掉掩码，而 numpy 的同名函数保留。**这是特性请求，不是缺陷修复**。",
+  "constraints": [
+   "题面给出 dask 与 numpy 的输出对照。",
+   "题面自己提出实现路线：'implement dask.array.ma.ones_like, etc.' 用 map_blocks 包 numpy.ma 版本。"
+  ],
+  "unknown_from_public": [
+   "题面的复现用的是**顶层** `da.ones_like`，而评分要的是新增 `da.ma.ones_like`（题面后半句指对了命名空间，但两处不一致）。只改 `dask/array/creation.py:ones_like` 让它保留掩码的候选会被判 0。",
+   "题面没说 `empty_like` 该怎么断言（数据未初始化）；F2P 对 empty_like 只比较掩码数组。",
+   "题面没说这些函数是否要进 `dask.array.ma` 的公开导出/文档。"
+  ],
+  "by": "L1_dask"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "8b95f983c232c1bd628e9cba0695d3ef229d290b:dask/array/ma.py:1-11,190",
+    "8b95f983c232c1bd628e9cba0695d3ef229d290b:dask/array/tests/test_masked.py:427"
+   ],
+   "note": "test_patch 只在 test_masked.py 末尾新增参数化用例，gold 只在 dask/array/ma.py 末尾追加 3 个函数，base 均存在；`asanyarray`、`derived_from` 在 ma.py 顶部已 import，不需要新增导入。无二进制/LFS/子模块。",
+   "by": "L1_dask"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "8b95f983c232c1bd628e9cba0695d3ef229d290b:dask/array/ma.py（无 *_like 定义）",
+    "8b95f983c232c1bd628e9cba0695d3ef229d290b:dask/array/creation.py:124-133"
+   ],
+   "note": "base 的 `dask.array.ma` 里没有任何 `*_like`；顶层 `da.ones_like` 走 creation.py，用 `ones(shape, ..., meta=a._meta)` 生成，不保留掩码。题面现象成立；empty 侧 3 条 F2P 全 FAILED（AttributeError: module 'dask.array.ma' has no attribute ...）。",
+   "by": "L1_dask"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-9378.problem_statement",
+    "s2/raw/...:dask__dask-9378.hints_text"
+   ],
+   "note": "题面完整无截断。hints（1032 字符）是维护者与报告者关于 numpy issue #15200、`__array_ufunc__` 的讨论，以及一条指向 creation.py#L124-L133 的 permalink；**这条 permalink 指向的是顶层实现，反而可能把人引到错误的修改位置**。hints 没有提供题面之外的决定性信息。",
+   "by": "L1_dask"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-9378.test_patch"
+   ],
+   "note": "test_patch 仅碰 dask/array/tests/test_masked.py；gold 仅碰 dask/array/ma.py。",
+   "by": "L1_dask"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "同上"
+   ],
+   "note": "additional_exclusions 保持空。",
+   "by": "L1_dask"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dask/prescan.json"
+   ],
+   "note": "本包内唯一改 dask/array/ma.py / test_masked.py 的题。",
+   "by": "L1_dask"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-9378.problem_statement",
+    "grading_bundles_v2_v0.jsonl:dask__dask-9378.test_patch"
+   ],
+   "note": "要求基本充分（题面点名了 `dask.array.ma.ones_like` 与 map_blocks 路线），但存在一处命名空间歧义：题面**展示的复现**是顶层 `da.ones_like`，**建议的修法**却落在 `da.ma.*`。按前者动手（改 creation.py 让顶层函数保留掩码）是对题面现象的合理解读，却会因 `da.ma.ones_like` 不存在而 3 条 F2P 全挂。",
+   "by": "L1_dask"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-9378.test_patch"
+   ],
+   "note": "不锁实现：`a.map_blocks(np.ma.core.ones_like)`、`map_blocks(np.ma.ones_like, a)`、或直接 `da.ma.masked_array(da.ones_like(a), getmaskarray(a))` 都能过。断言只比较数值/掩码数组，不看 helper 名或装饰器。",
+   "by": "L1_dask"
+  },
+  "25": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading_bundles_v2_v0.jsonl:dask__dask-9378.fail_to_pass"
+   ],
+   "note": "三个函数各有独立参数点，只实现其中一两个会按条扣分；`empty_like` 用 `assert_eq(da.ma.getmaskarray(res), np.ma.getmaskarray(sol))` 而不比数据，避开了未初始化内存的不确定性——这是本包对断言边界处理最讲究的一处。硬编码 shape/掩码无法通过（输入是 3×2 带非平凡掩码、chunks=2，需要真的走分块）。",
+   "by": "L1_dask"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "8b95f983c232c1bd628e9cba0695d3ef229d290b:dask/array/tests/test_masked.py"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_dask"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "validation_bundles_v0.jsonl:dask__dask-9378.golden_patch"
+   ],
+   "note": "gold 18 行、三个对称函数，无与题无关的改动、不依赖未交付改动。次要风险：`@derived_from(np.ma.core)` 在 import 期从 numpy 抓 docstring，若 numpy 版本里该函数缺 docstring 会在导入时报错 —— 属跨版本脆弱点，本镜像未触发。",
+   "by": "L1_dask"
+  },
+  "29": {
+   "status": "issue",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-9378.problem_statement"
+   ],
+   "note": "题面给出了实现**路线**（“在 dask.array.ma 里用 map_blocks 包 numpy.ma 的版本”），与 gold 一致，但没有给出可直接粘贴的代码。泄漏程度弱于 7656/7138/9212。",
+   "by": "L1_dask"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-9378/gold/offline/a1/test_output.txt (install rc=0)"
+   ],
+   "note": "安装 rc=0；Python 3.10.14 + pytest-8.3.2。",
+   "by": "L1_dask"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "8b95f983c232c1bd628e9cba0695d3ef229d290b:dask/array/tests/test_masked.py"
+   ],
+   "note": "无 mark.network / URL / requests / boto3；模块级只有 `pytest.importorskip('dask.array.ma')`。",
+   "by": "L1_dask"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-9378/gold/offline/a1/status_map.json"
+   ],
+   "note": "**本包链路最干净的题之一**：gold 侧 137 条结果行 = 137 个键，0 SKIPPED、0 XFAIL、0 伪键、0 恒失败用例；3 条 F2P + 134 条 P2P 全部 PASSED。与 dask__dask-7894 并列。",
+   "by": "L1_dask"
+  },
+  "9": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/.../dask__dask-9378/{gold,empty}/offline/a1/status_map.json"
+   ],
+   "note": "empty→3 条 F2P 全 FAILED，gold→全 PASSED，134 条 P2P 两侧全 PASSED。",
+   "by": "L1_dask"
+  }
+ },
+ "issues": [
+  {
+   "category": "题面命名空间歧义",
+   "severity": "P2",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-9378.problem_statement"
+   ],
+   "proposed_action": "把题面复现里的 `da.ones_like(array)` 改成 `da.ma.ones_like(array)`（或明确写“请在 dask.array.ma 下新增”），消除“改顶层还是改 ma 子模块”的分叉。",
+   "next_experiment": "在 base 上只改 creation.py 让顶层 *_like 保留掩码，跑 3 条 F2P，预期全 FAILED（证明合理解读被拒）。"
+  },
+  {
+   "category": "特性请求而非缺陷",
+   "severity": "P3",
+   "evidence_refs": [
+    "public_bundles_v0.jsonl:dask__dask-9378.problem_statement"
+   ],
+   "proposed_action": "仅标注：本题是新增 API，不是修 bug；若数据划分按“缺陷修复”语义区分任务类型，需单独归类。",
+   "next_experiment": "无。"
+  },
+  {
+   "category": "derived_from 跨版本脆弱",
+   "severity": "P3",
+   "evidence_refs": [
+    "validation_bundles_v0.jsonl:dask__dask-9378.golden_patch"
+   ],
+   "proposed_action": "仅记录；本镜像未触发。",
+   "next_experiment": "无。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰测试文件，gold 只碰源码；按第四组 B 默认保持空。",
+  "evidence_refs": [
+   "grading_bundles_v2_v0.jsonl:dask__dask-9378.test_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "dask/array/tests/test_masked.py::test_masked_array / test_from_array_masked_array",
+   "reason": "已在 P2P；保证新函数依赖的 `da.ma.masked_array` 构造路径未被改动。"
+  },
+  {
+   "id": "dask/array/tests/test_creation.py::test_ones_like / test_zeros_like / test_empty_like",
+   "reason": "顶层 *_like 的既有用例在另一个文件，完全不在参考集内；若候选按题面复现去改 creation.py，没有任何断言能发现它破坏了非掩码路径。"
+  },
+  {
+   "id": "dask/array/tests/test_masked.py::test_tokenize_masked_array",
+   "reason": "已在 P2P；新增函数经 map_blocks 产生新图，tokenize 行为是最近的公共依赖。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "链路最干净（0 skip / 0 伪键 / 0 恒失败）、gold 对称清晰、三个参数点判别力独立、empty_like 的断言边界处理得当。唯一保留是题面复现用顶层 `da.ones_like` 而评分要 `da.ma.*`，存在一条会被判 0 的合理解读分叉。"
+ },
+ "costs": {
+  "minutes": 19
+ }
+}

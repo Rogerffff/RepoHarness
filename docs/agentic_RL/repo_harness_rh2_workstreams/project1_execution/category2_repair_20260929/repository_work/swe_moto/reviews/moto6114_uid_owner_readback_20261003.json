@@ -1,0 +1,121 @@
+{
+  "schema": "swe_moto.uid_owner_readback.v1",
+  "as_of_utc": "2026-10-02T21:08:13.692775+00:00",
+  "task_id": "swe_gym_lite::getmoto__moto-6114",
+  "job_id": "moto6114-uid-83565d38db45",
+  "status": "passed_pending_non_author_final_review",
+  "scope": "new-host actor UID/activation/import only; no CC, model, baseline export or grader",
+  "raw_files": [
+    {
+      "path": "runs/category2_repair_20260929/moto_cpu_20261003/moto6114-uid-83565d38db45_evidence/output/docker_calls.json",
+      "sha256": "0e9023e0c5d4990b3652ebb8c729d6ff1579777afe5507f82760880a0b2ae022",
+      "bytes": 34215
+    },
+    {
+      "path": "runs/category2_repair_20260929/moto_cpu_20261003/moto6114-uid-83565d38db45_evidence/output/result.json",
+      "sha256": "9db172c5925b78edeafa4f68b45e3ca4ec0a9a703b14fa41ba7fc04c6001266d",
+      "bytes": 2798
+    },
+    {
+      "path": "runs/category2_repair_20260929/moto_cpu_20261003/moto6114-uid-83565d38db45_evidence/job/status.json",
+      "sha256": "a2b9b3079707f56ed7f637dad55077a9894190bf2e4e13e4139511f33c3a719f",
+      "bytes": 1038
+    },
+    {
+      "path": "runs/category2_repair_20260929/moto_cpu_20261003/moto6114-uid-83565d38db45_evidence/job/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "runs/category2_repair_20260929/moto_cpu_20261003/moto6114-uid-83565d38db45_evidence/job/stdout.log",
+      "sha256": "71599d2a573c45613487648f52460e890a3eb62dbebdb1f8028eb535736c8590",
+      "bytes": 582
+    }
+  ],
+  "transport_manifest": {
+    "path": "runs/category2_repair_20260929/moto_cpu_20261003/moto6114-uid-83565d38db45_evidence/transport_manifest.json",
+    "sha256": "7b1b20ec5d4ca30d4bea02a915a70d63d27ed7250d9b776fe0b5895db7e5ccf5"
+  },
+  "job_returncode": 0,
+  "docker_calls_count": 12,
+  "all_docker_calls_rc0": true,
+  "material_binding_equal": true,
+  "prepared_summary": {
+    "path": "runs/category2_repair_20260929/moto_cpu_20261003/moto6114-cpu-0661259fc3d1_evidence/output/prepared/replay_summary.json",
+    "sha256": "44ad39c1802736c0080c93849cfefedb4ba6b01dd118f2a938b797ff803f6e3d"
+  },
+  "actual_image_id": "sha256:1d8dded2ee5bbe9275514fdc603116ac9f36da5e30c19b2d4ffcba4d4a9f27d5",
+  "profile_digest": "sha256:c19c035f48cd1a4546a40d0a0958c307f759bddcbf6ee262b28fe91525a8a092",
+  "actual_limits": {
+    "NanoCpus": 2000000000,
+    "Memory": 4294967296,
+    "PidsLimit": 512,
+    "ShmSize": 67108864
+  },
+  "network_mode": "none",
+  "sanitize": {
+    "RH2_GIT_SANITIZE_OK": "1",
+    "HEAD_BEFORE": "f01709f9ba656e7cf4399bcd1a0a07fd134b0aec",
+    "HEAD_AFTER": "f01709f9ba656e7cf4399bcd1a0a07fd134b0aec",
+    "HISTORY_COUNT_BEFORE": "7454",
+    "HISTORY_COUNT_AFTER": "7454",
+    "REFS_DELETED": "52",
+    "REFS_REMAINING": "186",
+    "REMOTES": "0",
+    "REFLOG_ENTRIES": "0",
+    "UNREACHABLE_OBJECTS": "0",
+    "SECONDS_ELAPSED": "32.4181"
+  },
+  "init": {
+    "WORKDIR_PRESENT": "1",
+    "RH2_INIT_OK": "1",
+    "AGENT_UID": "54321"
+  },
+  "activation": {
+    "role": "rollout",
+    "container_name": "rh2-moto6114-uid-83565d38db45",
+    "ok": true,
+    "violations": [],
+    "inspect_facts": {},
+    "probe_facts": {
+      "ACT_EXPECTED_PREFIX": "/opt/miniconda3/envs/testbed",
+      "ACT_PYTHON": "/opt/miniconda3/envs/testbed/bin/python",
+      "ACT_SYS_EXECUTABLE": "/opt/miniconda3/envs/testbed/bin/python",
+      "ACT_SYS_PREFIX": "/opt/miniconda3/envs/testbed",
+      "ACT_CONDA_DEFAULT_ENV": "testbed",
+      "ACT_VIRTUAL_ENV": "",
+      "RH2_ACTIVATION_PROBE_OK": "1"
+    },
+    "seconds": 0.421
+  },
+  "identity": {
+    "uid": 54321,
+    "gid": 54321,
+    "cwd": "/testbed",
+    "python": "/opt/miniconda3/envs/testbed/bin/python",
+    "prefix": "/opt/miniconda3/envs/testbed",
+    "moto_file": "/testbed/moto/__init__.py",
+    "moto_rds_file": "/testbed/moto/rds/models.py",
+    "moto_rds_sha256": "a614a137f21dce20445cad98611e578b435d4f09a592ced584d887d9edb9250c",
+    "boto3": "1.35.9",
+    "botocore": "1.35.9"
+  },
+  "cleanup": {
+    "container_query_rc": 0,
+    "containers": [],
+    "network_query_rc": 0,
+    "networks": []
+  },
+  "remove_rc": 0,
+  "script": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tools/moto6114_uid_smoke_v1.py",
+    "sha256": "da3798980fc199315b0977a49792769cd042869eab7e57d7ebc5b846af8dc2b0"
+  },
+  "historical_actor_reuse": "conditions now supported by actual new-host identity; independent final review remains required",
+  "not_claimed": [
+    "fresh CC actor",
+    "new model attempt",
+    "new FrozenPatch export",
+    "new actor-to-grader run"
+  ]
+}

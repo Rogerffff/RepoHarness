@@ -1,0 +1,13 @@
+diff --git a/src/PIL/TiffImagePlugin.py b/src/PIL/TiffImagePlugin.py
+--- a/src/PIL/TiffImagePlugin.py
++++ b/src/PIL/TiffImagePlugin.py
+@@ -1568,7 +1568,8 @@ def _save(im, fp, filename):
+     if format != 1:
+         ifd[SAMPLEFORMAT] = format
+ 
+-    ifd[PHOTOMETRIC_INTERPRETATION] = photo
++    if not (im.mode in ("1", "L") and ifd.get(PHOTOMETRIC_INTERPRETATION) == 0):
++        ifd[PHOTOMETRIC_INTERPRETATION] = photo
+ 
+     if im.mode in ["P", "PA"]:
+         lut = im.im.getpalette("RGB", "RGB;L")

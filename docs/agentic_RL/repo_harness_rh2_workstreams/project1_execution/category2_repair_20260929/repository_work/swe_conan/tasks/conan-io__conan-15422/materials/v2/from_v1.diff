@@ -1,0 +1,29 @@
+--- v1/effective_test.py
++++ v2/effective_test.py
+@@ -1247,15 +1247,24 @@
+     assert presets["buildPresets"][0]["jobs"] == int(expected[0])
+ 
+ 
++@pytest.mark.tool("cmake", "3.23")
+ @pytest.mark.parametrize("jobs", [2, 7], ids=["jobs2", "jobs7"])
+ def test_presets_jobs_explicit_values(jobs):
++    import shlex
++
+     client = TestClient()
+     client.save({"conanfile.py": GenConanfile().with_settings("os", "arch", "compiler", "build_type")
+-                 .with_generator("CMakeToolchain")})
++                 .with_generator("CMakeToolchain"),
++                 "CMakeLists.txt": "cmake_minimum_required(VERSION 3.15)\nproject(JobsPreset NONE)\n"})
+     client.run('install . -s build_type=Release -c tools.build:jobs={} '
+-               '-c tools.cmake.cmaketoolchain:generator="Ninja"'.format(jobs))
++               '-c tools.cmake.cmaketoolchain:generator="Unix Makefiles"'.format(jobs))
+     presets = json.loads(client.load("CMakePresets.json"))
+     assert presets["buildPresets"][0]["jobs"] == jobs
++    # 实际消费生成配置，不锁schema或最低版本数字；NONE避免引入编译器要求。
++    configure_name = shlex.quote(presets["configurePresets"][0]["name"])
++    build_name = shlex.quote(presets["buildPresets"][0]["name"])
++    client.run_command("cmake --preset " + configure_name)
++    client.run_command("cmake --build --preset " + build_name)
+ 
+ 
+ def test_presets_jobs_multiconfig_append_replace():

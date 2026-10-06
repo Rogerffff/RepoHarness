@@ -1,0 +1,70 @@
+{
+  "schema": "dask_acceptance_plan.v1",
+  "as_of": "2026-10-03",
+  "instance_id": "dask__dask-7656",
+  "revision_id": "dask7656-dataclass-argument-v1",
+  "effective_test_patch": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7656/effective_test.patch",
+    "sha256": "d3b711c9eb53cbdb6477314eae82f3ae5ca49e5c052a352c7da3959289c287db"
+  },
+  "expected_results_are_not_observed_scores": true,
+  "rows": [
+    {
+      "name": "noop",
+      "patch": null,
+      "role": "unrepaired",
+      "expected_reward": 0,
+      "reason": "未修复的原源码须被拒绝",
+      "priority": "first_formal_matrix",
+      "observed_reward_on_this_revision": null,
+      "original_material_f2p_count": 1
+    },
+    {
+      "name": "gold",
+      "patch": {
+        "path": "runs/swegym_quality_expansion_20260925/private/dask__dask-7656/gold.patch",
+        "sha256": "2f6f59d094834f3e8db2d1e5332f1415ff65d151678d5cc6c6590f1883de63e9"
+      },
+      "role": "historical_positive",
+      "expected_reward": 1,
+      "reason": "历史实际参数类型、默认值及嵌套控制均过；新版本评分仍须运行",
+      "priority": "first_formal_matrix",
+      "observed_reward_on_this_revision": null,
+      "original_material_f2p_count": 1
+    },
+    {
+      "name": "wrong_result_type",
+      "patch": {
+        "path": "runs/swegym_cpu_preprobe_20260929/remote/results/dask__dask-7656/grading_setup900_v1/wrong_result_type/artifacts/swe_gym_lite--dask__dask-7656/a1-ce66e8e8/candidate.patch",
+        "sha256": "d422554ec399b5540bc3492c8fcddf0b2c06246ec842545f6fb33ff7cc38d066"
+      },
+      "role": "known_wrong",
+      "expected_reward": 0,
+      "reason": "实际参数被重建成 SimpleNamespace，应在新增类型断言被拒",
+      "priority": "first_formal_matrix",
+      "observed_reward_on_this_revision": null,
+      "original_material_f2p_count": 1
+    },
+    {
+      "name": "opaque",
+      "patch": {
+        "path": "runs/swegym_cpu_preprobe_20260929/remote/results/dask__dask-7656/grading_setup900_v1/opaque/artifacts/swe_gym_lite--dask__dask-7656/a1-98965356/candidate.patch",
+        "sha256": "f6a357f6b5a69c91d4d9b5e40d3df13e79e0099f75265537a9ffa1241b1cae84"
+      },
+      "role": "known_wrong",
+      "expected_reward": 0,
+      "reason": "不遍历 dataclass，嵌套 Delayed 未求值，应被拒",
+      "priority": "first_formal_matrix",
+      "observed_reward_on_this_revision": null,
+      "original_material_f2p_count": 1
+    }
+  ],
+  "success_conditions": [
+    "固定材料身份、镜像、执行入口、安装配方与身份",
+    "有效正对照为 1；未修复及各已知错解为 0",
+    "安装和测试实际执行、参考无缺席；逐项参考状态和失败断言符合预期",
+    "保存完整评分账本、输出、候选和清理结果",
+    "非作者核公开依据、正对照及本轮实际结果"
+  ],
+  "known_wrong_coverage": "初始矩阵按独立机制选取；其余历史候选保留原件。接受性比较不能因私有检查通过而省略正式身份/导入等差异。"
+}

@@ -1,0 +1,37 @@
+{
+  "schema": "swe_pydantic.coder_first_arm_semantic_audit.v1",
+  "date": "2026-10-03",
+  "task_id": "swe_gym_lite::pydantic__pydantic-8567",
+  "job_id": "gpu1003-pyd8567-coder-a1",
+  "request_id": "swe-pydantic8567-behavior-v1-20261003",
+  "execution_accepted": true,
+  "raw_reward_preserved": 0.0,
+  "semantics": {
+    "source_semantically_accepted": false,
+    "source_failure": "无条件handler(source_type)破坏PlainValidator跳过内层schema，两个Unsupported F及forward/stdlib TypedDict两个P失败。",
+    "full_candidate_delivery_defect": true,
+    "temporary_files": "debug_issue.py和fix_plain_validator.py实际运行失败仍在FP；其余5个附带文件也保留。",
+    "self_test_claim_limits": "bool示例修好不等于完整F节点通过；所选公开测试不证明完整兼容。",
+    "new_material_CPU_revision_required": false
+  },
+  "owner_readback": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/coordination_20261003/8567_coder_first_arm_owner_readback_v1.json",
+    "sha256": "09179785d11f4d599fca1bae9813be5599bca26f4a4f5ae739ed2f3c15d7a001"
+  },
+  "independent_review": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/reviews/non_author_8511_8567_coder_q24_execution_review_20261003.json",
+    "sha256": "519e7055a0cbc3c260c17bd0c138f8a2d3ac8c658d9eb27d58e9cb97c6737783"
+  },
+  "formal_reference_total": 162,
+  "formal_failures": [
+    "tests/test_validators.py::test_plain_validator_plain_serializer",
+    "tests/test_validators.py::test_plain_validator_serializer_unsupported_type_both_orders",
+    "tests/test_validators.py::test_plain_validator_unresolved_inner_forward_reference",
+    "tests/test_validators.py::test_plain_validator_typing_typeddict_inner_schema_not_required"
+  ],
+  "paired_models_complete": false,
+  "Qwen_first_arm_complete": false,
+  "ACK": false,
+  "training_eligible": false,
+  "new_CPU_GPU_model_calls": 0
+}

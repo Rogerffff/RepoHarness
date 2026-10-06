@@ -1,0 +1,73 @@
+diff --git a/tests/test_dynamodb/test_dynamodb.py b/tests/test_dynamodb/test_dynamodb.py
+--- a/tests/test_dynamodb/test_dynamodb.py
++++ b/tests/test_dynamodb/test_dynamodb.py
+@@ -4708,6 +4708,56 @@
+         }
+     )
+ 
++    # Same when scanning the table
++    response = table.scan(IndexName="GSI-INC")
++    items = response["Items"]
++    assert response["Count"] == len(items) == 1
++    items[0].should.equal(
++        {
++            "gsiK1PartitionKey": "gsi-pk",
++            "gsiK1SortKey": "gsi-sk",
++            "partitionKey": "pk-1",
++            "projectedAttribute": "lore ipsum",
++        }
++    )
++
++    # 索引扫描只能投影返回值，不能损坏原表存储。
++    assert table.get_item(Key={"partitionKey": "pk-1"})["Item"] == item
++
++
++@mock_dynamodb
++def test_gsi_scan_projection_keys_only_all_items():
++    dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
++    table = dynamodb.create_table(
++        TableName="scan-gsi-keys-only",
++        KeySchema=[{"AttributeName": "id", "KeyType": "HASH"}],
++        AttributeDefinitions=[
++            {"AttributeName": "id", "AttributeType": "S"},
++            {"AttributeName": "gsi_id", "AttributeType": "S"},
++        ],
++        GlobalSecondaryIndexes=[{
++            "IndexName": "keys-only",
++            "KeySchema": [{"AttributeName": "gsi_id", "KeyType": "HASH"}],
++            "Projection": {"ProjectionType": "KEYS_ONLY"},
++        }],
++        BillingMode="PAY_PER_REQUEST",
++    )
++    originals = [
++        {"id": "row-a", "gsi_id": "index-a", "payload": "alpha"},
++        {"id": "row-b", "gsi_id": "index-b", "payload": "beta"},
++    ]
++    for item in originals:
++        table.put_item(Item=item)
++
++    response = table.scan(IndexName="keys-only")
++    assert response["Count"] == len(response["Items"]) == 2
++    assert sorted(response["Items"], key=lambda item: item["id"]) == [
++        {"id": "row-a", "gsi_id": "index-a"},
++        {"id": "row-b", "gsi_id": "index-b"},
++    ]
++    for item in originals:
++        assert table.get_item(Key={"id": item["id"]})["Item"] == item
++
+ 
+ @mock_dynamodb
+ def test_lsi_projection_type_keys_only():
+@@ -4754,6 +4804,12 @@
+     # Item should only include GSI Keys and Table Keys, as per the ProjectionType
+     items[0].should.equal(
+         {"partitionKey": "pk-1", "sortKey": "sk-1", "lsiK1SortKey": "lsi-sk"}
++    )
++
++    # Same when scanning the table
++    items = table.scan(IndexName="LSI")["Items"]
++    items[0].should.equal(
++        {"lsiK1SortKey": "lsi-sk", "partitionKey": "pk-1", "sortKey": "sk-1"}
+     )
+ 
+ 

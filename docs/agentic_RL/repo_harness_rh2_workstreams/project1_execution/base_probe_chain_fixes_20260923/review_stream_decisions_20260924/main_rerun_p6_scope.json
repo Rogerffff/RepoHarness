@@ -1,0 +1,249 @@
+{
+  "scope": "CPU read-only source/evidence audit; real local template; no model behavior claim",
+  "source_hash_matches_recorded_replay": {
+    "rh2/src/slime/agent/adapters/anthropic.py": true,
+    "rh2/src/slime/agent/adapters/common.py": true,
+    "rh2/src/slime/agent/trajectory.py": true,
+    "rh2/src/repoharness2/adapters/slime/turn_identity.py": true
+  },
+  "denominators": {
+    "attempts": 22,
+    "raw_generation_turns": 617,
+    "raw_output_tokens_sum": 167985,
+    "finish_reasons": {
+      "stop": 617
+    },
+    "excluded_gateway_rows": [
+      {
+        "attempt": "bp22-qwen3-6-35b-a3b-dask-8597-a2",
+        "path": "/v1/messages/count_tokens?beta=true"
+      },
+      {
+        "attempt": "bp22-qwen3-6-35b-a3b-mypy-11236-a2",
+        "path": "/v1/messages/count_tokens?beta=true"
+      }
+    ]
+  },
+  "variants": {
+    "current": {
+      "turns": 617,
+      "pairs": 595,
+      "unique_pairs": 595,
+      "thinking_drop_pairs": 74,
+      "training_rows": 132,
+      "turns_generated": 617,
+      "turns_trained": 617,
+      "trainable_tokens_total": 167985,
+      "input_tokens_total": 4379385
+    },
+    "a_smoosh": {
+      "turns": 617,
+      "pairs": 595,
+      "unique_pairs": 595,
+      "thinking_drop_pairs": 2,
+      "training_rows": 64,
+      "turns_generated": 617,
+      "turns_trained": 617,
+      "trainable_tokens_total": 167985,
+      "input_tokens_total": 2212759
+    },
+    "a2_smoosh_all_text": {
+      "turns": 617,
+      "pairs": 595,
+      "unique_pairs": 595,
+      "thinking_drop_pairs": 0,
+      "training_rows": 62,
+      "turns_generated": 617,
+      "turns_trained": 617,
+      "trainable_tokens_total": 167985,
+      "input_tokens_total": 2174880
+    },
+    "b_preserve": {
+      "turns": 617,
+      "pairs": 595,
+      "unique_pairs": 595,
+      "thinking_drop_pairs": 0,
+      "training_rows": 62,
+      "turns_generated": 617,
+      "turns_trained": 617,
+      "trainable_tokens_total": 167985,
+      "input_tokens_total": 2175420
+    },
+    "c_no_task_reminder": {
+      "turns": 617,
+      "pairs": 595,
+      "unique_pairs": 595,
+      "thinking_drop_pairs": 3,
+      "training_rows": 65,
+      "turns_generated": 617,
+      "turns_trained": 617,
+      "trainable_tokens_total": 167985,
+      "input_tokens_total": 2223815
+    }
+  },
+  "replay_limitations": {
+    "output_ids": "sampled output ids were not logged; output_ids = tok.encode(raw_output) (length checked per turn)",
+    "coverage_max_sample_tokens": 0,
+    "scope_note": "Amounts are replay outputs, not proof of original sampled token identity or all production training stages."
+  },
+  "fork_attribution": {
+    "current_forks": 84,
+    "thinking_drop_pairs": 74,
+    "drop_pairs_also_current_fork": 74,
+    "preserve_forks": 5,
+    "extra_removed_forks_not_at_drop_pair": [
+      {
+        "attempt": "bp22-qwen3-6-35b-a3b-conan-15422-a3",
+        "seq_to": 9,
+        "cause": "other_only",
+        "insertion_kinds": {},
+        "previous_pair_thinking_drop": true,
+        "previous_pair_insertion_kinds": {
+          "task_reminder": 1
+        },
+        "first_diff": {
+          "block": 19,
+          "is_last_response_block": true,
+          "held_token_start": 27950,
+          "text_common_prefix_chars": 581,
+          "old_around": "uild preset fields.\n\n<tool_call>\n<function=Edit>\n<parameter=file_path>\n/testbed/conan/tools/cmake/presets.py\n</parameter>\n<parameter=old_string>\nfrom conan.tool",
+          "new_around": "uild preset fields.\n\n<tool_call>\n<function=Edit>\n<parameter=replace_all>\nfalse\n</parameter>\n<parameter=file_path>\n/testbed/conan/tools/cmake/presets.py\n</parame"
+        }
+      },
+      {
+        "attempt": "bp22-qwen3-6-35b-a3b-conan-15422-a4",
+        "seq_to": 26,
+        "cause": "other_only",
+        "insertion_kinds": {},
+        "previous_pair_thinking_drop": true,
+        "previous_pair_insertion_kinds": {
+          "task_reminder": 1
+        },
+        "first_diff": {
+          "block": 56,
+          "is_last_response_block": true,
+          "held_token_start": 38258,
+          "text_common_prefix_chars": 139,
+          "old_around": "test file.\n</think>\n\n<tool_call>\n<function=Edit>\n<parameter=file_path>\n/testbed/conans/test/unittests/tools/cmake/test_cmake_presets_definitions.py\n</parameter>",
+          "new_around": "test file.\n</think>\n\n<tool_call>\n<function=Edit>\n<parameter=replace_all>\nfalse\n</parameter>\n<parameter=file_path>\n/testbed/conans/test/unittests/tools/cmake/tes"
+        }
+      },
+      {
+        "attempt": "bp22-qwen3-6-35b-a3b-dvc-6954-a2",
+        "seq_to": 9,
+        "cause": "other_only",
+        "insertion_kinds": {},
+        "previous_pair_thinking_drop": true,
+        "previous_pair_insertion_kinds": {
+          "task_reminder": 1
+        },
+        "first_diff": {
+          "block": 19,
+          "is_last_response_block": true,
+          "held_token_start": 23876,
+          "text_common_prefix_chars": 1422,
+          "old_around": "n the AST:\n\n<tool_call>\n<function=Bash>\n<parameter=command>\ncd /testbed && python3 -c \"\nimport ast\n# Test how -1 is represented\ntree = ast.parse('my_int = -1')\n",
+          "new_around": "n the AST:\n\n<tool_call>\n<function=Bash>\n<parameter=command>\npython3 -c \"\nimport ast\n# Test how -1 is represented\ntree = ast.parse('my_int = -1')\nprint('AST dump"
+        }
+      },
+      {
+        "attempt": "bp22-qwen3-6-35b-a3b-moto-5134-a4",
+        "seq_to": 8,
+        "cause": "other_only",
+        "insertion_kinds": {},
+        "previous_pair_thinking_drop": true,
+        "previous_pair_insertion_kinds": {
+          "task_reminder": 1
+        },
+        "first_diff": {
+          "block": 17,
+          "is_last_response_block": true,
+          "held_token_start": 22377,
+          "text_common_prefix_chars": 1142,
+          "old_around": " in the event dict:\n\n<tool_call>\n<function=Edit>\n<parameter=file_path>\n/testbed/moto/events/models.py\n</parameter>\n<parameter=old_string>\n    def _does_event_ma",
+          "new_around": " in the event dict:\n\n<tool_call>\n<function=Edit>\n<parameter=replace_all>\nfalse\n</parameter>\n<parameter=file_path>\n/testbed/moto/events/models.py\n</parameter>\n<p"
+        }
+      },
+      {
+        "attempt": "bp22-qwen3-6-35b-a3b-mypy-17071-a1",
+        "seq_to": 27,
+        "cause": "other_only",
+        "insertion_kinds": {},
+        "previous_pair_thinking_drop": true,
+        "previous_pair_insertion_kinds": {
+          "task_reminder": 1
+        },
+        "first_diff": {
+          "block": 57,
+          "is_last_response_block": true,
+          "held_token_start": 33221,
+          "text_common_prefix_chars": 1280,
+          "old_around": " implement the fix:\n\n<tool_call>\n<function=Edit>\n<parameter=file_path>\n/testbed/mypy/typetraverser.py\n</parameter>\n<parameter=old_string>\n    def visit_callable",
+          "new_around": " implement the fix:\n\n<tool_call>\n<function=Edit>\n<parameter=replace_all>\nfalse\n</parameter>\n<parameter=file_path>\n/testbed/mypy/typetraverser.py\n</parameter>\n<p"
+        }
+      }
+    ]
+  },
+  "real_compaction_scope": {
+    "source": "runs/decision_package_20260924/p8_9_10/remote/dp_c8_reactive/stub/requests/messages_003.json",
+    "source_sha256": "99f80bae7dfd73eff62853d07dc143bd234917ea88a4f084af2d60458062c2fb",
+    "instruction_chars": 6361,
+    "instruction_sha256": "63e2bfb4ded280d5057a66d8a034ef352a73960d97d955b990e78f04f0db1fb0",
+    "variants": {
+      "current": {
+        "moved_blocks": 0,
+        "instruction_roles": [
+          "user"
+        ],
+        "last_query_index": 6,
+        "roles_tail": [
+          "user",
+          "assistant",
+          "tool",
+          "user"
+        ],
+        "instruction_inside_tool_response": false,
+        "instruction_text_present": true,
+        "rendered_before_instruction": "call><|im_end|>\n<|im_start|>user\n<tool_response>\nRH2_R1\n</tool_response><|im_end|>\n<|im_start|>user\n",
+        "instruction_head": "CRITICAL: Respond with TEXT ONLY. Do NOT call any tools.\n\n- Do NOT use Read, Bash, Grep, Glob, Edit, Write, or",
+        "rendered_after_instruction": "<|im_end|>\n<|im_start|>assistant\n<think>\n"
+      },
+      "a_smoosh": {
+        "moved_blocks": 0,
+        "instruction_roles": [
+          "user"
+        ],
+        "last_query_index": 6,
+        "roles_tail": [
+          "user",
+          "assistant",
+          "tool",
+          "user"
+        ],
+        "instruction_inside_tool_response": false,
+        "instruction_text_present": true,
+        "rendered_before_instruction": "call><|im_end|>\n<|im_start|>user\n<tool_response>\nRH2_R1\n</tool_response><|im_end|>\n<|im_start|>user\n",
+        "instruction_head": "CRITICAL: Respond with TEXT ONLY. Do NOT call any tools.\n\n- Do NOT use Read, Bash, Grep, Glob, Edit, Write, or",
+        "rendered_after_instruction": "<|im_end|>\n<|im_start|>assistant\n<think>\n"
+      },
+      "a2_smoosh_all_text": {
+        "moved_blocks": 1,
+        "instruction_roles": [
+          "tool"
+        ],
+        "last_query_index": 3,
+        "roles_tail": [
+          "user",
+          "user",
+          "assistant",
+          "tool"
+        ],
+        "instruction_inside_tool_response": true,
+        "instruction_text_present": true,
+        "rendered_before_instruction": "cho RH2_R1\n</parameter>\n</function>\n</tool_call><|im_end|>\n<|im_start|>user\n<tool_response>\nRH2_R1\n\n",
+        "instruction_head": "CRITICAL: Respond with TEXT ONLY. Do NOT call any tools.\n\n- Do NOT use Read, Bash, Grep, Glob, Edit, Write, or",
+        "rendered_after_instruction": "\n</tool_response><|im_end|>\n<|im_start|>assistant\n<think>\n"
+      }
+    }
+  }
+}

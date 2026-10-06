@@ -1,0 +1,14 @@
+{
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "    tm.assert_series_equal(result, expected)\n\n\ndef test_groupby_quantile_NA_int(any_int_ea_dtype):\n",
+     "new": "    tm.assert_series_equal(result, expected)\n\n    # Missing is decided by the mask alone, whatever the underlying data holds\n    # there. Int64 -> float dtype: for the masked Float dtypes the masked slot\n    # keeps the integer array's filler (1.0) instead of NaN.\n    ser = pd.Series(pd.array([1, None, 3], dtype=\"Int64\").astype(any_float_dtype))\n    result = ser.groupby([0, 0, 0]).quantile(0.5)\n    tm.assert_series_equal(result, pd.Series([2.0], index=[0]), check_dtype=False)\n\n\ndef test_groupby_quantile_NA_int(any_int_ea_dtype):\n"
+    }
+   ]
+  }
+ ]
+}

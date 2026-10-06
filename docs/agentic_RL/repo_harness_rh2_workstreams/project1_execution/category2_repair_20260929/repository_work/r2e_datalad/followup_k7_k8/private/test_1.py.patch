@@ -1,0 +1,23 @@
+--- a/test_1.py
++++ b/test_1.py
+@@ -94,6 +94,10 @@
+     url = 'http://map.org/api/download/?id=98&code=13'
+     output = parse_url_opts(url)
+     eq_(output, ('http://map.org/api/download/', {'id': '98', 'code': '13'}))
++
++    # 公开爬虫模板允许 URL 式 query；参数里的冒号不是 SSH 主机分隔符。
++    eq_(parse_url_opts('openfmri_s3?_url=s3://b/k'),
++        ('openfmri_s3', {'_url': 's3://b/k'}))
+ 
+ 
+ def test_split_colon():
+@@ -221,6 +225,9 @@
+     _u = URL('example.com/path/sp1:fname')
+     eq_(str(URL(**_u.fields)), 'example.com/path/sp1:fname')
+ 
++    # 绝对本地路径中的冒号必须保留；不能把目录部分解释成 SSH 主机名。
++    _check_url('/some/dir:x', scheme='file:implicit', path='/some/dir:x')
++
+     # check that we are getting a warning logged when url can't be reconstructed
+     # precisely
+     # actually failed to come up with one -- becomes late here

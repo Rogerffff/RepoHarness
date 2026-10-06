@@ -1,0 +1,48 @@
+--- a/test_1.py
++++ b/test_1.py
+@@ -112,6 +112,11 @@
+ def _check_url(url, **fields):
+     """just a helper to carry out few checks on urls"""
+     url_ = URL(**fields)
++    parsed = URL(url)
++    # 直接比较公开字段，不让 URL.__eq__ 决定解析是否正确。
++    for f in ('scheme', 'username', 'password', 'hostname',
++              'port', 'path', 'query', 'fragment'):
++        eq_(getattr(parsed, f), fields.get(f, ''))
+     eq_(URL(url), url_)
+     eq_(str(URL(url)), url)
+     eq_(url, url_)  # just in case ;)  above should fail first if smth is wrong
+@@ -204,17 +209,17 @@
+     _check_url('weired:/', scheme='ssh:implicit', hostname='weired', path='/')
+     # since schema is not allowing some symbols so we need to add additional check
+     _check_url('weired_url:/', scheme='ssh:implicit', hostname='weired_url', path='/')
++    _check_url('my_host:path/sp1',
++               scheme='ssh:implicit', hostname='my_host', path='path/sp1')
++    _check_url('data_server.example.org:/srv/ds',
++               scheme='ssh:implicit', hostname='data_server.example.org', path='/srv/ds')
+     _check_url('example.com:/', scheme='ssh:implicit', hostname='example.com', path='/')
+     _check_url('example.com:path/sp1', scheme='ssh:implicit', hostname='example.com', path='path/sp1')
+     _check_url('example.com/path/sp1\:fname',
+                scheme='file:implicit', path='example.com/path/sp1\:fname')
+-    # ssh is as stupid as us, so we will stay "Consistently" dumb
+-    """
+-    $> ssh example.com/path/sp1:fname
+-    ssh: Could not resolve hostname example.com/path/sp1:fname: Name or service not known
+-    """
+-    _check_url('example.com/path/sp1:fname',
+-               scheme='ssh:implicit', hostname='example.com/path/sp1', path='fname')
++    # 不限定含斜杠前缀的分类；解析字段仍须能重建原串。
++    _u = URL('example.com/path/sp1:fname')
++    eq_(str(URL(**_u.fields)), 'example.com/path/sp1:fname')
+ 
+     # check that we are getting a warning logged when url can't be reconstructed
+     # precisely
+@@ -278,6 +283,8 @@
+     # a useless scheme=weird with a hope to point to a netloc
+     with swallow_logs():
+         ok_(is_url('weired://'))
++    ok_(is_url('weired_url:/'))
++    ok_(is_url('my_host:path/sp1'))
+     nok_(is_url('relative'))
+     nok_(is_url('/absolute'))
+     nok_(is_url('like@sshlogin'))

@@ -1,0 +1,71 @@
+{
+  "schema_id": "rh2.category2.aiohttp.publication_operations.v1",
+  "instance_id": "aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52",
+  "purpose": "发布者分配正式revision与revised_file；两条替换080/081而非叠加。sha256_before仍是原consumer输入，保留080全部edits再只新增一个函数。",
+  "operations": [
+    {
+      "instance_id": "aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52",
+      "kind": "hidden_test_text_replace",
+      "target": "test_1.py",
+      "edits": [
+        {
+          "old": "\n\nclass TestShutdown:\n",
+          "new": "\n\ndef test_run_app_raises_exception_on_server_start_failure(\n    patched_loop: asyncio.AbstractEventLoop,\n) -> None:\n    # Not the issue's example: the error comes from starting the server\n    # (e.g. the port is already in use) instead of a cleanup context, and it\n    # is an OSError.  run_app() raises it, so it must not also report it.\n    patched_loop.create_server = mock.Mock(\n        side_effect=OSError(\"Address already in use\")\n    )\n    app = web.Application()\n\n    with mock.patch.object(\n        patched_loop, \"call_exception_handler\", autospec=True, spec_set=True\n    ) as m:\n        with pytest.raises(OSError, match=\"Address already in use\"):\n            web.run_app(app, print=stopper(patched_loop), loop=patched_loop)\n\n    assert not m.called\n\n\nclass TestShutdown:\n"
+        },
+        {
+          "old": "\n\nclass TestShutdown:\n",
+          "new": "\n\ndef test_run_app_cleanup_error_is_observable_after_interrupt(patched_loop) -> None:\n    # 清理异常可以抛给调用者，也可以交给异常处理器；两条路线均有效。\n    message = \"cleanup failed after interrupt\"\n    cleanup_reached = []\n    reports = []\n\n    async def context(app):\n        yield\n        cleanup_reached.append(True)\n        raise RuntimeError(message)\n\n    app = web.Application()\n    app.cleanup_ctx.append(context)\n    patched_loop.set_exception_handler(lambda loop, context: reports.append(context))\n    raised = \"\"\n    try:\n        web.run_app(\n            app, print=stopper(patched_loop), loop=patched_loop, handle_signals=False\n        )\n    except Exception as exc:\n        raised = str(exc)\n\n    assert cleanup_reached, \"cleanup context was not reached\"\n    reported = any(\n        message in str(context.get(\"exception\", \"\"))\n        or message in str(context.get(\"message\", \"\"))\n        for context in reports\n    )\n    assert message in raised or reported, \"cleanup exception was silently lost\"\n\n\nclass TestShutdown:\n"
+        },
+        {
+          "old": "\n\nclass TestShutdown:\n",
+          "new": "\n\ndef test_run_app_cancelled_coroutine_cleans_resources(loop) -> None:\n    # 保留公开 coroutine 取消的传播与资源收尾；不限定内部任务组织。\n    state = {\"events\": []}\n\n    async def pending_worker():\n        try:\n            state[\"events\"].append(\"worker_started\")\n            await asyncio.Event().wait()\n        finally:\n            state[\"events\"].append(\"worker_cleanup\")\n\n    async def open_generator():\n        try:\n            state[\"events\"].append(\"generator_started\")\n            yield None\n        finally:\n            state[\"events\"].append(\"generator_cleanup\")\n\n    async def cancelled_app_factory():\n        state[\"worker\"] = loop.create_task(pending_worker())\n        await asyncio.sleep(0)\n        # 保持强引用，并实际进入 generator，避免 GC 代替库的清理。\n        state[\"generator\"] = open_generator()\n        await state[\"generator\"].__anext__()\n        main = asyncio.current_task()\n        state[\"main\"] = main\n        main.cancel()\n        await asyncio.sleep(0)\n        raise AssertionError(\"coroutine cancellation did not propagate\")\n\n    try:\n        with pytest.raises(asyncio.CancelledError):\n            web.run_app(\n                cancelled_app_factory(), loop=loop, handle_signals=False, print=None\n            )\n\n        # 此快照及全部语义断言都在观察者补清理之前。\n        worker = state[\"worker\"]\n        generator = state[\"generator\"]\n        print(\"cancelled coroutine cleanup snapshot:\", {\n            \"main_done\": state[\"main\"].done(),\n            \"main_cancelled\": state[\"main\"].cancelled(),\n            \"worker_done\": worker.done(),\n            \"worker_cancelled\": worker.cancelled(),\n            \"generator_closed\": generator.ag_frame is None,\n            \"loop_closed\": loop.is_closed(),\n            \"pending_tasks\": len(asyncio.all_tasks(loop)),\n            \"events\": list(state[\"events\"]),\n        })\n        assert worker.done()\n        assert \"worker_cleanup\" in state[\"events\"]\n        assert generator.ag_frame is None\n        assert \"generator_cleanup\" in state[\"events\"]\n        assert loop.is_closed()\n        assert not asyncio.all_tasks(loop)\n    finally:\n        # 只回收测试失败时遗留的资源，不能用于满足前面的断言。\n        if not loop.is_closed():\n            try:\n                tasks = list(asyncio.all_tasks(loop))\n                for task in tasks:\n                    task.cancel()\n                if tasks:\n                    loop.run_until_complete(\n                        asyncio.gather(*tasks, return_exceptions=True)\n                    )\n                loop.run_until_complete(loop.shutdown_asyncgens())\n            finally:\n                loop.close()\n        asyncio.set_event_loop(None)\n\n\nclass TestShutdown:\n"
+        }
+      ],
+      "sha256_before": "sha256:26317e3d9f2ad5ee29ac899b6a807117151eedb628350bde61f148dabe51500a",
+      "sha256_after": "sha256:3f57f362fd8d43cfd384386c1ecdc2f8c85b04aec88364a0859bbc2e2e6d3f52",
+      "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/revision_1c1_cancelled_main_p2p_20261003/materials_v1/test_1.py",
+      "expected_change": null,
+      "decision_ref": "runs/category2_repair_20260929/overnight_watch_20261003/aiohttp1c1_cancelled_main_p2p_decision_20261003.json",
+      "reason": "已批准窄修订：保留080/081全部旧行为，只追加公开coroutine取消的资源收尾P2P；旧raw1/58不回写。",
+      "evidence": [
+        "runs/category2_repair_20260929/overnight_watch_20261003/aiohttp1c1_cancelled_main_p2p_decision_20261003.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/followup_1c1_cancelled_main_20261003/results_public_cancelled_main_20261003.json"
+      ],
+      "supersedes_revision_id": "r2e-mr-080",
+      "formal_revision_id": "assign_by_publication",
+      "parent_current_sha256": "sha256:5b38ccd1dd8083acbcb8db229a471517512434a5caccdddf0461f418c181910d"
+    },
+    {
+      "instance_id": "aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52",
+      "kind": "expected_file_replace",
+      "target": "expected_output_json",
+      "edits": null,
+      "sha256_before": "sha256:a7341a36e1da6740bc37e591b636e69425528aa5fa420a24553c34d3eb29c489",
+      "sha256_after": "sha256:4872a730f3a8ffce94869108668c0a7dd20a68c368ee2141bb5ae47981060adf",
+      "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/revision_1c1_cancelled_main_p2p_20261003/materials_v1/expected_output.json",
+      "expected_change": {
+        "changed": {},
+        "added": {
+          "test_run_app_raises_exception_on_server_start_failure[pyloop]": "PASSED",
+          "test_run_app_cleanup_error_is_observable_after_interrupt[pyloop]": "PASSED",
+          "test_run_app_cancelled_coroutine_cleans_resources[pyloop]": "PASSED"
+        },
+        "removed": []
+      },
+      "decision_ref": "runs/category2_repair_20260929/overnight_watch_20261003/aiohttp1c1_cancelled_main_p2p_decision_20261003.json",
+      "reason": "已批准窄修订：保留080/081全部旧行为，只追加公开coroutine取消的资源收尾P2P；旧raw1/58不回写。",
+      "evidence": [
+        "runs/category2_repair_20260929/overnight_watch_20261003/aiohttp1c1_cancelled_main_p2p_decision_20261003.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/followup_1c1_cancelled_main_20261003/results_public_cancelled_main_20261003.json"
+      ],
+      "supersedes_revision_id": "r2e-mr-081",
+      "formal_revision_id": "assign_by_publication",
+      "parent_current_sha256": "sha256:1bc0a6c74ee6fceb75b695d4d269c90f752deccf60b842db647a3602e1499370"
+    }
+  ],
+  "anticipated_new_key": "test_run_app_cancelled_coroutine_cleans_resources[pyloop]",
+  "key_actual_collection_verified": false,
+  "expected_after_count": 59,
+  "statement_change": false,
+  "shared_code_change": false
+}

@@ -1,0 +1,31 @@
+diff --git a/dask/base.py b/dask/base.py
+--- a/dask/base.py
++++ b/dask/base.py
+@@ -13,6 +13,7 @@
+ from collections.abc import Callable, Iterator, Mapping
+ from concurrent.futures import Executor
+ from contextlib import contextmanager
++from enum import Enum
+ from functools import partial
+ from numbers import Integral, Number
+ from operator import getitem
+@@ -997,6 +998,19 @@
+ @normalize_token.register(range)
+ def normalize_range(r):
+     return list(map(normalize_token, [r.start, r.stop, r.step]))
++
++
++@normalize_token.register(Enum)
++def normalize_enum(e):
++    # Pickle by reference (module, qualified name and value), as later dask
++    # releases do; classes that cannot be pickled by reference (e.g. local
++    # classes) go through cloudpickle, like normalize_function.
++    try:
++        return pickle.dumps(e, protocol=4)
++    except Exception:
++        import cloudpickle
++
++        return cloudpickle.dumps(e, protocol=4)
+ 
+ 
+ @normalize_token.register(object)

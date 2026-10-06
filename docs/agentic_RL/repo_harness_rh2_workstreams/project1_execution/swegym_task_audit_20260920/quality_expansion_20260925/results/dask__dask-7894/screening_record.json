@@ -1,0 +1,790 @@
+{
+  "task_id": "swe_gym_lite::dask__dask-7894",
+  "task_revision": {
+    "kind": "upstream_unmodified",
+    "base_commit": "bf4bc7dd8dc96021b171e0941abde7a5f60ce89f",
+    "source_version": "2021.07"
+  },
+  "source_adapter_ref": {
+    "ref": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/source_refs.json",
+    "source": "swe_gym_lite",
+    "public_bundle_ref": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/dask__dask-7894/public_bundle.json",
+    "grading_bundle_ref": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/grading.json",
+    "validation_ref": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/validation.json",
+    "note": "Static source locators; not proof of current actor input delivery."
+  },
+  "recipe_ref": {
+    "ref": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/run_refs.json",
+    "conditions": [
+      "baseline_policy_v2 original baseline pair"
+    ],
+    "note": "Historical recipe only; original commands and RC in facts/analysis."
+  },
+  "code_snapshot_ref": {
+    "public_base_ref": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/dask__dask-7894/base",
+    "base_identity_ref": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/dask__dask-7894/base_identity.json",
+    "base_commit": "bf4bc7dd8dc96021b171e0941abde7a5f60ce89f",
+    "gold_sha256": "a9c18255a00d60d785d7bb9cd1cb459503261d5cf669d0bf028db8ce3cbb8f1c",
+    "test_patch_sha256": "0220c0cf26f78d2a549778bf476bf884d40bcb4ee0deb0c4db1d4f63d0ba08cf",
+    "historical_scripts_digests": [
+      "sha256:57eda7b39bbd851b8146a797356324cf2ea218fe6db6c64b1dd12d0afa0b03a8"
+    ],
+    "actual_actor_worktree": "unknown",
+    "actual_actor_image_id": null
+  },
+  "facts_ref": {
+    "primary_refs": [
+      "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md",
+      "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/environment_record.json",
+      "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/run_refs.json"
+    ],
+    "historical_runs": [
+      {
+        "candidate_kind": "noop",
+        "ledger_ref": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-3/ledger.jsonl:7",
+        "ledger_line_sha256": "20ae30154f694c060f2eaa70a6f45d632983b7392636fe93b12f0b8e13314733",
+        "log_ref": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-3/eval_logs/evallog_replay-f216-baseline01-w_ef6aaeb0.eval.log",
+        "log_sha256": "3fbc4af37c3553484d012647fbdc1691af690dfe785057f78bf0ed2b5ba48ca2",
+        "authorized_log_lines": {
+          "line_start": 1,
+          "line_end": 1090,
+          "scope": "single-task original"
+        },
+        "condition": {
+          "run_id": "f216-baseline01-w01-3",
+          "source": "swe_gym_lite",
+          "schema_id": "rh2.replay_grade_ledger.v1",
+          "started_at_utc": "2026-09-18T18:21:38.778142+00:00",
+          "image_ref": "xingyaoww/sweb.eval.x86_64.dask_s_dask-7894:latest",
+          "image_digest_expected": "sha256:e66d08cf5c0343503a41646a0a3b027a13562246d0cb7eb28c553e6cbb8c236a",
+          "image_id_actual": null,
+          "image_identity": "sha256:e66d08cf5c0343503a41646a0a3b027a13562246d0cb7eb28c553e6cbb8c236a",
+          "image_local_build": false,
+          "derived_image_recipe": null,
+          "scripts_digest": "sha256:57eda7b39bbd851b8146a797356324cf2ea218fe6db6c64b1dd12d0afa0b03a8",
+          "baseline_policy_version": "baseline_policy_v2",
+          "policy": {
+            "candidate_writable_prefixes": [
+              "/opt/miniconda3/envs/testbed"
+            ],
+            "cpus": 2.0,
+            "grader_profile_digest": "sha256:1bb8e0cf80ce48b15401fdf79d18f4f4c08a5f01001d8b0756311c58de25c19a",
+            "memory_bytes": 4294967296,
+            "network": "deny_all",
+            "pids_limit": 512,
+            "profile_id": "rh2.grader_sandbox_profile.v1",
+            "shm_bytes": 67108864,
+            "tmpfs_bytes": 1073741824,
+            "uid": 54322,
+            "user": "rh2grader"
+          },
+          "budgets": {
+            "candidate_stage_seconds": 900.0,
+            "cleanup_seconds": 120.0,
+            "grading_deadline_seconds": 3600.0,
+            "image_pull_seconds": 1800.0
+          },
+          "resource": {
+            "mem_peak_mb": 429.758,
+            "mem_peak_unavailable_or_zero": false
+          },
+          "resource_facts": null,
+          "reference": null
+        },
+        "candidate": {
+          "apply_method": "noop",
+          "apply_stderr_tail": null,
+          "apply_user": "agent/54321",
+          "kind": "noop",
+          "origin": "noop",
+          "patch_sha256": null
+        },
+        "projection": {
+          "frozen_patch_digest": "sha256:ebe628607716afe725ae494419eb066533766e92bd27db9da10cf92dc31ded3d",
+          "ignored_paths": [],
+          "included_paths": [],
+          "unsupported_shape_reasons": []
+        },
+        "install": {
+          "install_rc_last_command": 0,
+          "install_seconds": 2.854,
+          "install_skipped": false,
+          "log_partial": false,
+          "markers_seen": [
+            "RH2_INSTALL_RC",
+            "RH2_TEST_RC",
+            "RH2_TS_INSTALL_END",
+            "RH2_TS_INSTALL_START",
+            "RH2_TS_TEST_END",
+            "RH2_TS_TEST_START"
+          ],
+          "test_rc": 1,
+          "test_seconds": 5.785
+        },
+        "test": {
+          "rc": 1,
+          "seconds": 5.785
+        },
+        "observations": {
+          "RH2_OBS_IMPORT_PATH": "/testbed/dask/__init__.py",
+          "RH2_OBS_PKG_VERSION": "2021.07.0+3.gbf4bc7dd8.dirty",
+          "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+          "RH2_OBS_RUNNER_DIGEST": "f42f077db8e6148dc3319c685c359cf5d5f001b5e92b8e3529a977deeb82d8cc",
+          "RH2_OBS_RUNNER_DIGEST_PRE": "f42f077db8e6148dc3319c685c359cf5d5f001b5e92b8e3529a977deeb82d8cc"
+        },
+        "expected_report": {
+          "execution_failure_evidence": [],
+          "execution_failure_stage": null,
+          "f2p_pass": 0,
+          "f2p_total": 5,
+          "failure_category": "tests_failed",
+          "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+          "grading_semantics": "swe_f2p_p2p",
+          "infra_failure_detail": null,
+          "outcome": "unresolved",
+          "p2p_fail": 0,
+          "p2p_total": 75,
+          "report_id": "rpt_grading_ef6aaeb0",
+          "reward": 0.0
+        },
+        "parser_diagnostics": {
+          "apply_ok": true,
+          "num_parsed_outside_segment": 0,
+          "num_parsed_tests": 80,
+          "parser_source": "swegym_parsers@242429c1",
+          "reference_missing": [],
+          "reference_skipped": [],
+          "resolution": "RESOLVED_NO"
+        },
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "scope": "historical real RH2 only; not actual current actor qualification"
+      },
+      {
+        "candidate_kind": "gold",
+        "ledger_ref": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-3/ledger.jsonl:8",
+        "ledger_line_sha256": "77146c967eb8e0b8a63ebaa7dc5d74d2c3e0e7d81371b35c01d65c54b31551b3",
+        "log_ref": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-3/eval_logs/evallog_replay-f216-baseline01-w_81567ca7.eval.log",
+        "log_sha256": "c7f9090905997379b27ce01e7786ddf1c1b585499fd5c51cfd15ed026362e51f",
+        "authorized_log_lines": {
+          "line_start": 1,
+          "line_end": 867,
+          "scope": "single-task original"
+        },
+        "condition": {
+          "run_id": "f216-baseline01-w01-3",
+          "source": "swe_gym_lite",
+          "schema_id": "rh2.replay_grade_ledger.v1",
+          "started_at_utc": "2026-09-18T18:22:05.635671+00:00",
+          "image_ref": "xingyaoww/sweb.eval.x86_64.dask_s_dask-7894:latest",
+          "image_digest_expected": "sha256:e66d08cf5c0343503a41646a0a3b027a13562246d0cb7eb28c553e6cbb8c236a",
+          "image_id_actual": null,
+          "image_identity": "sha256:e66d08cf5c0343503a41646a0a3b027a13562246d0cb7eb28c553e6cbb8c236a",
+          "image_local_build": false,
+          "derived_image_recipe": null,
+          "scripts_digest": "sha256:57eda7b39bbd851b8146a797356324cf2ea218fe6db6c64b1dd12d0afa0b03a8",
+          "baseline_policy_version": "baseline_policy_v2",
+          "policy": {
+            "candidate_writable_prefixes": [
+              "/opt/miniconda3/envs/testbed"
+            ],
+            "cpus": 2.0,
+            "grader_profile_digest": "sha256:1bb8e0cf80ce48b15401fdf79d18f4f4c08a5f01001d8b0756311c58de25c19a",
+            "memory_bytes": 4294967296,
+            "network": "deny_all",
+            "pids_limit": 512,
+            "profile_id": "rh2.grader_sandbox_profile.v1",
+            "shm_bytes": 67108864,
+            "tmpfs_bytes": 1073741824,
+            "uid": 54322,
+            "user": "rh2grader"
+          },
+          "budgets": {
+            "candidate_stage_seconds": 900.0,
+            "cleanup_seconds": 120.0,
+            "grading_deadline_seconds": 3600.0,
+            "image_pull_seconds": 1800.0
+          },
+          "resource": {
+            "mem_peak_mb": 295.465,
+            "mem_peak_unavailable_or_zero": false
+          },
+          "resource_facts": null,
+          "reference": null
+        },
+        "candidate": {
+          "apply_method": "git_apply",
+          "apply_stderr_tail": null,
+          "apply_user": "agent/54321",
+          "kind": "gold",
+          "origin": "/work/full216_20260919/replay/gold/dask__dask-7894.gold.patch",
+          "patch_sha256": "sha256:a9c18255a00d60d785d7bb9cd1cb459503261d5cf669d0bf028db8ce3cbb8f1c"
+        },
+        "projection": {
+          "frozen_patch_digest": "sha256:00970129636c28b7bdf51aa979eb0fe6e8fe6a7da09f4c002dbc77bff7e31c4b",
+          "ignored_paths": [],
+          "included_paths": [
+            "dask/array/overlap.py"
+          ],
+          "unsupported_shape_reasons": []
+        },
+        "install": {
+          "install_rc_last_command": 0,
+          "install_seconds": 2.623,
+          "install_skipped": false,
+          "log_partial": false,
+          "markers_seen": [
+            "RH2_INSTALL_RC",
+            "RH2_TEST_RC",
+            "RH2_TS_INSTALL_END",
+            "RH2_TS_INSTALL_START",
+            "RH2_TS_TEST_END",
+            "RH2_TS_TEST_START"
+          ],
+          "test_rc": 0,
+          "test_seconds": 3.958
+        },
+        "test": {
+          "rc": 0,
+          "seconds": 3.958
+        },
+        "observations": {
+          "RH2_OBS_IMPORT_PATH": "/testbed/dask/__init__.py",
+          "RH2_OBS_PKG_VERSION": "2021.07.0+3.gbf4bc7dd8.dirty",
+          "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+          "RH2_OBS_RUNNER_DIGEST": "f42f077db8e6148dc3319c685c359cf5d5f001b5e92b8e3529a977deeb82d8cc",
+          "RH2_OBS_RUNNER_DIGEST_PRE": "f42f077db8e6148dc3319c685c359cf5d5f001b5e92b8e3529a977deeb82d8cc"
+        },
+        "expected_report": {
+          "execution_failure_evidence": [],
+          "execution_failure_stage": null,
+          "f2p_pass": 5,
+          "f2p_total": 5,
+          "failure_category": null,
+          "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+          "grading_semantics": "swe_f2p_p2p",
+          "infra_failure_detail": null,
+          "outcome": "resolved",
+          "p2p_fail": 0,
+          "p2p_total": 75,
+          "report_id": "rpt_grading_81567ca7",
+          "reward": 1.0
+        },
+        "parser_diagnostics": {
+          "apply_ok": true,
+          "num_parsed_outside_segment": 0,
+          "num_parsed_tests": 80,
+          "parser_source": "swegym_parsers@242429c1",
+          "reference_missing": [],
+          "reference_skipped": [],
+          "resolution": "RESOLVED_FULL"
+        },
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "scope": "historical real RH2 only; not actual current actor qualification"
+      }
+    ],
+    "history_release": {
+      "authorization": "root explicitly released these two refs after verifying sealed initial SHA",
+      "ref": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/history/dask__dask-7894/refs.json",
+      "records": [
+        {
+          "ref": "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_dask/records/dask__dask-7894.json",
+          "sha256": "de6c82fd4fbd0b0f8e760330de5f17de22acf2e8805ac364f363613e3db5f053",
+          "hash_verified": true
+        },
+        {
+          "ref": "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/dask_pilot/records/dask__dask-7894.json",
+          "sha256": "63ac5e27701b0d425882afc4db73180e77bdafcfdf06c10649aa5d1fb52ec756",
+          "hash_verified": true
+        }
+      ],
+      "delta_ref": "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/old_findings_delta.md",
+      "no_link_following": true
+    },
+    "reviewer_status": "not_read",
+    "current_runtime_execution": false,
+    "independent_review": {
+      "file": "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/review.md",
+      "sha256": "bbad17483285a949e71058575705aa3e385337405d49db23640f97574b57a6fe",
+      "phase": "sealed independent initial followed by explicitly released cross-review"
+    },
+    "reviewer": "completed; main private-exposure statement remains as-of its delivery",
+    "coordinator_adjudication": {
+      "by": "/root",
+      "at": "2026-09-24T21:46:17.377708+00:00",
+      "report": "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack11_report.md",
+      "revision_log": "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/coordinator_revisions/pack11_dask/revision_log.json",
+      "read_scope": "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/reserve20_coordinator_read_notes.md"
+    }
+  },
+  "checks": {
+    "1": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/dask__dask-7894/base_identity.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/dask__dask-7894/public_bundle.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/grading.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/gold.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "Static public/base/patch identity and historical candidate binding agree; image tag, expected manifest and actual ID are separate; current actor identity unknown."
+    },
+    "2": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/test.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/run_refs.json"
+      ],
+      "by": "main_pack11_dask",
+      "note": "Base root cause is visible in source and historical noop fails target assertions; not a current actor run."
+    },
+    "3": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/dask__dask-7894/environment_brief.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/dask__dask-7894/base_identity.json"
+      ],
+      "by": "main_pack11_dask",
+      "note": "Only planned public input is available. Actual model messages, delivered hints/system/tools and actor worktree were not captured."
+    },
+    "4": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/dask__dask-7894/public_bundle.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "Planned NON-TEST editing permits a legitimate source fix; historical gold projects correctly. Actual actor write permissions and delivery remain unobserved."
+    },
+    "5": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/old_findings_delta.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "No cross-task original material inspected; no global duplication or holdout determination. Old claim of uniqueness within fourteen tasks was not independently checked."
+    },
+    "6": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "Historical installation succeeded under recorded conditions; current actor dependency/toolchain restoration remains unknown."
+    },
+    "7": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/dask__dask-7894/environment_brief.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "Core case uses local generated values. Static export does not prove actual actor assets or permissions; historical optional dependencies do not transfer to actor."
+    },
+    "8": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "Recorded historical grader user/UID and installation/test results are available. Actual actor UID/HOME/PATH/permissions are not."
+    },
+    "9": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "Limited to the two historical candidates: bound candidate bytes/projection, editable installation and /testbed/dask import observations support candidate code execution. No current actor observation."
+    },
+    "10": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/dask__dask-7894/environment_brief.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "Public narrow development commands are specified but not executed in the actual actor environment."
+    },
+    "11": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "Core reproduction has no external service requirement. Historical grader network=deny_all is recorded; preparation/actor network access is not established."
+    },
+    "13": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "Historical resource and budget fields are preserved without unit inference; no observed resource-driven failure in that pair, current actor resources unknown."
+    },
+    "14": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/test.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/old_findings_delta.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "No repeated scoring performed. No explicit random seed is present; this alone does not prove reward instability."
+    },
+    "16": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "Only historical noop/gold delivery: exact bound candidate, included paths and stage/base identity checked; no assertion about arbitrary candidate or actor submissions."
+    },
+    "17": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "Only historical ordinary candidates: trusted checkout/apply restored one expected test file, setup attestations succeeded, source candidate remained separate. Empty additional exclusions are not the proof."
+    },
+    "18": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/grading.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "Historical expected tests executed: 5 F2P + 75 P2P all present; noop five target failures, gold all eighty pass; no skips/xfails."
+    },
+    "19": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/grading.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/old_findings_delta.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "Limited to exact expected identities mechanically matched to original logs. All eighty expected identities were found."
+    },
+    "20": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "Historical noop/gold difference is explained by target assertion failures, not installation failure; not proof of sufficient acceptance coverage."
+    },
+    "21": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "Installation RC, test RC, target failure location and skips retained separately from reward; scope is the authorized historical pair only."
+    },
+    "23": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/dask__dask-7894/user_prompt.txt",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/test.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "Core public requirement supports new relational/value assertions; unresolved wider behavior is not promoted to mandatory requirements. Actual input completeness belongs to check3."
+    },
+    "24": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/test.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/old_findings_delta.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "No source/helper/exact-hash lock seen in added assertions. Reasonable non-gold routes exist, but no alternative candidate executed; universal absence of false rejection is not proven."
+    },
+    "25": {
+      "status": "issue",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/test.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/old_findings_delta.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "Added tests use only non-none boundaries, so depth-only remapping cannot be distinguished; result metadata and several interactions also lack direct coverage."
+    },
+    "26": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/gold.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/old_findings_delta.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/review.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack11_report.md"
+      ],
+      "by": "/root / coordinator adjudication after independent cross-review",
+      "note": "具体静态风险：ones((5,10),chunks=(5,5))配合mean(0)[None,:]、depth=(0,1)、reflect、drop_axis=0/new_axis=0，base字典与输出轴对应，gold改为{0:1}后裁新轴。实际base成功/gold错误尚未运行。kwargs.pop外部字典副作用说法已纠正。"
+    },
+    "27": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/gold.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "Gold corresponds to task and passes the historical selected core cases. Completeness is not established; see separate coverage and regression records."
+    },
+    "28": {
+      "status": "pass",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/old_findings_delta.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "Review does not require gold syntax or unrequested generalizations. Proposed probes derive from public behavior/source contracts and do not modify task/test/score definitions."
+    },
+    "29": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/dask__dask-7894/environment_brief.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/dask__dask-7894/user_prompt.txt",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/old_findings_delta.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "Actual actor-visible files and messages not captured. Review-side private exposure and public root-cause hints are recorded under usage separately."
+    },
+    "30": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/dask__dask-7894/environment_brief.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "No network/tool retrieval of answers was tested; no inference of actor internet capabilities."
+    },
+    "31": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "Historical normal candidates show protected test/control observations and unchanged runner digest; arbitrary tamper/fake-success resistance not exhaustively audited."
+    },
+    "32": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "Expected assertions and normal historical results are checked, but false acceptance gaps and non-exhaustive control-plane audit prevent universal verifier correctness claim."
+    },
+    "33": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/dask__dask-7894/environment_brief.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "No actual Claude Code task execution or complete actor workflow captured."
+    },
+    "34": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "No real model solve/failure evidence; do not infer model ability from noop/gold."
+    },
+    "35": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "No actual model-produced successful candidate reviewed."
+    },
+    "36": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/card.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "Development diagnostic recommendation only, not training/base-model stage qualification."
+    },
+    "37": {
+      "status": "not_applicable",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "No repair recipe in this authorized historical baseline pair; absence is not proof no environment preparation ever occurred."
+    },
+    "38": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/run_refs.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "Reproducible references recorded but no current clean actor rerun performed."
+    },
+    "39": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md"
+      ],
+      "by": "main_pack11_dask",
+      "note": "No cross-task impact experiment or shared recipe sweep; no claim about other tasks."
+    },
+    "40": {
+      "status": "unknown",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/old_findings_delta.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/review.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/pack11_report.md"
+      ],
+      "by": "/root / coordinator adjudication after independent cross-review",
+      "note": "独立交叉复核及协调裁定已完成；封存/来源校验不证明无漏检、误拒或抽样偏差，不构成全局质量认证。"
+    }
+  },
+  "issues": [
+    {
+      "category": "coverage_gap",
+      "scope": "boundary remapping after drop_axis; check25",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/test.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md"
+      ],
+      "proposed_action": "保留boundary=none的静态漏测结论；若优先new_axis对照未支持新增回归，再决定是否做depth-only漏接收验证，不新增第二项当前CPU排程。",
+      "status": "open_static_inference",
+      "evidence_level": "static control-flow reasoning; no partial candidate executed"
+    },
+    {
+      "category": "coverage_gap",
+      "scope": "lazy result metadata after dimension drop; check25",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/test.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md"
+      ],
+      "proposed_action": "在唯一new_axis对照中同时保存lazy shape/chunks与实际数组；不要求相同内部图布局。",
+      "status": "open_static_inference"
+    },
+    {
+      "category": "boundary_uncertainty",
+      "scope": "具体drop_axis/new_axis轴映射风险；迭代器drop交互仍未验证",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/gold.patch"
+      ],
+      "proposed_action": "唯一优先私有base/gold对照review的drop0/new0例，记录lazy shape/chunks、实际数组或异常及RC；26暂unknown。",
+      "status": "open_static_inference",
+      "evidence_level": "static mapping and slicing divergence confirmed; runtime consequence unknown"
+    },
+    {
+      "category": "historical_claim_correction",
+      "scope": "L1 kwargs.pop external dictionary mutation claim",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/old_findings_delta.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/gold.patch"
+      ],
+      "proposed_action": "Retire this erroneous side-effect claim: **kwargs is a local mapping.",
+      "status": "corrected"
+    },
+    {
+      "category": "actor_evidence_gap",
+      "scope": "actual input, initial worktree and development identity",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/dask__dask-7894/environment_brief.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md"
+      ],
+      "proposed_action": "Have actor validation owner capture actual messages, HEAD/status/diff with RC/stage, import path and necessary local permissions; no action dispatched here.",
+      "status": "unknown"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "No evidence supports extra exclusions beyond source task rules. Tests/gold/scoring/production unchanged.",
+    "evidence_refs": [
+      "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/dask__dask-7894/public_bundle.json",
+      "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/test.patch",
+      "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/dask__dask-7894/gold.patch",
+      "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7894/analysis_before_history.md"
+    ]
+  },
+  "revision_refs": [],
+  "disposition": {
+    "state": "needs_review",
+    "scope": "static_review",
+    "reason": "核心drop修复有静态/历史正证据，但drop+new_axis有具体未运行gold风险，boundary漏测另保留。",
+    "unique_priority_next_step": "任务二私有base/gold的drop_axis=0/new_axis=0例，比较源码来源、lazy shape/chunks、实际数组或异常及RC。",
+    "executed": false,
+    "dispatched": false,
+    "reviewer_disagreement": "resolved by coordinator priority choice: review's concrete drop+new_axis regression diagnostic first; main's boundary false-acceptance proposal retained but not separately queued",
+    "reviewer_status": "completed",
+    "static_classification": "quality_first",
+    "ready_for_probe": false
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "formal_training_approved": false,
+    "formal_evaluation_approved": false,
+    "actual_actor_answer_exposure": "unknown",
+    "reviewer_private_exposure": {
+      "role": "main_pack11_dask",
+      "gold": true,
+      "hidden_test_patch": true,
+      "historical_noop_gold_originals": true,
+      "sealed_public_read": true,
+      "authorized_old_quality_records_after_release": true,
+      "reviewer_artifacts": false,
+      "other_task_originals": false
+    },
+    "statement_contains_fix": false,
+    "note": "Private review materials and old findings must not enter independent solver input. Public statement gives root-cause direction but no patch body; actual delivered messages are unknown.",
+    "coordinator_exposure": {
+      "public_and_private_task_materials": true,
+      "sealed_role_outputs": true,
+      "history_scope": "selected task fields as documented in coordinator read notes",
+      "actual_actor_answer_exposure": "unknown",
+      "training_or_formal_evaluation_admission": false
+    }
+  },
+  "costs": {
+    "tokens": null,
+    "usd": null,
+    "current_cpu_seconds": null,
+    "review_elapsed_seconds": null,
+    "note": "No tool-observed current cost/runtime measurement; old-record minutes are not copied as current usage."
+  }
+}

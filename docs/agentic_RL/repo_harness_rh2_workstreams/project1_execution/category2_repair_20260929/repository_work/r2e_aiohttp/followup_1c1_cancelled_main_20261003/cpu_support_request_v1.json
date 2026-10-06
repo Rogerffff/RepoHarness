@@ -1,0 +1,94 @@
+{
+  "schema_id": "rh2.category2.aiohttp.cancelled_main_cpu_support_request.v1",
+  "created_at": "2026-10-03T05:30:21.253353+00:00",
+  "request_id": "aiohttp1c1-cancelled-main-cpu-support-20261003-v1",
+  "scope": "原cpu-b已销毁后，1c1公共run_app coroutine取消边界的一次有界实际归因检查；只需现存CPU支持。",
+  "request": "请分配现存cpu-a/c一项run机会和本包端口/冻结入口（如需要），核可用固定r6演员环境或协助同像供应。优先复用相同00ad镜像；不新租、不停在途、不新增模型/正式评分、不改共享契约。题主负责执行/取证/一次非作者窄核。",
+  "origin": "本批授权裁定线程要求补实际公开回归归因；不是普通收到ACK。",
+  "task_id": "r2e_gym_subset::aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52",
+  "related_probe_request": "aiohttp1c1-r080081-probe-wide-v1-20261003",
+  "original_request": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/requests/1c1/probe_request.json",
+    "sha256": "sha256:c5a01f0302705c3179581137662f77b725c22f3fa7d7304dc98a35d0eb5718cf",
+    "bytes": 15721
+  },
+  "fixed_release_id": "cat2-cpu-r2e080087-swe8-git-20261003-v1",
+  "fixed_release_manifest_sha256": "sha256:ab0a3a13fd65e0ea4cd60541ea3b37b01196170477e25832df246f33ea208828",
+  "original_actor_image_id": "sha256:00ad3e96b2ec0cf385aba6e9b69b6335c5e1623c5c3235cd57c34d6300b87683",
+  "actor_profile": {
+    "uid": 54321,
+    "cpu": 2,
+    "memory_bytes": 4294967296,
+    "pids": 512,
+    "python": "3.9.21",
+    "workdir": "/testbed"
+  },
+  "cases": [
+    "baseline",
+    "coder_full_frozen",
+    "qwen_full_frozen_same_input_if_needed"
+  ],
+  "public_input": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/followup_1c1_cancelled_main_20261003/public_cancelled_main_probe.py",
+    "sha256": "sha256:50c09f6ee8e303a1521dbfc958be4cbcc67055e82f493cd70cde3d8ca23b598e",
+    "bytes": 4345
+  },
+  "public_reachability": "_run_app在321/322 await公开coroutine app；输入令main自身取消。原baseline先检查task.cancelled()；Coder新增main.exception()条件未检查。脚本不替换库，不开网络服务器。",
+  "observe": [
+    "实际caller异常类型与消息",
+    "main.done/cancelled及worker.done/cancelled",
+    "worker finally与asyncgen finally事件",
+    "asyncgen.ag_frame关闭与实际loop.is_closed",
+    "观察前pending任务数与loop handler；观察者后清理单列，不冒充run_app收尾"
+  ],
+  "inputs": {
+    "canonical_baseline_digest": "sha256:40b0956474180605d1f46cc2b59f3e4ae3dcef0fffd18f9f2ff24b539d007608",
+    "baseline_tar": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v16r1/results/gpu1003-aio1c1-coder-a1/attempt/frozen/baseline.tar",
+      "sha256": "sha256:a6441ad8cd27ab02b38834e847ad17c8099da6d80e99347cf9e3745ff625bff8",
+      "bytes": 6471680
+    },
+    "baseline_manifest": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v16r1/results/gpu1003-aio1c1-coder-a1/attempt/frozen/baseline_manifest.json",
+      "sha256": "sha256:c0a8b09805d2c59415506c0df5e2560bcfbaeba8aed612cc638a5dd32e1e2b61",
+      "bytes": 70232
+    },
+    "coder_complete_frozen": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v16r1/results/gpu1003-aio1c1-coder-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "sha256:df96a42607e8ba68eb01807d7817400601318e905bacbfd277eb07c4e3d76709",
+      "bytes": 407928
+    },
+    "qwen_complete_frozen": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v11/results/gpu1003-aio1c1-qwen36-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "sha256:ac2c034f86f0b742572fe4b99bbaa8a4b00b9fa55d5cfa72f1cf5543f9e96988",
+      "bytes": 561148
+    },
+    "coder_original_result": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v16r1/results/gpu1003-aio1c1-coder-a1/result.json",
+      "sha256": "sha256:5bd9c5d22fb748ad6f766ff4061285d2df5fc4f746a6393f33b820711ff1d338",
+      "bytes": 2681
+    },
+    "prior_review": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/review_acceptance1c1_240d_gpu_first_round_20261003.json",
+      "sha256": "sha256:969c8e2b6f4e4019bf5665aa52c89b2d173392eebd9b06f25e7eca9376f25e08",
+      "bytes": 3919
+    }
+  },
+  "full_candidate_rule": "重建原baseline，应用完整原Frozen全部条目（Coder7、Qwen2），不删helper/coverage，不改单生产文件冒充完整候选；先核同像/解释器/基线内容再运行。",
+  "scope_limits": "一次最小输入比较，不整矩阵/模型采样/重判raw reward。若base同错、无法触发或环境不匹配则记录边界而非强证错误；证实新增回归时另记语义失败/评分遗漏，提出窄P2P方案，不直接发布。",
+  "technical_budget": {
+    "single_case_seconds": 120,
+    "whole_run_seconds": 1800,
+    "cleanup_seconds": 120
+  },
+  "required_support_return": [
+    "现存主机/实际连接入口和可用slot方式",
+    "同像是否已有；缺像时最小供应/部署方式",
+    "精确冻结r6环境入口可读性与需要的端口（若走CC stub）"
+  ],
+  "current_running_own_job": null,
+  "do_not_use_cpu_b": true,
+  "new_rental_authorized": false,
+  "new_model_sampling_requested": false,
+  "raw_reward_changed": false
+}

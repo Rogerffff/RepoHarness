@@ -1,0 +1,16 @@
+{
+  "schema_id": "rh2.public_task_bundle.v1",
+  "instance_id": "aiohttp__240da100151933883d7dea0528d45877df025b92",
+  "repo": "aiohttp",
+  "base_commit": "ef756ce29cc40a9b69e5e794eda722e252a62b4d",
+  "image": "namanjain12/aiohttp_final:240da100151933883d7dea0528d45877df025b92",
+  "image_manifest_digest": "sha256:bb629a91571e2f0dcefd44470a726c2006c42a1e70203d72d663d982f6f088ab",
+  "workdir": "/testbed",
+  "allowed_tools": [
+    "bash",
+    "edit"
+  ],
+  "problem_statement": "[ISSUE]\n\n### ProxyConnector Drops Port from Request Path\n\n**Description**\n\nWhen using `ProxyConnector` to establish a connection with a URL that includes a specific port, the port number is omitted from the request path. This results in the request being sent to an incorrect URL without the designated port.\n\n**Example Code**\n\nThe example replaces the transport connection with a completed Future, so it runs without contacting the proxy. It still exercises ProxyConnector.connect().\n\n```python\nimport asyncio\nfrom unittest import mock\nfrom aiohttp import ProxyConnector\nfrom aiohttp.client import ClientRequest\n\nloop = asyncio.new_event_loop()\ntransport, protocol = mock.Mock(), mock.Mock()\nconnected = loop.create_future()\nconnected.set_result((transport, protocol))\ntransport_loop = mock.Mock()\ntransport_loop.create_connection.return_value = connected\nconnector = ProxyConnector('http://proxy.example.com', loop=transport_loop)\ntry:\n    req = ClientRequest('GET', 'http://localhost:1234/path', loop=loop)\n    loop.run_until_complete(connector.connect(req))\n    print(req.path)\n    assert req.path == 'http://localhost:1234/path'\nfinally:\n    connector.close()\n    loop.close()\n```\n\n**Expected Behavior**\n\nThe `req.path` should retain the port number, resulting in:\n```\n'http://localhost:1234/path'\n```\n\n**Actual Behavior**\n\nThe `req.path` drops the port number, resulting in:\n```\n'http://localhost/path'\n```\n\n[/ISSUE]",
+  "problem_statement_sha256": "sha256:d3ff12a9a27890831dcedc62d53e8c124647d6fe036c28712505ed247d7a272c",
+  "public_hints": "You are a software engineer fixing a real GitHub issue in the repository checked out at /testbed (your bash tool already runs there).\n- The project's Python environment is the virtualenv at /testbed/.venv: `python` and the repo's test tools already point at it. There is no network access and `pip` may be unavailable, so work with the packages that are already installed.\n- Explore the code, find the root cause, and edit NON-TEST source files to fix the issue.\n- Do NOT modify the repository's test files: the fix is judged by a separate set of tests.\n- You may run tests to verify your fix, but keep runs narrow (a single test file or module) to save time; run them from /testbed with `python -m pytest`.\n- When you are confident the fix is complete, reply with a short summary and stop calling tools."
+}

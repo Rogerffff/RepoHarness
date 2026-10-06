@@ -1,0 +1,2081 @@
+{
+  "schema": "dask8801_semantic_verdicts.v1",
+  "results": [
+    {
+      "id": "c008cced6f5d5061fa38bf40f",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "config files must have a dict as the top level object, got a list instead"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "明确指名坏文件，并准确说明顶层列表不符合映射结构。"
+    },
+    {
+      "id": "c014c87c816330a331ad72892",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected the node content, but found '<stream end>'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "可见异常链明确指名坏文件，并保留输入结束时缺少节点内容的解析原因。"
+    },
+    {
+      "id": "c02dae1b3f1ae78991f829845",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "found character '\\t' that cannot start any token"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "唯一列出的文件为坏文件，且准确解释制表符导致的 YAML 解析失败。"
+    },
+    {
+      "id": "c04572eb827bb5187a95cdab0",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "'str' object has no attribute 'items'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件身份明确，真实的字符串类型错误解释其内容不能作为映射使用。"
+    },
+    {
+      "id": "c0477439f64e49a75ee734b3a",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "found character '\\t' that cannot start any token"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件与可见底层解析原因均明确。"
+    },
+    {
+      "id": "c04cb18b18a0ff0b9058140c2",
+      "verdict": "fail",
+      "file_evidence": [
+        "['FIXTURE_DIR/0.yaml', 'BAD_FILE', 'GOOD_FILE']"
+      ],
+      "reason_evidence": [
+        "got a str"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "仅列全部文件，没有指明字符串内容属于哪个坏文件。"
+    },
+    {
+      "id": "c098081620deaa99bb7cd0b5e",
+      "verdict": "fail",
+      "file_evidence": [
+        "FIXTURE_DIR/0.yaml"
+      ],
+      "reason_evidence": [
+        "got a list instead"
+      ],
+      "contradiction_evidence": [
+        "at 'FIXTURE_DIR/0.yaml' is malformed"
+      ],
+      "explanation": "诊断把内容问题归给跳过的不可读项，未指名实际坏文件。"
+    },
+    {
+      "id": "c09a73d1a0b7419032e35faee",
+      "verdict": "fail",
+      "file_evidence": [
+        "FIXTURE_DIR"
+      ],
+      "reason_evidence": [
+        "top level must be a mapping, got int"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "只指名目录，无法定位实际坏文件。"
+    },
+    {
+      "id": "c0a293da3c5fa1a54214d16f4",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [],
+      "explanation": "只有泛称配置无效，没有解释内容问题。"
+    },
+    {
+      "id": "c0a7e0f3768028d2d7f774af0",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "should be a YAML map of settings, but its top level is 'hello'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "明确指名坏文件，并对比所需映射与实际字符串值。"
+    },
+    {
+      "id": "c0b99a077296a0a19e6b63467",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "the top level must be a dictionary, not float"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "明确指名坏文件，并准确说明浮点数不符合顶层字典结构。"
+    },
+    {
+      "id": "c0c81a4b22d959a64befefbfc",
+      "verdict": "fail",
+      "file_evidence": [
+        "['FIXTURE_DIR/0.yaml', 'BAD_FILE', 'GOOD_FILE']"
+      ],
+      "reason_evidence": [
+        "found character '\\t' that cannot start any token"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "解析原因可见，但仅列全部文件而未指明哪个文件发生错误。"
+    },
+    {
+      "id": "c0fb444272df5313ef902a71f",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "found character '\\t' that cannot start any token"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "指名坏文件，并提供真实的制表符解析原因。"
+    },
+    {
+      "id": "c0fe85915b3f179c3cc47c6fc",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "'float' object has no attribute 'items'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件与真实浮点类型错误均可见，足以解释内容不能作为映射使用。"
+    },
+    {
+      "id": "c110e3479cab6e99dc61caece",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected a collection of named values"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "明确指名坏文件，并说明内容不满足具名键值集合结构。"
+    },
+    {
+      "id": "c11577187511bda22474b0c2e",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected the node content, but found '<stream end>'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，解析原因与未完成的 YAML 流结构一致。"
+    },
+    {
+      "id": "c13d32b1dcc09b56197c026b2",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "config files must have a dict as the top level object, got a float"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "只列坏文件，并准确说明顶层类型不符。"
+    },
+    {
+      "id": "c19c58423727125f2d47b54f0",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected the node content, but found '<stream end>'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "可见原因链解释坏文件的 YAML 流结构在输入结束时未完成。"
+    },
+    {
+      "id": "c19d16e6f8e86d06a2d82e4b0",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "must contain a mapping at the top level, not a list"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，顶层列表与映射要求的差异解释准确。"
+    },
+    {
+      "id": "c19e83d035d69395be0f46604",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "must contain a mapping at the top level, not a float"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，准确说明顶层浮点数不符合映射结构。"
+    },
+    {
+      "id": "c1a2dca3088ba0f7c11f7b73b",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [],
+      "explanation": "只有配置无效的泛称，未解释内容原因。"
+    },
+    {
+      "id": "c1b379468833a21e592610066",
+      "verdict": "fail",
+      "file_evidence": [
+        "FIXTURE_DIR/0.yaml"
+      ],
+      "reason_evidence": [
+        "got a float instead"
+      ],
+      "contradiction_evidence": [
+        "at 'FIXTURE_DIR/0.yaml' is malformed"
+      ],
+      "explanation": "内容错误被归给跳过的不可读项，而非实际坏文件。"
+    },
+    {
+      "id": "c1c21c7366a2a5beebf5d8c0b",
+      "verdict": "fail",
+      "file_evidence": [
+        "FIXTURE_DIR/0.yaml"
+      ],
+      "reason_evidence": [
+        "got a int instead"
+      ],
+      "contradiction_evidence": [
+        "at 'FIXTURE_DIR/0.yaml' is malformed"
+      ],
+      "explanation": "指名了错误文件，未定位实际坏文件。"
+    },
+    {
+      "id": "c1dc9abe0c7a0f0ee485f9569",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected the node content, but found '<stream end>'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "明确指名坏文件并保留真实的 YAML 未完成解析原因。"
+    },
+    {
+      "id": "c1f928d550cb5da87f2527acf",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected the node content, but found '<stream end>'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "自定义外层异常与可见 cause 一起提供坏文件和具体解析原因。"
+    },
+    {
+      "id": "c1fb75c536f9e129b8b053873",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [
+        "the configuration file does not exist."
+      ],
+      "explanation": "坏文件实际存在且可读，诊断却称文件不存在。"
+    },
+    {
+      "id": "c2566a909ae792fe911777f2f",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "must contain key/value pairs at the top level, got float"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，所需键值结构与实际浮点类型均可见。"
+    },
+    {
+      "id": "c25dc7796e1bd45e3d4cc2db6",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "must contain key/value pairs at the top level, got str"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，准确说明字符串不符合键值映射结构。"
+    },
+    {
+      "id": "c2846fed6257b9509d08c7d60",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "should be a YAML map of settings, but its top level is 1234"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，并具体指出实际整数值与所需映射不符。"
+    },
+    {
+      "id": "c28c0ae8bd07fcbb91fa77f3d",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "found character '\\t' that cannot start any token"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，制表符导致解析失败的具体原因可见。"
+    },
+    {
+      "id": "c296d0ca6e050e0dea907dc71",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "'str' object has no attribute 'items'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，真实字符串类型错误足以解释内容不能作为映射。"
+    },
+    {
+      "id": "c2ba18713d5c2c00c0cded2cb",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "top level must be a mapping, got list"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "唯一列出的坏文件明确，列表类型与映射要求不符。"
+    },
+    {
+      "id": "c2c313190162072a138a54a19",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "found character '\\t' that cannot start any token"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "聚合诊断明确将 YAML 解析错误归给坏文件。"
+    },
+    {
+      "id": "c2d1ad07ebf1c7cb6907bae45",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [],
+      "explanation": "只有配置无效的泛称，没有具体内容原因。"
+    },
+    {
+      "id": "c2d781a9a9c353e8661470523",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "should be a YAML map of settings, but its top level is [1234]"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "明确指名坏文件，具体列表值与映射要求形成准确解释。"
+    },
+    {
+      "id": "c2de78657000950fa826e34b3",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "must contain an object at the top level, found 1.5"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "明确指名坏文件，并具体说明实际浮点值不符合所需配置对象结构。"
+    },
+    {
+      "id": "c2e04245aeef147c1f593ddc9",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "must contain an object at the top level, found [1234]"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "明确指名坏文件，并具体说明实际列表值不符合所需配置对象结构。"
+    },
+    {
+      "id": "c2e127808628927346eb32543",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [],
+      "explanation": "仅称配置无效，未说明内容问题。"
+    },
+    {
+      "id": "c31f514fa8a51efff8181b4fb",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected a collection of named values"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "明确指名坏文件，说明其内容不符合具名键值集合要求。"
+    },
+    {
+      "id": "c31fd7df1a6481a83fa00c4db",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [
+        "the configuration file does not exist."
+      ],
+      "explanation": "诊断称坏文件不存在，与文件存在且可读的受信事实冲突。"
+    },
+    {
+      "id": "c34bfdbb0dee403530652b625",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "must contain key/value pairs at the top level, got int"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，准确说明整数类型不能满足键值映射结构。"
+    },
+    {
+      "id": "c3941389ee7ac0db6119398b1",
+      "verdict": "fail",
+      "file_evidence": [
+        "GOOD_FILE"
+      ],
+      "reason_evidence": [
+        "got a int instead"
+      ],
+      "contradiction_evidence": [
+        "at 'GOOD_FILE' is malformed"
+      ],
+      "explanation": "把内容错误归给已知有效的好文件，未指名实际坏文件。"
+    },
+    {
+      "id": "c3d5f32fa205292b0b3508eb8",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected the node content, but found '<stream end>'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件与真实的 YAML 未完成解析原因均明确可见。"
+    },
+    {
+      "id": "c3eee0df7640ba57508a75f77",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "must contain key/value pairs at the top level, got int"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，准确说明顶层整数与键值映射要求不符。"
+    },
+    {
+      "id": "c42891b0803e70354fea269ef",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "'int' object has no attribute 'items'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，真实整数类型错误可作为内容原因。"
+    },
+    {
+      "id": "c481a3cbd1040a0e76af76f98",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected the node content, but found '<stream end>'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，具体解析原因与未完成的 YAML 流结构一致。"
+    },
+    {
+      "id": "c4b25b9728844f9935a94de69",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "must contain an object at the top level, found 1234"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "明确指名坏文件，并具体指出实际整数值不符合所需配置对象结构。"
+    },
+    {
+      "id": "c4bee065682c4761cb8dff3cc",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "should be a YAML map of settings, but its top level is 1.5"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "明确指名坏文件，实际浮点值与所需映射的差异解释准确。"
+    },
+    {
+      "id": "c4c024ce8f2a9e7c322f1d720",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [
+        "the configuration file does not exist."
+      ],
+      "explanation": "文件存在且可读，诊断称其不存在，与受信事实冲突。"
+    },
+    {
+      "id": "c4c62990815fd4d8fff5fa114",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "did not find expected node content"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，并以等价解析说明解释未完成的 YAML 节点。"
+    },
+    {
+      "id": "c4e0220f1f7bc8da330e1e1f5",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [],
+      "explanation": "仅称配置无效，没有解释内容问题。"
+    },
+    {
+      "id": "c4e66f224bb932b5c86f3c697",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "top level must be a mapping, got str"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "唯一列出的坏文件明确，准确说明字符串不符合映射要求。"
+    },
+    {
+      "id": "c4ec5025f38c79467aec2fa9c",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [
+        "is not valid YAML"
+      ],
+      "explanation": "内容是合法 YAML 列表，诊断却称 YAML 无效。"
+    },
+    {
+      "id": "c4f7186e3f02188b6d04fa859",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [],
+      "explanation": "只有配置无效的泛称，缺少具体解析原因。"
+    },
+    {
+      "id": "c4f88660f58aeab0ffd777d9a",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [
+        "is not valid YAML"
+      ],
+      "explanation": "内容是合法 YAML 浮点数，诊断却称 YAML 无效。"
+    },
+    {
+      "id": "c4fddc8b44e6bb19986099e1c",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "found character '\\t' that cannot start any token"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，可见 cause 保留真实的制表符解析原因。"
+    },
+    {
+      "id": "c511c5c0785210018446424c5",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [
+        "is not valid YAML"
+      ],
+      "explanation": "内容是合法 YAML 整数，诊断却称 YAML 无效。"
+    },
+    {
+      "id": "c54d77fd81c80db6d8b688c18",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "the top level must be a dictionary, not float"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "明确指名坏文件并说明浮点类型不符合顶层字典结构。"
+    },
+    {
+      "id": "c573b82e3de5edbc384dc5336",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "'int' object has no attribute 'items'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，真实整数类型错误足以解释内容不能作为映射。"
+    },
+    {
+      "id": "c5885c0c99c36d66fa913ff06",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "top-level YAML must be a mapping, got int"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "聚合诊断明确将整数顶层结构问题归给坏文件。"
+    },
+    {
+      "id": "c58d14cbbda0aed9c9b1a4e9d",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "must contain an object at the top level, found 'hello'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，并具体指出实际字符串值不符合配置对象结构。"
+    },
+    {
+      "id": "c5a13afc8321c13c6d4d7b40d",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "top-level YAML must be a mapping, got list"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "聚合诊断明确指名坏文件并准确解释列表结构问题。"
+    },
+    {
+      "id": "c5d69b85787143f63b939f2bd",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "top-level YAML must be a mapping, got int"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件和整数类型不符合映射结构的原因均明确。"
+    },
+    {
+      "id": "c6035901ba2aeff7bfb7da693",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "config files must have a dict as the top level object, got a str instead"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，准确说明字符串不符合顶层字典要求。"
+    },
+    {
+      "id": "c6063fbdeb0149e3c222c9b46",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "must contain key/value pairs at the top level, got list"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，准确说明列表不符合键值映射结构。"
+    },
+    {
+      "id": "c60dc353dd92be87de564ff8f",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected the node content, but found '<stream end>'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，可见 cause 解释 YAML 流结构在输入结束时未完成。"
+    },
+    {
+      "id": "c63abe49c023916b11f9d8c4e",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [
+        "is not valid YAML"
+      ],
+      "explanation": "内容是合法 YAML 字符串，诊断却称 YAML 无效。"
+    },
+    {
+      "id": "c640bc6557f009cd23c0e431c",
+      "verdict": "fail",
+      "file_evidence": [
+        "['FIXTURE_DIR/0.yaml', 'BAD_FILE', 'GOOD_FILE']"
+      ],
+      "reason_evidence": [
+        "got a int"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "仅列全部文件，没有指明哪个文件含整数内容。"
+    },
+    {
+      "id": "c640e456ed3b05c3470a80871",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected a collection of named values"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，并说明内容不满足具名键值集合要求。"
+    },
+    {
+      "id": "c64280f1390c46301f035c98e",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "must contain a mapping at the top level, not a str"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，字符串与映射结构的差异解释准确。"
+    },
+    {
+      "id": "c657fdb84092fc8cb0bad92b4",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "must contain a mapping at the top level, not a int"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，整数与映射结构的差异解释准确。"
+    },
+    {
+      "id": "c66f88b55bb422ec5ac20da8a",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [],
+      "explanation": "只有配置无效的泛称，没有具体内容原因。"
+    },
+    {
+      "id": "c673dda0d3a6fa902cede0b48",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "found character '\\t' that cannot start any token"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，可见 cause 保留真实制表符解析原因。"
+    },
+    {
+      "id": "c6b02273144a9e866c4fbb48f",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "top level must be a mapping, got float"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "唯一列出的坏文件明确，准确解释浮点数结构不符。"
+    },
+    {
+      "id": "c6b559cd0b6a229ea942a58f8",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "the top level must be a dictionary, not list"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，并准确说明列表不符合顶层字典结构。"
+    },
+    {
+      "id": "c6c448ce4541554aa45d4b3f4",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "the top level must be a dictionary, not str"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，并准确说明字符串不符合顶层字典结构。"
+    },
+    {
+      "id": "c6e9a6f08a4912610c779c16d",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "found character '\\t' that cannot start any token"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，真实的制表符解析原因可见。"
+    },
+    {
+      "id": "c6ee19b99e7a771fda9e92b15",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "top-level YAML must be a mapping, got float"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "聚合诊断将准确的浮点顶层类型问题明确归给坏文件。"
+    },
+    {
+      "id": "c7300c38708e5504c419d89b6",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "config files must have a dict as the top level object, got a str instead"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，准确说明字符串不符合顶层字典结构。"
+    },
+    {
+      "id": "c7382aaeef70e522ad938621b",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [
+        "is not valid YAML"
+      ],
+      "explanation": "内容是合法 YAML 整数，诊断却称 YAML 无效。"
+    },
+    {
+      "id": "c7458c0e627c49925b058b99b",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [
+        "the configuration file does not exist."
+      ],
+      "explanation": "文件存在且可读，诊断却称其不存在。"
+    },
+    {
+      "id": "c75b130ae24b036b4d3f40763",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "must contain a mapping at the top level, not a str"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "明确指名坏文件并准确解释字符串不符合映射结构。"
+    },
+    {
+      "id": "c79aeb202c5c1daae8bafcc24",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "top-level YAML must be a mapping, got str"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "聚合诊断明确将字符串顶层结构问题归给坏文件。"
+    },
+    {
+      "id": "c7d31b8741b2e0dd9cd8f5a4a",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected a collection of named values"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，并说明其内容不满足具名键值集合要求。"
+    },
+    {
+      "id": "c7e242b2ef2e3351ee0c0e60c",
+      "verdict": "fail",
+      "file_evidence": [
+        "FIXTURE_DIR"
+      ],
+      "reason_evidence": [
+        "found character '\\t' that cannot start any token"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "解析原因可见，但仅指名目录，未定位坏文件。"
+    },
+    {
+      "id": "c7e661dbe5270b96000686e89",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "found character '\\t' that cannot start any token"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，真实的制表符解析原因可见。"
+    },
+    {
+      "id": "c7ecf62ea6e5ab0d19f2dcd25",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "the top level must be a dictionary, not int"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，整数不符合顶层字典要求的原因准确。"
+    },
+    {
+      "id": "c80463a4b8630eb792cb4eee3",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "must contain an object at the top level, found [1234]"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，具体指出实际列表值不符合配置对象结构。"
+    },
+    {
+      "id": "c81346016b20bd856982caade",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "config files must have a dict as the top level object, got a float instead"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，准确说明浮点数不符合顶层字典要求。"
+    },
+    {
+      "id": "c814795e649bc1d2ccf77241c",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [
+        "is not valid YAML"
+      ],
+      "explanation": "内容是合法 YAML 字符串，诊断却称 YAML 无效。"
+    },
+    {
+      "id": "c8595978141913b2448a2cd16",
+      "verdict": "fail",
+      "file_evidence": [
+        "GOOD_FILE"
+      ],
+      "reason_evidence": [
+        "got a str instead"
+      ],
+      "contradiction_evidence": [
+        "at 'GOOD_FILE' is malformed"
+      ],
+      "explanation": "把字符串内容问题归给已知有效的好文件，未指名实际坏文件。"
+    },
+    {
+      "id": "c8675e88f445ae1ae06e9db2e",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "found a tab character that violates indentation"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，以等价说明解释第二行制表符造成的 YAML 内容错误。"
+    },
+    {
+      "id": "c869aee676b76b1797ee645b1",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected the node content, but found '<stream end>'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，具体解析原因与未完成的 YAML 流结构一致。"
+    },
+    {
+      "id": "c88fe7a5b3c2323b73c732ec7",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected the node content, but found '<stream end>'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "聚合诊断明确将真实的 YAML 解析原因归给坏文件。"
+    },
+    {
+      "id": "c89597bd6255c7ca1d6c046b2",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected a collection of named values"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，并说明其内容不符合具名键值集合要求。"
+    },
+    {
+      "id": "c8dee8419bb4a47ad8d9afc00",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected a collection of named values"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，并解释其内容不符合具名键值集合结构。"
+    },
+    {
+      "id": "c8e183475f5f3749a791f910e",
+      "verdict": "fail",
+      "file_evidence": [
+        "GOOD_FILE"
+      ],
+      "reason_evidence": [
+        "got a float instead"
+      ],
+      "contradiction_evidence": [
+        "at 'GOOD_FILE' is malformed"
+      ],
+      "explanation": "把内容问题归给有效好文件，未指名实际坏文件。"
+    },
+    {
+      "id": "c8e4a2b4cf750fc1881715f2b",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [
+        "the configuration file does not exist."
+      ],
+      "explanation": "文件存在且可读，诊断却称其不存在。"
+    },
+    {
+      "id": "c8f37c2eca40dd88cd6d4dc07",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "the top level must be a dictionary, not list"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，列表不符合顶层字典结构的解释准确。"
+    },
+    {
+      "id": "c91ae68b31b9e77513186ee0e",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "top-level YAML must be a mapping, got float"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "聚合诊断明确将准确的浮点顶层结构问题归给坏文件。"
+    },
+    {
+      "id": "c92320797be5d14c5e7484983",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "config files must have a dict as the top level object, got a str"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "唯一列出的坏文件明确，准确说明字符串结构不符。"
+    },
+    {
+      "id": "c941a3e9b2643cdfe5568980b",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected the node content, but found '<stream end>'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，具体解析原因与未完成的 YAML 流结构一致。"
+    },
+    {
+      "id": "c96d83e00aadb2826861a2c03",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected a collection of named values"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，并说明内容不符合具名键值集合要求。"
+    },
+    {
+      "id": "c9924eddd7bf9d47b0c067cbb",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "found character '\\t' that cannot start any token"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，制表符造成 YAML 解析失败的具体原因可见。"
+    },
+    {
+      "id": "c9bc053721b2bc9c8e0ce7b0a",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected a collection of named values"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，并解释内容不符合具名键值集合结构。"
+    },
+    {
+      "id": "c9c4318a0e8b5076aab343afa",
+      "verdict": "fail",
+      "file_evidence": [
+        "FIXTURE_DIR"
+      ],
+      "reason_evidence": [
+        "top level must be a mapping, got str"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "只指名目录，无法明确定位坏文件。"
+    },
+    {
+      "id": "c9e08f17cd598b8bfecacfc16",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [
+        "the configuration file does not exist."
+      ],
+      "explanation": "坏文件实际存在且可读，诊断却称其不存在。"
+    },
+    {
+      "id": "c9e4db28b23db34a1780d9f25",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [
+        "the configuration file does not exist."
+      ],
+      "explanation": "坏文件实际存在且可读，诊断却称其不存在。"
+    },
+    {
+      "id": "ca2621487a3bc63fdf913a101",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "found character '\\t' that cannot start any token"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，可见解析原因与第二行制表符错误一致。"
+    },
+    {
+      "id": "ca2b686125d3332324c6e6dd0",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "config files must have a dict as the top level object, got a list instead"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，准确说明列表不符合顶层字典结构。"
+    },
+    {
+      "id": "ca41bb84332b04582252ce0b3",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected the node content, but found '<stream end>'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，可见 cause 解释 YAML 流结构在输入结束时未完成。"
+    },
+    {
+      "id": "ca5dfaf9fda4127d4bf5bf543",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "config files must have a dict as the top level object, got a int instead"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，准确说明整数不符合顶层字典结构。"
+    },
+    {
+      "id": "ca73d9c7203b2d38158c63e59",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected the node content, but found '<stream end>'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "可见上下文与外层消息共同提供坏文件和具体解析原因。"
+    },
+    {
+      "id": "ca8595a07c0418fcb8eb78c13",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "the top level must be a dictionary, not int"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，准确解释整数不符合顶层字典结构。"
+    },
+    {
+      "id": "ca85afa7a940c813a4bd2f05a",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [],
+      "explanation": "只有配置无效的泛称，没有具体内容原因。"
+    },
+    {
+      "id": "caa2947ca236292246b5073e9",
+      "verdict": "fail",
+      "file_evidence": [
+        "['FIXTURE_DIR/0.yaml', 'BAD_FILE', 'GOOD_FILE']"
+      ],
+      "reason_evidence": [
+        "got a float"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "仅列全部文件，未明确指出浮点内容属于坏文件。"
+    },
+    {
+      "id": "caa5de7f427b0b4bd36f04452",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "top-level YAML must be a mapping, got str"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "聚合诊断明确将准确的字符串顶层结构问题归给坏文件。"
+    },
+    {
+      "id": "caac9061f212e26f0de536997",
+      "verdict": "fail",
+      "file_evidence": [
+        "FIXTURE_DIR"
+      ],
+      "reason_evidence": [
+        "top level must be a mapping, got float"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "只指名目录，无法定位实际坏文件。"
+    },
+    {
+      "id": "cabe04366dd66866bf98c9831",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [
+        "is not valid YAML"
+      ],
+      "explanation": "内容是合法 YAML 浮点数，诊断却称 YAML 无效。"
+    },
+    {
+      "id": "cacd66a0f21544628ed0b018d",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected the node content, but found '<stream end>'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，真实的 YAML 未完成解析原因可见。"
+    },
+    {
+      "id": "cadabc1537b93892e926280dc",
+      "verdict": "fail",
+      "file_evidence": [
+        "['FIXTURE_DIR/0.yaml', 'BAD_FILE', 'GOOD_FILE']"
+      ],
+      "reason_evidence": [
+        "expected the node content, but found '<stream end>'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "虽然解析原因可见，但仅列全部文件，未明确哪个文件出错。"
+    },
+    {
+      "id": "caf2f039c2fde7599662dd091",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "found character '\\t' that cannot start any token"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "外层消息与可见上下文共同提供坏文件和真实制表符解析原因。"
+    },
+    {
+      "id": "cafb877f1deffa1d06b79869a",
+      "verdict": "fail",
+      "file_evidence": [
+        "FIXTURE_DIR"
+      ],
+      "reason_evidence": [
+        "top level must be a mapping, got list"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "只指名目录，未明确定位坏文件。"
+    },
+    {
+      "id": "cb1717b09ff78862997248614",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "the top level must be a dictionary, not str"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，准确解释字符串不符合顶层字典要求。"
+    },
+    {
+      "id": "cb2487b7d4adcee1ec57e4e44",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "found character '\\t' that cannot start any token"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "唯一列出的坏文件明确，真实的制表符解析原因可见。"
+    },
+    {
+      "id": "cb2b0fad2282968d7f094e161",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "must contain key/value pairs at the top level, got float"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，准确解释浮点类型不符合键值映射结构。"
+    },
+    {
+      "id": "cb59e4ff40c1e56feb7f8f832",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "'list' object has no attribute 'items'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，真实列表类型错误足以解释内容不能作为映射。"
+    },
+    {
+      "id": "cb72669536e783f9133dfbbd3",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected the node content, but found '<stream end>'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，具体解析原因与 YAML 流结构未完成一致。"
+    },
+    {
+      "id": "cb7485bd6a8e9928e9a7c9b3d",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected the node content, but found '<stream end>'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，可见 cause 具体解释 YAML 语法问题。"
+    },
+    {
+      "id": "cb7e53971305facec74750379",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "'list' object has no attribute 'items'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，真实列表类型错误可作为内容原因。"
+    },
+    {
+      "id": "cb973625d30c5d7116b657582",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "found character '\\t' that cannot start any token"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，可见 cause 提供真实的制表符解析原因。"
+    },
+    {
+      "id": "cb9d6a0db4482bab4fd6d7bcf",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "found character '\\t' that cannot start any token"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "外层与可见上下文共同明确坏文件和具体解析原因。"
+    },
+    {
+      "id": "cb9e441010b80d1f6e729714b",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "must contain a mapping at the top level, not a int"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，准确解释整数不符合映射结构。"
+    },
+    {
+      "id": "cbe61a5a9a81cb2af9e183191",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "config files must have a dict as the top level object, got a int instead"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，准确解释顶层整数与字典要求不符。"
+    },
+    {
+      "id": "cc69d31d99c7ce0f683fc255a",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "must contain an object at the top level, found 1234"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，并具体指出实际整数值不符合配置对象结构。"
+    },
+    {
+      "id": "cccc5a63efa74e0255234433e",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [],
+      "explanation": "仅称配置无效，缺少具体解析原因。"
+    },
+    {
+      "id": "ccd36169e1b7059a59fdabf04",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "should be a YAML map of settings, but its top level is [1234]"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，具体列表值与所需映射的差异解释准确。"
+    },
+    {
+      "id": "ccf0c05bef68cc28a6051773c",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "found character '\\t' that cannot start any token"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，可见 cause 具体解释制表符造成的解析失败。"
+    },
+    {
+      "id": "cd085025e1e1aa22aaf9c8cb4",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "must contain a mapping at the top level, not a float"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，准确说明浮点数不符合映射结构。"
+    },
+    {
+      "id": "cd14d9d98ee69a19819f5f348",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "found character '\\t' that cannot start any token"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，真实的制表符解析原因可见。"
+    },
+    {
+      "id": "cd22bb33fe59fa45e3bf459e9",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "must contain an object at the top level, found 1.5"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，并具体指出实际浮点值不符合配置对象结构。"
+    },
+    {
+      "id": "cd2e6d44f04c43596dcbb5975",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected the node content, but found '<stream end>'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "唯一列出的坏文件明确，具体解析原因与未完成 YAML 流结构一致。"
+    },
+    {
+      "id": "cd38afb911e051d3b4037de27",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "config files must have a dict as the top level object, got a float instead"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，准确说明浮点数不符合顶层字典要求。"
+    },
+    {
+      "id": "cd431359ef3499c4cb7180d36",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [],
+      "explanation": "只有配置无效的泛称，没有具体内容原因。"
+    },
+    {
+      "id": "cd532d0048a4b5381e6805aac",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "config files must have a dict as the top level object, got a list"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "唯一列出的坏文件明确，准确说明列表结构不符。"
+    },
+    {
+      "id": "cd60ecedb1b57ddc4d3c6dbc1",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "must contain a mapping at the top level, not a list"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，列表与映射要求的差异解释准确。"
+    },
+    {
+      "id": "cd724231e87ae01193172435a",
+      "verdict": "fail",
+      "file_evidence": [
+        "GOOD_FILE"
+      ],
+      "reason_evidence": [
+        "got a list instead"
+      ],
+      "contradiction_evidence": [
+        "at 'GOOD_FILE' is malformed"
+      ],
+      "explanation": "把列表内容错误归给有效的好文件，未指名实际坏文件。"
+    },
+    {
+      "id": "cd856b43dab9af3178157587d",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "found character '\\t' that cannot start any token"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，真实的制表符解析原因可见。"
+    },
+    {
+      "id": "cda1876e9e970050e5fb00ab0",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "config files must have a dict as the top level object, got a int"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "唯一列出的坏文件明确，准确说明整数结构不符。"
+    },
+    {
+      "id": "cdb766bb1d8b845453d668eaf",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "did not find expected node content"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，并给出与未完成 YAML 流结构等价的节点缺失说明。"
+    },
+    {
+      "id": "cdbfa8f47eb509c0d3c2c5ec4",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "should be a YAML map of settings, but its top level is 1234"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，实际整数值与所需映射的差异解释准确。"
+    },
+    {
+      "id": "cdd432ff816625aa330fc8bf3",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "must contain key/value pairs at the top level, got str"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，准确解释字符串不符合键值映射结构。"
+    },
+    {
+      "id": "ce231b10670d19bc08464d079",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected the node content, but found '<stream end>'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，可见 cause 具体解释未完成的 YAML 流结构。"
+    },
+    {
+      "id": "ce7ae301bdb77f14b31d24afb",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [],
+      "explanation": "只有配置无效的泛称，未解释内容问题。"
+    },
+    {
+      "id": "ce9df28b73f5042cde22e3737",
+      "verdict": "fail",
+      "file_evidence": [],
+      "reason_evidence": [
+        "found character '\\t' that cannot start any token"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "底层解析原因具体，但诊断未指名坏文件。"
+    },
+    {
+      "id": "ceb38865a6619ef1fbe8490aa",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "top-level YAML must be a mapping, got list"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "聚合诊断明确将准确的列表顶层结构问题归给坏文件。"
+    },
+    {
+      "id": "ceb5dc4a664d555d85f23ed01",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "top level must be a mapping, got int"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "唯一列出的坏文件明确，准确解释整数结构不符。"
+    },
+    {
+      "id": "cebe0a34d55fa9be3b7b5a78d",
+      "verdict": "fail",
+      "file_evidence": [],
+      "reason_evidence": [
+        "found character '\\t' that cannot start any token"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "底层解析原因具体，但诊断没有指名坏文件。"
+    },
+    {
+      "id": "cedc6867d3991575e14f3e0ee",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected the node content, but found '<stream end>'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "唯一列出的坏文件明确，具体解析原因与未完成的 YAML 流结构一致。"
+    },
+    {
+      "id": "cef5fa9b7c29015424ca0e13c",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "must contain an object at the top level, found 'hello'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，并具体指出实际字符串值不符合配置对象结构。"
+    },
+    {
+      "id": "cefa9679621d8f68abcdfde36",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "must contain key/value pairs at the top level, got list"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，准确说明列表不符合键值映射结构。"
+    },
+    {
+      "id": "cf2232e96d3e619e04fe35e32",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [],
+      "explanation": "只有配置无效的泛称，未解释具体解析原因。"
+    },
+    {
+      "id": "cf43a223510d39a39167e68b5",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "'float' object has no attribute 'items'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，真实浮点类型错误可作为内容原因。"
+    },
+    {
+      "id": "cf44983487f47008837cca9c9",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "found character '\\t' that cannot start any token"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，可见 cause 解释制表符造成的 YAML 解析失败。"
+    },
+    {
+      "id": "cf580e17c682352d611b5dffc",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "should be a YAML map of settings, but its top level is 'hello'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，具体字符串值与所需映射的差异解释准确。"
+    },
+    {
+      "id": "cf63dc6c5e574089378ab8f0b",
+      "verdict": "fail",
+      "file_evidence": [
+        "FIXTURE_DIR"
+      ],
+      "reason_evidence": [
+        "expected the node content, but found '<stream end>'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "解析原因具体，但仅指名目录，未定位实际坏文件。"
+    },
+    {
+      "id": "cf8bb0724dfebf127ef138e88",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [
+        "the configuration file does not exist."
+      ],
+      "explanation": "文件存在且可读，诊断却称其不存在。"
+    },
+    {
+      "id": "cf96889cc013e10e49807bf17",
+      "verdict": "fail",
+      "file_evidence": [
+        "FIXTURE_DIR/0.yaml"
+      ],
+      "reason_evidence": [
+        "got a str instead"
+      ],
+      "contradiction_evidence": [
+        "at 'FIXTURE_DIR/0.yaml' is malformed"
+      ],
+      "explanation": "把字符串内容问题归给跳过的不可读项，未指名实际坏文件。"
+    },
+    {
+      "id": "cf9e6fd4be851351e40a85f15",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "found character '\\t' that cannot start any token"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "聚合诊断明确将真实的制表符解析原因归给坏文件。"
+    },
+    {
+      "id": "cf9e7269d53f985e7071f213d",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "found a tab character that violates indentation"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，以等价内容说明解释第二行制表符造成的 YAML 错误。"
+    },
+    {
+      "id": "cfc959810413f57452608b012",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "should be a YAML map of settings, but its top level is 1.5"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "坏文件明确，具体浮点值与所需映射的差异解释准确。"
+    },
+    {
+      "id": "cfd2be798f0c58e8949c8bcf8",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "expected the node content, but found '<stream end>'"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "聚合诊断明确将真实的未完成 YAML 解析原因归给坏文件。"
+    },
+    {
+      "id": "cfe966fce53ec01706761ecab",
+      "verdict": "fail",
+      "file_evidence": [
+        "['FIXTURE_DIR/0.yaml', 'BAD_FILE', 'GOOD_FILE']"
+      ],
+      "reason_evidence": [
+        "got a list"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "仅列全部文件，未明确指出哪个文件包含不适用的列表。"
+    },
+    {
+      "id": "cfea67ccb0a1397005000270a",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [
+        "is not valid YAML"
+      ],
+      "explanation": "内容是合法 YAML 列表，诊断却称 YAML 无效。"
+    }
+  ]
+}

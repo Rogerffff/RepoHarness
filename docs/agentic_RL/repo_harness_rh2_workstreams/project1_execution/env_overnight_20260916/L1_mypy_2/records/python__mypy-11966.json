@@ -1,0 +1,246 @@
+{
+ "task_id": "python__mypy-11966",
+ "source": "SWE-Gym lite / python/mypy PR 11966",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "public_bundles_v0.jsonl:python__mypy-11966",
+  "grading": "grading_bundles_v2_v0.jsonl:python__mypy-11966",
+  "validation": "validation_bundles_v0.jsonl:python__mypy-11966",
+  "base_commit": "48d810d5ed25f898d4f220a7476b6b267c289b9a",
+  "version": "0.940",
+  "python_version": "3.10",
+  "eval_cmd": "pytest -n0 -rA -k",
+  "f2p": [
+   "mypy/test/testcheck.py::TypeCheckSuite::check-dataclasses.test::testDataclassesAnyInherit"
+  ],
+  "p2p": [],
+  "gold_paths": [
+   "mypy/plugins/dataclasses.py"
+  ],
+  "test_patch_paths": [
+   "test-data/unit/check-dataclasses.test"
+  ],
+  "runtime_evidence": "无（不在 stage1 样本、in_e2 空、无 DeepSeek 候选）"
+ },
+ "public_view": {
+  "goal": "用 --ignore-missing-imports 时，基类类型是 Any 的 dataclass 子类，其自动生成的 __init__ 不应拒绝来自未知基类的关键字参数（题面例子：Inherits(foo='hi', bar='bye') 报 'Unexpected keyword argument \"bar\"'）。",
+  "constraints": [
+   "题面给完整最小复现与实际输出（含 reveal_type 两行），无外链、无图片、无截断",
+   "hints_text 为空——没有任何维护者讨论"
+  ],
+  "unknowns_from_public_only": [
+   "自身声明的字段（foo: str）还要不要保留类型检查？题面只说'至少能接受任意参数'，没说要保留 foo 的类型约束——这恰恰是 F2P 第三条断言的内容",
+   "位置参数怎么办：题面例子只用关键字。gold 选择把自有字段从 ARG_POS 降级成 ARG_OPT 并在两端补 *args/**kwargs，题面完全没有这层要求",
+   "reveal_type(Inherits) 改完之后应显示什么，题面没规定（F2P 也没断言）"
+  ],
+  "base_code_evidence": [
+   "48d810d5e:mypy/plugins/dataclasses.py:141-152 transform()：无条件用 `[attr.to_argument() for attr in attributes ...]` 生成 __init__，不看 info.fallback_to_any",
+   "48d810d5e:mypy/mro.py:17 info.fallback_to_any = any(baseinfo.fallback_to_any for baseinfo in info.mro) —— base 已有现成的判定位",
+   "48d810d5e:mypy/plugins/dataclasses.py:16-19 已 import AnyType/TypeOfAny，gold 只需再补 ARG_STAR/ARG_STAR2"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "test-data/unit/check-dataclasses.test 在 base 存在（78 个 case）",
+    "test-data/unit/fixtures/dataclasses.pyi 在 base 存在（git ls-tree 48d810d5e）",
+    "gold 目标 mypy/plugins/dataclasses.py 在 base 存在且 hunk 上下文逐行一致"
+   ],
+   "note": "无二进制/LFS/子模块；F2P 是 test_patch 新增的 case。",
+   "by": "L1_mypy_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "48d810d5e:mypy/plugins/dataclasses.py:141-152 无 fallback_to_any 分支"
+   ],
+   "note": "静态确认 base 含题面缺陷。",
+   "by": "L1_mypy_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 881 字符，含完整复现与输出",
+    "hints_text 长度 0"
+   ],
+   "note": "题面自足，无外链/图片/截断；hints 为空，不存在'hints 有而题面没有'的不对称。",
+   "by": "L1_mypy_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只碰 test-data/unit/check-dataclasses.test"
+   ],
+   "note": "无非测试源码；gold 不碰测试样路径。",
+   "by": "L1_mypy_2"
+  },
+  "17": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "同 file_rules"
+   ],
+   "note": "mypy/test/*.py 与 test-data/unit/fixtures/* 不受保护（仓库级）。",
+   "by": "L1_mypy_2"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "40 题中只有本题 gold 触碰 mypy/plugins/dataclasses.py；只有本题 test_patch 触碰 check-dataclasses.test"
+   ],
+   "note": "无重复/派生。",
+   "by": "L1_mypy_2"
+  },
+  "23": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "F2P 第三条 `A(a=\"foo\")  # E: Argument \"a\" to \"A\" has incompatible type \"str\"; expected \"int\"` 要求**自有字段的类型检查必须保留**",
+    "题面原话只有 'I would expect a class that inherits from Any to also be Any or at least be able to take any number of arguments in its constructor'"
+   ],
+   "note": "题面把'整体变成 Any'与'构造器能收任意参数'并列为可接受结果；若 agent 选前者（例如遇到 fallback_to_any 就不生成 __init__），F2P 第三条必挂。要求不一致。",
+   "by": "L1_mypy_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 三条断言都是对外可见行为（能否调用、报什么错），没有断言 helper 名或内部顺序"
+   ],
+   "note": "不强制唯一实现：只要'fallback_to_any 时位置参数变可选且补 *args/**kwargs'这一类语义即可；写法自由。",
+   "by": "L1_mypy_2"
+  },
+  "25": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "F2P=1、P2P=0（grading_bundles_v2_v0:python__mypy-11966）",
+    "base check-dataclasses.test 共 78 个 case，一条都没进 P2P"
+   ],
+   "note": "最直接的漏放：把 gold 里的 `if info.fallback_to_any:` 守卫去掉（对**所有** dataclass 都补 *args/**kwargs 并把位置参数降级），F2P 三条全过——因为 A 的 `a: int` 仍在、`A(a=\"foo\")` 仍报错——而所有正常 dataclass 从此接受任意参数、位置参数也不再必填。P2P 为空，完全检不出来。",
+   "by": "L1_mypy_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "P2P 为空"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_mypy_2"
+  },
+  "27": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "golden_patch 第一段重排 mypy.nodes 的 import（实际只需新增 ARG_STAR/ARG_STAR2），并留下 `CallExpr,    Context` 这种多空格",
+    "AnyType/TypeOfAny 在 base 已 import（48d810d5e:mypy/plugins/dataclasses.py:16-19），gold 未遗漏依赖"
+   ],
+   "note": "gold 正确、完整、不依赖未交付改动；瑕疵只有 import 重排这类噪声（会让 diff 比必要的大，做 SFT 目标时是噪声）。",
+   "by": "L1_mypy_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 无 PR/commit 链接、无修复代码；hints 为空"
+   ],
+   "note": "无静态泄漏。",
+   "by": "L1_mypy_2"
+  },
+  "6": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "未实跑安装。",
+   "by": "L1_mypy_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P case 只用 [builtins fixtures/dataclasses.pyi]，在 base 仓库内"
+   ],
+   "note": "无外部权重/数据依赖。",
+   "by": "L1_mypy_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "case 正文无 URL、无 requests/boto3/torch.hub"
+   ],
+   "note": "纯离线数据驱动测试。",
+   "by": "L1_mypy_2"
+  },
+  "18": {
+   "status": "pass",
+   "evidence_refs": [
+    "kscan.json:python__mypy-11966 over_select=[]"
+   ],
+   "note": "-k 'testDataclassesAnyInherit' 无过选、无同名冲突。",
+   "by": "L1_mypy_2"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P nodeid 4 段；48d810d5e:mypy/test/data.py 含 DataFileCollector"
+   ],
+   "note": "nodeid 形状与运行时一致。",
+   "by": "L1_mypy_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "grading_coverage",
+   "severity": "P1",
+   "evidence_refs": [
+    "F2P=1、P2P=0；check-dataclasses.test 78 个既有 case 无一入 P2P"
+   ],
+   "proposed_action": "补 P2P：把 check-dataclasses.test 里覆盖'普通 dataclass 的 __init__ 参数必填 / 位置参数顺序 / 多余关键字报错'的既有 case 纳入，最少 5~10 条。",
+   "next_experiment": "写假修复（删掉 `if info.fallback_to_any:` 守卫）跑当前 F2P，预期满分；再整文件跑 check-dataclasses.test，统计被破坏的既有 case 数。"
+  },
+  {
+   "category": "requirement_underspecified",
+   "severity": "P2",
+   "evidence_refs": [
+    "题面允许'整体变成 Any'，F2P 要求保留自有字段类型检查"
+   ],
+   "proposed_action": "若保留本题，在题面补一句'自身声明字段的类型检查必须保留'。",
+   "next_experiment": "实现'fallback_to_any 时不生成 __init__'的版本跑 F2P，确认第三条断言失败。"
+  },
+  {
+   "category": "file_boundary",
+   "severity": "P1",
+   "evidence_refs": [
+    "rh2/src/repoharness2/grading/manager.py:656/672/581"
+   ],
+   "proposed_action": "建议把 mypy/test/* 与 test-data/* 纳入 hygiene 保护（40 题 gold 均不触碰）。",
+   "next_experiment": "构造只改 mypy/test/helpers.py::assert_string_arrays_equal 的候选 patch 走一次评分，确认当前会判满分。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 test-data/unit/ 下的 .test 数据文件，gold 只碰 mypy/ 源码，两者无交集，按第四组 B 默认保持空。仓库级建议（需用户裁定、对 40 题统一生效）：把 'mypy/test/*' 与 'test-data/*' 加入 hygiene.test_globs——40 题 gold 无一触碰这两处（已对 validation_bundles 全量核对），而当前 agent 改 mypy/test/helpers.py、mypy/test/data.py 或 test-data/unit/fixtures/*.pyi 既不被 eval 的 git checkout 还原，也不被判 rejected_test_tampering。副作用：agent 在 test-data/ 下建临时文件会让整份提交作废，需一并决定。",
+  "evidence_refs": [
+   "rh2/src/repoharness2/grading/manager.py:656、:672、:581",
+   "rh2/src/repoharness2/contracts/grading.py:118-121"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "mypy/test/testcheck.py::TypeCheckSuite::check-dataclasses.test 全文件（base 78 个 case）",
+   "reason": "gold 改的是所有 dataclass 的 __init__ 生成入口 transform()。"
+  },
+  {
+   "id": "check-dataclasses.test::testDataclassesBasic / testDataclassesDeepInheritance / testDataclassOrdering 等覆盖参数必填与顺序的 case",
+   "reason": "专门堵住'对所有 dataclass 都补 *args/**kwargs'这一类过度修复。"
+  },
+  {
+   "id": "新增：普通（非 Any 基类）dataclass 少传必填参数仍应报 'Missing positional argument'",
+   "reason": "位置参数被降级成 ARG_OPT 是本次改动最危险的副作用，需要一条正面护栏。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "题面、gold、F2P 三者对应良好，唯一硬伤是 P2P=0 而 gold 改的是所有 dataclass 的公共路径；补 P2P 后可直接用。"
+ },
+ "costs": {
+  "minutes": 24
+ }
+}

@@ -1,0 +1,106 @@
+{
+  "as_of": "2026-10-03",
+  "scope": "作者回读冻结private_behavior的root单case校准；不是正式reward或actor权限证据",
+  "job": "mypy15184-nested-r2-20261002T175739Z-090d84",
+  "status": "author_case_validation_passed_non_author_incremental_review_pending",
+  "node": "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes",
+  "node_collection_verified": true,
+  "effective_test_patch_sha256": "sha256:e6d5eb0ef39aeeb08a945d3ce6aeb340a7f8b4fd56e599247dbef3b99bf4e532",
+  "original_three_cases_preserved": true,
+  "variants": {
+    "base": {
+      "case_rc": 1,
+      "case_result": "FAILED",
+      "failure_if_any": "泛型内部同名C仍未限定",
+      "collected_node": "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes",
+      "selected_nodes": 1,
+      "preparation_rcs": [
+        0,
+        0
+      ],
+      "source_identity": "/testbed/mypy/messages.py及checkexpr.py，精确base HEAD",
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      },
+      "case_log": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy15184-nested-r2-20261002T175739Z-090d84/attempt/base/case.out",
+      "case_log_sha256": "sha256:ad47efb3c10d07b36b5c235581648f1e0afa167047179606ee01f50ff04ceec4"
+    },
+    "gold": {
+      "case_rc": 0,
+      "case_result": "PASSED",
+      "failure_if_any": null,
+      "collected_node": "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes",
+      "selected_nodes": 1,
+      "preparation_rcs": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "source_identity": "/testbed/mypy/messages.py及checkexpr.py，精确base HEAD",
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      },
+      "case_log": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy15184-nested-r2-20261002T175739Z-090d84/attempt/gold/case.out",
+      "case_log_sha256": "sha256:5a8065d0faf09860608e584851aeeeb23116bd0b8fe4d1a42e05311443aa8779"
+    },
+    "bad": {
+      "case_rc": 0,
+      "case_result": "PASSED",
+      "failure_if_any": null,
+      "collected_node": "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes",
+      "selected_nodes": 1,
+      "preparation_rcs": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "source_identity": "/testbed/mypy/messages.py及checkexpr.py，精确base HEAD",
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      },
+      "case_log": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy15184-nested-r2-20261002T175739Z-090d84/attempt/bad/case.out",
+      "case_log_sha256": "sha256:a360bc937c2ffc4250cac60c7b871900f0b9c4432116f9929e932fe988054fe1"
+    },
+    "top_only": {
+      "case_rc": 1,
+      "case_result": "FAILED",
+      "failure_if_any": "泛型内部同名C仍未限定",
+      "collected_node": "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes",
+      "selected_nodes": 1,
+      "preparation_rcs": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "source_identity": "/testbed/mypy/messages.py及checkexpr.py，精确base HEAD",
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      },
+      "case_log": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy15184-nested-r2-20261002T175739Z-090d84/attempt/top_only/case.out",
+      "case_log_sha256": "sha256:ad47efb3c10d07b36b5c235581648f1e0afa167047179606ee01f50ff04ceec4"
+    }
+  },
+  "first_draft_failure": {
+    "job": "mypy15184-nested-r1-20261002T175423Z-e27fcb",
+    "cause": "已有suite强制uppercase内置名；v1误期望list，gold也失败",
+    "correction_basis": "公开base mypy/test/testcheck.py:129和mypy/messages.py:2409",
+    "not_counted_as_acceptance": true
+  },
+  "conclusion": "嵌套F2P拒绝top_only并保留gold；always-reject在本失败用例通过，须同时保留testAssertType正向P2P；两种保护互补",
+  "formal_reward": null
+}

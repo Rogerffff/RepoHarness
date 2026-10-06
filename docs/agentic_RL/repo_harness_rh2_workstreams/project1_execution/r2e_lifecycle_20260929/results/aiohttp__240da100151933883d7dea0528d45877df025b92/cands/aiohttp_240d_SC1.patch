@@ -1,0 +1,20 @@
+diff --git a/aiohttp/connector.py b/aiohttp/connector.py
+--- a/aiohttp/connector.py
++++ b/aiohttp/connector.py
+@@ -271,6 +271,7 @@ class TCPConnector(BaseConnector):
+             return [{'hostname': host, 'host': host, 'port': port,
+                      'family': self._family, 'proto': 0, 'flags': 0}]
+ 
++    @asyncio.coroutine
+     def _create_connection(self, req, **kwargs):
+         """Create connection.
+ 
+@@ -340,7 +341,7 @@ class ProxyConnector(TCPConnector):
+         except OSError as exc:
+             raise ProxyConnectionError(*exc.args) from exc
+         req.path = '{scheme}://{host}{path}'.format(scheme=req.scheme,
+-                                                    host=req.host,
++                                                    host=req.netloc,
+                                                     path=req.path)
+         if 'AUTHORIZATION' in proxy_req.headers:
+             auth = proxy_req.headers['AUTHORIZATION']

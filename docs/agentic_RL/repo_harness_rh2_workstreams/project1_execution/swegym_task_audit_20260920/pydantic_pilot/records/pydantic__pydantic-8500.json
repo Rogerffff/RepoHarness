@@ -1,0 +1,103 @@
+{
+  "instance_id": "pydantic__pydantic-8500",
+  "audit_date": "2026-09-20",
+  "old_record": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_pydantic/records/pydantic__pydantic-8500.json",
+  "source_refs": {
+    "public": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl#pydantic__pydantic-8500",
+    "grading": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl#pydantic__pydantic-8500",
+    "validation_reference_only": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl#pydantic__pydantic-8500",
+    "base_commit": "069d0205424f98912f8b670b1bc5cfc7df37b2f3",
+    "F2P": 1,
+    "P2P": 44
+  },
+  "environment": {
+    "catalog_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json#tasks[instance_id=pydantic__pydantic-8500]",
+    "status": "verified_environment_pair",
+    "selected_batch": "pydantic_v1",
+    "recipe": "pydantic-install-v1",
+    "verified_existing_pair": "noop=0 / gold=1；两次安装rc=0，gold测试rc=0；日志SHA256已本轮复算。",
+    "verification_ref": "verification.json#environment.pydantic__pydantic-8500",
+    "boundary": "环境对照有效，不等于题意/评分质量或actor正式准入；选定配方仍需冻结消费。"
+  },
+  "requirements": [
+    "题面要求model_construct后model_dump保持字段声明顺序，而不是让默认字段排在前面。",
+    "原例明确先无参构造，再给缺失必填字段a赋值，最后更新默认字段b；应输出a,b。",
+    "应保留model_construct允许缺失必填字段以及model_fields_set排除默认值的原行为，不能靠补占位字段达到顺序。"
+  ],
+  "old_claim_reviews": [
+    {
+      "original_claim": "题面原例在gold/最终候选上仍失败，而官方验收换成构造时提供值的另一场景（check23）。",
+      "status": "confirmed",
+      "evidence": [
+        "题面是a必填、b=None默认、construct后再赋a/b；test_patch则是a=\"a\"默认、b必填、construct(b=\"b\")。需求本身明确，落差在gold/验收遗漏原例。",
+        "pydantic@069d0205424f98912f8b670b1bc5cfc7df37b2f3:pydantic/main.py:216-225：gold仍跳过缺失的必填a，先写默认b；之后赋a只能追加。",
+        "原DeepSeek stream.jsonl:6073-6074、6808-6809真实显示原例dump为b,a；最终生产hunk与gold相同。",
+        "verification.json#historical_runs.L3_8500：旧独立脚本gold及candidate的diagnostic原日志均2 failed/8 passed，失败正是原例dump及JSON顺序；官方45条则通过。本轮未新跑RH2。"
+      ]
+    },
+    {
+      "original_claim": "构造后赋值是否也属修复范围，题面没有区分（public_view）。",
+      "status": "refuted",
+      "evidence": [
+        "原例直接写出construct()之后的两次赋值及Expected output；它明确属于题面要修的场景，不能解释成可选。",
+        "pydantic@069d0205424f98912f8b670b1bc5cfc7df37b2f3:docs/concepts/models.md:1283-1289 还明确说model_dump/model_dump_json保持字段顺序。",
+        "不建议把题面静默缩成“只含构造期”，那会删除用户原始要求；如选择窄修订，必须另立版本并明说改变了目标。"
+      ]
+    },
+    {
+      "original_claim": "按字段名字母序重排__dict__的错误修复能通过官方45条（check25）。",
+      "status": "confirmed",
+      "evidence": [
+        "runs/env_overnight_20260916/M2/L7/patches/pydantic__pydantic-8500.fake.diff 仅对fields_values排序，未按声明序处理。",
+        "verification.json#historical_runs.L7_8500重解析旧独立脚本：base的F2P失败，gold和fake均45个参考ID通过。",
+        "verification.json#local_probes.8500_exact_construct_with_field_doubles_no_serializer：执行精确方法及补丁，用声明z默认/a必填的替身，gold写入顺序z,a而fake是a,z；这是字典路径小实验，不冒充完整序列化运行。"
+      ]
+    },
+    {
+      "original_claim": "gold无题外改动、_fields_set与原语义一致（check27）。",
+      "status": "confirmed",
+      "evidence": [
+        "gold只在model_construct内将defaults原位写入并另记显式字段set；没有给缺失必填字段添加值。",
+        "这说明它是一个范围较窄的真实修复，不能说明已经完成题面原例。"
+      ]
+    },
+    {
+      "original_claim": "历史候选在定稿前已接触上游修复及官方新增测试（answer_exposure）。",
+      "status": "confirmed",
+      "evidence": [
+        "runs/env_probe_20260909_codex_backup/ledger/logs_cc/pydantic__pydantic-8500/stream.jsonl:13119-13126下载2.6.0 wheel并读model_construct；:13636-13645下载sdist并读test_retain_order_of_fields；:16563重排为最终fields_set实现；:19077-19078取PR diff。",
+        "核心“默认值原位加入”想法在曝光前已有实现；不可把全部工作归为复制，也不可把最终通过当无答案访问的独立成功。"
+      ]
+    },
+    {
+      "original_claim": "8500与8525共享文件/函数即可自动要求同侧划分。",
+      "status": "unresolved",
+      "evidence": [
+        "旧R8称8525基线包含8500修复，这比仅共享文件强；本轮未逐行独立复核8525，不自动扩大簇。",
+        "实际暴露关系仍取决于数据划分和模型读到的源码/轨迹；本题历史运行已证的上游下载应单独记。"
+      ]
+    },
+    {
+      "original_claim": "旧install rc=2仍使本题环境不可用。",
+      "status": "superseded_env",
+      "evidence": [
+        "repair_catalog选定pydantic_v1，noop/gold安装rc=0、gold测试rc=0，deny_all/uid54322/2CPU/4GiB；两份日志SHA256本轮匹配。",
+        "grader环境对照不等于actor PATH和初始工作树已在新探针验证。"
+      ]
+    }
+  ],
+  "recommendation": "needs_revision",
+  "next_action": [
+    "先把原例加入诊断：比较list(model_dump())或JSON文本为a,b，同时保留缺失必填访问抛AttributeError和_fields_set护栏；不要用dict相等判断顺序。",
+    "以z默认/a必填的非字母序例子拒绝现成sorted假修复；在相同环境对noop/gold/候选比较，明确gold自身仍漏原例。",
+    "若后续保留原题，修补目标必须覆盖构造后赋值；若选择只评构造期，则应显式建立窄目标版本，由用户决定，不在本轮实施。"
+  ],
+  "unknowns": [
+    "旧独立脚本的反例未在20260919新配方中走最新RH2重放。",
+    "本轮没有满足原例并保留所有构造语义的完整替代实现。",
+    "本题历史答案访问条件不能代表未来受控模型探针。"
+  ],
+  "evidence_level": "static_or_existing_run",
+  "verification_scope": "本轮读取精确base源码、实际公开题面/test_patch/gold、已归档运行证据；新增仅本地纯Python探针与日志重解析，未启动Docker/远端/模型/真实RH2。",
+  "formal_admission": false
+}

@@ -1,0 +1,42 @@
+{
+  "affected_cpu": {
+    "command": "uv run pytest tests/contracts tests/adapters tests/governance tests/grading tests/envpack -m 'not docker' -q",
+    "exit_code": 0,
+    "tail": "1402 passed, 1 skipped, 48 deselected in 73.82s (0:01:13)",
+    "skipped_reason": "RH2_SWEGYM_PARSER_CORPUS 未设置；仅跳过可选本机全语料对照，已入库 curated parser 语料测试已执行。"
+  },
+  "ruff": {
+    "command": "uv run ruff check src tests scripts",
+    "exit_code": 0,
+    "tail": "All checks passed!"
+  },
+  "docker_batch4_local": {
+    "command": "uv run pytest tests/grading/test_batch4_docker.py -q",
+    "exit_code": 0,
+    "tail": "4 passed in 10.18s"
+  },
+  "python_compat": {
+    "exit_code": 0,
+    "versions": [
+      "3.8.19",
+      "3.9.19",
+      "3.12.4"
+    ],
+    "uid": 54321,
+    "network": "none",
+    "production_renderer": true
+  },
+  "root_cpu_probes": {
+    "main_training": 0,
+    "fresh_group_transport": 0,
+    "production": 0,
+    "falsifier": 0,
+    "fixed_test_r4": 0
+  },
+  "preflight_notes": [
+    "Remote fixture image absent: Docker batch4 stopped before tests, no image installed; 4 Docker tests then ran locally with the existing fixture image.",
+    "Initial group replay encountered the intentional write-once prepared-artifact guard; retried in a fresh review output directory successfully, no original artifacts deleted."
+  ],
+  "source_unchanged": true,
+  "remote_probe_containers_remaining": 0
+}

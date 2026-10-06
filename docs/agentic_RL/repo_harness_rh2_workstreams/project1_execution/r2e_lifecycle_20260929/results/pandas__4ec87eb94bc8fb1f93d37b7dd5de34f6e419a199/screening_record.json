@@ -1,0 +1,151 @@
+{
+ "schema_note": "字段沿 environment_screening_definition_20260915.md §1；v1 用途写在 usage.v1；checks 用 40 项清单编号、稀疏记录，未列项 = not_checked",
+ "task_id": "r2e_gym_subset::pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199",
+ "instance_id": "pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199",
+ "task_revision": "r2e_gym_subset_e8b9fcbc + material_revisions_v2（r2e-mr-006、r2e-mr-007）；expected sha256:bdf1ddf52be5d557f6454f264d068c661cad404cc471ef3315af0a0e0f482a30（237 键）；hidden_tests_tree sha256:6a8597546224ce8bf2e6176d6adcc99354bc853239012935a7634d207fc20ecb；与任务面 v6 相同（协调者说明）",
+ "source_adapter_ref": {
+  "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl 第 33 行（经 material_revisions_v2）",
+  "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl（problem_statement sha256:edda8ba467837038597eb2534c54c6756a0a30bb8748a34daf18c82139d943d6）",
+  "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+  "parser_id": "r2e_prime_pytest_v1",
+  "grading_semantics": "r2e_expected_map：键集相等且逐键状态相等才得 1"
+ },
+ "recipe_ref": {
+  "current": {
+   "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+   "recipe_sha256": "sha256:76710ab57d6d306836599e1bb195d3a6524c2745b74d28b9ec811ba38f3c2b2c",
+   "image_ref": "rh2-r2e-derived/pandas:4ec87eb94bc8-r2e_derive_v1m2s",
+   "image_id": "sha256:85f550e62cc04d543b8169fa9d3bc9683ef773bf481c08a3cb0128f502d15ece",
+   "base_image_ref": "namanjain12/pandas_final:4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199",
+   "grader_profile": "rh2.grader_sandbox_profile.v1：2 CPU / 4 GiB / tmpfs 1 GiB / network deny_all / uid 54322",
+   "budgets": "candidate_stage 900 s；grading_deadline 3600 s",
+   "note": "sysconfig_v1 层的内容本审未读；本题 noop / gold 逐键结果与旧机相同"
+  },
+  "previous": {
+   "recipe_id": "r2e_derive_v1+material_v2",
+   "recipe_sha256": "sha256:b5a70d0414502a1dbf1eafcd948628d49e62e058b3f10e8cd46690405b4546dd",
+   "image_id": "sha256:b4ff94834fe0174d29355cb8fe18b7cf7d9cd0a723fc8b4b2ef6d18d03b3278f",
+   "machine": "旧机（2026-09-24）"
+  }
+ },
+ "code_snapshot_ref": "新机候选评分用 /work/code_v6/rh2（runs/r2e_lifecycle_20260929/inv/pandas_4ec8/run.sh:3）；devcheck 层 experiments/r2e_actor_20260925/r2e_devcheck.py，overlays all_v5（sha256:a1b657f7afde526cc394fa7553ba47719f1237c646fad7aedd6551e72340d855）",
+ "facts_ref": [
+  {"ref": "runs/r2e_lifecycle_20260929/env_verify/ledger_l2_noop.jsonl#L8", "role": "noop", "condition": "新机，当前材料，正式 profile，默认预算", "result": "0.0；233/237；mismatched 为 4 个目标键"},
+  {"ref": "runs/r2e_lifecycle_20260929/env_verify/ledger_l2_gold.jsonl#L8", "role": "gold", "condition": "同上", "result": "1.0；237/237；内存峰值 764 MB"},
+  {"ref": "runs/r2e_t0_batch2_20260924/replay_b3/ledger_b3_noop.jsonl#L1-2", "role": "noop ×2", "condition": "旧机，当前材料", "result": "0.0；233/237 ×2；日志 evallog_replay-r2e-t0-batch2-pan_4ae6eaa6 / _c3f7181e"},
+  {"ref": "runs/r2e_t0_batch2_20260924/replay_b3/ledger_b3_gold.jsonl#L1-2", "role": "gold ×2", "condition": "旧机，当前材料", "result": "1.0；237/237 ×2；日志 evallog_replay-r2e-t0-batch2-pan_0ac6a231 / _3b39925f"},
+  {"ref": "runs/r2e_lifecycle_20260929/inv/pandas_4ec8/ledger_C0.jsonl#L1", "role": "退化候选 C0（v1 §4 第 3 步）", "condition": "新机，任务面 v6，正式评分", "result": "1.0；237/237；included_paths [pandas/core/groupby/groupby.py]；patch sha256:cc92ca6f…"},
+  {"ref": "runs/r2e_lifecycle_20260929/inv/pandas_4ec8/logs_C0/evallog_replay-r2e-inv-4ec8-C0-0_ba0f9574.eval.log", "role": "C0 日志", "condition": "同上", "result": "第 3 行 groupby.py 已修改；第 11 行 APPLY_RC=0；第 257-258、267-268 行 4 个目标键 PASSED；第 272 行 237 passed, 2 skipped"},
+  {"ref": "runs/r2e_lifecycle_20260929/inv/pandas_4ec8/ledger_C1.jsonl#L1", "role": "合理替代解 C1", "condition": "同上", "result": "1.0；237/237"},
+  {"ref": "runs/r2e_lifecycle_20260929/inv/pandas_4ec8/pcheck_none.json、pcheck_gold.json、pcheck_C0.json、pcheck_C1.json", "role": "A-2 私有行为对照（root、无网络、不是评分）", "condition": "新机镜像 85f550e6…", "result": "base 在第一次 quantile 就抛题面那条 TypeError；gold 与 C1：astype [2.0]、reindex [2.5]、除法 [2.0]；C0：[1.0]、[0.0]、[1.0]；底层值 [1. 1. 3.]、[2.5 0.]、[1. 1. 3.]"},
+  {"ref": "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/devcheck.log", "role": "devcheck", "condition": "agent uid 54321，正式启动链，真实 CC 2.1.205 + 桩，任务面 v5", "result": "all_commands_ran、all_match_expect、r2e_preflight_ok 均为 true；输出见 orig/captures/*.out"},
+  {"ref": "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/private_control.json", "role": "私有 gold 对照", "condition": "root，无网络", "result": "全部命令 rc 0；8 个变体全 OK，dtype 都是 float64；公开 test_quantile 222 passed, 2 skipped"},
+  {"ref": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_e47e4f78.eval.log", "role": "noop（superseded，来源材料）", "condition": "修订前", "result": "224/226；2 个 ERROR 是 fixture 不可达"},
+  {"ref": "runs/env_overnight_20260916/M3/gold_ledger/logs_r2e/pandas/4ec87eb94bc8/gold/a1/test_output.txt", "role": "M3 独立 runner（来源材料）", "condition": "来源镜像", "result": "224 passed + 2 errors，与 RH2 一致"}
+ ],
+ "checks": {
+  "1": {"status": "pass", "note": "题面、base baa10328、gold（groupby.py 第 2453 行起的 hunk）、隐藏测试（公开 test_quantile.py 加上修复提交的 3 个新测试）、期望互相对应", "evidence_refs": ["runs/r2e_static_prep_20260924/v3/private/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/hidden_tests/test_1.py:251-289", "runs/r2e_static_prep_20260924/v3/private/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/gold.patch"], "by": "主审"},
+  "2": {"status": "pass", "note": "noop 的 4 个目标键都以题面那条 TypeError 失败（旧机 2 次、新机 1 次）；agent 身份复现结果相同", "evidence_refs": ["runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-pan_4ae6eaa6.eval.log:288,547,807,1067", "runs/r2e_lifecycle_20260929/env_verify/ledger_l2_noop.jsonl#L8", "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/orig/captures/repro_issue_example.out"], "by": "主审"},
+  "3": {"status": "unknown", "note": "只有 user_prompt.txt 这份静态渲染；devcheck 的首条用户消息是核对指令，不是题面，所以模型实际收到的题面消息仍未捕获", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/orig/stub/requests/messages_000.json"], "by": "主审"},
+  "4": {"status": "pass", "note": "gold、C0、C1 都经投影交付（included_paths 为 pandas/core/groupby/groupby.py），由 agent 身份 git_apply", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/pandas_4ec8/ledger_C0.jsonl#L1", "runs/r2e_lifecycle_20260929/env_verify/ledger_l2_gold.jsonl#L8"], "by": "主审"},
+  "5": {"status": "issue", "note": "X1：pandas 7dd34ea7 的公开初始工作树逐字包含本题 gold（groupby.py:2685-2687、:68）和三个新测试（test_quantile.py:250、267、280）；本题 base 按 gold 逐字比对包含 19c5eea5、877876098c、f656217a 的修复，按函数名比对包含 294cbc8d、32dd55cb 的新测试", "evidence_refs": ["runs/r2e_static_prep_20260924/cross_task_gold_scan.json", "runs/r2e_static_prep_20260924/cross_task_test_scan.json", "runs/r2e_static_prep_20260924/v3/public/pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af/worktree/pandas/core/groupby/groupby.py:2685-2687"], "by": "主审"},
+  "6": {"status": "pass", "note": "Python 3.8.20、numpy 1.20.3、pytest 8.3.4、pip 24.3.1；pandas 从 /testbed 就地构建导入，grader 与 actor 用同一个 .venv", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/orig/captures/env_import_version.out"], "by": "主审"},
+  "7": {"status": "not_applicable", "note": "不需要任何资产", "evidence_refs": [], "by": "主审"},
+  "8": {"status": "pass", "note": "agent uid 54321 跑通全部公开命令；grader uid 54322 评分正常", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/orig/captures/env.out"], "by": "主审"},
+  "9": {"status": "pass", "note": "grader 导入 /testbed/pandas/__init__.py；C0 与 gold 的行为不同，证明候选代码确实生效", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/pandas_4ec8/ledger_C0.jsonl#L1", "runs/r2e_lifecycle_20260929/inv/pandas_4ec8/pcheck_C0.json"], "by": "主审"},
+  "10": {"status": "pass", "note": "devcheck 全部命令符合预期：复现与定位都成功；公开 test_quantile 222 passed、2 skipped（2.36 s）；相关路径 40 passed、3 xfailed", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/devcheck.log"], "by": "主审"},
+  "11": {"status": "pass", "note": "准备、解题、安装、测试四个阶段都不需要网络；grader 为 deny_all；解题侧只有到模型端点的 relay（共享机制）", "evidence_refs": ["runs/r2e_lifecycle_20260929/env_verify/ledger_l2_gold.jsonl#L8"], "by": "主审"},
+  "12": {"status": "not_applicable", "note": "不依赖外部服务", "evidence_refs": [], "by": "主审"},
+  "13": {"status": "pass", "note": "内存峰值约 764 MB（限额 4 GiB）；新机测试段 9.7-12.5 s，期限 3600 s", "evidence_refs": ["runs/r2e_lifecycle_20260929/env_verify/ledger_l2_gold.jsonl#L8", "runs/r2e_lifecycle_20260929/inv/pandas_4ec8/ledger_C0.jsonl#L1"], "by": "主审"},
+  "14": {"status": "pass", "note": "旧机 noop、gold 各 2 次，日志除时间与地址外逐字相同；新机各 1 次，逐键一致", "evidence_refs": ["runs/r2e_t0_batch2_20260924/replay_b3/ledger_b3_noop.jsonl#L1-2", "runs/r2e_t0_batch2_20260924/replay_b3/ledger_b3_gold.jsonl#L1-2", "runs/r2e_lifecycle_20260929/env_verify/ledger_l2_noop.jsonl#L8"], "by": "主审"},
+  "16": {"status": "pass", "note": "补丁以 agent 身份 git_apply，APPLY_RC=0，投影与补丁一致", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/pandas_4ec8/logs_C0/evallog_replay-r2e-inv-4ec8-C0-0_ba0f9574.eval.log:3,11"], "by": "主审"},
+  "17": {"status": "pass", "note": "grader 只重置 r2e_tests；gold 修改的文件不在测试集内", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/pandas_4ec8/logs_C0/evallog_replay-r2e-inv-4ec8-C0-0_ba0f9574.eval.log:9-16"], "by": "主审"},
+  "18": {"status": "pass", "note": "collected 239，其中 2 个被测试代码无条件 skip；目标测试体确实执行（有 traceback 与 PASSED 行）", "evidence_refs": ["runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-pan_4ae6eaa6.eval.log:24,32-290"], "by": "主审"},
+  "19": {"status": "pass", "note": "237 个键全 PASSED；只有一个测试文件，不会撞键；SKIPPED 不成键；修订把 fixture 缺失导致的 ERROR 键换成了参数展开后的键", "evidence_refs": ["runs/r2e_static_prep_20260924/v3/private/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/revisions.json"], "by": "主审"},
+  "20": {"status": "pass", "note": "noop 与 gold 的差别只在 4 个目标键，原因就是题面缺陷", "evidence_refs": ["runs/r2e_lifecycle_20260929/env_verify/ledger_l2_noop.jsonl#L8"], "by": "主审"},
+  "21": {"status": "pass", "note": "失败原因可见，没有被总分或重试掩盖", "evidence_refs": ["runs/r2e_t0_batch2_20260924/replay_b3/eval_logs/evallog_replay-r2e-t0-batch2-pan_4ae6eaa6.eval.log:1305-1310"], "by": "主审"},
+  "22": {"status": "pass", "note": "来源材料上，RH2 与 M3 独立 runner 逐键一致；修订版没有独立 runner，以两台机器正式链结果一致作为可复现证据", "evidence_refs": ["runs/env_overnight_20260916/M3/gold_ledger/logs_r2e/pandas/4ec87eb94bc8/gold/a1/test_output.txt"], "by": "主审"},
+  "23": {"status": "pass", "note": "结果 dtype 题面没写，但可由公开旧行为推断（登记为 P3，不交用户）", "evidence_refs": ["runs/r2e_static_prep_20260924/v3/public/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/worktree/pandas/tests/groupby/test_quantile.py:215-236", "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/orig/captures/variants_float_masked.out"], "by": "主审"},
+  "24": {"status": "pass", "note": "C1 把修改放在不同位置，仍得 1.0；断言只看结果，不约束实现", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/pandas_4ec8/ledger_C1.jsonl#L1"], "by": "主审"},
+  "25": {"status": "issue", "note": "T2b / S1：退化候选 C0 得 1.0，但对 astype、reindex、除法产生的 NA 算错", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/pandas_4ec8/ledger_C0.jsonl#L1", "runs/r2e_lifecycle_20260929/inv/pandas_4ec8/pcheck_C0.json"], "by": "主审"},
+  "26": {"status": "pass", "note": "gold 未见回归：公开测试、相关路径与 8 个变体全部通过；覆盖缺口另作 T3 登记", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/private_control.json"], "by": "主审"},
+  "27": {"status": "pass", "note": "gold 修好了题面例子，对底层非 NaN 的存储也正确，结果为 float64，没有无关改动", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/pandas_4ec8/pcheck_gold.json"], "by": "主审"},
+  "28": {"status": "unknown", "note": "R-c 草案尚未实施；验收计划同时包含替代解 C1 与错误解 C0", "evidence_refs": [], "by": "主审"},
+  "29": {"status": "pass", "note": "git 已清理：HEAD 不变，REFS、REMOTES、REFLOG 都是 0，preflight 通过；工作区 7 行来自 install.sh", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/orig/attempt.json"], "by": "主审"},
+  "30": {"status": "pass", "note": "解题侧没有通用出网，取不到上游修复；出网 relay 属共享机制", "evidence_refs": [], "by": "主审"},
+  "31": {"status": "unknown", "note": "通用控制面（候选能改 pandas._testing、能在 /testbed 根目录新建 conftest.py）属共享审查范围，本题未单独实测", "evidence_refs": [], "by": "主审"},
+  "32": {"status": "pass", "note": "断言检查的是真实行为，不是文本或文件是否存在；缺口在输入覆盖，见 25", "evidence_refs": [], "by": "主审"},
+  "33": {"status": "unknown", "note": "devcheck 已由真实 CC + 桩在正式启动链上跑通公开命令；尚未做真实模型求解", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/devcheck.log"], "by": "主审"},
+  "37": {"status": "pass", "note": "r2e-mr-006/007 只恢复测试支撑，没有改变任务定义；拟议的 R-c 是带版本的测试标准修订", "evidence_refs": ["runs/r2e_static_prep_20260924/v3/private/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/revisions.json"], "by": "主审"},
+  "38": {"status": "pass", "note": "修订后旧机 noop / gold 各 2 次、新机各 1 次，逐键一致", "evidence_refs": ["runs/r2e_lifecycle_20260929/env_verify/ledger_l2_gold.jsonl#L8"], "by": "主审"}
+ },
+ "issues": [
+  {"id": "T2b", "v1_code": "T2（T2b）", "severity": "S1", "category": "test_strength", "scope": "本题隐藏测试的目标键", "summary": "目标键的 Float 输入都由列表构造，掩码位置恰好是 NaN。退化候选 C0（out = vals._data，不按 mask 置 NaN）正式评分 1.0（237/237），但对 Int64 转 Float64、reindex、Int64 除法产生的 NA 分别得 1.0、0.0、1.0，正确值是 2.0、2.5、2.0。违反题面 \"ignoring the pd.NA value\"，以及 FloatingArray 以 mask 定义缺失的约定", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/pandas_4ec8/ledger_C0.jsonl#L1", "runs/r2e_lifecycle_20260929/inv/pandas_4ec8/logs_C0/evallog_replay-r2e-inv-4ec8-C0-0_ba0f9574.eval.log", "runs/r2e_lifecycle_20260929/inv/pandas_4ec8/pcheck_C0.json", "runs/r2e_lifecycle_20260929/inv/pandas_4ec8/pcheck_gold.json"], "evidence_level": "当前 CPU 正式评分 + 私有行为对照", "proposed_action": "R-c（card.md §4）：在 r2e_tests/test_1.py 新增 test_groupby_quantile_NA_float_nonnan_storage；期望增加 1 个 PASSED 键；验收 gold 1、noop 0、C0 0、C1 1", "status": "confirmed_open"},
+  {"id": "P3_result_dtype", "v1_code": "P3", "severity": "登记（S2 级，不构成 T1）", "category": "statement", "scope": "目标键的 dtype 断言", "summary": "题面没写结果 dtype，测试要求 numpy float64。公开依据：同一方法对 Int64 / boolean 返回 float64 的公开测试；base 上无 NA 的 Float64 返回 float64（devcheck 实测）；v1.1.0 的同类约定。反向依据：Series.quantile、groupby 的 mean / median 保留掩码 dtype。返回 Float64 的补丁还会改变无 NA 时的既有行为", "evidence_refs": ["runs/r2e_static_prep_20260924/v3/public/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/worktree/pandas/tests/groupby/test_quantile.py:215-236", "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/orig/captures/variants_float_masked.out", "runs/r2e_static_prep_20260924/v3/public/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/worktree/doc/source/whatsnew/v1.1.0.rst:1135"], "proposed_action": "不修订，不交用户。探针中若出现只错 dtype 的真实补丁，单列为规格争议样本，保留原始 reward", "status": "registered"},
+  {"id": "T3_gaps", "v1_code": "T3", "severity": "登记", "category": "coverage_gap", "scope": "受影响接口", "summary": "以下情形没有断言：浮点扩展数组走 DataFrameGroupBy 入口；混合列 frame 不再丢掉 Float64 列；无 NA 时 dtype 仍为 float64 的旧行为；稀疏浮点数组路径", "evidence_refs": [], "proposed_action": "按 v1 §8 抽查；R-c 的第二个实例顺带覆盖两组多值", "status": "registered"},
+  {"id": "X1", "v1_code": "X1", "severity": "登记", "category": "relation", "scope": "同仓 pandas 七题", "summary": "见 checks.5", "evidence_refs": ["runs/r2e_static_prep_20260924/cross_task_gold_scan.json", "runs/r2e_static_prep_20260924/cross_task_test_scan.json"], "proposed_action": "训练时控制同源重复采样；按 D3 以仓库划分，同仓题放在同一侧", "status": "registered"},
+  {"id": "P4_minor", "v1_code": "P4", "severity": "登记", "category": "statement", "scope": "题面", "summary": "题面写 group `1`，实际索引标签是 1.0（键列也是 Float64）；题面没提先出现的 FutureWarning", "evidence_refs": [], "proposed_action": "无", "status": "registered"},
+  {"id": "generic_control_plane", "v1_code": "E3（共享）", "severity": "非本题", "category": "shared_mechanism", "scope": "所有 pandas R2E 题", "summary": "隐藏测试依赖候选可改、评分时不重置的 pandas._testing；候选可以在 /testbed 根目录新建 conftest.py", "evidence_refs": [], "proposed_action": "引用共享控制面审查，不在本题处置", "status": "not_task_specific"},
+  {"id": "material_revision_check", "v1_code": "—", "severity": "—", "category": "material", "scope": "r2e-mr-006/007", "summary": "私有 conftest 的两个 fixture 与 base 的 pandas/conftest.py:1258-1269、1329-1343 逐字相同，没有 autouse 或 hook；期望的修订让题面场景真正参与评分，是加强而不是弱化，也没有扩大需求", "evidence_refs": ["runs/r2e_static_prep_20260924/v3/private/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/hidden_tests/conftest.py", "runs/r2e_static_prep_20260924/v3/private/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/revisions.json"], "proposed_action": "无", "status": "verified"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "没有证据支持新增路径规则；gold 与合理解都只改 pandas/core/groupby/groupby.py", "evidence_refs": [], "applied_version": null},
+ "revision_refs": [
+  {"id": "r2e-mr-006", "type": "hidden_test_file_add", "parent": "来源隐藏测试树 sha256:793ebf5786d8bcbb4958aa98693f5a15b7a1594bde8d4b359e7ef958dd814e98", "changes_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/r2e_tests/conftest.py（sha256:632b5ee3…）", "reason": "隐藏测试搬出原目录后，fixture 不可达", "verification_refs": ["runs/r2e_t0_batch2_20260924/replay_b3/ledger_b3_gold.jsonl#L1-2", "runs/r2e_lifecycle_20260929/env_verify/ledger_l2_gold.jsonl#L8"], "reviewer": "本审逐字核对", "status": "applied"},
+  {"id": "r2e-mr-007", "type": "expected_file_replace", "parent": "sha256:19f481a294bdbfaed7e72858fb5e5fa3215c1ba9479cb0e600585d7ca3b69336", "changes_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/expected_output.json（sha256:bdf1ddf5…）", "reason": "删掉 2 个 ERROR 键，加上 13 个参数展开后的 PASSED 键", "verification_refs": ["runs/r2e_t0_batch2_20260924/replay_b3/ledger_b3_noop.jsonl#L1-2", "runs/r2e_lifecycle_20260929/env_verify/ledger_l2_noop.jsonl#L8"], "reviewer": "本审核对：加强而非弱化", "status": "applied"},
+  {"id": "R-c（待编号）", "type": "hidden_test_text_edit + expected_file_replace（按 v1 §5 R-c 模板）", "parent": "r2e-mr-006/007（expected sha256:bdf1ddf5…；hidden tree sha256:6a859754…）", "changes_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/card.md §4", "reason": "T2b / S1：退化候选 C0 得 1", "trigger": "C0：patch sha256:cc92ca6fd15d3387299309d7b6104d6accc6b763036528ff5c33356f4830995c；runs/r2e_lifecycle_20260929/inv/pandas_4ec8/ledger_C0.jsonl#L1", "acceptance": "gold 1（238/238）；noop 0；C0 0（只有新键 FAILED）；C1 1；新键确实执行；保存新旧版本；交 Codex 复核", "reviewer": null, "status": "proposed"}
+ ],
+ "disposition": {
+  "state": "needs_repair",
+  "scope": "static_review",
+  "severity": "S1",
+  "reason": "材料缺陷，属于测试强度问题：目标键只用掩码位置恰好是 NaN 的输入，退化候选 C0 正式评分 1.0，却在常见 NA 上算错（T2b）。按 v1 §4 第 3 步判为 S1，进训练前必须经 R-c 修订并验收。环境与开发条件已在新机核对通过，不存在环境阻断",
+  "v1_steps": {"1": "不命中：NA_float[Float64] 有直接断言", "2": "不命中：值为 0.2 而非 2.5，另有 Float32、列表 q、全 NA", "3": "命中：C0 1.0（237/237），违例见 pcheck_C0", "4": "暂无真实模型候选", "5": "—"},
+  "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/pandas_4ec8/ledger_C0.jsonl#L1", "runs/r2e_lifecycle_20260929/inv/pandas_4ec8/pcheck_C0.json", "runs/r2e_lifecycle_20260929/env_verify/ledger_l2_noop.jsonl#L8", "runs/r2e_lifecycle_20260929/env_verify/ledger_l2_gold.jsonl#L8", "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/devcheck.log"],
+  "reviewer": null,
+  "previous": [
+   {"stage": "本审前稿 analysis_before_history.md", "state": "needs_review", "severity": "S1 conditional（等 C0 实跑）"},
+   {"stage": "环境审查（2026-09-24，r2e_env_repair_20260924）", "state": "qualified_with_revision", "note": "环境侧结论，仍然成立；不含题目质量结论"}
+  ],
+  "revision_mandatory": "训练前必做（v1 §4：S1 进训练前必须修）；问题定位不需要；能力比较可以先用事后审计替代，但建议在探针前完成",
+  "probe_readiness_gaps": [
+   {"item": "新机评分：noop 0 / gold 1，正式 profile", "status": "met"},
+   {"item": "公开开发路径（agent 身份、正式启动链、真实 CC + 桩）", "status": "met"},
+   {"item": "私有 gold 对照", "status": "met"},
+   {"item": "测试强度（v1 §4）", "status": "not_met", "owner": "Claude 实施 R-c，Codex 复核"},
+   {"item": "R-c 之前就进探针时的预登记事后审计", "status": "needed_if_probe_before_rc", "owner": "协调者"},
+   {"item": "经 Qwen adapter 的链路、真实模型求解、模型实际收到的消息", "status": "unknown（批次级）", "owner": "A 线 / 协调者"},
+   {"item": "每题独立复核（v1 §7.3）", "status": "pending", "owner": "新会话复核者"}
+  ]
+ },
+ "usage": {
+  "intended_use": "development_diagnostic",
+  "exposure_notes": "主审读过 gold、隐藏测试、期望映射、运行账本和环境审查旧记录，并构造了 C0、C1 两个候选；这些材料与本记录都不提供给 solver。公开读者只读了公开包。",
+  "v1": {
+   "problem_localization": {"value": "yes"},
+   "capability_comparison": {"value": "conditional", "missing": "R-c 之前，得 1 的补丁要预先登记事后审计（runs/r2e_lifecycle_20260929/inv/pandas_4ec8/private_check_A2.py，或公开命令 variants_float_masked 中的 masked_slot_not_nan），原始 reward 与语义结果分开记；R-c 验收后解除。另有批次级条件：经 Qwen adapter 的链路与模型实际收到的消息尚未验证（环境卡 §2）", "evidence": ["runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/devcheck.log", "runs/r2e_lifecycle_20260929/env_verify/ledger_l2_gold.jsonl#L8"]},
+   "training_candidate": {"value": "no", "reason": "当前版本有未处理的 S1（T2b）", "unblock": "R-c 按验收矩阵通过并经 Codex 复核后，按新版本重新判定"},
+   "heldout_candidate": {"value": "no", "reason": "不满足训练候选的质量条件；材料已修订，只能作标明版本的自建题；有 X1 同源关联；有审查暴露"}
+  }
+ },
+ "costs": {
+  "container_wall_seconds": null,
+  "agent_tokens": null,
+  "human_decisions": 0,
+  "observed_durations_s": {
+   "new_machine_formal_test_segment": {"noop": 10.318, "gold": 9.68, "C0": 12.535, "C1": 10.157},
+   "old_machine_formal_test_segment": {"noop": 2.424, "gold": 2.301},
+   "devcheck_solve": 40.189,
+   "devcheck_public_test_quantile_pytest": 2.36,
+   "private_check_each": "4.0-4.8"
+  },
+  "source_refs": ["runs/r2e_lifecycle_20260929/env_verify/ledger_l2_noop.jsonl#L8", "runs/r2e_lifecycle_20260929/inv/pandas_4ec8/ledger_C0.jsonl#L1", "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/orig/attempt.json"],
+  "note": "agent_tokens 为 null：devcheck 用的是桩端点，报告的用量不是真实数字。human_decisions=0：本轮不需要新的用户决定（R-c 属预授权模板，dtype 不交用户）；历史上 T0-6 曾由用户决定"
+ },
+ "review_meta": {
+  "investigator": "Claude（Opus 5.5，R2E 私有主审，单题闭环试行 2026-09-29）",
+  "analysis_before_history": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/analysis_before_history.md",
+  "old_findings_delta": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/old_findings_delta.md",
+  "card": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/card.md",
+  "independent_review": null
+ }
+}

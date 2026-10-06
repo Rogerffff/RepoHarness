@@ -1,0 +1,20 @@
+diff --git a/dask/array/slicing.py b/dask/array/slicing.py
+index 3b614c67c..9e91a78ce 100644
+--- a/dask/array/slicing.py
++++ b/dask/array/slicing.py
+@@ -641,6 +641,15 @@ def take(outname, inname, chunks, index, itemsize, axis=0):
+     other_chunks = [chunks[i] for i in range(len(chunks)) if i != axis]
+     other_numel = np.prod([sum(x) for x in other_chunks])
+ 
++    if other_numel == 0:
++        # Every row is empty, so there is nothing worth splitting or
++        # rearranging: take all requested rows from the first block.
++        chunks2 = list(chunks)
++        chunks2[axis] = (len(index),)
++        slc = tuple(index if i == axis else colon for i in range(len(chunks)))
++        zeros = (0,) * len(chunks)
++        return tuple(chunks2), {(outname,) + zeros: (getitem, (inname,) + zeros, slc)}
++
+     if math.isnan(other_numel):
+         warnsize = maxsize = math.inf
+     else:

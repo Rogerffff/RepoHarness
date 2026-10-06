@@ -1,0 +1,270 @@
+{
+ "task_id": "iterative__dvc-6954",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+  "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+  "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+  "raw": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc",
+  "base_commit": "28dd39a1a0d710585ff21bf66199208b1b83cbde",
+  "version": "2.8",
+  "python_version": "3.9",
+  "eval_cmd": "pytest -rA",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-6954:latest",
+  "workdir": "/testbed",
+  "test_patch_paths": [
+   "tests/unit/utils/serialize/test_python.py"
+  ],
+  "gold_paths": [
+   "dvc/utils/serialize/_py.py"
+  ],
+  "n_f2p": 1,
+  "n_p2p": 12,
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-6954/{gold,empty}/offline/a1/",
+  "signals": {
+   "in_e2": [],
+   "fragile_reference_id": false,
+   "stage1": {
+    "empty": {
+     "verdict": "RESOLVED_NO",
+     "rc_install": 0
+    },
+    "gold": {
+     "verdict": "RESOLVED_FULL",
+     "rc_install": 0,
+     "p2p_missing": 0,
+     "f2p_missing": 0
+    }
+   },
+   "deepseek_candidate_oracle": null
+  }
+ },
+ "public_view": {
+  "目标行为": "Python 参数文件里的负数（`my_int = -1`）应能被 dvc 识别为参数；当前 `dvc repro` 报 `ERROR: Parameters 'my_int' are missing from 'my_params.py'.`，而同样的值写在 YAML 里没问题。",
+  "约束": "题面给了 6 步完整复现（dvc.yaml + my_params.py + 命令）、精确错误文本、期望输出、`dvc doctor` 全量输出。",
+  "公开材料无法确定的点": [
+   "范围：只修负数（`ast.UnaryOp`），还是把整个自定义 AST 取值函数换掉。gold 选了后者（删掉 `_get_ast_value`，全部改用 `ast.literal_eval`），顺带支持了嵌套容器等。",
+   "哪些写法**仍应**被拒：F2P 之外还要求 `dict(a=1, b=2)` 与 `1 + 2` 继续解析成 `{}`，这条题面没提。",
+   "评分粒度：题面症状是 `dvc repro`，评分是对 `parse_py` 的单元测试。"
+  ],
+  "base 关键代码": "dvc/utils/serialize/_py.py:`_get_ast_value` 只认 `ast.Num` / `ast.Str` / `ast.NameConstant`，负数在 AST 里是 `UnaryOp(USub, Num)` 因此走 `raise ValueError`；上层 `_ast_tree_to_dict` 的 `except ValueError: continue` 把它整条吞掉，于是参数『消失』——正好对应题面的 `are missing` 而不是报错。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "repos/dvc 7df6090a9cf33d82f3fe30a7ee93ea49d5534e59 `params: Use ast.literal_eval for python params. / Add unit tests for parse_py / Closes #6953` --stat: dvc/utils/serialize/_py.py 26, tests/unit/utils/serialize/test_python.py 45（新文件）"
+   ],
+   "note": "gold+test_patch 与上游一致，无丢件。注意上游 commit message 写的是 `Closes #6953`（issue 号）而任务号是 6954（PR 号）。test_patch 新建文件 `tests/unit/utils/serialize/test_python.py`。",
+   "by": "L1_dvc_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base:dvc/utils/serialize/_py.py `_get_ast_value` 的三分支 + `raise ValueError`",
+    "base:dvc/utils/serialize/_py.py `_ast_tree_to_dict` 的 `except ValueError: continue`",
+    "stage1 empty: test_parse_valid_types[UNARY_OP FAILED"
+   ],
+   "note": "缺陷在 base 存在，且能解释题面里『参数缺失』而非『解析报错』这一现象。",
+   "by": "L1_dvc_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 1800 字符，含 6 步复现、dvc.yaml、my_params.py、精确错误、期望输出、dvc doctor"
+   ],
+   "note": "题面完整、代码块闭合、无外链图片。`raw hints_text` 为空。",
+   "by": "L1_dvc_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 仅新建 tests/unit/utils/serialize/test_python.py",
+    "gold 仅 dvc/utils/serialize/_py.py"
+   ],
+   "note": "零交集。additional_exclusions 空。",
+   "by": "L1_dvc_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 是 `new file mode`，stage1 eval.sh 对新文件的 `git checkout <base> <path>` 会失败但 `|| true` 不影响后续 apply"
+   ],
+   "note": "恢复集合是一个**新建**的纯测试文件，不覆盖任何既有源码。",
+   "by": "L1_dvc_2"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan.json 本包路径表"
+   ],
+   "note": "本包无第二题触碰 dvc/utils/serialize/ 或该测试文件。",
+   "by": "L1_dvc_2"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "F2P 唯一 ID `tests/unit/utils/serialize/test_python.py::test_parse_valid_types[UNARY_OP`（不闭合）",
+    "P2P 12 条全部不闭合",
+    "stage1 gold 日志实际 nodeid 例如 `test_parse_valid_types[UNARY_OP = -1-result9]`、`test_parse_invalid_types[SUM = 1 + 2]`",
+    "scripts/collide.py: graded_truncated_keys=13, graded_collisions=0"
+   ],
+   "note": "**本包参考 ID 截断最彻底的一题：13/13 条全部被截断**。pytest 用参数文本生成 id（`BOOL = True-result0`），里面必然含空格，`parse_log_pytest` 只保留首 token。参考集与 status_map 同样截断，判分当前正确、无碰撞（各参数首 token 互异）。但脆弱性显而易见：只要再加一个 `INT = 6` 这样的参数，它的键就会和现有的 `INT = 5` 合并。",
+   "by": "L1_dvc_2"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement 只讲负数",
+    "P2P 含 test_parse_invalid_types[CONSTRUCTOR / [SUM"
+   ],
+   "note": "公开材料足以推出 F2P（负数要被识别）。推不出的是两条**负向要求**：`dict(a=1, b=2)` 与 `1 + 2` 必须继续返回 `{}`。它们是 base 的既有行为，但题面没说要保持，而这恰是 `ast.literal_eval` 与手写解析器之间容易出分歧的地方（例如用 `eval` 或 `ast.literal_eval` 的宽松变体就会让 `1 + 2` 变成 3）。",
+   "by": "L1_dvc_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P/P2P 断言都是 `parse_py(text, \"foo\") == result`"
+   ],
+   "note": "只断言函数返回值，不锁实现。最小修法（给 `_get_ast_value` 补一个 `ast.UnaryOp` 分支）与 gold 的整体替换都能过全部 13 条。",
+   "by": "L1_dvc_2"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "F2P 只有 `UNARY_OP = -1` 一条",
+    "题面症状是 dvc repro"
+   ],
+   "note": "覆盖偏窄：只测 `-1`，不测负浮点 `-0.5`、`+1`、列表/字典里的负数（`LIST = [-1, 2]`）、类属性里的负数。题面的端到端症状（`dvc repro` 不再报 `Parameters ... are missing`）零覆盖。不过 12 条 P2P 把 parser 的类型面铺得比较全，硬编码式假修复很难通过。",
+   "by": "L1_dvc_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "smstat.json 6954: gold real=13 全 PASSED",
+    "P2P 12 条全部来自 test_patch 自己新增的参数化"
+   ],
+   "note": "**P2P 全部是本次 test_patch 新增的用例**（该测试文件在 base 上根本不存在），所以它们不是『既有回归』而是随修复一起交付的规格。它们质量不错（覆盖 bool/int/float/str/dict/list/set/tuple/None/class 与两条负向），但 `parse_py` 的真实调用面（`dvc/dependency/param.py` 的参数校验、`dvc repro`）零覆盖。",
+   "by": "L1_dvc_2"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "上游 --stat 两文件"
+   ],
+   "note": "gold 删掉 `_get_ast_value` 改用 `ast.literal_eval`，不依赖未交付改动；上层 `except ValueError: continue` 在 base 已有，`literal_eval` 抛的也是 ValueError，语义衔接正确。",
+   "by": "L1_dvc_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak.py: gold_added=7 ps_match=0 hints_match=0；hints_text 为空"
+   ],
+   "note": "题面不含修复代码，hints 为空。",
+   "by": "L1_dvc_2"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "smstat.json: gold 13/13 全 PASSED；deps_scan2.txt 本题未命中"
+   ],
+   "note": "不受 pathspec/networkx 影响。install 段仍需网络。",
+   "by": "L1_dvc_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只传字符串给 parse_py"
+   ],
+   "note": "无外部资产、无文件 I/O。",
+   "by": "L1_dvc_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 无 URL/requests"
+   ],
+   "note": "测试段纯内存。",
+   "by": "L1_dvc_2"
+  },
+  "18": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh `pytest -rA tests/unit/utils/serialize/test_python.py`；gold real=13 = F2P 1 + P2P 12"
+   ],
+   "note": "收集集合与 F2P∪P2P 完全相等（在截断后的键空间里），零过选零漏选。",
+   "by": "L1_dvc_2"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "empty 12 PASSED/1 FAILED；gold 13/13"
+   ],
+   "note": "分差恰为 F2P 一条。",
+   "by": "L1_dvc_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "参考 ID 全量截断",
+   "severity": "P2",
+   "evidence_refs": [
+    "13/13 条 ID 方括号不闭合",
+    "collide.py 输出",
+    "gold 日志实际 nodeid"
+   ],
+   "proposed_action": "与 L2 包的方案合并：按镜像实际 nodeid 重生成参考 ID，或给 parser 换成整行 nodeid。本题是『按参数文本生成 id』这一 pytest 惯例下截断最彻底的样本，适合做 parser 回归语料。",
+   "next_experiment": "把本题 gold 日志的 13 行摘要与期望 status_map 存成 parser 回归样例（可并入 L2 的 parser_samples/）。"
+  },
+  {
+   "category": "负向要求无题面依据",
+   "severity": "P3",
+   "evidence_refs": [
+    "P2P 的 CONSTRUCTOR / SUM 两条"
+   ],
+   "proposed_action": "题面补一句『只接受字面量，函数调用与表达式仍应被忽略』。",
+   "next_experiment": "写一个用 `eval` 实现的宽松版本跑 F2P+P2P，预期 `SUM = 1 + 2` 那条失败。"
+  },
+  {
+   "category": "覆盖偏窄 + 端到端零覆盖",
+   "severity": "P3",
+   "evidence_refs": [
+    "F2P 只有 UNARY_OP = -1"
+   ],
+   "proposed_action": "补负浮点、容器内负数、类属性负数；再补一条 `dvc repro` 端到端。",
+   "next_experiment": "在 base/gold 上跑 `LIST = [-1, 2]` 的解析对比。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只新建 tests/unit/utils/serialize/test_python.py；gold 只改 dvc/utils/serialize/_py.py。沿用第四组 B 默认空。",
+  "evidence_refs": [
+   "test_patch",
+   "golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "新增参数化：`NEG_FLOAT = -0.5`、`LIST = [-1, 2]`、`DICT = {'a': -1}`、类属性里的负数",
+   "reason": "gold 把整个取值路径换成 literal_eval，容器内部的负数是最容易出现分歧的地方，当前一条都没测。"
+  },
+  {
+   "id": "tests/unit/dependency/test_params.py（若该版本有）与 tests/func/test_stage.py 里 py params 的用例",
+   "reason": "`parse_py` 的真实调用面，当前零覆盖。"
+  },
+  {
+   "id": "tests/unit/utils/serialize/test_python.py::test_parse_invalid_types 两条（已在 P2P）",
+   "reason": "界定『只接受字面量』的边界，已覆盖。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "题面完整（6 步复现 + 精确错误）、gold 与上游一致、收集集合与参考集完全相等、13/13 全绿、P2P 铺了完整类型面且不锁实现。唯一结构性风险是 13/13 参考 ID 被空白截断（当前无碰撞），属仓库级待修项而非本题缺陷。"
+ },
+ "costs": {
+  "minutes": 16
+ },
+ "by": "L1_dvc_2 (Claude Opus 5, 2026-09-16, 静态审查)"
+}

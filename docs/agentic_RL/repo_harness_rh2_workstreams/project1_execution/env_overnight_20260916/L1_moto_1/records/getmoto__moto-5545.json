@@ -1,0 +1,108 @@
+{
+ "task_id": "getmoto__moto-5545",
+ "source": "swe_gym_lite_full_f70b1a29",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "s2/ingest/public_bundles_v0.jsonl#getmoto__moto-5545",
+  "grading": "s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-5545",
+  "validation": "s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-5545",
+  "base_commit": "1a8f93dce33f1c1c7983a8052ef54de30ff64407",
+  "version": "4.0",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5545/",
+  "other_signals": "in_e2=[]; fragile_reference_id=true; stage1 gold=RESOLVED_NO(p2p_missing=1)"
+ },
+ "public_view": {
+  "goal": "题面：往 S3Backend 写入大对象后调用 reset()，底层 TemporaryFile 句柄未关闭，gc.collect() 时报 ResourceWarning。期望 reset 关闭所有句柄。",
+  "constraints": [
+   "题面给出完整交互式复现（S3Backend/create_bucket/put_object 10MB/reset/gc.collect）",
+   "题面直接给出建议的修复代码（S3Backend.reset 的完整实现）",
+   "moto 4.0.6"
+  ],
+  "unknowns_from_public_only": [
+   "无实质未知项：题面把修复代码整段贴出，gold 只比它多一个 isinstance(key, FakeKey) 守卫"
+  ],
+  "base_code_located": [
+   "1a8f93dc:moto/s3/models.py:1421 附近 S3Backend.__init__，base 没有覆写 reset()",
+   "1a8f93dc:moto/s3/models.py:876 FakeBucket.multiparts —— 进行中的 multipart 上传也持有带 _value_buffer 的 parts"
+  ],
+  "public_view_conclusion": "公开材料即答案；只需把题面给的 reset() 粘进 S3Backend 并加一个类型守卫。"
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 只改 tests/test_s3/test_s3_multipart.py（base 存在）", "gold 只改 moto/s3/models.py（base 存在）", "1a8f93dc:tests/test_s3/test_s3_multipart.py:14 已有 `import moto.s3.models as s3model`"], "note": "目标文件均在 base 存在；test_patch 新增用例依赖的 s3model 导入在 base 已具备（test_patch 只补了 gc 与 warnings）；无二进制/LFS/子模块材料。", "by": "L1_moto_1"},
+  "2": {"status": "pass", "evidence_refs": ["1a8f93dc:moto/s3/models.py S3Backend 无 reset 覆写", "stage1:5545/empty F2P=FAILED"], "note": "base 确有缺陷。", "by": "L1_moto_1"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 无外链、无图片、无截断"], "note": "题面自足（且过度自足，见 check 29）。", "by": "L1_moto_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch paths = [tests/test_s3/test_s3_multipart.py]", "gold paths = [moto/s3/models.py]"], "note": "test_patch 只触碰纯测试文件；gold 不触碰测试样路径。additional_exclusions = []。", "by": "L1_moto_1"},
+  "5": {"status": "issue", "evidence_refs": ["与 getmoto__moto-5417 共用测试文件 tests/test_s3/test_s3_multipart.py", "与 getmoto__moto-5562 共用 gold 文件 moto/s3/models.py"], "note": "非同一 PR、非同一修复（5545 加 S3Backend.reset，5562 改 list/delimiter 逻辑，5417 改 responses 的 ACL 判定）。但本包 19 题中有 5 题集中在 moto/s3/，主题集中度偏高。", "by": "L1_moto_1"},
+  "6": {"status": "pass", "evidence_refs": ["stage1:5545 gold rc_install=0"], "note": "安装阶段正常。", "by": "L1_moto_1"},
+  "7": {"status": "pass", "evidence_refs": ["F2P 直接构造 S3Backend，不发 HTTP"], "note": "无外部服务。", "by": "L1_moto_1"},
+  "11": {"status": "pass", "evidence_refs": ["无权重/数据集下载"], "note": "", "by": "L1_moto_1"},
+  "17": {"status": "pass", "evidence_refs": ["同 check 4"], "note": "additional_exclusions = []。", "by": "L1_moto_1"},
+  "23": {"status": "pass", "evidence_refs": ["problem_statement 的复现与 F2P 结构一致（put 10MB → reset → gc.collect → 不应有 ResourceWarning）"], "note": "要求充分且一致。", "by": "L1_moto_1"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 只断言 warning_types 不含 ResourceWarning"], "note": "不绑定实现细节；任何关闭句柄的写法（覆写 reset、给 FakeKey 加 __del__/dispose、用 contextlib.closing 等）都能通过。", "by": "L1_moto_1"},
+  "25": {"status": "issue", "evidence_refs": ["test_patch 的 F2P 体内是 `s3.put_object(...)`（普通大对象写入），不涉及任何 multipart 上传", "validation.golden_patch 的 `if key.multipart is not None:` 分支", "1a8f93dc:moto/s3/models.py:876 FakeBucket.multiparts 未被 gold 的 reset 遍历"], "note": "两处放过：(a) F2P 名为 test_reset_after_multipart_upload_closes_file_handles，但实际只做普通 put_object，gold 里的 multipart 分支没有任何用例覆盖，删掉它也能满分；(b) 进行中的 multipart 上传存放在 bucket.multiparts 里，gold 完全没遍历，reset 后仍会泄漏句柄，同样无用例覆盖。因此“只关闭 bucket.keys 里普通 key 的 buffer”这一部分修复会被完整接受。", "by": "L1_moto_1"},
+  "26": {"status": "pass", "evidence_refs": ["见 proposed_regression_tests"], "note": "", "by": "L1_moto_1"},
+  "27": {"status": "issue", "evidence_refs": ["validation.golden_patch 与 raw.patch 完全一致（无夹带）", "gold 未遍历 bucket.multiparts"], "note": "gold 相关、最小、不依赖未交付改动，但不完整：进行中的 multipart 上传的 parts 句柄仍泄漏。作为 oracle 使用时需知其为部分修复。", "by": "L1_moto_1"},
+  "29": {"status": "issue", "evidence_refs": ["problem_statement `Adding this to S3Backend fixes the warning:` 后整段给出 reset() 实现", "validation.golden_patch 与该段仅差一个 `if isinstance(key, FakeKey):` 守卫与两行注释", "raw.hints_text `thanks for raising this and providing the fix!`"], "note": "题面直接给出可用的修复代码，属强泄漏（与 6913 同类，但 6913 是逐字相同，本题是“几乎相同”）。", "by": "L1_moto_1"}
+ },
+ "issues": [
+  {
+   "category": "grading_materials/id_encoding_mismatch",
+   "severity": "P1",
+   "evidence_refs": [
+    "grading.pass_to_pass 含 `tests/test_s3/test_s3_multipart.py::test_multipart_upload_with_copy_key[the-unicode-💩-key]`",
+    "stage1:5545/gold/offline/a1/status_map.json 无该 key（p2p_missing=1）",
+    "task_signals_swegym.json getmoto__moto-5545 stage1.gold.verdict = RESOLVED_NO"
+   ],
+   "proposed_action": "与 5701/5417/5562/6308 同因（pytest ascii_escaped 转义 vs 常量原始字符），统一在匹配层做归一化。",
+   "next_experiment": "见 5417 记录。"
+  },
+  {
+   "category": "static_leakage/fix_in_problem_statement",
+   "severity": "P1",
+   "evidence_refs": [
+    "problem_statement 中 `Adding this to S3Backend fixes the warning:` 之后的 7 行 Python 代码",
+    "validation.golden_patch 的新增块（仅多 isinstance 守卫与注释）"
+   ],
+   "proposed_action": "题面给出接近逐字的修复代码，训练信号接近于零。与 6913 同类。建议按同一规则处理：作为冒烟/最低档，或改写题面只保留 `gc.collect()` 后出现 ResourceWarning 的现象与复现，删去 'Adding this to S3Backend fixes the warning' 整段。",
+   "next_experiment": "与 6913 合并做同一个实验：对全 216 题的 gold 新增行在题面中做规范化子串匹配，产出泄漏清单与规模。"
+  },
+  {
+   "category": "test_fragility/global_gc_assertion",
+   "severity": "P2",
+   "evidence_refs": [
+    "test_patch F2P 体内 `with warnings.catch_warnings(record=True) as warning_list: warnings.simplefilter('always', ResourceWarning); s3.reset(); gc.collect()`",
+    "grading.eval_cmd = `pytest -n0 -rA`（整文件单进程顺序执行）",
+    "该用例追加在 tests/test_s3/test_s3_multipart.py 末尾，前面有大量做大文件上传的用例"
+   ],
+   "proposed_action": "断言是全局性的：gc.collect() 会回收整个进程此刻的所有垃圾，因此同文件里任何先前用例遗留的未关闭句柄都会让它失败，与本题修没修无关。反过来，若 gc 时机不同（对象尚未成为垃圾），它也可能在未修复时侥幸通过。这类“全局资源断言”在 RL 里会产生与 patch 无关的奖励噪声。建议：单独进程运行该用例（`-p no:randomly` + 单独 pytest 调用），或在准入时标记为“顺序敏感”。",
+   "next_experiment": "在容器里分别跑 `pytest -n0 tests/test_s3/test_s3_multipart.py`（整文件）与 `pytest -n0 tests/test_s3/test_s3_multipart.py::test_reset_after_multipart_upload_closes_file_handles`（单条），在 base 与 gold 下各跑 3 次，看结论是否稳定一致。"
+  },
+  {
+   "category": "gold_incomplete",
+   "severity": "P3",
+   "evidence_refs": [
+    "1a8f93dce33f1c1c7983a8052ef54de30ff64407:moto/s3/models.py:876 `self.multiparts = {}`",
+    "validation.golden_patch 的 reset() 只遍历 self.buckets[*].keys"
+   ],
+   "proposed_action": "进行中（未完成/未 abort）的 multipart 上传存在 bucket.multiparts 里，gold 的 reset 不遍历它，句柄仍泄漏；且 gold 中 `if key.multipart is not None` 这条分支没有任何用例触达（F2P 用的是普通 put_object）。建议补一条“创建 multipart 上传、上传若干 part、不 complete 直接 reset”的回归断言。",
+   "next_experiment": "写该用例在 gold 下跑一次，预期仍报 ResourceWarning，以确认 gold 为部分修复。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 tests/test_s3/test_s3_multipart.py（纯测试文件），gold 只触碰 moto/s3/models.py，二者不重叠。按第四组 B 默认空即可。",
+  "evidence_refs": ["grading.test_patch", "validation.golden_patch", "docs/.../batch4_scoring_20260910/README.md §0/§6.5"]
+ },
+ "proposed_regression_tests": [
+  {"id": "tests/test_s3/test_s3_multipart.py::test_deleting_large_upload_closes_file_handles", "reason": "同一 PR 新增、已在 P2P 内的姊妹用例，覆盖 delete 路径的句柄关闭"},
+  {"id": "tests/test_s3/test_s3.py::test_delete_versioned_objects", "reason": "reset 覆写会遍历 _VersionedKeyStore，版本化/删除标记对象是 isinstance 守卫的边界（FakeDeleteMarker 不是 FakeKey）"},
+  {"id": "tests/test_s3/test_s3_multipart.py::test_multipart_upload", "reason": "multipart 主路径，确认新 reset 不破坏正常上传"},
+  {"id": "tests/test_s3/test_s3_lifecycle.py", "reason": "同样依赖 S3Backend.reset 的另一组测试（不在 P2P 内），覆盖 reset 语义改动的外溢"},
+  {"id": "建议新增：创建 multipart 上传、上传 part、不 complete 直接 reset", "reason": "覆盖 gold 未处理的 bucket.multiparts 泄漏与从未被触达的 key.multipart 分支"}
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "两个独立阻塞：(a) 与 5701/5417/5562/6308 同因的非 ASCII P2P ID 导致 gold=RESOLVED_NO；(b) 题面近乎逐字给出修复代码，作为训练题学习信号极低。另有全局 gc 断言的顺序敏感风险需登记。修 (a) 后可作为冒烟档使用，作为训练题则需改写题面。"
+ },
+ "costs": {"minutes": 23}
+}

@@ -1,0 +1,2105 @@
+{
+  "summary": {
+    "tasks": 48,
+    "raw_reparse_matches": 48,
+    "ten_core_pass": 48,
+    "pip_present": 21,
+    "public_collect_rc": {
+      "0": 46,
+      "2": 1,
+      "4": 1
+    },
+    "public_run_rc": {
+      "0": 41,
+      "2": 1,
+      "1": 5,
+      "4": 1
+    },
+    "repro_flags": {
+      "1": 46,
+      "0": 2
+    },
+    "lock_header_enospc_released": true
+  },
+  "rows": [
+    {
+      "instance_id": "aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52",
+      "disposition": "environment_qualified",
+      "classification": "solver_condition",
+      "raw_ref": "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": true,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1 (exception raised AND logged 1 time(s))"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "公开测试 tests/test_base_protocol.py 收集 20、运行 20 passed；公开复现 REPRO_OBSERVED=1（raised + logged 1 次）。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/dev_probe.json",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52.py"
+        ],
+        "by": "p1-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "solver_condition",
+          "scope": "repo:aiohttp",
+          "summary": "aiohttp 没装进 venv（site-packages 无副本、无 .pth），只有 cwd=/testbed（python -c / -m pytest）时可导入；/tmp 下 ModuleNotFoundError；放在 /testbed 以外的脚本要自己把 /testbed 加进 sys.path（或 PYTHONPATH=/testbed）。裸 `pytest`（venv 入口脚本，sys.path[0] 是 .venv/bin）收集即 ImportError（3.x：加载 tests/conftest.py 失败 rc 4；0.x：导入测试模块失败 rc 2），`python -m pytest` 或 `PYTHONPATH=/testbed pytest` 正常（事后诊断 posthoc3 在 1c1c0ea3 / 22a12cc2 / 240da100 / 61833518 实测；4075c653 同一 install.sh、未单测）。隐藏测试入口用的是 `python -m pytest`，评分不受影响。本池 5 张 aiohttp 镜像同一 install.sh（其中 make .develop 没有留下 editable 安装；原因未查）。",
+          "proposed_action": "作为解题侧条件写进题包 / 系统提示（E10，由任务面决定）；不改环境。",
+          "status": "proposed",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/dev_probe.json",
+            "runs/env_overnight_20260916/M3/facts/1c1c0ea35304/pkgsrc.txt",
+            "runs/r2e_env_repair_20260924/p1/dev_probe_posthoc3/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/dev_probe.json",
+            "runs/r2e_env_repair_20260924/p1/posthoc3/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52.py"
+          ]
+        },
+        {
+          "category": "reference",
+          "scope": "task",
+          "summary": "期望里 TestShutdown.test_shutdown_handler_cancellation_suppressed=PASSED，但来源宿主机记录新旧提交都 FAILED（0.4 s 超时下 ConnectionRefusedError）；RH2 / M3 至今都 PASSED。时序敏感嫌疑，可能在高负载下翻转成 gold=0。",
+          "proposed_action": "中央复跑（R13）看该键；若出现翻转，再考虑逐题资源档位或材料提案。",
+          "status": "open",
+          "evidence_refs": [
+            "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl",
+            "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-a_dcbb1d7a.eval.log"
+          ]
+        }
+      ]
+    },
+    {
+      "instance_id": "aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac",
+      "disposition": "environment_qualified",
+      "classification": "solver_condition",
+      "raw_ref": "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": true,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=0 reason=direct HTTPS already raises ServerFingerprintMismatch on base"
+      ],
+      "R09": {
+        "status": "issue",
+        "note": "公开测试 tests/test_base_protocol.py 收集 20、20 passed。按题面写的公开复现未观察到所述行为（REPRO_OBSERVED=0：直连已抛 ServerFingerprintMismatch）；事后诊断经本机 CONNECT 代理可离线复现（REPRO_OBSERVED=1）。即：环境支持本地验证，但照题面做复现会得到\"base 没问题\"的结论——归因见 R03。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac/dev_probe.json",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac.py",
+          "runs/r2e_env_repair_20260924/p1/dev_probe_posthoc/aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p1/posthoc/aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac.py"
+        ],
+        "by": "p1-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "solver_condition",
+          "scope": "repo:aiohttp",
+          "summary": "aiohttp 没装进 venv（site-packages 无副本、无 .pth），只有 cwd=/testbed（python -c / -m pytest）时可导入；/tmp 下 ModuleNotFoundError；放在 /testbed 以外的脚本要自己把 /testbed 加进 sys.path（或 PYTHONPATH=/testbed）。裸 `pytest`（venv 入口脚本，sys.path[0] 是 .venv/bin）收集即 ImportError（3.x：加载 tests/conftest.py 失败 rc 4；0.x：导入测试模块失败 rc 2），`python -m pytest` 或 `PYTHONPATH=/testbed pytest` 正常（事后诊断 posthoc3 在 1c1c0ea3 / 22a12cc2 / 240da100 / 61833518 实测；4075c653 同一 install.sh、未单测）。隐藏测试入口用的是 `python -m pytest`，评分不受影响。本池 5 张 aiohttp 镜像同一 install.sh（其中 make .develop 没有留下 editable 安装；原因未查）。",
+          "proposed_action": "作为解题侧条件写进题包 / 系统提示（E10，由任务面决定）；不改环境。",
+          "status": "proposed",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac/dev_probe.json",
+            "runs/env_overnight_20260916/M3/facts/22a12cc2e2ef/pkgsrc.txt",
+            "runs/r2e_env_repair_20260924/p1/dev_probe_posthoc3/aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac/dev_probe.json",
+            "runs/r2e_env_repair_20260924/p1/posthoc3/aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac.py"
+          ]
+        },
+        {
+          "category": "material",
+          "scope": "task",
+          "summary": "（公开题面，非 expected / 隐藏测试 / gold）题面没说缺陷只在经 HTTP 代理 CONNECT 的 HTTPS 路径上；题面示例的直连场景在 base 上已正确抛 ServerFingerprintMismatch，示例里的指纹字符串在此版本还会直接 ValueError。",
+          "proposed_action": "交后续题意筛查（清单 §6）决定补一句题面（例如 \"including HTTPS requests sent through an HTTP proxy (CONNECT)\"）或降权；本轮不改题面。",
+          "status": "open",
+          "evidence_refs": [
+            "runs/r2e_rf_20260923/remote/prepared_r2e/prompts.jsonl",
+            "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac/dev_probe.json",
+            "runs/r2e_env_repair_20260924/p1/dev_probe_posthoc/aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac/dev_probe.json",
+            "runs/env_overnight_20260916/M3/facts/22a12cc2e2ef/r2e_tests/test_1.py"
+          ]
+        }
+      ]
+    },
+    {
+      "instance_id": "aiohttp__240da100151933883d7dea0528d45877df025b92",
+      "disposition": "environment_qualified",
+      "classification": "solver_condition",
+      "raw_ref": "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__240da100151933883d7dea0528d45877df025b92/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "2",
+      "public_run_rc": "2",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1 (port dropped; expected 'http://localhost:1234/path')"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "探针默认选的 tests/test_client.py 收集失败：文件第 647/682/701 行仍是 asyncio.async(（Python 3.7+ 关键字，SyntaxError；来源镜像的改写脚本只处理了 aiohttp/，没处理 tests/）——不是 conftest / 插件 / 依赖原因。与题目相关的 tests/test_connector.py：收集 32、运行 30 passed / 2 failed（正是期望标 FAILED 的两个 3.9 不兼容用例）。公开复现 REPRO_OBSERVED=1。注意 `pytest tests/` 整目录会被 test_client.py 的收集错误中断。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__240da100151933883d7dea0528d45877df025b92/dev_probe.json",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/aiohttp__240da100151933883d7dea0528d45877df025b92.py",
+          "runs/r2e_env_repair_20260924/p1/dev_probe_posthoc2/aiohttp__240da100151933883d7dea0528d45877df025b92/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p1/posthoc2/aiohttp__240da100151933883d7dea0528d45877df025b92.py",
+          "runs/r2e_env_repair_20260924/p1/dev_probe_posthoc/aiohttp__240da100151933883d7dea0528d45877df025b92/dev_probe.json"
+        ],
+        "by": "p1-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "solver_condition",
+          "scope": "repo:aiohttp",
+          "summary": "aiohttp 没装进 venv（site-packages 无副本、无 .pth），只有 cwd=/testbed（python -c / -m pytest）时可导入；/tmp 下 ModuleNotFoundError；放在 /testbed 以外的脚本要自己把 /testbed 加进 sys.path（或 PYTHONPATH=/testbed）。裸 `pytest`（venv 入口脚本，sys.path[0] 是 .venv/bin）收集即 ImportError（3.x：加载 tests/conftest.py 失败 rc 4；0.x：导入测试模块失败 rc 2），`python -m pytest` 或 `PYTHONPATH=/testbed pytest` 正常（事后诊断 posthoc3 在 1c1c0ea3 / 22a12cc2 / 240da100 / 61833518 实测；4075c653 同一 install.sh、未单测）。隐藏测试入口用的是 `python -m pytest`，评分不受影响。本池 5 张 aiohttp 镜像同一 install.sh（其中 make .develop 没有留下 editable 安装；原因未查）。",
+          "proposed_action": "作为解题侧条件写进题包 / 系统提示（E10，由任务面决定）；不改环境。",
+          "status": "proposed",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__240da100151933883d7dea0528d45877df025b92/dev_probe.json",
+            "runs/env_overnight_20260916/M3/facts/240da1001519/pkgsrc.txt",
+            "runs/r2e_env_repair_20260924/p1/dev_probe_posthoc3/aiohttp__240da100151933883d7dea0528d45877df025b92/dev_probe.json",
+            "runs/r2e_env_repair_20260924/p1/posthoc3/aiohttp__240da100151933883d7dea0528d45877df025b92.py"
+          ]
+        },
+        {
+          "category": "solver_condition",
+          "scope": "task",
+          "summary": "venv 里没有 pip（python -m pip：No module named pip），uv 也不在 PATH；解题者不能装包（本来也无网络）。",
+          "proposed_action": "作为解题侧条件记录（E10）；不改环境。",
+          "status": "proposed",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__240da100151933883d7dea0528d45877df025b92/dev_probe.json",
+            "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__240da100151933883d7dea0528d45877df025b92/agent_probe.log"
+          ]
+        },
+        {
+          "category": "solver_condition",
+          "scope": "repo:aiohttp(0.x: 240da100, 61833518)",
+          "summary": "Python 3.9 上跑 2014–2015 年的 aiohttp：真实客户端 / 服务端路径不可用（3.9 asyncio 不兼容 + 来源镜像 create_task(loop=) 改写本身无效）；tests/test_client.py 因 asyncio.async( SyntaxError 无法收集，`pytest tests/` 整目录会中断；题目相关的 tests/test_connector.py 可用（30/32，2 个已知失败即期望 FAILED 键）。",
+          "proposed_action": "作为解题侧条件声明（建议跑单个模块而非整目录）；不修改写（改基线代码会改变期望 FAILED 键的语义，属材料修订，当前不建议）。",
+          "status": "proposed",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p1/dev_probe_posthoc2/aiohttp__240da100151933883d7dea0528d45877df025b92/dev_probe.json",
+            "runs/r2e_env_repair_20260924/p1/posthoc2/aiohttp__240da100151933883d7dea0528d45877df025b92.py",
+            "runs/env_overnight_20260916/M3/facts/240da1001519/facts/initial.diff",
+            "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-a_508fe701.eval.log"
+          ]
+        }
+      ]
+    },
+    {
+      "instance_id": "aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a",
+      "disposition": "environment_qualified",
+      "classification": "solver_condition",
+      "raw_ref": "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": true,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1 (not rejected as required: ['invalid_header', 'malformed_status_line'])"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "公开测试 tests/test_base_protocol.py 收集 20、20 passed；公开复现 REPRO_OBSERVED=1（invalid_header 与 malformed_status_line 都被接受）。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/dev_probe.json",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a.py"
+        ],
+        "by": "p1-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "solver_condition",
+          "scope": "repo:aiohttp",
+          "summary": "aiohttp 没装进 venv（site-packages 无副本、无 .pth），只有 cwd=/testbed（python -c / -m pytest）时可导入；/tmp 下 ModuleNotFoundError；放在 /testbed 以外的脚本要自己把 /testbed 加进 sys.path（或 PYTHONPATH=/testbed）。裸 `pytest`（venv 入口脚本，sys.path[0] 是 .venv/bin）收集即 ImportError（3.x：加载 tests/conftest.py 失败 rc 4；0.x：导入测试模块失败 rc 2），`python -m pytest` 或 `PYTHONPATH=/testbed pytest` 正常（事后诊断 posthoc3 在 1c1c0ea3 / 22a12cc2 / 240da100 / 61833518 实测；4075c653 同一 install.sh、未单测）。隐藏测试入口用的是 `python -m pytest`，评分不受影响。本池 5 张 aiohttp 镜像同一 install.sh（其中 make .develop 没有留下 editable 安装；原因未查）。",
+          "proposed_action": "作为解题侧条件写进题包 / 系统提示（E10，由任务面决定）；不改环境。",
+          "status": "proposed",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/dev_probe.json",
+            "runs/env_overnight_20260916/M3/facts/4075c653fb67/pkgsrc.txt"
+          ]
+        }
+      ]
+    },
+    {
+      "instance_id": "aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2",
+      "disposition": "environment_qualified",
+      "classification": "solver_condition",
+      "raw_ref": "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "0",
+      "public_run_rc": "1",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1 (empty chunk(s) written: True; chunked stream ends early: True)"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "探针默认选的 tests/test_client_functional.py 能收集 60 个，但运行大面积失败，根因 TypeError: create_task() got an unexpected keyword argument 'loop'（镜像改写）；与题目相关的 tests/test_http_protocol.py：收集 47、47 passed。公开复现 REPRO_OBSERVED=1。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/dev_probe.json",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2.py",
+          "runs/r2e_env_repair_20260924/p1/dev_probe_posthoc2/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p1/posthoc2/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2.py",
+          "runs/r2e_env_repair_20260924/p1/dev_probe_posthoc/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/dev_probe.json"
+        ],
+        "by": "p1-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "solver_condition",
+          "scope": "repo:aiohttp",
+          "summary": "aiohttp 没装进 venv（site-packages 无副本、无 .pth），只有 cwd=/testbed（python -c / -m pytest）时可导入；/tmp 下 ModuleNotFoundError；放在 /testbed 以外的脚本要自己把 /testbed 加进 sys.path（或 PYTHONPATH=/testbed）。裸 `pytest`（venv 入口脚本，sys.path[0] 是 .venv/bin）收集即 ImportError（3.x：加载 tests/conftest.py 失败 rc 4；0.x：导入测试模块失败 rc 2），`python -m pytest` 或 `PYTHONPATH=/testbed pytest` 正常（事后诊断 posthoc3 在 1c1c0ea3 / 22a12cc2 / 240da100 / 61833518 实测；4075c653 同一 install.sh、未单测）。隐藏测试入口用的是 `python -m pytest`，评分不受影响。本池 5 张 aiohttp 镜像同一 install.sh（其中 make .develop 没有留下 editable 安装；原因未查）。",
+          "proposed_action": "作为解题侧条件写进题包 / 系统提示（E10，由任务面决定）；不改环境。",
+          "status": "proposed",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/dev_probe.json",
+            "runs/env_overnight_20260916/M3/facts/618335186f22/pkgsrc.txt",
+            "runs/r2e_env_repair_20260924/p1/dev_probe_posthoc3/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/dev_probe.json",
+            "runs/r2e_env_repair_20260924/p1/posthoc3/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2.py"
+          ]
+        },
+        {
+          "category": "solver_condition",
+          "scope": "task",
+          "summary": "venv 里没有 pip（python -m pip：No module named pip），uv 也不在 PATH；解题者不能装包（本来也无网络）。",
+          "proposed_action": "作为解题侧条件记录（E10）；不改环境。",
+          "status": "proposed",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/dev_probe.json",
+            "runs/r2e_env_repair_20260924/p1/dev_probe/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/agent_probe.log"
+          ]
+        },
+        {
+          "category": "solver_condition",
+          "scope": "repo:aiohttp(0.x: 240da100, 61833518)",
+          "summary": "来源镜像的 asyncio.async → create_task(loop=) 改写在 Python 3.9 上无效，真实客户端 / 服务端路径 TypeError；tests/test_client_functional.py 基本全挂。与题目相关的 tests/test_http_protocol.py 47/47 通过。",
+          "proposed_action": "作为解题侧条件声明（建议跑 tests/test_http_protocol.py 而非整目录）；不修改写（会改基线代码，属材料修订，当前不建议）。",
+          "status": "proposed",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p1/dev_probe_posthoc2/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/dev_probe.json",
+            "runs/r2e_env_repair_20260924/p1/posthoc2/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2.py",
+            "runs/env_overnight_20260916/M3/facts/618335186f22/facts/initial.diff"
+          ]
+        }
+      ]
+    },
+    {
+      "instance_id": "coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae",
+      "disposition": "held_material",
+      "classification": "material",
+      "raw_ref": "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": true,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1 (UnicodeEncodeError on save in variant(s) ['B'])"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "公开测试 tests/test_annotate.py 收集 4、运行 rc 0（xdist）；公开复现 REPRO_OBSERVED=1（变体 B）。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/dev_probe.json",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae.py"
+        ],
+        "by": "p1-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "reference",
+          "scope": "task",
+          "summary": "期望 MockingProtectionTest.test_os_path_exists=FAILED 来自宿主机检出的执行（子进程缺 mock），发布镜像里 13/13 PASSED → gold 14/15、reward 0。",
+          "proposed_action": "材料修订提案：该题 expected_v1 把该键改为 PASSED（方案 A）；备选 B（移出评分，需改隐藏测试或 grader）/ C（隔离）。T0，用户决定。",
+          "status": "proposed",
+          "evidence_refs": [
+            "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-c_2c95f1f9.eval.log",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl",
+            "runs/env_overnight_20260916/M3/facts/016af5f6352d/facts/pip_freeze.txt",
+            "runs/r2e_rf_20260923/reconcile_all/reconcile.json",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae.md"
+          ]
+        }
+      ]
+    },
+    {
+      "instance_id": "coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9",
+      "disposition": "environment_qualified",
+      "classification": "env_ok",
+      "raw_ref": "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": true,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1 (TypeError on once=)"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "公开测试 tests/test_annotate.py 收集 4、运行 rc 0；公开复现 REPRO_OBSERVED=1。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/dev_probe.json",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9.py"
+        ],
+        "by": "p1-subagent"
+      },
+      "known_issues": []
+    },
+    {
+      "instance_id": "coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266",
+      "disposition": "environment_qualified",
+      "classification": "env_ok",
+      "raw_ref": "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": true,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1 (paths option rejected)"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "公开测试 tests/test_annotate.py 收集 4、运行 rc 0；公开复现 REPRO_OBSERVED=1。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266/dev_probe.json",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/coveragepy__97997d2cd6801d0335e3fa162b719d6f8c160266.py"
+        ],
+        "by": "p1-subagent"
+      },
+      "known_issues": []
+    },
+    {
+      "instance_id": "coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5",
+      "disposition": "environment_qualified",
+      "classification": "solver_condition",
+      "raw_ref": "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1 (no .gitignore in the HTML output directory)"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "公开测试 tests/test_annotate.py 收集 4、运行 rc 0；公开复现 REPRO_OBSERVED=1。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/dev_probe.json",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5.py"
+        ],
+        "by": "p1-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "solver_condition",
+          "scope": "task",
+          "summary": "venv 里没有 pip（python -m pip：No module named pip），uv 也不在 PATH；解题者不能装包（本来也无网络）。",
+          "proposed_action": "作为解题侧条件记录（E10）；不改环境。",
+          "status": "proposed",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/dev_probe.json",
+            "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/agent_probe.log"
+          ]
+        }
+      ]
+    },
+    {
+      "instance_id": "coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96",
+      "disposition": "environment_qualified",
+      "classification": "env_ok",
+      "raw_ref": "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": true,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1 (totals missing ['covered_branches', 'missing_branches'])"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "公开测试 tests/test_annotate.py 收集 4、运行 rc 0；公开复现 REPRO_OBSERVED=1。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p1/dev_probe/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/dev_probe.json",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96.py"
+        ],
+        "by": "p1-subagent"
+      },
+      "known_issues": []
+    },
+    {
+      "instance_id": "datalad__16c1ffc349df566151db0beb6d355ca27266bb8c",
+      "disposition": "environment_qualified",
+      "classification": "solver_condition",
+      "raw_ref": "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "探针公开测试 datalad/tests/test__main__.py：收集 ok、运行 rc 0。补充检查（按 gold 触碰文件选同目录测试，uid 54321 同级条件，事后选择）：datalad/interface/tests/test_utils.py：3 passed / 5 errors（fixture 'path' not found，与改动无关）；plain 与 -W ignore 相同。公开复现 REPRO_RC=0、REPRO_OBSERVED=1。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p2/pubtests/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c.py",
+          "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+        ],
+        "by": "run_dev_probe.py + p2-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "solver_condition",
+          "scope": "repo:datalad（本批 5 题）",
+          "summary": "agent HOME（空 tmpfs）没有 git 身份：datalad 建数据集 / 提交会失败（Author identity unknown）；较新版本导入时打印 git 身份警告。本题复现没有涉及 git 操作，同一初始化，推断相同。",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__16c1ffc349df566151db0beb6d355ca27266bb8c/dev_probe.json"
+          ],
+          "proposed_action": "记入解题侧条件；或由 rollout 初始化为 agent 写入 git 身份（A 线接缝，本轮不改）。评分不受影响：隐藏 conftest 自带临时 HOME + git 身份。",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "instance_id": "datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb",
+      "disposition": "environment_qualified",
+      "classification": "solver_condition",
+      "raw_ref": "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "探针公开测试 datalad/tests/test__main__.py：收集 ok、运行 rc 0。补充检查（按 gold 触碰文件选同目录测试，uid 54321 同级条件，事后选择）：datalad/cli/tests/test_main.py：18 passed / 1 skipped（13 s）。公开复现 REPRO_RC=0、REPRO_OBSERVED=1。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p2/pubtests/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb.py",
+          "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+        ],
+        "by": "run_dev_probe.py + p2-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "solver_condition",
+          "scope": "repo:datalad（本批 5 题）",
+          "summary": "agent HOME（空 tmpfs）没有 git 身份：datalad 建数据集 / 提交会失败（Author identity unknown）；较新版本导入时打印 git 身份警告。本题复现实测 create 失败，设 GIT_AUTHOR_* / GIT_COMMITTER_* 后可继续。",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/dev_probe.json",
+            "runs/r2e_env_repair_20260924/p2/precheck/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb.log"
+          ],
+          "proposed_action": "记入解题侧条件；或由 rollout 初始化为 agent 写入 git 身份（A 线接缝，本轮不改）。评分不受影响：隐藏 conftest 自带临时 HOME + git 身份。",
+          "status": "verified"
+        }
+      ]
+    },
+    {
+      "instance_id": "datalad__58ba5165234cb16de0e8463ee75097362099835f",
+      "disposition": "held_material",
+      "classification": "material",
+      "raw_ref": "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__58ba5165234cb16de0e8463ee75097362099835f/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "探针公开测试 datalad/tests/test__main__.py：收集 ok、运行 rc 0。补充检查（按 gold 触碰文件选同目录测试，uid 54321 同级条件，事后选择）：datalad/cli/tests/test_interface.py 2 passed、datalad/interface/tests/test_docs.py 2 passed（base 上的 demo_doc 不含方括号示例，公开测试不暴露该缺陷）。公开复现 REPRO_RC=0、REPRO_OBSERVED=1。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__58ba5165234cb16de0e8463ee75097362099835f/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p2/pubtests/datalad__58ba5165234cb16de0e8463ee75097362099835f.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/datalad__58ba5165234cb16de0e8463ee75097362099835f.py",
+          "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+        ],
+        "by": "run_dev_probe.py + p2-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "material",
+          "scope": "task",
+          "summary": "隐藏 test_1 从仓库内修复前的 datalad/interface/tests/test_docs.py 导入 demo_doc / demo_paramdoc（上游修复提交改了它，gold 按规则排除测试路径，R2E 只把新版放进 r2e_tests/test_2.py），test_alter_interface_docs_for_cmdline 在任何源码修复下都 FAILED → gold 3/4。",
+          "evidence_refs": [
+            "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-d_d14560df.eval.log",
+            "runs/r2e_env_repair_20260924/p2/dryrun_58ba/hash.log",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/datalad__58ba5165234cb16de0e8463ee75097362099835f.md",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl",
+            "rh2/src/repoharness2/envpack/r2e_parsers.py#L143"
+          ],
+          "proposed_action": "提案（T0）：推荐 B1（test_1 改为 from .test_2 import …，新材料版本 + 重建该题派生镜像），决定前先 C2 隔离；dry-run 已验证 B1 / A 下 gold 4/4、noop 2/4。",
+          "status": "proposed"
+        },
+        {
+          "category": "solver_condition",
+          "scope": "repo:datalad（本批 5 题）",
+          "summary": "agent HOME（空 tmpfs）没有 git 身份：datalad 建数据集 / 提交会失败（Author identity unknown）；较新版本导入时打印 git 身份警告。本题复现没有涉及 git 操作，同一初始化，推断相同。",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__58ba5165234cb16de0e8463ee75097362099835f/dev_probe.json"
+          ],
+          "proposed_action": "记入解题侧条件；或由 rollout 初始化为 agent 写入 git 身份（A 线接缝，本轮不改）。评分不受影响：隐藏 conftest 自带临时 HOME + git 身份。",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "instance_id": "datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb",
+      "disposition": "environment_qualified",
+      "classification": "solver_condition",
+      "raw_ref": "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1 (expected ('ssh:implicit', 'weired_url', '/'))"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "探针公开测试 datalad/tests/test__main__.py：收集 ok、运行 rc 0。补充检查（按 gold 触碰文件选同目录测试，uid 54321 同级条件，事后选择）：datalad/tests/test_network.py：16 passed / 1 failed（test_get_local_file_url_linux，同上）/ 1 xfailed；plain 与 -W ignore 相同。公开复现 REPRO_RC=0、REPRO_OBSERVED=1。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p2/pubtests/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb.py",
+          "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+        ],
+        "by": "run_dev_probe.py + p2-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "solver_condition",
+          "scope": "repo:datalad（本批 5 题）",
+          "summary": "agent HOME（空 tmpfs）没有 git 身份：datalad 建数据集 / 提交会失败（Author identity unknown）；较新版本导入时打印 git 身份警告。本题复现没有涉及 git 操作，同一初始化，推断相同。",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/dev_probe.json"
+          ],
+          "proposed_action": "记入解题侧条件；或由 rollout 初始化为 agent 写入 git 身份（A 线接缝，本轮不改）。评分不受影响：隐藏 conftest 自带临时 HOME + git 身份。",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "instance_id": "datalad__9ba5de094ea326e6fd5773f21c7de1776ec0fa69",
+      "disposition": "environment_qualified",
+      "classification": "solver_condition",
+      "raw_ref": "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__9ba5de094ea326e6fd5773f21c7de1776ec0fa69/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "探针公开测试 datalad/tests/test__main__.py：收集 ok、运行 rc 0。补充检查（按 gold 触碰文件选同目录测试，uid 54321 同级条件，事后选择）：datalad/interface/tests/test_utils.py：2 passed / 5 errors（fixture 'path' not found，与改动无关）。公开复现 REPRO_RC=0、REPRO_OBSERVED=1。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__9ba5de094ea326e6fd5773f21c7de1776ec0fa69/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p2/pubtests/datalad__9ba5de094ea326e6fd5773f21c7de1776ec0fa69.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/datalad__9ba5de094ea326e6fd5773f21c7de1776ec0fa69.py",
+          "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+        ],
+        "by": "run_dev_probe.py + p2-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "solver_condition",
+          "scope": "repo:datalad（本批 5 题）",
+          "summary": "agent HOME（空 tmpfs）没有 git 身份：datalad 建数据集 / 提交会失败（Author identity unknown）；较新版本导入时打印 git 身份警告。本题复现没有涉及 git 操作，同一初始化，推断相同。",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__9ba5de094ea326e6fd5773f21c7de1776ec0fa69/dev_probe.json"
+          ],
+          "proposed_action": "记入解题侧条件；或由 rollout 初始化为 agent 写入 git 身份（A 线接缝，本轮不改）。评分不受影响：隐藏 conftest 自带临时 HOME + git 身份。",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "instance_id": "numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9",
+      "disposition": "environment_qualified",
+      "classification": "solver_condition",
+      "raw_ref": "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "探针公开测试 numpy/tests/test_ctypeslib.py：收集 ok、运行 rc 0。补充检查（按 gold 触碰文件选同目录测试，uid 54321 同级条件，事后选择）：numpy/lib/tests/test_polynomial.py：10 passed。公开复现 REPRO_RC=0、REPRO_OBSERVED=1。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p2/pubtests/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9.py"
+        ],
+        "by": "run_dev_probe.py + p2-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "solver_condition",
+          "scope": "repo:numpy（本批 7 题）",
+          "summary": "numpy 就地构建、未装进 venv：/testbed 在 sys.path 上才能 import numpy；脚本放在 /testbed 之外（如 /tmp/x.py）即使 cwd=/testbed 也 ModuleNotFoundError；裸 pytest 收集失败，要用 python -m pytest（18b7cd9d 实测）。",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/dev_probe.json",
+            "runs/env_overnight_20260916/M3/facts/18b7cd9df7a4/pkgsrc.txt",
+            "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9/agent_probe.log",
+            "runs/r2e_env_repair_20260924/p2/followups/bare_pytest.log"
+          ],
+          "proposed_action": "记入解题侧条件（E10）；是否写进题包 / 系统提示由后续任务面决定（可给 PYTHONPATH=/testbed 或\"脚本放进 /testbed\"）。",
+          "status": "verified"
+        }
+      ]
+    },
+    {
+      "instance_id": "numpy__2f4a965019722c3c56f43433bfa4a99c4c083138",
+      "disposition": "qualified_with_recipe",
+      "classification": "resource",
+      "raw_ref": "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__2f4a965019722c3c56f43433bfa4a99c4c083138/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1 (not ValueError for: 0D,3D)"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "探针公开测试 numpy/tests/test_ctypeslib.py：收集 ok、运行 rc 0。补充检查（按 gold 触碰文件选同目录测试，uid 54321 同级条件，事后选择）：numpy/lib/tests/test_io.py：140 passed / 1 failed（test_big_arrays：OSError Not enough free space to write 2147583648 bytes——rollout 同级 /tmp 1 GiB 下与改动无关）。公开复现 REPRO_RC=0、REPRO_OBSERVED=1。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__2f4a965019722c3c56f43433bfa4a99c4c083138/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p2/pubtests/numpy__2f4a965019722c3c56f43433bfa4a99c4c083138.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/numpy__2f4a965019722c3c56f43433bfa4a99c4c083138.py",
+          "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+        ],
+        "by": "run_dev_probe.py + p2-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "resource",
+          "scope": "task",
+          "summary": "默认 1 GiB /tmp 下 test_big_arrays OSError（gold 141/142）；逐题配方 v1：/tmp 6 GiB + 内存 12 GiB，gold 142/142（两次）。",
+          "evidence_refs": [
+            "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/recipes/task_resources_v1.json",
+            "runs/r2e_env_repair_20260924/p2/_rerun2/ledger_numpy_bigtmp_gold.jsonl",
+            "runs/r2e_rf_20260923/remote/ledger_r2e_numpy_bigtmp_gold.jsonl"
+          ],
+          "proposed_action": "按 E04 使用 recipes/task_resources_v1.json；正式消费方式（题包字段或运行期覆盖）留给流水线接入。",
+          "status": "verified"
+        },
+        {
+          "category": "solver_condition",
+          "scope": "repo:numpy（本批 7 题）",
+          "summary": "numpy 就地构建、未装进 venv：/testbed 在 sys.path 上才能 import numpy；脚本放在 /testbed 之外（如 /tmp/x.py）即使 cwd=/testbed 也 ModuleNotFoundError；裸 pytest 收集失败，要用 python -m pytest（18b7cd9d 实测）。",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__2f4a965019722c3c56f43433bfa4a99c4c083138/dev_probe.json",
+            "runs/env_overnight_20260916/M3/facts/2f4a96501972/pkgsrc.txt",
+            "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__2f4a965019722c3c56f43433bfa4a99c4c083138/agent_probe.log",
+            "runs/r2e_env_repair_20260924/p2/followups/bare_pytest.log"
+          ],
+          "proposed_action": "记入解题侧条件（E10）；是否写进题包 / 系统提示由后续任务面决定（可给 PYTHONPATH=/testbed 或\"脚本放进 /testbed\"）。",
+          "status": "verified"
+        },
+        {
+          "category": "solver_condition",
+          "scope": "task",
+          "summary": "rollout 的 /tmp 也是 1 GiB：解题者跑公开 numpy/lib/tests/test_io.py 时 test_big_arrays 在 base 上就失败（OSError），与改动无关，容易误导。",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p2/pubtests/numpy__2f4a965019722c3c56f43433bfa4a99c4c083138.log",
+            "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+          ],
+          "proposed_action": "记入解题侧条件（该用例在 rollout 资源下必失败）；rollout 侧不跟着放大 /tmp（grader 配方 rollout=null）。",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "instance_id": "numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d",
+      "disposition": "environment_qualified",
+      "classification": "solver_condition",
+      "raw_ref": "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "4",
+      "public_run_rc": "4",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1 (expected 1.5)"
+      ],
+      "R09": {
+        "status": "issue",
+        "note": "探针公开测试 numpy/tests/test__all__.py：收集 rc 4、运行 rc 4（conftest 加载失败）。补充检查（按 gold 触碰文件选同目录测试，uid 54321 同级条件）：仓库内 numpy 测试整体收集失败：numpy/ma/tests/test_extras.py 与 numpy/tests/test__all__.py 都 rc 4（numpy/conftest.py:33 调 hypothesis.HealthCheck.all()，hypothesis 6.124.1 发 HypothesisDeprecationWarning，pytest.ini filterwarnings=error 把它变成错误；-W ignore / -W ignore::DeprecationWarning 都无效）。绕法 -o filterwarnings=ignore 或 --noconftest 后 test_extras.py 78 passed / 10 failed（pytest 8.3.4 不再调用 nose 风格 setup(self)：TestCov / TestCorrcoef 缺 data 属性）。公开复现 REPRO_OBSERVED=1。解题者不能直接跑仓库自带测试验证改动；隐藏测试不受影响。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p2/pubtests/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d.log",
+          "runs/r2e_env_repair_20260924/p2/followups/followups.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d.py"
+        ],
+        "by": "run_dev_probe.py + p2-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "solver_condition",
+          "scope": "repo:numpy（本批 7 题）",
+          "summary": "numpy 就地构建、未装进 venv：/testbed 在 sys.path 上才能 import numpy；脚本放在 /testbed 之外（如 /tmp/x.py）即使 cwd=/testbed 也 ModuleNotFoundError；裸 pytest 收集失败，要用 python -m pytest（18b7cd9d 实测）。",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/dev_probe.json",
+            "runs/env_overnight_20260916/M3/facts/43e333e2ff64/pkgsrc.txt",
+            "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/agent_probe.log",
+            "runs/r2e_env_repair_20260924/p2/followups/bare_pytest.log"
+          ],
+          "proposed_action": "记入解题侧条件（E10）；是否写进题包 / 系统提示由后续任务面决定（可给 PYTHONPATH=/testbed 或\"脚本放进 /testbed\"）。",
+          "status": "verified"
+        },
+        {
+          "category": "solver_condition",
+          "scope": "task（py3.10 镜像）",
+          "summary": "仓库自带 numpy 测试无法按常规收集（numpy/conftest.py 调 hypothesis.HealthCheck.all()，hypothesis 6.124.1 弃用警告被 pytest.ini filterwarnings=error 变成错误，rc 4）；绕法 -o filterwarnings=ignore 或 --noconftest 后，nose 风格 setup(self) 的类在 pytest 8.3.4 下不被调用（test_extras.py 10 failed）。隐藏测试不受影响。",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p2/pubtests/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d.log",
+            "runs/r2e_env_repair_20260924/p2/followups/followups.log",
+            "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/dev_probe.json"
+          ],
+          "proposed_action": "本轮记入解题侧条件（给出绕法）；环境侧可在后续派生配方里把 hypothesis 固定到不弃用 HealthCheck.all() 的版本、pytest 固定到 <8（需先验证 gold / noop 不变）——不在本轮。",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "instance_id": "numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb",
+      "disposition": "environment_qualified",
+      "classification": "solver_condition",
+      "raw_ref": "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "探针公开测试 numpy/tests/test_ctypeslib.py：收集 ok、运行 rc 0。补充检查（按 gold 触碰文件选同目录测试，uid 54321 同级条件，事后选择）：numpy/core/tests/test_einsum.py：35 passed。公开复现 REPRO_RC=0、REPRO_OBSERVED=1。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p2/pubtests/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb.py"
+        ],
+        "by": "run_dev_probe.py + p2-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "solver_condition",
+          "scope": "repo:numpy（本批 7 题）",
+          "summary": "numpy 就地构建、未装进 venv：/testbed 在 sys.path 上才能 import numpy；脚本放在 /testbed 之外（如 /tmp/x.py）即使 cwd=/testbed 也 ModuleNotFoundError；裸 pytest 收集失败，要用 python -m pytest（18b7cd9d 实测）。",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/dev_probe.json",
+            "runs/env_overnight_20260916/M3/facts/5e8301c2b360/pkgsrc.txt",
+            "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb/agent_probe.log",
+            "runs/r2e_env_repair_20260924/p2/followups/bare_pytest.log"
+          ],
+          "proposed_action": "记入解题侧条件（E10）；是否写进题包 / 系统提示由后续任务面决定（可给 PYTHONPATH=/testbed 或\"脚本放进 /testbed\"）。",
+          "status": "verified"
+        }
+      ]
+    },
+    {
+      "instance_id": "numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764",
+      "disposition": "environment_qualified",
+      "classification": "solver_condition",
+      "raw_ref": "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "0",
+      "public_run_rc": "1",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1 (original array mutated)"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "探针公开测试 numpy/tests/test_ctypeslib.py：收集 ok、运行 rc 1。补充检查（按 gold 触碰文件选同目录测试，uid 54321 同级条件，事后选择）：numpy/lib/tests/test_shape_base.py：31 passed；探针选的 numpy/tests/test_ctypeslib.py 6 passed / 1 error（模块级 test 项被当成用例：fixture 'self' not found，nose 时代遗留，与改动无关）。公开复现 REPRO_RC=0、REPRO_OBSERVED=1。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p2/pubtests/numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764.py",
+          "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+        ],
+        "by": "run_dev_probe.py + p2-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "solver_condition",
+          "scope": "repo:numpy（本批 7 题）",
+          "summary": "numpy 就地构建、未装进 venv：/testbed 在 sys.path 上才能 import numpy；脚本放在 /testbed 之外（如 /tmp/x.py）即使 cwd=/testbed 也 ModuleNotFoundError；裸 pytest 收集失败，要用 python -m pytest（18b7cd9d 实测）。",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764/dev_probe.json",
+            "runs/env_overnight_20260916/M3/facts/a5ea773e6611/pkgsrc.txt",
+            "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764/agent_probe.log",
+            "runs/r2e_env_repair_20260924/p2/followups/bare_pytest.log"
+          ],
+          "proposed_action": "记入解题侧条件（E10）；是否写进题包 / 系统提示由后续任务面决定（可给 PYTHONPATH=/testbed 或\"脚本放进 /testbed\"）。",
+          "status": "verified"
+        }
+      ]
+    },
+    {
+      "instance_id": "numpy__d805e9b66228e68a0eb14d901cd350159c49af18",
+      "disposition": "environment_qualified",
+      "classification": "solver_condition",
+      "raw_ref": "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1 (data not truncated as expected)"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "探针公开测试 numpy/tests/test_ctypeslib.py：收集 ok、运行 rc 0。补充检查（按 gold 触碰文件选同目录测试，uid 54321 同级条件，事后选择）：numpy/ma/tests/test_core.py：229 passed。公开复现 REPRO_RC=0、REPRO_OBSERVED=1。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p2/pubtests/numpy__d805e9b66228e68a0eb14d901cd350159c49af18.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/numpy__d805e9b66228e68a0eb14d901cd350159c49af18.py"
+        ],
+        "by": "run_dev_probe.py + p2-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "solver_condition",
+          "scope": "repo:numpy（本批 7 题）",
+          "summary": "numpy 就地构建、未装进 venv：/testbed 在 sys.path 上才能 import numpy；脚本放在 /testbed 之外（如 /tmp/x.py）即使 cwd=/testbed 也 ModuleNotFoundError；裸 pytest 收集失败，要用 python -m pytest（18b7cd9d 实测）。",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/dev_probe.json",
+            "runs/env_overnight_20260916/M3/facts/d805e9b66228/pkgsrc.txt",
+            "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/agent_probe.log",
+            "runs/r2e_env_repair_20260924/p2/followups/bare_pytest.log"
+          ],
+          "proposed_action": "记入解题侧条件（E10）；是否写进题包 / 系统提示由后续任务面决定（可给 PYTHONPATH=/testbed 或\"脚本放进 /testbed\"）。",
+          "status": "verified"
+        }
+      ]
+    },
+    {
+      "instance_id": "numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd",
+      "disposition": "environment_qualified",
+      "classification": "solver_condition",
+      "raw_ref": "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1 (TypeError in: histogram2d,histogramdd)"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "探针公开测试 numpy/tests/test_ctypeslib.py：收集 ok、运行 rc 0。补充检查（按 gold 触碰文件选同目录测试，uid 54321 同级条件，事后选择）：numpy/lib/tests/test_twodim_base.py：33 passed；numpy/lib/tests/test_histograms.py：24 passed / 21 errors（TestHistogram 用 nose 风格 setup(self)，pytest 7.4.4 的弃用警告被 numpy pytest.ini filterwarnings=error 变成错误；与改动无关）。公开复现 REPRO_RC=0、REPRO_OBSERVED=1。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p2/pubtests/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd.py",
+          "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+        ],
+        "by": "run_dev_probe.py + p2-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "solver_condition",
+          "scope": "repo:numpy（本批 7 题）",
+          "summary": "numpy 就地构建、未装进 venv：/testbed 在 sys.path 上才能 import numpy；脚本放在 /testbed 之外（如 /tmp/x.py）即使 cwd=/testbed 也 ModuleNotFoundError；裸 pytest 收集失败，要用 python -m pytest（18b7cd9d 实测）。",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd/dev_probe.json",
+            "runs/env_overnight_20260916/M3/facts/d89bc4bbf541/pkgsrc.txt",
+            "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd/agent_probe.log",
+            "runs/r2e_env_repair_20260924/p2/followups/bare_pytest.log"
+          ],
+          "proposed_action": "记入解题侧条件（E10）；是否写进题包 / 系统提示由后续任务面决定（可给 PYTHONPATH=/testbed 或\"脚本放进 /testbed\"）。",
+          "status": "verified"
+        }
+      ]
+    },
+    {
+      "instance_id": "orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237",
+      "disposition": "environment_qualified",
+      "classification": "env_ok",
+      "raw_ref": "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": true,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "公开测试 Orange/tests/test__orange.py：收集 rc=0（1 test collected in 1.27s），限量运行 rc=0（1 passed in 1.15s）；公开复现脚本 rc=0、REPRO_OBSERVED=1：UNIQUE=[2, 3, 1] MAPPING=[2, 0, 1] EXPECTED_MAPPING=[0, 1, 2] / REPRO_REASON=mapping [2, 0, 1] != [0, 1, 2] (issue says actual [2, 0, 1])",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/agent_probe.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237.py"
+        ],
+        "by": "p3-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "material",
+          "scope": "task",
+          "summary": "题面 “Example Buggy Code” 的函数体就是 gold 修复（按字面执行输出期望值），属题面泄漏修复；不影响环境资格。",
+          "evidence_refs": [
+            "runs/r2e_rf_20260923/remote/prepared_r2e/prompts.jsonl",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/validation_bundles_v0.jsonl"
+          ],
+          "proposed_action": "交后续题意质量 / 反作弊筛查决定是否改写题面或降级；本轮不动。",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "instance_id": "orange3__4014f2483e3bab0621c9ae0f994947c008183253",
+      "disposition": "environment_qualified",
+      "classification": "env_ok",
+      "raw_ref": "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__4014f2483e3bab0621c9ae0f994947c008183253/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": true,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "公开测试 Orange/tests/test__orange.py：收集 rc=0（1 test collected in 0.89s），限量运行 rc=0（1 passed in 0.89s）；公开复现脚本 rc=0、REPRO_OBSERVED=1：EXC=AssertionError | File \"/testbed/Orange/preprocess/discretize.py\", line 53, in _fmt_interval | assert low is None or high is None or low < high | AssertionError / REPRO_REASON=AssertionError while building discretized intervals",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__4014f2483e3bab0621c9ae0f994947c008183253/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__4014f2483e3bab0621c9ae0f994947c008183253/agent_probe.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/orange3__4014f2483e3bab0621c9ae0f994947c008183253.py"
+        ],
+        "by": "p3-subagent"
+      },
+      "known_issues": []
+    },
+    {
+      "instance_id": "orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e",
+      "disposition": "environment_qualified",
+      "classification": "env_ok",
+      "raw_ref": "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": true,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "公开测试 Orange/tests/test__orange.py：收集 rc=0（1 test collected in 1.11s），限量运行 rc=0（1 passed in 1.07s）；公开复现脚本 rc=0、REPRO_OBSERVED=1：WARNING_CALLED=False CALL_ARGS=None / REPRO_REASON=no warning naming unused 'foo'/'bar'",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/agent_probe.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e.py"
+        ],
+        "by": "p3-subagent"
+      },
+      "known_issues": []
+    },
+    {
+      "instance_id": "orange3__9b5494e26f407b75e79699c9d40be6df1d80a040",
+      "disposition": "environment_qualified",
+      "classification": "material",
+      "raw_ref": "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__9b5494e26f407b75e79699c9d40be6df1d80a040/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": true,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "公开测试 Orange/tests/test__orange.py：收集 rc=0（1 test collected in 0.87s），限量运行 rc=0（1 passed in 0.83s）；公开复现脚本 rc=0、REPRO_OBSERVED=1：EXC=ValueError Solver lbfgs supports only 'l2' or 'none' penalties, got l1 penalty. / REPRO_REASON=ValueError: solver does not support penalty='l1'",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__9b5494e26f407b75e79699c9d40be6df1d80a040/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__9b5494e26f407b75e79699c9d40be6df1d80a040/agent_probe.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/orange3__9b5494e26f407b75e79699c9d40be6df1d80a040.py"
+        ],
+        "by": "p3-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "material",
+          "scope": "task",
+          "summary": "期望里 4 个 FAILED 键来自 scikit-learn 0.22.2.post1 与 SciPy 1.7.3 的不兼容（环境伪影被写进 expected）；对所有通过目标测试的候选恒为 FAILED，P2P 信号少 4 键。",
+          "evidence_refs": [
+            "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-o_f0536903.eval.log",
+            "runs/r2e_env_repair_20260924/p3/fixture_check/orange3_9b5494e2_versions.txt",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/orange3__9b5494e26f407b75e79699c9d40be6df1d80a040.md"
+          ],
+          "proposed_action": "材料修订提案：推荐 A 维持现状；若以后统一重建 orange3 依赖再做 B（修环境 + expected_v1）。",
+          "status": "proposed"
+        }
+      ]
+    },
+    {
+      "instance_id": "orange3__c3fb72ba464880e0354cf33f8b3d3773865c2bf6",
+      "disposition": "environment_qualified",
+      "classification": "env_ok",
+      "raw_ref": "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__c3fb72ba464880e0354cf33f8b3d3773865c2bf6/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": true,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "公开测试 Orange/tests/test__orange.py：收集 rc=0（1 test collected in 1.11s），限量运行 rc=0（1 passed in 1.07s）；公开复现脚本 rc=0、REPRO_OBSERVED=1：N_ATTRS_SET=4 N_ATTRS_AFTER_RELOAD=3 / REPRO_REASON=reloaded n_attrs_spin is 3, not 4",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__c3fb72ba464880e0354cf33f8b3d3773865c2bf6/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__c3fb72ba464880e0354cf33f8b3d3773865c2bf6/agent_probe.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/orange3__c3fb72ba464880e0354cf33f8b3d3773865c2bf6.py"
+        ],
+        "by": "p3-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "resource",
+          "scope": "repo:orange3",
+          "summary": "R12 自动检查把峰值 2580 MB（64% / 63% 限额）记为余量不足；实测峰值主体是 chown copy-up 的可回收页缓存，测试匿名内存 < 0.25 GB，2 GiB 限额下 gold 仍 reward 1、无 OOM。",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p3/memprobe/c3fb72ba_mem4g/summary.txt",
+            "runs/r2e_env_repair_20260924/p3/memprobe/c3fb72ba_mem4g/samples.tsv",
+            "runs/r2e_env_repair_20260924/p3/ledger_gold_mem2g.jsonl",
+            "runs/r2e_env_repair_20260924/p3/eval_logs/evallog_replay-r2e-envrepair-p3-_b0fa3f46.eval.log",
+            "runs/r2e_env_repair_20260924/p3/eval_logs/evallog_replay-r2e-envrepair-p3-_b0fa3f46.diagnostics.json"
+          ],
+          "proposed_action": "不设 orange3 内存档位；R12 改判据（anon 峰值或 memory.events 的 oom），见包 README §7。",
+          "status": "verified"
+        }
+      ]
+    },
+    {
+      "instance_id": "orange3__f237f9688e06ae46fe98d195b134d01f5b38b2e0",
+      "disposition": "environment_qualified",
+      "classification": "env_ok",
+      "raw_ref": "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__f237f9688e06ae46fe98d195b134d01f5b38b2e0/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": true,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "公开测试 Orange/tests/test__orange.py：收集 rc=0（1 test collected in 0.84s），限量运行 rc=0（1 passed in 0.94s）；公开复现脚本 rc=0、REPRO_OBSERVED=1：CONDITIONS=[('petal length', 0, ('',))] / REPRO_REASON=conditions[0][1] is not 2",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__f237f9688e06ae46fe98d195b134d01f5b38b2e0/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__f237f9688e06ae46fe98d195b134d01f5b38b2e0/agent_probe.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/orange3__f237f9688e06ae46fe98d195b134d01f5b38b2e0.py"
+        ],
+        "by": "p3-subagent"
+      },
+      "known_issues": []
+    },
+    {
+      "instance_id": "orange3__f5026689551be7f0a43ad5f0d129e5bcfff7999c",
+      "disposition": "environment_qualified",
+      "classification": "env_ok",
+      "raw_ref": "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__f5026689551be7f0a43ad5f0d129e5bcfff7999c/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": true,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "公开测试 Orange/tests/test__orange.py：收集 rc=0（1 test collected in 1.10s），限量运行 rc=0（1 passed in 1.13s）；公开复现脚本 rc=0、REPRO_OBSERVED=1：SELECTED_ID_AFTER='dir1\\\\bar' EXPECTED='dir1/bar' / REPRO_REASON=backslash not converted by migrate_settings",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__f5026689551be7f0a43ad5f0d129e5bcfff7999c/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__f5026689551be7f0a43ad5f0d129e5bcfff7999c/agent_probe.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/orange3__f5026689551be7f0a43ad5f0d129e5bcfff7999c.py"
+        ],
+        "by": "p3-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "resource",
+          "scope": "repo:orange3",
+          "summary": "R12 自动检查把峰值 2632 MB（64% / 63% 限额）记为余量不足；实测峰值主体是 chown copy-up 的可回收页缓存，测试匿名内存 < 0.25 GB，2 GiB 限额下 gold 仍 reward 1、无 OOM。",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p3/memprobe/f5026689_mem4g/summary.txt",
+            "runs/r2e_env_repair_20260924/p3/memprobe/f5026689_mem4g/samples.tsv",
+            "runs/r2e_env_repair_20260924/p3/memprobe/f5026689_mem2g/summary.txt",
+            "runs/r2e_env_repair_20260924/p3/ledger_gold_mem2g.jsonl",
+            "runs/r2e_env_repair_20260924/p3/eval_logs/evallog_replay-r2e-envrepair-p3-_d698586e.eval.log",
+            "runs/r2e_env_repair_20260924/p3/eval_logs/evallog_replay-r2e-envrepair-p3-_d698586e.diagnostics.json"
+          ],
+          "proposed_action": "不设 orange3 内存档位；R12 改判据（anon 峰值或 memory.events 的 oom），见包 README §7。",
+          "status": "verified"
+        }
+      ]
+    },
+    {
+      "instance_id": "pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf",
+      "disposition": "environment_qualified",
+      "classification": "material",
+      "raw_ref": "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": true,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "公开测试 pandas/tests/test_aggregation.py：收集 rc=0（8 tests collected in 0.02s），限量运行 rc=0（8 passed in 0.01s）；公开复现脚本 rc=0、REPRO_OBSERVED=1：EXC=ValueError Must have equal len keys and value when setting with an iterable / REPRO_REASON=ValueError as described",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf/agent_probe.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf.py"
+        ],
+        "by": "p3-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "material",
+          "scope": "repo:pandas（本包 7 题同一机制）",
+          "summary": "期望 17/155 个 ERROR 键来自隐藏测试移出原目录后 fixture 不可达；这些键对任何候选恒为 ERROR（无回归信号），且候选若新增根目录 conftest.py 会让它们翻成 PASSED 而得 0。",
+          "evidence_refs": [
+            "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_c9cd4c5a.eval.log",
+            "runs/r2e_env_repair_20260924/p3/fixture_check/pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf/result.txt",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf.md"
+          ],
+          "proposed_action": "材料修订提案（推荐 A 维持现状）；本轮不改 expected / 隐藏测试。",
+          "status": "proposed"
+        }
+      ]
+    },
+    {
+      "instance_id": "pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b",
+      "disposition": "environment_qualified",
+      "classification": "material",
+      "raw_ref": "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": true,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "公开测试 pandas/tests/test_aggregation.py：收集 rc=0（8 tests collected in 0.01s），限量运行 rc=0（8 passed in 0.01s）；公开复现脚本 rc=0、REPRO_OBSERVED=1：EXC=KeyError KeyError(0) / REPRO_REASON=KeyError from .info() with integer column labels",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b/agent_probe.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b.py"
+        ],
+        "by": "p3-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "material",
+          "scope": "repo:pandas（本包 7 题同一机制）",
+          "summary": "期望 1/21 个 ERROR 键来自隐藏测试移出原目录后 fixture 不可达；这些键对任何候选恒为 ERROR（无回归信号），且候选若新增根目录 conftest.py 会让它们翻成 PASSED 而得 0。",
+          "evidence_refs": [
+            "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_aa73a0d2.eval.log",
+            "runs/r2e_env_repair_20260924/p3/fixture_check/pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b/result.txt",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b.md"
+          ],
+          "proposed_action": "材料修订提案（推荐 A 维持现状）；本轮不改 expected / 隐藏测试。",
+          "status": "proposed"
+        }
+      ]
+    },
+    {
+      "instance_id": "pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0",
+      "disposition": "environment_qualified",
+      "classification": "material",
+      "raw_ref": "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": true,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "公开测试 pandas/tests/test_aggregation.py：收集 rc=0（8 tests collected in 0.02s），限量运行 rc=0（8 passed in 0.01s）；公开复现脚本 rc=0、REPRO_OBSERVED=1：EXC=ValueError the 'dtype' parameter is not supported in the pandas implementation of sum() / REPRO_REASON=reduction raised about unsupported 'dtype' parameter",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/agent_probe.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0.py"
+        ],
+        "by": "p3-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "material",
+          "scope": "repo:pandas（本包 7 题同一机制）",
+          "summary": "期望 13/92 个 ERROR 键来自隐藏测试移出原目录后 fixture 不可达；这些键对任何候选恒为 ERROR（无回归信号），且候选若新增根目录 conftest.py 会让它们翻成 PASSED 而得 0。",
+          "evidence_refs": [
+            "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_c1ac93bc.eval.log",
+            "runs/r2e_env_repair_20260924/p3/fixture_check/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0/result.txt",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0.md"
+          ],
+          "proposed_action": "材料修订提案（推荐 A 维持现状）；本轮不改 expected / 隐藏测试。",
+          "status": "proposed"
+        },
+        {
+          "category": "material",
+          "scope": "task",
+          "summary": "目标键 test_mean_datetimelike_numeric_only_false 检查 Period 列 mean 的报错文案，题面没有描述（隐含要求）。",
+          "evidence_refs": [
+            "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_75e948f0.eval.log",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl"
+          ],
+          "proposed_action": "交后续题意质量筛查（题面补充或剔除该键需走材料修订）；本轮不动。",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "instance_id": "pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199",
+      "disposition": "environment_qualified",
+      "classification": "material",
+      "raw_ref": "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": true,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "公开测试 pandas/tests/test_aggregation.py：收集 rc=0（8 tests collected in 0.03s），限量运行 rc=0（8 passed in 0.02s）；公开复现脚本 rc=0、REPRO_OBSERVED=1：EXC=TypeError float() argument must be a string or a number, not 'NAType' / REPRO_REASON=TypeError on pd.NA as described",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/agent_probe.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199.py"
+        ],
+        "by": "p3-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "material",
+          "scope": "repo:pandas（本包 7 题同一机制）",
+          "summary": "期望 2/226 个 ERROR 键来自隐藏测试移出原目录后 fixture 不可达；这些键对任何候选恒为 ERROR（无回归信号），且候选若新增根目录 conftest.py 会让它们翻成 PASSED 而得 0。被掩盖的是题面场景本身的测试（F2P 覆盖不到题面例子）。",
+          "evidence_refs": [
+            "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_bb99de50.eval.log",
+            "runs/r2e_env_repair_20260924/p3/fixture_check/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199/result.txt",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199.md"
+          ],
+          "proposed_action": "材料修订提案（推荐 B（进入正式池前补 fixture，恢复题面场景的 F2P））；本轮不改 expected / 隐藏测试。",
+          "status": "proposed"
+        }
+      ]
+    },
+    {
+      "instance_id": "pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af",
+      "disposition": "environment_qualified",
+      "classification": "material",
+      "raw_ref": "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": true,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "公开测试 pandas/tests/test_aggregation.py：收集 rc=0（8 tests collected in 0.02s），限量运行 rc=0（8 passed in 0.02s）；公开复现脚本 rc=0、REPRO_OBSERVED=1：RESULT=RangeIndex(start=6, stop=0, step=-1, name='foo') / REPRO_REASON=result order [6, 5, 4, 3, 2, 1] is not ascending 1..6",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af/agent_probe.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af.py"
+        ],
+        "by": "p3-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "material",
+          "scope": "repo:pandas（本包 7 题同一机制）",
+          "summary": "期望 4/34 个 ERROR 键来自隐藏测试移出原目录后 fixture 不可达；这些键对任何候选恒为 ERROR（无回归信号），且候选若新增根目录 conftest.py 会让它们翻成 PASSED 而得 0。",
+          "evidence_refs": [
+            "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_73855f0f.eval.log",
+            "runs/r2e_env_repair_20260924/p3/fixture_check/pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af/result.txt",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af.md"
+          ],
+          "proposed_action": "材料修订提案（推荐 A 维持现状）；本轮不改 expected / 隐藏测试。",
+          "status": "proposed"
+        }
+      ]
+    },
+    {
+      "instance_id": "pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d",
+      "disposition": "environment_qualified",
+      "classification": "material",
+      "raw_ref": "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": true,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "公开测试 pandas/tests/test_algos.py：收集 rc=0（227 tests collected in 0.35s），限量运行 rc=0（219 passed, 8 skipped in 0.69s）；公开复现脚本 rc=0、REPRO_OBSERVED=1：LITERAL_RIGHT=ValueError Shape of passed values is (3, 1), indices imply (4, 1) / EXC=RecursionError maximum recursion depth exceeded while calling a Python object / REPRO_REASON=RecursionError on join of MultiIndexes with swapped level order",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d/agent_probe.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d.py"
+        ],
+        "by": "p3-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "material",
+          "scope": "repo:pandas（本包 7 题同一机制）",
+          "summary": "期望 9/34 个 ERROR 键来自隐藏测试移出原目录后 fixture 不可达；这些键对任何候选恒为 ERROR（无回归信号），且候选若新增根目录 conftest.py 会让它们翻成 PASSED 而得 0。",
+          "evidence_refs": [
+            "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_abe4707c.eval.log",
+            "runs/r2e_env_repair_20260924/p3/fixture_check/pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d/result.txt",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d.md"
+          ],
+          "proposed_action": "材料修订提案（推荐 A 维持现状）；本轮不改 expected / 隐藏测试。",
+          "status": "proposed"
+        }
+      ]
+    },
+    {
+      "instance_id": "pandas__f656217a06b31e48474702036e0a5c49f664186c",
+      "disposition": "environment_qualified",
+      "classification": "material",
+      "raw_ref": "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__f656217a06b31e48474702036e0a5c49f664186c/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": true,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "公开测试 pandas/tests/test_aggregation.py：收集 rc=0（8 tests collected in 0.01s），限量运行 rc=0（8 passed in 0.01s）；公开复现脚本 rc=0、REPRO_OBSERVED=1：RESULT_COLUMNS=['a', 'b_x', 'b_x', 'b_y'] / REPRO_REASON=no FutureWarning about duplicate columns from suffixes",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__f656217a06b31e48474702036e0a5c49f664186c/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p3/dev_probe/pandas__f656217a06b31e48474702036e0a5c49f664186c/agent_probe.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/pandas__f656217a06b31e48474702036e0a5c49f664186c.py"
+        ],
+        "by": "p3-subagent"
+      },
+      "known_issues": [
+        {
+          "category": "material",
+          "scope": "repo:pandas（本包 7 题同一机制）",
+          "summary": "期望 12/323 个 ERROR 键来自隐藏测试移出原目录后 fixture 不可达；这些键对任何候选恒为 ERROR（无回归信号），且候选若新增根目录 conftest.py 会让它们翻成 PASSED 而得 0。",
+          "evidence_refs": [
+            "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_96f21ba3.eval.log",
+            "runs/r2e_env_repair_20260924/p3/fixture_check/pandas__f656217a06b31e48474702036e0a5c49f664186c/result.txt",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pandas__f656217a06b31e48474702036e0a5c49f664186c.md"
+          ],
+          "proposed_action": "材料修订提案（推荐 A 维持现状）；本轮不改 expected / 隐藏测试。",
+          "status": "proposed"
+        }
+      ]
+    },
+    {
+      "instance_id": "pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8",
+      "disposition": "needs_decision",
+      "classification": "material",
+      "raw_ref": "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=0"
+      ],
+      "R09": {
+        "status": "issue",
+        "note": "公开测试：Tests/test_000_sanity.py 收集 / 运行 rc 0；相关文件 Tests/test_image.py 2 failed / 52 passed（同上 pytest.warns(None)，预存失败）。公开复现只能观测到真实缺口（Image.open 不接受 formats），题面声称的 TypeError 复现不出（REPRO_OBSERVED=0）→ 求解者按题面无法复现所述问题。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p4/targeted_public_tests/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/agent_probe.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8.py"
+        ],
+        "by": "run_dev_probe.py + P4 sub-agent"
+      },
+      "known_issues": [
+        {
+          "category": "material",
+          "scope": "task",
+          "summary": "公开题面与目标测试矛盾（formats=['JPEG'] 打开 PNG：题面说应成功，测试要求 UnidentifiedImageError；formats=123 → TypeError 未提），并把 pytest.warns(None) 在 pytest 8 下的 TypeError 写成库缺陷",
+          "evidence_refs": [
+            "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_90eb28b3.eval.log",
+            "runs/r2e_rf_20260923/remote/prepared_r2e/prompts.jsonl",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8.py",
+            "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/dev_probe.json"
+          ],
+          "proposed_action": "材料修订提案（T0）：docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8.md",
+          "status": "proposed"
+        },
+        {
+          "category": "solver_condition",
+          "scope": "repo:pillow",
+          "summary": "venv 无 pip（install.sh 用 `uv venv` + `uv pip`；`python -m pip` → No module named pip；pip / pip3 / uv 均不在 PATH），而公开提示写“`python`, `pip` and the repo's test tools already point at it”（另有 conda 措辞，全局 E09）",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/agent_probe.log",
+            "runs/r2e_env_repair_20260924/p4/image_readout/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8.txt",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl"
+          ],
+          "proposed_action": "任务面 / 系统提示声明“无 pip、无网络、不需要安装依赖”（与 E09 conda 措辞一并修）；本题解题不需要装包",
+          "status": "open"
+        },
+        {
+          "category": "reference",
+          "scope": "repo:pillow",
+          "summary": "2 个期望 FAILED 键是 pytest 8 拒绝 `pytest.warns(None)` 的死键（与候选无关，评分一致）",
+          "evidence_refs": [
+            "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_d21a126c.eval.log",
+            "runs/r2e_env_repair_20260924/p4/targeted_public_tests/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/agent_probe.log"
+          ],
+          "proposed_action": "不改（记录）；与 2d01f7d0 同族",
+          "status": "verified"
+        },
+        {
+          "category": "solver_condition",
+          "scope": "task",
+          "summary": "公开 Tests/test_image.py 在 base 上有 2 个与改动无关的预存失败（pytest.warns(None)）",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p4/targeted_public_tests/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/agent_probe.log"
+          ],
+          "proposed_action": "写入 solver_conditions；是否进提示由任务面决定（E10）",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "instance_id": "pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+      "disposition": "environment_qualified",
+      "classification": "solver_condition",
+      "raw_ref": "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "Tests/test_000_sanity.py collect / run rc 0；相关文件 Tests/test_file_tiff.py 58 passed / 2 failed（pytest.warns(None) 预存失败）/ 2 skipped；公开复现 REPRO_OBSERVED=1。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p4/targeted_public_tests/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/agent_probe.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96.py"
+        ],
+        "by": "run_dev_probe.py + P4 sub-agent"
+      },
+      "known_issues": [
+        {
+          "category": "solver_condition",
+          "scope": "repo:pillow",
+          "summary": "venv 无 pip（install.sh 用 `uv venv` + `uv pip`；`python -m pip` → No module named pip；pip / pip3 / uv 均不在 PATH），而公开提示写“`python`, `pip` and the repo's test tools already point at it”（另有 conda 措辞，全局 E09）",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/agent_probe.log",
+            "runs/r2e_env_repair_20260924/p4/image_readout/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96.txt",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl"
+          ],
+          "proposed_action": "任务面 / 系统提示声明“无 pip、无网络、不需要安装依赖”（与 E09 conda 措辞一并修）；本题解题不需要装包",
+          "status": "open"
+        },
+        {
+          "category": "reference",
+          "scope": "repo:pillow",
+          "summary": "2 个期望 FAILED 键是 pytest 8 拒绝 `pytest.warns(None)` 的死键（评分一致，不惩罚正确解）",
+          "evidence_refs": [
+            "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_6fdf1e36.eval.log",
+            "runs/r2e_env_repair_20260924/p4/targeted_public_tests/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/agent_probe.log"
+          ],
+          "proposed_action": "不改（记录）；与 2b061b68 同族",
+          "status": "verified"
+        },
+        {
+          "category": "solver_condition",
+          "scope": "task",
+          "summary": "公开 Tests/test_file_tiff.py 在 base 上有 2 个与改动无关的预存失败（pytest.warns(None)）",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p4/targeted_public_tests/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/agent_probe.log"
+          ],
+          "proposed_action": "写入 solver_conditions（E10）",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "instance_id": "pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07",
+      "disposition": "environment_qualified",
+      "classification": "solver_condition",
+      "raw_ref": "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "Tests/test_000_sanity.py collect / run rc 0；相关文件 Tests/test_image.py 71 passed / 1 skipped；公开复现 REPRO_OBSERVED=1。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p4/targeted_public_tests/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/agent_probe.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07.py"
+        ],
+        "by": "run_dev_probe.py + P4 sub-agent"
+      },
+      "known_issues": [
+        {
+          "category": "solver_condition",
+          "scope": "repo:pillow",
+          "summary": "venv 无 pip（install.sh 用 `uv venv` + `uv pip`；`python -m pip` → No module named pip；pip / pip3 / uv 均不在 PATH），而公开提示写“`python`, `pip` and the repo's test tools already point at it”（另有 conda 措辞，全局 E09）",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07/agent_probe.log",
+            "runs/r2e_env_repair_20260924/p4/image_readout/pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07.txt",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl"
+          ],
+          "proposed_action": "任务面 / 系统提示声明“无 pip、无网络、不需要安装依赖”（与 E09 conda 措辞一并修）；本题解题不需要装包",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "instance_id": "pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605",
+      "disposition": "environment_qualified",
+      "classification": "solver_condition",
+      "raw_ref": "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "入口是自定义 unittest runner，自己打印 pytest 形态的 `short test summary info` 段（`PASSED test_1::Class::method`），parser 取 `::` 之后的段得到 `Class.method` 键：11 个键全解析、与独立 runner 逐键一致。公开测试：pytest 能收集 / 运行 Tests/test_000_sanity.py（1 passed）与 Tests/test_tiff_ifdrational.py（2 passed）；但相关文件 Tests/test_file_tiff_metadata.py 在 pytest 8 下 3 例假失败（Tests/helper.py 的 delete_tempfile 读 `currentResult.errors`，pytest 的 TestCaseFunction 没有该属性，凡写临时文件的用例都失败）；`cd Tests && python -m unittest` 因夹具路径相对仓库根而 5 errors；在 /testbed 下 `python Tests/test_file_tiff_metadata.py` 7 tests OK。公开复现 REPRO_OBSERVED=1。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p4/targeted_public_tests/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/agent_probe.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605.py",
+          "runs/r2e_env_repair_20260924/p4/targeted2_cmds/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/agent_probe.log"
+        ],
+        "by": "run_dev_probe.py + P4 sub-agent"
+      },
+      "known_issues": [
+        {
+          "category": "solver_condition",
+          "scope": "repo:pillow",
+          "summary": "venv 无 pip（install.sh 用 `uv venv` + `uv pip`；`python -m pip` → No module named pip；pip / pip3 / uv 均不在 PATH），而公开提示写“`python`, `pip` and the repo's test tools already point at it”（另有 conda 措辞，全局 E09）",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/agent_probe.log",
+            "runs/r2e_env_repair_20260924/p4/image_readout/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605.txt",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl"
+          ],
+          "proposed_action": "任务面 / 系统提示声明“无 pip、无网络、不需要安装依赖”（与 E09 conda 措辞一并修）；本题解题不需要装包",
+          "status": "open"
+        },
+        {
+          "category": "solver_condition",
+          "scope": "task",
+          "summary": "公开 Tests/ 用 pytest 跑会假失败（Pillow 3.1 的 Tests/helper.py 与 pytest 8 不兼容：写临时文件的用例 AttributeError）；在 Tests/ 里跑 unittest 夹具路径又失效；可用方式是在 /testbed 下 `python Tests/test_<name>.py`",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p4/targeted_public_tests/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/agent_probe.log",
+            "runs/r2e_env_repair_20260924/p4/targeted2_cmds/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/agent_probe.log"
+          ],
+          "proposed_action": "写入 solver_conditions；是否写进题包 / 提示由任务面决定（E10）",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "instance_id": "pillow__4bc6483564ae1a254911e98280b9a501f047a2e0",
+      "disposition": "environment_qualified",
+      "classification": "solver_condition",
+      "raw_ref": "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "Tests/test_000_sanity.py collect / run rc 0；相关文件 Tests/test_imageops.py 24 passed；公开复现 REPRO_OBSERVED=1。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p4/targeted_public_tests/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/agent_probe.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0.py"
+        ],
+        "by": "run_dev_probe.py + P4 sub-agent"
+      },
+      "known_issues": [
+        {
+          "category": "solver_condition",
+          "scope": "repo:pillow",
+          "summary": "venv 无 pip（install.sh 用 `uv venv` + `uv pip`；`python -m pip` → No module named pip；pip / pip3 / uv 均不在 PATH），而公开提示写“`python`, `pip` and the repo's test tools already point at it”（另有 conda 措辞，全局 E09）",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/agent_probe.log",
+            "runs/r2e_env_repair_20260924/p4/image_readout/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0.txt",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl"
+          ],
+          "proposed_action": "任务面 / 系统提示声明“无 pip、无网络、不需要安装依赖”（与 E09 conda 措辞一并修）；本题解题不需要装包",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "instance_id": "pillow__a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90",
+      "disposition": "environment_qualified",
+      "classification": "solver_condition",
+      "raw_ref": "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "Tests/test_000_sanity.py collect / run rc 0；相关文件 Tests/test_file_gif.py 92 passed / 2 skipped（Netpbm）；公开复现 REPRO_OBSERVED=1。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p4/targeted_public_tests/pillow__a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90/agent_probe.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/pillow__a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90.py"
+        ],
+        "by": "run_dev_probe.py + P4 sub-agent"
+      },
+      "known_issues": [
+        {
+          "category": "solver_condition",
+          "scope": "repo:pillow",
+          "summary": "venv 无 pip（install.sh 用 `uv venv` + `uv pip`；`python -m pip` → No module named pip；pip / pip3 / uv 均不在 PATH），而公开提示写“`python`, `pip` and the repo's test tools already point at it”（另有 conda 措辞，全局 E09）",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90/agent_probe.log",
+            "runs/r2e_env_repair_20260924/p4/image_readout/pillow__a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90.txt",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl"
+          ],
+          "proposed_action": "任务面 / 系统提示声明“无 pip、无网络、不需要安装依赖”（与 E09 conda 措辞一并修）；本题解题不需要装包",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "instance_id": "pillow__f9d3ee0f4888f7618071c0a5315c916062e78854",
+      "disposition": "environment_qualified",
+      "classification": "solver_condition",
+      "raw_ref": "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__f9d3ee0f4888f7618071c0a5315c916062e78854/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "Tests/test_000_sanity.py collect / run rc 0；相关文件 Tests/test_imageops.py 25 passed；公开复现 REPRO_OBSERVED=1。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__f9d3ee0f4888f7618071c0a5315c916062e78854/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p4/targeted_public_tests/pillow__f9d3ee0f4888f7618071c0a5315c916062e78854/agent_probe.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/pillow__f9d3ee0f4888f7618071c0a5315c916062e78854.py"
+        ],
+        "by": "run_dev_probe.py + P4 sub-agent"
+      },
+      "known_issues": [
+        {
+          "category": "solver_condition",
+          "scope": "repo:pillow",
+          "summary": "venv 无 pip（install.sh 用 `uv venv` + `uv pip`；`python -m pip` → No module named pip；pip / pip3 / uv 均不在 PATH），而公开提示写“`python`, `pip` and the repo's test tools already point at it”（另有 conda 措辞，全局 E09）",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__f9d3ee0f4888f7618071c0a5315c916062e78854/agent_probe.log",
+            "runs/r2e_env_repair_20260924/p4/image_readout/pillow__f9d3ee0f4888f7618071c0a5315c916062e78854.txt",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl"
+          ],
+          "proposed_action": "任务面 / 系统提示声明“无 pip、无网络、不需要安装依赖”（与 E09 conda 措辞一并修）；本题解题不需要装包",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "instance_id": "scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67",
+      "disposition": "environment_qualified",
+      "classification": "solver_condition",
+      "raw_ref": "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "探针公开文件 tests/test_closespider.py collect rc 0、4 passed；相关文件 tests/test_command_shell.py 16 passed（13.5 s）；公开复现 REPRO_OBSERVED=1（Crawled (200) 之后 scraper 报 RuntimeError）。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p4/targeted_public_tests/scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67/agent_probe.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67.py"
+        ],
+        "by": "run_dev_probe.py + P4 sub-agent"
+      },
+      "known_issues": [
+        {
+          "category": "solver_condition",
+          "scope": "repo:scrapy",
+          "summary": "venv 无 pip（install.sh 用 `uv venv` + `uv pip`；`python -m pip` → No module named pip；pip / pip3 / uv 均不在 PATH），而公开提示写“`python`, `pip` and the repo's test tools already point at it”（另有 conda 措辞，全局 E09）",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67/agent_probe.log",
+            "runs/r2e_env_repair_20260924/p4/image_readout/scrapy__75450e75d269b2a2b00b6303af1033df1f69cc67.txt",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl"
+          ],
+          "proposed_action": "任务面 / 系统提示声明“无 pip、无网络、不需要安装依赖”（与 E09 conda 措辞一并修）；本题解题不需要装包",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "instance_id": "scrapy__9a15fcf89a151811de8ac783419df0512c863d5e",
+      "disposition": "needs_decision",
+      "classification": "material",
+      "raw_ref": "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "0",
+      "public_run_rc": "1",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "探针公开文件 tests/test_closespider.py collect rc 0、run rc 1（Twisted 不兼容，见 R05，与本题无关）；相关文件 tests/test_responsetypes.py 5 passed / 2 failed（同 R06 两例）；公开复现 REPRO_OBSERVED=1（str → Response；bytes → TypeError）。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p4/targeted_public_tests/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e.py",
+          "runs/r2e_env_repair_20260924/p4/targeted2_cmds/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log"
+        ],
+        "by": "run_dev_probe.py + P4 sub-agent"
+      },
+      "known_issues": [
+        {
+          "category": "material",
+          "scope": "task",
+          "summary": "期望 FAILED 键 test_from_args / test_from_headers 可被更完整的 py3 修复翻成 PASSED → 正确且更完整的解被判 0（已实测：候选 7/7 PASSED、reward 0）",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p4/ledger_overfix.jsonl",
+            "runs/r2e_env_repair_20260924/p4/eval_logs/evallog_replay-r2e-envrepair-p4-_1acaf88b.eval.log",
+            "runs/r2e_env_repair_20260924/p4/eval_logs/evallog_replay-r2e-envrepair-p4-_1acaf88b.diagnostics.json",
+            "runs/r2e_env_repair_20260924/p4/overfix/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e.diff",
+            "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_798f95c6.eval.log",
+            "runs/r2e_env_repair_20260924/p4/targeted_public_tests/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log"
+          ],
+          "proposed_action": "材料修订提案（T0）：docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e.md",
+          "status": "proposed"
+        },
+        {
+          "category": "solver_condition",
+          "scope": "repo:scrapy",
+          "summary": "venv 无 pip（install.sh 用 `uv venv` + `uv pip`；`python -m pip` → No module named pip；pip / pip3 / uv 均不在 PATH），而公开提示写“`python`, `pip` and the repo's test tools already point at it”（另有 conda 措辞，全局 E09）",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log",
+            "runs/r2e_env_repair_20260924/p4/image_readout/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e.txt",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl"
+          ],
+          "proposed_action": "任务面 / 系统提示声明“无 pip、无网络、不需要安装依赖”（与 E09 conda 措辞一并修）；本题解题不需要装包",
+          "status": "open"
+        },
+        {
+          "category": "solver_condition",
+          "scope": "repo:scrapy@1.1.0dev1（9a15fcf8 / cfed9b66 / e9387529）",
+          "summary": "Scrapy 1.1.0dev1 与镜像内 Twisted 24.11 / zope.interface 不兼容：HTTP 下载处理器加载失败，抓取类公开测试恒失败（与本题无关）",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p4/targeted2_cmds/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log",
+            "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log"
+          ],
+          "proposed_action": "写入 solver_conditions；不改依赖（会改变评分环境）",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "instance_id": "scrapy__a95a338eeada7275a5289cf036136610ebaf07eb",
+      "disposition": "environment_qualified",
+      "classification": "solver_condition",
+      "raw_ref": "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "0",
+      "public_run_rc": "0",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "探针公开文件 tests/test_closespider.py 4 passed；相关文件 tests/test_utils_misc/test_return_with_argument_inside_generator.py 4 passed；公开复现 REPRO_OBSERVED=1。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p4/targeted_public_tests/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/agent_probe.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb.py"
+        ],
+        "by": "run_dev_probe.py + P4 sub-agent"
+      },
+      "known_issues": [
+        {
+          "category": "solver_condition",
+          "scope": "repo:scrapy",
+          "summary": "venv 无 pip（install.sh 用 `uv venv` + `uv pip`；`python -m pip` → No module named pip；pip / pip3 / uv 均不在 PATH），而公开提示写“`python`, `pip` and the repo's test tools already point at it”（另有 conda 措辞，全局 E09）",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/agent_probe.log",
+            "runs/r2e_env_repair_20260924/p4/image_readout/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb.txt",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl"
+          ],
+          "proposed_action": "任务面 / 系统提示声明“无 pip、无网络、不需要安装依赖”（与 E09 conda 措辞一并修）；本题解题不需要装包",
+          "status": "open"
+        },
+        {
+          "category": "reference",
+          "scope": "global（R2E 入口 `-W ignore`）",
+          "summary": "2 个期望 FAILED 键是评分入口 `-W ignore` 让 catch_warnings(record=True) 记录不到警告的死键（求解者条件下公开同名用例通过）",
+          "evidence_refs": [
+            "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_9377378e.eval.log",
+            "runs/r2e_env_repair_20260924/p4/targeted_public_tests/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/agent_probe.log"
+          ],
+          "proposed_action": "不改（记录）；其它题若有“数警告”的测试同族",
+          "status": "verified"
+        }
+      ]
+    },
+    {
+      "instance_id": "scrapy__cfed9b6659c90e0799361911b1d72ed127edf471",
+      "disposition": "needs_decision",
+      "classification": "material",
+      "raw_ref": "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "0",
+      "public_run_rc": "1",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "探针公开文件 tests/test_closespider.py collect rc 0、run rc 1（Twisted 不兼容，与本题无关）；相关文件 tests/test_utils_misc/__init__.py 4 passed、tests/test_middleware.py 4 passed；公开复现 REPRO_OBSERVED=1。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p4/targeted_public_tests/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/agent_probe.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471.py",
+          "runs/r2e_env_repair_20260924/p4/targeted2_cmds/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/agent_probe.log"
+        ],
+        "by": "run_dev_probe.py + P4 sub-agent"
+      },
+      "known_issues": [
+        {
+          "category": "material",
+          "scope": "task",
+          "summary": "3 个期望 FAILED 键是测试搬迁伪影（test.egg 未随迁；自引用 'tests.test_middleware.M1' 指向公开旧模块）；题面主体无活键，部分解可得满分（按键集推断）",
+          "evidence_refs": [
+            "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_915fb3c8.eval.log",
+            "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-s_6f09d8ff.eval.log",
+            "runs/r2e_env_repair_20260924/p4/targeted_public_tests/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/agent_probe.log"
+          ],
+          "proposed_action": "材料修订提案（T0，推荐本轮不改）：docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471.md",
+          "status": "proposed"
+        },
+        {
+          "category": "solver_condition",
+          "scope": "repo:scrapy",
+          "summary": "venv 无 pip（install.sh 用 `uv venv` + `uv pip`；`python -m pip` → No module named pip；pip / pip3 / uv 均不在 PATH），而公开提示写“`python`, `pip` and the repo's test tools already point at it”（另有 conda 措辞，全局 E09）",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/agent_probe.log",
+            "runs/r2e_env_repair_20260924/p4/image_readout/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471.txt",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl"
+          ],
+          "proposed_action": "任务面 / 系统提示声明“无 pip、无网络、不需要安装依赖”（与 E09 conda 措辞一并修）；本题解题不需要装包",
+          "status": "open"
+        },
+        {
+          "category": "solver_condition",
+          "scope": "repo:scrapy@1.1.0dev1（9a15fcf8 / cfed9b66 / e9387529）",
+          "summary": "Scrapy 1.1.0dev1 与镜像内 Twisted 24.11 / zope.interface 不兼容：抓取类公开测试恒失败（与本题无关）",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p4/targeted2_cmds/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/agent_probe.log",
+            "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471/agent_probe.log"
+          ],
+          "proposed_action": "写入 solver_conditions；不改依赖",
+          "status": "open"
+        }
+      ]
+    },
+    {
+      "instance_id": "scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4",
+      "disposition": "environment_qualified",
+      "classification": "solver_condition",
+      "raw_ref": "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4/agent_probe.log",
+      "raw_reparse_matches_saved": true,
+      "core_pass": true,
+      "pip_present": false,
+      "public_collect_rc": "0",
+      "public_run_rc": "1",
+      "repro_rc": "0",
+      "repro_observation": [
+        "REPRO_OBSERVED=1"
+      ],
+      "R09": {
+        "status": "pass",
+        "note": "探针公开文件 tests/test_closespider.py collect rc 0、run rc 1（Twisted 不兼容，与本题无关）；相关文件 tests/test_exporters.py 61 passed；公开复现 REPRO_OBSERVED=1。",
+        "evidence_refs": [
+          "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4/dev_probe.json",
+          "runs/r2e_env_repair_20260924/p4/targeted_public_tests/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4/agent_probe.log",
+          "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4.py",
+          "runs/r2e_env_repair_20260924/p4/targeted2_cmds/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4/agent_probe.log"
+        ],
+        "by": "run_dev_probe.py + P4 sub-agent"
+      },
+      "known_issues": [
+        {
+          "category": "solver_condition",
+          "scope": "repo:scrapy",
+          "summary": "venv 无 pip（install.sh 用 `uv venv` + `uv pip`；`python -m pip` → No module named pip；pip / pip3 / uv 均不在 PATH），而公开提示写“`python`, `pip` and the repo's test tools already point at it”（另有 conda 措辞，全局 E09）",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4/agent_probe.log",
+            "runs/r2e_env_repair_20260924/p4/image_readout/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4.txt",
+            "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl"
+          ],
+          "proposed_action": "任务面 / 系统提示声明“无 pip、无网络、不需要安装依赖”（与 E09 conda 措辞一并修）；本题解题不需要装包",
+          "status": "open"
+        },
+        {
+          "category": "solver_condition",
+          "scope": "repo:scrapy@1.1.0dev1（9a15fcf8 / cfed9b66 / e9387529）",
+          "summary": "Scrapy 1.1.0dev1 与镜像内 Twisted 24.11 / zope.interface 不兼容：抓取类公开测试恒失败（与本题无关）",
+          "evidence_refs": [
+            "runs/r2e_env_repair_20260924/p4/targeted2_cmds/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4/agent_probe.log",
+            "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4/agent_probe.log"
+          ],
+          "proposed_action": "写入 solver_conditions；不改依赖",
+          "status": "open"
+        }
+      ]
+    }
+  ]
+}

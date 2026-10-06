@@ -1,0 +1,281 @@
+{
+  "schema": "monai.public_actor_check.v1",
+  "as_of": "2026-10-03",
+  "task_id": "Project-MONAI__MONAI-2446",
+  "job": "monai-2446-actor-20261003-b6bf42bd",
+  "host_alias": "cpu-c",
+  "evidence_root": "runs/category2_repair_20260929/repository_work/swe_monai/cpu_c_20261003/monai-2446-actor-20261003-b6bf42bd",
+  "release_manifest_sha256": "80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9",
+  "prepared_job": "monai-release5-prepared-20261003-3537d9d8",
+  "actual_image_id": "sha256:28959a332c8a17ebfb2db681d3afaf79f8fd6e845ba51406fc7772f32453bcdd",
+  "public_command_sha256": "5171897e0f188192fa2748388ee531a12a35c0ca231e971994d1bb201d7c826c",
+  "commands_result": [
+    {
+      "id": "identity",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 731,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "实际actor身份、激活、工作区加载、版本与可写性；不单独当开发合格"
+    },
+    {
+      "id": "nibabel",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 6,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "确认历史兼容依赖到actor"
+    },
+    {
+      "id": "public_smartcache",
+      "rc": 1,
+      "status": "nonzero",
+      "expect": "nonzero",
+      "matches_expect": true,
+      "output_bytes": 853,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "base应真实触发原列表被修改；需检查结构化结果，不能把任意nonzero当目标复现"
+    },
+    {
+      "id": "public_existing",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 6386,
+      "output_truncated_to": 200000,
+      "pytest": {
+        "passed": 7,
+        "warning": 20
+      },
+      "purpose": "公开旧模块，含shape、shuffle和替换；无隐藏test_patch"
+    }
+  ],
+  "identity": {
+    "cwd": "/testbed",
+    "home": "/home/agent",
+    "monai": "/testbed/monai/__init__.py",
+    "path": "/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+    "uid": 54321,
+    "versions": {
+      "monai": "0.5.3+143.g05b2da61",
+      "numpy": "1.24.4",
+      "parameterized": "0.9.0",
+      "pytest": "8.3.3",
+      "torch": "1.13.1"
+    }
+  },
+  "observed_testbed_interpreter": true,
+  "base_commit_observed": true,
+  "initial_image_worktree": "HEAD=05b2da61d70324c2f02b5d72429ddb7cc171b9b9\nPORCELAIN_BEGIN\nPORCELAIN_RC=0\n",
+  "nibabel4_verified": true,
+  "public_smartcache_rows": [
+    {
+      "shuffle": true,
+      "before": [
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ]
+      ],
+      "caller_after": [
+        [
+          2
+        ],
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ]
+      ],
+      "internal": [
+        [
+          2
+        ],
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ]
+      ],
+      "cache": [
+        [
+          2
+        ],
+        [
+          0
+        ]
+      ],
+      "input_preserved": false,
+      "internal_correct": true,
+      "cache_correct": true
+    },
+    {
+      "shuffle": false,
+      "before": [
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ]
+      ],
+      "caller_after": [
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ]
+      ],
+      "internal": [
+        [
+          0
+        ],
+        [
+          1
+        ],
+        [
+          2
+        ],
+        [
+          3
+        ],
+        [
+          4
+        ]
+      ],
+      "cache": [
+        [
+          0
+        ],
+        [
+          1
+        ]
+      ],
+      "input_preserved": true,
+      "internal_correct": true,
+      "cache_correct": true
+    }
+  ],
+  "intended_caller_list_mutation_reproduced": true,
+  "original_public_module_passed": 7,
+  "actual_actor_resources": {
+    "nano_cpus": 2000000000,
+    "memory": 4294967296,
+    "pids_limit": 512
+  },
+  "effective_profile": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmp_tmpfs_bytes": 1073741824,
+    "home_tmpfs_bytes": 268435456,
+    "writable_layer_quota_bytes": 8589934592,
+    "pids_limit": 512
+  },
+  "cleanup": {
+    "container_rm": 0,
+    "network_failures": [],
+    "relay_failures": [],
+    "stub_rc": 0,
+    "labeled_containers_left": [],
+    "labeled_networks_left": [],
+    "residual_after_force": []
+  },
+  "diagnostic_checks_retained": {
+    "interpreter_in_tool_result": false,
+    "host_log_present": true,
+    "no_harness_dir_in_container": true,
+    "no_launcher_or_done_marker": true,
+    "message_start_matches_stub_requests": true,
+    "exit_code_zero": true,
+    "result_event_present": true,
+    "log_complete": true,
+    "bashenv_denied_for_agent": false,
+    "all_commands_ran": true,
+    "all_match_expect": true
+  },
+  "public_command_capability_verified": true,
+  "public_statement_and_hints_first_model_request_proven": false,
+  "scope_limits": [
+    "真实CC桩的公开命令能力；不是模型解题结果",
+    "CPU桩首请求使用通用命令执行指令，未证明正式题面/提示实际交付",
+    "通用interpreter和bashenv检查false保留；直接identity与预启动权限事实分别核对，不宣称平台guard全验收",
+    "新版正式reward矩阵及运行后非作者核查仍待完成"
+  ],
+  "new_private_node_absent_from_actual_actor_requests": true,
+  "formal_reward_proven": false,
+  "independently_reviewed": false,
+  "artifact_sha256": {
+    "activation_check.json": "1e76a4e8dc8e6c1a3238322232a0b576295b64b76fc712e126e1fab223577ef3",
+    "attempt.json": "af47222272a5584292e5ec713e09b0fafe7409fdf3448f21184a20d1d8581422",
+    "bounded_image_probe.json": "1c499e24fd812621089c6b250c38333f860ae62c71d8c2160818c76b3099fd65",
+    "bringup_artifacts/cc_version_observed.json": "c2b9bcf966c47d9a00227877026cb90b76afed482fd0df4e0ac12caab786bacb",
+    "captures/identity.out": "09acad36e7a9f638364ad8698026dbdd06937a2a9a0d80b0ffef4248b49095eb",
+    "captures/nibabel.out": "c6d3fb057b198f1d0563d4218d4e36b48df752251aabffe78ea60aac5a72c7a2",
+    "captures/public_existing.out": "b1cee9360ea38d54fb549b90b5ec04f586dddb0c58ca8e90dead47122413d8c1",
+    "captures/public_smartcache.out": "3d536140ba6c3056c4e92884737e6c79387794dc0f08ad65c678684ed2af0ffc",
+    "harness/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "harness/trajectory.jsonl": "fdb120c55e85700bc1cf8f6cde7c2e10b9e105947c8d659258bca04bc4cbcf00",
+    "post_run_facts_root.txt": "471ec1564db2dffa5f0c4ca35c84f32a4100f89fdfc118fdbe80f62e6839d4fb",
+    "prelaunch.json": "8c4bb96d7bad9cf0adcfce9bfd5b3d6d78764bf7765ba514e787570557837a3f",
+    "stub/requests/messages_000.json": "8afca4eff9eef44f5e3089e13354b508c09e6a7121ddcb0e2f8e9f21fe44d609",
+    "stub/requests/messages_001.json": "40a17bb5f9431e6d98c3c462d50be80ecf9569091bcfa3a7e479b5f7e861d275",
+    "stub/requests/messages_002.json": "c54cd15aebeaef71fbf03a5dea5e65ab0bae5cd5d1554e2ded037e18329cef91",
+    "stub/requests/messages_003.json": "3b3ff3044ac4fa4267d66f7bb6ef777bdf8b6a0b8bdc4b6d67c4179838258511",
+    "stub/requests/messages_004.json": "d5f354bac8e19e7b7cc5e91fe667b1014f9b43c51a11d6173f72920e6bcf0017",
+    "stub/stub_log.json": "776e8ea2ac7827e748e993d6defc34b9dacafcd5a86f22cd89bc80714e23e455",
+    "stub_script.json": "df7ab9e9669a378c25b3b31517598492186e0e4252146fc1e650aa3e58e686c4",
+    "stub_stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

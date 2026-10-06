@@ -1,0 +1,410 @@
+{
+  "schema": "Dask_Qwen_first_arm_and_model_pair_owner_analysis_v1",
+  "as_of": "2026-10-04T01:59:26.439112+08:00",
+  "instance_id": "dask__dask-7138",
+  "revision_id": "dask7138-array-keyword-v1",
+  "request_id": "probe-swe-dask-7138-20261003-v1",
+  "job_id": "gpu1003-dask7138-qwen36-a1",
+  "scope": "ravel接受标量/array-like、正确展开并返回Dask Array；保留array=旧关键字，题面已有转换引导。",
+  "pair_receipt": {
+    "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/probe-swe-dask-7138-20261003-v1_pair_execution_receipt_v1.json",
+    "sha256": "15eadf0d511bc3bd1da2bef73a9b30a307b68c93c6289725cafdb07b8f1f5bfb",
+    "bytes": 9691
+  },
+  "execution_receipt": {
+    "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/dask7138_qwen36_code9_execution_receipt_v1/execution_receipt.json",
+    "sha256": "2eaaa06491668332611e8e9dc055a24d3e167fd89eb898e95fb7c466285ff9dd",
+    "bytes": 308777
+  },
+  "original_readback": {
+    "path": "runs/category2_repair_20260929/swe_dask/model_analysis_20261004/dask7138_qwen36_a1_v1/originals_checks_v1.json",
+    "sha256": "62f4545b50dc0e29507e592c9c9b56eeb8193426219e01af0dc22bcbcf298218",
+    "bytes": 144865
+  },
+  "trajectory_index": {
+    "path": "runs/category2_repair_20260929/swe_dask/model_analysis_20261004/dask7138_qwen36_a1_v1/trajectory_index_v1.json",
+    "sha256": "464a1a375e0b260c663084630c388c2b40259b836f45b5f5b7944a5704c596c2",
+    "bytes": 25520
+  },
+  "non_author_candidate_review": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_7138_qwen36_a1_candidate_review_20261004.json",
+    "sha256": "408f1a665461fee1914f58e42a63dd969c0035da3b519975a2db59758512926c",
+    "bytes": 32128
+  },
+  "non_author_report": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_7138_qwen36_a1_candidate_review_20261004.md",
+    "sha256": "74a16836a2cc323986afff466ccff174b0e8547de8059f8c2bd3c69024528ed6",
+    "bytes": 14347
+  },
+  "original_report": {
+    "schema_id": "rh2.grading_report.v1",
+    "report_id": "rpt_grading_a2437547",
+    "trajectory_id": "gpu1003-dask7138-qwen36-a1",
+    "task_id": "swe_gym_lite::dask__dask-7138",
+    "grader_name": "swebench_official_parser",
+    "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+dask7138-array-keyword-v1",
+    "outcome": "resolved",
+    "failure_category": null,
+    "reward": 1.0,
+    "reward_scale_version": "binary_v1",
+    "f2p_pass_count": 1,
+    "f2p_total_count": 1,
+    "p2p_fail_count": 0,
+    "p2p_total_count": 469,
+    "execution_failure_stage": null,
+    "execution_failure_evidence": [],
+    "grading_semantics": "swe_f2p_p2p",
+    "expected_match_count": null,
+    "expected_total_count": null,
+    "patch_hygiene": {
+      "cleaned_patch_digest": "sha256:3478b88d4e40a69e23f1c6a4cf1c4b61511131b394bfc81eb7ff61759216078b",
+      "digest_kind": "applied_entry_set",
+      "replayed_on_clean_checkout": true,
+      "test_files_modified": false,
+      "forbidden_path_touched": false,
+      "forbidden_paths": [],
+      "verdict": "clean"
+    },
+    "infra_failure_detail": null,
+    "eval_log_ref": {
+      "ref_id": "evallog_gpu1003-dask7138-qwen36-_a2437547",
+      "sha256": "sha256:15dc1a0d53748ea766697b299bf2c1c9ad33b35a1e785a4f1bd2f3c73134b165",
+      "byte_size": 74281
+    },
+    "timings": {
+      "schema_id": "rh2.grading_timing_record.v1",
+      "record_id": "timing_a2437547",
+      "trajectory_id": "gpu1003-dask7138-qwen36-a1",
+      "task_id": "swe_gym_lite::dask__dask-7138",
+      "image_pull_seconds": 0.0,
+      "env_reset_seconds": 12.371,
+      "prep_seconds": 0.245,
+      "test_seconds": 9.367,
+      "total_grading_seconds": 487.486,
+      "queue_wait_seconds": 0.0,
+      "container_peak_memory_mb": 2961.582,
+      "queue_depth_at_enqueue": null,
+      "backpressure_triggered": false
+    },
+    "graded_at_utc": "2026-10-03T17:31:38.568688Z"
+  },
+  "pair_results": [
+    {
+      "model": "Coder",
+      "model_job_id": "gpu1003-dask7138-coder-a1",
+      "original_GPU_raw_reward": null,
+      "original_failure_category": "infra_failure_prepare300",
+      "CPU_derived_reward": 0,
+      "CPU_grading_job_id": "dask7138-original-fp-cpu-recovery-20261003-v1",
+      "CPU_readback": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7138/coder_original_FP_CPU_recovery_readback_20261003.json",
+        "sha256": "a328855247b131b8ebb3a2a41c7272cc21b99939c2577e1f35fae1d3a23fd057",
+        "bytes": 12253
+      },
+      "new_solve_or_model_sample": false
+    },
+    {
+      "model": "Qwen3.6",
+      "model_job_id": "gpu1003-dask7138-qwen36-a1",
+      "original_GPU_raw_reward": 1,
+      "F2P_pass_total": [
+        1,
+        1
+      ],
+      "P2P_fail_total": [
+        0,
+        469
+      ],
+      "semantic_scope_passed": "ravel接受标量/array-like、正确展开并返回Dask Array；保留array=旧关键字，题面已有转换引导。"
+    }
+  ],
+  "candidate_FP_digest": "sha256:e1f8877dfc4c912f3fc79bd4e25a4e6e5cc912da9e9920811bb7470e55f2f068",
+  "baseline_digest": "sha256:1bb7df741c80d1271ab92408e0277d129c0b866011b218b79a8295bc38ad49b2",
+  "actual_projection": {
+    "schema_id": "rh2.fa.scoring_projection.v1",
+    "frozen_patch_digest": "sha256:e1f8877dfc4c912f3fc79bd4e25a4e6e5cc912da9e9920811bb7470e55f2f068",
+    "rollout_execution_id": "gpu1003-dask7138-qwen36-a1",
+    "physical_attempt_id": "gpu1003-dask7138-qwen36-a1#p1",
+    "included_entry_paths": [
+      "dask/array/routines.py"
+    ]
+  },
+  "test_changes_in_FP_but_not_scoring_projection": true,
+  "edit_replay": [
+    {
+      "line": 113,
+      "path": "dask/array/routines.py",
+      "replayed_sha256": "5d245e5166c7b026b1d67cc943419c62dce98401f782dd684ea639df44fe96b6"
+    },
+    {
+      "line": 173,
+      "path": "dask/array/tests/test_routines.py",
+      "replayed_sha256": "e768c42e12970eeeb66df03ff70216f58cd45907c2f6e8f680071d0c1e3a5d7f"
+    }
+  ],
+  "transport_integrity": {
+    "raw_files": 139,
+    "raw_bytes": 14318038,
+    "execution_refs": 33,
+    "old_CPU_refs": 16,
+    "all_SHA_bytes_checked": true
+  },
+  "actual_code9_R25_binding": {
+    "runtime": "code_v9",
+    "consumer": "R25",
+    "execution_receipt": {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/dask7138_qwen36_code9_execution_receipt_v1/execution_receipt.json",
+      "sha256": "2eaaa06491668332611e8e9dc055a24d3e167fd89eb898e95fb7c466285ff9dd",
+      "bytes": 308777
+    },
+    "native_policy_fields": {
+      "policy_sha256": "43bcb4c7d87e85b463f30de52fca82149acf476914c4ac6df81f953cbe004eac",
+      "request_id": "support-swe-dask7138-setup900-20261003-v1",
+      "request_input_sha256": "b9c306456d28310e0fe6d73511fdc585362b39aeb4e074c9f00673a95a292163",
+      "actual_image_id": "sha256:625b404c6c1c40da31df4edfea6052a10fbd30b7fb49d58072b6ee2b215fab13",
+      "apply_seconds": 120,
+      "cpu_acceptance_sha256": "a328855247b131b8ebb3a2a41c7272cc21b99939c2577e1f35fae1d3a23fd057",
+      "env_reset_seconds": 900,
+      "grading_bundle_digest": "sha256:ab58a76b4d8fa60add16e3217d0a2d8e10c9bff2667dfcdc67c61e1cddc0175a",
+      "image": "sha256:625b404c6c1c40da31df4edfea6052a10fbd30b7fb49d58072b6ee2b215fab13",
+      "image_manifest_digest": null,
+      "materials_identity": "sha256:3e94408ef02d1c2fb6c9113a5c86920325280b2a80962bf579d98087e283136e",
+      "new_script_sha256": {
+        "candidate_install_script": "9584421007e8df9e1a6683db6c16367c8026c6b664dc54666a1fb1de95d8d817",
+        "candidate_test_after_install_script": "b43322560b698c660dadce1aa7ea1a638242feb58a34f41d944f75b5bba8beda",
+        "candidate_test_script": "35f42305d6fe713bf29bef181e3adf43d70bb4b8531a48561e360e439c0d37ec",
+        "eval_script": "9c41b5a8d272168c922db0ebe22edec4de67974964f17416bc5d01b9ecfb2675",
+        "trusted_setup_script": "ad5898b05b08fba08ef366a7d35505eca5eea591f3fcad30f2c10778d888a34f"
+      },
+      "old_script_sha256": {
+        "candidate_install_script": "9584421007e8df9e1a6683db6c16367c8026c6b664dc54666a1fb1de95d8d817",
+        "candidate_test_after_install_script": "b43322560b698c660dadce1aa7ea1a638242feb58a34f41d944f75b5bba8beda",
+        "candidate_test_script": "35f42305d6fe713bf29bef181e3adf43d70bb4b8531a48561e360e439c0d37ec",
+        "eval_script": "9c41b5a8d272168c922db0ebe22edec4de67974964f17416bc5d01b9ecfb2675",
+        "trusted_setup_script": "ad5898b05b08fba08ef366a7d35505eca5eea591f3fcad30f2c10778d888a34f"
+      },
+      "old_scripts_digest": "sha256:6f61a742aacc681b4e07e2b1825cd1d8cba5450da1791e2aae7b9eee659c0d5b",
+      "recipe_id": "dask7138-original-FP-setup900-v1",
+      "reference_total": 470,
+      "revision_id": "dask7138-array-keyword-v1",
+      "selected_env": null,
+      "single_shell_scripts_digest": "sha256:6f61a742aacc681b4e07e2b1825cd1d8cba5450da1791e2aae7b9eee659c0d5b",
+      "test_seconds": 1800,
+      "whole_seconds": 3600,
+      "two_stage_scripts_digest": "sha256:3048923f3d521f1cee55fc0bf5cf4cd3447bd3df97749d90cdb1683ab4167c56",
+      "actual_image_inspect_verified": false,
+      "actual_execution_mode": null,
+      "CPU_acceptance_scope": "single_shell_deny_all_no_supply",
+      "two_stage_execution_verified": false,
+      "training_qualification": null,
+      "consumer_source_sha256": "sha256:789aa2dbdd4ede98460cbfd4ca33b3d4652729f0ed0e284e34940ff1ed2bc0b5",
+      "execution_mode_declared": "single_shell",
+      "supply_config_declared": null,
+      "profile_parameters": {
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "schema_id": "rh2.sandbox_profile.v1",
+        "candidate_exec_user": "rh2grader",
+        "candidate_exec_uid": 54322,
+        "trusted_init_caps": [
+          "CHOWN",
+          "DAC_OVERRIDE",
+          "DAC_READ_SEARCH",
+          "FOWNER",
+          "KILL"
+        ],
+        "pids_limit": 512,
+        "cpus": 2.0,
+        "memory_bytes": 4294967296,
+        "swap_bytes": 0,
+        "tmp_tmpfs_bytes": 1073741824,
+        "writable_layer_quota_bytes": 8589934592,
+        "require_writable_layer_quota": false,
+        "shm_size_bytes": 67108864,
+        "tmpfs_mount_flags": "exec,nosuid,nodev",
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "network": {
+          "mode": "deny_all",
+          "forbidden_probe_targets": [
+            "169.254.169.254:80",
+            "1.1.1.1:443",
+            "172.17.0.1:18001"
+          ]
+        },
+        "bind_mounts_allowed": [
+          "declared_readonly_snapshot_only"
+        ],
+        "testbed_path": "/testbed",
+        "security_opt": [
+          "no-new-privileges"
+        ],
+        "cap_drop": [
+          "ALL"
+        ]
+      }
+    },
+    "actor_actual_image_id": "sha256:fdd298b61309ae2df4cb9f528351526b7b3817c42fc34f47f98152a92a520881",
+    "actual_grader_image_id": "sha256:625b404c6c1c40da31df4edfea6052a10fbd30b7fb49d58072b6ee2b215fab13",
+    "same_full_single_shell_scripts_as_Coder_CPU": true,
+    "selected_env": null,
+    "after_install_static_not_executed": true,
+    "setup_apply_test_whole_seconds": [
+      900,
+      120,
+      1800,
+      3600
+    ],
+    "resource_observation": {
+      "actor": {
+        "samples": 4,
+        "actual_image_ids": [
+          "sha256:fdd298b61309ae2df4cb9f528351526b7b3817c42fc34f47f98152a92a520881"
+        ],
+        "PID_peak": 38,
+        "memory_peak_bytes": 899108864,
+        "pids_max_event": 0,
+        "memory_events_max": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        }
+      },
+      "relay": {
+        "samples": 4,
+        "actual_image_ids": [
+          "sha256:ec7d6c95cd3692a2e2d228a8b1ca74e4025b54121fcc4c5da6f09cfa473315ad"
+        ],
+        "PID_peak": 7,
+        "memory_peak_bytes": 27717632,
+        "pids_max_event": 0,
+        "memory_events_max": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        }
+      },
+      "grader": {
+        "samples": 32,
+        "actual_image_ids": [
+          "sha256:625b404c6c1c40da31df4edfea6052a10fbd30b7fb49d58072b6ee2b215fab13"
+        ],
+        "PID_peak": 8,
+        "memory_peak_bytes": 1931325440,
+        "pids_max_event": 0,
+        "memory_events_max": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        }
+      }
+    },
+    "resource_observation_gaps_unknown": true,
+    "raw_resource_facts_preserved": null,
+    "full_Docker_Config_kernel_profile_child_environment_attestation_claimed": false,
+    "cleanup_ok": true,
+    "manager_created_removed": [
+      1,
+      1
+    ],
+    "gateway_drained_active0": true
+  },
+  "trajectory_analysis": {
+    "implementation": "保留ravel(array)签名，将array.reshape改为asanyarray(array).reshape；转换与旧调用兼容。",
+    "model_observation": "正确复现list无reshape并读取同文件转换惯例；一行生产改动、一次新增公共测试，未反复换算法。",
+    "verification": "三个聚焦用例各过、ravel选择11pass/550deselected及二维Dask实例通过；模型未跑完整module、未显式测标量或array=，正式私有470项另确认。",
+    "final_claim": "只称array-like转换与11个ravel相关测试通过，与轨迹相符；新增测试注释issue/XXXX为占位，无评分作用。",
+    "parallel": "19工具逐项串行；可批量独立读取，但依赖编辑/测试应串行。",
+    "limits": "本轮有限输入，不证明全部NumPy选项兼容、稳定能力或训练资格；不新增零拷贝要求。"
+  },
+  "model_metrics": {
+    "solve_seconds": 26.193,
+    "CC_seconds": 22.627,
+    "cumulative_API_seconds": 16.008,
+    "API_seconds_not_pure_GPU_time": true,
+    "CC_turns": 20,
+    "unique_model_responses": 20,
+    "tool_counts": {
+      "Bash": 12,
+      "Read": 5,
+      "Edit": 2
+    },
+    "tool_calls": 19,
+    "cumulative_input_tokens": 126475,
+    "output_tokens": 2505,
+    "max_single_prompt_input_tokens": 9349,
+    "termination": "completed",
+    "budget_exhausted": false,
+    "cost_metadata_not_actual_invoice": 0.6950000000000001
+  },
+  "grading_time_separate": {
+    "schema_id": "rh2.grading_timing_record.v1",
+    "record_id": "timing_a2437547",
+    "trajectory_id": "gpu1003-dask7138-qwen36-a1",
+    "task_id": "swe_gym_lite::dask__dask-7138",
+    "image_pull_seconds": 0.0,
+    "env_reset_seconds": 12.371,
+    "prep_seconds": 0.245,
+    "test_seconds": 9.367,
+    "total_grading_seconds": 487.486,
+    "queue_wait_seconds": 0.0,
+    "container_peak_memory_mb": 2961.582,
+    "queue_depth_at_enqueue": null,
+    "backpressure_triggered": false
+  },
+  "phase_segments_seconds": {
+    "delta_apply": 0.121459,
+    "grader_baseline_rebuild": 0.12189,
+    "grader_cleanup": null,
+    "grader_start_and_verify": 12.372311,
+    "grader_trusted_setup": 464.814026,
+    "parser_and_report": null,
+    "test": 9.367204
+  },
+  "install_test_facts": {
+    "install_rc_last_command": 0,
+    "install_failed_commands": [],
+    "install_skipped": false,
+    "install_seconds": 1.569,
+    "test_rc": 0,
+    "test_seconds": 7.222,
+    "markers_seen": [
+      "RH2_INSTALL_RC",
+      "RH2_TEST_RC",
+      "RH2_TS_INSTALL_END",
+      "RH2_TS_INSTALL_START",
+      "RH2_TS_TEST_END",
+      "RH2_TS_TEST_START"
+    ]
+  },
+  "public_delivery": {
+    "mode": "unchanged",
+    "base_prompt_sha256": "sha256:b02c916a8faba2fe3718f1e67a58d230df7863c8abd4864ec7e78781200f46c8",
+    "delivered_prompt_sha256": "sha256:b02c916a8faba2fe3718f1e67a58d230df7863c8abd4864ec7e78781200f46c8"
+  },
+  "public_scope_alignment": "既有7656澄清适用：unchanged只保spec.prompt，旧通用hints未追加，不以未交提示判违令或重复采样。",
+  "current_verdict": {
+    "current_goal_passed": true,
+    "new_material_or_grading_defect_found": false,
+    "candidate_false_acceptance_found_in_current_scope": false,
+    "scoring_control_pollution_found": false,
+    "pretraining_contamination_ruled_out": false,
+    "new_CPU_or_model_repeat_required": false,
+    "stable_model_capability": null,
+    "training_qualification": null,
+    "whole_task_complete": false
+  },
+  "new_CPU_model_control_runs": 0,
+  "old_None_and_CPU_derived_scores_preserved": true,
+  "prior_controls_and_sealed_reports_unchanged": true,
+  "next_action": "核收总回执ack并清本题活动请求；本题普通首轮分析闭合，不新增CPU/模型重试，继续8801诊断首轮核收。"
+}

@@ -1,0 +1,38 @@
+[ISSUE]
+
+**Title:** Incorrect String Representation for Large 1D Masked Arrays
+
+**Description:**
+When printing a large 1D masked array, its data section retains more values than the ordinary array summary and omits middle values without an ellipsis. This makes it harder to see which values have been omitted.
+
+**Example Code:**
+```python
+import numpy as np
+
+a = np.ma.arange(2000)
+a[1:50] = np.ma.masked
+print(repr(a))
+```
+
+**Expected Behavior:**
+The `repr` of the masked array should truncate the data after a certain number of elements, using an ellipsis to indicate omitted values. The choice between a summary and full output should follow NumPy's existing printing options; when those options request full output, values must not be silently dropped. For example:
+```
+masked_array(data = [0 -- -- ..., 1997 1998 1999],
+             mask = [False  True  True ..., False False False],
+       fill_value = 999999)
+```
+
+**Actual Behavior:**
+For the example above, the initial checkout prints a data section containing 0, the 49 masked values, and 1950 through 1999. The intervening values are omitted, but the data section has no ellipsis:
+```
+masked_array(data = [0 -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+ -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- --
+ 1950 1951 1952 1953 1954 1955 1956 1957 1958 1959 1960 1961 1962 1963 1964
+ 1965 1966 1967 1968 1969 1970 1971 1972 1973 1974 1975 1976 1977 1978 1979
+ 1980 1981 1982 1983 1984 1985 1986 1987 1988 1989 1990 1991 1992 1993 1994
+ 1995 1996 1997 1998 1999],
+             mask = [False  True  True ..., False False False],
+       fill_value = 999999)
+```
+
+[/ISSUE]

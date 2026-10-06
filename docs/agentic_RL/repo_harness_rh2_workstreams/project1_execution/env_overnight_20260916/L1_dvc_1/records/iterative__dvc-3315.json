@@ -1,0 +1,229 @@
+{
+ "task_id": "iterative__dvc-3315",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "docs/.../s2/ingest/public_bundles_v0.jsonl#iterative__dvc-3315",
+  "grading": "docs/.../s2/ingest/grading_bundles_v2_v0.jsonl#iterative__dvc-3315",
+  "validation": "docs/.../s2/ingest/validation_bundles_v0.jsonl#iterative__dvc-3315",
+  "raw": "docs/.../s2/raw/swe_gym_lite_full_f70b1a29.jsonl#iterative__dvc-3315",
+  "base_commit": "9e7740572c2cb3e9a4b29e884ca95cb99c694b8d",
+  "version": "0.90",
+  "python_version": "3.8",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-3315:latest",
+  "eval_cmd": "pytest -rA",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3315/{gold,empty}/offline/a1/",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc"
+ },
+ "public_view": {
+  "目标行为": "`dvc add` 之后打印的提示命令 `git add <paths>`，当路径含空格时要加引号，使其可以直接复制粘贴执行。",
+  "约束": "base `dvc/scm/git/__init__.py:320-329 Git.remind_to_track` 用 `\" \".join(self.files_to_track)` 拼接；`self.files_to_track` 在第 50、318 行被初始化为 **`set()`**，所以生产环境下的拼接顺序本来就不确定。",
+  "公开材料无法确定的点": [
+   "**只有含空格的路径要加引号，还是所有 shell 不安全字符都要**：题面只说空格；",
+   "用单引号还是双引号、用什么转义规则，题面没说；",
+   "多个路径的输出顺序（base 是 set，顺序不确定），题面没提。"
+  ],
+  "相关模块": "dvc/scm/git/__init__.py（Git.remind_to_track / track_file / files_to_track）、dvc/repo/scm_context.py:6。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3315/grading.json#test_patch",
+    "mat/iterative__dvc-3315/validation.json#golden_patch",
+    "git show 9e7740572c:dvc/scm/git/__init__.py:320"
+   ],
+   "note": "test_patch 只动 tests/unit/scm/test_scm.py（base 存在，含 TestScmContext 两条）；gold 只动 dvc/scm/git/__init__.py。同一问题。无二进制/LFS/子模块。",
+   "by": "static"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show 9e7740572c:dvc/scm/git/__init__.py:328（`\" \".join(self.files_to_track)`）",
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3315/empty/offline/a1/status_map.json"
+   ],
+   "note": "base 确实不做任何引号处理；empty 侧 F2P FAILED。",
+   "by": "static"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3315/public.json#problem_statement"
+   ],
+   "note": "题面 336 字符，散文但意思明确（\"not wrap path with quotes so copy-paste this hint-command not working\"），无代码块需求、无截断、无外链。hints 只有一句跑题感想，无信息落差。",
+   "by": "static"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3315/grading.json#test_patch"
+   ],
+   "note": "test_patch 只触碰 tests/unit/scm/test_scm.py；gold 不触碰测试样路径。",
+   "by": "static"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3315/grading.json#test_patch"
+   ],
+   "note": "恢复清单 = {tests/unit/scm/test_scm.py}，官方测试文件。",
+   "by": "static"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_dvc_1/prescan.json"
+   ],
+   "note": "本包唯一 version=0.90、唯一改 dvc/scm/git/__init__.py 的题。",
+   "by": "static"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-3315/grading.json#test_patch（`assert \"git add 'fname with spaces.txt' 'тест' foo\" in caplog.text`）"
+   ],
+   "note": "**F2P 要求给一个不含空格的非 ASCII 文件名 `тест` 也加引号**，题面只说\"含空格的路径\"。这条恰好是 `shlex.quote` 的行为（它的 `_find_unsafe` 用 `re.ASCII`，所以西里尔字母被判为不安全），但从题面推不出来。按题面字面实现（`if \" \" in path: quote`）会因为 `тест` 没被引号包住而判 0。",
+   "by": "static"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-3315/grading.json#test_patch",
+    "git show 9e7740572c:dvc/scm/git/__init__.py:50,318（`files_to_track = set()`）"
+   ],
+   "note": "两处强制：(a) 引号字符与转义规则被逐字锁成 `shlex.quote` 的输出（单引号），用 `'\"{}\"'.format(path)` 之类的双引号实现会被拒；(b) **输出顺序被逐字锁成传入顺序**——测试把 `files_to_track` 直接赋成 list 绕过了 base 的 set，因此一个\"顺便排序让输出稳定\"的合理改进（`sorted(...)` 会得到 `fname... foo тест`）反而判 0。",
+   "by": "static"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "mat/iterative__dvc-3315/grading.json#pass_to_pass（2 条，均为 `TestScmContext`，用 `mock.Mock(spec=NoSCM)`）"
+   ],
+   "note": "P2P 只有 2 条，且都是对 `scm_context` 装饰器的 mock 级测试（断言 `reset_ignores`/`remind_to_track` 的调用次数），**根本不会执行 `Git.remind_to_track` 的真实代码**。也就是说本题除 F2P 外零真实回归；把 `remind_to_track` 整个改成 `pass` 之外的任何破坏都不会被 P2P 发现。",
+   "by": "static"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3315/gold/offline/a1/test_output.txt（3 passed in 0.18s）"
+   ],
+   "note": "整个 tests/unit/scm/test_scm.py 只有 3 条用例，P2P 已取满。`remind_to_track` 的真实调用点在 `dvc/repo/scm_context.py:6`，被所有写操作（add/run/repro/checkout...）经过，但这些功能测试都不在评分文件里。",
+   "by": "static"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3315/validation.json#golden_patch"
+   ],
+   "note": "gold 三行（import shlex、生成 files、替换格式化参数），与题目对应，无无关改动，不依赖未交付改动。`shlex.quote` 是 Python 3 标准做法。",
+   "by": "static"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "mat/iterative__dvc-3315/public.json#problem_statement",
+    "mat/iterative__dvc-3315/raw.json#hints_text"
+   ],
+   "note": "题面与 hints 都不含修复代码、不含 PR/commit 链接（hints 只有一句 \"Makes me think if we should re-consider auto `git add`ing files\"）。",
+   "by": "static"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3315/gold/offline/a1/test_output.txt（3 passed in 0.18s）"
+   ],
+   "note": "安装与测试正常；本题是本包最快的一档（测试阶段 0.18 秒）。",
+   "by": "static"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3315/gold/offline/a1/test_output.txt"
+   ],
+   "note": "纯单元测试，无网络、无外部服务。",
+   "by": "static"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-3315/gold/offline/a1/status_map.json"
+   ],
+   "note": "status_map 无污染键，F2P/P2P 全部对上。",
+   "by": "static"
+  },
+  "7": {
+   "status": "not_applicable",
+   "evidence_refs": [],
+   "note": "test_patch 不带外部资产。",
+   "by": "static"
+  }
+ },
+ "issues": [
+  {
+   "category": "要求超出题面(23/24)",
+   "severity": "P2",
+   "evidence_refs": [
+    "mat/iterative__dvc-3315/public.json#problem_statement（只提 spaces）",
+    "mat/iterative__dvc-3315/grading.json#test_patch（期望串里 `тест` 被加引号）"
+   ],
+   "note": "F2P 逐字匹配 `shlex.quote` 的输出，包括\"非 ASCII 但无空格的文件名也要加引号\"这条题面没有的要求，以及单引号这一具体形式。按题面字面实现会判 0。",
+   "proposed_action": "题面补一句\"按 POSIX shell 规则对所有需要转义的路径加引号（不止空格）\"；或把断言放宽为分别检查每个路径的 shell 可解析性（例如用 `shlex.split(printed_cmd)` 还原出原始三个路径）。",
+   "next_experiment": "写 `if \" \" in path: path = \"'\" + path + \"'\"` 的题面字面实现跑 F2P，预期因 `тест` 未加引号失败。"
+  },
+  {
+   "category": "顺序被测试固化(24/14)",
+   "severity": "P3",
+   "evidence_refs": [
+    "git show 9e7740572c:dvc/scm/git/__init__.py:50,318（`files_to_track = set()`）",
+    "mat/iterative__dvc-3315/grading.json#test_patch（直接赋 list 绕过 set）"
+   ],
+   "note": "生产代码里 `files_to_track` 是 set，输出顺序本来不确定；测试用 list 绕过，反而把\"保持传入顺序\"变成隐含要求，使得 `sorted()` 这种让输出确定化的合理改进被拒。",
+   "proposed_action": "断言改成对每个路径分别 `assert \"'fname with spaces.txt'\" in caplog.text`，不约束顺序。",
+   "next_experiment": "写 `\" \".join(shlex.quote(p) for p in sorted(self.files_to_track))` 跑 F2P，预期失败。"
+  },
+  {
+   "category": "零真实回归(25/26)",
+   "severity": "P2",
+   "evidence_refs": [
+    "git show 9e7740572c:tests/unit/scm/test_scm.py（2 条均用 `mock.Mock(spec=NoSCM)`）"
+   ],
+   "note": "两条 P2P 都在 mock 层，不执行 `Git.remind_to_track` 的真实代码；除 F2P 外本题没有任何行为回归。",
+   "proposed_action": "把 `tests/func/test_add.py` 里检查 \"To track the changes with git\" 提示的用例（若有）或 `tests/unit/scm/test_git.py` 纳入 P2P。",
+   "next_experiment": "base/gold 各跑一次 `pytest -rA tests/unit/scm/ tests/func/test_add.py -k track`，取双侧 PASSED 作为扩充 P2P。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 tests/unit/scm/test_scm.py；gold 不触碰测试样路径。按第四组 B 保持为空。",
+  "evidence_refs": [
+   "mat/iterative__dvc-3315/grading.json#test_patch",
+   "mat/iterative__dvc-3315/validation.json#golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/unit/scm/test_git.py",
+   "reason": "`Git` 类的单元测试同包，是 `remind_to_track`/`track_file` 最近的真实回归位置。"
+  },
+  {
+   "id": "tests/func/test_add.py -k track",
+   "reason": "`remind_to_track` 的真实调用点在 `dvc/repo/scm_context.py`，被 add 路径触发。"
+  },
+  {
+   "id": "tests/unit/scm/test_scm.py::TestScmContext::test_should_throw_and_cleanup",
+   "reason": "已在 P2P；确保异常路径下不打印提示，是 gold 改动点的调用条件。"
+  },
+  {
+   "id": "（新增）tests/unit/scm/test_scm.py::test_remind_to_track_roundtrip",
+   "reason": "针对 check 24 的缺口：用 `shlex.split` 还原打印出的命令，断言能得回原始路径集合，不约束引号形式与顺序。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_review",
+  "reason": "题目小而干净、环境最快（0.18 秒）、gold 用标准库正解；但 F2P 逐字锁 `shlex.quote` 的输出（含题面没要求的非 ASCII 引号与顺序），且两条 P2P 都在 mock 层、不执行被改代码，除 F2P 外零回归。"
+ },
+ "costs": {
+  "minutes": 16
+ },
+ "by": "L1_dvc_1 (Claude Opus 5, 静态审查)"
+}

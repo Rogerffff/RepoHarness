@@ -1,0 +1,635 @@
+{
+  "schema": "swe_dask.non_author_coder_candidate_review.v1",
+  "as_of": "2026-10-03",
+  "task": "dask__dask-8801",
+  "reviewer_role": "非作者独立候选及原执行窄核",
+  "context_disclosure": {
+    "prior_context": "复用本reviewer已有Dask7656、7305、9378、7138审查上下文与仓库规范；本题此真实候选首次读取。",
+    "implementation_authorship": false,
+    "fresh_blind_semantic_judge": false,
+    "control_matrices_reaudited": false,
+    "control_420_verdicts_reused": false
+  },
+  "authorized_scope": "仅封闭SHA/size、当前材料/公开交付、原FP和baseline、生产静态路径、逐工具重放、自测/最终说明、原评分终态及清理；真实可见诊断fresh裁决等待本次CPU。",
+  "actions": {
+    "new_CPU_GPU_tests_models_SSH_Docker": false,
+    "original_or_shared_source_modified": false,
+    "sealed_closed_reviews_written": false,
+    "only_new_H_reports_write_once": true
+  },
+  "closure": {
+    "authoritative_root": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1",
+    "manifest_sha256": "eba8b49c23fb6ff22fea8ed2cbd2cbf87ab1bf851bbac09844fb790e781dc021",
+    "receipt_sha256": "f812022ab41928264b9297358a7964294209a3925d3ce293f8180b60894d156c",
+    "files_checked": 528,
+    "bytes_checked": 52779768,
+    "SHA_size_errors": [],
+    "receipt_mapping_rows_checked": 528,
+    "unrelated_history_semantics_reviewed": false,
+    "other_model_arm_closed": false
+  },
+  "decision": {
+    "candidate_integrity": "通过；唯一生产修改与Edit重放和diff精确相符。",
+    "current_target_correctness": "未定；静态非映射/None/OSError路径与允许分支相容，但不推出完整目标正确。",
+    "formal_raw_reward": null,
+    "outcome": "failed_to_grade",
+    "failure_category": "infra_failure",
+    "count_as_model_failure": false,
+    "formal_references": "45项均not_evaluated",
+    "fresh_semantic_verdict": null,
+    "fresh_semantic_status": "needs_evidence",
+    "qualification": null,
+    "automatic_training_reward_authorized": false,
+    "allowed_usage": "单样本普通基座质量诊断与同原FP环境恢复的原证据基线。"
+  },
+  "binding": {
+    "job_id": "gpu1003-dask8801-coder-a1",
+    "queue": "queue_v31",
+    "entry_runtime": "code_v8",
+    "base_commit": "9634da11a5a6e5eb64cf941d2088aabffe504adb",
+    "frozen_patch_canonical_sha256": "739f20878faca8da44f55b164596413fe411b9a1054e4d9c227212bc0dabd7a1",
+    "frozen_patch_file_sha256": "74f1d11153705668c72ab331251d31d343291c35362e6230f043ee4fc3a7ef8a",
+    "baseline_manifest_canonical_sha256": "aff22965ee08670e719a8ae2c026cf1f78ef93e201356921845b61ada0262aea",
+    "baseline_archive_sha256": "448b888d918356f968b4b8ab581044fdbd8c962a82ee07515d0fb4e758f05b86",
+    "production_paths": [
+      "dask/config.py"
+    ],
+    "production_content_sha256": "b703567bdf999d7da1c85637596e81aa5123cccc6f82173e8f449ead135c05da",
+    "production_bytes": 20371,
+    "actor_image_id": "sha256:695d2cc28e303a0224c1109fe245f7296c6290d480124fa4fd4cc2ad072124b1",
+    "grader_actual_resource_image_id": "sha256:695d2cc28e303a0224c1109fe245f7296c6290d480124fa4fd4cc2ad072124b1",
+    "source_manifest": "sha256:21e77aea7025bad694a5c600ed6d4b372c80c83bc319fafa2fedb23d9ff48483",
+    "revision": "dask8801-behavior-semantic-v7-compat1",
+    "material_identity": "sha256:b5cf41d813f263bc4d3d04985ecfde892677fb05ef6b6f1e5f95b93758e49b1b",
+    "public_bundle_digest": "sha256:4410e2acd12b04f49f2f17967331573e54f3f22498980c3d612ce5a6ec27fdf2",
+    "statement_bytes": 8563,
+    "statement_CRLF": 162,
+    "statement_sha256": "0b3ffb734d5e9f1eac09848d407b0f040913075359563f7717d5f3efb1ce166c",
+    "prompt_bytes": 8668,
+    "prompt_sha256": "da676ad7d775266c4e31d755ea6d534a8d75ff7b351484d7eff521ba7c063e7c",
+    "first_actual_HTTP_user_contains_exact_statement": true,
+    "owner_request_equals_current_probe_bytes": true,
+    "private_test_patch_matches_effective_bytes": true,
+    "test_patch_sha256": "a0d2794fb43dc920f7dbc00078975b9334a3040d873aa56971256f04f3dd360c",
+    "reference_counts": {
+      "F": 2,
+      "P": 43,
+      "total": 45
+    },
+    "reference_sets_match_prepared_actual_diagnostics": true,
+    "metadata_limit": "revision导航旧pending状态保留；实际消费以当前prepared/registry/input_check为据。"
+  },
+  "replay": {
+    "method": "安全按tar成员读取，不解压执行；463常规成员逐内容digest核baseline。所有Edit/Write成功结果按tool_use_id核，在内存字符串重放；四文件Bash清理模拟；diff唯一hunk另行解析应用比较。",
+    "baseline_members_verified": 463,
+    "member_errors": [],
+    "successful_operations": [
+      {
+        "tool": "Edit",
+        "path": "dask/config.py",
+        "use_line": 36,
+        "result_line": 40
+      },
+      {
+        "tool": "Write",
+        "path": "test_yaml_fix.py",
+        "use_line": 101,
+        "result_line": 105
+      },
+      {
+        "tool": "Write",
+        "path": "test_yaml_fix.py",
+        "use_line": 123,
+        "result_line": 127
+      },
+      {
+        "tool": "Write",
+        "path": "test_realistic.py",
+        "use_line": 171,
+        "result_line": 175
+      },
+      {
+        "tool": "Write",
+        "path": "test_import_with_invalid_config.py",
+        "use_line": 193,
+        "result_line": 197
+      },
+      {
+        "tool": "Write",
+        "path": "final_test.py",
+        "use_line": 228,
+        "result_line": 232
+      }
+    ],
+    "temporary_cleanup_use_line": 263,
+    "temporary_cleanup_result_line": 267,
+    "temporary_paths_removed": [
+      "test_yaml_fix.py",
+      "test_realistic.py",
+      "test_import_with_invalid_config.py",
+      "final_test.py"
+    ],
+    "FP_final_bytes_equal": true,
+    "diff_applied_final_bytes_equal": true,
+    "trajectory_copies_equal": true
+  },
+  "static_scope": [
+    {
+      "lines": [
+        182,
+        194
+      ],
+      "fact": "None转空映射、Mapping保留，其他非映射抛含path/type/repr的ValueError；OSError忽略保留。五假值非映射拒绝是当前允许分支，不能判作回归。",
+      "kind": "静态事实，不是实际诊断语义裁决。"
+    },
+    {
+      "lines": [
+        182,
+        195
+      ],
+      "fact": "safe_load(f.read())解析错误先于新增检查，未新增YAMLError文件上下文处理；坏YAML在当前公开目标内，轨迹没有自测。",
+      "kind": "须当前CPU可见封包核实的静态覆盖缺口，不以源码或旧控制结论预判真实语义fail。"
+    }
+  ],
+  "observed_selftests": {
+    "all_existing_public_config": {
+      "use_line": 145,
+      "result_line": 149,
+      "passed": 43,
+      "seconds": 0.12,
+      "private_2F_included": false
+    },
+    "two_single_existing_nodes": [
+      [
+        75,
+        79
+      ],
+      [
+        88,
+        92
+      ]
+    ],
+    "failure_labels": [
+      {
+        "write_line": 101,
+        "use_line": 110,
+        "result_line": 114,
+        "observed": "bool.yaml正确非映射拒绝，打印Test failed!",
+        "meaning": "脚本预期混合坏配置加载成功写错，非新回归证据；return False未sys.exit，Bash is_error=false不等于测试成功。"
+      },
+      {
+        "write_line": 171,
+        "use_line": 180,
+        "result_line": 184,
+        "observed": "invalid.yaml字符串拒绝，打印Realistic scenario test failed!",
+        "meaning": "同类错误成功期望；前一try已return，refresh未执行。"
+      }
+    ],
+    "simplified_string_direct": {
+      "write_line": 123,
+      "use_line": 132,
+      "result_line": 136,
+      "observed": "Test passed!"
+    },
+    "fresh_string_import_examples": [
+      [
+        193,
+        202,
+        206
+      ],
+      [
+        228,
+        237,
+        241
+      ]
+    ],
+    "normal_import_result_lines": [
+      162,
+      219,
+      254
+    ],
+    "missing_coverage": [
+      "损坏YAML诊断",
+      "10假值两入口兼容记录",
+      "13–23正式匿名诊断输入",
+      "45参考正式评分"
+    ],
+    "reviewer_new_execution": false
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "priority": "P2",
+      "category": "validation_claim_scope",
+      "title": "最终全面自测表述超出真实覆盖",
+      "trajectory_lines": [
+        114,
+        123,
+        136,
+        149,
+        184,
+        193,
+        206,
+        228,
+        241,
+        285,
+        289
+      ],
+      "details": "43/43公开现有测试通过属实。两自编脚本把期望拒绝标作失败后收窄为字符串直接加载/两import例；L285/L289的comprehensive tests及invalid config普遍获得帮助性诊断的概括没有损坏YAML、五假值两入口或正式封包证据。",
+      "candidate_regression_proven": false,
+      "formal_score_bypass_proven": false,
+      "followup": "有限公开自测如实记载，整个目标结论留给同原FP正式行为与新鲜可见诊断裁决。"
+    }
+  ],
+  "hygiene": {
+    "classification": "projectable",
+    "test_files_modified_in_FP": false,
+    "forbidden_paths_touched": false,
+    "private_pathset_changed": false,
+    "excluded_pathset_changed": false,
+    "projection_paths": [
+      "dask/config.py"
+    ],
+    "official_test_restore_apply_logged": true,
+    "trusted_setup_OK_logged": true,
+    "test_grader_pollution_seen": false,
+    "score_bypass_seen": false,
+    "scope_limit": "实际工具轨迹/最终生产内容/运输范围，非所有未记录行为的穷尽证明。"
+  },
+  "execution": {
+    "solve_seconds": 56.406,
+    "CC_duration_ms": 52764,
+    "CC_API_duration_ms": 47969,
+    "termination": "completed",
+    "CC_result_line": 289,
+    "harness_exit": 0,
+    "CC_turns": 24,
+    "tool_total": 23,
+    "tools": {
+      "Read": 3,
+      "Edit": 1,
+      "Bash": 14,
+      "Write": 5
+    },
+    "gateway_requests": 24,
+    "HTTP_statuses": [
+      200
+    ],
+    "stream_errors": [],
+    "model_sent": "Qwen3-Coder-30B-A3B-Instruct",
+    "checkpoint_repo": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+    "checkpoint_revision": "b2cff646eb4bb1d68355c01b18ae02e7cf42d120",
+    "output_tokens": 5743,
+    "input_tokens_summed_across_requests": 551024,
+    "budget": {
+      "wall": 10800,
+      "CC_turns": 240,
+      "context": 196608,
+      "requested_output": 65536,
+      "gateway_requests": 1024,
+      "adapter_idle": 14400
+    },
+    "truncation_evidence": false,
+    "checkpoint_limit": "实际config/HTTP/服务身份相符；未本次逐权重全重哈希，无GPU内存权重认证。",
+    "actual_actor_uid": 54321,
+    "actor_profile_declared": {
+      "cpus": 2,
+      "memory": 4294967296,
+      "pids": 512
+    },
+    "grading_setup_budget": 300,
+    "trusted_setup_segment_seconds": 300.509969,
+    "failure": "grading_control_surface_protect_timeout_after_300s",
+    "install_started": false,
+    "formal_tests_started": false,
+    "test_seconds": 0,
+    "reference_partitions_result": null,
+    "baseline_rebuild_passed": true,
+    "formal_mode": "supply=None，single-shell候选安装/测试分支；本次因prepare失败未启动。",
+    "scripts_digest_recorded": "sha256:835811ced3255278f9fd36b35e68ae6deee2791ed710367d832e4d9954af67e5",
+    "recipe_binding": "请求规定原python -m pip install --no-deps -e .；task config无recipe/derived_image覆写，builder返回原spec；该安装实际未执行。",
+    "qualification": null
+  },
+  "cleanup": {
+    "actor": {
+      "container_rm": 0,
+      "container_left": "",
+      "network_failures": [],
+      "relay_failures": [],
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "cleanup_ok": true
+    },
+    "quiescence_agent_residual": 0,
+    "gateway_revoked_drained": true,
+    "gateway_active": 0,
+    "grader_manager": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "supply_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0,
+      "containers_created_total": 1,
+      "containers_removed_total": 1,
+      "container_history_retained": 1,
+      "leases_total": 1
+    },
+    "grader_cleanup_ok": true,
+    "terminal_exit": 3,
+    "terminal_status": "attention",
+    "resource_samples": 29,
+    "final_filtered_container_list": [],
+    "resource_observations": [
+      {
+        "name": "/rh2bp-dask-dask-8801-7e77ad23",
+        "samples": 6,
+        "image_ids": [
+          "sha256:695d2cc28e303a0224c1109fe245f7296c6290d480124fa4fd4cc2ad072124b1"
+        ],
+        "memory_peak_bytes_observed": 914898944,
+        "pids_peak_observed": 43,
+        "memory_max_events_observed": 0,
+        "oom_events_observed": 0,
+        "oom_kill_events_observed": 0,
+        "pids_max_events_observed": 0
+      },
+      {
+        "name": "/rh2-egress-relay-gpu1003-dask8801-coder-a1",
+        "samples": 6,
+        "image_ids": [
+          "sha256:ec7d6c95cd3692a2e2d228a8b1ca74e4025b54121fcc4c5da6f09cfa473315ad"
+        ],
+        "memory_peak_bytes_observed": 27639808,
+        "pids_peak_observed": 7,
+        "memory_max_events_observed": 0,
+        "oom_events_observed": 0,
+        "oom_kill_events_observed": 0,
+        "pids_max_events_observed": 0
+      },
+      {
+        "name": "/rh2-gpu-grade-gpu1003-dask8801-coder-a-cc10ae51",
+        "samples": 21,
+        "image_ids": [
+          "sha256:695d2cc28e303a0224c1109fe245f7296c6290d480124fa4fd4cc2ad072124b1"
+        ],
+        "memory_peak_bytes_observed": 1619120128,
+        "pids_peak_observed": 9,
+        "memory_max_events_observed": 0,
+        "oom_events_observed": 0,
+        "oom_kill_events_observed": 0,
+        "pids_max_events_observed": 0
+      }
+    ],
+    "limit": "采样间隙未知，只称所见峰值/events；最后空列表限本次过滤范围，不声称全GPU无其他作业。"
+  },
+  "recovery": {
+    "static_original_transport_blocker_found": false,
+    "known_execution_blocker": "prepare300控制面保护超时。",
+    "setup900_limit": "同原FP/baseline/当前材料/source镜像保持下，仅setup900需真实采集验收；未读在途CPU/未验恢复worker，不保证900足够，不套7305五键环境。",
+    "fresh_judge_separate_context_required": true,
+    "future_results_write_separate_report": true
+  },
+  "limits": [
+    "单个首Coder样本，另一既定Qwen arm未闭合，结果未知。",
+    "原None保留，不默认0/1，不计模型失败。",
+    "控制29/59矩阵与420裁决未重审或复用为本候选结论。",
+    "完整正式行为和本次可见诊断缺证，语义保持needs_evidence；源码不补证。",
+    "薄探针无正式训练actor/miles receipt/训练消费接线；环境恢复或未来行为1不自动授qualification/reward。",
+    "原件/共享源码/模型补丁未改；未运行新测试、模型、CPU/GPU、SSH、Docker。"
+  ],
+  "evidence": {
+    "manifest": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/gpu1003-dask8801-coder-a1_closed_manifest_v1.json",
+      "sha256": "eba8b49c23fb6ff22fea8ed2cbd2cbf87ab1bf851bbac09844fb790e781dc021",
+      "bytes": 99637
+    },
+    "receipt": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/sync_receipt_v3.json",
+      "sha256": "f812022ab41928264b9297358a7964294209a3925d3ce293f8180b60894d156c",
+      "bytes": 341400
+    },
+    "owner_request": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/prepared_dask_pandas_four_code8_v1/dask8801/host_evidence/owner_request.json",
+      "sha256": "2afb838064e341c2ae9355c5d136b1de1672647370c3d879d5fb07999e53ddcd",
+      "bytes": 16873
+    },
+    "card": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/card.md",
+      "sha256": "8067e956c59f90a2731e896377e789ea872e70f97f907cd62a43bd7875e8cba2",
+      "bytes": 7416
+    },
+    "probe": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/probe_request.json",
+      "sha256": "2afb838064e341c2ae9355c5d136b1de1672647370c3d879d5fb07999e53ddcd",
+      "bytes": 16873
+    },
+    "revision": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/revision.json",
+      "sha256": "fddedb82581076d5b7277693fb3bef44aa73c0a5216e3c243e3ee0133167b87e",
+      "bytes": 14119
+    },
+    "statement": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/effective_statement.txt",
+      "sha256": "0b3ffb734d5e9f1eac09848d407b0f040913075359563f7717d5f3efb1ce166c",
+      "bytes": 8563
+    },
+    "effective_test_patch": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/effective_test.patch",
+      "sha256": "a0d2794fb43dc920f7dbc00078975b9334a3040d873aa56971256f04f3dd360c",
+      "bytes": 13552
+    },
+    "effective_test_file": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/effective_test.py",
+      "sha256": "8257cf66bb3a65181f165cd9ef040b828a0084cf1ca76e9181d6968053a332e7",
+      "bytes": 28768
+    },
+    "judge_v3": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/semantic_judge_prompt_v3.txt",
+      "sha256": "9d49671b56ae155f9183d8a0280ff7e779959de2697cdf3887ba4f558f2c19c1",
+      "bytes": 3190
+    },
+    "public": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/prepared_dask_pandas_four_code8_v1/dask8801/prepared/rollout_task_views.jsonl",
+      "sha256": "c1772cca2e2c15d902d9e1f9e5afda8a753aba0da66aa2b777fe0a6573cdf7b9",
+      "bytes": 10527
+    },
+    "private": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/prepared_dask_pandas_four_code8_v1/dask8801/private/host_grading_views.jsonl",
+      "sha256": "1660f444f3b62fb0506d6d97fb524db137d91e28a3b4d9ac4c5c9e92678b5e4d",
+      "bytes": 22208
+    },
+    "registry": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/prepared_dask_pandas_four_code8_v1/prepare_overlay/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/dask8801_fixed_test_patch_v1/material_revisions.json",
+      "sha256": "0b62b5e94301c77b83f6fc53820c35432b73471472523f5d9e6640bcc8c9c511",
+      "bytes": 36961
+    },
+    "prompt": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/queue_v31/results/gpu1003-dask8801-coder-a1/attempt/prompt.txt",
+      "sha256": "da676ad7d775266c4e31d755ea6d534a8d75ff7b351484d7eff521ba7c063e7c",
+      "bytes": 8668
+    },
+    "solver_prompt": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/queue_v31/results/gpu1003-dask8801-coder-a1/solver_prompt.txt",
+      "sha256": "da676ad7d775266c4e31d755ea6d534a8d75ff7b351484d7eff521ba7c063e7c",
+      "bytes": 8668
+    },
+    "trajectory": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/queue_v31/results/gpu1003-dask8801-coder-a1/attempt/trajectory.jsonl",
+      "sha256": "74fe26dc0c56892c21f035754585b0674757b56861e8e5b68ed3c9a2ba29b042",
+      "bytes": 285761
+    },
+    "harness_trajectory": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/queue_v31/results/gpu1003-dask8801-coder-a1/attempt/harness/trajectory.jsonl",
+      "sha256": "74fe26dc0c56892c21f035754585b0674757b56861e8e5b68ed3c9a2ba29b042",
+      "bytes": 285761
+    },
+    "fp": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/queue_v31/results/gpu1003-dask8801-coder-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "74f1d11153705668c72ab331251d31d343291c35362e6230f043ee4fc3a7ef8a",
+      "bytes": 28024
+    },
+    "baseline": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/queue_v31/results/gpu1003-dask8801-coder-a1/attempt/frozen/baseline_manifest.json",
+      "sha256": "ef4851038f426788a5751d1121d47140be0394952819ed2f9cc2013d2d154e3a",
+      "bytes": 108793
+    },
+    "tar": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/queue_v31/results/gpu1003-dask8801-coder-a1/attempt/frozen/baseline.tar",
+      "sha256": "448b888d918356f968b4b8ab581044fdbd8c962a82ee07515d0fb4e758f05b86",
+      "bytes": 15278080
+    },
+    "diff": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/queue_v31/results/gpu1003-dask8801-coder-a1/attempt/candidate/dask__dask-8801.diff",
+      "sha256": "f5ea6dca072b43a0492714873a7a32e30d46f3d8fd02211d939ea96dc877d7cd",
+      "bytes": 1167
+    },
+    "classification": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/queue_v31/results/gpu1003-dask8801-coder-a1/attempt/frozen/classification.json",
+      "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6",
+      "bytes": 93
+    },
+    "attempt": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/queue_v31/results/gpu1003-dask8801-coder-a1/attempt/attempt.json",
+      "sha256": "a2df474abef6e4d29209eab751a4d8e370e84fda8ce6ac9583764b6da9dae1e4",
+      "bytes": 15831
+    },
+    "projection": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/queue_v31/results/gpu1003-dask8801-coder-a1/grading/projection.json",
+      "sha256": "250ef8102abe684145559fe8241b214381c11a52b6102c744218f52a13309fdb",
+      "bytes": 316
+    },
+    "result": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/queue_v31/results/gpu1003-dask8801-coder-a1/result.json",
+      "sha256": "51a777aa728a14169c4b438f51e950583d2d92130b1775f3159a30a2492403cc",
+      "bytes": 2707
+    },
+    "report": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/queue_v31/results/gpu1003-dask8801-coder-a1/grading/report.json",
+      "sha256": "0080b522baace0b4d7af3c662bb3e23b1c0c9b93479beecd9fce8ddcac142cf3",
+      "bytes": 1887
+    },
+    "status": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/queue_v31/results/gpu1003-dask8801-coder-a1/grading/status.json",
+      "sha256": "6028df222367a3ffa8972d68459684b52affe9453223370fbefc8a574987c076",
+      "bytes": 2671
+    },
+    "eval_log": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/queue_v31/results/gpu1003-dask8801-coder-a1/grading/eval_logs/evallog_gpu1003-dask8801-coder-a_cc10ae51.eval.log",
+      "sha256": "17f7a8f1c10f645b0169d13ca381d88f0bed0a3ac8221947f698fc944014bb55",
+      "bytes": 37572
+    },
+    "diagnostics": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/queue_v31/results/gpu1003-dask8801-coder-a1/grading/eval_logs/evallog_gpu1003-dask8801-coder-a_cc10ae51.diagnostics.json",
+      "sha256": "4bc1fc51c0baf08fba089574be283bb03ee3192c9fc654a603cd3136738ceb14",
+      "bytes": 6324
+    },
+    "baseline_rebuild": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/queue_v31/results/gpu1003-dask8801-coder-a1/grading/baseline_rebuild_census.txt",
+      "sha256": "d9b2697ee642f70f4a92206859165f96faa443ed77e78de7b0ce35a685c1dc92",
+      "bytes": 52266
+    },
+    "input_check": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/config_v31/input_checks/gpu1003-dask8801-coder-a1/input_check.json",
+      "sha256": "c12619bddd0cf965352123e1172fb8edbaeb30c8ddd2c8708534aba06052baa3",
+      "bytes": 6864
+    },
+    "purecheck": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/config_v31/purecheck_gpu1003-dask8801-coder-a1.json",
+      "sha256": "cf66d871458730dca9cd4e5186d0a2573fc8060f45b924e3ed9d1409d236529a",
+      "bytes": 1465
+    },
+    "tasks_config": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/config_v31/tasks.json",
+      "sha256": "e37a0a7ea4c6442122ef13edf56abc87e725e64985d7c88a6c33080316c09f47",
+      "bytes": 2046
+    },
+    "gateway_requests": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/services_v29/coder/gateway/gpu1003-dask8801-coder-a1/requests.jsonl",
+      "sha256": "8021e297dd663dac5eace906d474635b83df437610b22a98fe84841b732f7108",
+      "bytes": 1975672
+    },
+    "gateway_responses": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/services_v29/coder/gateway/gpu1003-dask8801-coder-a1/responses.jsonl",
+      "sha256": "1967cdda42da79af755fc3f0b714e15dcb9edc1bdeb48a148949e1e9a8d18375",
+      "bytes": 7492
+    },
+    "gateway_close": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/services_v29/coder/gateway/gpu1003-dask8801-coder-a1/session_close.jsonl",
+      "sha256": "91a04c5a4d1d5543df4077bc1083f6d1a7c49da2ae80aa3b7e03b010ba875ed3",
+      "bytes": 125
+    },
+    "gateway_usage": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/services_v29/coder/gateway/gpu1003-dask8801-coder-a1/usage.json",
+      "sha256": "bb62df0f57c3c48f00fc8183f43b5580c00558e5b4eef7d29f2766f0e10c1178",
+      "bytes": 89
+    },
+    "adapter_turns": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/services_v14/coder/adapter/gpu1003-dask8801-coder-a1.turns.jsonl",
+      "sha256": "11220044eb48c19240f9949f50bd0f80f26540a47472a58da01928cc77b9b0f3",
+      "bytes": 60683
+    },
+    "capture": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/diagnostics/QUEUE_V31_gpu1003-dask8801-coder-a1_before/capture_receipt.json",
+      "sha256": "46d0f6046b044bd549dbd034c3b103346aa8036cd79ed0e5e37079172ccca1a7",
+      "bytes": 1575
+    },
+    "identity": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/diagnostics/QUEUE_V31_gpu1003-dask8801-coder-a1_before/identity_binding_actual.json",
+      "sha256": "a5739fc2570e82b2de7804c4d31124944b64dac9ef397d424c462ea675bbc08a",
+      "bytes": 2960
+    },
+    "adapter_config": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/diagnostics/QUEUE_V31_gpu1003-dask8801-coder-a1_before/adapter_config_actual.json",
+      "sha256": "1568f2e833897101fe16e4184436147663a7a42f153ff18f65d066fe9b83eec4",
+      "bytes": 766
+    },
+    "resources": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/gpu1003-dask8801-coder-a1_closed_resource_v1.jsonl",
+      "sha256": "44bbfbbd82ed8f124d045108ad0ab94a1e7d10c7b5af285ef9984a0ce60a1f4e",
+      "bytes": 29326
+    },
+    "terminal": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/gpu1003-dask8801-coder-a1_terminal_snapshot_v1.json",
+      "sha256": "cfae6122ac9e392b69a784e495609a52546493941a553d20ca0c1dbc7395e31c",
+      "bytes": 30308
+    },
+    "entry": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/code_v8/rh2/experiments/ordinary_gpu_probe_20261002/entry.py",
+      "sha256": "bdf806bf8da1d5ebb4970887bfc3c7738eb3e57a75e1d07215d6d68b17e574c4",
+      "bytes": 27732
+    },
+    "overrides": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/code_v8/rh2/experiments/ordinary_gpu_probe_20261002/spec_overrides.py",
+      "sha256": "098c21cacf4cd497a7eb7240ad2b34b2106bbd27bf14b1af200fe9ac0a3008ad",
+      "bytes": 6583
+    },
+    "manager": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask8801-coder-a1/code_v8/rh2/src/repoharness2/grading/manager.py",
+      "sha256": "1783533e1e3b66a57fcaa5a599a1da4f8e4e886318e24f040c6df91f294c1c1e",
+      "bytes": 225647
+    }
+  }
+}

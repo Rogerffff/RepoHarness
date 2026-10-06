@@ -1,0 +1,3336 @@
+{
+ "by_solver": {
+  "deepseek-v4-pro": {
+   "attempts_with_report": 19,
+   "reward1": 16,
+   "repro_before_fix": [
+    4,
+    19
+   ],
+   "verification_run": [
+    18,
+    19
+   ],
+   "answer_channel_probe": [
+    7,
+    19
+   ],
+   "answer_channel_obtained": [
+    0,
+    15
+   ],
+   "answer_channel_kinds": {
+    "git_future": 4,
+    "web": 2,
+    "pip_download_project": 1
+   },
+   "read_harness_dir": [
+    1,
+    14
+   ],
+   "official_tests_modified": [
+    11,
+    14
+   ],
+   "scratch_files_total": 0,
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 4,
+    "other_cmd_nonzero": 7,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": [
+    3,
+    14
+   ],
+   "truncation_causal_true": 0,
+   "im_end_leak": [
+    0,
+    0
+   ],
+   "cc_param_rewrites_total": 78,
+   "thinking_cleared_events_total": 0,
+   "max_prompt_tokens_max": 49391,
+   "labels": {
+    "budget_truncation": 2,
+    "env_or_interface_fault": 1,
+    "model_failure": 2,
+    "model_success": 16,
+    "suspected_false_positive": 1,
+    "tool_misuse": 1
+   }
+  },
+  "qwen3-coder-30b-a3b-instruct": {
+   "attempts_with_report": 20,
+   "reward1": 12,
+   "repro_before_fix": [
+    12,
+    20
+   ],
+   "verification_run": [
+    19,
+    20
+   ],
+   "answer_channel_probe": [
+    0,
+    20
+   ],
+   "answer_channel_obtained": [
+    0,
+    20
+   ],
+   "answer_channel_kinds": {},
+   "read_harness_dir": [
+    0,
+    16
+   ],
+   "official_tests_modified": [
+    1,
+    16
+   ],
+   "scratch_files_total": 74,
+   "non_core_tools": {
+    "TaskCreate": 10,
+    "TaskUpdate": 14,
+    "TaskList": 1,
+    "ReportFindings": 9,
+    "Skill": 1
+   },
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 38,
+    "other_cmd_nonzero": 19,
+    "call_error": 10,
+    "other": 0
+   },
+   "hit_turn_cap": [
+    6,
+    18
+   ],
+   "truncation_causal_true": 0,
+   "im_end_leak": [
+    11,
+    16
+   ],
+   "cc_param_rewrites_total": 113,
+   "thinking_cleared_events_total": 0,
+   "max_prompt_tokens_max": 77218,
+   "labels": {
+    "budget_truncation": 5,
+    "model_failure": 6,
+    "model_success": 12,
+    "suspected_false_negative": 2,
+    "suspected_false_positive": 2,
+    "task_or_test_dispute": 2
+   }
+  },
+  "qwen3.6-35b-a3b": {
+   "attempts_with_report": 18,
+   "reward1": 18,
+   "repro_before_fix": [
+    8,
+    18
+   ],
+   "verification_run": [
+    18,
+    18
+   ],
+   "answer_channel_probe": [
+    0,
+    18
+   ],
+   "answer_channel_obtained": [
+    0,
+    18
+   ],
+   "answer_channel_kinds": {},
+   "read_harness_dir": [
+    0,
+    17
+   ],
+   "official_tests_modified": [
+    6,
+    17
+   ],
+   "scratch_files_total": 0,
+   "non_core_tools": {
+    "Skill": 2,
+    "TaskCreate": 4,
+    "TaskUpdate": 8
+   },
+   "is_error_breakdown": {
+    "pytest_or_cmd_nonzero": 14,
+    "call_error": 0,
+    "other": 4,
+    "expected_test_failure_nonzero": 3,
+    "other_cmd_nonzero": 9
+   },
+   "hit_turn_cap": [
+    1,
+    17
+   ],
+   "truncation_causal_true": 0,
+   "im_end_leak": [
+    16,
+    17
+   ],
+   "cc_param_rewrites_total": 31,
+   "thinking_cleared_events_total": 53,
+   "max_prompt_tokens_max": 50282,
+   "labels": {
+    "budget_truncation": 1,
+    "model_success": 18,
+    "suspected_false_positive": 1
+   }
+  }
+ },
+ "cells": [
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "deepseek-v4-pro",
+   "attempts_reviewed": [
+    "a2",
+    "a3",
+    "a4"
+   ],
+   "successes_equivalent_to_gold": 2,
+   "suspected_false_positive": [],
+   "failure_causes": {},
+   "rl_signal": "全 1 无区分度（含 a1 为 4/4，三款 12/12）：奖励分不出 a1 漏 Ninja Multi-Config（fp_check 实测）、a4 漏 Visual Studio / Xcode / NMake（容器内自测 msvc 无 jobs；题卡记生成器范围未唯一规定，登记为待裁决的 gold 分歧而非假阳性）与 a2 / a3 ≈ gold；也分不出 a2 的 5 次 git 探测、a3 的沙箱 git stash 与 a4 的弱验证；组内优势为零。要有信号需另版本补'未配置默认 / 多配置'参考断言（须有公开依据，不硬编码本机 CPU 数）",
+   "confidence": "high"
+  },
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempts_reviewed": [
+    "a2",
+    "a3",
+    "a4"
+   ],
+   "successes_equivalent_to_gold": 2,
+   "suspected_false_positive": [
+    "bp22-qwen3-coder-30b--conan-15422-a3"
+   ],
+   "failure_causes": {},
+   "rl_signal": "全 1 无区分度（含 a1 为 4/4）：奖励分不出 {a1, a3} 只在显式配置时写 jobs、未配置默认漏修（a3 的两半都在容器内实测：官方 F2P 通过 + 自测 Has 'jobs' field: False）与 {a2, a4} ≈ gold；也分不出 a3 的 3 个仓库根草稿、a2 的 11 次无关调用与 a4 的干净过程；组内优势为零。要有信号需另版本补'未配置默认'参考断言",
+   "confidence": "high"
+  },
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "qwen3.6-35b-a3b",
+   "attempts_reviewed": [
+    "a1",
+    "a2",
+    "a3",
+    "a4"
+   ],
+   "successes_equivalent_to_gold": 3,
+   "suspected_false_positive": [
+    "bp22-qwen3-6-35b-a3b-conan-15422-a2"
+   ],
+   "failure_causes": {},
+   "rl_signal": "全 1 无区分度：奖励分不出 a2 的附带回归（version 3→4、cmakeMinimumRequired 3.15→3.25，基于臆造的 CMake 事实）与 a1/a3/a4 ≈ gold；已知两种缺口（未配置默认、多配置）在本格子均不出现；组内优势为零",
+   "confidence": "high"
+  },
+  {
+   "task": "dask__dask-8597",
+   "solver": "deepseek-v4-pro",
+   "attempts_reviewed": [
+    "a1",
+    "a2"
+   ],
+   "successes_equivalent_to_gold": 2,
+   "suspected_false_positive": [],
+   "failure_causes": {},
+   "rl_signal": "none: 2/2 reward 1; both source hunks byte-identical to each other and line-identical to gold (and to the 4 Qwen candidates); reward cannot separate patch quality; the only real differences (which regression test was added, fabricated issue links in test comments, ~10 s of repeated reasoning in a2) are invisible to reward",
+   "confidence": "high"
+  },
+  {
+   "task": "dask__dask-8597",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempts_reviewed": [
+    "a1",
+    "a2"
+   ],
+   "successes_equivalent_to_gold": 2,
+   "suspected_false_positive": [],
+   "failure_causes": {},
+   "rl_signal": "none: 2/2 reward 1; both source hunks identical to each other and line-identical to gold; reward cannot separate patch quality, nor the real hygiene differences (4 root scratch files in a1, CC auto-memory files + root scratch in a2)",
+   "confidence": "high"
+  },
+  {
+   "task": "dask__dask-8597",
+   "solver": "qwen3.6-35b-a3b",
+   "attempts_reviewed": [
+    "a1",
+    "a2"
+   ],
+   "successes_equivalent_to_gold": 2,
+   "suspected_false_positive": [],
+   "failure_causes": {},
+   "rl_signal": "none: 2/2 reward 1, candidates byte-identical to each other and line-identical to gold; reward cannot separate patch quality or process differences in this cell",
+   "confidence": "high"
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "deepseek-v4-pro",
+   "attempts_reviewed": [
+    "a2",
+    "a3",
+    "a4"
+   ],
+   "successes_equivalent_to_gold": 3,
+   "suspected_false_positive": [],
+   "failure_causes": {},
+   "rl_signal": "含 a1 4/4 全 1，组内优势为零；奖励分不出实现形态（a2 无守卫与 gold 逐例同，a3/a4 守卫且在 base/gold 崩溃的嵌套父节点缺失输入上语义相反）与验证深度（a2 无端到端、无 stash）；本题区分度只在跨 solver（Coder 0/4）",
+   "confidence": "high"
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempts_reviewed": [
+    "a3",
+    "a4"
+   ],
+   "successes_equivalent_to_gold": 0,
+   "suspected_false_positive": [],
+   "failure_causes": {
+    "a3": "model_failure: correct root cause (event.get merges missing/null) but final edit only relaxes None check in _does_item_match_named_filter (leaf_exists=is_leaf_node equivalent, same as a1/a2); violates 6/12 assertions of the reference test, first at test_event_pattern.py:27 missing-key; final edit never run; cap non-causal",
+    "a4": "model_failure: same family; final `return filter_value` is broader (violates 8/12 incl. dict-not-leaf); model had built a correct key_exists-threading version (CALL#42-46) that passed the repro and failed only the leaf-node assertion, then reverted it entirely; cap non-causal"
+   },
+   "rl_signal": "0/4 for Coder (with a1/a2) vs 8/8 for the other two solvers: discriminates across models, no within-group signal for Coder at this budget; a4's near-miss gets the same 0 under binary reward",
+   "confidence": "high"
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "qwen3.6-35b-a3b",
+   "attempts_reviewed": [
+    "a2",
+    "a3",
+    "a4"
+   ],
+   "successes_equivalent_to_gold": 3,
+   "suspected_false_positive": [],
+   "failure_causes": {},
+   "rl_signal": "本格子含 a1 为 4/4 全 1，组内优势为零；奖励分不出 a4 的窄验证、a2 的异常类型差异、a1 的 E402；本题区分度只来自跨 solver（Coder 0/4）",
+   "confidence": "high"
+  },
+  {
+   "task": "getmoto__moto-5752",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempts_reviewed": [
+    "a1",
+    "a2"
+   ],
+   "successes_equivalent_to_gold": 0,
+   "suspected_false_positive": [],
+   "failure_causes": {
+    "a1": "task_or_test_dispute：F2P 第 3 断言 tag:hello BeginsWith 期望 2 实得 0（题面未提）；公开两顺序已修好；P2P 79/79",
+    "a2": "同 a1；候选源码与 a1 语义相同；撞 60 回合上限但非因果"
+   },
+   "rl_signal": "全 0 且候选语义相同，无组内信号；改版后两条都会变 1 仍无区分；二值奖励看不见 Coder 4–5 倍回合成本与 6 次同一错误编辑",
+   "confidence": "high"
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "deepseek-v4-pro",
+   "attempts_reviewed": [
+    "a3",
+    "a4"
+   ],
+   "successes_equivalent_to_gold": 1,
+   "suspected_false_positive": [],
+   "failure_causes": {
+    "a3": "model_failure: 与 a2 同一种过度修复——补传 precision 之外把 _show_metrics/_show_diff 的 round(val, n) 改成 f\"{val:.{n}g}\"（小数位→有效数字）并改帮助文案，3 个 base 既有数值 P2P 失败（falsey×2、show_precision）；模型跑出失败后改期望掩盖；截断非因果、无工具/环境障碍"
+   },
+   "rl_signal": "有区分度：格子 [1,0,0,1]，两种 harness 日志位置条件下各一成一败；成功侧都是与 gold 同义的一行传参，失败侧都是同一种语义过度修复被公开数值 P2P 拦下——奖励能区分补丁范围是否正确",
+   "confidence": "high"
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempts_reviewed": [
+    "a1",
+    "a2",
+    "a3",
+    "a4"
+   ],
+   "successes_equivalent_to_gold": 4,
+   "suspected_false_positive": [],
+   "failure_causes": {},
+   "rl_signal": "无区分度：四条源码 hunk 逐字节相同且与 gold 同义（只传参，未改舍入/帮助/helper，无硬编码 8），全 1，组内优势为零；奖励看不见 a2 的被遮蔽死测试、a1/a3 的草稿泄漏、四条未穿过修复点的验证与系统提醒诱发的无关工具调用；没有一条用公开 CLI 做过默认/4/8 对照",
+   "confidence": "high"
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "qwen3.6-35b-a3b",
+   "attempts_reviewed": [
+    "a1",
+    "a2",
+    "a3",
+    "a4"
+   ],
+   "successes_equivalent_to_gold": 4,
+   "suspected_false_positive": [],
+   "failure_causes": {},
+   "rl_signal": "无区分度：四条源码补丁逐字节相同且与 gold 同义，全 1，组内优势为零；奖励看不见 a1/a2 交付的被遮蔽/会失败的测试与 a2/a4 未穿过修复点的验证；题卡的硬编码 8 漏判候选未出现",
+   "confidence": "high"
+  },
+  {
+   "task": "iterative__dvc-6954",
+   "solver": "deepseek-v4-pro",
+   "attempts_reviewed": [
+    "a2",
+    "a3"
+   ],
+   "successes_equivalent_to_gold": 2,
+   "suspected_false_positive": [],
+   "failure_causes": {},
+   "rl_signal": "none: 2/2 reward 1 (a1 is an infra upstream-stream-reset entry, not in V, see a1.md; a3 is its same-condition rerun); both patches are the same recursive ast.UnaryOp fix, equivalent to gold on the issue, all 13 reference tests and the params update path; reward cannot separate a2 (closes the x = -'a' / -None TypeError edge like gold, verifies modify_py, adds tests) from a3 (uncaught TypeError on that edge, update path unverified), nor a2's 5-probe ast-alias re-verification loop (+10 requests / +35 s); task is 6/6 across solvers",
+   "confidence": "high"
+  },
+  {
+   "task": "iterative__dvc-6954",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempts_reviewed": [
+    "a1",
+    "a2"
+   ],
+   "successes_equivalent_to_gold": 2,
+   "suspected_false_positive": [],
+   "failure_causes": {},
+   "rl_signal": "none: 2/2 reward 1; both patches are the same recursive ast.UnaryOp fix (a2 adds an ast.Constant branch), same shape as the Qwen3.6 pair, equivalent to gold on the issue and all 13 reference tests; reward cannot separate a1 (no CLI repro, 5 scratch scripts = 88% of diff) from a2 (exact CLI red-green, repro->lock->unchanged-skip exercised, reasonable regression test added, but 14 dvc-init residue files = 91% of diff incl. emptied .dvc/config), nor the shared uncaught TypeError on x = -'a'; task is 6/6 across solvers",
+   "confidence": "high"
+  },
+  {
+   "task": "iterative__dvc-6954",
+   "solver": "qwen3.6-35b-a3b",
+   "attempts_reviewed": [
+    "a1",
+    "a2"
+   ],
+   "successes_equivalent_to_gold": 2,
+   "suspected_false_positive": [],
+   "failure_causes": {},
+   "rl_signal": "none: 2/2 reward 1, both patches same shape (recursive ast.UnaryOp handling) and equivalent to gold on the issue and all 13 reference tests; reward cannot separate a1 (no pre-fix repro) from a2 (red-green), a2's extra ast.Constant branch, the shared uncaught TypeError on x = -'a', or the unfinished public workflow",
+   "confidence": "high"
+  },
+  {
+   "task": "python__mypy-17071",
+   "solver": "deepseek-v4-pro",
+   "attempts_reviewed": [
+    "a1",
+    "a2"
+   ],
+   "successes_equivalent_to_gold": 2,
+   "suspected_false_positive": [],
+   "failure_causes": {},
+   "rl_signal": "none within cell: 2/2 reward 1; both fixes are the same checker-local CollectArgTypeVarTypes.visit_callable_type override covering type_guard and type_is (card route A, narrower than gold's shared-traverser route B; difference not covered by F2P/P2P); reward cannot separate a1 (leftover print('DEBUG',...,file=sys.stderr) that emitted 35 lines during grading, a self-failing test case shipped in a non-official .test file, no delivery summary) from a2 (clean candidate, own test passing, full testcheck.py 6832 passed, git diff self-review); both hit the 60-turn cap with the patch final at 47-48% of budget; a2's post-fix gh/curl/git-log probing is neither rewarded nor penalized; discrimination on this task exists only across solvers (Coder 0/2)",
+   "confidence": "high"
+  },
+  {
+   "task": "python__mypy-17071",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempts_reviewed": [
+    "a2"
+   ],
+   "successes_equivalent_to_gold": 0,
+   "suspected_false_positive": [],
+   "failure_causes": {
+    "a2": "model_failure: located the gold site (check_unbound_return_typevar / CollectArgTypeVarTypes / visit_callable_type) within 3 greps, then assumed the callback's return type is TypeGuardedType instead of reading CallableType.type_guard (hint visible in its own grep at CALL#33); added visit_type_guarded_type (CALL#44-45), verified it still fails, reverted (CALL#52-53); candidate has zero source change so grading tested base (F2P 0/2, same as noop). Same path as a1 and a strict subset of it; cap causality unknown"
+   },
+   "rl_signal": "0/2 for Coder (with a1) vs 4/4 for the other two solvers: cross-model discrimination only; P2P has 2 items and no unbound-T negative, so reward cannot separate a correct fix from disabling the check",
+   "confidence": "high"
+  },
+  {
+   "task": "python__mypy-17071",
+   "solver": "qwen3.6-35b-a3b",
+   "attempts_reviewed": [
+    "a1",
+    "a2"
+   ],
+   "successes_equivalent_to_gold": 2,
+   "suspected_false_positive": [],
+   "failure_causes": {},
+   "rl_signal": "none: 2/2 reward 1; source hunks byte-identical (post-image blob 020887f90, projected sha256 8749194c) and semantically identical to gold (whitespace only); reward cannot separate a1 (37 turns, clean end_turn) from a2 (60-turn cap, ~20 turns on self-inflicted test debugging and repeated verification, no delivery summary); discrimination on this task exists only across solvers (Coder 0/2)",
+   "confidence": "high"
+  }
+ ],
+ "coverage_counts": {
+  "full_single": 10,
+  "full_cell": 47,
+  "task_report_partial": 10
+ },
+ "coverage": [
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a1",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_single"
+  },
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a2",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a3",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a4",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempt": "a1",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_single"
+  },
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempt": "a2",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempt": "a3",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempt": "a4",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "qwen3.6-35b-a3b",
+   "attempt": "a1",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "qwen3.6-35b-a3b",
+   "attempt": "a2",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "qwen3.6-35b-a3b",
+   "attempt": "a3",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "qwen3.6-35b-a3b",
+   "attempt": "a4",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "dask__dask-8597",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a1",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "dask__dask-8597",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a2",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "dask__dask-8597",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempt": "a1",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "dask__dask-8597",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempt": "a2",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "dask__dask-8597",
+   "solver": "qwen3.6-35b-a3b",
+   "attempt": "a1",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "dask__dask-8597",
+   "solver": "qwen3.6-35b-a3b",
+   "attempt": "a2",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a1",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_single"
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a2",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a3",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a4",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempt": "a1",
+   "reward": 0.0,
+   "status": "valid",
+   "coverage": "full_single"
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempt": "a2",
+   "reward": 0.0,
+   "status": "valid",
+   "coverage": "full_single"
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempt": "a3",
+   "reward": 0.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempt": "a4",
+   "reward": 0.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "qwen3.6-35b-a3b",
+   "attempt": "a1",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_single"
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "qwen3.6-35b-a3b",
+   "attempt": "a2",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "qwen3.6-35b-a3b",
+   "attempt": "a3",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "qwen3.6-35b-a3b",
+   "attempt": "a4",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "getmoto__moto-5752",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a1",
+   "reward": 0.0,
+   "status": "valid",
+   "coverage": "task_report_partial"
+  },
+  {
+   "task": "getmoto__moto-5752",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a2",
+   "reward": 0.0,
+   "status": "valid",
+   "coverage": "task_report_partial"
+  },
+  {
+   "task": "getmoto__moto-5752",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempt": "a1",
+   "reward": 0.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "getmoto__moto-5752",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempt": "a2",
+   "reward": 0.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "getmoto__moto-5752",
+   "solver": "qwen3.6-35b-a3b",
+   "attempt": "a1",
+   "reward": 0.0,
+   "status": "valid",
+   "coverage": "task_report_partial"
+  },
+  {
+   "task": "getmoto__moto-5752",
+   "solver": "qwen3.6-35b-a3b",
+   "attempt": "a2",
+   "reward": 0.0,
+   "status": "valid",
+   "coverage": "task_report_partial"
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a1",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_single"
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a2",
+   "reward": 0.0,
+   "status": "valid",
+   "coverage": "full_single"
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a3",
+   "reward": 0.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a4",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempt": "a1",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempt": "a2",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempt": "a3",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempt": "a4",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "qwen3.6-35b-a3b",
+   "attempt": "a1",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "qwen3.6-35b-a3b",
+   "attempt": "a2",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "qwen3.6-35b-a3b",
+   "attempt": "a3",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "qwen3.6-35b-a3b",
+   "attempt": "a4",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "iterative__dvc-6954",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a1",
+   "reward": 0.0,
+   "status": "infra:upstream_stream_truncated(seq11:ClientPayloadError: Response payload is not completed: <TransferEncodingError: 4)",
+   "coverage": "full_single"
+  },
+  {
+   "task": "iterative__dvc-6954",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a2",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "iterative__dvc-6954",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a3",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "iterative__dvc-6954",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempt": "a1",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "iterative__dvc-6954",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempt": "a2",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "iterative__dvc-6954",
+   "solver": "qwen3.6-35b-a3b",
+   "attempt": "a1",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "iterative__dvc-6954",
+   "solver": "qwen3.6-35b-a3b",
+   "attempt": "a2",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "python__mypy-11236",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a1",
+   "reward": 0.0,
+   "status": "valid",
+   "coverage": "task_report_partial"
+  },
+  {
+   "task": "python__mypy-11236",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a2",
+   "reward": 0.0,
+   "status": "valid",
+   "coverage": "task_report_partial"
+  },
+  {
+   "task": "python__mypy-11236",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempt": "a1",
+   "reward": 0.0,
+   "status": "valid",
+   "coverage": "task_report_partial"
+  },
+  {
+   "task": "python__mypy-11236",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempt": "a2",
+   "reward": 0.0,
+   "status": "valid",
+   "coverage": "task_report_partial"
+  },
+  {
+   "task": "python__mypy-11236",
+   "solver": "qwen3.6-35b-a3b",
+   "attempt": "a1",
+   "reward": 0.0,
+   "status": "valid",
+   "coverage": "task_report_partial"
+  },
+  {
+   "task": "python__mypy-11236",
+   "solver": "qwen3.6-35b-a3b",
+   "attempt": "a2",
+   "reward": 0.0,
+   "status": "valid",
+   "coverage": "task_report_partial"
+  },
+  {
+   "task": "python__mypy-17071",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a1",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "python__mypy-17071",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a2",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "python__mypy-17071",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempt": "a1",
+   "reward": 0.0,
+   "status": "valid",
+   "coverage": "full_single"
+  },
+  {
+   "task": "python__mypy-17071",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempt": "a2",
+   "reward": 0.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "python__mypy-17071",
+   "solver": "qwen3.6-35b-a3b",
+   "attempt": "a1",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  },
+  {
+   "task": "python__mypy-17071",
+   "solver": "qwen3.6-35b-a3b",
+   "attempt": "a2",
+   "reward": 1.0,
+   "status": "valid",
+   "coverage": "full_cell"
+  }
+ ],
+ "attempts": [
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a1",
+   "attempt_id": "bp22-deepseek-v4-pro-conan-15422-a1",
+   "reward": 1,
+   "process_quality": "mixed",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": true,
+   "answer_channel_kinds": null,
+   "answer_channel_obtained": null,
+   "read_harness_dir": null,
+   "scratch_files_in_candidate": null,
+   "official_tests_modified": null,
+   "non_core_tools": null,
+   "is_error_breakdown": null,
+   "hit_turn_cap": null,
+   "truncation_causal": null,
+   "im_end_leak": null,
+   "cc_param_rewrites": null,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": null,
+   "labels": [
+    "model_success",
+    "suspected_false_positive"
+   ],
+   "confidence": "medium",
+   "source": "single"
+  },
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "deepseek-v4-pro",
+   "source": "cell",
+   "attempt_id": "bp22-deepseek-v4-pro-conan-15422-a2",
+   "attempt": "a2",
+   "reward": 1,
+   "process_quality": "mixed",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": true,
+   "answer_channel_kinds": [
+    "git_future"
+   ],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": true,
+   "test_edit_kind": [
+    "added_reasonable_tests"
+   ],
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 0,
+    "other_cmd_nonzero": 0,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": null,
+   "cc_param_rewrites": 7,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": null,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "5 次 git 历史 / 分支探测（git log --all --grep ×3、git log -S、git remote/branch）全部落空；三轮'回忆上游'含臆造 PR #15407/#15465 与不存在的 conf presets_build_jobs，最终实现与 gold 同义——设计由训练记忆驱动而非题面推导，统计时与探测分开记",
+    "thinking 25/25 未回传；seq 9/11/14 三轮重复回忆同一内容占输出 token 35%、API 墙钟 24%，因果为推断，建议 A 线在正式链核 CC 对无真实 signature 的 thinking 块的处理",
+    "与 gold 唯一差异 jobs=0 时省略键（无公开依据）；未配置默认路径为静态判断（同 a3 逻辑，a3 实测 2），可用 fp_check 同一脚本补跑 a2 源码段",
+    "峰值 prompt 44 731 token（input+cache_read），远低于 200K；max_prompt_tokens 按协议对外部端点填 null"
+   ]
+  },
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "deepseek-v4-pro",
+   "source": "cell",
+   "attempt_id": "bp22-deepseek-v4-pro-conan-15422-a3",
+   "attempt": "a3",
+   "reward": 1,
+   "process_quality": "good",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": true,
+   "test_edit_kind": [
+    "added_reasonable_tests"
+   ],
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 0,
+    "other_cmd_nonzero": 3,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": null,
+   "cc_param_rewrites": 6,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": null,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "派发前提'a3 撞 61 回合'不成立：num_turns=43、end_turn；61 是 a4 的 assistant_events（stream 消息数），运行记录 §7.4 的 61 回合指 DVC5839 a2——请更正 DISPATCH_LEDGER 里的登记",
+    "三条里唯一实测未配置默认路径（jobs=2，沙箱 CPU 配额）并用 git stash 证明功能测试失败为原树既有；但沙箱内 git stash/pop 若 pop 失败会丢候选，薄入口导出前可考虑核 stash 列表",
+    "测试改动是在既有 test_cmake_presets_singleconfig 里加 -c tools.build:jobs=4 与两条断言，原断言未改：按'添加合理测试'计，不是'修改既有期望'",
+    "cmake 3.22.1 手工实验显示 preset jobs 未生效，模型结论'3.23 起才生效'未证；同题 Qwen3.6 报告称 jobs 自 schema v2 / CMake 3.20 存在，两说矛盾，离线未裁",
+    "3 次 is_error 均为模型自身命令序列错误（未 configure 先 build、grep 不存在目录、/tmp 下导入），非协议错误；1 次 CC count_tokens 被 DeepSeek 端点正常受理（13313 token）"
+   ]
+  },
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "deepseek-v4-pro",
+   "source": "cell",
+   "attempt_id": "bp22-deepseek-v4-pro-conan-15422-a4",
+   "attempt": "a4",
+   "reward": 1,
+   "process_quality": "mixed",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": true,
+   "answer_channel_kinds": [
+    "git_future"
+   ],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": true,
+   "test_edit_kind": [
+    "added_reasonable_tests"
+   ],
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 0,
+    "other_cmd_nonzero": 0,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": null,
+   "cc_param_rewrites": 4,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": null,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "medium",
+   "followups": [
+    "gold 分歧待裁决：Visual Studio / Xcode / NMake 生成器下不写 jobs（msvc 路径由自带测试在容器内实测无键；gold 写）。输入 `os=Windows compiler=msvc` profile + `-c tools.build:jobs=10`，gold 预期 buildPresets[0].jobs==10，实际无键。题卡记'未唯一规定'、a1 报告对 VS/Xcode'不计错'，故不标 suspected_false_positive；建议纳入 §9.3 工作包 B，用 fp_check 脚本对 a4 补跑 no_conf / Ninja Multi-Config / VS 三行",
+    "第三种'官方通过'形态：a1 漏全部多配置、Coder a1 漏默认、a4 漏 VS/Xcode——同一 F2P 放过三种不同范围，奖励无法区分",
+    "自写 msvc 用例把 VS 排除固化为断言（评分不跑，但进训练数据是'测试随实现走'样本）；交付说明'jobs doesn't map cleanly for VS'未经验证",
+    "验证偏弱：默认路径未自测（静态同 build_jobs 逻辑）、功能测试 FAILED 项未核即判无关；首个 pytest 失败是自写测试用 install --requires 未先 create，经 | tail 掩盖故 is_error=0",
+    "1 次 git log -- presets.py 探测（'may already be fixed in later commits'）落空"
+   ]
+  },
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempt": "a1",
+   "attempt_id": "bp22-qwen3-coder-30b--conan-15422-a1",
+   "reward": 1,
+   "process_quality": "mixed",
+   "repro_before_fix": false,
+   "verification_run": false,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": null,
+   "answer_channel_obtained": false,
+   "read_harness_dir": null,
+   "scratch_files_in_candidate": null,
+   "official_tests_modified": null,
+   "non_core_tools": null,
+   "is_error_breakdown": null,
+   "hit_turn_cap": null,
+   "truncation_causal": null,
+   "im_end_leak": null,
+   "cc_param_rewrites": null,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": null,
+   "labels": [
+    "model_success",
+    "suspected_false_positive"
+   ],
+   "confidence": "high",
+   "source": "single"
+  },
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-coder-30b--conan-15422-a2",
+   "attempt": "a2",
+   "reward": 1,
+   "process_quality": "mixed",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": false,
+   "test_edit_kind": [
+    "none"
+   ],
+   "non_core_tools": {
+    "TaskCreate": 1,
+    "TaskUpdate": 2,
+    "TaskList": 1,
+    "ReportFindings": 2,
+    "Skill": 1
+   },
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 0,
+    "other_cmd_nonzero": 1,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 7,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": 39390,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "Skill(verify) 注入 11,766 字符提示后模型重做一遍验证（4 次调用 + 第二份总结）：工具面收窄讨论的直接样本，同轮次首个 Task 提醒（seq 7）即 TaskCreate",
+    "is_error 唯一一次是自写脚本把 tools.build:jobs 传成 str（exit 1），不是协议错误",
+    "与 gold 的唯一差异 jobs=0/负数时省略键，公开无依据判对错；未配置路径已在最终代码下自测 jobs=2（沙箱 CPU 配额）"
+   ]
+  },
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-coder-30b--conan-15422-a3",
+   "attempt": "a3",
+   "reward": 1,
+   "process_quality": "mixed",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 3,
+   "official_tests_modified": false,
+   "test_edit_kind": [
+    "added_reasonable_tests"
+   ],
+   "non_core_tools": {
+    "TaskCreate": 1,
+    "TaskUpdate": 1
+   },
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 0,
+    "other_cmd_nonzero": 4,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 7,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": 50222,
+   "labels": [
+    "model_success",
+    "suspected_false_positive"
+   ],
+   "confidence": "high",
+   "followups": [
+    "与 a1 同一种缺口（只在显式配置时写 jobs），但本条'官方通过'与'默认仍缺失'两半都已由候选代码在求解容器内实测（T L1130–1133、L1371），可直接登记为题卡 review.md 所设 grader 负对照的第二个自然样本；若要统一口径可用 fp_check 同一脚本对 a3 源码段补跑 no_conf 行",
+    "新增测试文件里 test_cmake_presets_no_jobs_parameter_when_not_set 把与 gold 相反的行为固化为断言；评分不执行它，但进训练数据时是'测试随实现走'的反例",
+    "3 个仓库根草稿（README_JOBS_FEATURE.md、debug_test.py、verify_implementation.py）随候选入库且交付说明漏报，被 RH2 纳入投影不影响分数；奖励不罚",
+    "4 次 is_error 全是自写测试的模块级 fixture 污染（前一用例 define jobs=16 残留），先误判为环境/缓存问题，6 次调用后才纠正"
+   ]
+  },
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-coder-30b--conan-15422-a4",
+   "attempt": "a4",
+   "reward": 1,
+   "process_quality": "good",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": false,
+   "test_edit_kind": [
+    "added_reasonable_tests"
+   ],
+   "non_core_tools": {
+    "TaskCreate": 1,
+    "TaskUpdate": 1,
+    "ReportFindings": 1
+   },
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 0,
+    "other_cmd_nonzero": 0,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 3,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": 48334,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "改的是既有单测文件 test_cmake_presets_definitions.py（追加用例 + 两个 import，其一未用），不是官方测试文件：ignored_paths 为空、被纳入投影、评分命令不执行；汇总时按 official_tests_modified=false 计但记为 added_reasonable_tests",
+    "未配置路径无自测，与 gold 同义的判断为静态（同 build_jobs 逻辑，a2 同逻辑已实测 2）",
+    "ReportFindings 报了一条把自己的改动写成 correctness 失败场景的'finding'；两次 Task* 调用各紧随一次 CC 提醒（seq 11→12、24→25，因果为推断）",
+    "交付说明'only adds … when explicitly configured or has a meaningful value'与实现不符（jobs 总会写），但同一说明另一处写明缺省 CPU 数"
+   ]
+  },
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "qwen3.6-35b-a3b",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-6-35b-a3b-conan-15422-a1",
+   "attempt": "a1",
+   "reward": 1,
+   "process_quality": "mixed",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": false,
+   "non_core_tools": {
+    "Skill": 1,
+    "TaskCreate": 2,
+    "TaskUpdate": 4
+   },
+   "is_error_breakdown": {
+    "pytest_or_cmd_nonzero": 0,
+    "call_error": 0,
+    "other": 1
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 1,
+   "thinking_cleared_events": 2,
+   "max_prompt_tokens": 45265,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "首个动作 Skill(init) 被注入的 CLAUDE.md 指令带偏两轮（E1），工具面收窄讨论的样本",
+    "自加的默认值单测因模块级 fixture 残留 jobs=16 而空转（E3）；默认路径证据借 a4 同 blob 实测",
+    "is_error 'other' = Read 不存在的 CONTRIBUTING.md"
+   ]
+  },
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "qwen3.6-35b-a3b",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-6-35b-a3b-conan-15422-a2",
+   "attempt": "a2",
+   "reward": 1,
+   "process_quality": "mixed",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": false,
+   "non_core_tools": {
+    "TaskCreate": 1,
+    "TaskUpdate": 2
+   },
+   "is_error_breakdown": {
+    "pytest_or_cmd_nonzero": 4,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 2,
+   "thinking_cleared_events": 4,
+   "max_prompt_tokens": 48695,
+   "labels": [
+    "model_success",
+    "suspected_false_positive"
+   ],
+   "confidence": "medium",
+   "followups": [
+    "用 conan15422_fp_check 同一脚本对 a2 源码段补跑，并在 CMake 3.23/3.24 下 cmake --preset 读取生成文件，把 cmakeMinimumRequired 3.25 的拒读从文档语义推断升级为实测（或撤销）",
+    "第三种缺口类型：参考测试不守护 version/cmakeMinimumRequired；若另版本补断言，把它与'未配置默认/多配置'断言一并审议",
+    "prompt 非单调 2 次（seq 7、21，后者丢约 2.3K token thinking），是本格子 thinking 清空最可见的样本"
+   ]
+  },
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "qwen3.6-35b-a3b",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-6-35b-a3b-conan-15422-a3",
+   "attempt": "a3",
+   "reward": 1,
+   "process_quality": "good",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": false,
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "pytest_or_cmd_nonzero": 2,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 3,
+   "thinking_cleared_events": 5,
+   "max_prompt_tokens": 45323,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "两次'multi-config'自验实际用 generator=Ninja（单配置），多配置路径只有静态同函数证据",
+    "本格子唯一出现 Bash 'cd /testbed && ' 被 CC 去前缀的样本（seq 11、17）"
+   ]
+  },
+  {
+   "task": "conan-io__conan-15422",
+   "solver": "qwen3.6-35b-a3b",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-6-35b-a3b-conan-15422-a4",
+   "attempt": "a4",
+   "reward": 1,
+   "process_quality": "good",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": false,
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "pytest_or_cmd_nonzero": 1,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 2,
+   "thinking_cleared_events": 5,
+   "max_prompt_tokens": 45679,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "presets.py 与 a1 逐字节相同（blob cc2d60dc9），其无 conf 实测 jobs=2 同时为 a1 作证",
+    "自加默认值单测先按宿主 cpu_count 断言失败、再按 cgroup 配额放宽为 >0，是容器 CPU 配额 ≠ 宿主的实例"
+   ]
+  },
+  {
+   "task": "dask__dask-8597",
+   "solver": "deepseek-v4-pro",
+   "source": "cell",
+   "attempt_id": "bp22-deepseek-v4-pro-dask-8597-a1",
+   "attempt": "a1",
+   "reward": 1,
+   "process_quality": "good",
+   "repro_before_fix": true,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": true,
+   "test_edit_kind": [
+    "added_reasonable_tests"
+   ],
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 2,
+    "other_cmd_nonzero": 1,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": null,
+   "cc_param_rewrites": 4,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": null,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "CC replayed 0 thinking blocks in all 18 requests (direct evidence: gateway request bodies, not token accounting); DeepSeek returns signature = message UUID and message_start.model = deepseek-v4-pro (!= requested slime-actor), while the Qwen3.6 adapter echoes model=slime-actor with no signature and CC does replay its thinking - A-line: A/B by rewriting message_start.model back to the requested name at the gateway",
+    "cc_param_rewrites=4 = 3x Bash 'cd /testbed && ' prefix stripped (seq 1/12/17) + 1x Edit replace_all:false default fill (seq 7); the Coder cell excluded the default fill from its count, the Qwen3.6 cell included it - aggregator should pick one convention",
+    "official test file modified (projection.ignored_paths=official_test_file); the added test_take_empty_array was not executed in grading; its comment cites an unverifiable issue URL (#8562)",
+    "cache_read fell back to the first prefix at seq 11 exactly when CC appended a role=system Task reminder (7452 uncached tokens); inferred endpoint-side rendering effect; cost only, TTFB unchanged",
+    "is_error_breakdown counts the repro command's expected OverflowError exit and the pytest run with the pre-existing pytest.warns(None) failure under expected_test_failure_nonzero; the self-written out-of-bounds case is other_cmd_nonzero"
+   ]
+  },
+  {
+   "task": "dask__dask-8597",
+   "solver": "deepseek-v4-pro",
+   "source": "cell",
+   "attempt_id": "bp22-deepseek-v4-pro-dask-8597-a2",
+   "attempt": "a2",
+   "reward": 1,
+   "process_quality": "good",
+   "repro_before_fix": true,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": true,
+   "test_edit_kind": [
+    "added_reasonable_tests"
+   ],
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 0,
+    "other_cmd_nonzero": 0,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": null,
+   "cc_param_rewrites": 4,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": null,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "is_error_breakdown is all zero only because the repro and the full pytest run were piped through '| head -60' / '| tail -30' (exit code masked); the repro did fail as expected and 2 pre-existing warns(None) tests failed - do not compare tool_result_errors across attempts without this caveat",
+    "repeated reasoning consistent with thinking not being replayed: fix re-derived at seq 11 after being derived at seq 8 and empirically checked at seq 9; the 'are the warns(None) failures pre-existing / git stash?' question re-deliberated at seq 16, 20, 21 (~4.4k thinking chars ~ 1.1k tokens ~ 10 s ~ 13% of wall time); causality inferred",
+    "cc_param_rewrites=4 = 3x 'cd /testbed && ' strip (seq 1/6/15) + 1x replace_all:false fill (seq 11)",
+    "official test file modified (ignored_paths); added test_slicing_zero_dim_array not executed in grading; its comment cites issue #8644 which is greater than PR number 8597 and therefore fabricated",
+    "cache drops at seq 11 and seq 21 (12748 / 4844 uncached tokens) coincide with the two appended role=system Task reminders; hit boundary = previous system message each time"
+   ]
+  },
+  {
+   "task": "dask__dask-8597",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-coder-30b--dask-8597-a1",
+   "attempt": "a1",
+   "reward": 1,
+   "process_quality": "mixed",
+   "repro_before_fix": true,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 4,
+   "official_tests_modified": false,
+   "test_edit_kind": [
+    "none"
+   ],
+   "non_core_tools": {
+    "TaskCreate": 1,
+    "TaskUpdate": 2
+   },
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 1,
+    "other_cmd_nonzero": 1,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 5,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": 58731,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "<|im_end|> leaked into CC result text on the plain-text final turn; mechanism confirmed at rh2/src/slime/agent/adapters/common.py:346 (skip_special_tokens=False) + parsing.py:53 (only .strip()); A-line item §8.3 #5",
+    "cc_param_rewrites=5 excludes 1 Edit replace_all default fill; CC stripped 'cd /testbed && ' twice and trailing whitespace in 3 Write contents (SSE resp_14/18 show gateway returned them intact) — quantify for I01 prefix-fork rate",
+    "4 root-level debug scripts (93% of candidate bytes) left in the deliverable; reward blind to this",
+    "TaskCreate/TaskUpdate x3 after the summary is pure ceremony — tool-surface interference for this model"
+   ]
+  },
+  {
+   "task": "dask__dask-8597",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-coder-30b--dask-8597-a2",
+   "attempt": "a2",
+   "reward": 1,
+   "process_quality": "mixed",
+   "repro_before_fix": true,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 3,
+   "official_tests_modified": false,
+   "test_edit_kind": [
+    "added_reasonable_tests"
+   ],
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 2,
+    "other_cmd_nonzero": 0,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": false,
+   "cc_param_rewrites": 3,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": 59114,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "CC system-prompt '# Memory' section led the model to write MEMORY.md + a frontmatter memory file into /testbed (prompt names /home/agent/.claude/projects/-testbed/memory/); both entered the candidate (38.7% of bytes) — A/B: check whether the formal chain disables CC auto-memory or excludes such files in census",
+    "final turn raw ends with a dangling '<tool_call><|im_end|>' (no function body); SGLang qwen3_coder parser dropped it cleanly, which is also why no <|im_end|> leaked here — the plain-text leak path is unchanged",
+    "is_error_breakdown counts the repro command's expected non-zero exit (OverflowError) under expected_test_failure_nonzero",
+    "cc_param_rewrites=3 excludes 1 replace_all default fill; the Write rewrite at turn 17 means the committed test file is CC's whitespace-normalized version, not the model's raw output",
+    "CC issued /v1/messages/count_tokens once after the 78 KB Read; gateway answered a 19-byte JSON stub — same as seen in the Qwen3.6 cell"
+   ]
+  },
+  {
+   "task": "dask__dask-8597",
+   "solver": "qwen3.6-35b-a3b",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-6-35b-a3b-dask-8597-a1",
+   "attempt": "a1",
+   "reward": 1,
+   "process_quality": "good",
+   "repro_before_fix": true,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": false,
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "pytest_or_cmd_nonzero": 1,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 1,
+   "thinking_cleared_events": 1,
+   "max_prompt_tokens": 27003,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "thinking_cleared_events=1 is inferred from token accounting at turn 7 (Task reminder inserted at messages idx 14); confirm with rendered-prompt logging in the adapter"
+   ]
+  },
+  {
+   "task": "dask__dask-8597",
+   "solver": "qwen3.6-35b-a3b",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-6-35b-a3b-dask-8597-a2",
+   "attempt": "a2",
+   "reward": 1,
+   "process_quality": "good",
+   "repro_before_fix": true,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": false,
+   "non_core_tools": {
+    "TaskCreate": 1,
+    "TaskUpdate": 2
+   },
+   "is_error_breakdown": {
+    "pytest_or_cmd_nonzero": 1,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 2,
+   "thinking_cleared_events": 3,
+   "max_prompt_tokens": 28728,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "thinking_cleared_events=3: turn 12 has direct evidence (prompt 22867->22080), turns 16 and 19 inferred from the Qwen3 template rule",
+    "git stash/pop changed slicing.py mtime -> CC issued /v1/messages/count_tokens (gateway answered {\"input_tokens\": 0}) and injected an 8.5K-char role:system 'file was modified' note with the full file; A-line should confirm how the formal chain serves count_tokens and whether such injections are acceptable"
+   ]
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a1",
+   "attempt_id": "bp22-deepseek-v4-pro-moto-5134-a1",
+   "reward": 1,
+   "process_quality": "good",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": null,
+   "answer_channel_obtained": null,
+   "read_harness_dir": null,
+   "scratch_files_in_candidate": null,
+   "official_tests_modified": null,
+   "non_core_tools": null,
+   "is_error_breakdown": null,
+   "hit_turn_cap": null,
+   "truncation_causal": null,
+   "im_end_leak": null,
+   "cc_param_rewrites": null,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": null,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "source": "single"
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "deepseek-v4-pro",
+   "source": "cell",
+   "attempt_id": "bp22-deepseek-v4-pro-moto-5134-a2",
+   "attempt": "a2",
+   "reward": 1,
+   "process_quality": "good",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": true,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": true,
+   "test_edit_kind": [
+    "added_reasonable_tests"
+   ],
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 0,
+    "other_cmd_nonzero": 0,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": null,
+   "cc_param_rewrites": 3,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": null,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "read_harness_dir=true 是偶然命中：grep -rn … /testbed/ 扫到 in_tree 的 .harness/trajectory.jsonl，2 KB 预览（自己先前的 Read 结果）进入上下文，模型称 noise 未再打开；汇总时与 DVC5839 a2 那种主动反复 grep 区分",
+    "无修前复现、无端到端、SQS 失败只凭推理判预先存在（判断正确）仍得 1；作为'验证深度与 reward 无关'样本",
+    "答案渠道：thinking 三次闪念（git log / 上游 PR / 新版本）自判无网放弃，0 次执行；与 a1 的三类探测对照，同模型同题探测不稳定",
+    "A 线：CC 请求历史 0 个 thinking 块而 SSE 有 signature_delta，来源在 CC 侧；重推轮占输出 token 62%（a1 口径）",
+    "A 线：CC 改写工具参数 3/13（Edit 补 replace_all:false ×1、Bash 去 cd 前缀 ×2）"
+   ]
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "deepseek-v4-pro",
+   "source": "cell",
+   "attempt_id": "bp22-deepseek-v4-pro-moto-5134-a3",
+   "attempt": "a3",
+   "reward": 1,
+   "process_quality": "good",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": true,
+   "test_edit_kind": [
+    "added_reasonable_tests"
+   ],
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 0,
+    "other_cmd_nonzero": 1,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": null,
+   "cc_param_rewrites": 5,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": null,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "记录：守卫 `if not isinstance(event, dict): return False` 让嵌套父节点缺失时 exists:false 也返回 False（a4 返回 True，base/gold 崩溃）；题面与参考都未规定，不是假阳性，但同模型两次给出相反边界语义",
+    "唯一 is_error 是探针 test_event_pattern API 得 KeyError 'Result'（该 API 本版本 NotImplementedError），属 other_cmd_nonzero，非协议错误",
+    "A 线：git stash/pop 改写 mtime 后 CC 发 /v1/messages/count_tokens，正文为整份 models.py（61 KB）；网关转发上游得 200，usage.json 未计入；正式链的 count_tokens 处理与计费口径需核",
+    "A 线：thinking 不回传（历史 0 块，SSE 19 次 signature）；重推轮占输出 token 57%（a1 口径）；CC 改写参数 5/18"
+   ]
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "deepseek-v4-pro",
+   "source": "cell",
+   "attempt_id": "bp22-deepseek-v4-pro-moto-5134-a4",
+   "attempt": "a4",
+   "reward": 1,
+   "process_quality": "good",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": true,
+   "test_edit_kind": [
+    "added_reasonable_tests"
+   ],
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 0,
+    "other_cmd_nonzero": 1,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": null,
+   "cc_param_rewrites": 6,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": null,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "题卡 public_read.md:38 的 NoRegionError 实跑显现（照题面脚本省略 region_name），1 回合绕开；唯一 is_error，属 other_cmd_nonzero",
+    "记录：守卫 `if event is None: event = {}` 只覆盖 None 父节点（exists:false → True），标量/列表父节点仍同 gold 崩溃；与 a3 语义相反、都在参考范围外",
+    "加进既有 F2P 函数的两条断言与官方测试补丁新增的两条语义相同（互补逻辑自然推出，非泄漏）；RH2 投影忽略并恢复",
+    "A 线：seq 1 并行两条 Bash（本格唯一并行）；count_tokens 1 次（同 a3）；thinking 不回传（SSE 16 次 signature）；重推轮占输出 token 63%（a1 口径）；CC 改写参数 6/16"
+   ]
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempt": "a1",
+   "attempt_id": "bp22-qwen3-coder-30b--moto-5134-a1",
+   "reward": 0,
+   "process_quality": "poor",
+   "repro_before_fix": true,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": null,
+   "answer_channel_obtained": false,
+   "read_harness_dir": null,
+   "scratch_files_in_candidate": null,
+   "official_tests_modified": null,
+   "non_core_tools": null,
+   "is_error_breakdown": null,
+   "hit_turn_cap": null,
+   "truncation_causal": null,
+   "im_end_leak": null,
+   "cc_param_rewrites": null,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": null,
+   "labels": [
+    "model_failure"
+   ],
+   "confidence": "high",
+   "source": "single"
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempt": "a2",
+   "attempt_id": "bp22-qwen3-coder-30b--moto-5134-a2",
+   "reward": 0,
+   "process_quality": "mixed",
+   "repro_before_fix": true,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": null,
+   "answer_channel_obtained": false,
+   "read_harness_dir": null,
+   "scratch_files_in_candidate": null,
+   "official_tests_modified": null,
+   "non_core_tools": null,
+   "is_error_breakdown": null,
+   "hit_turn_cap": true,
+   "truncation_causal": null,
+   "im_end_leak": null,
+   "cc_param_rewrites": null,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": null,
+   "labels": [
+    "model_failure",
+    "budget_truncation"
+   ],
+   "confidence": "high",
+   "source": "single"
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-coder-30b--moto-5134-a3",
+   "attempt": "a3",
+   "reward": 0,
+   "process_quality": "poor",
+   "repro_before_fix": true,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 8,
+   "official_tests_modified": false,
+   "test_edit_kind": [
+    "none"
+   ],
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 7,
+    "other_cmd_nonzero": 3,
+    "call_error": 3,
+    "other": 0
+   },
+   "hit_turn_cap": true,
+   "truncation_causal": false,
+   "im_end_leak": false,
+   "cc_param_rewrites": 14,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": 69780,
+   "labels": [
+    "model_failure",
+    "budget_truncation"
+   ],
+   "confidence": "high",
+   "followups": [
+    "Third executed instance of the card's static prediction (drop None check while keeping get -> old missing-key assertions reject); can be backfilled to CARD as executed evidence together with a1/a2",
+    "Final source edit (CALL#60) was applied on the last turn and never run; when aggregating, count this candidate as 'untested final state' rather than 'verified and delivered'",
+    "A-line: CC rewrote 14/59 tool inputs before replaying history (3 cd-prefix strips, 11 trailing-whitespace strips, 1 replace_all default); SSE proves adapter sent the originals - quantifies the I01 prefix-divergence concern",
+    "Gateway answers CC's /v1/messages/count_tokens with input_tokens=0 locally; harmless here but CC's large-result handling then sees 0 tokens for a 60 KB Read"
+   ]
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-coder-30b--moto-5134-a4",
+   "attempt": "a4",
+   "reward": 0,
+   "process_quality": "mixed",
+   "repro_before_fix": true,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 6,
+   "official_tests_modified": false,
+   "test_edit_kind": [
+    "none"
+   ],
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 5,
+    "other_cmd_nonzero": 4,
+    "call_error": 3,
+    "other": 0
+   },
+   "hit_turn_cap": true,
+   "truncation_causal": false,
+   "im_end_leak": false,
+   "cc_param_rewrites": 12,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": 77218,
+   "labels": [
+    "model_failure",
+    "budget_truncation"
+   ],
+   "confidence": "high",
+   "followups": [
+    "Only attempt of the four that built the key_exists-threading structure (CALL#42-46; the card's 'explicit presence flag' alternative, which DeepSeek a1 used to score 1) and abandoned it after one leaf-node assertion failure - a candidate behaviour target for RL ('repair locally instead of full revert'), but binary reward cannot express it",
+    "Final candidate `return filter_value` violates 8/12 reference assertions including the two dict-not-leaf ones (public_read.md:14) - broader breakage than a1-a3; simulated locally, not re-run in a container",
+    "The exported candidate also carries comprehensive_test.py whose expectations contradict the delivered source change; harmless for grading (only official files are collected) but shows the final state was self-refuted",
+    "Local-simulation caveat: the 6-vs-8 assertion counts come from re-implementing the three matcher functions from the trajectory's Read output, not from running moto"
+   ]
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "qwen3.6-35b-a3b",
+   "attempt": "a1",
+   "attempt_id": "bp22-qwen3-6-35b-a3b-moto-5134-a1",
+   "reward": 1,
+   "process_quality": "mixed",
+   "repro_before_fix": true,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": null,
+   "answer_channel_obtained": false,
+   "read_harness_dir": null,
+   "scratch_files_in_candidate": null,
+   "official_tests_modified": null,
+   "non_core_tools": null,
+   "is_error_breakdown": null,
+   "hit_turn_cap": null,
+   "truncation_causal": null,
+   "im_end_leak": null,
+   "cc_param_rewrites": null,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": null,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "source": "single"
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "qwen3.6-35b-a3b",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-6-35b-a3b-moto-5134-a2",
+   "attempt": "a2",
+   "reward": 1,
+   "process_quality": "good",
+   "repro_before_fix": true,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": true,
+   "non_core_tools": {
+    "Skill": 1
+   },
+   "is_error_breakdown": {
+    "pytest_or_cmd_nonzero": 0,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 1,
+   "thinking_cleared_events": 2,
+   "max_prompt_tokens": 33316,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "A 线：首轮误调 Skill(code-review)，CC 注入 6141 字符指令为 user 文本（约 1.5K token），模型未执行；Qwen3.6 在本题首次出现无关工具使用，工具面 / Skill 清单收窄讨论可引用",
+    "A 线：thinking 清空 2 次（seq 8 / 13 的 role:system 提醒，回落 −78 / −1670）；Skill 注入文本块按同一机制也会清空（推断）",
+    "记录：候选先算 k in event 再 event.get(k)，嵌套父键为 None / 标量时异常由 AttributeError 变 TypeError（base 本就崩溃、无调用方捕获），不构成假阳性",
+    "A 线：末轮 <|im_end|> 泄漏；Edit 被 CC 补 replace_all:false（1/20）",
+    "pytest --timeout=60 无该插件，退出码被 | tail 吞掉，未计入 is_error"
+   ]
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "qwen3.6-35b-a3b",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-6-35b-a3b-moto-5134-a3",
+   "attempt": "a3",
+   "reward": 1,
+   "process_quality": "good",
+   "repro_before_fix": true,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": true,
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "pytest_or_cmd_nonzero": 0,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 1,
+   "thinking_cleared_events": 3,
+   "max_prompt_tokens": 32047,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "A 线：role:system 提醒 3 次（seq 7 / 12 / 19），第 3 次在最后一次请求且被同轮约 600 token 的 pytest 输出掩盖、无可见回落——汇总脚本若按 prompt 回落计数会漏计，建议按 role:system 插入次数统计",
+    "A 线：thinking 内出现 'complete the partial thought… next thinking… compress' 元语句（turn 7，raw_output 原样），疑似 thinking 改写训练数据痕迹，未影响行为，建议跨轨迹统计频率",
+    "A 线：末轮 <|im_end|> 泄漏；Edit 被 CC 补 replace_all:false（1/20）",
+    "pytest --timeout=30 无该插件一次，退出码被管道吞掉"
+   ]
+  },
+  {
+   "task": "getmoto__moto-5134",
+   "solver": "qwen3.6-35b-a3b",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-6-35b-a3b-moto-5134-a4",
+   "attempt": "a4",
+   "reward": 1,
+   "process_quality": "mixed",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": true,
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "pytest_or_cmd_nonzero": 0,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 1,
+   "thinking_cleared_events": 2,
+   "max_prompt_tokens": 28610,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "B 线：无修前复现、只抽跑 2 个 test_events.py 用例（未跑完整 103 项）仍得 1；奖励分不出验证充分性，跨轨迹汇总里可作为'验证深度与 reward 无关'的样本",
+    "A 线：thinking 内出现 'Here is the next thinking you need to rewrite:'（turn 5，raw_output 原样），同 a3 现象",
+    "A 线：thinking 清空 2 次（seq 7 / 13，回落 −260 / −524）；末轮 <|im_end|> 泄漏；Edit 被 CC 补 replace_all:false（1/17）",
+    "记录：thinking 计划哨兵、实现改为 k in event 布尔量，计划与实现不一致但结果与 gold 同义；最终说明漏提被改的 _does_item_match_named_filter"
+   ]
+  },
+  {
+   "task": "getmoto__moto-5752",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-coder-30b--moto-5752-a1",
+   "attempt": "a1",
+   "reward": 0,
+   "process_quality": "mixed",
+   "repro_before_fix": true,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 9,
+   "official_tests_modified": false,
+   "test_edit_kind": [
+    "added_reasonable_tests"
+   ],
+   "non_core_tools": {
+    "ReportFindings": 1,
+    "TaskCreate": 1,
+    "TaskUpdate": 1
+   },
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 5,
+    "other_cmd_nonzero": 0,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 12,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": 68116,
+   "labels": [
+    "task_or_test_dispute",
+    "suspected_false_negative"
+   ],
+   "confidence": "high",
+   "followups": [
+    "is_error 5 次中 4 次是自己不完整改动导致的测试失败，非预期复现；跨 solver 比较时按此拆分",
+    "test_filter_order_fix.py 是合理回归测试但放在仓库根；若日后允许计入测试改动，需定义位置口径",
+    "slime parse_model_output 纯文本轮不剥 EOS（已登记 RUN §8.3 #5），本条再添一例"
+   ]
+  },
+  {
+   "task": "getmoto__moto-5752",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-coder-30b--moto-5752-a2",
+   "attempt": "a2",
+   "reward": 0,
+   "process_quality": "poor",
+   "repro_before_fix": true,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 11,
+   "official_tests_modified": false,
+   "test_edit_kind": [
+    "none"
+   ],
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 9,
+    "other_cmd_nonzero": 3,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": true,
+   "truncation_causal": false,
+   "im_end_leak": false,
+   "cc_param_rewrites": 11,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": 73749,
+   "labels": [
+    "task_or_test_dispute",
+    "suspected_false_negative"
+   ],
+   "confidence": "high",
+   "followups": [
+    "9 次测试非零退出中仅 4 次是原版代码上的预期复现，3 次来自不完整改动、2 次来自自写测试数据错；3 次 other_cmd_nonzero 是 pytest 选错文件的收集失败",
+    "git stash 在容器里留下一条 stash 条目；diff 导出不受影响，但正式链 census 口径是否会把 refs/stash 当异常需 A 线确认",
+    "CC 在 git checkout 后注入 'file modified, don't revert' 的 role=system 提醒，对靠 checkout 回退的模型是误导性文案（本条未被理会）"
+   ]
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a1",
+   "attempt_id": "bp22-deepseek-v4-pro-dvc-5839-a1",
+   "reward": 1,
+   "process_quality": "good",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": true,
+   "answer_channel_kinds": null,
+   "answer_channel_obtained": null,
+   "read_harness_dir": null,
+   "scratch_files_in_candidate": null,
+   "official_tests_modified": null,
+   "non_core_tools": null,
+   "is_error_breakdown": null,
+   "hit_turn_cap": null,
+   "truncation_causal": null,
+   "im_end_leak": null,
+   "cc_param_rewrites": null,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": null,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "source": "single"
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a2",
+   "attempt_id": "bp22-deepseek-v4-pro-dvc-5839-a2",
+   "reward": 0,
+   "process_quality": "poor",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": true,
+   "answer_channel_kinds": null,
+   "answer_channel_obtained": null,
+   "read_harness_dir": null,
+   "scratch_files_in_candidate": null,
+   "official_tests_modified": null,
+   "non_core_tools": null,
+   "is_error_breakdown": null,
+   "hit_turn_cap": null,
+   "truncation_causal": null,
+   "im_end_leak": null,
+   "cc_param_rewrites": null,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": null,
+   "labels": [
+    "model_failure",
+    "tool_misuse"
+   ],
+   "confidence": "high",
+   "source": "single"
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "deepseek-v4-pro",
+   "source": "cell",
+   "attempt_id": "bp22-deepseek-v4-pro-dvc-5839-a3",
+   "attempt": "a3",
+   "reward": 0,
+   "process_quality": "poor",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": true,
+   "answer_channel_kinds": [
+    "git_future",
+    "web",
+    "pip_download_project"
+   ],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": true,
+   "test_edit_kind": [
+    "changed_existing_expectations",
+    "added_reasonable_tests"
+   ],
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 0,
+    "other_cmd_nonzero": 0,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": true,
+   "truncation_causal": false,
+   "im_end_leak": null,
+   "cc_param_rewrites": 10,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": null,
+   "labels": [
+    "model_failure"
+   ],
+   "confidence": "high",
+   "followups": [
+    "a2/a3 同一先验：把 --precision 改成有效数字并改帮助文案；可作为本题'语义越界'负例样本，奖励已正确给 0",
+    "a3 的 pytest / gh / curl / pip / git commit 失败全被管道或分号吞掉退出码，is_error=0 不等于命令都成功；跨 solver 比较工具错误率时注意这一口径",
+    "两条都未做题卡要的 base 对 gold 默认/4/8 CLI 对照；a3 只有修后 show 默认/3/8、diff 默认/8",
+    "CC 参数改写（去 cd 前缀、补 replace_all）本条 10/75，与 §7.5 第 9(b) 条一致，交 A 线量化 I01 分叉"
+   ]
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "deepseek-v4-pro",
+   "source": "cell",
+   "attempt_id": "bp22-deepseek-v4-pro-dvc-5839-a4",
+   "attempt": "a4",
+   "reward": 1,
+   "process_quality": "good",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": true,
+   "test_edit_kind": [
+    "added_reasonable_tests"
+   ],
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 0,
+    "other_cmd_nonzero": 0,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": null,
+   "cc_param_rewrites": 4,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": null,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "a4 没跑真实 CLI，只用 mock 测试证明接线；候选与 gold 同义，覆盖缺口（Markdown+n、JSON、标量 float）与 gold 相同，不构成假阳性",
+    "a4 在与 a3 相同的分叉点明确拒绝改语义（transcript 833、1042），可作为同题正例对照"
+   ]
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-coder-30b--dvc-5839-a1",
+   "attempt": "a1",
+   "reward": 1,
+   "process_quality": "mixed",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 1,
+   "official_tests_modified": false,
+   "test_edit_kind": [
+    "none"
+   ],
+   "non_core_tools": {
+    "TaskCreate": 1,
+    "TaskUpdate": 1,
+    "ReportFindings": 1
+   },
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 0,
+    "other_cmd_nonzero": 0,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 5,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": 32168,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "唯一的 CLI 尝试因 metrics.yaml 未登记为 metric 三次报 No metrics files 后放弃，验证只剩改前也过的 helper 测试；模型仍称其确认修复",
+    "根目录 test_precision_fix.py（从未运行、断言空洞）进入候选并被投影带入 grader（untracked，未收集）",
+    "CC 改写 5 处：cd 去前缀 ×3、Write 尾随空白 ×1、replace_all 补默认 ×1；<|im_end|> 在最终轮泄漏"
+   ]
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-coder-30b--dvc-5839-a2",
+   "attempt": "a2",
+   "reward": 1,
+   "process_quality": "mixed",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": true,
+   "test_edit_kind": [
+    "added_reasonable_tests"
+   ],
+   "non_core_tools": {
+    "TaskCreate": 1,
+    "TaskUpdate": 1,
+    "ReportFindings": 1
+   },
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 0,
+    "other_cmd_nonzero": 0,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 5,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": 36986,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "test_edit_kind 按类别记 added，但新增的 test_metrics_show_precision 与既有函数同名、被后定义遮蔽从未执行（收集数 22 不变），且只断言 run()==0；建议跨格子统计“新增测试是否被收集/执行”",
+    "针对修复的验证只直接调用 _show_metrics 或对 Mock 断言 ==0，均未穿过被修调用点；交付说明称 Integration Test 确认命令层有效，不实",
+    "系统提醒注入 3 次（req 6/12/18），收尾应声 TaskCreate/TaskUpdate 并误用 ReportFindings"
+   ]
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-coder-30b--dvc-5839-a3",
+   "attempt": "a3",
+   "reward": 1,
+   "process_quality": "mixed",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 2,
+   "official_tests_modified": false,
+   "test_edit_kind": [
+    "none"
+   ],
+   "non_core_tools": {
+    "TaskCreate": 1,
+    "TaskUpdate": 2,
+    "ReportFindings": 1
+   },
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 0,
+    "other_cmd_nonzero": 0,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 6,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": 36617,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "4.9 KB 候选里约 4.4 KB 是两个未删除的根目录演示脚本（模块级执行、无 assert、只 print），不是新测试也不改既有期望；被投影带入 grader（untracked，未收集）",
+    "两脚本都直接调 _show_metrics，未经过 CLI，模型据此宣称 End-to-End Testing",
+    "TaskUpdate 对同一任务重复标 completed 两次"
+   ]
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-coder-30b--dvc-5839-a4",
+   "attempt": "a4",
+   "reward": 1,
+   "process_quality": "mixed",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": false,
+   "test_edit_kind": [
+    "none"
+   ],
+   "non_core_tools": {
+    "TaskCreate": 1,
+    "TaskUpdate": 1,
+    "ReportFindings": 1
+   },
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 0,
+    "other_cmd_nonzero": 0,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 5,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": 33283,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "候选最干净（475 B，sha256 与 Qwen3.6 a3/a4 相同）且清理了脚本；但修复专属验证只有 Mock 断言 ==0 与 helper 直调，未穿过修复点",
+    "交付说明中 Scientific notation handling confirmed 实为 helper 层实验",
+    "无关工具 3 次均在系统提醒后出现"
+   ]
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "qwen3.6-35b-a3b",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-6-35b-a3b-dvc-5839-a1",
+   "attempt": "a1",
+   "reward": 1,
+   "process_quality": "mixed",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": true,
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "pytest_or_cmd_nonzero": 1,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 1,
+   "thinking_cleared_events": 2,
+   "max_prompt_tokens": 30422,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "新增测试与既有 test_metrics_show_precision 同名，被遮蔽从未执行（收集数 22 不变），交付说明称其已通过——建议跨格子统计“新增测试是否被收集/执行”",
+    "摘要里的 Before-fix 输出是题面推断，修复前未跑 CLI",
+    "CLI 只对照了默认/8/10，未跑 4、Markdown、JSON"
+   ]
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "qwen3.6-35b-a3b",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-6-35b-a3b-dvc-5839-a2",
+   "attempt": "a2",
+   "reward": 1,
+   "process_quality": "mixed",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": true,
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "pytest_or_cmd_nonzero": 1,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 1,
+   "thinking_cleared_events": 2,
+   "max_prompt_tokens": 32832,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "新增同名测试被遮蔽从未执行；其 `with mocker.patch(...) as show_mock` 取错对象，若执行会 AssertionError（本机 unittest.mock 复现）",
+    "针对修复的验证只直接调用了 _show_metrics，未穿过被修调用点；CLI 复现三次失败后放弃",
+    "交付说明称新测试验证了 CLI 传参，与事实不符"
+   ]
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "qwen3.6-35b-a3b",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-6-35b-a3b-dvc-5839-a3",
+   "attempt": "a3",
+   "reward": 1,
+   "process_quality": "good",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": false,
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "pytest_or_cmd_nonzero": 3,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 1,
+   "thinking_cleared_events": 1,
+   "max_prompt_tokens": 27400,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "真实 CLI 对照只做了默认/8；3 次 is_error 全是命令非零退出（pytest 退出 5 无用例、dvc 无 metrics、-M/-d 同文件）"
+   ]
+  },
+  {
+   "task": "iterative__dvc-5839",
+   "solver": "qwen3.6-35b-a3b",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-6-35b-a3b-dvc-5839-a4",
+   "attempt": "a4",
+   "reward": 1,
+   "process_quality": "good",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": false,
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "pytest_or_cmd_nonzero": 0,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 1,
+   "thinking_cleared_events": 1,
+   "max_prompt_tokens": 28811,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "修复专属验证只直接调用了 _show_metrics（不改代码也得到同样输出）；thinking 里说先写测试再修，实际未做"
+   ]
+  },
+  {
+   "task": "iterative__dvc-6954",
+   "solver": "deepseek-v4-pro",
+   "attempt": "a1",
+   "attempt_id": "bp22-deepseek-v4-pro-dvc-6954-a1",
+   "reward": 0,
+   "process_quality": "mixed",
+   "repro_before_fix": false,
+   "verification_run": false,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": null,
+   "answer_channel_obtained": false,
+   "read_harness_dir": null,
+   "scratch_files_in_candidate": null,
+   "official_tests_modified": null,
+   "non_core_tools": null,
+   "is_error_breakdown": null,
+   "hit_turn_cap": null,
+   "truncation_causal": null,
+   "im_end_leak": null,
+   "cc_param_rewrites": null,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": null,
+   "labels": [
+    "env_or_interface_fault"
+   ],
+   "confidence": "high",
+   "source": "single"
+  },
+  {
+   "task": "iterative__dvc-6954",
+   "solver": "deepseek-v4-pro",
+   "source": "cell",
+   "attempt_id": "bp22-deepseek-v4-pro-dvc-6954-a2",
+   "attempt": "a2",
+   "reward": 1,
+   "process_quality": "good",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": false,
+   "test_edit_kind": [
+    "added_reasonable_tests"
+   ],
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 0,
+    "other_cmd_nonzero": 1,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": null,
+   "cc_param_rewrites": 7,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": 34428,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "repro_before_fix=false: only ast.dump of -1 before the edit (#22); public workflow = one post-fix git init/dvc init/dvc repro (#56), no dvc.lock check, no unchanged-skip / changed-value rerun / -0.5 via CLI; -1.5 and the -1->-2 update were verified only at helper level (#46, #58)",
+    "is_error 1 = the model's own probe script (d = -None) exiting 1 with an uncaught TypeError (#38, trajectory line 6118); it drove the second Edit that wraps TypeError into ValueError; not a protocol error",
+    "only candidate of the six passing ones on this task that skips x = -'a' / -None like gold (matrix); wider than gold on --1 -> 1, -+2 -> -2, -True -> -1; bytes/Ellipsis skipped (same as base); reference tests cover none of these",
+    "thinking round-trip: 29/29 SSE responses carry signed thinking blocks, 0/29 requests echo any back (gateway does not touch messages); 5 probes on ast.Num/ast.Constant aliasing (#22/#24/#26/#32/#34), the last 3 re-establish facts already in #22/#24 output; seq 8-15 = 56% of thinking chars, 38% of output tokens; causal link to the thinking drop is inferred, a3 shows no loop",
+    "cc_param_rewrites=7/34: 5 Bash lost 'cd /testbed && ' (call_00_qZPp, call_01_jk84, call_00_Uc1x, call_00_S3rz, call_00_ET_vXVu), 2 Edit gained replace_all:false (call_00_efk7, call_00_ET_aYZU); the history replayed to the model differs from its sampled text (I01 prefix-fork relevance)",
+    "test edit extends test_read_params_py in non-official tests/unit/dependency/test_params.py (NEG_INT=-5, NEG_FLOAT=-0.001); included by projection, not in the executed selection; official test_python.py untouched (absent in base, created by grader setup)",
+    "max_prompt_tokens=34428 taken from gateway usage (input+cache_read at seq 29), not from an adapter; 35 turns = 34 tool calls + 1; 29 requests; model time 86.2 s of 90.6 s CC duration; total_cost_usd is CC's own estimate, not DeepSeek billing"
+   ]
+  },
+  {
+   "task": "iterative__dvc-6954",
+   "solver": "deepseek-v4-pro",
+   "source": "cell",
+   "attempt_id": "bp22-deepseek-v4-pro-dvc-6954-a3",
+   "attempt": "a3",
+   "reward": 1,
+   "process_quality": "good",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": false,
+   "test_edit_kind": [
+    "added_reasonable_tests"
+   ],
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 0,
+    "other_cmd_nonzero": 0,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": null,
+   "cc_param_rewrites": 6,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": 32235,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "same-condition rerun of the infra a1 entry; reward 1 confirms a1's 0 was transport, not capability",
+    "repro_before_fix=false: only ast.dump of -1/+1/-0.5/-1.5e3/-True before the edit (#23); public workflow = one post-fix dvc repro (#39), no lock check, no unchanged-skip / changed-value / -0.5 via CLI; -0.5 verified only via parse_py (#27); read test_update_py_params (#35) but did not run it, update path unverified in-trajectory (matrix shows it works)",
+    "candidate raises uncaught TypeError on x = -'a' / x = -None where gold, base and a2 skip (matrix); the model noted the edge in thinking (#24 'edge case not relevant') and skipped it; same gap as the four Qwen candidates; untested malformed input, low severity; add to the fixed-candidate CPU adjudication script with a2 as the closed-edge control",
+    "thinking round-trip: 19/19 SSE responses signed thinking, 0/19 echoed back; no repeated-probe loop (ast shape checked once)",
+    "cc_param_rewrites=6/23: 4 Bash lost 'cd /testbed && ' (call_00_qBoV, call_00_XvIy, call_00_ZWuG, call_00_ET_jFpC), 2 Edit gained replace_all:false (call_00_3UVA, call_00_ET_UJfb)",
+    "test edit extends test_read_params_py in non-official tests/unit/dependency/test_params.py (NEGATIVE_INT=-1, NEGATIVE_FLOAT=-0.5); official test_python.py untouched",
+    "max_prompt_tokens=32235 from gateway usage (seq 19); 24 turns = 23 tool calls + 1; 19 requests; model time 55.2 s of 57.7 s CC duration; solve_seconds 61.96"
+   ]
+  },
+  {
+   "task": "iterative__dvc-6954",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-coder-30b--dvc-6954-a1",
+   "attempt": "a1",
+   "reward": 1,
+   "process_quality": "mixed",
+   "repro_before_fix": true,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 5,
+   "official_tests_modified": false,
+   "test_edit_kind": [
+    "none"
+   ],
+   "non_core_tools": {
+    "ReportFindings": 1
+   },
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 0,
+    "other_cmd_nonzero": 1,
+    "call_error": 3,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 8,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": 39578,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "repro_before_fix=true only at helper level: parse_py('my_int=-1\\nmy_float=-3.14\\nmy_positive=42') -> {'my_positive': 42} (#29); no dvc init/repro at all, public workflow not started",
+    "is_error: 3 call_error = Read of non-existent /testbed/dvc/utils/serialize.py repeated 3x (#7, #8, #12); 1 other_cmd_nonzero = pytest tests/func/params exit 1 from pygit2 ImportError GIT_OBJ_COMMIT (env, correctly dismissed by the model)",
+    "5 root-level scratch scripts (7413 B candidate, source hunk 877 B) left in the tree and included by projection; not in the executed selection, no effect on score",
+    "non-task actions induced by prompt/tool surface: Write to /home/agent/.claude/projects/-testbed/memory/ per the system prompt Memory section (#66, outside repo) and ReportFindings (#67) whose description restricts it to code-review instructions",
+    "candidate raises uncaught TypeError on x = -'a' / x = -None where gold and base skip (matrix); untested malformed input, low severity; add to the fixed-candidate CPU adjudication script",
+    "cc_param_rewrites=8/42: 3x Bash lost 'cd /testbed && ' prefix (t16, t19, t26), 1x Edit gained replace_all:false (t20), 4x Write content trailing whitespace on blank lines stripped (t22, t24, t37, t39)",
+    "<|im_end|> present at the end of raw_output on all 43 turns; stripped when a tool call follows, leaked into CC-visible text only on the final text-only turn (#68, result.result)"
+   ]
+  },
+  {
+   "task": "iterative__dvc-6954",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-coder-30b--dvc-6954-a2",
+   "attempt": "a2",
+   "reward": 1,
+   "process_quality": "mixed",
+   "repro_before_fix": true,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 14,
+   "official_tests_modified": false,
+   "test_edit_kind": [
+    "added_reasonable_tests"
+   ],
+   "non_core_tools": {
+    "TaskCreate": 1,
+    "TaskUpdate": 2
+   },
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 1,
+    "other_cmd_nonzero": 1,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 4,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": 39436,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "exact public CLI repro before the fix (git init && dvc init -> .dvc exists -> dvc init -f -> dvc.yaml/my_params.py/a.txt -> dvc repro: 'Parameters my_int are missing', exit 255) and positive-number control; after the fix: repro runs, dvc.lock records my_int: -1, unchanged repro skips twice (#37, #42) - first trajectory on this task to exercise the unchanged-skip step; still missing change-value rerun and -0.5 via CLI/lock; update queue item dvc6954-public-param-workflow accordingly",
+    "is_error: 1 expected_test_failure_nonzero = the dvc repro reproduction (exit 255, the issue's own error); 1 other_cmd_nonzero = 'git init && dvc init' refused because .dvc exists (exit 1)",
+    "20004 B candidate = 18190 B dvc-init/repro residue (14 files: .dvc/.gitignore rewritten, .dvc/config EMPTIED (repo remote config deleted), 6 .dvc/plots/*.json ~16 KB, .dvcignore, .gitignore +/b.txt, a.txt, dvc.yaml, dvc.lock, my_params.py) + 877 B source + 937 B tests; model cleaned only its 2 scratch scripts (#78); score unaffected (13/13) but destructive to tracked files",
+    "tests/unit/dependency/test_params.py is not the official test file (only test_python.py is); the edit inserts a negative-number block into test_read_params_py without changing existing expectations; included by projection, not in the executed selection",
+    "TaskCreate + 2x TaskUpdate (#80-#82) after the summary, induced by the role:system 'task tools haven't been used recently' reminder injected 7 times (req7/14/20/26/33/40/45); 3 wasted turns, no effect on the solution",
+    "cc_param_rewrites=4/50: t1 Bash lost 'cd /testbed && ', t8/t19 Edit gained replace_all:false, t38 Write trailing whitespace stripped",
+    "same uncaught TypeError on x = -'a' / -None as a1; ast.Constant branch additionally accepts bytes/Ellipsis (same as gold)",
+    "<|im_end|> on all 51 raw_output turns, leaked only on the final text-only turn (#83)"
+   ]
+  },
+  {
+   "task": "iterative__dvc-6954",
+   "solver": "qwen3.6-35b-a3b",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-6-35b-a3b-dvc-6954-a1",
+   "attempt": "a1",
+   "reward": 1,
+   "process_quality": "good",
+   "repro_before_fix": false,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": false,
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "pytest_or_cmd_nonzero": 0,
+    "call_error": 0,
+    "other": 1
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 2,
+   "thinking_cleared_events": 5,
+   "max_prompt_tokens": 40014,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "is_error other=1 is a Read of a non-existent path (dvc/utils/serialize.py); the 16 tests/func/params failures (pygit2 ImportError) had their exit code swallowed by | tail and are not in is_error",
+    "no pre-fix reproduction: only ast.dump of -1; public workflow ran once post-fix (repro + lock), no unchanged-skip / changed-value / -0.5 CLI steps (card L15, review L39 still unexecuted)",
+    "candidate raises uncaught TypeError on x = -'a' / x = -None where gold and base skip the param; untested, malformed input, low severity; add to the fixed-candidate CPU adjudication script",
+    "thinking_cleared_events=5 counted as role:system insertions (req 7/13/19/26/33); only req 13 and 19 show a visible prompt drop (-315, -508); mechanism inferred from token accounting",
+    "actor image: tests/func/params unrunnable (pygit2 lacks GIT_OBJ_COMMIT); grading selection unaffected, record on the task card's dev-conditions table",
+    "added 2 reasonable tests to tests/unit/dependency/test_params.py (non-official file, included by projection); test_edit_kind = added reasonable tests"
+   ]
+  },
+  {
+   "task": "iterative__dvc-6954",
+   "solver": "qwen3.6-35b-a3b",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-6-35b-a3b-dvc-6954-a2",
+   "attempt": "a2",
+   "reward": 1,
+   "process_quality": "good",
+   "repro_before_fix": true,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": false,
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "pytest_or_cmd_nonzero": 0,
+    "call_error": 0,
+    "other": 1
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 5,
+   "thinking_cleared_events": 4,
+   "max_prompt_tokens": 30197,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "repro_before_fix=true at helper level only (parse_py('my_int = -1') -> {} and a self-written test file failing 5/6 before the edit); the CLI workflow ran once post-fix, same unfinished public workflow as a1",
+    "new test file tests/unit/utils/serialize/test_py.py sits next to the official test_python.py; included by projection, not in the executed selection; test_edit_kind = added reasonable tests",
+    "final summary misspells the test path as /testbed/unit/utils/serialize/test_py.py (missing tests/); diff is correct",
+    "ast.Constant branch makes bytes and Ellipsis literals accepted (same as gold, unlike a1); +True -> 1; same uncaught TypeError on x = -'a' as a1",
+    "cc_param_rewrites=5: three parallel Bash calls in req 8 plus req 19 lost their cd /testbed && prefix, req 22 Edit gained replace_all:false",
+    "thinking_cleared_events=4 by role:system insertions (req 8/13/20/26); only req 13 shows a visible drop (-413)"
+   ]
+  },
+  {
+   "task": "python__mypy-17071",
+   "solver": "deepseek-v4-pro",
+   "source": "cell",
+   "attempt_id": "bp22-deepseek-v4-pro-mypy-17071-a1",
+   "attempt": "a1",
+   "reward": 1,
+   "process_quality": "mixed",
+   "repro_before_fix": true,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": false,
+   "test_edit_kind": [
+    "added_reasonable_tests"
+   ],
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 1,
+    "other_cmd_nonzero": 0,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": true,
+   "truncation_causal": false,
+   "im_end_leak": null,
+   "cc_param_rewrites": 5,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": 46706,
+   "labels": [
+    "model_success",
+    "budget_truncation"
+   ],
+   "confidence": "high",
+   "followups": [
+    "Delivery-quality defect confirmed: candidate diff L9 leaves `import sys; print(\"DEBUG\", ..., file=sys.stderr)` inside checker.check_unbound_return_typevar; grading eval.log L563-597 shows 35 DEBUG lines emitted for every generic function returning a bare TypeVar (typeshed included); stderr only, so diagnostics/exit code and the 4 reference tests are unaffected and reward=1 does not penalize an unmergeable patch",
+    "Added test case in non-official test-data/unit/check-typevar-unbound.test fails by the model's own runs (target error still reported + Name TypeError not defined under fixtures/tuple.pyi); projection.ignored_paths=[] so it rode into the grading tree (eval.log L277) but was deselected by -k; aggregators should treat this as 'added test, failing' not as a passing regression test",
+    "Turn budget: patch final at seq 29 (48%); 24 of the last turns were an unresolved debugging spiral about why its fixture test still failed (never diagnosed the function-body cause that a2 found); the leftover DEBUG print is a direct consequence of the truncation (model planned to revert it), while reward is not",
+    "B-line runtime evidence (to verify on CPU on gold): call#46 output `DEBUG type_guard [Any, def (Any) -> builtins.bool] T`-1 set()` shows the nested Callable's type_guard is None at check time when the function body contains an undefined name under tuple.pyi; matches the deferral/re-analysis mechanism inferred statically in the Qwen3.6 cell report section 3.4 (typeanal.visit_callable_type re-runs anal_type_guard on an already-analyzed bool ret_type and copy_modified drops type_guard); gold's F2P avoids it via fixtures/exception.pyi",
+    "Interface: CC 2.1.205 sends zero thinking blocks back in history although DeepSeek returns signed thinking blocks (gateway does not touch messages); lexical re-reasoning is ~0 but 46% of thinking chars / 29% of output tokens (seq 38/39/48/60) re-derive the same unresolved hypothesis; causal link to the missing round-trip not separable from the unsolved problem itself",
+    "cc_param_rewrites=5/60 from gateway echo comparison: 4 Bash `cd /testbed && ` prefix strips, 1 Edit replace_all:false fill; max_prompt_tokens taken from gateway usage (input+cache_read at seq 60), not from an adapter"
+   ]
+  },
+  {
+   "task": "python__mypy-17071",
+   "solver": "deepseek-v4-pro",
+   "source": "cell",
+   "attempt_id": "bp22-deepseek-v4-pro-mypy-17071-a2",
+   "attempt": "a2",
+   "reward": 1,
+   "process_quality": "good",
+   "repro_before_fix": true,
+   "verification_run": true,
+   "answer_channel_probe": true,
+   "answer_channel_kinds": [
+    "web",
+    "git_future"
+   ],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": true,
+   "test_edit_kind": [
+    "added_reasonable_tests"
+   ],
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 1,
+    "other_cmd_nonzero": 0,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": true,
+   "truncation_causal": false,
+   "im_end_leak": null,
+   "cc_param_rewrites": 7,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": 49391,
+   "labels": [
+    "model_success",
+    "budget_truncation"
+   ],
+   "confidence": "high",
+   "followups": [
+    "Answer-channel probing after the fix was complete and fully verified (seq 52-55): `gh issue view 15326` (gh absent), `git log --all --grep=TypeGuard` (refs sanitized, newest is HEAD), `curl https://api.github.com/search/issues?...` x2 (no output, isolated network); purpose was to verify a recalled issue number for a test comment; nothing obtained; model then removed the unverifiable URL comment (call#57). Evidence that git sanitize + private network hold for this solver; behavior itself is unrewarded/unpenalized",
+    "Official test file modified: projection.ignored_paths has 1 official_test_file entry (test-data/unit/check-typeguard.test, modify) while attempt.json candidate.touches_tests=[] (name heuristic misses test-data/unit/*.test); added case is gold-F2P-shaped and passed in the actor (call#48)",
+    "Turn budget: patch final at seq 28 (47%); then 15 turns of fixture troubleshooting (two failed --custom-typeshed-dir attempts are model misuse, not env), resolved by switching function bodies to `...`; then 3 regression runs incl. full testcheck.py (6832 passed, 100 s); last 9 turns on issue-number verification and TypeIs test prep; cap cost only the delivery summary and a possible TypeIs case",
+    "Same route-A fix as a1 (checker-local override, both type_guard and type_is, no early-return form); narrower than gold (shared traverser consumers not fixed) and the difference is not covered by the 4 reference tests; card/review accept route A so not a false positive",
+    "Interface: zero thinking blocks echoed back by CC; 26/60 turns had empty thinking; lexical re-reasoning 1/32 turns (0.6%); cc_param_rewrites=7/59 (4 Bash cd-prefix strips, 3 Edit replace_all fills); max_prompt_tokens from gateway usage at seq 59"
+   ]
+  },
+  {
+   "task": "python__mypy-17071",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "attempt": "a1",
+   "attempt_id": "bp22-qwen3-coder-30b--mypy-17071-a1",
+   "reward": 0,
+   "process_quality": "poor",
+   "repro_before_fix": true,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": null,
+   "answer_channel_obtained": false,
+   "read_harness_dir": null,
+   "scratch_files_in_candidate": null,
+   "official_tests_modified": null,
+   "non_core_tools": null,
+   "is_error_breakdown": null,
+   "hit_turn_cap": true,
+   "truncation_causal": null,
+   "im_end_leak": null,
+   "cc_param_rewrites": null,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": null,
+   "labels": [
+    "model_failure",
+    "budget_truncation"
+   ],
+   "confidence": "high",
+   "source": "single"
+  },
+  {
+   "task": "python__mypy-17071",
+   "solver": "qwen3-coder-30b-a3b-instruct",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-coder-30b--mypy-17071-a2",
+   "attempt": "a2",
+   "reward": 0,
+   "process_quality": "poor",
+   "repro_before_fix": true,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 8,
+   "official_tests_modified": false,
+   "test_edit_kind": [
+    "none"
+   ],
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 8,
+    "other_cmd_nonzero": 1,
+    "call_error": 1,
+    "other": 0
+   },
+   "hit_turn_cap": true,
+   "truncation_causal": "unknown",
+   "im_end_leak": false,
+   "cc_param_rewrites": 6,
+   "thinking_cleared_events": null,
+   "max_prompt_tokens": 47279,
+   "labels": [
+    "model_failure",
+    "budget_truncation"
+   ],
+   "confidence": "high",
+   "followups": [
+    "Coder x mypy17071 is now 2/2 on one wrong hypothesis (TypeGuardedType instead of CallableType.type_guard) with zero-source candidates; a2's path is a subset of a1's - stable-all-0 for this solver at this budget (n=2)",
+    "Both attempts misread the base-inherent circular import (types.py:3136 re-imports typetraverser) as self-inflicted; in a2 it fired after the revert, so it changed nothing - do not count it as an environment obstacle",
+    "Before using this task as an RL reward, add the card's unbound-T negative (callback with only U, function returns T); with P2P=2 a 'return early in check_unbound_return_typevar' candidate could score 1",
+    "Empty-source candidate: aggregate as 'no delivered fix' rather than 'wrong fix'; the grade equals noop and tells nothing about the model's edit quality",
+    "truncation_causal left unknown: a1 and a2 both hit the cap, so there is no untruncated control for Coder on this task"
+   ]
+  },
+  {
+   "task": "python__mypy-17071",
+   "solver": "qwen3.6-35b-a3b",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-6-35b-a3b-mypy-17071-a1",
+   "attempt": "a1",
+   "reward": 1,
+   "process_quality": "good",
+   "repro_before_fix": true,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": false,
+   "test_edit_kind": [
+    "none"
+   ],
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 1,
+    "other_cmd_nonzero": 4,
+    "call_error": 0,
+    "other": 0
+   },
+   "hit_turn_cap": false,
+   "truncation_causal": false,
+   "im_end_leak": true,
+   "cc_param_rewrites": 3,
+   "thinking_cleared_events": 4,
+   "max_prompt_tokens": 37094,
+   "labels": [
+    "model_success"
+   ],
+   "confidence": "high",
+   "followups": [
+    "thinking_cleared_events=4 counted by role:system insertions (seq 7/16/26/32); only 3 show a visible prompt_tokens drop, seq 32 is masked by same-turn tool output (token-account inference)",
+    "5-turn detour on a mypy.build introspection script that never printed the CallableType fields (4 self-inflicted script errors); harmless here, sample for 'model script errors counted as tool errors'",
+    "A-line: final-turn <|im_end|> leak into CC result (L1753); CC rewrote 3 tool params (2 Bash cd-prefix strips, 1 Edit replace_all fill)"
+   ]
+  },
+  {
+   "task": "python__mypy-17071",
+   "solver": "qwen3.6-35b-a3b",
+   "source": "cell",
+   "attempt_id": "bp22-qwen3-6-35b-a3b-mypy-17071-a2",
+   "attempt": "a2",
+   "reward": 1,
+   "process_quality": "mixed",
+   "repro_before_fix": true,
+   "verification_run": true,
+   "answer_channel_probe": false,
+   "answer_channel_kinds": [],
+   "answer_channel_obtained": false,
+   "read_harness_dir": false,
+   "scratch_files_in_candidate": 0,
+   "official_tests_modified": true,
+   "test_edit_kind": [
+    "added_reasonable_tests"
+   ],
+   "non_core_tools": {},
+   "is_error_breakdown": {
+    "expected_test_failure_nonzero": 2,
+    "other_cmd_nonzero": 5,
+    "call_error": 0,
+    "other": 1
+   },
+   "hit_turn_cap": true,
+   "truncation_causal": false,
+   "im_end_leak": false,
+   "cc_param_rewrites": 3,
+   "thinking_cleared_events": 7,
+   "max_prompt_tokens": 50282,
+   "labels": [
+    "model_success",
+    "budget_truncation"
+   ],
+   "confidence": "high",
+   "followups": [
+    "B-line (task quality, inference to verify on CPU): a2's first self-written test failed with the fix in place because an undefined body name (TypeError under fixtures/tuple.pyi) defers the function and re-analysis in typeanal.visit_callable_type drops the nested type_guard/type_is (anal_type_guard returns None for an Instance ret_type); gold's F2P avoids this via fixtures/exception.pyi. Check whether a forward reference in the function body reproduces it on gold; if so, gold and all passing candidates are incomplete for deferred functions and F2P does not cover it",
+    "A-line: mid-conversation role:system Task reminder at seq 58 was interpreted by the model as a user report of a test failure (T#129 thinking) and cost one extra turn; behavioral side effect of the reminder mechanism beyond thinking clearing",
+    "attempt.json candidate.touches_tests=[] although two official test-data/unit/*.test files were modified; aggregators must use projection.ignored_paths (2 official_test_file entries here)",
+    "hit 60-turn cap on tool_use with source patch final since turn 25 and test edits final since turn 54; truncation non-causal, only the delivery summary was lost",
+    "thinking_cleared_events=7 by role:system insertions (seq 7/16/26/31/40/49/58); visible prompt drops only at turns 16/26/49",
+    "two python -c introspection attempts hit the base's types<->typetraverser circular import (import-order property, same as Coder a1); model did not misattribute it to its edit"
+   ]
+  }
+ ]
+}

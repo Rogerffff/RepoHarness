@@ -1,0 +1,31 @@
+{
+  "format": "swe_dvc_actual_new_file_capture.v1",
+  "instance_id": "iterative__dvc-6954",
+  "job_id": "dvc6954-r14-noop-20261003-001",
+  "release_id": "cat2-cpu-r2e089092-swe34-dvc-pyd-20261003-v1",
+  "trusted_log": {
+    "path": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal6954_r14_noop001_v1/formal/jobs/dvc6954-r14-noop-20261003-001/eval_logs/evallog_replay-dvc6954-r14-noop-_86e53023.eval.log",
+    "sha256": "sha256:b0c8d4074d655b88f6f68d1273e8bb55b63de00a11e96efe30662770afbfb66f"
+  },
+  "file_path": "tests/unit/utils/serialize/test_python.py",
+  "full_effective_bytes": {
+    "path": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal6954_r14_noop001_v1.actual_new_file.py",
+    "sha256": "sha256:291c52123b8d576780732193f2c651f3c95f695bb1976e0621736ea57f0283ae"
+  },
+  "bytes": 1624,
+  "lines": 56,
+  "expected_sha256": "sha256:291c52123b8d576780732193f2c651f3c95f695bb1976e0621736ea57f0283ae",
+  "capture_method": "anchored actual BEGIN -> + base64 -> only base64 lines -> actual END; strict decode; exact expected SHA",
+  "base_absence_guard": "new R14 trusted setup proves immutable base exists then git ls-tree absence, removes only registered new file before trusted apply; actual apply_ok and no setup error",
+  "candidate_prerequisite": {
+    "exit_code": 0,
+    "home": "/home/rh2grader",
+    "script_sha256": "sha256:8eeb79a16593e4c73237adacb98f2dd9494eb831136b0cf4ac21752b34fa5092",
+    "state": "verified",
+    "stderr": "",
+    "stdout": "RH2_DVC_BEHAVIOR_UID54322_WHEEL_BYTES_OK=1\n",
+    "user": "54322"
+  },
+  "independent_review": "pending",
+  "scope": "actual noop grading trusted full new file bytes, not full other test file snapshot or model attempt"
+}

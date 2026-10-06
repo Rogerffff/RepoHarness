@@ -1,0 +1,639 @@
+{
+  "instance_id": "datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb",
+  "owner_thread_id": "01a0fd64-754d-7a90-8e97-2ae0f2907bb7",
+  "as_of": "2026-10-03",
+  "state": "r088_first_round_baseline_diagnosis_complete_two_incorrect",
+  "material_status": "frozen_published_cpu_and_first_round_diagnostic_validated",
+  "probe_ready": true,
+  "local_checks": {
+    "status": "pass",
+    "scope": "local_material_checks_and_isolated_url_assertions",
+    "evidence_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/checks/local_checks.json",
+    "formal_reward": null
+  },
+  "independent_review": {
+    "status": "material_and_cpu_result_review_pass",
+    "reviewer_thread_id": "01a08bd3-b639-7c71-a1ee-f3f4d05b3a0e",
+    "scope": "static_material_review_and_final_formal_cpu_result_review",
+    "evidence_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/review.md",
+    "formal_results_review": "pass",
+    "formal_results_review_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/cpu_result_review_20261003.md",
+    "formal_results_review_sha256": "sha256:182c4d396a5c3b0bbd733bc84b4e1c4d7046d4932399e18987661152f814548a",
+    "review_context": "非作者已接触私有材料，直接核原件，不是fresh公开盲审；原公开读者未变更",
+    "historical_scope_note": "此字段为065原静态/CPU报告；088独立增量核查见followup_repair.non_author_review"
+  },
+  "formal_cpu_validation": {
+    "status": "passed_owner_readback_and_non_author_result_review",
+    "image_id": "sha256:1c82f7f509ee94bec9223e17afc9343c0794edc259759bdbf96c87f17b47b77f",
+    "frozen_material_version": {
+      "release_id": "cat2-cpu-r2e064065-swe5-20261003-v1",
+      "manifest_sha256": "sha256:282021962a92b510f077385660ac56acedcd7fac1d97e63db3baa98e4dcc057f",
+      "registry": "material_revisions_v13.json",
+      "pins": "t1_input_pins_r2e_v14.json",
+      "revision_id": "r2e-mr-065",
+      "local_inventory_readback": "794 file hashes and DataLad fulltext match",
+      "remote_readback": "pass_in_build_job"
+    },
+    "results": [
+      {
+        "candidate": "noop",
+        "raw_reward": 0.0,
+        "expected_match": 15,
+        "expected_total": 17,
+        "mismatched": [
+          "test_is_url",
+          "test_url_samples"
+        ],
+        "patch_sha256": null,
+        "delivered_paths": [],
+        "ledger_ref": "runs/category2_repair_20260929/r2e_datalad_cpu_20261003/cpu_c_evidence/matrix/noop/ledger.jsonl",
+        "ledger_sha256": "sha256:f500d359536b3d6fad96a6a62a6c2b626c52efb6665d00e65901a34fb4f62e57",
+        "log_ref": "runs/category2_repair_20260929/r2e_datalad_cpu_20261003/cpu_c_evidence/matrix/noop/eval_logs/evallog_replay-datalad-r065-2026_a6be0eb0.eval.log",
+        "log_sha256": "sha256:5b59dc84447e2c93e6a545130a10dc95b1f0dd7076395225fb082422e1fe67df",
+        "grader_setup_seconds": 52.704596,
+        "test_seconds": 2.522,
+        "peak_memory_mb": 561.457,
+        "test_command_rc": 1,
+        "driver_exit_code": 0,
+        "candidate_and_grader_cleanup": "confirmed",
+        "failure_assertion_excerpt": ">       _check_url('weired_url:/', scheme='ssh:implicit', hostname='weired_url', path='/')\n>           raise AssertionError(msg or \"%r != %r\" % (a, b))\nE           AssertionError: 'file:implicit' != 'ssh:implicit'\n>       ok_(is_url('weired_url:/'))\n>           raise AssertionError(msg)\nE           AssertionError: None\n>       eq_(get_local_file_url('/a~'), 'file:///a%7E')\n>           raise AssertionError(msg or \"%r != %r\" % (a, b))\nE           AssertionError: 'file:///a~' != 'file:///a%7E'"
+      },
+      {
+        "candidate": "gold",
+        "raw_reward": 1.0,
+        "expected_match": 17,
+        "expected_total": 17,
+        "mismatched": [],
+        "patch_sha256": "sha256:0ceae26933f982203fd7afb8c9fbe1f0761c948c49f2ed4ded076e087493c728",
+        "delivered_paths": [
+          "datalad/support/network.py"
+        ],
+        "ledger_ref": "runs/category2_repair_20260929/r2e_datalad_cpu_20261003/cpu_c_evidence/matrix/gold/ledger.jsonl",
+        "ledger_sha256": "sha256:7da32fcdaefaf73ac80c2d2654ba4a02d32f67c9f9e553a9524cce2a83e2cd20",
+        "log_ref": "runs/category2_repair_20260929/r2e_datalad_cpu_20261003/cpu_c_evidence/matrix/gold/eval_logs/evallog_replay-datalad-r065-2026_c3dcc678.eval.log",
+        "log_sha256": "sha256:d6c3bc57da92a86b7037c644c3a6e50202c94d06071bcce95a5f844b57456921",
+        "grader_setup_seconds": 49.677487,
+        "test_seconds": 2.152,
+        "peak_memory_mb": 560.059,
+        "test_command_rc": 1,
+        "driver_exit_code": 0,
+        "candidate_and_grader_cleanup": "confirmed",
+        "failure_assertion_excerpt": ">       eq_(get_local_file_url('/a~'), 'file:///a%7E')\n>           raise AssertionError(msg or \"%r != %r\" % (a, b))\nE           AssertionError: 'file:///a~' != 'file:///a%7E'"
+      },
+      {
+        "candidate": "C-A",
+        "raw_reward": 1.0,
+        "expected_match": 17,
+        "expected_total": 17,
+        "mismatched": [],
+        "patch_sha256": "sha256:a66d344f4e2075ea59b4004005e8346968ece41f2f14488776c81f0dae0eb72b",
+        "delivered_paths": [
+          "datalad/support/network.py"
+        ],
+        "ledger_ref": "runs/category2_repair_20260929/r2e_datalad_cpu_20261003/cpu_c_evidence/matrix/C-A/ledger.jsonl",
+        "ledger_sha256": "sha256:64370f0e93f9f09ee8a5fb6489724a4e0fc6c064ff7177e686a7cc3abbc2ec91",
+        "log_ref": "runs/category2_repair_20260929/r2e_datalad_cpu_20261003/cpu_c_evidence/matrix/C-A/eval_logs/evallog_replay-datalad-r065-2026_bfa86049.eval.log",
+        "log_sha256": "sha256:8adc3de29a4acc9a394eff7d9e04446a0ffa4ff6448e4a2785ffa3108722e00f",
+        "grader_setup_seconds": 50.248265,
+        "test_seconds": 2.93,
+        "peak_memory_mb": 580.34,
+        "test_command_rc": 1,
+        "driver_exit_code": 0,
+        "candidate_and_grader_cleanup": "confirmed",
+        "failure_assertion_excerpt": ">       eq_(get_local_file_url('/a~'), 'file:///a%7E')\n>           raise AssertionError(msg or \"%r != %r\" % (a, b))\nE           AssertionError: 'file:///a~' != 'file:///a%7E'"
+      },
+      {
+        "candidate": "C-B",
+        "raw_reward": 0.0,
+        "expected_match": 16,
+        "expected_total": 17,
+        "mismatched": [
+          "test_url_samples"
+        ],
+        "patch_sha256": "sha256:0fb9e48fca1b0f5e849868a75272328eb40e3cd53757aba71a29b565ecf148b6",
+        "delivered_paths": [
+          "datalad/support/network.py"
+        ],
+        "ledger_ref": "runs/category2_repair_20260929/r2e_datalad_cpu_20261003/cpu_c_evidence/matrix/C-B/ledger.jsonl",
+        "ledger_sha256": "sha256:b1038388c3454a5b69a3b55468533f86149c923a0b33be88256a23296b5b0e18",
+        "log_ref": "runs/category2_repair_20260929/r2e_datalad_cpu_20261003/cpu_c_evidence/matrix/C-B/eval_logs/evallog_replay-datalad-r065-2026_131e6319.eval.log",
+        "log_sha256": "sha256:96500ba31bb88a80aa537b4d4aaac72a744deb36246cff70b6482bb6325fb358",
+        "grader_setup_seconds": 48.307973,
+        "test_seconds": 2.154,
+        "peak_memory_mb": 578.105,
+        "test_command_rc": 1,
+        "driver_exit_code": 0,
+        "candidate_and_grader_cleanup": "confirmed",
+        "failure_assertion_excerpt": ">       eq_(str(URL(**_u.fields)), 'example.com/path/sp1:fname')\n>           raise AssertionError(msg or \"%r != %r\" % (a, b))\nE           AssertionError: 'example.com:path/sp1/fname' != 'example.com/path/sp1:fname'\n>       eq_(get_local_file_url('/a~'), 'file:///a%7E')\n>           raise AssertionError(msg or \"%r != %r\" % (a, b))\nE           AssertionError: 'file:///a~' != 'file:///a%7E'"
+      },
+      {
+        "candidate": "D-eq",
+        "raw_reward": 0.0,
+        "expected_match": 15,
+        "expected_total": 17,
+        "mismatched": [
+          "test_is_url",
+          "test_url_samples"
+        ],
+        "patch_sha256": "sha256:90876b71705632cdab15cc478865188ca5662284ed25dbdb0198aacc7f6d48e1",
+        "delivered_paths": [
+          "datalad/support/network.py"
+        ],
+        "ledger_ref": "runs/category2_repair_20260929/r2e_datalad_cpu_20261003/cpu_c_evidence/matrix/D-eq/ledger.jsonl",
+        "ledger_sha256": "sha256:deebdce930a202d0fd4c2c592650c2833e3945f24d03b15e5c7f6b48fa649a90",
+        "log_ref": "runs/category2_repair_20260929/r2e_datalad_cpu_20261003/cpu_c_evidence/matrix/D-eq/eval_logs/evallog_replay-datalad-r065-2026_98edc591.eval.log",
+        "log_sha256": "sha256:b955c2650127886604fe3f5f6c590cc8724e81e9252acd9dc4a3e43cb76985ba",
+        "grader_setup_seconds": 46.865477,
+        "test_seconds": 2.802,
+        "peak_memory_mb": 563.055,
+        "test_command_rc": 1,
+        "driver_exit_code": 0,
+        "candidate_and_grader_cleanup": "confirmed",
+        "failure_assertion_excerpt": ">       _check_url('weired_url:/', scheme='ssh:implicit', hostname='weired_url', path='/')\n>           raise AssertionError(msg or \"%r != %r\" % (a, b))\nE           AssertionError: 'file:implicit' != 'ssh:implicit'\n>       ok_(is_url('weired_url:/'))\n>           raise AssertionError(msg)\nE           AssertionError: None\n>       eq_(get_local_file_url('/a~'), 'file:///a%7E')\n>           raise AssertionError(msg or \"%r != %r\" % (a, b))\nE           AssertionError: 'file:///a~' != 'file:///a%7E'"
+      },
+      {
+        "candidate": "D-eq-minus",
+        "raw_reward": 0.0,
+        "expected_match": 15,
+        "expected_total": 17,
+        "mismatched": [
+          "test_is_url",
+          "test_url_samples"
+        ],
+        "patch_sha256": "sha256:7691d7d37ccbaa5c6cd16a7c437d72477db3ab69bd6543e6f0393861df735cac",
+        "delivered_paths": [
+          "datalad/support/network.py"
+        ],
+        "ledger_ref": "runs/category2_repair_20260929/r2e_datalad_cpu_20261003/cpu_c_evidence/matrix/D-eq-minus/ledger.jsonl",
+        "ledger_sha256": "sha256:029096e3448977aab48a953a81a6709688e3cc9c78b5e4482ae5ce79625955d8",
+        "log_ref": "runs/category2_repair_20260929/r2e_datalad_cpu_20261003/cpu_c_evidence/matrix/D-eq-minus/eval_logs/evallog_replay-datalad-r065-2026_2ea18294.eval.log",
+        "log_sha256": "sha256:5ea028f72bf08cb4f25d6429eeb633cb07082b10eda84546122c2db11446afd4",
+        "grader_setup_seconds": 50.772827,
+        "test_seconds": 2.474,
+        "peak_memory_mb": 582.484,
+        "test_command_rc": 1,
+        "driver_exit_code": 0,
+        "candidate_and_grader_cleanup": "confirmed",
+        "failure_assertion_excerpt": ">       _check_url('weired_url:/', scheme='ssh:implicit', hostname='weired_url', path='/')\n>           raise AssertionError(msg or \"%r != %r\" % (a, b))\nE           AssertionError: 'file:implicit' != 'ssh:implicit'\n>       ok_(is_url('weired_url:/'))\n>           raise AssertionError(msg)\nE           AssertionError: None\n>       eq_(get_local_file_url('/a~'), 'file:///a%7E')\n>           raise AssertionError(msg or \"%r != %r\" % (a, b))\nE           AssertionError: 'file:///a~' != 'file:///a%7E'"
+      },
+      {
+        "candidate": "D-hard",
+        "raw_reward": 0.0,
+        "expected_match": 15,
+        "expected_total": 17,
+        "mismatched": [
+          "test_is_url",
+          "test_url_samples"
+        ],
+        "patch_sha256": "sha256:479ce25a1aab3ab304a0b6084c6899cbe1d4296bdaff0136cc43d25051d21807",
+        "delivered_paths": [
+          "datalad/support/network.py"
+        ],
+        "ledger_ref": "runs/category2_repair_20260929/r2e_datalad_cpu_20261003/cpu_c_evidence/matrix/D-hard/ledger.jsonl",
+        "ledger_sha256": "sha256:4e42ebe4cd313506c060a4cb4cf969df8d7766a91e9962be2a83bc533f2ff028",
+        "log_ref": "runs/category2_repair_20260929/r2e_datalad_cpu_20261003/cpu_c_evidence/matrix/D-hard/eval_logs/evallog_replay-datalad-r065-2026_2b2fc20e.eval.log",
+        "log_sha256": "sha256:381a8cb68b17b2707db3e0e3a36c91eaa54ff6fd2d90834e341923f3be949726",
+        "grader_setup_seconds": 46.905028,
+        "test_seconds": 2.535,
+        "peak_memory_mb": 559.773,
+        "test_command_rc": 1,
+        "driver_exit_code": 0,
+        "candidate_and_grader_cleanup": "confirmed",
+        "failure_assertion_excerpt": ">                  scheme='ssh:implicit', hostname='my_host', path='path/sp1')\n>           raise AssertionError(msg or \"%r != %r\" % (a, b))\nE           AssertionError: 'file:implicit' != 'ssh:implicit'\n>       ok_(is_url('my_host:path/sp1'))\n>           raise AssertionError(msg)\nE           AssertionError: None\n>       eq_(get_local_file_url('/a~'), 'file:///a%7E')\n>           raise AssertionError(msg or \"%r != %r\" % (a, b))\nE           AssertionError: 'file:///a~' != 'file:///a%7E'"
+      }
+    ],
+    "host": "cpu-c",
+    "source_preparation_job": "datalad-6b6f-build-r065-c1",
+    "revision_id_reserved_by_publisher": "r2e-mr-065",
+    "source_preparation_attempts": [
+      {
+        "job_id": "datalad-6b6f-source-pull-20261003-a1",
+        "status": "not_admitted_image_prepare_busy",
+        "formal_result": null,
+        "host": "cpu-a",
+        "evidence_ref": "runs/category2_repair_20260929/r2e_datalad_cpu_20261003/cpu-a_admission/source-pull-a1.log",
+        "evidence_sha256": "sha256:b22052880d06439c4e14ffe09d7846bd466c6f9c3c41644132d9654334c4013e",
+        "admission_log_verified": true
+      },
+      {
+        "job_id": "datalad-6b6f-source-pull-20261003-a2",
+        "status": "not_admitted_image_prepare_busy",
+        "formal_result": null,
+        "host": "cpu-a",
+        "evidence_ref": "runs/category2_repair_20260929/r2e_datalad_cpu_20261003/cpu-a_admission/source-pull-a2.log",
+        "evidence_sha256": "sha256:b22052880d06439c4e14ffe09d7846bd466c6f9c3c41644132d9654334c4013e",
+        "admission_log_verified": true
+      },
+      {
+        "job_id": "datalad-6b6f-source-pull-20261003-a3",
+        "status": "not_admitted_image_prepare_busy",
+        "formal_result": null,
+        "host": "cpu-a",
+        "evidence_ref": "runs/category2_repair_20260929/r2e_datalad_cpu_20261003/cpu-a_admission/source-pull-a3.log",
+        "evidence_sha256": "sha256:b22052880d06439c4e14ffe09d7846bd466c6f9c3c41644132d9654334c4013e",
+        "admission_log_verified": true
+      }
+    ],
+    "host_status": "opened_by_coordinator",
+    "input_migration": {
+      "status": "pass",
+      "input_files": 6,
+      "validation_patches": 6,
+      "archive_sha256": "sha256:726f970f27bf61a91a0815032d6b6c54321c9b162390eb1780fa6e64988e81fb"
+    },
+    "actor_ports": {
+      "gateway": 18198,
+      "stub": 18199
+    },
+    "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+    "recipe_sha256": "sha256:0068598f198826bfd433b152bb307200b14ae1eb3e8034d6c4d7e9ae113111db",
+    "hidden_tree_sha256": "sha256:7c0a5adcca94e3747a8ff2b0bbab7ea94eba162526e036d5e6a1ddf7460c5e6c",
+    "source_preparation_result": "completed_exit_0",
+    "actor_job": "datalad-6b6f-actor-r065-c1",
+    "matrix_job": "datalad-6b6f-matrix-r065-c1",
+    "actor_attempts": [
+      {
+        "job_id": "datalad-6b6f-actor-r065-c1",
+        "status": "infra_failure_before_cc",
+        "driver_exception": "ModuleNotFoundError: No module named 'torch'",
+        "termination": "driver_exception:ModuleNotFoundError",
+        "cleanup_ok": true,
+        "formal_reward": null,
+        "public_task_delivery": "not_verified",
+        "evidence_ref": "runs/category2_repair_20260929/r2e_datalad_cpu_20261003/cpu_c_evidence/actor/attempt/attempt.json",
+        "archive_sha256": "sha256:ab7a6feed10fd42a420a132dee445d0d24a905c79ad41b15226b34eb4554c64a"
+      },
+      {
+        "job_id": "datalad-6b6f-actor-r065-c2",
+        "status": "pass",
+        "runtime": "runtime_cpu_v2",
+        "source_release_unchanged": true,
+        "original_prompt_delivery": "verified_CPU_stub_first_request",
+        "public_command_checks": "pass",
+        "cleanup_ok": true,
+        "model_probe_reward": null,
+        "evidence_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/checks/cpu_actor_owner_readback.json"
+      }
+    ],
+    "actor_recovery": {
+      "status": "recovered_and_verified",
+      "source_release_unchanged": true,
+      "old_failed_attempt_preserved": true,
+      "runtime_path_ref": "runtime_cpu_v2/rh2/.venv/bin/python",
+      "changed_host_dependencies": {
+        "torch": "2.13.0+cpu",
+        "Pillow": "12.3.0",
+        "networkx": "3.6.1",
+        "setuptools": "83.0.0"
+      },
+      "cuda_version": null,
+      "coordinator_deep_import_check": "pass",
+      "retry_script_sha256": "sha256:4a6b5aa4c7120c261973d56d09563706b84e4af8805327d730190697121b28ad"
+    },
+    "matrix_evidence_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/checks/cpu_matrix_owner_readback.json",
+    "actor_evidence_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/checks/cpu_actor_owner_readback.json",
+    "report_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/cpu_acceptance_20261003.md",
+    "non_author_result_review": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/cpu_result_review_20261003.md",
+      "sha256": "sha256:182c4d396a5c3b0bbd733bc84b4e1c4d7046d4932399e18987661152f814548a"
+    },
+    "historical_scope_note": "此字段保留065原七候选/CPU actor事实；当前088成绩见followup_repair.new_cpu_result，不是旧分改绑"
+  },
+  "model_probe": {
+    "status": "two_initial_models_analyzed_execution_returned_acked_and_active_cleared",
+    "request_id": "r2e-datalad-6b6f-r088-20261003-v1",
+    "request_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/probe_request_r088.json",
+    "request_sha256": "sha256:c8c879cfda2be4e9cab0ba5f5e4f386e4aa1a27cdc9bb4e922f1c4d387e01c90",
+    "executor_thread_id": "01a0ebd7-4095-7dd1-8017-9648d7dba040",
+    "executor_admission": "both_initial_arm_actual_execution_scoring_prompt_and_cleanup_evidence_verified",
+    "models": [
+      "Qwen3-Coder-30B-A3B-Instruct",
+      "Qwen3.6-35B-A3B"
+    ],
+    "initial_attempts_per_model": 1,
+    "budget_version": "probe-wide-v1",
+    "results": [
+      {
+        "job_id": "gpu1003-datalad088-qwen36-a1",
+        "model": "Qwen3.6-35B-A3B",
+        "material_version": "r2e-mr-088",
+        "budget_version": "probe-wide-v1",
+        "initial_attempt": 1,
+        "raw_reward": 0,
+        "normal_complete": true,
+        "semantic_correct": false,
+        "expected_match_count": 16,
+        "expected_total_count": 17,
+        "mismatched": [
+          "test_url_samples"
+        ],
+        "candidate_failure_cause": "escaped-colon local path misclassified SSH; empty host causes string reconstruction assertion",
+        "infra_failure": false,
+        "owner_behavior_analysis_complete": true,
+        "independent_key_original_review": "PASS_diagnostic_receipt_candidate_incorrect",
+        "owner_analysis_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/model_probe_reviews/qwen36_a1_owner_analysis_20261003.json",
+        "owner_analysis_sha256": "sha256:9cb617765539d5923f727be850157f0f874e7a6808aa3e7e1d2cb26459887559",
+        "owner_report_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/model_probe_reviews/qwen36_a1_owner_analysis_20261003.md",
+        "owner_report_sha256": "sha256:cb5346975f422be9d1c07d79b481e0a8414dab2e71d3e1328f40209606c9597c",
+        "independent_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/model_probe_reviews/qwen36_a1_independent_review_20261003.md",
+        "independent_sha256": "sha256:48a21481eec2a0d05bf0ca2c479ab75e95a915b519b74ffaff587d5a0ab3e937",
+        "original_result_ref": "runs/ordinary_gpu_probe_20261002/remote/queue_v15/results/gpu1003-datalad088-qwen36-a1/result.json",
+        "metrics_ref": "runs/category2_repair_20260929/r2e_datalad_model_probe_20261003/qwen36_a1/owner_original_metrics.json",
+        "new_material_blocker": false,
+        "new_cpu_repair_needed": false,
+        "allowed_usage": "versioned_baseline_diagnostic_only"
+      },
+      {
+        "job_id": "gpu1003-datalad088-coder-a1",
+        "model": "Qwen3-Coder-30B-A3B-Instruct",
+        "material_version": "r2e-mr-088",
+        "budget_version": "probe-wide-v1",
+        "initial_attempt": 1,
+        "raw_reward": 0,
+        "normal_complete": true,
+        "semantic_correct": false,
+        "expected_match_count": 16,
+        "expected_total_count": 17,
+        "mismatched": [
+          "test_url_samples"
+        ],
+        "candidate_failure_cause": "escaped-colon local path enters new elif, split length1 skips assignment and file fallback; scheme remains empty",
+        "infra_failure": false,
+        "owner_behavior_analysis_complete": true,
+        "independent_key_original_review": "PASS_diagnostic_receipt_candidate_incorrect",
+        "owner_analysis_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/model_probe_reviews/coder_a1_owner_analysis_20261003.json",
+        "owner_analysis_sha256": "sha256:c714adc691a22dbfc3726db4bbd3ce8592ad783c7b194c9437ca3cfc59fefe59",
+        "owner_report_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/model_probe_reviews/coder_a1_owner_analysis_20261003.md",
+        "owner_report_sha256": "sha256:28867615818c5352e65e32b33ad8670f7f0c2d13a8d4bb3b0f1a5c4ba7c019e9",
+        "independent_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/model_probe_reviews/coder_a1_independent_review_20261003.md",
+        "independent_sha256": "sha256:354bd5b4d2088846d9bc0e2767ede813d9ca1cf60015db09fb293513cf986e83",
+        "original_result_ref": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-datalad088-coder-a1/queue_v29/results/gpu1003-datalad088-coder-a1/result.json",
+        "metrics_ref": "runs/category2_repair_20260929/r2e_datalad_model_probe_20261003/coder_a1/owner_original_metrics.json",
+        "new_material_blocker": false,
+        "new_cpu_repair_needed": false,
+        "allowed_usage": "versioned_baseline_diagnostic_only"
+      }
+    ],
+    "all_requested_models_complete": true,
+    "public_dev_brief": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/public_dev_brief.md",
+      "sha256": "sha256:68688ecf3f12e22de138e22f9ecaf28ff7d77fa7f7b8940e58d1c2a9ede888af"
+    },
+    "request_binding_check_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/followup_k7_k8/checks/probe_request_bindings_20261003.json",
+    "submission": {
+      "channel": "task_board_then_direct_thread_message",
+      "tool_registered": true,
+      "notice_send_confirmed": true,
+      "notice_delivery_ref": "runs/category2_repair_20260929/r2e_datalad_k7k8_cpu_20261003/probe_notice_delivery.json",
+      "old065_cancelled_acked_and_cleared": true
+    },
+    "allowed_usage": "versioned_baseline_diagnostic_only",
+    "training_or_holdout_qualification": false,
+    "trajectory_analysis_policy_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/overnight_watch_20261003.md",
+    "analysis_requirements": [
+      "具体步骤与补丁支持的根因/修法正确性",
+      "首次准确定位的步骤、工具次数、时间及纠错",
+      "搜索/阅读/编辑/测试质量和无效工作",
+      "并行机会、模型请求及执行层实际重叠；无机会或不支持则不可判断",
+      "复现、相关测试、边界与回归验证质量",
+      "token/回合/工具调用和墙钟；模型/工具/环境/队列/infra分别统计",
+      "终止完整性及同条件重复稳定性，原预算完成率/成功率与完整样本语义正确率分列并注明分母"
+    ],
+    "repeat_stage": {
+      "status": "deferred_coverage_first_no_extra_samples_requested",
+      "current_policy_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/overnight_watch_20261003.md",
+      "default_three_per_model_required": false,
+      "extra_sampling_requested": false,
+      "stability_unknown": true,
+      "superseded_stage_record": {
+        "status": "pending_gpu_batch_plan_after_majority_repaired",
+        "initial_request_unchanged": "each model1 initial sample; immutable submitted input preserved",
+        "authority_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/overnight_watch_20261003.md#覆盖、预算与重复采样",
+        "no_stability_claim_from_single_sample": true,
+        "initial_qwen36_analysis_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/model_probe_reviews/qwen36_a1_owner_analysis_20261003.json"
+      }
+    },
+    "pending_first_models": [],
+    "request_status_observed": "returned",
+    "ack_or_clear_performed": true,
+    "owner_ack": {
+      "request_id": "r2e-datalad-6b6f-r088-20261003-v1",
+      "status": "returned",
+      "acknowledged": true,
+      "ack_or_clear": true,
+      "active_request_id": null,
+      "all_requested_models_complete": true,
+      "pending_first_models": [],
+      "request_revision_after_ack": 5,
+      "progress_revision_after_clear": 9,
+      "repeat_stage": "deferred_coverage_first_no_extra_samples_requested",
+      "current_policy_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/overnight_watch_20261003.md"
+    },
+    "pair_analysis_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/model_probe_reviews/pair_first_round_analysis_20261003.json",
+    "pair_analysis_sha256": "sha256:0b22a834d72a9704338d83bd1af651ac6b6cfef4fe8acc5c4d34628865d0c64d",
+    "pair_execution_receipt_ref": "runs/ordinary_gpu_probe_20261002/migration_20261003/r2e-datalad-6b6f-r088-20261003-v1_pair_execution_receipt_v1.json",
+    "pair_execution_receipt_sha256": "sha256:2b7911d2ebc949c85a51bb7be16d95ec26c87b90d8e0b4c3512385019eea9e1b"
+  },
+  "known_residuals": [
+    "Python3.7 ~编码key固定expected FAILED，与候选回归分开",
+    "同仓另外四题初态含本修复，整仓划分/数据暴露和来源训练价值不得据本题单次结论推断",
+    "CPU replay环境血缘/ledger身份缺口及两臂GPU baseline环境包null仍为formal gate限制",
+    "每模型仅1个正常失败样本，稳定能力未知；最新覆盖优先规则暂缓普通追加，本题没有追加请求",
+    "Coder excluded_pathset_changed=true如实保留，未取得独立post排除路径归因，不宣称排除区不变"
+  ],
+  "current_usage": "088 CPU0/1/0及独立核查通过；两模型首轮完整raw0，各16/17，七维/效率与非作者关键核查完成；两个不同控制流造成旧转义路径回归，无新材料缺陷；成对执行回执ack并清指针，仅固定版本基座诊断",
+  "owner_request_ready": true,
+  "followup_repair": {
+    "status": "cpu_and_independent_pass_two_model_first_round_analyzed_execution_acked",
+    "parent_revision_id": "r2e-mr-065",
+    "reason": "已证gold会破坏明确绝对本地路径和公开crawler模板query，065未保护这些旧行为；原S2登记不能代替当前准入修复",
+    "planned_assertions": [
+      "absolute local path retains file:implicit and path",
+      "public crawler template query via parse_url_opts retains name and _url"
+    ],
+    "effective_positive_control": "C-A",
+    "known_negative_control": "gold",
+    "original_065_cpu_evidence_preserved": true,
+    "new_formal_revision_id": "r2e-mr-088",
+    "new_cpu_result": {
+      "status": "owner_original_and_non_author_incremental_readback_pass",
+      "report_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/followup_k7_k8/cpu_acceptance_20261003.md",
+      "results": [
+        {
+          "candidate": "noop",
+          "raw_reward": 0.0,
+          "expected_match": 15,
+          "expected_total": 17
+        },
+        {
+          "candidate": "C-A",
+          "raw_reward": 1.0,
+          "expected_match": 17,
+          "expected_total": 17
+        },
+        {
+          "candidate": "gold",
+          "raw_reward": 0.0,
+          "expected_match": 15,
+          "expected_total": 17
+        }
+      ],
+      "image_id": "sha256:6cb609c6ef96764ae05e502b535a786aa30e45d594f971f604c881c1cbd2317a",
+      "recipe_sha256": "sha256:0385a5051574bd15668ddcc8f3d105c74edcaceff6be4a4a942d6a4d8bde46b1"
+    },
+    "new_probe_request": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/probe_request_r088.json",
+      "sha256": "sha256:c8c879cfda2be4e9cab0ba5f5e4f386e4aa1a27cdc9bb4e922f1c4d387e01c90",
+      "status": "two_initial_models_completed_execution_returned_acked_active_cleared"
+    },
+    "draft_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/followup_k7_k8/revision_draft.json",
+    "draft_full_test_sha256": "sha256:7649b82fb114a9bbdfa3a73148c4d8f1ee8bed926dd2d7853c6385379b88c8b6",
+    "draft_hidden_tree_sha256": "sha256:2a62382c32a9def6a9ccf42c27fb938b7e4c0c0747805bafeaa605afce6b4724",
+    "local_checks_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/followup_k7_k8/checks/local_checks.json",
+    "local_checks_sha256": "sha256:7d671aac9d2e3c543898afd38dccf9b2bbfce4859a07344cb8b1ecc3e05b3d39",
+    "publisher_thread_id": "01a08bd3-b639-7c71-a1ee-f3f4d05b3a0e",
+    "new_material_review": "pass_publisher_narrow_material_and_consumer_review",
+    "publication_readback_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/followup_k7_k8/checks/publication_readback.json",
+    "publication_binding": {
+      "release_id": "cat2-cpu-r2e088-swe12-git-20261003-v1",
+      "local_release_ref": "runs/category2_repair_20260929/releases_20261003/r2e_088_swe12_git_candidate_v1",
+      "remote_release_ref": "releases/cat2-cpu-r2e088-swe12-git-20261003-v1",
+      "manifest_sha256": "sha256:f9dfcd16c9c88e4f514512e61781856b7d6f1a71a20b64cd1843d20546c5009b",
+      "checksummed_files": 905,
+      "verify_release_sha256": "sha256:fc00b2c9fa46febf0cecc63dbc5edc5f578598ab31233b7e263bba8ca25d52c8",
+      "registry_path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v19.json",
+      "registry_sha256": "sha256:3d555333a60f230da23a545b829eb7cff4c442a0e0cca5a523352756e1f837dc",
+      "pins_path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/t1_input_pins_r2e_v20.json",
+      "pins_sha256": "sha256:4fc0dd4475811079591753cbe03444cca3870ab6c2f4b49207f68dc5a95d9255",
+      "revision_id": "r2e-mr-088",
+      "superseded_active_revision": "r2e-mr-065",
+      "formal_test_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files_20261003_v19/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/test_1.py",
+      "formal_test_sha256": "sha256:7649b82fb114a9bbdfa3a73148c4d8f1ee8bed926dd2d7853c6385379b88c8b6",
+      "hidden_tree_sha256": "sha256:2a62382c32a9def6a9ccf42c27fb938b7e4c0c0747805bafeaa605afce6b4724",
+      "matrix_job": "datalad-6b6f-matrix-r088-c1",
+      "build_job": "datalad-6b6f-build-r088-c1",
+      "cpu_c_deployment": "confirmed_905_members_and_trusted_48_216_by_coordinator",
+      "publisher_material_review": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/swe12_datalad088_publication_review_20261003.md",
+        "sha256": "sha256:056529dcd2009a3bee790e4b8d1c4219fd53d3dc3878c7ec21da83220b4c9c0a"
+      },
+      "builder_sha256": "sha256:5af7dc214976336ea440674bc4416cfa0a805881463798e05ebbb3e33af19471",
+      "remote_acceptance_ref": "packages/r2e_datalad/cpu_acceptance_r088_v1",
+      "builder_launcher_sha256": "sha256:9e86eec23beced403cf59049dbab284bddb77916707fca2f974ccc9beece32c7",
+      "matrix_launcher_sha256": "sha256:84bc8346ae254271ac77bc9ea95904ba99f8f523edbfd7d9d6f715e85e161efd",
+      "input_manifest_sha256": "sha256:5a7347f018f5793451276a29c2e2c9e62d19b0de5a99161d98cc69b04e684ea2"
+    },
+    "build_job": "datalad-6b6f-build-r088-c3",
+    "build_admission_attempts": [
+      {
+        "job_id": "datalad-6b6f-build-r088-c1",
+        "host": "cpu-c",
+        "exit_code": 75,
+        "status": "not_admitted_all_cpu_slots_busy",
+        "evidence_ref": "runs/category2_repair_20260929/r2e_datalad_k7k8_cpu_20261003/cpu-c_admission/build-r088-c1.log",
+        "evidence_sha256": "sha256:bdb981ecb0af3aab2945cf0111863a240c0b11fe98156048a801488157c052eb",
+        "formal_result": null
+      },
+      {
+        "job_id": "datalad-6b6f-build-r088-c2",
+        "host": "cpu-c",
+        "exit_code": 75,
+        "status": "not_admitted_all_cpu_slots_busy",
+        "evidence_ref": "runs/category2_repair_20260929/r2e_datalad_k7k8_cpu_20261003/cpu-c_admission/build-r088-c2.log",
+        "evidence_sha256": "sha256:bdb981ecb0af3aab2945cf0111863a240c0b11fe98156048a801488157c052eb",
+        "formal_result": null
+      }
+    ],
+    "resource_wait_notified_to_coordinator": true,
+    "non_author_review": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/followup_k7_k8/independent_review_20261003.md",
+      "sha256": "sha256:2e349e98aee9291b9f1a4ffbb7f410094a4ad51ca0e5622e6af3f7f8d2da7b4a",
+      "status": "pass",
+      "context": "非作者子代理已接触私有材料；直接核原件，无SSH/重跑；不是fresh公开盲审"
+    },
+    "pair_analysis_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/model_probe_reviews/pair_first_round_analysis_20261003.json",
+    "pair_analysis_sha256": "sha256:0b22a834d72a9704338d83bd1af651ac6b6cfef4fe8acc5c4d34628865d0c64d"
+  },
+  "state_before_pause": "followup_088_build_waiting_cpu_slot",
+  "pause": {
+    "as_of": "2026-10-03",
+    "reason": "用户要求安全暂停各线程，重新确认分工及消息机制",
+    "checkpoint_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/pause_checkpoint_20261003.md",
+    "owned_inflight_jobs": [],
+    "owned_subagents": [],
+    "automatic_retry_or_dispatch_running": false,
+    "routine_cross_thread_messages_stopped": true,
+    "resume_requires": "explicit_user_resume",
+    "resumed": true
+  },
+  "resume": {
+    "as_of": "2026-10-03",
+    "authority": "用户批准总账工具/路由迁移后继续实验；总协调已统一通知",
+    "workflow_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/coordination_workflow_20261003.md",
+    "next_step": "CPU门解除后新build作业c3；三方正式0/1/0及自带非作者增量核查",
+    "owned_inflight_jobs": [],
+    "scope_note": "历史恢复授权/CPU接续记录；原当时next_step已完成，当前状态以state/model_probe为准",
+    "current_status": "first_round_baseline_diagnosis_complete_no_active_request"
+  },
+  "resource_status": {
+    "cpu_host": "cpu-c",
+    "owned_inflight_jobs": [],
+    "cpu_evidence_local_archive_verified": true,
+    "cpu_required_now": false,
+    "cpu_known_pending_repair": null,
+    "cpu_possible_later_use": "当前无已知修复；仅后续具体新材料缺陷或授权校准需要时接续",
+    "gpu_required_now": false,
+    "gpu_pending_models": [],
+    "retirement_decision_owner": "latest user resource authorization; old automatic retirement/destroy workflow superseded",
+    "gpu_pending_work": [],
+    "current_policy_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/overnight_watch_20261003.md"
+  },
+  "current_material_revision_id": "r2e-mr-088",
+  "probe_ready_scope": "当前材料和两模型首轮诊断已完成；不是候选通过或训练/留出/一般模型比较资格",
+  "legacy_065_model_probe": {
+    "status": "intake_received_owner_hold_requested_followup_repair_needed",
+    "request_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/probe_request.json",
+    "results": [],
+    "public_dev_brief": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/public_dev_brief.md",
+      "sha256": "sha256:68688ecf3f12e22de138e22f9ecaf28ff7d77fa7f7b8940e58d1c2a9ede888af",
+      "status": "environment_facts_confirmed_on_cpu"
+    },
+    "request_sha256": "sha256:988ac9c88e5f4851e0da80272dc2e6bace36a9facd2c2245952ab8812afa5a69",
+    "executor_thread_id": "01a0ebd7-4095-7dd1-8017-9648d7dba040",
+    "executor_admission": "pending",
+    "budget_version": "probe-wide-v1",
+    "models": [
+      "Qwen3-Coder-30B-A3B-Instruct",
+      "Qwen3.6-35B-A3B"
+    ],
+    "initial_attempts_per_model": 1,
+    "request_binding_check_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/checks/probe_request_bindings_20261003.json",
+    "submission": {
+      "date": "2026-10-03",
+      "channel": "official_thread_message",
+      "destination_thread_id": "01a0ebd7-4095-7dd1-8017-9648d7dba040",
+      "send_confirmed": true,
+      "executor_acknowledgement": "intake_frozen_received_not_dispatched",
+      "request_sha256": "sha256:988ac9c88e5f4851e0da80272dc2e6bace36a9facd2c2245952ab8812afa5a69",
+      "executor_intake_ref": "runs/ordinary_gpu_probe_20261002/intake/datalad6b6_v1/owner_request.json",
+      "intake_sha256_verified": true
+    },
+    "owner_hold_requested": true,
+    "owner_hold_confirmed_by_executor": true,
+    "old_request_cancellation": {
+      "intent_registered": true,
+      "intent_notice_sent": true,
+      "request_id": "r2e-datalad-6b6f-r065-20261003-v1",
+      "safe_close_receipt_pending": false,
+      "safe_closed": true,
+      "owner_acknowledged": true,
+      "active_pointer_cleared": true,
+      "receipt_ref": "runs/ordinary_gpu_probe_20261002/migration_20261003/receipts/datalad065_cancelled_v1.json",
+      "receipt_sha256": "sha256:949b6b837afe2b7e449088ec39206d4474792129f07c41b54730d92d60c0b5db"
+    }
+  },
+  "resolved_in_088": [
+    "原gold绝对本地路径误判SSH和公开crawler query回归：补两条已有公开依据断言，新gold真实目标失败得0，C-A17/17得1"
+  ]
+}

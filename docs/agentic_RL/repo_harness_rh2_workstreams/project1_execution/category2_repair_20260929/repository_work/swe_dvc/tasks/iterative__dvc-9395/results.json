@@ -1,0 +1,541 @@
+{
+  "format": "swe_dvc_result_list.v1",
+  "as_of": "2026-10-03T17:39:03.987172+00:00",
+  "instance_id": "iterative__dvc-9395",
+  "revision_id": "dvc9395-behavior-v2-draft",
+  "effective_test_patch_sha256": "sha256:964c80ef786b71091fcc722d8b3fdcd8afe8ba7e3f5fb511d6cb9661a25c2777",
+  "current_status": "two_model_first_round_valid_diagnostics_semantic_and_execution_non_author_accepted",
+  "cpu_runs": [
+    {
+      "job_id": "dvc9395-diagnostic-20261003-v1-004",
+      "kind": "private_pytest_diagnostic",
+      "formal_grading": false,
+      "status": "completed_candidate_positive_rejected_by_draft_api_error",
+      "qualifies_for_probe": false
+    },
+    {
+      "job_id": "dvc9395-diagnostic-20261003-v2-002",
+      "kind": "private_pytest_diagnostic",
+      "revision_id": "dvc9395-behavior-v2-draft",
+      "formal_grading": false,
+      "result": "cpu_diagnostics_v2.json",
+      "status": "completed"
+    },
+    {
+      "job_id": "dvc9395-r14-noop-20261003-002355",
+      "kind": "formal_grading_r14",
+      "candidate": "noop",
+      "formal_grading": true,
+      "status": "infra_failure",
+      "reward": null,
+      "result": "formal_cpu_r14_failure_v1.json"
+    },
+    {
+      "job_id": "dvc9395-r14-recovery-noop-20261003-021424",
+      "kind": "formal_grading_r14_recovery",
+      "candidate": "noop",
+      "formal_grading": true,
+      "status": "infra_failure",
+      "reward": null,
+      "result": "formal_cpu_r14_recovery_failure_v1.json"
+    }
+  ],
+  "independent_review": {
+    "path": "../../reviews/non_author_6954_9395_cpu_review_20261003.md",
+    "sha256": "sha256:ded53d84604bd5134ec153c6fd441460e35c52c8405c9a8ee69f9967055888b0",
+    "kind": "non_author_cpu_private_diagnostic_readback",
+    "material_revision_id": "dvc9395-behavior-v2-draft",
+    "status": "no_new_blocking_findings",
+    "formal_cpu_or_actor_acceptance": false,
+    "runtime_result_scope": "原版六方身份不变复用；当前v2-002六方真实原件",
+    "reviewed_request_sha256": "sha256:144583d2426f7f45824c2e3126a40a04a40fc28fd97d2f9db950273acf6fe954",
+    "reviewed_request_snapshot": "../../reviews/history/runtime_review_request_6954_9395_20261003_reviewed.json",
+    "context": "未继承作者会话，但阅读私有材料和已有窄核；不是fresh公开读者"
+  },
+  "probe_requests": [
+    {
+      "request_id": "swe-dvc9395-behavior-r20-v1-20261003",
+      "path": "probe_request.json",
+      "sha256": "sha256:8dddd01f5530417085ea20cec8e884e1c0da0b1eca49de724c128d93185805f1",
+      "status": "returned_ACKed_owner_analysis_complete",
+      "delivery_ref": "../../requests/dvc9395_probe_delivery_20261003_v1.json",
+      "pair_receipt": {
+        "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/swe-dvc9395-behavior-r20-v1-20261003_pair_execution_receipt_v1.json",
+        "sha256": "sha256:eed35d58c543a7ef411042cbe310b4d5553034658ccbf75166354e6f53bbfe4c"
+      },
+      "board_request_revision": 6,
+      "board_ACK_ref": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_pair_ack_20261004_v1.json"
+    }
+  ],
+  "probe_results": [
+    {
+      "job_id": "gpu1003-dvc9395-coder-a1",
+      "model_sent": "Qwen3-Coder-30B-A3B-Instruct",
+      "budget_version": "probe-wide-v1",
+      "full_runtime_version": "code_v8",
+      "raw_reward": null,
+      "f2p_pass": null,
+      "f2p_total": null,
+      "p2p_fail": null,
+      "p2p_total": null,
+      "actual_nodes": null,
+      "termination": "completed",
+      "solver_completed": true,
+      "formal_grading_completed": false,
+      "owner_semantic_assessment": "static_business_miss_but_original_attempt_not_graded_infra_before_grading",
+      "owner_semantic_audit_ref": "coder_a1_semantic_audit_v1.md",
+      "owner_semantic_audit_sha256": "sha256:4ea483a455af6f66023deef3537ed4a99b5045c9a6697e07943199a0934ad85e",
+      "owner_evidence_readback_ref": "coder_a1_owner_evidence_readback_v1.json",
+      "owner_evidence_readback_sha256": "sha256:6589a2b2d549b458d13ed8a945d62ba6eb32a3f8014d55e258369a74498cc3ce",
+      "frozen_patch_canonical_sha256": "sha256:1cad35171d386f0d905859d0232d29d7df9a398872d62e6e71e98ffc8d0cd456",
+      "baseline_canonical_sha256": "sha256:0c75caa0ac9790c739e0250f37125f342241d19d57bb430e6a6c7fa009acf0ec",
+      "frozen_patch_entries": 3,
+      "generated_root_scripts": 2,
+      "non_author_semantic_review": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/reviews/non_author_dvc_three_coder_a1_semantic_review_20261003.md",
+        "sha256": "sha256:f67401f24fc7a60bd8a2f3a1e2f62c34e5b4e77d0faf86452cbe4c2a2a134a05",
+        "status": "owner_fully_read_with_declared_limits"
+      },
+      "execution_independent_review_pending": false,
+      "GPU_completed_execution_review_not_in_this_receipt": true,
+      "second_model_pending": false,
+      "paired_request_closed": true,
+      "stability_claimed": false,
+      "first_arm_owner_acceptance": {
+        "path": "runs/category2_repair_20260929/repository_work/swe_dvc/q27_three_coder_first_arm_owner_acceptance_v1.json",
+        "sha256": "sha256:e1321f4a9d22cd3c8910ae90eaab0c7c6f6a1c9f3f319569e94cdf93c525aa3f"
+      },
+      "execution_receipt": {
+        "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/q27_three_DVC_first_coder_execution_receipt_v1.json",
+        "sha256": "sha256:8ac94ba5e6df718d1c4f424c4e53025d5a42f42caf472f80cecc952e76af425f"
+      },
+      "closed_manifest": {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-coder-a1/gpu1003-dvc9395-coder-a1_closed_manifest_v1.json",
+        "sha256": "sha256:dd3c2b3f578b86c54ea59a8654987dba41befd09028b9e0a7840b238a46b877d"
+      },
+      "self_validation_limits": "先check missing再恢复，缺失时不可达；checkout不新增cloud pull；hasattr脚本不核恢复；后台测试stopped／管道BrokenPipe无完整回归；FP保留2个脚本",
+      "model_identity_limit": "fresh pre-job operational binding; listed 25 model file sizes including 16 weight shards; no individual rehash or GPU-memory attestation",
+      "operational_owner_readback": {
+        "path": "runs/category2_repair_20260929/repository_work/swe_dvc/q27_three_coder_operational_owner_readback_v1.json",
+        "sha256": "sha256:84fb2d8871578ca1e2559251110fc0b6aaaa1ce0201bb3e71fab824786513d29"
+      },
+      "original_entry_exit_code": 1,
+      "original_cleanup_ok": false,
+      "grading_status": "not_graded",
+      "infra_failure_detail": "relay docker rm timeout after solver before grader; not model capability zero",
+      "current_cleanup_recovery": {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc9395-coder-a1/q27_dvc9395_cleanup_recovery_v1/readback.json",
+        "sha256": "sha256:c0c5ca097db66ccdcd255987584a346722c2a619ee771fdfbfc57e7a48499c6f"
+      },
+      "original_FP_grading_pending": false,
+      "new_solve_required": false,
+      "execution_independent_review": {
+        "path": "runs/ordinary_gpu_probe_20261002/reviews/closed_four_execution_non_author_20261003_v1.json",
+        "sha256": "sha256:52f447ad6c7dde3aca1f31da54b2c26d35e8e3aa6a661758dcaf05d9315db661",
+        "markdown": {
+          "path": "runs/ordinary_gpu_probe_20261002/reviews/closed_four_execution_non_author_20261003_v1.md",
+          "sha256": "sha256:5016cc6212911a74f0cffde7bb5d68db783acf56f5078b51d9c52ead9bfb3595"
+        },
+        "accepted_scope": "original_execution_evidence_checked_with_declared_limits",
+        "owner_full_DVC_report_readback": true,
+        "environment_package_digest_remains_null": true,
+        "same_original_FP_grading_review_in_scope": false
+      },
+      "latest_execution_scope_acceptance": {
+        "path": "runs/category2_repair_20260929/repository_work/swe_dvc/q27_three_coder_execution_review_owner_acceptance_v1.json",
+        "sha256": "sha256:6f644b18ba8e9f353ae422532492a8ef622774cd77cec32bb3c9fe1f479c4ef3"
+      },
+      "future_grading_execution_review_pending": false,
+      "linked_same_original_FP_CPU_grading_job": "dvc9395-original-fp-cpu-grade-20261003-v1",
+      "linked_same_original_FP_reward_after_CPU": 0.0,
+      "linked_same_original_FP_CPU_grading_acceptance": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/coder_a1_same_original_fp_cpu_grade_acceptance_v1.json",
+        "sha256": "sha256:5c48c93d0b7670edcc22cd937daf49361cc5054787d88851437a9287e302e52b"
+      },
+      "latest_pair_acceptance": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/two_model_first_round_acceptance_v1.json",
+        "sha256": "sha256:4fb3dfdff485b80b1144cd05f9b1db6204b54a679355bb77e0825b47a4aaec88"
+      }
+    },
+    {
+      "job_id": "gpu1003-dvc9395-qwen36-a1",
+      "model_sent": "Qwen3.6-35B-A3B",
+      "budget_version": "probe-wide-v1",
+      "full_runtime_version": "code_v8",
+      "raw_reward": 0.0,
+      "f2p_pass": 1,
+      "f2p_total": 3,
+      "p2p_fail": 1,
+      "p2p_total": 37,
+      "actual_nodes": {
+        "total": 41,
+        "passed": 37,
+        "failed": 4
+      },
+      "formal_references": 40,
+      "unscored_import": "FAILED",
+      "termination": "completed",
+      "solver_completed": true,
+      "formal_grading_completed": true,
+      "owner_semantic_assessment": "partial_source_and_frozen_recovery_but_repo_import_remote_run_cache_and_modified_no_remote_boundary_miss",
+      "owner_semantic_audit": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/qwen36_a1_semantic_audit_v1.md",
+        "sha256": "sha256:87d0a81c929cd00eeae0a2632c2bae927fc83290f8fa7d7b3a21a9830d72d602"
+      },
+      "owner_evidence_readback": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/qwen36_a1_owner_evidence_readback_v1.json",
+        "sha256": "sha256:52b0a14e91451c197fd5b73cd0d05581627d35ce36aee0610b0ba9d3785ddad1"
+      },
+      "frozen_patch_canonical_sha256": "sha256:bca0a3a7a04f2259a21b1f0aa7904b12ceff777f234dc2bde16f28345f45d476",
+      "baseline_canonical_sha256": "sha256:0c75caa0ac9790c739e0250f37125f342241d19d57bb430e6a6c7fa009acf0ec",
+      "frozen_patch_entries": 3,
+      "scoring_projection_entries": 2,
+      "actor_modified_public_test_file": true,
+      "non_author_semantic_review": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/reviews/non_author_dvc9395_qwen_pair_semantic_review_20261004_v1.json",
+        "sha256": "sha256:1d65ca51cb7d17de39f550920da67da5218b210463f6e868ca2e97f0ae44e907"
+      },
+      "non_author_execution_review": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/reviews/non_author_dvc9395_pair_execution_review_20261004_v1.json",
+        "sha256": "sha256:dc124a33ee481177389e276917e85ecc626fab119611ecd621d575643f3a33fd"
+      },
+      "execution_independent_review_pending": false,
+      "second_model_pending": false,
+      "paired_request_closed": true,
+      "first_round_acceptance": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/two_model_first_round_acceptance_v1.json",
+        "sha256": "sha256:4fb3dfdff485b80b1144cd05f9b1db6204b54a679355bb77e0825b47a4aaec88"
+      },
+      "stability_claimed": false,
+      "tool_calls": 88,
+      "gateway_requests": 88,
+      "CC_num_turns": 89,
+      "SSE_CC_parameter_exact_objects": 86,
+      "SSE_CC_parameter_differences": 2,
+      "solve_seconds": 260.0,
+      "grading_seconds": 268.066,
+      "input_tokens_sum": 3068590,
+      "output_tokens_sum": 16725,
+      "original_entry_exit_code": 0,
+      "solver_cleanup_ok": true,
+      "grader_cleanup_ok": true,
+      "self_validation_limits": "final5 public groups193 passed incl2 appended recovery tests; repo imports/remote runs/modified-no-remote not tested; final CLI filter masks repro stdout and lacks isolated RC",
+      "operational_owner_readback": {
+        "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_pair_operational_owner_readback_v1.json",
+        "sha256": "sha256:1d973ecc693b065e29697630cfcc65795c5a1f1faf16f28faf41af5adf6f16c7"
+      },
+      "execution_receipt": {
+        "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/dvc9395_qwen36_execution_receipt_v1/execution_receipt.json",
+        "sha256": "sha256:55f1bfda379232313c6c187af4926d791ad95ec1514542f3c2b8604118ca29fe"
+      }
+    }
+  ],
+  "final_use": null,
+  "prior_material_review": {
+    "path": "../../reviews/non_author_4166_9395_v2_review_20261003.md",
+    "kind": "non_author_delta_material_review",
+    "material_revision_id": "dvc9395-behavior-v2-draft",
+    "status": "no_static_blocking_findings",
+    "formal_cpu_or_actor_acceptance": false,
+    "runtime_result_scope": "4166三方私有结果已独立复核；9395本报告尚未复核新版六方结果",
+    "sha256": "sha256:c6adf3fe5dbf411b694813100b17b5b4db9ffd24e5bbe665259e86986afe0491"
+  },
+  "active_publish_request_id": null,
+  "publish_input": "../../requests/dvc9395_publish_v2_input.json",
+  "current_checkpoint": "两模型首次候选的原件、七维和非作者执行/语义复核均已核收：Qwen原0/F1/3/P36/37；Coder同原FP CPU0/F0/3/P37/37，原GPU null/入口1/cleanupfalse保持。详见swe_dvc/tasks/iterative__dvc-9395/two_model_first_round_acceptance_v1.json；ACK仅核收，不授训练资格。",
+  "actor_checks": [
+    {
+      "job_id": "dvc9395-public-actor-20261003-v1-001",
+      "result": "public_actor_r5_v1.json",
+      "status": "passed_and_non_author_readback_complete",
+      "formal_grading": false,
+      "model_probe": false,
+      "independent_review": {
+        "path": "../../reviews/non_author_actor4166_9395_runtime_review_20261003.md",
+        "sha256": "sha256:c914c520234eaee7da6fd9d3c20d9a84c8bd67aa509236d0c00c752ceab55632"
+      }
+    }
+  ],
+  "still_needs_cpu": false,
+  "still_needs_gpu": false,
+  "public_contract_review": {
+    "path": "../../public_contract_review_20261003.json",
+    "sha256": "sha256:a1e42b08d2ada761fb4ed6e694db81dba0231ae597d2c776a46caeb0424eb7ac",
+    "status": "public_core_requirement_clear",
+    "scope": "clean public read; private coverage comparison separately attributed to author"
+  },
+  "publication": {
+    "release_id": "cat2-cpu-r2e089092-swe34-dvc-pyd-20261003-v1",
+    "manifest_sha256": "sha256:51b833975be2c3354be45b731552235a33070315f0039c8e6f54987de95f6ca8",
+    "receipt": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r14/dvc9395_publication_receipt.json",
+    "receipt_read_and_acked": true,
+    "task_cpu_acceptance": false
+  },
+  "current_formal_series": "dvc9395_r20_v1",
+  "public_actor_applicability_review": {
+    "path": "../../reviews/non_author_public_actor_r14_reuse_review_20261003.md",
+    "sha256": "sha256:24276eef103c12df70f261a9b05a56c33a251a98a480300555582a3b561f9c97",
+    "status": "same_public_image_code_scope_reuse_supported",
+    "actual_r14_prepared_public_checked": true,
+    "actual_recovery_prepare_public_check_ref": "runs/category2_repair_20260929/repository_work/swe_dvc/9395_r14_recovery_prepare_public_binding_v1.json",
+    "actual_recovery_prepare_public_check_sha256": "sha256:56f02b7e71b3acc7bc86982bdcf22776f39c71242cc393f108526dfd5a07da4d",
+    "scope": "same public dict and solver prompt text bytes; whole prompt JSON metadata equality not claimed",
+    "actual_r20_prepared_public_checked": true,
+    "r20_runtime_applicability_review": {
+      "path": "../../reviews/non_author_formal9395_r20_runtime_review_20261003.md",
+      "sha256": "sha256:0413230dfd6553e31b52a1ddad146ce7d05508272d87e7787df84790bdfaf00b",
+      "new_r20_actor_run": false
+    }
+  },
+  "active_cpu_support_request_id": null,
+  "formal_checkpoint_r14": {
+    "prepare_success": true,
+    "actual_prepared_public_author_checked": true,
+    "noop_reward": null,
+    "noop_outcome": "failed_to_grade",
+    "infra_failure_detail": "grading_control_surface_protect_timeout_after_300s",
+    "candidate_prerequisite_started": false,
+    "candidate_install_started": false,
+    "tests_started": false,
+    "remaining_controls": "not_dispatched_after_infra",
+    "non_author_failure_reason_review": "fully_read_no_misclassification",
+    "failure_record": "formal_cpu_r14_failure_v1.json"
+  },
+  "formal_failure_review": {
+    "path": "../../reviews/non_author_formal9395_r14_failure_review_20261003.md",
+    "sha256": "sha256:174d5908963aec91039cbc7d708f4a168c8bd630a5bbc6411d883ac46df2b351",
+    "status": "fully_read_no_misclassification",
+    "formal_matrix_complete": false
+  },
+  "resume_constraints": {
+    "do_not_rerun_unchanged_r14_binding": true,
+    "failed_receipt_not_completed_control": true,
+    "pipeline_hazard": "run_r14_remaining_controls_v1.py将任何已归档receipt视作completed；9395失败noop也会被跳过，collect_r14_matrix_v1.py随后读入infra而断言失败。不得直接复用旧pipeline。",
+    "next_series": "新recovery noop再次infra已停；须v2支持返回具体版本化部署/预算修正或有证据的新固定条件，再建新输入/prepare/series/output。不能直接重启旧系列或放大预算。",
+    "unchanged_other_tasks": [
+      "5839 R10",
+      "6954 R14",
+      "4166 R14"
+    ]
+  },
+  "latest_cpu_resource_support": {
+    "request_id": "dvc9395-control-protect-timeout-support-20261003-v1",
+    "receipt_ref": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/support/cpu_a_control_surface_protect_v1/dvc9395_resource_support_receipt_v1.json",
+    "receipt_sha256": "sha256:8f009c783e281db37865a6d112fb9f30ea7bd75683b08ec471b291be3374d1a0",
+    "status": "acked_protection_only_not_formal_recovery"
+  },
+  "formal_recovery": {
+    "series": "dvc9395_r14_recovery_v1",
+    "prepare_job_id": "dvc9395-r14-recovery-prepare-20261003-021424-a4",
+    "prepare_completion_sha256": "sha256:21443512d3791c421c758f1550f6b414b764ad8abfbc306568730e8de597fc11",
+    "summary_sha256": "sha256:4cb44fd85ba92b940b263dca5cfe93b59ecab56c0f99f05cdfd82ed743281767",
+    "run_input_ref": "runs/category2_repair_20260929/repository_work/swe_dvc/formal9395_r14_recovery_run_input.json",
+    "run_input_sha256": "sha256:1ed8cd6b84584278e89f6dfc55e61233e55b14ca62941d9a1cbf9479d624fdcd",
+    "active_job_id": null,
+    "completed_valid_controls": [],
+    "last_job_id": "dvc9395-r14-recovery-noop-20261003-021424",
+    "status": "stopped_second_control_protect300_infra",
+    "last_reward": null,
+    "last_failure_record": "formal_cpu_r14_recovery_failure_v1.json",
+    "remaining_controls_not_dispatched": [
+      "gold",
+      "c3_frozenfix",
+      "c3_missing_only",
+      "up351_port",
+      "w_swallow3"
+    ],
+    "non_author_difference_review": {
+      "path": "../../reviews/non_author_formal9395_r14_recovery_failure_review_20261003.md",
+      "sha256": "sha256:a07cfbf374473dbf1dedfd4b94cb0d12a78e525a3faf87dc72a2b98ceb381776",
+      "status": "fully_read_no_misclassification"
+    }
+  },
+  "latest_cpu_support_request": {
+    "request_id": "dvc9395-control-protect-timeout-support-20261003-v2",
+    "input_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/requests/dvc9395_control_protect_timeout_support_input_v2.json",
+    "input_sha256": "sha256:3bf174133d17334cc752c4a9775acf9782fc2017b76cd4682d5202081c1ddf57",
+    "status": "claimed_by_publisher_pending_versioned_correction",
+    "delivery_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/requests/dvc9395_control_protect_support_delivery_20261003_v2.json"
+  },
+  "pending_versioned_support": {
+    "release_label": "R20",
+    "design_ref": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/support/pyd8316_repeated_protect_v1/versioned_support_design_v1.json",
+    "design_sha256": "sha256:f85a1edb7a1363effc174fb79d16e949355b89623edffde715e7e992d05e845b",
+    "chosen_env_reset_timeout_seconds": 900,
+    "status": "receipt_read_independent_delta_review_accepted_and_internally_acked",
+    "actual_cpu_resumed": "all_six_formal_controls_complete_and_non_author_accepted",
+    "controls_required": [
+      "noop",
+      "gold",
+      "c3_frozenfix",
+      "c3_missing_only",
+      "up351_port",
+      "w_swallow3"
+    ],
+    "receipt_ref": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r20/dvc9395_publication_receipt.json",
+    "receipt_sha256": "sha256:dd6e6894a4079e141d2fe54ab3775d012d58f3b0adbfedfede8813598f0447cb",
+    "review_ref": "../../reviews/non_author_dvc9395_r20_budget_support_review_20261003.md",
+    "review_sha256": "sha256:88c26bddb9becd4ced787eb77b6b094acd59e3ae57d7b050728fe649bb27320b"
+  },
+  "formal_r20": {
+    "series": "dvc9395_r20_v1",
+    "prepare_job_id": "dvc9395-r20-prepare-20261003-031559",
+    "prepare_completion_sha256": "sha256:ee5b6654a0a107a5335c219bd817879c732a154e73a0f6b402b209744d8afd06",
+    "summary_sha256": "sha256:47d78323f469bab6a4462cebc8c91a005345e0865a51e088e9d1e2cfc57a56f1",
+    "run_input_ref": "runs/category2_repair_20260929/repository_work/swe_dvc/formal9395_r20_run_input.json",
+    "run_input_sha256": "sha256:e459f6f54bd71a152cfdcccd1eb724b9e9332602269c62eba3a481e687c32d3d",
+    "actual_spec_readback_ref": "runs/category2_repair_20260929/repository_work/swe_dvc/9395_r20_actual_spec_readback_v1.json",
+    "actual_spec_sha256": "sha256:a26d4876d59ab6866725afa032a4b631daa3793052387135e3cc15918d02205b",
+    "completed_valid_controls": [
+      {
+        "candidate": "c3_frozenfix",
+        "job_id": "dvc9395-r20-c3_frozenfix-20261003-032003",
+        "raw_receipt_ref": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r20_c3_frozenfix_032003_v1.receipt.json",
+        "reward": 1.0
+      },
+      {
+        "candidate": "c3_missing_only",
+        "job_id": "dvc9395-r20-c3_missing_only-20261003-032003-a5",
+        "raw_receipt_ref": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r20_c3_missing_only_032003_v1.receipt.json",
+        "reward": 0.0
+      },
+      {
+        "candidate": "gold",
+        "job_id": "dvc9395-r20-gold-20261003-032003",
+        "raw_receipt_ref": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r20_gold_032003_v1.receipt.json",
+        "reward": 0.0
+      },
+      {
+        "candidate": "noop",
+        "job_id": "dvc9395-r20-noop-20261003-032003",
+        "raw_receipt_ref": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r20_noop_032003_v1.receipt.json",
+        "reward": 0.0
+      },
+      {
+        "candidate": "up351_port",
+        "job_id": "dvc9395-r20-up351_port-20261003-032003",
+        "raw_receipt_ref": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r20_up351_port_032003_v1.receipt.json",
+        "reward": 0.0
+      },
+      {
+        "candidate": "w_swallow3",
+        "job_id": "dvc9395-r20-w_swallow3-20261003-032003",
+        "raw_receipt_ref": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r20_w_swallow3_032003_v1.receipt.json",
+        "reward": 0.0
+      }
+    ],
+    "status": "cpu_acceptance_complete",
+    "env_reset_timeout_seconds": 900,
+    "owner_checkpoint_ref": "runs/category2_repair_20260929/repository_work/swe_dvc/9395_r20_6controls_owner_checkpoint_v1.json",
+    "report_parser_note": "只解析所选两pytest文件的状态行；captured logging ERROR不是pytest ERROR。旧collect_r20_matrix_v1保留，当前pipeline结束时若其误计logging行而失败，只以v2重新离线收集，不重跑候选或修改日志。",
+    "active_job_id": null,
+    "admission_wait": {
+      "candidate": "c3_missing_only",
+      "observed_busy75_attempts": 4,
+      "actual_candidate_failure": false,
+      "resolved_by_actual_job": "dvc9395-r20-c3_missing_only-20261003-032003-a5"
+    },
+    "matrix_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/formal_matrix_r20_v1.json",
+    "offline_collector_correction_ref": "runs/category2_repair_20260929/repository_work/swe_dvc/9395_r20_offline_collector_correction_v1.json",
+    "acceptance_ref": "cpu_acceptance_r20_v1.json",
+    "acceptance_sha256": "sha256:6dabaa89b0284178d3c852c4f253616dcfed1394e6d7a8306923acaf815eb991",
+    "final_runtime_review": {
+      "path": "../../reviews/non_author_formal9395_r20_runtime_review_20261003.md",
+      "sha256": "sha256:0413230dfd6553e31b52a1ddad146ce7d05508272d87e7787df84790bdfaf00b",
+      "owner_full_report_read": true,
+      "no_new_blocking_findings": true
+    }
+  },
+  "retirement_ready": false,
+  "current_probe_policy": {
+    "coverage_first": true,
+    "unstarted_ordinary_repeats_deferred": true,
+    "no_mechanical_three_samples_per_model": true,
+    "no_retirement_or_resource_mutation": true,
+    "pending": null,
+    "first_round_complete": true
+  },
+  "latest_execution_scope_acceptance": {
+    "path": "runs/category2_repair_20260929/repository_work/swe_dvc/q27_three_coder_execution_review_owner_acceptance_v1.json",
+    "sha256": "sha256:6f644b18ba8e9f353ae422532492a8ef622774cd77cec32bb3c9fe1f479c4ef3"
+  },
+  "original_fp_cpu_grading": {
+    "job_id": "dvc9395-original-fp-cpu-grade-20261003-v1",
+    "slot_job": "dvc9395-original-fp-cpu-grade-20261003-v1-q01",
+    "status": "owner_and_non_author_accepted",
+    "original_job_id": "gpu1003-dvc9395-coder-a1",
+    "new_model_calls": 0,
+    "candidate_changed": false,
+    "budgets_changed": false,
+    "preflight_review_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/reviews/non_author_dvc9395_same_original_fp_cpu_preflight_20261003_v1.md",
+    "launch_intent_ref": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/launch_intent_v1.json",
+    "preflight_materials_ref": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/pre_execute_readback_manifest_v1.json",
+    "source_snapshot_manifest_sha256": "7c8c9bccd699a74f58041f6e990707e79f07979c712fbbd81c0d6ec731155351",
+    "result_pending": false,
+    "execution_review_pending": false,
+    "old_failure_preserved": true,
+    "raw_reward": 0.0,
+    "outcome": "unresolved",
+    "failure_category": "tests_failed",
+    "actual_nodes": {
+      "total": 41,
+      "passed": 37,
+      "failed": 4
+    },
+    "formal_references": {
+      "total": 40,
+      "f2p_pass": 0,
+      "f2p_total": 3,
+      "p2p_fail": 0,
+      "p2p_total": 37
+    },
+    "unscored_import": "FAILED",
+    "report_ref": {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/grade_v1/report.json",
+      "sha256": "sha256:643e47665e0510dfba0da453f7b2ba2f4aa6962e40816b8dd296fbbcc2815d4c"
+    },
+    "owner_complete_readback_ref": {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/owner_complete_readback_v1.json",
+      "sha256": "sha256:4a4810d01db60a34a1472f819c4108c9e6ad0b6030ae8297961d7059ef1904e4"
+    },
+    "closed_manifest_ref": {
+      "path": "runs/category2_repair_20260929/repository_work/swe_dvc/dvc9395_same_original_fp_cpu_recovery_20261003_v1/actual_readback_v1/closed_manifest.json",
+      "sha256": "sha256:5d106389938f110050a7a16c5205c1cb723f27851d6ba193ea8fbcd727b46fa1"
+    },
+    "cleanup_ok": true,
+    "manager_containers_created_total": 1,
+    "manager_containers_removed_total": 1,
+    "slot_returncode": 0,
+    "acceptance_ref": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/coder_a1_same_original_fp_cpu_grade_acceptance_v1.json",
+      "sha256": "sha256:5c48c93d0b7670edcc22cd937daf49361cc5054787d88851437a9287e302e52b"
+    },
+    "owner_human_readback_ref": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/coder_a1_same_original_fp_cpu_grade_owner_readback_v1.md",
+      "sha256": "sha256:85558f2d58269169e7b12e4176ffb72cd99eafdb5d1fe0bc6bd7b7b09bae5634"
+    },
+    "non_author_runtime_review": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/reviews/non_author_dvc9395_same_original_fp_cpu_runtime_20261003_v1.md",
+      "sha256": "sha256:d9704016a0b4ee5f649a3744b678d96afed03ac8fe5e7ad3125eb76e68d634b5"
+    },
+    "non_author_runtime_review_JSON": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/reviews/non_author_dvc9395_same_original_fp_cpu_runtime_20261003_v1.json",
+      "sha256": "sha256:940a96ba9032d26911f9e38072551f6b070bbb1ee0c19bf409eb6c02bbceac8b"
+    },
+    "official_num_parsed_tests": 42,
+    "official_parser_count_limit": "captured ERROR log pseudo entry; actual pytest41/formal references40 independently matched",
+    "GPU_delivery_ref": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/requests/dvc9395_same_original_fp_CPU_grade_delivery_20261003_v1.json",
+      "sha256": "sha256:2dbfdbc6909e8336a69037c09de62b0de25de744378a72dd20fb6fa11dc51247"
+    }
+  },
+  "first_round_acceptance": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/two_model_first_round_acceptance_v1.json",
+    "sha256": "sha256:4fb3dfdff485b80b1144cd05f9b1db6204b54a679355bb77e0825b47a4aaec88"
+  },
+  "two_model_audit": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/dvc9395_two_model_first_round_audit_20261004_v1.md",
+    "sha256": "sha256:551de1a9ce0a8a09de2e390df1d566330ecbea47ee6a9bcb7390b7f28914420a"
+  },
+  "active_request_id": null
+}

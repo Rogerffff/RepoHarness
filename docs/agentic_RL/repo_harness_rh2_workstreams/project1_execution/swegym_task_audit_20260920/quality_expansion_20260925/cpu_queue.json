@@ -1,0 +1,408 @@
+{
+  "status": "selective_proposals_only_not_dispatched",
+  "execution_status": "not_executed",
+  "scope": "selective evidence requests only; task2 owns runtime scheduling and fixes",
+  "items": [
+    {
+      "instance_id": "Project-MONAI__MONAI-5686",
+      "priority": "selective_reference_diagnostic",
+      "question": "Does gold leave public B1C5 input gradients disconnected while B1C1 is repaired?",
+      "plan_ref": "pack01_followups.md",
+      "checks": [
+        "25",
+        "27"
+      ],
+      "evidence_level": "static_call_chain_pending_runtime",
+      "execution_owner": "task2 / Claude B",
+      "execution_status": "not_executed",
+      "dispatched": false,
+      "actor_qualification": false,
+      "solver_access": "private gold material must not enter solver context",
+      "resource_scope": "CPU, synthetic B1C1/B1C5 tensors, no GPU/model/download/full-suite"
+    },
+    {
+      "instance_id": "dask__dask-9378",
+      "priority": "selective_assertion_diagnostic",
+      "question": "Can current ones/zeros assertions miss an incorrect mask while explicit mask equality rejects it?",
+      "plan_ref": "pack03_followups.md",
+      "checks": [
+        "25",
+        "32"
+      ],
+      "evidence_level": "static_assertion_chain_pending_runtime",
+      "execution_owner": "task2 / Claude B",
+      "execution_status": "not_executed",
+      "dispatched": false,
+      "actor_qualification": false,
+      "solver_access": "private gold/hidden assertions must not enter solver context",
+      "resource_scope": "CPU, synthetic small masked arrays, narrow assertions; no full-suite or score claim"
+    },
+    {
+      "instance_id": "pydantic__pydantic-8567",
+      "priority": "selective_reference_compatibility_diagnostic",
+      "question": "Does gold require an unsupported Custom inner schema that base PlainValidator does not need?",
+      "plan_ref": "pack04_followups.md",
+      "checks": [
+        "26",
+        "27"
+      ],
+      "evidence_level": "static_schema_chain_pending_runtime",
+      "execution_owner": "task2 / Claude B",
+      "execution_status": "not_executed",
+      "dispatched": false,
+      "actor_qualification": false,
+      "solver_access": "private gold material must not enter solver context",
+      "resource_scope": "CPU, ordinary Custom plus PlainValidator, matched base/core version; no network/full-suite/model"
+    },
+    {
+      "instance_id": "conan-io__conan-12397",
+      "priority": "selective_assertion_diagnostic",
+      "question": "Can cpp_link_args assertions accept an objcpp-only fix while exact configuration keys reveal missing C++ flags?",
+      "plan_ref": "pack06_followups.md",
+      "checks": [
+        "25",
+        "27",
+        "32"
+      ],
+      "evidence_level": "static_source_and_assertion_chain_pending_runtime",
+      "execution_owner": "task2 / Claude B",
+      "execution_status": "not_executed",
+      "dispatched": false,
+      "actor_qualification": false,
+      "solver_access": "private gold/hidden assertions must not enter independent solver context",
+      "resource_scope": "CPU, synthetic Apple-cross and Linux-Clang generated configurations; no compiler/link/download/full-suite/model"
+    },
+    {
+      "instance_id": "conan-io__conan-13403",
+      "priority": "selective_reference_compatibility_diagnostic",
+      "question": "Does gold break old nonempty positional args and do chdir factory assertions fail to observe run-time cwd?",
+      "plan_ref": "pack06_followups.md",
+      "checks": [
+        "24",
+        "25",
+        "26",
+        "27"
+      ],
+      "evidence_level": "static_source_and_assertion_chain_pending_runtime",
+      "execution_owner": "task2 / Claude B",
+      "execution_status": "not_executed",
+      "dispatched": false,
+      "actor_qualification": false,
+      "solver_access": "private gold/hidden assertions must not enter independent solver context",
+      "resource_scope": "CPU, temporary directories and actual Autotools with recording recipe.run; no external GNU tools/download/full-suite/model"
+    },
+    {
+      "instance_id": "dask__dask-6801",
+      "priority": "selective_reference_behavior_diagnostic",
+      "question": "Which public upstream computations occur during graph construction versus joint compute for normal and infer schemas?",
+      "plan_ref": "pack07_followups.md",
+      "checks": [
+        "20",
+        "25",
+        "27",
+        "32"
+      ],
+      "evidence_level": "static_source_and_assertion_chain_pending_runtime",
+      "execution_owner": "task2 / Claude B",
+      "execution_status": "not_executed",
+      "dispatched": false,
+      "actor_qualification": false,
+      "solver_access": "private gold/hidden assertions must not enter independent solver context",
+      "resource_scope": "CPU, public two-delayed graph, explicit PyArrow/meta, synchronous counts and independent temporary output directories; no network/full-suite/model"
+    },
+    {
+      "instance_id": "dask__dask-7305",
+      "priority": "selective_reference_behavior_diagnostic",
+      "question": "Does the direct public uint64 quantile example preserve exact endpoints with 1 and 3 output partitions, including the np.interp branch?",
+      "plan_ref": "pack07_followups.md",
+      "checks": [
+        "20",
+        "25",
+        "27",
+        "32"
+      ],
+      "evidence_level": "static_source_and_assertion_chain_pending_runtime",
+      "execution_owner": "task2 / Claude B",
+      "execution_status": "not_executed",
+      "dispatched": false,
+      "actor_qualification": false,
+      "solver_access": "private gold/hidden assertions must not enter independent solver context",
+      "resource_scope": "CPU, two public uint64 values, direct partition_quantiles and exact endpoint/dtype checks; no CSV/network/full-suite/model"
+    },
+    {
+      "instance_id": "pydantic__pydantic-8316",
+      "priority": "selective_reference_compatibility_diagnostic",
+      "question": "Does the uppercase-to-digit rule change break old generated alias keys in an actual model workflow?",
+      "plan_ref": "pack08_followups.md",
+      "checks": [
+        "25",
+        "26",
+        "27"
+      ],
+      "evidence_level": "static_regex_and_alias_call_chain_pending_runtime_and_contract_decision",
+      "execution_owner": "task2 / Claude B",
+      "execution_status": "not_executed",
+      "dispatched": false,
+      "actor_qualification": false,
+      "solver_access": "private gold/hidden assertions must not enter independent solver context",
+      "resource_scope": "CPU, HTTPResponse plus one A1 alias model with old-key input and by_alias output; no network/full-suite/model"
+    },
+    {
+      "instance_id": "conan-io__conan-13788",
+      "priority": "selective_reference_regression_diagnostic",
+      "question": "Does gold misresolve an ordinary dependency of a build-context tool during locked replay?",
+      "plan_ref": "pack10_followups.md",
+      "checks": [
+        "25",
+        "26",
+        "27"
+      ],
+      "evidence_level": "specific_static_call_chain_runtime_unknown",
+      "execution_owner": "task2 / Claude B",
+      "execution_status": "not_executed",
+      "dispatched": false,
+      "actor_qualification": false,
+      "solver_access": "private gold/hidden assertions must not enter independent solver context",
+      "resource_scope": "CPU, local root→build T→ordinary D with two profiles; lock create then install --build; preserve actual contexts/RC; no compiler/network/full-suite/model"
+    },
+    {
+      "instance_id": "dask__dask-7894",
+      "priority": "selective_reference_regression_diagnostic",
+      "question": "Does drop_axis=0/new_axis=0 shift trimming onto the inserted axis under gold?",
+      "plan_ref": "pack11_followups.md",
+      "checks": [
+        "25",
+        "26",
+        "27"
+      ],
+      "evidence_level": "specific_static_path_runtime_consequence_unknown",
+      "execution_owner": "task2 / Claude B",
+      "execution_status": "not_executed",
+      "dispatched": false,
+      "actor_qualification": false,
+      "solver_access": "private gold/hidden assertions must not enter independent solver context",
+      "resource_scope": "CPU, deterministic ones((5,10)), drop0/new0, mean(0)[None,:], record lazy metadata and actual result/error; no full-suite/network/model"
+    },
+    {
+      "instance_id": "dask__dask-9212",
+      "priority": "selective_reference_regression_diagnostic",
+      "question": "Do same-name enums from distinct modules cause a same-function pure delayed result collision under gold?",
+      "plan_ref": "pack11_followups.md",
+      "checks": [
+        "25",
+        "26",
+        "27"
+      ],
+      "evidence_level": "specific_static_path_runtime_consequence_unknown",
+      "execution_owner": "task2 / Claude B",
+      "execution_status": "not_executed",
+      "dispatched": false,
+      "actor_qualification": false,
+      "solver_access": "private gold/hidden assertions must not enter independent solver context",
+      "resource_scope": "CPU, two Color enums with distinct module attributes, same pure delayed function, one synchronous joint compute; no fake module import/network/full-suite/model"
+    },
+    {
+      "instance_id": "pydantic__pydantic-9066",
+      "priority": "selective_reference_regression_diagnostic",
+      "question": "Does a stdlib dataclass default instance make gold model_json_schema raise type-adapter-config-unused while base succeeds?",
+      "plan_ref": "pack12_followups.md",
+      "checks": [
+        "25",
+        "26",
+        "27"
+      ],
+      "evidence_level": "specific_static_exception_path_runtime_unknown",
+      "execution_owner": "task2 / Claude B",
+      "execution_status": "not_executed",
+      "dispatched": false,
+      "actor_qualification": false,
+      "solver_access": "private gold/hidden assertions must not enter independent solver context",
+      "resource_scope": "CPU, one stdlib dataclass instance default plus public IP control, actual schema/warning/error code; no default_factory/full-suite/network/model"
+    }
+  ],
+  "policy": "A targeted next step only when supported by a concrete uncertainty; no mandatory pair of counterexamples and no all-pool gate. Do not duplicate task2 experiments.",
+  "updated_at": "2026-09-24T21:57:08.494730+00:00",
+  "not_queued": [
+    {
+      "instance_id": "Project-MONAI__MONAI-2446",
+      "reason": "obtain actual actor delivery evidence first; do not rerun CPU to prove static selector facts"
+    },
+    {
+      "instance_id": "Project-MONAI__MONAI-3715",
+      "reason": "write behavioral acceptance proposal first; missing train selector is statically established"
+    },
+    {
+      "instance_id": "pydantic__pydantic-5386",
+      "reason": "define public field-ready interface and behavioral acceptance before scheduling another private run"
+    },
+    {
+      "instance_id": "Project-MONAI__MONAI-1121",
+      "reason": "acceptance contract decision first; static mechanism already established, no duplicate CPU proposal"
+    },
+    {
+      "instance_id": "Project-MONAI__MONAI-3566",
+      "reason": "acceptance contract decision first; static mechanism already established, no duplicate CPU proposal"
+    },
+    {
+      "instance_id": "conan-io__conan-11560",
+      "reason": "clarify actual link/sorting reproduction and acceptance before another CPU run"
+    },
+    {
+      "instance_id": "dask__dask-7138",
+      "reason": "signature and decorator statically establish keyword binding difference; reference compatibility review first, no duplicate CPU"
+    },
+    {
+      "instance_id": "pydantic__pydantic-6043",
+      "reason": "CPU cannot decide field-order contract priority; clarify before recursive acceptance revision"
+    },
+    {
+      "instance_id": "conan-io__conan-13610",
+      "reason": "优先公开契约澄清，重复CPU不改变该判断"
+    }
+  ],
+  "actor_workflow_requests": [
+    {
+      "instance_id": "conan-io__conan-11594",
+      "action": "任务二获准后，以实际actor入口跑临时Ninja Multi-Config公开用户流程，核test目标、Release配置和实际测试执行；本任务不执行。",
+      "execution_owner": "task2 / Claude B",
+      "execution_status": "not_executed",
+      "dispatched": false
+    },
+    {
+      "instance_id": "conan-io__conan-13230",
+      "action": "任务二获准后，以显式Macos/armv8 build、Linux/x86_64 host profiles执行题面生成流程并解释故意raise输出；本任务不执行。",
+      "execution_owner": "task2 / Claude B",
+      "execution_status": "not_executed",
+      "dispatched": false
+    },
+    {
+      "instance_id": "conan-io__conan-13721",
+      "action": "由任务二在实际actor正式入口，用两个无扩展名软链接alpha/beta指向同一生成器，按公开with-context模板和CLI检验入口区分与源码生效；后缀规范另记未定，不让其阻断此公开流程。本任务未执行或派发。",
+      "execution_owner": "task2 / Claude B",
+      "execution_status": "not_executed",
+      "dispatched": false
+    },
+    {
+      "instance_id": "dask__dask-6626",
+      "action": "由任务二在实际actor入口执行题面两条from_pandas/set_index流程，保存真实初态、身份、解释器/源码导入位置、RC，并比较col1类别元数据/计算结果与col2类别；本审查未执行或派发。",
+      "execution_owner": "task2 / Claude B",
+      "execution_status": "not_executed",
+      "dispatched": false
+    },
+    {
+      "instance_id": "dask__dask-7656",
+      "action": "由任务二在实际actor入口原样执行Entry→delayed fun→compute，并检查默认字段与嵌套字段求值，保存消息、初态、身份、解释器、导入位置和RC；本审查未执行或派发。",
+      "execution_owner": "task2 / Claude B",
+      "execution_status": "not_executed",
+      "dispatched": false
+    },
+    {
+      "instance_id": "Project-MONAI__MONAI-2446",
+      "action": "先取得真实actor消息、初态、身份/权限、依赖与工作区源码导入证据，再按公开SmartCacheDataset输入列表不被修改及内部shuffle流程验证；本任务未执行或派发。",
+      "execution_owner": "task2 / Claude B",
+      "execution_status": "not_executed",
+      "dispatched": false
+    },
+    {
+      "instance_id": "pydantic__pydantic-6283",
+      "action": "任务二按实际actor入口运行公开题面显式RootModel子类与BaseModel对照smoke，同时采集解释器/包来源及真实初态；本轮不执行或派发。",
+      "execution_owner": "task2 / Claude B",
+      "execution_status": "not_executed",
+      "dispatched": false
+    },
+    {
+      "instance_id": "Project-MONAI__MONAI-4583",
+      "action": "任务二实际actor入口按公开2D及同机制稀疏3D API诊断，记录消息、初态、来源、RC、框/标签/dtype/device及实际参数类型；必要的私有gold对照是隔离的可选参考支路，不进入solver上下文。",
+      "plan_ref": "pack05_followups.md",
+      "execution_owner": "task2 / Claude B",
+      "execution_status": "not_executed",
+      "dispatched": false
+    },
+    {
+      "instance_id": "pydantic__pydantic-5662",
+      "action": "真实actor入口采消息/初态/RC/解释器与源码来源，以公开ANY、一般True/False matcher及dict/object护栏和equality窄选择作为同一开发验证；私有材料不进入solver。",
+      "plan_ref": "pack08_followups.md",
+      "execution_owner": "task2 / Claude B",
+      "execution_status": "not_executed",
+      "dispatched": false
+    },
+    {
+      "instance_id": "Project-MONAI__MONAI-5932",
+      "action": "真实actor保存初态与导入路径，以公开ConfigParser数值复现和交换长短引用顺序及窄公开parser/resolver测试作为一个开发流程。",
+      "plan_ref": "pack09_followups.md",
+      "execution_owner": "task2 / Claude B",
+      "execution_status": "not_executed",
+      "dispatched": false
+    },
+    {
+      "instance_id": "Project-MONAI__MONAI-6975",
+      "action": "真实actor以内存字典Flipd direct/Dataset True/False/None小矩阵联合检查返回image与lazy执行，保存初态与导入路径；不把applied_operations当resample次数。",
+      "plan_ref": "pack09_followups.md",
+      "execution_owner": "task2 / Claude B",
+      "execution_status": "not_executed",
+      "dispatched": false
+    },
+    {
+      "instance_id": "pydantic__pydantic-8793",
+      "action": "真实actor公开create_model原例同时核required/is_required/缺值ValidationError，保存初态/导入/权限；Python3.8使用typing_extensions.Annotated。",
+      "plan_ref": "pack12_followups.md",
+      "execution_owner": "task2 / Claude B",
+      "execution_status": "not_executed",
+      "dispatched": false
+    }
+  ],
+  "acceptance_design_requests": [
+    {
+      "instance_id": "Project-MONAI__MONAI-3715",
+      "question": "How should acceptance observe the public train-mode behavior, gradient state and restoration?",
+      "plan_ref": "pack01_followups.md",
+      "production_modified": false
+    },
+    {
+      "instance_id": "pydantic__pydantic-5386",
+      "question": "Which public field-ready interface and equivalent implementations should be accepted, and how should fields actually be read in acceptance?",
+      "plan_ref": "pack04_followups.md",
+      "production_modified": false
+    },
+    {
+      "instance_id": "Project-MONAI__MONAI-1121",
+      "question": "How should all-network test delivery, allowed edits and acceptance align, and which collection material version is authoritative?",
+      "plan_ref": "pack05_followups.md",
+      "production_modified": false
+    },
+    {
+      "instance_id": "Project-MONAI__MONAI-3566",
+      "question": "Should DICOM tags appear by default or through a publicly specified opt-in API, and which equivalent interfaces are accepted?",
+      "plan_ref": "pack05_followups.md",
+      "production_modified": false
+    },
+    {
+      "instance_id": "conan-io__conan-11560",
+      "question": "Which reproducible multilib/sorting workflow defines correct behavior, independent of the user-proposed alwayslink or hidden literal directive?",
+      "plan_ref": "pack06_followups.md",
+      "production_modified": false
+    },
+    {
+      "instance_id": "pydantic__pydantic-6043",
+      "question": "Which contract governs properties declaration order and final multi-schema wrappers under the new recursive sorting requirement?",
+      "plan_ref": "pack08_followups.md",
+      "production_modified": false
+    },
+    {
+      "instance_id": "conan-io__conan-13610",
+      "question": "明确公开无参数、裸-v、显式verbose和帮助契约；CPU不能解决语义选择。",
+      "plan_ref": "pack10_followups.md",
+      "production_modified": false
+    }
+  ],
+  "reference_review_requests": [
+    {
+      "instance_id": "dask__dask-7138",
+      "question": "Preserve the old array= keyword while extending ravel inputs; handle the reference compatibility change before further probes.",
+      "plan_ref": "pack07_followups.md",
+      "production_modified": false,
+      "execution_status": "not_executed",
+      "dispatched": false
+    }
+  ]
+}

@@ -1,0 +1,644 @@
+{
+ "L": {
+  "control_lower_s": {
+   "item": {
+    "index": 0,
+    "s": null
+   },
+   "put": {
+    "ok": true,
+    "value": null
+   },
+   "get_equal": true
+  },
+  "control_A": {
+   "item": {
+    "index": 1,
+    "A": null
+   },
+   "put": {
+    "ok": true,
+    "value": null
+   },
+   "get_equal": true
+  },
+  "top_S_null": {
+   "item": {
+    "index": 2,
+    "S": null
+   },
+   "put": {
+    "ok": true,
+    "value": null
+   },
+   "get_equal": true
+  },
+  "nested_S_null": {
+   "item": {
+    "index": 3,
+    "A": {
+     "S": null
+    }
+   },
+   "put": {
+    "ok": false,
+    "kind": "ClientError",
+    "code": "SerializationException",
+    "message": "Start of structure or map found where not expected"
+   }
+  },
+  "top_S_str": {
+   "item": {
+    "index": 4,
+    "S": "text"
+   },
+   "put": {
+    "ok": true,
+    "value": null
+   },
+   "get_equal": true
+  },
+  "nested_S_str": {
+   "item": {
+    "index": 5,
+    "A": {
+     "S": "text"
+    }
+   },
+   "put": {
+    "ok": false,
+    "kind": "ClientError",
+    "code": "SerializationException",
+    "message": "Start of structure or map found where not expected"
+   }
+  },
+  "deep_S": {
+   "item": {
+    "index": 6,
+    "A": {
+     "B": {
+      "C": {
+       "S": null
+      }
+     }
+    }
+   },
+   "put": {
+    "ok": false,
+    "kind": "ClientError",
+    "code": "SerializationException",
+    "message": "Start of structure or map found where not expected"
+   }
+  },
+  "deep2_S_str": {
+   "item": {
+    "index": 7,
+    "A": {
+     "B": {
+      "S": "x"
+     }
+    }
+   },
+   "put": {
+    "ok": false,
+    "kind": "ClientError",
+    "code": "SerializationException",
+    "message": "Start of structure or map found where not expected"
+   }
+  },
+  "nested_S_sibling": {
+   "item": {
+    "index": 8,
+    "A": {
+     "S": "1",
+     "T": "x"
+    }
+   },
+   "put": {
+    "ok": false,
+    "kind": "ClientError",
+    "code": "SerializationException",
+    "message": "Start of structure or map found where not expected"
+   }
+  },
+  "S_in_S_in_S": {
+   "item": {
+    "index": 9,
+    "S": {
+     "S": {
+      "S": null
+     }
+    }
+   },
+   "put": {
+    "ok": false,
+    "kind": "ClientError",
+    "code": "SerializationException",
+    "message": "Start of structure or map found where not expected"
+   }
+  },
+  "nested_S_map_value": {
+   "item": {
+    "index": 10,
+    "A": {
+     "S": {
+      "B": "x"
+     }
+    }
+   },
+   "put": {
+    "ok": false,
+    "kind": "ClientError",
+    "code": "SerializationException",
+    "message": "Start of structure or map found where not expected"
+   }
+  },
+  "list_map_S": {
+   "item": {
+    "index": 11,
+    "A": [
+     {
+      "S": null
+     }
+    ]
+   },
+   "put": {
+    "ok": true,
+    "value": null
+   },
+   "get_equal": true
+  },
+  "other_tag_names": {
+   "item": {
+    "index": 12,
+    "N": "5",
+    "M": "m",
+    "L": [
+     "1"
+    ],
+    "NULL": null,
+    "SS": "{'a'}"
+   },
+   "put": {
+    "ok": true,
+    "value": null
+   },
+   "get_equal": true
+  },
+  "S_first_then_other": {
+   "item": {
+    "index": 13,
+    "S": null,
+    "x": "1"
+   },
+   "put": {
+    "ok": true,
+    "value": null
+   },
+   "get_equal": true
+  },
+  "batch_nested_S_null": {
+   "put": {
+    "ok": false,
+    "kind": "ClientError",
+    "code": "SerializationException",
+    "message": "Start of structure or map found where not expected"
+   },
+   "get_equal": false
+  },
+  "transact_nested_S_null": {
+   "put": {
+    "ok": false,
+    "kind": "ClientError",
+    "code": "TransactionCanceledException",
+    "message": "Transaction cancelled, please refer cancellation reasons for specific reasons [SerializationException]"
+   },
+   "get_equal": false
+  },
+  "update_set_nested_S_null": {
+   "update": {
+    "ok": true,
+    "value": null
+   },
+   "get_equal": true
+  }
+ },
+ "K": {
+  "hashM_nested_S_null": {
+   "item": {
+    "M": "id1",
+    "A": {
+     "S": null
+    }
+   },
+   "put": {
+    "ok": false,
+    "kind": "ClientError",
+    "code": "SerializationException",
+    "message": "Start of structure or map found where not expected"
+   }
+  },
+  "hashM_top_S_null": {
+   "item": {
+    "M": "id2",
+    "S": null
+   },
+   "put": {
+    "ok": true,
+    "value": null
+   },
+   "get_equal": true
+  },
+  "hashM_deep_S_str": {
+   "item": {
+    "M": "id3",
+    "A": {
+     "B": {
+      "S": "x"
+     }
+    }
+   },
+   "put": {
+    "ok": false,
+    "kind": "ClientError",
+    "code": "SerializationException",
+    "message": "Start of structure or map found where not expected"
+   }
+  },
+  "hashM_plain": {
+   "item": {
+    "M": "id4",
+    "A": "x"
+   },
+   "put": {
+    "ok": true,
+    "value": null
+   },
+   "get_equal": true
+  },
+  "rangeM_nested_S_null": {
+   "item": {
+    "pk": "p",
+    "M": "r",
+    "A": {
+     "S": null
+    }
+   },
+   "put": {
+    "ok": false,
+    "kind": "ClientError",
+    "code": "SerializationException",
+    "message": "Start of structure or map found where not expected"
+   }
+  },
+  "hashS_plain": {
+   "item": {
+    "S": "id1"
+   },
+   "put": {
+    "ok": true,
+    "value": null
+   },
+   "get_equal": true
+  },
+  "hashS_nested_S_null": {
+   "item": {
+    "S": "id2",
+    "A": {
+     "S": null
+    }
+   },
+   "put": {
+    "ok": false,
+    "kind": "ClientError",
+    "code": "SerializationException",
+    "message": "Start of structure or map found where not expected"
+   }
+  },
+  "hashA_nested_S_null": {
+   "item": {
+    "A": "id1",
+    "B": {
+     "S": null
+    }
+   },
+   "put": {
+    "ok": false,
+    "kind": "ClientError",
+    "code": "SerializationException",
+    "message": "Start of structure or map found where not expected"
+   }
+  }
+ },
+ "N": {
+  "pk_S_int": {
+   "item": {
+    "pk": {
+     "S": 123
+    }
+   },
+   "put": {
+    "ok": false,
+    "kind": "ClientError",
+    "code": "SerializationException",
+    "message": "NUMBER_VALUE cannot be converted to String"
+   }
+  },
+  "pk_S_dict": {
+   "item": {
+    "pk": {
+     "S": {
+      "S": "asdf"
+     }
+    }
+   },
+   "put": {
+    "ok": false,
+    "kind": "ClientError",
+    "code": "SerializationException",
+    "message": "Start of structure or map found where not expected"
+   }
+  },
+  "nonkey_S_dict": {
+   "item": {
+    "pk": {
+     "S": "a1"
+    },
+    "bad": {
+     "S": {
+      "S": "x"
+     }
+    }
+   },
+   "put": {
+    "ok": false,
+    "kind": "ClientError",
+    "code": "SerializationException",
+    "message": "Start of structure or map found where not expected"
+   },
+   "stored_after": false
+  },
+  "nonkey_S_int": {
+   "item": {
+    "pk": {
+     "S": "a2"
+    },
+    "bad": {
+     "S": 123
+    }
+   },
+   "put": {
+    "ok": false,
+    "kind": "ClientError",
+    "code": "SerializationException",
+    "message": "NUMBER_VALUE cannot be converted to String"
+   },
+   "stored_after": false
+  },
+  "nested_nonkey_S_dict": {
+   "item": {
+    "pk": {
+     "S": "a3"
+    },
+    "A": {
+     "M": {
+      "x": {
+       "S": {
+        "S": "y"
+       }
+      }
+     }
+    }
+   },
+   "put": {
+    "ok": false,
+    "kind": "ClientError",
+    "code": "SerializationException",
+    "message": "Start of structure or map found where not expected"
+   },
+   "stored_after": false
+  },
+  "nested_nonkey_N_int": {
+   "item": {
+    "pk": {
+     "S": "a4"
+    },
+    "nested": {
+     "M": {
+      "sth": {
+       "N": 5
+      }
+     }
+    }
+   },
+   "put": {
+    "ok": false,
+    "kind": "ClientError",
+    "code": "SerializationException",
+    "message": "NUMBER_VALUE cannot be converted to String"
+   },
+   "stored_after": false
+  },
+  "nonkey_N_int": {
+   "item": {
+    "pk": {
+     "S": "a5"
+    },
+    "bad": {
+     "N": 5
+    }
+   },
+   "put": {
+    "ok": false,
+    "kind": "ClientError",
+    "code": "SerializationException",
+    "message": "NUMBER_VALUE cannot be converted to String"
+   },
+   "stored_after": false
+  },
+  "attrS_S_dict": {
+   "item": {
+    "pk": {
+     "S": "a6"
+    },
+    "S": {
+     "S": {
+      "S": "x"
+     }
+    }
+   },
+   "put": {
+    "ok": false,
+    "kind": "ClientError",
+    "code": "SerializationException",
+    "message": "Start of structure or map found where not expected"
+   },
+   "stored_after": false
+  },
+  "attrS_S_int": {
+   "item": {
+    "pk": {
+     "S": "a7"
+    },
+    "S": {
+     "S": 123
+    }
+   },
+   "put": {
+    "ok": false,
+    "kind": "ClientError",
+    "code": "SerializationException",
+    "message": "NUMBER_VALUE cannot be converted to String"
+   },
+   "stored_after": false
+  },
+  "attrS_first_then_N_int": {
+   "item": {
+    "S": {
+     "NULL": true
+    },
+    "x": {
+     "N": 5
+    },
+    "pk": {
+     "S": "a8"
+    }
+   },
+   "put": {
+    "ok": false,
+    "kind": "ClientError",
+    "code": "SerializationException",
+    "message": "NUMBER_VALUE cannot be converted to String"
+   },
+   "stored_after": false
+  },
+  "lowlevel_top_S_str": {
+   "item": {
+    "pk": {
+     "S": "v1"
+    },
+    "S": {
+     "S": "asdf"
+    }
+   },
+   "put": {
+    "ok": true,
+    "value": null
+   },
+   "get_equal": true
+  },
+  "lowlevel_nested_S_null": {
+   "item": {
+    "pk": {
+     "S": "v2"
+    },
+    "A": {
+     "M": {
+      "S": {
+       "NULL": true
+      }
+     }
+    }
+   },
+   "put": {
+    "ok": false,
+    "kind": "ClientError",
+    "code": "SerializationException",
+    "message": "Start of structure or map found where not expected"
+   }
+  },
+  "lowlevel_deep_S_str": {
+   "item": {
+    "pk": {
+     "S": "v3"
+    },
+    "A": {
+     "M": {
+      "B": {
+       "M": {
+        "S": {
+         "S": "x"
+        }
+       }
+      }
+     }
+    }
+   },
+   "put": {
+    "ok": false,
+    "kind": "ClientError",
+    "code": "SerializationException",
+    "message": "Start of structure or map found where not expected"
+   }
+  },
+  "lowlevel_list_map_S": {
+   "item": {
+    "pk": {
+     "S": "v4"
+    },
+    "A": {
+     "L": [
+      {
+       "M": {
+        "S": {
+         "S": "x"
+        }
+       }
+      }
+     ]
+    }
+   },
+   "put": {
+    "ok": true,
+    "value": null
+   },
+   "get_equal": true
+  }
+ }
+}
+=== SUMMARY
+L.control_lower_s: ok get_equal=True
+L.control_A: ok get_equal=True
+L.top_S_null: ok get_equal=True
+L.nested_S_null: ClientError:SerializationException:Start of structure or map found where not expected
+L.top_S_str: ok get_equal=True
+L.nested_S_str: ClientError:SerializationException:Start of structure or map found where not expected
+L.deep_S: ClientError:SerializationException:Start of structure or map found where not expected
+L.deep2_S_str: ClientError:SerializationException:Start of structure or map found where not expected
+L.nested_S_sibling: ClientError:SerializationException:Start of structure or map found where not expected
+L.S_in_S_in_S: ClientError:SerializationException:Start of structure or map found where not expected
+L.nested_S_map_value: ClientError:SerializationException:Start of structure or map found where not expected
+L.list_map_S: ok get_equal=True
+L.other_tag_names: ok get_equal=True
+L.S_first_then_other: ok get_equal=True
+L.batch_nested_S_null: ClientError:SerializationException:Start of structure or map found where not expected get_equal=False
+L.transact_nested_S_null: ClientError:TransactionCanceledException:Transaction cancelled, please refer cancellation reasons for get_equal=False
+L.update_set_nested_S_null: ok get_equal=True
+K.hashM_nested_S_null: ClientError:SerializationException:Start of structure or map found where not expected
+K.hashM_top_S_null: ok get_equal=True
+K.hashM_deep_S_str: ClientError:SerializationException:Start of structure or map found where not expected
+K.hashM_plain: ok get_equal=True
+K.rangeM_nested_S_null: ClientError:SerializationException:Start of structure or map found where not expected
+K.hashS_plain: ok get_equal=True
+K.hashS_nested_S_null: ClientError:SerializationException:Start of structure or map found where not expected
+K.hashA_nested_S_null: ClientError:SerializationException:Start of structure or map found where not expected
+N.pk_S_int: ClientError:SerializationException:NUMBER_VALUE cannot be converted to String
+N.pk_S_dict: ClientError:SerializationException:Start of structure or map found where not expected
+N.nonkey_S_dict: ClientError:SerializationException:Start of structure or map found where not expected stored_after=False
+N.nonkey_S_int: ClientError:SerializationException:NUMBER_VALUE cannot be converted to String stored_after=False
+N.nested_nonkey_S_dict: ClientError:SerializationException:Start of structure or map found where not expected stored_after=False
+N.nested_nonkey_N_int: ClientError:SerializationException:NUMBER_VALUE cannot be converted to String stored_after=False
+N.nonkey_N_int: ClientError:SerializationException:NUMBER_VALUE cannot be converted to String stored_after=False
+N.attrS_S_dict: ClientError:SerializationException:Start of structure or map found where not expected stored_after=False
+N.attrS_S_int: ClientError:SerializationException:NUMBER_VALUE cannot be converted to String stored_after=False
+N.attrS_first_then_N_int: ClientError:SerializationException:NUMBER_VALUE cannot be converted to String stored_after=False
+N.lowlevel_top_S_str: ok get_equal=True
+N.lowlevel_nested_S_null: ClientError:SerializationException:Start of structure or map found where not expected
+N.lowlevel_deep_S_str: ClientError:SerializationException:Start of structure or map found where not expected
+N.lowlevel_list_map_S: ok get_equal=True
+=== SUMMARY
+X.attrS_contains_N_int: ClientError:SerializationException:NUMBER_VALUE cannot be converted to String stored_after=False
+X.attrS_then_nested_N_int: ClientError:SerializationException:NUMBER_VALUE cannot be converted to String stored_after=False
+X.nested_N_int_then_attrS: ClientError:SerializationException:NUMBER_VALUE cannot be converted to String stored_after=False
+X.nested_attrS_contains_N_int: ClientError:SerializationException:NUMBER_VALUE cannot be converted to String stored_after=False
+X.attrS_then_nonkey_S_int: ClientError:SerializationException:NUMBER_VALUE cannot be converted to String stored_after=False

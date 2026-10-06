@@ -1,0 +1,286 @@
+{
+  "record_kind": "task_material_preparation_not_runtime_registry",
+  "as_of": "2026-10-03",
+  "instance_id": "python__mypy-15184",
+  "owner_thread_id": "01a0fd63-1eba-7133-951d-7dd3475840a4",
+  "state": "draft_private_cpu_validated_waiting_incremental_review_and_release",
+  "base_commit": "13f35ad0915e70c2c299e2eb308968c86117132d",
+  "parent_public_digest": "sha256:9c0679c9ca5b06fa6ab36fa3c35ca418477ba85fd25b39feda9309eff0e6cab2",
+  "parent_grading_digest": "sha256:4d06500507c04fe8fe2843025d01f53ea8b6854f9fc72e1656bf7781b7da9b18",
+  "original_test_patch_sha256": "sha256:63e112197db7864cb74f6c827e0fff35664e98b0a407ff2bb2871eb22600bded",
+  "changes": [
+    {
+      "kind": "replace_problem_statement_proposal",
+      "original_public_bundle": {
+        "path": "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/public_bundle.json",
+        "sha256": "sha256:2b25cddb768f62d7c651206709125695c54281f4f9ee82419880ed934c9896aa",
+        "bytes": 2226
+      },
+      "statement": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/public/problem_statement_v1.txt",
+        "sha256": "sha256:c17659095d0b4ab71caf2fab52dfaa52e9da009212381a7dc46053c015499178",
+        "bytes": 934
+      },
+      "statement_diff": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/private/problem_statement.diff",
+        "sha256": "sha256:95eace22f29f9650e18d8d29c74ac028e88b77b3042c9b80ae821f570e4306b2",
+        "bytes": 1914
+      },
+      "public_bundle_draft": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/public/public_bundle_draft.json",
+        "sha256": "sha256:129e7341efd8699b2a379262647bb4868c8569429903d745cf5c15d54dba7606",
+        "bytes": 2265
+      },
+      "draft_public_digest": "sha256:77b85678b3f20ef5689e4a9b646518ae1247407ff44b250803563c11dce3ea7e",
+      "scoring_change_from_this_operation": false,
+      "rationale": "用已在历史 actor/gold 原件中核实的公开同名类复现替换不触发缺陷的原例；任务目标不变。"
+    },
+    {
+      "kind": "append_existing_mypy_p2p_proposal",
+      "preserve_original_fail_to_pass": [
+        "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2"
+      ],
+      "preserve_original_pass_to_pass": [
+        "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3"
+      ],
+      "added_mypy_cases": [
+        {
+          "case_name": "testAssertType",
+          "path": "test-data/unit/check-expressions.test",
+          "base_sha256": "sha256:f541a8781c01edf4a27209cc1569e61d1d8a4741c3d4bc381548d0b1239ce3b9",
+          "case_body_sha256": "sha256:b2353ccaf311e98f4d0b2426d6a28b62742f5e8ae18e4f077fdd13acf4409161",
+          "node_id": "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType"
+        }
+      ],
+      "development_regression_cases": [
+        {
+          "case_name": "testAssertTypeGeneric",
+          "path": "test-data/unit/check-expressions.test",
+          "base_sha256": "sha256:f541a8781c01edf4a27209cc1569e61d1d8a4741c3d4bc381548d0b1239ce3b9",
+          "case_body_sha256": "sha256:b13d955a00d800df15f8e40ba60ce4fb13f1844b20aad9b8f76794253bb5ffa2",
+          "node_id": "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertTypeGeneric"
+        },
+        {
+          "case_name": "testAssertTypeUncheckedFunction",
+          "path": "test-data/unit/check-expressions.test",
+          "base_sha256": "sha256:f541a8781c01edf4a27209cc1569e61d1d8a4741c3d4bc381548d0b1239ce3b9",
+          "case_body_sha256": "sha256:28109e06de1339e4b782ecaf021153eac54d89b6af7afeb18c50581b8ecba5c6",
+          "node_id": "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertTypeUncheckedFunction"
+        },
+        {
+          "case_name": "testAssertTypeUncheckedFunctionWithUntypedCheck",
+          "path": "test-data/unit/check-expressions.test",
+          "base_sha256": "sha256:f541a8781c01edf4a27209cc1569e61d1d8a4741c3d4bc381548d0b1239ce3b9",
+          "case_body_sha256": "sha256:6e83b36e8a98d8c1fa83a6037723520e41feaa3cf6e82647549ba10de37d4e47",
+          "node_id": "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertTypeUncheckedFunctionWithUntypedCheck"
+        },
+        {
+          "case_name": "testAssertTypeNoPromoteUnion",
+          "path": "test-data/unit/check-expressions.test",
+          "base_sha256": "sha256:f541a8781c01edf4a27209cc1569e61d1d8a4741c3d4bc381548d0b1239ce3b9",
+          "case_body_sha256": "sha256:e8251294d85bc46ce719a167fd83632ddd39d86bfdd7b43cbc05c2fac313eb4a",
+          "node_id": "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertTypeNoPromoteUnion"
+        }
+      ],
+      "baseline_test": {
+        "path": "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/base/test-data/unit/check-expressions.test",
+        "sha256": "sha256:f541a8781c01edf4a27209cc1569e61d1d8a4741c3d4bc381548d0b1239ce3b9",
+        "bytes": 62119
+      },
+      "baseline_file_exists": true,
+      "private_candidate": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/private/gold_but_always_reject_assert_type.patch",
+        "sha256": "sha256:8e5df3cb5e3d52c5223551809cca394418ba3a5c3ee56afa1c41d27a5e5c2846",
+        "bytes": 1400
+      },
+      "node_id_verified_by_collection": true,
+      "selector_note": "-k testAssertType 为子串选择；正式 collect 须核出全部节点和额外 suite，不能只按登记行数填执行数。",
+      "rationale": "采纳非作者窄核：仅 testAssertType 进入正式 P2P，直接保护有效断言及返回类型；其余四项保持开发回归。",
+      "private_case_evidence": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/private_behavior_readback_20261003.json",
+        "sha256": "sha256:599d3151e2da5d3e038d09709721c66a519ed9b2293b3b38b3d917209950820d",
+        "bytes": 5927
+      }
+    },
+    {
+      "kind": "replace_test_patch_append_f2p_proposal",
+      "original_test_patch": {
+        "path": "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-15184/test.patch",
+        "sha256": "sha256:63e112197db7864cb74f6c827e0fff35664e98b0a407ff2bb2871eb22600bded",
+        "bytes": 1023
+      },
+      "effective_test_patch": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/private/effective_test_nested_draft_v2.patch",
+        "sha256": "sha256:e6d5eb0ef39aeeb08a945d3ce6aeb340a7f8b4fd56e599247dbef3b99bf4e532",
+        "bytes": 1320
+      },
+      "baseline_test_path": "test-data/unit/check-assert-type-fail.test",
+      "baseline_file_exists": false,
+      "added_case": {
+        "case_name": "testAssertTypeFailNestedNominalTypes",
+        "node_id": "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFailNestedNominalTypes",
+        "node_collection_verified": true,
+        "body": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/private/generic_case_draft_v2.test",
+          "sha256": "sha256:3b607c875f41361f1dee14d16af7c85a2e386aba900e5b0e491d70292751da99",
+          "bytes": 312
+        }
+      },
+      "preserve_original_fail_to_pass": [
+        "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail1",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail2"
+      ],
+      "preserve_original_pass_to_pass": [
+        "mypy/test/testcheck.py::TypeCheckSuite::check-assert-type-fail.test::testAssertTypeFail3"
+      ],
+      "private_candidate": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/private/qualify_top_level_only.patch",
+        "sha256": "sha256:707f1748338159b53465ead34075d0ae7a84c1123b576c457fc42df8fbee66ad",
+        "bytes": 1304
+      },
+      "cpu_case_evidence": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/nested_guard_cpu_readback_20261003.json",
+        "sha256": "sha256:e7ddd77fafef6d4a4739ea31cde1e4f6a84f7f9ccd1737601e9c417e8024b5a6",
+        "bytes": 4330
+      },
+      "rationale": "原评分实测接受top_only且既有正向P2P无法检出泛型内部同名歧义；仅追加同一消歧目标的一个嵌套失败case，gold真实通过；公开题面不变。",
+      "expected_total_reference_keys": 5,
+      "private_evidence_is_formal_reward": false
+    }
+  ],
+  "environment_reuse": {
+    "historical_image_record": {
+      "path": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184/image.json",
+      "sha256": "sha256:6068eb2f18bab43d8cf59f0a8ce3958d96ea4e991a87ae6d6a98bf58788a973d",
+      "bytes": 794
+    },
+    "historical_image_id": "sha256:38c3651c72ac2fe7ce40e3cf3e2a6056f8e983fe325d0fed771124e5827a829e",
+    "immutable_base": "xingyaoww/sweb.eval.x86_64.python_s_mypy-15184@sha256:affb925329f2dfb2173482c64a1b65648b250777b66b0d7417ee5340fce74835",
+    "wheel_pins": {
+      "setuptools": "72.1.0",
+      "wheel": "0.43.0",
+      "typing-extensions": "4.12.2",
+      "mypy-extensions": "1.0.0",
+      "tomli": "2.0.1",
+      "types-psutil": "6.0.0.20240621",
+      "types-setuptools": "74.0.0.20240830",
+      "types-typed-ast": "1.5.8.7",
+      "packaging": "24.1"
+    },
+    "current_remote_image_available": null,
+    "wheel_payload_directory_exists_locally": false,
+    "note": "pins 不是全量依赖锁；新宿主须核实际 wheel SHA、每步安装、actor/grader 源码与解释器来源。",
+    "recovered_wheel_assets": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/install_assets_20261003.json",
+      "sha256": "sha256:1cc6445f73e6c006fc20243249d6e0a27bbc8b13e74af636ca019b7595d634c0",
+      "bytes": 6920
+    },
+    "recovered_payload_verified": true,
+    "recovered_assets_installed": false
+  },
+  "source_files": [
+    {
+      "path": "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/public_bundle.json",
+      "sha256": "sha256:2b25cddb768f62d7c651206709125695c54281f4f9ee82419880ed934c9896aa",
+      "bytes": 2226
+    },
+    {
+      "path": "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/base_identity.json",
+      "sha256": "sha256:d2a82896160d15585b1f6bc630614887ab7a980a7cea656f661c264ed366df54",
+      "bytes": 619
+    },
+    {
+      "path": "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-15184/grading.json",
+      "sha256": "sha256:8a4b204701f3b814e2f74c0b5aaa0230543855583c4d87e815d1adb2c4a1d531",
+      "bytes": 1723
+    },
+    {
+      "path": "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-15184/test.patch",
+      "sha256": "sha256:63e112197db7864cb74f6c827e0fff35664e98b0a407ff2bb2871eb22600bded",
+      "bytes": 1023
+    },
+    {
+      "path": "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-15184/gold.patch",
+      "sha256": "sha256:365adadcf2ad3dbed4dc98bf30ebda81f9c788a8ced939ff2a2abd8bfef1a280",
+      "bytes": 836
+    },
+    {
+      "path": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184/image.json",
+      "sha256": "sha256:6068eb2f18bab43d8cf59f0a8ce3958d96ea4e991a87ae6d6a98bf58788a973d",
+      "bytes": 794
+    },
+    {
+      "path": "runs/task2_swegym_dev_20260925/runs/mypy15184/orig/activation_check.json",
+      "sha256": "sha256:0f3262abcc4586a2474bc5acbfa8b120fa6d1dbc61acc178e63af14254e4d464",
+      "bytes": 506
+    },
+    {
+      "path": "runs/task2_swegym_dev_20260925/runs/mypy15184/orig/captures/tree.out",
+      "sha256": "sha256:244923da52fbe4fb3d5f047dd31acf691d7ca1464ef334e498d35e58b10d9f0e",
+      "bytes": 41
+    },
+    {
+      "path": "runs/task2_swegym_dev_20260925/runs/mypy15184/orig/captures/env.out",
+      "sha256": "sha256:5aec7f7495244715e2f7a883ce309e90f4705a00bc561151ad8d14a66021b4e7",
+      "bytes": 241
+    },
+    {
+      "path": "runs/task2_swegym_dev_20260925/runs/mypy15184/orig/captures/mcve.out",
+      "sha256": "sha256:5d4b6d285b77932e3d08212c3b4974d0a803f98ec60408ac6ccf6a063fa6c19e",
+      "bytes": 42
+    },
+    {
+      "path": "runs/task2_swegym_dev_20260925/runs/mypy15184/orig/captures/mcve_ambiguous.out",
+      "sha256": "sha256:46d11b67e48cec8d4d31f89210f76838d007ae964084b4f5e161629b36d70155",
+      "bytes": 113
+    },
+    {
+      "path": "runs/task2_swegym_dev_20260925/runs/mypy15184/orig/captures/assert_type.out",
+      "sha256": "sha256:688c0a51f9ca73e46f04a448516f216fbd94fa91110631e4cfd04c7a641b7669",
+      "bytes": 141
+    },
+    {
+      "path": "runs/task2_swegym_dev_20260925/runs/private/python__mypy-15184_gold.json",
+      "sha256": "sha256:360c1b4ecad418b48b738acf78ec0c4d3470869c05705e7c0a18013cc438d383",
+      "bytes": 700
+    },
+    {
+      "path": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184/noop/ledger.jsonl",
+      "sha256": "sha256:6cff7f3a33b3c9b57748ed146590605ad91eb0bda30f93ffe7eea9ac647f76aa",
+      "bytes": 4323
+    },
+    {
+      "path": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-15184/gold/ledger.jsonl",
+      "sha256": "sha256:e59e3c7d298d422b2418af62e0a22949897b8654c10ec7a237a81614a4efe309",
+      "bytes": 4465
+    }
+  ],
+  "local_checks": [
+    "题面草案只改 problem_statement 及其 SHA，其他公开字段保持不变",
+    "一个正式拟登记 case 与四个开发 case 名唯一；错误候选叠加 gold 后能应用且源码通过 AST 解析",
+    "公开复现三文件通过 AST 解析；未在宿主运行 mypy",
+    "v2有效补丁可应用；原三个case正文逐个相同；新增case实际collect并以base/top_only失败、gold通过验证"
+  ],
+  "cpu_results": {
+    "original_matrix": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/original_cpu_readback_20261003.json",
+      "sha256": "sha256:9114782e443304764058033f83b05fe53783ac7ccdb935aa92768276e1181f3c",
+      "bytes": 7145
+    },
+    "existing_p2p_diagnostics": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/private_behavior_readback_20261003.json",
+      "sha256": "sha256:599d3151e2da5d3e038d09709721c66a519ed9b2293b3b38b3d917209950820d",
+      "bytes": 5927
+    },
+    "nested_f2p_diagnostics": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/nested_guard_cpu_readback_20261003.json",
+      "sha256": "sha256:e7ddd77fafef6d4a4739ea31cde1e4f6a84f7f9ccd1737601e9c417e8024b5a6",
+      "bytes": 4330
+    },
+    "new_formal_reward": null
+  },
+  "independent_review": null,
+  "production_registration": null,
+  "probe_request": null
+}

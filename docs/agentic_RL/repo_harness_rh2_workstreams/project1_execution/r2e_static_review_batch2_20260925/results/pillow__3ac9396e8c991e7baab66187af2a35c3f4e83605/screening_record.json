@@ -1,0 +1,442 @@
+{
+  "schema_id": "rh2.r2e_screening_record.v1",
+  "record_kind": "static_review",
+  "task_id": "r2e_gym_subset::pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605",
+  "instance_id": "pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605",
+  "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0（material_revisions=[]；静态审查材料 v3）",
+  "source_adapter_ref": {
+    "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl:40 (line_sha256 230d16f7…)",
+    "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/validation_bundles_v0.jsonl:40 (line_sha256 6df3db22…)",
+    "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl (line_sha256 c2110039…)",
+    "spec_vendor_id": "r2e_gym_subset_e8b9fcbc",
+    "parser_id": "r2e_prime_pytest_v1",
+    "base_commit": "48e4e0722e6afd4cf38ffc70d9eeea235085ff4e",
+    "source_commit_hash": "3ac9396e8c991e7baab66187af2a35c3f4e83605"
+  },
+  "recipe_ref": {
+    "recipe_id": "r2e_derive_v1",
+    "recipe_sha256": "sha256:0da821a15fa389289f524c60d3a421bc940cce753e4ecf3d53560b7ab6b31df9",
+    "derived_image_ref": "rh2-r2e-derived/pillow:3ac9396e8c99-r2e_derive_v1",
+    "derived_image_ids_with_evidence": {
+      "sha256:74c3618c0072…": "R-f reps noop/gold（重建前）",
+      "sha256:7a80aa717582…": "R-f requal/all 与环境轮复跑 noop/gold",
+      "sha256:c9ec14f750454494c4e8afe730919eafc556d0cbc330246361a278e2364a5ff9": "derived9：devcheck、私有 gold 对照、09-25 正式评分 noop/gold"
+    },
+    "env_recipe": null,
+    "resource_recipe": null,
+    "resources": "默认：2 CPU / 4 GiB / /tmp 1 GiB / pids 512"
+  },
+  "code_snapshot_ref": {
+    "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+    "scripts_digest": "sha256:054f8a048149fe068fa543a240c710ac7816d2af54996ac6e55a4a82c98cdf9f",
+    "grader_profile_digest": "sha256:1bb8e0cf80ce48b15401fdf79d18f4f4c08a5f01001d8b0756311c58de25c19a",
+    "devcheck_claude_code": "2.1.205",
+    "devcheck_profile_digest": "sha256:149b3abeddcf74304e6ec7e524a5fc2f33e04d3d9b98ede8f864c5d8ad7bbcec"
+  },
+  "facts_ref": [
+    {
+      "ref": "runs/r2e_actor_20260925/grader/ledger_p3ac9_noop.jsonl",
+      "line": 1,
+      "role": "noop",
+      "condition": "derived9 c9ec14f7，正式评分代码，09-25",
+      "log": "runs/r2e_actor_20260925/grader/eval_logs/evallog_replay-ed969340eccc-pill_029f6ef4.eval.log",
+      "result": "reward 0，10/11，test_exif_div_zero ERROR"
+    },
+    {
+      "ref": "runs/r2e_actor_20260925/grader/ledger_p3ac9_gold.jsonl",
+      "line": 1,
+      "role": "gold",
+      "condition": "derived9 c9ec14f7，正式评分代码，09-25",
+      "log": "runs/r2e_actor_20260925/grader/eval_logs/evallog_replay-a99657eb8c14-pill_b3c2f8c7.eval.log",
+      "result": "reward 1，11/11"
+    },
+    {
+      "ref": "runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl",
+      "line": 40,
+      "role": "noop",
+      "condition": "7a80aa71，环境轮复跑",
+      "result": "reward 0，10/11"
+    },
+    {
+      "ref": "runs/r2e_env_repair_20260924/_rerun2/ledger_gold.jsonl",
+      "line": 40,
+      "role": "gold",
+      "condition": "7a80aa71，环境轮复跑",
+      "result": "reward 1，11/11"
+    },
+    {
+      "ref": "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl",
+      "line": 40,
+      "role": "noop",
+      "condition": "7a80aa71，R-f 全池",
+      "result": "reward 0，10/11"
+    },
+    {
+      "ref": "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl",
+      "line": 40,
+      "role": "gold",
+      "condition": "7a80aa71，R-f 全池",
+      "result": "reward 1，11/11"
+    },
+    {
+      "ref": "runs/r2e_rf_20260923/remote/ledger_r2e_requal_noop.jsonl",
+      "line": 1,
+      "role": "noop",
+      "condition": "7a80aa71，重新定性",
+      "result": "reward 0，10/11"
+    },
+    {
+      "ref": "runs/r2e_rf_20260923/remote/ledger_r2e_requal_gold.jsonl",
+      "line": 1,
+      "role": "gold",
+      "condition": "7a80aa71，重新定性",
+      "result": "reward 1，11/11"
+    },
+    {
+      "ref": "runs/r2e_rf_20260923/remote/ledger_r2e_reps_noop.jsonl",
+      "line": 2,
+      "role": "noop",
+      "condition": "74c3618c，代表题重复",
+      "result": "reward 0，10/11"
+    },
+    {
+      "ref": "runs/r2e_rf_20260923/remote/ledger_r2e_reps_gold.jsonl",
+      "line": 2,
+      "role": "gold",
+      "condition": "74c3618c，代表题重复",
+      "result": "reward 1，11/11"
+    },
+    {
+      "ref": "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl",
+      "line": [
+        15,
+        63
+      ],
+      "role": "gold（独立参考）",
+      "condition": "M3 独立 runner，来源镜像",
+      "result": "11 passed ×2"
+    },
+    {
+      "ref": "runs/r2e_actor_20260925/devcheck/pillow__3ac9396e8c991e7baab66187af2a35c3/orig/",
+      "role": "开发条件（公开命令）",
+      "condition": "正式启动链，agent 54321，真实 Claude Code 2.1.205 + 桩端点，c9ec14f7",
+      "result": "9 条命令都跑完；R2E 预检三项 ok"
+    },
+    {
+      "ref": "runs/r2e_actor_20260925/devcheck/pillow__3ac9396e8c991e7baab66187af2a35c3/private_gold/private_control.json",
+      "role": "私有 gold 对照（公开命令）",
+      "condition": "同一派生镜像的一次性容器，root，不联网",
+      "result": "复现命令给出修复后的结果；pytest 噪声与 base 相同"
+    },
+    {
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/facts.json",
+      "role": "历史事实汇总",
+      "condition": "09-24 环境审查"
+    }
+  ],
+  "checks": {
+    "1": {
+      "status": "pass",
+      "note": "隐藏测试、gold、run_tests.sh、期望映射的 sha256 与摄入面相同；各日志的隐藏测试树摘要为 43f98461…"
+    },
+    "2": {
+      "status": "pass",
+      "note": "noop 共 5 次（3 个 build），只有目标键为 ERROR，报错与题面 Actual Behavior 逐字相同；devcheck 在 actor 身份下复现"
+    },
+    "3": {
+      "status": "unknown",
+      "note": "只有 user_prompt.txt 的静态渲染；devcheck 用的是合成 user 消息，模型实际收到的消息和 public_hints 怎样送达都未验证"
+    },
+    "4": {
+      "status": "pass",
+      "note": "修复只涉及 PIL/*.py，投影能收进去，ignored_paths 为空；额外排除规则为空"
+    },
+    "5": {
+      "status": "issue",
+      "note": "本题修复（演化形态）与两个新增测试出现在同仓 6 题的公开初态中：2b061b68、2d01f7d0、4bc64835、3a61c9e9、f9d3ee0f、a682ceaf。gold 逐字扫描漏报，测试名扫描命中，本人逐个工作树核对"
+    },
+    "6": {
+      "status": "pass",
+      "note": "不需要安装；评分时 RH2_INSTALL_SKIPPED=1；解题侧不需要装包，venv 里也没有 pip"
+    },
+    "7": {
+      "status": "pass",
+      "note": "测试图片都在工作树里；zip 解码器与 libtiff 编码器可用。test_ifd_rational_save 依赖 libtiff（来源宿主机缺 libtiff 时该键为 ERROR），今后重建镜像要保留"
+    },
+    "8": {
+      "status": "pass",
+      "note": "评分用户 54322、actor 54321 都实测过；/testbed、/tmp、home 可写，激活文件只读"
+    },
+    "9": {
+      "status": "pass",
+      "note": "RH2_OBS_IMPORT_PATH=/testbed/PIL/__init__.py（3 个 build）；通过 editable finder 导入；traceback 位于 /testbed/PIL"
+    },
+    "10": {
+      "status": "issue",
+      "note": "提示指定 python -m pytest，但 Pillow 3.1 的 helper 与 pytest 8 不兼容：写临时文件的用例在清理阶段报 AttributeError，TIFF 三个文件 9/42 假失败，jpeg exif 1 例，libtiff 13 个 FAILED 加 2 个 ERROR，base 与 gold 相同。在 /testbed 下用 PYTHONPATH=Tests python -m unittest，42 个全 OK"
+    },
+    "11": {
+      "status": "pass",
+      "note": "准备、解题、评分都不需要网络；正式链只有 relay 可达"
+    },
+    "12": {
+      "status": "not_applicable"
+    },
+    "13": {
+      "status": "pass",
+      "note": "内存峰值约 362 MB，限额 4 GiB；测试阶段约 0.1 s"
+    },
+    "14": {
+      "status": "pass",
+      "note": "noop 与 gold 各 5 次、跨 3 个 build，逐键一致；M3 gold 2 次一致"
+    },
+    "15": {
+      "status": "not_checked"
+    },
+    "16": {
+      "status": "pass",
+      "note": "gold 这种源码改动形状已实测。未跟踪的二进制文件（例如照题面示例生成的 temp.tiff）按导出脚本 git add -N + diff --binary 会被收进并重放，这一点只做了静态核对，未实跑"
+    },
+    "17": {
+      "status": "pass",
+      "note": "RH2_SETUP_RESTORED=5，EXPECTED_TEST_FILES=6；runner 摘要前后一致；隐藏 helper 随隐藏测试放入"
+    },
+    "18": {
+      "status": "pass",
+      "note": "自定义 unittest runner 收集 11 项，short summary 段完整，没有段外解析"
+    },
+    "19": {
+      "status": "pass",
+      "note": "键为 Class.method，共 11 个，没有撞键、参数化或 SKIP；期望里没有非 PASSED 键"
+    },
+    "20": {
+      "status": "pass",
+      "note": "唯一目标键 TestFileTiffMetadata.test_exif_div_zero（noop ERROR，gold PASSED）；其余 10 个是回归键"
+    },
+    "21": {
+      "status": "pass"
+    },
+    "22": {
+      "status": "pass",
+      "note": "M3 独立 runner 的 gold 结果逐键相同；noop 参考侧未由本人核对"
+    },
+    "23": {
+      "status": "issue",
+      "note": "题面把原因归到零分母；实测 base 上 1/2 同样失败、已注册标签写 0/0 正常。有误导性，但不构成冲突"
+    },
+    "24": {
+      "status": "pass",
+      "note": "静态判断：不限定类型码，也不限定内部 helper；读回形状由题面示例的 [0] 限定。待 K1 / K1b / K4 实跑确认"
+    },
+    "25": {
+      "status": "issue",
+      "note": "只覆盖字面例子：只特判零分母（K2）、只注册 41988 并设长度 0 的修复也能得 1；让 LONG writer 接受 IFDRational 的错误修复会被拦下（K3）。静态推断，待实跑"
+    },
+    "26": {
+      "status": "issue",
+      "note": "gold 把未注册整数标签的类型码从 LONG 改为 SHORT（读回值不变），没有测试覆盖；P1–P4 由回归键保护"
+    },
+    "27": {
+      "status": "pass",
+      "note": "修到了原例，也修到了根因（1/2 同样可用）；没有无关改动"
+    },
+    "28": {
+      "status": "not_applicable"
+    },
+    "29": {
+      "status": "pass",
+      "note": "git 没有 refs、reflog、remote，HEAD 没有子提交；工作树里没有未来测试或修复代码"
+    },
+    "30": {
+      "status": "pass",
+      "note": "网络被禁。上游修复存在于之后所有 Pillow 版本中，模型预训练很可能见过，这一点静态无法度量"
+    },
+    "31": {
+      "status": "not_checked",
+      "note": "共享控制面没有重审；本题没有发现特有的入口"
+    },
+    "32": {
+      "status": "pass",
+      "note": "断言检查的是保存并读回后的行为"
+    },
+    "33": {
+      "status": "not_checked"
+    },
+    "34": {
+      "status": "not_checked"
+    },
+    "35": {
+      "status": "not_checked"
+    },
+    "36": {
+      "status": "not_checked"
+    },
+    "37": {
+      "status": "not_applicable"
+    },
+    "38": {
+      "status": "not_applicable"
+    },
+    "39": {
+      "status": "not_applicable"
+    },
+    "40": {
+      "status": "not_applicable"
+    }
+  },
+  "issues": [
+    {
+      "id": "p3ac9-I1",
+      "check": 23,
+      "category": "spec_quality",
+      "severity": "low",
+      "evidence_level": "当前 CPU（devcheck 镜像实测）",
+      "summary": "题面标题和描述把原因归到零分母；实际原因是未注册标签的类型推断落到 LONG。base 上 41988 写 1/2 同样失败，282 写 0/0 正常",
+      "evidence_refs": [
+        "runs/r2e_actor_20260925/devcheck/pillow__3ac9396e8c991e7baab66187af2a35c3/orig/captures/pr3_2_cmd.out"
+      ],
+      "proposed_action": "只记录，不修订；示例本身准确，traceback 指向正确位置",
+      "status": "open"
+    },
+    {
+      "id": "p3ac9-I2",
+      "check": 25,
+      "category": "test_coverage",
+      "severity": "low",
+      "evidence_level": "静态推断（待实跑）",
+      "summary": "目标测试只覆盖题面字面例子：只特判零分母、或只注册 41988 并设长度 0 的部分修复也能得 1。因为题面只描述了零分母的情形，这不算违背题意",
+      "evidence_refs": [
+        "card.md §5 K2"
+      ],
+      "proposed_action": "协调者实跑 K2；不修订测试",
+      "status": "open"
+    },
+    {
+      "id": "p3ac9-I3",
+      "check": 26,
+      "category": "gold_side_effect",
+      "severity": "low",
+      "evidence_level": "静态推断",
+      "summary": "gold 让猜类型分支变得可达后，未注册整数标签若所有值都小于 2**16，类型码由 LONG 变为 SHORT；读回的值不变，没有测试覆盖，公开材料也没有约定",
+      "evidence_refs": [
+        "gold.patch",
+        "worktree PIL/TiffImagePlugin.py:499-517"
+      ],
+      "proposed_action": "只记录",
+      "status": "open"
+    },
+    {
+      "id": "p3ac9-I4",
+      "check": 10,
+      "category": "solver_condition",
+      "severity": "low",
+      "evidence_level": "当前 CPU（devcheck 与私有 gold 对照）",
+      "summary": "公开提示要求用 python -m pytest，但在本仓 unittest 时代的测试上，写临时文件的用例会恒定假失败（Tests/helper.py:32/35），base 与 gold 两侧相同；PYTHONPATH=Tests python -m unittest 可用。历史 known_issues 的 solver_condition:public_test_noise 族已收录；v3 提示让它恰好落在提示指定的路径上",
+      "evidence_refs": [
+        "runs/r2e_actor_20260925/devcheck/pillow__3ac9396e8c991e7baab66187af2a35c3/orig/captures/pr7_4_pytest.out",
+        "runs/r2e_actor_20260925/devcheck/pillow__3ac9396e8c991e7baab66187af2a35c3/orig/captures/pr8_5_cmd.out",
+        "runs/r2e_actor_20260925/devcheck/pillow__3ac9396e8c991e7baab66187af2a35c3/private_gold/private_control.json"
+      ],
+      "proposed_action": "由任务面决定是否在环境说明里注明这类噪声和替代运行方式（环境说明，不是修订题面）",
+      "status": "open"
+    },
+    {
+      "id": "p3ac9-I5",
+      "check": 5,
+      "category": "task_relation",
+      "severity": "low",
+      "evidence_level": "本地核对公开工作树",
+      "summary": "本题修复（演化形态）与 test_exif_div_zero、test_ifd_rational_save 出现在同仓 6 题（Pillow 8.0–10.1）的公开初态中；逐字的 gold 扫描因上游重构而漏报",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/cross_task_test_scan.json",
+        "runs/r2e_static_prep_20260924/v3/public/pillow__{2b061b68,2d01f7d0,4bc64835,3a61c9e9,f9d3ee0f,a682ceaf}…/worktree/src/PIL/TiffTags.py 与 TiffImagePlugin.py"
+      ],
+      "proposed_action": "划分数据集时把这 7 题当作同一族，不要拆到训练和评测两边",
+      "status": "open"
+    },
+    {
+      "id": "p3ac9-I6",
+      "check": 3,
+      "category": "actor_unverified",
+      "severity": "unknown",
+      "evidence_level": "缺证据",
+      "summary": "模型实际收到的完整消息、public_hints 的送达方式，以及真实模型的求解都没有验证",
+      "evidence_refs": [
+        "runs/r2e_actor_20260925/devcheck/pillow__3ac9396e8c991e7baab66187af2a35c3/orig/stub/requests/messages_000.json"
+      ],
+      "proposed_action": "actor 待验",
+      "status": "open"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": []
+  },
+  "revision_refs": [],
+  "proposed_experiments": [
+    {
+      "id": "K1",
+      "kind": "合理替代解",
+      "expected_reward": 1,
+      "expected_mismatched": [],
+      "patch": "PIL/TiffImagePlugin.py ImageFileDirectory_v2._setitem：在原 try 之前，若 tag not in TAGS_V2、values 非空且全是 IFDRational，则 tagtype=5；K1b 用 10，预期同样得 1"
+    },
+    {
+      "id": "K2",
+      "kind": "可能蒙混的部分实现",
+      "expected_reward": 1,
+      "expected_mismatched": [],
+      "patch": "位置同 K1，条件改为所有值都是 denominator==0 的 IFDRational 才设 5；IFDRational(1,2) 仍会失败"
+    },
+    {
+      "id": "K3",
+      "kind": "错误实现",
+      "expected_reward": 0,
+      "expected_mismatched": [
+        "TestFileTiffMetadata.test_exif_div_zero（观测 FAILED）"
+      ],
+      "patch": "只给 IFDRational 加 __index__，返回 int(self._numerator)"
+    },
+    {
+      "id": "K4",
+      "kind": "满足题面文字但违背示例的候选",
+      "expected_reward": 0,
+      "expected_mismatched": [
+        "TestFileTiffMetadata.test_exif_div_zero（观测 ERROR，TypeError）"
+      ],
+      "patch": "只在 PIL/TiffTags.py 的 TAGS_V2 加 41988: (\"DigitalZoomRatio\", RATIONAL, 1)；K4b 长度写 0，预期得 1"
+    }
+  ],
+  "disposition": {
+    "scope": "static_review",
+    "state": "needs_review",
+    "reason": "静态候选，待 actor 验证；题意与测试不需要修订（问题均为低严重度，见 issues）",
+    "prior_disposition": {
+      "state": "environment_qualified",
+      "scope": "环境资格（09-24 P4），不含题目质量",
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/screening_record.json"
+    },
+    "draft_changed_by_history": false,
+    "history_delta_ref": "old_findings_delta.md",
+    "next_step": "用正式评分代码在 derived9（c9ec14f7）上实跑 K1 / K1b、K2、K3、K4 / K4b",
+    "reviewer": null
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "reviewer_exposure": "主审见过 gold、隐藏测试、期望映射、运行日志、devcheck 与私有 gold 对照；历史调查是在初判封存之后才读的",
+    "not_for_solver": true,
+    "note": "这不是正式训练或评测的批准"
+  },
+  "costs": {
+    "review_tokens": null,
+    "review_usd": null,
+    "new_cpu_seconds_by_reviewer": null,
+    "note": "主审没有运行任何命令；09-25 的 noop / gold 与 devcheck 由协调者执行，耗时见各自账本"
+  },
+  "coordinator_notes": [
+    {
+      "date": "2026-09-25",
+      "by": "Claude B（协调者）",
+      "note": "本记录写于候选实跑之前，'待实跑''预期'为当时推断。实跑结果见 docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/grader_candidates.md，主审与复核的对照见同目录 results/<instance_id>/review.md，批次结论见 README.md §3。协调者未改动本记录的其它字段。"
+    }
+  ]
+}

@@ -56,3 +56,6 @@
 - **验收**（`test_parse_wire.py` 14 例）：真实 EOS 正控剥除且工具调用不变；普通 token 拼出的字面量保留（计数 `eos_literal_kept`）；无事实不剥（`eos_fact_missing`）；正文中间字面量只剥末尾一个；事实一次性不串轮；未配 id 不剥；正文提到标签不误报；完整调用 + 悬空片段 → `ill_formed=True` 且调用保留；单独悬空 / XML 片段 / JSON 片段三形态；挂接点（原函数同时含 `parse_model_output(` 与 `call_sglang_generate(`）；发布器包装幂等且事实在同一任务里被解析取走。
 - **B 接线**：[交接 §2](b_wiring_handoff_20260924.md) 的示例已改为传 `eos_token_id` 并装发布器。
 
+## 7. Codex 修复复核（2026-09-25）
+
+**R1/R2 通过，#5 收口。** [完整报告与证据](../batch6_efficiency_20260921/review_followup_e5_20260925/README.md)。本轮使用真实 tokenizer、HTTP adapter、capture wire、parser 与轨迹记录，只有引擎返回固定 ID。六个 session 并发覆盖真实 EOS、普通 token 拼出的字面量、正文标签、正常和悬空调用；采样 ID / logprob 保持、各 commit 一次、无 pending / draft 残留。接受本文已声明的窄语法范围，不扩成完整坏调用检测；无需再跑整条启动链。

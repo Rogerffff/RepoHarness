@@ -1,0 +1,410 @@
+{
+  "source": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl",
+  "source_sha256": "dc90e8c1485ae5401f8ec9c60c74a2f9d631805ccb482719aced33d84c817adb",
+  "instance_id": "numpy__2f4a965019722c3c56f43433bfa4a99c4c083138",
+  "file": "numpy/lib/npyio.py",
+  "source_version": "new_file_content (gold)",
+  "savez_lines": [
+    {
+      "line": 660,
+      "text": "def _savez(file, args, kwds, compress, allow_pickle=True, pickle_kwargs=None):"
+    },
+    {
+      "line": 661,
+      "text": "    # Import is postponed to here since zipfile depends on gzip, an optional"
+    },
+    {
+      "line": 662,
+      "text": "    # component of the so-called standard library."
+    },
+    {
+      "line": 663,
+      "text": "    import zipfile"
+    },
+    {
+      "line": 664,
+      "text": "    # Import deferred for startup time improvement"
+    },
+    {
+      "line": 665,
+      "text": "    import tempfile"
+    },
+    {
+      "line": 666,
+      "text": ""
+    },
+    {
+      "line": 667,
+      "text": "    if isinstance(file, basestring):"
+    },
+    {
+      "line": 668,
+      "text": "        if not file.endswith('.npz'):"
+    },
+    {
+      "line": 669,
+      "text": "            file = file + '.npz'"
+    },
+    {
+      "line": 670,
+      "text": "    elif is_pathlib_path(file):"
+    },
+    {
+      "line": 671,
+      "text": "        if not file.name.endswith('.npz'):"
+    },
+    {
+      "line": 672,
+      "text": "            file = file.parent / (file.name + '.npz')"
+    },
+    {
+      "line": 673,
+      "text": ""
+    },
+    {
+      "line": 674,
+      "text": "    namedict = kwds"
+    },
+    {
+      "line": 675,
+      "text": "    for i, val in enumerate(args):"
+    },
+    {
+      "line": 676,
+      "text": "        key = 'arr_%d' % i"
+    },
+    {
+      "line": 677,
+      "text": "        if key in namedict.keys():"
+    },
+    {
+      "line": 678,
+      "text": "            raise ValueError("
+    },
+    {
+      "line": 679,
+      "text": "                \"Cannot use un-named variables and keyword %s\" % key)"
+    },
+    {
+      "line": 680,
+      "text": "        namedict[key] = val"
+    },
+    {
+      "line": 681,
+      "text": ""
+    },
+    {
+      "line": 682,
+      "text": "    if compress:"
+    },
+    {
+      "line": 683,
+      "text": "        compression = zipfile.ZIP_DEFLATED"
+    },
+    {
+      "line": 684,
+      "text": "    else:"
+    },
+    {
+      "line": 685,
+      "text": "        compression = zipfile.ZIP_STORED"
+    },
+    {
+      "line": 686,
+      "text": ""
+    },
+    {
+      "line": 687,
+      "text": "    zipf = zipfile_factory(file, mode=\"w\", compression=compression)"
+    },
+    {
+      "line": 688,
+      "text": ""
+    },
+    {
+      "line": 689,
+      "text": "    # Stage arrays in a temporary file on disk, before writing to zip."
+    },
+    {
+      "line": 690,
+      "text": ""
+    },
+    {
+      "line": 691,
+      "text": "    # Since target file might be big enough to exceed capacity of a global"
+    },
+    {
+      "line": 692,
+      "text": "    # temporary directory, create temp file side-by-side with the target file."
+    },
+    {
+      "line": 693,
+      "text": "    file_dir, file_prefix = os.path.split(file) if _is_string_like(file) else (None, 'tmp')"
+    },
+    {
+      "line": 694,
+      "text": "    fd, tmpfile = tempfile.mkstemp(prefix=file_prefix, dir=file_dir, suffix='-numpy.npy')"
+    },
+    {
+      "line": 695,
+      "text": "    os.close(fd)"
+    },
+    {
+      "line": 696,
+      "text": "    try:"
+    },
+    {
+      "line": 697,
+      "text": "        for key, val in namedict.items():"
+    },
+    {
+      "line": 698,
+      "text": "            fname = key + '.npy'"
+    },
+    {
+      "line": 699,
+      "text": "            fid = open(tmpfile, 'wb')"
+    },
+    {
+      "line": 700,
+      "text": "            try:"
+    },
+    {
+      "line": 701,
+      "text": "                format.write_array(fid, np.asanyarray(val),"
+    },
+    {
+      "line": 702,
+      "text": "                                   allow_pickle=allow_pickle,"
+    },
+    {
+      "line": 703,
+      "text": "                                   pickle_kwargs=pickle_kwargs)"
+    },
+    {
+      "line": 704,
+      "text": "                fid.close()"
+    },
+    {
+      "line": 705,
+      "text": "                fid = None"
+    },
+    {
+      "line": 706,
+      "text": "                zipf.write(tmpfile, arcname=fname)"
+    },
+    {
+      "line": 707,
+      "text": "            except IOError as exc:"
+    },
+    {
+      "line": 708,
+      "text": "                raise IOError(\"Failed to write to %s: %s\" % (tmpfile, exc))"
+    },
+    {
+      "line": 709,
+      "text": "            finally:"
+    },
+    {
+      "line": 710,
+      "text": "                if fid:"
+    },
+    {
+      "line": 711,
+      "text": "                    fid.close()"
+    },
+    {
+      "line": 712,
+      "text": "    finally:"
+    },
+    {
+      "line": 713,
+      "text": "        os.remove(tmpfile)"
+    },
+    {
+      "line": 714,
+      "text": ""
+    },
+    {
+      "line": 715,
+      "text": "    zipf.close()"
+    }
+  ],
+  "array_bytes": 2147583648,
+  "two_copies_payload_lower_bound_bytes": 4295167296,
+  "inference": "ZIP_STORED output grows while temporary .npy remains until zipf.write returns; 3 GiB is not a sufficient capacity. This is source inference, not a new threshold run.",
+  "observed_profiles": [
+    {
+      "ledger": "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl",
+      "image_identity": "local_build:sha256:3a64ae0820dfeb96f05336952245a68aa111de74a867ac9c61b84d67f6f2ad1a",
+      "scripts_digest": "sha256:dd9dfcd7f4a0a670c98120e4e3adc37059a083dfdda5a300a8846e24f42ec834",
+      "candidate_patch_sha256": null,
+      "policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:1bb8e0cf80ce48b15401fdf79d18f4f4c08a5f01001d8b0756311c58de25c19a",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "resource": {
+        "mem_peak_mb": 347.816,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": 140,
+        "expected_total": 142,
+        "f2p_pass": null,
+        "f2p_total": null,
+        "failure_category": "tests_failed",
+        "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+        "grading_semantics": "r2e_expected_map",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": null,
+        "p2p_total": null,
+        "report_id": "rpt_grading_a25f9e11",
+        "reward": 0.0
+      },
+      "log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-n_a25f9e11.eval.log"
+    },
+    {
+      "ledger": "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl",
+      "image_identity": "local_build:sha256:3a64ae0820dfeb96f05336952245a68aa111de74a867ac9c61b84d67f6f2ad1a",
+      "scripts_digest": "sha256:dd9dfcd7f4a0a670c98120e4e3adc37059a083dfdda5a300a8846e24f42ec834",
+      "candidate_patch_sha256": "sha256:4840df98fcad433a40e4fd26dc541c6c957bef0f66c6ca0091290f06a790e558",
+      "policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:1bb8e0cf80ce48b15401fdf79d18f4f4c08a5f01001d8b0756311c58de25c19a",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "resource": {
+        "mem_peak_mb": 340.281,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": 141,
+        "expected_total": 142,
+        "f2p_pass": null,
+        "f2p_total": null,
+        "failure_category": "tests_failed",
+        "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+        "grading_semantics": "r2e_expected_map",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": null,
+        "p2p_total": null,
+        "report_id": "rpt_grading_f642bc09",
+        "reward": 0.0
+      },
+      "log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-n_f642bc09.eval.log"
+    },
+    {
+      "ledger": "runs/r2e_rf_20260923/remote/ledger_r2e_numpy_bigtmp_noop.jsonl",
+      "image_identity": "local_build:sha256:3a64ae0820dfeb96f05336952245a68aa111de74a867ac9c61b84d67f6f2ad1a",
+      "scripts_digest": "sha256:dd9dfcd7f4a0a670c98120e4e3adc37059a083dfdda5a300a8846e24f42ec834",
+      "candidate_patch_sha256": null,
+      "policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:75b2a60f3ce7b23cf1ff22ec083893bdc3d749d36b67bd031c5ce449ac70cc72",
+        "memory_bytes": 12884901888,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 6442450944,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "resource": {
+        "mem_peak_mb": 4439.281,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": 141,
+        "expected_total": 142,
+        "f2p_pass": null,
+        "f2p_total": null,
+        "failure_category": "tests_failed",
+        "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+        "grading_semantics": "r2e_expected_map",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": null,
+        "p2p_total": null,
+        "report_id": "rpt_grading_dba31e95",
+        "reward": 0.0
+      },
+      "log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-numpy-bigt_dba31e95.eval.log"
+    },
+    {
+      "ledger": "runs/r2e_rf_20260923/remote/ledger_r2e_numpy_bigtmp_gold.jsonl",
+      "image_identity": "local_build:sha256:3a64ae0820dfeb96f05336952245a68aa111de74a867ac9c61b84d67f6f2ad1a",
+      "scripts_digest": "sha256:dd9dfcd7f4a0a670c98120e4e3adc37059a083dfdda5a300a8846e24f42ec834",
+      "candidate_patch_sha256": "sha256:4840df98fcad433a40e4fd26dc541c6c957bef0f66c6ca0091290f06a790e558",
+      "policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:75b2a60f3ce7b23cf1ff22ec083893bdc3d749d36b67bd031c5ce449ac70cc72",
+        "memory_bytes": 12884901888,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 6442450944,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "resource": {
+        "mem_peak_mb": 4435.082,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": 142,
+        "expected_total": 142,
+        "f2p_pass": null,
+        "f2p_total": null,
+        "failure_category": null,
+        "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+        "grading_semantics": "r2e_expected_map",
+        "infra_failure_detail": null,
+        "outcome": "resolved",
+        "p2p_fail": null,
+        "p2p_total": null,
+        "report_id": "rpt_grading_41ab3dae",
+        "reward": 1.0
+      },
+      "log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-numpy-bigt_41ab3dae.eval.log"
+    }
+  ]
+}

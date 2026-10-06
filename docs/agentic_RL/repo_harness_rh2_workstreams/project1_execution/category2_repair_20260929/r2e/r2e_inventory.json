@@ -1,0 +1,3255 @@
+{
+  "schema": "category2.r2e.local_inventory.v1",
+  "as_of": "2026-09-29",
+  "scope": "starting_inventory source=R2E 的13题；不领取第1/3类。无新SSH、容器、模型或题目运行。",
+  "source_inventory": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/starting_inventory.json",
+    "sha256": "sha256:25a83b5d00b0c2bf5f1351da13fe2dd98d1b691628b09b602e352d8071e5def6"
+  },
+  "all_remain_category2": true,
+  "tasks": [
+    {
+      "instance_id": "aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a",
+      "short_name": "aiohttp__4075c653",
+      "source": "R2E",
+      "starting_category": 2,
+      "proposed_category": 2,
+      "priority": 1,
+      "status": "grading_accepted_public_repair_required",
+      "repair_direction": "评分修订独立验收通过；明确仍需改正题面 bytes 插入 f-string 的错误复现。",
+      "remaining": [
+        "v11 七方、完整日志、136 键映射、替代正对照和 actor 七命令均可收口。",
+        "当前公开题面原例 1 在 base 已抛 InvalidHeader；旧卡所谓可选 R-f 不再适用当前严格口径。",
+        "三个 C 扩展 expected FAILED 键已解释；当前离线纯 Python 路径不会因合理源码修复翻转，不能据其存在要求全 PASS。"
+      ],
+      "dependencies": [
+        "窄 R-f、fresh 公开读者和实际题面交付核对",
+        "如以后开放 C 扩展构建路径，先重定 expected/开发范围"
+      ],
+      "minimum_acceptance_matrix_expected_not_run": "不重跑 v11 七方。复用 ALT2 主正对照、ALT1 备选；原 gold/noop/DG1=0，ALT1–ALT4=1；新公开复现 base 失败、ALT2 通过并核实际消息。",
+      "material_current": {
+        "material_revisions": [
+          "r2e-mr-061",
+          "r2e-mr-062"
+        ],
+        "hidden_tests_tree_sha256": "sha256:3ff70876554bee932635b48cbf85bd988ac5b83df3e46a871b29ca1418d210d4",
+        "expected_output_sha256": "sha256:fdabd74b34e463b84e09abb2998b33ee5a7906fa2e7d662673ba73d376880491",
+        "expected_count": 136,
+        "expected_nonpass": {
+          "test_c_parser_loaded": "FAILED",
+          "test_invalid_character[pyloop]": "FAILED",
+          "test_invalid_linebreak[pyloop]": "FAILED"
+        },
+        "statement_sha256": "sha256:219538aa24f40ea4acb846876dd7585123a9ed2148b7abed722e166fe587eb88"
+      },
+      "sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/reviewer_initial.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/public_read.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/revision_draft.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/screening_record.json"
+      ],
+      "existing_formal_rows": [
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_gold.jsonl",
+          "line": 1,
+          "candidate_patch_sha256": "sha256:f99fe9252adaf4d68e4c3988836676c55710867429f4d73e00ed5e5712cb46b8",
+          "origin": "aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a.gold.patch",
+          "reward": 0.0,
+          "expected_match": 132,
+          "expected_total": 136,
+          "keys_equal": true,
+          "mismatched": [
+            "test_http_request_ctl_in_target_rejected[py-parser-pyloop-cr-in-target]",
+            "test_http_request_ctl_in_target_rejected[py-parser-pyloop-ff-in-target]",
+            "test_http_request_ctl_in_target_rejected[py-parser-pyloop-lf-in-target]",
+            "test_http_request_ctl_in_target_rejected[py-parser-pyloop-tab-in-target]"
+          ],
+          "image_id": "sha256:dbe77bf048e1e03d02ab678c2a7ef0fc4b5c4042e1d6aebbf4138e562a615e99",
+          "recipe": {
+            "derived_image_id": "sha256:dbe77bf048e1e03d02ab678c2a7ef0fc4b5c4042e1d6aebbf4138e562a615e99",
+            "derived_image_ref": "rh2-r2e-derived/aiohttp:4075c653fb67-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:e139ba5708390eca37d126e49637de55a69348a572e59f0dc914fba0b4e7db32"
+          },
+          "log_sha256": "sha256:9068bf4fc0edab6315e3298eb55f8ae6f4238f6f491c88153c1b0dafc96a7d99",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-29T00:30:53.157873+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_s2.jsonl",
+          "line": 1,
+          "candidate_patch_sha256": "sha256:d3a4b23c79944783ad9abe1fd0d0b26c1fcc5e7e30d62da56605b2211d91f3f8",
+          "origin": "aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a.diff",
+          "reward": 1.0,
+          "expected_match": 136,
+          "expected_total": 136,
+          "keys_equal": true,
+          "mismatched": [],
+          "image_id": "sha256:dbe77bf048e1e03d02ab678c2a7ef0fc4b5c4042e1d6aebbf4138e562a615e99",
+          "recipe": {
+            "derived_image_id": "sha256:dbe77bf048e1e03d02ab678c2a7ef0fc4b5c4042e1d6aebbf4138e562a615e99",
+            "derived_image_ref": "rh2-r2e-derived/aiohttp:4075c653fb67-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:e139ba5708390eca37d126e49637de55a69348a572e59f0dc914fba0b4e7db32"
+          },
+          "log_sha256": "sha256:9b4eb84d53bd7231a2263119789c9a490e2b2334d0e934c4439b5c2ea9a7705c",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-29T00:41:36.974732+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_s4.jsonl",
+          "line": 1,
+          "candidate_patch_sha256": "sha256:653546cb292aa16835ff0ec6948d736f370b430558869d24c8caa705520850b4",
+          "origin": "aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a.diff",
+          "reward": 1.0,
+          "expected_match": 136,
+          "expected_total": 136,
+          "keys_equal": true,
+          "mismatched": [],
+          "image_id": "sha256:dbe77bf048e1e03d02ab678c2a7ef0fc4b5c4042e1d6aebbf4138e562a615e99",
+          "recipe": {
+            "derived_image_id": "sha256:dbe77bf048e1e03d02ab678c2a7ef0fc4b5c4042e1d6aebbf4138e562a615e99",
+            "derived_image_ref": "rh2-r2e-derived/aiohttp:4075c653fb67-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:e139ba5708390eca37d126e49637de55a69348a572e59f0dc914fba0b4e7db32"
+          },
+          "log_sha256": "sha256:6ff69ab75468b3b7b9b220955d5394ecbb0ab045945523203ff3754c8ebe8876",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-29T00:41:36.972483+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_s3.jsonl",
+          "line": 1,
+          "candidate_patch_sha256": "sha256:f2d8d6f05190ec590ab594ccd626603fc11dcf172b1170510b7475316998b042",
+          "origin": "aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a.diff",
+          "reward": 0.0,
+          "expected_match": 134,
+          "expected_total": 136,
+          "keys_equal": true,
+          "mismatched": [
+            "test_bad_headers[py-parser-pyloop-nonascii-mid-name]",
+            "test_http_request_bad_status_line_other_whitespace[py-parser-pyloop-vt-separator]"
+          ],
+          "image_id": "sha256:dbe77bf048e1e03d02ab678c2a7ef0fc4b5c4042e1d6aebbf4138e562a615e99",
+          "recipe": {
+            "derived_image_id": "sha256:dbe77bf048e1e03d02ab678c2a7ef0fc4b5c4042e1d6aebbf4138e562a615e99",
+            "derived_image_ref": "rh2-r2e-derived/aiohttp:4075c653fb67-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:e139ba5708390eca37d126e49637de55a69348a572e59f0dc914fba0b4e7db32"
+          },
+          "log_sha256": "sha256:094f0407b31027029275f3ac63269973d7c768600df079e4dfc40b957cbca268",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-29T00:36:24.233520+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_noop.jsonl",
+          "line": 1,
+          "candidate_patch_sha256": null,
+          "origin": "noop",
+          "reward": 0.0,
+          "expected_match": 131,
+          "expected_total": 136,
+          "keys_equal": true,
+          "mismatched": [
+            "test_bad_headers[py-parser-pyloop-\\xffoo: bar]",
+            "test_bad_headers[py-parser-pyloop-nonascii-mid-name]",
+            "test_http_request_bad_status_line_other_whitespace[py-parser-pyloop-ff-separator]",
+            "test_http_request_bad_status_line_other_whitespace[py-parser-pyloop-vt-separator]",
+            "test_http_request_bad_status_line_whitespace[py-parser-pyloop]"
+          ],
+          "image_id": "sha256:dbe77bf048e1e03d02ab678c2a7ef0fc4b5c4042e1d6aebbf4138e562a615e99",
+          "recipe": {
+            "derived_image_id": "sha256:dbe77bf048e1e03d02ab678c2a7ef0fc4b5c4042e1d6aebbf4138e562a615e99",
+            "derived_image_ref": "rh2-r2e-derived/aiohttp:4075c653fb67-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:e139ba5708390eca37d126e49637de55a69348a572e59f0dc914fba0b4e7db32"
+          },
+          "log_sha256": "sha256:8bbe2cf162c691a3dd7d9f9dd549d4c4bd4ccbb66adb4646ea10a1f770dfbd10",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-29T00:30:52.776675+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_s1.jsonl",
+          "line": 1,
+          "candidate_patch_sha256": "sha256:f3c6056416e15fa36521dd196f66315cee5cc2197a555d4f8087fcc4304c20c2",
+          "origin": "aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a.diff",
+          "reward": 1.0,
+          "expected_match": 136,
+          "expected_total": 136,
+          "keys_equal": true,
+          "mismatched": [],
+          "image_id": "sha256:dbe77bf048e1e03d02ab678c2a7ef0fc4b5c4042e1d6aebbf4138e562a615e99",
+          "recipe": {
+            "derived_image_id": "sha256:dbe77bf048e1e03d02ab678c2a7ef0fc4b5c4042e1d6aebbf4138e562a615e99",
+            "derived_image_ref": "rh2-r2e-derived/aiohttp:4075c653fb67-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:e139ba5708390eca37d126e49637de55a69348a572e59f0dc914fba0b4e7db32"
+          },
+          "log_sha256": "sha256:5825b56b0cd04f798af4943ca9ffcca62992ef88367aa07815b3bcf6c46e96aa",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-29T00:36:23.968693+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_s5.jsonl",
+          "line": 1,
+          "candidate_patch_sha256": "sha256:0ef49961d4e1c9615c2ce13788349b3e1cc5a0accf9f2295023de27dc49e3e4c",
+          "origin": "aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a.diff",
+          "reward": 1.0,
+          "expected_match": 136,
+          "expected_total": 136,
+          "keys_equal": true,
+          "mismatched": [],
+          "image_id": "sha256:dbe77bf048e1e03d02ab678c2a7ef0fc4b5c4042e1d6aebbf4138e562a615e99",
+          "recipe": {
+            "derived_image_id": "sha256:dbe77bf048e1e03d02ab678c2a7ef0fc4b5c4042e1d6aebbf4138e562a615e99",
+            "derived_image_ref": "rh2-r2e-derived/aiohttp:4075c653fb67-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:e139ba5708390eca37d126e49637de55a69348a572e59f0dc914fba0b4e7db32"
+          },
+          "log_sha256": "sha256:f6b4fe6a8ac3605f6e91736ee387c610b213f7840c7efeae45a7dfb07d49e981",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-29T00:30:53.329240+00:00"
+        }
+      ],
+      "existing_devcheck": [
+        {
+          "source": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/devcheck_v11/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/orig/attempt.json",
+          "image": "sha256:dbe77bf048e1e03d02ab678c2a7ef0fc4b5c4042e1d6aebbf4138e562a615e99",
+          "checks": {
+            "interpreter_in_tool_result": true,
+            "host_log_present": true,
+            "no_harness_dir_in_container": true,
+            "no_launcher_or_done_marker": true,
+            "message_start_matches_stub_requests": true,
+            "exit_code_zero": true,
+            "result_event_present": true,
+            "log_complete": true,
+            "bashenv_denied_for_agent": true,
+            "all_commands_ran": true,
+            "all_match_expect": true,
+            "r2e_preflight_ok": true,
+            "image_is_overlay_derived_id": true
+          },
+          "commands": [
+            {
+              "id": "r2e_preflight",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "env",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            },
+            {
+              "id": "env_import_versions",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            },
+            {
+              "id": "repro_parser_issue_cases",
+              "rc": 1,
+              "expect": "nonzero",
+              "matches_expect": true
+            },
+            {
+              "id": "repro_server_400_py_parser",
+              "rc": 1,
+              "expect": "nonzero",
+              "matches_expect": true
+            },
+            {
+              "id": "public_http_parser_tests",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            },
+            {
+              "id": "public_related_tests",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            }
+          ],
+          "cleanup": {
+            "container_rm": 0,
+            "network_failures": [],
+            "relay_failures": [],
+            "stub_rc": 0,
+            "labeled_containers_left": [],
+            "labeled_networks_left": [],
+            "residual_after_force": []
+          }
+        }
+      ],
+      "verification_scope": "本轮读取当前卡/修订/独立意见并结构化核对既有账本和开发记录；除4075专项与scrapy rev2外，不声称完整独立重验所有原件。"
+    },
+    {
+      "instance_id": "orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237",
+      "short_name": "orange3__22e98f8f",
+      "source": "R2E",
+      "starting_category": 2,
+      "proposed_category": 2,
+      "priority": 2,
+      "status": "public_closeout",
+      "repair_direction": "明确：采用已通过独立审查的 R-f 草案；公开包已准备。",
+      "remaining": [
+        "新公开读者未完成；正式 ingest 仍为含答案的旧题面。",
+        "最终实际消息尚未捕获，当前 consumer/准备预算须核对。",
+        "DG 正式评分已完成且为 0，不再是待跑项。"
+      ],
+      "dependencies": [
+        "fresh 公开读者",
+        "主线程正式 R-f/pins/ingest 落地与 consumer 核查",
+        "采用已验证 1200 秒准备预算并记录实际生效值"
+      ],
+      "minimum_acceptance_matrix_expected_not_run": "复用原材料 noop=0、gold=1、DG=0（DG 20/23，setup 303.30s）。新读者独立读需求；核正式消息 hash 等于修订后 f8701d3a…，不重复不变评分矩阵。",
+      "material_current": {
+        "material_revisions": [],
+        "hidden_tests_tree_sha256": "sha256:385348d36a508e4aa71cd9dcaa98748f0f384f9314ad59b9f6c8f3e2d130318d",
+        "expected_output_sha256": "sha256:1a43a298548cd1f2a1f11fb7f55718cd81d34ad957b8e7eddca4863133ba50f7",
+        "expected_count": 23,
+        "expected_nonpass": {},
+        "statement_sha256": "sha256:0d196bc2ef106b2f053da4acdc09718b142561e72c912d9d36f86f98d0296698"
+      },
+      "sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/revision_draft.json"
+      ],
+      "existing_formal_rows": [
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/budget_v5/ledger_gold.jsonl",
+          "line": 6,
+          "candidate_patch_sha256": "sha256:474672197e7a20434538db139980ed273d7595c9412fe92d11c0ad0db0e1acfd",
+          "origin": "orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237.gold.patch",
+          "reward": 1.0,
+          "expected_match": 23,
+          "expected_total": 23,
+          "keys_equal": true,
+          "mismatched": [],
+          "image_id": "sha256:1985bc2376c7dbe4b8086c8a7f5cdaf06bb26301f2a632fc388100a1042f535d",
+          "recipe": {
+            "derived_image_id": "sha256:1985bc2376c7dbe4b8086c8a7f5cdaf06bb26301f2a632fc388100a1042f535d",
+            "derived_image_ref": "rh2-r2e-derived/orange3:22e98f8f4ccc-r2e_derive_v1s",
+            "recipe_id": "r2e_derive_v1+sysconfig_v1",
+            "recipe_sha256": "sha256:e2e17bf12b0edf5d1f77eb315a7c8cd91e36dde70b6a272c81b04976b98a7270"
+          },
+          "log_sha256": "sha256:f7fdc9dcb00e08f79645f65e88b84854644da5c6684bce8d286d179029a37547",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T21:07:29.466351+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/budget_v5/ledger_noop.jsonl",
+          "line": 6,
+          "candidate_patch_sha256": null,
+          "origin": "noop",
+          "reward": 0.0,
+          "expected_match": 22,
+          "expected_total": 23,
+          "keys_equal": true,
+          "mismatched": [
+            "TestHelpers.test_unique_in_order_mapping"
+          ],
+          "image_id": "sha256:1985bc2376c7dbe4b8086c8a7f5cdaf06bb26301f2a632fc388100a1042f535d",
+          "recipe": {
+            "derived_image_id": "sha256:1985bc2376c7dbe4b8086c8a7f5cdaf06bb26301f2a632fc388100a1042f535d",
+            "derived_image_ref": "rh2-r2e-derived/orange3:22e98f8f4ccc-r2e_derive_v1s",
+            "recipe_id": "r2e_derive_v1+sysconfig_v1",
+            "recipe_sha256": "sha256:e2e17bf12b0edf5d1f77eb315a7c8cd91e36dde70b6a272c81b04976b98a7270"
+          },
+          "log_sha256": "sha256:807d9efe04f50156dcc26ca1bbd0afa5eecc42722b2d61cd5ad226c69585866b",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T21:07:29.017717+00:00"
+        }
+      ],
+      "existing_devcheck": [],
+      "verification_scope": "本轮读取当前卡/修订/独立意见并结构化核对既有账本和开发记录；除4075专项与scrapy rev2外，不声称完整独立重验所有原件。"
+    },
+    {
+      "instance_id": "pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+      "short_name": "pillow__2d01f7d0",
+      "source": "R2E",
+      "starting_category": 2,
+      "proposed_category": 2,
+      "priority": 3,
+      "status": "development_compatibility_closeout",
+      "repair_direction": "明确：处置 pytest.warns(None) 开发兼容；复用已完成 v11 九方评分。",
+      "remaining": [
+        "actor 8命令均执行，但 public_tiff_tests 两个 pytest 8 兼容错误，all_match_expect=false；不能写全过。",
+        "评分修订含 FillOrder 误拒解除已具9方正式证据，尚需完整题级收口审查。"
+      ],
+      "dependencies": [
+        "窄 R-d 或公开等效命令",
+        "兼容处理若影响正式 expected，需联动重标版本并定向复验"
+      ],
+      "minimum_acceptance_matrix_expected_not_run": "复用 gold/C1/C1FO2=1，noop/D/C3/C2/A/B=0；agent 跑修订后的公开 TIFF 开发路径，base 保持原题失败，正确解修好且相关回归不新增。",
+      "material_current": {
+        "material_revisions": [
+          "r2e-mr-063"
+        ],
+        "hidden_tests_tree_sha256": "sha256:bd62b707f7ef41bb21dcb4773e8206970773511eb9c819e7ae0adeb624f8fada",
+        "expected_output_sha256": "sha256:28da3c259354012c9989afbeb731f9eea95a7913ac43ff8fd8a2a41ebce9df15",
+        "expected_count": 62,
+        "expected_nonpass": {
+          "\u001b[1mTestFileTiff.test_closed_file\u001b[0m": "FAILED",
+          "\u001b[1mTestFileTiff.test_context_manager\u001b[0m": "FAILED"
+        },
+        "statement_sha256": "sha256:ad8f5c57410407c9373ed601063a9f588b0eb534e39ede1da2e1aff2e6c33003"
+      },
+      "sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/reviewer_initial.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/public_read.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/revision_draft.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/screening_record.json"
+      ],
+      "existing_formal_rows": [
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_gold.jsonl",
+          "line": 2,
+          "candidate_patch_sha256": "sha256:190a8e47712345194ab36111eebae27a7229d79c16db5bb394e158ba596c4702",
+          "origin": "pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96.gold.patch",
+          "reward": 1.0,
+          "expected_match": 62,
+          "expected_total": 62,
+          "keys_equal": true,
+          "mismatched": [],
+          "image_id": "sha256:87d6e9a022b1f5e7dd8e5d112743a7c8e62f83265310710ed6c0364c6a5b9987",
+          "recipe": {
+            "derived_image_id": "sha256:87d6e9a022b1f5e7dd8e5d112743a7c8e62f83265310710ed6c0364c6a5b9987",
+            "derived_image_ref": "rh2-r2e-derived/pillow:2d01f7d02243-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:54e35b094ecff3dffe724f34443a928519da09480152c21d60b44752b111845a"
+          },
+          "log_sha256": "sha256:cd4c3f69c482336b269bd79129a096e04e329fa2b9966607973b4f87a351be7e",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-29T00:34:24.262359+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_s2.jsonl",
+          "line": 2,
+          "candidate_patch_sha256": "sha256:2900966f6ccc4ccf12461b13b0f52acaa69c40540bf14e9d7c4bcae7beeaa867",
+          "origin": "pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96.diff",
+          "reward": 1.0,
+          "expected_match": 62,
+          "expected_total": 62,
+          "keys_equal": true,
+          "mismatched": [],
+          "image_id": "sha256:87d6e9a022b1f5e7dd8e5d112743a7c8e62f83265310710ed6c0364c6a5b9987",
+          "recipe": {
+            "derived_image_id": "sha256:87d6e9a022b1f5e7dd8e5d112743a7c8e62f83265310710ed6c0364c6a5b9987",
+            "derived_image_ref": "rh2-r2e-derived/pillow:2d01f7d02243-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:54e35b094ecff3dffe724f34443a928519da09480152c21d60b44752b111845a"
+          },
+          "log_sha256": "sha256:f58b13d7a7bd2cb66a51625eb6872788db084552158c8c39737940047ae15d25",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-29T00:44:37.614487+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_s6.jsonl",
+          "line": 1,
+          "candidate_patch_sha256": "sha256:79613b5e28d513224a549e4e88e6afc5b14dda5f6ad81273585840beba14da24",
+          "origin": "pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96.diff",
+          "reward": 0.0,
+          "expected_match": 60,
+          "expected_total": 62,
+          "keys_equal": true,
+          "mismatched": [
+            "TestFileTiff.test_photometric[1]",
+            "TestFileTiff.test_photometric[L]"
+          ],
+          "image_id": "sha256:87d6e9a022b1f5e7dd8e5d112743a7c8e62f83265310710ed6c0364c6a5b9987",
+          "recipe": {
+            "derived_image_id": "sha256:87d6e9a022b1f5e7dd8e5d112743a7c8e62f83265310710ed6c0364c6a5b9987",
+            "derived_image_ref": "rh2-r2e-derived/pillow:2d01f7d02243-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:54e35b094ecff3dffe724f34443a928519da09480152c21d60b44752b111845a"
+          },
+          "log_sha256": "sha256:a2fcd15587f37033ce2e5e2b4de7a4cdd4a0d1c5fa4a19291888021e5cac5d8b",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-29T00:36:23.323969+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_s4.jsonl",
+          "line": 2,
+          "candidate_patch_sha256": "sha256:26d0fce723f87a118a56171e6305600e2f29eeba976d87c26f5f5579d345db31",
+          "origin": "pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96.diff",
+          "reward": 0.0,
+          "expected_match": 60,
+          "expected_total": 62,
+          "keys_equal": true,
+          "mismatched": [
+            "TestFileTiff.test_photometric[1]",
+            "TestFileTiff.test_photometric[L]"
+          ],
+          "image_id": "sha256:87d6e9a022b1f5e7dd8e5d112743a7c8e62f83265310710ed6c0364c6a5b9987",
+          "recipe": {
+            "derived_image_id": "sha256:87d6e9a022b1f5e7dd8e5d112743a7c8e62f83265310710ed6c0364c6a5b9987",
+            "derived_image_ref": "rh2-r2e-derived/pillow:2d01f7d02243-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:54e35b094ecff3dffe724f34443a928519da09480152c21d60b44752b111845a"
+          },
+          "log_sha256": "sha256:a96c312f4c2cfee19eb36e39dde3bc192c852e533d53649864948b73594dd707",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-29T00:44:37.612525+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_s3.jsonl",
+          "line": 2,
+          "candidate_patch_sha256": "sha256:b807964db3de4484425a7797541349bd8a942ffe0045403ceb2dbafe3abf63db",
+          "origin": "pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96.diff",
+          "reward": 0.0,
+          "expected_match": 60,
+          "expected_total": 62,
+          "keys_equal": true,
+          "mismatched": [
+            "TestFileTiff.test_photometric[1]",
+            "TestFileTiff.test_photometric[L]"
+          ],
+          "image_id": "sha256:87d6e9a022b1f5e7dd8e5d112743a7c8e62f83265310710ed6c0364c6a5b9987",
+          "recipe": {
+            "derived_image_id": "sha256:87d6e9a022b1f5e7dd8e5d112743a7c8e62f83265310710ed6c0364c6a5b9987",
+            "derived_image_ref": "rh2-r2e-derived/pillow:2d01f7d02243-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:54e35b094ecff3dffe724f34443a928519da09480152c21d60b44752b111845a"
+          },
+          "log_sha256": "sha256:d09f5c81a9d724e53a5ce8b023de2f0564d9b3140eb2b49ddb7c6b91ee9695c2",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-29T00:39:50.880550+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_noop.jsonl",
+          "line": 2,
+          "candidate_patch_sha256": null,
+          "origin": "noop",
+          "reward": 0.0,
+          "expected_match": 60,
+          "expected_total": 62,
+          "keys_equal": true,
+          "mismatched": [
+            "TestFileTiff.test_photometric[1]",
+            "TestFileTiff.test_photometric[L]"
+          ],
+          "image_id": "sha256:87d6e9a022b1f5e7dd8e5d112743a7c8e62f83265310710ed6c0364c6a5b9987",
+          "recipe": {
+            "derived_image_id": "sha256:87d6e9a022b1f5e7dd8e5d112743a7c8e62f83265310710ed6c0364c6a5b9987",
+            "derived_image_ref": "rh2-r2e-derived/pillow:2d01f7d02243-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:54e35b094ecff3dffe724f34443a928519da09480152c21d60b44752b111845a"
+          },
+          "log_sha256": "sha256:538a8baa5329cbf93f7f025d5783fd59c51f3281179de938ee8dc689390b8879",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-29T00:34:24.344001+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_s1.jsonl",
+          "line": 2,
+          "candidate_patch_sha256": "sha256:232924c20e4b21b64ccf0be7c3c09ede1df138b0f1d2f388c34afdf29bdeb1d7",
+          "origin": "pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96.diff",
+          "reward": 1.0,
+          "expected_match": 62,
+          "expected_total": 62,
+          "keys_equal": true,
+          "mismatched": [],
+          "image_id": "sha256:87d6e9a022b1f5e7dd8e5d112743a7c8e62f83265310710ed6c0364c6a5b9987",
+          "recipe": {
+            "derived_image_id": "sha256:87d6e9a022b1f5e7dd8e5d112743a7c8e62f83265310710ed6c0364c6a5b9987",
+            "derived_image_ref": "rh2-r2e-derived/pillow:2d01f7d02243-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:54e35b094ecff3dffe724f34443a928519da09480152c21d60b44752b111845a"
+          },
+          "log_sha256": "sha256:f010884527fd49e8d9ff6b040693499bffdd902f84f50cf795c1a82449907c16",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-29T00:39:50.290936+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_s5.jsonl",
+          "line": 2,
+          "candidate_patch_sha256": "sha256:33c266300e701ece64525794a4b8b701c7d229c595425e0366f6cb2fd8c2e6c1",
+          "origin": "pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96.diff",
+          "reward": 0.0,
+          "expected_match": 60,
+          "expected_total": 62,
+          "keys_equal": true,
+          "mismatched": [
+            "TestFileTiff.test_photometric[1]",
+            "TestFileTiff.test_photometric[L]"
+          ],
+          "image_id": "sha256:87d6e9a022b1f5e7dd8e5d112743a7c8e62f83265310710ed6c0364c6a5b9987",
+          "recipe": {
+            "derived_image_id": "sha256:87d6e9a022b1f5e7dd8e5d112743a7c8e62f83265310710ed6c0364c6a5b9987",
+            "derived_image_ref": "rh2-r2e-derived/pillow:2d01f7d02243-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:54e35b094ecff3dffe724f34443a928519da09480152c21d60b44752b111845a"
+          },
+          "log_sha256": "sha256:37e293d783f5539e67261a02e58daf5a431933a30f8fbb3282a39a85d35cfe45",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-29T00:34:22.110266+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_s7.jsonl",
+          "line": 1,
+          "candidate_patch_sha256": "sha256:fed050f2604be82c44b17089d0c50b75ac31363cdbd5cf98bd149db25fc1b9b0",
+          "origin": "pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96.diff",
+          "reward": 0.0,
+          "expected_match": 60,
+          "expected_total": 62,
+          "keys_equal": true,
+          "mismatched": [
+            "TestFileTiff.test_photometric[1]",
+            "TestFileTiff.test_photometric[L]"
+          ],
+          "image_id": "sha256:87d6e9a022b1f5e7dd8e5d112743a7c8e62f83265310710ed6c0364c6a5b9987",
+          "recipe": {
+            "derived_image_id": "sha256:87d6e9a022b1f5e7dd8e5d112743a7c8e62f83265310710ed6c0364c6a5b9987",
+            "derived_image_ref": "rh2-r2e-derived/pillow:2d01f7d02243-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:54e35b094ecff3dffe724f34443a928519da09480152c21d60b44752b111845a"
+          },
+          "log_sha256": "sha256:5d997c8b1a962a233f8ed144853669f99144f239f78cf03010c1b191caa9bc23",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-29T00:30:53.442519+00:00"
+        }
+      ],
+      "existing_devcheck": [
+        {
+          "source": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/devcheck_v11/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/orig/attempt.json",
+          "image": "sha256:87d6e9a022b1f5e7dd8e5d112743a7c8e62f83265310710ed6c0364c6a5b9987",
+          "checks": {
+            "interpreter_in_tool_result": true,
+            "host_log_present": true,
+            "no_harness_dir_in_container": true,
+            "no_launcher_or_done_marker": true,
+            "message_start_matches_stub_requests": true,
+            "exit_code_zero": true,
+            "result_event_present": true,
+            "log_complete": true,
+            "bashenv_denied_for_agent": true,
+            "all_commands_ran": true,
+            "all_match_expect": false,
+            "r2e_preflight_ok": true,
+            "image_is_overlay_derived_id": true
+          },
+          "commands": [
+            {
+              "id": "r2e_preflight",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "env",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            },
+            {
+              "id": "env_import",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            },
+            {
+              "id": "repro_issue_mode_l",
+              "rc": 1,
+              "expect": "nonzero",
+              "matches_expect": true
+            },
+            {
+              "id": "repro_mode_1",
+              "rc": 1,
+              "expect": "nonzero",
+              "matches_expect": true
+            },
+            {
+              "id": "default_photometric_kept",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            },
+            {
+              "id": "public_tiff_tests",
+              "rc": 1,
+              "expect": "zero",
+              "matches_expect": false
+            },
+            {
+              "id": "compressed_path_observe",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            }
+          ],
+          "cleanup": {
+            "container_rm": 0,
+            "network_failures": [],
+            "relay_failures": [],
+            "stub_rc": 0,
+            "labeled_containers_left": [],
+            "labeled_networks_left": [],
+            "residual_after_force": []
+          }
+        }
+      ],
+      "verification_scope": "本轮读取当前卡/修订/独立意见并结构化核对既有账本和开发记录；除4075专项与scrapy rev2外，不声称完整独立重验所有原件。"
+    },
+    {
+      "instance_id": "scrapy__a95a338eeada7275a5289cf036136610ebaf07eb",
+      "short_name": "scrapy__a95a338e",
+      "source": "R2E",
+      "starting_category": 2,
+      "proposed_category": 2,
+      "priority": 4,
+      "status": "formal_material_closeout",
+      "repair_direction": "明确：采用已完成试跑的第2版，C1 替代 gold，恢复警告两键并覆盖 partial 绑定方法。",
+      "remaining": [
+        "新版 rev2 9次试跑已齐，重算 observed 与 expected 一致；此前中断摘要已过时。",
+        "最终新版独立复核、正式材料/镜像、正式矩阵仍缺。",
+        "新 setUp 只恢复 UserWarning；其它 warning 类别是否为合理修复相关需按公开要求核，不以改类别属于题外直接豁免。"
+      ],
+      "dependencies": [
+        "第2版定向独立审查",
+        "主线程落正式 material/expected 与镜像",
+        "C1 正对照元数据绑定"
+      ],
+      "minimum_acceptance_matrix_expected_not_run": "C1×2=1、noop×2=0、gold/D/C2/C2b/C3=0；5键，复活两键 PASSED；完整日志区分 partial 与警告失败原因。试跑不再重复。",
+      "material_current": {
+        "material_revisions": [],
+        "hidden_tests_tree_sha256": "sha256:63928e22fc359d645cdd4af1a1a14d00cde84a3c8bf4f90811db12f40ce359b7",
+        "expected_output_sha256": "sha256:2c5d045cd0d33191f62a962df28fd04f7f95ae954adb3b8d91881b48b8a29dd0",
+        "expected_count": 5,
+        "expected_nonpass": {
+          "UtilsMiscPy3TestCase.test_generators_return_something": "FAILED",
+          "UtilsMiscPy3TestCase.test_indentation_error": "FAILED"
+        },
+        "statement_sha256": "sha256:eddf95214b7bbc41b0b1109eab8ab79319f9af065385831fcbf5eebff558bffb"
+      },
+      "sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/reviewer_initial.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/public_read.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/revision_draft.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/screening_record.json"
+      ],
+      "existing_formal_rows": [],
+      "existing_devcheck": [
+        {
+          "source": "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/orig/attempt.json",
+          "image": "sha256:d7f8d826ef87da4804790cd08ff8746bf2ee7df6b02bdecff878bf9d190012ac",
+          "checks": {
+            "interpreter_in_tool_result": true,
+            "host_log_present": true,
+            "no_harness_dir_in_container": true,
+            "no_launcher_or_done_marker": true,
+            "message_start_matches_stub_requests": true,
+            "exit_code_zero": true,
+            "result_event_present": true,
+            "log_complete": true,
+            "bashenv_denied_for_agent": true,
+            "all_commands_ran": true,
+            "all_match_expect": true,
+            "r2e_preflight_ok": true,
+            "image_is_overlay_derived_id": true
+          },
+          "commands": [
+            {
+              "id": "r2e_preflight",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "env",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            },
+            {
+              "id": "env_python_scrapy",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            },
+            {
+              "id": "repro_issue_example",
+              "rc": 1,
+              "expect": "nonzero",
+              "matches_expect": true
+            },
+            {
+              "id": "diag_partial_variants",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "crawl_partial_callback",
+              "rc": 1,
+              "expect": "nonzero",
+              "matches_expect": true
+            },
+            {
+              "id": "pytest_generator_return_tests",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            },
+            {
+              "id": "pytest_utils_misc_and_doctest",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            }
+          ],
+          "cleanup": {
+            "container_rm": 0,
+            "network_failures": [],
+            "relay_failures": [],
+            "stub_rc": 0,
+            "labeled_containers_left": [],
+            "labeled_networks_left": [],
+            "residual_after_force": []
+          }
+        }
+      ],
+      "verification_scope": "本轮读取当前卡/修订/独立意见并结构化核对既有账本和开发记录；除4075专项与scrapy rev2外，不声称完整独立重验所有原件。"
+    },
+    {
+      "instance_id": "aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52",
+      "short_name": "aiohttp__1c1c0ea3",
+      "source": "R2E",
+      "starting_category": 2,
+      "proposed_category": 2,
+      "priority": 5,
+      "status": "coverage_repair",
+      "repair_direction": "明确：将既有 cleanup 错误后检变为正式行为断言，允许抛出或报告任一合理路线。",
+      "remaining": [
+        "C3 取消后 gather(return_exceptions=True) 会吞掉 cleanup 错误，v5 仍得 1；旧 S2/后检不能豁免。"
+      ],
+      "dependencies": [
+        "题级 R-c 版本落地"
+      ],
+      "minimum_acceptance_matrix_expected_not_run": "gold=1、C1=1、C3=0；noop/F1/C5 仍=0。核 cleanup 错误可观察且既有关闭顺序不退化。",
+      "material_current": {
+        "material_revisions": [
+          "r2e-mr-040",
+          "r2e-mr-041"
+        ],
+        "hidden_tests_tree_sha256": "sha256:a00b8ac22a42567b8a3733ebcd37dca2d52fb23c22deb44762f806a25a9ffe2b",
+        "expected_output_sha256": "sha256:4dc7bde24d5ebee6101a64f57355fc036905b5a50fd2eb63b402400f8d0ba275",
+        "expected_count": 57,
+        "expected_nonpass": {},
+        "statement_sha256": "sha256:b66629f137ff1c11b95f9c4cadc257ae2963b40abdbd54a735077dbb16039d85"
+      },
+      "sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/revision_draft.json"
+      ],
+      "existing_formal_rows": [
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v5/ledgers/ledger_gold.jsonl",
+          "line": 4,
+          "candidate_patch_sha256": "sha256:926c9558d4b56b6a8049e2daf1d4789042469bacee4a652a7f763696186b6b03",
+          "origin": "aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52.gold.patch",
+          "reward": 1.0,
+          "expected_match": 57,
+          "expected_total": 57,
+          "keys_equal": true,
+          "mismatched": [],
+          "image_id": "sha256:a12abdbed03c38e7d3c1286d37b6d28ddd9a41c902b81a4d3fb05882340f3a68",
+          "recipe": {
+            "derived_image_id": "sha256:a12abdbed03c38e7d3c1286d37b6d28ddd9a41c902b81a4d3fb05882340f3a68",
+            "derived_image_ref": "rh2-r2e-derived/aiohttp:1c1c0ea35304-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:8cb0d20fb31847410365e4e8c988776b9cadef280d495d83cf60abbcc983f3c4"
+          },
+          "log_sha256": "sha256:bff7d87b2dd499b80fba3bbe6ab3915d6d987cee063f1b78459816e9767cbbba",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T20:06:13.881644+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v5/ledgers/ledger_s2.jsonl",
+          "line": 4,
+          "candidate_patch_sha256": "sha256:a12aaaab59afa158f501008c18f22889c1b91568bfbb777e17b76e7389640a74",
+          "origin": "aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52.diff",
+          "reward": 0.0,
+          "expected_match": 50,
+          "expected_total": 57,
+          "keys_equal": true,
+          "mismatched": [
+            "TestShutdown.test_shutdown_close_websockets",
+            "TestShutdown.test_shutdown_handler_cancellation_suppressed",
+            "TestShutdown.test_shutdown_new_conn_rejected",
+            "TestShutdown.test_shutdown_pending_handler_responds",
+            "TestShutdown.test_shutdown_timeout_handler",
+            "TestShutdown.test_shutdown_timeout_not_reached",
+            "TestShutdown.test_shutdown_wait_for_handler"
+          ],
+          "image_id": "sha256:a12abdbed03c38e7d3c1286d37b6d28ddd9a41c902b81a4d3fb05882340f3a68",
+          "recipe": {
+            "derived_image_id": "sha256:a12abdbed03c38e7d3c1286d37b6d28ddd9a41c902b81a4d3fb05882340f3a68",
+            "derived_image_ref": "rh2-r2e-derived/aiohttp:1c1c0ea35304-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:8cb0d20fb31847410365e4e8c988776b9cadef280d495d83cf60abbcc983f3c4"
+          },
+          "log_sha256": "sha256:9a3c78ab647bac3e76ca96e5393d54caca6633b1f56a72e6b09aeaac519b755e",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T20:06:11.835388+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v5/ledgers/ledger_s4.jsonl",
+          "line": 3,
+          "candidate_patch_sha256": "sha256:b8bab2e30a32936e21d0d93965a882b185b8258106acf88b4ba07eebe9b24c4a",
+          "origin": "aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52.diff",
+          "reward": 1.0,
+          "expected_match": 57,
+          "expected_total": 57,
+          "keys_equal": true,
+          "mismatched": [],
+          "image_id": "sha256:a12abdbed03c38e7d3c1286d37b6d28ddd9a41c902b81a4d3fb05882340f3a68",
+          "recipe": {
+            "derived_image_id": "sha256:a12abdbed03c38e7d3c1286d37b6d28ddd9a41c902b81a4d3fb05882340f3a68",
+            "derived_image_ref": "rh2-r2e-derived/aiohttp:1c1c0ea35304-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:8cb0d20fb31847410365e4e8c988776b9cadef280d495d83cf60abbcc983f3c4"
+          },
+          "log_sha256": "sha256:b4124aa78de9ad1377a10c8171c541b769d196662bda52c53354fe0b67f53a88",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T20:03:39.488840+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v5/ledgers/ledger_s3.jsonl",
+          "line": 4,
+          "candidate_patch_sha256": "sha256:98fa33f87ea36826251020cc0c01bbef91027f4cbb2df4c17cd01c9e98dd77eb",
+          "origin": "aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52.diff",
+          "reward": 1.0,
+          "expected_match": 57,
+          "expected_total": 57,
+          "keys_equal": true,
+          "mismatched": [],
+          "image_id": "sha256:a12abdbed03c38e7d3c1286d37b6d28ddd9a41c902b81a4d3fb05882340f3a68",
+          "recipe": {
+            "derived_image_id": "sha256:a12abdbed03c38e7d3c1286d37b6d28ddd9a41c902b81a4d3fb05882340f3a68",
+            "derived_image_ref": "rh2-r2e-derived/aiohttp:1c1c0ea35304-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:8cb0d20fb31847410365e4e8c988776b9cadef280d495d83cf60abbcc983f3c4"
+          },
+          "log_sha256": "sha256:8e0122a5acc8a40ce6983a0d39c0cf22ad1d060171ca3617f68dc3fbf6702ab8",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T20:06:13.292810+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v5/ledgers/ledger_noop.jsonl",
+          "line": 4,
+          "candidate_patch_sha256": null,
+          "origin": "noop",
+          "reward": 0.0,
+          "expected_match": 55,
+          "expected_total": 57,
+          "keys_equal": true,
+          "mismatched": [
+            "test_run_app_raises_exception[pyloop]",
+            "test_run_app_raises_exception_on_server_start_failure[pyloop]"
+          ],
+          "image_id": "sha256:a12abdbed03c38e7d3c1286d37b6d28ddd9a41c902b81a4d3fb05882340f3a68",
+          "recipe": {
+            "derived_image_id": "sha256:a12abdbed03c38e7d3c1286d37b6d28ddd9a41c902b81a4d3fb05882340f3a68",
+            "derived_image_ref": "rh2-r2e-derived/aiohttp:1c1c0ea35304-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:8cb0d20fb31847410365e4e8c988776b9cadef280d495d83cf60abbcc983f3c4"
+          },
+          "log_sha256": "sha256:021677b2daed233e0df09e30da8d25df38258091a7ee39d1502c1d07287134aa",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T20:06:12.049015+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v5/ledgers/ledger_s1.jsonl",
+          "line": 4,
+          "candidate_patch_sha256": "sha256:cbfadcc30fd538605d6fcb2b63ae8b90f39b47a46dc3a3c1443795fd3938e4f5",
+          "origin": "aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52.diff",
+          "reward": 0.0,
+          "expected_match": 56,
+          "expected_total": 57,
+          "keys_equal": true,
+          "mismatched": [
+            "test_run_app_raises_exception_on_server_start_failure[pyloop]"
+          ],
+          "image_id": "sha256:a12abdbed03c38e7d3c1286d37b6d28ddd9a41c902b81a4d3fb05882340f3a68",
+          "recipe": {
+            "derived_image_id": "sha256:a12abdbed03c38e7d3c1286d37b6d28ddd9a41c902b81a4d3fb05882340f3a68",
+            "derived_image_ref": "rh2-r2e-derived/aiohttp:1c1c0ea35304-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:8cb0d20fb31847410365e4e8c988776b9cadef280d495d83cf60abbcc983f3c4"
+          },
+          "log_sha256": "sha256:f3fbe1cc56a4fdde315aaf47d7dba3fde64c00f4b107362f55e1bd65a16f9591",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T20:06:12.776783+00:00"
+        }
+      ],
+      "existing_devcheck": [
+        {
+          "source": "runs/r2e_lifecycle_20260929/devcheck_rev/v5/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/orig/attempt.json",
+          "image": "sha256:a12abdbed03c38e7d3c1286d37b6d28ddd9a41c902b81a4d3fb05882340f3a68",
+          "checks": {
+            "interpreter_in_tool_result": true,
+            "host_log_present": true,
+            "no_harness_dir_in_container": true,
+            "no_launcher_or_done_marker": true,
+            "message_start_matches_stub_requests": true,
+            "exit_code_zero": true,
+            "result_event_present": true,
+            "log_complete": true,
+            "bashenv_denied_for_agent": true,
+            "all_commands_ran": true,
+            "all_match_expect": true,
+            "r2e_preflight_ok": true,
+            "image_is_overlay_derived_id": true
+          },
+          "commands": [
+            {
+              "id": "r2e_preflight",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "env",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            },
+            {
+              "id": "pr1_1_cmd",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "pr2_2_cmd",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "pr3_3_cmd",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "pr4_4_pytest",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "pr4_5_pytest",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            }
+          ],
+          "cleanup": {
+            "container_rm": 0,
+            "network_failures": [],
+            "relay_failures": [],
+            "stub_rc": 0,
+            "labeled_containers_left": [],
+            "labeled_networks_left": [],
+            "residual_after_force": []
+          }
+        }
+      ],
+      "verification_scope": "本轮读取当前卡/修订/独立意见并结构化核对既有账本和开发记录；除4075专项与scrapy rev2外，不声称完整独立重验所有原件。"
+    },
+    {
+      "instance_id": "coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5",
+      "short_name": "coveragepy__ea6906b0",
+      "source": "R2E",
+      "starting_category": 2,
+      "proposed_category": 2,
+      "priority": 6,
+      "status": "coverage_and_acceptance_repair",
+      "repair_direction": "明确：补已有 .gitignore 内容保留与实际忽略效果；核 open 替身接受 encoding 的合理写法。",
+      "remaining": [
+        "gold 无条件覆盖用户已有 .gitignore。",
+        "C-C 添加 encoding 后因公开测试替身签名得 0；不能仅以公开测试同样失败认定无误拒。"
+      ],
+      "dependencies": [
+        "题级 R-b/R-c；参考正对照需为安全合并实现"
+      ],
+      "minimum_acceptance_matrix_expected_not_run": "安全合并正确解=1、encoding 合理解=1；覆盖已有内容的 gold 类候选=0、空文件 C-B=0、提前写目录 RE=0、noop=0。核已有规则保留与新报告实际被 git 忽略。",
+      "material_current": {
+        "material_revisions": [
+          "r2e-mr-036",
+          "r2e-mr-037"
+        ],
+        "hidden_tests_tree_sha256": "sha256:6c721a51febcc52ea279581e0557ca081504846a08ea424f7c15c6f8ac9b1d1c",
+        "expected_output_sha256": "sha256:6d252beebe343650d22fd34d29a7d8ef9a84572c8f6dbe499a36967c0009b6a7",
+        "expected_count": 48,
+        "expected_nonpass": {},
+        "statement_sha256": "sha256:87f805dad9c0268639721aa5e02df3a6b430ade43e91344f641eefd47d242cdf"
+      },
+      "sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/revision_draft.json"
+      ],
+      "existing_formal_rows": [
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v5/ledgers/ledger_gold.jsonl",
+          "line": 2,
+          "candidate_patch_sha256": "sha256:bd20515f70a5b6732df9a021806fe82dad15bfc2b24d350cd3624814764a7f39",
+          "origin": "coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5.gold.patch",
+          "reward": 1.0,
+          "expected_match": 48,
+          "expected_total": 48,
+          "keys_equal": true,
+          "mismatched": [],
+          "image_id": "sha256:110ba1cbe8ee8add9ef77e1904a7e741b4221b92c3a6c8872c6d76651ad82522",
+          "recipe": {
+            "derived_image_id": "sha256:110ba1cbe8ee8add9ef77e1904a7e741b4221b92c3a6c8872c6d76651ad82522",
+            "derived_image_ref": "rh2-r2e-derived/coveragepy:ea6906b092d9-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:9b3c2352bdf40b4150a8b6f902c45c500f6b73c5b8172ef7f388b1dbd915f0ed"
+          },
+          "log_sha256": "sha256:b931e5caa7782a999bbf3c3edf138614cf16336863166b0a44bd0b10654a3b48",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T20:00:17.503792+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v5/ledgers/ledger_s2.jsonl",
+          "line": 2,
+          "candidate_patch_sha256": "sha256:be5318a1c6e8239295b47345cfe976e1560dd17cf5f91a7b30aee9d76e0aac93",
+          "origin": "coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5.diff",
+          "reward": 0.0,
+          "expected_match": 47,
+          "expected_total": 48,
+          "keys_equal": true,
+          "mismatched": [
+            "HtmlGitignoreTest.test_html_report_is_ignored_by_git"
+          ],
+          "image_id": "sha256:110ba1cbe8ee8add9ef77e1904a7e741b4221b92c3a6c8872c6d76651ad82522",
+          "recipe": {
+            "derived_image_id": "sha256:110ba1cbe8ee8add9ef77e1904a7e741b4221b92c3a6c8872c6d76651ad82522",
+            "derived_image_ref": "rh2-r2e-derived/coveragepy:ea6906b092d9-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:9b3c2352bdf40b4150a8b6f902c45c500f6b73c5b8172ef7f388b1dbd915f0ed"
+          },
+          "log_sha256": "sha256:77e42d995b43526ba448bd198944a812705d9e358032767ef6ebcb3a2c583a7b",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T20:00:17.988119+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v5/ledgers/ledger_s4.jsonl",
+          "line": 2,
+          "candidate_patch_sha256": "sha256:3de1e7236120e5dc5ddf7be721940f072e07031d1e1d080dabf2e17f0edbbb08",
+          "origin": "coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5.diff",
+          "reward": 0.0,
+          "expected_match": 41,
+          "expected_total": 48,
+          "keys_equal": true,
+          "mismatched": [
+            "HtmlDeltaTest.test_file_becomes_100",
+            "HtmlDeltaTest.test_html_created",
+            "HtmlDeltaTest.test_html_delta_from_coverage_change",
+            "HtmlDeltaTest.test_html_delta_from_coverage_version_change",
+            "HtmlDeltaTest.test_html_delta_from_settings_change",
+            "HtmlDeltaTest.test_html_delta_from_source_change",
+            "HtmlDeltaTest.test_status_format_change"
+          ],
+          "image_id": "sha256:110ba1cbe8ee8add9ef77e1904a7e741b4221b92c3a6c8872c6d76651ad82522",
+          "recipe": {
+            "derived_image_id": "sha256:110ba1cbe8ee8add9ef77e1904a7e741b4221b92c3a6c8872c6d76651ad82522",
+            "derived_image_ref": "rh2-r2e-derived/coveragepy:ea6906b092d9-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:9b3c2352bdf40b4150a8b6f902c45c500f6b73c5b8172ef7f388b1dbd915f0ed"
+          },
+          "log_sha256": "sha256:95446057da15ee1478f28d1a418866f8f4bf34c32ede3b2b97804c6a138ba395",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T20:00:18.307075+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v5/ledgers/ledger_s3.jsonl",
+          "line": 2,
+          "candidate_patch_sha256": "sha256:4dda0d8989298691497b27c606ca471ea82922c0b39724fdf238de9b5a18b520",
+          "origin": "coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5.diff",
+          "reward": 0.0,
+          "expected_match": 47,
+          "expected_total": 48,
+          "keys_equal": true,
+          "mismatched": [
+            "ReportingTest.test_no_data_to_report_on_html"
+          ],
+          "image_id": "sha256:110ba1cbe8ee8add9ef77e1904a7e741b4221b92c3a6c8872c6d76651ad82522",
+          "recipe": {
+            "derived_image_id": "sha256:110ba1cbe8ee8add9ef77e1904a7e741b4221b92c3a6c8872c6d76651ad82522",
+            "derived_image_ref": "rh2-r2e-derived/coveragepy:ea6906b092d9-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:9b3c2352bdf40b4150a8b6f902c45c500f6b73c5b8172ef7f388b1dbd915f0ed"
+          },
+          "log_sha256": "sha256:ca7f3bbf401ad91adadd64890149beb581bfbf1eb50fceee6b98cb26c9de53ea",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T20:00:18.350833+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v5/ledgers/ledger_noop.jsonl",
+          "line": 2,
+          "candidate_patch_sha256": null,
+          "origin": "noop",
+          "reward": 0.0,
+          "expected_match": 41,
+          "expected_total": 48,
+          "keys_equal": true,
+          "mismatched": [
+            "HtmlDeltaTest.test_html_created",
+            "HtmlDeltaTest.test_html_delta_from_coverage_change",
+            "HtmlDeltaTest.test_html_delta_from_coverage_version_change",
+            "HtmlDeltaTest.test_html_delta_from_settings_change",
+            "HtmlDeltaTest.test_html_delta_from_source_change",
+            "HtmlDeltaTest.test_status_format_change",
+            "HtmlGitignoreTest.test_html_report_is_ignored_by_git"
+          ],
+          "image_id": "sha256:110ba1cbe8ee8add9ef77e1904a7e741b4221b92c3a6c8872c6d76651ad82522",
+          "recipe": {
+            "derived_image_id": "sha256:110ba1cbe8ee8add9ef77e1904a7e741b4221b92c3a6c8872c6d76651ad82522",
+            "derived_image_ref": "rh2-r2e-derived/coveragepy:ea6906b092d9-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:9b3c2352bdf40b4150a8b6f902c45c500f6b73c5b8172ef7f388b1dbd915f0ed"
+          },
+          "log_sha256": "sha256:252d885380a028695a4de2e31f281041fff3d413f65935806c7a9e6d50d947d4",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T20:00:17.020113+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v5/ledgers/ledger_s1.jsonl",
+          "line": 2,
+          "candidate_patch_sha256": "sha256:e6502b52d55123b806c446f66bd74796e27fdf305a2e674ab293700553348788",
+          "origin": "coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5.diff",
+          "reward": 1.0,
+          "expected_match": 48,
+          "expected_total": 48,
+          "keys_equal": true,
+          "mismatched": [],
+          "image_id": "sha256:110ba1cbe8ee8add9ef77e1904a7e741b4221b92c3a6c8872c6d76651ad82522",
+          "recipe": {
+            "derived_image_id": "sha256:110ba1cbe8ee8add9ef77e1904a7e741b4221b92c3a6c8872c6d76651ad82522",
+            "derived_image_ref": "rh2-r2e-derived/coveragepy:ea6906b092d9-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:9b3c2352bdf40b4150a8b6f902c45c500f6b73c5b8172ef7f388b1dbd915f0ed"
+          },
+          "log_sha256": "sha256:aafb01b890f68777374d06a524aa5832eb5124b0ad17f7eed37fc68ffe819bf3",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T20:00:17.945402+00:00"
+        }
+      ],
+      "existing_devcheck": [
+        {
+          "source": "runs/r2e_lifecycle_20260929/devcheck_rev/v5/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/orig/attempt.json",
+          "image": "sha256:110ba1cbe8ee8add9ef77e1904a7e741b4221b92c3a6c8872c6d76651ad82522",
+          "checks": {
+            "interpreter_in_tool_result": true,
+            "host_log_present": true,
+            "no_harness_dir_in_container": true,
+            "no_launcher_or_done_marker": true,
+            "message_start_matches_stub_requests": true,
+            "exit_code_zero": true,
+            "result_event_present": true,
+            "log_complete": true,
+            "bashenv_denied_for_agent": true,
+            "all_commands_ran": true,
+            "all_match_expect": true,
+            "r2e_preflight_ok": true,
+            "image_is_overlay_derived_id": true
+          },
+          "commands": [
+            {
+              "id": "r2e_preflight",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "env",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            },
+            {
+              "id": "pr1_1_cmd",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "pr2_2_cmd",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "pr3_3_pytest",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "pr4_4_pytest",
+              "rc": 4,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "pr4_5_pytest",
+              "rc": 4,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "pr5_6_pytest",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "pr6_7_pytest",
+              "rc": 4,
+              "expect": "any",
+              "matches_expect": true
+            }
+          ],
+          "cleanup": {
+            "container_rm": 0,
+            "network_failures": [],
+            "relay_failures": [],
+            "stub_rc": 0,
+            "labeled_containers_left": [],
+            "labeled_networks_left": [],
+            "residual_after_force": []
+          }
+        }
+      ],
+      "verification_scope": "本轮读取当前卡/修订/独立意见并结构化核对既有账本和开发记录；除4075专项与scrapy rev2外，不声称完整独立重验所有原件。"
+    },
+    {
+      "instance_id": "numpy__d805e9b66228e68a0eb14d901cd350159c49af18",
+      "short_name": "numpy__d805e9b6",
+      "source": "R2E",
+      "starting_category": 2,
+      "proposed_category": 2,
+      "priority": 7,
+      "status": "coverage_and_public_repair",
+      "repair_direction": "明确：补 n=3000/threshold=2000 的摘要保值对照；改正 Actual 说明。",
+      "remaining": [
+        "n>threshold>=1500 的混合截断路线可通过现有断言但静默丢值（目前为静态推导，不冒称已评分）。",
+        "K-A5b 的大 edgeitems>=501 同族丢省略号风险已有具体推导，不能因旧 S2 标签自动豁免；需核影响并用可涵盖声明范围的正对照。",
+        "二维窄轴题外，不并入本题修复。"
+      ],
+      "dependencies": [
+        "题级 R-c/R-f",
+        "大 edgeitems 的最小辨别控制与正对照边界"
+      ],
+      "minimum_acceptance_matrix_expected_not_run": "至少 K-A5b 在 n=3000,t=2000 应为1，混合截断=0；gold/noop/K-DE/K-DC/K-DF/DG-e/DG-g 保持0。另核 edgeitems 具体反例，必要时窄修正对照，不能先放行再后检。",
+      "material_current": {
+        "material_revisions": [
+          "r2e-mr-056"
+        ],
+        "hidden_tests_tree_sha256": "sha256:71326af5cfd9437b56f1e51d3740ea7d8684e742627b76ed98774a5d28dc72f0",
+        "expected_output_sha256": "sha256:4ed3f5bcaea6016adb71885f0befe9dd1e056d460d7e6410e9a40fc84be11dd6",
+        "expected_count": 229,
+        "expected_nonpass": {},
+        "statement_sha256": "sha256:22231c8b99a65488d94abcc88da4a810122fb0b4208f47c1a6891a68c2738cf2"
+      },
+      "sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/reviewer_initial.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/public_read.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/revision_draft.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/screening_record.json"
+      ],
+      "existing_formal_rows": [
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v8/ledgers/ledger_gold.jsonl",
+          "line": 3,
+          "candidate_patch_sha256": "sha256:a1adb8d1abdb7402bb4565bac61fa79506f46c68a0b648e996e96477ed1f7cde",
+          "origin": "numpy__d805e9b66228e68a0eb14d901cd350159c49af18.gold.patch",
+          "reward": 0.0,
+          "expected_match": 228,
+          "expected_total": 229,
+          "keys_equal": true,
+          "mismatched": [
+            "TestMaskedArray.test_str_repr"
+          ],
+          "image_id": "sha256:c596cd48d0378be050f132cca095dbff7373ffd8e10d147a46a03c3f891ae551",
+          "recipe": {
+            "derived_image_id": "sha256:c596cd48d0378be050f132cca095dbff7373ffd8e10d147a46a03c3f891ae551",
+            "derived_image_ref": "rh2-r2e-derived/numpy:d805e9b66228-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:e0a8970ef09b4a758d92ad92293614413af5c3a55387ccc239a2ff6f50b02908"
+          },
+          "log_sha256": "sha256:e1726ceace65c592790f5a4726882c30d40cda3f299034fe01e5c18a6170a88e",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T22:36:37.150840+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v8/ledgers/ledger_s2.jsonl",
+          "line": 3,
+          "candidate_patch_sha256": "sha256:f416c7226d6f7664bbf35cb6c22916265882854f984566cd09ed0b5526056cc4",
+          "origin": "numpy__d805e9b66228e68a0eb14d901cd350159c49af18.diff",
+          "reward": 0.0,
+          "expected_match": 228,
+          "expected_total": 229,
+          "keys_equal": true,
+          "mismatched": [
+            "TestMaskedArray.test_str_repr"
+          ],
+          "image_id": "sha256:c596cd48d0378be050f132cca095dbff7373ffd8e10d147a46a03c3f891ae551",
+          "recipe": {
+            "derived_image_id": "sha256:c596cd48d0378be050f132cca095dbff7373ffd8e10d147a46a03c3f891ae551",
+            "derived_image_ref": "rh2-r2e-derived/numpy:d805e9b66228-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:e0a8970ef09b4a758d92ad92293614413af5c3a55387ccc239a2ff6f50b02908"
+          },
+          "log_sha256": "sha256:e364e6cdb45e56ae599817f947a3e5a00fced4b7767b4f6b6c9744646e936dc0",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T22:36:36.919764+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v8/ledgers/ledger_s6.jsonl",
+          "line": 2,
+          "candidate_patch_sha256": "sha256:1a7d3c9499e471140d0ad8984bb5cd2e3ef8df63a8c7c90ed2b04b7d728bf857",
+          "origin": "numpy__d805e9b66228e68a0eb14d901cd350159c49af18.diff",
+          "reward": 0.0,
+          "expected_match": 228,
+          "expected_total": 229,
+          "keys_equal": true,
+          "mismatched": [
+            "TestMaskedArray.test_str_repr"
+          ],
+          "image_id": "sha256:c596cd48d0378be050f132cca095dbff7373ffd8e10d147a46a03c3f891ae551",
+          "recipe": {
+            "derived_image_id": "sha256:c596cd48d0378be050f132cca095dbff7373ffd8e10d147a46a03c3f891ae551",
+            "derived_image_ref": "rh2-r2e-derived/numpy:d805e9b66228-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:e0a8970ef09b4a758d92ad92293614413af5c3a55387ccc239a2ff6f50b02908"
+          },
+          "log_sha256": "sha256:ce301eda3ad3954abf5b4358641054c01eb9749d81eec85307d475e7246f00f0",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T22:39:53.495059+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v8/ledgers/ledger_s4.jsonl",
+          "line": 2,
+          "candidate_patch_sha256": "sha256:2657247d5b4c6c67671073c57a1fded6e908a50c967bc19cd8d3bb8f993c9ff1",
+          "origin": "numpy__d805e9b66228e68a0eb14d901cd350159c49af18.diff",
+          "reward": 0.0,
+          "expected_match": 228,
+          "expected_total": 229,
+          "keys_equal": true,
+          "mismatched": [
+            "TestMaskedArray.test_str_repr"
+          ],
+          "image_id": "sha256:c596cd48d0378be050f132cca095dbff7373ffd8e10d147a46a03c3f891ae551",
+          "recipe": {
+            "derived_image_id": "sha256:c596cd48d0378be050f132cca095dbff7373ffd8e10d147a46a03c3f891ae551",
+            "derived_image_ref": "rh2-r2e-derived/numpy:d805e9b66228-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:e0a8970ef09b4a758d92ad92293614413af5c3a55387ccc239a2ff6f50b02908"
+          },
+          "log_sha256": "sha256:6d57ee2f588ded2b2f44f082d96632ae04357333d6d1a8f934e2776fe2a5819a",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T22:39:34.830038+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v8/ledgers/ledger_s3.jsonl",
+          "line": 2,
+          "candidate_patch_sha256": "sha256:84766bcaa893b0fe52ff65c9ee7a681a72939508e2387607aca74cdf21d2d832",
+          "origin": "numpy__d805e9b66228e68a0eb14d901cd350159c49af18.diff",
+          "reward": 0.0,
+          "expected_match": 228,
+          "expected_total": 229,
+          "keys_equal": true,
+          "mismatched": [
+            "TestMaskedArray.test_str_repr"
+          ],
+          "image_id": "sha256:c596cd48d0378be050f132cca095dbff7373ffd8e10d147a46a03c3f891ae551",
+          "recipe": {
+            "derived_image_id": "sha256:c596cd48d0378be050f132cca095dbff7373ffd8e10d147a46a03c3f891ae551",
+            "derived_image_ref": "rh2-r2e-derived/numpy:d805e9b66228-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:e0a8970ef09b4a758d92ad92293614413af5c3a55387ccc239a2ff6f50b02908"
+          },
+          "log_sha256": "sha256:af1c427edfd7a7b90062096b2fc222f769bd6f08a055f0bda97421abb619b916",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T22:39:52.483482+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v8/ledgers/ledger_noop.jsonl",
+          "line": 3,
+          "candidate_patch_sha256": null,
+          "origin": "noop",
+          "reward": 0.0,
+          "expected_match": 228,
+          "expected_total": 229,
+          "keys_equal": true,
+          "mismatched": [
+            "TestMaskedArray.test_str_repr"
+          ],
+          "image_id": "sha256:c596cd48d0378be050f132cca095dbff7373ffd8e10d147a46a03c3f891ae551",
+          "recipe": {
+            "derived_image_id": "sha256:c596cd48d0378be050f132cca095dbff7373ffd8e10d147a46a03c3f891ae551",
+            "derived_image_ref": "rh2-r2e-derived/numpy:d805e9b66228-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:e0a8970ef09b4a758d92ad92293614413af5c3a55387ccc239a2ff6f50b02908"
+          },
+          "log_sha256": "sha256:c66493d7b20937ad953eca667de9488435b78aa5051a8bed39fda021375ebefe",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T22:36:30.327861+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v8/ledgers/ledger_s1.jsonl",
+          "line": 3,
+          "candidate_patch_sha256": "sha256:0cde371bd6e2729bed10e4fee8f5df3034acb93379ab4af8396de3690aa51b43",
+          "origin": "numpy__d805e9b66228e68a0eb14d901cd350159c49af18.diff",
+          "reward": 1.0,
+          "expected_match": 229,
+          "expected_total": 229,
+          "keys_equal": true,
+          "mismatched": [],
+          "image_id": "sha256:c596cd48d0378be050f132cca095dbff7373ffd8e10d147a46a03c3f891ae551",
+          "recipe": {
+            "derived_image_id": "sha256:c596cd48d0378be050f132cca095dbff7373ffd8e10d147a46a03c3f891ae551",
+            "derived_image_ref": "rh2-r2e-derived/numpy:d805e9b66228-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:e0a8970ef09b4a758d92ad92293614413af5c3a55387ccc239a2ff6f50b02908"
+          },
+          "log_sha256": "sha256:165dbf12dd013918a57068d9e0099af7081c5c3bcef457b66b43c1c222b2f386",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T22:36:36.400014+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v8/ledgers/ledger_s5.jsonl",
+          "line": 2,
+          "candidate_patch_sha256": "sha256:b89992b356a6c46ecfac5b75624a9fbf6ed2eb3cbed37aa3af593b9122d78852",
+          "origin": "numpy__d805e9b66228e68a0eb14d901cd350159c49af18.diff",
+          "reward": 0.0,
+          "expected_match": 228,
+          "expected_total": 229,
+          "keys_equal": true,
+          "mismatched": [
+            "TestMaskedArray.test_str_repr"
+          ],
+          "image_id": "sha256:c596cd48d0378be050f132cca095dbff7373ffd8e10d147a46a03c3f891ae551",
+          "recipe": {
+            "derived_image_id": "sha256:c596cd48d0378be050f132cca095dbff7373ffd8e10d147a46a03c3f891ae551",
+            "derived_image_ref": "rh2-r2e-derived/numpy:d805e9b66228-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:e0a8970ef09b4a758d92ad92293614413af5c3a55387ccc239a2ff6f50b02908"
+          },
+          "log_sha256": "sha256:f4e1df38b98aa1f8f61e8282d04e5ebc0b179372adfff1b3445e8baf8a2cd3d7",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T22:39:52.843872+00:00"
+        }
+      ],
+      "existing_devcheck": [
+        {
+          "source": "runs/r2e_lifecycle_20260929/devcheck_rev/v8/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/orig/attempt.json",
+          "image": "sha256:c596cd48d0378be050f132cca095dbff7373ffd8e10d147a46a03c3f891ae551",
+          "checks": {
+            "interpreter_in_tool_result": true,
+            "host_log_present": true,
+            "no_harness_dir_in_container": true,
+            "no_launcher_or_done_marker": true,
+            "message_start_matches_stub_requests": true,
+            "exit_code_zero": true,
+            "result_event_present": true,
+            "log_complete": true,
+            "bashenv_denied_for_agent": true,
+            "all_commands_ran": true,
+            "all_match_expect": true,
+            "r2e_preflight_ok": true,
+            "image_is_overlay_derived_id": true
+          },
+          "commands": [
+            {
+              "id": "r2e_preflight",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "env",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            },
+            {
+              "id": "import_version",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            },
+            {
+              "id": "repro_issue_repr",
+              "rc": 1,
+              "expect": "nonzero",
+              "matches_expect": true
+            },
+            {
+              "id": "diag_sizes",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "pytest_print_related",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            },
+            {
+              "id": "pytest_ma_core_full",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "diag_perf_large",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            }
+          ],
+          "cleanup": {
+            "container_rm": 0,
+            "network_failures": [],
+            "relay_failures": [],
+            "stub_rc": 0,
+            "labeled_containers_left": [],
+            "labeled_networks_left": [],
+            "residual_after_force": []
+          }
+        }
+      ],
+      "verification_scope": "本轮读取当前卡/修订/独立意见并结构化核对既有账本和开发记录；除4075专项与scrapy rev2外，不声称完整独立重验所有原件。"
+    },
+    {
+      "instance_id": "orange3__4014f2483e3bab0621c9ae0f994947c008183253",
+      "short_name": "orange3__4014f248",
+      "source": "R2E",
+      "starting_category": 2,
+      "proposed_category": 2,
+      "priority": 8,
+      "status": "coverage_and_build_repair",
+      "repair_direction": "明确：加入已有小量级分割回归，拒绝以 round(p,10) 合并不同值的 C3。",
+      "remaining": [
+        "C3 v9=1，但 arange(100)*1e-12、n=4 全部落一个区间；属于已知可修行为回归。",
+        "最终入口的 agent 真重编与 pyx_only 配对、准备预算仍需定向验收。"
+      ],
+      "dependencies": [
+        "题级 R-c",
+        "最终构建/导出/加载入口",
+        "1200 秒准备预算；源 R2E 机当前不可用"
+      ],
+      "minimum_acceptance_matrix_expected_not_run": "gold、C1、pyx_build=1；C3、DG、C4、pyx_only、noop=0。核小量级有有效分割；agent 改 .pyx 后真重编、导出二进制并由新 grader 加载。",
+      "material_current": {
+        "material_revisions": [
+          "r2e-mr-057"
+        ],
+        "hidden_tests_tree_sha256": "sha256:315e46aec49c3017020ecda1c3dff77de38acd94b409f97a54095b016135e4f6",
+        "expected_output_sha256": "sha256:07f34ad40f871b27517af4fb1bf7939409fcc8ddd303771784e8f8425e5da490",
+        "expected_count": 27,
+        "expected_nonpass": {},
+        "statement_sha256": "sha256:efdb68c7ab45c887f0fab1959673885838f6385a37cd7086120841d2b91242df"
+      },
+      "sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__4014f2483e3bab0621c9ae0f994947c008183253/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__4014f2483e3bab0621c9ae0f994947c008183253/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__4014f2483e3bab0621c9ae0f994947c008183253/revision_draft.json"
+      ],
+      "existing_formal_rows": [
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v9/ledgers/ledger_s3_budget1200.jsonl",
+          "line": 1,
+          "candidate_patch_sha256": "sha256:34624751a646327339e7ca7bd6d37724ac072473a934fcecee0a17a283f43bf6",
+          "origin": "orange3__4014f2483e3bab0621c9ae0f994947c008183253.diff",
+          "reward": 0.0,
+          "expected_match": 26,
+          "expected_total": 27,
+          "keys_equal": true,
+          "mismatched": [
+            "TestEqualFreq.test_below_precision"
+          ],
+          "image_id": "sha256:bcd82bd87063de228be114f20f05fa7837db973db3fe82cffc60eccc0ba1d4fa",
+          "recipe": {
+            "derived_image_id": "sha256:bcd82bd87063de228be114f20f05fa7837db973db3fe82cffc60eccc0ba1d4fa",
+            "derived_image_ref": "rh2-r2e-derived/orange3:4014f2483e3b-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:f2dcfb45a4e673cb2633e309fe83f85a8034fa85721576fc162a7babce6d029c"
+          },
+          "log_sha256": "sha256:3baf1018d5d7c7904932ce80e0480ecd700366b73961c4dff91183bfe7e06d74",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T23:05:38.208460+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v9/ledgers/ledger_s6_budget1200.jsonl",
+          "line": 1,
+          "candidate_patch_sha256": "sha256:6f230913d1c1024e04bef131ecbbbc7ade90c36d9a4cd663b2de46f8b01d59cb",
+          "origin": "orange3__4014f2483e3bab0621c9ae0f994947c008183253.diff",
+          "reward": 1.0,
+          "expected_match": 27,
+          "expected_total": 27,
+          "keys_equal": true,
+          "mismatched": [],
+          "image_id": "sha256:bcd82bd87063de228be114f20f05fa7837db973db3fe82cffc60eccc0ba1d4fa",
+          "recipe": {
+            "derived_image_id": "sha256:bcd82bd87063de228be114f20f05fa7837db973db3fe82cffc60eccc0ba1d4fa",
+            "derived_image_ref": "rh2-r2e-derived/orange3:4014f2483e3b-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:f2dcfb45a4e673cb2633e309fe83f85a8034fa85721576fc162a7babce6d029c"
+          },
+          "log_sha256": "sha256:ec9c034fb858b7f0f459d5c3beab31814d79fcb9ea0adfe6595bf0073f52c093",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T23:17:27.176487+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v9/ledgers/ledger_gold_budget1200.jsonl",
+          "line": 1,
+          "candidate_patch_sha256": "sha256:431cc37d5563157822ba0ec35b3ace799af5c305a81527f8552f5dae11d18397",
+          "origin": "orange3__4014f2483e3bab0621c9ae0f994947c008183253.gold.patch",
+          "reward": 1.0,
+          "expected_match": 27,
+          "expected_total": 27,
+          "keys_equal": true,
+          "mismatched": [],
+          "image_id": "sha256:bcd82bd87063de228be114f20f05fa7837db973db3fe82cffc60eccc0ba1d4fa",
+          "recipe": {
+            "derived_image_id": "sha256:bcd82bd87063de228be114f20f05fa7837db973db3fe82cffc60eccc0ba1d4fa",
+            "derived_image_ref": "rh2-r2e-derived/orange3:4014f2483e3b-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:f2dcfb45a4e673cb2633e309fe83f85a8034fa85721576fc162a7babce6d029c"
+          },
+          "log_sha256": "sha256:59545bff591b499a5b9973502da72303a954fe8cccd3eae717019e251fe5ee6e",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T23:05:37.941349+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v9/ledgers/ledger_noop_budget1200.jsonl",
+          "line": 1,
+          "candidate_patch_sha256": null,
+          "origin": "noop",
+          "reward": 0.0,
+          "expected_match": 26,
+          "expected_total": 27,
+          "keys_equal": true,
+          "mismatched": [
+            "TestEqualFreq.test_below_precision"
+          ],
+          "image_id": "sha256:bcd82bd87063de228be114f20f05fa7837db973db3fe82cffc60eccc0ba1d4fa",
+          "recipe": {
+            "derived_image_id": "sha256:bcd82bd87063de228be114f20f05fa7837db973db3fe82cffc60eccc0ba1d4fa",
+            "derived_image_ref": "rh2-r2e-derived/orange3:4014f2483e3b-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:f2dcfb45a4e673cb2633e309fe83f85a8034fa85721576fc162a7babce6d029c"
+          },
+          "log_sha256": "sha256:6cd3861a8ddb6e1891c80c08646db10da1972e38c8ab4ed53a80184f5f71a173",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T23:05:37.825390+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v9/ledgers/ledger_s2_budget1200.jsonl",
+          "line": 1,
+          "candidate_patch_sha256": "sha256:372f4982da9dedb605a8ac7619a95e238fac8757b9da3e8b4847dcb0f3c6c94b",
+          "origin": "orange3__4014f2483e3bab0621c9ae0f994947c008183253.diff",
+          "reward": 1.0,
+          "expected_match": 27,
+          "expected_total": 27,
+          "keys_equal": true,
+          "mismatched": [],
+          "image_id": "sha256:bcd82bd87063de228be114f20f05fa7837db973db3fe82cffc60eccc0ba1d4fa",
+          "recipe": {
+            "derived_image_id": "sha256:bcd82bd87063de228be114f20f05fa7837db973db3fe82cffc60eccc0ba1d4fa",
+            "derived_image_ref": "rh2-r2e-derived/orange3:4014f2483e3b-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:f2dcfb45a4e673cb2633e309fe83f85a8034fa85721576fc162a7babce6d029c"
+          },
+          "log_sha256": "sha256:d9b8d1327de97c2f6a499124f9486682b22960d9aa2921bcf7504c65954ee776",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T23:17:26.516366+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v9/ledgers/ledger_s5_budget1200.jsonl",
+          "line": 1,
+          "candidate_patch_sha256": "sha256:eae852458d9f70f6d3b12664af99645f1e4bb87ba9458e9388c3bf553e59aeb4",
+          "origin": "orange3__4014f2483e3bab0621c9ae0f994947c008183253.diff",
+          "reward": 0.0,
+          "expected_match": 26,
+          "expected_total": 27,
+          "keys_equal": true,
+          "mismatched": [
+            "TestEqualFreq.test_below_precision"
+          ],
+          "image_id": "sha256:bcd82bd87063de228be114f20f05fa7837db973db3fe82cffc60eccc0ba1d4fa",
+          "recipe": {
+            "derived_image_id": "sha256:bcd82bd87063de228be114f20f05fa7837db973db3fe82cffc60eccc0ba1d4fa",
+            "derived_image_ref": "rh2-r2e-derived/orange3:4014f2483e3b-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:f2dcfb45a4e673cb2633e309fe83f85a8034fa85721576fc162a7babce6d029c"
+          },
+          "log_sha256": "sha256:992341427a99035af4521bdcc06e17d8d443f1afb6529f401e43f06d9c26feb8",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T23:05:38.353355+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v9/ledgers/ledger_s1_budget1200.jsonl",
+          "line": 1,
+          "candidate_patch_sha256": "sha256:06b31ab2801b8a065f25672be92de2adc655b19650c1e8f285ea72abf3aaac4f",
+          "origin": "orange3__4014f2483e3bab0621c9ae0f994947c008183253.diff",
+          "reward": 0.0,
+          "expected_match": 26,
+          "expected_total": 27,
+          "keys_equal": true,
+          "mismatched": [
+            "TestEqualFreq.test_below_precision"
+          ],
+          "image_id": "sha256:bcd82bd87063de228be114f20f05fa7837db973db3fe82cffc60eccc0ba1d4fa",
+          "recipe": {
+            "derived_image_id": "sha256:bcd82bd87063de228be114f20f05fa7837db973db3fe82cffc60eccc0ba1d4fa",
+            "derived_image_ref": "rh2-r2e-derived/orange3:4014f2483e3b-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:f2dcfb45a4e673cb2633e309fe83f85a8034fa85721576fc162a7babce6d029c"
+          },
+          "log_sha256": "sha256:300b4b2a8e7169a17fd05ea09c648503e80a4fd03b7b36b6e09db243f3569e65",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T23:17:27.199252+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v9/ledgers/ledger_s4_budget1200.jsonl",
+          "line": 1,
+          "candidate_patch_sha256": "sha256:e7cf1161cc162928db23099fc9503810281fecc62ade5faf801a622cfe91e748",
+          "origin": "orange3__4014f2483e3bab0621c9ae0f994947c008183253.diff",
+          "reward": 1.0,
+          "expected_match": 27,
+          "expected_total": 27,
+          "keys_equal": true,
+          "mismatched": [],
+          "image_id": "sha256:bcd82bd87063de228be114f20f05fa7837db973db3fe82cffc60eccc0ba1d4fa",
+          "recipe": {
+            "derived_image_id": "sha256:bcd82bd87063de228be114f20f05fa7837db973db3fe82cffc60eccc0ba1d4fa",
+            "derived_image_ref": "rh2-r2e-derived/orange3:4014f2483e3b-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:f2dcfb45a4e673cb2633e309fe83f85a8034fa85721576fc162a7babce6d029c"
+          },
+          "log_sha256": "sha256:5c6bbfe8f11f7650d394005b38175348ca9bd09a068019737338a6cd868bbd5f",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T23:17:27.092329+00:00"
+        }
+      ],
+      "existing_devcheck": [
+        {
+          "source": "runs/r2e_lifecycle_20260929/devcheck_rev/v9/orange3__4014f2483e3bab0621c9ae0f994947c008183253/orig/attempt.json",
+          "image": "sha256:bcd82bd87063de228be114f20f05fa7837db973db3fe82cffc60eccc0ba1d4fa",
+          "checks": {
+            "interpreter_in_tool_result": true,
+            "host_log_present": true,
+            "no_harness_dir_in_container": true,
+            "no_launcher_or_done_marker": true,
+            "message_start_matches_stub_requests": true,
+            "exit_code_zero": true,
+            "result_event_present": true,
+            "log_complete": true,
+            "bashenv_denied_for_agent": true,
+            "all_commands_ran": true,
+            "all_match_expect": true,
+            "r2e_preflight_ok": true,
+            "image_is_overlay_derived_id": true
+          },
+          "commands": [
+            {
+              "id": "r2e_preflight",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "env",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            },
+            {
+              "id": "pr1_1_cmd",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "pr3_2_cmd",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "pr4_3_pytest",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "pr5_4_pytest",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "pr6_5_pytest",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "pr7_6_pytest",
+              "rc": 1,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "pr8_7_cmd",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "pr9_8_cmd",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            }
+          ],
+          "cleanup": {
+            "container_rm": 0,
+            "network_failures": [],
+            "relay_failures": [],
+            "stub_rc": 0,
+            "labeled_containers_left": [],
+            "labeled_networks_left": [],
+            "residual_after_force": []
+          }
+        }
+      ],
+      "verification_scope": "本轮读取当前卡/修订/独立意见并结构化核对既有账本和开发记录；除4075专项与scrapy rev2外，不声称完整独立重验所有原件。"
+    },
+    {
+      "instance_id": "aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2",
+      "short_name": "aiohttp__61833518",
+      "source": "R2E",
+      "starting_category": 2,
+      "proposed_category": 2,
+      "priority": 9,
+      "status": "public_and_dev_repair",
+      "repair_direction": "明确：中性改正 all(write.mock_calls) 恒真复现，给出已验证的有效断言；恢复目标相关客户端/服务端兼容或交付等效公开路径。",
+      "remaining": [
+        "旧题面复现断言恒真；真实 client/server 的 asyncio 兼容改写导致 TypeError。",
+        "公开 protocol 层已可验证核心目标，需明确它能覆盖所声明的目标，不以无关 cookie 旧测全过为条件。"
+      ],
+      "dependencies": [
+        "R-f 公开材料与 R-d/等效开发路径版本",
+        "相关开发兼容范围核定"
+      ],
+      "minimum_acceptance_matrix_expected_not_run": "gold/AP2/A1=1；noop/AP1/AP1m=0。最终公开复现由 agent 执行，压缩与 chunked 分帧、解压载荷及 EOF 均核对。",
+      "material_current": {
+        "material_revisions": [
+          "r2e-mr-044",
+          "r2e-mr-045"
+        ],
+        "hidden_tests_tree_sha256": "sha256:23b524a89a3137272d0d4bda1c4f1d9e3a3e9e0851f462c061d2fd988dac85af",
+        "expected_output_sha256": "sha256:3390e85fe2f0807791b3def432def784f6da255b28b8d9e63c9af052218ace3f",
+        "expected_count": 49,
+        "expected_nonpass": {},
+        "statement_sha256": "sha256:d8fdebfed1986ce334c0fdaf74594a8a70bb205a25d4020dd11a3f2b7acf2d5a"
+      },
+      "sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/revision_draft.json"
+      ],
+      "existing_formal_rows": [
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v5/ledgers/ledger_gold.jsonl",
+          "line": 6,
+          "candidate_patch_sha256": "sha256:ce89afa45fb0c1558a8acd2276666d8b1c021dd0c94f8742683a99ad054cdb79",
+          "origin": "aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2.gold.patch",
+          "reward": 1.0,
+          "expected_match": 49,
+          "expected_total": 49,
+          "keys_equal": true,
+          "mismatched": [],
+          "image_id": "sha256:b93c5d43ab2871f0b39ccccd2f53b9517b6e0560a7085579e4ab5bc076397be6",
+          "recipe": {
+            "derived_image_id": "sha256:b93c5d43ab2871f0b39ccccd2f53b9517b6e0560a7085579e4ab5bc076397be6",
+            "derived_image_ref": "rh2-r2e-derived/aiohttp:618335186f22-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:70ceace9f6ab1e015cd3fa26ea20bb9180125711597c569acff70e30adf68c7a"
+          },
+          "log_sha256": "sha256:20cdfe2c7eb7eb2174b5d0b0ecb77cbea6f2f244e848565858acfb5667f15551",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T20:15:52.719963+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v5/ledgers/ledger_s2.jsonl",
+          "line": 6,
+          "candidate_patch_sha256": "sha256:05e094d58842721675e8be34a1bb262ca5058305cbbd6c07130b863382bb4413",
+          "origin": "aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2.diff",
+          "reward": 0.0,
+          "expected_match": 47,
+          "expected_total": 49,
+          "keys_equal": true,
+          "mismatched": [
+            "TestHttpMessage.test_write_payload_deflate_chunked_encoding",
+            "TestHttpMessage.test_write_payload_deflate_chunked_encoding_multiple_writes"
+          ],
+          "image_id": "sha256:b93c5d43ab2871f0b39ccccd2f53b9517b6e0560a7085579e4ab5bc076397be6",
+          "recipe": {
+            "derived_image_id": "sha256:b93c5d43ab2871f0b39ccccd2f53b9517b6e0560a7085579e4ab5bc076397be6",
+            "derived_image_ref": "rh2-r2e-derived/aiohttp:618335186f22-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:70ceace9f6ab1e015cd3fa26ea20bb9180125711597c569acff70e30adf68c7a"
+          },
+          "log_sha256": "sha256:6984840fa8f80c2340c23b5fb371975add6dfa05d9eb3e4594f653b97da59fd5",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T20:14:53.567056+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v5/ledgers/ledger_s4.jsonl",
+          "line": 5,
+          "candidate_patch_sha256": "sha256:5b38357b44e604a5823d436f030f871490b84e7c471c279a40a4636fdb5232e7",
+          "origin": "aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2.diff",
+          "reward": 1.0,
+          "expected_match": 49,
+          "expected_total": 49,
+          "keys_equal": true,
+          "mismatched": [],
+          "image_id": "sha256:b93c5d43ab2871f0b39ccccd2f53b9517b6e0560a7085579e4ab5bc076397be6",
+          "recipe": {
+            "derived_image_id": "sha256:b93c5d43ab2871f0b39ccccd2f53b9517b6e0560a7085579e4ab5bc076397be6",
+            "derived_image_ref": "rh2-r2e-derived/aiohttp:618335186f22-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:70ceace9f6ab1e015cd3fa26ea20bb9180125711597c569acff70e30adf68c7a"
+          },
+          "log_sha256": "sha256:72cc686607e16536a51490714d6fce72944d6baa2442c86fbb4a09b3e9a5766e",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T20:13:28.958414+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v5/ledgers/ledger_s3.jsonl",
+          "line": 6,
+          "candidate_patch_sha256": "sha256:0548e104256c9f358b312c24e5b319d99b19c78cbaafac85ae708fd11c1db08e",
+          "origin": "aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2.diff",
+          "reward": 1.0,
+          "expected_match": 49,
+          "expected_total": 49,
+          "keys_equal": true,
+          "mismatched": [],
+          "image_id": "sha256:b93c5d43ab2871f0b39ccccd2f53b9517b6e0560a7085579e4ab5bc076397be6",
+          "recipe": {
+            "derived_image_id": "sha256:b93c5d43ab2871f0b39ccccd2f53b9517b6e0560a7085579e4ab5bc076397be6",
+            "derived_image_ref": "rh2-r2e-derived/aiohttp:618335186f22-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:70ceace9f6ab1e015cd3fa26ea20bb9180125711597c569acff70e30adf68c7a"
+          },
+          "log_sha256": "sha256:e6b85c49e00f071c660481edb3bba3d58170e581fd531258a123ad75c7bbe1f9",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T20:15:51.555975+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v5/ledgers/ledger_noop.jsonl",
+          "line": 6,
+          "candidate_patch_sha256": null,
+          "origin": "noop",
+          "reward": 0.0,
+          "expected_match": 45,
+          "expected_total": 49,
+          "keys_equal": true,
+          "mismatched": [
+            "TestHttpMessage.test_write_payload_chunked_and_deflate",
+            "TestHttpMessage.test_write_payload_deflate_chunked_encoding",
+            "TestHttpMessage.test_write_payload_deflate_chunked_encoding_multiple_writes",
+            "TestHttpMessage.test_write_payload_deflate_filter"
+          ],
+          "image_id": "sha256:b93c5d43ab2871f0b39ccccd2f53b9517b6e0560a7085579e4ab5bc076397be6",
+          "recipe": {
+            "derived_image_id": "sha256:b93c5d43ab2871f0b39ccccd2f53b9517b6e0560a7085579e4ab5bc076397be6",
+            "derived_image_ref": "rh2-r2e-derived/aiohttp:618335186f22-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:70ceace9f6ab1e015cd3fa26ea20bb9180125711597c569acff70e30adf68c7a"
+          },
+          "log_sha256": "sha256:cd776de8f59097de8bfe01dfb83a68a52fe67b0f5f1d77bed226fd2a273b5fd2",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T20:15:48.167885+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v5/ledgers/ledger_s1.jsonl",
+          "line": 6,
+          "candidate_patch_sha256": "sha256:62fb5c2c2ee0a2dc208fb2257a37e655c5fab2ffa5a50fa2e50b3418dae6f849",
+          "origin": "aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2.diff",
+          "reward": 0.0,
+          "expected_match": 47,
+          "expected_total": 49,
+          "keys_equal": true,
+          "mismatched": [
+            "TestHttpMessage.test_write_payload_deflate_chunked_encoding",
+            "TestHttpMessage.test_write_payload_deflate_chunked_encoding_multiple_writes"
+          ],
+          "image_id": "sha256:b93c5d43ab2871f0b39ccccd2f53b9517b6e0560a7085579e4ab5bc076397be6",
+          "recipe": {
+            "derived_image_id": "sha256:b93c5d43ab2871f0b39ccccd2f53b9517b6e0560a7085579e4ab5bc076397be6",
+            "derived_image_ref": "rh2-r2e-derived/aiohttp:618335186f22-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:70ceace9f6ab1e015cd3fa26ea20bb9180125711597c569acff70e30adf68c7a"
+          },
+          "log_sha256": "sha256:77db56249a326b011d51b19b0589aaf0d1f5ce9a09a9ee957f6c8aa36677ce23",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T20:15:53.537390+00:00"
+        }
+      ],
+      "existing_devcheck": [
+        {
+          "source": "runs/r2e_lifecycle_20260929/devcheck_rev/v5/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/orig/attempt.json",
+          "image": "sha256:b93c5d43ab2871f0b39ccccd2f53b9517b6e0560a7085579e4ab5bc076397be6",
+          "checks": {
+            "interpreter_in_tool_result": true,
+            "host_log_present": true,
+            "no_harness_dir_in_container": true,
+            "no_launcher_or_done_marker": true,
+            "message_start_matches_stub_requests": true,
+            "exit_code_zero": true,
+            "result_event_present": true,
+            "log_complete": true,
+            "bashenv_denied_for_agent": true,
+            "all_commands_ran": true,
+            "all_match_expect": true,
+            "r2e_preflight_ok": true,
+            "image_is_overlay_derived_id": true
+          },
+          "commands": [
+            {
+              "id": "r2e_preflight",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "env",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            },
+            {
+              "id": "mcve_c2_writes",
+              "rc": 1,
+              "expect": "nonzero",
+              "matches_expect": true
+            },
+            {
+              "id": "mcve_c3_chunked",
+              "rc": 1,
+              "expect": "nonzero",
+              "matches_expect": true
+            },
+            {
+              "id": "test_http_protocol",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "test_wsgi_web_response",
+              "rc": 1,
+              "expect": "any",
+              "matches_expect": true
+            }
+          ],
+          "cleanup": {
+            "container_rm": 0,
+            "network_failures": [],
+            "relay_failures": [],
+            "stub_rc": 0,
+            "labeled_containers_left": [],
+            "labeled_networks_left": [],
+            "residual_after_force": []
+          }
+        }
+      ],
+      "verification_scope": "本轮读取当前卡/修订/独立意见并结构化核对既有账本和开发记录；除4075专项与scrapy rev2外，不声称完整独立重验所有原件。"
+    },
+    {
+      "instance_id": "aiohttp__240da100151933883d7dea0528d45877df025b92",
+      "short_name": "aiohttp__240da100",
+      "source": "R2E",
+      "starting_category": 2,
+      "proposed_category": 2,
+      "priority": 10,
+      "status": "public_and_dead_key_repair",
+      "repair_direction": "明确：采用已有 mock 等效公开复现；处置两项兼容死键并验 SC1。",
+      "remaining": [
+        "题面顶层 ClientRequest 导入无效、真实协程路径 TypeError；部分公开文件不能收集。",
+        "TCP/Unix 两个 expected FAILED 死键需移除或恢复有效的明确方案，不等待候选偶然翻转。"
+      ],
+      "dependencies": [
+        "R-f 与 R-a/R-d 版本",
+        "不扩默认端口/Host 等未定范围"
+      ],
+      "minimum_acceptance_matrix_expected_not_run": "gold、AL1、SC1=1；noop/DG1/WR1/WR2=0；agent 执行新 mock 复现及相关开发命令，核两死键处置前后精确键集。",
+      "material_current": {
+        "material_revisions": [
+          "r2e-mr-051",
+          "r2e-mr-052"
+        ],
+        "hidden_tests_tree_sha256": "sha256:0ca2411984b25ce4bc8696c75171f91b9ec667999c057a71a668b716839bc23f",
+        "expected_output_sha256": "sha256:28da8c15839bda64649ee0d888b4ac86993bce8f3e2052b8e78a9bac5155ccdd",
+        "expected_count": 35,
+        "expected_nonpass": {
+          "HttpClientConnectorTests.test_tcp_connector": "FAILED",
+          "HttpClientConnectorTests.test_unix_connector": "FAILED"
+        },
+        "statement_sha256": "sha256:5fd505cc8b7f564782cdb5081a308f3b8051164be85a8805dd42a2a33c33cc31"
+      },
+      "sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/probe_card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/reviewer_initial.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/public_read.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/revision_draft.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/screening_record.json"
+      ],
+      "existing_formal_rows": [
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v7/ledgers/ledger_gold.jsonl",
+          "line": 1,
+          "candidate_patch_sha256": "sha256:df75d1d24bc411e2ce46712930054181bb5b6321f6f1892961f3ee75cd0b3739",
+          "origin": "aiohttp__240da100151933883d7dea0528d45877df025b92.gold.patch",
+          "reward": 1.0,
+          "expected_match": 35,
+          "expected_total": 35,
+          "keys_equal": true,
+          "mismatched": [],
+          "image_id": "sha256:a86015aadba70cf7a21916152df98d87456f872a6fa1c63f3618a6181146af06",
+          "recipe": {
+            "derived_image_id": "sha256:a86015aadba70cf7a21916152df98d87456f872a6fa1c63f3618a6181146af06",
+            "derived_image_ref": "rh2-r2e-derived/aiohttp:240da1001519-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:c075da35740269717142cbbcf67d2dc5c438ae4036d57d291ec88ec8fb256a5f"
+          },
+          "log_sha256": "sha256:abab2d60dfe4ae8fa560748971f1787ef09d044c12795f493ae918e541a028de",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T20:59:00.946924+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v7/ledgers/ledger_s2.jsonl",
+          "line": 1,
+          "candidate_patch_sha256": "sha256:b8b809c11de35988b9dc627b044cc0c4fd115744293ed620c2dae99e2db4b38c",
+          "origin": "aiohttp__240da100151933883d7dea0528d45877df025b92.diff",
+          "reward": 0.0,
+          "expected_match": 34,
+          "expected_total": 35,
+          "keys_equal": true,
+          "mismatched": [
+            "ProxyConnectorTests.test_https_connect_port"
+          ],
+          "image_id": "sha256:a86015aadba70cf7a21916152df98d87456f872a6fa1c63f3618a6181146af06",
+          "recipe": {
+            "derived_image_id": "sha256:a86015aadba70cf7a21916152df98d87456f872a6fa1c63f3618a6181146af06",
+            "derived_image_ref": "rh2-r2e-derived/aiohttp:240da1001519-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:c075da35740269717142cbbcf67d2dc5c438ae4036d57d291ec88ec8fb256a5f"
+          },
+          "log_sha256": "sha256:24f7742c71dd46c4e85afb2530cf7e03dea43c460154c3cd7f0fda7844f26cd1",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T21:00:23.390567+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v7/ledgers/ledger_s4.jsonl",
+          "line": 1,
+          "candidate_patch_sha256": "sha256:a2e5e694251ed0a2d67f61e88a36341cdc66e691b3d89e962eeaf9eacb287f29",
+          "origin": "aiohttp__240da100151933883d7dea0528d45877df025b92.diff",
+          "reward": 1.0,
+          "expected_match": 35,
+          "expected_total": 35,
+          "keys_equal": true,
+          "mismatched": [],
+          "image_id": "sha256:a86015aadba70cf7a21916152df98d87456f872a6fa1c63f3618a6181146af06",
+          "recipe": {
+            "derived_image_id": "sha256:a86015aadba70cf7a21916152df98d87456f872a6fa1c63f3618a6181146af06",
+            "derived_image_ref": "rh2-r2e-derived/aiohttp:240da1001519-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:c075da35740269717142cbbcf67d2dc5c438ae4036d57d291ec88ec8fb256a5f"
+          },
+          "log_sha256": "sha256:5e68ad50c080a2e01bd5fdf29c208eee8eb98ed66627bb356a8cb1512a56f51b",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T20:59:01.162327+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v7/ledgers/ledger_s3.jsonl",
+          "line": 1,
+          "candidate_patch_sha256": "sha256:1b8a32ebc735c479d4bbb92f2d076f1602a10d3e770b652f1dc4548b98c1a62f",
+          "origin": "aiohttp__240da100151933883d7dea0528d45877df025b92.diff",
+          "reward": 0.0,
+          "expected_match": 34,
+          "expected_total": 35,
+          "keys_equal": true,
+          "mismatched": [
+            "ProxyConnectorTests.test_https_connect_port"
+          ],
+          "image_id": "sha256:a86015aadba70cf7a21916152df98d87456f872a6fa1c63f3618a6181146af06",
+          "recipe": {
+            "derived_image_id": "sha256:a86015aadba70cf7a21916152df98d87456f872a6fa1c63f3618a6181146af06",
+            "derived_image_ref": "rh2-r2e-derived/aiohttp:240da1001519-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:c075da35740269717142cbbcf67d2dc5c438ae4036d57d291ec88ec8fb256a5f"
+          },
+          "log_sha256": "sha256:5542d9454255e34a326852f80a1ab0afd4d04eb59e2db620adcaf8f9b203b197",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T20:59:48.790493+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v7/ledgers/ledger_noop.jsonl",
+          "line": 1,
+          "candidate_patch_sha256": null,
+          "origin": "noop",
+          "reward": 0.0,
+          "expected_match": 33,
+          "expected_total": 35,
+          "keys_equal": true,
+          "mismatched": [
+            "ProxyConnectorTests.test_request_port",
+            "ProxyConnectorTests.test_request_port_other_url"
+          ],
+          "image_id": "sha256:a86015aadba70cf7a21916152df98d87456f872a6fa1c63f3618a6181146af06",
+          "recipe": {
+            "derived_image_id": "sha256:a86015aadba70cf7a21916152df98d87456f872a6fa1c63f3618a6181146af06",
+            "derived_image_ref": "rh2-r2e-derived/aiohttp:240da1001519-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:c075da35740269717142cbbcf67d2dc5c438ae4036d57d291ec88ec8fb256a5f"
+          },
+          "log_sha256": "sha256:c265c8afe76b236aab510e5b40c034f942508f6aaa77d5af58f67b9f7151a55e",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T20:59:00.695332+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v7/ledgers/ledger_s1.jsonl",
+          "line": 1,
+          "candidate_patch_sha256": "sha256:efa105365fa81c3a6390953d1fa86b1c91149476e8d53060cb0072c4382cb758",
+          "origin": "aiohttp__240da100151933883d7dea0528d45877df025b92.diff",
+          "reward": 0.0,
+          "expected_match": 34,
+          "expected_total": 35,
+          "keys_equal": true,
+          "mismatched": [
+            "ProxyConnectorTests.test_request_port_other_url"
+          ],
+          "image_id": "sha256:a86015aadba70cf7a21916152df98d87456f872a6fa1c63f3618a6181146af06",
+          "recipe": {
+            "derived_image_id": "sha256:a86015aadba70cf7a21916152df98d87456f872a6fa1c63f3618a6181146af06",
+            "derived_image_ref": "rh2-r2e-derived/aiohttp:240da1001519-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:c075da35740269717142cbbcf67d2dc5c438ae4036d57d291ec88ec8fb256a5f"
+          },
+          "log_sha256": "sha256:ff66d707e4cfc21cf55ef4ebe51ce0f83213f7b15e01f74f52b5dd82ec6bf7ac",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T20:59:48.335296+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/formal_v7/ledgers/ledger_s5.jsonl",
+          "line": 1,
+          "candidate_patch_sha256": "sha256:ab0d861d07649e49d415b5de8e2d672e551ca8887286e0f9a3ff70162f821cc2",
+          "origin": "aiohttp__240da100151933883d7dea0528d45877df025b92.diff",
+          "reward": 1.0,
+          "expected_match": 35,
+          "expected_total": 35,
+          "keys_equal": true,
+          "mismatched": [],
+          "image_id": "sha256:a86015aadba70cf7a21916152df98d87456f872a6fa1c63f3618a6181146af06",
+          "recipe": {
+            "derived_image_id": "sha256:a86015aadba70cf7a21916152df98d87456f872a6fa1c63f3618a6181146af06",
+            "derived_image_ref": "rh2-r2e-derived/aiohttp:240da1001519-r2e_derive_v1m2s",
+            "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+            "recipe_sha256": "sha256:c075da35740269717142cbbcf67d2dc5c438ae4036d57d291ec88ec8fb256a5f"
+          },
+          "log_sha256": "sha256:b3c188b697c930fe6de0c2cc2e5632f5bbff3321d0d633ac97b851802f260ab5",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T20:59:49.570779+00:00"
+        }
+      ],
+      "existing_devcheck": [
+        {
+          "source": "runs/r2e_lifecycle_20260929/devcheck_rev/v7/aiohttp__240da100151933883d7dea0528d45877df025b92/orig/attempt.json",
+          "image": "sha256:a86015aadba70cf7a21916152df98d87456f872a6fa1c63f3618a6181146af06",
+          "checks": {
+            "interpreter_in_tool_result": true,
+            "host_log_present": true,
+            "no_harness_dir_in_container": true,
+            "no_launcher_or_done_marker": true,
+            "message_start_matches_stub_requests": true,
+            "exit_code_zero": true,
+            "result_event_present": true,
+            "log_complete": true,
+            "bashenv_denied_for_agent": true,
+            "all_commands_ran": true,
+            "all_match_expect": true,
+            "r2e_preflight_ok": true,
+            "image_is_overlay_derived_id": true
+          },
+          "commands": [
+            {
+              "id": "r2e_preflight",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "env",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            },
+            {
+              "id": "import_version",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            },
+            {
+              "id": "literal_example_probe",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "repro_port_mocked",
+              "rc": 1,
+              "expect": "nonzero",
+              "matches_expect": true
+            },
+            {
+              "id": "public_proxy_tests",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            },
+            {
+              "id": "public_connector_file",
+              "rc": 1,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "public_client_file_collect",
+              "rc": 2,
+              "expect": "nonzero",
+              "matches_expect": true
+            }
+          ],
+          "cleanup": {
+            "container_rm": 0,
+            "network_failures": [],
+            "relay_failures": [],
+            "stub_rc": 0,
+            "labeled_containers_left": [],
+            "labeled_networks_left": [],
+            "residual_after_force": []
+          }
+        }
+      ],
+      "verification_scope": "本轮读取当前卡/修订/独立意见并结构化核对既有账本和开发记录；除4075专项与scrapy rev2外，不声称完整独立重验所有原件。"
+    },
+    {
+      "instance_id": "datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb",
+      "short_name": "datalad__6b6fa389",
+      "source": "R2E",
+      "starting_category": 2,
+      "proposed_category": 2,
+      "priority": 11,
+      "status": "acceptance_repair",
+      "repair_direction": "明确：字段直查避开 __eq__、非示例 host:path、合理分类放宽但保留按字段重建原串。",
+      "remaining": [
+        "C-A 合理解=0，D-eq 绕过解析=1；需独立复核终稿与 R-b/R-c 落地。",
+        "不能以 str(URL(url)) 等于 url 作为重建验收：构造器保存原串会使其恒真。"
+      ],
+      "dependencies": [
+        "独立修订审查",
+        "1200 秒准备预算",
+        "新的 material 镜像和 actor 预检"
+      ],
+      "minimum_acceptance_matrix_expected_not_run": "gold/C-A=1；noop/C-B/D-eq/D-eq-minus/D-hard=0。gold/noop 各2，其余各1（原计划）；17 键 exact expected，保留已声明 FAILED 键解释。",
+      "material_current": {
+        "material_revisions": [],
+        "hidden_tests_tree_sha256": "sha256:8af0fcf7d682f26fce9ea48ebd2290cbdaaff67f479610c9d2ee90e00a2f990e",
+        "expected_output_sha256": "sha256:15da45bafd393ca47e0f732decf3079f3fe8c55f43b58359ba4795095d6dccb9",
+        "expected_count": 17,
+        "expected_nonpass": {
+          "test_get_local_file_url_linux": "FAILED"
+        },
+        "statement_sha256": "sha256:7aee20e15dc5452af921173d20792fe95c0b0d17e04c935c7fe99c648acf1cad"
+      },
+      "sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/reviewer_initial.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/public_read.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/screening_record.json"
+      ],
+      "existing_formal_rows": [
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/budget_v5/ledger_gold.jsonl",
+          "line": 4,
+          "candidate_patch_sha256": "sha256:0ceae26933f982203fd7afb8c9fbe1f0761c948c49f2ed4ded076e087493c728",
+          "origin": "datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb.gold.patch",
+          "reward": 1.0,
+          "expected_match": 17,
+          "expected_total": 17,
+          "keys_equal": true,
+          "mismatched": [],
+          "image_id": "sha256:2ec5e89b69b2737921ff5750adea40c451084030dd5ef29e11507be4c5a3a547",
+          "recipe": {
+            "derived_image_id": "sha256:2ec5e89b69b2737921ff5750adea40c451084030dd5ef29e11507be4c5a3a547",
+            "derived_image_ref": "rh2-r2e-derived/datalad:6b6fa3898546-r2e_derive_v1s",
+            "recipe_id": "r2e_derive_v1+sysconfig_v1",
+            "recipe_sha256": "sha256:e2e17bf12b0edf5d1f77eb315a7c8cd91e36dde70b6a272c81b04976b98a7270"
+          },
+          "log_sha256": "sha256:02c6cf64bd3e6b2802b5fde56fd1101db03ee60fe8b66867c90a8ac6dc9c587b",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T20:52:11.684641+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/budget_v5/ledger_noop.jsonl",
+          "line": 4,
+          "candidate_patch_sha256": null,
+          "origin": "noop",
+          "reward": 0.0,
+          "expected_match": 16,
+          "expected_total": 17,
+          "keys_equal": true,
+          "mismatched": [
+            "test_url_samples"
+          ],
+          "image_id": "sha256:2ec5e89b69b2737921ff5750adea40c451084030dd5ef29e11507be4c5a3a547",
+          "recipe": {
+            "derived_image_id": "sha256:2ec5e89b69b2737921ff5750adea40c451084030dd5ef29e11507be4c5a3a547",
+            "derived_image_ref": "rh2-r2e-derived/datalad:6b6fa3898546-r2e_derive_v1s",
+            "recipe_id": "r2e_derive_v1+sysconfig_v1",
+            "recipe_sha256": "sha256:e2e17bf12b0edf5d1f77eb315a7c8cd91e36dde70b6a272c81b04976b98a7270"
+          },
+          "log_sha256": "sha256:9dffea479576c146fa28d8246d0f0aa075ff104b0972997b1887e0546e62578f",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T20:52:09.065474+00:00"
+        }
+      ],
+      "existing_devcheck": [
+        {
+          "source": "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/orig/attempt.json",
+          "image": "sha256:2ec5e89b69b2737921ff5750adea40c451084030dd5ef29e11507be4c5a3a547",
+          "checks": {
+            "interpreter_in_tool_result": true,
+            "host_log_present": true,
+            "no_harness_dir_in_container": true,
+            "no_launcher_or_done_marker": true,
+            "message_start_matches_stub_requests": true,
+            "exit_code_zero": true,
+            "result_event_present": true,
+            "log_complete": true,
+            "bashenv_denied_for_agent": true,
+            "all_commands_ran": true,
+            "all_match_expect": true,
+            "r2e_preflight_ok": true,
+            "image_is_overlay_derived_id": true
+          },
+          "commands": [
+            {
+              "id": "r2e_preflight",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "env",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            },
+            {
+              "id": "import_env",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            },
+            {
+              "id": "repro_issue_example",
+              "rc": 1,
+              "expect": "nonzero",
+              "matches_expect": true
+            },
+            {
+              "id": "repro_check_url_helper",
+              "rc": 1,
+              "expect": "nonzero",
+              "matches_expect": true
+            },
+            {
+              "id": "edge_case_survey",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "public_test_network",
+              "rc": 1,
+              "expect": "any",
+              "matches_expect": true
+            }
+          ],
+          "cleanup": {
+            "container_rm": 0,
+            "network_failures": [],
+            "relay_failures": [],
+            "stub_rc": 0,
+            "labeled_containers_left": [],
+            "labeled_networks_left": [],
+            "residual_after_force": []
+          }
+        }
+      ],
+      "verification_scope": "本轮读取当前卡/修订/独立意见并结构化核对既有账本和开发记录；除4075专项与scrapy rev2外，不声称完整独立重验所有原件。"
+    },
+    {
+      "instance_id": "orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e",
+      "short_name": "orange3__50f6a758",
+      "source": "R2E",
+      "starting_category": 2,
+      "proposed_category": 2,
+      "priority": 12,
+      "status": "acceptance_and_public_repair",
+      "repair_direction": "明确：R-b 放宽名单格式、R-c 覆盖加载数据/混合文件/numeric 与已匹配定义仍生效。",
+      "remaining": [
+        "K1 全列变量名=0，K2/K3/K4 错解=1；独立复核终稿及正式修订矩阵未完成。",
+        "C-deg 补丁存在，本地未找到正式 ledger/私有 probe 结果；不能写已回传。",
+        "TypeError 题面伪影及旧公开不警告断言冲突需要按当前规则处置，不能仅记可选。"
+      ],
+      "dependencies": [
+        "独立修订审查",
+        "1200 秒准备预算",
+        "R-f 与公开旧断言冲突的窄处置"
+      ],
+      "minimum_acceptance_matrix_expected_not_run": "gold/K1=1；noop/K2/K3/K4/C-deg=0；加不点名 K5=0。核警告实际点名、已匹配定义继续生效、新公开说明与开发路径。",
+      "material_current": {
+        "material_revisions": [],
+        "hidden_tests_tree_sha256": "sha256:ba3458cb280d514fbd8eb7b70b04cf1e022034c14e95b6e7c00208a5dc282b11",
+        "expected_output_sha256": "sha256:c73cea6662f37b53861137d2bc32e784923a9041d8e644765e16f7a729e84129",
+        "expected_count": 48,
+        "expected_nonpass": {},
+        "statement_sha256": "sha256:8f4108475bb9dc328ac52574094f105fe24a9148d12a2add3cf4266b388b9463"
+      },
+      "sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/card.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/reviewer_initial.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/public_read.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/screening_record.json"
+      ],
+      "existing_formal_rows": [
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/budget_v5/ledger_gold.jsonl",
+          "line": 8,
+          "candidate_patch_sha256": "sha256:8f3d578bfd467133d7db593389f03d1692cbe0cc1df78d2777b57d4ddefe8154",
+          "origin": "orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e.gold.patch",
+          "reward": 1.0,
+          "expected_match": 48,
+          "expected_total": 48,
+          "keys_equal": true,
+          "mismatched": [],
+          "image_id": "sha256:f5573c5a67037e06958260f7bc84260310c381dc43b34af2652caad17c5a3159",
+          "recipe": {
+            "derived_image_id": "sha256:f5573c5a67037e06958260f7bc84260310c381dc43b34af2652caad17c5a3159",
+            "derived_image_ref": "rh2-r2e-derived/orange3:50f6a758f1c6-r2e_derive_v1s",
+            "recipe_id": "r2e_derive_v1+sysconfig_v1",
+            "recipe_sha256": "sha256:e2e17bf12b0edf5d1f77eb315a7c8cd91e36dde70b6a272c81b04976b98a7270"
+          },
+          "log_sha256": "sha256:a2d56398b05fb599b51f61502ae2228b687779d352e080ef315f10152dcba28e",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T21:26:35.168697+00:00"
+        },
+        {
+          "ledger": "runs/r2e_lifecycle_20260929/budget_v5/ledger_noop.jsonl",
+          "line": 8,
+          "candidate_patch_sha256": null,
+          "origin": "noop",
+          "reward": 0.0,
+          "expected_match": 47,
+          "expected_total": 48,
+          "keys_equal": true,
+          "mismatched": [
+            "TestOWColor.test_load_ignore_warning"
+          ],
+          "image_id": "sha256:f5573c5a67037e06958260f7bc84260310c381dc43b34af2652caad17c5a3159",
+          "recipe": {
+            "derived_image_id": "sha256:f5573c5a67037e06958260f7bc84260310c381dc43b34af2652caad17c5a3159",
+            "derived_image_ref": "rh2-r2e-derived/orange3:50f6a758f1c6-r2e_derive_v1s",
+            "recipe_id": "r2e_derive_v1+sysconfig_v1",
+            "recipe_sha256": "sha256:e2e17bf12b0edf5d1f77eb315a7c8cd91e36dde70b6a272c81b04976b98a7270"
+          },
+          "log_sha256": "sha256:b1daad1e849cc111a50e90d665e28727fc149ceafafd555cee0e5f4a673c1e50",
+          "test_complete": true,
+          "cleanup_removed": true,
+          "started_at_utc": "2026-09-28T21:26:35.366615+00:00"
+        }
+      ],
+      "existing_devcheck": [
+        {
+          "source": "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/orig/attempt.json",
+          "image": "sha256:f5573c5a67037e06958260f7bc84260310c381dc43b34af2652caad17c5a3159",
+          "checks": {
+            "interpreter_in_tool_result": true,
+            "host_log_present": true,
+            "no_harness_dir_in_container": true,
+            "no_launcher_or_done_marker": true,
+            "message_start_matches_stub_requests": true,
+            "exit_code_zero": true,
+            "result_event_present": true,
+            "log_complete": true,
+            "bashenv_denied_for_agent": true,
+            "all_commands_ran": true,
+            "all_match_expect": true,
+            "r2e_preflight_ok": true,
+            "image_is_overlay_derived_id": true
+          },
+          "commands": [
+            {
+              "id": "r2e_preflight",
+              "rc": 0,
+              "expect": "any",
+              "matches_expect": true
+            },
+            {
+              "id": "env",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            },
+            {
+              "id": "env_import",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            },
+            {
+              "id": "repro_unused_vars_warning",
+              "rc": 1,
+              "expect": "nonzero",
+              "matches_expect": true
+            },
+            {
+              "id": "public_owcolor_tests_except_conflict",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            },
+            {
+              "id": "public_no_rename_conflict",
+              "rc": 0,
+              "expect": "zero",
+              "matches_expect": true
+            }
+          ],
+          "cleanup": {
+            "container_rm": 0,
+            "network_failures": [],
+            "relay_failures": [],
+            "stub_rc": 0,
+            "labeled_containers_left": [],
+            "labeled_networks_left": [],
+            "residual_after_force": []
+          }
+        }
+      ],
+      "verification_scope": "本轮读取当前卡/修订/独立意见并结构化核对既有账本和开发记录；除4075专项与scrapy rev2外，不声称完整独立重验所有原件。"
+    },
+    {
+      "instance_id": "orange3__9b5494e26f407b75e79699c9d40be6df1d80a040",
+      "short_name": "orange3__9b5494e2",
+      "source": "R2E",
+      "starting_category": 2,
+      "proposed_category": 2,
+      "priority": 13,
+      "status": "shared_recipe_dependency",
+      "repair_direction": "明确：A+B′ 加 G1 多分类默认模型回归断言，并绑定最终内容的环境配方摘要。",
+      "remaining": [
+        "旧方案 A/B′ 仍放行 G1（默认 multinomial 改 OvR）。",
+        "当前 environment_overlay.py 批准集合仍仅含旧 512277… 摘要，加入 material 后的配方未获绑定。"
+      ],
+      "dependencies": [
+        "主线程/公共实现负责人处理最终配方内容身份",
+        "SciPy 1.5.4 / +env_v2 不可省略"
+      ],
+      "minimum_acceptance_matrix_expected_not_run": "gold、V1/V3/V4/V5=1；noop/W1/V7/P1/G1=0；先证 base/gold 的默认与显式 multinomial 行为关系，不能照抄 gold 数值。保留 13 键 expected 精确状态口径。",
+      "material_current": {
+        "material_revisions": [
+          "r2e-mr-020"
+        ],
+        "hidden_tests_tree_sha256": "sha256:9a87bfe6c587ddeae7aa9eb367413baa2a9a58481d90178c2a842dee45c5cbd6",
+        "expected_output_sha256": "sha256:cd034086c160e69a531b6d1d74dc5b00734a672e364575c273877515518ff240",
+        "expected_count": 13,
+        "expected_nonpass": {
+          "TestLogisticRegressionLearner.test_learner_scorer": "FAILED",
+          "TestLogisticRegressionLearner.test_learner_scorer_multiclass": "FAILED"
+        },
+        "statement_sha256": "sha256:687b44de0c1c54495a92186594e86d44c3f4b1288bfdac1a6a49650e1d1ab4a8"
+      },
+      "sources": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__9b5494e26f407b75e79699c9d40be6df1d80a040/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__9b5494e26f407b75e79699c9d40be6df1d80a040/revision_draft.json"
+      ],
+      "existing_formal_rows": [],
+      "existing_devcheck": [],
+      "verification_scope": "本轮读取当前卡/修订/独立意见并结构化核对既有账本和开发记录；除4075专项与scrapy rev2外，不声称完整独立重验所有原件。"
+    }
+  ],
+  "aiohttp4075_log_recomputation": [
+    {
+      "ledger": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_gold.jsonl",
+      "log": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/gold_logs/evallog_replay-r2e-v11-gold-0929_6ca66a09.eval.log",
+      "log_sha256": "sha256:9068bf4fc0edab6315e3298eb55f8ae6f4238f6f491c88153c1b0dafc96a7d99",
+      "observed_count": 136,
+      "match_count": 132,
+      "mismatched": [
+        "test_http_request_ctl_in_target_rejected[py-parser-pyloop-lf-in-target]",
+        "test_http_request_ctl_in_target_rejected[py-parser-pyloop-ff-in-target]",
+        "test_http_request_ctl_in_target_rejected[py-parser-pyloop-cr-in-target]",
+        "test_http_request_ctl_in_target_rejected[py-parser-pyloop-tab-in-target]"
+      ],
+      "reward": 0.0,
+      "test_rc": 1,
+      "test_complete": true,
+      "cleanup_removed": true
+    },
+    {
+      "ledger": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_s2.jsonl",
+      "log": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/s2_logs/evallog_replay-r2e-v11-s2-092900_267f154d.eval.log",
+      "log_sha256": "sha256:9b4eb84d53bd7231a2263119789c9a490e2b2334d0e934c4439b5c2ea9a7705c",
+      "observed_count": 136,
+      "match_count": 136,
+      "mismatched": [],
+      "reward": 1.0,
+      "test_rc": 1,
+      "test_complete": true,
+      "cleanup_removed": true
+    },
+    {
+      "ledger": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_s4.jsonl",
+      "log": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/s4_logs/evallog_replay-r2e-v11-s4-092900_034925c1.eval.log",
+      "log_sha256": "sha256:6ff69ab75468b3b7b9b220955d5394ecbb0ab045945523203ff3754c8ebe8876",
+      "observed_count": 136,
+      "match_count": 136,
+      "mismatched": [],
+      "reward": 1.0,
+      "test_rc": 1,
+      "test_complete": true,
+      "cleanup_removed": true
+    },
+    {
+      "ledger": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_s3.jsonl",
+      "log": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/s3_logs/evallog_replay-r2e-v11-s3-092900_03a29ee4.eval.log",
+      "log_sha256": "sha256:094f0407b31027029275f3ac63269973d7c768600df079e4dfc40b957cbca268",
+      "observed_count": 136,
+      "match_count": 134,
+      "mismatched": [
+        "test_bad_headers[py-parser-pyloop-nonascii-mid-name]",
+        "test_http_request_bad_status_line_other_whitespace[py-parser-pyloop-vt-separator]"
+      ],
+      "reward": 0.0,
+      "test_rc": 1,
+      "test_complete": true,
+      "cleanup_removed": true
+    },
+    {
+      "ledger": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_noop.jsonl",
+      "log": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/noop_logs/evallog_replay-r2e-v11-noop-0929_3c16929c.eval.log",
+      "log_sha256": "sha256:8bbe2cf162c691a3dd7d9f9dd549d4c4bd4ccbb66adb4646ea10a1f770dfbd10",
+      "observed_count": 136,
+      "match_count": 131,
+      "mismatched": [
+        "test_bad_headers[py-parser-pyloop-\\xffoo: bar]",
+        "test_bad_headers[py-parser-pyloop-nonascii-mid-name]",
+        "test_http_request_bad_status_line_whitespace[py-parser-pyloop]",
+        "test_http_request_bad_status_line_other_whitespace[py-parser-pyloop-ff-separator]",
+        "test_http_request_bad_status_line_other_whitespace[py-parser-pyloop-vt-separator]"
+      ],
+      "reward": 0.0,
+      "test_rc": 1,
+      "test_complete": true,
+      "cleanup_removed": true
+    },
+    {
+      "ledger": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_s1.jsonl",
+      "log": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/s1_logs/evallog_replay-r2e-v11-s1-092900_b31a72fc.eval.log",
+      "log_sha256": "sha256:5825b56b0cd04f798af4943ca9ffcca62992ef88367aa07815b3bcf6c46e96aa",
+      "observed_count": 136,
+      "match_count": 136,
+      "mismatched": [],
+      "reward": 1.0,
+      "test_rc": 1,
+      "test_complete": true,
+      "cleanup_removed": true
+    },
+    {
+      "ledger": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_s5.jsonl",
+      "log": "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/s5_logs/evallog_replay-r2e-v11-s5-092900_0dc59f5f.eval.log",
+      "log_sha256": "sha256:f6b4fe6a8ac3605f6e91736ee387c610b213f7840c7efeae45a7dfb07d49e981",
+      "observed_count": 136,
+      "match_count": 136,
+      "mismatched": [],
+      "reward": 1.0,
+      "test_rc": 1,
+      "test_complete": true,
+      "cleanup_removed": true
+    }
+  ],
+  "scrapy_rev2_reconstructed_test_sha256": "sha256:9ce38e4618acc39e683dad4ffb44bf737ed9bbdd2ab05df5a13d62a73f64ba05",
+  "scrapy_rev2_observed_checks": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/trials/rev2_C1_1.json",
+      "sha256": "sha256:0bb52d7842cbd6f9ed2f6b923b506551cdbc1ae14a92bc7d1e050252aa873c47",
+      "mismatched": [],
+      "match": true
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/trials/rev2_C1_2.json",
+      "sha256": "sha256:ad0c2c70c85aa7e4970e5dd593ea347b00a20c2658559d7d03da9be05866b077",
+      "mismatched": [],
+      "match": true
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/trials/rev2_C2.json",
+      "sha256": "sha256:f6b583ec90e72d9f6d21d6c307e18b65c1b8dfcc6742ce9821a3817e235df36d",
+      "mismatched": [
+        "UtilsMiscPy3TestCase.test_partial",
+        "UtilsMiscPy3TestCase.test_generators_return_something",
+        "UtilsMiscPy3TestCase.test_indentation_error"
+      ],
+      "match": false
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/trials/rev2_C2b.json",
+      "sha256": "sha256:eda649ffbf94a7684795a09319a1b735e4eb5f1d838ec969f780f10368d643b3",
+      "mismatched": [
+        "UtilsMiscPy3TestCase.test_generators_return_something",
+        "UtilsMiscPy3TestCase.test_indentation_error"
+      ],
+      "match": false
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/trials/rev2_C3.json",
+      "sha256": "sha256:5d7b0a17e091932d4345a5bb8f2cf7e185907bd2f78371d48204238979307aa1",
+      "mismatched": [
+        "UtilsMiscPy3TestCase.test_partial",
+        "UtilsMiscPy3TestCase.test_generators_return_something"
+      ],
+      "match": false
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/trials/rev2_D.json",
+      "sha256": "sha256:1d6013f343e4b41d3f3fb191d686ac0ff3ad91dc94fd87c6c3a0a999c67ab4f0",
+      "mismatched": [
+        "UtilsMiscPy3TestCase.test_partial"
+      ],
+      "match": false
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/trials/rev2_gold.json",
+      "sha256": "sha256:89fe4733023eccae42950669d8c444e83331fbd00276f58061910452f8e41067",
+      "mismatched": [
+        "UtilsMiscPy3TestCase.test_partial"
+      ],
+      "match": false
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/trials/rev2_noop_1.json",
+      "sha256": "sha256:3130befa5fe80728c4ee838625153596e720a8e4c725a8b6fa37302d31c9df25",
+      "mismatched": [
+        "UtilsMiscPy3TestCase.test_partial"
+      ],
+      "match": false
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/trials/rev2_noop_2.json",
+      "sha256": "sha256:18cd1f4361165c5b392c3f4f2b190f3977cc4889a55f649e1a7642f1995ffb52",
+      "mismatched": [
+        "UtilsMiscPy3TestCase.test_partial"
+      ],
+      "match": false
+    }
+  ],
+  "source_hashes": {
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/probe_card.md": "sha256:b3691515e8a01b00f205437aab40bc15c693a2665166ebcf0170732dbdb7b51d",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/revision_plan.md": "sha256:75ab4db11fa03a45cbba00d240b2a51743ce0b983f2dd4a8dae9dde9e99dfa55",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/revision_draft.json": "sha256:b6886ff12a5c496106b4496e7f70f6a57d87d89c8f965392d4eb6751905b26f8",
+    "runs/r2e_lifecycle_20260929/formal_v5/ledgers/ledger_gold.jsonl": "sha256:9d8f59608409cfb4a6b95ce9232e3547813cb8dd9d96233baa7829e5d7582c8b",
+    "runs/r2e_lifecycle_20260929/formal_v5/ledgers/ledger_s2.jsonl": "sha256:024f0df4ce66246749c7b5830d776a50e3f50bf976c1f2b945efeff53257bca9",
+    "runs/r2e_lifecycle_20260929/formal_v5/ledgers/ledger_s4.jsonl": "sha256:5d400633e041cfb4245c31ff6b07203654fd6bbe8867660659ef950ec3ec97ca",
+    "runs/r2e_lifecycle_20260929/formal_v5/ledgers/ledger_s3.jsonl": "sha256:3b41cef597912f132615f5c4c55954a21c73a5aa87a8874af8655f1f0984daa7",
+    "runs/r2e_lifecycle_20260929/formal_v5/ledgers/ledger_noop.jsonl": "sha256:f961cef23ce44ebb1d95d58940d68fa8d6da25a380683952c39e72befc99efe9",
+    "runs/r2e_lifecycle_20260929/formal_v5/ledgers/ledger_s1.jsonl": "sha256:92aa369ced5abbd1204f3ee0274222d55e11794fd373dd7e32a3341f303e9767",
+    "runs/r2e_lifecycle_20260929/devcheck_rev/v5/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/orig/attempt.json": "sha256:5fa0a1b21977d5705c1da694322602d1bc236b1f5ef8e4a433e067e0a889538d",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/probe_card.md": "sha256:e3940a9a6011497fec149c13f21746f0e4842a86791e67ecedacc9eb59c5fdf1",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/revision_plan.md": "sha256:6d23d4dfed977968b90469bed04589ea54994c21037413a54fdf4303372c1890",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/revision_draft.json": "sha256:ec28e49ac512fa18a0946edafb7a2b218425d525963f12ba030fcd8243d67516",
+    "runs/r2e_lifecycle_20260929/devcheck_rev/v5/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/orig/attempt.json": "sha256:4d2d138c79b800476c8444bbe710d9fb57b730ad3fae5c55f79cccee6a2a88be",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/probe_card.md": "sha256:03ae946682519ca284951ded4ed8a33567d3aa08624068a6e8488dba8537e50d",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/revision_plan.md": "sha256:8dd0ec3c4981d1387cc097acd7cd24adcd32db75767ddf076484bc5b4a6102f9",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/revision_draft.json": "sha256:b2f07d53ba6de2ed2c00b6141b6c2e242c8914ad7a29d251e1d1c4f6d75cd4f6",
+    "runs/r2e_lifecycle_20260929/devcheck_rev/v5/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/orig/attempt.json": "sha256:eb8de1965c21397b4f85dfca02ac7551781b9318689fc80c63a9504156bc4631",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/revision_plan.md": "sha256:17d7eeb24eb6303c0d843c372e12cdde101a36fcbea07c834185d2315813b45c",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/revision_draft.json": "sha256:2605b9a7eeefb6c3bb9838536342c7e73cea79d260953378a49d00660aedc9e9",
+    "runs/r2e_lifecycle_20260929/budget_v5/ledger_gold.jsonl": "sha256:fbda746ce5b91d2143858ba1299ccedaddc73cc4a2d5a2eb1b598736437b0c2c",
+    "runs/r2e_lifecycle_20260929/budget_v5/ledger_noop.jsonl": "sha256:f9c2a67cc4f2c4f2d44708a49e3e5ddc709a022e3da02730c178e20c97483475",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__4014f2483e3bab0621c9ae0f994947c008183253/probe_card.md": "sha256:c6456be2b376004b6f3ae25a33f194658cfff9130889373cedc9dc8ef7bf97f1",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__4014f2483e3bab0621c9ae0f994947c008183253/revision_plan.md": "sha256:ea275d8b56998b782d2aad72702aabe28948e87974ce2b09c942a5643bf0fdd2",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__4014f2483e3bab0621c9ae0f994947c008183253/revision_draft.json": "sha256:72f1e660dfc7f34cc461cc85719c1b715b65ff9641757462b88c9dc5e02349ff",
+    "runs/r2e_lifecycle_20260929/formal_v9/ledgers/ledger_s3_budget1200.jsonl": "sha256:0c470cf7978ae72115a16c71f5544d2c05d8cd0ab2ea0b6f67cda39cab5e1fbb",
+    "runs/r2e_lifecycle_20260929/formal_v9/ledgers/ledger_s6_budget1200.jsonl": "sha256:bc577dfc198fa4c0d77fa759cb3ab316cb02703860f12e6c90c87c6b93afff05",
+    "runs/r2e_lifecycle_20260929/formal_v9/ledgers/ledger_gold_budget1200.jsonl": "sha256:888f4548693dc68d65832f1b0ce253b7d40af03ad94c235e231755f09c876dda",
+    "runs/r2e_lifecycle_20260929/formal_v9/ledgers/ledger_noop_budget1200.jsonl": "sha256:d33c05f72420e8a1442cd47f358ddbf430d760db593a35099384fe4a3f830acd",
+    "runs/r2e_lifecycle_20260929/formal_v9/ledgers/ledger_s2_budget1200.jsonl": "sha256:6e17ad1b79ed7c3f37314447077e29c557c1c731f159b7a2256335593e682b69",
+    "runs/r2e_lifecycle_20260929/formal_v9/ledgers/ledger_s5_budget1200.jsonl": "sha256:09527cc1f7a7e8342f1b3d202ca56eca40aaec03dc96c311f9119178b58433a5",
+    "runs/r2e_lifecycle_20260929/formal_v9/ledgers/ledger_s1_budget1200.jsonl": "sha256:63bca0747ce873a118a548a69b7e42733a1182fc78d4051e4bd17fb5d2aae63b",
+    "runs/r2e_lifecycle_20260929/formal_v9/ledgers/ledger_s4_budget1200.jsonl": "sha256:644ca23efd6e06f5ba6a47f08cde36b4f23ed1ee3ef68ad092c42dddf8d6e255",
+    "runs/r2e_lifecycle_20260929/devcheck_rev/v9/orange3__4014f2483e3bab0621c9ae0f994947c008183253/orig/attempt.json": "sha256:c17965af58b0cfd248e02d757e836efaa42435c2469019408a54fcd22d2ec8d8",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__9b5494e26f407b75e79699c9d40be6df1d80a040/revision_plan.md": "sha256:895febda9d7526eeefd87d065f5164fca3bd4b79d94b99ac606ca8e9b57a1041",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__9b5494e26f407b75e79699c9d40be6df1d80a040/revision_draft.json": "sha256:c22c4abfcaec42b6a133c2f41ae8d4dbaf770fe1c69da0ff4dee15d09d87a31a",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/probe_card.md": "sha256:c3f90c740a0f399ab5c7690cd4d717cb71091d24fa49e2386abfe730c0021078",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/card.md": "sha256:b5835e99dd1ed97045d48effe3c10fcabfcdec70b1fa2a556e13a61c2742ca7e",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/reviewer_initial.md": "sha256:50f840201aa55c44eaf89f61836497a90116aec7ef84834e26490ab598d32a3a",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/public_read.md": "sha256:d792b9b92452cf0c90282762843597a368141a258441a5800e8c0b07453d8e60",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/review.md": "sha256:a70d3f860d9d122604e0bb342e30498c2b57d32c5d2f6def8e8a73f28beafa83",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/revision_plan.md": "sha256:7f6f36f1d692075cda40729b9da89873ed89e879a5b564222a2ebd87e2398454",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/revision_draft.json": "sha256:56d05de5fc81145545329fbb88705793efe86248972d03e99d4dd578ddd30a3b",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__240da100151933883d7dea0528d45877df025b92/screening_record.json": "sha256:f1f7461c38de3926e658d588754371ff742de4ebbef33cf2e59014358619bbb7",
+    "runs/r2e_lifecycle_20260929/formal_v7/ledgers/ledger_gold.jsonl": "sha256:e7922cf6be66c84d2e253e0fd0405304bc880e6b690d0c27af36984332b63b3b",
+    "runs/r2e_lifecycle_20260929/formal_v7/ledgers/ledger_s2.jsonl": "sha256:ec113083e5b66f2a04a33f9848157751e97554123eef449d5df81f94fd2f496b",
+    "runs/r2e_lifecycle_20260929/formal_v7/ledgers/ledger_s4.jsonl": "sha256:45bc449a05f77c628cf7cfecc0e96c4baeb4379aeb33aa1868e4d400d170aa67",
+    "runs/r2e_lifecycle_20260929/formal_v7/ledgers/ledger_s3.jsonl": "sha256:2842880319a4d5d868b77d5c620514501fca73a9e15d93096db7e6ef4e37ff6d",
+    "runs/r2e_lifecycle_20260929/formal_v7/ledgers/ledger_noop.jsonl": "sha256:b2d3ba6b937c8b009dd1425811709022d802a9e88f26deccf3e56689219e6034",
+    "runs/r2e_lifecycle_20260929/formal_v7/ledgers/ledger_s1.jsonl": "sha256:abb8db957f03f4fbaa5a8d7de2f4e0aefc2ebc51f60ad26bd86a8544e9eb0ca0",
+    "runs/r2e_lifecycle_20260929/formal_v7/ledgers/ledger_s5.jsonl": "sha256:adb20858b7559a2c799ba56c048ed562b7086b55b86614fb4f0091aec2fc63b1",
+    "runs/r2e_lifecycle_20260929/devcheck_rev/v7/aiohttp__240da100151933883d7dea0528d45877df025b92/orig/attempt.json": "sha256:9647c7e13f23a7a59fdb776fc49d67dcd21f611b93035433f12227c5468520b0",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/card.md": "sha256:437cd3c0f1c73c5f514d647adaaf1b189e02a6a0366c06c8345c8db6eab3b6db",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/reviewer_initial.md": "sha256:d58f70cc64384c47df13c6c2c3a1658c164371613c5bb878c5c39a17509f4af3",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/public_read.md": "sha256:1d43713da5eab59b38e71a63e4b2a61d228faa44833f901c5734d3e3833fa4cb",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/review.md": "sha256:758d9f0f44fc6971d5889b17c1b9c01f72056932834a1088fa458a95faf41a39",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/revision_plan.md": "sha256:5e55448893a796b5828ab0e3accf808ea95d68665b595f722fdfcf053ea4fc28",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/revision_draft.json": "sha256:27ad3066b169107a5a9a7b66dc6bc15f68a9c082cfa69ea4c24b8bf128b96b6d",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/screening_record.json": "sha256:ae4c6b3c163b764757af54be974e034b395ae0dd25ba42b9149612a9052d352a",
+    "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_gold.jsonl": "sha256:58210e8560cb0b8847d64b37ca54ca75bcdfcda25a7046e884e992c5b9c617b7",
+    "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_s2.jsonl": "sha256:83d2d2c353071f6710b44835caafe4ed0d7052c44229c5c6d4322222a26b9376",
+    "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_s4.jsonl": "sha256:f52efa107340e674eb4f6bd903bcc79329daf2fad41847b0151827bdaf8b78b0",
+    "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_s3.jsonl": "sha256:050d4f4239ea8a39a29032950ee56b7fb491d7c59cc135f1f37c072267aa04ea",
+    "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_noop.jsonl": "sha256:d8eb2970aca04f5ff96b1c88103b902167f34b891b311f0af37b0b539d9bdf33",
+    "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_s1.jsonl": "sha256:ba075c2f9fbaceed43ea217ad56e42516b843d847ace8a0c14e23e562008fa40",
+    "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_s5.jsonl": "sha256:2a4c95cc52e51bc6a35239dc1e16dcfcb7b779a669307613ed41e69745008050",
+    "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/devcheck_v11/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/orig/attempt.json": "sha256:5f74859269e8620e5e9b9e0393839f14bd4df93bb5246ddae54d62a1080b0266",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/card.md": "sha256:9bc26f7f7dc0003c026b6a169eaa1d1871ecfa5d240af3b186b40aef5b1f9b93",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/reviewer_initial.md": "sha256:5654270bac1c9f1fee6ffe9f6a1b3dcea269d29d3cdd79429be6289719ead1f8",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/public_read.md": "sha256:3b0b203b36c253abc8b9bc1cefee9d3fcd967fc6ee7aa131488858c5d9b3d9aa",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/screening_record.json": "sha256:93bbcfebf143060b39ff5a74ff85ab86f4e49ee73ade3945eec46e52dc61bdd6",
+    "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/orig/attempt.json": "sha256:f1b4cd235e6cf5e9c9c5331bfc0b9e936a9932145b655b9161f26aaabdebb3d3",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/probe_card.md": "sha256:40093dab2e31089247f99f3d5eade95928f1b4f84eaf7a03e90603a7b00aa18c",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/card.md": "sha256:fa99671308f3f81c2959ca231ac163560e5d78d80b5b53cb0cbdab77786a5daa",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/reviewer_initial.md": "sha256:1ae9ca6effc2f8b8e11b5f3335004e578e21e9ca2645a205667d6569ef1f0e24",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/public_read.md": "sha256:0901af37732f193848ef740592617c06f3e8ae42530f39a12c81d8c624e3e12b",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/review.md": "sha256:a8a3846bfe80e7503f85a0a1fbea1f3326bd119dbde91fbea67d0d5821743177",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/revision_plan.md": "sha256:d23a999c5138a00946c763215c925aca9ebb1085a33d6abcab9952e5e8fbcb35",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/revision_draft.json": "sha256:0c4ea30260a15774fabf08a202d9a7df382b980c880d4f0a6a64738c92066025",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/screening_record.json": "sha256:4a03a502ffb1e8ccf5c2f94a50e15c998e2f85eab798e58209298ce2d77c09cf",
+    "runs/r2e_lifecycle_20260929/formal_v8/ledgers/ledger_gold.jsonl": "sha256:b0e18d064c3512de13f0ae27fb03456785bf669fcd33c20dbf4a52d042891ca6",
+    "runs/r2e_lifecycle_20260929/formal_v8/ledgers/ledger_s2.jsonl": "sha256:1077b6df563baca1790a7976f39e575255a9bba495c12213323a49a0d10d8f09",
+    "runs/r2e_lifecycle_20260929/formal_v8/ledgers/ledger_s6.jsonl": "sha256:aeba57903820b93f27b951684a645f480f8b0f5bb2f78e4f5d83388fee7324ea",
+    "runs/r2e_lifecycle_20260929/formal_v8/ledgers/ledger_s4.jsonl": "sha256:fcabdd0a276b66ab4d1f65b992143a423f24a9ef9777d79121b063a817a3104d",
+    "runs/r2e_lifecycle_20260929/formal_v8/ledgers/ledger_s3.jsonl": "sha256:b2860181df1ba83b968defece3ae95e8df0ef381f6443c8f735bea8770fa8375",
+    "runs/r2e_lifecycle_20260929/formal_v8/ledgers/ledger_noop.jsonl": "sha256:4549e0bbf792615c912e6499fc77086b22178de9d8ee4e2072cd0884c876e481",
+    "runs/r2e_lifecycle_20260929/formal_v8/ledgers/ledger_s1.jsonl": "sha256:32068cb0469453a66ab566e112967ce35f165d450f37f12afab66d9257d75596",
+    "runs/r2e_lifecycle_20260929/formal_v8/ledgers/ledger_s5.jsonl": "sha256:483ced674fb6c171cd128feb733ea424189419c29656f0d9ef0b36278eb2d64e",
+    "runs/r2e_lifecycle_20260929/devcheck_rev/v8/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/orig/attempt.json": "sha256:b640877c808f5a3b1d6bdb43ef279857e3901f2e855ca5280221c0b53dcdb5ce",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/card.md": "sha256:1648cec7fba16c32c4e3463771b75acbd9683f2383e3812852c064b69500dacd",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/reviewer_initial.md": "sha256:d3d00dba5a04e7bfd2869d9208516649e4018498f05548ded6ae08b5819bf1e8",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/public_read.md": "sha256:289630797f5977140c5683d698a0140a2594abbfe8da09801e7e3137540bfdda",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/screening_record.json": "sha256:83ad0461484e2edd51df1276a5cb353825ca50b0b5c9db49e7318de1ddb30920",
+    "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/orig/attempt.json": "sha256:247e03fc7ade55bb988126355c72f5e64cc9ac7d1e89100f8de15a7fdf0f064b",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/card.md": "sha256:88c9bfb749875003c30bd0bcc38636508bc3f23a4fe6f7a826e2203ecf52b70c",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/reviewer_initial.md": "sha256:f1473b58dc5dfe294558da852bca62649bbf81e28a355b0f3a4a82aadbd97ffb",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/public_read.md": "sha256:35d8ae163b775fa97fe61a5a793dd14d82e5e7ab30f75bd1c5ce249d5ee34aa7",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/review.md": "sha256:dee5fca552c46122920d29f386dac8bad1e9547b97c7b7faab79d065d64f51b3",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/revision_plan.md": "sha256:2afead9ba19b12a41c1ac5b6031dc30043264313c96dd99d133135f54fccf98d",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/revision_draft.json": "sha256:6fb76156c59516929e9e19d06b141f2b9c722512f29dd1b225aba24d3fa5ac4c",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/screening_record.json": "sha256:fc1d663be70ca3e5707b6bc1a323f7e4354134baf68bd80ce698e1d968d92168",
+    "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_s6.jsonl": "sha256:87a353aeb635d7baa52522ec891d2f5faf7f4ba4d06c82630f99fcba35de3bad",
+    "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/ledger_s7.jsonl": "sha256:bd16ef4110f133b116eb5c53a7864d211e41b0f990f4e85a88e05e9fb0b995d2",
+    "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/devcheck_v11/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/orig/attempt.json": "sha256:d6cc18cc4fd4c4152e10ccea342adecc538973128c44a1e885fd8e329243f30d",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/card.md": "sha256:e840c02b9d2dfeb1037cf6ace6a710cfe834673798cbba1ebb0ebc3d25356c06",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/reviewer_initial.md": "sha256:868c2841445003a754ae4b5b15da6a365e67dcf4a053e48cd19fdb4ba508537d",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/public_read.md": "sha256:098400333f565ff9b12778c7022854dda04625e4ab823f048e10e855b038e585",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/review.md": "sha256:594aa1e9080ab3cfd0a9709965b18d19da1c8ea7a9b5d92a835a4a69a56cb79e",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/revision_plan.md": "sha256:5db1ec1da0d15469b522d7e88bf7616acee24755012f59ebc60ba930919f54c4",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/revision_draft.json": "sha256:d0cfd1d6d3c33351f8b86e009d1ee8704bee36d33f235a009a126e66a5262f0e",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/screening_record.json": "sha256:42d6b2096440de011fd419bfa3619eb928bdd25e0b33393b9c1dbf93bb77556f",
+    "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/orig/attempt.json": "sha256:b3f06a08d813d1616129ac9588641ded34c4e7fa70ecae71e6f6d0ad98a2beaf",
+    "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/gold_logs/evallog_replay-r2e-v11-gold-0929_6ca66a09.eval.log": "sha256:9068bf4fc0edab6315e3298eb55f8ae6f4238f6f491c88153c1b0dafc96a7d99",
+    "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/s2_logs/evallog_replay-r2e-v11-s2-092900_267f154d.eval.log": "sha256:9b4eb84d53bd7231a2263119789c9a490e2b2334d0e934c4439b5c2ea9a7705c",
+    "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/s4_logs/evallog_replay-r2e-v11-s4-092900_034925c1.eval.log": "sha256:6ff69ab75468b3b7b9b220955d5394ecbb0ab045945523203ff3754c8ebe8876",
+    "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/s3_logs/evallog_replay-r2e-v11-s3-092900_03a29ee4.eval.log": "sha256:094f0407b31027029275f3ac63269973d7c768600df079e4dfc40b957cbca268",
+    "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/noop_logs/evallog_replay-r2e-v11-noop-0929_3c16929c.eval.log": "sha256:8bbe2cf162c691a3dd7d9f9dd549d4c4bd4ccbb66adb4646ea10a1f770dfbd10",
+    "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/s1_logs/evallog_replay-r2e-v11-s1-092900_b31a72fc.eval.log": "sha256:5825b56b0cd04f798af4943ca9ffcca62992ef88367aa07815b3bcf6c46e96aa",
+    "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/formal_v11/s5_logs/evallog_replay-r2e-v11-s5-092900_0dc59f5f.eval.log": "sha256:f6b4fe6a8ac3605f6e91736ee387c610b213f7840c7efeae45a7dfb07d49e981",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/trials/rev2_C1_1.json": "sha256:0bb52d7842cbd6f9ed2f6b923b506551cdbc1ae14a92bc7d1e050252aa873c47",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/trials/rev2_C1_2.json": "sha256:ad0c2c70c85aa7e4970e5dd593ea347b00a20c2658559d7d03da9be05866b077",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/trials/rev2_C2.json": "sha256:f6b583ec90e72d9f6d21d6c307e18b65c1b8dfcc6742ce9821a3817e235df36d",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/trials/rev2_C2b.json": "sha256:eda649ffbf94a7684795a09319a1b735e4eb5f1d838ec969f780f10368d643b3",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/trials/rev2_C3.json": "sha256:5d7b0a17e091932d4345a5bb8f2cf7e185907bd2f78371d48204238979307aa1",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/trials/rev2_D.json": "sha256:1d6013f343e4b41d3f3fb191d686ac0ff3ad91dc94fd87c6c3a0a999c67ab4f0",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/trials/rev2_gold.json": "sha256:89fe4733023eccae42950669d8c444e83331fbd00276f58061910452f8e41067",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/trials/rev2_noop_1.json": "sha256:3130befa5fe80728c4ee838625153596e720a8e4c725a8b6fa37302d31c9df25",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/trials/rev2_noop_2.json": "sha256:18cd1f4361165c5b392c3f4f2b190f3977cc4889a55f649e1a7642f1995ffb52",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/starting_inventory.json": "sha256:25a83b5d00b0c2bf5f1351da13fe2dd98d1b691628b09b602e352d8071e5def6",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl": "sha256:078018db9f06bea4316226bd1180094908d25a1cffd0827850fbbb7f3c4c4519",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl": "sha256:32f512d26cc049f20a23bc1e43e00ecb40fb8843c3d3a70fddc111c0eb7cb394",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/cands/aiohttp_4075_ALT3.patch": "sha256:653546cb292aa16835ff0ec6948d736f370b430558869d24c8caa705520850b4",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/cands/aiohttp_4075_ALT1.patch": "sha256:d3a4b23c79944783ad9abe1fd0d0b26c1fcc5e7e30d62da56605b2211d91f3f8",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/cands/aiohttp_4075_ALT2.patch": "sha256:f3c6056416e15fa36521dd196f66315cee5cc2197a555d4f8087fcc4304c20c2",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/cands/aiohttp_4075_ALT4.patch": "sha256:0ef49961d4e1c9615c2ce13788349b3e1cc5a0accf9f2295023de27dc49e3e4c",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/cands/aiohttp_4075_DG1.patch": "sha256:f2d8d6f05190ec590ab594ccd626603fc11dcf172b1170510b7475316998b042",
+    "runs/r2e_lifecycle_20260929/inv/aiohttp_4075/pcheck_public_ALT1.json": "sha256:b693efa3ac075deacbd05f9e749a0d1a9b0008c59c9f6ad9c2a677504b8c6a9d",
+    "runs/r2e_lifecycle_20260929/inv/aiohttp_4075/pcheck_public_ALT2.json": "sha256:224455766b68e283d4d5d25fd9e021196f1ae67a4f9bddec6f9ad06e5fd1c616",
+    "runs/r2e_lifecycle_20260929/inv/aiohttp_4075/pcheck_cext_agent.json": "sha256:76a42561f9ecea1b26d58fd5fac90e1ffb5483afa4a429e6f548fdee4b824a21",
+    "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/devcheck_v11/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/orig/captures/env.out": "sha256:3ffd59502b968288a701de2957b625c712088bbcefe8031db534e4dd38728d7f",
+    "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/devcheck_v11/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/orig/captures/public_related_tests.out": "sha256:c2917504d76c0d4439c856d99d4aed9fc8339234fa3d189aabd91b993cee672e",
+    "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/devcheck_v11/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/orig/captures/r2e_preflight.out": "sha256:ab7f0af4e93e5fbdfc5597e13408e657fff25f705d0ddcc5c06aa6b49297c742",
+    "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/devcheck_v11/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/orig/captures/env_import_versions.out": "sha256:40688e4dcaddbb530616700a3697ca2a7d7ae4a85f6ddf466cdbf22d95ca6549",
+    "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/devcheck_v11/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/orig/captures/public_http_parser_tests.out": "sha256:0681cfd9834767028e9f3f713a0266891c338f35ee4c061561cc1486ee127d5e",
+    "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/devcheck_v11/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/orig/captures/repro_server_400_py_parser.out": "sha256:844574c39c321eba4502340cb2bac67fa36f7c02adc5d3ab2eb299d1ccb59657",
+    "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/devcheck_v11/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/orig/captures/repro_parser_issue_cases.out": "sha256:72448a9379c2c1a417a75997fc4a249309f73019b7b31610de9b41d5b0dcc1fa",
+    "runs/r2e_lifecycle_20260929/codex_status_check_20260929_1020/devcheck_v11/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/private_control.json": "sha256:95c7bbe3f16125cc3cd30c26765d138da0a1c9204b8d974936fa00a208b7701b",
+    "runs/r2e_static_prep_20260924/v3/public/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/user_prompt.txt": "sha256:6392debd18f0214bbf52c0fe81558a03c68cf420f6c5c37fe2cd0f98c15eec23",
+    "runs/r2e_lifecycle_20260929/inv/orange3_22e9/ledger_DG.jsonl": "sha256:781826758678341cc8f80a6ec3e0b08ac6b95fc839dc6aff186bb017f9e25328",
+    "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/ledger_Deq_budget1200.jsonl": "sha256:99dcafe39dccb48bf428631b4d159dcbdc7ff44432d3f96359c9c36ab863880b",
+    "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/ledger_CB_budget1200.jsonl": "sha256:b1e489eb2b744162b5ec06bd9953211f0d2ada2b5031b9c746f036c7e36bfe6d",
+    "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/ledger_Dhard_budget1200.jsonl": "sha256:c7089a59705a3523bca673a221ed96c02c4f2560aaed4eb294a09b1bf3c3434c",
+    "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/ledger_CA_budget1200.jsonl": "sha256:97fa9ec652017578d01dd3382940c416e9d0f9639ae98638b935caf259cf9881",
+    "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/ledger_Deqminus_budget1200.jsonl": "sha256:a6cd43eadd58cb62beedbc156a96c3d11da1c8d35892b9088c17a435983cb2f7",
+    "runs/r2e_lifecycle_20260929/inv/orange3_50f6/ledger_K2_budget1200.jsonl": "sha256:ca842eaa9580a7520cbb3216cb7c28c9ad27ecf19f8e9c52a055ba3a1eb32b27",
+    "runs/r2e_lifecycle_20260929/inv/orange3_50f6/ledger_K3_budget1200.jsonl": "sha256:1a23567a1a4fe4c95373321ce0e6ca3549427230e50ce4eb3e1f126ac41c7e04",
+    "runs/r2e_lifecycle_20260929/inv/orange3_50f6/ledger_K4_budget1200.jsonl": "sha256:c66936c9d2a723814b294ecf610aff5a4de07471007aa0792eb620363e3c9799",
+    "runs/r2e_lifecycle_20260929/inv/orange3_50f6/ledger_K1_budget1200.jsonl": "sha256:2578087d3c9a427c5e12125769fc76dea1fe62994b29a417feb6f4f4163850de",
+    "runs/r2e_lifecycle_20260929/inv/orange3_22e9/logs_DG/evallog_replay-r2e-inv-22e9-DG-0_76a8bd97.eval.log": "sha256:b0563e4402a1c0f2d9cf0b82d789805ca7895f9465bde8cf073d844bf32e155d",
+    "runs/category2_repair_20260929/r2e/orange3_22e98_public_v1/manifest.json": "sha256:fcbeb310d0ba3f7ef683404ad5ee43681720ed9009ecc7af9192d79995ed630e",
+    "runs/category2_repair_20260929/r2e/orange3_22e98_public_v1/environment_brief.md": "sha256:2975c76d952bf854a4d133715c1f1f4e25a5b27bf010f2a1ef62fdf7eec0b078",
+    "runs/category2_repair_20260929/r2e/orange3_22e98_public_v1/user_prompt.txt": "sha256:8208f63e35b3e59e0afba90ed67c2a3d37bf26424f61dbb3e9360e7d85b8c23c",
+    "rh2/src/repoharness2/envpack/environment_overlay.py": "sha256:69b519f5163114c037e32f90cb1a470f5d3444627fc86ef1da808f4efc6823a4",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_pandas_4ec8.md": "sha256:39b1417bc7437fe1113c96ee4ca510c97fd8a68e815b50a72d94fb3141622204",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_aiohttp_4075_r2.md": "sha256:2a9d1f06443cc4dff476f6bbd6a917b230917f1338cde1da017cd327ba0ebae6",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_coveragepy.md": "sha256:bd935a4945063aebf65ab0809d8e53d68031567d92c5399abc20373ce0f2471a",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_aiohttp.md": "sha256:61185693fb4e078b7c6cd88e2e572f1ad9b1a57fbf31d14bb112468fcc657f5b",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_pillow_2d01_r2.md": "sha256:fe1ceecb9a2f281bf3e7a62d229a6b5d50b8a1d45cd23e27b0204d2af3173aa6",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_datalad_16c1.md": "sha256:3fdc3337de168116154d90a9dc30306028f61b3fe94f0c8fee58438a87cef7fb",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_pillow_4bc6.md": "sha256:9861cb15e48fb3c4109d5a466fad2d772d31b5c6f78e400f95fb9495ec5edf96",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_pillow.md": "sha256:9ae59b7004721af25ea438ddb601532b503dddcd67ff728925b0b42b94d57d8c",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_aiohttp_240d.md": "sha256:a81cae77d3226f372dc28d34388d513d75b9641d179b666f9bef989b2d4e6494",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_numpy_d805.md": "sha256:16177959560955027036de0e9532e5ec6d55c0d9981ab94df31b4729bed2fc1a",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_numpy_d89b_r2.md": "sha256:43fc5356608af8fcc73863fab99141c4a193c62f85e31697606294116ef52504",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_aiohttp_4075.md": "sha256:b4f4403fd44de08e1de2dc4e8ac82aa2ce943cf3797db05e3dc23a036f331106",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_numpy_d805_r2.md": "sha256:57e6c293d69a02b9a73259d1747c44aa14be85b0309a4cf94d5344d4830a1b4a",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_numpy_d89b.md": "sha256:dfa3de1450b6c06dfec61bd5f23e7a9f068ae8809faa50f212874e73e657c2c5",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_pillow_3ac9_r2.md": "sha256:a293a742893b265177f63a5098cbf8020ebe0a89db6551b95104da5a96ae26c1",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_orange3_4014.md": "sha256:282f94fa3da11852ba8f85ddd9dc99b539dafaa3682c7b52889dd99d10774524",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_pillow_2d01.md": "sha256:863e00cb17d99e891329329b6e780cbe477b793ae88ffec7da42f7b37c75717a",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_numpy.md": "sha256:00cc26eb88eb83f8b2b025cde0990475824e07c740f5ccb19a2593c5919da43e",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_misc.md": "sha256:35c9e35bbc5526cf8a3210bb81aa3e6e00557197fb50e1abb031e5fde73810ea",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_coveragepy_f5eb.md": "sha256:fd9dcfb2434e2f58687a374731d6df17449fb0df9e75a862302c75e815e092fa",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_orange3.md": "sha256:f9f582ab621d64a5a7549c94a528c9f9ee7adbdd75214647dbb70d30d31312ca",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_scrapy.md": "sha256:c19d1644477f668cb8c3baec1aeb4e841da7769d88423b24ca1d85b10fe6afdf",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/codex_reviews/review_revision_scrapy_a95a.md": "sha256:168fcd9870b22ee945642382a5d89b1292832f5dc821005286194d9534b21ff9"
+  }
+}

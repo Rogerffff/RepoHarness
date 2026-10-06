@@ -1,0 +1,1803 @@
+{
+  "scope": "cross-package independent original evidence review; known batch context, not fresh blind review; no remote/project execution",
+  "tasks": {
+    "conan-io__conan-13230": {
+      "actor": {
+        "checks": {
+          "interpreter_in_tool_result": false,
+          "host_log_present": true,
+          "no_harness_dir_in_container": true,
+          "no_launcher_or_done_marker": true,
+          "message_start_matches_stub_requests": true,
+          "exit_code_zero": true,
+          "result_event_present": true,
+          "log_complete": true,
+          "bashenv_denied_for_agent": false,
+          "all_commands_ran": true,
+          "all_match_expect": true
+        },
+        "commands_result": [
+          {
+            "id": "identity",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 892,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "公开固定base、实际解释器/包路径/版本及原始dirty状态"
+          },
+          {
+            "id": "public_profiles",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 2715,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "公开真实CLI完整诊断；打印原始输出及精确payload，观察不等于语义通过"
+          },
+          {
+            "id": "public_regression",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 4266,
+            "output_truncated_to": 200000,
+            "pytest": {
+              "passed": 34
+            },
+            "purpose": "公开base既有整模块34项，不加入隐藏测试"
+          }
+        ],
+        "cleanup": {
+          "container_rm": 0,
+          "network_failures": [],
+          "relay_failures": [],
+          "stub_rc": 0,
+          "labeled_containers_left": [],
+          "labeled_networks_left": [],
+          "residual_after_force": []
+        },
+        "post_run_facts": {
+          "RH2_HARNESS_DIR": "ABSENT",
+          "RH2_RUN_SH": "ABSENT",
+          "RH2_RUN_DONE": "ABSENT",
+          "RH2_GIT_STATUS_LINES": "0",
+          "RH2_AGENT_PROCS": "0",
+          "RH2_NEWER_FILES": "353"
+        },
+        "image": "sha256:470bafe8634b5ef92f942aef63a818d7dd681ba591548d467a6f25be420806df",
+        "base_commit": "c2001bad8aa873eaf2c392ab6e3ff8b8bdfec971",
+        "cc_version_observed": "2.1.205 (Claude Code)",
+        "capture_bytes_verified": true
+      },
+      "private": {
+        "base": {
+          "observations": [
+            {
+              "cli_rc": 1,
+              "flags": null,
+              "mode": "issue_exact",
+              "outcome": "wrong_branch_sdk_lookup"
+            },
+            {
+              "cli_rc": 1,
+              "flags": [
+                "-isysroot /public-diagnostic-sdk",
+                "-arch x86_64"
+              ],
+              "mode": "explicit_sdk_diagnostic",
+              "outcome": "deliberate_flags_exception"
+            }
+          ],
+          "preparation_rc": [
+            0,
+            0,
+            0
+          ],
+          "commands": [
+            {
+              "id": "matrix",
+              "rc": 0,
+              "seconds": 2.7412003110002843,
+              "stdout_bytes": 7137,
+              "stderr_bytes": 0
+            }
+          ],
+          "cleanup": {
+            "rm_rc": 0,
+            "query_rc": 0,
+            "remaining": [],
+            "stderr": ""
+          },
+          "actual_source_sha": {
+            "conan/tools/gnu/autotoolstoolchain.py": "c5da24d439695b2814310b73271cdb78b7c8fcd89b88164a409e9e83c10fa7b0"
+          },
+          "matrix_sha256": "f303b59486f24649941bdd3b8d9a684060645f7937fa429ba4cba52966c29fe2",
+          "old_regression_summary": [
+            "34 passed in 0.32s"
+          ]
+        },
+        "gold": {
+          "observations": [
+            {
+              "cli_rc": 1,
+              "flags": [],
+              "mode": "issue_exact",
+              "outcome": "deliberate_flags_exception"
+            },
+            {
+              "cli_rc": 1,
+              "flags": [],
+              "mode": "explicit_sdk_diagnostic",
+              "outcome": "deliberate_flags_exception"
+            }
+          ],
+          "preparation_rc": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "commands": [
+            {
+              "id": "matrix",
+              "rc": 0,
+              "seconds": 3.1419112389994552,
+              "stdout_bytes": 6939,
+              "stderr_bytes": 0
+            }
+          ],
+          "cleanup": {
+            "rm_rc": 0,
+            "query_rc": 0,
+            "remaining": [],
+            "stderr": ""
+          },
+          "actual_source_sha": {
+            "conan/tools/gnu/autotoolstoolchain.py": "bc27d227c5ace77320acc92c99b225c03d0d27493cfae2a76fc97b7b3705b567"
+          },
+          "matrix_sha256": "a72126db08a06d5a7235ab8d03574e02ffe5c9e0a2bdccbc8e93cf7ef2a58079",
+          "old_regression_summary": [
+            "34 passed in 0.44s"
+          ]
+        },
+        "degenerate": {
+          "observations": [
+            {
+              "cli_rc": 1,
+              "flags": null,
+              "mode": "issue_exact",
+              "outcome": "wrong_branch_sdk_lookup"
+            },
+            {
+              "cli_rc": 1,
+              "flags": [
+                "-isysroot /public-diagnostic-sdk",
+                "-arch x86_64"
+              ],
+              "mode": "explicit_sdk_diagnostic",
+              "outcome": "deliberate_flags_exception"
+            }
+          ],
+          "preparation_rc": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "commands": [
+            {
+              "id": "matrix",
+              "rc": 0,
+              "seconds": 3.024936706999142,
+              "stdout_bytes": 7143,
+              "stderr_bytes": 0
+            }
+          ],
+          "cleanup": {
+            "rm_rc": 0,
+            "query_rc": 0,
+            "remaining": [],
+            "stderr": ""
+          },
+          "actual_source_sha": {
+            "conan/tools/gnu/autotoolstoolchain.py": "27ff8904f912db9f468d35033fda856c0399121190556639bf58e04b599fd3dc"
+          },
+          "matrix_sha256": "785fdb44c710bd2017e7a7cc253612c6caaee4cab4aed4778ad9e64f73c3e607",
+          "old_regression_summary": [
+            "34 passed in 0.41s"
+          ]
+        }
+      },
+      "formal": {
+        "noop": {
+          "report": {
+            "execution_failure_evidence": [],
+            "execution_failure_stage": null,
+            "expected_match": null,
+            "expected_total": null,
+            "f2p_pass": 0,
+            "f2p_total": 1,
+            "failure_category": "tests_failed",
+            "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+reference-bindings-v1",
+            "grading_semantics": "swe_f2p_p2p",
+            "infra_failure_detail": null,
+            "outcome": "unresolved",
+            "p2p_fail": 0,
+            "p2p_total": 34,
+            "report_id": "rpt_grading_4873f5ac",
+            "reward": 0.0
+          },
+          "install": {
+            "candidate_exec_exit_code": 0,
+            "candidate_segment_completed": true,
+            "install_failed_commands": [],
+            "install_rc_last_command": 0,
+            "install_seconds": 2.311,
+            "install_skipped": false,
+            "log_partial": false,
+            "markers_seen": [
+              "RH2_INSTALL_RC",
+              "RH2_TEST_RC",
+              "RH2_TS_INSTALL_END",
+              "RH2_TS_INSTALL_START",
+              "RH2_TS_TEST_END",
+              "RH2_TS_TEST_START"
+            ],
+            "test_rc": 1,
+            "test_seconds": 1.024
+          },
+          "test": {
+            "exec_exit_code": 0,
+            "rc": 1,
+            "seconds": 1.024,
+            "segment_completed": true
+          },
+          "phases": {
+            "delta_apply": 0.194789,
+            "grader_baseline_rebuild": 0.589387,
+            "grader_cleanup": 0.751376,
+            "grader_start_and_verify": 1.926972,
+            "grader_trusted_setup": 108.195409,
+            "parser_and_report": 1.599008,
+            "test": 4.639048
+          },
+          "observations": {
+            "RH2_OBS_IMPORT_PATH": "/testbed/conans/__init__.py",
+            "RH2_OBS_PKG_VERSION": "2.0.0",
+            "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+            "RH2_OBS_RUNNER_DIGEST": "9c7467b6f377ed0bd4f1924f872a3b3647d9769d51f1b60ab9e2911c4bac8792",
+            "RH2_OBS_RUNNER_DIGEST_PRE": "9c7467b6f377ed0bd4f1924f872a3b3647d9769d51f1b60ab9e2911c4bac8792"
+          },
+          "projection": {
+            "frozen_patch_digest": "sha256:295f4aec52e4a6048200c5b1acfc6edbea4510af347307babbbaf88f61f38342",
+            "ignored_paths": [],
+            "included_paths": [],
+            "unsupported_shape_reasons": []
+          },
+          "stage_error": null,
+          "cleanup": {
+            "detail": "",
+            "removed": true,
+            "steps": [
+              "rm:ok"
+            ]
+          },
+          "resource": {
+            "mem_peak_mb": 336.137,
+            "mem_peak_unavailable_or_zero": false
+          },
+          "resource_facts": null,
+          "image_identity": "sha256:3f7ba164d697c75bf27b917cd2ea794c8ebefbbb3c6954113e1dc1f2d5e62376",
+          "image_id_actual": null,
+          "verdict_diagnostics": {
+            "apply_ok": true,
+            "expected_match": null,
+            "grading_semantics": "swe_f2p_p2p",
+            "num_parsed_outside_segment": 0,
+            "num_parsed_tests": 35,
+            "parser_source": "swegym_parsers@242429c1+reference-bindings-v1",
+            "reference_missing": [],
+            "reference_skipped": [],
+            "resolution": "RESOLVED_NO"
+          },
+          "per_reference": {
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_crossbuild_from_macos_to_non_apple_os": "FAILED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config5]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config11]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config4]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config8]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config9]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_apple_min_os_flag": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config0]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_architecture_flag[config0]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_fpic": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config6]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_apple_arch_flag": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_extra_flags_via_conf": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_cppstd": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_target_triple": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_sysrootflag": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_ndebug": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config13]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_cxx11_abi_define": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_custom_ldflags": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_apple_isysrootflag": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_modify_environment": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config3]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config1]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_custom_cxxflags": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_custom_host_triple": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config10]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_custom_defines": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_architecture_flag[config1]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config7]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_build_type_flag[msvc]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_invalid_target_triple": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config2]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config12]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_custom_cflags": "PASSED"
+          },
+          "log_sha256": "74fc1ef87384bcad700e56c11c9d5ec1d19460ff64929ed283afe1f63e01309b",
+          "log_bytes": 26815,
+          "log_sha_matches_ledger": true,
+          "source": [],
+          "raw_manager_close_matches_receipt": true,
+          "manager_close": {
+            "ledger": "/work/swegym_cpu_preprobe_20260929/results/conan-io__conan-13230/reserve6-v1/grade_noop/ledger.jsonl",
+            "rows": 1,
+            "manager_close": {
+              "prepare_cancelled": 0,
+              "containers_removed": [],
+              "containers_open": [],
+              "supply_open": [],
+              "cleanup_failures": [],
+              "regrade_events": 0,
+              "regrade_total": 0,
+              "regrade_declined": 0,
+              "containers_created_total": 1,
+              "containers_removed_total": 1,
+              "container_history_retained": 1,
+              "leases_total": 1
+            },
+            "halted": null,
+            "aborted": null,
+            "cleanup_failures": [],
+            "final_status": {
+              "exit_code": 0,
+              "reason": "ok",
+              "grader_containers_open": [],
+              "cleanup_failures_total": 0,
+              "cleanup_failures_resolved": false
+            }
+          },
+          "original_equals_revised_except_parser_label": true,
+          "reference_bindings": {}
+        },
+        "gold": {
+          "report": {
+            "execution_failure_evidence": [],
+            "execution_failure_stage": null,
+            "expected_match": null,
+            "expected_total": null,
+            "f2p_pass": 1,
+            "f2p_total": 1,
+            "failure_category": null,
+            "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+reference-bindings-v1",
+            "grading_semantics": "swe_f2p_p2p",
+            "infra_failure_detail": null,
+            "outcome": "resolved",
+            "p2p_fail": 0,
+            "p2p_total": 34,
+            "report_id": "rpt_grading_ad29b07c",
+            "reward": 1.0
+          },
+          "install": {
+            "candidate_exec_exit_code": 0,
+            "candidate_segment_completed": true,
+            "install_failed_commands": [],
+            "install_rc_last_command": 0,
+            "install_seconds": 2.172,
+            "install_skipped": false,
+            "log_partial": false,
+            "markers_seen": [
+              "RH2_INSTALL_RC",
+              "RH2_TEST_RC",
+              "RH2_TS_INSTALL_END",
+              "RH2_TS_INSTALL_START",
+              "RH2_TS_TEST_END",
+              "RH2_TS_TEST_START"
+            ],
+            "test_rc": 0,
+            "test_seconds": 0.948
+          },
+          "test": {
+            "exec_exit_code": 0,
+            "rc": 0,
+            "seconds": 0.948,
+            "segment_completed": true
+          },
+          "phases": {
+            "delta_apply": 0.406785,
+            "grader_baseline_rebuild": 0.558692,
+            "grader_cleanup": 0.682466,
+            "grader_start_and_verify": 1.937876,
+            "grader_trusted_setup": 110.300567,
+            "parser_and_report": 1.703239,
+            "test": 4.457948
+          },
+          "observations": {
+            "RH2_OBS_IMPORT_PATH": "/testbed/conans/__init__.py",
+            "RH2_OBS_PKG_VERSION": "2.0.0",
+            "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+            "RH2_OBS_RUNNER_DIGEST": "9c7467b6f377ed0bd4f1924f872a3b3647d9769d51f1b60ab9e2911c4bac8792",
+            "RH2_OBS_RUNNER_DIGEST_PRE": "9c7467b6f377ed0bd4f1924f872a3b3647d9769d51f1b60ab9e2911c4bac8792"
+          },
+          "projection": {
+            "frozen_patch_digest": "sha256:61076b1d7458c70d6099aeb610bf69f2690b8c9107761a28ec0477479d2f2de1",
+            "ignored_paths": [],
+            "included_paths": [
+              "conan/tools/gnu/autotoolstoolchain.py"
+            ],
+            "unsupported_shape_reasons": []
+          },
+          "stage_error": null,
+          "cleanup": {
+            "detail": "",
+            "removed": true,
+            "steps": [
+              "rm:ok"
+            ]
+          },
+          "resource": {
+            "mem_peak_mb": 334.383,
+            "mem_peak_unavailable_or_zero": false
+          },
+          "resource_facts": null,
+          "image_identity": "sha256:3f7ba164d697c75bf27b917cd2ea794c8ebefbbb3c6954113e1dc1f2d5e62376",
+          "image_id_actual": null,
+          "verdict_diagnostics": {
+            "apply_ok": true,
+            "expected_match": null,
+            "grading_semantics": "swe_f2p_p2p",
+            "num_parsed_outside_segment": 0,
+            "num_parsed_tests": 35,
+            "parser_source": "swegym_parsers@242429c1+reference-bindings-v1",
+            "reference_missing": [],
+            "reference_skipped": [],
+            "resolution": "RESOLVED_FULL"
+          },
+          "per_reference": {
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_crossbuild_from_macos_to_non_apple_os": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config5]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config11]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config4]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config8]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config9]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_apple_min_os_flag": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config0]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_architecture_flag[config0]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_fpic": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config6]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_apple_arch_flag": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_extra_flags_via_conf": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_cppstd": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_target_triple": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_sysrootflag": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_ndebug": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config13]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_cxx11_abi_define": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_custom_ldflags": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_apple_isysrootflag": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_modify_environment": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config3]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config1]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_custom_cxxflags": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_custom_host_triple": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config10]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_custom_defines": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_architecture_flag[config1]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config7]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_build_type_flag[msvc]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_invalid_target_triple": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config2]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config12]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_custom_cflags": "PASSED"
+          },
+          "log_sha256": "75bc543c064532a946c803af935753a1f2a81b779877bc7cd287a959e8334cf5",
+          "log_bytes": 25666,
+          "log_sha_matches_ledger": true,
+          "source": [
+            {
+              "path": "conan/tools/gnu/autotoolstoolchain.py",
+              "bytes": 13040,
+              "sha256": "bc27d227c5ace77320acc92c99b225c03d0d27493cfae2a76fc97b7b3705b567",
+              "equals_base_plus_patch_wholebytes": true,
+              "equals_private_actual_sha": true
+            }
+          ],
+          "raw_manager_close_matches_receipt": true,
+          "manager_close": {
+            "ledger": "/work/swegym_cpu_preprobe_20260929/results/conan-io__conan-13230/reserve6-v1/grade_gold/ledger.jsonl",
+            "rows": 1,
+            "manager_close": {
+              "prepare_cancelled": 0,
+              "containers_removed": [],
+              "containers_open": [],
+              "supply_open": [],
+              "cleanup_failures": [],
+              "regrade_events": 0,
+              "regrade_total": 0,
+              "regrade_declined": 0,
+              "containers_created_total": 1,
+              "containers_removed_total": 1,
+              "container_history_retained": 1,
+              "leases_total": 1
+            },
+            "halted": null,
+            "aborted": null,
+            "cleanup_failures": [],
+            "final_status": {
+              "exit_code": 0,
+              "reason": "ok",
+              "grader_containers_open": [],
+              "cleanup_failures_total": 0,
+              "cleanup_failures_resolved": false
+            }
+          },
+          "original_equals_revised_except_parser_label": true,
+          "reference_bindings": {}
+        },
+        "degenerate": {
+          "report": {
+            "execution_failure_evidence": [],
+            "execution_failure_stage": null,
+            "expected_match": null,
+            "expected_total": null,
+            "f2p_pass": 1,
+            "f2p_total": 1,
+            "failure_category": null,
+            "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+reference-bindings-v1",
+            "grading_semantics": "swe_f2p_p2p",
+            "infra_failure_detail": null,
+            "outcome": "resolved",
+            "p2p_fail": 0,
+            "p2p_total": 34,
+            "report_id": "rpt_grading_06810a37",
+            "reward": 1.0
+          },
+          "install": {
+            "candidate_exec_exit_code": 0,
+            "candidate_segment_completed": true,
+            "install_failed_commands": [],
+            "install_rc_last_command": 0,
+            "install_seconds": 2.346,
+            "install_skipped": false,
+            "log_partial": false,
+            "markers_seen": [
+              "RH2_INSTALL_RC",
+              "RH2_TEST_RC",
+              "RH2_TS_INSTALL_END",
+              "RH2_TS_INSTALL_START",
+              "RH2_TS_TEST_END",
+              "RH2_TS_TEST_START"
+            ],
+            "test_rc": 0,
+            "test_seconds": 0.853
+          },
+          "test": {
+            "exec_exit_code": 0,
+            "rc": 0,
+            "seconds": 0.853,
+            "segment_completed": true
+          },
+          "phases": {
+            "delta_apply": 0.40567,
+            "grader_baseline_rebuild": 0.611971,
+            "grader_cleanup": 0.81858,
+            "grader_start_and_verify": 1.88491,
+            "grader_trusted_setup": 107.39446,
+            "parser_and_report": 1.593081,
+            "test": 4.484449
+          },
+          "observations": {
+            "RH2_OBS_IMPORT_PATH": "/testbed/conans/__init__.py",
+            "RH2_OBS_PKG_VERSION": "2.0.0",
+            "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+            "RH2_OBS_RUNNER_DIGEST": "9c7467b6f377ed0bd4f1924f872a3b3647d9769d51f1b60ab9e2911c4bac8792",
+            "RH2_OBS_RUNNER_DIGEST_PRE": "9c7467b6f377ed0bd4f1924f872a3b3647d9769d51f1b60ab9e2911c4bac8792"
+          },
+          "projection": {
+            "frozen_patch_digest": "sha256:6563d762e58021117746a6be49aa54d8aeb870efaa84d58493124669a321a927",
+            "ignored_paths": [],
+            "included_paths": [
+              "conan/tools/gnu/autotoolstoolchain.py"
+            ],
+            "unsupported_shape_reasons": []
+          },
+          "stage_error": null,
+          "cleanup": {
+            "detail": "",
+            "removed": true,
+            "steps": [
+              "rm:ok"
+            ]
+          },
+          "resource": {
+            "mem_peak_mb": 334.754,
+            "mem_peak_unavailable_or_zero": false
+          },
+          "resource_facts": null,
+          "image_identity": "sha256:3f7ba164d697c75bf27b917cd2ea794c8ebefbbb3c6954113e1dc1f2d5e62376",
+          "image_id_actual": null,
+          "verdict_diagnostics": {
+            "apply_ok": true,
+            "expected_match": null,
+            "grading_semantics": "swe_f2p_p2p",
+            "num_parsed_outside_segment": 0,
+            "num_parsed_tests": 35,
+            "parser_source": "swegym_parsers@242429c1+reference-bindings-v1",
+            "reference_missing": [],
+            "reference_skipped": [],
+            "resolution": "RESOLVED_FULL"
+          },
+          "per_reference": {
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_crossbuild_from_macos_to_non_apple_os": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config5]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config11]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config4]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config8]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config9]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_apple_min_os_flag": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config0]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_architecture_flag[config0]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_fpic": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config6]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_apple_arch_flag": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_extra_flags_via_conf": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_cppstd": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_target_triple": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_sysrootflag": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_ndebug": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config13]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_cxx11_abi_define": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_custom_ldflags": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_apple_isysrootflag": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_modify_environment": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config3]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config1]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_custom_cxxflags": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_custom_host_triple": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config10]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_custom_defines": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_architecture_flag[config1]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config7]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_build_type_flag[msvc]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_invalid_target_triple": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config2]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config12]": "PASSED",
+            "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_custom_cflags": "PASSED"
+          },
+          "log_sha256": "e1806519e4e33e26c7a2feeea0a9c014000ecea769eafca3153b56e2bef3f00e",
+          "log_bytes": 25206,
+          "log_sha_matches_ledger": true,
+          "source": [
+            {
+              "path": "conan/tools/gnu/autotoolstoolchain.py",
+              "bytes": 13025,
+              "sha256": "27ff8904f912db9f468d35033fda856c0399121190556639bf58e04b599fd3dc",
+              "equals_base_plus_patch_wholebytes": true,
+              "equals_private_actual_sha": true
+            }
+          ],
+          "raw_manager_close_matches_receipt": true,
+          "manager_close": {
+            "ledger": "/work/swegym_cpu_preprobe_20260929/results/conan-io__conan-13230/reserve6-v1/grade_degenerate/ledger.jsonl",
+            "rows": 1,
+            "manager_close": {
+              "prepare_cancelled": 0,
+              "containers_removed": [],
+              "containers_open": [],
+              "supply_open": [],
+              "cleanup_failures": [],
+              "regrade_events": 0,
+              "regrade_total": 0,
+              "regrade_declined": 0,
+              "containers_created_total": 1,
+              "containers_removed_total": 1,
+              "container_history_retained": 1,
+              "leases_total": 1
+            },
+            "halted": null,
+            "aborted": null,
+            "cleanup_failures": [],
+            "final_status": {
+              "exit_code": 0,
+              "reason": "ok",
+              "grader_containers_open": [],
+              "cleanup_failures_total": 0,
+              "cleanup_failures_resolved": false
+            }
+          },
+          "original_equals_revised_except_parser_label": true,
+          "reference_bindings": {}
+        }
+      },
+      "original_references": {
+        "f2p": [
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_crossbuild_from_macos_to_non_apple_os"
+        ],
+        "p2p": [
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config5]",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config11]",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config4]",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config8]",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config9]",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_apple_min_os_flag",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config0]",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_architecture_flag[config0]",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_fpic",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config6]",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_apple_arch_flag",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_extra_flags_via_conf",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_cppstd",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_target_triple",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_sysrootflag",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_ndebug",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config13]",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_cxx11_abi_define",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_custom_ldflags",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_apple_isysrootflag",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_modify_environment",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config3]",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config1]",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_custom_cxxflags",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_custom_host_triple",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config10]",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_custom_defines",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_architecture_flag[config1]",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config7]",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_build_type_flag[msvc]",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_invalid_target_triple",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config2]",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_libcxx[config12]",
+          "conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py::test_custom_cflags"
+        ]
+      },
+      "input_bindings": {
+        "version": "reference-bindings-v1",
+        "decision": "Original references unchanged; no truncated reference keys for this task",
+        "tasks": {
+          "conan-io__conan-13230": {
+            "bindings": {},
+            "meaning": "Exact original IDs; no Conan11594 map copied",
+            "source_logs": {
+              "noop": {
+                "path": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-1/eval_logs/evallog_replay-f216-baseline01-w_3c8a4d04.eval.log",
+                "sha256": "c5424545c7bbf2123242db1fb4005cae030f289507d91982b94e4fba5ccfaa2c"
+              },
+              "gold": {
+                "path": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-1/eval_logs/evallog_replay-f216-baseline01-w_2d8f2dea.eval.log",
+                "sha256": "5640692aa3f4ea46c0f0996f98bb5b8d3e97fd5a996832e7771ae33098d915be"
+              }
+            }
+          }
+        }
+      },
+      "transport": {
+        "path": "runs/swegym_cpu_preprobe_20260929/analysis/evidence_manifest_final3_v1.json",
+        "subset_files": 98,
+        "subset_bytes": 1138146,
+        "all_bytes_sha_verified_independently": true
+      },
+      "root_parser": {
+        "path": "runs/swegym_cpu_preprobe_20260929/analysis/conan13230_final_v1.json",
+        "each_reference_matches": true
+      },
+      "resource_samples": [
+        {
+          "task": "conan-io__conan-13230",
+          "ledger": "results/conan-io__conan-13230/reserve6-v1/grade_degenerate/ledger.jsonl",
+          "report_id": "rpt_grading_06810a37",
+          "samples": 8,
+          "first": 1790634165.4157152,
+          "last": 1790634271.599576,
+          "max_sample_gap_seconds": 15.171516418457031,
+          "observed_memory_peak_bytes": 330334208,
+          "observed_pids_peak": 8,
+          "memory.events": {
+            "low": 0,
+            "high": 0,
+            "max": 0,
+            "oom": 0,
+            "oom_kill": 0,
+            "oom_group_kill": 0
+          },
+          "pids.events": {
+            "max": 0
+          },
+          "ledger_resource": {
+            "mem_peak_mb": 334.754,
+            "mem_peak_unavailable_or_zero": false
+          },
+          "ledger_resource_facts": null,
+          "limits": {
+            "Memory": 4294967296,
+            "NanoCpus": 2000000000,
+            "PidsLimit": 512,
+            "ShmSize": 67108864,
+            "Tmpfs": {
+              "/tmp": "size=1073741824,mode=1777,exec,nosuid,nodev"
+            }
+          },
+          "phases": {
+            "delta_apply": 0.40567,
+            "grader_baseline_rebuild": 0.611971,
+            "grader_cleanup": 0.81858,
+            "grader_start_and_verify": 1.88491,
+            "grader_trusted_setup": 107.39446,
+            "parser_and_report": 1.593081,
+            "test": 4.484449
+          }
+        },
+        {
+          "task": "conan-io__conan-13230",
+          "ledger": "results/conan-io__conan-13230/reserve6-v1/grade_gold/ledger.jsonl",
+          "report_id": "rpt_grading_ad29b07c",
+          "samples": 8,
+          "first": 1790634028.9417126,
+          "last": 1790634135.0951886,
+          "max_sample_gap_seconds": 15.173567533493042,
+          "observed_memory_peak_bytes": 311050240,
+          "observed_pids_peak": 8,
+          "memory.events": {
+            "low": 0,
+            "high": 0,
+            "max": 0,
+            "oom": 0,
+            "oom_kill": 0,
+            "oom_group_kill": 0
+          },
+          "pids.events": {
+            "max": 0
+          },
+          "ledger_resource": {
+            "mem_peak_mb": 334.383,
+            "mem_peak_unavailable_or_zero": false
+          },
+          "ledger_resource_facts": null,
+          "limits": {
+            "Memory": 4294967296,
+            "NanoCpus": 2000000000,
+            "PidsLimit": 512,
+            "ShmSize": 67108864,
+            "Tmpfs": {
+              "/tmp": "size=1073741824,mode=1777,exec,nosuid,nodev"
+            }
+          },
+          "phases": {
+            "delta_apply": 0.406785,
+            "grader_baseline_rebuild": 0.558692,
+            "grader_cleanup": 0.682466,
+            "grader_start_and_verify": 1.937876,
+            "grader_trusted_setup": 110.300567,
+            "parser_and_report": 1.703239,
+            "test": 4.457948
+          }
+        },
+        {
+          "task": "conan-io__conan-13230",
+          "ledger": "results/conan-io__conan-13230/reserve6-v1/grade_noop/ledger.jsonl",
+          "report_id": "rpt_grading_4873f5ac",
+          "samples": 7,
+          "first": 1790633907.6457822,
+          "last": 1790633998.6671987,
+          "max_sample_gap_seconds": 15.175981521606445,
+          "observed_memory_peak_bytes": 308707328,
+          "observed_pids_peak": 8,
+          "memory.events": {
+            "low": 0,
+            "high": 0,
+            "max": 0,
+            "oom": 0,
+            "oom_kill": 0,
+            "oom_group_kill": 0
+          },
+          "pids.events": {
+            "max": 0
+          },
+          "ledger_resource": {
+            "mem_peak_mb": 336.137,
+            "mem_peak_unavailable_or_zero": false
+          },
+          "ledger_resource_facts": null,
+          "limits": {
+            "Memory": 4294967296,
+            "NanoCpus": 2000000000,
+            "PidsLimit": 512,
+            "ShmSize": 67108864,
+            "Tmpfs": {
+              "/tmp": "size=1073741824,mode=1777,exec,nosuid,nodev"
+            }
+          },
+          "phases": {
+            "delta_apply": 0.194789,
+            "grader_baseline_rebuild": 0.589387,
+            "grader_cleanup": 0.751376,
+            "grader_start_and_verify": 1.926972,
+            "grader_trusted_setup": 108.195409,
+            "parser_and_report": 1.599008,
+            "test": 4.639048
+          }
+        }
+      ],
+      "independent_conclusion_before_owner_card": {
+        "severity": "S1",
+        "type": "T2b",
+        "formal": [
+          0,
+          1,
+          1
+        ],
+        "scope": "Macos build to Linux flags remain wrong under Android-only despite original tests passing",
+        "P5": "not applicable to current flag diagnostic",
+        "use": "diagnostic; conditional comparison requires upfront equal semantic controls"
+      },
+      "owner_card_alignment": {
+        "result_md": "read; consistent",
+        "result_json": "read; consistent",
+        "evidence_audit_json": "read; formal common fields match independent audit",
+        "classification": "S1/T2b consistent",
+        "uses": "consistent; 13721 diagnostic-only P5 persists",
+        "new_blockers": [],
+        "per_reference_exact_match": true
+      }
+    },
+    "conan-io__conan-13721": {
+      "actor": {
+        "checks": {
+          "interpreter_in_tool_result": false,
+          "host_log_present": true,
+          "no_harness_dir_in_container": true,
+          "no_launcher_or_done_marker": true,
+          "message_start_matches_stub_requests": true,
+          "exit_code_zero": true,
+          "result_event_present": true,
+          "log_complete": true,
+          "bashenv_denied_for_agent": false,
+          "all_commands_ran": true,
+          "all_match_expect": true
+        },
+        "commands_result": [
+          {
+            "id": "identity",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 892,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "公开固定base、实际解释器/包路径/版本及原始dirty状态"
+          },
+          {
+            "id": "public_profiles",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 1673,
+            "output_truncated_to": 200000,
+            "pytest": null,
+            "purpose": "公开真实CLI完整诊断；打印原始输出及精确payload，观察不等于语义通过"
+          },
+          {
+            "id": "public_regression",
+            "rc": 0,
+            "status": "rc0",
+            "expect": "zero",
+            "matches_expect": true,
+            "output_bytes": 1135,
+            "output_truncated_to": 200000,
+            "pytest": {
+              "passed": 6
+            },
+            "purpose": "公开base既有整模块6项，不加入隐藏测试"
+          }
+        ],
+        "cleanup": {
+          "container_rm": 0,
+          "network_failures": [],
+          "relay_failures": [],
+          "stub_rc": 0,
+          "labeled_containers_left": [],
+          "labeled_networks_left": [],
+          "residual_after_force": []
+        },
+        "post_run_facts": {
+          "RH2_HARNESS_DIR": "ABSENT",
+          "RH2_RUN_SH": "ABSENT",
+          "RH2_RUN_DONE": "ABSENT",
+          "RH2_GIT_STATUS_LINES": "0",
+          "RH2_AGENT_PROCS": "0",
+          "RH2_NEWER_FILES": "409"
+        },
+        "image": "sha256:e5e14326d6e58a37cc8c39bcaf67a4130d49a2cd8116f0decd60f6cd9a4c48f4",
+        "base_commit": "0efbe7e49fdf554da4d897735b357d85b2a75aca",
+        "cc_version_observed": "2.1.205 (Claude Code)",
+        "capture_bytes_verified": true
+      },
+      "private": {
+        "base": {
+          "observations": [
+            {
+              "rendered": "",
+              "requested": "alpha",
+              "symlink_target": "_generator"
+            },
+            {
+              "rendered": "",
+              "requested": "beta",
+              "symlink_target": "_generator"
+            }
+          ],
+          "preparation_rc": [
+            0,
+            0,
+            0
+          ],
+          "commands": [
+            {
+              "id": "matrix",
+              "rc": 0,
+              "seconds": 4.171714815001906,
+              "stdout_bytes": 2964,
+              "stderr_bytes": 0
+            }
+          ],
+          "cleanup": {
+            "rm_rc": 0,
+            "query_rc": 0,
+            "remaining": [],
+            "stderr": ""
+          },
+          "actual_source_sha": {
+            "conans/client/profile_loader.py": "90783561327c6930ede55d6b9124eecdfd01ed583b3b6803d3561fc66d61b18a"
+          },
+          "matrix_sha256": "223e7c55ece0cbac52253ac68ddb763cbfa2ba50efd5df8a3e7c2768be059ef4",
+          "old_regression_summary": [
+            "6 passed in 1.69s"
+          ]
+        },
+        "gold": {
+          "observations": [
+            {
+              "rendered": "alpha",
+              "requested": "alpha",
+              "symlink_target": "_generator"
+            },
+            {
+              "rendered": "beta",
+              "requested": "beta",
+              "symlink_target": "_generator"
+            }
+          ],
+          "preparation_rc": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "commands": [
+            {
+              "id": "matrix",
+              "rc": 0,
+              "seconds": 4.435836291999294,
+              "stdout_bytes": 2991,
+              "stderr_bytes": 0
+            }
+          ],
+          "cleanup": {
+            "rm_rc": 0,
+            "query_rc": 0,
+            "remaining": [],
+            "stderr": ""
+          },
+          "actual_source_sha": {
+            "conans/client/profile_loader.py": "8a9adf4ba9b122fdda24ef4afa874eb610eb4dd5d7f3c8561c2a1e1a7c3f55f6"
+          },
+          "matrix_sha256": "8381d1d9c4127c7142e01cbf12b4249163bb8dd4a0aad3935ccaa262fd3bd7f0",
+          "old_regression_summary": [
+            "6 passed in 1.75s"
+          ]
+        },
+        "degenerate": {
+          "observations": [
+            {
+              "rendered": "_generator",
+              "requested": "alpha",
+              "symlink_target": "_generator"
+            },
+            {
+              "rendered": "_generator",
+              "requested": "beta",
+              "symlink_target": "_generator"
+            }
+          ],
+          "preparation_rc": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "commands": [
+            {
+              "id": "matrix",
+              "rc": 0,
+              "seconds": 4.776126557997486,
+              "stdout_bytes": 3030,
+              "stderr_bytes": 0
+            }
+          ],
+          "cleanup": {
+            "rm_rc": 0,
+            "query_rc": 0,
+            "remaining": [],
+            "stderr": ""
+          },
+          "actual_source_sha": {
+            "conans/client/profile_loader.py": "ef928b72a7cf6981d36f95f6bec30c5dc03a754735a8dfe6cfbc3ed78358c11d"
+          },
+          "matrix_sha256": "a20f102d150772afe6f3fd69582093d5f0c7da6418ec04e6614d6b3389c27369",
+          "old_regression_summary": [
+            "6 passed in 2.32s"
+          ]
+        }
+      },
+      "formal": {
+        "noop": {
+          "report": {
+            "execution_failure_evidence": [],
+            "execution_failure_stage": null,
+            "expected_match": null,
+            "expected_total": null,
+            "f2p_pass": 0,
+            "f2p_total": 1,
+            "failure_category": "tests_failed",
+            "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+reference-bindings-v1",
+            "grading_semantics": "swe_f2p_p2p",
+            "infra_failure_detail": null,
+            "outcome": "unresolved",
+            "p2p_fail": 0,
+            "p2p_total": 6,
+            "report_id": "rpt_grading_e1512ea1",
+            "reward": 0.0
+          },
+          "install": {
+            "candidate_exec_exit_code": 0,
+            "candidate_segment_completed": true,
+            "install_failed_commands": [],
+            "install_rc_last_command": 0,
+            "install_seconds": 2.24,
+            "install_skipped": false,
+            "log_partial": false,
+            "markers_seen": [
+              "RH2_INSTALL_RC",
+              "RH2_TEST_RC",
+              "RH2_TS_INSTALL_END",
+              "RH2_TS_INSTALL_START",
+              "RH2_TS_TEST_END",
+              "RH2_TS_TEST_START"
+            ],
+            "test_rc": 1,
+            "test_seconds": 1.76
+          },
+          "test": {
+            "exec_exit_code": 0,
+            "rc": 1,
+            "seconds": 1.76,
+            "segment_completed": true
+          },
+          "phases": {
+            "delta_apply": 0.183987,
+            "grader_baseline_rebuild": 0.6213,
+            "grader_cleanup": 0.781624,
+            "grader_start_and_verify": 1.906492,
+            "grader_trusted_setup": 108.10009,
+            "parser_and_report": 1.652056,
+            "test": 5.249174
+          },
+          "observations": {
+            "RH2_OBS_IMPORT_PATH": "/testbed/conans/__init__.py",
+            "RH2_OBS_PKG_VERSION": "2.0.4",
+            "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+            "RH2_OBS_RUNNER_DIGEST": "9c7467b6f377ed0bd4f1924f872a3b3647d9769d51f1b60ab9e2911c4bac8792",
+            "RH2_OBS_RUNNER_DIGEST_PRE": "9c7467b6f377ed0bd4f1924f872a3b3647d9769d51f1b60ab9e2911c4bac8792"
+          },
+          "projection": {
+            "frozen_patch_digest": "sha256:228f4fd1d644d9141db92971e68395b644d10b4ce0fd57d992a5d37cfa6436ae",
+            "ignored_paths": [],
+            "included_paths": [],
+            "unsupported_shape_reasons": []
+          },
+          "stage_error": null,
+          "cleanup": {
+            "detail": "",
+            "removed": true,
+            "steps": [
+              "rm:ok"
+            ]
+          },
+          "resource": {
+            "mem_peak_mb": 345.312,
+            "mem_peak_unavailable_or_zero": false
+          },
+          "resource_facts": null,
+          "image_identity": "sha256:05df007b940aa6495e4ee237a820125c046c683c3b782f0ea8b39290bf6837e5",
+          "image_id_actual": null,
+          "verdict_diagnostics": {
+            "apply_ok": true,
+            "expected_match": null,
+            "grading_semantics": "swe_f2p_p2p",
+            "num_parsed_outside_segment": 0,
+            "num_parsed_tests": 7,
+            "parser_source": "swegym_parsers@242429c1+reference-bindings-v1",
+            "reference_missing": [],
+            "reference_skipped": [],
+            "resolution": "RESOLVED_NO"
+          },
+          "per_reference": {
+            "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_profile_name": "FAILED",
+            "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_variables": "PASSED",
+            "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_include": "PASSED",
+            "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_profile_dir": "PASSED",
+            "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template": "PASSED",
+            "conans/test/integration/configuration/test_profile_jinja.py::test_profile_version": "PASSED",
+            "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_import": "PASSED"
+          },
+          "log_sha256": "d798ca719fad2f92c7c910f09b4fb1efb5ea7745b69acbc386bad35b3ad28ca2",
+          "log_bytes": 24151,
+          "log_sha_matches_ledger": true,
+          "source": [],
+          "raw_manager_close_matches_receipt": true,
+          "manager_close": {
+            "ledger": "/work/swegym_cpu_preprobe_20260929/results/conan-io__conan-13721/reserve6-v1/grade_noop/ledger.jsonl",
+            "rows": 1,
+            "manager_close": {
+              "prepare_cancelled": 0,
+              "containers_removed": [],
+              "containers_open": [],
+              "supply_open": [],
+              "cleanup_failures": [],
+              "regrade_events": 0,
+              "regrade_total": 0,
+              "regrade_declined": 0,
+              "containers_created_total": 1,
+              "containers_removed_total": 1,
+              "container_history_retained": 1,
+              "leases_total": 1
+            },
+            "halted": null,
+            "aborted": null,
+            "cleanup_failures": [],
+            "final_status": {
+              "exit_code": 0,
+              "reason": "ok",
+              "grader_containers_open": [],
+              "cleanup_failures_total": 0,
+              "cleanup_failures_resolved": false
+            }
+          },
+          "original_equals_revised_except_parser_label": true,
+          "reference_bindings": {}
+        },
+        "gold": {
+          "report": {
+            "execution_failure_evidence": [],
+            "execution_failure_stage": null,
+            "expected_match": null,
+            "expected_total": null,
+            "f2p_pass": 1,
+            "f2p_total": 1,
+            "failure_category": null,
+            "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+reference-bindings-v1",
+            "grading_semantics": "swe_f2p_p2p",
+            "infra_failure_detail": null,
+            "outcome": "resolved",
+            "p2p_fail": 0,
+            "p2p_total": 6,
+            "report_id": "rpt_grading_036c9deb",
+            "reward": 1.0
+          },
+          "install": {
+            "candidate_exec_exit_code": 0,
+            "candidate_segment_completed": true,
+            "install_failed_commands": [],
+            "install_rc_last_command": 0,
+            "install_seconds": 1.952,
+            "install_skipped": false,
+            "log_partial": false,
+            "markers_seen": [
+              "RH2_INSTALL_RC",
+              "RH2_TEST_RC",
+              "RH2_TS_INSTALL_END",
+              "RH2_TS_INSTALL_START",
+              "RH2_TS_TEST_END",
+              "RH2_TS_TEST_START"
+            ],
+            "test_rc": 0,
+            "test_seconds": 2.113
+          },
+          "test": {
+            "exec_exit_code": 0,
+            "rc": 0,
+            "seconds": 2.113,
+            "segment_completed": true
+          },
+          "phases": {
+            "delta_apply": 0.390559,
+            "grader_baseline_rebuild": 0.61358,
+            "grader_cleanup": 0.831795,
+            "grader_start_and_verify": 1.993303,
+            "grader_trusted_setup": 109.62523,
+            "parser_and_report": 1.609538,
+            "test": 5.290867
+          },
+          "observations": {
+            "RH2_OBS_IMPORT_PATH": "/testbed/conans/__init__.py",
+            "RH2_OBS_PKG_VERSION": "2.0.4",
+            "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+            "RH2_OBS_RUNNER_DIGEST": "9c7467b6f377ed0bd4f1924f872a3b3647d9769d51f1b60ab9e2911c4bac8792",
+            "RH2_OBS_RUNNER_DIGEST_PRE": "9c7467b6f377ed0bd4f1924f872a3b3647d9769d51f1b60ab9e2911c4bac8792"
+          },
+          "projection": {
+            "frozen_patch_digest": "sha256:8e2e39734d9b4d3ba09d5e266bec124407c9a2b8e71858202c34b2310d8eab55",
+            "ignored_paths": [],
+            "included_paths": [
+              "conans/client/profile_loader.py"
+            ],
+            "unsupported_shape_reasons": []
+          },
+          "stage_error": null,
+          "cleanup": {
+            "detail": "",
+            "removed": true,
+            "steps": [
+              "rm:ok"
+            ]
+          },
+          "resource": {
+            "mem_peak_mb": 346.75,
+            "mem_peak_unavailable_or_zero": false
+          },
+          "resource_facts": null,
+          "image_identity": "sha256:05df007b940aa6495e4ee237a820125c046c683c3b782f0ea8b39290bf6837e5",
+          "image_id_actual": null,
+          "verdict_diagnostics": {
+            "apply_ok": true,
+            "expected_match": null,
+            "grading_semantics": "swe_f2p_p2p",
+            "num_parsed_outside_segment": 0,
+            "num_parsed_tests": 7,
+            "parser_source": "swegym_parsers@242429c1+reference-bindings-v1",
+            "reference_missing": [],
+            "reference_skipped": [],
+            "resolution": "RESOLVED_FULL"
+          },
+          "per_reference": {
+            "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_profile_name": "PASSED",
+            "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_variables": "PASSED",
+            "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_include": "PASSED",
+            "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_profile_dir": "PASSED",
+            "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template": "PASSED",
+            "conans/test/integration/configuration/test_profile_jinja.py::test_profile_version": "PASSED",
+            "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_import": "PASSED"
+          },
+          "log_sha256": "a8cf4dfe1f4a5877ec912f9ac347acae27fe3d8659ade95293f9fefeed65d90d",
+          "log_bytes": 22801,
+          "log_sha_matches_ledger": true,
+          "source": [
+            {
+              "path": "conans/client/profile_loader.py",
+              "bytes": 16848,
+              "sha256": "8a9adf4ba9b122fdda24ef4afa874eb610eb4dd5d7f3c8561c2a1e1a7c3f55f6",
+              "equals_base_plus_patch_wholebytes": true,
+              "equals_private_actual_sha": true
+            }
+          ],
+          "raw_manager_close_matches_receipt": true,
+          "manager_close": {
+            "ledger": "/work/swegym_cpu_preprobe_20260929/results/conan-io__conan-13721/reserve6-v1/grade_gold/ledger.jsonl",
+            "rows": 1,
+            "manager_close": {
+              "prepare_cancelled": 0,
+              "containers_removed": [],
+              "containers_open": [],
+              "supply_open": [],
+              "cleanup_failures": [],
+              "regrade_events": 0,
+              "regrade_total": 0,
+              "regrade_declined": 0,
+              "containers_created_total": 1,
+              "containers_removed_total": 1,
+              "container_history_retained": 1,
+              "leases_total": 1
+            },
+            "halted": null,
+            "aborted": null,
+            "cleanup_failures": [],
+            "final_status": {
+              "exit_code": 0,
+              "reason": "ok",
+              "grader_containers_open": [],
+              "cleanup_failures_total": 0,
+              "cleanup_failures_resolved": false
+            }
+          },
+          "original_equals_revised_except_parser_label": true,
+          "reference_bindings": {}
+        },
+        "degenerate": {
+          "report": {
+            "execution_failure_evidence": [],
+            "execution_failure_stage": null,
+            "expected_match": null,
+            "expected_total": null,
+            "f2p_pass": 1,
+            "f2p_total": 1,
+            "failure_category": null,
+            "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+reference-bindings-v1",
+            "grading_semantics": "swe_f2p_p2p",
+            "infra_failure_detail": null,
+            "outcome": "resolved",
+            "p2p_fail": 0,
+            "p2p_total": 6,
+            "report_id": "rpt_grading_a471f9e5",
+            "reward": 1.0
+          },
+          "install": {
+            "candidate_exec_exit_code": 0,
+            "candidate_segment_completed": true,
+            "install_failed_commands": [],
+            "install_rc_last_command": 0,
+            "install_seconds": 2.321,
+            "install_skipped": false,
+            "log_partial": false,
+            "markers_seen": [
+              "RH2_INSTALL_RC",
+              "RH2_TEST_RC",
+              "RH2_TS_INSTALL_END",
+              "RH2_TS_INSTALL_START",
+              "RH2_TS_TEST_END",
+              "RH2_TS_TEST_START"
+            ],
+            "test_rc": 0,
+            "test_seconds": 2.143
+          },
+          "test": {
+            "exec_exit_code": 0,
+            "rc": 0,
+            "seconds": 2.143,
+            "segment_completed": true
+          },
+          "phases": {
+            "delta_apply": 0.388614,
+            "grader_baseline_rebuild": 0.589719,
+            "grader_cleanup": 0.740189,
+            "grader_start_and_verify": 1.888314,
+            "grader_trusted_setup": 107.296281,
+            "parser_and_report": 1.58882,
+            "test": 5.804074
+          },
+          "observations": {
+            "RH2_OBS_IMPORT_PATH": "/testbed/conans/__init__.py",
+            "RH2_OBS_PKG_VERSION": "2.0.4",
+            "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+            "RH2_OBS_RUNNER_DIGEST": "9c7467b6f377ed0bd4f1924f872a3b3647d9769d51f1b60ab9e2911c4bac8792",
+            "RH2_OBS_RUNNER_DIGEST_PRE": "9c7467b6f377ed0bd4f1924f872a3b3647d9769d51f1b60ab9e2911c4bac8792"
+          },
+          "projection": {
+            "frozen_patch_digest": "sha256:94e631b1eb4c877756ae374d9c0e324a250129daf168da8b0bee79aa7040fd7f",
+            "ignored_paths": [],
+            "included_paths": [
+              "conans/client/profile_loader.py"
+            ],
+            "unsupported_shape_reasons": []
+          },
+          "stage_error": null,
+          "cleanup": {
+            "detail": "",
+            "removed": true,
+            "steps": [
+              "rm:ok"
+            ]
+          },
+          "resource": {
+            "mem_peak_mb": 347.473,
+            "mem_peak_unavailable_or_zero": false
+          },
+          "resource_facts": null,
+          "image_identity": "sha256:05df007b940aa6495e4ee237a820125c046c683c3b782f0ea8b39290bf6837e5",
+          "image_id_actual": null,
+          "verdict_diagnostics": {
+            "apply_ok": true,
+            "expected_match": null,
+            "grading_semantics": "swe_f2p_p2p",
+            "num_parsed_outside_segment": 0,
+            "num_parsed_tests": 7,
+            "parser_source": "swegym_parsers@242429c1+reference-bindings-v1",
+            "reference_missing": [],
+            "reference_skipped": [],
+            "resolution": "RESOLVED_FULL"
+          },
+          "per_reference": {
+            "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_profile_name": "PASSED",
+            "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_variables": "PASSED",
+            "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_include": "PASSED",
+            "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_profile_dir": "PASSED",
+            "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template": "PASSED",
+            "conans/test/integration/configuration/test_profile_jinja.py::test_profile_version": "PASSED",
+            "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_import": "PASSED"
+          },
+          "log_sha256": "bf23e00d8d005e2407cbee98b45b817f458a9aee1f73856f8c0b3caa50a0cf51",
+          "log_bytes": 22819,
+          "log_sha_matches_ledger": true,
+          "source": [
+            {
+              "path": "conans/client/profile_loader.py",
+              "bytes": 16866,
+              "sha256": "ef928b72a7cf6981d36f95f6bec30c5dc03a754735a8dfe6cfbc3ed78358c11d",
+              "equals_base_plus_patch_wholebytes": true,
+              "equals_private_actual_sha": true
+            }
+          ],
+          "raw_manager_close_matches_receipt": true,
+          "manager_close": {
+            "ledger": "/work/swegym_cpu_preprobe_20260929/results/conan-io__conan-13721/reserve6-v1/grade_degenerate/ledger.jsonl",
+            "rows": 1,
+            "manager_close": {
+              "prepare_cancelled": 0,
+              "containers_removed": [],
+              "containers_open": [],
+              "supply_open": [],
+              "cleanup_failures": [],
+              "regrade_events": 0,
+              "regrade_total": 0,
+              "regrade_declined": 0,
+              "containers_created_total": 1,
+              "containers_removed_total": 1,
+              "container_history_retained": 1,
+              "leases_total": 1
+            },
+            "halted": null,
+            "aborted": null,
+            "cleanup_failures": [],
+            "final_status": {
+              "exit_code": 0,
+              "reason": "ok",
+              "grader_containers_open": [],
+              "cleanup_failures_total": 0,
+              "cleanup_failures_resolved": false
+            }
+          },
+          "original_equals_revised_except_parser_label": true,
+          "reference_bindings": {}
+        }
+      },
+      "original_references": {
+        "f2p": [
+          "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_profile_name"
+        ],
+        "p2p": [
+          "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_variables",
+          "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_include",
+          "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_profile_dir",
+          "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template",
+          "conans/test/integration/configuration/test_profile_jinja.py::test_profile_version",
+          "conans/test/integration/configuration/test_profile_jinja.py::test_profile_template_import"
+        ]
+      },
+      "input_bindings": {
+        "version": "reference-bindings-v1",
+        "decision": "Original references unchanged; no truncated reference keys for this task",
+        "tasks": {
+          "conan-io__conan-13721": {
+            "bindings": {},
+            "meaning": "Exact original IDs; no Conan11594 map copied",
+            "source_logs": {
+              "noop": {
+                "path": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-1/eval_logs/evallog_replay-f216-baseline01-w_df99f252.eval.log",
+                "sha256": "42e71383f31f8a5db9777056d2988d7566dfe666b8e86657e93d214b78d55a3e"
+              },
+              "gold": {
+                "path": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w01-1/eval_logs/evallog_replay-f216-baseline01-w_c52e208f.eval.log",
+                "sha256": "30c8221727ba84b9ebb8a8847838f3412e4b3b8ebbd2838139a4217fce3ba006"
+              }
+            }
+          }
+        }
+      },
+      "transport": {
+        "path": "runs/swegym_cpu_preprobe_20260929/analysis/evidence_manifest_final3_v1.json",
+        "subset_files": 98,
+        "subset_bytes": 1094200,
+        "all_bytes_sha_verified_independently": true
+      },
+      "root_parser": {
+        "path": "runs/swegym_cpu_preprobe_20260929/analysis/conan13721_final_v1.json",
+        "each_reference_matches": true
+      },
+      "resource_samples": [
+        {
+          "task": "conan-io__conan-13721",
+          "ledger": "results/conan-io__conan-13721/reserve6-v1/grade_degenerate/ledger.jsonl",
+          "report_id": "rpt_grading_a471f9e5",
+          "samples": 7,
+          "first": 1790634180.583195,
+          "last": 1790634271.599576,
+          "max_sample_gap_seconds": 15.171516418457031,
+          "observed_memory_peak_bytes": 309362688,
+          "observed_pids_peak": 8,
+          "memory.events": {
+            "low": 0,
+            "high": 0,
+            "max": 0,
+            "oom": 0,
+            "oom_kill": 0,
+            "oom_group_kill": 0
+          },
+          "pids.events": {
+            "max": 0
+          },
+          "ledger_resource": {
+            "mem_peak_mb": 347.473,
+            "mem_peak_unavailable_or_zero": false
+          },
+          "ledger_resource_facts": null,
+          "limits": {
+            "Memory": 4294967296,
+            "NanoCpus": 2000000000,
+            "PidsLimit": 512,
+            "ShmSize": 67108864,
+            "Tmpfs": {
+              "/tmp": "size=1073741824,mode=1777,exec,nosuid,nodev"
+            }
+          },
+          "phases": {
+            "delta_apply": 0.388614,
+            "grader_baseline_rebuild": 0.589719,
+            "grader_cleanup": 0.740189,
+            "grader_start_and_verify": 1.888314,
+            "grader_trusted_setup": 107.296281,
+            "parser_and_report": 1.58882,
+            "test": 5.804074
+          }
+        },
+        {
+          "task": "conan-io__conan-13721",
+          "ledger": "results/conan-io__conan-13721/reserve6-v1/grade_gold/ledger.jsonl",
+          "report_id": "rpt_grading_036c9deb",
+          "samples": 8,
+          "first": 1790634044.108099,
+          "last": 1790634150.2655783,
+          "max_sample_gap_seconds": 15.173567533493042,
+          "observed_memory_peak_bytes": 363593728,
+          "observed_pids_peak": 8,
+          "memory.events": {
+            "low": 0,
+            "high": 0,
+            "max": 0,
+            "oom": 0,
+            "oom_kill": 0,
+            "oom_group_kill": 0
+          },
+          "pids.events": {
+            "max": 0
+          },
+          "ledger_resource": {
+            "mem_peak_mb": 346.75,
+            "mem_peak_unavailable_or_zero": false
+          },
+          "ledger_resource_facts": null,
+          "limits": {
+            "Memory": 4294967296,
+            "NanoCpus": 2000000000,
+            "PidsLimit": 512,
+            "ShmSize": 67108864,
+            "Tmpfs": {
+              "/tmp": "size=1073741824,mode=1777,exec,nosuid,nodev"
+            }
+          },
+          "phases": {
+            "delta_apply": 0.390559,
+            "grader_baseline_rebuild": 0.61358,
+            "grader_cleanup": 0.831795,
+            "grader_start_and_verify": 1.993303,
+            "grader_trusted_setup": 109.62523,
+            "parser_and_report": 1.609538,
+            "test": 5.290867
+          }
+        },
+        {
+          "task": "conan-io__conan-13721",
+          "ledger": "results/conan-io__conan-13721/reserve6-v1/grade_noop/ledger.jsonl",
+          "report_id": "rpt_grading_e1512ea1",
+          "samples": 8,
+          "first": 1790633907.6457822,
+          "last": 1790634013.8363109,
+          "max_sample_gap_seconds": 15.175981521606445,
+          "observed_memory_peak_bytes": 349515776,
+          "observed_pids_peak": 8,
+          "memory.events": {
+            "low": 0,
+            "high": 0,
+            "max": 0,
+            "oom": 0,
+            "oom_kill": 0,
+            "oom_group_kill": 0
+          },
+          "pids.events": {
+            "max": 0
+          },
+          "ledger_resource": {
+            "mem_peak_mb": 345.312,
+            "mem_peak_unavailable_or_zero": false
+          },
+          "ledger_resource_facts": null,
+          "limits": {
+            "Memory": 4294967296,
+            "NanoCpus": 2000000000,
+            "PidsLimit": 512,
+            "ShmSize": 67108864,
+            "Tmpfs": {
+              "/tmp": "size=1073741824,mode=1777,exec,nosuid,nodev"
+            }
+          },
+          "phases": {
+            "delta_apply": 0.183987,
+            "grader_baseline_rebuild": 0.6213,
+            "grader_cleanup": 0.781624,
+            "grader_start_and_verify": 1.906492,
+            "grader_trusted_setup": 108.10009,
+            "parser_and_report": 1.652056,
+            "test": 5.249174
+          }
+        }
+      ],
+      "independent_conclusion_before_owner_card": {
+        "severity": "S1",
+        "type": "T2b",
+        "formal": [
+          0,
+          1,
+          1
+        ],
+        "scope": "Requested symlink name lost under realpath candidate despite original tests passing",
+        "P5": "Unresolved .jinja suffix interpretation; suffix-free success cannot resolve it",
+        "use": "diagnostic-only pending P5 resolution before any comparison"
+      },
+      "owner_card_alignment": {
+        "result_md": "read; consistent",
+        "result_json": "read; consistent",
+        "evidence_audit_json": "read; formal common fields match independent audit",
+        "classification": "S1/T2b consistent",
+        "uses": "consistent; 13721 diagnostic-only P5 persists",
+        "new_blockers": [],
+        "per_reference_exact_match": true
+      }
+    }
+  }
+}

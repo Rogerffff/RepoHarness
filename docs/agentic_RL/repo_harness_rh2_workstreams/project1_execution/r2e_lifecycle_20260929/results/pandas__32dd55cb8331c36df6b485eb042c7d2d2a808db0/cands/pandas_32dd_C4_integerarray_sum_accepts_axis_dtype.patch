@@ -1,0 +1,14 @@
+diff --git a/pandas/core/arrays/integer.py b/pandas/core/arrays/integer.py
+--- a/pandas/core/arrays/integer.py
++++ b/pandas/core/arrays/integer.py
+@@ -574,7 +574,9 @@
+ 
+         return result
+ 
+-    def sum(self, skipna=True, min_count=0, **kwargs):
++    def sum(self, axis=None, skipna=True, min_count=0, dtype=None, **kwargs):
++        # accept numpy-style axis / dtype (nanops calls values.sum(axis, dtype=...));
++        # for a 1D masked array they do not change the result
+         nv.validate_sum((), kwargs)
+         result = masked_reductions.sum(
+             values=self._data, mask=self._mask, skipna=skipna, min_count=min_count

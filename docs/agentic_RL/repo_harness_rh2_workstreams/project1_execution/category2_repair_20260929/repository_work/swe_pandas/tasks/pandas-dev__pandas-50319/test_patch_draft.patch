@@ -1,0 +1,33 @@
+diff --git a/pandas/tests/tslibs/test_parsing.py b/pandas/tests/tslibs/test_parsing.py
+--- a/pandas/tests/tslibs/test_parsing.py
++++ b/pandas/tests/tslibs/test_parsing.py
+@@ -186,6 +186,29 @@
+     assert result == fmt
+ 
+ 
++@pytest.mark.parametrize(
++    "string,expected",
++    [
++        pytest.param(
++            "27.03.2003 14:55:00.000",
++            datetime(2003, 3, 27, 14, 55),
++            id="reported",
++        ),
++        pytest.param(
++            "28.04.2004 16:07:08.123456",
++            datetime(2004, 4, 28, 16, 7, 8, 123456),
++            id="another-dot-date",
++        ),
++    ],
++)
++def test_guess_datetime_format_dot_date_contract(string, expected):
++    # GH50317 permits None when inference is unavailable.
++    result = parsing.guess_datetime_format(string)
++    if result is not None:
++        assert isinstance(result, str)
++        assert datetime.strptime(string, result) == expected
++
++
+ @pytest.mark.parametrize("dayfirst,expected", [(True, "%d/%m/%Y"), (False, "%m/%d/%Y")])
+ def test_guess_datetime_format_with_dayfirst(dayfirst, expected):
+     ambiguous_string = "01/01/2011"

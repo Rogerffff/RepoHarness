@@ -1,0 +1,271 @@
+{
+  "schema": "rh2.non_author_runner_static_review.v1",
+  "date": "2026-10-03",
+  "task_id": "pydantic__pydantic-6283",
+  "revision_id": "pyd6283-behavior-v2",
+  "status": "static_increment_review_passed_actual_publication_inputs_and_cpu_pending",
+  "reviewer_role": "非作者；接续旧私有材料、对照、原Qwen FP与审查上下文",
+  "private_context_exposure": true,
+  "fresh_public_reader": false,
+  "static_review_passed": true,
+  "new_blocking_findings": [],
+  "runner_executed": false,
+  "generator_executed": false,
+  "project_dependencies_imported": false,
+  "formal_inputs_reviewed": false,
+  "real_privateattr_observation_complete": false,
+  "formal_four_row_41_reference_cpu_complete": false,
+  "old_gpu_fp_regrade_complete": false,
+  "model_or_task_completion_asserted": false,
+  "scope": "两份runner SHA/diff/AST增量及未执行输入生成器；不重审材料，不读不存在的冻结输入，不运行依赖、Docker、SSH、模型或项目pytest。",
+  "checks": {
+    "old_runner": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/cpu_acceptance_20261003/remaining/run_formal.py",
+      "bytes": 22791,
+      "sha256": "b127f7309ffae3eae2bbe834c595f846104406e2f858b8073ff2182d0a2ce3c5"
+    },
+    "new_runner": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/cpu_acceptance_20261003/6283_privateattr_v2/run_formal.py",
+      "bytes": 23684,
+      "sha256": "40b0460b70c2890a1eb3fbbf2474e10bee906125e3068868079370044d875805"
+    },
+    "provenance_draft": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/cpu_acceptance_20261003/6283_privateattr_v2/runner_provenance_draft.json",
+      "bytes": 1060,
+      "sha256": "460f4cfacaa319acdf594da7a38ca0dfdad1931a6bb984d03ea944b96666547c"
+    },
+    "prior_runner_review": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/reviews/non_author_remaining_runner_review_20261003.md",
+      "bytes": 12622,
+      "sha256": "570e2b60183f33888cfb31c7c6f7ef3baa2f0ae2dbde75729e56a301a4eb6b32"
+    },
+    "prior_material_review": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/reviews/non_author_6283_privateattr_v2_material_review_20261003.md",
+      "bytes": 8883,
+      "sha256": "c5e4ae8d729b3dc323f0372f1f27101d2982f29c1684217ed2851a95338e6abe"
+    },
+    "python38_host_ast_parse": true,
+    "python38_embedded_audit_ast_parse": true,
+    "execute_ast_unchanged": true,
+    "spec_record_ast_unchanged": true,
+    "seven_script_names_identical": [
+      "eval_script",
+      "trusted_setup_script",
+      "candidate_test_script",
+      "candidate_install_script",
+      "candidate_test_after_install_script",
+      "pre_candidate_observation_script",
+      "post_candidate_observation_script"
+    ],
+    "unchanged_functions": [
+      "sha",
+      "save",
+      "need",
+      "spec_record",
+      "execute"
+    ],
+    "changed_functions": [
+      "prepare",
+      "audit_script",
+      "validate",
+      "main"
+    ],
+    "whole_ast_equal_after_documented_delta_normalization": true,
+    "embedded_audit_only_delta_privateattr_observation_and_json_field": true,
+    "budgets_and_resource_logic_changed": false,
+    "formal_score_or_test_scripts_mutated": false,
+    "candidate_import_is_real_project_import_in_target_environment": {
+      "activation": "conda activate testbed",
+      "cwd": "/testbed",
+      "python_command": "PYTHONDONTWRITEBYTECODE=1 python",
+      "imports": [
+        "pydantic",
+        "pydantic_core",
+        "RootModel",
+        "PrivateAttr"
+      ],
+      "not_a_stdlib_mechanism_simulation": true,
+      "actual_executed": false,
+      "lines": {
+        "script": 103,
+        "import": 117,
+        "normal": 120,
+        "construct": 122,
+        "exception": 124,
+        "validation": 202
+      }
+    },
+    "supplemental_budget": {
+      "container_command_timeout_seconds": 25,
+      "container_kill_grace_seconds": 2,
+      "host_asyncio_wait_seconds": 30,
+      "unchanged_from_original": true,
+      "placement": "after super()._observe for post_candidate_observation, before container teardown",
+      "report_reward_not_reassigned": true,
+      "normal_read_failure": "outside try; script nonzero or missing unique audit JSON prevents automatic review success",
+      "construct_exception": "Exception converted to type/message; exact expected exception type is checked, no exact message assertion",
+      "timeout_failure": "runtime_observation false, matrix stops after preserving artifacts; not a task reward conversion"
+    },
+    "privateattr_expectation_matcher_checks": {
+      "actual_added_AST_expressions_evaluated_with_synthetic_JSON_only": true,
+      "cases": [
+        {
+          "candidate": "noop",
+          "expected": {
+            "construct_value": "abc",
+            "construct_error_type": null
+          },
+          "fabricated_json_match": true,
+          "runtime_observation": false
+        },
+        {
+          "candidate": "gold",
+          "expected": {
+            "construct_value": "abc",
+            "construct_error_type": null
+          },
+          "fabricated_json_match": true,
+          "runtime_observation": false
+        },
+        {
+          "candidate": "validate_construct",
+          "expected": {
+            "construct_value": "abc",
+            "construct_error_type": null
+          },
+          "fabricated_json_match": true,
+          "runtime_observation": false
+        },
+        {
+          "candidate": "qwen36_a1_pop_private",
+          "expected": {
+            "construct_value": null,
+            "construct_error_type": "TypeError"
+          },
+          "fabricated_json_match": true,
+          "runtime_observation": false
+        }
+      ],
+      "four_wrong_value_or_error_examples_rejected": true,
+      "does_not_validate_absent_inputs": true
+    },
+    "formal_inputs_exists_at_review": false,
+    "formal_inputs_reviewed": false,
+    "runtime_executed": false,
+    "status_context_from_parent": {
+      "new_publication_request": "submitted",
+      "old_request_safe_partial": "ACK/clear reported verified by parent, not reaudited here",
+      "original_gpu_fp_regrade": "not executed",
+      "real_privateattr_minimal_observation": "not executed",
+      "new_four_row_41_reference_cpu": "pending"
+    },
+    "generator_static_review": {
+      "generator": {
+        "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/generate_6283_v2_inputs_v1.py",
+        "bytes": 8472,
+        "sha256": "7a41967b906688086383f6cfeb9466aad95a6ca8d0f023acccbd7c0cdd9a81fe"
+      },
+      "python38_ast_parse": true,
+      "executed": false,
+      "formal_inputs_generated": false,
+      "target_formal_inputs_exists": false,
+      "gate_order": [
+        "assert new formal_inputs absent",
+        "bundles inside actual release repo",
+        "verify complete release manifest byte identities and exact pathset",
+        "verify requested publication request/cpu-a/safe_closed/release path and manifest SHA",
+        "bind actual bundle files",
+        "match active revision, full ordered F2P/P2P, effective patch and base",
+        "verify publication material member identities",
+        "fix four candidates, 2 F2P and 39 P2P, exact sole new P2P",
+        "derive actual effective test/source SHA in temporary directories",
+        "match install asset/recipe and prior R7 public actor identity conditions",
+        "create independent new formal_inputs with open(x)"
+      ],
+      "requires_existing_actual_release_and_receipt": true,
+      "existing_old_input_is_read_only": true,
+      "old_input_reference": "cpu_acceptance_20261003/formal_inputs.json",
+      "input_write_mode": "x",
+      "filesystem_operations_static": [
+        {
+          "line": 99,
+          "call": "shutil.copyfile(base / test, p)"
+        },
+        {
+          "line": 100,
+          "call": "subprocess.run(['git', 'apply', str((d / 'effective_test.patch').resolve())], cwd=t, check=True, capture_output=True)"
+        },
+        {
+          "line": 140,
+          "call": "(out / 'formal_inputs.json').open('x')"
+        },
+        {
+          "line": 123,
+          "call": "shutil.copyfile(base / rel, p)"
+        },
+        {
+          "line": 125,
+          "call": "subprocess.run(['git', 'apply', '--whitespace=error-all', str(patch.resolve())], cwd=t, check=True, capture_output=True)"
+        }
+      ],
+      "subprocess_operations_are_git_apply_in_temporary_directories_only": true,
+      "module_identity_coverage": [
+        "pydantic.main",
+        "pydantic.root_model",
+        "pydantic._internal._model_construction"
+      ],
+      "required_statuses_scope": {
+        "gold": "all41 PASSED",
+        "noop": "2F FAILED and39P PASSED",
+        "validate_construct": "2F andnewP PASSED, existing test_construct/test_construct_nested FAILED; other refs must be accounted by runner",
+        "qwen36_a1_pop_private": "all original40 PASSED, sole newP FAILED"
+      },
+      "preserves_old40_order_by_assertion": true,
+      "no_original_gpu_fp_or_reward_write_path_observed": true,
+      "new_cpu_candidate_does_not_regrade_original_gpu_fp": true,
+      "prior_in_memory_author_ast_failure": "parent reported before file write; no failed artifact claimed as input; current file syntax parsed here",
+      "release_receipt_or_material_manifest_content_reviewed_in_this_increment": false,
+      "configured_expectations": {
+        "noop": {
+          "normal": "abc",
+          "construct": "abc",
+          "error_type": null
+        },
+        "gold": {
+          "normal": "abc",
+          "construct": "abc",
+          "error_type": null
+        },
+        "validate_construct": {
+          "normal": "abc",
+          "construct": "abc",
+          "error_type": null
+        },
+        "qwen36_a1_pop_private": {
+          "normal": "abc",
+          "construct": null,
+          "error_type": "TypeError"
+        }
+      }
+    }
+  },
+  "limitations": [
+    "静态真实import代码路径不是实际Pydantic/core结果。",
+    "Python3.8 AST解析不证明host完整标准库兼容性或依赖执行。",
+    "PrivateAttr表达式只用人工JSON形状核判定逻辑，不是CPU观察。",
+    "实际新publication/formal_inputs/spec尚待；脚本/hygiene/预算字节未因静态继承自动完成新身份验收。",
+    "旧请求ACK/clear和R14实际运行复用题主交接及旧审查，不是新现场核验。",
+    "CPU源等价新材料负对照不是原GPU FP重评分；旧原分和工件不回写。"
+  ],
+  "pending": [
+    "实际发布回执/完整release及bundle到位；生成独立formal_inputs后做增量身份核对。",
+    "新spec七脚本、hygiene、预算、安装及source/import实际身份。",
+    "四行各41参考真实CPU与PrivateAttr normal/construct值或类型原件，预期0/1/0/0尚未观测。",
+    "真实FP和完整baseline运输、清理与非作者原件验收；旧公开actor复用条件核查。"
+  ],
+  "report": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/reviews/non_author_6283_v2_runner_static_review_20261003.md",
+    "bytes": 8534,
+    "sha256": "4ae4ad16de576996a0ac0d08e3653435a46a8f06a2be9b4c9fea6b790a007ffd"
+  }
+}

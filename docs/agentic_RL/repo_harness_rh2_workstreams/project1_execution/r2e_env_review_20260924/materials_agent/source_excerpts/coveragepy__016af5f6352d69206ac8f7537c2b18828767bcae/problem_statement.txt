@@ -1,0 +1,32 @@
+[ISSUE]
+
+**Title:** Coverage Crashes with UnicodeEncodeError on Non-UTF8 Filenames
+
+**Description:**
+When using coverage.py to trace files, if a file has a non-UTF8 encodable filename, attempting to save the coverage data results in a crash with a `UnicodeEncodeError`. This occurs because coverage.py tries to encode the filename in UTF-8 without handling encoding errors.
+
+**Example Code:**
+```python
+# Create a file with a non-UTF8 encodable filename
+exec(compile("pass", "\udcff.py", "exec"))
+
+# Run coverage and attempt to save data
+cov = coverage.Coverage()
+cov.start()
+exec("pass")
+cov.stop()
+cov.save()  # This line raises UnicodeEncodeError
+```
+
+**Expected Behavior:**
+Coverage.py should gracefully handle filenames that cannot be encoded in UTF-8, either by skipping them or handling the encoding error internally without crashing.
+
+**Actual Behavior:**
+When saving coverage data, coverage.py raises a `UnicodeEncodeError` due to the non-encodable filename, causing the coverage process to fail.
+
+**Error Message:**
+```
+UnicodeEncodeError: 'utf-8' codec can't encode character '\udcff' in position 80: surrogates not allowed
+```
+
+[/ISSUE]

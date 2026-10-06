@@ -1,0 +1,65 @@
+{
+  "name": "coveragepy_ea69_public_delivery_v2",
+  "task": "coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5",
+  "purpose": "交付固定公开题面，复用公开HTML命令，保留原open替身诊断，并通过公开参数转发包装核开发测试路径；不做求解修改。",
+  "steps": [
+    {
+      "kind": "bash_r2e_preflight"
+    },
+    {
+      "kind": "bash",
+      "id": "env",
+      "command": "id; echo VIRTUAL_ENV=$VIRTUAL_ENV; echo RH2_BASHENV_WRITE=$( ( : >> /rh2/bash_env ) 2>/dev/null && echo WRITABLE || echo DENIED ); python -c 'import sys; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable)'; python -c 'import coverage, coverage.html; print(\"coverage\", coverage.__version__, coverage.__file__)'; (cd / && python -c 'import coverage; print(\"cwd=/ coverage\", coverage.__file__)'); command -v git coverage || true; python -m pip --version 2>&1 | head -1; python -m pytest --version 2>&1 | head -1; git status --porcelain=v1; echo PORCELAIN_RC=$?",
+      "timeout_ms": 270000
+    },
+    {
+      "kind": "bash",
+      "id": "pr1_1_cmd",
+      "command": "python - <<'EOF'\nimport os, sys, tempfile\nsys.path.insert(0, \"/testbed\")\nimport coverage\nprint(\"coverage from:\", coverage.__file__)\nwork = tempfile.mkdtemp()\nos.chdir(work)\nwith open(\"demo.py\", \"w\") as f:\n    f.write(\"def f(x):\\n    if x:\\n        return 1\\n    return 2\\n\\nf(1)\\n\")\nsys.path.insert(0, work)\ncov = coverage.Coverage()\ncov.start()\nimport demo\ncov.stop()\ncov.html_report(directory=\"htmlcov\")\nprint(sorted(os.listdir(\"htmlcov\")))\ngi = os.path.join(\"htmlcov\", \".gitignore\")\nprint(\".gitignore exists:\", os.path.exists(gi))\nif os.path.exists(gi):\n    with open(gi) as f:\n        print(repr(f.read()))\nEOF",
+      "timeout_ms": 600000
+    },
+    {
+      "kind": "bash",
+      "id": "pr2_2_cmd",
+      "command": "D=$(mktemp -d) && printf 'def f(x):\\n    return x + 1\\n\\nf(1)\\n' > \"$D/demo.py\" && ( cd \"$D\" && export PYTHONPATH=/testbed && python -m coverage run demo.py && python -m coverage html -d htmlcov && ls -A htmlcov && echo '--- htmlcov/.gitignore:' && { cat htmlcov/.gitignore || true; } && if command -v git >/dev/null 2>&1; then git init -q . && echo '--- git status (htmlcov only):' && git status --porcelain --untracked-files=all -- htmlcov; else echo '(git not found; skipped)'; fi )",
+      "timeout_ms": 600000
+    },
+    {
+      "kind": "bash",
+      "id": "pr5_6_pytest",
+      "command": "python -m pytest -p no:cacheprovider --color=no -rfE -o addopts=\"\" tests/test_html.py -q",
+      "timeout_ms": 600000
+    },
+    {
+      "kind": "bash",
+      "id": "public_open_spy_encoding",
+      "command": "cd /testbed && python - <<'PYCODE'\nimport os, tempfile\nfrom tests.test_html import FileWriteTracker\nwith tempfile.TemporaryDirectory() as work:\n    with FileWriteTracker(set()).open(os.path.join(work, 'example.txt'), 'w', encoding='utf-8') as f:\n        f.write('example\\n')\nPYCODE",
+      "timeout_ms": 60000
+    },
+    {
+      "kind": "bash",
+      "id": "public_html_compat",
+      "command": "cd /testbed && python - <<'PYCODE'\n# Public-only compatibility command for the original test helper.\n# Preserve its write tracking; forward arguments accepted by builtins.open.\nimport os\nimport tempfile\nimport pytest\nfrom tests.test_html import FileWriteTracker\n\n\ndef compatible_open(self, filename, mode=\"r\", *args, **kwargs):\n    if mode.startswith(\"w\"):\n        self.written.add(filename.replace(\"\\\\\", \"/\"))\n    return open(filename, mode, *args, **kwargs)\n\n\nFileWriteTracker.open = compatible_open\nwith tempfile.TemporaryDirectory() as work:\n    path = os.path.join(work, \"example.txt\")\n    written = set()\n    tracker = FileWriteTracker(written)\n    with tracker.open(path, \"w\", encoding=\"utf-8\") as stream:\n        stream.write(\"example\\n\")\n    assert written == {path.replace(\"\\\\\", \"/\")}\n    with tracker.open(path, \"r\", encoding=\"utf-8\") as stream:\n        assert stream.read() == \"example\\n\"\nprint(\"RH2_PUBLIC_SPY_ENCODING_OK=1\", flush=True)\nraise SystemExit(pytest.main([\n    \"-o\", \"addopts=\", \"-p\", \"no:cacheprovider\", \"--color=no\", \"-rfE\",\n    \"tests/test_html.py\", \"-q\",\n]))\nPYCODE",
+      "timeout_ms": 600000
+    }
+  ],
+  "solve": {
+    "wall_seconds": 1200,
+    "max_context_len": 32768,
+    "max_new_tokens": 4096
+  },
+  "public_provenance": {
+    "source_commands": "rh2/experiments/r2e_actor_20260925/commands/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5.json",
+    "source_commands_sha256": "sha256:b2aac3cb09032f50ae1f02b542f57c816572cd66407c9dddbbd2806d6f47fd21",
+    "selected_command_strings_changed": false,
+    "public_open_spy_source": "runs/r2e_static_prep_20260924/v3/public/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/worktree/tests/test_html.py",
+    "public_open_spy_sha256": "sha256:5770b63e4e3341f8c7402401091cf1b2c2a916c4ffd0a127d0b27d820755422a",
+    "spy_check_author_constructed_public_only": true,
+    "execution_status": "not_run",
+    "compat_command_source": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/devcheck/public_filewrite_compat_v1.py",
+    "compat_command_sha256": "sha256:4a8dfebdddbf425a6f469bfe89768eccba311a1e0819d8ff6a7c19052a0d8a49",
+    "compat_basis": "原公开FileWriteTracker.open签名和实现；仅转发参数，保留mode.startswith(w)写记录，不改源码或评分",
+    "public_test_file_changed": false
+  },
+  "known_public_limit": "原公开 FileWriteTracker.open 只接 filename/mode；私有R-b修改不改变公开测试。单独保留实际结果，不把该公开替身限制当作encoding方案的语义错误。"
+}

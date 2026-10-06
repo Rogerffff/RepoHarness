@@ -1,0 +1,30 @@
+[
+  {
+    "id": "C1",
+    "cmd": "env TEST_SERVER_MODE=false PYTHONPATH=/testbed python -c 'import sys, boto3, botocore, moto, pytest, sure; from moto import mock_dynamodb; from moto.dynamodb.models import Table; print(sys.executable); print(moto.__file__); print(boto3.__version__, botocore.__version__, moto.__version__)'\n",
+    "timeout_s": 240,
+    "expect": "zero",
+    "purpose": "原公开读者开发命令；实际精确行为、节点收集与完整输出由题主另核"
+  },
+  {
+    "id": "C2",
+    "cmd": "env TEST_SERVER_MODE=false AWS_DEFAULT_REGION=us-east-1 AWS_ACCESS_KEY_ID=testing AWS_SECRET_ACCESS_KEY=testing AWS_EC2_METADATA_DISABLED=true PYTHONPATH=/testbed python - <<'PY'\nimport boto3\nimport moto\nfrom botocore.exceptions import ClientError\n\ncases = [\n    ('control_lower_s', {'s': None}),\n    ('control_A', {'A': None}),\n    ('top_S', {'S': None}),\n    ('nested_S', {'A': {'S': None}}),\n    ('deep_S', {'A': {'B': {'S': 'text'}}}),\n    ('list_map_S', {'A': [{'S': None}]}),\n]\nfailed = []\nwith moto.mock_dynamodb():\n    dynamodb = boto3.resource('dynamodb', region_name='us-east-1')\n    table = dynamodb.create_table(\n        TableName='test',\n        KeySchema=[{'AttributeName': 'index', 'KeyType': 'HASH'}],\n        AttributeDefinitions=[{'AttributeName': 'index', 'AttributeType': 'N'}],\n        ProvisionedThroughput={'ReadCapacityUnits': 1, 'WriteCapacityUnits': 1},\n    )\n    for index, (name, extra) in enumerate(cases):\n        item = {'index': index, **extra}\n        try:\n            table.put_item(Item=item)\n            assert table.get_item(Key={'index': index})['Item'] == item\n            print(name, 'OK')\n        except ClientError as error:\n            failed.append(name)\n            print(name, error.response['Error'])\nassert not failed, failed\nPY\n",
+    "timeout_s": 240,
+    "expect": "nonzero",
+    "purpose": "原公开读者开发命令；实际精确行为、节点收集与完整输出由题主另核"
+  },
+  {
+    "id": "C3",
+    "cmd": "env TEST_SERVER_MODE=false AWS_DEFAULT_REGION=us-east-1 AWS_ACCESS_KEY_ID=testing AWS_SECRET_ACCESS_KEY=testing AWS_EC2_METADATA_DISABLED=true PYTHONPATH=/testbed python -m pytest -q -p no:cacheprovider /testbed/tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_put_item_wrong_datatype /testbed/tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_put_item__string_as_integer_value\n",
+    "timeout_s": 240,
+    "expect": "zero",
+    "purpose": "原公开读者开发命令；实际精确行为、节点收集与完整输出由题主另核"
+  },
+  {
+    "id": "C4",
+    "cmd": "env TEST_SERVER_MODE=false AWS_DEFAULT_REGION=us-east-1 AWS_ACCESS_KEY_ID=testing AWS_SECRET_ACCESS_KEY=testing AWS_EC2_METADATA_DISABLED=true PYTHONPATH=/testbed python -m pytest -q -p no:cacheprovider /testbed/tests/test_dynamodb/test_dynamodb.py::test_put_item_with_special_chars /testbed/tests/test_dynamodb/test_dynamodb.py::test_nested_projection_expression_using_get_item /testbed/tests/test_dynamodb/test_dynamodb.py::test_update_item_if_original_value_is_none /testbed/tests/test_dynamodb/test_dynamodb.py::test_update_nested_item_if_original_value_is_none /testbed/tests/test_dynamodb/test_dynamodb.py::test_put_return_attributes\n",
+    "timeout_s": 240,
+    "expect": "zero",
+    "purpose": "原公开读者开发命令；实际精确行为、节点收集与完整输出由题主另核"
+  }
+]

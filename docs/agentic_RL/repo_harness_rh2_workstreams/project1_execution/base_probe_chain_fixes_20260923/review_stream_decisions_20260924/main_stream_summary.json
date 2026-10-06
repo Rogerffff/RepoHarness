@@ -1,0 +1,205 @@
+{
+  "reviewed_head": "6b023ebe",
+  "scope": "Real CC 2.1.205 + author production transport/capture/orchestrator fixture; engine, tokenizer, quiescence barrier, grading are stubs. No GPU/real SWE score claim.",
+  "sources": {
+    "rh2/src/slime/agent/adapters/anthropic.py": {
+      "remote_sha256": "66ef380a3fc2ee8e582041ac8948857eea5e8a24ff5e9816a51320abedbd8980",
+      "local_sha256": "66ef380a3fc2ee8e582041ac8948857eea5e8a24ff5e9816a51320abedbd8980",
+      "same": true
+    },
+    "rh2/src/slime/agent/adapters/common.py": {
+      "remote_sha256": "27bd6c396b6fdd525667df9b33490ab594d38714255073991404daf417d77b11",
+      "local_sha256": "27bd6c396b6fdd525667df9b33490ab594d38714255073991404daf417d77b11",
+      "same": true
+    },
+    "rh2/src/repoharness2/adapters/slime/capture_wire.py": {
+      "remote_sha256": "942323765ce94e524f5480f77def8292a8ff764db593bcd28e88eec83eabee0d",
+      "local_sha256": "942323765ce94e524f5480f77def8292a8ff764db593bcd28e88eec83eabee0d",
+      "same": true
+    },
+    "rh2/src/repoharness2/adapters/slime/bringup.py": {
+      "remote_sha256": "34478c6710f5f446186b109a57403e82c0aeaf29f4b90da8ec93ea10dfb41182",
+      "local_sha256": "34478c6710f5f446186b109a57403e82c0aeaf29f4b90da8ec93ea10dfb41182",
+      "same": true
+    },
+    "rh2/src/repoharness2/adapters/slime/generate.py": {
+      "remote_sha256": "4e08c73e7f3d900bb5378d9174e945dc72edb2b7218b8c4098f574f40538e125",
+      "local_sha256": "4e08c73e7f3d900bb5378d9174e945dc72edb2b7218b8c4098f574f40538e125",
+      "same": true
+    },
+    "rh2/src/repoharness2/adapters/slime/docker_sandbox.py": {
+      "remote_sha256": "58b87a14d5142e97b01621112ec524ed7550ec7b12f8c98953c2f376c562cc17",
+      "local_sha256": "58b87a14d5142e97b01621112ec524ed7550ec7b12f8c98953c2f376c562cc17",
+      "same": true
+    },
+    "rh2/experiments/base_probe_fixes_20260923/stream3_formal_chain.py": {
+      "remote_sha256": "22825488e22ca56d2ce332653caf74a521caa96a1d5e71115646a4685bbf1d5b",
+      "local_sha256": "22825488e22ca56d2ce332653caf74a521caa96a1d5e71115646a4685bbf1d5b",
+      "same": true
+    }
+  },
+  "scenarios": {
+    "control": {
+      "harness_exit_code": 0,
+      "cc_executed_cut_turn_tool": true,
+      "capture_record_count": 4,
+      "session_plane_drained": true,
+      "capture_closed": true,
+      "outcome_v2": {
+        "termination_kind": "completed",
+        "completion_class": "present_complete",
+        "reason_code": null,
+        "runtime_failure_category": null
+      },
+      "grading_calls": 1,
+      "cc_result": {
+        "subtype": "success",
+        "is_error": false,
+        "num_turns": 4,
+        "stop_reason": "end_turn",
+        "duration_ms": 193
+      },
+      "delivered": [
+        {
+          "status": "Status.COMPLETED",
+          "remove_sample": false,
+          "loss_mask_sum": 24
+        }
+      ],
+      "second_response": {
+        "opened": 1790234408.9164145,
+        "id": "857cac",
+        "event": "sse_response",
+        "index": 1,
+        "chunks": 9,
+        "events": [
+          "message_start",
+          "content_block_start",
+          "content_block_delta",
+          "content_block_stop",
+          "content_block_start",
+          "content_block_delta",
+          "content_block_stop",
+          "message_delta",
+          "message_stop"
+        ],
+        "action": null,
+        "bytes_forwarded": 1371
+      },
+      "cleanup": {
+        "labeled_containers_left": [],
+        "labeled_networks_left": []
+      }
+    },
+    "cut": {
+      "harness_exit_code": 0,
+      "cc_executed_cut_turn_tool": false,
+      "capture_record_count": 2,
+      "session_plane_drained": true,
+      "capture_closed": true,
+      "outcome_v2": {
+        "termination_kind": "completed",
+        "completion_class": "present_complete",
+        "reason_code": null,
+        "runtime_failure_category": null
+      },
+      "grading_calls": 1,
+      "cc_result": {
+        "subtype": "success",
+        "is_error": false,
+        "num_turns": 2,
+        "stop_reason": "tool_use",
+        "duration_ms": 146
+      },
+      "delivered": [
+        {
+          "status": "Status.COMPLETED",
+          "remove_sample": false,
+          "loss_mask_sum": 12
+        }
+      ],
+      "second_response": {
+        "opened": 1790234477.8748713,
+        "id": "469da3",
+        "event": "sse_response",
+        "index": 1,
+        "chunks": 9,
+        "events": [
+          "message_start",
+          "content_block_start(earlier-block)",
+          "content_block_delta",
+          "content_block_stop",
+          "content_block_start",
+          "content_block_delta(DROPPED)",
+          "content_block_stop(DROPPED)",
+          "message_delta(DROPPED)",
+          "message_stop(DROPPED)"
+        ],
+        "action": "truncated_after:content_block_start:terminator_forwarded",
+        "bytes_forwarded": 851
+      },
+      "cleanup": {
+        "labeled_containers_left": [],
+        "labeled_networks_left": []
+      }
+    },
+    "cut_fin": {
+      "harness_exit_code": 1,
+      "cc_executed_cut_turn_tool": false,
+      "capture_record_count": null,
+      "session_plane_drained": false,
+      "capture_closed": false,
+      "outcome_v2": {
+        "termination_kind": "harness_crash",
+        "completion_class": "missing",
+        "reason_code": "nonzero_harness_exit_in_formal_chain",
+        "runtime_failure_category": null
+      },
+      "grading_calls": 0,
+      "cc_result": {
+        "subtype": "success",
+        "is_error": true,
+        "num_turns": 2,
+        "stop_reason": "stop_sequence",
+        "duration_ms": 149
+      },
+      "delivered": [
+        {
+          "status": "Status.ABORTED",
+          "remove_sample": true,
+          "loss_mask_sum": 0
+        }
+      ],
+      "second_response": {
+        "opened": 1790234796.2077587,
+        "id": "14216f",
+        "event": "sse_response",
+        "index": 1,
+        "chunks": 5,
+        "events": [
+          "message_start",
+          "content_block_start(earlier-block)",
+          "content_block_delta",
+          "content_block_stop",
+          "content_block_start",
+          "content_block_delta(drained)",
+          "content_block_stop(drained)",
+          "message_delta(drained)",
+          "message_stop(drained)"
+        ],
+        "action": "fin_after:content_block_start",
+        "bytes_forwarded": 851,
+        "cut_at": 1790234796.311
+      },
+      "cleanup": {
+        "labeled_containers_left": [],
+        "labeled_networks_left": []
+      }
+    }
+  },
+  "classification": {
+    "cut": "HTTP terminator deliberately forwarded by injector; reproduced old B gateway shape, not generated by raw TCP relay",
+    "cut_fin": "Raw FIN before HTTP terminator; rejected by current formal nonzero-exit check"
+  },
+  "remote_docker_ps_empty_after_runs": true
+}

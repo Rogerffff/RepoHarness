@@ -1,0 +1,30 @@
+[
+  {
+    "id": "identity_import",
+    "cmd": "id; pwd; git rev-parse HEAD; git status --porcelain; python - <<'PY'\nimport sys,numpy,scipy,dask,dask.array,pytest\nprint('PYTHON',sys.executable,sys.version)\nprint('DASK',dask.__file__,dask.__version__)\nprint('NUMPY',numpy.__version__,'SCIPY',scipy.__version__,'PYTEST',pytest.__version__)\nassert dask.__file__.startswith('/testbed/')\nPY",
+    "timeout_s": 60,
+    "expect": "zero",
+    "purpose": "公开源码、身份、解释器和 array 必要依赖"
+  },
+  {
+    "id": "issue_public_ones_like",
+    "cmd": "python - <<'PY'\nimport dask.array as da\nimport numpy as np\narray=da.ma.masked_array([2,3,4],mask=[0,0,1])\nactual=da.ones_like(array).compute()\nexpected=np.ones_like(array.compute())\nprint('ACTUAL',actual,'EXPECTED',expected)\nprint('ACTUAL_MASK',np.ma.getmaskarray(actual),'EXPECTED_MASK',np.ma.getmaskarray(expected))\nassert np.array_equal(np.ma.getmaskarray(actual),np.ma.getmaskarray(expected))\nPY",
+    "timeout_s": 60,
+    "expect": "nonzero",
+    "purpose": "原公开题面例子；未修复源码的输出应丢失最后位置 mask，须读异常"
+  },
+  {
+    "id": "public_masked_regression",
+    "cmd": "python -m pytest -p no:cacheprovider -n0 -rA --color=no dask/array/tests/test_masked.py",
+    "timeout_s": 600,
+    "expect": "zero",
+    "purpose": "base 现有公开 masked 模块；不应用新测试"
+  },
+  {
+    "id": "public_creation_like",
+    "cmd": "python -m pytest -p no:cacheprovider -n0 -rA --color=no dask/array/tests/test_creation.py -k arr_like",
+    "timeout_s": 600,
+    "expect": "zero",
+    "purpose": "既有公开 *_like 创建测试；历史 top-level 修法接受性覆盖"
+  }
+]

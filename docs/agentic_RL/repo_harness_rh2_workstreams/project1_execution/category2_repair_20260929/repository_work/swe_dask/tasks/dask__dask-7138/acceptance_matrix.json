@@ -1,0 +1,57 @@
+{
+  "schema": "dask_acceptance_plan.v1",
+  "as_of": "2026-10-03",
+  "instance_id": "dask__dask-7138",
+  "revision_id": "dask7138-array-keyword-v1",
+  "effective_test_patch": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7138/effective_test.patch",
+    "sha256": "2f3c5c539816149a06b6c460b5d79d6b3223f452cd5862bcdbac41faf76bc44a"
+  },
+  "expected_results_are_not_observed_scores": true,
+  "rows": [
+    {
+      "name": "noop",
+      "patch": null,
+      "role": "unrepaired",
+      "expected_reward": 0,
+      "reason": "未修复的原源码须被拒绝",
+      "priority": "first_formal_matrix",
+      "observed_reward_on_this_revision": null,
+      "original_material_f2p_count": 1
+    },
+    {
+      "name": "compatible_ravel",
+      "patch": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7138/compatible_ravel.patch",
+        "sha256": "031783b6576e9410160e8ac515dbf49cedb7e5938facd0b9c9d7967d95d467e4"
+      },
+      "role": "positive_draft",
+      "expected_reward": 1,
+      "reason": "保留旧 array=，同时支持 array-like；尚待运行和非作者核实",
+      "priority": "first_formal_matrix",
+      "observed_reward_on_this_revision": null,
+      "original_material_f2p_count": 1
+    },
+    {
+      "name": "gold",
+      "patch": {
+        "path": "runs/swegym_quality_expansion_20260925/private/dask__dask-7138/gold.patch",
+        "sha256": "d68ca41cd89d5607d0db853a76b4161314033cc70aeefaa59385e828bcf6644b"
+      },
+      "role": "incomplete_gold",
+      "expected_reward": 0,
+      "reason": "转换主体有效，但改名后不兼容原 array= 调用；应在新增 P2P 被拒",
+      "priority": "first_formal_matrix",
+      "observed_reward_on_this_revision": null,
+      "original_material_f2p_count": 1
+    }
+  ],
+  "success_conditions": [
+    "固定材料身份、镜像、执行入口、安装配方与身份",
+    "有效正对照为 1；未修复及各已知错解为 0",
+    "安装和测试实际执行、参考无缺席；逐项参考状态和失败断言符合预期",
+    "保存完整评分账本、输出、候选和清理结果",
+    "非作者核公开依据、正对照及本轮实际结果"
+  ],
+  "known_wrong_coverage": "初始矩阵按独立机制选取；其余历史候选保留原件。接受性比较不能因私有检查通过而省略正式身份/导入等差异。"
+}

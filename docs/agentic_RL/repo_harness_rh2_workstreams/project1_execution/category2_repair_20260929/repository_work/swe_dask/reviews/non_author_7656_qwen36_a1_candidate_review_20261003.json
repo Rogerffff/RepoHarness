@@ -1,0 +1,1631 @@
+{
+  "schema": "dask7656_non_author_candidate_review.v1",
+  "review_id": "non_author_7656_qwen36_a1_candidate_review_20261003",
+  "as_of": "2026-10-03T22:20:53.315588+08:00",
+  "reviewer": "Codex 非作者独立subagent",
+  "task_id": "swe_gym_lite::dask__dask-7656",
+  "job_id": "gpu1003-dask7656-qwen36-a1",
+  "material_revision": "dask7656-dataclass-argument-v1",
+  "verdict": "pass_current_task_semantics_with_needs_alignment",
+  "source_semantic_blockers": [],
+  "new_effective_test_defects_found": [],
+  "training_qualification": null,
+  "authorization_and_scope": {
+    "basis": "coordination_workflow_20261003.md题主安排非作者subagent核查及父代理明确授权",
+    "read_only_except_report_outputs": true,
+    "no_model_CPU_matrix_container_SSH_reruns": true,
+    "shared_inputs_board_task_card_changed": false,
+    "other_threads_messaged": false,
+    "coder_extra_scope": "仅核同题既有封存prompt/请求/接口，不复审Coder候选"
+  },
+  "target_semantics": {
+    "public_target": "未初始化且无属性的init=False字段，不阻止dataclass作为delayed函数输入。",
+    "approved_extension": "被调用函数实际收到原dataclass类、字段值正确、嵌套Delayed已求值；同类普通默认字段对象也可用。",
+    "excluded_goal": "不新增已存在init=False字段的状态恢复或__post_init__兼容要求。",
+    "actual_change": "unpack_collections与弃用的to_task_dask均以f.init or hasattr(expr,f.name)过滤字段，其余递归、原类typ重建及apply调用不变。",
+    "source_reasoning": "对本题缺失init=False字段，谓词为false，避免getattr；a等init=True字段仍递归遍历并合并子图；apply(typ,(),dict(args))仍以原类重建。",
+    "gold_difference": "gold过滤所有不存在的属性；本候选保留f.init=True的getattr。正常初始化dataclass及本题场景一致；人为删除init=True属性不是本轮已批准要求。",
+    "no_evasion_observed": "代码没有识别评分器、固定返回值、改类型、禁止子图求值、替换测试控制或私有访问。"
+  },
+  "FP_identity": {
+    "artifact_digest": "sha256:b02833ba8e11db16ab96e751b3730c037fc9fd2b75bc056af7901c945efd96af",
+    "rendered_diff_sha256": "31136b11cf2d801c80a844b5fc75dbc3cdc3db7b2dc56969f783fe891de9cf74",
+    "entries": [
+      {
+        "repository_path": "dask/delayed.py",
+        "sha256": "bf2c408907dbe65c66ef46d771b4aeea97071ba2ead760e75c5369e4f8fc3540",
+        "bytes": 22348,
+        "operation": "modify",
+        "mode": "100644"
+      },
+      {
+        "repository_path": "dask/tests/test_delayed.py",
+        "sha256": "d4e01dc9655cfdf27fcbb35019ec558ab019c008ba8bdd09a3596df0317506c1",
+        "bytes": 19966,
+        "operation": "modify",
+        "mode": "100644"
+      }
+    ],
+    "projected_paths": [
+      "dask/delayed.py"
+    ],
+    "candidate_test_change_excluded": true,
+    "baseline_members_examined": [
+      {
+        "archive": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/frozen/baseline.tar",
+        "member": "dask/delayed.py",
+        "sha256": "dfb4916f344567c5d4bda3a0473ac7f4dd5cf90fdebb75ce0e5dc4428edc52f8",
+        "bytes": 22278,
+        "role": "content_reviewed"
+      },
+      {
+        "archive": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/frozen/baseline.tar",
+        "member": "dask/tests/test_delayed.py",
+        "sha256": "6ae2af0d5d911d1c573755f7a62ec487d26aeaf0edc2089fa6c4be99d8e1c672",
+        "bytes": 19254,
+        "role": "content_reviewed"
+      },
+      {
+        "archive": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/frozen/baseline.tar",
+        "member": "dask/compatibility.py",
+        "sha256": "3ba64503f22801e2a66173b16c0a778060b9ae167a7995fc753d005d5df76b18",
+        "bytes": 503,
+        "role": "identity_read"
+      },
+      {
+        "archive": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/frozen/baseline.tar",
+        "member": "dask/utils.py",
+        "sha256": "12003a0974ddc31bcfd0d41a184437aa5393f68628e6cf3588339f19d60c1484",
+        "bytes": 45854,
+        "role": "content_reviewed"
+      }
+    ]
+  },
+  "original_scoring_checked": {
+    "raw_reward": 1.0,
+    "F2P_pass_total": [
+      1,
+      1
+    ],
+    "P2P_pass_total": [
+      48,
+      48
+    ],
+    "formal_reference_missing": [],
+    "log_unique_tests": 52,
+    "log_PASS": 50,
+    "log_XFAIL": 2,
+    "non_reference_PASS": [
+      "dask/tests/test_delayed.py::test_check_meta_flag"
+    ],
+    "non_reference_XFAIL": [
+      "dask/tests/test_delayed.py::test_pickle[f1]",
+      "dask/tests/test_delayed.py::test_pickle[f2]"
+    ],
+    "candidate_added_test_in_formal_log": false,
+    "formal_test_restoration_log_lines": [
+      318,
+      326,
+      332,
+      334
+    ],
+    "install_rc": 0,
+    "test_rc": 0,
+    "qualification": "仅核原件一致性和源码语义，无新的运行验证"
+  },
+  "trajectory_review": {
+    "read_complete_non_stream_messages": true,
+    "total_jsonl_lines": 309,
+    "model_requests": 20,
+    "tool_calls": {
+      "Bash": 9,
+      "Read": 7,
+      "Edit": 3
+    },
+    "solve_seconds": 27.802,
+    "CC_duration_seconds": 24.36,
+    "CC_output_tokens": 3220,
+    "grader_total_seconds": 384.38,
+    "grader_trusted_setup_seconds": 365.008574,
+    "steps": [
+      {
+        "lines": [
+          15,
+          19,
+          29,
+          33,
+          43,
+          47
+        ],
+        "result": "先按题面旧dataclass_fields名称查找无结果，随后拓宽dataclass搜索，定位当前直接fields导入和两条路径。"
+      },
+      {
+        "lines": [
+          57,
+          75,
+          113,
+          117
+        ],
+        "result": "读实际源码与原公开dataclass测试；根因判断准确。"
+      },
+      {
+        "lines": [
+          131,
+          145,
+          163,
+          181
+        ],
+        "result": "两次源码编辑有实际行为变化，随后读回核对；无无效重编辑。"
+      },
+      {
+        "lines": [
+          195,
+          199,
+          213,
+          217,
+          245,
+          259,
+          263
+        ],
+        "result": "原示例成功；原单测试1PASS；新增未初始化字段测试后两测试2PASS。新增测试只支持actor本地自检。"
+      },
+      {
+        "lines": [
+          277,
+          281,
+          291,
+          295
+        ],
+        "result": "--timeout=60不受支持，输出参数错误；模型识别并移除该参数，随后日志完整给出51PASS+2XFAIL。管道到head使工具is_error=false，不能当首条测试命令成功。"
+      },
+      {
+        "lines": [
+          305,
+          309
+        ],
+        "result": "最终说明准确列出两处过滤与新增测试；“All tests pass”应限于已运行的test_delayed.py，不能推广全仓或通用dataclass兼容。"
+      }
+    ],
+    "not_demonstrated": [
+      "未运行修复前的模型本地失败对照",
+      "未对弃用to_task_dask的dataclass目标分支单独执行验证",
+      "未验证已存在init=False字段重建或通用__post_init__场景",
+      "单个Qwen样本不证明稳定能力"
+    ]
+  },
+  "known_omissions": [
+    {
+      "status": "existing_out_of_approved_scope",
+      "description": "已存在init=False字段仍进入kwargs，标准dataclass __init__不接收该名称，可在compute阶段报unexpected keyword argument；原base同样重建为kwargs，本候选未引入新回归。",
+      "evidence": "实际FP dask/delayed.py:112-115、190-193；baseline同位置；当前题卡明确不新增该要求。",
+      "verification": "本审查为源码推断，未重跑反例。"
+    }
+  ],
+  "alignment_items": [
+    {
+      "id": "A1",
+      "status": "needs_alignment",
+      "priority": "unresolved_obligation_not_candidate_failure",
+      "current_behavior": "RH2生成的6条public_hints存在于冻结公开面，但两GPU臂实际模型system/messages均未交付。Qwen新增了正式测试文件内的测试。",
+      "source_vs_generated": "problem_statement为来源公开issue全文；public_hints是bundles.PUBLIC_SYSTEM_HINTS的通用运行规则，不是这篇source issue的第6条要求。",
+      "full_six_hints": [
+        "You are a software engineer fixing a real GitHub issue in the repository checked out at /testbed (your bash tool already runs there).",
+        "- The project's Python environment is a pre-activated conda env named `testbed`: `python`, `pip` and the repo's test tools already point at it.",
+        "- Explore the code, find the root cause, and edit NON-TEST source files to fix the issue.",
+        "- Do NOT modify test files: grading resets the test files to their original state before running the official test suite, so test edits never count.",
+        "- You may run tests to verify your fix, but keep runs narrow (a single test file or module) to save time.",
+        "- When you are confident the fix is complete, reply with a short summary and stop calling tools."
+      ],
+      "qwen_requests_file": {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gpu1003-dask7656-qwen36-a1/requests.jsonl",
+        "sha256": "bfaea85f74946e030619de1a46a660781a2351532879d1c262df9a2d3957e4d4",
+        "bytes": 606938,
+        "role": "content_reviewed"
+      },
+      "qwen_request_records": [
+        {
+          "seq": 1,
+          "jsonl_line": 1,
+          "raw_line_sha256": "8d9c6c8470c94c230ca28da0a47f7c41d1af5b5ff49d95df9b13f843be7238a9",
+          "hash_convention": "原JSONL行UTF-8字节，不含末尾换行"
+        },
+        {
+          "seq": 2,
+          "jsonl_line": 2,
+          "raw_line_sha256": "7da9eef7bc6206dafedb59f1e5e024385a9001a0ac72e000b123f0c0999a9f98",
+          "hash_convention": "原JSONL行UTF-8字节，不含末尾换行"
+        },
+        {
+          "seq": 3,
+          "jsonl_line": 3,
+          "raw_line_sha256": "4db20a33cbaab54a1b18ebd1904623797d300048dc130c516a0e258472c2f139",
+          "hash_convention": "原JSONL行UTF-8字节，不含末尾换行"
+        },
+        {
+          "seq": 4,
+          "jsonl_line": 4,
+          "raw_line_sha256": "d8644bc941550f53878b0cd00694824acb92f349a99b4c1c5620fe5eea7bb297",
+          "hash_convention": "原JSONL行UTF-8字节，不含末尾换行"
+        },
+        {
+          "seq": 5,
+          "jsonl_line": 5,
+          "raw_line_sha256": "4eecb2012581458ca5beb5f121139ba3a785e7493976b6e0992af471a5073d4b",
+          "hash_convention": "原JSONL行UTF-8字节，不含末尾换行"
+        },
+        {
+          "seq": 6,
+          "jsonl_line": 6,
+          "raw_line_sha256": "ce049f4490751b5fd4acab8c1f19b9d9d5dd45c84215ee654f3d25b995ae33cb",
+          "hash_convention": "原JSONL行UTF-8字节，不含末尾换行"
+        },
+        {
+          "seq": 7,
+          "jsonl_line": 7,
+          "raw_line_sha256": "3fb9397c2fb324f46e93013c107b73b6fd66ed2c6372197e10f4adb44d45fb05",
+          "hash_convention": "原JSONL行UTF-8字节，不含末尾换行"
+        },
+        {
+          "seq": 8,
+          "jsonl_line": 8,
+          "raw_line_sha256": "3e63359e68ca7573f3ff1d3fbaf6573b26eb28a49b2e9f879a40c53cdc549676",
+          "hash_convention": "原JSONL行UTF-8字节，不含末尾换行"
+        },
+        {
+          "seq": 9,
+          "jsonl_line": 9,
+          "raw_line_sha256": "603b79b5de3e46178302ab7d8ab3c5d30d09e12d8a74b056344b27433bcf64bb",
+          "hash_convention": "原JSONL行UTF-8字节，不含末尾换行"
+        },
+        {
+          "seq": 10,
+          "jsonl_line": 10,
+          "raw_line_sha256": "cf838235d00a0b7153bbffc97e9612f8425500583a0ec11fb8971d0dededca9f",
+          "hash_convention": "原JSONL行UTF-8字节，不含末尾换行"
+        },
+        {
+          "seq": 11,
+          "jsonl_line": 11,
+          "raw_line_sha256": "56e0d4e0e151f79ebd6efbfbce9a6419ac1804714c5f23a3d65c27b7b87d6c24",
+          "hash_convention": "原JSONL行UTF-8字节，不含末尾换行"
+        },
+        {
+          "seq": 12,
+          "jsonl_line": 12,
+          "raw_line_sha256": "c0143dc3a8568a849ede06791cac3c21e635e3c3cdc557a41e0c4c8fb9bef7a2",
+          "hash_convention": "原JSONL行UTF-8字节，不含末尾换行"
+        },
+        {
+          "seq": 13,
+          "jsonl_line": 13,
+          "raw_line_sha256": "bfb290808d5c4eab88b3b4c431f0c5c81032d46457b96e10ae93b697cd3a4da9",
+          "hash_convention": "原JSONL行UTF-8字节，不含末尾换行"
+        },
+        {
+          "seq": 14,
+          "jsonl_line": 14,
+          "raw_line_sha256": "4d6df5847ed5894b1222ece26d6d5b16bff03cb9241c592c4c2fddb295b57b88",
+          "hash_convention": "原JSONL行UTF-8字节，不含末尾换行"
+        },
+        {
+          "seq": 15,
+          "jsonl_line": 15,
+          "raw_line_sha256": "2a00c0b2fc5ce42db9e3e8a7bad3a6dd300e07cbb516c27ba4f2defce3c31d3d",
+          "hash_convention": "原JSONL行UTF-8字节，不含末尾换行"
+        },
+        {
+          "seq": 16,
+          "jsonl_line": 16,
+          "raw_line_sha256": "53ed8de759032fb3bb7177558bcb7de9b2073e16fd38c461c5f53328bdad9ef2",
+          "hash_convention": "原JSONL行UTF-8字节，不含末尾换行"
+        },
+        {
+          "seq": 17,
+          "jsonl_line": 17,
+          "raw_line_sha256": "765c97caac4413da3c91d291541f51fe2a36347a90a4703b26800c170bb850db",
+          "hash_convention": "原JSONL行UTF-8字节，不含末尾换行"
+        },
+        {
+          "seq": 18,
+          "jsonl_line": 18,
+          "raw_line_sha256": "b3dbd7995b124ddf7003a625a8718b015b94ff71ed8ff5155dba0f557a60c52b",
+          "hash_convention": "原JSONL行UTF-8字节，不含末尾换行"
+        },
+        {
+          "seq": 19,
+          "jsonl_line": 19,
+          "raw_line_sha256": "59463ed6f4554c61e88587fca8ab2bafb4edac8d7e5b139c86ae331c266dca44",
+          "hash_convention": "原JSONL行UTF-8字节，不含末尾换行"
+        },
+        {
+          "seq": 20,
+          "jsonl_line": 20,
+          "raw_line_sha256": "8f5334d81e7d68b428e11e87f5dee6a02c6f2168c439f564ea1d9e9c31998b82",
+          "hash_convention": "原JSONL行UTF-8字节，不含末尾换行"
+        }
+      ],
+      "qwen_absence_in_all_requests": 20,
+      "coder_requests_file": {
+        "path": "runs/ordinary_gpu_probe_20261002/remote/services_v15/coder/gateway/gpu1003-dask7656-coder-a1/requests.jsonl",
+        "sha256": "715a8331b269cf6813e7606cec8ebd97ff12e98123e7328706fe89fae30040d4",
+        "bytes": 2365903,
+        "role": "content_reviewed"
+      },
+      "coder_absence_in_all_requests": 34,
+      "coder_prompt_file": {
+        "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v17/results/gpu1003-dask7656-coder-a1/attempt/prompt.txt",
+        "sha256": "aaadede8cfa6a5dc0be3e9ae673951e5ed1f0067206c03ddeb90ce89dcb1d7ef",
+        "bytes": 3199,
+        "role": "content_reviewed"
+      },
+      "coder_manifest_verified_relevant_members": true,
+      "owner_public_delivery": {
+        "mode": "unchanged",
+        "basis": "原题面/hints准确且已在CPU实际首请求交付；executor须保持公开prompt字节和有效中性环境激活，拒绝任何私有调查材料"
+      },
+      "interface_evidence": "冻结code7/code8 entry.py:61-83明确unchanged不追加说明、直接spec.prompt；bundles.py:282-289只渲染problem_statement；历史SweSmokeTask.system_prompt在swebench_smoke.py:108单独承接public_hints。",
+      "current_decision": "gpu_coordination_decisions_20261002.md:52不机械交付整个内部JSON或全部旧public_hints，统一用当前有效中性说明；过时测试恢复描述需先纠正。",
+      "invariant_and_uncertainty": "不能仅据public_hints字段存在认定本臂必须逐字交付；题主basis将题面/hints并称，与当前unchanged只守prompt字节的实现范围有歧义。公开issue和prepared prompt已准确交付。",
+      "classification": "沿用冻结接口的输入范围；本轮新识别的题主措辞/验收范围歧义，不认定Qwen新共享bug或已知限制已被明确核销。",
+      "impact": "无法据旧6条判模型违令，也不能把公开bundle身份一致当作6条均已送达；当前源码语义和原评分不受该观察推翻。",
+      "recommendation_phase": "题主与GPU对齐7656采用unchanged的理由及当前有效开发说明的交付范围；本报告不发外部消息、不修改历史分。",
+      "minimal_read_only_probe": "读取两臂封存gateway requests.jsonl；逐记录搜索body.system/messages的6条原文并对照冻结entry.resolve_public_delivery。",
+      "acceptance_condition": "明确unchanged对7656的当前有效说明范围和未交付旧通用提示；若要求追加说明，独立建立未来材料/说明版本及最终请求证据，不追溯替换此次输入。"
+    }
+  ],
+  "boundary_audit": {
+    "candidate_added_test": "新增回归测试属非评分改动；不能据未送达旧禁止令认定越权。",
+    "projection_and_score_contamination": "FP虽含test_delayed.py，评分projection只含delayed.py；log证明测试从base恢复并应用固定私有测试patch，新测试不出现在正式log。未发现改评分/假stdout/私有材料访问。",
+    "hidden_materials": "公开issue本来含修法workaround，同一谓词是公开线索；无轨迹读取gold/私有test/candidate内部分析证据。",
+    "resource_limits": "仅沿原执行回执的有限观测；峰值1968.199MB、32样本，间隙未知，env qualification absent。",
+    "pair_receipt": "两既定模型各首轮已执行是执行事实；Coder code7/Qwen code8差异保留，semantic_review_by_owner字段不代替本报告，training_qualification_inferred=false。"
+  },
+  "integrity_check": {
+    "authoritative_root": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1",
+    "members": 148,
+    "bytes": 13107604,
+    "all_SHA_bytes_match": true,
+    "semantic_review_not_claimed_for_all_148_files": true,
+    "integrity_only_members": [
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/code_v8/rh2/experiments/ordinary_gpu_probe_20261002/entry.py",
+        "sha256": "bdf806bf8da1d5ebb4970887bfc3c7738eb3e57a75e1d07215d6d68b17e574c4",
+        "bytes": 27732,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/code_v8/rh2/experiments/ordinary_gpu_probe_20261002/serial_dispatch.py",
+        "sha256": "cb435f7390d9aeba3bad51efabf808634668263e9dfbcffae96f50a4b8f90f10",
+        "bytes": 7539,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/code_v8/source_manifest.json",
+        "sha256": "09ddb8bfdeecd3ffaa38c1048a574161ef6fa6053b2855da50166e8e8677899d",
+        "bytes": 504439,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/config_qwen_first10_v1/fixed_inputs_manifest.json",
+        "sha256": "97bd3ed8b8b8943c1a2272a9cb5b965df2d8fa2b7812a0c28f795fa4e842ee3f",
+        "bytes": 374055,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/config_qwen_first10_v1/gateway_binding_v1.json",
+        "sha256": "c7ddabbd1f7a7b51193f315fc07722d9f336e5d66373fe605d60448f4b184c78",
+        "bytes": 6870,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/config_qwen_first10_v1/gateway_qwen36.json",
+        "sha256": "8bfed2b4c248395f7184c440699abe314945e56efca658d671a2af6a2b7bf990",
+        "bytes": 766,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/config_qwen_first10_v1/input_checks/gpu1003-dask7656-qwen36-a1/input_check.json",
+        "sha256": "311261b1ce29802321e18c86c225d246557dec20348c4673a2f031b0ca1b5c90",
+        "bytes": 6842,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/config_qwen_first10_v1/purecheck_gpu1003-dask7656-qwen36-a1.json",
+        "sha256": "fe5f1951a7aa7c3602492e2afd4e1c638646ddf744a0579294ff3e356deabc2b",
+        "bytes": 1068,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/config_qwen_first10_v1/tasks.json",
+        "sha256": "4b1d3e235d9863938bd7236268f2b2233585c73a9edf53e43703f5751000e9ef",
+        "bytes": 6406,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/adapter_config_actual.json",
+        "sha256": "39f78df905b32cbb4bdc3783b993a763af76e5f355ef818c8749284fa98c2b09",
+        "bytes": 741,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/adapter_inspect_actual.json",
+        "sha256": "e93c40b01c8dbb38e64a0ecc69c7348c274ece07630359da46b8970308f843d7",
+        "bytes": 1857,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/adapter_inspect_after_actual.json",
+        "sha256": "e93c40b01c8dbb38e64a0ecc69c7348c274ece07630359da46b8970308f843d7",
+        "bytes": 1857,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/backend_continuous_log.txt",
+        "sha256": "0fb5364a26843759604b380da6545207170f84461f8e10af8b115a54f76521a7",
+        "bytes": 135334,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/capture_receipt.json",
+        "sha256": "e60980d70ce03709ef09ebf11162638f69dea9a299672cc6cb4814b67a771cfa",
+        "bytes": 1574,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/current_terminal_evidence_v3/freeze_group_source.py",
+        "sha256": "c9c4d4a3d637117d959c88f99dd053111d9897bc131e5a0eefa43e7b0a90b0ae",
+        "bytes": 13399,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/current_terminal_evidence_v3/journal.jsonl",
+        "sha256": "e23f6af61bd8720448b72f21944ed3eda04c8e9c18325df4f4d60c8147184f29",
+        "bytes": 4423,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/current_terminal_evidence_v3/journal_helper_source.py",
+        "sha256": "dca6fe902fa2583225b6944489b71bdd6c9af7a78fd62db9a984051049a682e4",
+        "bytes": 7979,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/current_terminal_evidence_v3/journal_query.json",
+        "sha256": "46f35f3e188707bfad69796696c2ec3b0b504641602a45611165559bb115dc4a",
+        "bytes": 444,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/current_terminal_evidence_v3/journal_query_result.json",
+        "sha256": "9544b002d998f23956d4f25f1de6d6219e115210c350b8dc821627255471b2c2",
+        "bytes": 292,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/current_terminal_evidence_v3/success.json",
+        "sha256": "f3ff693d5af0d8b3510f65e1ba24e42728eb651a6884e17e0c32ebe79e74440e",
+        "bytes": 5404,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/current_terminal_evidence_v3/systemctl_query.json",
+        "sha256": "023c63ad4ba90d9fd3d9653646f8f02a07ac352db50fad3ece4a9c29135018e1",
+        "bytes": 3083,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/dispatch_terminal_evidence_v2/archive_intent.json",
+        "sha256": "ca69b6d3bd4f12a44546c1981c649ca7dfe855164ee2e4514f00e3e861ba615a",
+        "bytes": 1511,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/dispatch_terminal_evidence_v2/dispatch_wrapper_source.py",
+        "sha256": "b65e524cf8b6a33711015cff5798403911d8db4db7871e5384bd86670865bee7",
+        "bytes": 4657,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/dispatch_terminal_evidence_v2/freeze_group_binding.json",
+        "sha256": "021c6e0aa59801ae2290e704ac8b92b69a7cc00070a5764033096e3ae89abea9",
+        "bytes": 280,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/dispatch_terminal_evidence_v2/freeze_group_v3_source.py",
+        "sha256": "c9c4d4a3d637117d959c88f99dd053111d9897bc131e5a0eefa43e7b0a90b0ae",
+        "bytes": 13399,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/dispatch_terminal_evidence_v2/gpu1003-conan11594-qwen36-a1/journal.jsonl",
+        "sha256": "e74f8b6154b4e9c9469372d64bb0181d61154a133e02c1706cdc8454c5f7653a",
+        "bytes": 4435,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/dispatch_terminal_evidence_v2/gpu1003-conan11594-qwen36-a1/journal_query.json",
+        "sha256": "aaefdfb9cdb500fa9ce82a2cee2ebfcaa62a4e6d9d13cda25eb074b3d3db7485",
+        "bytes": 665,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/dispatch_terminal_evidence_v2/gpu1003-conan11594-qwen36-a1/journal_query_result.json",
+        "sha256": "890f76ad4483ce47dbe2f186403611fa48cb2f1672c09cd29ae6add7a07f5b7e",
+        "bytes": 322,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/dispatch_terminal_evidence_v2/gpu1003-conan11594-qwen36-a1/success.json",
+        "sha256": "71ded26bb68f1895343d71aa1fbeafb8ad1c0a3c0bd3cf3aa12b311011bc3729",
+        "bytes": 4092,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/dispatch_terminal_evidence_v2/gpu1003-conan11594-qwen36-a1/systemctl_query.json",
+        "sha256": "bb139172d2363ed968d7fa3ebecec07b2ca1c0aa84b2721983e9cef47c132338",
+        "bytes": 1529,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/dispatch_terminal_evidence_v2/intent.json",
+        "sha256": "0c50f7adde997c14f532179c5687bba3741376544b102289c67d91e9d9883a4a",
+        "bytes": 563,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/dispatch_terminal_evidence_v2/journal_helper_source.py",
+        "sha256": "dca6fe902fa2583225b6944489b71bdd6c9af7a78fd62db9a984051049a682e4",
+        "bytes": 7979,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/download_manifest_actual.json",
+        "sha256": "32bd30f61860366b3783eabc9d75bee0cd28c474d9c07de8be8d9ae60a4552ab",
+        "bytes": 6509,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/engine_inspect_actual.json",
+        "sha256": "d9e5c4b34b20e57f0a4f60e7e4dd2acd097f627c5572fb75221c368728ed53c0",
+        "bytes": 1156,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/engine_inspect_after_actual.json",
+        "sha256": "d9e5c4b34b20e57f0a4f60e7e4dd2acd097f627c5572fb75221c368728ed53c0",
+        "bytes": 1156,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/engine_template_actual.py",
+        "sha256": "e981d378662f2a39d50bb1043d3544744b3bf8877d6a007c9d99b2b9c1f527e5",
+        "bytes": 14700,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/identity_binding_actual.json",
+        "sha256": "603bec65f047c9b87967c58be43b8933ef3b662f9eab7052ac8ee64c3ae9e9f7",
+        "bytes": 3069,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/model_chat_template_actual.jinja",
+        "sha256": "e84f32a23fdda27689f868aa4a1a5621f41133e51a48d7f3efcbea2839574259",
+        "bytes": 7764,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/model_file_sizes_actual.json",
+        "sha256": "cb0718f57a6ec078826434d95f110af217b297810191ecacbf283c913a8e24a6",
+        "bytes": 5164,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/model_info_actual.json",
+        "sha256": "ce656877870e106f65e53bab646053656af85757af6173b4db4490cb19931133",
+        "bytes": 2121,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/diagnostics/QUEUE_QWEN_FIRST10_V1_gpu1003-dask7656-qwen36-a1_before/server_info_actual.json",
+        "sha256": "e261a1b93e47106459b00f9c084483eb884857bc72f924e192ba5b1e97b60827",
+        "bytes": 42357,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/conan11594/host_evidence/cpu_acceptance.json",
+        "sha256": "7f46711ba2b922834196f0c9783d2d34b2e529a0e95f37a38a27eb9f7ce4055a",
+        "bytes": 5587,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/conan11594/host_evidence/non_author_1.md",
+        "sha256": "11c2f3c66df4a3d45815d876ea97db8c92ddc522a56e92c90cc4b8f614e228a9",
+        "bytes": 15097,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/conan11594/host_evidence/non_author_2.md",
+        "sha256": "25e5617c692fb8b5ade39bc7a78ebb8fb6d6e10ab12e3a10516597ed603a59b0",
+        "bytes": 10796,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/conan11594/host_evidence/original_cpu_summary.json",
+        "sha256": "9082a9ba64c0da51be3d7c0c62af4eca871455bee9e8f2b3f9a4024f03f98903",
+        "bytes": 465,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/conan11594/host_evidence/producer_manifest.json",
+        "sha256": "61e806c2cb640480f468c96500e6df83539155e54ae9943f8a4293548190688c",
+        "bytes": 4280,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/conan11594/host_evidence/public_reader.md",
+        "sha256": "22ed3792e0e760ef216dc52787aaceb5c92a39ec2faaf76dc9bb6905c80c72a3",
+        "bytes": 10788,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/conan11594/host_evidence/public_reader_delta.md",
+        "sha256": "cebf750b9e9d3b6148de3a09643d61924f6bd2c9a56a028d7812affcbec86aea",
+        "bytes": 2012,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/conan11594/host_evidence/request.json",
+        "sha256": "274c7e394eda8da6b3dd1f2161754338a721bc4fa71f300ed9a5db237a65b581",
+        "bytes": 15823,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/conan11594/host_evidence/source_release_manifest.json",
+        "sha256": "3fe07ef04c88f9883b2bc3040cac425374cbd7bcd23041fc4280e17ef62e7987",
+        "bytes": 212931,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/conan11594/prepared/prepared_manifest.json",
+        "sha256": "c986845ec686abd17538c6a9ef52e82c2efc37b8a686b123e3fb339a3b4dec6e",
+        "bytes": 924,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/conan11594/prepared/prompts.jsonl",
+        "sha256": "37f335ab3bcff583273d739af328040cdea580df4ced42c4fc6f8fb5b4a53073",
+        "bytes": 1800,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/conan11594/prepared/rollout_task_views.jsonl",
+        "sha256": "c94536b81301715a1c7763eb90dbbe4a70f198928a0a6116025a7e8499489ffd",
+        "bytes": 2931,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/conan11594/private/assets/effective_test_patch.patch",
+        "sha256": "4a781bc87b05f63cac3af0686bbd6b29817dacd39f0ef7ba053fd0f2f9a47eb2",
+        "bytes": 3226,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/conan11594/private/assets/environment_recipe.json",
+        "sha256": "6dec5b0a62860a58741c32488c1f155ddfcdc46eae2e967c4e7b55dcf14e1acc",
+        "bytes": 673,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/conan11594/private/assets/reference_bindings.json",
+        "sha256": "ca0987bd0bdde5926b33eabf31bf51b1e704165036e1441e66ff97e6f9630bcc",
+        "bytes": 1175,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/conan11594/private/assets/registry.json",
+        "sha256": "105cf9f779eac8c933ff38984b829da23608659abe926ec7269088a524ce4fde",
+        "bytes": 7458,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/conan11594/private/host_grading_views.jsonl",
+        "sha256": "16b27d2a16852fc23f1a3f2e64956e86a781f98315088db7c34aaee8ef507f6b",
+        "bytes": 8579,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/conan11594/public/development_brief.md",
+        "sha256": "c0ab743d03d433b9fd9f23b5d152430592f3ccb38cf703acec45a45dcddaa5f7",
+        "bytes": 1428,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/conan11594/summary.json",
+        "sha256": "16c4ab5a16ffe40e02733190efd02ed82c15e5836addd44213f588b92929769f",
+        "bytes": 490,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/conan11594/summary.template.json",
+        "sha256": "16c4ab5a16ffe40e02733190efd02ed82c15e5836addd44213f588b92929769f",
+        "bytes": 490,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/dask7656/host_evidence/formal_matrix.json",
+        "sha256": "c797ac322d6771023a74b22b0a844ffa8f3234281254bbd92b8226c8358a557d",
+        "bytes": 12634,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/dask7656/host_evidence/independent_review.json",
+        "sha256": "1102e1ab107fed5b7d7b53d272c8d2b2d2ae0b6ba376bb47a31fa1230d703bb4",
+        "bytes": 72053,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/dask7656/host_evidence/independent_review_md.md",
+        "sha256": "eb051496959d9e5024edce82840fd6a4672920aeabe2232eab9aa4b9b3be6ec5",
+        "bytes": 8666,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/dask7656/host_evidence/original_cpu_summary.json",
+        "sha256": "5c272e93c1c05d2ce8e031341fb2de823ad61ed1a0c615efbeac6a772b1c378b",
+        "bytes": 511,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/dask7656/host_evidence/producer_manifest.json",
+        "sha256": "a22fe6dc38728c2dc238ce0c4b73d6dfa7896212193c5b32e51155ad0f936625",
+        "bytes": 3696,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/dask7656/host_evidence/request.json",
+        "sha256": "adb01532eeb93df7dab561a4f9a034cf023fce4ac3ce9c2571e66412ef133435",
+        "bytes": 15857,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/dask7656/host_evidence/source_release_manifest.json",
+        "sha256": "bf1d0e8a279f996a7737de775c9a30abf3401dc34840ef54bf7e56b754991bb9",
+        "bytes": 201258,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/dask7656/prepared/prepared_manifest.json",
+        "sha256": "f88d310045bded5ddeb75b82cd11f1058da870e1cfc0ae1e25187145e77e7879",
+        "bytes": 912,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/dask7656/prepared/prompts.jsonl",
+        "sha256": "93e3f17b7fd49166b2affc2b666d94924cbd8c5177d479a20b14c64abb350a7a",
+        "bytes": 3838,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/dask7656/prepared/rollout_task_views.jsonl",
+        "sha256": "771b5593b3650032b9a278fdd81578ab1e91e344c27d505ce9bf1538e90afe29",
+        "bytes": 4963,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/dask7656/private/assets/actor_Dockerfile",
+        "sha256": "0ae8be0ac4905f7cd05033a88fe241539450876e6eec6f76f3596284f88a992f",
+        "bytes": 491,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/dask7656/private/assets/actor_image_readback.json",
+        "sha256": "08fbe471c8e99710ddf5f6d4651507d076d6c6b1f0aa35baee96e6fad2f0b014",
+        "bytes": 2117,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/dask7656/private/assets/effective_test_patch.patch",
+        "sha256": "d3b711c9eb53cbdb6477314eae82f3ae5ca49e5c052a352c7da3959289c287db",
+        "bytes": 1149,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/dask7656/private/assets/formal_binding.json",
+        "sha256": "d788a12d2f61a88cc12a8511befb6772c49937db28aabd44c110598811c4dcae",
+        "bytes": 4945,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/dask7656/private/assets/grader_Dockerfile",
+        "sha256": "eea5bb600626982ca4fca6d873c5b77f2858a85aa8cdc746bc172e1daae148cd",
+        "bytes": 71,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/dask7656/private/assets/grader_image_readback.json",
+        "sha256": "e486b443caab23b3c6cfddc510bd2bbb473ff09d3cdd89cdb90421ef75d30197",
+        "bytes": 1044,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/dask7656/private/assets/install_recipe.json",
+        "sha256": "4be37effaae78af9e724c10ccdad38c6d555b2e81ed5351b2128b48fd1927d61",
+        "bytes": 869,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/dask7656/private/assets/registry.json",
+        "sha256": "e8a832f4113a5b9a7e4addf12626d4d0780d03984cff4bb0865d2e3966df8636",
+        "bytes": 4761,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/dask7656/private/host_grading_views.jsonl",
+        "sha256": "d0e54b5146d58591936dcd2b867062590218d3a03aa52d12706460a7cc379f7f",
+        "bytes": 10038,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/dask7656/summary.json",
+        "sha256": "f883874cb51a0cf98e067952a33d4dfccc52baa0f51dfe5f318b80b1562c3d46",
+        "bytes": 480,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/dask7656/summary.template.json",
+        "sha256": "f883874cb51a0cf98e067952a33d4dfccc52baa0f51dfe5f318b80b1562c3d46",
+        "bytes": 480,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/migration_receipt.json",
+        "sha256": "2faabe1b0e0b894fcf35e383ac5e8d8137f11cf34a0ac7b748d6c92117bd0dc5",
+        "bytes": 665,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/tasks.json",
+        "sha256": "4e74504f931f4af0f6b3f3dc296b956217fabfe2c8aa938d135a155ad1cd9b1a",
+        "bytes": 1373,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/requests/gpu1003-dask7656-qwen36-a1.json",
+        "sha256": "a0ac4543ac713098ce739c3dab7ad6f3d86b4c25e4f752886f82d43404825aa9",
+        "bytes": 16940,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/attempt.json",
+        "sha256": "acc8dd27f4897cae71c9abfa4b4d65d00c4aa62d889c8765473cca3d841f1a01",
+        "bytes": 16041,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/bringup_artifacts/cc_version_observed.json",
+        "sha256": "c2b9bcf966c47d9a00227877026cb90b76afed482fd0df4e0ac12caab786bacb",
+        "bytes": 60,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/candidate/dask__dask-7656.diff",
+        "sha256": "31136b11cf2d801c80a844b5fc75dbc3cdc3db7b2dc56969f783fe891de9cf74",
+        "bytes": 2053,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/cc_home.tgz",
+        "sha256": "f3c2f5c68390ff7164c7820c1daa893a04011d040fc6ea13b82a30898bdeefd4",
+        "bytes": 15589,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/facts/activation_check.json",
+        "sha256": "927ebe45b078d84374820f798c9c7c71b2c937bbbc0217b00f19d7e558514704",
+        "bytes": 501,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/facts/agent_env_facts.txt",
+        "sha256": "0e7e26a81f4887958718170bd7f7a5ccf29d6752cbd71af2be9a284de459cc76",
+        "bytes": 1174,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/facts/materialize_probe.txt",
+        "sha256": "ece523bb5b4f0fc62a2874ea3b42f82c6539bcb52509627fdf2757177c7cd5dc",
+        "bytes": 135,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/facts/pip_freeze_after.txt",
+        "sha256": "260187bc0342bef86ac19511745e8823d4d27d88a30ad9074a9a360d92fbaedb",
+        "bytes": 13797,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/facts/pip_freeze_before.txt",
+        "sha256": "260187bc0342bef86ac19511745e8823d4d27d88a30ad9074a9a360d92fbaedb",
+        "bytes": 13797,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/facts/prelaunch.json",
+        "sha256": "882127533acf0b9d466857ee5225885670da9b2bdd12d97eee36e537c0f15fa9",
+        "bytes": 2223,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/frozen/baseline.tar",
+        "sha256": "27e22971001a138eb5ecd40684d17f832b2675c7a3164437038b43fd2c4c563b",
+        "bytes": 9144320,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/frozen/baseline_census.txt",
+        "sha256": "ef91a2772083b7b34c4942eba66a998e024686498f60e13cf219607d3600ace8",
+        "bytes": 48804,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/frozen/baseline_manifest.json",
+        "sha256": "0ccd7771fbeed41045d8651f3457ce6580cf0f991112a0b4b255b344f923fc92",
+        "bytes": 101793,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/frozen/classification.json",
+        "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6",
+        "bytes": 93,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/frozen/frozen_patch.json",
+        "sha256": "bbe632d66f7757070f2ac81cc70d070bbd45d00090dee4459b9980aeb4d8e38e",
+        "bytes": 57530,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/harness/stderr.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/harness/trajectory.jsonl",
+        "sha256": "a4289a76ae3c0d2f268bf83318667826302a247a6d4d42b712fc5d6622dadf99",
+        "bytes": 212855,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/prompt.txt",
+        "sha256": "aaadede8cfa6a5dc0be3e9ae673951e5ed1f0067206c03ddeb90ce89dcb1d7ef",
+        "bytes": 3199,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/trajectory.jsonl",
+        "sha256": "a4289a76ae3c0d2f268bf83318667826302a247a6d4d42b712fc5d6622dadf99",
+        "bytes": 212855,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/gateway_audit.json",
+        "sha256": "84e207603565330ebdb2353458d3749a42f4b027595b73716658e113691150d7",
+        "bytes": 416,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/grading/baseline_rebuild_census.txt",
+        "sha256": "ef91a2772083b7b34c4942eba66a998e024686498f60e13cf219607d3600ace8",
+        "bytes": 48804,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/grading/eval_logs/evallog_gpu1003-dask7656-qwen36-_95166d70.diagnostics.json",
+        "sha256": "d5db15bd8806b8d4581ced12b3fcbd09bf1f4aba43fd6e46fa2f63e00d3e4dc8",
+        "bytes": 10892,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/grading/eval_logs/evallog_gpu1003-dask7656-qwen36-_95166d70.eval.log",
+        "sha256": "9f63afd62c8433d2fa2d6b466cb3ed091e4dbc9810ee3b5816e29c5a3fc419b9",
+        "bytes": 37509,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/grading/projection.json",
+        "sha256": "73744856b27d6c49bab03e2674f634a4e7ed8e2862746dd73ada804c55c51b35",
+        "bytes": 319,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/grading/report.json",
+        "sha256": "5034bbcc168432d56b75d8ba8350c1be144de81d60f351c29cdb374051f4dda4",
+        "bytes": 1804,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/grading/status.json",
+        "sha256": "6fea71ff3e43ab60c649e7621a2ef225ec1638e59296c2eeb194e2454c0043b8",
+        "bytes": 2588,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/input_check.json",
+        "sha256": "311261b1ce29802321e18c86c225d246557dec20348c4673a2f031b0ca1b5c90",
+        "bytes": 6842,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/result.json",
+        "sha256": "b6bfca5e9b94840ae5a952b3405a4268c7a8cb3ef86876a25357e8801c81e49a",
+        "bytes": 2624,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/solver_prompt.txt",
+        "sha256": "aaadede8cfa6a5dc0be3e9ae673951e5ed1f0067206c03ddeb90ce89dcb1d7ef",
+        "bytes": 3199,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/qwen_first10_closed_v1/gpu1003-dask7656-qwen36-a1/resources.jsonl",
+        "sha256": "0f1c73e653d1b952d1ede69595d018a473ee3df66d632898dc8e9313140b546c",
+        "bytes": 29728,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/qwen_first10_closed_v1/gpu1003-dask7656-qwen36-a1/terminal_snapshot.json",
+        "sha256": "c259ab25547475d53b8ed59a2ffcafdd98d8c094bacdfd29e20e3a6364eace2e",
+        "bytes": 19697,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/qwen_first_group10_code8_v1/inputs_manifest.json",
+        "sha256": "97bd3ed8b8b8943c1a2272a9cb5b965df2d8fa2b7812a0c28f795fa4e842ee3f",
+        "bytes": 374055,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/adapter/adapter_config.json",
+        "sha256": "39f78df905b32cbb4bdc3783b993a763af76e5f355ef818c8749284fa98c2b09",
+        "bytes": 741,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/adapter/gpu1003-dask7656-qwen36-a1.turns.jsonl",
+        "sha256": "1ad92d55d454b0c39006772c95e4f64e1f7062d66beff5bc4c66f9f52a8d558b",
+        "bytes": 29022,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/engine_launch_v1.json",
+        "sha256": "603bec65f047c9b87967c58be43b8933ef3b662f9eab7052ac8ee64c3ae9e9f7",
+        "bytes": 3069,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gateway_config.json",
+        "sha256": "00aba93f207eb6e194de10fe14edde33d7ef686f3a9612f2ad6058ea9c77effa",
+        "bytes": 774,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gpu1003-dask7656-qwen36-a1/requests.jsonl",
+        "sha256": "bfaea85f74946e030619de1a46a660781a2351532879d1c262df9a2d3957e4d4",
+        "bytes": 606938,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gpu1003-dask7656-qwen36-a1/resp_1.sse",
+        "sha256": "c2d1a4b9f449fd342e530bb7bfe31620947a7f0b6b30e627721814adc403bb4f",
+        "bytes": 2707,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gpu1003-dask7656-qwen36-a1/resp_10.sse",
+        "sha256": "c95e0ae737bc35e8865709b672515e8f91716d2249a06c5fbf26782720293f04",
+        "bytes": 1883,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gpu1003-dask7656-qwen36-a1/resp_11.sse",
+        "sha256": "a247e9dfd494b17181c127db1f6f144aa2699233c7f820cb941dc8bf63e5641f",
+        "bytes": 1799,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gpu1003-dask7656-qwen36-a1/resp_12.sse",
+        "sha256": "43fb563aecd7f5f75373eb30babdcde130761c5f51388963caff50b31c45fee1",
+        "bytes": 1373,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gpu1003-dask7656-qwen36-a1/resp_13.sse",
+        "sha256": "36dc79c05291b17b4deb727b2681af891bd8ab9b65049abf4eba3e1674463372",
+        "bytes": 2435,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gpu1003-dask7656-qwen36-a1/resp_14.sse",
+        "sha256": "06f0d87d6f5b6d5e07a24893b73186d59bb7660b6bf3c4b334849b12abd165e2",
+        "bytes": 1872,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gpu1003-dask7656-qwen36-a1/resp_15.sse",
+        "sha256": "3b02064bc655f53f95d07a7c5b57432622564ce7b1d5574cda5cee6cd7e19e84",
+        "bytes": 1842,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gpu1003-dask7656-qwen36-a1/resp_16.sse",
+        "sha256": "3df08278e870d92450e64fae251ad91d5f781f794678e843ff34e473bd808b26",
+        "bytes": 2354,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gpu1003-dask7656-qwen36-a1/resp_17.sse",
+        "sha256": "53be915f361b6a5238c38768ba109db43068b534ca803e82a70ec9f9bf867114",
+        "bytes": 1475,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gpu1003-dask7656-qwen36-a1/resp_18.sse",
+        "sha256": "4f3fbba3e124178250cd7956ec6a10a8d79c3aa9f732fabc92818b8f9622a999",
+        "bytes": 1838,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gpu1003-dask7656-qwen36-a1/resp_19.sse",
+        "sha256": "e6ffb3324e75eec5ebfb597f42db0625016da43969bc8bb092508ef968a82919",
+        "bytes": 1387,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gpu1003-dask7656-qwen36-a1/resp_2.sse",
+        "sha256": "44714610e7f20c72aaffdc18813d59514e2ba60d180c5df789e701ddc06e4420",
+        "bytes": 1366,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gpu1003-dask7656-qwen36-a1/resp_20.sse",
+        "sha256": "b6542a445dd1ccf6676334d5508f6ce51ea2032458d31cb6f4a9df75f512ca19",
+        "bytes": 2623,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gpu1003-dask7656-qwen36-a1/resp_3.sse",
+        "sha256": "43c1ce27df9146528b700353b9e2340312974b46accc0a310a3850e3a40479ae",
+        "bytes": 1397,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gpu1003-dask7656-qwen36-a1/resp_4.sse",
+        "sha256": "114eedf23eb8b2d217b1bc268e77c0cc6173fdfa50ff55e5cc77f84918043d3c",
+        "bytes": 1358,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gpu1003-dask7656-qwen36-a1/resp_5.sse",
+        "sha256": "46575df4c883f75a53453709f6ed48d3a90a2ec49b88a5db591ba65272056808",
+        "bytes": 1677,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gpu1003-dask7656-qwen36-a1/resp_6.sse",
+        "sha256": "df1c78039d88531304bdb620f28a569b44020c86a49508890161d6d0e282652c",
+        "bytes": 1768,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gpu1003-dask7656-qwen36-a1/resp_7.sse",
+        "sha256": "eb9763d2848fb9adbbeeff0419a2be7662d81c74a29b0a7f8cfb0216ba5477e7",
+        "bytes": 1396,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gpu1003-dask7656-qwen36-a1/resp_8.sse",
+        "sha256": "3b84a598a9cc2d243b872bb678a4455d37947080feff33471100017d70bb619f",
+        "bytes": 1387,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gpu1003-dask7656-qwen36-a1/resp_9.sse",
+        "sha256": "7b57326dbe36e9b7725cc254d31b4ccce6bc8123e050e1b8ce20e6ac9e2b6191",
+        "bytes": 3159,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gpu1003-dask7656-qwen36-a1/responses.jsonl",
+        "sha256": "b2dd47df65e36991c5b8aed7095243e9f6161a77ede9579ab0901e1912eeaa3b",
+        "bytes": 6230,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gpu1003-dask7656-qwen36-a1/session_close.jsonl",
+        "sha256": "cac9da056a6ea982ac1d218e660eb99eb11e15f93670e97e41b00ee504d9b455",
+        "bytes": 127,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gpu1003-dask7656-qwen36-a1/usage.json",
+        "sha256": "7c8ca6f17df1908abb5192befb18da0584033ada19476e59b46bc6a520a720bc",
+        "bytes": 89,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/tools/qwen_first10_code8_v2.py",
+        "sha256": "ace08cf24f89ff011d9fbae500a6ee0b79b081725adb8bbb64fb8b52b6145f30",
+        "bytes": 21569,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/tools/root_dispatch_one_v16.py",
+        "sha256": "350561d9b41c0cba313aaab56bc5521b64c71a54dabed93c1378abd67edcef8a",
+        "bytes": 100175,
+        "role": "integrity_only"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/tools/root_dispatch_qwen_first10_v1.py",
+        "sha256": "387b44a83b80694316ed4af46f36da1e124fcb45d76e6f01f6190874d830e603",
+        "bytes": 4182,
+        "role": "integrity_only"
+      }
+    ],
+    "frozen_code_reference_checks": [
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v8/rh2/src/repoharness2/envpack/bundles.py",
+        "sha256": "f107d1a09979cc52890a1d5dbfb7697c6744179157041aa2bb6d1d0530d7c988",
+        "bytes": 15284,
+        "role": "content_reviewed"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v8/rh2/src/repoharness2/taskset/swebench_smoke.py",
+        "sha256": "4c3c1e1939a76b76ee4a92823b92b4f9fbc02f6070ce85ed9161d2bf0649b0eb",
+        "bytes": 9612,
+        "role": "content_reviewed"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v7/rh2/experiments/ordinary_gpu_probe_20261002/entry.py",
+        "sha256": "a1efff44dc2cbedfc81d93b2da8d84a92f6c9c88b15c2a10bf96db2026a4e82c",
+        "bytes": 25249,
+        "role": "content_reviewed"
+      },
+      {
+        "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v7/rh2/experiments/base_probe_20260922/solve_attempt.py",
+        "sha256": "00ca849909150de02769f297374a9bbfacf2746347c425474775d9c3e22a04f9",
+        "bytes": 35581,
+        "role": "content_reviewed"
+      }
+    ]
+  },
+  "dimensions": {
+    "A": "检查实际源码目标、初始化缺字段失败根因及原类重建；当前范围通过，非目标重建缺口明确保留。",
+    "B": "不改reward/mask或数据分布；训练资格N/A，本报告不授予。",
+    "C": "没有修改闸门；单样本、typed训练actor未接通、训练资格未授予的边界保留。",
+    "D": "实际actor/FP/评分版本沿封存回执，public_hints消费范围需对齐。",
+    "E": "读真实增强F2P与原逐参考状态；新增模型测试不进入评分；失败参数已纠正。",
+    "F": "对照当前题卡、revision、probe和现行说明决策；needs_alignment明确不作新授权。",
+    "G": "源码真实调用delayed→unpack_collections以及call_function→unpack_collections；正式评分只消费原FP源码入口。",
+    "H": "以封存Qwen根为原件；同题Coder只用manifest匹配的既有原件；不回写历史。",
+    "I": "当前语义无阻断；说明范围对齐另列，既有init=False状态恢复不扩本轮。",
+    "J": "变更谓词清楚，最后声明限定实际测试范围；格式/行长不作finding。",
+    "K": "两条现有dataclass遍历路径同步窄改，没有新owner/状态机。",
+    "L": "求解27.802秒与评分384.38秒、setup365.008574秒分列；无新性能跑分或全资源证明。",
+    "M": "逐步定位/纠错/自检及原评分对应，tool错误统计0不抹去pytest参数错误。",
+    "N": "只确认原Python3.9.19/固定镜像当前路径；无跨Python版本或未来依赖兼容承诺。"
+  },
+  "read_evidence_paths_SHA_bytes": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "de76dc6bab84209f40053433a68f82ff6feaf4708199473f1a67410f93d6d99c",
+      "bytes": 7626,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/review-standards.md",
+      "sha256": "b56af8cf2805d50f109ed81c33a09bf8e9a10a52d3393741048556a85c0f2acd",
+      "bytes": 21690,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/collaboration-protocol.md",
+      "sha256": "4fb97787272c173c79f203548e488c781526fef4234427cddab8c77e378265ef",
+      "bytes": 18723,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+      "sha256": "8844f38f5ebc97fbcc548f9099f80e0614f8e865a7d840ce120dc86a001794c6",
+      "bytes": 39673,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/coordination_workflow_20261003.md",
+      "sha256": "ceb5316c53a61c8da2631c301da4238f830469dfd1f789da438994bf65d0fb52",
+      "bytes": 12130,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/ordinary_probe_20260929/gpu_coordination_decisions_20261002.md",
+      "sha256": "2d70bd54cfb80722e66d78901ed909f0c77648ffd6e32f3cd9f7023afc0c1804",
+      "bytes": 20418,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/preparation.md",
+      "sha256": "f4d662ae00157d67f1a3633ab38a6d1c0ecff3b262320d26a3cf2361ea0f1f4e",
+      "bytes": 6754,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7656/card.md",
+      "sha256": "99b0391dbbd442cf2c4132cae5568a2d7616632cd51ebe2d1043b679b83a8df9",
+      "bytes": 4938,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7656/revision.json",
+      "sha256": "0b70310018821b5cff83d81a89bcfdca820a198b85c94d246ed91e37500cfcd3",
+      "bytes": 9139,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7656/effective_test.py",
+      "sha256": "45947718a1d33637e37a61781a80af280910bba53599f0e6de8952a5fd31403d",
+      "bytes": 19654,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7656/acceptance_matrix.json",
+      "sha256": "5da46b2ddb0407b61492c546a323a12b6b55f6417b48fd91044ff83a3a856f8f",
+      "bytes": 3137,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7656/probe_request.json",
+      "sha256": "adb01532eeb93df7dab561a4f9a034cf023fce4ac3ce9c2571e66412ef133435",
+      "bytes": 15857,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/sync_receipt_v4.json",
+      "sha256": "b5f8ee656b8995a0f506b6704d17c409d6f44970ab1b7e7786d2fdc0b1f6d0fa",
+      "bytes": 104353,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/gpu1003-dask7656-qwen36-a1_execution_receipt_v1/execution_receipt.json",
+      "sha256": "c69be4cd4072c1af00bb6711cae0d9471a3afe72a4181e6f51570e19d5cbc3c1",
+      "bytes": 68342,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/probe-swe-dask-7656-20261003-v1_pair_execution_receipt_v1.json",
+      "sha256": "58f49c8875e217bde6e7d912252312a1b289167007a99d9479ef8a0593230de5",
+      "bytes": 1740,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/candidate/dask__dask-7656.diff",
+      "sha256": "31136b11cf2d801c80a844b5fc75dbc3cdc3db7b2dc56969f783fe891de9cf74",
+      "bytes": 2053,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "bbe632d66f7757070f2ac81cc70d070bbd45d00090dee4459b9980aeb4d8e38e",
+      "bytes": 57530,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/frozen/baseline_manifest.json",
+      "sha256": "0ccd7771fbeed41045d8651f3457ce6580cf0f991112a0b4b255b344f923fc92",
+      "bytes": 101793,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/frozen/baseline.tar",
+      "sha256": "27e22971001a138eb5ecd40684d17f832b2675c7a3164437038b43fd2c4c563b",
+      "bytes": 9144320,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/frozen/classification.json",
+      "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6",
+      "bytes": 93,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/attempt.json",
+      "sha256": "acc8dd27f4897cae71c9abfa4b4d65d00c4aa62d889c8765473cca3d841f1a01",
+      "bytes": 16041,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/trajectory.jsonl",
+      "sha256": "a4289a76ae3c0d2f268bf83318667826302a247a6d4d42b712fc5d6622dadf99",
+      "bytes": 212855,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/attempt/prompt.txt",
+      "sha256": "aaadede8cfa6a5dc0be3e9ae673951e5ed1f0067206c03ddeb90ce89dcb1d7ef",
+      "bytes": 3199,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/solver_prompt.txt",
+      "sha256": "aaadede8cfa6a5dc0be3e9ae673951e5ed1f0067206c03ddeb90ce89dcb1d7ef",
+      "bytes": 3199,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/grading/projection.json",
+      "sha256": "73744856b27d6c49bab03e2674f634a4e7ed8e2862746dd73ada804c55c51b35",
+      "bytes": 319,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/grading/report.json",
+      "sha256": "5034bbcc168432d56b75d8ba8350c1be144de81d60f351c29cdb374051f4dda4",
+      "bytes": 1804,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/grading/status.json",
+      "sha256": "6fea71ff3e43ab60c649e7621a2ef225ec1638e59296c2eeb194e2454c0043b8",
+      "bytes": 2588,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/input_check.json",
+      "sha256": "311261b1ce29802321e18c86c225d246557dec20348c4673a2f031b0ca1b5c90",
+      "bytes": 6842,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-dask7656-qwen36-a1/grading/eval_logs/evallog_gpu1003-dask7656-qwen36-_95166d70.eval.log",
+      "sha256": "9f63afd62c8433d2fa2d6b466cb3ed091e4dbc9810ee3b5816e29c5a3fc419b9",
+      "bytes": 37509,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/dask7656/prepared/rollout_task_views.jsonl",
+      "sha256": "771b5593b3650032b9a278fdd81578ab1e91e344c27d505ce9bf1538e90afe29",
+      "bytes": 4963,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/dask7656/private/host_grading_views.jsonl",
+      "sha256": "d0e54b5146d58591936dcd2b867062590218d3a03aa52d12706460a7cc379f7f",
+      "bytes": 10038,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/dask7656/host_evidence/request.json",
+      "sha256": "adb01532eeb93df7dab561a4f9a034cf023fce4ac3ce9c2571e66412ef133435",
+      "bytes": 15857,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/dask7656/prepared/prompts.jsonl",
+      "sha256": "93e3f17b7fd49166b2affc2b666d94924cbd8c5177d479a20b14c64abb350a7a",
+      "bytes": 3838,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/prepared_conan11594_dask7656_code7_v1/dask7656/private/assets/effective_test_patch.patch",
+      "sha256": "d3b711c9eb53cbdb6477314eae82f3ae5ca49e5c052a352c7da3959289c287db",
+      "bytes": 1149,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/first10-v1/gpu1003-dask7656-qwen36-a1/requests.jsonl",
+      "sha256": "bfaea85f74946e030619de1a46a660781a2351532879d1c262df9a2d3957e4d4",
+      "bytes": 606938,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/gpu1003-dask7656-coder-a1_closed_manifest_v1.json",
+      "sha256": "1a379e1e4e1398b4bf4da2eee4641714f7a5e76c6e360c3d32be02b94da419cd",
+      "bytes": 30776,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v15/coder/gateway/gpu1003-dask7656-coder-a1/requests.jsonl",
+      "sha256": "715a8331b269cf6813e7606cec8ebd97ff12e98123e7328706fe89fae30040d4",
+      "bytes": 2365903,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v17/results/gpu1003-dask7656-coder-a1/attempt/prompt.txt",
+      "sha256": "aaadede8cfa6a5dc0be3e9ae673951e5ed1f0067206c03ddeb90ce89dcb1d7ef",
+      "bytes": 3199,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/prepared_conan11594_dask7656_code7_v1/dask7656/prepared/rollout_task_views.jsonl",
+      "sha256": "771b5593b3650032b9a278fdd81578ab1e91e344c27d505ce9bf1538e90afe29",
+      "bytes": 4963,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/prepared_conan11594_dask7656_code7_v1/dask7656/host_evidence/request.json",
+      "sha256": "adb01532eeb93df7dab561a4f9a034cf023fce4ac3ce9c2571e66412ef133435",
+      "bytes": 15857,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/dask7656_coder_a1_execution_review_v1.json",
+      "sha256": "6d76e0aac1ba75c642f252a686dd6be1051290a95dc7a5ecd1335f9254f34307",
+      "bytes": 26464,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v7/source_manifest.json",
+      "sha256": "be705a777484c70af2afe9a34b6dd288bd85c2b1f536c6d57bd59aecb4eb0352",
+      "bytes": 590937,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v8/source_manifest.json",
+      "sha256": "09ddb8bfdeecd3ffaa38c1048a574161ef6fa6053b2855da50166e8e8677899d",
+      "bytes": 504439,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7656-qwen36-a1/code_v8/rh2/experiments/ordinary_gpu_probe_20261002/entry.py",
+      "sha256": "bdf806bf8da1d5ebb4970887bfc3c7738eb3e57a75e1d07215d6d68b17e574c4",
+      "bytes": 27732,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v8/rh2/src/repoharness2/envpack/bundles.py",
+      "sha256": "f107d1a09979cc52890a1d5dbfb7697c6744179157041aa2bb6d1d0530d7c988",
+      "bytes": 15284,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v8/rh2/src/repoharness2/taskset/swebench_smoke.py",
+      "sha256": "4c3c1e1939a76b76ee4a92823b92b4f9fbc02f6070ce85ed9161d2bf0649b0eb",
+      "bytes": 9612,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v7/rh2/experiments/ordinary_gpu_probe_20261002/entry.py",
+      "sha256": "a1efff44dc2cbedfc81d93b2da8d84a92f6c9c88b15c2a10bf96db2026a4e82c",
+      "bytes": 25249,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v7/rh2/experiments/base_probe_20260922/solve_attempt.py",
+      "sha256": "00ca849909150de02769f297374a9bbfacf2746347c425474775d9c3e22a04f9",
+      "bytes": 35581,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/dask__dask-7656/public_bundle.json",
+      "sha256": "cfba563ce4c2f4912b442e115b72e8dfc872f3c60919b14ed9eca5c6d37d21c4",
+      "bytes": 4602,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/private/dask__dask-7656/test.patch",
+      "sha256": "30702af1cfec8658313396009c5d9d24a9d5410c57d3cb654bf6dd9e63c9a35d",
+      "bytes": 628,
+      "role": "content_reviewed_or_selected_sections"
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/private/dask__dask-7656/gold.patch",
+      "sha256": "2f6f59d094834f3e8db2d1e5332f1415ff65d151678d5cc6c6590f1883de63e9",
+      "bytes": 1007,
+      "role": "content_reviewed_or_selected_sections"
+    }
+  ],
+  "delivery": "仅创建本JSON及同名MD；父代理负责机械运输、当前入口及必要跨线程对齐。"
+}

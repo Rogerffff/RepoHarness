@@ -1,0 +1,85 @@
+{
+  "source_replay": {
+    "official_archive_sha256": "b928139eb0e9b4da9ca5d0ad927e17cf32727a6d18bc444ed57d63ca1a273bed",
+    "official_regex_repr": "'\\x1b\\\\[\\\\d+m'",
+    "ansi_example": {
+      "test_sanity": "PASSED"
+    },
+    "plan_input_count": 24,
+    "merged_input_count": 48,
+    "manifest_count": 48,
+    "merged_keys_equal_manifest": true,
+    "logs_replayed": 336,
+    "reward_counts": {
+      "noop_reward_0": 168,
+      "gold_reward_1": 164,
+      "gold_reward_0": 4
+    },
+    "official_vs_runner_reward_differences": [],
+    "pillow_ansi_gold_unique_tasks": 6,
+    "pillow_ansi_gold_runs": 24,
+    "pillow_ansi_gold_all_official_reward_1": true
+  },
+  "manager_seams": {
+    "partial_reference_present": {
+      "trigger": "reference_all_missing",
+      "decision": "unattributed",
+      "expected_source_reward": 0,
+      "current_override_reward": null
+    },
+    "reports": [
+      {
+        "case": "resolved",
+        "outcome": "resolved",
+        "reward": 1.0,
+        "grading_semantics": "r2e_expected_map",
+        "failure": null
+      },
+      {
+        "case": "tests_failed",
+        "outcome": "unresolved",
+        "reward": 0.0,
+        "grading_semantics": "r2e_expected_map",
+        "failure": "tests_failed"
+      },
+      {
+        "case": "candidate_execution_failed",
+        "outcome": "unresolved",
+        "reward": 0.0,
+        "grading_semantics": "swe_f2p_p2p",
+        "failure": "candidate_execution_failed"
+      },
+      {
+        "case": "infra_before_parser",
+        "outcome": "failed_to_grade",
+        "reward": null,
+        "grading_semantics": "swe_f2p_p2p",
+        "failure": "infra_failure"
+      },
+      {
+        "case": "patch_apply_failed",
+        "outcome": "unresolved",
+        "reward": 0.0,
+        "grading_semantics": "swe_f2p_p2p",
+        "failure": "patch_apply_failed"
+      }
+    ]
+  },
+  "runtime_ownership": {
+    "rollout_uid": 54321,
+    "grader_uid": 54322,
+    "rollout_workdir_chown": [
+      "if [ -d /testbed ]; then chown -R 54321:54321 /testbed || { echo \"RH2_INIT_ERROR=chown_workdir_failed\"; exit 4; }; echo \"WORKDIR_PRESENT=1\"; else echo \"WORKDIR_PRESENT=0\"; fi"
+    ],
+    "grader_workdir_chown": [
+      "chown -R \"$UIDV:$UIDV\" \"$TB\" || { echo \"RH2_PROTECT_ERROR=chown_candidate_failed\"; exit 4; }",
+      "    chown -R \"$UIDV:$UIDV\" -- \"$p\" || { echo \"RH2_PROTECT_ERROR=prefix_chown_failed:$p\"; exit 4; }"
+    ]
+  },
+  "file_sha256": {
+    "rh2/src/repoharness2/grading/manager.py": "dc409c38121dc77db0228831506ac6f44cd8ce44c6d4e3aceea69dcbf3b283b5",
+    "rh2/src/repoharness2/envpack/scoring.py": "b6c8b9bd3e9cac604bc0d03b0b243ef9646de369e94bb6a65e60eadd3a64f5ab",
+    "rh2/src/repoharness2/adapters/slime/sandbox_profile.py": "698edb1740907f4255363d047e126d7f6b401677d907b1c1fcd694beb1fe5899",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_grading_wiring_20260920.md": "c75e4da031909ffcb2173bcc5902c03a34265f6c18acb07b011353732f088d4e"
+  }
+}

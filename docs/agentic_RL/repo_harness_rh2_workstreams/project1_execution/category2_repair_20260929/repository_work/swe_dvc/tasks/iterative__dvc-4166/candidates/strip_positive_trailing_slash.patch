@@ -1,0 +1,15 @@
+diff --git a/dvc/ignore.py b/dvc/ignore.py
+--- a/dvc/ignore.py
++++ b/dvc/ignore.py
+@@ -31,6 +31,11 @@
+ 
+         with tree.open(ignore_file_path, encoding="utf-8") as fobj:
+             path_spec_lines = fobj.readlines()
++            path_spec_lines = [
++                line.rstrip('\r\n').removesuffix('/') + '\n'
++                if not line.startswith('!') else line
++                for line in path_spec_lines
++            ]
+             regex_pattern_list = map(
+                 GitWildMatchPattern.pattern_to_regex, path_spec_lines
+             )

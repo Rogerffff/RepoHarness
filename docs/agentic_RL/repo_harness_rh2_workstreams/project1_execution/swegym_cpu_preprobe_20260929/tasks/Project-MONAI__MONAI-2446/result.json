@@ -1,0 +1,1424 @@
+{
+  "schema": "swegym_cpu_result.v1",
+  "date": "2026-09-29",
+  "instance_id": "Project-MONAI__MONAI-2446",
+  "run": "mixed-v1",
+  "state": "cpu_complete_independently_reviewed",
+  "review_kind": "owner full readback + cross-package independent review",
+  "base_commit": "05b2da61d70324c2f02b5d72429ddb7cc171b9b9",
+  "restoration": {
+    "source_manifest": [
+      "xingyaoww/sweb.eval.x86_64.project-monai_s_monai-2446@sha256:cca2571758f276aa5d82fcb372b523e2201cd10be150776badceaaa04defad6a"
+    ],
+    "base_id": "sha256:7f21570d0a3627b66a20999c22c08da627a3bfed752ae511f8964e5adb86c18a",
+    "derived_id": "sha256:e463edf9eddf29d59db779a0ecc3d2ab009f8f63885dc26425c938d4059b6220",
+    "base_layers_preserved": true,
+    "wheel_expected": [
+      {
+        "name": "nibabel-4.0.2-py3-none-any.whl",
+        "sha256": "c4fe76348aa865f8300beaaf2a69d31624964c861853ef80c06e33d5f244413c",
+        "bytes": 3345004
+      }
+    ],
+    "download_source": "https://pypi.org/simple; fixed nibabel==4.0.2",
+    "wheel_local_bytes_available": false,
+    "hash_evidence": "orchestrator exact filename/size/SHA gate precedes successful build; wheel bytes not synced, no independent local wheel rehash",
+    "install_observed": "5.2.1 uninstalled; 4.0.2 installed into original testbed interpreter",
+    "download_cleanup": {
+      "rm_rc": 0,
+      "query_rc": 0,
+      "remaining": [],
+      "stderr": "Error response from daemon: No such container: cpu29-download-project-monai-monai-2446-mixed-v1\n"
+    }
+  },
+  "actors": {
+    "actor_original": {
+      "attempt_result": "ran",
+      "identity": {
+        "cwd": "/testbed",
+        "home": "/home/agent",
+        "monai": "/testbed/monai/__init__.py",
+        "path": "/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "uid": 54321,
+        "versions": {
+          "monai": "0.5.3+143.g05b2da61",
+          "numpy": "1.24.4",
+          "parameterized": "0.9.0",
+          "pytest": "8.3.3",
+          "torch": "1.13.1"
+        }
+      },
+      "python": "3.8.20",
+      "cc": "2.1.205 (Claude Code)",
+      "commands": [
+        {
+          "id": "identity",
+          "rc": 0,
+          "status": "rc0",
+          "expect": "zero",
+          "matches_expect": true,
+          "output_bytes": 731,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "实际actor身份、激活、工作区加载、版本与可写性；不单独当开发合格"
+        },
+        {
+          "id": "nibabel",
+          "rc": 1,
+          "status": "nonzero",
+          "expect": "zero",
+          "matches_expect": false,
+          "output_bytes": 94,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "确认历史兼容依赖到actor"
+        },
+        {
+          "id": "public_smartcache",
+          "rc": 1,
+          "status": "nonzero",
+          "expect": "nonzero",
+          "matches_expect": true,
+          "output_bytes": 853,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "base应真实触发原列表被修改；需检查结构化结果，不能把任意nonzero当目标复现"
+        },
+        {
+          "id": "public_existing",
+          "rc": 1,
+          "status": "nonzero",
+          "expect": "zero",
+          "matches_expect": false,
+          "output_bytes": 17010,
+          "output_truncated_to": 200000,
+          "pytest": {
+            "failed": 5,
+            "passed": 2,
+            "warning": 15
+          },
+          "purpose": "公开旧模块，含shape、shuffle和替换；无隐藏test_patch"
+        }
+      ],
+      "checks": {
+        "interpreter_in_tool_result": false,
+        "host_log_present": true,
+        "no_harness_dir_in_container": true,
+        "no_launcher_or_done_marker": true,
+        "message_start_matches_stub_requests": true,
+        "exit_code_zero": true,
+        "result_event_present": true,
+        "log_complete": true,
+        "bashenv_denied_for_agent": false,
+        "all_commands_ran": true,
+        "all_match_expect": false
+      },
+      "cleanup": {
+        "container_rm": 0,
+        "network_failures": [],
+        "relay_failures": [],
+        "stub_rc": 0,
+        "labeled_containers_left": [],
+        "labeled_networks_left": [],
+        "residual_after_force": []
+      },
+      "effective_profile": {
+        "cpus": 2.0,
+        "memory_bytes": 4294967296,
+        "tmp_tmpfs_bytes": 1073741824,
+        "home_tmpfs_bytes": 268435456,
+        "writable_layer_quota_bytes": 8589934592,
+        "pids_limit": 512
+      },
+      "git_clean_after": true,
+      "prompt_scope": "Devcheck control text; formal issue/public_hints delivery unproved"
+    },
+    "actor_revised": {
+      "attempt_result": "ran",
+      "identity": {
+        "cwd": "/testbed",
+        "home": "/home/agent",
+        "monai": "/testbed/monai/__init__.py",
+        "path": "/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "uid": 54321,
+        "versions": {
+          "monai": "0.5.3+143.g05b2da61",
+          "numpy": "1.24.4",
+          "parameterized": "0.9.0",
+          "pytest": "8.3.3",
+          "torch": "1.13.1"
+        }
+      },
+      "python": "3.8.20",
+      "cc": "2.1.205 (Claude Code)",
+      "commands": [
+        {
+          "id": "identity",
+          "rc": 0,
+          "status": "rc0",
+          "expect": "zero",
+          "matches_expect": true,
+          "output_bytes": 731,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "实际actor身份、激活、工作区加载、版本与可写性；不单独当开发合格"
+        },
+        {
+          "id": "nibabel",
+          "rc": 0,
+          "status": "rc0",
+          "expect": "zero",
+          "matches_expect": true,
+          "output_bytes": 6,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "确认历史兼容依赖到actor"
+        },
+        {
+          "id": "public_smartcache",
+          "rc": 1,
+          "status": "nonzero",
+          "expect": "nonzero",
+          "matches_expect": true,
+          "output_bytes": 853,
+          "output_truncated_to": 200000,
+          "pytest": null,
+          "purpose": "base应真实触发原列表被修改；需检查结构化结果，不能把任意nonzero当目标复现"
+        },
+        {
+          "id": "public_existing",
+          "rc": 0,
+          "status": "rc0",
+          "expect": "zero",
+          "matches_expect": true,
+          "output_bytes": 6385,
+          "output_truncated_to": 200000,
+          "pytest": {
+            "passed": 7,
+            "warning": 20
+          },
+          "purpose": "公开旧模块，含shape、shuffle和替换；无隐藏test_patch"
+        }
+      ],
+      "checks": {
+        "interpreter_in_tool_result": false,
+        "host_log_present": true,
+        "no_harness_dir_in_container": true,
+        "no_launcher_or_done_marker": true,
+        "message_start_matches_stub_requests": true,
+        "exit_code_zero": true,
+        "result_event_present": true,
+        "log_complete": true,
+        "bashenv_denied_for_agent": false,
+        "all_commands_ran": true,
+        "all_match_expect": true
+      },
+      "cleanup": {
+        "container_rm": 0,
+        "network_failures": [],
+        "relay_failures": [],
+        "stub_rc": 0,
+        "labeled_containers_left": [],
+        "labeled_networks_left": [],
+        "residual_after_force": []
+      },
+      "effective_profile": {
+        "cpus": 2.0,
+        "memory_bytes": 4294967296,
+        "tmp_tmpfs_bytes": 1073741824,
+        "home_tmpfs_bytes": 268435456,
+        "writable_layer_quota_bytes": 8589934592,
+        "pids_limit": 512
+      },
+      "git_clean_after": true,
+      "prompt_scope": "Devcheck control text; formal issue/public_hints delivery unproved"
+    }
+  },
+  "private": {
+    "scope": "root only; not actor permissions",
+    "image": "sha256:e463edf9eddf29d59db779a0ecc3d2ab009f8f63885dc26425c938d4059b6220",
+    "variants": {
+      "base": {
+        "rows": [
+          {
+            "shuffle": true,
+            "before": [
+              [
+                0
+              ],
+              [
+                1
+              ],
+              [
+                2
+              ],
+              [
+                3
+              ],
+              [
+                4
+              ]
+            ],
+            "caller_after": [
+              [
+                2
+              ],
+              [
+                0
+              ],
+              [
+                1
+              ],
+              [
+                3
+              ],
+              [
+                4
+              ]
+            ],
+            "internal": [
+              [
+                2
+              ],
+              [
+                0
+              ],
+              [
+                1
+              ],
+              [
+                3
+              ],
+              [
+                4
+              ]
+            ],
+            "cache": [
+              [
+                2
+              ],
+              [
+                0
+              ]
+            ],
+            "input_preserved": false,
+            "internal_correct": true,
+            "cache_correct": true
+          },
+          {
+            "shuffle": false,
+            "before": [
+              [
+                0
+              ],
+              [
+                1
+              ],
+              [
+                2
+              ],
+              [
+                3
+              ],
+              [
+                4
+              ]
+            ],
+            "caller_after": [
+              [
+                0
+              ],
+              [
+                1
+              ],
+              [
+                2
+              ],
+              [
+                3
+              ],
+              [
+                4
+              ]
+            ],
+            "internal": [
+              [
+                0
+              ],
+              [
+                1
+              ],
+              [
+                2
+              ],
+              [
+                3
+              ],
+              [
+                4
+              ]
+            ],
+            "cache": [
+              [
+                0
+              ],
+              [
+                1
+              ]
+            ],
+            "input_preserved": true,
+            "internal_correct": true,
+            "cache_correct": true
+          }
+        ],
+        "commands": [
+          {
+            "id": "public_smartcache",
+            "rc": 1,
+            "seconds": 3.6977942280000207,
+            "stdout_bytes": 488,
+            "stderr_bytes": 365
+          }
+        ],
+        "preparation": [
+          {
+            "step": "git config --global --add safe.directory /testbed",
+            "rc": 0
+          },
+          {
+            "step": "python - <<'PY_CHECK'\nimport os,sys,json,pathlib,subprocess,importlib.metadata as m\nimport numpy,torch,monai\nprint('PY_CHECK',sys.executable)\nprint(json.dumps({'uid':os.getuid(),'cwd':os.getcwd(),'home':os.environ.get('HOME'),'path':os.environ.get('PATH'),'monai':monai.__file__,'versions':{x:m.version(x) for x in ['numpy','torch','monai','parameterized','pytest']}},sort_keys=True))\nassert pathlib.Path(monai.__file__).resolve().is_relative_to(pathlib.Path('/testbed')) if hasattr(pathlib.Path(), 'is_relative_to') else str(pathlib.Path(monai.__file__).resolve()).startswith('/testbed/')\nprint(subprocess.check_output(['git','rev-parse','HEAD'],text=True));print(subprocess.check_output(['git','status','--porcelain'],text=True))\nfor f in ['monai', '/tmp']:\n print('writable',f,os.access(f,os.W_OK))\nPY_CHECK",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'monai/data/dataset.py'\"'\"', '\"'\"'22f52cd44c1b8bc2afac1111aa6824e4c563920a631c3336984a910bd264299a'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          }
+        ],
+        "cleanup": {
+          "rm_rc": 0,
+          "query_rc": 0,
+          "remaining": [],
+          "stderr": ""
+        },
+        "failure_class": "target: caller list mutated with shuffle=True"
+      },
+      "gold": {
+        "rows": [
+          {
+            "shuffle": true,
+            "before": [
+              [
+                0
+              ],
+              [
+                1
+              ],
+              [
+                2
+              ],
+              [
+                3
+              ],
+              [
+                4
+              ]
+            ],
+            "caller_after": [
+              [
+                0
+              ],
+              [
+                1
+              ],
+              [
+                2
+              ],
+              [
+                3
+              ],
+              [
+                4
+              ]
+            ],
+            "internal": [
+              [
+                2
+              ],
+              [
+                0
+              ],
+              [
+                1
+              ],
+              [
+                3
+              ],
+              [
+                4
+              ]
+            ],
+            "cache": [
+              [
+                2
+              ],
+              [
+                0
+              ]
+            ],
+            "input_preserved": true,
+            "internal_correct": true,
+            "cache_correct": true
+          },
+          {
+            "shuffle": false,
+            "before": [
+              [
+                0
+              ],
+              [
+                1
+              ],
+              [
+                2
+              ],
+              [
+                3
+              ],
+              [
+                4
+              ]
+            ],
+            "caller_after": [
+              [
+                0
+              ],
+              [
+                1
+              ],
+              [
+                2
+              ],
+              [
+                3
+              ],
+              [
+                4
+              ]
+            ],
+            "internal": [
+              [
+                0
+              ],
+              [
+                1
+              ],
+              [
+                2
+              ],
+              [
+                3
+              ],
+              [
+                4
+              ]
+            ],
+            "cache": [
+              [
+                0
+              ],
+              [
+                1
+              ]
+            ],
+            "input_preserved": true,
+            "internal_correct": true,
+            "cache_correct": true
+          }
+        ],
+        "commands": [
+          {
+            "id": "public_smartcache",
+            "rc": 0,
+            "seconds": 3.5163979349999863,
+            "stdout_bytes": 487,
+            "stderr_bytes": 225
+          }
+        ],
+        "preparation": [
+          {
+            "step": "git config --global --add safe.directory /testbed",
+            "rc": 0
+          },
+          {
+            "step": "python - <<'PY_CHECK'\nimport os,sys,json,pathlib,subprocess,importlib.metadata as m\nimport numpy,torch,monai\nprint('PY_CHECK',sys.executable)\nprint(json.dumps({'uid':os.getuid(),'cwd':os.getcwd(),'home':os.environ.get('HOME'),'path':os.environ.get('PATH'),'monai':monai.__file__,'versions':{x:m.version(x) for x in ['numpy','torch','monai','parameterized','pytest']}},sort_keys=True))\nassert pathlib.Path(monai.__file__).resolve().is_relative_to(pathlib.Path('/testbed')) if hasattr(pathlib.Path(), 'is_relative_to') else str(pathlib.Path(monai.__file__).resolve()).startswith('/testbed/')\nprint(subprocess.check_output(['git','rev-parse','HEAD'],text=True));print(subprocess.check_output(['git','status','--porcelain'],text=True))\nfor f in ['monai', '/tmp']:\n print('writable',f,os.access(f,os.W_OK))\nPY_CHECK",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'monai/data/dataset.py'\"'\"', '\"'\"'22f52cd44c1b8bc2afac1111aa6824e4c563920a631c3336984a910bd264299a'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          },
+          {
+            "step": "git apply --check /in/gold.patch",
+            "rc": 0
+          },
+          {
+            "step": "git apply /in/gold.patch",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'monai/data/dataset.py'\"'\"', '\"'\"'f29bf46a6bc40e9d4e09ac1e94e46513fcec160c860ca87cbe6633f01b4e301b'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          }
+        ],
+        "cleanup": {
+          "rm_rc": 0,
+          "query_rc": 0,
+          "remaining": [],
+          "stderr": ""
+        },
+        "failure_class": null
+      },
+      "degenerate": {
+        "rows": [
+          {
+            "shuffle": true,
+            "before": [
+              [
+                0
+              ],
+              [
+                1
+              ],
+              [
+                2
+              ],
+              [
+                3
+              ],
+              [
+                4
+              ]
+            ],
+            "caller_after": [
+              [
+                0
+              ],
+              [
+                1
+              ],
+              [
+                2
+              ],
+              [
+                3
+              ],
+              [
+                4
+              ]
+            ],
+            "internal": [
+              [
+                0
+              ],
+              [
+                1
+              ],
+              [
+                2
+              ],
+              [
+                3
+              ],
+              [
+                4
+              ]
+            ],
+            "cache": [
+              [
+                0
+              ],
+              [
+                1
+              ]
+            ],
+            "input_preserved": true,
+            "internal_correct": false,
+            "cache_correct": false
+          },
+          {
+            "shuffle": false,
+            "before": [
+              [
+                0
+              ],
+              [
+                1
+              ],
+              [
+                2
+              ],
+              [
+                3
+              ],
+              [
+                4
+              ]
+            ],
+            "caller_after": [
+              [
+                0
+              ],
+              [
+                1
+              ],
+              [
+                2
+              ],
+              [
+                3
+              ],
+              [
+                4
+              ]
+            ],
+            "internal": [
+              [
+                0
+              ],
+              [
+                1
+              ],
+              [
+                2
+              ],
+              [
+                3
+              ],
+              [
+                4
+              ]
+            ],
+            "cache": [
+              [
+                0
+              ],
+              [
+                1
+              ]
+            ],
+            "input_preserved": true,
+            "internal_correct": true,
+            "cache_correct": true
+          }
+        ],
+        "commands": [
+          {
+            "id": "public_smartcache",
+            "rc": 1,
+            "seconds": 3.6341164400000707,
+            "stdout_bytes": 489,
+            "stderr_bytes": 365
+          }
+        ],
+        "preparation": [
+          {
+            "step": "git config --global --add safe.directory /testbed",
+            "rc": 0
+          },
+          {
+            "step": "python - <<'PY_CHECK'\nimport os,sys,json,pathlib,subprocess,importlib.metadata as m\nimport numpy,torch,monai\nprint('PY_CHECK',sys.executable)\nprint(json.dumps({'uid':os.getuid(),'cwd':os.getcwd(),'home':os.environ.get('HOME'),'path':os.environ.get('PATH'),'monai':monai.__file__,'versions':{x:m.version(x) for x in ['numpy','torch','monai','parameterized','pytest']}},sort_keys=True))\nassert pathlib.Path(monai.__file__).resolve().is_relative_to(pathlib.Path('/testbed')) if hasattr(pathlib.Path(), 'is_relative_to') else str(pathlib.Path(monai.__file__).resolve()).startswith('/testbed/')\nprint(subprocess.check_output(['git','rev-parse','HEAD'],text=True));print(subprocess.check_output(['git','status','--porcelain'],text=True))\nfor f in ['monai', '/tmp']:\n print('writable',f,os.access(f,os.W_OK))\nPY_CHECK",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'monai/data/dataset.py'\"'\"', '\"'\"'22f52cd44c1b8bc2afac1111aa6824e4c563920a631c3336984a910bd264299a'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          },
+          {
+            "step": "git apply --check /in/degenerate_array_no_shuffle.patch",
+            "rc": 0
+          },
+          {
+            "step": "git apply /in/degenerate_array_no_shuffle.patch",
+            "rc": 0
+          },
+          {
+            "step": "python -c 'from pathlib import Path\nimport hashlib,json\nchecks=[('\"'\"'monai/data/dataset.py'\"'\"', '\"'\"'1653727e6f823ad96967d6f717d8a49db05b2f136e782a4f3df73f16c1ea811b'\"'\"')]\nfor path,expected in checks:\n actual=hashlib.sha256(Path(path).read_bytes()).hexdigest()\n print('\"'\"'SOURCE_SHA'\"'\"',path,actual)\n assert actual==expected,(path,actual,expected)\n'",
+            "rc": 0
+          }
+        ],
+        "cleanup": {
+          "rm_rc": 0,
+          "query_rc": 0,
+          "remaining": [],
+          "stderr": ""
+        },
+        "failure_class": "target: internal order and cache incorrect with shuffle=True"
+      }
+    }
+  },
+  "formal": {
+    "noop": {
+      "ledger": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/grade_noop/ledger.jsonl",
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 0,
+        "f2p_total": 1,
+        "failure_category": "tests_failed",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": 0,
+        "p2p_total": 2,
+        "report_id": "rpt_grading_493e0233",
+        "reward": 0.0
+      },
+      "reference": {
+        "test_datalist": "FAILED",
+        "test_shuffle": "PASSED",
+        "test_update_cache": "PASSED"
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 7.568,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 8.087
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 8.087,
+        "segment_completed": true
+      },
+      "phases": {
+        "delta_apply": 0.332903,
+        "grader_baseline_rebuild": 0.561216,
+        "grader_cleanup": 2.685696,
+        "grader_start_and_verify": 2.130615,
+        "grader_trusted_setup": 374.779297,
+        "parser_and_report": 1.64034,
+        "test": 20.606892
+      },
+      "resource": {
+        "mem_peak_mb": 4096.0,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "resource_facts": null,
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "projection": {
+        "frozen_patch_digest": "sha256:282f372cc6c0ad8d29676398fc4e1ebfee026a48d7066f5a925865ea18363975",
+        "ignored_paths": [],
+        "included_paths": [],
+        "unsupported_shape_reasons": []
+      },
+      "candidate": {
+        "apply_method": "noop",
+        "apply_stderr_tail": null,
+        "apply_user": "agent/54321",
+        "kind": "noop",
+        "origin": "noop",
+        "patch_sha256": null
+      },
+      "runner_integrity_changed": false,
+      "log_sha256_verified": true,
+      "driver_close": {
+        "ledger": "/work/swegym_cpu_preprobe_20260929/results/Project-MONAI__MONAI-2446/mixed-v1/grade_noop/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      }
+    },
+    "gold": {
+      "ledger": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/grade_gold/ledger.jsonl",
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 1,
+        "f2p_total": 1,
+        "failure_category": null,
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "resolved",
+        "p2p_fail": 0,
+        "p2p_total": 2,
+        "report_id": "rpt_grading_358f41f0",
+        "reward": 1.0
+      },
+      "reference": {
+        "test_datalist": "PASSED",
+        "test_shuffle": "PASSED",
+        "test_update_cache": "PASSED"
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 9.992,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 7.924
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 7.924,
+        "segment_completed": true
+      },
+      "phases": {
+        "delta_apply": 0.385351,
+        "grader_baseline_rebuild": 0.585314,
+        "grader_cleanup": 4.19211,
+        "grader_start_and_verify": 1.817272,
+        "grader_trusted_setup": 524.215568,
+        "parser_and_report": 1.639738,
+        "test": 22.867068
+      },
+      "resource": {
+        "mem_peak_mb": 4096.0,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "resource_facts": null,
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "projection": {
+        "frozen_patch_digest": "sha256:b2132d5bb72a4b064075ab1012fb9391eef414e30e0fa9fe8ad5a9e7bef05d18",
+        "ignored_paths": [],
+        "included_paths": [
+          "monai/data/dataset.py"
+        ],
+        "unsupported_shape_reasons": []
+      },
+      "candidate": {
+        "apply_method": "git_apply",
+        "apply_stderr_tail": null,
+        "apply_user": "agent/54321",
+        "kind": "gold",
+        "origin": "/work/swegym_cpu_preprobe_20260929/gold/v1/Project-MONAI__MONAI-2446.gold.patch",
+        "patch_sha256": "sha256:0c0e9e07a3d8195c75cebdac933cb628fef3425e2721f99087fea2ced6fc9f1a"
+      },
+      "runner_integrity_changed": false,
+      "log_sha256_verified": true,
+      "driver_close": {
+        "ledger": "/work/swegym_cpu_preprobe_20260929/results/Project-MONAI__MONAI-2446/mixed-v1/grade_gold/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      }
+    },
+    "degenerate": {
+      "ledger": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/grade_degenerate/ledger.jsonl",
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 1,
+        "f2p_total": 1,
+        "failure_category": null,
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "resolved",
+        "p2p_fail": 0,
+        "p2p_total": 2,
+        "report_id": "rpt_grading_ba365c88",
+        "reward": 1.0
+      },
+      "reference": {
+        "test_datalist": "PASSED",
+        "test_shuffle": "PASSED",
+        "test_update_cache": "PASSED"
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 7.909,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 8.078
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 8.078,
+        "segment_completed": true
+      },
+      "phases": {
+        "delta_apply": 0.399475,
+        "grader_baseline_rebuild": 0.539429,
+        "grader_cleanup": 2.715422,
+        "grader_start_and_verify": 1.892789,
+        "grader_trusted_setup": 461.582937,
+        "parser_and_report": 1.681692,
+        "test": 20.74545
+      },
+      "resource": {
+        "mem_peak_mb": 4096.0,
+        "mem_peak_unavailable_or_zero": false
+      },
+      "resource_facts": null,
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "projection": {
+        "frozen_patch_digest": "sha256:57dcfba4c31fb38bf84af43817d07bb628c6920fb85abd5808df0a2cb70d0bcf",
+        "ignored_paths": [],
+        "included_paths": [
+          "monai/data/dataset.py"
+        ],
+        "unsupported_shape_reasons": []
+      },
+      "candidate": {
+        "apply_method": "git_apply",
+        "apply_stderr_tail": null,
+        "apply_user": "agent/54321",
+        "kind": "cc",
+        "origin": "/work/swegym_cpu_preprobe_20260929/inputs_v1/Project-MONAI__MONAI-2446/private/degenerate_array_no_shuffle.patch",
+        "patch_sha256": "sha256:91bcb98b33149e93606f2e42d48de5a08fd735a4e4e1c54da0f84d04933024e0"
+      },
+      "runner_integrity_changed": false,
+      "log_sha256_verified": true,
+      "driver_close": {
+        "ledger": "/work/swegym_cpu_preprobe_20260929/results/Project-MONAI__MONAI-2446/mixed-v1/grade_degenerate/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      }
+    }
+  },
+  "allowed_use": "environment restoration and confirmed formal coverage-gap diagnosis; not unconditional correctness-comparison or training reward sample until separately governed quality remediation",
+  "remaining": [
+    "D6 formal quality remediation/new-version validation if authorized",
+    "formal issue/public_hints delivery",
+    "whole environment dependency health not checked",
+    "wheel bytes not locally rehashed; remote gate and build evidence retained",
+    "separately governed model/GPU/budget/training qualification"
+  ],
+  "evidence": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/monai2446_result_review.md",
+      "bytes": 13602,
+      "sha256": "2b75bcae4582b6c16ea747ce3b7ac01ef22965885349603b11f15f88adaeec01"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/analysis/monai2446_final_v1.json",
+      "bytes": 11481,
+      "sha256": "7a8a2ee7ee9f3de59789d80d191d2ef834970703d8992eb05a437cf38f765582"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/actor_original/attempt.json",
+      "bytes": 14456,
+      "sha256": "5085c0cc77400d0d6b8c4166284b9f715bfaa6ce4af2aceb28a27c5bf1b5be55"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/actor_original/captures/identity.out",
+      "bytes": 731,
+      "sha256": "09acad36e7a9f638364ad8698026dbdd06937a2a9a0d80b0ffef4248b49095eb"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/actor_original/captures/nibabel.out",
+      "bytes": 94,
+      "sha256": "adc75db9094ae12cfb18ec35c749d2e8d9a2dd224f8cad1499972c4d15c9badf"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/actor_original/captures/public_existing.out",
+      "bytes": 17010,
+      "sha256": "0b829f4e7d2b25719554ae2a8317a6a4d3b14fdd3182a23baca7394c856882ec"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/actor_original/captures/public_smartcache.out",
+      "bytes": 853,
+      "sha256": "3d536140ba6c3056c4e92884737e6c79387794dc0f08ad65c678684ed2af0ffc"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/actor_original/post_run_facts_root.txt",
+      "bytes": 1082,
+      "sha256": "23068f414db8154af8994359ddb2ddad575495eabd9c98652db1e3c96018b7ce"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/actor_original/stub/requests/messages_000.json",
+      "bytes": 12484,
+      "sha256": "ebf4ff6e8bccd8ca0838916a16962c07615ecfed35d57938a6e267bd20f1e2e4"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/actor_revised/attempt.json",
+      "bytes": 14221,
+      "sha256": "46b8902f9c7c8778c968e5fecc64c300203a0b573629414e2e7fa836ed4c160b"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/actor_revised/captures/identity.out",
+      "bytes": 731,
+      "sha256": "09acad36e7a9f638364ad8698026dbdd06937a2a9a0d80b0ffef4248b49095eb"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/actor_revised/captures/nibabel.out",
+      "bytes": 6,
+      "sha256": "c6d3fb057b198f1d0563d4218d4e36b48df752251aabffe78ea60aac5a72c7a2"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/actor_revised/captures/public_existing.out",
+      "bytes": 6385,
+      "sha256": "8b055a934f14deed99ceac904cd26d2c2a97514cd5cda8b67e6f367f0ed248e8"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/actor_revised/captures/public_smartcache.out",
+      "bytes": 853,
+      "sha256": "3d536140ba6c3056c4e92884737e6c79387794dc0f08ad65c678684ed2af0ffc"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/actor_revised/post_run_facts_root.txt",
+      "bytes": 1082,
+      "sha256": "471ec1564db2dffa5f0c4ca35c84f32a4100f89fdfc118fdbe80f62e6839d4fb"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/actor_revised/stub/requests/messages_000.json",
+      "bytes": 12484,
+      "sha256": "9928bdc30647a6e5987913c78d47522e00265bd15c326bfb2bc29ab26d007ca8"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/build_dependencies.log",
+      "bytes": 2265,
+      "sha256": "1cd386cdc30ef7565a67095c3496afcf23283eafc6e2140a320d7b7b994c47a0"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/dependency_build/Dockerfile",
+      "bytes": 205,
+      "sha256": "fb458c9c98ca30a64e9b115806ef9b160ba3d9b822a28f9f275e995e2b4740d3"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/dependency_build/download_cleanup.json",
+      "bytes": 166,
+      "sha256": "68eb905b54cde80f81a61b1cf56ba8ad28c6077ab1be65d498eb9ee0b16281a6"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/dependency_build/image.json",
+      "bytes": 8415,
+      "sha256": "48b8a3be04d0bf9e75827ae5629f90f2d0c479805ead08c62de42daad7c050c7"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/download_wheels.log",
+      "bytes": 374,
+      "sha256": "733ff09359a5196df5dddbddcb6aaae190076bde296f0f656d948c642c6af849"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/grade_degenerate/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-e22a7e46/candidate.patch",
+      "bytes": 451,
+      "sha256": "91bcb98b33149e93606f2e42d48de5a08fd735a4e4e1c54da0f84d04933024e0"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/grade_degenerate/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-e22a7e46/frozen_patch.json",
+      "bytes": 67275,
+      "sha256": "06e8556fe60c30560945b979043b48d5b0fc2f2fd14ba88cd35e6d9eff14e104"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/grade_degenerate/driver_close_checked.json",
+      "bytes": 740,
+      "sha256": "4a86513fdf1d1902aab5282dd10454492c4a5f1771d9e043a60b01734b53ecf5"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/grade_degenerate/eval_logs/evallog_replay-cpu29-project-mon_ba365c88.eval.log",
+      "bytes": 48201,
+      "sha256": "13422cbab784ecb6a87a48af600ec4ad2a1b08a7ceb0fa349e2d5a3c980ed239"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/grade_degenerate/ledger.jsonl",
+      "bytes": 4963,
+      "sha256": "e9794a2ffbdeff78bbb7af4202255385f96d42a3cbf438a45357d23d37c68428"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/grade_gold/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-837ae7cd/candidate.patch",
+      "bytes": 1198,
+      "sha256": "0c0e9e07a3d8195c75cebdac933cb628fef3425e2721f99087fea2ced6fc9f1a"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/grade_gold/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-837ae7cd/frozen_patch.json",
+      "bytes": 67287,
+      "sha256": "4d205ba8dce2c907039004e419e59f6b4ab6d80bf674fe3fcd4fa4d85b0fdf9d"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/grade_gold/driver_close_checked.json",
+      "bytes": 734,
+      "sha256": "a54bedff30ead6546fd5ed06a922f0411d9463315a1f3873a1fb259b0bb885c3"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/grade_gold/eval_logs/evallog_replay-cpu29-project-mon_358f41f0.eval.log",
+      "bytes": 49052,
+      "sha256": "a7004961404ebec652a3797d0f7977246a4b880ce44af6679400b5d2339bd905"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/grade_gold/ledger.jsonl",
+      "bytes": 4914,
+      "sha256": "893ef64320ec369a46070d46eac8366c3588dc630316b5556579a6ec1b860a26"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/grade_noop/artifacts/swe_gym_lite--Project-MONAI__MONAI-2446/a1-25a1ebed/frozen_patch.json",
+      "bytes": 776,
+      "sha256": "d8b34f368e60e9125ab04b241536868da693db35030b10f4457ebd86080d0b32"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/grade_noop/driver_close_checked.json",
+      "bytes": 734,
+      "sha256": "0f559d9f0f7522e8337469f3aa841c0df2764c10e3a484a2841553d13204eccd"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/grade_noop/eval_logs/evallog_replay-cpu29-project-mon_493e0233.eval.log",
+      "bytes": 49103,
+      "sha256": "12ebd9f13dace2a6366f2f93f6a3ea9bf072f80377e657813dd25acd336fb0a5"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/grade_noop/ledger.jsonl",
+      "bytes": 4752,
+      "sha256": "54d623f73adc2368c1165862a0c2d941a90d14dc54482ad238d62a4851fc9203"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/private_behavior/base/prep_0.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/private_behavior/base/prep_1.out",
+      "bytes": 676,
+      "sha256": "9861ed9d25581a853ec118d0758e5fa006a6993392b645c014b151a9c2d53aa3"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/private_behavior/base/prep_2.out",
+      "bytes": 98,
+      "sha256": "8466bf0f3da8cbffdb47594654c0c9be27604101925e940f938c0c34b92774f6"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/private_behavior/base/public_smartcache.out",
+      "bytes": 853,
+      "sha256": "65f67022fb599e25481b491116d97b0ef05af3b76a33ed3a7a837506063d8a03"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/private_behavior/degenerate/prep_0.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/private_behavior/degenerate/prep_1.out",
+      "bytes": 676,
+      "sha256": "9861ed9d25581a853ec118d0758e5fa006a6993392b645c014b151a9c2d53aa3"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/private_behavior/degenerate/prep_2.out",
+      "bytes": 98,
+      "sha256": "8466bf0f3da8cbffdb47594654c0c9be27604101925e940f938c0c34b92774f6"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/private_behavior/degenerate/prep_3.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/private_behavior/degenerate/prep_4.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/private_behavior/degenerate/prep_5.out",
+      "bytes": 98,
+      "sha256": "855542d51c36d47b533e578018f908332a8120dc1a766c86fb9ea3f02b568e96"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/private_behavior/degenerate/public_smartcache.out",
+      "bytes": 854,
+      "sha256": "a64b0b4d95a0801d189b8e0b7a1b0411e244d9d1e0ae535bac9e2d4d4ce724d8"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/private_behavior/gold/prep_0.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/private_behavior/gold/prep_1.out",
+      "bytes": 676,
+      "sha256": "9861ed9d25581a853ec118d0758e5fa006a6993392b645c014b151a9c2d53aa3"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/private_behavior/gold/prep_2.out",
+      "bytes": 98,
+      "sha256": "8466bf0f3da8cbffdb47594654c0c9be27604101925e940f938c0c34b92774f6"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/private_behavior/gold/prep_3.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/private_behavior/gold/prep_4.out",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/private_behavior/gold/prep_5.out",
+      "bytes": 98,
+      "sha256": "a5345cc2caf01343d89df2a7e2b96dda8e0edbd91b24591448b11179bdedb895"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/private_behavior/gold/public_smartcache.out",
+      "bytes": 712,
+      "sha256": "d216ff7b7d77ff4bec24239caa2b3df697fffa370ee5f0fb92bf3b7b3e7fbbc3"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/private_behavior/summary.json",
+      "bytes": 7538,
+      "sha256": "62457226a437274f11624a23d87a49f4072d14b37d873ce3db8e0c3922fb530b"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/private_behavior_spec.json",
+      "bytes": 6591,
+      "sha256": "b20b99e3cb5ddfa5b77e70c4a380c0f14922747dfa431949f7f043f012e7197a"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-2446/mixed-v1/status.json",
+      "bytes": 17390,
+      "sha256": "0193ea08bfb70bc423cd0dda30de72cf0ac350d23f046327f9d814b07add687b"
+    }
+  ],
+  "independent_review": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/monai2446_result_review.md",
+  "quality": {
+    "classification": "S1 formal assertion coverage gap",
+    "failure": "array-list shuffle=True candidate preserves caller but skips internal shuffle/cache ordering, yet formal reward=1",
+    "public_basis": "issue explicitly requires shuffle inside SmartCacheDataset; base seed/cache behavior supplies deterministic expected values",
+    "not_claimed": [
+      "deep copy or element independence",
+      "all input types/seeds/transforms/lifecycle",
+      "formal test modification implemented"
+    ]
+  },
+  "resource_interpretation": {
+    "profile": "2 CPU / 4 GiB; setup/reset900; existing test and whole1800 budgets",
+    "all_ledger_peaks_mb": 4096.0,
+    "peak_is_not_oom": true,
+    "noop_samples_from_root_review": {
+      "samples": 27,
+      "memory_events_max": 1650,
+      "observed_oom": 0,
+      "observed_oom_kill": 0,
+      "observed_pids_max": 0
+    },
+    "limits": "sampling not full lifetime; no cross-container extrapolation. Host snapshot supports chown/copy-up file-cache pressure, not test-process minimum RAM."
+  }
+}

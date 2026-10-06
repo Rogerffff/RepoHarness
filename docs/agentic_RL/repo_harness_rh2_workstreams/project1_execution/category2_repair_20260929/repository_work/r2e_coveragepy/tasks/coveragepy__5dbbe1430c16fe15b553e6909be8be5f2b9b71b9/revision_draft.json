@@ -1,0 +1,29 @@
+{
+  "schema_id": "rh2.s2_r2e.material_revisions.v2",
+  "purpose": "未发布草案；901–908 仅供本包静态验证，非正式编号、未预约编号。",
+  "revisions": [
+    {
+      "revision_id": "r2e-mr-903",
+      "instance_id": "coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9",
+      "kind": "statement_text_replace",
+      "target": "problem_statement",
+      "edits": [
+        {
+          "old": "[ISSUE]\n**Title:** TypeError when using `once` parameter with `_warn` method\n\n**Description:**\nWhen attempting to mark warnings to display only once by using the `once` parameter, a `TypeError` is raised. This issue occurs because the `_warn` method does not recognize the `once` keyword argument.\n\n**Example Code:**\n```python\ncov = coverage.Coverage()\ncov.load()\ncov._warn(\"Warning, warning 1!\", slug=\"bot\", once=True)\ncov._warn(\"Warning, warning 2!\", slug=\"bot\", once=True)\n```\n\n**Expected Behavior:**\nWarnings marked with `once=True` should be displayed only once each, preventing duplicate warnings from appearing.\n\n**Actual Behavior:**\nA `TypeError` is raised with the message: `_warn() got an unexpected keyword argument 'once'`\n\n[/ISSUE]",
+          "new": "[ISSUE]\n**Title:** TypeError when using `once` parameter with `_warn` method\n\n**Description:**\nWhen attempting to mark warnings to display only once by using the `once` parameter, a `TypeError` is raised. This issue occurs because the `_warn` method does not recognize the `once` keyword argument.\n\n**Example Code:**\n```python\ncov = coverage.Coverage()\ncov.load()\ncov._warn(\"Warning, warning 1!\", slug=\"bot\", once=True)\ncov._warn(\"Warning, warning 2!\", slug=\"bot\", once=True)\n```\n\n**Expected Behavior:**\nWarnings marked with `once=True` should be displayed only once each, preventing duplicate warnings from appearing. As with `disable_warnings`, a warning is identified by its `slug` (the short name shown in parentheses after the message): once a `once=True` warning has been displayed, later `once=True` warnings with the same slug are not displayed, even if their message text is different. `once=True` warnings with different slugs are each still displayed once.\n\n**Actual Behavior:**\nA `TypeError` is raised with the message: `_warn() got an unexpected keyword argument 'once'`\n\n[/ISSUE]"
+        }
+      ],
+      "sha256_before": "sha256:439be36deff566442dcb5805f42f3db8fd5772f07090e2648c22f39694043bf0",
+      "sha256_after": "sha256:b2a7f5fb3e3c76a8896ac0f8afb2e9b534bcfbd28baf6ebbe647ddd0857b2415",
+      "revised_file": null,
+      "expected_change": null,
+      "decision_ref": "用户 2026-09-29 已选 A：按 slug；见本题云端 result.md §6。",
+      "reason": "R-f：直接采用已有窄题面修订；不改变无关要求。",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/remaining_workflow_20261002.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category3_diagnosis_20260929/tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/result.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9/card.md"
+      ]
+    }
+  ]
+}

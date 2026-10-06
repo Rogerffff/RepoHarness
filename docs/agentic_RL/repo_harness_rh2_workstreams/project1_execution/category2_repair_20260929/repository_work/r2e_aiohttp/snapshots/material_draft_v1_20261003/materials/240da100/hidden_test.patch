@@ -1,0 +1,40 @@
+--- current/test_1.py
++++ draft/test_1.py
+@@ -257,36 +257,7 @@
+         self.loop.close()
+         gc.collect()
+ 
+-    def test_tcp_connector(self):
+-        with test_utils.run_server(self.loop, router=Functional) as httpd:
+-            r = self.loop.run_until_complete(
+-                client.request(
+-                    'get', httpd.url('method', 'get'),
+-                    connector=aiohttp.TCPConnector(loop=self.loop),
+-                    loop=self.loop))
+-            content = self.loop.run_until_complete(r.content.read())
+-            content = content.decode()
+-            self.assertEqual(r.status, 200)
+-            r.close()
+-
+-    @unittest.skipUnless(hasattr(socket, 'AF_UNIX'), 'requires unix')
+-    def test_unix_connector(self):
+-        path = '/tmp/aiohttp_unix.sock'
+-
+-        connector = aiohttp.UnixConnector(path, loop=self.loop)
+-        self.assertEqual(path, connector.path)
+-
+-        with test_utils.run_server(
+-                self.loop, listen_addr=path, router=Functional) as httpd:
+-            r = self.loop.run_until_complete(
+-                client.request(
+-                    'get', httpd.url('method', 'get'),
+-                    connector=connector,
+-                    loop=self.loop))
+-            content = self.loop.run_until_complete(r.content.read())
+-            content = content.decode()
+-            self.assertEqual(r.status, 200)
+-            r.close()
++
+ 
+ 
+ class ProxyConnectorTests(unittest.TestCase):

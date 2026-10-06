@@ -1,0 +1,13 @@
+{
+  "instance_id": "dask__dask-8792",
+  "original_install": "python -m pip install --no-deps -e .",
+  "revised_install": "rh2_compat_install() {\n python -m pip install --no-index --find-links=/opt/rh2/compat-wheels --no-deps pandas==1.4.4 pytest==7.4.4 numpy==1.24.4 || return $?\n python -I -c 'import importlib.metadata as m,json; print(\"RH2_COMPAT_VERSIONS=\"+json.dumps({x:m.version(x) for x in ['\"'\"'pandas'\"'\"', '\"'\"'pytest'\"'\"', '\"'\"'numpy'\"'\"']}))'\n python -m pip install --no-deps -e .\n local original_rc=$?\n python -I -c 'import importlib.metadata as m,json; print(\"RH2_COMPAT_VERSIONS=\"+json.dumps({x:m.version(x) for x in ['\"'\"'pandas'\"'\"', '\"'\"'pytest'\"'\"', '\"'\"'numpy'\"'\"']}))'\n return \"$original_rc\"\n}\nrh2_compat_install",
+  "pins": [
+    "pandas==1.4.4",
+    "pytest==7.4.4",
+    "numpy==1.24.4"
+  ],
+  "scope": "dependency variant; source install still audited independently",
+  "decision": "E11",
+  "reason": "v1 introduced reference regressions; v2 restores older categorical behavior / numpy pre-cumproduct-deprecation"
+}

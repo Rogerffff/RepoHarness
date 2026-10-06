@@ -1,0 +1,116 @@
+{
+ "instance_id": "scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4",
+ "template": "R-c",
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "    def test_export_binary(self):\n        exporter = PythonItemExporter(binary=True)\n        value = TestItem(name=u'John\\xa3', age=u'22')\n        expected = {b'name': b'John\\xc2\\xa3', b'age': b'22'}\n        self.assertEqual(expected, exporter.export_item(value))\n",
+     "new": "    def test_export_binary(self):\n        exporter = PythonItemExporter(binary=True)\n        value = TestItem(name=u'John\\xa3', age=u'22')\n        expected = {b'name': b'John\\xc2\\xa3', b'age': b'22'}\n        self.assertEqual(expected, exporter.export_item(value))\n\n    def test_export_binary_dict_item(self):\n        exporter = PythonItemExporter(binary=True)\n        value = {'title': u'Caf\\xe9', 'price': u'3'}\n        expected = {b'title': b'Caf\\xc3\\xa9', b'price': b'3'}\n        self.assertEqual(expected, exporter.export_item(value))\n\n    def test_export_binary_empty_fields(self):\n        exporter = PythonItemExporter(binary=True, export_empty_fields=True)\n        value = TestItem(name=u'Maria')\n        expected = {b'name': b'Maria', b'age': None}\n        self.assertEqual(expected, exporter.export_item(value))\n\n    def test_export_binary_serializer_output(self):\n        class CustomFieldItem(Item):\n            name = Field()\n            age = Field(serializer=lambda value: int(value) + 2)\n\n        exporter = PythonItemExporter(binary=True)\n        value = CustomFieldItem(name=u'Maria', age=u'22')\n        expected = {b'name': b'Maria', b'age': 24}\n        self.assertEqual(expected, exporter.export_item(value))\n"
+    }
+   ]
+  }
+ ],
+ "expected_after": {
+  "BaseItemExporterTest.test_export_dict_item": "PASSED",
+  "BaseItemExporterTest.test_export_item": "PASSED",
+  "BaseItemExporterTest.test_field_custom_serializer": "PASSED",
+  "BaseItemExporterTest.test_fields_to_export": "PASSED",
+  "BaseItemExporterTest.test_serialize_field": "PASSED",
+  "PythonItemExporterTest.test_export_binary": "PASSED",
+  "PythonItemExporterTest.test_export_dict_item": "PASSED",
+  "PythonItemExporterTest.test_export_item": "PASSED",
+  "PythonItemExporterTest.test_export_item_dict_list": "PASSED",
+  "PythonItemExporterTest.test_export_list": "PASSED",
+  "PythonItemExporterTest.test_field_custom_serializer": "PASSED",
+  "PythonItemExporterTest.test_fields_to_export": "PASSED",
+  "PythonItemExporterTest.test_nested_item": "PASSED",
+  "PythonItemExporterTest.test_serialize_field": "PASSED",
+  "PprintItemExporterTest.test_export_dict_item": "PASSED",
+  "PprintItemExporterTest.test_export_item": "PASSED",
+  "PprintItemExporterTest.test_field_custom_serializer": "PASSED",
+  "PprintItemExporterTest.test_fields_to_export": "PASSED",
+  "PprintItemExporterTest.test_serialize_field": "PASSED",
+  "PickleItemExporterTest.test_export_dict_item": "PASSED",
+  "PickleItemExporterTest.test_export_item": "PASSED",
+  "PickleItemExporterTest.test_export_multiple_items": "PASSED",
+  "PickleItemExporterTest.test_field_custom_serializer": "PASSED",
+  "PickleItemExporterTest.test_fields_to_export": "PASSED",
+  "PickleItemExporterTest.test_serialize_field": "PASSED",
+  "CsvItemExporterTest.test_export_dict_item": "PASSED",
+  "CsvItemExporterTest.test_export_item": "PASSED",
+  "CsvItemExporterTest.test_field_custom_serializer": "PASSED",
+  "CsvItemExporterTest.test_fields_to_export": "PASSED",
+  "CsvItemExporterTest.test_header_export_all": "PASSED",
+  "CsvItemExporterTest.test_header_export_all_dict": "PASSED",
+  "CsvItemExporterTest.test_header_export_single_field": "PASSED",
+  "CsvItemExporterTest.test_header_export_two_items": "PASSED",
+  "CsvItemExporterTest.test_header_no_header_line": "PASSED",
+  "CsvItemExporterTest.test_join_multivalue": "PASSED",
+  "CsvItemExporterTest.test_serialize_field": "PASSED",
+  "XmlItemExporterTest.test_export_dict_item": "PASSED",
+  "XmlItemExporterTest.test_export_item": "PASSED",
+  "XmlItemExporterTest.test_field_custom_serializer": "PASSED",
+  "XmlItemExporterTest.test_fields_to_export": "PASSED",
+  "XmlItemExporterTest.test_multivalued_fields": "PASSED",
+  "XmlItemExporterTest.test_nested_item": "PASSED",
+  "XmlItemExporterTest.test_nested_list_item": "PASSED",
+  "XmlItemExporterTest.test_serialize_field": "PASSED",
+  "JsonLinesItemExporterTest.test_export_dict_item": "PASSED",
+  "JsonLinesItemExporterTest.test_export_item": "PASSED",
+  "JsonLinesItemExporterTest.test_extra_keywords": "PASSED",
+  "JsonLinesItemExporterTest.test_field_custom_serializer": "PASSED",
+  "JsonLinesItemExporterTest.test_fields_to_export": "PASSED",
+  "JsonLinesItemExporterTest.test_nested_item": "PASSED",
+  "JsonLinesItemExporterTest.test_serialize_field": "PASSED",
+  "JsonItemExporterTest.test_export_dict_item": "PASSED",
+  "JsonItemExporterTest.test_export_item": "PASSED",
+  "JsonItemExporterTest.test_extra_keywords": "PASSED",
+  "JsonItemExporterTest.test_field_custom_serializer": "PASSED",
+  "JsonItemExporterTest.test_fields_to_export": "PASSED",
+  "JsonItemExporterTest.test_nested_dict_item": "PASSED",
+  "JsonItemExporterTest.test_nested_item": "PASSED",
+  "JsonItemExporterTest.test_serialize_field": "PASSED",
+  "JsonItemExporterTest.test_two_dict_items": "PASSED",
+  "JsonItemExporterTest.test_two_items": "PASSED",
+  "CustomItemExporterTest.test_exporter_custom_serializer": "PASSED",
+  "PythonItemExporterTest.test_export_binary_dict_item": "PASSED",
+  "PythonItemExporterTest.test_export_binary_empty_fields": "PASSED",
+  "PythonItemExporterTest.test_export_binary_serializer_output": "PASSED"
+ },
+ "positive_control": "runs/r2e_actor_20260925/grader_cands/scrapy_e938_C1_bytes_keys_when_binary.patch",
+ "acceptance": {
+  "C1": {
+   "expected_score": 1,
+   "trial": "trials/draft_C1.json",
+   "trial_verdict": "match 65/65（复跑 trials/draft_C1_r2.json 同为 match）"
+  },
+  "RC2": {
+   "expected_score": 1,
+   "trial": "trials/draft_RC2.json",
+   "trial_verdict": "match 65/65"
+  },
+  "noop": {
+   "expected_score": 0,
+   "trial": "trials/draft_noop.json",
+   "trial_verdict": "mismatch：test_export_binary、test_export_binary_dict_item、test_export_binary_empty_fields、test_export_binary_serializer_output 四键 PASSED→FAILED"
+  },
+  "gold": {
+   "expected_score": 0,
+   "trial": "trials/draft_gold.json",
+   "trial_verdict": "mismatch：test_export_binary_empty_fields（TypeError got NoneType）、test_export_binary_serializer_output（TypeError got int）两键 PASSED→FAILED"
+  },
+  "C2": {
+   "expected_score": 0,
+   "trial": "trials/draft_C2.json",
+   "trial_verdict": "mismatch：仅 test_export_binary_dict_item PASSED→FAILED（当前材料下为 match 62/62，见 trials/cur_C2.json）"
+  },
+  "C3": {
+   "expected_score": 0,
+   "trial": "trials/draft_C3.json",
+   "trial_verdict": "mismatch：test_nested_item、test_export_list、test_export_item_dict_list 三键 PASSED→FAILED（与修订前相同）"
+  }
+ }
+}

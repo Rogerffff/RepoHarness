@@ -1,0 +1,47 @@
+{
+  "image": "sha256:9d63f1ddcbd277fa62d49e10d800908cfec54544e890fc5fe741d2101ca8eb7e",
+  "python_prefix": "/opt/miniconda3/envs/testbed",
+  "cpus": 2,
+  "memory": "4g",
+  "files": {
+    "gold.patch": "/work/rh2-category2-20261003/packages/swe_mypy/input_v1/original/python__mypy-10174/private/gold.patch",
+    "effective.patch": "/work/rh2-category2-20261003/packages/swe_mypy/input_v1/proposals/python__mypy-10174/private/effective_test.patch",
+    "bad.patch": "/work/rh2-category2-20261003/packages/swe_mypy/input_v1/proposals/python__mypy-10174/private/disable_non_strict_comparisons.patch"
+  },
+  "variants": {
+    "base": [
+      "git apply --check /in/effective.patch",
+      "git apply /in/effective.patch"
+    ],
+    "gold": [
+      "git apply --check /in/effective.patch",
+      "git apply /in/effective.patch",
+      "git apply --check /in/gold.patch",
+      "git apply /in/gold.patch"
+    ],
+    "bad": [
+      "git apply --check /in/effective.patch",
+      "git apply /in/effective.patch",
+      "git apply --check /in/bad.patch",
+      "git apply /in/bad.patch"
+    ]
+  },
+  "commands": [
+    {
+      "id": "identity",
+      "cmd": "set -e\nexport PYTHONPATH=/testbed\npython - <<'PY'\nimport sys,pathlib,mypy.messages,mypy.checkexpr\nprint('PYTHON='+sys.executable)\nfor m in (mypy.messages,mypy.checkexpr):\n print(m.__name__+'='+str(m.__file__))\n assert pathlib.Path(m.__file__).resolve().is_relative_to('/testbed')\nPY\ngit rev-parse HEAD",
+      "timeout_s": 120
+    },
+    {
+      "id": "collect",
+      "cmd": "PYTHONPATH=/testbed python -m pytest --collect-only -q --color=no -p no:cacheprovider mypy/test/testcheck.py -k 'testStrictEqualityWithFixedLengthTupleInCheckWithoutStrictOptional'",
+      "timeout_s": 300
+    },
+    {
+      "id": "case",
+      "cmd": "PYTHONPATH=/testbed python -m pytest -n0 -rA --color=no -p no:cacheprovider mypy/test/testcheck.py -k 'testStrictEqualityWithFixedLengthTupleInCheckWithoutStrictOptional'",
+      "timeout_s": 300
+    }
+  ],
+  "scope": "冻结private_behavior入口的私有root诊断；不是actor资格、新修订正式评分或探针"
+}

@@ -1,0 +1,124 @@
+{
+  "instance_id": "orange3__9b5494e26f407b75e79699c9d40be6df1d80a040",
+  "status": "prepared_not_run",
+  "expected_key_count": 13,
+  "fixed_material": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/9b5494e2/revision_draft.json",
+    "sha256": "sha256:13e4b46d4ea26885ea9bee70ab5cc64325880540decbf9500a77603568e950fa"
+  },
+  "env_reset_timeout_seconds": 1200,
+  "budget_note": "这是grader基线重建/控制面准备预算，不是模型求解时限；在最终consumer核实际生效值。",
+  "shared_runner_ref": "rh2/experiments/r2e_lifecycle_20260929/replay_grade_budget.py / rh2/scripts/replay_grade.py",
+  "machine_resource_entry": "由总协调正式入口提供；本文件不含SSH或凭据。",
+  "candidates": [
+    {
+      "candidate": "noop",
+      "patch": null,
+      "expected_score": 0,
+      "purpose": "原L1失败",
+      "observed_score": null
+    },
+    {
+      "candidate": "gold",
+      "patch": {
+        "path": "runs/r2e_static_prep_20260924/v3/private/orange3__9b5494e26f407b75e79699c9d40be6df1d80a040/gold.patch",
+        "sha256": "sha256:162ad8b40ffa96b9a4538bd7a8a44d3d1616b40d11ebab0a2235e1220d8d24f4"
+      },
+      "expected_score": 1,
+      "purpose": "正确solver修复",
+      "observed_score": null
+    },
+    {
+      "candidate": "V1",
+      "patch": {
+        "path": "runs/r2e_actor_20260925/grader_cands/orange3_9b54_OR1_keep_lbfgs_switch_for_l1.patch",
+        "sha256": "sha256:396487018a5b67eef7d8d0785bc83ab71283cc027cc46777756aa9c237315dd6"
+      },
+      "expected_score": 1,
+      "purpose": "无auto哨兵的合理解",
+      "observed_score": null
+    },
+    {
+      "candidate": "V3",
+      "patch": {
+        "path": "runs/r2e_actor_20260925/grader_cands/orange3_9b54_OR2_auto_sentinel_saga_for_l1.patch",
+        "sha256": "sha256:3d05c2c8869c4dc7ad7cfc66aaf5d6d5a99a3c8a8e50db34a6723c246f5a835a"
+      },
+      "expected_score": 1,
+      "purpose": "L1用saga的合理解",
+      "observed_score": null
+    },
+    {
+      "candidate": "V4",
+      "patch": {
+        "path": "runs/r2e_actor_20260925/grader_cands/orange3_9b54_V4_resolve_in_fit.patch",
+        "sha256": "sha256:825529c1ff97393474a69e26fff0d64a7203f9148bb9da5d7ae7fd29bd039d6c"
+      },
+      "expected_score": 1,
+      "purpose": "拟合时解析",
+      "observed_score": null
+    },
+    {
+      "candidate": "V5",
+      "patch": {
+        "path": "runs/r2e_actor_20260925/grader_cands/orange3_9b54_V5_mapping_table.patch",
+        "sha256": "sha256:63af6eef082dc404911dd9a7d382087c6c29d133660aea6d73bf9e431cc4aa38"
+      },
+      "expected_score": 1,
+      "purpose": "映射表选择",
+      "observed_score": null
+    },
+    {
+      "candidate": "W1",
+      "patch": {
+        "path": "runs/r2e_actor_20260925/grader_cands/orange3_9b54_W1_gold_silently_drop_l1.patch",
+        "sha256": "sha256:b32a5a9bcc016fb11218311c7b9900e97cbc32542db8c0ea99e8d397021d4fcd"
+      },
+      "expected_score": 0,
+      "purpose": "不得静默改penalty",
+      "observed_score": null
+    },
+    {
+      "candidate": "V7",
+      "patch": {
+        "path": "runs/r2e_actor_20260925/grader_cands/orange3_9b54_V7_default_liblinear.patch",
+        "sha256": "sha256:e3248d441d54e5d7a9ac8796db24bf3f02053c9589f6cc96325a037e3ae0833a"
+      },
+      "expected_score": 0,
+      "purpose": "不得改变默认solver",
+      "observed_score": null
+    },
+    {
+      "candidate": "P1",
+      "patch": {
+        "path": "runs/r2e_actor_20260925/grader_cands/orange3_9b54_P1_resolve_in_init.patch",
+        "sha256": "sha256:d6717cb60f1724d8ae035501ed85a7a5e8e7cabcedf9a998afb928a050817144"
+      },
+      "expected_score": 0,
+      "purpose": "保留公开默认repr",
+      "observed_score": null
+    },
+    {
+      "candidate": "G1",
+      "patch": {
+        "path": "runs/r2e_actor_20260925/grader_cands/orange3_9b54_G1_gold_plus_multiclass_ovr.patch",
+        "sha256": "sha256:00ba0b7c7801406092c899e5d89a5359f6441f93abe426cfad8dc4d98a630666"
+      },
+      "expected_score": 0,
+      "purpose": "新增默认multinomial关系拒绝OvR回归",
+      "observed_score": null
+    }
+  ],
+  "acceptance_requires": [
+    "固定新版材料与镜像/配方/consumer",
+    "补丁成功应用和对应源码/产物确被加载",
+    "精确键集与完整日志",
+    "失败来自目标断言而非环境故障",
+    "实际准备预算与清理证据",
+    "非作者修订/证据复核",
+    "受影响公开开发路径与实际题面交付"
+  ],
+  "extra": [
+    "先在base/gold确认默认与显式multinomial的概率关系与容差；不能照抄gold常量或绕过环境绑定。"
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "scope": "conditional_future: no network implementation; local Bash and current renderer/parser, test command is a text fixture",
+  "task": "getmoto__moto-6913",
+  "original_shell_prologue": [
+    "#!/bin/bash",
+    "set -xo pipefail"
+  ],
+  "tail_markers": [
+    ": '>>>>> Start Test Output'",
+    ": '>>>>> End Test Output'"
+  ],
+  "cases": {
+    "single_shell_control": {
+      "exec_rc": 0,
+      "start_marker_present": true,
+      "end_marker_present": true,
+      "apply_ok": true,
+      "num_parsed_tests": 18,
+      "carried_export_and_function": false,
+      "accepted_by_manager_parser": true
+    },
+    "carry_without_shell_options": {
+      "exec_rc": 0,
+      "start_marker_present": false,
+      "end_marker_present": false,
+      "apply_ok": false,
+      "num_parsed_tests": 0,
+      "carried_export_and_function": true,
+      "accepted_by_manager_parser": false,
+      "category": "test_log_parse_failed",
+      "detail": "official_bad_codes_after_successful_replay"
+    },
+    "carry_with_explicit_test_prologue": {
+      "exec_rc": 0,
+      "start_marker_present": true,
+      "end_marker_present": true,
+      "apply_ok": true,
+      "num_parsed_tests": 18,
+      "carried_export_and_function": true,
+      "accepted_by_manager_parser": true
+    }
+  }
+}

@@ -1,0 +1,105 @@
+source	key	action	blocker	confirmed	suspected	situation	next_action
+SWE	conan-14177	3	scope	P	T,G	公开 verbose 开关与 gold／测试接口冲突；尚未做两文件和显式开关对照。	核默认、False、True 的公开行为，确定应修题面还是验收，再做候选对照。
+SWE	conan-15422	1	audit	C		真实得 1 的候选漏掉默认 jobs 或多配置路径；开发工具与 G1 exec 已修。	沿已授权 jobs／schema 审计做受限探针，原 reward 与完整语义分列。
+SWE	dask-8597	1	condition	E	B	pytest 已修，公开数组路径和六次模型成功有证据；distributed 与旧 Dask 仍有依赖冲突。	用已验配方做限定数组范围探针；不把该冲突外推成所有开发操作失败。
+SWE	dask-8801	3	diagnostic		T,B	参考锁异常文案和形态；完整合理替代解是否被误拒尚未验证。	只改同义措辞并保留路径、类型和原因，运行公开行为及正式评分。
+SWE	dvc-1681	1	condition	P	T	原例依赖旧版本产物，现有公开替代复现可用；已获保留此限制的比较决定。	记录模型是否自行构造有效复现；出现等价元数据实现时再查内部表示约束。
+SWE	dvc-3576	3	diagnostic		T	怀疑测试强制内部 helper，命令层合理修复的接受性未证。	对照 base、gold、命令层替代解的真实 CLI 输出与正式得分。
+SWE	dvc-3620	3	diagnostic		C	存在解除链接却丢数据的漏判疑点，尚无正式退化对照。	用非空文件验证断链、写入及缓存不变，再校准原评分。
+SWE	dvc-3665	3	diagnostic	B	T	测试强制内部 helper；Linux 运行不直接覆盖 Windows 行为，实际误拒未证。	核合理内联解的公开路径与原评分；保留平台范围，不直接改验收。
+SWE	dvc-4166	1	condition		B,R	pathspec 与 networkx 开发修订已验；需要固定与 grader 一致的版本及初态。	使用已验配方继续受限探针；候选涉及目录规则时做成对语义核对。
+SWE	dvc-4185	3	diagnostic		G	题面包含 status 和 commit 两个症状，gold 是否仅修一个仍未实测。	重载仓库后对照两症状，并用实际改值作为正控制。
+SWE	dvc-4785	3	scope	P	C	公开 raise_for_status 与 CLI 异常约定存在范围分歧；HEAD／GET 控制未执行。	先核 405→404、405→200 行为，再明确允许的外部异常契约。
+SWE	dvc-5839	1	condition		B	开发依赖已修；模型失败已确认为舍入语义过度修改，没有已证评分假阳性。	复用有效环境和数值审计继续探针；硬编码退化验证留作训练准入补充。
+SWE	dvc-6954	1	condition		B	pygit2 已补；六条有效模型尝试通过公开数值与锁文件检查，另一次为 infra。	用有效评分分母继续探针；不把无依据的非法输入行为新增为要求。
+SWE	dvc-9395	3	diagnostic		G	怀疑 pull 加 dry-run 仍有副作用，尚无文件快照反例。	本地 remote 下比较 base／gold 的 dry-run、非 dry-run 和无 remote 控制。
+SWE	mypy-10174	1	condition		C	公开开发验证通过；过宽关闭比较检查只是尚未运行的疑点。	继续条件性探针，对得 1 补丁检查真实不重叠比较。
+SWE	mypy-10308	1	condition		B	缺 fixture 已由 materials_v2 修复，公开开发测试可运行。	固定修订材料做探针；训练前补非示例与过度放宽约束控制。
+SWE	mypy-10424	1	audit	C,R		关闭收窄的错误补丁得 1，公开回归四项失败；安装子命令 rc=1 曾被段末 rc=0 掩盖。	沿已授权普通收窄后检做受限比较；干净安装及 D6 参考修订另收口。
+SWE	mypy-11236	3	scope	P	T	Final 和诊断文本要求仍有范围分歧；六个模型失败中也混有真实不完整修复。	明确 Final 与文案的公开要求，保留真实失败与疑似误拒的分离证据。
+SWE	mypy-11707	3	scope	P	C	模块别名重导出的公开目标方向未定，不能按 gold 反推规范。	核两种导入、真实子模块的四文件矩阵，形成具体范围选择。
+SWE	mypy-12417	3	diagnostic		T	不同错误恢复方式可能被拒，尚无完整合理候选和 actor 对照。	先核原例及可接受恢复边界，再做替代解评分。
+SWE	mypy-15139	3	scope	C,P		恒小写补丁得 1 却破坏旧版／force-uppercase；gold 的 reveal 显示仍未覆盖题面全部读法。	确定显示范围，再接入已构造的旧行为保护并复验。
+SWE	mypy-15184	1	condition	P	B	题面原例在 base 上已成功；公开替代复现可用，已决定保留该限制。	做需自行复现的条件探针；训练前补有效正例保护。
+SWE	mypy-16869	1	condition		T,G	stubgen 开发路径可用；等价 Unpack 输出接受性及生成桩完整性尚有疑点。	继续条件探针，审实际生成桩；不把原有私有名过滤直接判新回归。
+SWE	mypy-16963	3	diagnostic	B	C	TypedDict 多类分支与返回精度覆盖有限，过宽返回 Any 的误奖未证。	跑完整公开多类例及返回精度控制，同时取得 actor 证据。
+SWE	mypy-17071	1	audit	C,R		禁用 unbound 检查可得 1，却接受真实未绑定类型；安装子命令失败仍需单列。	沿已授权真正 unbound 负例审计做受限比较；训练前接入负向参考。
+SWE	moto-5134	1	condition	B		SDK 已对齐；成功候选经 14 项行为和 103 项回归核对，archive／replay 未纳正式评分。	恢复同配方镜像并预登记现有审计，继续受限探针。
+SWE	moto-5406	2	repair	C		恒返回 East2 ARN 的错误补丁得 1；公开 East1 行为失败。	把已有双地区断言接入有版本的 SWE 修订机制，复验正确／错误对照。
+SWE	moto-5752	3	scope	P	T	题面未写 BeginsWith，但参考要求该行为；已有决定仅作诊断。	核公开过滤契约，明确保留现范围、补说明或修改验收的版本方案。
+SWE	moto-5960	1	audit	C,R		GSI KEYS_ONLY 核心断言缺失；参数节点合键已见，尚未造成当前对照错分。	沿既有受限比较规则单独审 INCLUDE／KEYS_ONLY；训练前修核心覆盖。
+SWE	moto-6114	2	repair	C		按 B ARN 返回 A、数量仍为 1 的错误补丁得满分。	新增对象 Identifier／ARN 身份断言，经 D6 版本入口复验。
+SWE	moto-6185	3	diagnostic	R	G	参数节点合键已证；深层合法属性在 gold 下是否退化尚未运行。	先对合法嵌套值做 base／gold Put/Get 对照，再处理实际失败。
+SWE	moto-6408	1	condition	C		公开开发条件可用；首项断言未完整约束 tag 归属，尚无错误候选得分证据。	继续有边界说明的探针，审新建／已存在 manifest 的完整对象集合。
+SWE	moto-7584	3	diagnostic	P	G	公开先订阅再删除再订阅的序列与 gold 控制流存在静态冲突。	执行该公开序列和正式评分，确定是 gold 遗漏还是规格解释问题。
+SWE	pandas-48106	1	condition	R	B	安装及三组 Period 绑定已修；两组 tz 别名仍合键，当前成员均通过。	固定 meta_v3 与绑定输入做条件探针；有混合状态时先查聚合，不按总分放行。
+SWE	pandas-50319	2	repair	T,R		题面明示返回 None 或猜出格式均可，测试仅接受格式；另有参数合键记录。	构造保留其它行为的 None 路线，按公开允许范围修验收并做正负对照；不再仅以 P5 暂挂。
+SWE	pandas-51605	3	diagnostic		G,B	gold 对 iterator 的相邻合法输入有强静态回归线索，未实跑。	每次新建 iterator 做 base／gold 对照，再决定参考修复及验收。
+SWE	pandas-53958	3	scope	P,O,C		题面是在征求 _libs 或 api.typing 的选择；公开旧名单与新增导出冲突已实测，身份断言也偏弱。	先明确公开命名空间目标，再做 singleton 误导出对照；保留旧池身份但不视为条件已解除。
+SWE	pandas-56849	1	condition	R	T	Cython 重编及相关公开测试已验；参数合键已证，同义 warning 误拒仍待候选验证。	按真实重编路径继续条件探针，遇文案差异单独审查。
+SWE	pydantic-5706	3	scope	C,P		转 list 的错误修法得 1 并破坏旧 Sequence 行为；JSON 应支持还是拒绝仍有分歧。	先定 JSON 范围，再接入保持 Python Sequence 行为的正式断言。
+SWE	pydantic-8511	1	audit	C,G,R		gold 在字段继承组合引入 TypeError，窄修可用；两者原评分均 1，安装也并非全成功。	沿已授权继承组合审计做受限探针；后续用窄修作正对照收口安装和 D6。
+SWE	MONAI-2446	2	repair	C		NiBabel 开发缺口已修；只保外部数组顺序、破坏内部 shuffle／cache 的补丁得 1。	将已有同输入内外行为对照接入版本化验收并复验。
+SWE	MONAI-3715	2	repair	C		公开 train 目标没有决定性验收，当前主要覆盖 eval。	补 forward 时 training／梯度及退出恢复的行为断言；核 actor 后验正确与退化候选。
+SWE	MONAI-5686	3	positive_control	C	G	梯度断言偏弱；源码显示 gold 多通道递归仍 detach，需要运行确认及完整正对照。	用 B1C1／B1C5 输入核 backward 和 y.grad，找到满足公开要求的替代修复。
+SWE	MONAI-1121	3	scope	C,D,P		题面要求补所有网络测试，现有验收范围及不交付测试文件的方式不一致。	先确定合法交付和网络模型范围，核实际公开消息，再修材料与投影安排。
+SWE	MONAI-3566	3	scope	P,C		LoadImage 默认示例与隐藏 series_meta 接口不一致，验收仅查单一标签。	明确公开接口和默认行为，再对真实 DICOM 标签与几何做版本化验证。
+SWE	MONAI-4583	2	repair	C	R	只修 2D 的补丁得 1，公开稀疏 3D 标签仍错误；CPU 范围已固定。	纳入已跑的 2D／3D 标签及 dtype 断言，保留 CPU／CUDA 身份条件。
+SWE	MONAI-5932	2	repair	C		反转顺序的错误修法得 1，另一长短引用顺序失败。	将已有双顺序、真实解析值对照纳入验收并复验。
+SWE	MONAI-6975	2	repair	C	T	退化补丁正确打印 lazy／resample 信息却丢掉返回图像，仍得 1。	按已跑 direct／Dataset 矩阵核实际像素并修验收；沿用验证过的准备预算。
+SWE	conan-11594	2	repair	C	T	Ninja 已补；Release 变 Debug 的错误补丁仍得 1。	补真实构建配置及执行 marker 验收，避免只核命令字符串。
+SWE	conan-13230	2	repair	C	T	Android-only 修法得 1，公开 Linux host 路径仍生成错误 xcrun flags。	用真实双 profile 的 Linux flags 对照补验收，不安装无关 SDK。
+SWE	conan-13721	3	scope	C,P		realpath 导致两条软链入口名丢失仍得 1；带后缀 profile_name 语义未定。	先补无争议双软链断言，同时明确后缀规则后确定整题用途。
+SWE	conan-11560	3	scope	P,C	T	隐藏测试固定 Bazel 注释与空白，真实多库链接及外部重排序契约未明。	核可复现链接流程，区分要求的行为与建议实现，再制定验收。
+SWE	conan-12397	2	repair	C		cpp 键匹配不完整、Linux native Clang 路径缺测，公开目标明确。	按完整键名检查 Apple／Linux 生成结果，验证只修 objcpp 的错解被拒。
+SWE	conan-13403	3	diagnostic	C	T,G	唯一 F2P 锁 chdir mock；gold 可能破坏旧 autoreconf(args) 位置参数。	执行 base／gold／保留 args 首位的实现，核真实 cwd、命令与恢复。
+SWE	conan-13610	3	scope	P,G,B		gold 改裸 -v 行为却留下旧 help；默认、裸 -v、显式 verbose 的目标未定。	以公开帮助与接口行为形成明确范围方案，再修帮助及验收。
+SWE	conan-13788	3	diagnostic	B	G,P	构建工具的普通依赖在锁重放下有具体 gold 回归疑点，尚未运行。	按 root→build T→ordinary D 的双 profile 图做真实锁重放。
+SWE	dask-6626	1	condition	E	B	pytest 已修，runner 差异已归因；所测 object dtype 退化被原参考正确拒绝，依赖组合仍有限制。	作为新增题级候选核统一探针入口；不将 CPU 完成等同 GPU 或训练批准。
+SWE	dask-7656	2	repair	C,H		错误候选改变传给 delayed 函数的 dataclass 参数类型仍得 1；题面自带修法提示。	把已有类型及字段值行为断言接入正式验收，报告提示程度。
+SWE	dask-9378	3	diagnostic		C	MaskedArray 的 mask equality 断言有具体疑点，错误 mask 是否得分未证。	保持 shape／dtype／值正确只改 mask，核正式得分及显式 mask 比较。
+SWE	dask-6801	3	diagnostic	P,C	T,G	公开调用计数与测试图结构代理不一致，gold 的 infer 采样遗漏需确认。	分阶段统计普通／infer 公开例，再决定行为验收及正对照。
+SWE	dask-7138	2	repair	G,B,H		gold 重命名参数会破坏旧 array= 调用；题面包含修法提示。	保留旧关键字签名验证兼容实现，加入该回归控制并核 actor。
+SWE	dask-7305	3	diagnostic	P,C	T,G	小整数 F2P 与公开大整数端点目标错位，新增单分区例缺乏区分力。	直接核大整数 partition_quantiles 的端点、dtype 和不同分区数。
+SWE	dask-7894	3	diagnostic	B	G	drop_axis／new_axis 组合存在静态映射风险，真实后果未验证。	对照 lazy shape／chunks 和实际数组，再判断 gold 回归与补测范围。
+SWE	dask-9212	3	diagnostic	B,H	G	不同模块同名 Enum 的归一表示碰撞已静态定位，任务图后果待验证；题面含核心修法。	在同一 pure delayed 函数上核 token、key 和计算输出。
+SWE	pydantic-5386	3	scope	P,C		新增 hook 名称和时机未公开明确，题面示例也有语法问题，字段就绪核心行为缺测。	明确有公开依据的 hook 契约，修中性题面并补字段可用性验收。
+SWE	pydantic-6283	2	repair	C		验证式构造退化已被原 P2P 拒绝，但目标相等性仍只直接验示例；非 42 控制已跑。	保留不验证构造护栏，补已验证的非示例相等性及必要私有字段组合。
+SWE	pydantic-8567	3	positive_control	C,G		gold 修原例却使普通 Custom＋PlainValidator 类构建失败；尚无已验证替代正对照。	准备保持该公开能力的窄修，先独立验证，再补精确值／JSON 及回归断言。
+SWE	pydantic-5662	2	repair	C		ANY-only 修法得 1，一般 matcher 委托仍错误。	将已验证的一般 matcher 与 dict／object 控制接入验收。
+SWE	pydantic-6043	3	scope	P,C		递归排序与旧 properties 字段保序优先级未明，唯一断言不能覆盖一般排序。	明确字段序契约，再设计递归／批量行为验收。
+SWE	pydantic-8316	3	diagnostic	B	G,P	gold 删除大写→数字分隔，可能改变 A1／API2 的 alias key；兼容范围未核。	对照 HTTPResponse、数字边界及 alias 模型填充／导出，明确实际影响。
+SWE	pydantic-8793	2	repair	C		强制 required 的补丁得 1，却破坏公开默认值 5 和两项旧测试。	补已有默认值及旧行为断言，经正式版本入口复验。
+SWE	pydantic-9066	3	positive_control	C,G		gold 修 IP 默认值却使标准 dataclass 默认实例的 schema 生成失败。	找到兼容两类默认值的有效正对照，再纳入既有 dataclass 回归。
+R2E	aiohttp__1c1c0ea3	1	condition	B		示例拟合缺口已修；Ctrl+C 后吞 cleanup 错误的 S2 候选仍得 1。	用修订版进入探针，保留已登记 cleanup 后检及同仓划分限制。
+R2E	aiohttp__22a12cc2	1	condition	P,B	T	TLS 核心漏判／误拒已修；题面非法指纹示例和漏写代理条件仍在，已有 P4 限定。	沿准入卡的受限解释与 fingerprint 后检做探针；训练前另核构造器退化。
+R2E	aiohttp__61833518	1	condition	P,B,E		chunked 核心验收已修；题面断言无效、真实 socket 路径有旧版本兼容限制。	用已验写出器路径探针，保留脏初态及有效公开命令。
+R2E	coveragepy__97997d2c	1	condition	B,P	T	paths 的配置与 combine 验收已补；题面报错位置有误，部分插件边界未覆盖。	使用修订材料继续探针，出现替代转发实现时核接受性。
+R2E	coveragepy__ea6906b0	1	condition	B,G		gitignore 与无数据核心检查已补；gold 覆盖用户已有 gitignore 的边缘问题仍登记。	继续修订版探针并保留覆盖旧文件的审计；不是所有边界都已修完。
+R2E	datalad__19f5b450	1	condition	P,B,E	T	退出码验收已修；文档／原例导入仍有偏差，HOME 无 git 身份，评分在 1200 秒准备预算下验收。	确认目标机预算，沿已验 git 配置和退出码路径探针；stderr 读法单列。
+R2E	numpy__18b7cd9d	1	condition	B,H		poly1d 核心比较验收已修；题面明示修法，长度及其它输入边界仍有限制。	用修订版及已验证语义后检，标注提示程度。
+R2E	numpy__5e8301c2	1	condition	B		广播验收已修，原 gold 缺陷已有替代正对照 C-A；多操作数等边界未扩。	探针和环境健全性检查使用 C-A，不再要求原 gold 满分。
+R2E	numpy__a5ea773e	1	condition	B,E		tile 核心断言已补；少量 reps 形式未测，公开 ctypeslib 有无关错误。	使用已验相关开发命令和修订版，不把无关错误计模型失败。
+R2E	orange3__4014f248	1	condition	B,P		编译环境和核心退化验收已修；小量级容差合并仍有 S2 风险，准备预算为 1200 秒。	统一编译导出入口与目标机预算后探针，保留小量级审计。
+R2E	pandas__32dd55cb	1	condition	B,G,O		均值／sum 误拒与漏判已修；旧公开名单式断言冲突及题外 numeric_only=False gold 问题仍登记。	用修订版探针，按公开测试冲突规则判读，避免把原 gold 当通用正确性保证。
+R2E	pillow__3a61c9e9	1	condition	B	G	调色板核心四处漏测已补；其它插件／显式 palette 边界仍有限制。	用修订版探针，涉及调色板时按调用前快照审计。
+R2E	pillow__3ac9396e	1	condition	B,P,E		混合有理数序列验收已补；题面归因不准，旧 pytest 辅助不兼容但 unittest 路径可用。	沿已验替代开发命令探针，不把 LONG→SHORT 当无依据的新缺陷。
+R2E	scrapy__75450e75	1	condition	B,P,E		异步抓取核心验收已修，使用 K1 替代会挂起的 gold；部分公开测试受 Twisted 版本限制。	固定 K1 正对照与已验入口，区分题面措辞和真实异常行为。
+R2E	scrapy__9a15fcf8	1	condition	B,O,E		死键和核心覆盖已修；旧公开 header 测试仍失败，抓取测试有依赖兼容限制。	使用修订版，模型修旧 header 行为不算越界，保留未覆盖边界。
+R2E	scrapy__e9387529	1	condition	B,E		dict／serializer 核心检查已补，采用 C1 替代有回归的 gold；无关抓取测试仍不兼容。	固定 C1 作正对照，按已定非文本值语义分析补丁。
+R2E	aiohttp__240da100	1	condition	B,P,E		端口与 CONNECT 核心漏判已修；原例导入／协程兼容有误，部分公开文件不能收集。	用已验 mock 开发路径和修订版探针，原期望 FAILED 键保持来源语义。
+R2E	numpy__d805e9b6	1	condition	B,P		打印阈值验收已修，K-A5b 替代静默丢值的 gold；题面 Actual 和未测阈值族仍有局限。	固定 K-A5b 作正对照，出现同族静默丢值即回流复核。
+R2E	numpy__d89bc4bb	1	condition	B,E		三处漏判与一种浮点误拒已修；公开整文件有 nose-setup 兼容错误，部分运算边界未扩。	使用修订版及已验命令做探针，末位误差另审，保留旧 API 中立范围。
+R2E	coveragepy__5dbbe143	3	scope	P		与读法无关的漏测已修；去重应按 slug 还是消息仍未定。	核公开依据后明确一种或允许范围，完成对应题面／验收版本，不重复已验 R-c。
+R2E	orange3__22e98f8f	2	closeout	H,P		题面含答案及错误 Actual；删除答案的草案已审，退化候选已正式被拒。	让新公开读者验修订题面，落版本并核实际交付及准备预算。
+R2E	orange3__9b5494e2	2	implementation_dependency	C,R		核心验收仍需窄补；新 material 配方摘要与批准绑定不兼容。	补已指出的 G1 回归断言，修共用摘要绑定后完成候选矩阵与卡片。
+R2E	pillow__2b061b68	3	positive_control	C,P,G,E		题面及格式限制验收有缺陷；gold 新进程 PCX 路径也失败，兼容警告检查会掩盖回归。	先核支持一般格式的替代正对照，合并核心断言／题面修订并由新公开读者验收。
+R2E	aiohttp__4075c653	2	closeout	G		正式七方及 actor 七命令均已完成；新版 gold 为 0，四种替代实现为 1，尚缺最终卡。	读取已回传完整证据、封存替代正对照与当前材料身份，补卡；不重跑已结束矩阵。
+R2E	coveragepy__f5eb5f21	3	scope	P	T	核心漏测已修；每文件 summary 能否增加两个统计字段仍有公开范围分歧。	明确允许的字段范围，再按已有窄 R-b 草案或保留范围完成验收。
+R2E	datalad__16c1ffc3	3	scope	P,C		R-c 草案可行；过滤器收到显式 dataset=None 是否应等同未传尚未裁定。	区分 CLI 与 Python API 公开契约，确定范围后一次落修订，避免重复改同一目标。
+R2E	datalad__6b6fa389	2	repair	C,T,G		合理 URL 解 C-A 得 0，绕过实际解析的 D-eq 得 1；gold 还存在边缘回归。	完成独立复核，将字段直查、非示例及合理分类约束修订后跑正式矩阵。
+R2E	orange3__50f6a758	2	repair	C,T,P,O		全列变量名被误拒，多种不警告错解得 1；题面症状及旧公开断言也有偏差。	落实窄 R-b＋R-c，完整审阅 C-deg 并复验；补最终卡。
+R2E	pandas__4ec87eb9	3	scope	C,P,R		新 D1 仍得 1；dtype 选择有分歧，二次修订还卡在同目标版本机制。	先明确 dtype 允许范围和新版修订策略，再接入已有插值反例；保留历史版本。
+R2E	pillow__2d01f7d0	2	repair	E		正式九方已完成，FillOrder 误拒修订有效；两项公开测试仍因 pytest.warns(None) 失败。	修开发兼容或验证等效命令，审已完成证据后补卡；不把 devcheck 写成全过。
+R2E	pillow__4bc64835	3	scope	C,P		新反相测试草案有效，但题面 color=1 应黑还是仍白有语义分歧，最新复核整题暂挂。	先核并确定非规范二值输入语义，再选择正对照与正式验收范围。
+R2E	scrapy__a95a338e	2	repair	C,G,R		partial 包装绑定方法仍需覆盖，原 gold 不能作完整正对照；警告死键需恢复有效。	核最新版草案／试跑摘要，使用 C1 完成剩余矩阵、复核和材料落地。

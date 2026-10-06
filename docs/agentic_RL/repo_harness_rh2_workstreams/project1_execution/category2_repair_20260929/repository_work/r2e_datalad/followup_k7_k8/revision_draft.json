@@ -1,0 +1,80 @@
+{
+  "status": "draft_not_published",
+  "as_of": "2026-10-03",
+  "intended_operation": "hidden_test_text_replace",
+  "proposed_revision": {
+    "revision_id": null,
+    "instance_id": "datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb",
+    "kind": "hidden_test_text_replace",
+    "target": "test_1.py",
+    "edits": [
+      {
+        "old": "    eq_(output, ('http://map.org/api/download/', {'id': '98', 'code': '13'}))\n",
+        "new": "    eq_(output, ('http://map.org/api/download/', {'id': '98', 'code': '13'}))\n\n    # 公开爬虫模板允许 URL 式 query；参数里的冒号不是 SSH 主机分隔符。\n    eq_(parse_url_opts('openfmri_s3?_url=s3://b/k'),\n        ('openfmri_s3', {'_url': 's3://b/k'}))\n"
+      },
+      {
+        "old": "    eq_(str(URL(**_u.fields)), 'example.com/path/sp1:fname')\n",
+        "new": "    eq_(str(URL(**_u.fields)), 'example.com/path/sp1:fname')\n\n    # 绝对本地路径中的冒号必须保留；不能把目录部分解释成 SSH 主机名。\n    _check_url('/some/dir:x', scheme='file:implicit', path='/some/dir:x')\n"
+      }
+    ],
+    "sha256_before": "sha256:161f9d3b7bafc365932249ad934aa9f17ef12ff90d88b2ee7683605ccd05a3bd",
+    "sha256_after": "sha256:7649b82fb114a9bbdfa3a73148c4d8f1ee8bed926dd2d7853c6385379b88c8b6",
+    "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/followup_k7_k8/private/hidden_tests/test_1.py",
+    "expected_change": null,
+    "decision_ref": "task_screening_standard_v1_20260925.md §5 R-c/D4；remaining_workflow_20261002.md §2–4；用户已授权题主端到端修订",
+    "reason": "保护已被公开读者与历史执行证实的绝对本地路径和crawler模板query旧行为。065仍会放行有这些回归的gold；有效替代正对照C-A已有065 CPU成绩1。仅加两条直接行为断言，保留065全部约束与17键期望。",
+    "evidence": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/cpu_acceptance_20261003.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/cpu_result_review_20261003.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/public_read.md#1.2 应保留的旧行为",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/old_findings_delta.md",
+      "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/pcheck_public4_gold.json",
+      "runs/r2e_lifecycle_20260929/inv/datalad_6b6f/pcheck_public4_CA.json"
+    ]
+  },
+  "registration_pending": {
+    "revision_id": "由共用发布者分配",
+    "revised_file": "发布者移入允许的 s2_r2e/revisions/ 正式路径",
+    "frozen_material_version": null
+  },
+  "parent": {
+    "snapshot": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_datalad/private",
+    "base_commit": "2753d4722fbf88015c59135f246b2cac82389612",
+    "hidden_tests_tree_sha256": "sha256:7c0a5adcca94e3747a8ff2b0bbab7ea94eba162526e036d5e6a1ddf7460c5e6c",
+    "full_test_sha256": "sha256:161f9d3b7bafc365932249ad934aa9f17ef12ff90d88b2ee7683605ccd05a3bd",
+    "expected_output_json_sha256": "sha256:15da45bafd393ca47e0f732decf3079f3fe8c55f43b58359ba4795095d6dccb9",
+    "material_revisions": [
+      "r2e-mr-065"
+    ],
+    "cpu_release_id": "cat2-cpu-r2e064065-swe5-20261003-v1"
+  },
+  "unchanged": {
+    "expected_output_json_sha256": "sha256:15da45bafd393ca47e0f732decf3079f3fe8c55f43b58359ba4795095d6dccb9",
+    "expected_key_count": 17,
+    "public_bundle": "runs/r2e_static_prep_20260924/v3/public/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/public_bundle.json",
+    "public_bundle_sha256": "sha256:9219285e9d55d108c68d58a5581e1ddf858c75733fa3ef296342aaf46a831dc6",
+    "user_prompt_sha256": "sha256:a0f4c92ea4cc56c9a07670100d75b30dfc828e7c82c6b671b1ba7e8cd38bf233",
+    "run_tests_sh_sha256": "sha256:8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+    "other_hidden_files": [
+      "__init__.py",
+      "conftest.py"
+    ]
+  },
+  "new_hidden_tests_tree_sha256": "sha256:2a62382c32a9def6a9ccf42c27fb938b7e4c0c0747805bafeaa605afce6b4724",
+  "publication_note": "草案是对065活动全文的两处增量；生产父链/活动修订单及最终SHA由发布者登记验证，不能直接加载本草案或覆盖065原件。",
+  "planned_formal_acceptance": {
+    "fresh_candidates": [
+      "noop",
+      "C-A",
+      "gold"
+    ],
+    "expected_raw_rewards": [
+      0,
+      1,
+      0
+    ],
+    "reason": "原七候选矩阵仍绑定065，本次只加两个断言；复用未变机制的旧反例证据，不冒称它们已在新版本正式运行。gold原本能过065，新版应因两种目标回归失败；C-A为正对照。",
+    "repeat": 1,
+    "actor_evidence_policy": "纯隐藏测试增量，公开包/题面/源码/解释器/依赖不变；核新构建身份后复用既有真实CC公开检查，不机械重做。"
+  }
+}

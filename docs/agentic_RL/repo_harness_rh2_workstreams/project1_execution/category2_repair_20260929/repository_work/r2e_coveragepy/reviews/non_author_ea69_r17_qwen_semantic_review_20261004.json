@@ -1,0 +1,1853 @@
+{
+  "schema": "coveragepy.non_author_r17_qwen_semantic_review.v1",
+  "as_of": "2026-10-04",
+  "reviewer_role": "non_author_existing_context_not_fresh_public_reader",
+  "job_id": "gpu1003-coverageea69-r17-qwen36-a1",
+  "scope": "原Qwen单臂完整轨迹、完整FP及评分运输；Qwen新真实Git边界闭批；51键草稿受影响两方法窄验。复用旧CPU/已完成Coder，未重审旧Coder506件。",
+  "status": "original_49_key_execution_valid_public_goal_incomplete_scoring_revision_required",
+  "conclusion": {
+    "raw_reward": 1,
+    "original_matched": 49,
+    "original_total": 49,
+    "raw_score_overwritten": false,
+    "formal_install_skipped": true,
+    "formal_install_rc": null,
+    "formal_test_rc": 0,
+    "complete_public_goal_success": false,
+    "candidate_existing_pattern_bug_cpu_confirmed": true,
+    "new_criterion_draft_narrow_review_passed": true,
+    "full_51_formal_grade_verified": false,
+    "fresh_reader": false,
+    "training_qualification": false,
+    "new_model_attempt_or_rerun_requested": false,
+    "whole_task_environment_unrunnable": false
+  },
+  "findings": [
+    {
+      "id": "F1",
+      "category": "candidate_semantics",
+      "finding": "条件 if '/*' not in existing_content 将子串当成实际Git有效规则。注释含/*、cache/*、!/*、/*后!index.html四个已有内容输入在两次生成中均漏忽略；这是公开all-generated-and-repeat目标缺失，而非逐字节保留附加要求。"
+    },
+    {
+      "id": "F2",
+      "category": "scoring_coverage",
+      "finding": "R17原49键对正常两行用户fixture正确通过，但未识别Qwen已有模式失败或Coder特殊CSS失败。新普通发布应只修对应两个行为方法/expected51和绑定身份，实际消费补验收前保留该版本评分完整性阻断；旧raw1不回写。"
+    },
+    {
+      "id": "F3",
+      "category": "artifact_hygiene",
+      "finding": "完整FP携带53248B .coverage，84 file表条目仅2 line_bits、0 arc，均/testbed来源。未发现私测/控制修改；不是只改html.py，也未证明DB无所有消费风险。"
+    },
+    {
+      "id": "F4",
+      "category": "self_validation",
+      "finding": "0 tool errors不能证明验证充分。临时exec无filename/source=.、git add -f、绝对路径与相对status文字比较/未assert均使附加自测弱；实际普通Git空status仍是观察证据。"
+    }
+  ],
+  "seven_dimensions": [
+    {
+      "dimension": "method/root-cause fix",
+      "result": "新增末尾调用与open(a)通常保留已有内容并忽略生成文件；子串判断遗漏实际模式优先级与词法，CPU四反例确认。正常、active-last及4CSS通过。"
+    },
+    {
+      "dimension": "localization and correction",
+      "result": "两搜索后完整读生产源码及1120行公开HTML测试，两Edit后未再改生产实现。识别force stage测试错误后改观察，但未测试已有模式边界。"
+    },
+    {
+      "dimension": "tool use and test control",
+      "result": "完整303轨迹行、17工具（11 Bash/4 Read/2 Edit）、所有配对结果、0 is_error；无公开tests/conftest/runner修改。公开open兼容仅本进程转发args/kwargs，保留w记录与46断言。FP含DB残留。"
+    },
+    {
+      "dimension": "parallel opportunities",
+      "result": "源码/测试读取、独立回归可批处理；编辑与依赖验证顺序合理。轨迹每次单工具，未测并行接口、多agent支持或收益。"
+    },
+    {
+      "dimension": "validation quality",
+      "result": "HTML46共4次（baseline1+post3），公开test_coverage84一次；并集130不是累计268。5附加断言与2Git观察另计，管道tail可能掩盖退出码但实际footer成功。正式49完整通过；边界反例与草稿方法补盲区。"
+    },
+    {
+      "dimension": "completion efficiency",
+      "result": "18生成+1count，429634输入/5597输出，cache0、峰33495/926；同上下文反复发送影响累计输入。solve54.147s、CC50.441s/API36.670s、gateway36.141s，不能称纯GPU时间。有限单臂不作能力或成功率排名。"
+    },
+    {
+      "dimension": "termination and stability",
+      "result": "completed/end_turn/harness0，install跳过/null，test0；FP/360基线/评分完整、actor与grader清理和gateway drain有效。一次正常终止不证明稳定性或训练资格；旧R6 Qwen不混入。"
+    }
+  ],
+  "candidate": {
+    "frozen_file_sha256": "ae3ae46f8abc45f85acacfc1784babf8c9aaddf333ce535d8c6699a325f2f25c",
+    "canonical_sha256": "a237757b19cee92e4226ec84cdb60104f11622ef13b125823dec2e2636715381",
+    "baseline_canonical_sha256": "7d9fea8c8926ccc665aa1d9f71cf316338ed712d0277d46efdaf75c2a285385e",
+    "entries": [
+      {
+        "path": "coverage/html.py",
+        "mode": "100644",
+        "bytes": 18536,
+        "sha256": "ba44779ff440c8e31ce404991140363f9130c6ddb47f981beee245d1d1884742"
+      },
+      {
+        "path": ".coverage",
+        "mode": "100644",
+        "bytes": 53248,
+        "sha256": "bc66f10af00166771973bab39922bca8f5b1cdbe73f6b176a01da9b581699fce"
+      }
+    ],
+    "projection_preserves_both": true,
+    "tests_modified": false,
+    "db": {
+      "file_rows": 84,
+      "line_bits_rows": 2,
+      "arc_rows": 0,
+      "paths_all_testbed": true,
+      "not_84_valid_covered_files": true
+    }
+  },
+  "original_formal": {
+    "parser_sha256": "339b7c80cca516dc7d1bcf9c11e3ff9a42f1bc993b5027a0d06c41c85d024b58",
+    "eval_log_sha256": "f97119e956e59be238263e3037b156b4d29da44e2a545f099afc58959f1eb67d",
+    "full_segment_independent_parser_replayed": true,
+    "keys_exact_expected": true,
+    "statuses": {
+      "HtmlDeltaTest.test_file_becomes_100": "PASSED",
+      "HtmlDeltaTest.test_html_created": "PASSED",
+      "HtmlDeltaTest.test_html_delta_from_coverage_change": "PASSED",
+      "HtmlDeltaTest.test_html_delta_from_coverage_version_change": "PASSED",
+      "HtmlDeltaTest.test_html_delta_from_settings_change": "PASSED",
+      "HtmlDeltaTest.test_html_delta_from_source_change": "PASSED",
+      "HtmlDeltaTest.test_status_format_change": "PASSED",
+      "HtmlGitignoreTest.test_existing_gitignore_is_preserved_and_report_ignored": "PASSED",
+      "HtmlGitignoreTest.test_html_report_is_ignored_by_git": "PASSED",
+      "HtmlGoldTest.test_a": "PASSED",
+      "HtmlGoldTest.test_b_branch": "PASSED",
+      "HtmlGoldTest.test_bom": "PASSED",
+      "HtmlGoldTest.test_isolatin1": "PASSED",
+      "HtmlGoldTest.test_omit_1": "PASSED",
+      "HtmlGoldTest.test_omit_2": "PASSED",
+      "HtmlGoldTest.test_omit_3": "PASSED",
+      "HtmlGoldTest.test_omit_4": "PASSED",
+      "HtmlGoldTest.test_omit_5": "PASSED",
+      "HtmlGoldTest.test_other": "PASSED",
+      "HtmlGoldTest.test_partial": "PASSED",
+      "HtmlGoldTest.test_styled": "PASSED",
+      "HtmlGoldTest.test_tabbed": "PASSED",
+      "HtmlGoldTest.test_unicode": "PASSED",
+      "HtmlTest.test_extensionless_file_collides_with_extension": "PASSED",
+      "HtmlTest.test_has_date_stamp_in_files": "PASSED",
+      "HtmlTest.test_html_skip_covered": "PASSED",
+      "HtmlTest.test_html_skip_empty": "PASSED",
+      "HtmlTest.test_missing_source_file_incorrect_message": "PASSED",
+      "HtmlTest.test_report_skip_covered": "PASSED",
+      "HtmlTest.test_report_skip_covered_100": "PASSED",
+      "HtmlTest.test_report_skip_covered_branches": "PASSED",
+      "HtmlTest.test_report_skip_empty": "PASSED",
+      "HtmlTest.test_reporting_on_unmeasured_file": "PASSED",
+      "HtmlTitleTest.test_default_title": "PASSED",
+      "HtmlTitleTest.test_non_ascii_title_set_in_config_file": "PASSED",
+      "HtmlTitleTest.test_title_set_in_args": "PASSED",
+      "HtmlTitleTest.test_title_set_in_config_file": "PASSED",
+      "HtmlWithContextsTest.test_dynamic_contexts": "PASSED",
+      "HtmlWithContextsTest.test_dynamic_contexts_relative_files": "PASSED",
+      "HtmlWithContextsTest.test_filtered_dynamic_contexts": "PASSED",
+      "HtmlWithContextsTest.test_no_contexts_warns_no_contexts": "PASSED",
+      "HtmlWithUnparsableFilesTest.test_decode_error": "PASSED",
+      "HtmlWithUnparsableFilesTest.test_dothtml_not_python": "PASSED",
+      "HtmlWithUnparsableFilesTest.test_dotpy_not_python": "PASSED",
+      "HtmlWithUnparsableFilesTest.test_dotpy_not_python_ignored": "PASSED",
+      "HtmlWithUnparsableFilesTest.test_execed_liar_ignored": "PASSED",
+      "HtmlWithUnparsableFilesTest.test_execed_liar_ignored_indentation_error": "PASSED",
+      "HtmlWithUnparsableFilesTest.test_formfeeds": "PASSED",
+      "ReportingTest.test_no_data_to_report_on_html": "PASSED"
+    },
+    "footer": "49 passed in 1.25s",
+    "infra_failure": false
+  },
+  "material_binding": {
+    "release_id": "cat2-cpu-r2e093-swe40-coverage-ea69-20261003-v1",
+    "local_release_dir": "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_coverage_ea69_v1",
+    "external_manifest": "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_coverage_ea69_v1/manifest.json",
+    "external_manifest_sha256": "sha256:76aee53151d3b58758d00a9feb5a901b720b4b430f37d2057ed07c1ef0ce2fa6",
+    "registry": {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_coverage_ea69_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v21.json",
+      "sha256": "sha256:44cbd2a3b817042b7751eb910d2a972702ab2d76a4b13a49716416a2f5c8c42f"
+    },
+    "input_pins": {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_coverage_ea69_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/t1_input_pins_r2e_v22.json",
+      "sha256": "sha256:a1cdf4971f32ad0a4d8a3aae72ac02d6137952a10786a4761c725c933bb76593"
+    },
+    "material_revision_ids": [
+      "r2e-mr-073",
+      "r2e-mr-074",
+      "r2e-mr-075",
+      "r2e-mr-093"
+    ],
+    "public_bundle_digest": "sha256:53deb1de7539fb7dfb1150fbe52957a29ee0f69d35f68f9796a53aa787ebdcc0",
+    "grading_bundle_digest": "sha256:46de14f5ca6fc9adcfff2fcac483c05d98fc8a9e29d1286e66867a3a463566c8",
+    "problem_statement": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/materials/statement_preserve_public_v2.txt",
+      "sha256": "sha256:39b6b28abc08b21a76a71d8908a7e37a00040cbfc3f9d92ee12bc37b3b6a194f"
+    },
+    "hidden_tests_tree_sha256": "sha256:d9860e3e4c82c0d005cc5fdb3027ac0b489128eec2ffafdb306fc33d991c3430",
+    "expected_output_json_sha256": "sha256:b3482977f4b14e436b61638b92950c68bea93f5cda15cf7854d4c87ff3627527",
+    "expected_total": 49,
+    "run_tests_sh_sha256": "sha256:8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+    "base_commit": "7fd1ea39925f0856ff607bb30796bc948a8c829d",
+    "environment_package_digest": "sha256:8fb9b7e14b7e0e28030bc1d8e49d9a51b5620231a445c44d6be104c0016f85a9"
+  },
+  "runtime": {
+    "code": "code_v8",
+    "source_manifest_sha256": "09ddb8bfdeecd3ffaa38c1048a574161ef6fa6053b2855da50166e8e8677899d",
+    "model": "Qwen/Qwen3.6-35B-A3B",
+    "revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+    "dtype": "bfloat16",
+    "tp": 1,
+    "actor_grader_image": "sha256:e23fbbed8b6f809347e38ee9684699314fda0e14a948a06b9d368e29c8db38d2",
+    "cc": "2.1.205",
+    "actor_uid": 54321,
+    "sampling": {
+      "temperature": 1.0,
+      "top_p": 0.95,
+      "top_k": 20
+    },
+    "wire_max_tokens": 65536,
+    "cc_metadata_max_output_tokens": 32000,
+    "identity_limit": "读取本job开始前actual capture、配置/HTTP/挂载身份；不重复逐权重哈希或显存权重证明。gateway checkpoint_identity_verified=false原字段保留，不代替capture。"
+  },
+  "budgets": {
+    "purpose": "first Qwen arm for this exact current owner request; new solve/new FP; no retry/regrade/semantic qualification",
+    "grading_budgets": {
+      "whole_seconds": 3600.0,
+      "setup_seconds": 300.0,
+      "apply_seconds": 120.0,
+      "test_seconds": 1800.0
+    },
+    "model_budget": {
+      "context_tokens": 196608,
+      "response_output_tokens": 65536,
+      "CC_turns": 240,
+      "solver_seconds": 10800,
+      "gateway_requests": 1024,
+      "first_byte_timeout_seconds": 1800,
+      "adapter_idle_seconds_minimum": 14400
+    },
+    "fixed_input_manifest_sha256": "a606a12a4c966faa413cfafb6108b83750f3bd15345a0b746a85a0c706b9cd54"
+  },
+  "metrics": {
+    "generation_requests": 18,
+    "count_requests": 1,
+    "input_tokens": 429634,
+    "output_tokens": 5597,
+    "peak_input_tokens": 33495,
+    "peak_output_tokens": 926,
+    "cache_tokens": 0,
+    "solve_seconds": 54.147,
+    "CC_seconds": 50.441,
+    "CC_API_seconds": 36.67,
+    "gateway_response_sum_seconds": 36.141,
+    "actor_seconds": 118.722077,
+    "grader_seconds": 48.817,
+    "formal_peak_mb": 348.84,
+    "actor_sample_rows": 8,
+    "actor_valid_sample_rows": 7,
+    "all_resource_rows": 13,
+    "actor_observed_peak_bytes": 1057497088,
+    "grader_samples": 3,
+    "grader_observed_peak_bytes": 134205440,
+    "resource_limit": "有限cgroup切片，非连续完整峰，不归因为GPU耗用或196K实际容量验收。cost2.288095为CC别名估价，非实际账单。"
+  },
+  "termination": {
+    "harness_exit_code": 0,
+    "reason": "completed",
+    "stop_reason": "end_turn",
+    "actor_cleanup": {
+      "container_rm": 0,
+      "container_left": "",
+      "network_failures": [],
+      "relay_failures": [],
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "cleanup_ok": true
+    },
+    "pre_drain_stop": {
+      "residual": 0,
+      "kill_returned_at": 90762.430380985,
+      "kill_exit_code": 0,
+      "pkill_status": 1,
+      "kill_delivered_at": 90762.430380985,
+      "confirmed_at": 90762.483036671,
+      "observations": [
+        {
+          "issued_at": 90762.430408167,
+          "returned_at": 90762.483036671,
+          "residual": 0
+        }
+      ],
+      "observation_count": 1,
+      "timed_out": false,
+      "elapsed_seconds": 0.104,
+      "attempts": 1
+    },
+    "gateway_drain": {
+      "session_id": "gpu1003-coverageea69-r17-qwen36-a1",
+      "revoked": true,
+      "active_requests": 0,
+      "drained": true,
+      "ts": 1791046213.4351625
+    },
+    "grader_cleanup": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "supply_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0,
+      "containers_created_total": 1,
+      "containers_removed_total": 1,
+      "container_history_retained": 1,
+      "leases_total": 1
+    }
+  },
+  "boundary_cpu": {
+    "root": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_qwen_boundary_cpu_20261004_v1/closed_raw",
+    "manifest_sha256": "0697b4e76f388b1af0e13d8f699ecabdad2330566393a3efb60ab539f41f3e87",
+    "file_count": 21,
+    "bytes": 4741766,
+    "all_file_hashes_independently_checked": true,
+    "fixtures": 23,
+    "reports": 46,
+    "generated_path_round_checks": 386,
+    "baseline": {
+      "passed": 0,
+      "total": 3
+    },
+    "safe": {
+      "passed": 10,
+      "total": 10
+    },
+    "qwen": {
+      "passed": 6,
+      "total": 10,
+      "failed": [
+        "comment_contains_pattern",
+        "nested_existing_pattern",
+        "negation_only_pattern",
+        "pattern_then_exception"
+      ],
+      "failed_path_round_observations": 50
+    },
+    "environment": "精确e23镜像，UID/GID54321，Python3.7.9/Git2.34.1，2CPU/4GiB/512/none/no mounts；与GPU Git2.43.0分列。",
+    "logic": "真实check-ignore --no-index -q退出0判ignored；-v可报告negation，不能把非空verbose当ignored。status与quiet失败路径对应；不stage报告。生成排除.gitignore与非生成用户文件，two-round每项独立记录。",
+    "full_fp_restored": true,
+    "db_limit": "原DB确实恢复，但每fixture明确新data_file；是Git行为窄验，不检验DB所有消费者。",
+    "candidate_modified": false,
+    "job_finished_rc": 0,
+    "own_containers_left": 0
+  },
+  "criterion_v3": {
+    "root": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw",
+    "manifest_sha256": "0af8a1f3b721987c10ae7f61d56c665027045118f4e3f3bba3d579c3d83f7809",
+    "files": 39,
+    "bytes": 4488902,
+    "all_sha_bytes_and_output_tar_checked": true,
+    "draft_test_sha256": "6fa2ecfd00f917a12867d75b2c855875b88446411a7f35dc5ed429829d1998fa",
+    "draft_expected_sha256": "d766068e50bbeb338cd8a63e80b0c0e97ea9cfc83dde44b5f6e59fc6647e6b2a",
+    "expected_total": 51,
+    "old49_statuses_unchanged": true,
+    "old_test_AST_unchanged_except_two_added_methods": true,
+    "CSS_v2_method_AST_unchanged": true,
+    "rows": [
+      {
+        "arm": "baseline",
+        "method": "test_generated_extra_css_literal_names_are_ignored",
+        "returncode": 1,
+        "command": [
+          "/testbed/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/test_report_ignore_criterion_draft.py::HtmlGitignoreTest::test_generated_extra_css_literal_names_are_ignored"
+        ],
+        "html_sha256": "c1e9dd130184d6fc97140c6e7a2b49df12f826bcf86e92ced29c29e5fa0f9bc9",
+        "criterion_sha256": "6fa2ecfd00f917a12867d75b2c855875b88446411a7f35dc5ed429829d1998fa",
+        "expected_for_discrimination": 1
+      },
+      {
+        "arm": "baseline",
+        "method": "test_existing_patterns_do_not_skip_report_ignore",
+        "returncode": 1,
+        "command": [
+          "/testbed/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/test_report_ignore_criterion_draft.py::HtmlGitignoreTest::test_existing_patterns_do_not_skip_report_ignore"
+        ],
+        "html_sha256": "c1e9dd130184d6fc97140c6e7a2b49df12f826bcf86e92ced29c29e5fa0f9bc9",
+        "criterion_sha256": "6fa2ecfd00f917a12867d75b2c855875b88446411a7f35dc5ed429829d1998fa",
+        "expected_for_discrimination": 1
+      },
+      {
+        "arm": "safe_append",
+        "method": "test_generated_extra_css_literal_names_are_ignored",
+        "returncode": 0,
+        "command": [
+          "/testbed/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/test_report_ignore_criterion_draft.py::HtmlGitignoreTest::test_generated_extra_css_literal_names_are_ignored"
+        ],
+        "html_sha256": "fc692f80ab396a633088aea9d7c758f73ec113cc3a32848dab89ae070cf60345",
+        "criterion_sha256": "6fa2ecfd00f917a12867d75b2c855875b88446411a7f35dc5ed429829d1998fa",
+        "expected_for_discrimination": 0
+      },
+      {
+        "arm": "safe_append",
+        "method": "test_existing_patterns_do_not_skip_report_ignore",
+        "returncode": 0,
+        "command": [
+          "/testbed/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/test_report_ignore_criterion_draft.py::HtmlGitignoreTest::test_existing_patterns_do_not_skip_report_ignore"
+        ],
+        "html_sha256": "fc692f80ab396a633088aea9d7c758f73ec113cc3a32848dab89ae070cf60345",
+        "criterion_sha256": "6fa2ecfd00f917a12867d75b2c855875b88446411a7f35dc5ed429829d1998fa",
+        "expected_for_discrimination": 0
+      },
+      {
+        "arm": "original_qwen",
+        "method": "test_generated_extra_css_literal_names_are_ignored",
+        "returncode": 0,
+        "command": [
+          "/testbed/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/test_report_ignore_criterion_draft.py::HtmlGitignoreTest::test_generated_extra_css_literal_names_are_ignored"
+        ],
+        "html_sha256": "ba44779ff440c8e31ce404991140363f9130c6ddb47f981beee245d1d1884742",
+        "criterion_sha256": "6fa2ecfd00f917a12867d75b2c855875b88446411a7f35dc5ed429829d1998fa",
+        "expected_for_discrimination": 0
+      },
+      {
+        "arm": "original_qwen",
+        "method": "test_existing_patterns_do_not_skip_report_ignore",
+        "returncode": 1,
+        "command": [
+          "/testbed/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/test_report_ignore_criterion_draft.py::HtmlGitignoreTest::test_existing_patterns_do_not_skip_report_ignore"
+        ],
+        "html_sha256": "ba44779ff440c8e31ce404991140363f9130c6ddb47f981beee245d1d1884742",
+        "criterion_sha256": "6fa2ecfd00f917a12867d75b2c855875b88446411a7f35dc5ed429829d1998fa",
+        "expected_for_discrimination": 1
+      },
+      {
+        "arm": "original_coder",
+        "method": "test_generated_extra_css_literal_names_are_ignored",
+        "returncode": 1,
+        "command": [
+          "/testbed/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/test_report_ignore_criterion_draft.py::HtmlGitignoreTest::test_generated_extra_css_literal_names_are_ignored"
+        ],
+        "html_sha256": "631eb6014e4b3a3f2a2c88d105acfc3597a0cce4c5778436ec1051c1bd9035fb",
+        "criterion_sha256": "6fa2ecfd00f917a12867d75b2c855875b88446411a7f35dc5ed429829d1998fa",
+        "expected_for_discrimination": 1
+      },
+      {
+        "arm": "original_coder",
+        "method": "test_existing_patterns_do_not_skip_report_ignore",
+        "returncode": 0,
+        "command": [
+          "/testbed/.venv/bin/python",
+          "-m",
+          "pytest",
+          "-q",
+          "tests/test_report_ignore_criterion_draft.py::HtmlGitignoreTest::test_existing_patterns_do_not_skip_report_ignore"
+        ],
+        "html_sha256": "631eb6014e4b3a3f2a2c88d105acfc3597a0cce4c5778436ec1051c1bd9035fb",
+        "criterion_sha256": "6fa2ecfd00f917a12867d75b2c855875b88446411a7f35dc5ed429829d1998fa",
+        "expected_for_discrimination": 0
+      }
+    ],
+    "qwen_failure_first_observation": [
+      0,
+      0,
+      "report_rules_0/coverage_html.js"
+    ],
+    "coder_failure_first_observation": [
+      "!custom.css",
+      0,
+      "report_css_1/!custom.css"
+    ],
+    "failed_methods_early_stop": true,
+    "all_subfixtures_not_claimed_on_failure": true,
+    "safe_success_covers_all_loops": true,
+    "scope_limit": "八次单方法运行，非完整51键评分或正式发布；expected_for_discrimination是诊断退出分类，不是正式expected标签。真实失败日志为Gitquiet1断言，非infra。",
+    "behavior_target": "all generated files plus repeat；无字节保留、文本顺序、重复规则幂等新增硬要求。",
+    "job_finished_rc": 0,
+    "own_containers_left": 0
+  },
+  "author_comparison": "先形成独立源码/轨迹/边界结论，随后读取题主MD/JSON；原49分、四CPU反例、DB84/2/0、八次新方法与计时范围一致。pair returned/ACK引用题主当前状态，不将旧closed_manifest paired_request_closed=false改写为当时已关闭。",
+  "read_scope": {
+    "independent": [
+      "原FP全部entries与baseline.tar360路径内容/Git mode",
+      "303轨迹全部工具及assistant thinking/text，完整生产与公开HTML测试",
+      "原正式49日志完整段与固定parser逐键对拍",
+      "实际prompt/首次user完整交付、preflight与身份配置、projection/评分/清理相关原件",
+      "146闭批逐SHA/bytes；边界21与草稿39逐SHA/bytes及输出tar，runner与所有结果日志",
+      "草稿旧AST/expected49保留与v2 CSS方法对拍"
+    ],
+    "integrity_not_full_semantic_read": [
+      "146清单中未在上述范围列出的通用代码/诊断文件；SHA/bytes检查不声称逐段审查所有文件"
+    ],
+    "reused": [
+      "R17正式CPU空FP公开交付与旧7候选矩阵仅源/recipe/runner/private payload未变范围",
+      "Coder专项CSS边界报告；本轮只核其原FP恢复和新增两方法"
+    ],
+    "not_done": [
+      "无新SSH/Docker/安装/项目测试/模型/重评分",
+      "未全面重审旧Coder506件或重新构建公共builder",
+      "未重复所有模型权重SHA、测GPU容量、连续性能或多次稳定性",
+      "未验证正式51键实际消费；草稿须发布与受影响补验收"
+    ]
+  },
+  "allowed_use": [
+    "保留R17 Qwen原单臂raw1/49与执行运输事实",
+    "用于已证候选边界缺陷和最小51键普通修订请求依据",
+    "复用未变身份与既有CPU/候选证据"
+  ],
+  "required_next": "固定两个行为方法/expected51及新私有评分身份，普通发布后核实际消费并以safe、baseline及两份完整原FP补验收；无新公开目标、无模型重跑要求。旧分/旧50草稿和原件保留。",
+  "evidence_refs": [
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/qwen_tail2_closed_v1/gpu1003-coverageea69-r17-qwen36-a1/closed_manifest.json",
+      "sha256": "81445828267029f8d16f5543549c21428233160afd28dc012dd5d2a74a886795",
+      "bytes": 30946,
+      "verification": "独立读取并核全部清单项SHA/bytes；不是全部文件逐段语义阅读"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_qwen_boundary_cpu_20261004_v1/closed_raw/archive_manifest.json",
+      "sha256": "0697b4e76f388b1af0e13d8f699ecabdad2330566393a3efb60ab539f41f3e87",
+      "bytes": 3680,
+      "verification": "独立读取并核全部清单项SHA/bytes；不是全部文件逐段语义阅读"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/archive_manifest.json",
+      "sha256": "0af8a1f3b721987c10ae7f61d56c665027045118f4e3f3bba3d579c3d83f7809",
+      "bytes": 7267,
+      "verification": "独立读取并核全部清单项SHA/bytes；不是全部文件逐段语义阅读"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/materials/statement_preserve_public_v2.txt",
+      "sha256": "39b6b28abc08b21a76a71d8908a7e37a00040cbfc3f9d92ee12bc37b3b6a194f",
+      "bytes": 1463,
+      "verification": "实际读取/比对；旧CPU与Coder报告只复用适用范围"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/public_devbrief_20261003.md",
+      "sha256": "475e3ee69e2e28b4812c1b464a1c9e8381011e9f4959551e05c162387823e2e9",
+      "bytes": 2106,
+      "verification": "实际读取/比对；旧CPU与Coder报告只复用适用范围"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/materials/test_2_preserve_v1.py",
+      "sha256": "e5fee9fb81700d682e45c5c25cdc18035000e1dd86bf78fb2c8391ee61105497",
+      "bytes": 3879,
+      "verification": "实际读取/比对；旧CPU与Coder报告只复用适用范围"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/materials/test_2_generated_css_v2_draft.py",
+      "sha256": "4ff56808d8b38aa22242e8d28f4b7fe00160729bd8f7f3ad4ac33b2e7f82b9f3",
+      "bytes": 5289,
+      "verification": "实际读取/比对；旧CPU与Coder报告只复用适用范围"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/materials/test_2_report_ignore_v3_draft.py",
+      "sha256": "6fa2ecfd00f917a12867d75b2c855875b88446411a7f35dc5ed429829d1998fa",
+      "bytes": 6765,
+      "verification": "实际读取/比对；旧CPU与Coder报告只复用适用范围"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/materials/expected_report_ignore_v3_draft.json",
+      "sha256": "d766068e50bbeb338cd8a63e80b0c0e97ea9cfc83dde44b5f6e59fc6647e6b2a",
+      "bytes": 2891,
+      "verification": "实际读取/比对；旧CPU与Coder报告只复用适用范围"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/model_analysis_qwen36_r17_a1_20261004.md",
+      "sha256": "cef7ee6fe7de2bdfa68da322d342747a53391e82df80d1ab64f09576036ab8d1",
+      "bytes": 6559,
+      "verification": "实际读取/比对；旧CPU与Coder报告只复用适用范围"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/model_analysis_qwen36_r17_a1_20261004.json",
+      "sha256": "7b15796e4498c3b8d107f28ce25e3e934b4d5de929a39bb5e4964610a9a1f102",
+      "bytes": 42242,
+      "verification": "实际读取/比对；旧CPU与Coder报告只复用适用范围"
+    },
+    {
+      "path": "rh2/src/repoharness2/envpack/r2e_parsers.py",
+      "sha256": "339b7c80cca516dc7d1bcf9c11e3ff9a42f1bc993b5027a0d06c41c85d024b58",
+      "bytes": 10622,
+      "verification": "实际读取/比对；旧CPU与Coder报告只复用适用范围"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/reviews/non_author_ea69_r17_actual_cpu_review_20261003.json",
+      "sha256": "6705dc8cce9bfd86e2048df9a667370fe56c95ab5991c2c1558526bc8b7a6729",
+      "bytes": 54880,
+      "verification": "实际读取/比对；旧CPU与Coder报告只复用适用范围"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/reviews/non_author_ea69_r17_coder_boundary_cpu_review_20261003.json",
+      "sha256": "8fed239d57327933baa7fd1232984b720bd4a45f30628af7956e9eda87b550c3",
+      "bytes": 104333,
+      "verification": "实际读取/比对；旧CPU与Coder报告只复用适用范围"
+    }
+  ],
+  "integrity_inventory": [
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/code_v8/rh2/experiments/ordinary_gpu_probe_20261002/entry.py",
+      "sha256": "bdf806bf8da1d5ebb4970887bfc3c7738eb3e57a75e1d07215d6d68b17e574c4",
+      "bytes": 27732,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/code_v8/rh2/experiments/ordinary_gpu_probe_20261002/serial_dispatch.py",
+      "sha256": "cb435f7390d9aeba3bad51efabf808634668263e9dfbcffae96f50a4b8f90f10",
+      "bytes": 7539,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/code_v8/source_manifest.json",
+      "sha256": "09ddb8bfdeecd3ffaa38c1048a574161ef6fa6053b2855da50166e8e8677899d",
+      "bytes": 504439,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/config_qwen_tail2_v1/fixed_inputs_manifest.json",
+      "sha256": "a606a12a4c966faa413cfafb6108b83750f3bd15345a0b746a85a0c706b9cd54",
+      "bytes": 228152,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/config_qwen_tail2_v1/gateway_binding_v1.json",
+      "sha256": "df6eef58c744bf181c5cb1e930f11946be1f4aa91e45d603fe6e4af9ffce92da",
+      "bytes": 1996,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/config_qwen_tail2_v1/gateway_qwen36.json",
+      "sha256": "bc6382a4fc4fdd7c2c2717c58db8003207287f8115d4d4607a9d05bace5edfe5",
+      "bytes": 482,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/config_qwen_tail2_v1/input_checks/gpu1003-coverageea69-r17-qwen36-a1/input_check.json",
+      "sha256": "b0a674c8ce046d70774c8d6f883f43a1c014be05e4d07e4981b05254d40705a7",
+      "bytes": 2983,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/config_qwen_tail2_v1/purecheck_gpu1003-coverageea69-r17-qwen36-a1.json",
+      "sha256": "826c2ce599bc6a13e770ef01003e659b0b1823dcf8a4e342527a001bf5bb5f17",
+      "bytes": 1044,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/config_qwen_tail2_v1/tasks.json",
+      "sha256": "f1da0be32ea6182fbe66d17ab43d5c882e2ae19d429ce40ed2a7448493ba3d00",
+      "bytes": 1543,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/adapter_config_actual.json",
+      "sha256": "39f78df905b32cbb4bdc3783b993a763af76e5f355ef818c8749284fa98c2b09",
+      "bytes": 741,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/adapter_inspect_actual.json",
+      "sha256": "e93c40b01c8dbb38e64a0ecc69c7348c274ece07630359da46b8970308f843d7",
+      "bytes": 1857,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/adapter_inspect_after_actual.json",
+      "sha256": "e93c40b01c8dbb38e64a0ecc69c7348c274ece07630359da46b8970308f843d7",
+      "bytes": 1857,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/backend_continuous_log.txt",
+      "sha256": "1503b409fc75c3d02773076407aa272db0aef2abaf72386f0bed07e24c477c5e",
+      "bytes": 1620509,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/capture_receipt.json",
+      "sha256": "76be4a491e59387cb8a49efbd07edbb116b265d5a44b45df34e880585b88ae82",
+      "bytes": 1574,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/current_terminal_evidence_v3/freeze_group_source.py",
+      "sha256": "8a6a533fa43acf9bf2b35ab68dad0bbf2ba0aef5480e02d77767bc58fcb60422",
+      "bytes": 2254,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/current_terminal_evidence_v3/journal.jsonl",
+      "sha256": "c1738ffac032184cc614dbc8e9a2fb40c522ca2428f71b01a3e762f6b54478f8",
+      "bytes": 4547,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/current_terminal_evidence_v3/journal_helper_source.py",
+      "sha256": "dca6fe902fa2583225b6944489b71bdd6c9af7a78fd62db9a984051049a682e4",
+      "bytes": 7979,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/current_terminal_evidence_v3/journal_query.json",
+      "sha256": "687bf306778e4eddcaf48a6042f5941a6588c39dcfe0239ba5f53ba1566b9f74",
+      "bytes": 464,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/current_terminal_evidence_v3/journal_query_result.json",
+      "sha256": "3f620d3c8e96dc940fd2af86bfda0d18ff2d9ec11b3eb9de2f1485e3f618bd7b",
+      "bytes": 298,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/current_terminal_evidence_v3/success.json",
+      "sha256": "cbc53e9fe12df2b5944625ea7ed338954fb7c3ba96e693d07c74a24bcaab2f9e",
+      "bytes": 5639,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/current_terminal_evidence_v3/systemctl_query.json",
+      "sha256": "0c1cbd8f5170279909b39bbf41139870b96f89a9027f8209f7cec24f562a721a",
+      "bytes": 3219,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/dispatch_terminal_evidence_v2/archive_intent.json",
+      "sha256": "ff574ede260c0bbd86e3da267c45341e7796dabe2e724c7a5eb9dd2416b05a0d",
+      "bytes": 1123,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/dispatch_terminal_evidence_v2/diagnostic_exception.json",
+      "sha256": "6ccccdbc7e64695a2296521348bc29ca987f7a558e9d360f043a57a453c04b4a",
+      "bytes": 8688,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/dispatch_terminal_evidence_v2/diagnostic_wrapper_source.py",
+      "sha256": "51a4fbfdd452947eb14ec969cb08be1e1936b2d461a8ad28552308dec17054a1",
+      "bytes": 10464,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/dispatch_terminal_evidence_v2/dispatch_wrapper_source.py",
+      "sha256": "71ef6f24236d364fb95e8d027b13b87c7852e97f9918d2e1b80c6c4ca2dc6fd6",
+      "bytes": 1520,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/dispatch_terminal_evidence_v2/freeze_group_binding.json",
+      "sha256": "a59859a5286f503700f35153d7d57ba4d189da64d849533508112dc7e1ebaa3d",
+      "bytes": 278,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/dispatch_terminal_evidence_v2/freeze_group_v3_source.py",
+      "sha256": "8a6a533fa43acf9bf2b35ab68dad0bbf2ba0aef5480e02d77767bc58fcb60422",
+      "bytes": 2254,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/dispatch_terminal_evidence_v2/intent.json",
+      "sha256": "aef12bd1e57113cc16367ee046cdc7ed317178c83c434bb4a69d78300a83828f",
+      "bytes": 537,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/dispatch_terminal_evidence_v2/journal_helper_source.py",
+      "sha256": "dca6fe902fa2583225b6944489b71bdd6c9af7a78fd62db9a984051049a682e4",
+      "bytes": 7979,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/download_manifest_actual.json",
+      "sha256": "32bd30f61860366b3783eabc9d75bee0cd28c474d9c07de8be8d9ae60a4552ab",
+      "bytes": 6509,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/engine_inspect_actual.json",
+      "sha256": "d9e5c4b34b20e57f0a4f60e7e4dd2acd097f627c5572fb75221c368728ed53c0",
+      "bytes": 1156,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/engine_inspect_after_actual.json",
+      "sha256": "d9e5c4b34b20e57f0a4f60e7e4dd2acd097f627c5572fb75221c368728ed53c0",
+      "bytes": 1156,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/engine_template_actual.py",
+      "sha256": "e981d378662f2a39d50bb1043d3544744b3bf8877d6a007c9d99b2b9c1f527e5",
+      "bytes": 14700,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/identity_binding_actual.json",
+      "sha256": "603bec65f047c9b87967c58be43b8933ef3b662f9eab7052ac8ee64c3ae9e9f7",
+      "bytes": 3069,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/model_chat_template_actual.jinja",
+      "sha256": "e84f32a23fdda27689f868aa4a1a5621f41133e51a48d7f3efcbea2839574259",
+      "bytes": 7764,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/model_file_sizes_actual.json",
+      "sha256": "cb0718f57a6ec078826434d95f110af217b297810191ecacbf283c913a8e24a6",
+      "bytes": 5164,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/model_info_actual.json",
+      "sha256": "ce656877870e106f65e53bab646053656af85757af6173b4db4490cb19931133",
+      "bytes": 2121,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/diagnostics/QUEUE_QWEN_TAIL2_V1_gpu1003-coverageea69-r17-qwen36-a1_before/server_info_actual.json",
+      "sha256": "0d5f47149f391c5847cbea3bb9ad893047f223300c32eaefe1fcd9db6d2076d8",
+      "bytes": 42358,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/intake_q29_datalad_ea69_r17_code8_v1/inputs_manifest.json",
+      "sha256": "1540b0c5b399d783abb4cc3ab46d9076be62e1d373e82334c86be060419a216d",
+      "bytes": 8454,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/prepared_datalad088_r8_v2/datalad088/actual_derived_image.json",
+      "sha256": "86687d1038cc945184d6698a373e8c84e48fb66899005303fd3b830fcddd192f",
+      "bytes": 5469,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/prepared_datalad088_r8_v2/datalad088/derived/datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb/facts.json",
+      "sha256": "618772953ee5ad0713e22f24597a635afd2a73d87ec1ddbfbfd61121ad83b700",
+      "bytes": 5823,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/prepared_datalad088_r8_v2/datalad088/derived/overlays.jsonl",
+      "sha256": "2942277f8026150042a71d3a8936cc8555f942232fe76437d7c2d34003f95e50",
+      "bytes": 936,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/prepared_datalad088_r8_v2/datalad088/prepared/prepared_manifest.json",
+      "sha256": "47777e987cefe70c19230b87e2a8b4835ec585ad6ef66f7fb66e411bd8b80fff",
+      "bytes": 984,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/prepared_datalad088_r8_v2/datalad088/prepared/prompts.jsonl",
+      "sha256": "a9db70fde32958bb4d78fe8fd14883f139524ce00705d923e276a6cd2c3f2cee",
+      "bytes": 1716,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/prepared_datalad088_r8_v2/datalad088/prepared/replay_summary.json",
+      "sha256": "b7ca31d907c7d4065fd6b5e152ad6a3b6522b8cc1a8e548a938590ccd88cc81c",
+      "bytes": 487,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/prepared_datalad088_r8_v2/datalad088/prepared/rollout_task_views.jsonl",
+      "sha256": "2147c18af71abdae5413987fb13d3184d126f53406026a8dd269091aead4777d",
+      "bytes": 2940,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/prepared_datalad088_r8_v2/datalad088/private/host_grading_views.jsonl",
+      "sha256": "37037d47c14867591cd4c14ab7bdadadeec3efd3f744dda7e48d19d05653cd6a",
+      "bytes": 2548,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/prepared_datalad088_r8_v2/inputs/public/datalad088/development_brief.md",
+      "sha256": "68688ecf3f12e22de138e22f9ecaf28ff7d77fa7f7b8940e58d1c2a9ede888af",
+      "bytes": 1176,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/prepared_q29_ea69_r17_code8_v1/derived/overlays.jsonl",
+      "sha256": "3cc861b3264535edad987b36406d49074b8955c4d734ba0eb2e1737feaae35e1",
+      "bytes": 949,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/prepared_q29_ea69_r17_code8_v1/host_evidence/GPU_existing_image_facts.json",
+      "sha256": "46beb951d02eea98a7d9032ee55e34207765c7bf582375007480ccccc7d8585b",
+      "bytes": 5872,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/prepared_q29_ea69_r17_code8_v1/host_evidence/cpu_R17_acceptance.json",
+      "sha256": "6bd1c7d531c55b2f2f43a87b62d7f484a456e1a68794ccad9e5850e3db36c7c2",
+      "bytes": 6908,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/prepared_q29_ea69_r17_code8_v1/host_evidence/cpu_R17_facts.json",
+      "sha256": "629a670fcab1de08af3d7c0f2c0447ffe181744248e949d837557ef68390e87c",
+      "bytes": 5853,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/prepared_q29_ea69_r17_code8_v1/host_evidence/cpu_R17_non_author.json",
+      "sha256": "6705dc8cce9bfd86e2048df9a667370fe56c95ab5991c2c1558526bc8b7a6729",
+      "bytes": 54880,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/prepared_q29_ea69_r17_code8_v1/host_evidence/image_applicability.json",
+      "sha256": "1581b28fd4c72484b708b8e4a67da0ab7c1d816b4b18e88f2b44f418d86ce77d",
+      "bytes": 1865,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/prepared_q29_ea69_r17_code8_v1/host_evidence/owner_request.json",
+      "sha256": "8334dc5a3ba8cd5e769d8ca1dd99fba0ab6b402538a7a3cccd67adbf6bcc92b0",
+      "bytes": 14370,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/prepared_q29_ea69_r17_code8_v1/prepared/prepared_manifest.json",
+      "sha256": "3a766e2a8a9243949431d97958abaaf3f1ba1aef47bb3035e9f8d45e1898a30d",
+      "bytes": 990,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/prepared_q29_ea69_r17_code8_v1/prepared/prompts.jsonl",
+      "sha256": "507f5d42b96d9ed38ac56dd0caaf513fd56a1f557e5fc6c1eb6a90409dd1944e",
+      "bytes": 2094,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/prepared_q29_ea69_r17_code8_v1/prepared/replay_summary.json",
+      "sha256": "bc05818de0d1671f3f4468fd775b0a650f0854e40d1a0d3df0d5ccf09bb2964c",
+      "bytes": 487,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/prepared_q29_ea69_r17_code8_v1/prepared/rollout_task_views.jsonl",
+      "sha256": "d4c4ef36da0d1c2b4e3ad90e3e529c5f64b61643c26ec2a32aca2a08a6d1e9be",
+      "bytes": 3321,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/prepared_q29_ea69_r17_code8_v1/private/host_grading_views.jsonl",
+      "sha256": "dc8761483ce32c141d33070a2ae600ce78e389d4f5619b43a863228150a4dc9f",
+      "bytes": 4837,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/prepared_q29_ea69_r17_code8_v1/public/development_brief.md",
+      "sha256": "475e3ee69e2e28b4812c1b464a1c9e8381011e9f4959551e05c162387823e2e9",
+      "bytes": 2106,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/requests/gpu1003-coverageea69-r17-qwen36-a1.json",
+      "sha256": "2bed46bdc9dd6e8242091cfac745cc471d490697da1027f7f8905ec88f825e03",
+      "bytes": 25471,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/attempt/attempt.json",
+      "sha256": "a888d33553fb46fd7b63892a1a498f0b1dc2b2270fb5bdd16e00f8d206bc6537",
+      "bytes": 18281,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/attempt/bringup_artifacts/cc_version_observed.json",
+      "sha256": "c2b9bcf966c47d9a00227877026cb90b76afed482fd0df4e0ac12caab786bacb",
+      "bytes": 60,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/attempt/candidate/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5.diff",
+      "sha256": "e79025a7a09af86d9ca1c2c09c6973e996d32ea858bca280828ab4054734c2f9",
+      "bytes": 6466,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/attempt/cc_home.tgz",
+      "sha256": "610fe9a8f773edafdf18d70dd303081a542ce101c13c1117cedc2bc054b8a4b2",
+      "bytes": 47994,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/attempt/facts/activation_check.json",
+      "sha256": "a05c0547140e7b5c91f72c8506befb740cfc9087639985cc08a0b74cd27c8754",
+      "bytes": 464,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/attempt/facts/agent_env_facts.txt",
+      "sha256": "572c11aed525cc9e51304e1fa33b82dfaaab5607e4fd0ae965f3e94b70181eeb",
+      "bytes": 995,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/attempt/facts/materialize_probe.txt",
+      "sha256": "4673f5923effdc53aa8971367b338f294a05751c6fc830133a2ebc8f670cd2a8",
+      "bytes": 165,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/attempt/facts/pip_freeze_after.txt",
+      "sha256": "c691ef2a998cae5e0c21e8a9ddfe23759ac2717a2a1444f4e39d8c9b8de870cd",
+      "bytes": 47,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/attempt/facts/pip_freeze_before.txt",
+      "sha256": "c691ef2a998cae5e0c21e8a9ddfe23759ac2717a2a1444f4e39d8c9b8de870cd",
+      "bytes": 47,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/attempt/facts/prelaunch.json",
+      "sha256": "b29d9bbd889959e8e65a8c43fba20a720a3aa710fc3f8eda311a33fdd6a375ee",
+      "bytes": 2346,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/attempt/facts/r2e_preflight.txt",
+      "sha256": "daab0589dc3105fbc35cf60921cdfede3acf6ca4356f9c706ac5d94f08b4b057",
+      "bytes": 104,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/attempt/frozen/baseline.tar",
+      "sha256": "aee8f1e97ea60df82d78e02e08a2bf0d3e93be59948f3972e332914bfa382729",
+      "bytes": 4198400,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/attempt/frozen/baseline_census.txt",
+      "sha256": "18037c0c32c11f2ca090d7b8561087d48aa8dacf666e215c5e7eb1c5230ea900",
+      "bytes": 431259,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/attempt/frozen/baseline_manifest.json",
+      "sha256": "fc422c66fa64f59a4038aa0f2ae76cd1b5b21dcd2176b412d0d501eaa09fe259",
+      "bytes": 83474,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/attempt/frozen/classification.json",
+      "sha256": "f5ffbaced0b3236a35e0fc6319c51b3077006f339e8a219377b606e8e26bce15",
+      "bytes": 92,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "ae3ae46f8abc45f85acacfc1784babf8c9aaddf333ce535d8c6699a325f2f25c",
+      "bytes": 96857,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/attempt/harness/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/attempt/harness/trajectory.jsonl",
+      "sha256": "108266b9a6dc809090831ea6a46336569a21def216928660c6d1d62e30691490",
+      "bytes": 337433,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/attempt/prompt.txt",
+      "sha256": "19aa60c71f97c59184b24f99cccdfee77fa7745bc201e7e7bd67066259f05d24",
+      "bytes": 3796,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/attempt/trajectory.jsonl",
+      "sha256": "108266b9a6dc809090831ea6a46336569a21def216928660c6d1d62e30691490",
+      "bytes": 337433,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/gateway_audit.json",
+      "sha256": "6bc5f84a09ca96928db005f20bb80a58918bdd44c2bc798b6a0d81b0717cf6a1",
+      "bytes": 422,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/grading/baseline_rebuild_census.txt",
+      "sha256": "18037c0c32c11f2ca090d7b8561087d48aa8dacf666e215c5e7eb1c5230ea900",
+      "bytes": 431259,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/grading/eval_logs/evallog_gpu1003-coverageea69-r17_bf389ceb.diagnostics.json",
+      "sha256": "72bf2983c0bc3dbc1a16ae172d8ee4c7d8204a6ae09745b4d0ade0bb48a4524b",
+      "bytes": 3748,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/grading/eval_logs/evallog_gpu1003-coverageea69-r17_bf389ceb.eval.log",
+      "sha256": "f97119e956e59be238263e3037b156b4d29da44e2a545f099afc58959f1eb67d",
+      "bytes": 9501,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/grading/projection.json",
+      "sha256": "73c6bc11a7b6b75043066dc4563ff99afb9f15212ff56cbd102fa4db93cd5642",
+      "bytes": 353,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/grading/report.json",
+      "sha256": "a3e9d7afef9ceb98cf075a9f6f2d47cee4a84a28a4c5ae2696301fbb209925fa",
+      "bytes": 1887,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/grading/status.json",
+      "sha256": "0ca98b9313ee69e7b36ec4621941360c5ed659d805bca1877a530b3ab91337fd",
+      "bytes": 2671,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/input_check.json",
+      "sha256": "b0a674c8ce046d70774c8d6f883f43a1c014be05e4d07e4981b05254d40705a7",
+      "bytes": 2983,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/result.json",
+      "sha256": "be2312ccc017e692594d902c87894b2d270b1409ba2afaca363e55b295693b6e",
+      "bytes": 2707,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/queue_qwen_tail2_v1/results/gpu1003-coverageea69-r17-qwen36-a1/solver_prompt.txt",
+      "sha256": "19aa60c71f97c59184b24f99cccdfee77fa7745bc201e7e7bd67066259f05d24",
+      "bytes": 3796,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/qwen_tail2_closed_v1/gpu1003-coverageea69-r17-qwen36-a1/resources.jsonl",
+      "sha256": "7da845432a47c440662ba75fffee26d51df58ce65033f1346acb0ed53487dfa8",
+      "bytes": 16344,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/qwen_tail2_closed_v1/gpu1003-coverageea69-r17-qwen36-a1/terminal_snapshot.json",
+      "sha256": "cc91067fbf0cc3c5c2bc223cf25d7a2e16537b232d90d5522f05e7c68297ec0d",
+      "bytes": 28686,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/qwen_tail_group2_code8_v1/evidence/coverageea69_r17/coder_attempt.json",
+      "sha256": "a6a1dcad73bdd754e3b8b4c829b2bec6df4f70092fc86b48d31214a7ba43dc3c",
+      "bytes": 18009,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/qwen_tail_group2_code8_v1/evidence/coverageea69_r17/coder_closed_manifest.json",
+      "sha256": "89cc9350a26f8b0892964046bac6d7478299c31e9dabbe14f82b507909ebe3da",
+      "bytes": 93586,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/qwen_tail_group2_code8_v1/evidence/coverageea69_r17/coder_execution_receipt.json",
+      "sha256": "cc298ce986d4c0ab4f34be0b2767560e324bd8c15f55d80c12f58d36ce024e22",
+      "bytes": 7686,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/qwen_tail_group2_code8_v1/evidence/coverageea69_r17/coder_input_check.json",
+      "sha256": "6c901324cc8c9e951b1542243b4545325eb078a619e1a7f1b6bdfd3944522b7a",
+      "bytes": 2981,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/qwen_tail_group2_code8_v1/evidence/coverageea69_r17/coder_request.json",
+      "sha256": "d27f3413a092040abb902c9bd82ecd2b43f8c692a1d616a7c7bfa8efbf7ac01e",
+      "bytes": 14038,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/qwen_tail_group2_code8_v1/evidence/coverageea69_r17/coder_result.json",
+      "sha256": "4c7c6aa2f21bb21cb0ac7b7cdd37deb67a8061a8ed6af221a48787c1bacc1266",
+      "bytes": 2705,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/qwen_tail_group2_code8_v1/evidence/coverageea69_r17/coder_terminal_snapshot.json",
+      "sha256": "9141e59c41e9286abd873407fda2f4137df40ac8f02054c1ba180f9c227cde79",
+      "bytes": 16313,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/qwen_tail_group2_code8_v1/evidence/coverageea69_r17/original_inputs_manifest.json",
+      "sha256": "b61b2fe0d6e1723f1ae160cd08f5154fa09226c5b17e0b821a510a160e6a1258",
+      "bytes": 25027,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/qwen_tail_group2_code8_v1/evidence/coverageea69_r17/owner_request.json",
+      "sha256": "8334dc5a3ba8cd5e769d8ca1dd99fba0ab6b402538a7a3cccd67adbf6bcc92b0",
+      "bytes": 14370,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/qwen_tail_group2_code8_v1/inputs_manifest.json",
+      "sha256": "a606a12a4c966faa413cfafb6108b83750f3bd15345a0b746a85a0c706b9cd54",
+      "bytes": 228152,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/services_qwen_code8_v1/qwen36/adapter/adapter_config.json",
+      "sha256": "39f78df905b32cbb4bdc3783b993a763af76e5f355ef818c8749284fa98c2b09",
+      "bytes": 741,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/services_qwen_code8_v1/qwen36/adapter/gpu1003-coverageea69-r17-qwen36-a1.turns.jsonl",
+      "sha256": "62f9ba9f1952e51ef91d1512e78eefa4c8bd225a8e525b7048d1534cf8be1c03",
+      "bytes": 50573,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/services_qwen_code8_v1/qwen36/engine_launch_v1.json",
+      "sha256": "603bec65f047c9b87967c58be43b8933ef3b662f9eab7052ac8ee64c3ae9e9f7",
+      "bytes": 3069,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gateway_config.json",
+      "sha256": "5acb9679dbfbf4e08f5954ce0a5681cddbe8597291b980654947b18cc2521ea1",
+      "bytes": 498,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-coverageea69-r17-qwen36-a1/requests.jsonl",
+      "sha256": "356e9ce830cb1ea6293d27fa7710e7ae12e2b8d786e578d9fa111783bb03d896",
+      "bytes": 1637715,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-coverageea69-r17-qwen36-a1/resp_1.sse",
+      "sha256": "f965df7d19f2f943955c9f805b7094b8f1d717fb2c97075c4a0d329ff9326f39",
+      "bytes": 1638,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-coverageea69-r17-qwen36-a1/resp_10.sse",
+      "sha256": "152bc0c0b44762a8f139a4385ac4ad509e459ccffaf68dc1c026e1d4e14d7eab",
+      "bytes": 5283,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-coverageea69-r17-qwen36-a1/resp_11.sse",
+      "sha256": "555993e9f90a490401dd9c9688ec0d8c5ed306a93d82d3d1d0c9ba747faa6bc1",
+      "bytes": 3115,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-coverageea69-r17-qwen36-a1/resp_12.sse",
+      "sha256": "b4435d75dd9ea2a3e300fb59cc4c3fe194b553d2b31a19de5888bd5c5b706d4d",
+      "bytes": 3921,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-coverageea69-r17-qwen36-a1/resp_13.sse",
+      "sha256": "eb127a928dc6afa34b45dfe3b62a339edfc21ae57b8ac62bf66f2c8aa027694e",
+      "bytes": 4039,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-coverageea69-r17-qwen36-a1/resp_14.sse",
+      "sha256": "12daed815d4cf82f49b8a578144fad9280638cbba4031ef4c1bd0019b1f652d0",
+      "bytes": 3593,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-coverageea69-r17-qwen36-a1/resp_15.sse",
+      "sha256": "25caa8783cc0abeefc5ba0f30c2ea01b49cbc9bbc8b1892685f7ce0f85d41b78",
+      "bytes": 2052,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-coverageea69-r17-qwen36-a1/resp_16.sse",
+      "sha256": "cb8fc0561c511b79f2dcd0916714e5fc00f3cc4d1a25f973d86adc17f2df9965",
+      "bytes": 1834,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-coverageea69-r17-qwen36-a1/resp_17.sse",
+      "sha256": "8becd6eabcd04e4d3f83411d072e7df7f30446008a4698ca10cf50799a8d298a",
+      "bytes": 1855,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-coverageea69-r17-qwen36-a1/resp_18.sse",
+      "sha256": "fff5569b656aae9e1354186a92260f4bc56a00a91bf1df63234321ad9efbc12f",
+      "bytes": 3538,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-coverageea69-r17-qwen36-a1/resp_2.sse",
+      "sha256": "fc6160521a9ad063066aedbf4374bd0bf08b1766dd02f8e2bfbb6b643933f5b0",
+      "bytes": 1376,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-coverageea69-r17-qwen36-a1/resp_3.sse",
+      "sha256": "4803d3866f387b3f4df024628e52dc175124bfc4eb47b3c11422641c6b632891",
+      "bytes": 1411,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-coverageea69-r17-qwen36-a1/resp_4.sse",
+      "sha256": "791dc9e363cdf641d5646e3c2d3cf4b9fcbcb582e94e3761e355a9977b311899",
+      "bytes": 1939,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-coverageea69-r17-qwen36-a1/resp_5.sse",
+      "sha256": "2e1e1f425a6c4e2a2985119fb6349e684f2dafd6283e827431115fab24408c36",
+      "bytes": 2915,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-coverageea69-r17-qwen36-a1/resp_6.sse",
+      "sha256": "e3a85b1af2324ec910fa9e8d4922678db19cb50b3485f29882027516544af77a",
+      "bytes": 4108,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-coverageea69-r17-qwen36-a1/resp_7.sse",
+      "sha256": "4c625b5e7c343ac50d807fae3badf1b57a5b0e62e8359afb6b84f124e75d9033",
+      "bytes": 2183,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-coverageea69-r17-qwen36-a1/resp_8.sse",
+      "sha256": "4848150e8db37be37b8ba6a037e91593d56ac34e5b06c38aff513c7df285d807",
+      "bytes": 1747,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-coverageea69-r17-qwen36-a1/resp_9.sse",
+      "sha256": "6f318bf8346df3e8ca763022cf6577216005c4e9ce0dff4c8da26b9472407b87",
+      "bytes": 1847,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-coverageea69-r17-qwen36-a1/responses.jsonl",
+      "sha256": "03cb56272ce179745565006b1e58a371f015f2c710ca63e5a778484695f95236",
+      "bytes": 5899,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-coverageea69-r17-qwen36-a1/session_close.jsonl",
+      "sha256": "bd1564c42bdb6aba1638ff3af806409519897e19bc33bc5038e88d2254cfb801",
+      "bytes": 135,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/tail2-v1/gpu1003-coverageea69-r17-qwen36-a1/usage.json",
+      "sha256": "742c28b56d00ab3e1b877da092b0187ef1c07edb50512a89b9c2fc5cbbe0acd3",
+      "bytes": 89,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/tools/bind_queue16_root_v1.py",
+      "sha256": "d1f6937389d6e71b553d5a29077bcf9706aad8537e067b7b9fd2ae3057f38ddb",
+      "bytes": 15021,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/tools/capture_qwen_code8_runtime_identity_v1.py",
+      "sha256": "bf13321265e57e2dd786dd2208803ea3330875b5bf757aa1e38f705e2cfbb44c",
+      "bytes": 17811,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/tools/qwen_first10_code8_v2.py",
+      "sha256": "ace08cf24f89ff011d9fbae500a6ee0b79b081725adb8bbb64fb8b52b6145f30",
+      "bytes": 21569,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/tools/qwen_first10_code8_v3.py",
+      "sha256": "c9c4d4a3d637117d959c88f99dd053111d9897bc131e5a0eefa43e7b0a90b0ae",
+      "bytes": 13399,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/tools/qwen_next12_code8_v1.py",
+      "sha256": "3dbea4a59a0bc651efbcb05ace43119e678d5ee29180de3bc8df1fe8a873ba42",
+      "bytes": 9272,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/tools/qwen_tail2_code8_v1.py",
+      "sha256": "8a6a533fa43acf9bf2b35ab68dad0bbf2ba0aef5480e02d77767bc58fcb60422",
+      "bytes": 2254,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/tools/read_closed_job_terminal_v1.py",
+      "sha256": "dca6fe902fa2583225b6944489b71bdd6c9af7a78fd62db9a984051049a682e4",
+      "bytes": 7979,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/tools/root_dispatch_one_v16.py",
+      "sha256": "350561d9b41c0cba313aaab56bc5521b64c71a54dabed93c1378abd67edcef8a",
+      "bytes": 100175,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/tools/root_dispatch_qwen_first10_v1.py",
+      "sha256": "387b44a83b80694316ed4af46f36da1e124fcb45d76e6f01f6190874d830e603",
+      "bytes": 4182,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/tools/root_dispatch_qwen_first10_v2.py",
+      "sha256": "c84f36f0931270b6592fcd90d53044fa9450a5267e0bbb96e865382573e19f83",
+      "bytes": 12585,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/tools/root_dispatch_qwen_first10_v3.py",
+      "sha256": "b65e524cf8b6a33711015cff5798403911d8db4db7871e5384bd86670865bee7",
+      "bytes": 4657,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/tools/root_dispatch_qwen_next12_v1.py",
+      "sha256": "7b7764af94bf08bf0f00025e0c3348e3e3f8d72b2612bf548a29c4df241f95f9",
+      "bytes": 3179,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/tools/root_dispatch_qwen_tail2_v1.py",
+      "sha256": "71ef6f24236d364fb95e8d027b13b87c7852e97f9918d2e1b80c6c4ca2dc6fd6",
+      "bytes": 1520,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/tools/start_qwen_code8_gateway_v1.py",
+      "sha256": "4b1a4a95ef95ef37b5ab9eee386e0531e3d0c850273fad30a60f37ba53de5e99",
+      "bytes": 4390,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/tools/start_qwen_code8_services_v1.py",
+      "sha256": "e981d378662f2a39d50bb1043d3544744b3bf8877d6a007c9d99b2b9c1f527e5",
+      "bytes": 14700,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-qwen36-a1/tools/start_qwen_code8_services_v2.py",
+      "sha256": "f0c3cc1c1d22e11d217ce88b63f46917bb14343a24ae4b624fac337e2f6493b2",
+      "bytes": 4447,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_qwen_boundary_cpu_20261004_v1/closed_raw/job/status.json",
+      "sha256": "cc1c5d3e0c220d81cfa57e46b406ce71f47cd869665c086c8df957e9c0557281",
+      "bytes": 563,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_qwen_boundary_cpu_20261004_v1/closed_raw/job/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_qwen_boundary_cpu_20261004_v1/closed_raw/job/stdout.log",
+      "sha256": "3847928bd8b4d51ea699aed3e53ca52c9f6c453df7f2bd739f453badfeebac62",
+      "bytes": 4893,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_qwen_boundary_cpu_20261004_v1/closed_raw/cpu/cleanup.json",
+      "sha256": "bb264770ff0a442be409fd6b53f431466a3baf5a31973210196063792c81740d",
+      "bytes": 135,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_qwen_boundary_cpu_20261004_v1/closed_raw/cpu/container_identity.json",
+      "sha256": "b22bb64ee9882ae4b0cf32d9d60e465fe8bba77f63415d2484f43aed5acee476",
+      "bytes": 562,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_qwen_boundary_cpu_20261004_v1/closed_raw/cpu/container_output.tar",
+      "sha256": "641af973f6de826f03d9f4609b2b08cac4ae2dfee39390d2dcb78fdbd6103fea",
+      "bytes": 169472,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_qwen_boundary_cpu_20261004_v1/closed_raw/cpu/host_identity.json",
+      "sha256": "1a3d0849ede16cd7780e4ac16f21859f3339c661b7d12e459e0a210da3148a1e",
+      "bytes": 575,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_qwen_boundary_cpu_20261004_v1/closed_raw/cpu/probe_exit.json",
+      "sha256": "212a8e1a5cf660ef8a737ecd358cd393d4679b564b9361953ba012132e25002c",
+      "bytes": 92,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_qwen_boundary_cpu_20261004_v1/closed_raw/cpu/probe_stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_qwen_boundary_cpu_20261004_v1/closed_raw/cpu/probe_stdout.log",
+      "sha256": "3ce00fe48fe76940bb2db82170469f61f27df7e30af2fcefee2dcc0ebff0dcc9",
+      "bytes": 4891,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_qwen_boundary_cpu_20261004_v1/closed_raw/cpu/results/baseline.json",
+      "sha256": "92f3bd78f853ac41ab54c6f6d58d525e02da63471fa524d54002f8647de8042d",
+      "bytes": 20300,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_qwen_boundary_cpu_20261004_v1/closed_raw/cpu/results/identity_setup.json",
+      "sha256": "37aca733796cebad760503d4814791ac3992de92f63406219d78ac83551e48a8",
+      "bytes": 2056,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_qwen_boundary_cpu_20261004_v1/closed_raw/cpu/results/original_qwen.json",
+      "sha256": "3b5541ea64ae400badc91f48c3b6f4e0dbfb78f54995f7610d6c59afce07887b",
+      "bytes": 70307,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_qwen_boundary_cpu_20261004_v1/closed_raw/cpu/results/safe_append.json",
+      "sha256": "580a0857d089b19ea535ff2e49b9c64a891b4c75f236794a8e708812c50ebdab",
+      "bytes": 72147,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_qwen_boundary_cpu_20261004_v1/closed_raw/inputs/baseline.tar",
+      "sha256": "aee8f1e97ea60df82d78e02e08a2bf0d3e93be59948f3972e332914bfa382729",
+      "bytes": 4198400,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_qwen_boundary_cpu_20261004_v1/closed_raw/inputs/baseline_manifest.json",
+      "sha256": "fc422c66fa64f59a4038aa0f2ae76cd1b5b21dcd2176b412d0d501eaa09fe259",
+      "bytes": 83474,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_qwen_boundary_cpu_20261004_v1/closed_raw/inputs/boundary_probe.py",
+      "sha256": "f333a4d5a95a8babd462b4ca619f19dc840b312c86e90847b7464ab0335c3fa3",
+      "bytes": 10106,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_qwen_boundary_cpu_20261004_v1/closed_raw/inputs/frozen_patch.json",
+      "sha256": "ae3ae46f8abc45f85acacfc1784babf8c9aaddf333ce535d8c6699a325f2f25c",
+      "bytes": 96857,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_qwen_boundary_cpu_20261004_v1/closed_raw/inputs/packet_manifest.json",
+      "sha256": "388735f1cb5fda0b84e329dd5196334911c6287ed01d0552fc23909e20e82112",
+      "bytes": 1027,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_qwen_boundary_cpu_20261004_v1/closed_raw/inputs/remote_job.py",
+      "sha256": "2a4e3ff4070dd683e84ca5cbaa293ac09710d5c0c4b2daf9c30eebd394d209de",
+      "bytes": 5362,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_qwen_boundary_cpu_20261004_v1/closed_raw/inputs/safe_append.patch",
+      "sha256": "4049a09d2d6ec220aeff034db378cc95e3f49f8572f2de110438ba059d3a68d3",
+      "bytes": 547,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/job/status.json",
+      "sha256": "a02f121e0678dbd18890a862e70e815d23a942805a99b80d9a6ff52ccf5e7379",
+      "bytes": 561,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/job/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/job/stdout.log",
+      "sha256": "9b517d5ef63b44b4fdf342af0ee3e8072601678af0743c9477ae67649510f1ae",
+      "bytes": 3918,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/cpu/cleanup.json",
+      "sha256": "d3fcf071919925b7c54f56a76e020f27984a8287fd08b4f99d39eb9bbc713ef8",
+      "bytes": 135,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/cpu/container_identity.json",
+      "sha256": "9927fd517d0b00b78885db242b1a0c4539aeccf4f7161e7019a405ae24551613",
+      "bytes": 561,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/cpu/container_output.tar",
+      "sha256": "1b54a588e0f0878de400865858c038fd2c7a0d8e335f59f4e4c06bbd87095b86",
+      "bytes": 31232,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/cpu/host_identity.json",
+      "sha256": "4fb6e9ca702ca274c2dc57a64cfda90fdb55d824cc65b802473824b7b0f63100",
+      "bytes": 574,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/cpu/probe_exit.json",
+      "sha256": "e2f0cf383db973d3065e21b1bd7b39d8931d04ab48e2559e3cc3f643649f0582",
+      "bytes": 92,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/cpu/probe_stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/cpu/probe_stdout.log",
+      "sha256": "f6378c261791be25b90d0e724e3a4a198c459e42135fefd68b06b81e813cf2c4",
+      "bytes": 3916,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/cpu/results/baseline_test_existing_patterns_do_not_skip_report_ignore_stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/cpu/results/baseline_test_existing_patterns_do_not_skip_report_ignore_stdout.log",
+      "sha256": "e37fc43e4d85d2022ce9905de062c840cc30f6fd0a575b47eeb24a9a289bf612",
+      "bytes": 2507,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/cpu/results/baseline_test_generated_extra_css_literal_names_are_ignored_stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/cpu/results/baseline_test_generated_extra_css_literal_names_are_ignored_stdout.log",
+      "sha256": "648b15a818b4d191273c796c5cb108317d364a660c9f56214e1e1a8b951fffb4",
+      "bytes": 2450,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/cpu/results/criterion_validation.json",
+      "sha256": "af7f42659b34c866e7eca11851940e32cc67b4b5e7dc6d8c848d24f913f09af9",
+      "bytes": 4907,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/cpu/results/identity_setup.json",
+      "sha256": "ef4ea3801efce4778eeead1b315fabb6b3824aedcd059eaa9efeae2d888b035f",
+      "bytes": 2866,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/cpu/results/original_coder_test_existing_patterns_do_not_skip_report_ignore_stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/cpu/results/original_coder_test_existing_patterns_do_not_skip_report_ignore_stdout.log",
+      "sha256": "ccac8dc2ea7d37fef45493be42deca1113ee991d49cc2b2d59e9a359d2d7f92b",
+      "bytes": 123,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/cpu/results/original_coder_test_generated_extra_css_literal_names_are_ignored_stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/cpu/results/original_coder_test_generated_extra_css_literal_names_are_ignored_stdout.log",
+      "sha256": "8277ec409ae0536661bab0229d1abd09ffde93dbc538fa8c77e32fbe3c2ddc0f",
+      "bytes": 2448,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/cpu/results/original_qwen_test_existing_patterns_do_not_skip_report_ignore_stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/cpu/results/original_qwen_test_existing_patterns_do_not_skip_report_ignore_stdout.log",
+      "sha256": "1c98d2dfdf8ef72d7dd3dc4c3c49b1890c76a0563d94fbb0f42f549817c1dc10",
+      "bytes": 2512,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/cpu/results/original_qwen_test_generated_extra_css_literal_names_are_ignored_stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/cpu/results/original_qwen_test_generated_extra_css_literal_names_are_ignored_stdout.log",
+      "sha256": "ccac8dc2ea7d37fef45493be42deca1113ee991d49cc2b2d59e9a359d2d7f92b",
+      "bytes": 123,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/cpu/results/safe_append_test_existing_patterns_do_not_skip_report_ignore_stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/cpu/results/safe_append_test_existing_patterns_do_not_skip_report_ignore_stdout.log",
+      "sha256": "ccac8dc2ea7d37fef45493be42deca1113ee991d49cc2b2d59e9a359d2d7f92b",
+      "bytes": 123,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/cpu/results/safe_append_test_generated_extra_css_literal_names_are_ignored_stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/cpu/results/safe_append_test_generated_extra_css_literal_names_are_ignored_stdout.log",
+      "sha256": "ccac8dc2ea7d37fef45493be42deca1113ee991d49cc2b2d59e9a359d2d7f92b",
+      "bytes": 123,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/inputs/baseline.tar",
+      "sha256": "aee8f1e97ea60df82d78e02e08a2bf0d3e93be59948f3972e332914bfa382729",
+      "bytes": 4198400,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/inputs/baseline_manifest.json",
+      "sha256": "fc422c66fa64f59a4038aa0f2ae76cd1b5b21dcd2176b412d0d501eaa09fe259",
+      "bytes": 83474,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/inputs/boundary_probe.py",
+      "sha256": "3756eb5a8ee26ca36486d9e9e0ca251770e3a6b6652f1b5d1d85b91d960eb521",
+      "bytes": 4789,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/inputs/coder_frozen_patch.json",
+      "sha256": "85c2211228edd88e9012924fc118c7e3cc1e814859a6b3ac2cda26d86367e388",
+      "bytes": 27080,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/inputs/criterion_probe.py",
+      "sha256": "95e4e18cf36bddfd4671c1c2318b23c91d6e38d3e7961a5e23a82caa98012086",
+      "bytes": 2016,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/inputs/expected_report_ignore_v3_draft.json",
+      "sha256": "d766068e50bbeb338cd8a63e80b0c0e97ea9cfc83dde44b5f6e59fc6647e6b2a",
+      "bytes": 2891,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/inputs/frozen_patch.json",
+      "sha256": "ae3ae46f8abc45f85acacfc1784babf8c9aaddf333ce535d8c6699a325f2f25c",
+      "bytes": 96857,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/inputs/packet_manifest.json",
+      "sha256": "8d4e306852756cb642f5984758690b2d928b6b17b7a8220171b513ac904f5249",
+      "bytes": 1550,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/inputs/remote_job.py",
+      "sha256": "b515dbbb4fd3cbba280aaa2530b9c99265f45fcd25e55880ef6c34f42957532e",
+      "bytes": 5362,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/inputs/safe_append.patch",
+      "sha256": "4049a09d2d6ec220aeff034db378cc95e3f49f8572f2de110438ba059d3a68d3",
+      "bytes": 547,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_criterion_cpu_20261004_v3/closed_raw/inputs/test_2_report_ignore_v3_draft.py",
+      "sha256": "6fa2ecfd00f917a12867d75b2c855875b88446411a7f35dc5ed429829d1998fa",
+      "bytes": 6765,
+      "verification": "independent_integrity_only_unless_named_in_read_scope"
+    }
+  ]
+}

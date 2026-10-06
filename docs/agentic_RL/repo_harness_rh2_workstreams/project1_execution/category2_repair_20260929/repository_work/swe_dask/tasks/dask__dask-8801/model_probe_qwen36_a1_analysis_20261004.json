@@ -1,0 +1,514 @@
+{
+  "schema": "Dask8801_Qwen_first_arm_and_pair_behavior_diagnostic_analysis_v1",
+  "as_of": "2026-10-04T02:15:17.373660+08:00",
+  "instance_id": "dask__dask-8801",
+  "revision_id": "dask8801-behavior-semantic-v7-compat1",
+  "request_id": "probe-swe-dask-8801-20261003-v1",
+  "job_id": "gpu1003-dask8801-qwen36-a1",
+  "scope": "原行为分与完整可见诊断语义分开；v7假值非映射可空配置或准确诊断失败，不固定实现/异常类/措辞；不自动训练reward。",
+  "pair_receipt": {
+    "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/probe-swe-dask-8801-20261003-v1_pair_execution_receipt_v1.json",
+    "sha256": "09c5046485087f483c18b78ac62f8f22a3c190c4c63a4d2cd51dd803a882b124",
+    "bytes": 9805
+  },
+  "execution_receipt": {
+    "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/dask8801_qwen36_code9_execution_receipt_v1/execution_receipt.json",
+    "sha256": "cb0c7124c31ade0d30fc1b077a121cad22af532037728c247737a50bbd3cb942",
+    "bytes": 73778
+  },
+  "originals_readback": {
+    "path": "runs/category2_repair_20260929/swe_dask/model_analysis_20261004/dask8801_qwen36_a1_v1/originals_checks_v1.json",
+    "sha256": "34bafa441415ff68bc4a34ff5a0e55aae99af3dc2d80082c4def94df79c73d59",
+    "bytes": 84791
+  },
+  "trajectory_index": {
+    "path": "runs/category2_repair_20260929/swe_dask/model_analysis_20261004/dask8801_qwen36_a1_v1/trajectory_index_v1.json",
+    "sha256": "06893ebca61a56ec8535ef1e52e665a65b8085f51e7ce7e756b0af77e0f7b081",
+    "bytes": 115415
+  },
+  "non_author_actual_candidate_and_binding_review": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_8801_qwen36_a1_candidate_review_20261004.json",
+    "sha256": "3cb6d2a02efdbcdf491adadb4f7f24ad23e7c112ad8c060e1145e44d76c86711",
+    "bytes": 42275
+  },
+  "non_author_report": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_8801_qwen36_a1_candidate_review_20261004.md",
+    "sha256": "b535b9b005b09b771daf8ebcd9f0f582de61e67148f6eafa766132fa2a1f3fac",
+    "bytes": 8984
+  },
+  "actual_report": {
+    "schema_id": "rh2.grading_report.v1",
+    "report_id": "rpt_grading_77927cf9",
+    "trajectory_id": "gpu1003-dask8801-qwen36-a1",
+    "task_id": "swe_gym_lite::dask__dask-8801",
+    "grader_name": "swebench_official_parser",
+    "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+dask8801-behavior-semantic-v7-compat1",
+    "outcome": "resolved",
+    "failure_category": null,
+    "reward": 1.0,
+    "reward_scale_version": "binary_v1",
+    "f2p_pass_count": 2,
+    "f2p_total_count": 2,
+    "p2p_fail_count": 0,
+    "p2p_total_count": 43,
+    "execution_failure_stage": null,
+    "execution_failure_evidence": [],
+    "grading_semantics": "swe_f2p_p2p",
+    "expected_match_count": null,
+    "expected_total_count": null,
+    "patch_hygiene": {
+      "cleaned_patch_digest": "sha256:00810108d7bee940762f737924f1410c29784c5b6762efe019e17c7f5b6d4c37",
+      "digest_kind": "applied_entry_set",
+      "replayed_on_clean_checkout": true,
+      "test_files_modified": false,
+      "forbidden_path_touched": false,
+      "forbidden_paths": [],
+      "verdict": "clean"
+    },
+    "infra_failure_detail": null,
+    "eval_log_ref": {
+      "ref_id": "evallog_gpu1003-dask8801-qwen36-_77927cf9",
+      "sha256": "sha256:e1102e2ad447ca9ed0a54ed40352aaaf0c6475df6919087601041689981321c2",
+      "byte_size": 73989
+    },
+    "timings": {
+      "schema_id": "rh2.grading_timing_record.v1",
+      "record_id": "timing_77927cf9",
+      "trajectory_id": "gpu1003-dask8801-qwen36-a1",
+      "task_id": "swe_gym_lite::dask__dask-8801",
+      "image_pull_seconds": 0.0,
+      "env_reset_seconds": 13.957,
+      "prep_seconds": 0.254,
+      "test_seconds": 2.657,
+      "total_grading_seconds": 387.018,
+      "queue_wait_seconds": 0.0,
+      "container_peak_memory_mb": 1951.324,
+      "queue_depth_at_enqueue": null,
+      "backpressure_triggered": false
+    },
+    "graded_at_utc": "2026-10-03T17:40:03.585200Z"
+  },
+  "pair_results": [
+    {
+      "model": "Coder",
+      "model_job_id": "gpu1003-dask8801-coder-a1",
+      "original_GPU_raw_reward": null,
+      "original_state": "infra_failure_prepare300_preserved",
+      "CPU_derived_raw_behavior_reward": 1,
+      "CPU_grading_job_id": "dask8801-original-fp-cpu-recovery-20261003-v1",
+      "CPU_readback": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/coder_original_FP_CPU_recovery_readback_20261003.json",
+        "sha256": "c7df16bd1f0cd543fd4f48f01597ead0af2fad2e52c24d2b5d6433149c1a47a3",
+        "bytes": 18669
+      },
+      "diagnostic_goal": "fail_diagnostic_semantics",
+      "fresh_semantics": {
+        "diagnostic_inputs": 23,
+        "pass": 19,
+        "fail": 4,
+        "uncertain": 0,
+        "compatibility_branches": 10,
+        "import_included_in_23": true
+      },
+      "new_solve_or_sample": false
+    },
+    {
+      "model": "Qwen3.6",
+      "model_job_id": "gpu1003-dask8801-qwen36-a1",
+      "original_GPU_raw_behavior_reward": 1,
+      "F2P_pass_total": [
+        2,
+        2
+      ],
+      "P2P_fail_total": [
+        0,
+        43
+      ],
+      "diagnostic_goal": "fail_diagnostic_semantics",
+      "fresh_semantics": {
+        "diagnostic_inputs": 13,
+        "pass": 9,
+        "fail": 4,
+        "uncertain": 0,
+        "compatibility_branches": 10,
+        "empty_configuration_branches": 10,
+        "import_packets": 1,
+        "import_included_in_13": true
+      }
+    }
+  ],
+  "actual_FrozenPatch_digest": "sha256:7104262ba651714c74a09d0c854629dc855e811a2e36cb6f25d7ad7d1d248dcb",
+  "actual_baseline_digest": "sha256:aff22965ee08670e719a8ae2c026cf1f78ef93e201356921845b61ada0262aea",
+  "actual_scoring_projection": {
+    "schema_id": "rh2.fa.scoring_projection.v1",
+    "frozen_patch_digest": "sha256:7104262ba651714c74a09d0c854629dc855e811a2e36cb6f25d7ad7d1d248dcb",
+    "rollout_execution_id": "gpu1003-dask8801-qwen36-a1",
+    "physical_attempt_id": "gpu1003-dask8801-qwen36-a1#p1",
+    "included_entry_paths": [
+      "dask/config.py"
+    ]
+  },
+  "edit_replay": [
+    {
+      "line": 75,
+      "path": "dask/config.py",
+      "replayed_sha256": "a75daef2905664b9eba4f94ff4525636fc46b1e5992199981cb59316f5fc22cc"
+    },
+    {
+      "line": 179,
+      "path": "dask/tests/test_config.py",
+      "replayed_sha256": "2f6ebbb338c333f14c80aeac2ab6ea158d21b20c14ad32d747ed1739d0f452f3"
+    },
+    {
+      "line": 229,
+      "path": "dask/tests/test_config.py",
+      "replayed_sha256": "a933d487209bca8f202bcc4e250057d34899755a9359b966972fcc2f8efebae0"
+    },
+    {
+      "line": 247,
+      "path": "dask/tests/test_config.py",
+      "result": "failed_no_modification",
+      "original_error": {
+        "line": 251,
+        "type": "tool_result",
+        "content": "<tool_use_error>String to replace not found in file.\nString: @pytest.mark.parametrize(\n    \"content,typename\",\n    [\n        (\"hello world\\n\", \"str\"),  # String\n        ('\"quoted\"\\n\", \"str\"),  # Quoted string\n        (\"['item1', 'item2']\\n\", \"list\"),  # List with items\n        (\"- item1\\n- item2\\n\", \"list\"),  # YAML list syntax with items\n        (\"42\\n\", \"int\"),  # Integer\n        (\"3.14\\n\", \"float\"),  # Float\n        (\"true\\n\", \"bool\"),  # Boolean true\n        (\"True\\n\", \"bool\"),  # Boolean true (alternative spelling)\n        (\"YES\\n\", \"bool\"),  # YAML yes is true\n        (\"yes\\n\", \"bool\"),  # YAML yes is true\n    ],\n)\ndef test_collect_yaml_invalid_non_mapping_errors(content, typename):\n    \"\"\"Test that non-mapping non-falsy values cause a clear error.\"\"\"\n    with tmpfile(extension=\"yaml\") as fn:\n        with open(fn, \"w\") as f:\n            f.write(content)\n        with pytest.raises(ValueError, match=f\"to contain a mapping\"):\n            dask.config.collect_yaml(paths=[fn])</tool_use_error>",
+        "is_error": true,
+        "tool_use_id": "toolu_e4ed9b6bb3691e39"
+      }
+    },
+    {
+      "line": 275,
+      "path": "dask/tests/test_config.py",
+      "replayed_sha256": "0c15999358a80ad9be1bdd5455179fdabfc8209f9de03658adb254a75b64b965"
+    }
+  ],
+  "four_successful_edits_one_failed_no_mutation": true,
+  "test_additions_in_FP_excluded_from_formal_projection": true,
+  "fresh_semantic_evaluation": {
+    "input": {
+      "path": "runs/category2_repair_20260929/swe_dask/semantic_judgement_20261004/actual_job_a1_v1/judge_inputs.json",
+      "sha256": "72eb091d83cf528c113d2bc00c4b088fb4c85531666484d8ab81fa615ad268b0",
+      "bytes": 13771
+    },
+    "prompt": {
+      "path": "runs/category2_repair_20260929/swe_dask/semantic_judgement_20261004/actual_job_a1_v1/judge_prompt.txt",
+      "sha256": "9d49671b56ae155f9183d8a0280ff7e779959de2697cdf3887ba4f558f2c19c1",
+      "bytes": 3190
+    },
+    "private_binding": {
+      "path": "runs/category2_repair_20260929/swe_dask/semantic_judgement_20261004/actual_job_a1_v1/private_run_binding.json",
+      "sha256": "943e8a029da63a43011afa6e85d5a237cc232969dd0f21fe6abdf2d9db6cc358",
+      "bytes": 4989
+    },
+    "job": {
+      "path": "runs/category2_repair_20260929/swe_dask/semantic_judgement_20261004/actual_job_a1_v1/job.json",
+      "sha256": "b673464fcca4218143cd16dc40297a7da10f936be63ddc72c4eea008050d77ee",
+      "bytes": 1531
+    },
+    "verdict": {
+      "path": "runs/category2_repair_20260929/swe_dask/semantic_judgement_20261004/actual_job_a1_v1/independent_verdicts_v1.json",
+      "sha256": "c0fc12e7c31e6287d51f34fd6e95c38f7db0b6312a40a3183682df0d3b5a6ebb",
+      "bytes": 6529
+    },
+    "provenance": {
+      "path": "runs/category2_repair_20260929/swe_dask/semantic_judgement_20261004/actual_job_a1_v1/independent_judge_provenance_v1.json",
+      "sha256": "221711ab6e992252dd75f0e3572c5b02385e382ac1949ee38810a17d84b00d27",
+      "bytes": 2430
+    },
+    "outcome": {
+      "path": "runs/category2_repair_20260929/swe_dask/semantic_judgement_20261004/actual_job_a1_v1/diagnostic_outcome.json",
+      "sha256": "accfe6ab51e5f5bd02a4cc2dda4aa149260084b48c4f933b96748e85d1f1d728",
+      "bytes": 9073
+    },
+    "custom_GPU_binding_crosscheck": {
+      "path": "runs/category2_repair_20260929/swe_dask/model_analysis_20261004/dask8801_qwen36_a1_v1/anonymous_GPU_binding_crosscheck_v1.json",
+      "sha256": "a37917e206ed97e9682fb6f681016b8ef11d10eb7039aa505efbc7761606f54f",
+      "bytes": 4669
+    },
+    "counts": {
+      "diagnostic_inputs": 13,
+      "pass": 9,
+      "fail": 4,
+      "uncertain": 0,
+      "compatibility_branches": 10,
+      "empty_configuration_branches": 10,
+      "import_packets": 1,
+      "import_included_in_13": true
+    },
+    "full_import_packet_and_before_after_bindings_complete": true,
+    "old_Coder_23_and_420_control_verdicts_not_reused": true,
+    "semantic_result": "fail_diagnostic_semantics",
+    "anonymous_ID_recipe": "GPU_material_FP_log_config_prompt_payload_v1_not_legacy_CPU_ledger_key",
+    "no_false_CPU_ledger_or_apply_user_metadata": true
+  },
+  "failure_analysis": {
+    "actual_cases": [
+      "syntax_brace:directory",
+      "syntax_brace:file",
+      "syntax_tab:directory",
+      "syntax_tab:file"
+    ],
+    "observed_visible_message": "底层PyYAML只显示<unicode string>/解析位置，没有BAD_FILE身份；原因正确不能补救缺失坏文件。",
+    "static_source_mechanism": "非映射ValueError含path且真实原因，falsy分支返回{}；yaml.safe_load(f.read())语法异常仍未包路径/显式可见cause。",
+    "new_task_material_or_grading_defect_found": false,
+    "behavior_score1_not_full_goal_success": true
+  },
+  "model_observation": {
+    "localization": "读取config/tests后在collect_yaml即刻校验Mapping；非映射消息带实际文件/type/repr，原str导入路径真实改好。",
+    "compatibility": "主动列多种falsy/null/空文档，保持空配置，不新增设置；10正式兼容分支实际通过。",
+    "correction": "自写测试错误把Y/N当bool false，真实2failed/74pass后直接核yaml解析，删错期望并将Y等列str；一次字符串替换失败后读取再修正。",
+    "verification": "原公开config43pass，加入38自写后81pass；只测非映射字符串目录路径带文件，不测损坏YAML/混合目录可见诊断。正式45pass与fresh13另列。",
+    "final_claim": "fix complete超出完整公开诊断目标；列非映射/假值行为准确，漏掉语法错误路径，未声称其自测涵盖该分支。",
+    "efficiency": "20响应/19串行工具；早做损坏YAML和导入诊断比拓展近似布尔拼写更有价值，但不新增采样或自改候选。"
+  },
+  "model_metrics": {
+    "solve_seconds": 61.809,
+    "CC_seconds": 58.36,
+    "cumulative_API_seconds": 53.897,
+    "API_seconds_not_pure_GPU_time": true,
+    "CC_turns": 20,
+    "unique_model_responses": 20,
+    "tool_calls": 19,
+    "tool_counts": {
+      "Read": 5,
+      "Bash": 9,
+      "Edit": 5
+    },
+    "cumulative_input_tokens": 514405,
+    "output_tokens": 8509,
+    "max_single_prompt_input_tokens": 37728,
+    "termination": "completed",
+    "budget_exhausted": false,
+    "cost_metadata_not_actual_invoice": 2.78475
+  },
+  "grader_times_separate": {
+    "schema_id": "rh2.grading_timing_record.v1",
+    "record_id": "timing_77927cf9",
+    "trajectory_id": "gpu1003-dask8801-qwen36-a1",
+    "task_id": "swe_gym_lite::dask__dask-8801",
+    "image_pull_seconds": 0.0,
+    "env_reset_seconds": 13.957,
+    "prep_seconds": 0.254,
+    "test_seconds": 2.657,
+    "total_grading_seconds": 387.018,
+    "queue_wait_seconds": 0.0,
+    "container_peak_memory_mb": 1951.324,
+    "queue_depth_at_enqueue": null,
+    "backpressure_triggered": false
+  },
+  "phase_segments_seconds": {
+    "delta_apply": 0.115994,
+    "grader_baseline_rebuild": 0.136616,
+    "grader_cleanup": null,
+    "grader_start_and_verify": 13.957886,
+    "grader_trusted_setup": 369.468485,
+    "parser_and_report": null,
+    "test": 2.656652
+  },
+  "install_test_facts": {
+    "install_rc_last_command": 0,
+    "install_failed_commands": [],
+    "install_skipped": false,
+    "install_seconds": 0.901,
+    "test_rc": 0,
+    "test_seconds": 1.167,
+    "markers_seen": [
+      "RH2_INSTALL_RC",
+      "RH2_TEST_RC",
+      "RH2_TS_INSTALL_END",
+      "RH2_TS_INSTALL_START",
+      "RH2_TS_TEST_END",
+      "RH2_TS_TEST_START"
+    ]
+  },
+  "actual_code9_R25_binding": {
+    "runtime": "code_v9",
+    "consumer": "R25",
+    "execution_receipt": {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/dask8801_qwen36_code9_execution_receipt_v1/execution_receipt.json",
+      "sha256": "cb0c7124c31ade0d30fc1b077a121cad22af532037728c247737a50bbd3cb942",
+      "bytes": 73778
+    },
+    "native_policy_fields_preserved": {
+      "policy_sha256": "43bcb4c7d87e85b463f30de52fca82149acf476914c4ac6df81f953cbe004eac",
+      "request_id": "support-swe-dask8801-setup900-20261003-v1",
+      "request_input_sha256": "2458578f8d41d41f7b4a0f8f1817a7a0b18b15c86f5587a530bcb96a57f8dd00",
+      "actual_image_id": "sha256:695d2cc28e303a0224c1109fe245f7296c6290d480124fa4fd4cc2ad072124b1",
+      "apply_seconds": 120,
+      "cpu_acceptance_sha256": "c9f53b5d2ab5e4ee84cc24a52de5cd906f4d8493ccb4da92b4d2276a08bc5ef3",
+      "env_reset_seconds": 900,
+      "grading_bundle_digest": "sha256:5df17259f9159fe73cbce4b8a5a93af2eeee385a4c52f3510575ee6b3247c2e5",
+      "image": "xingyaoww/sweb.eval.x86_64.dask_s_dask-8801:latest",
+      "image_manifest_digest": "sha256:21e77aea7025bad694a5c600ed6d4b372c80c83bc319fafa2fedb23d9ff48483",
+      "materials_identity": "sha256:b5cf41d813f263bc4d3d04985ecfde892677fb05ef6b6f1e5f95b93758e49b1b",
+      "new_script_sha256": {
+        "candidate_install_script": "5626531c75bc41c952470e4e38ce4afe34ac9701b2144a2c45bda50abe258acc",
+        "candidate_test_after_install_script": "82b18ca9f976ff0db8ea82981d774c83515e729438126ebb57c25ce52eb1a84a",
+        "candidate_test_script": "0c49baef272670826826a2f4744e5c2d44543721f2d275f09b483f0f7f1df2b4",
+        "eval_script": "e0e30c9bd3aabd435565b96617f5e12ae84d005054cbfd03f1f925f162ad9006",
+        "trusted_setup_script": "151bdd15ee70b0d2689d29631a6f5b9c43048be96fc7b49b281800843b9ee88e"
+      },
+      "old_script_sha256": {
+        "candidate_install_script": "5626531c75bc41c952470e4e38ce4afe34ac9701b2144a2c45bda50abe258acc",
+        "candidate_test_after_install_script": "82b18ca9f976ff0db8ea82981d774c83515e729438126ebb57c25ce52eb1a84a",
+        "candidate_test_script": "0c49baef272670826826a2f4744e5c2d44543721f2d275f09b483f0f7f1df2b4",
+        "eval_script": "e0e30c9bd3aabd435565b96617f5e12ae84d005054cbfd03f1f925f162ad9006",
+        "trusted_setup_script": "151bdd15ee70b0d2689d29631a6f5b9c43048be96fc7b49b281800843b9ee88e"
+      },
+      "old_scripts_digest": "sha256:835811ced3255278f9fd36b35e68ae6deee2791ed710367d832e4d9954af67e5",
+      "recipe_id": "dask8801-original-FP-setup900-v1",
+      "reference_total": 45,
+      "revision_id": "dask8801-behavior-semantic-v7-compat1",
+      "selected_env": null,
+      "single_shell_scripts_digest": "sha256:835811ced3255278f9fd36b35e68ae6deee2791ed710367d832e4d9954af67e5",
+      "test_seconds": 1800,
+      "whole_seconds": 3600,
+      "two_stage_scripts_digest": "sha256:470c7ca676303026b0faf63614e66b3444c7478d6be65738ca049cf8927d8106",
+      "actual_image_inspect_verified": false,
+      "actual_execution_mode": null,
+      "CPU_acceptance_scope": "single_shell_deny_all_no_supply",
+      "two_stage_execution_verified": false,
+      "training_qualification": null,
+      "consumer_source_sha256": "sha256:789aa2dbdd4ede98460cbfd4ca33b3d4652729f0ed0e284e34940ff1ed2bc0b5",
+      "execution_mode_declared": "single_shell",
+      "supply_config_declared": null,
+      "profile_parameters": {
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "schema_id": "rh2.sandbox_profile.v1",
+        "candidate_exec_user": "rh2grader",
+        "candidate_exec_uid": 54322,
+        "trusted_init_caps": [
+          "CHOWN",
+          "DAC_OVERRIDE",
+          "DAC_READ_SEARCH",
+          "FOWNER",
+          "KILL"
+        ],
+        "pids_limit": 512,
+        "cpus": 2.0,
+        "memory_bytes": 4294967296,
+        "swap_bytes": 0,
+        "tmp_tmpfs_bytes": 1073741824,
+        "writable_layer_quota_bytes": 8589934592,
+        "require_writable_layer_quota": false,
+        "shm_size_bytes": 67108864,
+        "tmpfs_mount_flags": "exec,nosuid,nodev",
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "network": {
+          "mode": "deny_all",
+          "forbidden_probe_targets": [
+            "169.254.169.254:80",
+            "1.1.1.1:443",
+            "172.17.0.1:18001"
+          ]
+        },
+        "bind_mounts_allowed": [
+          "declared_readonly_snapshot_only"
+        ],
+        "testbed_path": "/testbed",
+        "security_opt": [
+          "no-new-privileges"
+        ],
+        "cap_drop": [
+          "ALL"
+        ]
+      }
+    },
+    "actor_actual_image_id": "sha256:695d2cc28e303a0224c1109fe245f7296c6290d480124fa4fd4cc2ad072124b1",
+    "grader_actual_image_id": "sha256:695d2cc28e303a0224c1109fe245f7296c6290d480124fa4fd4cc2ad072124b1",
+    "same_complete_single_shell_scripts_as_Coder_CPU": true,
+    "selected_env": null,
+    "setup_apply_test_whole_seconds": [
+      900,
+      120,
+      1800,
+      3600
+    ],
+    "static_after_install_not_executed": true,
+    "resource_observation": {
+      "actor": {
+        "samples": 6,
+        "actual_image_ids": [
+          "sha256:695d2cc28e303a0224c1109fe245f7296c6290d480124fa4fd4cc2ad072124b1"
+        ],
+        "PID_peak": 44,
+        "memory_peak_bytes": 918851584,
+        "pids_max_event": 0,
+        "memory_events_max": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        }
+      },
+      "relay": {
+        "samples": 6,
+        "actual_image_ids": [
+          "sha256:ec7d6c95cd3692a2e2d228a8b1ca74e4025b54121fcc4c5da6f09cfa473315ad"
+        ],
+        "PID_peak": 7,
+        "memory_peak_bytes": 27611136,
+        "pids_max_event": 0,
+        "memory_events_max": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        }
+      },
+      "grader": {
+        "samples": 26,
+        "actual_image_ids": [
+          "sha256:695d2cc28e303a0224c1109fe245f7296c6290d480124fa4fd4cc2ad072124b1"
+        ],
+        "PID_peak": 8,
+        "memory_peak_bytes": 1951412224,
+        "pids_max_event": 0,
+        "memory_events_max": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        }
+      }
+    },
+    "raw_resource_facts_preserved": null,
+    "observation_gaps_unknown": true,
+    "full_Docker_Config_kernel_profile_child_environment_attestation_claimed": false,
+    "cleanup_ok": true,
+    "manager_created_removed": [
+      1,
+      1
+    ],
+    "gateway_drained_active0": true
+  },
+  "public_delivery": {
+    "mode": "unchanged",
+    "base_prompt_sha256": "sha256:da676ad7d775266c4e31d755ea6d534a8d75ff7b351484d7eff521ba7c063e7c",
+    "delivered_prompt_sha256": "sha256:da676ad7d775266c4e31d755ea6d534a8d75ff7b351484d7eff521ba7c063e7c"
+  },
+  "public_delivery_scope": "unchanged只保spec.prompt，沿用7656既有澄清，不将旧hints缺交当新缺陷/违令。",
+  "verdict": {
+    "behavior_references_passed": true,
+    "diagnostic_full_goal_passed": false,
+    "independent_fresh_judge_and_binding_review_accepted": true,
+    "new_material_or_scoring_blocker_found": false,
+    "legacy_v6_draft_remains_blocked": true,
+    "new_CPU_or_base_model_repeat_required": false,
+    "whole_task_complete": false,
+    "stable_model_capability": null,
+    "automatic_training_reward_authorized": false,
+    "training_qualification": null
+  },
+  "new_CPU_or_base_model_or_control_runs": 0,
+  "old_GPU_None_Coder_CPU1_fresh23_and_420_control_evidence_preserved": true,
+  "next_action": "两模型首轮诊断分析闭合，ack并清活动请求，保持v7仅诊断/v6阻断；有效候选失败不触发题面复修或重复采样，后续按具体新缺陷/用户规则。"
+}

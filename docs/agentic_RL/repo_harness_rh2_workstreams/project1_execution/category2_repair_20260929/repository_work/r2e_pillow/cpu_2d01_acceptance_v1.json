@@ -1,0 +1,280 @@
+{
+  "schema_id": "rh2.r2e_pillow_cpu_acceptance.v1",
+  "as_of": "2026-10-03",
+  "instance_id": "pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+  "status": "cpu_acceptance_complete_pending_probe",
+  "cpu_host": "cpu-b",
+  "release_id": "cat2-cpu-r2e064065-swe5-20261003-v1",
+  "release_manifest_sha256": "sha256:282021962a92b510f077385660ac56acedcd7fac1d97e63db3baa98e4dcc057f",
+  "material_revision_ids": [
+    "r2e-mr-063"
+  ],
+  "hidden_tests_tree_sha256": "sha256:bd62b707f7ef41bb21dcb4773e8206970773511eb9c819e7ae0adeb624f8fada",
+  "expected_total": 62,
+  "cpu_derived_image_id": "sha256:344103dc340c055f2e676a1c1acf0f0d8a2876477111bd8d6580b566eaf3f184",
+  "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+  "recipe_sha256": "sha256:54e35b094ecff3dffe724f34443a928519da09480152c21d60b44752b111845a",
+  "integrity_checks": {
+    "total": 21,
+    "failed": 0
+  },
+  "formal_controls": [
+    {
+      "candidate": "gold",
+      "expected_reward": 1.0,
+      "exit_code": 0,
+      "stop_reason": null,
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": 62,
+        "expected_total": 62,
+        "f2p_pass": null,
+        "f2p_total": null,
+        "failure_category": null,
+        "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+        "grading_semantics": "r2e_expected_map",
+        "infra_failure_detail": null,
+        "outcome": "resolved",
+        "p2p_fail": null,
+        "p2p_total": null,
+        "report_id": "rpt_grading_32345e86",
+        "reward": 1.0
+      },
+      "log_hash_matches": true,
+      "ledger": "/work/rh2-category2-20261003/packages/r2e_pillow/controls/pillow2d01-controls-20261002T172853Z/gold/ledger.jsonl",
+      "footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_pillow/controls/pillow2d01-controls-20261002T172853Z/gold/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "ok": true
+    },
+    {
+      "candidate": "noop",
+      "expected_reward": 0.0,
+      "exit_code": 0,
+      "stop_reason": null,
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": 60,
+        "expected_total": 62,
+        "f2p_pass": null,
+        "f2p_total": null,
+        "failure_category": "tests_failed",
+        "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+        "grading_semantics": "r2e_expected_map",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": null,
+        "p2p_total": null,
+        "report_id": "rpt_grading_5e7c6fbe",
+        "reward": 0.0
+      },
+      "log_hash_matches": true,
+      "ledger": "/work/rh2-category2-20261003/packages/r2e_pillow/controls/pillow2d01-controls-20261002T172853Z/noop/ledger.jsonl",
+      "footer": {
+        "ledger": "/work/rh2-category2-20261003/packages/r2e_pillow/controls/pillow2d01-controls-20261002T172853Z/noop/ledger.jsonl",
+        "rows": 1,
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "halted": null,
+        "aborted": null,
+        "cleanup_failures": [],
+        "final_status": {
+          "exit_code": 0,
+          "reason": "ok",
+          "grader_containers_open": [],
+          "cleanup_failures_total": 0,
+          "cleanup_failures_resolved": false
+        }
+      },
+      "ok": true
+    }
+  ],
+  "actor_checks": [
+    {
+      "job": "pillow2d01-actorbase-20261002T172129Z",
+      "success": false,
+      "runtime": "runtime_v1",
+      "returncode": 3,
+      "result": "ran",
+      "driver_exception": "No module named 'torch'",
+      "commands_ran": 0,
+      "command_count": 9,
+      "all_match_expect": false,
+      "checks": {
+        "interpreter_in_tool_result": false,
+        "host_log_present": false,
+        "no_harness_dir_in_container": true,
+        "no_launcher_or_done_marker": true,
+        "message_start_matches_stub_requests": true,
+        "exit_code_zero": false,
+        "result_event_present": false,
+        "log_complete": false,
+        "bashenv_denied_for_agent": false,
+        "all_commands_ran": false,
+        "all_match_expect": false,
+        "r2e_preflight_ok": false,
+        "image_is_overlay_derived_id": true
+      },
+      "harness_exit_code": null,
+      "termination": "driver_exception:ModuleNotFoundError",
+      "cleanup": {
+        "container_rm": 0,
+        "network_failures": [],
+        "relay_failures": [],
+        "stub_rc": 0,
+        "labeled_containers_left": [],
+        "labeled_networks_left": [],
+        "residual_after_force": []
+      },
+      "public_compat_tests": null,
+      "positive_control": null,
+      "evidence": "runs/category2_repair_20260929/r2e_pillow_cpu_b_20261003/pillow2d01-actorbase-20261002T172129Z_readback.json",
+      "evidence_sha256": "sha256:2d61b4b30ef574c994d159b3ada99d24f31fe8cdd6f6c4ecefaf15eba2e3f942"
+    },
+    {
+      "job": "pillow2d01-actorbase-20261002T173349Z",
+      "success": true,
+      "runtime": "runtime_cpu_v2",
+      "returncode": 0,
+      "result": "ran",
+      "driver_exception": null,
+      "commands_ran": 9,
+      "command_count": 9,
+      "all_match_expect": true,
+      "checks": {
+        "interpreter_in_tool_result": true,
+        "host_log_present": true,
+        "no_harness_dir_in_container": true,
+        "no_launcher_or_done_marker": true,
+        "message_start_matches_stub_requests": true,
+        "exit_code_zero": true,
+        "result_event_present": true,
+        "log_complete": true,
+        "bashenv_denied_for_agent": true,
+        "all_commands_ran": true,
+        "all_match_expect": true,
+        "r2e_preflight_ok": true,
+        "image_is_overlay_derived_id": true
+      },
+      "harness_exit_code": 0,
+      "termination": "returned",
+      "cleanup": {
+        "container_rm": 0,
+        "network_failures": [],
+        "relay_failures": [],
+        "stub_rc": 0,
+        "labeled_containers_left": [],
+        "labeled_networks_left": [],
+        "residual_after_force": []
+      },
+      "public_compat_tests": {
+        "passed": 82,
+        "skipped": 2
+      },
+      "positive_control": null,
+      "evidence": "runs/category2_repair_20260929/r2e_pillow_cpu_b_20261003/pillow2d01-actorbase-20261002T173349Z_readback.json",
+      "evidence_sha256": "sha256:a733addd78293048003ea01f2b17bb6fbf55352895018f0bca8e54f2d853f679"
+    },
+    {
+      "job": "pillow2d01-actorpositive-20261002T173710Z",
+      "success": true,
+      "runtime": "runtime_cpu_v2",
+      "returncode": 0,
+      "result": "ran",
+      "driver_exception": null,
+      "commands_ran": 9,
+      "command_count": 9,
+      "all_match_expect": true,
+      "checks": {
+        "interpreter_in_tool_result": true,
+        "host_log_present": true,
+        "no_harness_dir_in_container": true,
+        "no_launcher_or_done_marker": true,
+        "message_start_matches_stub_requests": true,
+        "exit_code_zero": true,
+        "result_event_present": true,
+        "log_complete": true,
+        "bashenv_denied_for_agent": true,
+        "all_commands_ran": true,
+        "all_match_expect": true,
+        "r2e_preflight_ok": true,
+        "image_is_overlay_derived_id": true
+      },
+      "harness_exit_code": 0,
+      "termination": "returned",
+      "cleanup": {
+        "container_rm": 0,
+        "network_failures": [],
+        "relay_failures": [],
+        "stub_rc": 0,
+        "labeled_containers_left": [],
+        "labeled_networks_left": [],
+        "residual_after_force": []
+      },
+      "public_compat_tests": {
+        "passed": 82,
+        "skipped": 2
+      },
+      "positive_control": {
+        "at": 1790962658.467,
+        "ok": true,
+        "patch_sha256": "sha256:190a8e47712345194ab36111eebae27a7229d79c16db5bb394e158ba596c4702",
+        "target": "src/PIL/TiffImagePlugin.py",
+        "exit_code": 0,
+        "user": "agent",
+        "observed_uid": "54321",
+        "delivery": "host_stdin_as_agent_before_driver"
+      },
+      "evidence": "runs/category2_repair_20260929/r2e_pillow_cpu_b_20261003/pillow2d01-actorpositive-20261002T173710Z_readback.json",
+      "evidence_sha256": "sha256:d38c7b26cb7f51869b091ecf950cd010841c6b1cbcf62519ff6e373310379360"
+    }
+  ],
+  "non_author_reviews": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_pillow/reviews/non_author_2d01_compat_review_20261003.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_pillow/reviews/non_author_2d01_positive_wrapper_review_20261003.md"
+  ],
+  "core_evidence_dir": "runs/category2_repair_20260929/r2e_pillow_cpu_b_20261003/2d01_cpu_core_v1",
+  "core_manifest_sha256": "sha256:25ea0718e60f7a6eaaf0d68d4cb611e669abed2ec2ef18f1acbddf1b88447c43",
+  "core_file_count": 123,
+  "historical_nine_candidate_matrix_reused": true,
+  "scope": "必要CPU闭环已完成，可以提交普通基座诊断；不是模型结果或训练/留出资格。"
+}

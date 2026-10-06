@@ -1,0 +1,138 @@
+{
+  "report": "pack08_report.md",
+  "tasks": {
+    "pydantic__pydantic-5662": {
+      "classification": "conditional_static_development_candidate",
+      "card_replacements": [
+        [
+          "独立reviewer尚未读/未知，不能报共识。",
+          "独立review与协调裁定已完成，保留一般matcher覆盖限制。"
+        ]
+      ],
+      "card_append": "协调裁定：有条件静态开发候选，ready_for_probe=false。旧dict不等护栏已在P2P，撤回历史“全部P2P只比较模型、递归委托即可满分”的论据；一般matcher漏测仍在。公开ANY和自定义比较小脚本可并入同一actual actor开发验证，不另凑私有CPU实验。27只保局部正确证据，正式训练/评测未批准。",
+      "checks": {
+        "2": {
+          "status": "pass",
+          "note": "只及本题历史初态：非BaseModel直接False与ANY F2P失败一致；并非当前actor复现。"
+        },
+        "20": {
+          "status": "pass",
+          "note": "本题历史安装均RC0，noop唯一ANY比较断言失败，gold通过；分差来自目标比较行为，不证明一般matcher完整覆盖。"
+        },
+        "18": {
+          "status": "pass",
+          "note": "本题历史tests/test_main.py共168 collected；noop141pass/1fail/26skip，gold142pass/26skip；1 F2P+127 P2P全部完成，skip在expected之外。"
+        },
+        "28": {
+          "status": "pass",
+          "note": "一般matcher/原对象传递与dict不等来自题面和公开旧行为；不强制if/else布局、直接dunder返回形状或未经要求的性能阈值。"
+        }
+      },
+      "changes": [
+        "Independent cross-review attached; original main card/record archived before final changes.",
+        "Keep static-only disposition and unknown actual actor; all sealed initials/delta/review unchanged.",
+        "Remove unrelated6043 wording from checks2/20 and unrelatedregex wording from28; retain candidate with matcher/actor conditions.",
+        "Preserve list-form main facts_ref under main_evidence_refs while attaching separate coordinator/reviewer references."
+      ]
+    },
+    "pydantic__pydantic-6043": {
+      "classification": "quality_first",
+      "card_replacements": [
+        [
+          "与新增字母序断言冲突，保字段序的合理解有误拒风险",
+          "与新增字母序断言存在契约优先级冲突；若应保旧字段序，保序解有误拒风险"
+        ],
+        [
+          "独立reviewer未读/结果未知；",
+          "独立review与协调裁定已完成；"
+        ]
+      ],
+      "card_append": "协调裁定：quality_first，ready_for_probe=false。check26由issue收窄为unknown：gold改变旧文档字段顺序是静态事实，但新排序要求是否授权该变化仍待决定，不能据旧文档单独宣告gold违规回归。23/24保留契约冲突及条件性误拒风险，25保留递归排序漏测。两批量wrapper的外层固定顺序不是字典序，不等于不确定。先定properties与wrapper范围，无新CPU。",
+      "checks": {
+        "2": {
+          "status": "pass",
+          "note": "本题历史noop显示尚未满足新增properties字母序断言；源码也未统一递归排序。该断言是否授权改变字段序另归23，不能从分差倒推唯一规格。"
+        },
+        "20": {
+          "status": "pass",
+          "note": "原install均RC0，唯一分差为test_by_alias的properties键序，gold RC0；这只确定分差来源，未解决23的契约优先级。"
+        },
+        "18": {
+          "status": "pass",
+          "note": "本题历史tests/test_json_schema.py共307 collected；noop305pass/1fail/1xfail，gold306pass/1xfail；1 F2P+303 P2P完成，无expected跳过。"
+        },
+        "24": {
+          "status": "issue",
+          "note": "不锁helper/算法，但唯一F2P强制properties字母序；若公开旧字段保序契约应保留，则可误拒保序递归方案。契约优先级未定，未执行完整替代解。"
+        },
+        "26": {
+          "status": "unknown",
+          "note": "gold静态改变旧文档承诺的字段序；新的递归排序任务可能授权此变化，是否构成不合理回归未定。保留具体行为变化证据，不将旧文档自动视为不可更改。"
+        }
+      },
+      "issue_updates": {
+        "public_contract_order_conflict": {
+          "scope": "旧字段保序与新排序要求未明优先级；若保旧契约则唯一隐藏断言可能误拒保守实现，尚未实测"
+        },
+        "gold_field_order_behavior_change": {
+          "status": "open",
+          "scope": "已静态确认字段序变化；新需求是否授权未明，check26 unknown，非已证违规回归"
+        }
+      },
+      "changes": [
+        "Independent cross-review attached; original main card/record archived before final changes.",
+        "Keep static-only disposition and unknown actual actor; all sealed initials/delta/review unchanged.",
+        "Coordinator narrows26 issue to unknown; old field-order documentation does not alone settle new task authorization.",
+        "Retain23/24 as contract conflict and conditional false-rejection risk; no automatic task rejection.",
+        "Preserve list-form main facts_ref under main_evidence_refs while attaching separate coordinator/reviewer references."
+      ]
+    },
+    "pydantic__pydantic-8316": {
+      "classification": "quality_first",
+      "card_replacements": [
+        [
+          "任务二做HTTPResponse、A1/API2及alias模型入参/导出的窄base/gold对照，捕获actor入口，确认旧key工作流影响。",
+          "任务二在私有CPU副本做HTTPResponse和一个大写数字例A1的base/gold及alias模型入参/导出对照，确认旧key影响；actual actor资格另采。"
+        ],
+        [
+          "独立reviewer未读/未知；",
+          "独立review与协调裁定已完成；"
+        ]
+      ],
+      "card_append": "协调裁定：quality_first，ready_for_probe=false。采纳reviewer的26=unknown：A1 a_1→a1是可定位静态事实，别名调用链说明真实影响方向；数字边界的兼容约定和实际旧key工作流尚待核实。私有gold对照与未来独立actor开发验证分开，不混为一次资格认证。不要求任意大小写输入归一化或新增Unicode规范。",
+      "disposition": {
+        "priority_next_step": "任务二私有CPU窄对照HTTPResponse和A1及alias模型旧key填充/按别名导出；确认具体兼容影响，actual actor资格另采。"
+      },
+      "checks": {
+        "2": {
+          "status": "pass",
+          "note": "本题base正则及noop的CAMELToSnake失败支持缩写边界问题；HTTPResponse直接原例未在该日志运行，actual actor未验。"
+        },
+        "20": {
+          "status": "pass",
+          "note": "原install均RC0，唯一F2P的camelto_snake与camel_to_snake差异来自缩写分界，gold RC0；未覆盖数字或模型alias工作流。"
+        },
+        "18": {
+          "status": "pass",
+          "note": "本题历史tests/test_utils.py共173 collected；noop158pass/1fail/14skip，gold159pass/14skip；1 F2P+143 P2P完成，14skip在expected之外。"
+        },
+        "26": {
+          "status": "unknown",
+          "note": "A1/API2输出变化及别名传播链已静态定位；精确数字兼容约定与旧key实际填充/导出流程未核，不能直接把所有变化归为不合理回归。"
+        }
+      },
+      "issue_updates": {
+        "gold_digit_boundary_compatibility_risk": {
+          "proposed_action": "私有CPU用HTTPResponse、A1和alias模型核旧key填充/导出；保留spec裁决与actor资格为独立未决事项"
+        }
+      },
+      "changes": [
+        "Independent cross-review attached; original main card/record archived before final changes.",
+        "Keep static-only disposition and unknown actual actor; all sealed initials/delta/review unchanged.",
+        "Accept reviewer26 unknown while retaining explicit digit-boundary compatibility issue.",
+        "Remove6043 copy text; separate private gold diagnostic from independent actual actor workflow.",
+        "Preserve list-form main facts_ref under main_evidence_refs while attaching separate coordinator/reviewer references."
+      ]
+    }
+  }
+}

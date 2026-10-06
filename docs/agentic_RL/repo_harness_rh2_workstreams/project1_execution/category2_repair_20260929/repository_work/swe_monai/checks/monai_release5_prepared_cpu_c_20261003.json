@@ -1,0 +1,90 @@
+{
+  "schema": "monai.release5_prepared_check.v1",
+  "as_of": "2026-10-03",
+  "host_alias": "cpu-c",
+  "release": "cat2-cpu-r2e078079-swe7-git-20261003-v1",
+  "release_manifest_sha256": "80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9",
+  "producer_job": "monai-release5-prepared-20261003-3537d9d8",
+  "summary": {
+    "prepared_dir": "/work/rh2-category2-20261003/packages/swe_monai/outputs/monai-release5-prepared-20261003-3537d9d8/prepared",
+    "private_dir": "/work/rh2-category2-20261003/packages/swe_monai/outputs/monai-release5-prepared-20261003-3537d9d8/private",
+    "prepared_manifest_sha256": "18da4cd12d7813fbef7348e300a94fefde0be18603298640127a11e7685df0cf",
+    "host_grading_artifact_sha256": "8e78e1bc655e7464ab93c587776289d0d939225378730baa32400cf2886c5a96",
+    "task_ids": [
+      "swe_gym_lite::Project-MONAI__MONAI-2446",
+      "swe_gym_lite::Project-MONAI__MONAI-3715",
+      "swe_gym_lite::Project-MONAI__MONAI-6975"
+    ]
+  },
+  "all_three_public_fields_unchanged": true,
+  "only_monai3715_effective": true,
+  "monai3715_allowed_changed_fields": [
+    "schema_id",
+    "revision",
+    "test_patch",
+    "fail_to_pass"
+  ],
+  "reference_counts": {
+    "2446": {
+      "f2p": 1,
+      "p2p": 2,
+      "public_unchanged": true,
+      "new_revision_effective": false,
+      "grading_bundle_digest": "sha256:baf96ec699b48a0aa07608ed405e240571103868a92016aea4e8eb9d3579e4f0",
+      "public_bundle_digest": "sha256:e28bef68fdde56691302cf89bf38e41ecdd122166538f6303beefda8b450b503",
+      "environment_package_digest": "sha256:91c8edeac4fe68112598b64e04800880af2bbe4584c483a44b3925dc603e0bd9"
+    },
+    "3715": {
+      "f2p": 2,
+      "p2p": 1,
+      "public_unchanged": true,
+      "new_revision_effective": true,
+      "grading_bundle_digest": "sha256:201888c737af106b752d3fb3d3b92865118044d226e164313e3ec7307c6cbaba",
+      "public_bundle_digest": "sha256:06657b6749eed7e3f97e7968de3383f6a187d52b9f9dfc879f83115da23ada06",
+      "environment_package_digest": "sha256:b837970c8f26bfd9475c19abe4b4cf3682315524a0851b1eb4e6ea27dee36222"
+    },
+    "6975": {
+      "f2p": 4,
+      "p2p": 59,
+      "public_unchanged": true,
+      "new_revision_effective": false,
+      "grading_bundle_digest": "sha256:637914aaac0270ea812bdd853ecfbffdbc6436777043d7d2ced41db9685e543b",
+      "public_bundle_digest": "sha256:962e5ee3c94e576f93003e1f6465bf5606fbc5377b7ea9ebb3e5b32bf43723e7",
+      "environment_package_digest": "sha256:202875faf8645da17b610ccb7eb8139006c3ed8a04e658f537c218881e3c429f"
+    }
+  },
+  "revision3715": {
+    "added_fail_to_pass": [
+      "tests/test_prepare_batch_default.py::TestPrepareBatchDefault::test_evaluator_string_modes_forward_and_restore_cpu"
+    ],
+    "effective_test_patch_sha256": "sha256:1e38b2d6a5dcfa2e2de5622c4db601a446da4e68ef1bd642d9c8100c3415565e",
+    "operation": "replace_test_patch_append_f2p",
+    "original_fail_to_pass": [
+      "tests/test_prepare_batch_default.py::TestPrepareBatchDefault::test_content"
+    ],
+    "original_pass_to_pass": [
+      "tests/test_prepare_batch_default.py::TestPrepareBatchDefault::test_empty_data"
+    ],
+    "original_test_patch": "diff --git a/tests/test_prepare_batch_default.py b/tests/test_prepare_batch_default.py\n--- a/tests/test_prepare_batch_default.py\n+++ b/tests/test_prepare_batch_default.py\n@@ -43,6 +43,7 @@ def test_content(self):\n             non_blocking=False,\n             prepare_batch=PrepareBatchDefault(),\n             decollate=False,\n+            mode=\"eval\",\n         )\n         evaluator.run()\n         output = evaluator.state.output\n",
+    "original_test_patch_sha256": "sha256:e4367b101b86dd71352b4156bf83c27272a7838d5a5e42ca6b34dcc8aea0dd19",
+    "parent_grading_digest": "sha256:21d700fb8b6c287a6900a0ef1192e03360947e2ace7df3b9488bbe8c52ab22e1",
+    "public_bundle_digest": "sha256:06657b6749eed7e3f97e7968de3383f6a187d52b9f9dfc879f83115da23ada06",
+    "registry_sha256": "sha256:9fd5f38bbd3f0d09027d2270a6f3f3c1af1bae84da9c6b7c9b553bbafd7a9cb0",
+    "revision_id": "monai3715-string-modes-forward-cpu-v1",
+    "test_files": [
+      {
+        "base_sha256": "sha256:d378e6c38b7963ec011cd0cd5a72c9cc9c9dd47925de0bc02bbbfd8c20b74214",
+        "path": "tests/test_prepare_batch_default.py"
+      }
+    ]
+  },
+  "evidence_root": "runs/category2_repair_20260929/repository_work/swe_monai/cpu_c_20261003/monai-release5-prepared-20261003-3537d9d8",
+  "artifact_sha256": {
+    "prepared/prepared_manifest.json": "18da4cd12d7813fbef7348e300a94fefde0be18603298640127a11e7685df0cf",
+    "prepared/prompts.jsonl": "1084aaec846ac35b8c2d1110b8e05f1378202cbeb644366cb0455286db6532b6",
+    "prepared/replay_summary.json": "3058de8fffaafe21f7fe76ecf126c731d83748b9d8b595201a822fe166c0539d",
+    "prepared/rollout_task_views.jsonl": "cf4d17914714fd446ff24c3a80d4427b68983b61abad4644d31ec2332bff41fa",
+    "private/host_grading_views.jsonl": "8e78e1bc655e7464ab93c587776289d0d939225378730baa32400cf2886c5a96"
+  },
+  "actor_or_grade_proven": false
+}

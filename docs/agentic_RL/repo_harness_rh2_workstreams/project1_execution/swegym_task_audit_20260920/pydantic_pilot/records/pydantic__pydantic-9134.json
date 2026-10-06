@@ -1,0 +1,82 @@
+{
+  "instance_id": "pydantic__pydantic-9134",
+  "audit_date": "2026-09-20",
+  "old_record": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_pydantic/records/pydantic__pydantic-9134.json",
+  "source_refs": {
+    "public": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl#pydantic__pydantic-9134",
+    "grading": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl#pydantic__pydantic-9134",
+    "validation_reference_only": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl#pydantic__pydantic-9134",
+    "base_commit": "b900fe2c74853aeefa153b87170ffc27a6240b48",
+    "F2P": 1,
+    "P2P": 176
+  },
+  "environment": {
+    "catalog_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_recipe_repair_20260919/repair_catalog.json#tasks[instance_id=pydantic__pydantic-9134]",
+    "status": "verified_environment_pair",
+    "selected_batch": "pydantic_v1",
+    "recipe": "pydantic-install-v1",
+    "verified_existing_pair": "noop=0 / gold=1；两次安装rc=0，gold测试rc=0；日志SHA256已本轮复算。",
+    "verification_ref": "verification.json#environment.pydantic__pydantic-9134",
+    "boundary": "环境对照有效，不等于题意/评分质量或actor正式准入；选定配方仍需冻结消费。"
+  },
+  "requirements": [
+    "子类的 model_post_init 在调用 super 前访问父类声明的私有属性，应能取得已初始化的默认值。",
+    "子类对私有值的修改应保留，不能随后被父类初始化覆盖。",
+    "已有 model_post_init 的上下文、调用次数、继承顺序及无私有属性情况应保持。"
+  ],
+  "old_claim_reviews": [
+    {
+      "original_claim": "题面完整，F2P正好检验继承私有属性在子类post-init中可读且修改保留。",
+      "status": "confirmed",
+      "evidence": [
+        "题面 BaseCls._priv=12、Cls在super前改为13；test_patch::test_model_post_init_supertype_private_attrs使用同一行为并断言13。",
+        "pydantic@b900fe2c74853aeefa153b87170ffc27a6240b48:pydantic/_internal/_model_construction.py:89-113 已收集base_private_attributes，但包装条件只看当前类private_attributes；公共源码足以定位。",
+        "pydantic@b900fe2c74853aeefa153b87170ffc27a6240b48:pydantic/_internal/_model_construction.py:294-300 初始化对已有private字典有保护，解释为什么super链不应覆盖子类修改。"
+      ]
+    },
+    {
+      "original_claim": "P2P没有多层继承、父子同时含私有属性等组合。",
+      "status": "refuted",
+      "evidence": [
+        "pydantic@b900fe2c74853aeefa153b87170ffc27a6240b48:tests/test_main.py:2063-2081 test_model_post_init_subclass_private_attrs已有A→B→C三层继承；:2084-2113的7091回归已有父子各自私有属性、先修改后super且检查值不重置。",
+        "两项均在176条P2P；同集合还含test_model_post_init_correct_mro及两种test_post_init_call_signatures。剩余组合可补，但不能称全无覆盖。"
+      ]
+    },
+    {
+      "original_claim": "与5386/5662共享tests/test_main.py即构成答案泄漏，应绑为一簇。",
+      "status": "refuted",
+      "evidence": [
+        "5386是类创建后hook，5662是相等委托，本题是实例私有字段初始化；共文件没有证明同一个解决方案。"
+      ]
+    },
+    {
+      "original_claim": "8004的gold进入9134基线，构成跨题答案泄漏并要求同侧划分（check5/R8）。",
+      "status": "unresolved",
+      "evidence": [
+        "精确源包含事实可确认：本轮读取8004 validation补丁的8条非空新增行，在9134 base对应_model_construction.py均可找到，尤其init_private_attributes的幂等保护。",
+        "包含早期上游修复不等于本题模型已读取该答案或存在训练污染；需要实际数据/轨迹暴露和更明确的方向性关系。"
+      ]
+    },
+    {
+      "original_claim": "旧记录install rc=2或只有联网才能安装，构成当前环境阻塞。",
+      "status": "superseded_env",
+      "evidence": [
+        "repair_catalog本题选择pydantic_v1/pydantic-install-v1，在deny_all、uid54322、2CPU/4GiB下已有noop/gold成对结果；本轮校验该题两份原始日志SHA256匹配目录。",
+        "这只替代已修的安装结论；旧actor PATH及初始脏树应在真正启动探针时核对，不能由grader对照擅自宣称已修。"
+      ]
+    }
+  ],
+  "recommendation": "probe_candidate",
+  "probe_role": "有继承回归护栏的小范围真实缺陷修复。",
+  "next_action": [
+    "作为首轮普通探针，保留官方F2P以及现有7091/7293/MRO相关P2P；不先因同文件关联降级。",
+    "若需要最小额外诊断，组合祖父类PrivateAttr(default_factory)和孙类post-init，检查工厂只执行一次及super后修改仍保留；先验证现有护栏未覆盖该行为再决定补测。"
+  ],
+  "unknowns": [
+    "未运行新的完整模型/评分链；尚无已证本题坏解满分。",
+    "早期修复进入后期源码的实际数据暴露影响未测量。"
+  ],
+  "evidence_level": "static_or_existing_run",
+  "verification_scope": "本轮读取精确base源码、实际公开题面/test_patch/gold、已归档运行证据；新增仅本地纯Python探针与日志重解析，未启动Docker/远端/模型/真实RH2。",
+  "formal_admission": false
+}

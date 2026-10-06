@@ -1,0 +1,56 @@
+{
+ "task_id": "getmoto__moto-6185",
+ "source": "SWE-Gym lite (s2 ingest v0)",
+ "task_revision": "upstream",
+ "by": "L1_moto_2 (Opus 5, 静态审查, 2026-09-16)",
+ "materials_refs": {
+  "snapshot": "runs/env_overnight_20260916/L1_moto_2/mat/getmoto__moto-6185/",
+  "base_commit": "dc460a325839bc6797084a54afc297a2c9d87e63",
+  "version": "4.1",
+  "eval_cmd": "pytest -n0 -rA",
+  "repo_level": "docs/.../env_overnight_20260916/L1_moto_2/repo_level_findings.md"
+ },
+ "public_view": {
+  "目标行为": "DynamoDB put_item 时，把 'S' 用作**普通属性名**（哪怕嵌套在深处）不应触发 SerializationException；只有当属性是主键且其 S 类型值是字典时才该报错。",
+  "约束": "只改 moto/ 源码。",
+  "公开材料可推断": "base 的 Table._validate_item_types 递归时对任何 `key == \"S\"` 且 `type(value) == dict` 无条件抛 \"Start of structure or map found where not expected\"（dc460a3258:moto/dynamodb/models/table.py:487-501）。而属性名恰好是 'S' 时，`{'S': {'NULL': True}}` 的外层 key 就是 'S'、值是字典，于是误报。题面把\"只有大写 S 触发、其它字母都正常、嵌套位置无关\"描述得很清楚，足以定位到这段按键名而非按类型判断的校验。",
+  "公开材料无法确定的点": [
+   "题面没说\"主键属性声明为 S 却给字典值\"这种真正非法的情况仍必须报错——这条要求来自 base 里既有的断言（同一个测试函数的前半段），属私有材料。",
+   "题面没说非主键属性声明为 S 却给字典值时应否报错（AWS 会报；gold 选择不报，见检查 27）。"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-6185/test.patch", "mat/getmoto__moto-6185/gold.patch"], "note": "test_patch 只在既有 test_put_item__string_as_integer_value 末尾追加断言（tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py，base 存在），gold 只碰 moto/dynamodb/models/table.py（base 存在）。", "by": "static"},
+  "2": {"status": "pass", "evidence_refs": ["dc460a3258:moto/dynamodb/models/table.py:487-501"], "note": "base 的无条件 `if type(value) == dict: raise SerializationException(...)` 确实会对属性名为 'S' 的普通属性误报。stage1 empty=RESOLVED_NO 印证。", "by": "static+stage1"},
+  "3": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-6185/problem_statement.txt"], "note": "题面 2442 字符，含完整复现（含四种 payload 的对照注释）与环境信息，无外链/截断。是本包里写得最清楚的题面之一。", "by": "static"},
+  "4": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-6185/test.patch"], "note": "合法解在 moto/dynamodb/models/table.py。", "by": "static"},
+  "5": {"status": "issue", "evidence_refs": ["本包 5620 同判分文件；5960 同源文件"], "note": "与 5620 共用判分文件 tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py（P2P 大量重叠），与 5960 共用源文件 moto/dynamodb/models/table.py（不同函数）。三者不同 PR、非派生，但同族相关性高。", "by": "static"},
+  "6": {"status": "issue", "evidence_refs": ["repo_level_findings.md#R2"], "note": "4.1，离线 make init rc=2（共性）。", "by": "stage1"},
+  "9": {"status": "pass", "evidence_refs": ["repo_level_findings.md#R3"], "note": "仓库级共性证据。", "by": "static+stage1"},
+  "11": {"status": "pass", "evidence_refs": ["dc460a3258:tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py:625,919"], "note": "settings.TEST_SERVER_MODE 是本地开关；无 network marker、无真实端点。", "by": "static"},
+  "17": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-6185/test.patch"], "note": "只恢复 1 个纯测试文件。", "by": "static"},
+  "19": {"status": "issue", "evidence_refs": ["repo_level_findings.md#R8"], "note": "P2P 含 `...::test_update_item_with_duplicate_expressions[set` 这个截断键，阶段一日志里对应 2 条真实用例塌缩（与 5620 同源）。F2P 本身无参数化，reward 判据不受影响。", "by": "static+stage1"},
+  "23": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-6185/problem_statement.txt", "mat/getmoto__moto-6185/test.patch"], "note": "F2P 新增断言（普通属性名为 'S' 时 put/get 往返正常）与题面症状一致；同测试函数保留的既有断言约束了\"主键给字典值仍要报错\"，两个方向都有依据。", "by": "static"},
+  "24": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-6185/test.patch"], "note": "只断言 boto3 层的异常与往返结果，不约束用 attr 参数递归、还是改成按\"是否主键\"预先分流。", "by": "static"},
+  "25": {"status": "issue", "evidence_refs": ["mat/getmoto__moto-6185/test.patch", "mat/getmoto__moto-6185/problem_statement.txt"], "note": "防护方向基本到位（同一个 F2P 测试里既要求新场景通过、又保留了原有必须报错的断言，所以\"直接删掉这条校验\"过不了）。缺口有两处：(a) 题面的原始例子用的是 `{'S': {'NULL': True}}`（属性值为 None），而新断言用的是 `{\"S\": {\"S\": \"asdf\"}}`，**题面原例本身没有进判分集合**；(b) 没有\"非主键属性声明为 S 却给字典值\"的负例，因此 gold 选择的\"只对主键报错\"这个宽松语义没有被任何测试固定。", "by": "static"},
+  "26": {"status": "issue", "evidence_refs": ["dc460a3258:moto/dynamodb/models/table.py:487-501"], "note": "_validate_item_types 是所有 put_item/update_item 的必经校验，34 个同文件 P2P 都在 exceptions 目录，主力的 tests/test_dynamodb/test_dynamodb.py 不参与。见 proposed_regression_tests。", "by": "static"},
+  "27": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-6185/gold.patch", "master:moto/dynamodb/models/table.py:545-563"], "note": "gold 达成目标、无夹带。两处可记录的瑕疵，但**与 upstream master 完全一致**，因此不算本题缺陷：(a) `attr=key if attr is None else key` 两个分支都是 `key`，是无意义的条件表达式；(b) 收紧后的检查只对 `attr in self.table_key_attrs` 生效，非主键属性声明为 S 却给字典值时不再报错，比 AWS 宽松。master 至今保留这两点（master:moto/dynamodb/models/table.py:545-563）。", "by": "static"},
+  "29": {"status": "pass", "evidence_refs": ["mat/getmoto__moto-6185/hints.txt"], "note": "hints 由维护者解释了校验\"过于急躁\"的原因（S 后面不应跟字典），方向性提示较强但不含代码或行号；题面本身无泄漏。", "by": "static"},
+  "7": {"status": "not_applicable", "evidence_refs": [], "note": "无外部资产。", "by": "static"}
+ },
+ "issues": [
+  {"category": "题面原例未进判分集合", "severity": "P3", "evidence_refs": ["mat/getmoto__moto-6185/problem_statement.txt", "mat/getmoto__moto-6185/test.patch"], "proposed_action": "扩展回归里补一条按题面原例写的用例（resource API、属性值为 None）。", "next_experiment": "gold 之上跑题面脚本，确认不再抛 SerializationException。"},
+  {"category": "宽松语义未被固定", "severity": "P3", "evidence_refs": ["mat/getmoto__moto-6185/gold.patch"], "proposed_action": "记录\"非主键属性 S 类型给字典值不报错\"是 gold 的选择、没有测试固定；与 upstream 一致，不建议改。", "next_experiment": "无。"},
+  {"category": "参考 ID 塌缩", "severity": "P3", "evidence_refs": ["repo_level_findings.md#R8"], "proposed_action": "同 R8（仅影响 P2P）。", "next_experiment": "同 R8。"},
+  {"category": "安装配方与离线条件不匹配", "severity": "P2", "evidence_refs": ["repo_level_findings.md#R2"], "proposed_action": "见 R2。", "next_experiment": "见 R2。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只碰 1 个纯测试文件。", "evidence_refs": ["mat/getmoto__moto-6185/test.patch"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_dynamodb/test_dynamodb.py -k put_item", "reason": "put_item 的主力测试文件，覆盖各种属性类型组合；_validate_item_types 是必经路径却完全不在判分集合内。"},
+  {"id": "新增：按题面原例用 resource API 写 `{'index': 0, 'S': None}`", "reason": "题面原始场景（值为 None → NULL 类型）未进判分集合。"},
+  {"id": "tests/test_dynamodb/test_dynamodb_batch_get_queries.py", "reason": "批量写入路径同样调用该校验，确认递归签名改动无副作用。"},
+  {"id": "tests/test_dynamodb/test_dynamodb_update_expressions.py", "reason": "update_item 也走 _validate_item_types，是另一类调用者。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "题面清楚、初态含问题、gold 与 upstream 一致、判分对正反两方向都有约束；保留项均为 P3（题面原例未进判分、宽松语义未固定）与仓库级共性问题。"},
+ "costs": {"minutes": 17}
+}

@@ -1,0 +1,33 @@
+diff --git a/dask/tests/test_delayed.py b/dask/tests/test_delayed.py
+--- a/dask/tests/test_delayed.py
++++ b/dask/tests/test_delayed.py
+@@ -100,17 +100,27 @@
+     dataclasses = pytest.importorskip("dataclasses")
+ 
+     # Avoid @dataclass decorator as Python < 3.7 fail to interpret the type hints
+-    ADataClass = dataclasses.make_dataclass("ADataClass", [("a", int)])
++    ADataClass = dataclasses.make_dataclass(
++        "ADataClass",
++        [("a", int, dataclasses.field(default=3)),
++         ("b", int, dataclasses.field(init=False))]
++    )
+ 
+     literal = dask.delayed(3)
+     with_class = dask.delayed({"a": ADataClass(a=literal)})
+ 
+     def return_nested(obj):
++        # 检查 delayed 函数实际收到的参数类型和值。
++        assert isinstance(obj["a"], ADataClass)
++        assert obj["a"].a == 3
+         return obj["a"].a
+ 
+     final = delayed(return_nested)(with_class)
+ 
+-    assert final.compute() == 3
++    assert final.compute(scheduler="sync") == 3
++
++    with_default = dask.delayed({"a": ADataClass()})
++    assert delayed(return_nested)(with_default).compute(scheduler="sync") == 3
+ 
+ 
+ def test_operators():

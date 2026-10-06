@@ -1,0 +1,33 @@
++ git checkout base -- tests/
+RH2_SETUP_RAN=1
++ echo RH2_PHASE_START=install
+RH2_PHASE_START=install
+RH2_TS_INSTALL_START=100.0
+RH2_INSTALL_RC=0
+RH2_TS_INSTALL_END=103.5
+RH2_PHASE_END=install
+RH2_TS_TEST_START=104.0
++ : '>>>>> Start Test Output'
+F.                                                                       [100%]
+=================================== FAILURES ===================================
+_____________________________ test_feature[after] ______________________________
+
+case = 'after'
+
+    @pytest.mark.parametrize("case", [label], ids=[label])
+    def test_feature(case):
+>       assert case == "before"
+E       AssertionError: assert 'after' == 'before'
+E         
+E         - before
+E         + after
+
+tests/test_thing.py:7: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_thing.py::test_stable[after]
+FAILED tests/test_thing.py::test_feature[after] - AssertionError: assert 'aft...
+1 failed, 1 passed in 0.02s
++ : '>>>>> End Test Output'
+RH2_TEST_RC=1
+RH2_TS_TEST_END=110.25

@@ -1,0 +1,464 @@
+{
+  "schema": "dask7305_qwen36_first_arm_and_pair_owner_analysis_v1",
+  "as_of": "2026-10-04T01:40:46.636086+08:00",
+  "instance_id": "dask__dask-7305",
+  "revision_id": "dask7305-exact-ends-auto-v3",
+  "request_id": "probe-swe-dask-7305-20261003-v1",
+  "job_id": "gpu1003-dask7305-qwen36-a1",
+  "scope": "两模型各一次首轮；本次核收Qwen真实求解/评分及既有Coder原FP CPU派生分，无新CPU/模型/控制运行。",
+  "pair_receipt": {
+    "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/probe-swe-dask-7305-20261003-v1_pair_execution_receipt_v1.json",
+    "sha256": "036f0969623d6c10c16b93e493e5e80e3ebe5471a4dbd27c58316fbf1842fd1b",
+    "bytes": 9990
+  },
+  "execution_receipt": {
+    "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/dask7305_qwen36_code9_execution_receipt_v1/execution_receipt.json",
+    "sha256": "2940881661ecff3e2da956fedd458e18e31186da7d258e0a1837057a93dc795f",
+    "bytes": 110631
+  },
+  "originals_readback": {
+    "path": "runs/category2_repair_20260929/swe_dask/model_analysis_20261004/dask7305_qwen36_a1_v1/originals_checks_v1.json",
+    "sha256": "eb278d4d53bae4dceb950cd80b939def27d90df5672a0b092319869aed2d1265",
+    "bytes": 91363
+  },
+  "trajectory_index": {
+    "path": "runs/category2_repair_20260929/swe_dask/model_analysis_20261004/dask7305_qwen36_a1_v1/trajectory_index_v1.json",
+    "sha256": "bfdd58f7e941e95763d988cf3d7705175a79018064888c25e52d3f7cd553cdd0",
+    "bytes": 147280
+  },
+  "non_author_candidate_review": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_7305_qwen36_a1_candidate_review_20261004.json",
+    "sha256": "2a47197f9d1518f787969136a959ad79782a02b08cc4335595d8fbc7d78c2ce1",
+    "bytes": 28548
+  },
+  "non_author_candidate_report": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_7305_qwen36_a1_candidate_review_20261004.md",
+    "sha256": "ab9bc559b482f7b1ed85179e8c63507aff0622a3ace3f2976a5ef5c94038606a",
+    "bytes": 8526
+  },
+  "actual_Qwen_result": {
+    "schema_id": "rh2.grading_report.v1",
+    "report_id": "rpt_grading_85f0af94",
+    "trajectory_id": "gpu1003-dask7305-qwen36-a1",
+    "task_id": "swe_gym_lite::dask__dask-7305",
+    "grader_name": "swebench_official_parser",
+    "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+dask7305-exact-ends-auto-v3",
+    "outcome": "unresolved",
+    "failure_category": "tests_failed",
+    "reward": 0.0,
+    "reward_scale_version": "binary_v1",
+    "f2p_pass_count": 0,
+    "f2p_total_count": 1,
+    "p2p_fail_count": 0,
+    "p2p_total_count": 104,
+    "execution_failure_stage": null,
+    "execution_failure_evidence": [],
+    "grading_semantics": "swe_f2p_p2p",
+    "expected_match_count": null,
+    "expected_total_count": null,
+    "patch_hygiene": {
+      "cleaned_patch_digest": "sha256:c0a8f7d441c7ada7b39643ba5fd8da12585e0b4543beba5812d07808b57127e4",
+      "digest_kind": "applied_entry_set",
+      "replayed_on_clean_checkout": true,
+      "test_files_modified": false,
+      "forbidden_path_touched": false,
+      "forbidden_paths": [],
+      "verdict": "clean"
+    },
+    "infra_failure_detail": null,
+    "eval_log_ref": {
+      "ref_id": "evallog_gpu1003-dask7305-qwen36-_85f0af94",
+      "sha256": "sha256:426ff77a1565deec6b8f68d5361ba5a177bee983d7fa52b6730e3ca259475b4d",
+      "byte_size": 74359
+    },
+    "timings": {
+      "schema_id": "rh2.grading_timing_record.v1",
+      "record_id": "timing_85f0af94",
+      "trajectory_id": "gpu1003-dask7305-qwen36-a1",
+      "task_id": "swe_gym_lite::dask__dask-7305",
+      "image_pull_seconds": 0.0,
+      "env_reset_seconds": 12.428,
+      "prep_seconds": 0.247,
+      "test_seconds": 16.765,
+      "total_grading_seconds": 508.037,
+      "queue_wait_seconds": 0.0,
+      "container_peak_memory_mb": 2164.043,
+      "queue_depth_at_enqueue": null,
+      "backpressure_triggered": false
+    },
+    "graded_at_utc": "2026-10-03T17:12:32.116088Z"
+  },
+  "pair_results": [
+    {
+      "model": "Coder",
+      "model_job_id": "gpu1003-dask7305-coder-a1",
+      "original_GPU_reward": null,
+      "original_GPU_state": "infra_failure_prepare300",
+      "additional_same_FP_GPU_setup900_state": "infra_failure_PID143_preserved",
+      "CPU_derived_grading_job_id": "dask7305-original-fp-cpu-recovery-20261003-v2",
+      "CPU_derived_reward": 0,
+      "F2P_pass_total": [
+        0,
+        1
+      ],
+      "P2P_fail_total": [
+        0,
+        104
+      ],
+      "candidate_semantics": "fails_exact_endpoint_goal",
+      "CPU_readback": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7305/coder_original_FP_CPU_recovery_readback_20261003.json",
+        "sha256": "0b41d92f82bfd0e6a244918a31db1b669164df70218d48891b31222a63049739",
+        "bytes": 12119
+      },
+      "prior_model_analysis": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7305/model_probe_coder_a1_analysis_20261003.json",
+        "sha256": "440cf7f7706b76a241aa56224741fabf201eab91e7869db54b47c9d561b0c5b9",
+        "bytes": 11205
+      },
+      "new_solve_or_sample": false
+    },
+    {
+      "model": "Qwen3.6",
+      "model_job_id": "gpu1003-dask7305-qwen36-a1",
+      "original_GPU_reward": 0,
+      "F2P_pass_total": [
+        0,
+        1
+      ],
+      "P2P_fail_total": [
+        0,
+        104
+      ],
+      "candidate_semantics": "partial_fix_fails_exact_endpoint_goal",
+      "new_solve_or_sample": "first_missing_model_arm_only"
+    }
+  ],
+  "model_metrics": {
+    "termination": "completed",
+    "harness_exit_code": 0,
+    "solve_seconds": 120.362,
+    "CC_seconds": 116.863,
+    "cumulative_API_seconds": 94.332,
+    "API_seconds_not_pure_GPU_time": true,
+    "CC_turns": 39,
+    "unique_model_responses": 39,
+    "tool_calls": 38,
+    "tools": {
+      "Read": 8,
+      "Bash": 27,
+      "Edit": 3
+    },
+    "cumulative_input_tokens": 1092050,
+    "output_tokens": 14782,
+    "max_single_prompt_input_tokens": 46696,
+    "context_budget_tokens": 196608,
+    "budget_exhausted": false,
+    "API_cost_metadata_not_actual_invoice": 5.8298,
+    "tool_result_error_flags": 0,
+    "tool_content_errors_still_present": true
+  },
+  "candidate": {
+    "frozen_patch_digest": "sha256:aacd6753030cc9422a7f3e93cebfbf6a760c0a293fcb14e2e15a194e9189dede",
+    "baseline_manifest_digest": "sha256:ee9ff8a96c8c01bf8261cca50561bcf7f1db65aa3f2064d9e82e4faf3c1bec9d",
+    "entry_count": 1,
+    "file": "dask/dataframe/partitionquantiles.py",
+    "content_SHA256": "a204ac5c6c1a8691e1193105acb04d01e8ba0ca5e991bbd19ff8fd143d2ca690",
+    "diff": {
+      "base_tree": "cd5326bdcd4eb2841c83720dc370941d555d02dc",
+      "post_tree": "4358be757c22e93f71264335e5d8714c6bdcb2d4",
+      "selfcheck_apply_cached_tree": "4358be757c22e93f71264335e5d8714c6bdcb2d4",
+      "selfcheck_ok": true,
+      "forced_binary_paths": [],
+      "attributes_mode": "none",
+      "diff_headers": 1,
+      "files_in_patch": [
+        "dask/dataframe/partitionquantiles.py"
+      ],
+      "binary_hunks": 0,
+      "git_version": "git version 2.43.0",
+      "bytes": 1052,
+      "sha256": "sha256:dd1f82d21fd24c681d4cf82fa93f1364d7c545e18f0cdd670d8bb98e49854568",
+      "path": "candidate/dask__dask-7305.diff",
+      "baseline_paths_fetched": 1,
+      "baseline_bytes_source": "actual_pre_solver_archive"
+    },
+    "edits_replayed": [
+      {
+        "line": 185,
+        "path": "dask/array/percentile.py",
+        "replayed_sha256": "130921dfd0e4c5b98c7de435c69c715a6634c5f9bab80eca06f1a15ec0a2a967"
+      },
+      {
+        "line": 401,
+        "path": "dask/array/percentile.py",
+        "replayed_sha256": "dfe457a7ddb5343036568873b3b84292d118924699e6437195bff24dd8e86191"
+      },
+      {
+        "line": 447,
+        "path": "dask/dataframe/partitionquantiles.py",
+        "replayed_sha256": "a204ac5c6c1a8691e1193105acb04d01e8ba0ca5e991bbd19ff8fd143d2ca690"
+      }
+    ],
+    "array_temporary_patch_fully_reverted": true,
+    "test_files_modified": false,
+    "grading_projection_clean": true
+  },
+  "first_actual_failure": {
+    "test": "test_set_index_interpolate",
+    "dtype": "uint64",
+    "input_partitions": 1,
+    "output_partitions": 3,
+    "expected_min": 612509347682975743,
+    "actual_min": 612509347682975744,
+    "auto_not_reached": true
+  },
+  "failure_analysis": {
+    "observed": "原公开二值uint64在1输入/3输出分区时，最小端点偏大1；dtype检查已过，其余端点/排序/set_index断言及auto未到达。",
+    "static_mechanism": "percentiles_summary钉输入分区摘要min/max；process_val_weights欠采样分支仍np.interp，再转整数，源码路径与原正式数值一致。",
+    "mechanism_runtime_instrumented": false,
+    "auto_and_cross_2_63_paths": "未修改且本次未到达；只列静态遗漏，不算已运行失败。"
+  },
+  "trajectory_analysis": {
+    "positioning": "先猜uint溢出，再由float64往返数值纠正，第一层精度损失定位准确。",
+    "correction": "全局改array._percentile造成普通quantile截断，两个相关组真实失败；读取core后完整撤回array改动，转到局部摘要修复。",
+    "miss": "已读后续process_val_weights，但只测少量输出1/2，没有1→3欠采样、auto、完整行保留和每分区归属。",
+    "verification": "最终array16pass/1skip，两个dataframe quantile组各2pass，quantile/repartition164pass/109skip/348deselected；未跑真实shuffle目标module。",
+    "assertion_limit": "若干uint64直接比较Pythonint可掩盖精度；已有所测实例正确打印，不能一概判自测假通过。",
+    "earlier_int64_warning": "首次摘要中间值-9223372036854775808可见，模型只核端点，未追踪内部有序性。",
+    "final_claim": "fix is complete超出验证范围；float64第一层根因及撤回全局修改的解释准确。",
+    "efficiency": "重复演示与相似端点实验较多；独立读取可合并，编辑和依赖测试须串行；不推断执行层已有并行能力。"
+  },
+  "current_scope_verdict": {
+    "transport_and_reference_integrity": "pass_in_observed_scope",
+    "candidate_semantic_status": "fail_exact_endpoint_goal",
+    "new_task_material_or_scoring_defect_found": false,
+    "candidate_false_rejection_found": false,
+    "control_contamination_found": false,
+    "pretraining_contamination_ruled_out": false,
+    "same_first_failure_in_two_models_is_not_task_defect": true,
+    "independent_review_accepted_for_this_scope": true,
+    "no_new_CPU_or_repeated_model_required": true,
+    "stable_model_capability": null,
+    "whole_task_complete": false,
+    "training_qualification": null
+  },
+  "actual_code9_R25_binding": {
+    "receipt": {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/dask7305_qwen36_code9_execution_receipt_v1/execution_receipt.json",
+      "sha256": "2940881661ecff3e2da956fedd458e18e31186da7d258e0a1837057a93dc795f",
+      "bytes": 110631
+    },
+    "policy_sha256": "43bcb4c7d87e85b463f30de52fca82149acf476914c4ac6df81f953cbe004eac",
+    "consumer_source_sha256": "sha256:789aa2dbdd4ede98460cbfd4ca33b3d4652729f0ed0e284e34940ff1ed2bc0b5",
+    "material_identity": "sha256:14a6817b0bc1bebdd6a9cb344270e1ab66ba0d2f6d00ca6bf3e777a97e526739",
+    "actor_grader_image_observed": "sha256:b4f186ca0a0139f4287b9203a666b9fd009af079ddad700bb2bf8019aede8b99",
+    "full_scripts_digest": "sha256:a071ed0d14c576d2029f8bdb3b4d9e9f04e679be6e5dea8633c3b63607700450",
+    "same_effective_scripts_as_Coder_CPU": true,
+    "setup_apply_test_whole_seconds": [
+      900,
+      120,
+      1800,
+      3600
+    ],
+    "five_actual_exports": {
+      "DASK_NUM_WORKERS": [
+        [
+          1518,
+          "+ export DASK_NUM_WORKERS=2"
+        ]
+      ],
+      "MKL_NUM_THREADS": [
+        [
+          1524,
+          "+ export MKL_NUM_THREADS=1"
+        ]
+      ],
+      "NUMEXPR_NUM_THREADS": [
+        [
+          1526,
+          "+ export NUMEXPR_NUM_THREADS=1"
+        ]
+      ],
+      "OMP_NUM_THREADS": [
+        [
+          1522,
+          "+ export OMP_NUM_THREADS=1"
+        ]
+      ],
+      "OPENBLAS_NUM_THREADS": [
+        [
+          1520,
+          "+ export OPENBLAS_NUM_THREADS=1"
+        ]
+      ]
+    },
+    "execution_mode_observed": "single_shell",
+    "supply": null,
+    "declared_profile": {
+      "profile_id": "rh2.grader_sandbox_profile.v1",
+      "schema_id": "rh2.sandbox_profile.v1",
+      "candidate_exec_user": "rh2grader",
+      "candidate_exec_uid": 54322,
+      "trusted_init_caps": [
+        "CHOWN",
+        "DAC_OVERRIDE",
+        "DAC_READ_SEARCH",
+        "FOWNER",
+        "KILL"
+      ],
+      "pids_limit": 512,
+      "cpus": 2.0,
+      "memory_bytes": 4294967296,
+      "swap_bytes": 0,
+      "tmp_tmpfs_bytes": 1073741824,
+      "writable_layer_quota_bytes": 8589934592,
+      "require_writable_layer_quota": false,
+      "shm_size_bytes": 67108864,
+      "tmpfs_mount_flags": "exec,nosuid,nodev",
+      "candidate_writable_prefixes": [
+        "/opt/miniconda3/envs/testbed"
+      ],
+      "network": {
+        "mode": "deny_all",
+        "forbidden_probe_targets": [
+          "169.254.169.254:80",
+          "1.1.1.1:443",
+          "172.17.0.1:18001"
+        ]
+      },
+      "bind_mounts_allowed": [
+        "declared_readonly_snapshot_only"
+      ],
+      "testbed_path": "/testbed",
+      "security_opt": [
+        "no-new-privileges"
+      ],
+      "cap_drop": [
+        "ALL"
+      ]
+    },
+    "actual_image_inspect_verified_native_flag_preserved": false,
+    "actual_execution_mode_native_field_preserved": null,
+    "two_stage_execution_verified_native_flag_preserved": false,
+    "full_Docker_Config_or_kernel_profile_attestation_claimed": false,
+    "child_env_BLAS_internal_counts_measured": false,
+    "resource_observation": {
+      "actor": {
+        "samples": 10,
+        "actual_image_ids": [
+          "sha256:b4f186ca0a0139f4287b9203a666b9fd009af079ddad700bb2bf8019aede8b99"
+        ],
+        "pid_peak": 46,
+        "memory_peak_bytes": 924946432,
+        "pids_max_event": 0,
+        "memory_events_max": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        }
+      },
+      "relay": {
+        "samples": 10,
+        "actual_image_ids": [
+          "sha256:ec7d6c95cd3692a2e2d228a8b1ca74e4025b54121fcc4c5da6f09cfa473315ad"
+        ],
+        "pid_peak": 7,
+        "memory_peak_bytes": 27443200,
+        "pids_max_event": 0,
+        "memory_events_max": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        }
+      },
+      "grader": {
+        "samples": 33,
+        "actual_image_ids": [
+          "sha256:b4f186ca0a0139f4287b9203a666b9fd009af079ddad700bb2bf8019aede8b99"
+        ],
+        "pid_peak": 19,
+        "memory_peak_bytes": 2261078016,
+        "pids_max_event": 0,
+        "memory_events_max": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        }
+      }
+    },
+    "original_resource_facts": null,
+    "observation_gaps_unknown": true,
+    "PID1_terminal_proof": {
+      "kind": "current_complete_RC0_plus_exact_PID1_success_journal",
+      "source": "diagnostics/QUEUE_QWEN_DASK4_R25_CODE9_V1_gpu1003-dask7305-qwen36-a1_before/current_terminal_evidence_v3/success.json",
+      "success_event": {
+        "timestamp_usec": "1791047553913183",
+        "at_utc": "2026-10-03T17:12:33.913183+00:00",
+        "MESSAGE": "rh2-gpu1003-dask7305-qwen36-a1-qwen-dask4-r25-code9-v1.service: Deactivated successfully.",
+        "UNIT": "rh2-gpu1003-dask7305-qwen36-a1-qwen-dask4-r25-code9-v1.service"
+      },
+      "not_found_default0_used_as_exit_proof": false
+    },
+    "cleanup_ok": true,
+    "manager_created_removed": [
+      1,
+      1
+    ],
+    "gateway_drained_active0": true
+  },
+  "grader_time_separate_from_model": {
+    "schema_id": "rh2.grading_timing_record.v1",
+    "record_id": "timing_85f0af94",
+    "trajectory_id": "gpu1003-dask7305-qwen36-a1",
+    "task_id": "swe_gym_lite::dask__dask-7305",
+    "image_pull_seconds": 0.0,
+    "env_reset_seconds": 12.428,
+    "prep_seconds": 0.247,
+    "test_seconds": 16.765,
+    "total_grading_seconds": 508.037,
+    "queue_wait_seconds": 0.0,
+    "container_peak_memory_mb": 2164.043,
+    "queue_depth_at_enqueue": null,
+    "backpressure_triggered": false
+  },
+  "install_test_facts": {
+    "install_rc_last_command": 0,
+    "install_failed_commands": [],
+    "install_skipped": false,
+    "install_seconds": 0.887,
+    "test_rc": 1,
+    "test_seconds": 15.174,
+    "markers_seen": [
+      "RH2_INSTALL_RC",
+      "RH2_TEST_RC",
+      "RH2_TS_INSTALL_END",
+      "RH2_TS_INSTALL_START",
+      "RH2_TS_TEST_END",
+      "RH2_TS_TEST_START"
+    ]
+  },
+  "public_delivery": {
+    "mode": "unchanged",
+    "base_prompt_sha256": "sha256:17fa4f73b0935467b461da018519009038bcd73c6e3e22938dffb014fd4bc752",
+    "delivered_prompt_sha256": "sha256:17fa4f73b0935467b461da018519009038bcd73c6e3e22938dffb014fd4bc752"
+  },
+  "public_delivery_scope": "unchanged保持prepared spec.prompt；7656已对齐的旧通用hints范围沿用，不据旧控制桩推断违令或再采样。",
+  "historical_acceptance": {
+    "formal_CPU_control_rows": 17,
+    "only_gold_full_auto_reward1": true,
+    "control_rows_not_real_model_samples": true,
+    "old_Coder_GPU_None_and_PID143_preserved": true,
+    "prior_sealed_reports_unmodified": true
+  },
+  "next_action": "本题双模型首轮分析核收后ack/清活动请求；不因两次有效模型失败复修已验题面或重复采样；继续核已回9378/7138与待回8801。"
+}

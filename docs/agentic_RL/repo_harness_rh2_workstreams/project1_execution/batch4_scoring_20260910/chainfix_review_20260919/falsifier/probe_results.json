@@ -1,0 +1,640 @@
+{
+  "cache_matrix": [
+    {
+      "path": ".pytest_cache",
+      "before": "absent",
+      "after": "regular",
+      "baseline_omitted": {
+        "dirs": 0,
+        "files": 0
+      },
+      "delta": [
+        [
+          ".pytest_cache",
+          "add",
+          "regular"
+        ]
+      ],
+      "phases": [
+        "census",
+        "normalization",
+        "delta"
+      ],
+      "outcome": "resolved",
+      "reward": 1.0
+    },
+    {
+      "path": ".pytest_cache",
+      "before": "directory",
+      "after": "regular",
+      "baseline_omitted": {
+        "dirs": 1,
+        "files": 1
+      },
+      "delta": [
+        [
+          ".pytest_cache",
+          "add",
+          "regular"
+        ]
+      ],
+      "phases": [
+        "census",
+        "normalization",
+        "delta"
+      ],
+      "outcome": "resolved",
+      "reward": 1.0
+    },
+    {
+      "path": "__pycache__",
+      "before": "directory",
+      "after": "symlink",
+      "baseline_omitted": {
+        "dirs": 1,
+        "files": 1
+      },
+      "delta": [
+        [
+          "__pycache__",
+          "add",
+          "symlink"
+        ]
+      ],
+      "phases": [
+        "census",
+        "normalization",
+        "delta"
+      ],
+      "outcome": "resolved",
+      "reward": 1.0
+    },
+    {
+      "path": "pkg/__pycache__",
+      "before": "directory",
+      "after": "regular",
+      "baseline_omitted": {
+        "dirs": 1,
+        "files": 1
+      },
+      "delta": [
+        [
+          "pkg/__pycache__",
+          "add",
+          "regular"
+        ]
+      ],
+      "phases": [
+        "census",
+        "normalization",
+        "delta"
+      ],
+      "outcome": "resolved",
+      "reward": 1.0
+    },
+    {
+      "path": ".pytest_cache",
+      "before": "regular",
+      "after": "regular",
+      "baseline_omitted": {
+        "dirs": 0,
+        "files": 0
+      },
+      "delta": [
+        [
+          ".pytest_cache",
+          "modify",
+          "regular"
+        ]
+      ],
+      "phases": [
+        "census",
+        "normalization",
+        "delta"
+      ],
+      "outcome": "resolved",
+      "reward": 1.0
+    },
+    {
+      "path": "__pycache__",
+      "before": "symlink",
+      "after": "regular",
+      "baseline_omitted": {
+        "dirs": 0,
+        "files": 0
+      },
+      "delta": [
+        [
+          "__pycache__",
+          "modify",
+          "regular"
+        ]
+      ],
+      "phases": [
+        "census",
+        "normalization",
+        "delta"
+      ],
+      "outcome": "resolved",
+      "reward": 1.0
+    },
+    {
+      "path": "config",
+      "policy": "v1",
+      "before": "regular",
+      "after": "directory",
+      "delta": [
+        [
+          "config",
+          "delete",
+          "regular"
+        ],
+        [
+          "config/default.json",
+          "add",
+          "regular"
+        ]
+      ],
+      "phases": [
+        "census",
+        "delta",
+        "delta"
+      ],
+      "outcome": "resolved"
+    },
+    {
+      "path": "config",
+      "policy": "v2",
+      "before": "regular",
+      "after": "directory",
+      "delta": [
+        [
+          "config",
+          "delete",
+          "regular"
+        ],
+        [
+          "config/default.json",
+          "add",
+          "regular"
+        ]
+      ],
+      "phases": [
+        "census",
+        "normalization",
+        "delta",
+        "delta"
+      ],
+      "outcome": "resolved"
+    }
+  ],
+  "namespace_boundary": {
+    "real_phases": [
+      "census",
+      "normalization"
+    ],
+    "noop_artifact_entries": 0,
+    "fixture_report_outcome": "resolved",
+    "report_limit": "评分测试输出由维护 FakeDocker 提供；Git 状态与删除是本机真实结果",
+    "baseline_omitted": {
+      "dirs": 2,
+      "files": 2
+    },
+    "scoreable_entries_equal": true,
+    "excluded_digest_before": "sha256:db37f89b8644f9327cbc07b54fceefc9d92fe14fbc71dd1141563ceb340e9579",
+    "excluded_digest_after": "sha256:784155590e33a8a03c9d0ec99b90d7f0b82ce5f912cdeda5106ca3a2719cba0f",
+    "manifest_digest_equal_after_normalization": false,
+    "head_before_rc": 0,
+    "head_after_rc": 128,
+    "head_after_stderr": "fatal: Needed a single revision",
+    "active_branch_deleted": true,
+    "harness_private_file_deleted": true,
+    "regular_same_name_preserved": true,
+    "symlinks_not_followed": true,
+    "outside_sentinel_preserved": true,
+    "local_alternative": {
+      "script": "find . -mindepth 1 \\( -path ./.git -o -path ./.harness \\) -prune -o -type d \\( -name .pytest_cache -o -name __pycache__ \\) -prune -exec rm -rf -- {} +",
+      "rc": 0,
+      "active_head_preserved": true,
+      "all_manifest_identity_preserved": true,
+      "scoreable_caches_still_removed": true,
+      "production_source_modified": false
+    }
+  },
+  "conflict_persistence": [
+    {
+      "ancestor": "config",
+      "child": "config/default.json",
+      "receipt_rejection_evidence": {
+        "reason_code": "unsupported_delta_shape",
+        "object_path": "config/default.json",
+        "object_type": "prefix_conflict"
+      },
+      "receipt_has_full_conflict": false,
+      "durable_audit_reason": "unsupported_delta_shape:config/default.json:prefix_conflict:ancestor=config(add/regular):child=config/default.json(delete/regular):prefix_conflict",
+      "audit_receipt_attempt_id_equal": true,
+      "workspace_removed": true,
+      "group_disposition": "DROP_GROUP",
+      "in_memory_omitted_counts": {
+        "baseline": {
+          "dirs": 2,
+          "files": 3
+        },
+        "post": {
+          "dirs": 4,
+          "files": 5
+        }
+      },
+      "durable_audit_has_omitted_counts": false
+    },
+    {
+      "ancestor": "config'quote",
+      "child": "config'quote/default.json",
+      "receipt_rejection_evidence": {
+        "reason_code": "unsupported_delta_shape",
+        "object_path": "config'quote/default.json",
+        "object_type": "prefix_conflict"
+      },
+      "receipt_has_full_conflict": false,
+      "durable_audit_reason": "unsupported_delta_shape:config'quote/default.json:prefix_conflict:ancestor=config'quote(add/regular):child=config'quote/default.json(delete/regular):prefix_conflict",
+      "audit_receipt_attempt_id_equal": true,
+      "workspace_removed": true,
+      "group_disposition": "DROP_GROUP",
+      "in_memory_omitted_counts": {
+        "baseline": {
+          "dirs": 2,
+          "files": 3
+        },
+        "post": {
+          "dirs": 4,
+          "files": 5
+        }
+      },
+      "durable_audit_has_omitted_counts": false
+    },
+    {
+      "ancestor": "config\"quote",
+      "child": "config\"quote/default.json",
+      "receipt_rejection_evidence": {
+        "reason_code": "unsupported_delta_shape",
+        "object_path": "config\"quote/default.json",
+        "object_type": "prefix_conflict"
+      },
+      "receipt_has_full_conflict": false,
+      "durable_audit_reason": "unsupported_delta_shape:config\"quote/default.json:prefix_conflict:ancestor=config\"quote(add/regular):child=config\"quote/default.json(delete/regular):prefix_conflict",
+      "audit_receipt_attempt_id_equal": true,
+      "workspace_removed": true,
+      "group_disposition": "DROP_GROUP",
+      "in_memory_omitted_counts": {
+        "baseline": {
+          "dirs": 2,
+          "files": 3
+        },
+        "post": {
+          "dirs": 4,
+          "files": 5
+        }
+      },
+      "durable_audit_has_omitted_counts": false
+    },
+    {
+      "ancestor": "config\\name",
+      "child": "config\\name/default.json",
+      "receipt_rejection_evidence": {
+        "reason_code": "unsupported_delta_shape",
+        "object_path": "config\\name/default.json",
+        "object_type": "prefix_conflict"
+      },
+      "receipt_has_full_conflict": false,
+      "durable_audit_reason": "unsupported_delta_shape:config\\name/default.json:prefix_conflict:ancestor=config\\name(add/regular):child=config\\name/default.json(delete/regular):prefix_conflict",
+      "audit_receipt_attempt_id_equal": true,
+      "workspace_removed": true,
+      "group_disposition": "DROP_GROUP",
+      "in_memory_omitted_counts": {
+        "baseline": {
+          "dirs": 2,
+          "files": 3
+        },
+        "post": {
+          "dirs": 4,
+          "files": 5
+        }
+      },
+      "durable_audit_has_omitted_counts": false
+    }
+  ],
+  "install_trap": {
+    "vendor_repo_count": 33,
+    "vendor_spec_count": 808,
+    "unique_install_including_none": 33,
+    "cases": [
+      {
+        "name": "dvc_nonfinal_and",
+        "command": "python -m pip install --upgrade pip wheel GitPython; python -m pip install \"cython<3.0.0\" && python -m pip install --no-build-isolation pyyaml==5.4.1; python -m pip install git+https://github.com/iterative/mock-ssh-server.git || true; python -m pip install -r tests/requirements.txt || true; python -m pip install -r test-requirements.txt || true; python -m pip install -e \".[tests,dev,all_remotes,all,testing]\"; python -m pip install \"numpy<=1.20\"; python -m pip install \"pytest<8\";",
+        "fail_match": "cython<3.0.0",
+        "same_exit_status_leaf_calls_and_file_bytes": true,
+        "runs": [
+          {
+            "with_trap": false,
+            "install_rc": 0,
+            "failed_commands": [],
+            "calls": [
+              "python -m pip install --upgrade pip wheel GitPython",
+              "python -m pip install cython<3.0.0",
+              "python -m pip install git+https://github.com/iterative/mock-ssh-server.git",
+              "python -m pip install -r tests/requirements.txt",
+              "python -m pip install -r test-requirements.txt",
+              "python -m pip install -e .[tests,dev,all_remotes,all,testing]",
+              "python -m pip install numpy<=1.20",
+              "python -m pip install pytest<8"
+            ],
+            "requirements_after": "initial_requirement\n\n",
+            "stdout": "RH2_PHASE_START=install\nRH2_TS_INSTALL_START=1789800596.212446000\nRH2_INSTALL_RC=0\nRH2_TS_INSTALL_END=1789800596.461749000\nRH2_PHASE_END=install\nPOST_TRAP=\nPOST_ERRTRACE=hBc\nPOST_FALSE_REACHED\n",
+            "stderr": ""
+          },
+          {
+            "with_trap": true,
+            "install_rc": 0,
+            "failed_commands": [],
+            "calls": [
+              "python -m pip install --upgrade pip wheel GitPython",
+              "python -m pip install cython<3.0.0",
+              "python -m pip install git+https://github.com/iterative/mock-ssh-server.git",
+              "python -m pip install -r tests/requirements.txt",
+              "python -m pip install -r test-requirements.txt",
+              "python -m pip install -e .[tests,dev,all_remotes,all,testing]",
+              "python -m pip install numpy<=1.20",
+              "python -m pip install pytest<8"
+            ],
+            "requirements_after": "initial_requirement\n\n",
+            "stdout": "RH2_PHASE_START=install\nRH2_TS_INSTALL_START=1789800596.473791000\nRH2_INSTALL_RC=0\nRH2_TS_INSTALL_END=1789800596.495178000\nRH2_PHASE_END=install\nPOST_TRAP=\nPOST_ERRTRACE=hBc\nPOST_FALSE_REACHED\n",
+            "stderr": ""
+          }
+        ]
+      },
+      {
+        "name": "dvc_or_true",
+        "command": "python -m pip install --upgrade pip wheel GitPython; python -m pip install \"cython<3.0.0\" && python -m pip install --no-build-isolation pyyaml==5.4.1; python -m pip install git+https://github.com/iterative/mock-ssh-server.git || true; python -m pip install -r tests/requirements.txt || true; python -m pip install -r test-requirements.txt || true; python -m pip install -e \".[tests,dev,all_remotes,all,testing]\"; python -m pip install \"numpy<=1.20\"; python -m pip install \"pytest<8\";",
+        "fail_match": "tests/requirements.txt",
+        "same_exit_status_leaf_calls_and_file_bytes": true,
+        "runs": [
+          {
+            "with_trap": false,
+            "install_rc": 0,
+            "failed_commands": [],
+            "calls": [
+              "python -m pip install --upgrade pip wheel GitPython",
+              "python -m pip install cython<3.0.0",
+              "python -m pip install --no-build-isolation pyyaml==5.4.1",
+              "python -m pip install git+https://github.com/iterative/mock-ssh-server.git",
+              "python -m pip install -r tests/requirements.txt",
+              "python -m pip install -r test-requirements.txt",
+              "python -m pip install -e .[tests,dev,all_remotes,all,testing]",
+              "python -m pip install numpy<=1.20",
+              "python -m pip install pytest<8"
+            ],
+            "requirements_after": "initial_requirement\n\n",
+            "stdout": "RH2_PHASE_START=install\nRH2_TS_INSTALL_START=1789800596.506278000\nRH2_INSTALL_RC=0\nRH2_TS_INSTALL_END=1789800596.525984000\nRH2_PHASE_END=install\nPOST_TRAP=\nPOST_ERRTRACE=hBc\nPOST_FALSE_REACHED\n",
+            "stderr": ""
+          },
+          {
+            "with_trap": true,
+            "install_rc": 0,
+            "failed_commands": [],
+            "calls": [
+              "python -m pip install --upgrade pip wheel GitPython",
+              "python -m pip install cython<3.0.0",
+              "python -m pip install --no-build-isolation pyyaml==5.4.1",
+              "python -m pip install git+https://github.com/iterative/mock-ssh-server.git",
+              "python -m pip install -r tests/requirements.txt",
+              "python -m pip install -r test-requirements.txt",
+              "python -m pip install -e .[tests,dev,all_remotes,all,testing]",
+              "python -m pip install numpy<=1.20",
+              "python -m pip install pytest<8"
+            ],
+            "requirements_after": "initial_requirement\n\n",
+            "stdout": "RH2_PHASE_START=install\nRH2_TS_INSTALL_START=1789800596.536619000\nRH2_INSTALL_RC=0\nRH2_TS_INSTALL_END=1789800596.556280000\nRH2_PHASE_END=install\nPOST_TRAP=\nPOST_ERRTRACE=hBc\nPOST_FALSE_REACHED\n",
+            "stderr": ""
+          }
+        ]
+      },
+      {
+        "name": "dvc_simple_failure_then_success",
+        "command": "python -m pip install --upgrade pip wheel GitPython; python -m pip install \"cython<3.0.0\" && python -m pip install --no-build-isolation pyyaml==5.4.1; python -m pip install git+https://github.com/iterative/mock-ssh-server.git || true; python -m pip install -r tests/requirements.txt || true; python -m pip install -r test-requirements.txt || true; python -m pip install -e \".[tests,dev,all_remotes,all,testing]\"; python -m pip install \"numpy<=1.20\"; python -m pip install \"pytest<8\";",
+        "fail_match": ".[tests,dev,all_remotes,all,testing]",
+        "same_exit_status_leaf_calls_and_file_bytes": true,
+        "runs": [
+          {
+            "with_trap": false,
+            "install_rc": 0,
+            "failed_commands": [],
+            "calls": [
+              "python -m pip install --upgrade pip wheel GitPython",
+              "python -m pip install cython<3.0.0",
+              "python -m pip install --no-build-isolation pyyaml==5.4.1",
+              "python -m pip install git+https://github.com/iterative/mock-ssh-server.git",
+              "python -m pip install -r tests/requirements.txt",
+              "python -m pip install -r test-requirements.txt",
+              "python -m pip install -e .[tests,dev,all_remotes,all,testing]",
+              "python -m pip install numpy<=1.20",
+              "python -m pip install pytest<8"
+            ],
+            "requirements_after": "initial_requirement\n\n",
+            "stdout": "RH2_PHASE_START=install\nRH2_TS_INSTALL_START=1789800596.567031000\nRH2_INSTALL_RC=0\nRH2_TS_INSTALL_END=1789800596.586128000\nRH2_PHASE_END=install\nPOST_TRAP=\nPOST_ERRTRACE=hBc\nPOST_FALSE_REACHED\n",
+            "stderr": ""
+          },
+          {
+            "with_trap": true,
+            "install_rc": 0,
+            "failed_commands": [
+              {
+                "rc": 7,
+                "cmd": "python -m pip install -e \".[tests,dev,all_remotes,all,testing]\""
+              }
+            ],
+            "calls": [
+              "python -m pip install --upgrade pip wheel GitPython",
+              "python -m pip install cython<3.0.0",
+              "python -m pip install --no-build-isolation pyyaml==5.4.1",
+              "python -m pip install git+https://github.com/iterative/mock-ssh-server.git",
+              "python -m pip install -r tests/requirements.txt",
+              "python -m pip install -r test-requirements.txt",
+              "python -m pip install -e .[tests,dev,all_remotes,all,testing]",
+              "python -m pip install numpy<=1.20",
+              "python -m pip install pytest<8"
+            ],
+            "requirements_after": "initial_requirement\n\n",
+            "stdout": "RH2_PHASE_START=install\nRH2_TS_INSTALL_START=1789800596.596747000\nRH2_INSTALL_CMD_FAILED=7 python -m pip install -e \".[tests,dev,all_remotes,all,testing]\"\nRH2_INSTALL_RC=0\nRH2_TS_INSTALL_END=1789800596.616350000\nRH2_PHASE_END=install\nPOST_TRAP=\nPOST_ERRTRACE=hBc\nPOST_FALSE_REACHED\n",
+            "stderr": ""
+          }
+        ]
+      },
+      {
+        "name": "dvc_last_command_failure",
+        "command": "python -m pip install --upgrade pip wheel GitPython; python -m pip install \"cython<3.0.0\" && python -m pip install --no-build-isolation pyyaml==5.4.1; python -m pip install git+https://github.com/iterative/mock-ssh-server.git || true; python -m pip install -r tests/requirements.txt || true; python -m pip install -r test-requirements.txt || true; python -m pip install -e \".[tests,dev,all_remotes,all,testing]\";",
+        "fail_match": ".[tests,dev,all_remotes,all,testing]",
+        "same_exit_status_leaf_calls_and_file_bytes": true,
+        "runs": [
+          {
+            "with_trap": false,
+            "install_rc": 7,
+            "failed_commands": [],
+            "calls": [
+              "python -m pip install --upgrade pip wheel GitPython",
+              "python -m pip install cython<3.0.0",
+              "python -m pip install --no-build-isolation pyyaml==5.4.1",
+              "python -m pip install git+https://github.com/iterative/mock-ssh-server.git",
+              "python -m pip install -r tests/requirements.txt",
+              "python -m pip install -r test-requirements.txt",
+              "python -m pip install -e .[tests,dev,all_remotes,all,testing]"
+            ],
+            "requirements_after": "initial_requirement\n\n",
+            "stdout": "RH2_PHASE_START=install\nRH2_TS_INSTALL_START=1789800596.626836000\nRH2_INSTALL_RC=7\nRH2_TS_INSTALL_END=1789800596.642567000\nRH2_PHASE_END=install\nPOST_TRAP=\nPOST_ERRTRACE=hBc\nPOST_FALSE_REACHED\n",
+            "stderr": ""
+          },
+          {
+            "with_trap": true,
+            "install_rc": 7,
+            "failed_commands": [
+              {
+                "rc": 7,
+                "cmd": "python -m pip install -e \".[tests,dev,all_remotes,all,testing]\""
+              }
+            ],
+            "calls": [
+              "python -m pip install --upgrade pip wheel GitPython",
+              "python -m pip install cython<3.0.0",
+              "python -m pip install --no-build-isolation pyyaml==5.4.1",
+              "python -m pip install git+https://github.com/iterative/mock-ssh-server.git",
+              "python -m pip install -r tests/requirements.txt",
+              "python -m pip install -r test-requirements.txt",
+              "python -m pip install -e .[tests,dev,all_remotes,all,testing]"
+            ],
+            "requirements_after": "initial_requirement\n\n",
+            "stdout": "RH2_PHASE_START=install\nRH2_TS_INSTALL_START=1789800596.653528000\nRH2_INSTALL_CMD_FAILED=7 python -m pip install -e \".[tests,dev,all_remotes,all,testing]\"\nRH2_INSTALL_RC=7\nRH2_TS_INSTALL_END=1789800596.669367000\nRH2_PHASE_END=install\nPOST_TRAP=\nPOST_ERRTRACE=hBc\nPOST_FALSE_REACHED\n",
+            "stderr": ""
+          }
+        ]
+      },
+      {
+        "name": "bokeh_pipeline_last_fails",
+        "command": "pip install \"setuptools<66\" \"jinja2<3.1\"; printf \"1\n\" | python setup.py develop; bokeh sampledata;",
+        "fail_match": "setup.py develop",
+        "same_exit_status_leaf_calls_and_file_bytes": true,
+        "runs": [
+          {
+            "with_trap": false,
+            "install_rc": 0,
+            "failed_commands": [],
+            "calls": [
+              "pip install setuptools<66 jinja2<3.1",
+              "python setup.py develop",
+              "bokeh sampledata"
+            ],
+            "requirements_after": "initial_requirement\n\n",
+            "stdout": "RH2_PHASE_START=install\nRH2_TS_INSTALL_START=1789800596.680044000\nRH2_INSTALL_RC=0\nRH2_TS_INSTALL_END=1789800596.903393000\nRH2_PHASE_END=install\nPOST_TRAP=\nPOST_ERRTRACE=hBc\nPOST_FALSE_REACHED\n",
+            "stderr": ""
+          },
+          {
+            "with_trap": true,
+            "install_rc": 0,
+            "failed_commands": [
+              {
+                "rc": 7,
+                "cmd": "python setup.py develop"
+              }
+            ],
+            "calls": [
+              "pip install setuptools<66 jinja2<3.1",
+              "python setup.py develop",
+              "bokeh sampledata"
+            ],
+            "requirements_after": "initial_requirement\n\n",
+            "stdout": "RH2_PHASE_START=install\nRH2_TS_INSTALL_START=1789800596.914992000\nRH2_INSTALL_CMD_FAILED=7 python setup.py develop\nRH2_INSTALL_RC=0\nRH2_TS_INSTALL_END=1789800596.924059000\nRH2_PHASE_END=install\nPOST_TRAP=\nPOST_ERRTRACE=hBc\nPOST_FALSE_REACHED\n",
+            "stderr": ""
+          }
+        ]
+      },
+      {
+        "name": "hydra_blank_tail_conditional",
+        "command": "sed -i 's|isort@git+git://github.com/timothycrosley/isort|isort@git+https://github.com/timothycrosley/isort|g' requirements/dev.txt; { tail -n1 requirements/requirements.txt | grep -q \".\" && echo \"\"; } >> requirements/requirements.txt; echo \"pip==24.0\" >> requirements/requirements.txt;pip install \"pip==24.0\"; pip install -r requirements/dev.txt; pip install -e .;",
+        "fail_match": "",
+        "same_exit_status_leaf_calls_and_file_bytes": true,
+        "runs": [
+          {
+            "with_trap": false,
+            "install_rc": 0,
+            "failed_commands": [],
+            "calls": [
+              "sed -i s|isort@git+git://github.com/timothycrosley/isort|isort@git+https://github.com/timothycrosley/isort|g requirements/dev.txt",
+              "pip install pip==24.0",
+              "pip install -r requirements/dev.txt",
+              "pip install -e ."
+            ],
+            "requirements_after": "initial_requirement\n\npip==24.0\n",
+            "stdout": "RH2_PHASE_START=install\nRH2_TS_INSTALL_START=1789800596.935221000\nRH2_INSTALL_RC=0\nRH2_TS_INSTALL_END=1789800597.042045000\nRH2_PHASE_END=install\nPOST_TRAP=\nPOST_ERRTRACE=hBc\nPOST_FALSE_REACHED\n",
+            "stderr": ""
+          },
+          {
+            "with_trap": true,
+            "install_rc": 0,
+            "failed_commands": [],
+            "calls": [
+              "sed -i s|isort@git+git://github.com/timothycrosley/isort|isort@git+https://github.com/timothycrosley/isort|g requirements/dev.txt",
+              "pip install pip==24.0",
+              "pip install -r requirements/dev.txt",
+              "pip install -e ."
+            ],
+            "requirements_after": "initial_requirement\n\npip==24.0\n",
+            "stdout": "RH2_PHASE_START=install\nRH2_TS_INSTALL_START=1789800597.054205000\nRH2_INSTALL_RC=0\nRH2_TS_INSTALL_END=1789800597.066368000\nRH2_PHASE_END=install\nPOST_TRAP=\nPOST_ERRTRACE=hBc\nPOST_FALSE_REACHED\n",
+            "stderr": ""
+          }
+        ]
+      },
+      {
+        "name": "diagnostic_subshell_function_boundary",
+        "command": "f() { return 7; }; f; (false); false || true; false && true; false | true; true",
+        "fail_match": "",
+        "same_exit_status_leaf_calls_and_file_bytes": true,
+        "runs": [
+          {
+            "with_trap": false,
+            "install_rc": 0,
+            "failed_commands": [],
+            "calls": [],
+            "requirements_after": "initial_requirement\n\n",
+            "stdout": "RH2_PHASE_START=install\nRH2_TS_INSTALL_START=1789800597.077168000\nRH2_INSTALL_RC=0\nRH2_TS_INSTALL_END=1789800597.081121000\nRH2_PHASE_END=install\nPOST_TRAP=\nPOST_ERRTRACE=hBc\nPOST_FALSE_REACHED\n",
+            "stderr": ""
+          },
+          {
+            "with_trap": true,
+            "install_rc": 0,
+            "failed_commands": [
+              {
+                "rc": 7,
+                "cmd": "return 7"
+              },
+              {
+                "rc": 1,
+                "cmd": "false"
+              },
+              {
+                "rc": 1,
+                "cmd": "( false )"
+              },
+              {
+                "rc": 1,
+                "cmd": "true"
+              }
+            ],
+            "calls": [],
+            "requirements_after": "initial_requirement\n\n",
+            "stdout": "RH2_PHASE_START=install\nRH2_TS_INSTALL_START=1789800597.091640000\nRH2_INSTALL_CMD_FAILED=7 return 7\nRH2_INSTALL_CMD_FAILED=1 false\nRH2_INSTALL_CMD_FAILED=1 ( false )\nRH2_INSTALL_CMD_FAILED=1 true\nRH2_INSTALL_RC=0\nRH2_TS_INSTALL_END=1789800597.095100000\nRH2_PHASE_END=install\nPOST_TRAP=\nPOST_ERRTRACE=hBc\nPOST_FALSE_REACHED\n",
+            "stderr": ""
+          }
+        ]
+      }
+    ],
+    "limit": "当前 vendor 的控制语义真实执行；pip/python 等外部叶命令是无网络替身。额外子 shell/function 用于解释观测边界，不增加支持要求。"
+  }
+}

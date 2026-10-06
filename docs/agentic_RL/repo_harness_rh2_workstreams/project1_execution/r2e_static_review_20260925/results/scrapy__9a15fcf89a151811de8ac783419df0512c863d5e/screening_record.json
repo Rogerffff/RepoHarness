@@ -1,0 +1,435 @@
+{
+ "schema_note": "沿 environment_screening_definition_20260915 的既有字段；静态审查记录，不是生产 schema，也不是自动准入。第二步（本文件、card.md、old_findings_delta.md）由接续会话完成：原主审会话在封存初判后、读历史阶段因 API 错误中止。",
+ "task_id": "r2e_gym_subset::scrapy__9a15fcf89a151811de8ac783419df0512c863d5e",
+ "instance_id": "scrapy__9a15fcf89a151811de8ac783419df0512c863d5e",
+ "task_revision": "r2e_gym_subset_e8b9fcbc / 来源版材料（material_revisions=[]；expected sha256:2fefa8a5287028e9…；hidden_tests_tree sha256:a3f0f6e4f494ed95…；run_tests.sh sha256:8285765fcf1a4ec2…）",
+ "source_adapter_ref": {
+  "pins": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/t1_input_pins_r2e_v4.json（其 material_revisions_v3.json 不含本题）",
+  "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl:45（line_sha256 e7cabb3108dfb2df…，与静态包 grading_bundle.json 记录相同）",
+  "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/validation_bundles_v0.jsonl:45（line_sha256 555eae94097e4897…）",
+  "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl（line_sha256 a1530cc66205828f…）",
+  "static_prep": "runs/r2e_static_prep_20260924/v2/{public,private,history}/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e",
+  "note": "环境阶段记录里写的 ingest_manifest_v0 (pin ea567fec…) 是旧引用；封板输入已升到 v4，但本题评分面自 v0 起未变"
+ },
+ "recipe_ref": {
+  "derived_image": "r2e_derive_v1",
+  "derived_image_ref": "rh2-r2e-derived/scrapy:9a15fcf89a15-r2e_derive_v1",
+  "derived_image_id": "sha256:fe908bed0003bea4519a5eb61d5022fe4ab50ce6b6f7f434a684c31cad96c6cd",
+  "recipe_sha256": "sha256:0da821a15fa389289f524c60d3a421bc940cce753e4ecf3d53560b7ab6b31df9",
+  "env_recipe": null,
+  "resource_recipe": null,
+  "resources": "default：2 CPU / 4 GiB / tmpfs 1 GiB / pids 512 / network deny_all（评分账本 policy）",
+  "formal_actor_image_note": "正式 actor 当前用的是 public.image，即来源镜像 namanjain12/scrapy_final:9a15fcf89a151811de8ac783419df0512c863d5e，不是评分用的派生镜像（环境卡 §2，09-25 代码事实）"
+ },
+ "code_snapshot_ref": "runs/r2e_snapshot_20260923.sha256（R-f 运行时的代码快照）。本审查静态读取的 rh2/src/repoharness2/envpack/scoring.py（sha256 7c26f6a2a875aedd…）和 envpack/r2e_parsers.py（sha256 339b7c80cca516dc…）与快照逐字节相同。仓库 HEAD 为 6526839f，工作树有未提交改动。",
+ "facts_ref": [
+  {
+   "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/facts.json",
+   "note": "环境阶段的汇总（collate_facts.py），覆盖 R-f 与中央复跑"
+  },
+  {
+   "ref": "runs/r2e_rf_20260923/remote/r2e_derived/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/facts.json",
+   "note": "派生镜像复核：fix_present=no，私有目录 700，refs / reflog / remotes 均为 0"
+  },
+  {
+   "ref": "runs/r2e_rf_20260923/remote/r2e_derived/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/integrity_derived.txt",
+   "note": "已装包的 dist-info 名单：twisted-24.11.0、zope.interface-7.2、pytest-8.3.4、six-1.17.0、w3lib-2.2.1、lxml-5.3.0、cssselect-1.2.0"
+  },
+  {
+   "ref": "runs/env_overnight_20260916/M3/facts/9a15fcf89a15/facts/",
+   "note": "来源镜像的事实（M3）：git_fix.txt、git_contains.txt、git_fix_files.txt、r2e_tests_list.txt、status_porcelain.txt、pth.txt"
+  },
+  {
+   "ref": "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl:45",
+   "note": "当前材料｜noop｜R-f 09-23｜派生镜像｜默认资源｜reward 0，6/7，只有目标键不符；日志 eval_logs_r2e/evallog_replay-r2e-rf-all-noop-s_49e74388.eval.log"
+  },
+  {
+   "ref": "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl:45",
+   "note": "当前材料｜gold｜R-f 09-23｜reward 1，7/7；日志 eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_798f95c6.eval.log"
+  },
+  {
+   "ref": "runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl:45",
+   "note": "当前材料｜noop｜中央复跑 09-24｜reward 0，6/7；日志 eval_logs/evallog_replay-r2e-envrepair-rer_92f27267.eval.log"
+  },
+  {
+   "ref": "runs/r2e_env_repair_20260924/_rerun2/ledger_gold.jsonl:45",
+   "note": "当前材料｜gold｜中央复跑 09-24｜reward 1，7/7；日志 eval_logs/evallog_replay-r2e-envrepair-rer_14d83f49.eval.log"
+  },
+  {
+   "ref": "runs/r2e_env_repair_20260924/p4/ledger_overfix.jsonl:1",
+   "note": "诊断｜P4 更完整修复（gold 加上 from_content_type / from_content_disposition 对 bytes 做 latin-1 解码）｜真实 grader，派生镜像同当前｜7/7 PASSED，reward 0，不符的是 test_from_args 与 test_from_headers；候选 p4/overfix/<iid>.diff，sha256 81cedada…"
+  },
+  {
+   "ref": "runs/r2e_env_repair_20260924/p4/offline_rescore_9a15fcf8.json",
+   "note": "离线重算（用生产函数重判旧日志）：只从期望里删键，gold 也得 0；两侧对称去掉后 noop 0 / gold 1 / over-fix 1"
+  },
+  {
+   "ref": "runs/r2e_rf_20260923/reconcile_all/reconcile.json#[44],[92]",
+   "note": "独立参考：M3（来源镜像、来源版材料）的 noop ×2（M3/facts/9a15fcf89a15/noop_x2/out1.txt、out2.txt）与 gold ×2（M3/gold_ledger/r2e_gold_m3.jsonl:31、:78），和 RH2 逐键一致"
+  },
+  {
+   "ref": "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log",
+   "note": "镜像层面探针（agent/54321，--network none，rollout 资源）：解释器 .venv 3.9.21，没有 pip，cwd=/tmp 也能导入，公开复现 REPRO_OBSERVED=1；验收时的独立重跑见 runs/r2e_env_repair_20260924/_accept/p4/dev_probe/"
+  },
+  {
+   "ref": "runs/r2e_env_repair_20260924/p4/targeted_public_tests/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log",
+   "note": "镜像层面：cd /testbed && python -m pytest -q -rfEs … tests/test_responsetypes.py → 2 failed / 5 passed，两例都是 py3 bytes 引起的 TypeError"
+  }
+ ],
+ "checks": {
+  "1": {
+   "status": "pass",
+   "note": "私有材料的哈希与摄入行、日志里的 RH2_SETUP_* 记录一致。M3 的 git_fix_files 显示修复提交只改了 scrapy/responsetypes.py 和 tests/test_responsetypes.py。派生镜像复核通过：HEAD、隐藏测试树和入口脚本都与评分面一致。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/grading_bundle.json",
+    "runs/r2e_rf_20260923/remote/r2e_derived/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/facts.json",
+    "runs/env_overnight_20260916/M3/facts/9a15fcf89a15/facts/git_fix_files.txt"
+   ]
+  },
+  "2": {
+   "status": "pass",
+   "note": "noop 在目标断言处失败（test_1.py:42），报错“application/x-json… ==> Response != TextResponse”与题面一致；R-f、中央复跑和 M3 各有 2 份日志，结果相同。镜像层面的公开复现 REPRO_OBSERVED=1，P4 探针和验收重跑都得到这个结果。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-s_49e74388.eval.log",
+    "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log"
+   ]
+  },
+  "3": {
+   "status": "issue",
+   "note": "user_prompt.txt 只是静态渲染，没有捕获模型实际收到的消息。public_hints 里关于 conda、pip 和“评分会重置测试文件”的说法对 R2E 不成立（共享问题 E09），但不影响本题的合法解。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/public/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/public_bundle.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/r2e_environment_card.md"
+   ]
+  },
+  "4": {
+   "status": "pass",
+   "note": "合法修复只需改 scrapy/responsetypes.py。gold 和 P4 候选的 projection.included_paths 都是 [scrapy/responsetypes.py]。不需要额外的排除规则。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/ledger_overfix.jsonl:1",
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl:45"
+   ]
+  },
+  "5": {
+   "status": "not_checked",
+   "note": "未检查与池内其它 scrapy 题（75450e75、a95a338e、cfed9b66、e9387529）是否同族或同修复派生。"
+  },
+  "6": {
+   "status": "pass",
+   "note": "镜像里的依赖已装齐，修复也不需要新依赖。Scrapy 1.1 与 Twisted 24.11.0、zope.interface 7.2 不兼容，但只影响抓取类公开测试，本题路径不经过那里。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/integrity_derived.txt",
+    "runs/r2e_env_repair_20260924/p4/targeted2_cmds/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log"
+   ]
+  },
+  "7": {
+   "status": "pass",
+   "note": "scrapy/mime.types 和 scrapy/VERSION 都在工作树里；test_custom_mime_types_loaded 在所有运行中都通过。"
+  },
+  "8": {
+   "status": "unknown",
+   "note": "评分侧 uid 54322 已实测可用。agent uid 54321 在派生镜像里按 rollout profile 探针：能写 /testbed，能导入（镜像层面）。正式启动链未验证：它用来源镜像，经 Claude Code 的非交互 shell 和 /rh2/bash_env 启动。按环境卡，这一项写“actor 待验”。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log"
+   ]
+  },
+  "9": {
+   "status": "pass",
+   "note": "导入的是 /testbed/scrapy/__init__.py（1.1.0dev1）。gold 下 TypeError 的行号从 56 变成 57，说明补丁确实生效了。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_798f95c6.eval.log"
+   ]
+  },
+  "10": {
+   "status": "unknown",
+   "note": "镜像层面已实测：用显式路径运行公开的 tests/test_responsetypes.py，结果 5 passed / 2 failed；公开复现也能跑。必须显式给出文件路径：py3 下 conftest 的 collect_ignore 会跳过这个文件（静态阅读）。正式链上的 actor 条件待验。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/targeted_public_tests/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log"
+   ]
+  },
+  "11": {
+   "status": "pass",
+   "note": "准备、解题、测试三个阶段都不需要网络。评分环境是 deny_all；探针里 NET_CONNECT_RC=1、NET_DNS_RC=2，确认无法出网。"
+  },
+  "12": {
+   "status": "not_applicable",
+   "note": "目标测试不依赖任何外部服务。"
+  },
+  "13": {
+   "status": "pass",
+   "note": "内存峰值约 205 MB（限额 4 GiB），测试耗时约 1 s。"
+  },
+  "14": {
+   "status": "pass",
+   "note": "RH2 的 noop 和 gold 各跑 2 次，逐键一致；M3 的 noop 和 gold 也各 2 次，结果相同。"
+  },
+  "15": {
+   "status": "pass",
+   "note": "每次评分都用新容器，omitted_cache_count 为 0。并发只做了记录，没有专门测试。"
+  },
+  "16": {
+   "status": "pass",
+   "note": "gold 和 P4 候选都用 git_apply 交付，投影路径符合预期。"
+  },
+  "17": {
+   "status": "pass",
+   "note": "评分只替换 r2e_tests/ 和 run_tests.sh，gold 改动的路径与它们不相交。根目录的 conftest.py（含 chdir fixture）和 pytest.ini（含 --doctest-modules --assert=plain）对 r2e_tests 生效，而且评分时不会被重置。合法解不需要改这两个文件；候选改了会影响评分，这属于共享机制，见 31。"
+  },
+  "18": {
+   "status": "pass",
+   "note": "7 个测试都被收集并执行。其中 test_from_headers 和 test_from_args 在第一个带头映射就抛 TypeError，后面的断言从不执行，见 19 和 25。"
+  },
+  "19": {
+   "status": "issue",
+   "note": "parser 的键和状态本身没有问题：只有一个文件，没有撞键，也没有 ANSI 转义。问题在期望：它把两个死键定为 FAILED。失败来自 py3 下的 bytes（responsetypes.py:56）；这两个键之所以进入期望，是因为搬迁绕开了上游的 tests/py3-ignores.txt:40。合法修复可以把它们翻成 PASSED。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_798f95c6.eval.log",
+    "runs/r2e_static_prep_20260924/v2/public/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/worktree/tests/py3-ignores.txt",
+    "runs/r2e_env_repair_20260924/p4/ledger_overfix.jsonl:1"
+   ]
+  },
+  "20": {
+   "status": "pass",
+   "note": "noop 与 gold 只在目标键上不同。"
+  },
+  "21": {
+   "status": "pass",
+   "note": "所有非 PASSED 键的原因都能在日志里看到，没有被总分或重试掩盖。"
+  },
+  "22": {
+   "status": "pass",
+   "note": "M3（来源镜像、来源版材料）的 noop ×2 和 gold ×2 与 RH2 逐键一致。如果做修订 B，本题就不再有同版本的独立 runner 对照，对账时要单独列出。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   ]
+  },
+  "23": {
+   "status": "pass",
+   "note": "题面清楚。两个小瑕疵：responsetypes 既是模块名又是单例名；题面把整串 content-type 叫作 MIME type。"
+  },
+  "24": {
+   "status": "issue",
+   "note": "P4 的更完整修复（gold 加上 bytes 解码）经真实评分 7/7 PASSED，reward 却是 0。按静态推断，只修 content_type 的部分修复仍能得 1。也就是说，得分取决于一项题外修复做得完不完整。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/ledger_overfix.jsonl:1",
+    "runs/r2e_env_repair_20260924/p4/eval_logs/evallog_replay-r2e-envrepair-p4-_1acaf88b.eval.log"
+   ]
+  },
+  "25": {
+   "status": "issue",
+   "note": "静态推断，未实跑：application/json 等其余表项没有测试保护，“把 application/json 改名成 x-json”这种错误实现也能得 1。content_encoding→Response 和 header 路径只出现在死键里，等于没有被测到。影响小。"
+  },
+  "26": {
+   "status": "pass",
+   "note": "静态推断：gold 只加了一个表项；调用者都经 from_args；TextResponse 是 Response 的子类，已有的 isinstance 判断不受影响。调用者只读了 grep 命中的行。"
+  },
+  "27": {
+   "status": "pass",
+   "note": "gold 修好了题面原例，没有无关改动。它没有处理 py3 bytes 问题，但那在题面范围之外。"
+  },
+  "28": {
+   "status": "pass",
+   "note": "本审查建议的修订 B 只是对称去掉两个死键，不新增要求。给 K1′ 补断言属于扩大测试标准，单独列出，不夹带进 B。"
+  },
+  "29": {
+   "status": "issue",
+   "note": "派生镜像是干净的：fix_present=no，私有目录 700，没有 refs、reflog 或 remote。但正式 actor 目前用来源镜像：/r2e_tests 所有用户可读，修复提交可达，远端 1.1…2.x 分支也都在（M3 facts）。这是共享问题，B 线正在改正式链。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/facts.json",
+    "runs/env_overnight_20260916/M3/facts/9a15fcf89a15/facts/git_fix.txt",
+    "runs/env_overnight_20260916/M3/facts/9a15fcf89a15/facts/git_contains.txt",
+    "runs/env_overnight_20260916/M3/facts/9a15fcf89a15/facts/r2e_tests_list.txt",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/r2e_environment_card.md"
+   ]
+  },
+  "30": {
+   "status": "unknown",
+   "note": "评分和探针环境都不能出网。正式链走隔离内网加 relay，能访问到哪些地址还没有验证。"
+  },
+  "31": {
+   "status": "not_checked",
+   "note": "属于共享机制。本题特有的入口是根目录的 conftest.py 和 pytest.ini：它们对 r2e_tests 生效且评分时不重置。没有做攻击测试。"
+  },
+  "32": {
+   "status": "pass",
+   "note": "断言用 is 比较类对象，检查的是行为，不是在匹配 gold 的文本。"
+  },
+  "33": {
+   "status": "not_checked",
+   "note": "需要真实模型。"
+  },
+  "34": {
+   "status": "not_checked",
+   "note": "需要真实轨迹才能判断：显式运行公开测试时看到的两个 TypeError，会不会引导模型去做会被判 0 的更完整修复。"
+  },
+  "35": {
+   "status": "not_checked",
+   "note": "需要真实模型。"
+  },
+  "36": {
+   "status": "not_checked",
+   "note": "需要目标基座的实测；不从静态阅读推测难度或学习价值。"
+  },
+  "37": {
+   "status": "not_applicable",
+   "note": "目前没有已批准的修订。建议的 B 属于测试标准纠错，恢复上游的 py3 忽略意图，不改变任务范围。"
+  },
+  "38": {
+   "status": "not_applicable",
+   "note": "修订实施后，需要在干净条件下把 noop、gold、over-fix 和部分修复各复跑 2 次。"
+  },
+  "40": {
+   "status": "not_checked",
+   "note": "流程建议：搬迁伪影扫描可以补一条规则，检查隐藏测试的原文件是否在 base 的 collect_ignore 或 py3-ignores 里。尚未对其它题核实。"
+  }
+ },
+ "issues": [
+  {
+   "id": "expected_dead_keys_flippable",
+   "category": "test_standard",
+   "scope": "task",
+   "checks": [
+    19,
+    24
+   ],
+   "summary": "期望把 ResponseTypesTest.test_from_headers 和 test_from_args 定为 FAILED。这两个是死键：在 py3 下，Headers 存的是 bytes，而 responsetypes.py:56 用 str 去切分，所以两个测试都在第一个带头映射就抛错，此后的断言从不执行，不保护任何行为。它们之所以进入期望，是因为 R2E 把测试搬到 r2e_tests/，绕开了上游 tests/py3-ignores.txt:40 对整个文件的 py3 忽略。结果是：更完整的正确修复会被判 0，只修 content_type 的部分修复仍能得 1。",
+   "evidence_strength": "历史真实 RH2（P4 诊断候选，真实 grader，派生镜像与当前相同）；离线重算（用生产函数重判旧日志）；静态推断（死键判断、py3-ignores 来源、部分修复的结果）",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/ledger_overfix.jsonl:1",
+    "runs/r2e_env_repair_20260924/p4/eval_logs/evallog_replay-r2e-envrepair-p4-_1acaf88b.eval.log",
+    "runs/r2e_env_repair_20260924/p4/overfix/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e.diff",
+    "runs/r2e_env_repair_20260924/p4/offline_rescore_9a15fcf8.json",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-s_798f95c6.eval.log",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e.md"
+   ],
+   "proposed_action": "T0-4 修订 B：在私有 r2e_tests/test_1.py 中删除这两个方法，期望同步删掉这两个键，走 material_v2（修订单 v4、pins v5、重建派生镜像）。如果改用 unittest.skipIf，跳过理由里不能出现 PASSED、FAILED 或 ERROR，否则 parse_log_pytest 会把 SKIPPED 行当成键。不建议改 run_tests.sh：它是公开可见的文件。验收：在修订后的材料上各跑 2 次，预期 noop 0、gold 1、P4 over-fix 1、只修 content_type 的部分修复 1。",
+   "status": "open",
+   "decision_ref": "T0-4（用户 09-24 晚决定交由题意与评分质量筛查；环境阶段的提案推荐 D）"
+  },
+  {
+   "id": "weak_regression_protection",
+   "category": "test_coverage",
+   "scope": "task",
+   "checks": [
+    25
+   ],
+   "summary": "CLASSES 表里除 html、xml、xhtml、wap 以外的条目（如 application/json、application/(x-)javascript、atom/rdf/rss+xml）都没有测试保护，“把 application/json 改名成 x-json”也能得 1。content_encoding→Response 和 header 路径只出现在死键里。",
+   "evidence_strength": "静态推断，未实跑",
+   "proposed_action": "可选：在 CPU 上跑一次反例。要不要补断言属于扩大测试标准，需另行决定，不夹带进修订 B。",
+   "status": "open"
+  },
+  {
+   "id": "public_test_overfix_lure",
+   "category": "solver_condition",
+   "scope": "task",
+   "checks": [
+    10,
+    34
+   ],
+   "summary": "显式运行公开的 tests/test_responsetypes.py，会看到两个 TypeError，出错位置正是题面点名的 from_content_type。在当前材料下，顺手把它们修掉会被判 0。",
+   "evidence_strength": "历史镜像层面实测（P4 定向公开测试，agent/54321）；模型会不会被诱导，要看真实轨迹",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/targeted_public_tests/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log"
+   ],
+   "proposed_action": "修订 B 实施后，这个诱因不再影响评分。修订前的诊断：A′ 改为筛选规则：得 0 且不符的恰好是这两个键从 FAILED 变为 PASSED、其余键都匹配时，只标'疑似过度修复误判'；再核候选是否只改库源码、是否保持公开行为契约（例：把 Headers.normvalue 改为返回 str 的错误实现也命中这个模式，但公开 HeadersTest.test_single_value 的 bytes 契约失败），核实后才记'过度修复误判'。原始 reward 保留。",
+   "status": "open"
+  },
+  {
+   "id": "shared_formal_chain_source_image",
+   "category": "leak_and_actor_condition",
+   "scope": "global",
+   "checks": [
+    3,
+    8,
+    29
+   ],
+   "summary": "正式 actor 用的是来源镜像：/r2e_tests 可读，修复提交和之后的上游分支都可达。RolloutTaskSpec.expected_interpreter_prefix 默认是 conda；公开提示写着 conda、pip 可用、测试文件会被重置，这些对 R2E 都不成立。",
+   "evidence_strength": "代码事实（环境卡 §2，09-25）；M3 的来源镜像事实",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/r2e_environment_card.md",
+    "runs/env_overnight_20260916/M3/facts/9a15fcf89a15/facts/git_contains.txt"
+   ],
+   "proposed_action": "正式链改用派生镜像，并修正解释器前缀和提示（B 线实现、A 线审查）。之后以 actor 身份复核本题的开发条件（清单 8、10）。",
+   "status": "open"
+  },
+  {
+   "id": "solver_env_notes",
+   "category": "solver_condition",
+   "scope": "repo:scrapy@1.1.0dev1",
+   "checks": [
+    6,
+    10
+   ],
+   "summary": "venv 里没有 pip，也不能出网。Scrapy 1.1 与 Twisted 24.11.0、zope.interface 7.2 不兼容，抓取类公开测试恒失败，但与本题无关。相关的公开测试必须显式给出路径才会运行。",
+   "evidence_strength": "历史镜像层面实测",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/dev_probe/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log",
+    "runs/r2e_env_repair_20260924/p4/targeted2_cmds/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e/agent_probe.log"
+   ],
+   "proposed_action": "只记录，不改依赖（改了会改变评分环境）。要不要写进任务面，由任务面决定（E10）。",
+   "status": "open"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "note": "没有证据，就不加路径规则。根目录的 conftest.py 和 pytest.ini 候选可以改、且会影响评分，但这属于共享机制（清单 31），不在本题单独加规则。"
+ },
+ "revision_refs": [],
+ "disposition": {
+  "scope": "static_review",
+  "state": "needs_review",
+  "reason": "主因是题意/测试争议：期望把两个 py3 年代遗留的死键锁成 FAILED，而更完整的正确修复会被判 0（诊断实测）。另有一项静态候选待 actor 验证：正式链还在用来源镜像，解释器前缀和提示也未修正，属于共享问题。",
+  "recommended_action": "修订 B：对称去掉两个死键（在隐藏测试里删掉这两个方法，期望同步删两键），按 material_v2 实施，并用四个候选各跑 2 次验收。修订之前不作 reward 使用。",
+  "fallback": "D（隔离）：适用于近期没有合批修订的机会，或者决定不为这道低难度题付重建成本的情况。",
+  "diagnostic_interim_rule": "A′ 改为筛选规则：得 0 且不符的恰好是这两个键从 FAILED 变为 PASSED、其余键都匹配时，只标'疑似过度修复误判'；再核候选是否只改库源码、是否保持公开行为契约（例：把 Headers.normvalue 改为返回 str 的错误实现也命中这个模式，但公开 HeadersTest.test_single_value 的 bytes 契约失败），核实后才记'过度修复误判'。原始 reward 保留。",
+  "decision_owner": "用户（T0：涉及训练语义与材料）",
+  "decision_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/decisions.md 的 T0-4 行；docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e.md",
+  "next_step": "用户就 T0-4 拍板，推荐 B。选 B 后，在修订后的材料上各跑 2 次：noop（预期 0）、gold（预期 1）、P4 over-fix（预期 1）、只修 content_type 的部分修复（预期 1），并核对键集只剩 5 个。",
+  "divergence_from_history": "环境阶段的提案推荐 D，理由是 B 要为一题重建镜像和 pins。本审查不把 D 作默认，理由有三：E16 已建成 material_v2，同仓 cfed9b66 就是按它修订并验收的，这条成本论据已部分过时；两个键是死键，去掉不损失任何有效覆盖；有上游 py3-ignores 作依据。详见 old_findings_delta.md §2。",
+  "previous": {
+   "environment_stage": "grading_ok_open_items（09-24；open_items 为 expected_penalizes_better_fix，deferred_to 题意与评分质量筛查）",
+   "sealed_draft": "needs_review（analysis_before_history.md §7）；读历史后处置不变"
+  },
+  "reviewer": "reviewer_initial.md 已存在；本会话按指示没有读，由协调者收口。"
+ },
+ "usage": {
+  "intended_use": "development_diagnostic",
+  "not_for_solver": true,
+  "exposure": "审查者看过：gold.patch、隐藏测试、期望映射、P4 over-fix 候选 diff，以及环境阶段的历史记录（findings、提案、facts、known_issues、decisions、P4 包报告）。没看过 reviewer_initial.md。",
+  "note": "这不是正式训练或评测的批准。"
+ },
+ "costs": {
+  "review_tokens": null,
+  "review_usd": null,
+  "cpu_seconds": null,
+  "note": "本审查没有执行任何运行命令，也没有工具观测到的 token 或费用。环境阶段的探针和复跑耗时见历史 screening_record.costs，不计入本审查。"
+ },
+ "review_notes": [
+  {
+   "by": "原主审会话",
+   "at": "2026-09-25",
+   "change": "封存初判 analysis_before_history.md：处置为 needs_review；建议修订（即历史编号的 B）或加判读规则（即 A′）。"
+  },
+  {
+   "by": "接续会话（第二步）",
+   "at": "2026-09-25",
+   "change": "读历史后处置不变。两项证据升为镜像层面实测：用显式路径运行公开测试得 5 passed / 2 failed，cwd=/tmp 也能导入。不把历史推荐的 D 作默认。修订 B 细化为直接删除这两个方法（若改用 skip，理由里不能出现 PASSED、FAILED 或 ERROR），并补上一项代价：修订后失去与 M3 的同版本对照。详见 old_findings_delta.md。"
+  }
+ ],
+ "coordinator_corrections": [
+  {
+   "at": "2026-09-25",
+   "source": "Codex 复核 r2e_static_actor_review_20260925/README.md",
+   "field": "disposition.diagnostic_interim_rule",
+   "previous": "A′：修订前用于诊断时，如果得 0，且不符的恰好是这两个键从 FAILED 变为 PASSED、其余键都匹配，就记为“过度修复误判”，不算失败。",
+   "now": "A′ 改为筛选规则：得 0 且不符的恰好是这两个键从 FAILED 变为 PASSED、其余键都匹配时，只标'疑似过度修复误判'；再核候选是否只改库源码、是否保持公开行为契约（例：把 Headers.normvalue 改为返回 str 的错误实现也命中这个模式，但公开 HeadersTest.test_single_value 的 bytes 契约失败），核实后才记'过度修复误判'。原始 reward 保留。"
+  },
+  {
+   "at": "2026-09-25",
+   "source": "Codex 复核 r2e_static_actor_review_20260925/README.md",
+   "field": "issues[public_test_overfix_lure].proposed_action",
+   "previous": "修订 B 实施后，这个诱因不再影响评分。修订前的诊断按 A′ 判读：如果得 0，而不符的恰好是这两个键从 FAILED 变为 PASSED、其余键都匹配，就记为“过度修复误判”。",
+   "now": "修订 B 实施后，这个诱因不再影响评分。修订前的诊断：A′ 改为筛选规则：得 0 且不符的恰好是这两个键从 FAILED 变为 PASSED、其余键都匹配时，只标'疑似过度修复误判'；再核候选是否只改库源码、是否保持公开行为契约（例：把 Headers.normvalue 改为返回 str 的错误实现也命中这个模式，但公开 HeadersTest.test_single_value 的 bytes 契约失败），核实后才记'过度修复误判'。原始 reward 保留。"
+  }
+ ]
+}

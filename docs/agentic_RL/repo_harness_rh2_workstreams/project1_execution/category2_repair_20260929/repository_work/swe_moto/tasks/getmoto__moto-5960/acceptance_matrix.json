@@ -1,0 +1,65 @@
+{
+  "schema": "moto.acceptance_matrix.plan.v1",
+  "as_of": "2026-10-03",
+  "instance_id": "getmoto__moto-5960",
+  "status": "not_run",
+  "material_request": "revision_request.json",
+  "reference_counts": {
+    "fail_to_pass": 3,
+    "pass_to_pass": 155
+  },
+  "controls": [
+    {
+      "name": "noop",
+      "role": "noop",
+      "patch": null,
+      "expected_reward": 0
+    },
+    {
+      "name": "gold",
+      "role": "positive",
+      "patch": {
+        "path": "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-5960/gold.patch",
+        "sha256": "df2af6b800578dc24b6ef33c396677683d766702734f44d506248354147b7af9",
+        "bytes": 593
+      },
+      "expected_reward": 1
+    },
+    {
+      "name": "omit_keys_only",
+      "role": "constructed_negative_unrun",
+      "patch": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-5960/omit_keys_only.patch",
+        "sha256": "5ddf1b01fdf43ecf0bc1a18e6d20908ff20ae70737d01ea00324f3a52fb1c734",
+        "bytes": 712
+      },
+      "expected_reward": 0,
+      "original_reward_observed": null
+    }
+  ],
+  "formal_run_count": 3,
+  "new_host_identity_check": true,
+  "shared_code_snapshot": null,
+  "cpu_host": null,
+  "resource_limits": "按本题既有配方和总协调全机名额落实，不使用旧SSH或无约束并发",
+  "required_evidence": [
+    "实际固定材料／镜像／代码／配方",
+    "安装与测试完整执行／逐参考状态／退出码",
+    "新增或修正断言的真实执行与目标失败位置",
+    "完整日志、工件、异常及两层清理",
+    "有效正对照与非作者核查"
+  ],
+  "reuse_or_targeted_actor_validation": "5406修订公开消息及原例；6185/7584补缺失actor命令；其余只补新宿主身份和受影响路径",
+  "never_send_to_solver": [
+    "gold",
+    "负对照",
+    "私有测试断言",
+    "题主分析"
+  ],
+  "probe_submission": "not_submitted",
+  "original_material_followup": {
+    "candidate": "omit_keys_only",
+    "purpose": "先确定该候选原评分是否真的漏判，原分未知不可冒作1",
+    "run_count": 1
+  }
+}

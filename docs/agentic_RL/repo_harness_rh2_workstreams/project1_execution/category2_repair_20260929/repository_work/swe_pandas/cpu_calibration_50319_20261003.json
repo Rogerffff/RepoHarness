@@ -1,0 +1,191 @@
+{
+  "purpose": "50319原材料下的CPU私有行为校准；不是manager reward或新材料验收",
+  "as_of": "2026-10-03",
+  "status": "private_none_route_and_all_original_p2p_verified",
+  "cpu_host": "cpu-c",
+  "job_id": "pandas50319-private-none-c227640c9e15",
+  "completed_at_utc": "2026-10-02T18:28:00Z",
+  "release": "cat2-cpu-r2e078079-swe7-git-20261003-v1",
+  "release_manifest_sha256": "80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9",
+  "runtime": "runtime_cpu_v2",
+  "actual_image_id": "sha256:a3f20f616f78963bee9c87426b8a93c28fb63a6ade97d0f444115279c28f859a",
+  "base_commit": "1613f26ff0ec75e30828996fd9ec3f9dd5119ca6",
+  "resources": {
+    "cpus": 2,
+    "memory": "4g",
+    "network": "none",
+    "user": "root",
+    "host_swap": "none_observed",
+    "formal_profile_qualified": false
+  },
+  "applied_test": "original_test.patch, never revised patch",
+  "spec": {
+    "path": "runs/category2_repair_20260929/pandas_cpu_20261003/cpu_c_50319_private_calibration_received/spec.json",
+    "sha256": "sha256:1cc3874c0dd7904f9e541d3fbff9b76f4569d22db4ad1be2b43a6dc37c277c8c"
+  },
+  "receipt_manifest": {
+    "path": "runs/category2_repair_20260929/pandas_cpu_20261003/cpu_c_50319_private_calibration_received/receipt_manifest.json",
+    "sha256": "sha256:9e7de457fa19d49b2dfc7e56c2bfa942d5f18e4a37063bc4ea0bf4aedf1be570"
+  },
+  "raw_summary": {
+    "path": "runs/category2_repair_20260929/pandas_cpu_20261003/cpu_c_50319_private_calibration_received/summary.json",
+    "sha256": "sha256:aa3a9989ceadfcbc080dfa8663bf81981b17b7f24bc817a37e7fbd0a100d072d"
+  },
+  "per_reference_readback": {
+    "path": "runs/category2_repair_20260929/pandas_cpu_20261003/cpu_c_50319_private_calibration_received/local_reference_readback.json",
+    "sha256": "sha256:c84a29c313b8f643d9074ae5bdebf930c4933c4119190f91c703f8ba086e1f68"
+  },
+  "binding_scope": "作者按既有parser/诊断binding字节读取原始pytest摘要；尚非共享正式consumer",
+  "variants": {
+    "noop": {
+      "candidate": null,
+      "source_and_extension_identity": {
+        "variant": "noop",
+        "pandas": "/testbed/pandas/__init__.py",
+        "parsing": "/testbed/pandas/_libs/tslibs/parsing.cpython-38-x86_64-linux-gnu.so",
+        "source_sha256": "5c8e81b9914bc6448b21a909cf13d3c2e7799e63e92d386042dd4262b6d048aa",
+        "extension_sha256": "127481b230a3c52c886aea1d01b8957e61b55ab106e315f93c4a8f399ecd425c",
+        "version": "2.0.0.dev0+940.g1613f26ff0.dirty"
+      },
+      "commands": {
+        "compile": {
+          "id": "compile",
+          "rc": 0,
+          "seconds": 0.17151317199932237,
+          "stdout_bytes": 46,
+          "stderr_bytes": 0
+        },
+        "source_identity": {
+          "id": "source_identity",
+          "rc": 0,
+          "seconds": 2.471918392000589,
+          "stdout_bytes": 363,
+          "stderr_bytes": 0
+        },
+        "runtime_contract": {
+          "id": "runtime_contract",
+          "rc": 1,
+          "seconds": 1.2459549900004276,
+          "stdout_bytes": 0,
+          "stderr_bytes": 558
+        },
+        "original_parsing_module": {
+          "id": "original_parsing_module",
+          "rc": 1,
+          "seconds": 4.517523347999486,
+          "stdout_bytes": 14756,
+          "stderr_bytes": 642
+        }
+      },
+      "original_source_reference_counts": {
+        "fail_to_pass": 1,
+        "pass_to_pass": 109
+      },
+      "p2p_passed": 109,
+      "p2p_missing": [],
+      "p2p_failed": [],
+      "old_f2p_failed": 1,
+      "physical_tests": {
+        "passed": 113,
+        "failed": 1
+      },
+      "runtime_caller": {
+        "status": "base_ValueError_before_caller_check"
+      },
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      }
+    },
+    "none_fallback": {
+      "candidate": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/tasks/pandas-dev__pandas-50319/candidates/none_fallback.patch",
+        "sha256": "sha256:eab59f565bc7a7a6f3c40192774468457cf89a3c45640decb2f2c8035c5473f6"
+      },
+      "source_and_extension_identity": {
+        "variant": "none_fallback",
+        "pandas": "/testbed/pandas/__init__.py",
+        "parsing": "/testbed/pandas/_libs/tslibs/parsing.cpython-38-x86_64-linux-gnu.so",
+        "source_sha256": "54262be7b7f417a620f4f15e8703453bc703652a8e4001a0d1e8f8cca594a8ca",
+        "extension_sha256": "20698f3e6d4a4ad47f51c2755a81ff538741778ea3cfd5cd32c328ff7591733d",
+        "version": "2.0.0.dev0+940.g1613f26ff0.dirty"
+      },
+      "commands": {
+        "compile": {
+          "id": "compile",
+          "rc": 0,
+          "seconds": 640.2217356399997,
+          "stdout_bytes": 69266,
+          "stderr_bytes": 16544
+        },
+        "source_identity": {
+          "id": "source_identity",
+          "rc": 0,
+          "seconds": 2.6697951770001964,
+          "stdout_bytes": 372,
+          "stderr_bytes": 0
+        },
+        "runtime_contract": {
+          "id": "runtime_contract",
+          "rc": 0,
+          "seconds": 2.3569676780007285,
+          "stdout_bytes": 293,
+          "stderr_bytes": 254
+        },
+        "original_parsing_module": {
+          "id": "original_parsing_module",
+          "rc": 1,
+          "seconds": 4.3258171580000635,
+          "stdout_bytes": 14599,
+          "stderr_bytes": 642
+        }
+      },
+      "original_source_reference_counts": {
+        "fail_to_pass": 1,
+        "pass_to_pass": 109
+      },
+      "p2p_passed": 109,
+      "p2p_missing": [],
+      "p2p_failed": [],
+      "old_f2p_failed": 1,
+      "physical_tests": {
+        "passed": 113,
+        "failed": 1
+      },
+      "runtime_caller": {
+        "pandas": "/testbed/pandas/__init__.py",
+        "parsing": "/testbed/pandas/_libs/tslibs/parsing.cpython-38-x86_64-linux-gnu.so",
+        "version": "2.0.0.dev0+940.g1613f26ff0.dirty",
+        "guesses": [
+          null,
+          null
+        ],
+        "array": [
+          "2003-03-27T14:55:00",
+          "2004-04-28T16:07:08.123456"
+        ]
+      },
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      }
+    }
+  },
+  "formal_revised_score": null,
+  "actor_permission_proved_by_this_run": false,
+  "probe_ready": false,
+  "training_qualified": false,
+  "remaining": [
+    "本轮新材料正式登记/冻结",
+    "新F2P与完整绑定正式正负矩阵",
+    "原公开actor受影响构建/导入/调用者检查",
+    "非作者CPU结果核查",
+    "按题提交GPU并处理反馈"
+  ],
+  "none_route_interpretation": "两输入返回None，真实to_datetime数组回退正确，全部109来源P2P及绑定七成员通过；原唯一F2P因None不等于唯一格式串失败。只证明原私有断言误拒此合理路线，不冒称正式原reward或修订后reward。",
+  "warning_preserved": "None路线的to_datetime发出既有Could not infer format警告并逐项dateutil解析；pytest_asyncio未设置fixture loop scope警告原样保留，不删日志。"
+}

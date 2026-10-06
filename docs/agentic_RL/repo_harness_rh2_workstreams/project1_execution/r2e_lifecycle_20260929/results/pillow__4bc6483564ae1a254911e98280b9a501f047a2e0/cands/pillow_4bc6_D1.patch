@@ -1,0 +1,13 @@
+diff --git a/src/PIL/ImageOps.py b/src/PIL/ImageOps.py
+index c6201d8..0a4ee58 100644
+--- a/src/PIL/ImageOps.py
++++ b/src/PIL/ImageOps.py
+@@ -525,7 +525,7 @@ def invert(image):
+     lut = []
+     for i in range(256):
+         lut.append(255 - i)
+-    return _lut(image, lut)
++    return image.copy() if image.mode == "1" else _lut(image, lut)
+ 
+ 
+ def mirror(image):

@@ -1,0 +1,469 @@
+{
+  "schema": "rh2.non_author_cpu_hold_scope_review.v1",
+  "as_of": "2026-10-03",
+  "task_id": "pydantic__pydantic-6283",
+  "private_context_exposure": true,
+  "fresh_public_reader": false,
+  "review_scope": "一次只读暂停影响范围判断；复用既有完整结果及静态材料审查，不作新 CPU 执行或验收。",
+  "scope_review_passed": true,
+  "one_original_300_four_row_formal_attempt_supported_by_scope_review": true,
+  "requires_8316_actual_success_before_6283": false,
+  "technical_blocking_findings_within_review_scope": [],
+  "current_execution_blocker_exists": true,
+  "current_execution_blockers": [
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/cpu_infra_hold.json",
+      "reason": "原 hold 仍在；当前派发 guard 在远端命令前返回 75。",
+      "sha256": "ce3b1b2581109b955261c5da6d689df0dd219ffd6f5f34e03714710e19160f5b"
+    }
+  ],
+  "owner_hold_scope_disposition_needed_before_dispatch": true,
+  "own_cpu_hold_released": false,
+  "current_cpu_recovery_verified": false,
+  "formal_cpu_acceptance_passed": false,
+  "formal_cpu_dispatch_ready": false,
+  "ordinary_gpu_probe_ready_within_review_scope": false,
+  "training_eligibility_asserted": false,
+  "real_privateattr_observation_complete": false,
+  "old_gpu_fp_regrade_complete": false,
+  "new_cpu_dispatched": false,
+  "new_job": null,
+  "source_release": "cat2-cpu-r2e093-swe40-pyd6283-moto6114-20261003-v1",
+  "manifest_sha256": "2cfdd9b4f1134c0915346b727b729665482c4c1121b550764833f16f2982402e",
+  "formal_inputs_sha256": "4d50c69969e883e48f919ac1221594d88665e409a720f67b9a16952c393b4640",
+  "runner_sha256": "40b0460b70c2890a1eb3fbbf2474e10bee906125e3068868079370044d875805",
+  "remote_namespace": "formal_6283_privateattr_v2",
+  "candidate_order": [
+    "noop",
+    "gold",
+    "validate_construct",
+    "qwen36_a1_pop_private"
+  ],
+  "expected_rewards_not_observed": [
+    0,
+    1,
+    0,
+    0
+  ],
+  "reference_counts": {
+    "f2p": 2,
+    "p2p": 39,
+    "total": 41
+  },
+  "budgets": {
+    "env_reset_timeout_seconds": 300.0,
+    "apply_timeout_seconds": 120.0,
+    "test_timeout_seconds": 1800.0
+  },
+  "identity": {
+    "base_commit": "a29286609e79c79b2ecd71bc7272eea43ed9fccd",
+    "public_bundle_digest": "sha256:d2d8b998296f14d164a024519603119def49bbc9ba84fad05b7a5c0eebceddc5",
+    "base_id": "sha256:24e9c51fedb7dc930796362c90f72e8e7a9c47d9362fa72414c6c6ff8a1a2882",
+    "derived_id": "sha256:58d0c004cec144834a01dfc160c0f4caf427a9b31fd5ad95a60d03f6f3623226",
+    "core": "0.42.0",
+    "install_asset_sha256": "6e50864b8f8976413f6fb32df2fd11060e1b190fb4161c8567810ac748e6a570",
+    "test_file": "tests/test_root_model.py"
+  },
+  "install_recipe_unchanged": true,
+  "hygiene_unchanged": true,
+  "old_r7": {
+    "job": "pyd6283-formal-20261002185959-dbe65",
+    "source_release": "cat2-cpu-r2e088-swe12-git-20261003-v1",
+    "manifest_sha256": "f9dfcd16c9c88e4f514512e61781856b7d6f1a71a20b64cd1843d20546c5009b",
+    "actual_rewards": [
+      0.0,
+      1.0,
+      0.0
+    ],
+    "slot_returncode": 0,
+    "wall_seconds": 514.2503526210785,
+    "full_evidence_review_reused": true,
+    "all_375_files_mechanically_rehashed_in_this_review": false,
+    "cleanup_no_residue_reused_and_status_rechecked": true,
+    "grader_protect_calls": [
+      {
+        "call": "0025",
+        "phase": "grader_control_surface_protect",
+        "elapsed_seconds": 133.88567066192627,
+        "exit_code": 0,
+        "script_sha256": "c9ad9d3ff2672bc99123bf9e20afb6d9d2bc0cb6e8980ac96dba8c42c4e5e799",
+        "stdout_sha256": "76c56fc7bce13b7218d31ccda2d4d553b3c01941ce184ab1f8b7c4b31415eafb"
+      },
+      {
+        "call": "0060",
+        "phase": "grader_control_surface_protect",
+        "elapsed_seconds": 122.16087484359741,
+        "exit_code": 0,
+        "script_sha256": "c9ad9d3ff2672bc99123bf9e20afb6d9d2bc0cb6e8980ac96dba8c42c4e5e799",
+        "stdout_sha256": "76c56fc7bce13b7218d31ccda2d4d553b3c01941ce184ab1f8b7c4b31415eafb"
+      },
+      {
+        "call": "0095",
+        "phase": "grader_control_surface_protect",
+        "elapsed_seconds": 113.5884006023407,
+        "exit_code": 0,
+        "script_sha256": "c9ad9d3ff2672bc99123bf9e20afb6d9d2bc0cb6e8980ac96dba8c42c4e5e799",
+        "stdout_sha256": "76c56fc7bce13b7218d31ccda2d4d553b3c01941ce184ab1f8b7c4b31415eafb"
+      }
+    ],
+    "candidate_trusted_init_calls": [
+      {
+        "call": "0008",
+        "phase": "candidate_rollout_trusted_init",
+        "elapsed_seconds": 4.472266674041748,
+        "exit_code": 0,
+        "script_sha256": "b0bebf8d190fba74378a06ecd9cd681b35f3f2f438c768ec0d6f6e6d40fc5991",
+        "stdout_sha256": "d60e3a07fd73571845fd175ed7babddcd2658835b6a91e96e239380727e03a38"
+      },
+      {
+        "call": "0039",
+        "phase": "candidate_rollout_trusted_init",
+        "elapsed_seconds": 2.5467216968536377,
+        "exit_code": 0,
+        "script_sha256": "b0bebf8d190fba74378a06ecd9cd681b35f3f2f438c768ec0d6f6e6d40fc5991",
+        "stdout_sha256": "d60e3a07fd73571845fd175ed7babddcd2658835b6a91e96e239380727e03a38"
+      },
+      {
+        "call": "0074",
+        "phase": "candidate_rollout_trusted_init",
+        "elapsed_seconds": 2.752011775970459,
+        "exit_code": 0,
+        "script_sha256": "b0bebf8d190fba74378a06ecd9cd681b35f3f2f438c768ec0d6f6e6d40fc5991",
+        "stdout_sha256": "d60e3a07fd73571845fd175ed7babddcd2658835b6a91e96e239380727e03a38"
+      }
+    ],
+    "short_candidate_calls_are_not_grader_protect": true,
+    "actual_runs": [
+      {
+        "call": "0005",
+        "derived_image": "sha256:58d0c004cec144834a01dfc160c0f4caf427a9b31fd5ad95a60d03f6f3623226",
+        "cpus": 2,
+        "memory_bytes": 4294967296,
+        "pids_limit": 512,
+        "network": "none"
+      },
+      {
+        "call": "0014",
+        "derived_image": "sha256:58d0c004cec144834a01dfc160c0f4caf427a9b31fd5ad95a60d03f6f3623226",
+        "cpus": 2,
+        "memory_bytes": 4294967296,
+        "pids_limit": 512,
+        "network": "none"
+      },
+      {
+        "call": "0036",
+        "derived_image": "sha256:58d0c004cec144834a01dfc160c0f4caf427a9b31fd5ad95a60d03f6f3623226",
+        "cpus": 2,
+        "memory_bytes": 4294967296,
+        "pids_limit": 512,
+        "network": "none"
+      },
+      {
+        "call": "0048",
+        "derived_image": "sha256:58d0c004cec144834a01dfc160c0f4caf427a9b31fd5ad95a60d03f6f3623226",
+        "cpus": 2,
+        "memory_bytes": 4294967296,
+        "pids_limit": 512,
+        "network": "none"
+      },
+      {
+        "call": "0071",
+        "derived_image": "sha256:58d0c004cec144834a01dfc160c0f4caf427a9b31fd5ad95a60d03f6f3623226",
+        "cpus": 2,
+        "memory_bytes": 4294967296,
+        "pids_limit": 512,
+        "network": "none"
+      },
+      {
+        "call": "0083",
+        "derived_image": "sha256:58d0c004cec144834a01dfc160c0f4caf427a9b31fd5ad95a60d03f6f3623226",
+        "cpus": 2,
+        "memory_bytes": 4294967296,
+        "pids_limit": 512,
+        "network": "none"
+      }
+    ]
+  },
+  "runtime_connection": {
+    "same_identity_keys": [
+      "base_commit",
+      "public_bundle_digest",
+      "base_id",
+      "derived_id",
+      "core",
+      "install_asset_sha256",
+      "revised_install",
+      "test_file"
+    ],
+    "same_five_scripts": [
+      "candidate_test_script",
+      "candidate_install_script",
+      "candidate_test_after_install_script",
+      "pre_candidate_observation_script",
+      "post_candidate_observation_script"
+    ],
+    "private_patch_script_changes": {
+      "eval_script": {
+        "old_sha256": "e7770c95260f30973cf2f8d766a605427c6b0aaa63e5105b7d052ffe03167445",
+        "new_sha256": "082da3ea455fd0b929f5be8055b657c6e10fb6b4dc42b7d1acc57c3281cefeba",
+        "only_embedded_effective_patch_delta": true
+      },
+      "trusted_setup_script": {
+        "old_sha256": "f4187b5a17b33f5923f96b055006e11c3778a120fc0363cb8451d92f6fba4f58",
+        "new_sha256": "10bda49566e5c4b4bbb5945df6db383692f754b58858a5466a4d94a4adedb81c",
+        "only_embedded_effective_patch_delta": true
+      }
+    },
+    "sandbox_source_sha256": {
+      "R7": "313bfd7691c5dca775aa0e9992f13561e20936f062ddfa3d269892b6bf4895ee",
+      "R19": "313bfd7691c5dca775aa0e9992f13561e20936f062ddfa3d269892b6bf4895ee",
+      "R20": "313bfd7691c5dca775aa0e9992f13561e20936f062ddfa3d269892b6bf4895ee"
+    },
+    "control_protect_call_AST_same": true,
+    "entire_manager_bytes_same_asserted": false,
+    "protected_timeout_from_env_reset_seconds": 300,
+    "resources": {
+      "cpus": 2,
+      "memory_bytes": 4294967296,
+      "pids_limit": 512,
+      "network": "none"
+    },
+    "current_live_resource_or_slot_availability_verified": false
+  },
+  "r20_support": {
+    "source_release": "cat2-cpu-r2e093-swe40-prepare900-20261003-v1",
+    "manifest_sha256": "2a4ceb0315ea959232151d70f29ccc48bd34bdb0cb7dcfbb4aa177fec07bd393",
+    "deployed_owner_readback_reused_and_selected_bindings_verified": true,
+    "selected_binding_count": 6,
+    "exact_task_set": [
+      "swe_gym_lite::iterative__dvc-9395",
+      "swe_gym_lite::pydantic__pydantic-8316"
+    ],
+    "reset_900_applies_to_6283": false,
+    "snapshot_6283_reset_seconds": 300.0,
+    "snapshot_default_source_is_not_r19_explicit_derived_runtime_proof": true,
+    "actual_8316_cpu_recovery_verified": false,
+    "old_8316_first_failure_phase_and_cleanup_review_reused": true,
+    "underlying_shared_host_slow_cause_resolved_asserted": false
+  },
+  "upload": {
+    "owner_readback": {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/6283_v2_upload_owner_readback_v1.json",
+      "bytes": 872,
+      "sha256": "98c8d5d74562228eec5faeb88d6dbf418d5dd7a9fbe294c0a412a4329cd364de"
+    },
+    "remote_readback": {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/6283_v2_upload_verified_remote_v1.json",
+      "bytes": 270,
+      "sha256": "8f543ec4aab9ea061e681897fde9409365eea37cd025c0f1b647183fb2910cee"
+    },
+    "payload_files": 10,
+    "exact_members_and_sha_owner_readback": true,
+    "upload_manifest_sha256": "42331860972b15eb9e3f7ee5947fb5a8be3d9fc9f3ee6be01401ac16a5a11314",
+    "tar_sha256": "e4cfa59f7e3a74219ecc42eedf57c65ad2247ed8bce708123add218bd4825f86",
+    "docker_called_in_archived_remote_readback": false,
+    "historical_input_review_pending_upload_not_rewritten": true
+  },
+  "failure_policy": "首个新 infra 或清理未知即停止并保存原件/null 原分、回公共支持；不自动重试、不改 300 秒或共享安全。",
+  "limits": [
+    "旧三次成功不是当前 CPU 恢复、槽空闲或 300 秒肯定足够的证明。",
+    "R20 是 8316/DVC9395 精确 900 秒支持；其实际成功不能证明 6283 的 300 秒。",
+    "当前 hold 仍是实际派发阻塞；本只读判断不解除或绕过 guard。",
+    "新四行/41 参考、真实 PrivateAttr、实际新容器安装/import/FP/baseline/cleanup 未观察。",
+    "未复核整 release/所有旧原件，未运行作者脚本或项目代码。",
+    "公开输入相同允许复用旧 actor 控制桩的已核边界，不能把桩称模型或训练 typed actor。"
+  ],
+  "methods": [
+    "本地标准库 JSON/SHA/AST",
+    "原 call.json/完整 stdout 的阶段和耗时复算",
+    "旧/新固定输入身份、script 全字节与内嵌 patch 差比较",
+    "已核原件及发布部署证据的明确范围复用"
+  ],
+  "ssh_or_docker_or_model_or_project_pytest_executed": false,
+  "author_helpers_executed": false,
+  "shared_or_historical_files_modified": false,
+  "bindings": [
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/cpu_infra_hold.json",
+      "bytes": 434,
+      "sha256": "ce3b1b2581109b955261c5da6d689df0dd219ffd6f5f34e03714710e19160f5b"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/coordination_20261003/8316_r20_support_owner_readback_v1.json",
+      "bytes": 5814,
+      "sha256": "c39f4276502d29c2bc893eae62d0d067f8093868332709e0bdc5539fb498d65c"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/6283_v2_upload_owner_readback_v1.json",
+      "bytes": 872,
+      "sha256": "98c8d5d74562228eec5faeb88d6dbf418d5dd7a9fbe294c0a412a4329cd364de"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/6283_v2_upload_verified_remote_v1.json",
+      "bytes": 270,
+      "sha256": "8f543ec4aab9ea061e681897fde9409365eea37cd025c0f1b647183fb2910cee"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/reviews/non_author_6283_v2_input_review_20261003.json",
+      "bytes": 29579,
+      "sha256": "d6e3d88cf9c0ceb7730c4c342ab2b8595281df161a096a1f3188dadf65a7f977"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/reviews/non_author_6283_v2_input_review_20261003.md",
+      "bytes": 10392,
+      "sha256": "fe5f1bd258d8966e4327584ce2f81f9e4440fb69725e7a56fda43976ac436ce7"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/reviews/non_author_6283_cpu_review_20261003.json",
+      "bytes": 31805,
+      "sha256": "e7f433b90685db5e3ce2d11f9dfc2b0fe66b4fe61179384adf6651840efa72b4"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/reviews/non_author_6283_cpu_review_20261003.md",
+      "bytes": 17994,
+      "sha256": "7c17ee9f424b17dacf542183f586c8d948a938edc9db9865e0c34c9f6f40fe8e"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/reviews/non_author_8316_partial_cpu_review_20261003.json",
+      "bytes": 361966,
+      "sha256": "317e724014183c09effd0046a8ba6189e3b16dd72e46134d4db61e7fc33d882a"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/reviews/non_author_8316_partial_cpu_review_20261003.md",
+      "bytes": 11640,
+      "sha256": "11a4dba7429357907695d8d423f811b79bd3a2b40ea4dea034183ae21388697b"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/dispatch_6283_v2.py",
+      "bytes": 3207,
+      "sha256": "168949915bb5e5630ec191c60c816ba4cc23bb516b8b47f39db823002a43b05b"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/cpu_acceptance_20261003/6283_privateattr_v2/formal_inputs.json",
+      "bytes": 23289,
+      "sha256": "4d50c69969e883e48f919ac1221594d88665e409a720f67b9a16952c393b4640"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/cpu_acceptance_20261003/6283_privateattr_v2/run_formal.py",
+      "bytes": 23684,
+      "sha256": "40b0460b70c2890a1eb3fbbf2474e10bee906125e3068868079370044d875805"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/cpu_acceptance_20261003/6283_privateattr_v2/upload_manifest.json",
+      "bytes": 2278,
+      "sha256": "42331860972b15eb9e3f7ee5947fb5a8be3d9fc9f3ee6be01401ac16a5a11314"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v1/outputs/pyd6283-formal-20261002185959-dbe65/status.json",
+      "bytes": 11727,
+      "sha256": "9e0bd2d3c4d41f0dd498494aa138d834a11d189e2ac44a8db0de3fba5f41e747"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/jobs/swe_pydantic/pyd6283-formal-20261002185959-dbe65/status.json",
+      "bytes": 824,
+      "sha256": "a32bf3a868da536f26832c3066aaa27830fa0eaf9b6584311f3bfd59002ed374"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/local_prepare_6283_v2/status.json",
+      "bytes": 6838,
+      "sha256": "0b097e78e3a55780e08305346f782e0a325049d789828e85c55b30be1fa2f928"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v1/outputs/pyd6283-formal-20261002185959-dbe65/docker_calls/0008/call.json",
+      "bytes": 1487,
+      "sha256": "809e09803577773b626472f1a6267b23c4dec1967a83c81cc1cc07fae6d57fcb"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v1/outputs/pyd6283-formal-20261002185959-dbe65/docker_calls/0008/stdout.full",
+      "bytes": 48,
+      "sha256": "d60e3a07fd73571845fd175ed7babddcd2658835b6a91e96e239380727e03a38"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v1/outputs/pyd6283-formal-20261002185959-dbe65/docker_calls/0025/call.json",
+      "bytes": 3099,
+      "sha256": "dccba2a9240846f8c20a5ea5fd034afe0dbac997612067e8cad7e3fe69a7d1b4"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v1/outputs/pyd6283-formal-20261002185959-dbe65/docker_calls/0025/stdout.full",
+      "bytes": 195,
+      "sha256": "76c56fc7bce13b7218d31ccda2d4d553b3c01941ce184ab1f8b7c4b31415eafb"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v1/outputs/pyd6283-formal-20261002185959-dbe65/docker_calls/0039/call.json",
+      "bytes": 1486,
+      "sha256": "9bbf89e1aff4605f32339b9f5d086f62336d6b4e57cff5c14caa90a0b638cc22"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v1/outputs/pyd6283-formal-20261002185959-dbe65/docker_calls/0039/stdout.full",
+      "bytes": 48,
+      "sha256": "d60e3a07fd73571845fd175ed7babddcd2658835b6a91e96e239380727e03a38"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v1/outputs/pyd6283-formal-20261002185959-dbe65/docker_calls/0060/call.json",
+      "bytes": 3099,
+      "sha256": "f2cf1379a2748a50c8888163ea780c850aac58776c3c96e30f7befa0f3773764"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v1/outputs/pyd6283-formal-20261002185959-dbe65/docker_calls/0060/stdout.full",
+      "bytes": 195,
+      "sha256": "76c56fc7bce13b7218d31ccda2d4d553b3c01941ce184ab1f8b7c4b31415eafb"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v1/outputs/pyd6283-formal-20261002185959-dbe65/docker_calls/0074/call.json",
+      "bytes": 1486,
+      "sha256": "0dbe4ca093264d535f467ed0abe1651f36f57e07b63e9e2b29400a4ebd263b04"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v1/outputs/pyd6283-formal-20261002185959-dbe65/docker_calls/0074/stdout.full",
+      "bytes": 48,
+      "sha256": "d60e3a07fd73571845fd175ed7babddcd2658835b6a91e96e239380727e03a38"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v1/outputs/pyd6283-formal-20261002185959-dbe65/docker_calls/0095/call.json",
+      "bytes": 3099,
+      "sha256": "1c8ec61a89311d71099c457731a83e565aa483db2ca160f30e4acd13067421dd"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/remote_evidence/packages/swe_pydantic/formal_v1/outputs/pyd6283-formal-20261002185959-dbe65/docker_calls/0095/stdout.full",
+      "bytes": 195,
+      "sha256": "76c56fc7bce13b7218d31ccda2d4d553b3c01941ce184ab1f8b7c4b31415eafb"
+    }
+  ],
+  "selected_support_bindings": [
+    {
+      "path": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r20/pyd8316_publication_receipt.json",
+      "bytes": 3110,
+      "sha256": "f61bb2ca382416ccb0e82bf6e644ba41d5e485a9ebe24c9ec893061483f55aae"
+    },
+    {
+      "path": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r20/root_scope_readback.json",
+      "bytes": 2845,
+      "sha256": "958dd51483d4320bff8b13d269b3fb8d568a13e3e6f0b41ccd70a516d3a81e56"
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_prepare900_v1/checks/consumption_diff.json",
+      "bytes": 766,
+      "sha256": "9209fa63c6968324928f7252ca60448afa98d45bd8b25bb27b4e1d65af9be627"
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_prepare900_v1/checks/candidate_snapshot_attempt02.json",
+      "bytes": 4674454,
+      "sha256": "373e4ad252f71876bd782cd3da385d3e3ee10719b5dabe3dc46f7aba510711d1"
+    },
+    {
+      "path": "runs/category2_repair_20260929/host_setup_20261003/cpu-a/release_receipts/cat2-cpu-r2e093-swe40-prepare900-20261003-v1.json",
+      "bytes": 1004,
+      "sha256": "7668f440ecd965f4a6f8b219ad14d56a58e46b79f980777d8c64f9d384e546a8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_prepare900_v1/repo/rh2/src/repoharness2/envpack/preparation_budget_policy_v1.json",
+      "bytes": 1614,
+      "sha256": "d417dbb8d3140e6a0082f2f12cda02fd492feb14db9375ace3d69222e48acdab"
+    }
+  ],
+  "report": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/reviews/non_author_6283_cpu_hold_scope_20261003.md",
+    "bytes": 9547,
+    "sha256": "e3d9b58e2f97ce1b6c1cc96c26cc51234bf398c6ac1e20a6a60286b640c9a17c"
+  }
+}

@@ -1,0 +1,460 @@
+{
+  "schema": "monai.owner_candidate_analysis.v1",
+  "as_of": "2026-10-03T19:38:34.950306+08:00",
+  "task_id": "swe_gym_lite::Project-MONAI__MONAI-6975",
+  "request_id": "swe-monai6975-r15-dict-pixels-public-nifti-20261003-v1",
+  "owner_input_sha256": "db75fe723a73f2db160439b271023c033fc82316d03cfdab3c81a37f6d1a91e3",
+  "job_id": "gpu1003-monai6975-coder-a1",
+  "model": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+  "runtime": {
+    "solve": "code_v8",
+    "engine_adapter": "code_v4"
+  },
+  "status": "first_coder_owner_semantics_analyzed_non_author_reviews_and_other_model_pending",
+  "raw_reward": 1,
+  "candidate_semantics": "Dataset将Compose的_lazy传给原apply_transform；保留字典返回值，当前公开问题及正式4F60P支持，无新具体阻断",
+  "full_FP_paths": [
+    "comprehensive_test.py",
+    "monai/data/dataset.py",
+    "test_lazy_fix.py"
+  ],
+  "entry_content_digests": {
+    "comprehensive_test.py": "sha256:da44464b999308f88aa9123732ac8197849d482f8ea33d51c2d3bfee87dbe19d",
+    "monai/data/dataset.py": "sha256:5ef9b8ce4848e6592def1367d3fc90f89f5dd43ad009fe95c7e12762d2b17d5f",
+    "test_lazy_fix.py": "sha256:d2c4132f0944ab16d50cb92980a013d9112688a3ff34a814d434fc3c3ba91f7d"
+  },
+  "frozen_patch_digest": "sha256:6100ad7c72a536040cfb71347ffe3b1129f57edbaa75e744469053aa7bc07345",
+  "baseline_manifest_digest": "sha256:0241a5dba43c1c62be62ee0c34ffae916e14e1e146492f2ca5b3d40e345e3e53",
+  "baseline_environment_package_digest": null,
+  "material_revision_id": "monai6975-dataset-dict-pixels-cpu-v1",
+  "grading_materials_identity": "sha256:790984d103cffad557230cb0188b5c3a5e3e9d6728f3d3a37defeb84cbbc20f6",
+  "actor_image_recorded": "sha256:fbfdddc4edda1f0ea4c1b76a572bd95045be4bbd202b197a94e8d8ee14a73fd6",
+  "baseline_entries_recorded": 1334,
+  "baseline_asset": {
+    "path": "tests/testing_data/ref_avg152T1_LR.nii.gz",
+    "bytes": 531671,
+    "sha256": "c01a50caa7a563158ecda43d93a1466bfc8aa939bc16b06452ac1089c54661c8"
+  },
+  "preexisting_requirements_state": {
+    "tracked_dirty_before_solver": true,
+    "sha256": "6c3694f70e5e903dc0012bde58bcf175f0e3429bd395f5e6c74c313f83a269f5",
+    "MetricsReloaded_URL_absent_before_solver": true,
+    "candidate_FP_contains_requirements_change": false
+  },
+  "formal_references_all_passed": [
+    "tests/test_dataset.py::TestDataset::test_dataset_lazy_dict_returns_transformed_pixels_cpu",
+    "tests/test_dataset.py::TestDatsesetWithLazy::test_dataset_lazy_with_logging_3",
+    "tests/test_dataset.py::TestDatsesetWithLazy::test_dataset_lazy_with_logging_1",
+    "tests/test_dataset.py::TestDatsesetWithLazy::test_dataset_lazy_with_logging_2",
+    "tests/test_dataset.py::TestDatsesetWithLazy::test_dataset_lazy_with_logging_0",
+    "tests/test_compose.py::TestComposeExecuteWithFlags::test_compose_execute_equivalence_with_flags_2",
+    "tests/test_compose.py::TestComposeExecuteWithLogging::test_compose_lazy_on_call_with_logging_1",
+    "tests/test_compose.py::TestComposeExecuteWithFlags::test_compose_execute_equivalence_with_flags_1",
+    "tests/test_compose.py::TestCompose::test_flatten_and_len",
+    "tests/test_compose.py::TestCompose::test_randomize_warn",
+    "tests/test_compose.py::TestComposeExecuteWithLogging::test_compose_lazy_on_call_with_logging_2",
+    "tests/test_compose.py::TestComposeExecuteWithLogging::test_compose_with_logging_5",
+    "tests/test_compose.py::TestComposeExecute::test_compose_execute_negative_range_0",
+    "tests/test_compose.py::TestCompose::test_non_dict_compose_with_unpack",
+    "tests/test_compose.py::TestComposeExecute::test_compose_execute_bad_end_param_0",
+    "tests/test_compose.py::TestComposeExecute::test_compose_execute_empty_range_2",
+    "tests/test_dataset.py::TestDatsesetWithLazy::test_dataset_lazy_with_logging_4",
+    "tests/test_compose.py::TestComposeExecute::test_compose_execute_bad_end_param_2",
+    "tests/test_compose.py::TestCompose::test_backwards_compatible_imports",
+    "tests/test_compose.py::TestComposeExecute::test_compose_execute_bad_start_param_3",
+    "tests/test_compose.py::TestComposeExecuteWithLogging::test_compose_with_logging_3",
+    "tests/test_compose.py::TestComposeExecute::test_compose_execute_negative_range_2",
+    "tests/test_compose.py::TestCompose::test_list_dict_compose_no_map",
+    "tests/test_compose.py::TestCompose::test_dict_compose",
+    "tests/test_compose.py::TestComposeExecuteWithLogging::test_compose_with_logging_4",
+    "tests/test_compose.py::TestComposeExecute::test_compose_execute_bad_end_param_1",
+    "tests/test_compose.py::TestComposeExecuteWithLogging::test_compose_lazy_on_call_with_logging_3",
+    "tests/test_compose.py::TestComposeExecuteWithLogging::test_compose_with_logging_0",
+    "tests/test_compose.py::TestComposeExecuteWithLogging::test_compose_with_logging_1",
+    "tests/test_compose.py::TestComposeExecuteWithLogging::test_compose_lazy_on_call_with_logging_0",
+    "tests/test_compose.py::TestCompose::test_empty_compose",
+    "tests/test_compose.py::TestComposeExecute::test_compose_execute_bad_start_param_1",
+    "tests/test_compose.py::TestComposeExecute::test_compose_execute_empty_range_0",
+    "tests/test_compose.py::TestComposeExecute::test_compose_execute_negative_range_3",
+    "tests/test_compose.py::TestComposeExecuteWithLogging::test_compose_with_logging_6",
+    "tests/test_compose.py::TestComposeExecute::test_compose_execute_bad_end_param_3",
+    "tests/test_compose.py::TestComposeExecuteWithFlags::test_compose_execute_equivalence_with_flags_3",
+    "tests/test_compose.py::TestComposeExecute::test_compose_with_logger_3",
+    "tests/test_compose.py::TestComposeExecute::test_compose_execute_equivalence_1",
+    "tests/test_compose.py::TestComposeExecuteWithLogging::test_compose_with_logging_7",
+    "tests/test_compose.py::TestComposeCallableInput::test_value_error_when_not_sequence",
+    "tests/test_compose.py::TestComposeExecute::test_compose_execute_negative_range_1",
+    "tests/test_compose.py::TestComposeExecute::test_compose_execute_equivalence_2",
+    "tests/test_compose.py::TestComposeExecute::test_compose_with_logger_0",
+    "tests/test_compose.py::TestComposeExecute::test_compose_with_logger_1",
+    "tests/test_compose.py::TestComposeExecute::test_compose_execute_empty_range_3",
+    "tests/test_compose.py::TestCompose::test_list_non_dict_compose_with_unpack",
+    "tests/test_compose.py::TestComposeExecute::test_compose_execute_equivalence_0",
+    "tests/test_compose.py::TestComposeExecuteWithLogging::test_compose_lazy_on_call_with_logging_4",
+    "tests/test_compose.py::TestComposeExecute::test_compose_execute_empty_range_1",
+    "tests/test_compose.py::TestComposeExecuteWithFlags::test_compose_execute_equivalence_with_flags_0",
+    "tests/test_compose.py::TestComposeExecute::test_compose_execute_bad_start_param_0",
+    "tests/test_dataset.py::TestDataset::test_shape_0",
+    "tests/test_compose.py::TestComposeExecuteWithLogging::test_compose_with_logging_2",
+    "tests/test_compose.py::TestCompose::test_data_loader",
+    "tests/test_compose.py::TestCompose::test_err_msg",
+    "tests/test_compose.py::TestComposeExecute::test_compose_execute_bad_start_param_2",
+    "tests/test_compose.py::TestCompose::test_non_dict_compose",
+    "tests/test_compose.py::TestCompose::test_random_compose",
+    "tests/test_compose.py::TestComposeExecute::test_compose_execute_equivalence_3",
+    "tests/test_compose.py::TestCompose::test_data_loader_2",
+    "tests/test_compose.py::TestCompose::test_list_dict_compose",
+    "tests/test_dataset.py::TestDataset::test_dataset_lazy_on_call",
+    "tests/test_compose.py::TestComposeExecute::test_compose_with_logger_2"
+  ],
+  "formal_partitions_counts": {
+    "added_p2p": 1,
+    "original_f2p": 4,
+    "original_p2p": 59
+  },
+  "formal_module_footer": {
+    "passed": 64,
+    "warnings": 20,
+    "seconds": 18.69
+  },
+  "formal_install_test_complete": true,
+  "candidate_prerequisite_asset_verified": true,
+  "trajectory_event_count": 183,
+  "calls": [
+    {
+      "event_line": 10,
+      "id": "toolu_cc5f117b011c450f",
+      "tool": "Read",
+      "input": {
+        "file_path": "/testbed/monai/data/dataset.py"
+      },
+      "result_event_line": 14,
+      "is_error": false,
+      "result_sha256": "74b1b6df4dda423d69fe711b4966c4cbe5bebc69ec8d045dc9ad9c4b00ce5262"
+    },
+    {
+      "event_line": 23,
+      "id": "toolu_be59bb7579cf2e2e",
+      "tool": "Read",
+      "input": {
+        "file_path": "/testbed/monai/transforms/compose.py"
+      },
+      "result_event_line": 27,
+      "is_error": false,
+      "result_sha256": "0f88213b4d041743263a2ba11802be89f144598ffbf87250dfa61828f151476f"
+    },
+    {
+      "event_line": 36,
+      "id": "toolu_79a4c34c71fee273",
+      "tool": "Read",
+      "input": {
+        "file_path": "/testbed/monai/transforms/transform.py",
+        "limit": 200
+      },
+      "result_event_line": 40,
+      "is_error": false,
+      "result_sha256": "166579d0d6876bbc36e3114b865d5495cfb7c45f7727b9cca38403b15738cb41"
+    },
+    {
+      "event_line": 49,
+      "id": "toolu_cb1e5c16a542227c",
+      "tool": "Read",
+      "input": {
+        "file_path": "/testbed/monai/data/dataset.py",
+        "offset": 90,
+        "limit": 25
+      },
+      "result_event_line": 53,
+      "is_error": false,
+      "result_sha256": "aa4f1f3527755c171d010fb06135fd3fe1252b6fa41f083cf657d6f99cc3e552"
+    },
+    {
+      "event_line": 62,
+      "id": "toolu_f2c2c40f7cf0060c",
+      "tool": "Read",
+      "input": {
+        "file_path": "/testbed/monai/transforms/transform.py",
+        "offset": 101,
+        "limit": 35
+      },
+      "result_event_line": 66,
+      "is_error": false,
+      "result_sha256": "747cca7b60668e2035a9cef26de0bba367bafbda8caa2f6d8f7e82628ee696c5"
+    },
+    {
+      "event_line": 75,
+      "id": "toolu_33e7a9ee70dd2410",
+      "tool": "Edit",
+      "input": {
+        "replace_all": false,
+        "file_path": "/testbed/monai/data/dataset.py",
+        "old_string": "    def _transform(self, index: int):\n        \"\"\"\n        Fetch single data item from `self.data`.\n        \"\"\"\n        data_i = self.data[index]\n        return apply_transform(self.transform, data_i) if self.transform is not None else data_i",
+        "new_string": "    def _transform(self, index: int):\n        \"\"\"\n        Fetch single data item from `self.data`.\n        \"\"\"\n        data_i = self.data[index]\n        if self.transform is not None:\n            # Extract lazy parameter from Compose if available\n            lazy = getattr(self.transform, '_lazy', False) if isinstance(self.transform, Compose) else False\n            return apply_transform(self.transform, data_i, lazy=lazy)\n        return data_i"
+      },
+      "result_event_line": 79,
+      "is_error": false,
+      "result_sha256": "07ac1d11c09c54a1d45efee87970cdc53ed37335d27a09aa8d6ab8cd89087452"
+    },
+    {
+      "event_line": 88,
+      "id": "toolu_fb377f83ac7071b4",
+      "tool": "Write",
+      "input": {
+        "file_path": "/testbed/test_lazy_fix.py",
+        "content": "#!/usr/bin/env python3\n\nimport monai.transforms as mt\nfrom monai.data import Dataset\n\n# Create test data\nd = {\"image\": \"tests/testing_data/ref_avg152T1_LR.nii.gz\"}\n\n# Create transform with lazy=True\nxform = mt.Compose(\n    [\n        mt.LoadImaged(keys=\"image\"),\n        mt.RandAffined(keys=\"image\", prob=1.0, rotate_range=45.0, translate_range=10.0, scale_range=0.15),\n    ],\n    lazy=True,\n    log_stats=True,\n)\n\nprint(\"Testing direct call...\")\nout_1 = xform(d)  # direct call works fine\nprint(f\"Direct call result type: {type(out_1)}\")\n\nprint(\"\\nTesting Dataset call...\")\nx = Dataset([d], transform=xform)  # dataset call should now respect lazy=True\nout_2 = x[0]\nprint(f\"Dataset call result type: {type(out_2)}\")\n\nprint(\"\\nBoth calls should produce the same result type and behavior.\")"
+      },
+      "result_event_line": 92,
+      "is_error": false,
+      "result_sha256": "b1671c7cba3a1e430e0574ee53b0954682fb014c232effbafa5cc826cf091226"
+    },
+    {
+      "event_line": 101,
+      "id": "toolu_6caf9244b25799e4",
+      "tool": "Bash",
+      "input": {
+        "command": "python test_lazy_fix.py",
+        "description": "Run test script to verify lazy fix"
+      },
+      "result_event_line": 107,
+      "is_error": false,
+      "result_sha256": "db1513767583d1bd39e401d277bc01429288c27061f59504967e0b77f80a427b"
+    },
+    {
+      "event_line": 116,
+      "id": "toolu_5e952e1789eb9cf0",
+      "tool": "Write",
+      "input": {
+        "file_path": "/testbed/comprehensive_test.py",
+        "content": "#!/usr/bin/env python3\n\nimport monai.transforms as mt\nfrom monai.data import Dataset\n\n# Create test data\nd = {\"image\": \"tests/testing_data/ref_avg152T1_LR.nii.gz\"}\n\nprint(\"=== Test 1: Compose with lazy=True ===\")\n# Create transform with lazy=True\nxform_lazy = mt.Compose(\n    [\n        mt.LoadImaged(keys=\"image\"),\n        mt.RandAffined(keys=\"image\", prob=1.0, rotate_range=45.0, translate_range=10.0, scale_range=0.15),\n    ],\n    lazy=True,\n    log_stats=True,\n)\n\n# Direct call\nout_1 = xform_lazy(d)\nprint(f\"Direct call result type: {type(out_1)}\")\n\n# Dataset call\nx = Dataset([d], transform=xform_lazy)\nout_2 = x[0]\nprint(f\"Dataset call result type: {type(out_2)}\")\n\nprint(\"\\n=== Test 2: Compose with lazy=False ===\")\n# Create transform with lazy=False\nxform_not_lazy = mt.Compose(\n    [\n        mt.LoadImaged(keys=\"image\"),\n        mt.RandAffined(keys=\"image\", prob=1.0, rotate_range=45.0, translate_range=10.0, scale_range=0.15),\n    ],\n    lazy=False,\n    log_stats=True,\n)\n\n# Direct call\nout_3 = xform_not_lazy(d)\nprint(f\"Direct call result type: {type(out_3)}\")\n\n# Dataset call\nx2 = Dataset([d], transform=xform_not_lazy)\nout_4 = x2[0]\nprint(f\"Dataset call result type: {type(out_4)}\")\n\nprint(\"\\n=== Test 3: Compose without explicit lazy parameter (should default to False) ===\")\n# Create transform without explicit lazy parameter\nxform_default = mt.Compose(\n    [\n        mt.LoadImaged(keys=\"image\"),\n        mt.RandAffined(keys=\"image\", prob=1.0, rotate_range=45.0, translate_range=10.0, scale_range=0.15),\n    ],\n    log_stats=True,\n)\n\n# Direct call\nout_5 = xform_default(d)\nprint(f\"Direct call result type: {type(out_5)}\")\n\n# Dataset call\nx3 = Dataset([d], transform=xform_default)\nout_6 = x3[0]\nprint(f\"Dataset call result type: {type(out_6)}\")\n\nprint(\"\\nAll tests completed successfully!\")"
+      },
+      "result_event_line": 120,
+      "is_error": false,
+      "result_sha256": "82c15213210067a3ca057fb23d84fd05460c389e4f033f70d8edccf79aa008c6"
+    },
+    {
+      "event_line": 125,
+      "id": "toolu_33a5a6271e1952d9",
+      "tool": "Bash",
+      "input": {
+        "command": "python comprehensive_test.py",
+        "description": "Run comprehensive test to verify lazy behavior consistency"
+      },
+      "result_event_line": 131,
+      "is_error": false,
+      "result_sha256": "350459700bc4102786ffbec927d968563b69b5097f73fe864c3a182e5e49ce7d"
+    },
+    {
+      "event_line": 140,
+      "id": "toolu_db82705ccd65e307",
+      "tool": "Bash",
+      "input": {
+        "command": "python -m pytest tests/test_dataset.py -v",
+        "description": "Run existing dataset tests to ensure no regression"
+      },
+      "result_event_line": 146,
+      "is_error": false,
+      "result_sha256": "e01e319d5e8af2518e12520526464c128d700f779bd1565238c52dfcd2eee48a"
+    },
+    {
+      "event_line": 155,
+      "id": "toolu_49857ed25da16647",
+      "tool": "Bash",
+      "input": {
+        "command": "python -c \"\nimport monai.transforms as mt\nfrom monai.data import Dataset\n\n# Test basic functionality without lazy\nd = {'image': 'tests/testing_data/ref_avg152T1_LR.nii.gz'}\nxform = mt.Compose([mt.LoadImaged(keys='image')])\ndataset = Dataset([d], transform=xform)\nresult = dataset[0]\nprint('Basic test passed:', type(result))\n\n# Test with None transform\ndataset2 = Dataset([d], transform=None)\nresult2 = dataset2[0]\nprint('None transform test passed:', type(result2))\n\"",
+        "description": "Run basic functionality tests to ensure no regression"
+      },
+      "result_event_line": 161,
+      "is_error": false,
+      "result_sha256": "449e5463b11da7658e7275373fcd32daa8e9bcab4c7154d6c7e4c7b96077e8c8"
+    },
+    {
+      "event_line": 170,
+      "id": "toolu_359e6b342155a5b4",
+      "tool": "Bash",
+      "input": {
+        "command": "git diff",
+        "description": "Show the exact changes made to fix the issue"
+      },
+      "result_event_line": 174,
+      "is_error": false,
+      "result_sha256": "4b5912e7432ee71a088df74fbfde6e1ad3ef29dd3c2c28ddb4b5aff3ad98e085"
+    }
+  ],
+  "Read_results_matched_actual_baseline": [
+    {
+      "event_line": 10,
+      "path": "monai/data/dataset.py",
+      "source_lines_matched": 1692
+    },
+    {
+      "event_line": 23,
+      "path": "monai/transforms/compose.py",
+      "source_lines_matched": 787
+    },
+    {
+      "event_line": 36,
+      "path": "monai/transforms/transform.py",
+      "source_lines_matched": 200
+    },
+    {
+      "event_line": 49,
+      "path": "monai/data/dataset.py",
+      "source_lines_matched": 25
+    },
+    {
+      "event_line": 62,
+      "path": "monai/transforms/transform.py",
+      "source_lines_matched": 35
+    }
+  ],
+  "first_precise_localization_event_line": 58,
+  "edit_event_line": 75,
+  "patch_revisions": 1,
+  "model_verification": {
+    "pre_edit_runtime_reproduction": false,
+    "post_edit_public_example_executed": true,
+    "public_old_dataset_tests_passed": 1,
+    "self_scripts_have_assertions": false,
+    "self_scripts_compare_same_seed_pixels": false,
+    "selftested_lazy_settings": [
+      true,
+      false,
+      "defaultFalse"
+    ],
+    "selftested_lazy_None": false
+  },
+  "metrics": {
+    "CC_seconds": 52.703,
+    "API_seconds": 30.948,
+    "entry_solve_seconds": 56.219,
+    "HTTP_records": 16,
+    "count_tokens_records": 2,
+    "generation_requests": 14,
+    "input_tokens_sum": 533614,
+    "output_tokens_sum": 2883,
+    "max_single_input_tokens": 46004,
+    "max_single_output_tokens": 657,
+    "grading_total_seconds": 711.634,
+    "trusted_setup_seconds": 659.16882,
+    "candidate_install_seconds": 16.902,
+    "candidate_test_seconds": 19.977
+  },
+  "parallel_conclusion": "所有实际工具调用串行；未验证并行能力",
+  "budget": {
+    "context": 196608,
+    "HTTP_max_tokens": 65536,
+    "turns": 240,
+    "solve_wall_seconds": 10800,
+    "CC_display_maxOutputTokens": 32000
+  },
+  "new_task_environment_blocker_found": false,
+  "training_or_holdout_qualified": false,
+  "limits": [
+    "独立候选语义和执行核查待；另一模型仍待，不核销原claimed请求。",
+    "两自写脚本与基础命令只打印类型/日志，未断言像素或固定同一随机状态比较；不能据此推全兼容。",
+    "lazy=None路径的源码语义可解释，当前候选自测未运行该设置，不冒称全部lazy组合已实跑。",
+    "正式64项包括原test_dataset_lazy_on_call无断言占位节点；真实新增像素断言另有实际通过证据。",
+    "末次git diff依赖删除属于预先dirty baseline，候选FP未包含；模型误归因保留。",
+    "仅首实际prompt及五次Read与baseline核对，不扩大为全部actor文件可见性审计。",
+    "封包636件/1334 baseline完整census将按范围复用GPU非作者报告；本check只核相关17件封包和选定baseline源码/资产。",
+    "env_qualification absent、baseline.environment_package_digest null；56有限资源样本有时间缺口，scripts_digest未独立重算。"
+  ],
+  "next_action": "等待非作者本臂语义/执行报告与原请求另一模型；无需重跑当前成功臂或已验CPU矩阵。",
+  "evidence": [
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai6975-coder-a1/queue_v28/results/gpu1003-monai6975-coder-a1/attempt/harness/trajectory.jsonl",
+      "sha256": "d6b3db1241d4ac149236eb8fda7dbd07e20e7499c56bf7a5f0b2ebb08baa878b",
+      "bytes": 461658
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai6975-coder-a1/queue_v28/results/gpu1003-monai6975-coder-a1/attempt/attempt.json",
+      "sha256": "cc92552b89062b566a9a122f314cbfd5b607153ddd806fad63d0d825b1b134bd",
+      "bytes": 16397
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai6975-coder-a1/queue_v28/results/gpu1003-monai6975-coder-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "4e1a5f919bc22779376e9f1b45dd7c5c0086ea7944932583f6a2207b85affe5e",
+      "bytes": 110256
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai6975-coder-a1/queue_v28/results/gpu1003-monai6975-coder-a1/attempt/frozen/baseline_manifest.json",
+      "sha256": "5a92966c1f9cc9e9c12f9a938ea2c64da02c45072ad535d78c2a478b5063ed5c",
+      "bytes": 312931
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai6975-coder-a1/queue_v28/results/gpu1003-monai6975-coder-a1/attempt/frozen/baseline.tar",
+      "sha256": "9e0c1d21738cda1550efe829849180b50169a888acac60e3a064c0f3d0d3c814",
+      "bytes": 24596480
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai6975-coder-a1/queue_v28/results/gpu1003-monai6975-coder-a1/attempt/candidate/Project-MONAI__MONAI-6975.diff",
+      "sha256": "727ae01824a4424353d0ba0a77e3f2c608480a7560d85ed40a045495085a002e",
+      "bytes": 4030
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai6975-coder-a1/queue_v28/results/gpu1003-monai6975-coder-a1/grading/projection.json",
+      "sha256": "7d06b319b576c94c843888b95fc31b25f34c04b09ccc1d267338b1a13d328edb",
+      "bytes": 378
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai6975-coder-a1/queue_v28/results/gpu1003-monai6975-coder-a1/result.json",
+      "sha256": "c75ba762984cbc52e8eb81033aa5ad2d4d80b78ec7f46572711980c01f0b8ba5",
+      "bytes": 2649
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai6975-coder-a1/queue_v28/results/gpu1003-monai6975-coder-a1/solver_prompt.txt",
+      "sha256": "803763a7e198232cbfb923ab1fcc40b3624c0351689d23c6f48a7350e98d3806",
+      "bytes": 1341
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai6975-coder-a1/queue_v28/results/gpu1003-monai6975-coder-a1/grading/eval_logs/evallog_gpu1003-monai6975-coder-_0544df50.diagnostics.json",
+      "sha256": "46ae55b4ada20909d8ee8fd0cafbdeb5e48fd5e7fcc3ef7d1eab053ff873ee06",
+      "bytes": 16320
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai6975-coder-a1/queue_v28/results/gpu1003-monai6975-coder-a1/grading/eval_logs/evallog_gpu1003-monai6975-coder-_0544df50.eval.log",
+      "sha256": "aa3d1d54aa39dbd9c54083e3384125937627f044b859528d8ec5922ea41a3c38",
+      "bytes": 78871
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai6975-coder-a1/prepared_remaining_eight_code8_v1/monai6975/host_evidence/owner_request.json",
+      "sha256": "db75fe723a73f2db160439b271023c033fc82316d03cfdab3c81a37f6d1a91e3",
+      "bytes": 14579
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai6975-coder-a1/prepared_remaining_eight_code8_v1/monai6975/private/host_grading_views.jsonl",
+      "sha256": "5020d44f0165fc3caea607efce60616e7ce5818c99aeb5ebf2c01cdd39c742fa",
+      "bytes": 39900
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai6975-coder-a1/services_v26/coder/gateway/gpu1003-monai6975-coder-a1/usage.json",
+      "sha256": "83f48da9d3a85c0d9023b07f1ffb3dcd0a16b2888bb5ff2eb970d848c78a8e98",
+      "bytes": 89
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai6975-coder-a1/services_v26/coder/gateway/gpu1003-monai6975-coder-a1/requests.jsonl",
+      "sha256": "f6d9b01305d9c72498f9c842b2205931f35126fe7a767bb7c225e6bb67c77277",
+      "bytes": 2264211
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai6975-coder-a1/services_v26/coder/gateway/gpu1003-monai6975-coder-a1/responses.jsonl",
+      "sha256": "b1bb83b8b5ab31d0fa25e1c908a3efcc05be4aa221c9fa94b2d6634ccc3134cd",
+      "bytes": 4923
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai6975-coder-a1/gpu1003-monai6975-coder-a1_terminal_snapshot_v1.json",
+      "sha256": "ce1af7a105edaad24ebbc677d5addfa11221a11863065c0d5a0141661622cebc",
+      "bytes": 66759
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-monai6975-coder-a1/gpu1003-monai6975-coder-a1_closed_manifest_v1.json",
+      "sha256": "f0228e045a78682c94d22fcdc8d6ff66914cf6caceb4f48444551f9901f5a0ba",
+      "bytes": 130568
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/monai6975_first_coder_execution_receipt_v1.json",
+      "sha256": "298e5b407900b5467e1ea93c44e27c34a9eae6d6350046462d700904414476ed",
+      "bytes": 1673
+    }
+  ]
+}

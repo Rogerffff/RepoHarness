@@ -1,0 +1,69 @@
+{
+  "schema": "coveragepy.model_first_pair_owner_analysis.v1",
+  "as_of": "2026-10-03",
+  "status": "first_pair_analyzed_with_non_author_semantic_checks",
+  "instance_id": "coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae",
+  "request_id": "r2e-coveragepy-016a-r086087-cpu-r6-20261003-v1",
+  "aggregate_receipt": {
+    "path": "runs/ordinary_gpu_probe_20261002/receipts/r2e-coveragepy-016a-r086087-cpu-r6-20261003-v1_two_model_v1.json",
+    "sha256": "sha256:d987ce644beaf5f0da8e72258c5cf69a12f244ea76da23ecbe0d48e7c1fc1d33",
+    "bytes": 16817
+  },
+  "aggregate_owner_ACK": true,
+  "attempts_per_model": 1,
+  "analysis": {
+    "qwen36": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/model_analysis_qwen36_a1_20261003.json",
+      "sha256": "sha256:97df7fc49f4ea90efaf35894a3aa93220bdeb20488ed8d3fbd1d0958205d982a",
+      "bytes": 53128
+    },
+    "coder": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/model_analysis_coder_a1_20261003.json",
+      "sha256": "sha256:73e8a1eabf09fb47acbd495a006b5a68fee29f9552116df487343af5129ad183",
+      "bytes": 50245
+    }
+  },
+  "semantic_reviews": {
+    "qwen36": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/reviews/non_author_016a_qwen36_semantic_review_20261003.json",
+      "sha256": "sha256:78befa51fb143cca19b7c0b357aae29ce266776253b6eedc4e7c06e97f42443b",
+      "bytes": 44607
+    },
+    "coder": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/reviews/non_author_016a_coder_semantic_review_20261003.json",
+      "sha256": "sha256:e7919a2c4dbd82f35481dda71bbf169106e2f87f167f2b0d52a49c018002ac48",
+      "bytes": 140320
+    }
+  },
+  "current_goal_success": {
+    "qwen36": true,
+    "coder": true
+  },
+  "raw_scores": {
+    "qwen36": {
+      "reward": 1,
+      "matched": 15,
+      "total": 15
+    },
+    "coder": {
+      "reward": 1,
+      "matched": 15,
+      "total": 15
+    }
+  },
+  "quality_findings": {
+    "qwen36": [
+      "bad key cachedNone remains measured_files; failed added assertion weakened; two generated DBs"
+    ],
+    "coder": [
+      "bad key not cached, but existing rootDB confirmed one NULL file_id line_bits row; helper swallows failures and unconditional success; four helpers plus two DBs"
+    ]
+  },
+  "same_fixed_task_and_public_input": true,
+  "model_sampling_and_modes_differ": true,
+  "same_condition_repetitions_complete": false,
+  "new_material_blockers": [],
+  "mandatory_CPU": false,
+  "training_qualified": false,
+  "next_action": "Second stage two additional clean attempts per model, preserve a1, prioritize missing first arms; audit each raw candidate and full trajectory on return."
+}

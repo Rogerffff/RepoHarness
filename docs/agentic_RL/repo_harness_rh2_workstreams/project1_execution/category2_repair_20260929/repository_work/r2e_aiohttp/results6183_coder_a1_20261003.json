@@ -1,0 +1,179 @@
+{
+  "schema_id": "rh2.category2.aiohttp.owner_gpu_result.v1",
+  "created_at": "2026-10-03T04:44:03.428587+00:00",
+  "task_id": "r2e_gym_subset::aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2",
+  "job_id": "gpu1003-aiohttp6183-coder-a1",
+  "request_id": "aiohttp6183-r085-probe-wide-v1-20261003",
+  "model_label": "coder",
+  "owner_verdict": "normally_completed_invalid_final_candidate_with_evidenced_candidate_caused_collection_failure",
+  "original_final_candidate_accepted": false,
+  "raw_grade": {
+    "reward": null,
+    "outcome": "failed_to_grade",
+    "failure_category": "test_log_parse_failed",
+    "infra_failure_detail": "reference_all_missing:unattributed:qualification:absent",
+    "expected_match_count": null,
+    "expected_total_count": null
+  },
+  "formal_grade_valid": false,
+  "formal_reward_overridden": false,
+  "qualification_injected": false,
+  "reference_test_observations": {
+    "expected": 49,
+    "executed": 0,
+    "collected": 0,
+    "collection_errors": 1,
+    "individual_reference_status": "all absent; not 49 FAILED",
+    "actual_test_rc": 2,
+    "complete_log": true
+  },
+  "decisive_cause_chain": [
+    {
+      "step": 25,
+      "actual": "protocol.py过滤compress空输出，保留flush/EOF/EOL。"
+    },
+    {
+      "steps": [
+        26,
+        30,
+        31
+      ],
+      "actual": "两段目标复现通过，公开47个TestHttpMessage通过，再跑原复现通过。"
+    },
+    {
+      "step": 33,
+      "actual": "相对Git HEAD的diff显示四个solver开工前已存在create_task兼容修改。"
+    },
+    {
+      "step": 34,
+      "actual_command": "git checkout -- aiohttp/client.py aiohttp/client_reqrep.py aiohttp/server.py aiohttp/worker.py",
+      "tool_request_line": 407,
+      "tool_result_line": 411,
+      "completed_at": "2026-10-03T04:17:33.104Z",
+      "actual_result": "completed no output"
+    },
+    {
+      "steps": [
+        39,
+        40,
+        41
+      ],
+      "result_lines": [
+        468,
+        481,
+        494
+      ],
+      "actual": "actor内已三次client.py:171 asyncio.async SyntaxError，两个Python rc1及pytest rc4。"
+    },
+    {
+      "step": 42,
+      "actual": "模型正常end_turn，声称兼容语法问题与自己修复无关、目标修复完成。"
+    },
+    {
+      "actual": "原Frozen含四个compat撤回，13项全部投影；grader与actor相同baseline/image，在同一client.py:171收集失败。"
+    }
+  ],
+  "root_cause_assessment": {
+    "model_localization_of_target": "有依据，早期目标修复实际通过；不把整个过程称为无有效工作。",
+    "final_failure": "模型把预置兼容差异误认无关而撤回，随后误归因并沿用早期成功作为最终交付结论。",
+    "initial_git_dirty_presentation": "真实诱因；本轮派生保留初态工作区/HEAD/index，未发现派生运输失真。",
+    "infrastructure_distortion": "未得到本次原件证据支持；初态可导入，错误已在actor端冻结前发生。",
+    "coverage_limit": "恢复兼容预置后的仅protocol候选是否过49键未知，未清理候选/重判假想版本。"
+  },
+  "behavior": {
+    "tools": {
+      "Read": 9,
+      "Write": 8,
+      "Bash": 22,
+      "Edit": 2,
+      "total": 41,
+      "error_flags": 8,
+      "error_limit": "包括原缺陷断言失败、脚本误用、重复Edit及最终语法失败，不能全算基础设施失败。"
+    },
+    "parallel": {
+      "multi_tool_generation_batches": 0,
+      "opportunities": "独立阅读与两段复现可并行，改代码与后续复验有依赖。",
+      "actual_execution_overlap": "unknown；无完整工具起止时间。",
+      "stable_parallel_ability_inference": false
+    },
+    "usage": {
+      "generation_requests": 42,
+      "cc_turns": 42,
+      "input_tokens": 1407768,
+      "output_tokens": 9369,
+      "input_definition": "累计逐次请求上下文，不是峰值context。"
+    },
+    "time": {
+      "solve_seconds": 95.58,
+      "cc_api_seconds": 87.027,
+      "cc_total_seconds": 92.246,
+      "trusted_init_seconds_outside_solver": 9.059,
+      "grading_seconds": 12.499,
+      "model_queue_wait": "unknown",
+      "api_pure_model_compute": "unknown",
+      "cc_non_api_pure_tool_time": "unknown"
+    },
+    "final_validation": "最后三次未进入目标断言；不能验收整份候选。"
+  },
+  "execution": {
+    "code": "code_v4",
+    "code_snapshot_id_original": null,
+    "image": "sha256:cfc4f547e3336c59f39841883b209ab0568cc719144aea87e4c7ee73aadc0d13",
+    "baseline": "sha256:096115266c81b72a6f28e517ccfdeb2e8903c44f7822031113bf2daedb1f5781",
+    "frozen": "sha256:221f72cfdb29c248ef9b38d856dbd6f466c25f8b45ff3316270646ebc5441102",
+    "original_candidate_entries": 13,
+    "all_entries_graded": true,
+    "solver_termination": "completed",
+    "actor_harness_exit_code": 0,
+    "entry_exit_code_from_GPU_independent_review": 3,
+    "cleanup": {
+      "container_rm": 0,
+      "container_left": "",
+      "network_failures": [],
+      "relay_failures": [],
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "cleanup_ok": true
+    },
+    "gateway_drain": {
+      "session_id": "gpu1003-aiohttp6183-coder-a1",
+      "revoked": true,
+      "active_requests": 0,
+      "drained": true,
+      "ts": 1791001078.708778
+    },
+    "pip_freeze_changed_metadata": false,
+    "pip_freeze_limit": "该事实文件很短，不视为完整依赖枚举。"
+  },
+  "refs": {
+    "original_result": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v16/results/gpu1003-aiohttp6183-coder-a1/result.json",
+      "sha256": "sha256:19b44d1cf61b410782da2885db60ca98591e0c09be5b8c66a26451f06e8d074a"
+    },
+    "primary_decisive_readback": {
+      "path": "runs/category2_repair_20260929/r2e_aiohttp/gpu6183_coder_a1_owner_readback_v1/owner_decisive_readback.json",
+      "sha256": "sha256:747a9c7aef361e1731cf870a16cab17ac09e0cab0424296f43b309b296c64e20"
+    },
+    "independent_execution_review": {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/aiohttp6183_coder_a1_execution_review_v1.json",
+      "sha256": "sha256:c39266a02fd760225c6a3fd5e4ebef6c9371b794ff0cdf0bbbe065558364454d"
+    },
+    "independent_falsifier": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/reviews/non_author_6183_coder_a1_falsifier_attribution_20261003.md",
+      "sha256": "sha256:46a6664616883e61bcfa19018488749459f1966dc27e31c9c8886ea9cbbbd5be"
+    },
+    "aggregate_receipt_readback": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/aggregate_receipt_readback6183_20261003.json",
+      "sha256": "sha256:dd06a41fc85d8f3614f7a70c6a70d81316f61c5e21d120835c842602b242a4b0"
+    },
+    "shared_classification_observation": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/grading_classification_gap6183_20261003.json",
+      "sha256": "sha256:4c95d7fd4dff3c08cd246fe39159a086445689459f58bbed2b862ce1cdb1d3f3"
+    }
+  },
+  "review_method": "主审实际字节/轨迹核查，结合GPU非作者执行核查与本包非作者反证报告；非fresh公开盲审，不按报告票数判断。",
+  "permitted_use": "有证据的正常完成后候选失败与纠错诊断；不把null纳入有效正式评分分母，不授训练/留出资格。",
+  "next": "本次首轮执行与语义分析可收口；不为通过重解/重判。统一第二阶段同条件重复另安排，旧原件保留。",
+  "requires_cpu_now": false,
+  "known_requested_reruns": []
+}

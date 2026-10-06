@@ -1,0 +1,28 @@
+[ISSUE]
+**Title:** Missing `.gitignore` in HTML Output Directory Causes Unintended Git Tracking
+
+**Description:**
+When generating HTML coverage reports, the output directory does not include a `.gitignore` file. This absence leads to all static files within the directory being tracked by Git repositories, resulting in unnecessary clutter and potential repository bloat.
+
+**Example Code:**
+After running the coverage report generation:
+```python
+coverage.html_report(directory='htmlcov')
+```
+The `htmlcov` directory structure includes:
+```
+htmlcov/
+├── index.html
+├── coverage_html.js
+├── style.css
+├── helper2_py.html
+├── main_file_py.html
+```
+However, without a `.gitignore` file, adding the `htmlcov` directory to a Git repository will track all these static files, which are meant to be generated and should not be version-controlled.
+
+**Expected Behavior:**
+The HTML output directory should contain a `.gitignore` file that ignores all its contents, preventing Git from tracking the generated static files.
+
+**Actual Behavior:**
+The HTML output directory lacks a `.gitignore` file, causing all static files to be tracked by Git when the directory is included in the repository.
+[/ISSUE]

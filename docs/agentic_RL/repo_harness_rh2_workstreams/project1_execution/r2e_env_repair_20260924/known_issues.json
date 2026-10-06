@@ -1,0 +1,414 @@
+{
+ "source": "2026-09-24 R2E 48 题第一轮环境审查：由 R-f 证据汇总（collate_facts.py）与 5 题探针试跑形成的工作队列；sub-agent 审查后由 Claude 更新",
+ "note": "工作队列，不是正式题池准入；待调查项不冒称已定位。状态词：open / analyzing / proposed / verified / not_an_issue。",
+ "families": [
+  {
+   "family": "reference_status:coveragepy_016af5f6",
+   "scope": "material",
+   "tasks": [
+    "coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae"
+   ],
+   "status": "verified",
+   "summary": "期望 MockingProtectionTest.test_os_path_exists=FAILED 来自来源宿主机检出（测试子进程缺 mock）；发布镜像里 RH2 4 次 + M3 9 次全部 PASSED → gold 恒 14/15。参考状态问题，不是环境问题。09-09 runner 没跑这题，独立参考只有 M3。",
+   "next": "用户 09-24 批准 A；已实施为 r2e-mr-001 并验证：A 线机器真实 grader noop 0（14/15）×2、gold 1（15/15）×2，与 M3 逐键一致（acceptance §T0）。",
+   "evidence": [
+    "tasks/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae/facts.json",
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.md",
+    "material_revisions/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl（该题 execution_result_content）",
+    "runs/r2e_t0_revisions_20260924/reconcile/reconcile.md"
+   ]
+  },
+  {
+   "family": "test_material:datalad_58ba5165",
+   "scope": "material",
+   "tasks": [
+    "datalad__58ba5165234cb16de0e8463ee75097362099835f"
+   ],
+   "status": "verified",
+   "summary": "隐藏 test_1 从仓库内 datalad.interface.tests.test_docs 导入 demo_doc 等常量；上游修复提交也改了该模块（加方括号示例），gold 按规则排除测试路径，R2E 只把新版放进 r2e_tests/test_2.py 却没改 test_1 的导入 → cmdline 键在任何源码修复下都 FAILED（gold 3/4）。缺测试支撑材料，不是模型该做的改动。沙盒 dry-run：B1（test_1 改从 .test_2 导入）与 A（评分前恢复修复后的 test_docs.py）都 gold 4/4、noop 仍 2/4。",
+   "next": "用户 09-24 批准 B1；已实施为 r2e-mr-002 + material_v1 并验证：A 线机器真实 grader noop 0（2/4）×2、gold 1（4/4）×2，与沙盒 B1 逐键相同（acceptance §T0）。",
+   "evidence": [
+    "tasks/datalad__58ba5165234cb16de0e8463ee75097362099835f/facts.json",
+    "material_revisions/datalad__58ba5165234cb16de0e8463ee75097362099835f.md",
+    "runs/r2e_env_repair_20260924/p2/dryrun_58ba/",
+    "runs/r2e_t0_revisions_20260924/derived/datalad__58ba5165234cb16de0e8463ee75097362099835f/build.log"
+   ]
+  },
+  {
+   "family": "resource:numpy_2f4a9650_tmpfs",
+   "scope": "resource",
+   "tasks": [
+    "numpy__2f4a965019722c3c56f43433bfa4a99c4c083138"
+   ],
+   "status": "verified",
+   "summary": "默认 /tmp 1 GiB 下 OSError（gold 141/142）；6 GiB /tmp + 12 GiB 内存下 gold=1 且逐键与参考一致。 配方 v1 下 09-23、09-24 各一次 noop（141/142，仅目标键）/ gold（142/142）；峰值 4429–4439 MiB = 两份 4096.2 MiB（_savez 临时 .npy + .npz）+ 基线约 340 MiB；默认运行峰值只有 340 MiB 是因为 numpy 先对整个数组 fallocate、失败即报错（convert.c:152）。",
+   "next": "recipes/task_resources_v1.json（E04）；中央复跑复验。",
+   "evidence": [
+    "recipes/task_resources_v1.json",
+    "runs/r2e_env_repair_20260924/p2/followups/numpy_2f4a_fallocate_source.txt",
+    "runs/r2e_env_repair_20260924/_rerun2/ledger_numpy_bigtmp_gold.jsonl"
+   ]
+  },
+  {
+   "family": "resource:orange3_memory_headroom",
+   "scope": "resource",
+   "tasks": [
+    "orange3__c3fb72ba464880e0354cf33f8b3d3773865c2bf6",
+    "orange3__f5026689551be7f0a43ad5f0d129e5bcfff7999c"
+   ],
+   "status": "not_an_issue",
+   "summary": "R-f 记录的 orange3 峰值（1.2–2.6 GB）主体是 `chown -R /testbed`（约 2.1 GB / 4.1 万文件）触发 overlay copy-up 写出的可回收页缓存（memory.stat file 2.4–3.1 GB）+ 约 160 MB 内核 slab；测试本身匿名内存只有 0.17–0.25 GB。P3 实测：限额降到 2 GiB 时 cgroup 顶到上限 2249 次但 oom=0，测试结果不变；真实 grader 在 2 GiB 下复跑 c3fb72ba / f5026689 gold 都是 reward 1、键全一致。默认 4 GiB 至少 2 倍余量，不设档位。R12 用 memory.peak / 限额 > 60% 会误报（memory.peak 含页缓存且随宿主状态波动：同题 R-f 2580 MB、memprobe 3527 MB）。",
+   "next": "不设 orange3 档位；R12 判据改为看 anon 峰值或 memory.events 的 oom（需要 grader 多记 memory.stat / memory.events，A 线）。",
+   "evidence": [
+    "runs/r2e_env_repair_20260924/p3/memprobe/",
+    "runs/r2e_env_repair_20260924/p3/ledger_gold_mem2g.jsonl",
+    "packages/p3/README.md §2.3"
+   ]
+  },
+  {
+   "family": "solver_condition:testbed_must_be_on_sys_path",
+   "scope": "solver_condition",
+   "tasks": [
+    "aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52",
+    "aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac",
+    "aiohttp__240da100151933883d7dea0528d45877df025b92",
+    "aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a",
+    "aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2",
+    "numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9",
+    "numpy__2f4a965019722c3c56f43433bfa4a99c4c083138",
+    "numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d",
+    "numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb",
+    "numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764",
+    "numpy__d805e9b66228e68a0eb14d901cd350159c49af18",
+    "numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd"
+   ],
+   "status": "verified",
+   "summary": "包没装进 venv（aiohttp 5 题：install.sh 的 make .develop 没留下 editable 安装；numpy 7 题：setup.py build_ext --inplace 就地构建）：只有 /testbed 在 sys.path 上时可导入。准确说法是\"/testbed 须在 sys.path 上\"而不只是 cwd——探针以 `python /rh2/repro.py` 运行时 sys.path[0] 是 /rh2，在 /testbed 下执行也导入失败；PYTHONPATH=/testbed 或把脚本放进 /testbed 可解。跑测试要用 `python -m pytest`，裸 `pytest` 收集即 ImportError（aiohttp 4 题 + numpy 18b7cd9d 实测，其余按同一构建方式记）。datalad 19f5b450 / 58ba5165 原被 M3 解析误报（那一行是 git 身份警告），探针 IMPORT_FROM_TMP_RC=0，已移出本族。",
+   "next": "解题侧条件（E10）；是否写进题包 / 提示由任务面决定。",
+   "evidence": [
+    "runs/r2e_env_repair_20260924/smoke/none2/",
+    "runs/r2e_env_repair_20260924/p1/dev_probe/",
+    "runs/r2e_env_repair_20260924/p1/dev_probe_posthoc3/",
+    "runs/r2e_env_repair_20260924/p2/followups/bare_pytest.log",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/"
+   ]
+  },
+  {
+   "family": "solver_condition:no_pip_in_venv",
+   "scope": "solver_condition",
+   "tasks": [
+    "aiohttp__240da100151933883d7dea0528d45877df025b92",
+    "aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2",
+    "coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5",
+    "datalad ×5（16c1ffc3, 19f5b450, 58ba5165, 6b6fa389, 9ba5de09）",
+    "numpy ×7（18b7cd9d, 2f4a9650, 43e333e2, 5e8301c2, a5ea773e, d805e9b6, d89bc4bb）",
+    "pillow ×7（2b061b68, 2d01f7d0, 3a61c9e9, 3ac9396e, 4bc64835, a682ceaf, f9d3ee0f）",
+    "scrapy ×5（75450e75, 9a15fcf8, a95a338e, cfed9b66, e9387529）"
+   ],
+   "status": "verified",
+   "summary": "install.sh 用 `uv venv` + `uv pip`，venv 里没有 pip，pip / pip3 / uv 命令都不在 PATH（有 pip 的 21 题：orange3 ×7、pandas ×7、 aiohttp 1c1c0ea3 / 22a12cc2 / 4075c653 与 coveragepy 016af5f6 / 5dbbe143 / 97997d2c / f5eb5f21）；本来也无网络。公开提示 PUBLIC_SYSTEM_HINTS 却写\"`pip` already points at it\"——与 solver_hints 族同源。 无 pip 共 27/48。",
+   "next": "各包按 dev_probe.json 的 PIP_VERSION 记录。",
+   "evidence": [
+    "runs/r2e_env_repair_20260924/smoke/",
+    "runs/r2e_env_repair_20260924/p1/dev_probe/（PIP_VERSION）",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/",
+    "runs/r2e_env_repair_20260924/p4/dev_probe/",
+    "runs/r2e_env_repair_20260924/p4/image_readout/"
+   ]
+  },
+  {
+   "family": "solver_hints:conda_wording_and_activation_prefix",
+   "scope": "global",
+   "tasks": [
+    "(全部 48 题)"
+   ],
+   "status": "open",
+   "summary": "PUBLIC_SYSTEM_HINTS 写 conda testbed；RolloutTaskSpec.expected_interpreter_prefix 默认 conda 前缀且 R2E 任务面未给 .venv。CPU 侧证据见 decisions E09。",
+   "next": "交 A 线 / 任务面（D4=B）；本轮不改生产代码。",
+   "evidence": [
+    "runs/r2e_env_repair_20260924/smoke/r2e_venv/",
+    "runs/r2e_env_repair_20260924/smoke/swe_conda/"
+   ]
+  },
+  {
+   "family": "expected_non_passed_keys",
+   "scope": "material_or_env",
+   "tasks": [
+    "aiohttp__240da100151933883d7dea0528d45877df025b92",
+    "aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a",
+    "datalad__16c1ffc349df566151db0beb6d355ca27266bb8c",
+    "datalad__6b6fa3898546793fa3517def09f85a74d51ec4bb",
+    "datalad__9ba5de094ea326e6fd5773f21c7de1776ec0fa69",
+    "orange3__9b5494e26f407b75e79699c9d40be6df1d80a040",
+    "orange3__f237f9688e06ae46fe98d195b134d01f5b38b2e0",
+    "pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8",
+    "pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+    "scrapy__9a15fcf89a151811de8ac783419df0512c863d5e",
+    "scrapy__a95a338eeada7275a5289cf036136610ebaf07eb"
+   ],
+   "status": "verified",
+   "summary": "期望含 FAILED / ERROR 键（R2E 允许），gold 也照样得 1。要逐键查 gold 日志原因：缺可选依赖 / fixture、网络、资源、上游本就失败。不是自动改成 PASSED。 P1 三题已归因：aiohttp 240da100 的 2 键＝上游在 Python 3.9 上本就失败；4075c653 的 3 键＝C 解析器扩展未构建（镜像属性）；coveragepy 016af5f6 的 1 键＝来源参考环境差异（见 reference_status 族）。 P2：datalad 16c1ffc3 / 9ba5de09 各 5 键＝隐藏 conftest 的 path fixture 与 nose 风格装饰器冲突（R2E 转 pytest 的产物，确定性死键）；6b6fa389 的 1 键＝Python ≥ 3.7 quote 不转义 ~（上游用例在该版本本就失败，P2P-FAILED）。P4：pillow 2b061b68 / 2d01f7d0 各 2 键＝pytest 8 拒绝 pytest.warns(None)（死键）；scrapy a95a338e 2 键＝入口 -W ignore 使 catch_warnings 记不到（死键）；scrapy cfed9b66 3 键＝隐藏测试搬迁伪影（死键）；**scrapy 9a15fcf8 2 键＝py3 移植未完成的库缺陷，可被更完整的修复翻成 PASSED——实测 over-fix 候选 7/7 PASSED 却 reward 0**（见 flippable 族）。 P3：pandas 7 题共 58 个 ERROR 键全部是 fixture 不可达（隐藏测试在 /testbed/r2e_tests/，pytest 不加载 pandas/ 下的 conftest；原位公开测试同名用例全 PASSED），不是缺依赖 / 网络 / 资源（见 pandas_fixture_unreachable 族）；orange3 9b5494e2 的 4 键＝scikit-learn 0.22.2.post1 与 SciPy 1.7.3 不兼容（依赖伪影）；f237f968 的 1 ERROR + 2 FAILED＝上游测试自身伪影（辅助函数被收集、2022-02-02 定时失败、字体像素阈值）。~~至此 16 题的全部非 PASSED 键都已归因。~~（旧计数，09-24 晚按 Codex 复核更正：来源材料是 20 题 93 键，全部有归因记录，多数\"死键不会被合法修复翻转\"仍是推断。） 09-24：coveragepy 016af5f6 的唯一非 PASSED 键已由 r2e-mr-001 改为 PASSED，修订后期望无非 PASSED 键，移出本族（修订前的归因见 reference_status 族）。 09-24 晚：scrapy cfed9b66 的 3 键（搬迁伪影）与 pandas 4ec87eb9 的 2 键（fixture 不可达）已随 T0-5 / T0-6 修订消失，移出本族；按当前材料是 17 题 87 键。 09-24 夜：pandas 另 6 题的 56 个 ERROR 键（fixture 不可达）已随 T0-6 第二步修订消失，移出本族；orange3 9b5494e2 的两个恢复键已随 T0-7 方案 B 改为 PASSED，剩两个 scorer 键。按当前材料是 11 题 29 键（由当前评分面逐题数出）。",
+   "next": "各包按 R06 分类；发现缺依赖 / 资产被 ERROR 掩盖的写提案。",
+   "evidence": [
+    "tasks/<iid>/facts.json → rh2_runs[].non_passed_reasons",
+    "packages/p1/README.md §2",
+    "packages/p2/README.md §2.5",
+    "packages/p4/README.md §1、§2.4",
+    "packages/p3/README.md §2.1–2.2"
+   ]
+  },
+  {
+   "family": "source_image_compat_rewrite:aiohttp_0x",
+   "scope": "solver_condition",
+   "tasks": [
+    "aiohttp__240da100151933883d7dea0528d45877df025b92",
+    "aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2"
+   ],
+   "status": "verified",
+   "summary": "来源镜像把 2014–2015 年的 aiohttp 在 Python 3.9 上跑：`asyncio.async → create_task(loop=)` 改写无效，真实客户端 / 服务端不可用；240da100 的 tests/test_client.py 收集 SyntaxError，61833518 的 test_client_functional.py 大面积失败；题目相关模块（test_connector.py 30/32、test_http_protocol.py 47/47）可跑。不建议修（会改基线代码与期望语义，属材料修订）；作为解题侧条件记录。",
+   "next": "解题侧条件：只跑题目相关模块、用 mock 验证；进题包 / 提示由任务面决定（E10）。",
+   "evidence": [
+    "runs/r2e_env_repair_20260924/p1/dev_probe_posthoc2/",
+    "packages/p1/README.md §3.2"
+   ]
+  },
+  {
+   "family": "expected_provenance_mixed",
+   "scope": "global",
+   "tasks": [
+    "(全部 48 题；P1 已核 4 题)"
+   ],
+   "status": "verified",
+   "summary": "期望映射的来源不统一：coveragepy 016af5f6、aiohttp 240da100 与来源宿主机执行记录（raw execution_result_content）逐键相同；aiohttp 4075c653 差 104 键（宿主机建了 C 扩展、期望反而与镜像一致）；1c1c0ea3 差 1 键。不能假设\"期望＝宿主机记录\"或\"期望＝镜像\"。",
+   "next": "09-24 晚全池三方比对完成（expected_provenance.py：来源期望 / 来源宿主机执行记录 / 发布镜像 R-f gold 实测）：41 题三者一致；4 题期望与镜像一致而宿主机记录不同（aiohttp 1c1c0ea3 1 键、4075c653 103 键、datalad 19f5b450 5 键、pillow 3ac9396e 1 键）；3 题期望与宿主机一致而镜像不同，正是已处理的 coveragepy 016af5f6（r2e-mr-001）、datalad 58ba5165（r2e-mr-002）与 numpy 2f4a9650（资源配方）。没有新问题。扩池时继续作为筛查项。",
+   "evidence": [
+    "material_revisions/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae.md §6",
+    "packages/p1/README.md §3.5",
+    "runs/r2e_t0_batch2_20260924/provenance/expected_provenance.md"
+   ]
+  },
+  {
+   "family": "timing_sensitive_key_watch",
+   "scope": "task",
+   "tasks": [
+    "aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52"
+   ],
+   "status": "verified",
+   "summary": "TestShutdown.test_shutdown_handler_cancellation_suppressed：来源宿主机新旧提交都 FAILED（超时）、期望 PASSED、RH2 与 M3 实测 PASSED；有时序敏感嫌疑。",
+   "next": "09-24 晚补跑真实 grader gold 5 次、noop 5 次（与其它作业并发）：该键 10/10 PASSED，发布镜像里累计 14/14；与独立 runner 逐键一致 10/10。来源宿主机的 FAILED（超时）没有复现，按稳定处理。残余：训练规模并发下未测。",
+   "evidence": [
+    "tasks/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/screening_record.json",
+    "runs/r2e_t0_batch2_20260924/replay_b2/",
+    "runs/r2e_t0_batch2_20260924/reconcile/reconcile.md"
+   ]
+  },
+  {
+   "family": "expected_key_flippable_by_legit_fix",
+   "scope": "material",
+   "tasks": [
+    "scrapy__9a15fcf89a151811de8ac783419df0512c863d5e"
+   ],
+   "status": "open",
+   "summary": "期望 FAILED 键（ResponseTypesTest.test_from_args / test_from_headers）的失败落在库代码（scrapy/responsetypes.py 对 bytes 用 str 切分）而不是测试或框架里，更完整的正确修复会让它们通过；实测 gold + bytes 解码候选隐藏测试 7/7 PASSED、reward 0。只删期望键不行（并集口径变 unexpected，gold 也 0），必须两侧对称去掉。离线重算：对称去掉后 noop 0 / gold 1 / over-fix 1。",
+   "next": "用户 09-24 晚决定 T0-4 留给后续题意与评分质量筛查；环境阶段不改材料。",
+   "evidence": [
+    "material_revisions/scrapy__9a15fcf89a151811de8ac783419df0512c863d5e.md",
+    "runs/r2e_env_repair_20260924/p4/ledger_overfix.jsonl",
+    "runs/r2e_env_repair_20260924/p4/offline_rescore_9a15fcf8.json"
+   ]
+  },
+  {
+   "family": "hidden_test_relocation_artifacts",
+   "scope": "material",
+   "tasks": [
+    "scrapy__cfed9b6659c90e0799361911b1d72ed127edf471",
+    "datalad__16c1ffc349df566151db0beb6d355ca27266bb8c",
+    "datalad__9ba5de094ea326e6fd5773f21c7de1776ec0fa69",
+    "datalad__58ba5165234cb16de0e8463ee75097362099835f"
+   ],
+   "status": "open",
+   "summary": "R2E 把测试搬进 r2e_tests/ 或转成 pytest 造成的伪影：scrapy cfed9b66 的 test.egg 夹具没跟着搬、测试以 'tests.test_middleware.M1' 自引用（2 个死键；test_instances_from_settings 在 noop / gold 下失败位置不同，测到了修复的一部分但被搬迁伪影挡住——Codex R2 更正）；datalad 16c1/9ba5 的隐藏 conftest path fixture 与 nose 装饰器冲突（各 5 个死键）；datalad 58ba5165 的支撑模块未随修复更新（见 test_material 族；09-24 已由 r2e-mr-002 修复并验证）。死键评分一致、不误伤正确解，但验证强度打折。",
+   "next": "09-24 晚：scrapy cfed9b66 已按 T0-5 修复并验证（r2e-mr-003/004/005）；全池批量扫描（scan_hidden_support.py：__file__ 相对资源、字符串自引用、导入被修复提交改过的仓库测试模块、未定义 fixture，再与 R-f gold 日志的 fixture not found 互核）没有发现新的搬迁伪影，另发现 coveragepy 5dbbe143 的旧测试辅助（见 support_stale_helper 族）。仍开着的只有 datalad 16c1ffc3 / 9ba5de09 的隐藏 conftest 与 nose 装饰器冲突（各 5 个死键，评分一致），交静态筛查决定修不修。",
+   "evidence": [
+    "material_revisions/scrapy__cfed9b6659c90e0799361911b1d72ed127edf471.md",
+    "packages/p2/README.md §2.5",
+    "runs/r2e_t0_batch2_20260924/scan/hidden_support_scan.md",
+    "runs/r2e_t0_batch2_20260924/replay_b3/"
+   ]
+  },
+  {
+   "family": "prompt_quality_candidates",
+   "scope": "task_quality",
+   "tasks": [
+    "pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8",
+    "aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac",
+    "datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb",
+    "numpy__2f4a965019722c3c56f43433bfa4a99c4c083138",
+    "orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237（题面 Example Buggy Code 逐行等于 gold 修复——答案泄漏候选）",
+    "pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0（目标键检查题面未提的 Period 报错文案）",
+    "pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199（题面场景的测试被 ERROR 掩盖——09-24 夜已由 r2e-mr-006/007 修复，题面场景成为活的 F2P 键）",
+    "pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d（题面示例构造即 ValueError）",
+    "orange3__f237f9688e06ae46fe98d195b134d01f5b38b2e0（示例用了不存在的 API）",
+    "orange3__9b5494e26f407b75e79699c9d40be6df1d80a040（目标测试要求 solver='auto' 字面值，题面只说自动选择）",
+    "orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e（题面 TypeError 是测试读未调用 mock 的产物）"
+   ],
+   "status": "open",
+   "summary": "环境审查顺带发现的题面问题（不属环境资格，移交题意筛查）：pillow 2b061b68 题面与目标测试矛盾且把 pytest 8 伪影写成缺陷（复现 REPRO_OBSERVED=0）；aiohttp 22a12cc2 题面没点明缺陷在 HTTP 代理 CONNECT 路径；datalad 19f5b450 示例导入位置不存在；numpy 2f4a9650 题面说 3D 也抛 IndexError 而 base 上不抛。建议的自动检查：题面 Actual Behavior 的报错文本应出现在 noop 目标键的原因行里。 P3 新增 7 条；其中 orange3 22e98f8f 是答案泄漏候选（题面把修复写成 Example Buggy Code），优先级最高。",
+   "next": "用户 09-24 晚决定 T0-3（pillow 2b061b68）连同其余题面线索一起留给后续题意与评分质量筛查。",
+   "evidence": [
+    "material_revisions/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8.md",
+    "packages/p1/README.md §3.4",
+    "packages/p2/README.md §2.6"
+   ]
+  },
+  {
+   "family": "solver_condition:git_identity_absent",
+   "scope": "solver_condition",
+   "tasks": [
+    "datalad ×5"
+   ],
+   "status": "verified",
+   "summary": "agent 的 HOME（tmpfs）没有 git user.name / user.email；datalad 19f5b450 复现实测 `create` 报 Author identity unknown，设 GIT_AUTHOR_* / GIT_COMMITTER_* 后可继续。评分不受影响（隐藏 conftest 自带临时 HOME 与身份）。",
+   "next": "交 A 线 / 任务面：由 rollout 初始化写入身份，还是写进提示。",
+   "evidence": [
+    "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/"
+   ]
+  },
+  {
+   "family": "solver_condition:public_test_noise",
+   "scope": "solver_condition",
+   "tasks": [
+    "numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d",
+    "numpy__d89bc4bbf541affbcf87498ff4af86b9451480cd",
+    "numpy__a5ea773e66110cf335c9ed37e8ccdc14f8e56764",
+    "datalad__16c1ffc349df566151db0beb6d355ca27266bb8c",
+    "datalad__9ba5de094ea326e6fd5773f21c7de1776ec0fa69",
+    "aiohttp__240da100151933883d7dea0528d45877df025b92",
+    "aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2",
+    "pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605",
+    "pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8",
+    "pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+    "scrapy__9a15fcf89a151811de8ac783419df0512c863d5e",
+    "scrapy__cfed9b6659c90e0799361911b1d72ed127edf471",
+    "scrapy__e938752973b4fc53e0fa0c0bc68a431613b987e4"
+   ],
+   "status": "verified",
+   "summary": "仓库自带公开测试在 base 上有与本题无关的失败或收集问题，会误导本地验证：numpy 43e333e2 原先整体收集失败（hypothesis 6.124.1 + filterwarnings=error），09-24 环境配方 env_pins_v1 修好收集后仍有 TestCov / TestCorrcoef 10 个旧式 setup 失败（pytest 8），与本题无关；numpy d89b / a5ea、datalad 16c1 / 9ba5 有 nose 风格 setup / fixture ERROR；aiohttp 0.x 两题 tests/ 整目录被收集错误中断；pillow 3ac9396e 的 Tests/ 用 pytest 有假失败（要 `python Tests/test_x.py`）；pillow 2b06 / 2d01、scrapy 9a15 相关公开测试在 base 上有预存失败；Scrapy 1.1 三题抓取类测试因 Twisted 24.11 恒失败。",
+   "next": "解题侧条件（E10）：建议在题包给出\"相关公开测试模块 + 运行方式\"；环境侧修复（固定 hypothesis / pytest 版本）留后续派生配方。",
+   "evidence": [
+    "packages/p2/README.md §2.6",
+    "packages/p4/README.md §2.2",
+    "packages/p1/README.md §3.2"
+   ]
+  },
+  {
+   "family": "test_material:pandas_fixture_unreachable",
+   "scope": "material",
+   "tasks": [
+    "pandas__19c5eea5db0046276bfc0eef8a67febf090eeaaf（17）",
+    "pandas__294cbc8d1faa15ba245391c5624752ecebd7f63b（1）",
+    "pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0（13）",
+    "pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199（2，掩盖的正是题面场景的测试）",
+    "pandas__7dd34ea7a121ce4282ce095b058c5c46568f07af（4）",
+    "pandas__877876098c88fbf9dae2eb5cdcbecd52c6ffdd2d（9）",
+    "pandas__f656217a06b31e48474702036e0a5c49f664186c（12）"
+   ],
+   "status": "resolved",
+   "summary": "58 个期望 ERROR 键全部是 setup 阶段 `fixture '<名>' not found`：隐藏测试恢复到 /testbed/r2e_tests/ 后，pytest 只加载 rootdir 到测试目录路径上的 conftest（/testbed/conftest.py、/testbed/r2e_tests/conftest.py 都不存在），pandas/conftest.py 及子目录 conftest 不可达。noop / gold / 参考 runner 一致 → 评分确定；但 ① 这些键没有回归信号；② 候选若在 /testbed 根目录新建 conftest.py 让 fixture 可达，存在键翻成 PASSED、正确解也得 0 的**静态可达路径**（未做真实候选评分；r2e_tests/ 下的 conftest 会被可信 setup 清掉，根目录的不会）；③ 19c5eea5 / 32dd55cb 另有缺 SciPy 的 skip，expected 绑定“无 SciPy”。 更正（Codex R2）：\"原位公开测试同名用例全 PASSED\"不适用于 4ec87eb9——那两个测试是修复提交新增的，base 公开文件里没有。",
+   "next": "09-24 夜：7 题全部修复并验证。代表题 4ec87eb9（r2e-mr-006/007，09-24 晚）；其余 6 题按 T0-6 第二步（r2e-mr-008…019）：私有 r2e_tests/conftest.py 从 base 的 conftest 链原样摘出隐藏测试实际请求的 fixture（清单由 extract_fixtures.py --tests 静态算出），期望按修复后 gold 重新核定（参数化 fixture 让 28 个 ERROR 键展开成 101 个新键，另 28 个 ERROR 键只改状态）。真实 grader noop 0 / gold 1 各两次，与一次性容器试跑逐键相同；目标键修复前后不变。期望里已无 ERROR 键，候选建根目录 conftest 翻转键的路径随之消失。",
+   "evidence": [
+    "material_revisions/pandas__4ec87eb94bc8fb1f93d37b7dd5de34f6e419a199.md",
+    "runs/r2e_env_repair_20260924/p3/fixture_check/",
+    "packages/p3/README.md §2.1",
+    "runs/r2e_t0_batch2_20260924/dryrun_b2/",
+    "runs/r2e_t0_batch2_20260924/replay_b3/",
+    "runs/r2e_t0_batch3_20260924/analysis_b3.json",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3/",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3r2/",
+    "runs/r2e_t0_batch3_20260924/replay_b5/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v3.json"
+   ]
+  },
+  {
+   "family": "dependency_artifact:orange3_9b5494e2_sklearn_scipy",
+   "scope": "material",
+   "tasks": [
+    "orange3__9b5494e26f407b75e79699c9d40be6df1d80a040"
+   ],
+   "status": "partially_resolved",
+   "summary": "4 个期望 FAILED 键：已证 noop/gold 都 FAILED，test_coefficients 的 AttributeError 来自 scikit-learn 0.22.2.post1 的 optimize.py:243——这一行只在 lbfgs 未收敛（result.status != 0）时执行，镜像 SciPy 1.7.3 返回 str。未证：选 lbfgs 是否每次都走到该分支、两个 scorer 排序失败是否同源、其它正确候选会不会翻键（Codex R2 撤回\"所有正确解恒 FAILED、假阴性风险低\"）。",
+   "next": "09-24 晚 T0-7 窄范围诊断（一次性容器，不改材料）：SciPy 换成 1.4.1 或 1.5.4 后 test_LogisticRegression、test_coefficients 在 noop / gold 下都变 PASSED；两个 scorer 键仍 FAILED（gold 3 次、noop 2 次），四键不同源，后两键原因未定位；本批换版本后的 3 次 gold 警告复跑都出现 lbfgs 未收敛（有限次观察，不证明所有正确候选都会走到出错分支，也不解释两个 scorer 键），两个恢复键的兼容修复得到验证。 09-24 夜：用户按 Claude / Codex 一致建议批准 B，已实施：环境配方 env_pins_v2（SciPy 1.5.4，环境步骤 env_v2，镜像 +env_v2）+ r2e-mr-020（两个恢复键改 PASSED）；真实 grader noop 0（11/13）×2、gold 1（13/13）×2，与试跑逐键相同。两个 scorer 键仍 FAILED、原因未定位，保持未完成项（open_items.kind = grading_keys_unexplained），交后续题意与评分质量筛查。",
+   "evidence": [
+    "material_revisions/orange3__9b5494e26f407b75e79699c9d40be6df1d80a040.md",
+    "runs/r2e_env_repair_20260924/p3/fixture_check/orange3_9b5494e2_versions.txt",
+    "runs/r2e_t0_batch2_20260924/diag_orange3/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/recipes/env_pins_v2.json",
+    "runs/r2e_t0_batch3_20260924/dryrun_b3o/",
+    "runs/r2e_t0_batch3_20260924/replay_b5/"
+   ]
+  },
+  {
+   "family": "upstream_test_artifacts:orange3_f237f968",
+   "scope": "material",
+   "tasks": [
+    "orange3__f237f9688e06ae46fe98d195b134d01f5b38b2e0"
+   ],
+   "status": "not_an_issue",
+   "summary": "1 ERROR + 2 FAILED 都是上游测试自身的确定性伪影：辅助函数 test_filename 被当测试收集、test_end_support_for_version_1 在 2022-02-02 后必然失败、test_minimum_size 的 815 ≥ 800 px 取决于镜像字体与 QT_QPA_PLATFORM=minimal（换 Qt 平台可能翻转）。参考一致，不提案。",
+   "next": "无；换镜像时复核 test_minimum_size。",
+   "evidence": [
+    "packages/p3/README.md §2.2"
+   ]
+  },
+  {
+   "family": "setup_cost:chown_copy_up_large_workdir",
+   "scope": "infra",
+   "tasks": [
+    "orange3 ×7（/testbed 约 2.1 GB / 4.1 万文件：chown 82–231 s、页缓存 2.4–3.1 GB、可写层同量）",
+    "datalad ×5（53–120 s）",
+    "aiohttp 3.x ×3（55–60 s）"
+   ],
+   "status": "open",
+   "summary": "rollout 与 grader 各做一次 `chown -R /testbed`（uid 54321 / 54322 不同），overlay 逐文件 copy-up；orange3 每个容器 2–4 分钟，占 grader 时间 59–90%（R-f 已记）。派生配方预先改属主可省掉，但两侧 uid 不同要先定统一方案。",
+   "next": "A 线 / 配方版本问题：统一候选 uid 或派生时预置属主；本轮只记录。",
+   "evidence": [
+    "packages/p3/README.md §2.3、§7.2",
+    "runbook_rf §7"
+   ]
+  },
+  {
+   "family": "dev_blocking:numpy_43e333e2_repo_tests_uncollectable",
+   "scope": "environment",
+   "tasks": [
+    "numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d"
+   ],
+   "status": "verified",
+   "summary": "仓库自带 numpy 测试按常规用法收集即失败：numpy/conftest.py 调 hypothesis.HealthCheck.all()，镜像 hypothesis 6.124.1 的弃用警告被 pytest.ini filterwarnings=error 变成错误（rc 4）；与本题修复（ma.extras.average）对应的 TestAverage 不能直接运行。-o filterwarnings=ignore 或 --noconftest 可绕过（78 passed / 10 failed，失败在无关的 TestCorrcoef/TestCov）。评分不受影响（隐藏测试在 numpy/ 外，不加载该 conftest）。",
+   "next": "已解决（E15）：环境配方 env_pins_v1 把 hypothesis 固定回仓库 test_requirements.txt 的 6.24.1（pytest 不动；本题 6.79.4 同样报弃用错误）。以解题身份常规收集 ok，TestAverage 6 passed，剩余 10 个 TestCov/TestCorrcoef 旧式 setup 失败与本题无关；真实 grader noop 0 ×2 / gold 1 ×2 与配方前一致。",
+   "evidence": [
+    "runs/r2e_env_repair_20260924/p2/pubtests/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d.log",
+    "runs/r2e_env_repair_20260924/p2/followups/followups.log",
+    "runs/r2e_t0_revisions_20260924/agent_pubtest_43e3_env_failures.txt",
+    "runs/r2e_t0_revisions_20260924/diag43/v1.public.txt",
+    "runs/r2e_t0_revisions_20260924/diag43b/",
+    "runs/r2e_t0_revisions_20260924/replay/ledger_env43_gold.jsonl",
+    "recipes/env_pins_v1.json"
+   ]
+  },
+  {
+   "family": "support_stale_helper:coveragepy_5dbbe143",
+   "scope": "material",
+   "tasks": [
+    "coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9"
+   ],
+   "status": "open",
+   "summary": "隐藏 test_1.py 从仓库测试辅助 tests/coveragetest.py 导入 CoverageTest；上游修复提交同时改了它（assert_warnings 里的假 _warn 加 once 参数），gold 按规则不含测试路径，工作区是修复前版本。gold 不在 assert_warnings 块里带 once 调 _warn，所以 gold=1 不受影响；顺带在别处用 once=True 的候选可能在这些用例上 TypeError 而被判 0（源码推断，未实跑）。与 datalad 58ba5165 同类，但只影响超出 gold 的改法，风险低。",
+   "next": "交后续题意与评分质量筛查判断；需要时可用材料修订给隐藏测试补修复后的 capture_warning。",
+   "evidence": [
+    "runs/r2e_t0_batch2_20260924/scan/hidden_support_scan.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl（该题 parsed_commit_content 的 tests/coveragetest.py 改动）"
+   ]
+  }
+ ]
+}

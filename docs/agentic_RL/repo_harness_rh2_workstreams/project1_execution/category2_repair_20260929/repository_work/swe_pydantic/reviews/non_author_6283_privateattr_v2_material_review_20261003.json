@@ -1,0 +1,424 @@
+{
+  "schema": "rh2.non_author_material_review.v1",
+  "date": "2026-10-03",
+  "task_id": "pydantic__pydantic-6283",
+  "revision_id": "pyd6283-behavior-v2",
+  "status": "static_material_review_complete_real_observation_publication_and_cpu_acceptance_pending",
+  "private_context_exposure": true,
+  "fresh_public_reader": false,
+  "review_scope": "条件私有P2P草稿；本地标准库的文件大小/SHA、精确内存补丁应用、Python3.8 AST解析、公开源码机制、原审查证据复用。",
+  "runtime_or_pytest_executed": false,
+  "real_python38_core042_observation": "pending",
+  "material_conflict_found": false,
+  "material_ready_to_continue": true,
+  "formal_publication_ready": false,
+  "cpu_acceptance_complete": false,
+  "task_or_model_completion_accepted": false,
+  "raw_reward_preserved": 1,
+  "prior_raw_reference_count": 40,
+  "prior_install_rc": 1,
+  "new_matrix_results_observed": false,
+  "findings": [
+    {
+      "id": "PUBLIC_BEHAVIOR_P2P",
+      "status": "source_supported_real_runtime_classification_pending",
+      "conclusion": "唯一新增条件只要求可信construct后PrivateAttr默认abc仍可读取，公开文档及RootModel既有默认值测试支持；不要求内部dict、base相等或验证。",
+      "public_sources": [
+        "docs/usage/models.md:464-465",
+        "docs/usage/models.md:476-477",
+        "tests/test_root_model.py:253-275",
+        "tests/test_root_model.py:315-323"
+      ],
+      "implementation_binding_found": false
+    },
+    {
+      "id": "GOLD_PRESERVES_POST_INIT_QWEN_ERASES_STATE",
+      "status": "source_mechanism_reviewed_prior_stdlib_replay_reused_real_cpu_pending",
+      "conclusion": "gold保留model_post_init及真实私有字典；原Qwen在super构造后无条件pop私有状态，RootModel类级None导致getattr下标None。",
+      "public_sources": [
+        "pydantic/main.py:218-219",
+        "pydantic/main.py:685",
+        "pydantic/root_model.py:36",
+        "pydantic/_internal/_model_construction.py:92-106",
+        "pydantic/_internal/_model_construction.py:222-236"
+      ],
+      "candidate_line": 66,
+      "new_replay_executed": false
+    },
+    {
+      "id": "VALIDATE_CONSTRUCT_NEGATIVE_SEPARATE_BASIS",
+      "status": "source_supported_matrix_not_observed",
+      "conclusion": "validate_construct自身应能保留新私有默认值，整题0由旧信任构造/不验证参考保护，不应归因新增节点。",
+      "public_sources": [
+        "docs/usage/models.md:469-472",
+        "tests/test_root_model.py:182-202"
+      ]
+    },
+    {
+      "id": "DRAFT_MANIFEST_SCOPE",
+      "status": "non_blocking_material_synchronization_condition",
+      "conclusion": "11个已列成员大小/SHA全部一致，随后README未列入；草稿清单不是正式publication清单，需要在正式封包同步README及报告身份。",
+      "test_or_revision_byte_mismatch": false
+    }
+  ],
+  "limits": [
+    "未运行Pydantic或pydantic-core；feature_version AST解析不等于Python3.8依赖执行。",
+    "复用既有391成员完整基线核对并重核原件SHA，未重新逐成员核对。",
+    "新增节点不覆盖私有默认工厂、unset属性、继承组合或自定义post-init一般语义。",
+    "原安装RC1、原reward与v1历史不回写；没有新实际矩阵分数。"
+  ],
+  "pending": [
+    "正确权限真实Python3.8/core0.42的原候选最小PrivateAttr观察与源码身份。",
+    "题主固定正式publication清单及新请求，包含当前入口README和审查报告；旧工件保留。",
+    "正式consumer四行41参考的原件、安装身份及独立运行验收，预期0/1/0/0尚未观测。"
+  ],
+  "static_checks": {
+    "v2_inventory": [
+      {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/tasks/pydantic__pydantic-6283/revisions/pyd6283-behavior-v2/README.md",
+        "bytes": 1777,
+        "sha256": "3907175a3b0d6f2c804b6cfe1fa32ffb0bb2b96ebf37a13f742d40f92af813da"
+      },
+      {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/tasks/pydantic__pydantic-6283/revisions/pyd6283-behavior-v2/controls/gold.patch",
+        "bytes": 922,
+        "sha256": "cf1db83c2966404d60f40d33ddee5aa197fe1e12f5a8147fb76076a4f541c64c"
+      },
+      {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/tasks/pydantic__pydantic-6283/revisions/pyd6283-behavior-v2/controls/noop.patch",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/tasks/pydantic__pydantic-6283/revisions/pyd6283-behavior-v2/controls/qwen36_a1_pop_private.patch",
+        "bytes": 1011,
+        "sha256": "0b591db84fb791e562fbd9c90f0f11bb2f1ea3c3d9406fe65dfe926da407e351"
+      },
+      {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/tasks/pydantic__pydantic-6283/revisions/pyd6283-behavior-v2/controls/validate_construct.patch",
+        "bytes": 438,
+        "sha256": "a3ee895dc358cda2b3be2c1e43e09fd9cf163f29b30799cc2ab6223621bef60d"
+      },
+      {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/tasks/pydantic__pydantic-6283/revisions/pyd6283-behavior-v2/draft_manifest.json",
+        "bytes": 1785,
+        "sha256": "ca4ce138cdc17cc22236b18c86d603f0c0ee74f390d457215dcbcf8d8b24c4c6"
+      },
+      {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/tasks/pydantic__pydantic-6283/revisions/pyd6283-behavior-v2/effective_test.patch",
+        "bytes": 1049,
+        "sha256": "30037d927f57145f7c0a80281e60861000183d10ae20e4bf10c03bcd8f5c7cde"
+      },
+      {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/tasks/pydantic__pydantic-6283/revisions/pyd6283-behavior-v2/extra_tests.py",
+        "bytes": 387,
+        "sha256": "b8bda8ad111cbabcb74e90c4ac40163f58f0c3b9a25110c6ab46b8f85f406656"
+      },
+      {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/tasks/pydantic__pydantic-6283/revisions/pyd6283-behavior-v2/install_recipe.json",
+        "bytes": 958,
+        "sha256": "6e50864b8f8976413f6fb32df2fd11060e1b190fb4161c8567810ac748e6a570"
+      },
+      {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/tasks/pydantic__pydantic-6283/revisions/pyd6283-behavior-v2/original_test.patch",
+        "bytes": 464,
+        "sha256": "fa6b3cfe37ddfb194d210a2695e4c01e5671efdaada6e29043c327d8c1f3f7e7"
+      },
+      {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/tasks/pydantic__pydantic-6283/revisions/pyd6283-behavior-v2/public_tests/tests/test_root_model.py",
+        "bytes": 13254,
+        "sha256": "402ccfd0f8d1745cb6173a017a463905f813cd19e5bb54cc2938d697b38e02ef"
+      },
+      {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/tasks/pydantic__pydantic-6283/revisions/pyd6283-behavior-v2/revision.json",
+        "bytes": 11404,
+        "sha256": "db97058ef881a5d44c91a3b297fd72fc0202575915fc0c7f53acd004a568ce37"
+      },
+      {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/tasks/pydantic__pydantic-6283/revisions/pyd6283-behavior-v2/static_result.json",
+        "bytes": 545,
+        "sha256": "119ff48c9090a3d084414fd30aaa3aa736c9ee7dd8e472999631fbda08dac655"
+      }
+    ],
+    "draft_manifest": {
+      "stage": "conditional_private_draft",
+      "listed_count": 11,
+      "all_listed_bytes_and_sha_match": true,
+      "excluded_current_files": [
+        "README.md",
+        "draft_manifest.json"
+      ],
+      "formal_publication_manifest": false
+    },
+    "v1_preservation": {
+      "parent_revision_sha256": "ee160fac81c3ad8776bed31b31f53ff9cc12a1e81377770d4632bda0b9275ff4",
+      "byte_identical_files": [
+        "original_test.patch",
+        "install_recipe.json",
+        "public_tests/tests/test_root_model.py",
+        "controls/gold.patch",
+        "controls/noop.patch",
+        "controls/validate_construct.patch"
+      ],
+      "v1_effective_ast_top_level_nodes_preserved": 42,
+      "v1_top_level_test_function_definitions_preserved": 34,
+      "complete_v1_patched_text_is_v2_prefix": true,
+      "only_one_new_top_level_function": "tests/test_root_model.py::test_root_model_construct_preserves_private_default",
+      "f2p_count": 2,
+      "p2p_count": 39,
+      "ordered_reference_lists_retained": true,
+      "source_bindings_identical": true,
+      "public_material_changed": false
+    },
+    "test_patch_application": {
+      "original": {
+        "bytes": 13322,
+        "sha256": "049f9b5dbfaf2a6d05d6bf56d83ddb24595d0a834ca67636abbb3fab6925273e",
+        "hunks": [
+          {
+            "path": "tests/test_root_model.py",
+            "old_start": 310,
+            "old_lines": 6,
+            "new_start": 310,
+            "new_lines": 7,
+            "context_and_counts_exact": true
+          }
+        ],
+        "python38_ast_parse": true,
+        "project_runtime_executed": false
+      },
+      "v1": {
+        "bytes": 13497,
+        "sha256": "d50d61ef9552dec427be4515accb87b96d4ed24180aa6cec151f70bf72457d19",
+        "hunks": [
+          {
+            "path": "tests/test_root_model.py",
+            "old_start": 310,
+            "old_lines": 6,
+            "new_start": 310,
+            "new_lines": 7,
+            "context_and_counts_exact": true
+          },
+          {
+            "path": "tests/test_root_model.py",
+            "old_start": 488,
+            "old_lines": 3,
+            "new_start": 489,
+            "new_lines": 10,
+            "context_and_counts_exact": true
+          }
+        ],
+        "python38_ast_parse": true,
+        "project_runtime_executed": false
+      },
+      "v2": {
+        "bytes": 13708,
+        "sha256": "6bb8bce7277436102efc2bb43a61dcddd2ccf9830730b7e3026b7add680129e8",
+        "hunks": [
+          {
+            "path": "tests/test_root_model.py",
+            "old_start": 310,
+            "old_lines": 6,
+            "new_start": 310,
+            "new_lines": 7,
+            "context_and_counts_exact": true
+          },
+          {
+            "path": "tests/test_root_model.py",
+            "old_start": 488,
+            "old_lines": 3,
+            "new_start": 489,
+            "new_lines": 17,
+            "context_and_counts_exact": true
+          }
+        ],
+        "python38_ast_parse": true,
+        "project_runtime_executed": false
+      }
+    },
+    "extra_tests_ast_matches_effective_patch": true,
+    "controls": [
+      {
+        "candidate": "noop",
+        "patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_copy_exact": true,
+        "expected_reward_not_observed": 0,
+        "changed_paths": [],
+        "output_files": [],
+        "hunks": [],
+        "python38_ast_parse": true,
+        "context_exact_memory_application": true
+      },
+      {
+        "candidate": "gold",
+        "patch_sha256": "cf1db83c2966404d60f40d33ddee5aa197fe1e12f5a8147fb76076a4f541c64c",
+        "source_copy_exact": true,
+        "expected_reward_not_observed": 1,
+        "changed_paths": [
+          "pydantic/main.py"
+        ],
+        "output_files": [
+          {
+            "path": "pydantic/main.py",
+            "bytes": 57192,
+            "sha256": "2a6ba2b34275a9b41065e958e62762160ba675be037e77211a1319bd3e624c3f"
+          }
+        ],
+        "hunks": [
+          {
+            "path": "pydantic/main.py",
+            "old_start": 213,
+            "old_lines": 11,
+            "new_start": 213,
+            "new_lines": 12,
+            "context_and_counts_exact": true
+          }
+        ],
+        "python38_ast_parse": true,
+        "context_exact_memory_application": true
+      },
+      {
+        "candidate": "validate_construct",
+        "patch_sha256": "a3ee895dc358cda2b3be2c1e43e09fd9cf163f29b30799cc2ab6223621bef60d",
+        "source_copy_exact": true,
+        "expected_reward_not_observed": 0,
+        "changed_paths": [
+          "pydantic/main.py"
+        ],
+        "output_files": [
+          {
+            "path": "pydantic/main.py",
+            "bytes": 57191,
+            "sha256": "709ba1bfe57c25dedf580245afbd2b10dad41f84b9e1db56424e8239fdc3ba3f"
+          }
+        ],
+        "hunks": [
+          {
+            "path": "pydantic/main.py",
+            "old_start": 190,
+            "old_lines": 6,
+            "new_start": 190,
+            "new_lines": 8,
+            "context_and_counts_exact": true
+          }
+        ],
+        "python38_ast_parse": true,
+        "context_exact_memory_application": true
+      },
+      {
+        "candidate": "qwen36_a1_pop_private",
+        "patch_sha256": "0b591db84fb791e562fbd9c90f0f11bb2f1ea3c3d9406fe65dfe926da407e351",
+        "source_copy_exact": true,
+        "expected_reward_not_observed": 0,
+        "changed_paths": [
+          "pydantic/root_model.py"
+        ],
+        "output_files": [
+          {
+            "path": "pydantic/root_model.py",
+            "bytes": 2460,
+            "sha256": "2e8b2748bea649c5bde853049ba9255d62dd6eb033ad9c979dac90765f644b44"
+          }
+        ],
+        "hunks": [
+          {
+            "path": "pydantic/root_model.py",
+            "old_start": 58,
+            "old_lines": 7,
+            "new_start": 58,
+            "new_lines": 13,
+            "context_and_counts_exact": true
+          }
+        ],
+        "python38_ast_parse": true,
+        "context_exact_memory_application": true
+      }
+    ],
+    "reused_baseline_audit": {
+      "prior_report_json": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/model_audits_20261003/6283_qwen36_a1_preliminary.json",
+        "bytes": 60886,
+        "sha256": "07cd65fbabf9aa3855924e1b06e10c10a279cb029811d33910bbf9f41378e8b7"
+      },
+      "baseline_canonical_digest": "sha256:5db8531800cd73bd1abe759a445e75cac7cefa12e88a3bd05bee1629e9e17998",
+      "frozen_patch_canonical_digest": "sha256:1ac717446957b1463305cabaceb2e71f8a9b0685c8377f0659869820b8b829d5",
+      "complete_member_content_and_exec_bit_count_previously_verified": 391,
+      "raw_evidence_hashes_rechecked": [
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic6283-qwen36-a1/attempt/frozen/baseline.tar",
+          "bytes": 5939200,
+          "sha256": "f6ca0230c86da0972ae9a6c65562e69142bbb84a4a5da884f5dc50d338542abb"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic6283-qwen36-a1/attempt/frozen/baseline_manifest.json",
+          "bytes": 91201,
+          "sha256": "64113b60e6ac339b571e44f1025df66e41e6e79fcca0efba723d55089ba2e24f"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic6283-qwen36-a1/attempt/frozen/frozen_patch.json",
+          "bytes": 4166,
+          "sha256": "e6119c827a795787fdad6c1abdedc7cad377aaed0417d29cfac75bdaec1efca6"
+        },
+        {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic6283-qwen36-a1/attempt/candidate/pydantic__pydantic-6283.diff",
+          "bytes": 1011,
+          "sha256": "0b591db84fb791e562fbd9c90f0f11bb2f1ea3c3d9406fe65dfe926da407e351"
+        }
+      ],
+      "original_fp_and_in_memory_qwen_control_output_exact": true,
+      "full_members_rechecked_in_this_review": false
+    },
+    "public_source_files_hashes_rechecked": [
+      {
+        "path": "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-6283/base/pydantic/root_model.py",
+        "bytes": 2101,
+        "sha256": "d1cdddb080df67eae718e31ea89c56e1ccf76bd7ca5e3cd1a6f5ab878691309d"
+      },
+      {
+        "path": "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-6283/base/pydantic/main.py",
+        "bytes": 57112,
+        "sha256": "627bf18d6c5b6b7d204c4a97fc70316c7290aeda77d2984ab9e19005f1bc261d"
+      },
+      {
+        "path": "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-6283/base/pydantic/_internal/_model_construction.py",
+        "bytes": 21692,
+        "sha256": "842abbb842a2ad3e00e266f3f143d1873812b100bb2ab3181600fa894ba799a3"
+      },
+      {
+        "path": "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-6283/base/tests/test_root_model.py",
+        "bytes": 13254,
+        "sha256": "402ccfd0f8d1745cb6173a017a463905f813cd19e5bb54cc2938d697b38e02ef"
+      },
+      {
+        "path": "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-6283/base/docs/usage/models.md",
+        "bytes": 43386,
+        "sha256": "3c255e46f833d8b5f147607880a456e744d3ddc7dac2383180c89655656a2107"
+      }
+    ],
+    "public_metadata_hashes": [
+      {
+        "path": "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-6283/base_identity.json",
+        "bytes": 749,
+        "sha256": "6b111819753fd4b76f2d06abf451fce17268b4014ac9c76f3d8bcb66c13920ed"
+      },
+      {
+        "path": "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-6283/public_bundle.json",
+        "bytes": 2528,
+        "sha256": "9bb1ce2684e8c8fccf4f69d9174abca2815b6d5db5b56be2fec6793eda888129"
+      },
+      {
+        "path": "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-6283/user_prompt.txt",
+        "bytes": 1303,
+        "sha256": "6380f70bdfbc2bfd614fab9a77a211c50837f15165dd72bf15cd8cc31a1f8f6a"
+      }
+    ],
+    "all_revision_evidence_refs_exist": true,
+    "real_python38_core042_observation": "pending",
+    "runtime_or_pytest_executed": false
+  },
+  "report": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/reviews/non_author_6283_privateattr_v2_material_review_20261003.md",
+    "bytes": 8883,
+    "sha256": "c5e4ae8d729b3dc323f0372f1f27101d2982f29c1684217ed2851a95338e6abe"
+  }
+}

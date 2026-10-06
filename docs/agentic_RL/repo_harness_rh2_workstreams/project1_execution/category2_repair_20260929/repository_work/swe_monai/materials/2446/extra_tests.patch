@@ -1,0 +1,36 @@
+diff --git a/tests/test_smartcachedataset.py b/tests/test_smartcachedataset.py
+--- a/tests/test_smartcachedataset.py
++++ b/tests/test_smartcachedataset.py
+@@ -33,6 +33,32 @@
+ 
+ 
+ class TestSmartCacheDataset(unittest.TestCase):
++    def test_shuffle_ndarray_list_and_cache_cpu(self):
++        for shuffle in (True, False):
++            with self.subTest(shuffle=shuffle):
++                data = [np.array([i]) for i in range(5)]
++                expected = np.stack(data).copy()
++                if shuffle:
++                    np.random.RandomState(0).shuffle(expected)
++                dataset = SmartCacheDataset(
++                    data=data,
++                    transform=None,
++                    cache_rate=0.5,
++                    replace_rate=0.4,
++                    shuffle=shuffle,
++                    seed=0,
++                    num_init_workers=1,
++                    num_replace_workers=1,
++                    progress=False,
++                )
++                try:
++                    np.testing.assert_array_equal(np.stack(dataset.data), expected)
++                    self.assertEqual(len(dataset), 2)
++                    actual_cache = np.stack([dataset[i] for i in range(len(dataset))])
++                    np.testing.assert_array_equal(actual_cache, expected[:2])
++                finally:
++                    dataset.shutdown()
++
+     @parameterized.expand([TEST_CASE_1, TEST_CASE_2, TEST_CASE_3, TEST_CASE_4, TEST_CASE_5])
+     def test_shape(self, replace_rate, num_replace_workers, transform):
+         test_image = nib.Nifti1Image(np.random.randint(0, 2, size=[8, 8, 8]), np.eye(4))

@@ -1,0 +1,230 @@
+{
+  "format": "swe_dvc_result_list.v1",
+  "as_of": "2026-10-03T11:30:01.548928+00:00",
+  "instance_id": "iterative__dvc-4166",
+  "revision_id": "dvc4166-behavior-v2-draft",
+  "effective_test_patch_sha256": "sha256:786588558c0e5c909475073912a54749ea254492406c24c5302aba13df360ade",
+  "current_status": "coder_first_arm_semantic_and_execution_non_author_accepted_Qwen_pending",
+  "cpu_runs": [
+    {
+      "job_id": "dvc4166-diagnostic-20261003-v1-001",
+      "kind": "private_diagnostic_setup",
+      "status": "failed_before_pytest",
+      "formal_grading": false,
+      "reason": "观测脚本误要求此旧版本不使用的pygit2；容器已清理"
+    },
+    {
+      "job_id": "dvc4166-diagnostic-20261003-v2-001",
+      "kind": "private_pytest_diagnostic",
+      "formal_grading": false,
+      "status": "completed",
+      "result": "cpu_diagnostics_v2.json"
+    },
+    {
+      "job_id": "dvc4166-diagnostic-20261003-v3-001",
+      "kind": "private_pytest_diagnostic",
+      "revision_id": "dvc4166-behavior-v2-draft",
+      "formal_grading": false,
+      "result": "cpu_diagnostics_v3.json",
+      "status": "completed"
+    },
+    {
+      "job_id": "dvc4166-r14-noop-20261003-235453-a2",
+      "candidate": "noop",
+      "kind": "formal_grading_r14",
+      "formal_grading": true,
+      "result": "formal_matrix_r14_v1.json",
+      "reward": 0.0,
+      "raw_archive": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal4166_r14_noop_235453_v1.tar.gz",
+      "raw_archive_sha256": "sha256:2e86062c280807147236e52c36f468e8356cc9ca395469fd52b3a7e106988a86",
+      "status": "completed_non_author_runtime_readback_complete"
+    },
+    {
+      "job_id": "dvc4166-r14-gold-20261003-235453",
+      "candidate": "gold",
+      "kind": "formal_grading_r14",
+      "formal_grading": true,
+      "result": "formal_matrix_r14_v1.json",
+      "reward": 1.0,
+      "raw_archive": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal4166_r14_gold_235453_v1.tar.gz",
+      "raw_archive_sha256": "sha256:bf6f9aed2a294873f5241d163e02cd981b54843f67d19eb1d7452a708919b3d5",
+      "status": "completed_non_author_runtime_readback_complete"
+    },
+    {
+      "job_id": "dvc4166-r14-strip_positive_trailing_slash-20261003-235453",
+      "candidate": "strip_positive_trailing_slash",
+      "kind": "formal_grading_r14",
+      "formal_grading": true,
+      "result": "formal_matrix_r14_v1.json",
+      "reward": 0.0,
+      "raw_archive": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal4166_r14_strip_positive_trailing_slash_235453_v1.tar.gz",
+      "raw_archive_sha256": "sha256:6de54b91d77db90662153434261eee3c4111d1a72637145afb7fae6e7c24e237",
+      "status": "completed_non_author_runtime_readback_complete"
+    }
+  ],
+  "independent_review": {
+    "path": "../../reviews/non_author_4166_9395_v2_review_20261003.md",
+    "kind": "non_author_delta_material_review",
+    "material_revision_id": "dvc4166-behavior-v2-draft",
+    "status": "no_static_blocking_findings",
+    "formal_cpu_or_actor_acceptance": false,
+    "runtime_result_scope": "4166三方私有结果已独立复核；9395本报告尚未复核新版六方结果",
+    "sha256": "sha256:c6adf3fe5dbf411b694813100b17b5b4db9ffd24e5bbe665259e86986afe0491"
+  },
+  "probe_requests": [
+    {
+      "request_id": "swe-dvc4166-behavior-r14-v1-20261003",
+      "path": "probe_request.json",
+      "sha256": "sha256:0425400cad8b3a139a0956c6d11b6e2439a887d1d995500818fc1fb4a4ffc232",
+      "status": "claimed_Coder_first_arm_reviewed_Qwen_pending",
+      "delivery_ref": "../../requests/dvc4166_probe_delivery_20261003_v1.json"
+    }
+  ],
+  "probe_results": [
+    {
+      "job_id": "gpu1003-dvc4166-coder-a1",
+      "model_sent": "Qwen3-Coder-30B-A3B-Instruct",
+      "budget_version": "probe-wide-v1",
+      "full_runtime_version": "code_v8",
+      "raw_reward": 0.0,
+      "f2p_pass": 0,
+      "f2p_total": 3,
+      "p2p_fail": 0,
+      "p2p_total": 60,
+      "actual_nodes": 66,
+      "termination": "completed",
+      "solver_completed": true,
+      "formal_grading_completed": true,
+      "owner_semantic_assessment": "valid_model_miss_directory_semantics_unchanged",
+      "owner_semantic_audit_ref": "coder_a1_semantic_audit_v1.md",
+      "owner_semantic_audit_sha256": "sha256:af340a29bf6e5c00817ee651e5dc723f0952ce5469cb237e9f9b17b81ffdbfb2",
+      "owner_evidence_readback_ref": "coder_a1_owner_evidence_readback_v1.json",
+      "owner_evidence_readback_sha256": "sha256:646c856009b73ed3c344beb4e594b684fa44ea94d0757cb70b7b950b7e0f5bb8",
+      "frozen_patch_canonical_sha256": "sha256:1f21d4efd80771070e0fb6135e9b48c736ff2b587218c3c5b2c4543a850076d7",
+      "baseline_canonical_sha256": "sha256:16f108c365097d36390d40ff2b06c47fcf186b13c0e4cae2381ebfe6048ab6db",
+      "frozen_patch_entries": 23,
+      "generated_root_scripts": 22,
+      "non_author_semantic_review": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/reviews/non_author_dvc_three_coder_a1_semantic_review_20261003.md",
+        "sha256": "sha256:f67401f24fc7a60bd8a2f3a1e2f62c34e5b4e77d0faf86452cbe4c2a2a134a05",
+        "status": "owner_fully_read_with_declared_limits"
+      },
+      "execution_independent_review_pending": false,
+      "GPU_completed_execution_review_not_in_this_receipt": true,
+      "second_model_pending": true,
+      "paired_request_closed": false,
+      "stability_claimed": false,
+      "first_arm_owner_acceptance": {
+        "path": "runs/category2_repair_20260929/repository_work/swe_dvc/q27_three_coder_first_arm_owner_acceptance_v1.json",
+        "sha256": "sha256:e1321f4a9d22cd3c8910ae90eaab0c7c6f6a1c9f3f319569e94cdf93c525aa3f"
+      },
+      "execution_receipt": {
+        "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/q27_three_DVC_first_coder_execution_receipt_v1.json",
+        "sha256": "sha256:8ac94ba5e6df718d1c4f424c4e53025d5a42f42caf472f80cecc952e76af425f"
+      },
+      "closed_manifest": {
+        "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dvc4166-coder-a1/gpu1003-dvc4166-coder-a1_closed_manifest_v1.json",
+        "sha256": "sha256:46bc255fa1d39b419dd1534b7e57caa1e72ee20ba7d21308a550ec95054cd403"
+      },
+      "self_validation_limits": "错误read/readlines mock反复出现；平面文件匹配不验证父目录遍历；29个公开测试通过不足以支持成功声明；FP保留22个调试脚本",
+      "model_identity_limit": "fresh pre-job operational binding; listed 25 model file sizes including 16 weight shards; no individual rehash or GPU-memory attestation",
+      "operational_owner_readback": {
+        "path": "runs/category2_repair_20260929/repository_work/swe_dvc/q27_three_coder_operational_owner_readback_v1.json",
+        "sha256": "sha256:84fb2d8871578ca1e2559251110fc0b6aaaa1ce0201bb3e71fab824786513d29"
+      },
+      "execution_independent_review": {
+        "path": "runs/ordinary_gpu_probe_20261002/reviews/closed_four_execution_non_author_20261003_v1.json",
+        "sha256": "sha256:52f447ad6c7dde3aca1f31da54b2c26d35e8e3aa6a661758dcaf05d9315db661",
+        "markdown": {
+          "path": "runs/ordinary_gpu_probe_20261002/reviews/closed_four_execution_non_author_20261003_v1.md",
+          "sha256": "sha256:5016cc6212911a74f0cffde7bb5d68db783acf56f5078b51d9c52ead9bfb3595"
+        },
+        "accepted_scope": "original_execution_evidence_checked_with_declared_limits",
+        "owner_full_DVC_report_readback": true,
+        "environment_package_digest_remains_null": true,
+        "same_original_FP_grading_review_in_scope": false
+      },
+      "latest_execution_scope_acceptance": {
+        "path": "runs/category2_repair_20260929/repository_work/swe_dvc/q27_three_coder_execution_review_owner_acceptance_v1.json",
+        "sha256": "sha256:6f644b18ba8e9f353ae422532492a8ef622774cd77cec32bb3c9fe1f479c4ef3"
+      },
+      "future_grading_execution_review_pending": false
+    }
+  ],
+  "final_use": null,
+  "active_publish_request_id": null,
+  "publish_input": "../../requests/dvc4166_publish_v2_input.json",
+  "current_checkpoint": "../../preparation.md",
+  "actor_checks": [
+    {
+      "job_id": "dvc4166-public-actor-20261003-v1-001",
+      "result": "public_actor_r5_v1_failure.json",
+      "status": "failed_own_initial_guard_before_cc",
+      "formal_grading": false,
+      "model_probe": false
+    },
+    {
+      "job_id": "dvc4166-public-actor-20261003-v2-001",
+      "result": "public_actor_r5_v2.json",
+      "status": "passed_and_non_author_readback_complete",
+      "formal_grading": false,
+      "model_probe": false,
+      "independent_review": {
+        "path": "../../reviews/non_author_actor4166_9395_runtime_review_20261003.md",
+        "sha256": "sha256:c914c520234eaee7da6fd9d3c20d9a84c8bd67aa509236d0c00c752ceab55632"
+      }
+    }
+  ],
+  "still_needs_cpu": false,
+  "still_needs_gpu": true,
+  "public_contract_review": {
+    "path": "../../public_contract_review_20261003.json",
+    "sha256": "sha256:a1e42b08d2ada761fb4ed6e694db81dba0231ae597d2c776a46caeb0424eb7ac",
+    "status": "core_directory_contract_clear_after_fixed_public_dependency",
+    "scope": "clean public read; private coverage comparison separately attributed to author"
+  },
+  "publication": {
+    "release_id": "cat2-cpu-r2e089092-swe34-dvc-pyd-20261003-v1",
+    "manifest_sha256": "sha256:51b833975be2c3354be45b731552235a33070315f0039c8e6f54987de95f6ca8",
+    "receipt": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r14/dvc4166_publication_receipt.json",
+    "receipt_read_and_acked": true,
+    "task_cpu_acceptance": true
+  },
+  "current_formal_series": "dvc4166_r14_v1",
+  "public_actor_applicability_review": {
+    "path": "../../reviews/non_author_public_actor_r14_reuse_review_20261003.md",
+    "sha256": "sha256:24276eef103c12df70f261a9b05a56c33a251a98a480300555582a3b561f9c97",
+    "status": "same_public_image_code_scope_reuse_supported",
+    "actual_r14_prepared_public_checked": true,
+    "actual_r14_prepared_public_author_checked": true
+  },
+  "formal_checkpoint_r14": {
+    "formal_matrix": "formal_matrix_r14_v1.json",
+    "formal_controls": {
+      "noop": 0.0,
+      "gold": 1.0,
+      "strip_positive_trailing_slash": 0.0
+    },
+    "actual_nodes_each": 66,
+    "score_references": 63,
+    "remaining_control_status": "all_controls_completed",
+    "non_author_formal_runtime_review": "complete_owner_readback_no_blocking_findings",
+    "cpu_acceptance": "cpu_acceptance_r14_v1.json"
+  },
+  "formal_runtime_independent_review": {
+    "path": "../../reviews/non_author_formal4166_r14_runtime_review_20261003.md",
+    "sha256": "sha256:dfc49fca6750f4d066aabdbfd6daf4b9601f712444cc6db9911e46f7e6b921f3",
+    "status": "no_blocking_findings_owner_full_report_read"
+  },
+  "current_probe_policy": {
+    "coverage_first": true,
+    "unstarted_ordinary_repeats_deferred": true,
+    "no_mechanical_three_samples_per_model": true,
+    "no_retirement_or_resource_mutation": true,
+    "pending": "Qwen first arm"
+  },
+  "latest_execution_scope_acceptance": {
+    "path": "runs/category2_repair_20260929/repository_work/swe_dvc/q27_three_coder_execution_review_owner_acceptance_v1.json",
+    "sha256": "sha256:6f644b18ba8e9f353ae422532492a8ef622774cd77cec32bb3c9fe1f479c4ef3"
+  }
+}

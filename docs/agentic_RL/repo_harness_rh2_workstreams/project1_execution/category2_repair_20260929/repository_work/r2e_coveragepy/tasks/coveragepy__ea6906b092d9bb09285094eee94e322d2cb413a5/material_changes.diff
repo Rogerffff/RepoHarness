@@ -1,0 +1,154 @@
+--- source/test_1.py
++++ draft/test_1.py
+@@ -101,11 +101,11 @@
+     def __init__(self, written):
+         self.written = written
+ 
+-    def open(self, filename, mode="r"):
++    def open(self, filename, mode="r", *args, **kwargs):
+         """Be just like `open`, but write written file names to `self.written`."""
+         if mode.startswith("w"):
+             self.written.add(filename.replace('\\', '/'))
+-        return open(filename, mode)
++        return open(filename, mode, *args, **kwargs)
+ 
+ 
+ class HtmlDeltaTest(HtmlTestHelpers, CoverageTest):
+--- retained_v5/test_2.py
++++ draft/test_2.py
+@@ -62,6 +62,33 @@
+         assert not_ignored == []
+ 
+ 
++    def test_existing_gitignore_is_preserved_and_report_ignored(self):
++        # 接续当前清单：保留用户内容，同时用真实 git 核对新报告。
++        init = run_git("init", "-q", ".")
++        assert init.returncode == 0, init.stderr
++        self.make_file("main_file.py", "a = 1\n")
++        os.makedirs("report_out")
++        prior = b"# User-owned rules\ncustom.tmp\n"
++        path = os.path.join("report_out", ".gitignore")
++        with open(path, "wb") as stream:
++            stream.write(prior)
++        cov = coverage.Coverage()
++        self.start_import_stop(cov, "main_file")
++        for _ in range(2):
++            cov.html_report(directory="report_out")
++            with open(path, "rb") as stream:
++                assert prior in stream.read(), "Existing user .gitignore content was lost"
++            assert os.path.exists(os.path.join("report_out", "index.html"))
++            status = run_git("status", "--porcelain", "--untracked-files=all", "--", "report_out")
++            assert status.returncode == 0, status.stderr
++            not_ignored = sorted(
++                line[3:] for line in status.stdout.splitlines()
++                if line[3:] != "report_out/.gitignore"
++            )
++            assert not_ignored == [], status.stdout
++
++
++
+ class ReportingTest(CoverageTest):
+     """Tests of some reporting behavior."""
+ 
+--- retained_v5/expected_output.json
++++ draft/expected_output.json
+@@ -1,50 +1,51 @@
+ {
+-    "HtmlDeltaTest.test_html_created": "PASSED",
+-    "HtmlDeltaTest.test_html_delta_from_coverage_change": "PASSED",
+-    "HtmlDeltaTest.test_html_delta_from_source_change": "PASSED",
+-    "HtmlDeltaTest.test_html_delta_from_settings_change": "PASSED",
+-    "HtmlDeltaTest.test_file_becomes_100": "PASSED",
+-    "HtmlDeltaTest.test_html_delta_from_coverage_version_change": "PASSED",
+-    "HtmlTitleTest.test_title_set_in_config_file": "PASSED",
+-    "HtmlDeltaTest.test_status_format_change": "PASSED",
+-    "HtmlTitleTest.test_default_title": "PASSED",
+-    "HtmlWithUnparsableFilesTest.test_dotpy_not_python": "PASSED",
+-    "HtmlTitleTest.test_non_ascii_title_set_in_config_file": "PASSED",
+-    "HtmlTitleTest.test_title_set_in_args": "PASSED",
+-    "HtmlWithUnparsableFilesTest.test_dotpy_not_python_ignored": "PASSED",
+-    "HtmlWithUnparsableFilesTest.test_execed_liar_ignored_indentation_error": "PASSED",
+-    "HtmlWithUnparsableFilesTest.test_decode_error": "PASSED",
+-    "HtmlWithUnparsableFilesTest.test_formfeeds": "PASSED",
+-    "HtmlTest.test_missing_source_file_incorrect_message": "PASSED",
+-    "HtmlTest.test_report_skip_covered": "PASSED",
+-    "HtmlTest.test_html_skip_covered": "PASSED",
+-    "HtmlTest.test_report_skip_covered_branches": "PASSED",
+-    "HtmlTest.test_report_skip_covered_100": "PASSED",
+-    "HtmlTest.test_extensionless_file_collides_with_extension": "PASSED",
+-    "HtmlTest.test_report_skip_empty": "PASSED",
+-    "HtmlTest.test_has_date_stamp_in_files": "PASSED",
+-    "HtmlTest.test_html_skip_empty": "PASSED",
+-    "HtmlTest.test_reporting_on_unmeasured_file": "PASSED",
+-    "HtmlGoldTest.test_a": "PASSED",
+-    "HtmlGoldTest.test_bom": "PASSED",
+-    "HtmlWithUnparsableFilesTest.test_dothtml_not_python": "PASSED",
+-    "HtmlGoldTest.test_b_branch": "PASSED",
+-    "HtmlGoldTest.test_isolatin1": "PASSED",
+-    "HtmlWithUnparsableFilesTest.test_execed_liar_ignored": "PASSED",
+-    "HtmlGoldTest.test_omit_1": "PASSED",
+-    "HtmlGoldTest.test_omit_4": "PASSED",
+-    "HtmlGoldTest.test_omit_2": "PASSED",
+-    "HtmlGoldTest.test_omit_3": "PASSED",
+-    "HtmlGoldTest.test_omit_5": "PASSED",
+-    "HtmlGoldTest.test_partial": "PASSED",
+-    "HtmlGoldTest.test_tabbed": "PASSED",
+-    "HtmlGoldTest.test_styled": "PASSED",
+-    "HtmlGoldTest.test_other": "PASSED",
+-    "HtmlWithContextsTest.test_filtered_dynamic_contexts": "PASSED",
+-    "HtmlGoldTest.test_unicode": "PASSED",
+-    "HtmlWithContextsTest.test_dynamic_contexts": "PASSED",
+-    "HtmlWithContextsTest.test_dynamic_contexts_relative_files": "PASSED",
+-    "HtmlWithContextsTest.test_no_contexts_warns_no_contexts": "PASSED",
+-    "HtmlGitignoreTest.test_html_report_is_ignored_by_git": "PASSED",
+-    "ReportingTest.test_no_data_to_report_on_html": "PASSED"
+-}+  "HtmlDeltaTest.test_html_created": "PASSED",
++  "HtmlDeltaTest.test_html_delta_from_coverage_change": "PASSED",
++  "HtmlDeltaTest.test_html_delta_from_source_change": "PASSED",
++  "HtmlDeltaTest.test_html_delta_from_settings_change": "PASSED",
++  "HtmlDeltaTest.test_file_becomes_100": "PASSED",
++  "HtmlDeltaTest.test_html_delta_from_coverage_version_change": "PASSED",
++  "HtmlTitleTest.test_title_set_in_config_file": "PASSED",
++  "HtmlDeltaTest.test_status_format_change": "PASSED",
++  "HtmlTitleTest.test_default_title": "PASSED",
++  "HtmlWithUnparsableFilesTest.test_dotpy_not_python": "PASSED",
++  "HtmlTitleTest.test_non_ascii_title_set_in_config_file": "PASSED",
++  "HtmlTitleTest.test_title_set_in_args": "PASSED",
++  "HtmlWithUnparsableFilesTest.test_dotpy_not_python_ignored": "PASSED",
++  "HtmlWithUnparsableFilesTest.test_execed_liar_ignored_indentation_error": "PASSED",
++  "HtmlWithUnparsableFilesTest.test_decode_error": "PASSED",
++  "HtmlWithUnparsableFilesTest.test_formfeeds": "PASSED",
++  "HtmlTest.test_missing_source_file_incorrect_message": "PASSED",
++  "HtmlTest.test_report_skip_covered": "PASSED",
++  "HtmlTest.test_html_skip_covered": "PASSED",
++  "HtmlTest.test_report_skip_covered_branches": "PASSED",
++  "HtmlTest.test_report_skip_covered_100": "PASSED",
++  "HtmlTest.test_extensionless_file_collides_with_extension": "PASSED",
++  "HtmlTest.test_report_skip_empty": "PASSED",
++  "HtmlTest.test_has_date_stamp_in_files": "PASSED",
++  "HtmlTest.test_html_skip_empty": "PASSED",
++  "HtmlTest.test_reporting_on_unmeasured_file": "PASSED",
++  "HtmlGoldTest.test_a": "PASSED",
++  "HtmlGoldTest.test_bom": "PASSED",
++  "HtmlWithUnparsableFilesTest.test_dothtml_not_python": "PASSED",
++  "HtmlGoldTest.test_b_branch": "PASSED",
++  "HtmlGoldTest.test_isolatin1": "PASSED",
++  "HtmlWithUnparsableFilesTest.test_execed_liar_ignored": "PASSED",
++  "HtmlGoldTest.test_omit_1": "PASSED",
++  "HtmlGoldTest.test_omit_4": "PASSED",
++  "HtmlGoldTest.test_omit_2": "PASSED",
++  "HtmlGoldTest.test_omit_3": "PASSED",
++  "HtmlGoldTest.test_omit_5": "PASSED",
++  "HtmlGoldTest.test_partial": "PASSED",
++  "HtmlGoldTest.test_tabbed": "PASSED",
++  "HtmlGoldTest.test_styled": "PASSED",
++  "HtmlGoldTest.test_other": "PASSED",
++  "HtmlWithContextsTest.test_filtered_dynamic_contexts": "PASSED",
++  "HtmlGoldTest.test_unicode": "PASSED",
++  "HtmlWithContextsTest.test_dynamic_contexts": "PASSED",
++  "HtmlWithContextsTest.test_dynamic_contexts_relative_files": "PASSED",
++  "HtmlWithContextsTest.test_no_contexts_warns_no_contexts": "PASSED",
++  "HtmlGitignoreTest.test_html_report_is_ignored_by_git": "PASSED",
++  "ReportingTest.test_no_data_to_report_on_html": "PASSED",
++  "HtmlGitignoreTest.test_existing_gitignore_is_preserved_and_report_ignored": "PASSED"
++}

@@ -1,0 +1,33 @@
+[ISSUE]
+**Title:** Middleware Settings Fail When Passing Python Objects Directly
+
+**Description:**
+When configuring middleware by passing Python objects directly within the settings dictionary, an `AttributeError` is raised. This occurs because the system expects string paths for middleware classes and attempts to call string methods on the provided objects.
+
+**Example Buggy Code:**
+```python
+from scrapy.middleware import MiddlewareManager
+
+class CustomMiddleware:
+    pass
+
+settings = {
+    'MIDDLEWARES': {
+        'custom': CustomMiddleware()  # Passing the object directly
+    }
+}
+
+mw_manager = MiddlewareManager.from_settings(settings)
+```
+In this example, attempting to initialize the `MiddlewareManager` with a Python object instead of a string path leads to an error.
+
+**Expected Behavior:**
+The `MiddlewareManager` should accept Python objects directly in the middleware settings and instantiate them without attempting to treat them as string paths.
+
+**Actual Behavior:**
+An `AttributeError` is raised with a message similar to:
+```
+AttributeError: 'CustomMiddleware' object has no attribute 'rindex'
+```
+This error indicates that the system is incorrectly trying to use string methods on a Python object, leading to a failure in middleware initialization.
+[/ISSUE]

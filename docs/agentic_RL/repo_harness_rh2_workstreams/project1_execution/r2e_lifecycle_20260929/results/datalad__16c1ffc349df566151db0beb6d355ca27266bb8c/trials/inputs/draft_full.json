@@ -1,0 +1,18 @@
+{
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "    def sadfilter(res, **kwargs):\n        assert_not_in('dataset', kwargs)\n",
+     "new": "    def sadfilter(res, **kwargs):\n        # no dataset was given in the call: the filter must not be handed\n        # one (the argument may be absent or None)\n        assert_equal(kwargs.get('dataset'), None)\n"
+    },
+    {
+     "old": "    Test_Utils().__call__(4, result_filter=sadfilter)\n",
+     "new": "    Test_Utils().__call__(4, result_filter=sadfilter)\n\n\ndef test_result_filter_gets_call_kwargs():\n    # a filter that accepts **kwargs gets the keyword arguments of the API\n    # call -- not only `dataset` -- also in generator mode and when the\n    # command is called as a Dataset method (all arguments become keyword\n    # arguments); the filter's decision is honored\n    seen = []\n\n    def kwfilter(res, **kwargs):\n        seen.append(kwargs)\n        return res['somekey'] in (1, 3)\n\n    for rtype in ('list', 'generator'):\n        del seen[:]\n        assert_equal(\n            [r['somekey'] for r in Test_Utils().__call__(\n                number=4, dataset='awesome', return_type=rtype,\n                result_filter=kwfilter)],\n            [1, 3])\n        ok_(seen)\n        for kw in seen:\n            assert_equal(kw.get('number'), 4)\n            assert_equal(kw.get('dataset'), 'awesome')\n\n    del seen[:]\n    ds = Dataset('/does/not/matter')\n    assert_equal(\n        [r['somekey'] for r in ds.fake_command(4, result_filter=kwfilter)],\n        [1, 3])\n    ok_(seen)\n    for kw in seen:\n        assert_equal(kw.get('number'), 4)\n        ok_(kw.get('dataset') is ds)\n\n\ndef test_result_filter_plain_callables_with_call_kwargs():\n    # filters that do not accept **kwargs -- Constraints (as used for the\n    # class-level default filter of `create` and for the --report-status /\n    # --report-type command line options) and plain one-argument callables\n    # (e.g. datalad.interface.results.is_ok_dataset) -- keep working when\n    # the API call has keyword arguments\n    ds = Dataset('/does/not/matter')\n    for filt in (\n            EnsureKeyChoice('somekey', (0, 2)),\n            EnsureKeyChoice('status', ('ok',)) & EnsureKeyChoice('somekey', (0, 2)),\n            lambda x: x['somekey'] in (0, 2)):\n        assert_equal(\n            [r['somekey'] for r in Test_Utils().__call__(\n                4, dataset='awesome', result_filter=filt)],\n            [0, 2])\n        assert_equal(\n            [r['somekey'] for r in ds.fake_command(4, result_filter=filt)],\n            [0, 2])\n"
+    }
+   ]
+  }
+ ]
+}

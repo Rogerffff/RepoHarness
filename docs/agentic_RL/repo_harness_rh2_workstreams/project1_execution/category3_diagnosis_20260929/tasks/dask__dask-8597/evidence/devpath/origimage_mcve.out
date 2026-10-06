@@ -1,0 +1,15 @@
+/testbed/dask/array/slicing.py:647: RuntimeWarning: divide by zero encountered in scalar divide
+  maxsize = math.ceil(nbytes / (other_numel * itemsize))
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/testbed/dask/array/core.py", line 1847, in __getitem__
+    dsk, chunks = slice_array(out, self.name, self.chunks, index2, self.itemsize)
+  File "/testbed/dask/array/slicing.py", line 174, in slice_array
+    dsk_out, bd_out = slice_with_newaxes(out_name, in_name, blockdims, index, itemsize)
+  File "/testbed/dask/array/slicing.py", line 196, in slice_with_newaxes
+    dsk, blockdims2 = slice_wrap_lists(out_name, in_name, blockdims, index2, itemsize)
+  File "/testbed/dask/array/slicing.py", line 262, in slice_wrap_lists
+    blockdims2, dsk3 = take(
+  File "/testbed/dask/array/slicing.py", line 647, in take
+    maxsize = math.ceil(nbytes / (other_numel * itemsize))
+OverflowError: cannot convert float infinity to integer

@@ -1,0 +1,98 @@
+{
+  "as_of": "2026-10-03",
+  "instance_id": "python__mypy-15184",
+  "job": "mypy-private-controls-r3-20261002T173657Z-cdd6d3",
+  "scope": "作者回读冻结private_behavior的root行为诊断；不表示actor权限或新修订正式reward",
+  "image_id_actual": "sha256:76b5b2646a9eb134e6349ee8e214bb84eb6030c34a234e167351acdec5dd8c54",
+  "rows": {
+    "base": {
+      "command_rc": {
+        "identity": 0,
+        "nominal": 1,
+        "generic": 1,
+        "collect": 0,
+        "case": 0
+      },
+      "execution_nodes": {
+        "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertTypeGeneric": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertTypeUncheckedFunction": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertTypeUncheckedFunctionWithUntypedCheck": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertTypeNoPromoteUnion": "PASSED"
+      },
+      "collected_selected_nodes": 5,
+      "preparation_all_rc0": true,
+      "cleanup_confirmed": true,
+      "case_log": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy-private-controls-r3-20261002T173657Z-cdd6d3/python__mypy-15184/base/case.out",
+      "nominal": "t.py:4: error: Expression is of type \"C\", not \"C\"  [assert-type]\nFound 1 error in 1 file (checked 1 source file)\n",
+      "generic": "t.py:4: error: Expression is of type \"list[C]\", not \"list[C]\"  [assert-type]\nFound 1 error in 1 file (checked 1 source file)\n"
+    },
+    "gold": {
+      "command_rc": {
+        "identity": 0,
+        "nominal": 1,
+        "generic": 1,
+        "collect": 0,
+        "case": 0
+      },
+      "execution_nodes": {
+        "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertTypeGeneric": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertTypeUncheckedFunction": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertTypeUncheckedFunctionWithUntypedCheck": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertTypeNoPromoteUnion": "PASSED"
+      },
+      "collected_selected_nodes": 5,
+      "preparation_all_rc0": true,
+      "cleanup_confirmed": true,
+      "case_log": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy-private-controls-r3-20261002T173657Z-cdd6d3/python__mypy-15184/gold/case.out",
+      "nominal": "t.py:4: error: Expression is of type \"a.C\", not \"b.C\"  [assert-type]\nFound 1 error in 1 file (checked 1 source file)\n",
+      "generic": "t.py:4: error: Expression is of type \"list[a.C]\", not \"list[b.C]\"  [assert-type]\nFound 1 error in 1 file (checked 1 source file)\n"
+    },
+    "bad": {
+      "command_rc": {
+        "identity": 0,
+        "nominal": 1,
+        "generic": 1,
+        "collect": 0,
+        "case": 1
+      },
+      "execution_nodes": {
+        "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertTypeUncheckedFunction": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertTypeUncheckedFunctionWithUntypedCheck": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType": "FAILED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertTypeGeneric": "FAILED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertTypeNoPromoteUnion": "FAILED"
+      },
+      "collected_selected_nodes": 5,
+      "preparation_all_rc0": true,
+      "cleanup_confirmed": true,
+      "case_log": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy-private-controls-r3-20261002T173657Z-cdd6d3/python__mypy-15184/bad/case.out",
+      "nominal": "t.py:4: error: Expression is of type \"a.C\", not \"b.C\"  [assert-type]\nFound 1 error in 1 file (checked 1 source file)\n",
+      "generic": "t.py:4: error: Expression is of type \"list[a.C]\", not \"list[b.C]\"  [assert-type]\nFound 1 error in 1 file (checked 1 source file)\n"
+    },
+    "top_only": {
+      "command_rc": {
+        "identity": 0,
+        "nominal": 1,
+        "generic": 1,
+        "collect": 0,
+        "case": 0
+      },
+      "execution_nodes": {
+        "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertType": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertTypeGeneric": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertTypeUncheckedFunction": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertTypeUncheckedFunctionWithUntypedCheck": "PASSED",
+        "mypy/test/testcheck.py::TypeCheckSuite::check-expressions.test::testAssertTypeNoPromoteUnion": "PASSED"
+      },
+      "collected_selected_nodes": 5,
+      "preparation_all_rc0": true,
+      "cleanup_confirmed": true,
+      "case_log": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy-private-controls-r3-20261002T173657Z-cdd6d3/python__mypy-15184/top_only/case.out",
+      "nominal": "t.py:4: error: Expression is of type \"a.C\", not \"b.C\"  [assert-type]\nFound 1 error in 1 file (checked 1 source file)\n",
+      "generic": "t.py:4: error: Expression is of type \"list[C]\", not \"list[C]\"  [assert-type]\nFound 1 error in 1 file (checked 1 source file)\n"
+    }
+  },
+  "conclusion": "testAssertType拒绝无条件报错；仅顶层限定候选通过5个公开case及nominal诊断但泛型内部仍歧义，原评分接受性待正式原材料诊断，不把私有结果算reward"
+}

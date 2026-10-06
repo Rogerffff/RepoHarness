@@ -1,0 +1,14 @@
+{
+  "revisions": [
+    {
+      "kind": "hidden_test_text_replace",
+      "target": "test_1.py",
+      "edits": [
+        {
+          "old": "            assert_equal(s.replace('[', ' ').replace(']', ' ').split(),\n                         expected)\n",
+          "new": "            assert_equal(s.replace('[', ' ').replace(']', ' ').split(),\n                         expected)\n\n\n            # 提高阈值后，仍需摘要的数组不能静默丢掉中间值。\n            # 首尾显示内容仍由原有打印选项决定。\n            a = np.ma.arange(3000)\n            a[1:50] = np.ma.masked\n            assert_equal(str(a), '[0 -- -- ..., 2997 2998 2999]')\n\n            # 保留配置指定的首尾元素；省略中间值时须有省略号。\n            # token 比较允许原有 linewidth 引起的折行。\n            np.set_printoptions(threshold=1000, edgeitems=501)\n            a = np.ma.arange(3000)\n            a[1:50] = np.ma.masked\n            s = str(a)\n            expected = (['0'] + ['--'] * 49 +\n                        [str(i) for i in range(50, 501)] + ['...'] +\n                        [str(i) for i in range(2499, 3000)])\n            assert_equal(s.replace('[', ' ').replace(']', ' ')\n                         .replace(',', ' ').split(), expected)\n"
+        }
+      ]
+    }
+  ]
+}

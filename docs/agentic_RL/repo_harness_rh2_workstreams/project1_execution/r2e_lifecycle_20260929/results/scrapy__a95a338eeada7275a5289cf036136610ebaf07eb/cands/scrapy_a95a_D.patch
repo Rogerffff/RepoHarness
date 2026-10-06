@@ -1,0 +1,16 @@
+diff --git a/scrapy/utils/misc.py b/scrapy/utils/misc.py
+--- a/scrapy/utils/misc.py
++++ b/scrapy/utils/misc.py
+@@ -226,7 +226,11 @@ def is_generator_with_return_value(callable):
+         return value is None or isinstance(value, ast.NameConstant) and value.value is None
+ 
+     if inspect.isgeneratorfunction(callable):
+-        src = inspect.getsource(callable)
++        try:
++            src = inspect.getsource(callable)
++        except TypeError:
++            _generator_callbacks_cache[callable] = False
++            return False
+         pattern = re.compile(r"(^[\t ]+)")
+         code = pattern.sub("", src)
+ 

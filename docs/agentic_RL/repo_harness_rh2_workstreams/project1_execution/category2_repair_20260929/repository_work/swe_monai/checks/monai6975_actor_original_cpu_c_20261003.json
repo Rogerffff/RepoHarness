@@ -1,0 +1,539 @@
+{
+  "schema": "monai.public_actor_check.v1",
+  "as_of": "2026-10-03",
+  "task_id": "Project-MONAI__MONAI-6975",
+  "host_alias": "cpu-c",
+  "job": "monai-6975-actor-20261003-723cd019",
+  "evidence_root": "runs/category2_repair_20260929/repository_work/swe_monai/cpu_c_20261003/monai-6975-actor-20261003-723cd019",
+  "release_manifest_sha256": "80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9",
+  "prepared_job": "monai-release5-prepared-20261003-3537d9d8",
+  "actual_image_id": "sha256:789cb5d10d9b343a2e8b656581697a7127b56a0d467b1cc5b8779a79a0ff0727",
+  "public_command_sha256": "c426f4ec0ac56d6a7a2c6951b1bb28bebcf5626ccf695f4463092db79ea16e0f",
+  "commands_result": [
+    {
+      "id": "identity",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 1066,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "核base、CPU、解释器、实际transform.py导入与初态；NiBabel供旧Dataset测试"
+    },
+    {
+      "id": "public_nifti_original",
+      "rc": 1,
+      "status": "nonzero",
+      "expect": "zero",
+      "matches_expect": false,
+      "output_bytes": 551,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "实际执行题面原LoadImaged/RandAffined直调与Dataset例子，记录资产及公开日志；随机图不互比，不代替私有像素测试"
+    },
+    {
+      "id": "lazy_value_matrix",
+      "rc": 1,
+      "status": "nonzero",
+      "expect": "nonzero",
+      "matches_expect": true,
+      "output_bytes": 4996,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "公开Compose/Dataset字典内存图像True/False/None：两次确定性Flipd的真实返回像素+有效lazy参数；wrap真实resample函数仅记录调用，不用操作长度代理、不要求唯一内部调用次数"
+    },
+    {
+      "id": "public_regression",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 9559,
+      "output_truncated_to": 200000,
+      "pytest": {
+        "passed": 56,
+        "warning": 20
+      },
+      "purpose": "base公开旧Compose/Dataset行为，使用测试自建临时NIfTI；未注入隐藏测试或外部图像"
+    }
+  ],
+  "identity": {
+    "python": "/opt/miniconda3/envs/testbed/bin/python",
+    "monai": "/testbed/monai/__init__.py",
+    "target": "/testbed/monai/transforms/transform.py",
+    "numpy": "1.24.4",
+    "torch": "2.4.1+cu121",
+    "pytest": "8.3.3",
+    "nibabel": "5.2.1",
+    "cuda": false
+  },
+  "initial_metricsreloaded_deletion_observed": true,
+  "actual_actor_uid": 54321,
+  "public_nifti_observation": {
+    "path": "tests/testing_data/ref_avg152T1_LR.nii.gz",
+    "exists": false
+  },
+  "public_nifti_read_failed_for_missing_asset": true,
+  "lazy_value_matrix": [
+    {
+      "entry": "direct",
+      "mode": true,
+      "values": [
+        [
+          [
+            11.0,
+            10.0,
+            9.0,
+            8.0
+          ],
+          [
+            7.0,
+            6.0,
+            5.0,
+            4.0
+          ],
+          [
+            3.0,
+            2.0,
+            1.0,
+            0.0
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          [
+            11.0,
+            10.0,
+            9.0,
+            8.0
+          ],
+          [
+            7.0,
+            6.0,
+            5.0,
+            4.0
+          ],
+          [
+            3.0,
+            2.0,
+            1.0,
+            0.0
+          ]
+        ]
+      ],
+      "dtype": "torch.float32",
+      "device": "cpu",
+      "trace": [
+        [
+          {
+            "argument": true,
+            "effective": true
+          }
+        ],
+        [
+          {
+            "argument": true,
+            "effective": true
+          }
+        ]
+      ],
+      "resample_function_calls": 1,
+      "policy_ok": true,
+      "value_ok": true
+    },
+    {
+      "entry": "dataset",
+      "mode": true,
+      "values": [
+        [
+          [
+            11.0,
+            10.0,
+            9.0,
+            8.0
+          ],
+          [
+            7.0,
+            6.0,
+            5.0,
+            4.0
+          ],
+          [
+            3.0,
+            2.0,
+            1.0,
+            0.0
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          [
+            11.0,
+            10.0,
+            9.0,
+            8.0
+          ],
+          [
+            7.0,
+            6.0,
+            5.0,
+            4.0
+          ],
+          [
+            3.0,
+            2.0,
+            1.0,
+            0.0
+          ]
+        ]
+      ],
+      "dtype": "torch.float32",
+      "device": "cpu",
+      "trace": [
+        [
+          {
+            "argument": false,
+            "effective": false
+          }
+        ],
+        [
+          {
+            "argument": false,
+            "effective": false
+          }
+        ]
+      ],
+      "resample_function_calls": 0,
+      "policy_ok": false,
+      "value_ok": true
+    },
+    {
+      "entry": "direct",
+      "mode": false,
+      "values": [
+        [
+          [
+            11.0,
+            10.0,
+            9.0,
+            8.0
+          ],
+          [
+            7.0,
+            6.0,
+            5.0,
+            4.0
+          ],
+          [
+            3.0,
+            2.0,
+            1.0,
+            0.0
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          [
+            11.0,
+            10.0,
+            9.0,
+            8.0
+          ],
+          [
+            7.0,
+            6.0,
+            5.0,
+            4.0
+          ],
+          [
+            3.0,
+            2.0,
+            1.0,
+            0.0
+          ]
+        ]
+      ],
+      "dtype": "torch.float32",
+      "device": "cpu",
+      "trace": [
+        [
+          {
+            "argument": false,
+            "effective": false
+          }
+        ],
+        [
+          {
+            "argument": false,
+            "effective": false
+          }
+        ]
+      ],
+      "resample_function_calls": 0,
+      "policy_ok": true,
+      "value_ok": true
+    },
+    {
+      "entry": "dataset",
+      "mode": false,
+      "values": [
+        [
+          [
+            11.0,
+            10.0,
+            9.0,
+            8.0
+          ],
+          [
+            7.0,
+            6.0,
+            5.0,
+            4.0
+          ],
+          [
+            3.0,
+            2.0,
+            1.0,
+            0.0
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          [
+            11.0,
+            10.0,
+            9.0,
+            8.0
+          ],
+          [
+            7.0,
+            6.0,
+            5.0,
+            4.0
+          ],
+          [
+            3.0,
+            2.0,
+            1.0,
+            0.0
+          ]
+        ]
+      ],
+      "dtype": "torch.float32",
+      "device": "cpu",
+      "trace": [
+        [
+          {
+            "argument": false,
+            "effective": false
+          }
+        ],
+        [
+          {
+            "argument": false,
+            "effective": false
+          }
+        ]
+      ],
+      "resample_function_calls": 0,
+      "policy_ok": true,
+      "value_ok": true
+    },
+    {
+      "entry": "direct",
+      "mode": null,
+      "values": [
+        [
+          [
+            11.0,
+            10.0,
+            9.0,
+            8.0
+          ],
+          [
+            7.0,
+            6.0,
+            5.0,
+            4.0
+          ],
+          [
+            3.0,
+            2.0,
+            1.0,
+            0.0
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          [
+            11.0,
+            10.0,
+            9.0,
+            8.0
+          ],
+          [
+            7.0,
+            6.0,
+            5.0,
+            4.0
+          ],
+          [
+            3.0,
+            2.0,
+            1.0,
+            0.0
+          ]
+        ]
+      ],
+      "dtype": "torch.float32",
+      "device": "cpu",
+      "trace": [
+        [
+          {
+            "argument": null,
+            "effective": true
+          }
+        ],
+        [
+          {
+            "argument": null,
+            "effective": true
+          }
+        ]
+      ],
+      "resample_function_calls": 1,
+      "policy_ok": true,
+      "value_ok": true
+    },
+    {
+      "entry": "dataset",
+      "mode": null,
+      "values": [
+        [
+          [
+            11.0,
+            10.0,
+            9.0,
+            8.0
+          ],
+          [
+            7.0,
+            6.0,
+            5.0,
+            4.0
+          ],
+          [
+            3.0,
+            2.0,
+            1.0,
+            0.0
+          ]
+        ]
+      ],
+      "expected": [
+        [
+          [
+            11.0,
+            10.0,
+            9.0,
+            8.0
+          ],
+          [
+            7.0,
+            6.0,
+            5.0,
+            4.0
+          ],
+          [
+            3.0,
+            2.0,
+            1.0,
+            0.0
+          ]
+        ]
+      ],
+      "dtype": "torch.float32",
+      "device": "cpu",
+      "trace": [
+        [
+          {
+            "argument": false,
+            "effective": false
+          }
+        ],
+        [
+          {
+            "argument": false,
+            "effective": false
+          }
+        ]
+      ],
+      "resample_function_calls": 0,
+      "policy_ok": false,
+      "value_ok": true
+    }
+  ],
+  "original_public_module_passed": 56,
+  "actual_actor_resources": {
+    "nano_cpus": 2000000000,
+    "memory": 4294967296,
+    "pids_limit": 512
+  },
+  "harness_exit_code": 0,
+  "cleanup": {
+    "container_rm": 0,
+    "network_failures": [],
+    "relay_failures": [],
+    "stub_rc": 0,
+    "labeled_containers_left": [],
+    "labeled_networks_left": [],
+    "residual_after_force": []
+  },
+  "diagnostic_checks_retained": {
+    "interpreter_in_tool_result": false,
+    "host_log_present": true,
+    "no_harness_dir_in_container": true,
+    "no_launcher_or_done_marker": true,
+    "message_start_matches_stub_requests": true,
+    "exit_code_zero": true,
+    "result_event_present": true,
+    "log_complete": true,
+    "bashenv_denied_for_agent": false,
+    "all_commands_ran": true,
+    "all_match_expect": false
+  },
+  "public_development_complete": false,
+  "blocked_material_version": "monai6975-dataset-dict-pixels-cpu-v1",
+  "blocker": "真实actor缺少题面原NIfTI；必须恢复固定官方资产、核原例，并另记环境材料版本后探针。外层RC0不能核销。",
+  "new_private_node_executed": false,
+  "formal_reward_proven": false,
+  "independently_reviewed": false,
+  "artifact_sha256": {
+    "activation_check.json": "a96cf5d2ef4af8a8219cf010f60143a73b9c56aa37add5d91bd412a2b477bf6f",
+    "attempt.json": "e84e5245b544c74537bc42b6c62f0206809de712fb2cd3e9000dd5b2650e29ef",
+    "bounded_image_probe.json": "41e1aaaf1dda07ca56679be102589c0429524fe3a20f9c86b31d5ac4c8a97d9d",
+    "bringup_artifacts/cc_version_observed.json": "c2b9bcf966c47d9a00227877026cb90b76afed482fd0df4e0ac12caab786bacb",
+    "captures/identity.out": "c568c246e6130ba82d887c0d650c320ff368bd9eb33e1f63cb65d3e3a34966eb",
+    "captures/lazy_value_matrix.out": "a5ff18b37b8c46563761f4f9e13b10b38cbb26130668e0b1c4bc174c69a34713",
+    "captures/public_nifti_original.out": "6bae92dc56b06021fcb0988e70a6acd86a85c46c8765c650468ac9f025a7dde6",
+    "captures/public_regression.out": "2cb4aed9f7ed69b997f706108d8a67a6824975d0157845d28f8d2793b0e149e7",
+    "harness/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "harness/trajectory.jsonl": "a7f3ad2ba755b3bc625d8939d6cd3f56ae0486bb27cd6f21f1ca07f2bed96cfa",
+    "post_run_facts_root.txt": "b26da70e953d746538fb21925ccc6013356846da34651bab32daac61d7e43711",
+    "prelaunch.json": "cefbe97a8b3e05d9e7a0e9e631862ea9de35acfc2aab0b725f645cc26ba9a5a7",
+    "stub/requests/messages_000.json": "c7b82b306084d607a444aed6b41c236d03223f12c18cd1bc507e43c00582ed88",
+    "stub/requests/messages_001.json": "496fdf369392c5d334290a305ce41528d96fced344b16df2c6b8ed435856a80e",
+    "stub/requests/messages_002.json": "56cf808763bb3884f1af9d1fc2570c65ce8b53973f062e513b686aba19055bda",
+    "stub/requests/messages_003.json": "9f9b0cfa9ebc27b48e39f71c76cfaeb76cffe8a7a80a92680edf34dc934c181f",
+    "stub/requests/messages_004.json": "65f86b8f981871ea4ab9d607c873b2c09d1a3c52d43bc7ebe0ab200ceeeb12b6",
+    "stub/stub_log.json": "ae44d95a7390ed5f14dfea917a5188eb143f8daa4ba5a85a68a2b05e69d9a601",
+    "stub_script.json": "2725f3bc0666bbf20f45250f72eae26db2b50dd0a4770713e52f8f4e806de92d",
+    "stub_stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

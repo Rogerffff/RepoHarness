@@ -1,0 +1,12 @@
+diff --git a/pandas/core/groupby/groupby.py b/pandas/core/groupby/groupby.py
+--- a/pandas/core/groupby/groupby.py
++++ b/pandas/core/groupby/groupby.py
+@@ -2453,6 +2453,8 @@ class GroupBy(BaseGroupBy[FrameOrSeries]):
+             elif is_timedelta64_dtype(vals.dtype):
+                 inference = np.dtype("timedelta64[ns]")
+                 out = np.asarray(vals).astype(float)
++            elif isinstance(vals, BaseMaskedArray):
++                out = vals._data
+             else:
+                 out = np.asarray(vals)
+ 

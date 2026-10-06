@@ -1,0 +1,12 @@
+diff --git a/dask/array/slicing.py b/dask/array/slicing.py
+--- a/dask/array/slicing.py
++++ b/dask/array/slicing.py
+@@ -644,7 +644,7 @@
+     if math.isnan(other_numel):
+         warnsize = maxsize = math.inf
+     else:
+-        maxsize = math.ceil(nbytes / (other_numel * itemsize))
++        maxsize = math.ceil(nbytes / (other_numel * itemsize)) if other_numel else 0
+         warnsize = maxsize * 5
+ 
+     split = config.get("array.slicing.split-large-chunks", None)

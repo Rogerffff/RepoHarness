@@ -1,0 +1,39 @@
+{
+  "schema": "category2_orange3_statement_preparation.v1",
+  "instance_id": "orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e",
+  "status": "draft_not_published_fresh_public_reader_pending",
+  "template": "R-f",
+  "operation": {
+    "kind": "statement_text_replace",
+    "target": "problem_statement",
+    "edits": [
+      {
+        "old": "**Title:** Error Occurs When Loading Variable Definitions with Unused Variables",
+        "new": "**Title:** Missing Warning When Loading Variable Definitions with Unused Variables"
+      },
+      {
+        "old": "When loading variable definitions that include unused variables, the application fails to handle the warnings properly. This results in a `TypeError` because the warning message is not correctly generated or handled.",
+        "new": "When loading variable definitions that include variables absent from the current data, the application silently ignores those definitions without displaying the warning described below."
+      },
+      {
+        "old": "A `TypeError` is raised with the message: `'NoneType' object is not subscriptable`, preventing the warning from being displayed and disrupting the loading process.",
+        "new": "The definitions for the unused variables are silently ignored and no warning is displayed. The example does not raise an application exception.\n\n**Development Note:**\nThe existing public `TestOWColor.test_parse_var_defs_no_rename` ends with an assertion that a definition for an unused variable produces no warning. That assertion conflicts with the behavior requested here. Preserve its checks for duplicate renames, and validate the final unused-variable case against the warning behavior requested in this issue."
+      }
+    ],
+    "sha256_before": "sha256:8f4108475bb9dc328ac52574094f105fe24a9148d12a2add3cf4266b388b9463",
+    "sha256_after": "sha256:8d7ddab841c89504b41268db2e13aed59a67ac13aaa791f8c32c70a1a3a321ef",
+    "revised_file": null,
+    "expected_change": null
+  },
+  "statement_file": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/50f6a758/files/problem_statement.txt",
+  "public_basis": [
+    "runs/r2e_static_prep_20260924/v3/public/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/worktree/Orange/widgets/data/tests/test_owcolor.py:885-888"
+  ],
+  "base_actual_behavior_evidence": {
+    "path": "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/orig/captures/repro_unused_vars_warning.out",
+    "sha256": "sha256:cf7b43bdd0400d66beadb4660ab33c5b357333681e004fa9fd895cfd8b11a2ef"
+  },
+  "fresh_public_reader": "pending",
+  "actual_actor_delivery": "pending_cpu",
+  "note": "不改公开工作树的测试文件；公开等效开发命令由fresh读者提出并在actor身份核验。"
+}

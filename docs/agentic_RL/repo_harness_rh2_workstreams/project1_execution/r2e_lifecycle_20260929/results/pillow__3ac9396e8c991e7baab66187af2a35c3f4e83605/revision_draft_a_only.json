@@ -1,0 +1,64 @@
+{
+ "instance_id": "pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605",
+ "status": "已否决，不得用于正式材料（2026-09-29 Codex 复核 codex_reviews/review_revision_pillow.md §1：A-only 留下 RC6 的已知 S1，不通过）。有效草案是同目录 revision_draft.json（A+B+C）。本文件与 trials/round1/a_*.json 只作记录保留。",
+ "template": "R-c",
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "        reloaded = Image.open(out)\n        self.assertEqual(0, reloaded.tag_v2[41988][0].numerator)\n        self.assertEqual(0, reloaded.tag_v2[41988][0].denominator)\n",
+     "new": "        reloaded = Image.open(out)\n        self.assertEqual(0, reloaded.tag_v2[41988][0].numerator)\n        self.assertEqual(0, reloaded.tag_v2[41988][0].denominator)\n\n    def test_div_zero_other_unregistered_tag(self):\n        # Same zero-denominator round trip on another tag that has no\n        # TAGS_V2 entry (private tag 65000), not only the example tag.\n        im = hopper()\n        info = TiffImagePlugin.ImageFileDirectory_v2()\n        info[65000] = TiffImagePlugin.IFDRational(0,0)\n\n        out = self.tempfile('temp.tiff')\n        im.save(out, tiffinfo=info, compression='raw')\n\n        reloaded = Image.open(out)\n        self.assertEqual(0, reloaded.tag_v2[65000][0].numerator)\n        self.assertEqual(0, reloaded.tag_v2[65000][0].denominator)\n"
+    }
+   ]
+  }
+ ],
+ "expected_after": {
+  "TestFileTiffMetadata.test_div_zero_other_unregistered_tag": "PASSED",
+  "TestFileTiffMetadata.test_empty_metadata": "PASSED",
+  "TestFileTiffMetadata.test_exif_div_zero": "PASSED",
+  "TestFileTiffMetadata.test_iccprofile": "PASSED",
+  "TestFileTiffMetadata.test_iccprofile_binary": "PASSED",
+  "TestFileTiffMetadata.test_no_duplicate_50741_tag": "PASSED",
+  "TestFileTiffMetadata.test_read_metadata": "PASSED",
+  "TestFileTiffMetadata.test_rt_metadata": "PASSED",
+  "TestFileTiffMetadata.test_write_metadata": "PASSED",
+  "Test_IFDRational.test_ifd_rational_save": "PASSED",
+  "Test_IFDRational.test_nonetype": "PASSED",
+  "Test_IFDRational.test_sanity": "PASSED"
+ },
+ "positive_control": "gold",
+ "acceptance": {
+  "gold": {
+   "patch": "runs/r2e_static_prep_20260924/v3/private/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/gold.patch",
+   "expected_score": 1,
+   "trial": "trials/round1/a_gold.json",
+   "trial_verdict": "match 12/12"
+  },
+  "noop": {
+   "patch": null,
+   "expected_score": 0,
+   "trial": "trials/round1/a_noop.json",
+   "trial_verdict": "mismatch：TestFileTiffMetadata.test_div_zero_other_unregistered_tag PASSED→ERROR；TestFileTiffMetadata.test_exif_div_zero PASSED→ERROR"
+  },
+  "K4b_tag_len_0": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/pillow_3ac9_K4b_tag_len_0.patch",
+   "expected_score": 0,
+   "trial": "trials/round1/a_K4b.json",
+   "trial_verdict": "mismatch：TestFileTiffMetadata.test_div_zero_other_unregistered_tag PASSED→ERROR"
+  },
+  "RC6_gold_with_numbers_rational": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/pillow_3ac9_RC6_gold_with_numbers_rational.patch",
+   "expected_score": 1,
+   "trial": "trials/round1/a_RC6.json",
+   "trial_verdict": "match 12/12：不含 B 时 RC6 仍得 1，是已知未处理的 S1 缺口（见 revision_plan.md §7）"
+  }
+ },
+ "local_private_copy_sha256": {
+  "note": "本机私有副本 runs/r2e_static_prep_20260924/v3/private/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/ 的摘要，仅供核对；正式修订单的 sha256_before 以来源行原文为准",
+  "test_1.py_before": "sha256:887ed0de8fbbc9740f09a312628675f6cd1e638f46f0b573b60063e71d5c91f8",
+  "test_1.py_after": "sha256:155698371b75be3ae954cf8821aa00dd6a87ae5a01960f3cb2798a63dc9aed63",
+  "expected_output.json_before": "sha256:11a665803be78c9c0d5c5668725c6570914449e6d9b6145dfc4f2bb661fd7d67"
+ }
+}

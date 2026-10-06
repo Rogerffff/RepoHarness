@@ -1,0 +1,95 @@
+{
+ "instance_id": "pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605",
+ "status": "第 1 轮草案（A+B），即 Codex 复核 codex_reviews/review_revision_pillow.md §1 所审的版本；复核结论为需小改（补 C 堵 K2），已被上级目录的 revision_draft.json（第 2 轮 A+B+C）取代，不得用于正式材料。本副本只作记录；下文 trial 路径已改为 trials/round1/。",
+ "template": "R-c",
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "        reloaded = Image.open(out)\n        self.assertEqual(0, reloaded.tag_v2[41988][0].numerator)\n        self.assertEqual(0, reloaded.tag_v2[41988][0].denominator)\n",
+     "new": "        reloaded = Image.open(out)\n        self.assertEqual(0, reloaded.tag_v2[41988][0].numerator)\n        self.assertEqual(0, reloaded.tag_v2[41988][0].denominator)\n\n    def test_div_zero_other_unregistered_tag(self):\n        # Same zero-denominator round trip on another tag that has no\n        # TAGS_V2 entry (private tag 65000), not only the example tag.\n        im = hopper()\n        info = TiffImagePlugin.ImageFileDirectory_v2()\n        info[65000] = TiffImagePlugin.IFDRational(0,0)\n\n        out = self.tempfile('temp.tiff')\n        im.save(out, tiffinfo=info, compression='raw')\n\n        reloaded = Image.open(out)\n        self.assertEqual(0, reloaded.tag_v2[65000][0].numerator)\n        self.assertEqual(0, reloaded.tag_v2[65000][0].denominator)\n\n    def test_unregistered_int_tag_type(self):\n        # Integer values on a tag with no TAGS_V2 entry are still detected\n        # as integers and read back as int. IFDRational(5, 1) == 5, so the\n        # value type is checked, not only equality.\n        im = hopper()\n        info = TiffImagePlugin.ImageFileDirectory_v2()\n        info[65000] = 5\n\n        out = self.tempfile('temp.tiff')\n        im.save(out, tiffinfo=info, compression='raw')\n\n        reloaded = Image.open(out)\n        value = reloaded.tag_v2[65000][0]\n        self.assertEqual(5, value)\n        self.assertIsInstance(value, int)\n"
+    }
+   ]
+  }
+ ],
+ "expected_after": {
+  "TestFileTiffMetadata.test_div_zero_other_unregistered_tag": "PASSED",
+  "TestFileTiffMetadata.test_empty_metadata": "PASSED",
+  "TestFileTiffMetadata.test_exif_div_zero": "PASSED",
+  "TestFileTiffMetadata.test_iccprofile": "PASSED",
+  "TestFileTiffMetadata.test_iccprofile_binary": "PASSED",
+  "TestFileTiffMetadata.test_no_duplicate_50741_tag": "PASSED",
+  "TestFileTiffMetadata.test_read_metadata": "PASSED",
+  "TestFileTiffMetadata.test_rt_metadata": "PASSED",
+  "TestFileTiffMetadata.test_unregistered_int_tag_type": "PASSED",
+  "TestFileTiffMetadata.test_write_metadata": "PASSED",
+  "Test_IFDRational.test_ifd_rational_save": "PASSED",
+  "Test_IFDRational.test_nonetype": "PASSED",
+  "Test_IFDRational.test_sanity": "PASSED"
+ },
+ "positive_control": "gold",
+ "acceptance": {
+  "gold": {
+   "patch": "runs/r2e_static_prep_20260924/v3/private/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/gold.patch",
+   "expected_score": 1,
+   "trial": "trials/round1/ab_gold.json",
+   "trial_verdict": "match 13/13"
+  },
+  "noop": {
+   "patch": null,
+   "expected_score": 0,
+   "trial": "trials/round1/ab_noop.json",
+   "trial_verdict": "mismatch：test_div_zero_other_unregistered_tag 与 test_exif_div_zero 均 ERROR（struct.error: required argument is not an integer），其余 11 键 PASSED"
+  },
+  "K4b_tag_len_0": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/pillow_3ac9_K4b_tag_len_0.patch",
+   "expected_score": 0,
+   "trial": "trials/round1/ab_K4b.json",
+   "trial_verdict": "mismatch：只有 test_div_zero_other_unregistered_tag ERROR（struct.error）；现材料上为 1（11/11），误判已纠正"
+  },
+  "RC6_gold_with_numbers_rational": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/pillow_3ac9_RC6_gold_with_numbers_rational.patch",
+   "expected_score": 0,
+   "trial": "trials/round1/ab_RC6.json",
+   "trial_verdict": "mismatch：只有 test_unregistered_int_tag_type FAILED（5.0 is not an instance of int）；现材料上为 1（11/11），误判已纠正"
+  },
+  "K3_index_on_rational": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/pillow_3ac9_K3_index_on_rational.patch",
+   "expected_score": 0,
+   "trial": "trials/round1/ab_K3.json",
+   "trial_verdict": "mismatch：两个零分母键均 FAILED（0 != 1），仍为 0"
+  },
+  "K4_tag_len_1": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/pillow_3ac9_K4_tag_len_1.patch",
+   "expected_score": 0,
+   "trial": "trials/round1/ab_K4.json",
+   "trial_verdict": "mismatch：test_div_zero_other_unregistered_tag ERROR（struct.error），test_exif_div_zero ERROR（'IFDRational' object is not subscriptable），仍为 0"
+  },
+  "K1_rational_type_5": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/pillow_3ac9_K1_rational_type_5.patch",
+   "expected_score": 1,
+   "trial": "trials/round1/ab_K1.json",
+   "trial_verdict": "match 13/13（合理替代解未被误拒）"
+  },
+  "K1b_rational_type_10": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/pillow_3ac9_K1b_rational_type_10.patch",
+   "expected_score": 1,
+   "trial": "trials/round1/ab_K1b.json",
+   "trial_verdict": "match 13/13（不限定类型码 5 或 10）"
+  },
+  "K2_zero_denominator_only": {
+   "patch": "runs/r2e_actor_20260925/grader_cands/pillow_3ac9_K2_zero_denominator_only.patch",
+   "expected_score": 1,
+   "trial": "trials/round1/ab_K2.json",
+   "trial_verdict": "match 13/13。第 1 轮把 K2 判为零分母范围内合规、仅属 S2；Codex 复核指出这不成立（含零分母的混合序列会让 K2 抛 struct.error），第 2 轮以 C 断言覆盖，K2 应为 0"
+  }
+ },
+ "local_private_copy_sha256": {
+  "note": "本机私有副本 runs/r2e_static_prep_20260924/v3/private/pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605/ 的摘要，仅供核对；正式修订单的 sha256_before 以来源行原文为准",
+  "test_1.py_before": "sha256:887ed0de8fbbc9740f09a312628675f6cd1e638f46f0b573b60063e71d5c91f8",
+  "test_1.py_after": "sha256:4142dabbe290bb109e679fecf1c19110c093ee01b172ca85a5a785e741f29a5a",
+  "expected_output.json_before": "sha256:11a665803be78c9c0d5c5668725c6570914449e6d9b6145dfc4f2bb661fd7d67"
+ }
+}

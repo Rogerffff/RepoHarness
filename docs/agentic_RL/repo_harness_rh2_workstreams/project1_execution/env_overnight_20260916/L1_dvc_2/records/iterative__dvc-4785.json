@@ -1,0 +1,279 @@
+{
+ "task_id": "iterative__dvc-4785",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+  "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+  "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+  "raw": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc",
+  "base_commit": "7da3de451f1580d0c48d7f0a82b1f96ea0e91157",
+  "version": "1.9",
+  "python_version": "3.9",
+  "eval_cmd": "pytest -rA",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-4785:latest",
+  "workdir": "/testbed",
+  "test_patch_paths": [
+   "tests/unit/remote/test_http.py"
+  ],
+  "gold_paths": [
+   "dvc/tree/http.py"
+  ],
+  "n_f2p": 1,
+  "n_p2p": 8,
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-4785/{gold,empty}/offline/a1/",
+  "signals": {
+   "in_e2": [],
+   "fragile_reference_id": false,
+   "stage1": {
+    "empty": {
+     "verdict": "RESOLVED_NO",
+     "rc_install": 0
+    },
+    "gold": {
+     "verdict": "RESOLVED_FULL",
+     "rc_install": 0,
+     "p2p_missing": 0,
+     "f2p_missing": 0
+    }
+   },
+   "deepseek_candidate_oracle": null
+  }
+ },
+ "public_view": {
+  "目标行为": "HTTP(S) remote 的 `exists()` 不应把 403/401 等失败状态当成『文件不存在』；只有成功或 404 才算有定论，其余状态要报错。",
+  "约束": "题面**逐字给出了修法**：`The simplest fix would be using res.raise_for_status() in .exists() check unless we have success or 404.`",
+  "公开材料无法确定的点": [
+   "抛哪个异常类型。题面说 `res.raise_for_status()`（即 `requests.exceptions.HTTPError`），F2P 断言的却是 `dvc.exceptions.HTTPError`（`DvcException` 子类，签名 `HTTPError(code, reason)`）。两者没有继承关系。",
+   "`_head()` 在 HEAD 被禁时会退化成 streaming GET（base:dvc/tree/http.py:131-143），因此 `exists()` 拿到的可能是 GET 的响应——这层行为题面没提，但能从 base 代码读出。"
+  ],
+  "base 关键代码": "dvc/tree/http.py:144 `def exists(...): return bool(self._head(path_info.url))` —— `bool(Response)` 等价于 `response.ok`，于是 403/401 与 404 同样返回 False。`dvc/exceptions.py:287 class HTTPError(DvcException)`，在 base 的 `dvc/tree/http.py:8` 已被 import。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "repos/dvc d1441ee16a934e662c4699f15b43e1ba0bb31961 `http: raise error on unsuccessful http statuses on exists (#4785)` --stat: dvc/tree/http.py 7, tests/unit/remote/test_http.py 28"
+   ],
+   "note": "gold+test_patch 与上游一致，无丢件。",
+   "by": "L1_dvc_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base:dvc/tree/http.py:144",
+    "stage1 empty: test_exists FAILED"
+   ],
+   "note": "缺陷在 base 存在。",
+   "by": "L1_dvc_2"
+  },
+  "3": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement 724 字符 = 362 字符逐字重复两遍",
+    "scripts/leak.py 输出 dup_ps=True",
+    "raw hints_text 同样整段重复两遍"
+   ],
+   "note": "**题面整段重复两遍**（前 362 字符与后 362 字符逐字相同），hints 也是。这与 L1_mypy_1 在 216 题里扫出的 6 题重复题面清单一致（本题是其中之一）。内容本身完整、无截断、无外链图片。",
+   "by": "L1_dvc_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 仅 tests/unit/remote/test_http.py",
+    "gold 仅 dvc/tree/http.py"
+   ],
+   "note": "零交集。additional_exclusions 空。",
+   "by": "L1_dvc_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh git checkout 目标"
+   ],
+   "note": "纯测试文件恢复。",
+   "by": "L1_dvc_2"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan.json 本包路径表"
+   ],
+   "note": "本包无第二题触碰 dvc/tree/http.py 或 tests/unit/remote/test_http.py。",
+   "by": "L1_dvc_2"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement 提出 `res.raise_for_status()`",
+    "test_patch `with pytest.raises(HTTPError)`，其中 HTTPError 来自 base:tests/unit/remote/test_http.py:3 `from dvc.exceptions import HTTPError`",
+    "dvc/exceptions.py:287"
+   ],
+   "note": "题面把需求说得很清楚（403/401 不能当不存在），但**没有说异常类型**，而这正是唯一会被判分的细节。`dvc.exceptions.HTTPError` 与 `requests.exceptions.HTTPError` 无继承关系。",
+   "by": "L1_dvc_2"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "同上"
+   ],
+   "note": "**按题面字面写的实现会判 0**：`res.raise_for_status()` 抛 `requests.exceptions.HTTPError`，F2P 要的是 `dvc.exceptions.HTTPError`，`pytest.raises` 不会捕获。这是本包『题面给了修法但那个修法过不了测试』的唯一一例。要过测试必须发现 base 里已 import 的 `dvc.exceptions.HTTPError` 并手动 `raise HTTPError(res.status_code, res.reason)`——这在 dvc 内部是既有约定（`_download` 也这么抛），属于可从代码推出、但题面未交代的要求。",
+   "by": "L1_dvc_2"
+  },
+  "25": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 三段：200→True、404→False、403→raises"
+   ],
+   "note": "F2P 三段覆盖了题面要求的三类状态，硬编码 `return True` 或 `return False` 都过不了。题面原例（403 Forbidden / 401 Auth Required 被当成不存在）被直接覆盖（403 那一段）。401 未单列，但与 403 同分支。",
+   "by": "L1_dvc_2"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "smstat.json 4785: gold real=9 全 PASSED；P2P 8 条",
+    "P2P 含 test_download_fails_on_error_code（走真实本地 HTTP server）"
+   ],
+   "note": "整文件 9 条全绿，P2P 8 条覆盖 auth 方法、SSL 校验、`_download` 的错误码处理。缺口：`exists()` 的调用者（`dvc/tree/base.py`、gc/status/pull 路径）没有回归；把 404 也改成抛错的过度修复只会被 F2P 的第二段拦住，这已经足够。",
+   "by": "L1_dvc_2"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "上游 --stat 两文件",
+    "base:dvc/tree/http.py:8 已 import HTTPError"
+   ],
+   "note": "gold 7 行、不依赖未交付改动。注意 gold 把『HEAD 被禁时退化成 GET』的既有语义保留了（先 `_head`，再判 404/ok/其它），没有夹带改动。",
+   "by": "L1_dvc_2"
+  },
+  "29": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement 末句 `The simplest fix would be using res.raise_for_status() in .exists() check unless we have success or 404.`",
+    "leak.py: hints_match=2（`if res.status_code == 404:` / `return False` 两行 gold 新增代码在 hints 里逐字出现）"
+   ],
+   "note": "**题面本身就给出了修法与修改位置**（`.exists()` + `raise_for_status()` + 『除了成功与 404』）。这不是代码泄漏但接近；本题对模型而言更像『按指示改一行』而不是定位缺陷。hints（不可见）里还直接贴了几乎等价的实现与 GitHub 行号链接。",
+   "by": "L1_dvc_2"
+  },
+  "6": {
+   "status": "issue",
+   "evidence_refs": [
+    "stage1 eval.sh install 段"
+   ],
+   "note": "install 段需要网络。本题测试文件未受 pathspec/networkx 问题影响（gold 9/9 全绿）。",
+   "by": "L1_dvc_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 用 requests.Response() + mocker",
+    "tests/remotes/http.py:38-48 `http_server` fixture 用 tests/utils/httpd.StaticFileServer 在 127.0.0.1 上起本地静态服务器"
+   ],
+   "note": "F2P 完全 mock，无外部资产；P2P 的 test_download_fails_on_error_code 依赖一个**本地** HTTP 服务器（session 级 fixture，绑定临时端口），不访问外网。",
+   "by": "L1_dvc_2"
+  },
+  "11": {
+   "status": "issue",
+   "evidence_refs": [
+    "tests/remotes/http.py:36-44 `@pytest.fixture(scope=\"session\") def http_server(...)` 绑定 127.0.0.1 端口"
+   ],
+   "note": "测试段需要**本地回环网络与一个可绑定端口**（不需要外网）。离线阶段一里该用例通过，说明容器内回环可用。并发跑多题时端口由 `server_port` 动态分配，冲突风险低但未验证（`not_checked`）。",
+   "by": "L1_dvc_2"
+  },
+  "18": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh `pytest -rA tests/unit/remote/test_http.py`；gold real=9 = F2P 1 + P2P 8"
+   ],
+   "note": "收集集合与 F2P∪P2P 完全相等，零过选零漏选。",
+   "by": "L1_dvc_2"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "伪键 'Could'"
+   ],
+   "note": "同 3677。",
+   "by": "L1_dvc_2"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "empty 8 PASSED/1 FAILED；gold 9/9"
+   ],
+   "note": "分差恰为 F2P 一条。",
+   "by": "L1_dvc_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "题面修法与评分冲突",
+   "severity": "P1",
+   "evidence_refs": [
+    "problem_statement 末句",
+    "test_patch 的 `pytest.raises(HTTPError)` + base 测试文件 import"
+   ],
+   "proposed_action": "二选一：(a) 题面改成『抛 dvc 的 HTTPError』或干脆不写具体修法；(b) 放宽断言为 `pytest.raises((HTTPError, requests.exceptions.HTTPError))`。当前状态下照题面做会判 0。",
+   "next_experiment": "写 `res.raise_for_status()` 版本的实现跑 F2P，预期第三段 `pytest.raises(HTTPError)` 不捕获而失败。"
+  },
+  {
+   "category": "题面重复",
+   "severity": "P3",
+   "evidence_refs": [
+    "problem_statement 前后半逐字相同",
+    "leak.py dup_ps=True"
+   ],
+   "proposed_action": "去重（与 216 题里另外 5 道重复题面一起批量处理）。",
+   "next_experiment": "无（静态可判）。"
+  },
+  {
+   "category": "题面接近给出答案",
+   "severity": "P2",
+   "evidence_refs": [
+    "problem_statement 末句"
+   ],
+   "proposed_action": "作为训练难度分档的依据记录：本题的定位成本几乎为零，只剩『找到正确异常类型』这一步。",
+   "next_experiment": "无。"
+  },
+  {
+   "category": "本地端口依赖",
+   "severity": "P3",
+   "evidence_refs": [
+    "tests/remotes/http.py http_server fixture"
+   ],
+   "proposed_action": "记录 P2P 需要本地回环端口；并发评分时若容器共享网络命名空间需复核。",
+   "next_experiment": "同机并发跑多份本题评分，看 StaticFileServer 是否抢端口。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只有 tests/unit/remote/test_http.py；gold 只改 dvc/tree/http.py。沿用第四组 B 默认空。",
+  "evidence_refs": [
+   "test_patch",
+   "golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/unit/remote/test_http.py 中 401 状态的一段（新增）",
+   "reason": "题面同时点名 401 与 403，当前只测了 403。"
+  },
+  {
+   "id": "tests/func/test_data_cloud.py 里 http remote 的 status/pull 路径",
+   "reason": "`exists()` 的调用者；把不确定状态改成抛错后，上层是否仍能给出可读错误没有回归。"
+  },
+  {
+   "id": "tests/unit/remote/test_http.py::test_download_fails_on_error_code（已在 P2P）",
+   "reason": "确认 `_download` 的错误码语义未被误改，已覆盖。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "环境与判分链路很干净（9/9 全绿、收集集合与参考集完全相等、无依赖问题），但题面明确建议的修法（`res.raise_for_status()`）会被 F2P 判 0，且题面整段重复两遍。改题面或放宽异常断言后即可用。"
+ },
+ "costs": {
+  "minutes": 18
+ },
+ "by": "L1_dvc_2 (Claude Opus 5, 2026-09-16, 静态审查)"
+}

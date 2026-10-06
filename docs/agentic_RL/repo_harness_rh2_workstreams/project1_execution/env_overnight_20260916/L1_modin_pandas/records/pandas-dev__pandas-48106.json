@@ -1,0 +1,75 @@
+{
+ "task_id": "pandas-dev__pandas-48106",
+ "source": "SWE-Gym lite (s2 ingest v0)",
+ "task_revision": "upstream",
+ "materials_refs": [
+  "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+  "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+  "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+  "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl",
+  "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-48106/{gold,empty}/offline/a1/",
+  "runs/env_overnight_20260916/repos/pandas@8b72297c8799725e98cb2c6aee664325b752194f"
+ ],
+ "public_view": {
+  "goal": "Series(dtype=category) 的 loc 放大赋值（s.loc[3] = 0）在 main 上抛 TypeError: type.__new__() takes exactly 3 arguments (1 given)，应恢复 1.4.3 的行为。",
+  "constraints_from_statement": [
+   "题面给出完整 traceback，直接点名 pandas/core/dtypes/cast.py 的 maybe_promote/_maybe_promote/_ensure_dtype_type 与 pandas/core/indexing.py:2115 的调用点，定位成本极低。",
+   "题面给出的唯一期望行为：s = Series(['a','b','c'], dtype='category'); s.loc[3] = 0 → dtype 变 object，值为 a,b,c,0。",
+   "题面原文写的是 when setting with enlargement, we cast the categorical dtype to object，读起来像是『categorical 放大一律转 object』。"
+  ],
+  "unknowns_from_public_only": [
+   "放大赋一个已存在的分类值（s.loc[3] = 'a'）应保持 category 还是转 object —— 题面未说。",
+   "放大赋 NA（np.nan / pd.NA / None / pd.NaT）应保持 category 还是转 object —— 题面未说。",
+   "categories 为 nullable EA dtype（Int8/UInt8/Float32 等）时的 enlarge 与 set-into 行为 —— 题面未说。",
+   "修复该落在 cast.py（maybe_promote）还是 indexing.py（_setitem_with_indexer_missing）—— 题面未指定。"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["pandas@8b72297c:pandas/core/dtypes/cast.py", "pandas@8b72297c:pandas/tests/indexing/test_loc.py"], "note": "test_patch 仅改 pandas/tests/indexing/test_loc.py，gold 仅改 pandas/core/dtypes/cast.py，两者在 base 都存在；无二进制/LFS/子模块材料。", "by": "L1_modin_pandas"},
+  "2": {"status": "pass", "evidence_refs": ["pandas@8b72297c:pandas/core/dtypes/cast.py L575-599", "stage1 empty/status_map.json: 16 个 F2P 全 FAILED"], "note": "base 的 _maybe_promote 在 kinds/isna 分支前没有 CategoricalDtype 分支，最终走到 _ensure_dtype_type -> dtype.type(value)，与题面 traceback 一致；empty 侧 16 个 F2P 全 FAILED 佐证初态含缺陷。", "by": "L1_modin_pandas"},
+  "3": {"status": "issue", "evidence_refs": ["public_bundles_v0.jsonl problem_statement", "raw hints_text"], "note": "题面无外链、无图片、无截断代码块（4312 字符，traceback 完整）。hints_text 里有题面没有的信息：first bad commit URL、PR #47342、以及最小复现 pd.core.dtypes.cast.maybe_promote(CategoricalDtype(...), 0)。hints 不可见，但题面 traceback 已足够定位，影响有限。", "by": "L1_modin_pandas"},
+  "4": {"status": "pass", "evidence_refs": ["grading.test_patch"], "note": "test_patch 只触碰 pandas/tests/indexing/test_loc.py（纯测试路径），无非测试源码混入。", "by": "L1_modin_pandas"},
+  "17": {"status": "pass", "evidence_refs": ["validation.golden_patch"], "note": "gold 只触碰 pandas/core/dtypes/cast.py，不含测试样路径；additional_exclusions 保持空。", "by": "L1_modin_pandas"},
+  "5": {"status": "pass", "evidence_refs": ["task_signals_swegym.json", "tasks_by_repo.json"], "note": "本包其余 pandas 题（50319/51605/53958/56849）与本题不同 PR、不同测试文件、不同模块，无重复或派生。", "by": "L1_modin_pandas"},
+  "23": {"status": "issue", "evidence_refs": ["grading.test_patch", "public_bundles_v0.jsonl problem_statement"], "note": "16 个 F2P 里只有 1 个（test_additional_element_to_categorical_series_loc）能从题面推出。其余 15 个检查题面完全没写的行为：赋已有分类值须保持 category；赋 NA 须保持 category；categories 为 nullable EA 时 enlarge+set-into 都保持 category。更严重的是题面字面说的是『放大时把 categorical 转 object』，照字面实现会让 test_additional_categorical_element_loc 与 12 个 nullable-EA 用例全挂。公开要求与 F2P 存在方向性冲突。", "by": "L1_modin_pandas"},
+  "24": {"status": "pass", "evidence_refs": ["grading.test_patch"], "note": "F2P 全部只断言 Series.loc 的可观察行为（dtype 与值），不引用新 helper 名、不检查内部调用顺序、不匹配精确异常字符串。在 pandas/core/indexing.py 的 _setitem_with_indexer_missing 里特判 CategoricalDtype 的替代实现同样能过，不强制唯一实现。", "by": "L1_modin_pandas"},
+  "25": {"status": "pass", "evidence_refs": ["grading.test_patch"], "note": "题面原例被 test_additional_element_to_categorical_series_loc 覆盖；『一律转 object』被 test_additional_categorical_element_loc 挡住；『一律保持 category』被 test_additional_element_to_categorical_series_loc 挡住。对错误修复的拦截足够。", "by": "L1_modin_pandas"},
+  "26": {"status": "pass", "evidence_refs": ["pandas@8b72297c"], "note": "见 proposed_regression_tests。", "by": "L1_modin_pandas"},
+  "27": {"status": "pass", "evidence_refs": ["validation.golden_patch", "pandas@8b72297c:pandas/core/dtypes/cast.py L47-95"], "note": "gold 只加一个 elif 分支；用到的 CategoricalDtype(L78)、isna(L93)、ensure_object(L55) 在 base 都已 import，不依赖未交付改动；无与题无关的顺带改动。瑕疵：_maybe_promote 签名标注仍是 dtype: np.dtype，新分支却处理 CategoricalDtype，标注与实现不一致（不影响测试）。", "by": "L1_modin_pandas"},
+  "29": {"status": "issue", "evidence_refs": ["leak.json", "raw hints_text"], "note": "题面本身不含 gold 新增代码、不指向上游 PR（statement_ptrs 为空；leak 扫描命中的 return dtype, fill_value 来自 traceback 的上下文行，不是 gold 新增行）。hints_text 直接给出 first bad commit URL 与 PR #47342，若将来把 hints 并入题面会构成泄漏。", "by": "L1_modin_pandas"},
+  "6": {"status": "issue", "evidence_refs": ["stage1 gold/offline/a1/eval.sh", "stage1 gold/offline/a1/test_output.txt L4309-6067"], "note": "安装阶段要联网 pip 安装 numpy<2 并用 -ve . --no-build-isolation 重编整棵 pandas C/Cython 扩展；stage1 install 阶段耗时约 779 秒（1789072647.24 -> 1789073426.53）。这是 rollout 的固定大头成本。", "by": "L1_modin_pandas"},
+  "7": {"status": "pass", "evidence_refs": ["stage1 gold/offline/a1/test_output.txt"], "note": "测试段内未出现真实网络端点访问；测试集中在 pandas/tests/indexing/test_loc.py，不用 datapath/S3/torch.hub。", "by": "L1_modin_pandas"},
+  "11": {"status": "issue", "evidence_refs": ["runs/env_overnight_20260916/L1_modin_pandas/collide_detail.json", "stage1 gold/offline/a1/status_map.json"], "note": "3 个 P2P 因反斜杠转义层级不一致永远匹配不上；另有 2 个截断键各吞掉 4 个和 2 个运行时 ID。详见 issues。", "by": "L1_modin_pandas"}
+ },
+ "issues": [
+  {"category": "reference_id_mismatch", "severity": "P1",
+   "evidence_refs": ["runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/pandas-dev__pandas-48106/gold/offline/a1/test_output.txt L6164-6170", "grading.pass_to_pass"],
+   "note": "数据集常量是 test_contains_raise_error_if_period_index_is_in_multi_index[Period\\('2017', （单反斜杠），运行时 pytest 打印的是 Period\\\\('2019', （双反斜杠）。gold 与 empty 两侧都 p2p_missing=3，stage1 因此把 gold 判成 RESOLVED_NO —— 不是解答质量问题，是 ID 常量本身永远匹配不上。",
+   "proposed_action": "把这 3 个 P2P 从常量里剔除，或按运行时实际 ID 重写常量（须固定 pytest 版本），并写进 task_revision。",
+   "next_experiment": "在真机镜像里跑 pytest --collect-only -q pandas/tests/indexing/test_loc.py 导出运行时 ID 全集，与常量做集合对拍，确认只有这 3 条不一致。"},
+  {"category": "reference_id_truncation", "severity": "P2",
+   "evidence_refs": ["runs/env_overnight_20260916/L1_modin_pandas/collide_detail.json", "rh2/src/repoharness2/envpack/swegym_parsers.py parse_log_pytest"],
+   "note": "38 个 P2P 常量方括号不配平（上游按空白切 nodeid 造成的截断）；其中 2 个截断键在运行时各对应 4 个和 2 个不同测试（多吞 4 个 ID）。parser 是 test_status_map[test_case[1]] = test_case[0]，后写覆盖先写，等于只保留组内最后执行那条的判定。",
+   "proposed_action": "含空格参数的 nodeid 改用 junitxml/JSON 报告取 ID，或在常量层标注『该键代表 N 个运行时测试』。",
+   "next_experiment": "用 pandas addopts 自带的 --junitxml=test-data.xml 解析 classname+name，与 -rA 摘要行做 ID 对拍。"},
+  {"category": "requirement_insufficient", "severity": "P1",
+   "evidence_refs": ["public_bundles_v0.jsonl problem_statement", "grading.test_patch"],
+   "note": "题面把期望行为描述成『放大时 categorical 转 object』，而 15/16 个 F2P 要求『赋已有分类值或 NA 时保持 category』。照题面字面做会大面积失败。",
+   "proposed_action": "补题面（说明按 fill_value 是否属于 categories、是否为 NA 分流），或把不可推导的 12 个 nullable-EA 参数化 F2P 降级为 P2P。",
+   "next_experiment": "无需跑；属于题面改写决定。"},
+  {"category": "grading_injection_surface", "severity": "P2",
+   "evidence_refs": ["pandas@8b72297c:pyproject.toml [tool.pytest.ini_options] addopts 含 --capture=no", "rh2/src/repoharness2/envpack/swegym_parsers.py parse_log_pytest"],
+   "note": "pandas addopts 含 --capture=no，测试期 stdout 直接落日志；parser 对任何以 PASSED/FAILED/ERROR/SKIPPED/XFAIL 开头的行取第二个空白分词当 nodeid。agent 可在被判分的非测试源码里 print 伪状态行。本题实测测试段内伪状态行=0（仅安装段有一条 ERROR: pip's ...，落在 RH2_PHASE_START test 之前，v2 只取标记段则不受影响）。",
+   "proposed_action": "评分侧只信任测试段内、第二分词形如 <path>::<name> 且属于 F2P∪P2P 的行；或给 eval 显式覆盖 --capture 参数。",
+   "next_experiment": "构造一个只 print 伪状态行的补丁，在真机跑一次确认 parser 是否被污染。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 与 gold 路径完全分离（测试只在 pandas/tests/，修复只在 pandas/core/），无需额外排除；沿用第四组 B 的默认空集。", "evidence_refs": ["grading.test_patch", "validation.golden_patch"]},
+ "proposed_regression_tests": [
+  {"id": "pandas/tests/dtypes/cast/test_promote.py", "reason": "gold 改的是 maybe_promote 本身，该文件是它的直接单元测试，能抓到新分支对非 categorical 路径的回归。"},
+  {"id": "pandas/tests/indexing/test_categorical.py", "reason": "categorical 索引/赋值的主测试文件，覆盖 set-into 与非放大路径。"},
+  {"id": "pandas/tests/series/indexing/test_setitem.py", "reason": "Series.__setitem__ 与 loc 共用 _setitem_with_indexer_missing，能抓到在 indexing.py 侧特判造成的旁路回归。"},
+  {"id": "pandas/tests/frame/indexing/test_setitem.py", "reason": "DataFrame 侧同一调用链，确认修复没有只在 Series 上成立。"}
+ ],
+ "disposition_hint": {"state": "needs_repair", "reason": "3 个 P2P 常量因转义层级不一致永远 missing，gold 必然判 RESOLVED_NO，这题在 RL 里恒定 0 奖励；修完 ID 后还要处理题面与 F2P 的方向性冲突。"},
+ "costs": {"minutes": 38}
+}

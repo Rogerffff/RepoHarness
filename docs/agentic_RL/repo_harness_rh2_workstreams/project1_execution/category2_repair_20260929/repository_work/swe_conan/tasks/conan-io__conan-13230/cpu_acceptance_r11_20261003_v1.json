@@ -1,0 +1,104 @@
+{
+  "status": "formal_cpu_accepted_after_root_and_non_author_reviews",
+  "root_audit": {
+    "path": "runs/category2_repair_20260929/conan_cpu_20261003/formal_matrix_13230_r11_v2_audit.json",
+    "sha256": "sha256:b27f973000b2a78e050438e6d24f6de2da9f8d95745c318ccc9c103b172983f6"
+  },
+  "release_id": "cat2-cpu-r2e089092-swe17-dask-conan-20261003-v1",
+  "manifest_sha256": "bf1d0e8a279f996a7737de775c9a30abf3401dc34840ef54bf7e56b754991bb9",
+  "grading_materials_identity": "sha256:c19c5f0f18836b70f99718f1a7afb4ceb11b3cca974b5e4413489045b21b80e2",
+  "matrix": [
+    {
+      "candidate_id": "noop",
+      "expected_reward": 0,
+      "actual_reward": 0.0,
+      "f2p_pass": 0,
+      "f2p_total": 3,
+      "p2p_fail": 0,
+      "p2p_total": 34,
+      "test_rc": 1,
+      "exec_rc": 0,
+      "source_candidate_sha256": null,
+      "log_sha256": "sha256:cce1098280653a1250f2d1f565c8d14330a741d518dd7c99a0893343d85e7d84",
+      "projection_included_paths": [],
+      "all_normal_cleanup_verified": true
+    },
+    {
+      "candidate_id": "gold",
+      "expected_reward": 1,
+      "actual_reward": 1.0,
+      "f2p_pass": 3,
+      "f2p_total": 3,
+      "p2p_fail": 0,
+      "p2p_total": 34,
+      "test_rc": 0,
+      "exec_rc": 0,
+      "source_candidate_sha256": "sha256:c77c7fa0aca6eecc6acaff2f21a23eeef23443c13467057b1367527ddfece7f7",
+      "log_sha256": "sha256:981830fd96eb1e012b37014b938558de4ef4eab4ebf43bd093a9127cbab9ed88",
+      "projection_included_paths": [
+        "conan/tools/gnu/autotoolstoolchain.py"
+      ],
+      "all_normal_cleanup_verified": true
+    },
+    {
+      "candidate_id": "android_only",
+      "expected_reward": 0,
+      "actual_reward": 0.0,
+      "f2p_pass": 1,
+      "f2p_total": 3,
+      "p2p_fail": 0,
+      "p2p_total": 34,
+      "test_rc": 1,
+      "exec_rc": 0,
+      "source_candidate_sha256": "sha256:8d99fdcef2c400cf07c11e26de93af78f62030a2594c2ae6d86aac45dd4583fe",
+      "log_sha256": "sha256:63a0b391fd3724b57ff4c70937c6027e28cdd57227e7183270bc6e8a26ab5c38",
+      "projection_included_paths": [
+        "conan/tools/gnu/autotoolstoolchain.py"
+      ],
+      "all_normal_cleanup_verified": true
+    }
+  ],
+  "f2p_count": 3,
+  "p2p_count": 34,
+  "independent_reviews": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_13230_r11_cpu_runtime_review_20261003.md",
+      "sha256": "sha256:c3fd9d3e45f46363f24b771303d5b9d21a847e77e84d952964db1e7af1c3c880",
+      "role": "Production Tracer",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "high",
+      "scope": "13230 R11 formal CPU only; no GPU/model/training qualification"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_13230_r11_cpu_scope_review_20261003.md",
+      "sha256": "sha256:7cfd868299247ad697780e6a1338caebc71235f4102d3701a6eab17aa35b2c4d",
+      "role": "Falsifier / Simplifier",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "high",
+      "scope": "13230 R11 formal CPU only; no GPU/model/training qualification"
+    }
+  ],
+  "public_brief": "solver_brief_20261003_v2.md",
+  "actor_reuse": "baseline_actor_13230_v2 actual CC/UID/module/import/34old tests/public CLI; same image config/public statement/source/vendor, not complete solver proof",
+  "ordinary_probe_ready": true,
+  "training_eligibility": "not_established",
+  "root_disposition": {
+    "blocking_findings": [],
+    "accepted_evidence": "55 SHA/size, 111 exact reference states, whole-patch FrozenPatch content correspondence, R11 immutable consumer, install/test/driver close and two-level cleanup; independent reports agree",
+    "accepted_limits": [
+      "Full resource facts not persisted for each matrix container; declared profile and retained memory peak do not establish measured CPU capacity.",
+      "Remote label readback receipt omits query argv; root audit script uses exact owned run labels.",
+      "Old scripted actor proves public generation commands and source/vendor conditions, not complete solver delivery."
+    ],
+    "next_gate": "GPU must verify full original issue plus brief v2 delivery before first real solver dispatch; no CPU rerun merely for this delivery check.",
+    "public_reader_initial": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_r11_public_reader_20261003.md",
+      "sha256": "sha256:aed37c93cb77326a650ed2e92fc61153ad400e42e669dc746368304eb2008d83"
+    },
+    "public_reader_v2_delta": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_r11_public_reader_v2_delta_20261003.md",
+      "sha256": "sha256:250a29c154468faf7d0ac585ace4b7feb0b2378815b23a967481343e1a8eb9dc"
+    },
+    "sdk_clarification": "R11-PR-1 closed by public config placeholder explanation; generation only, no real SDK compile/link claim"
+  }
+}

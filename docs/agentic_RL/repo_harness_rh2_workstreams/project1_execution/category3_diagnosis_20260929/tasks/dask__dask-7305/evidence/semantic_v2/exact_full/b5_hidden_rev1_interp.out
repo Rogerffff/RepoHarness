@@ -1,0 +1,27 @@
+============================= test session starts ==============================
+platform linux -- Python 3.8.19, pytest-8.3.2, pluggy-1.5.0
+rootdir: /testbed
+configfile: setup.cfg
+plugins: xdist-3.6.1, cov-5.0.0
+collected 108 items / 105 deselected / 3 selected
+
+dask/dataframe/tests/test_shuffle.py ...                                 [100%]
+
+=============================== warnings summary ===============================
+../opt/miniconda3/envs/testbed/lib/python3.8/site-packages/chest/core.py:1
+  /opt/miniconda3/envs/testbed/lib/python3.8/site-packages/chest/core.py:1: DeprecationWarning: Using or importing the ABCs from 'collections' instead of from 'collections.abc' is deprecated since Python 3.3, and in 3.10 it will stop working
+    from collections import MutableMapping
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+==================================== PASSES ====================================
+============================= slowest 10 durations =============================
+0.51s call     dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate
+0.03s call     dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate_int
+0.02s call     dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate_large_uint
+
+(6 durations < 0.005s hidden.  Use -vv to show these durations.)
+=========================== short test summary info ============================
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate_int
+PASSED dask/dataframe/tests/test_shuffle.py::test_set_index_interpolate_large_uint
+================= 3 passed, 105 deselected, 1 warning in 1.29s =================

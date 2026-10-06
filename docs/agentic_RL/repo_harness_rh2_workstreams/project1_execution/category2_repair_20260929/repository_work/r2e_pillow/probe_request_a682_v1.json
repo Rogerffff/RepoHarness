@@ -1,0 +1,124 @@
+{
+  "schema_id": "rh2.ordinary_gpu_probe.owner_request.v1",
+  "request_id": "r2e-pillow-a682-cpu-v1-20261003",
+  "status": "cpu_acceptance_complete_pending_executor_review",
+  "package_id": "r2e_pillow",
+  "package_path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_pillow",
+  "owner_thread_id": "01a0fd64-1b6e-75b0-978a-2873ac32201c",
+  "owner_thread_title": "R2E | Pillow 题目修订",
+  "tasks": [
+    {
+      "task_id": "r2e_gym_subset::pillow__a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90",
+      "instance_id": "pillow__a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90",
+      "purpose": "在修订已通过CPU正式矩阵及非作者结果核查的真实harness内，观察基座修复能力并由本题主审阅轨迹、候选语义和评分一致性。",
+      "allowed_uses": [
+        "普通基座诊断与必要能力比较"
+      ],
+      "limits": [
+        "CPU私有正对照不计模型成绩，不投递给solver。",
+        "同仓答案包含关系保留；本请求不授予训练或留出资格。",
+        "沿既有修订范围与停止条件；不是因模型失败再添加评分条件。"
+      ],
+      "source_binding": {
+        "release_id": "cat2-cpu-r2e078079-swe7-git-20261003-v1",
+        "local_release_dir": "runs/category2_repair_20260929/releases_20261003/r2e_078_079_swe7_git_candidate_v1",
+        "external_manifest": "runs/category2_repair_20260929/releases_20261003/r2e_078_079_swe7_git_candidate_v1/manifest.json",
+        "external_manifest_sha256": "sha256:80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9",
+        "registry": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_078_079_swe7_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v17.json",
+          "sha256": "sha256:2af5c20fec2293c27f0ffc967f0345edc4fe89978a536299f9963261c932f72d"
+        },
+        "input_pins": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_078_079_swe7_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/t1_input_pins_r2e_v18.json",
+          "sha256": "sha256:7b8ee0127d9bd36cfc65bfd7aa9d1bfcb68d7d30c539c1d699c77257a47c3d27"
+        },
+        "material_revision_ids": [
+          "r2e-mr-072"
+        ],
+        "hidden_test_file": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_078_079_swe7_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files_20261003_v16/pillow__a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90/test_1.py",
+          "sha256": "sha256:3573f459d7e313f7b3ca14ae691fccc9268d82ba079de8c7cdb870abf466274a"
+        },
+        "hidden_tests_tree_sha256": "sha256:2cbad6d046d3b725d4fa33ccc7ba8516236a84fdca735b0644b60b41ac013114",
+        "expected_output_json_sha256": "sha256:a465b6c99cb3be23e4f9d9a4f602d6caa2ceea228f524532938a535f7401a096",
+        "expected_total": 93,
+        "run_tests_sh_sha256": "sha256:8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+        "problem_statement_sha256": "sha256:e2b89213bf251462b69e4faa89f31d31a3934b0c8b457909fb7cfd774f6a181b",
+        "reference_binding": {
+          "source": "固定R5受信validation面重导原gold",
+          "sha256": "sha256:c08adef17e02cbc9f68d1c7166d9f42bc946cf80dbfd22b2fb72699860888ecd",
+          "local_export_path": "runs/category2_repair_20260929/r2e_pillow_cpu_b_20261003/gold_source_v5/pillow__a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90.gold.patch",
+          "cpu_reward": 1.0
+        },
+        "formal_runner_sha256": "sha256:d36fa3367415e573305a7a03619f51e7cbd358627569f3844d5c203b70d66db3"
+      },
+      "image": {
+        "source_ref_by_digest": "namanjain12/pillow_final@sha256:c9ee334c59190b34affeedb010cf805d456306370d6176ccb8db11648a7f5733",
+        "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+        "recipe_sha256": "sha256:6126f09927658ef9a54bc0ea87ecf4b3c2c2d59244172844a6e6e38cef2d9a12",
+        "cpu_derived_image_id": "sha256:33f71f7633ed8d868b726e351774bd9359c945d8815d0f45369b63c0192f6fb7",
+        "cpu_facts": {
+          "path": "runs/category2_repair_20260929/r2e_pillow_cpu_b_20261003/rgba_gif_inputs_core_v1/derived/pillow3a61a682-build-20261002T175714Z/pillow__a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90/facts.json",
+          "sha256": "sha256:fb1bc2b04863677174bd23ebbab2918d65919a85c619b6ee9528b91ba1d486a7"
+        },
+        "gpu_binding_policy": "由统一执行者在固定来源和材料下构建并核GPU宿主实际ID，不沿用CPU或旧宿主ID。",
+        "environment_install_note": "本轮仅私有测试修订；沿现有sysconfig派生配方，没有pytest降级或新增Pillow依赖改装。"
+      },
+      "public_delivery": {
+        "mode": "unchanged"
+      },
+      "public_delivery_binding": {
+        "source_public_bundles": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_078_079_swe7_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl",
+          "sha256": "sha256:b09a9a670698006f41814ace894014476b27d5a19910f3dd93682867f3f5c9c2"
+        },
+        "problem_statement_sha256": "sha256:e2b89213bf251462b69e4faa89f31d31a3934b0c8b457909fb7cfd774f6a181b",
+        "public_hints_sha256": "sha256:c031169467a4d7a221ecccaac999c41f4eab3db95d3b7aba34dd008c9e2d2b85",
+        "rationale": "原题面及generic public_hints与本轮开发条件仍准确；环境依赖、公开命令与接口未变化，仅修订私有断言。换宿主的真实CC身份及PIL源码/C扩展导入已验，既有公开开发与阅读证据按未变范围复用，不需要追加公开brief。",
+        "solver_visibility": "只投递由固定公开bundle生成的原prompt；不整体交付内部目录、私有材料、gold、反例或本请求。"
+      },
+      "cpu_acceptance": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_pillow/cpu_a682_acceptance_v1.json",
+        "sha256": "sha256:1b5621a6eecbd8da8cab3ca62306a68edb49c4de8c7b0d2761861d3239e6aa3a",
+        "formal_matrix": {
+          "total": 16,
+          "positive": 3,
+          "negative": 13,
+          "expected_total": 93
+        },
+        "core_manifests": [
+          {
+            "path": "runs/category2_repair_20260929/r2e_pillow_cpu_b_20261003/a682_matrix_core_v1/core_manifest.json",
+            "sha256": "sha256:f4fd781148446d349aa7aad847ddabc2626a0d695b7c6f058f21157e82f0ae08"
+          },
+          {
+            "path": "runs/category2_repair_20260929/r2e_pillow_cpu_b_20261003/a682_actor_core_v1/core_manifest.json",
+            "sha256": "sha256:26da73cb8feaa228ef48d900f1174d47d0b7067d945d950c76b9025e5b9bbccc"
+          }
+        ],
+        "actor": "实际CC 4 Bash/4工具返回/5桩请求；13项检查全过；非模型成绩",
+        "cleanup": "formal及actor完整退出，无残留",
+        "non_author_review_snapshot": {
+          "path": "runs/category2_repair_20260929/r2e_pillow_cpu_b_20261003/review_snapshots/a682_cpu_result_review_v1.md",
+          "sha256": "sha256:6be22d9571b8a600c09b5df420e007cf22d4490b6aed69c0ea9b7e0f90e8a643"
+        }
+      }
+    }
+  ],
+  "model_budget": {
+    "decision_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/ordinary_probe_20260929/gpu_coordination_decisions_20261002.md",
+    "budget_id": "probe-wide-v1",
+    "attempts_per_model": 1,
+    "models": [
+      "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+      "Qwen/Qwen3.6-35B-A3B"
+    ]
+  },
+  "executor_resolves": [
+    "接收入口的unchanged公开交付已验实现及不可变GPU代码版本",
+    "固定来源/材料与GPU宿主实际镜像ID",
+    "原prompt实际首请求交付",
+    "模型服务/预算/串行排队准入"
+  ],
+  "result_owner_policy": "本题主持续审候选、轨迹、正式逐键结果及必要修复；已有2d01请求与结果不改绑、不重跑。"
+}

@@ -1,0 +1,15 @@
+# 第五版的合并与发布核查
+
+2026-10-03。本维护者复核子agent实现的MONAI3715／Moto合并及协调者提供的Git精确增量，随后自行登记已独立审过的NumPy材料。未SSH、未运行MONAI／NumPy项目或模型。此记录不是题级CPU验收。
+
+MONAI3715独立单包审查见`runs/category2_repair_20260929/release_work_20261003/monai3715_candidate_v1/NON_AUTHOR_REVIEW.md`。合并不能整文件覆盖Moto版本：已读最终两个材料runtime文件差异，保留Moto类型、两个registry、公开重放、既有P2P路由及`spec_vendor.py`追加命令。3715仅增加唯一题ID／revision／文件／新F2P配对；asset root与registry SHA在父类之前分派。原4583对应关系仍受校验。候选修改剥离、基线恢复和完整补丁路径沿原实现。
+
+合并副本为`runs/category2_repair_20260929/release_work_20261003/monai3715_combined_swe7_v1/`。277项材料／消费者维护与59项Git维护通过，ruff通过。834成员相对父823成员的差异清单、日志及命令已读。两个隔离进程实际消费264题，仅3715的私有评分／绑定身份／准备脚本发生材料变化，原公开和候选安装／测试命令保持。新的SWE7 producer pin为`84e82a8219c215ce5f8711bbd7e3306d4af6217dc9c809ee1dc436bcc52352fd`；旧producer未改。
+
+Git四文件与协调者已独立审核的`implementation_files.json`逐字相同。改动是可信初态阶段重新、单线程打包；不删除基线字段、不取消排除目录比较。**262道其他题材料身份不变，不能推成运行代码相同。** 新的真实非空actor→grader验收仍由统一执行线完成，旧FrozenPatch不能静默重绑。
+
+NumPy登记复用本包材料、fresh公开阅读及`prepublication_cpu_review.md`，不再重做原229键五行对照。078从来源合并替换056，完整test_1 SHA为`09d0aa6d80f85d394fc0a7971e23de8dd43a79d817749f0246693f62898bf67a`；079题面SHA为`0d6302a3be3a39d0828c4fc5cf3b9e4d70ce6099b9bc61f6cf4275aad276225e`。原229键、运行命令及全部48份gold保持；其它47个R2E输入不变。登记时依据来源重放，不把父有效文件误当原件。
+
+封包脚本对最终候选再次构造全部264个正式consumer，并只允许MONAI3715、NumPy d805两题材料变化；非NumPy文件与已通过277／59检查的作者固定清单逐字匹配，因此不机械重跑这336项。NumPy自己的材料维护、prepare与最终trusted读回重新执行。具体外部manifest和实际结果以`publication_20261003.md`及发布目录`checks/`为准。
+
+剩余：新宿主完整manifest读回、MONAI3715及NumPy新版正式候选矩阵与真实公开交付。共享builder继承第四版，真实daemon三项已由协调者执行并独立核查；不是Docker build内部资源或题级结果证明。不得以“封包成功”给探针或训练准入。

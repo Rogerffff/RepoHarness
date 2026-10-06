@@ -1,0 +1,269 @@
+{
+ "task_id": "swe_gym_lite::Project-MONAI__MONAI-4676",
+ "instance_id": "Project-MONAI__MONAI-4676",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "by": "L1_monai_2 (Claude Opus 5, 静态审查)",
+ "materials_refs": {
+  "base_commit": "fedff1d414e4a35f2753eb6b73ace9821024c754",
+  "version": "0.9",
+  "python_version": "3.8",
+  "eval_cmd": "pytest -rA  tests/test_meta_tensor.py（整文件跑）",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/Project-MONAI__MONAI-4676/{gold,empty}/offline/a1/",
+  "created_at": "2022-07-11"
+ },
+ "public_view": {
+  "目标行为": "让 `MetaTensor` 与 numpy 函数互操作：题面只给一个例子 `np.sum(monai.data.MetaTensor(1.0))` 目前抛 TypeError，希望能工作，并提出『把主数组结果返回成 np.ndarray 是个不错的起点』。",
+  "约束": "题面自述是 feature request（非崩溃修复）；未指定要覆盖哪些 numpy 函数。",
+  "公开材料无法确定的点": [
+   "要支持的 numpy 函数范围（`np.sum` 之外是否含 `np.linalg.qr`、`np.concatenate`、`np.argwhere`）",
+   "是否要支持 numpy ufunc（`MetaTensor > np.ndarray` 这类比较）",
+   "返回类型到底是 ndarray 还是 MetaTensor",
+   "元数据（affine/meta）在 numpy 运算后如何处理"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.test_patch tests/test_meta_tensor.py:520+",
+    "validation.golden_patch monai/data/meta_tensor.py:280+"
+   ],
+   "note": "题面、test_patch、gold 同属一个 PR；目标文件 base 均存在。无二进制/LFS/子模块材料。",
+   "by": "L1_monai_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base fedff1d4 monai/data/meta_tensor.py 无 __array_function__/__array_ufunc__ 定义",
+    "stage1 empty: 6 条 test_array_function 全 FAILED"
+   ],
+   "note": "初态确实缺 numpy 互操作协议。",
+   "by": "L1_monai_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "public.problem_statement 1209 字符，含完整 traceback"
+   ],
+   "note": "题面完整、无外链无图片。**但 hints_text（981 字符）里有题面没有的关键定性信息**：维护者讨论确认这是『基本互操作性』而非核心数据结构改动、且必须 non-breaking。hints 对求解者不可见，不过这条信息不影响能否做对，只影响设计取向。",
+   "by": "L1_monai_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.test_patch 只触碰 tests/test_meta_tensor.py"
+   ],
+   "note": "纯测试文件；gold 只碰 monai/data/meta_tensor.py。additional_exclusions 保持空。",
+   "by": "L1_monai_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh setup 段"
+   ],
+   "note": "恢复清单只有一个纯测试文件。",
+   "by": "L1_monai_2"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_monai_2/scan/monai_cross_index.txt"
+   ],
+   "note": "P3：与 **MONAI-6523** 同 gold 文件（monai/data/meta_tensor.py）、同测试文件（tests/test_meta_tensor.py），相隔 10 个月。6523 的 base 已包含本题的 gold，且本题新增的 `test_array_function_0..5` 正是 6523 的 P2P 成员。两题必须划到训练/评测的同一侧，否则构成跨题泄漏。",
+   "by": "L1_monai_2"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "public.problem_statement 只出现 np.sum",
+    "test_patch 断言用到 np.sum/np.sum(axis)/np.linalg.qr/np.argwhere/np.concatenate 及 `c > np.asarray(...)`"
+   ],
+   "note": "P2：题面只给一个 `np.sum` 例子，F2P 却要求覆盖到 `np.linalg.qr`（返回 tuple，需要 `_convert` 处理序列）、`np.concatenate`（入参是 list of MetaTensor）与 numpy ufunc 比较。『basic compatibility』的边界无法从公开材料确定。不过 `__array_function__` 是 numpy 官方协议，专业求解者按 NEP-18 实现通用分发后这些例子会一起被覆盖——因此是设计线索不足，不是不可解。",
+   "by": "L1_monai_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只断言 numpy 函数调用的数值结果"
+   ],
+   "note": "不锁 helper 名（gold 的 `_convert` 名字未被测试引用）、不锁内部调用顺序、不查字符串。替代实现（例如只实现 `__array__` + 让 numpy 走 buffer 协议，或用 `__array_function__` 分发到 torch 等价算子）只要数值对就通过。",
+   "by": "L1_monai_2"
+  },
+  "25": {
+   "status": "unknown",
+   "evidence_refs": [
+    "test_patch 末两条断言在 `if pytorch_after(1, 8, 1)` 内"
+   ],
+   "note": "需要实跑确认：只实现 `__array_function__`、不实现 `__array_ufunc__` 的部分修复是否已能通过 `c > np.asarray([1.,1.,1.])`（torch 的 `__gt__` 对 ndarray 右操作数本来就可能可用）。若能通过，则 gold 的 `__array_ufunc__` 分支零覆盖。另：`if \"out\" in _kwargs: return NotImplemented` 分支完全未被测试。",
+   "by": "L1_monai_2"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "grading.pass_to_pass 71 条 = 整文件 77 个通过用例减去 6 条 F2P"
+   ],
+   "note": "P2P 覆盖了 test_meta_tensor.py 的全部既有通过用例（21 个测试名族，含 test_torchscript / test_pickling / test_collate / test_dataloader / test_multiprocessing / test_transforms），回归保护在本包里属于最强的一档。这是 MONAI 系『整文件跑』评分口径的直接收益（见 summary 仓库级第 1 条）。",
+   "by": "L1_monai_2"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "validation.golden_patch 仅新增 3 个方法到 monai/data/meta_tensor.py"
+   ],
+   "note": "gold 自洽、不含无关改动、不依赖未交付改动（convert_data_type 在 base 已 import）。",
+   "by": "L1_monai_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "public.problem_statement 与 raw.hints_text 全文"
+   ],
+   "note": "题面与 hints 都不含修复代码、不含上游 PR/commit 链接。",
+   "by": "L1_monai_2"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 install rc=0（两侧）"
+   ],
+   "note": "离线镜像内 rc=0。",
+   "by": "L1_monai_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_monai_2/scan/envscan.txt"
+   ],
+   "note": "测试数据全部现场构造（torch.rand / np.random），无权重、无外部数据下载。",
+   "by": "L1_monai_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "envscan：tests/test_meta_tensor.py 无 DOWNLOAD/NET 命中"
+   ],
+   "note": "不需要网络。",
+   "by": "L1_monai_2"
+  },
+  "13": {
+   "status": "issue",
+   "evidence_refs": [
+    "base tests/test_meta_tensor.py:310-326 test_dataloader 用 DataLoader(ds, num_workers=5)",
+    "base tests/test_meta_tensor.py:509-521 test_multiprocessing 用 ForkingPickler/torch.multiprocessing",
+    "grading.pass_to_pass 含 test_dataloader_0..5 与 test_multiprocessing_0..5 共 12 条"
+   ],
+   "note": "P1（环境风险，与已知反例 MONAI-763 同型）：**12 条 P2P 依赖多进程**——`test_dataloader` 起 5 个 worker 通过共享内存传张量，`test_multiprocessing` 直接走 `ForkingPickler`/`torch.multiprocessing` 的 fd/shm 通道。Docker 默认 `--shm-size=64m` 下这类用例会出现 `Bus error` 或 `DataLoader worker killed`；一旦失败就是 P2P 失败 → gold 被判非 FULL，而真实原因是资源不足。stage1（2026-09-10 CPU 机）实跑两侧都通过，说明当时的 shm 足够，但配方里没有把 shm 需求显式记下来。",
+   "by": "L1_monai_2"
+  },
+  "14": {
+   "status": "issue",
+   "evidence_refs": [
+    "test_patch: a = np.random.RandomState().randn(100, 100)"
+   ],
+   "note": "P3：F2P 用**无种子**的 `np.random.RandomState()` 生成输入，每次运行不同。本例里两边用同一个 `a`，`np.linalg.qr` 的比较是自洽的，理论上不引入不稳定；但按 check 14 的口径应记下这个不确定源。",
+   "by": "L1_monai_2"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "stage1 gold: pytest 摘要 '77 passed, 8 skipped'，status_map.json 却有 79 条",
+    "status_map 含伪键 '[1]'→SKIPPED 与 '[6]'→SKIPPED",
+    "rh2/src/repoharness2/envpack/swegym_parsers.py:47-58 parse_log_pytest 取 line.split()[1]"
+   ],
+   "note": "P2（跨题机制，见 summary 仓库级第 3 条）：pytest `-rA` 的跳过摘要形如 `SKIPPED [6] .../case.py:118: Skipping CUDA-based tests`，**第二个 token 是 `[6]` 而不是 nodeid**，于是 parser 产出伪键，同时 **8 个真正被跳过的测试的 nodeid 从未进入 status_map**。当前不影响判分（这 8 条都不在 F2P/P2P），但 `EvalVerdict.reference_skipped` 对 pytest 仓库恒为空是个失效字段；且一旦某条 P2P 在别的机器画像下被 SKIP，它会落进 `reference_missing` 并按『缺席计失败』扣分。",
+   "by": "L1_monai_2"
+  },
+  "31": {
+   "status": "issue",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_monai_2/scan/control_surface.txt",
+    "stage1 eval.sh 只 `git checkout <base> <test_patch 路径>`",
+    "grading.test_patch 不含 tests/utils.py"
+   ],
+   "note": "P1：本题测试从 **tests/utils.py** import `SkipIfBeforePyTorchVersion, TEST_DEVICES, assert_allclose, skip_if_no_cuda`，而 test_patch 的恢复清单只含本题的测试文件本身，**tests/utils.py 不被恢复**，保持候选写过的状态。强暴露：`assert_allclose` 直接承载参考断言，候选把它改成空函数即可让相关 F2P 通过。 另：base 里没有 tests/conftest.py，候选可新建一个注入 hook。此处只记录观测与建议，不据怀疑扣分。",
+   "by": "L1_monai_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "资源依赖未记入配方",
+   "severity": "P1",
+   "evidence_refs": [
+    "base tests/test_meta_tensor.py:321 DataLoader(num_workers=5)",
+    "grading.pass_to_pass 的 test_dataloader_*/test_multiprocessing_* 共 12 条"
+   ],
+   "proposed_action": "把『本题 P2P 需要可用的多进程与足够 /dev/shm』写入题级 facts 与运行配方（建议 --shm-size≥1g 或 --ipc=host），并在评分失败归因里把 Bus error / worker killed 与断言失败区分开。",
+   "next_experiment": "同镜像下用 --shm-size=64m 与 --shm-size=1g 各跑一次 `pytest -rA tests/test_meta_tensor.py`，对比 test_dataloader_*/test_multiprocessing_* 的状态。"
+  },
+  {
+   "category": "parser 身份错位",
+   "severity": "P2",
+   "evidence_refs": [
+    "status_map 伪键 '[1]'/'[6]'",
+    "swegym_parsers.py:47-58"
+   ],
+   "proposed_action": "在 v2 评分面补一条诊断：status_map 里出现不含 '::' 的键时单独计数并上报（不改 reward 口径，属于可解释性）。同时在题级 facts 记下『参考清单生成条件 = 无 CUDA』。",
+   "next_experiment": "用本题 gold 日志做 parser 单测输入，确认伪键数量与被吞掉的 8 条 nodeid。"
+  },
+  {
+   "category": "跨题同族",
+   "severity": "P3",
+   "evidence_refs": [
+    "scan/monai_cross_index.txt"
+   ],
+   "proposed_action": "把 4676 与 6523 绑为同一划分单元。",
+   "next_experiment": "无。"
+  },
+  {
+   "category": "要求边界不足",
+   "severity": "P2",
+   "evidence_refs": [
+    "public.problem_statement vs test_patch 断言集合"
+   ],
+   "proposed_action": "若保留本题，在题面补一句『需要支持 numpy 的通用函数分发协议（NEP-18）与 ufunc』。",
+   "next_experiment": "只实现 `__array_function__`（不含 `__array_ufunc__`）跑 6 条 F2P，看最后两条断言是否已通过。"
+  },
+  {
+   "category": "评分控制面（test_patch 之外的测试依赖）",
+   "severity": "P1",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/L1_monai_2/scan/control_surface.txt"
+   ],
+   "proposed_action": "把 tests/utils.py 纳入恢复清单（见 file_rules），并在评分报告里单列候选对 tests/ 下非恢复文件的改动。",
+   "next_experiment": "把 tests/utils.py 的 assert_allclose 改成 `def assert_allclose(*a, **k): return` 后用空补丁跑一次评分，观察 verdict 是否变 RESOLVED_FULL。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [
+   "tests/utils.py"
+  ],
+  "rationale": "**建议（非裁定）**：把 tests/utils.py 加入恢复/排除清单。判分影响：本题 F2P/P2P 的断言经过该文件的 `SkipIfBeforePyTorchVersion, TEST_DEVICES, assert_allclose, skip_if_no_cuda`，候选改写它能直接改变判分结果；而本题 gold 只改 monai/ 下的实现，改 tests/utils.py **不属于合法解答路径**。反面证据：同仓库的 MONAI-1121 的上游 test_patch 本身就修改了 tests/utils.py，说明不能对 MONAI 全仓一刀切地永久排除该文件，应按题判断（本题 test_patch 未触碰它，故排除是安全的）。若不排除，至少要在评分报告里标出候选是否改动过该文件。",
+  "evidence_refs": [
+   "runs/env_overnight_20260916/L1_monai_2/scan/control_surface.txt",
+   "grading.test_patch",
+   "validation.golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "tests/test_meta_tensor.py 全文件（已在 P2P）",
+   "reason": "P2P 已等于整文件通过集，无需额外补。"
+  },
+  {
+   "id": "tests/test_meta_affine.py、tests/test_to_numpy.py、tests/test_convert_data_type.py",
+   "reason": "gold 的 `_convert` 走 `convert_data_type(..., output_type=np.ndarray, wrap_sequence=False)`，这三处是该函数与 MetaTensor→ndarray 路径的直接下游。"
+  },
+  {
+   "id": "tests/test_decollate.py、tests/test_compose.py",
+   "reason": "变换管线里大量隐式 numpy 交互，是 `__array_function__` 生效后行为可能悄悄改变的地方（原来抛 TypeError 的路径现在会静默成功）。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "题面有可复现的 traceback、gold 干净、P2P 覆盖整文件；需要在配方里补记多进程/shm 需求，并确认 `__array_ufunc__` 分支是否真被 F2P 覆盖。"
+ },
+ "costs": {
+  "minutes": 24
+ }
+}

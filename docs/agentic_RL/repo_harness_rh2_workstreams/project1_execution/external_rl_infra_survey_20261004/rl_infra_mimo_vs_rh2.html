@@ -1,0 +1,614 @@
+<meta charset="utf-8">
+<title>RH2 与 MiMo 链路图</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+/* 布局：三张部署视图（同一套功能配色）上下对照 → 时间构成 → 逐项对照表 → 可优化点；右侧为点选细节栏 */
+:root{
+  --bg:#f3f4ef; --surface:#ffffff; --surface-2:#eceee8; --ink:#1d231f; --muted:#5b6761; --faint:#8b958f;
+  --line:#cdd3cb; --grid:rgba(29,35,31,.045);
+  --c-ctrl:#2b6a90; --c-exec:#94660f; --c-env:#2c7650; --c-infer:#6a4891; --c-data:#8c4b22; --c-train:#a3353a;
+  --opt:#d27812; --on-opt:#1c1103; --risk:#bd3129; --strict:#27708a; --same:#78827c;
+  --font-sans:"IBM Plex Sans","Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  --font-cjk:"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei","IBM Plex Sans",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:6px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101412; --surface:#171c19; --surface-2:#1e2421; --ink:#e2e7e3; --muted:#a2ada7; --faint:#77817b;
+  --line:#323a35; --grid:rgba(226,231,227,.05);
+  --c-ctrl:#6cb0d8; --c-exec:#d8a94e; --c-env:#69bc8f; --c-infer:#ab8ed8; --c-data:#d4905f; --c-train:#e37f82;
+  --opt:#f0a64d; --on-opt:#1c1103; --risk:#ef6c61; --strict:#64b2c8; --same:#9ba59f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101412; --surface:#171c19; --surface-2:#1e2421; --ink:#e2e7e3; --muted:#a2ada7; --faint:#77817b;
+  --line:#323a35; --grid:rgba(226,231,227,.05);
+  --c-ctrl:#6cb0d8; --c-exec:#d8a94e; --c-env:#69bc8f; --c-infer:#ab8ed8; --c-data:#d4905f; --c-train:#e37f82;
+  --opt:#f0a64d; --on-opt:#1c1103; --risk:#ef6c61; --strict:#64b2c8; --same:#9ba59f; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-sans);font-size:15px;line-height:1.55;margin:0}
+.wrap{max-width:1440px;margin:0 auto;padding-inline:20px;padding-block:28px 64px}
+h1,h2,h3{font-family:var(--font-cjk);text-wrap:balance;margin:0}
+h1{font-size:28px;font-weight:700;letter-spacing:.01em}
+h2{font-size:20px;font-weight:700}
+h3{font-size:15px;font-weight:700}
+p{margin:0}
+.eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lede{color:var(--muted);max-width:68ch;margin-top:6px}
+header{display:grid;gap:14px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.status{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr);gap:10px}
+.status>div{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--c-ctrl);border-radius:var(--r);padding:10px 12px;display:grid;gap:3px;font-size:14px;min-width:0}
+.status>div:first-child{border-left-color:var(--risk)}
+.status b{font-family:var(--font-cjk);font-size:13px;color:var(--muted)}
+@media (max-width:900px){.status{grid-template-columns:minmax(0,1fr)}}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:13px;color:var(--muted);align-items:center}
+.sw{display:inline-flex;align-items:center;gap:6px}
+.sw i{width:12px;height:12px;border-radius:3px;display:inline-block;border:1.5px solid var(--k);background:color-mix(in srgb,var(--k) 14%,var(--surface))}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;line-height:1;padding:4px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted);background:var(--surface);white-space:nowrap}
+.chip.rep{border-color:color-mix(in srgb,var(--c-infer) 50%,var(--line));color:var(--c-infer)}
+.chip.code{border-color:color-mix(in srgb,var(--c-ctrl) 50%,var(--line));color:var(--c-ctrl)}
+.chip.rh2{border-color:color-mix(in srgb,var(--c-exec) 55%,var(--line));color:var(--c-exec)}
+.chip.meas{border-color:color-mix(in srgb,var(--c-env) 55%,var(--line));color:var(--c-env)}
+.dot{width:18px;height:18px;border-radius:50%;display:inline-grid;place-items:center;font-size:11px;font-weight:600;font-family:var(--font-mono)}
+.dot.o{background:var(--opt);color:var(--on-opt)}
+.dot.x{background:var(--risk);color:#fff}
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);margin-inline:-20px;padding:8px 20px;display:flex;gap:4px;flex-wrap:wrap}
+nav.toc a{color:var(--muted);text-decoration:none;font-size:14px;padding:4px 10px;border-radius:999px}
+nav.toc a:hover,nav.toc a:focus-visible{background:var(--surface-2);color:var(--ink);outline:none}
+section{padding-top:30px;display:grid;gap:14px}
+.sec-head{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between}
+.sec-head p{color:var(--muted);font-size:14px}
+
+/* 结论条 */
+.keys{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px}
+.key{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:6px;min-width:0}
+.key .k-top{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.key b{font-family:var(--font-cjk);font-size:15px}
+.key .row{display:grid;grid-template-columns:52px minmax(0,1fr);gap:6px;font-size:13.5px}
+.key .row span:first-child{color:var(--faint);font-size:12px;padding-top:1px}
+.tag{font-size:11.5px;font-weight:600;padding:3px 7px;border-radius:4px;white-space:nowrap}
+.tag.opt{background:color-mix(in srgb,var(--opt) 18%,var(--surface));color:color-mix(in srgb,var(--opt) 75%,var(--ink))}
+.tag.risk{background:color-mix(in srgb,var(--risk) 16%,var(--surface));color:var(--risk)}
+.tag.strict{background:color-mix(in srgb,var(--strict) 16%,var(--surface));color:var(--strict)}
+.tag.same{background:var(--surface-2);color:var(--muted)}
+.tag.gap{border:1px solid var(--risk);color:var(--risk)}
+
+/* 图区 */
+.diagrams{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;align-items:start}
+.figs{display:grid;gap:22px;min-width:0}
+figure{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:grid;gap:10px;min-width:0}
+figure .f-head{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between}
+figure .f-head p{color:var(--muted);font-size:13.5px}
+.svgbox{overflow-x:auto;border-radius:4px;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:20px 20px}
+.svgbox svg{display:block;width:100%;min-width:900px;height:auto}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:2px;background:var(--surface-2)}
+.seg button{all:unset;cursor:pointer;font-size:13px;padding:5px 12px;border-radius:999px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+.seg button:focus-visible{outline:2px solid var(--c-ctrl);outline-offset:1px}
+ol.steps{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:4px 18px;font-size:13.5px;counter-reset:s}
+ol.steps li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:6px;align-items:start;color:var(--muted)}
+ol.steps li::before{counter-increment:s;content:counter(s);font-family:var(--font-mono);font-size:11px;font-weight:600;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:var(--bg);margin-top:1px}
+ol.steps li.multi::before{content:attr(data-n)}
+
+aside.detail{position:sticky;top:60px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:10px;min-width:0}
+aside.detail .d-sys{font-family:var(--font-mono);font-size:12px;color:var(--faint);letter-spacing:.04em}
+aside.detail h3{font-size:17px}
+aside.detail ul{margin:0;padding-left:18px;display:grid;gap:6px;font-size:14px}
+aside.detail .src{font-family:var(--font-mono);font-size:11.5px;color:var(--faint);word-break:break-all}
+aside.detail .opts{display:flex;flex-wrap:wrap;gap:6px}
+aside.detail .opts button{all:unset;cursor:pointer;font-size:12.5px;display:inline-flex;gap:6px;align-items:center;padding:3px 8px 3px 3px;border-radius:999px;border:1px solid var(--line)}
+aside.detail .opts button:focus-visible{outline:2px solid var(--opt)}
+.hint{color:var(--muted);font-size:13.5px;display:grid;gap:6px}
+
+/* SVG */
+svg text{font-family:var(--font-cjk)}
+.node{cursor:pointer;outline:none}
+.node .box{fill:color-mix(in srgb,var(--lane) 9%,var(--surface));stroke:var(--lane);stroke-width:1.4}
+.node .stack{fill:var(--surface);stroke:var(--lane);stroke-width:1;opacity:.55}
+.node .t{fill:var(--ink);font-size:14px;font-weight:700}
+.node .s{fill:var(--muted);font-size:12px}
+.node:hover .box{stroke-width:2.2}
+.node:focus-visible .box,.node.sel .box{stroke-width:2.8;fill:color-mix(in srgb,var(--lane) 17%,var(--surface))}
+.dim .node:not(.sel){opacity:.42}
+.grp{fill:none;stroke:var(--faint);stroke-width:1.1;stroke-dasharray:6 4}
+.grp.host{stroke:var(--line);stroke-dasharray:none;stroke-width:1.4}
+.grp.hot{stroke:var(--risk);stroke-width:1.5}
+.gl{fill:var(--muted);font-size:12.5px;font-weight:500}
+.gl.hot{fill:var(--risk);font-weight:700}
+.edge{fill:none;stroke:var(--faint);stroke-width:1.5}
+.num circle{fill:var(--ink)}
+.num text{fill:var(--bg);font-family:var(--font-mono);font-size:10.5px;font-weight:600}
+.mk{cursor:pointer}
+.mk circle{stroke:var(--surface);stroke-width:2}
+.mk.o circle{fill:var(--opt)}
+.mk.o text{fill:var(--on-opt)}
+.mk.x circle{fill:var(--risk)}
+.mk.x text{fill:#fff}
+.mk text{font-family:var(--font-mono);font-size:10.5px;font-weight:700}
+.mk.flash circle{stroke:var(--ink);stroke-width:2.5}
+.arrowhead{fill:var(--faint)}
+
+/* 时间图 */
+.time{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:18px;align-items:start}
+.time figure .svgbox{background:none}
+.time .svgbox svg{min-width:560px}
+.bar-l{font-size:13px;fill:var(--ink)}
+.bar-v{font-size:12px;fill:var(--surface);font-weight:600;font-family:var(--font-mono)}
+.axis{stroke:var(--line)}
+.tick{font-size:11px;fill:var(--faint);font-family:var(--font-mono)}
+.notes{display:grid;gap:10px}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;font-size:14px;display:grid;gap:4px}
+.note b{font-family:var(--font-cjk)}
+.note .num-big{font-family:var(--font-mono);font-size:22px;font-weight:500;color:var(--ink);font-variant-numeric:tabular-nums}
+
+/* 表 */
+.tablebox{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+table{border-collapse:collapse;width:100%;min-width:980px;font-size:13.5px}
+th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+thead th{font-family:var(--font-cjk);font-size:13px;color:var(--muted);font-weight:600;background:var(--surface-2);position:sticky;top:0}
+tbody th{font-family:var(--font-cjk);font-weight:700;white-space:nowrap}
+tbody tr:last-child th,tbody tr:last-child td{border-bottom:none}
+td.v{white-space:nowrap}
+
+/* 卡片 */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:grid;gap:8px;align-content:start;min-width:0;scroll-margin-top:70px}
+.card.flash{box-shadow:0 0 0 2px var(--opt)}
+.card .c-top{display:flex;gap:8px;align-items:center}
+.card h3{font-size:15.5px}
+.card p{font-size:14px;color:var(--ink)}
+.card .ev{display:flex;flex-wrap:wrap;gap:6px}
+.card .meta{display:flex;flex-wrap:wrap;gap:6px 10px;font-size:12.5px;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px}
+.card .meta b{color:var(--ink);font-weight:600}
+.grp-title{font-family:var(--font-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.decide{background:var(--surface-2);border-radius:var(--r);padding:12px 14px;font-size:14px;display:grid;gap:6px}
+.decide ul{margin:0;padding-left:18px;display:grid;gap:4px}
+footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--faint);display:grid;gap:6px}
+footer code{font-family:var(--font-mono);font-size:12px;color:var(--muted)}
+
+@media (max-width:1180px){.diagrams{grid-template-columns:minmax(0,1fr)}aside.detail{position:static}}
+@media (max-width:820px){.time{grid-template-columns:minmax(0,1fr)}.wrap{padding-inline:16px}nav.toc{margin-inline:-16px;padding-inline:16px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}nav.toc a{white-space:nowrap}h1{font-size:23px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+html{scroll-behavior:smooth}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">RL 基础设施对照 · 2026-10-04 整理 · 10-04 补代理容量实测 · 10-05 第 14 项已修复</div>
+  <h1>RH2 与 MiMo 的 RL 链路</h1>
+  <p class="lede">三张部署图使用同一套功能配色：我们当前的 miles＋RH2 链路、MiMo 公开代码的实际运行方式、MiMo V2.6 报告 §6 的架构。点击任意方框可查看细节和出处；橙色编号对应页尾的可优化点。</p>
+  <div class="status">
+    <div><b>高层判断</b><span>分布式骨架与 MiMo 一致：Ray actor 承载 GPU 进程，asyncio 并发跑大量会话。明显问题是 rollout 侧只有一个进程、没有横向扩展（已实测：单个代理线程每秒最多处理约 1.6–9 轮，取决于 CPU），环境准备又压在关键路径上。</span></div>
+    <div><b>本页范围</b><span>只列可优化点，不作决定；需要你定的语义放在页尾。</span></div>
+    <div><b>数值口径</b><span>RH2 取现有启动器默认值（已过时）；MiMo 报告与公开代码不一致，分开画。</span></div>
+  </div>
+  <div class="legend">
+    <span class="sw" style="--k:var(--c-ctrl)"><i></i>调度控制</span>
+    <span class="sw" style="--k:var(--c-exec)"><i></i>Agent 执行</span>
+    <span class="sw" style="--k:var(--c-env)"><i></i>环境与评分</span>
+    <span class="sw" style="--k:var(--c-infer)"><i></i>推理</span>
+    <span class="sw" style="--k:var(--c-data)"><i></i>数据面</span>
+    <span class="sw" style="--k:var(--c-train)"><i></i>训练</span>
+    <span class="sw"><span class="dot o">3</span>可优化点</span>
+    <span class="sw"><span class="dot x">!</span>结构风险</span>
+    <span class="chip rep">MiMo 报告</span><span class="chip code">MiMo 公开代码</span><span class="chip rh2">RH2 代码</span><span class="chip meas">RH2 实测</span>
+  </div>
+</header>
+
+<nav class="toc" aria-label="页面目录">
+  <a href="#keys">四个问题</a><a href="#diagrams">链路图</a><a href="#time">时间花在哪</a><a href="#matrix">逐项对照</a><a href="#opts">可优化点</a>
+</nav>
+
+<section id="keys" aria-labelledby="keys-h">
+  <div class="sec-head"><h2 id="keys-h">高层看到的四个问题</h2><p>每行一句话；细节见下方图与表。</p></div>
+  <div class="keys">
+    <div class="key">
+      <div class="k-top"><b>执行宿主</b><span class="tag risk">风险</span></div>
+      <div class="row"><span>MiMo</span><span>报告：常驻多租户宿主池，阻塞操作放后台线程；代码：每会话一个 Ray task</span></div>
+      <div class="row"><span>RH2</span><span>全部编排和模型代理都在一个进程里；实测代理线程每秒最多约 1.6 轮（老 Xeon）到 9 轮（M5）</span></div>
+    </div>
+    <div class="key">
+      <div class="k-top"><b>推理喂给量</b><span class="tag risk">风险</span></div>
+      <div class="row"><span>MiMo</span><span>代码：32 个 SGLang 副本，按会话粘性路由</span></div>
+      <div class="row"><span>RH2</span><span>模型调用上限 32；默认 1 个引擎；路由不按会话粘性</span></div>
+    </div>
+    <div class="key">
+      <div class="k-top"><b>环境准备</b><span class="tag opt">可优化</span></div>
+      <div class="row"><span>MiMo</span><span>K8s Pod 每会话，申请 0.5 CPU；镜像预制，运行时只核对</span></div>
+      <div class="row"><span>RH2</span><span>本机 docker，每次现场清 Git、chown；非模型时间是求解的 3.2 倍</span></div>
+    </div>
+    <div class="key">
+      <div class="k-top"><b>训练闭环</b><span class="tag gap">缺口</span></div>
+      <div class="row"><span>MiMo</span><span>报告是生产运行；公开代码是可运行的配方</span></div>
+      <div class="row"><span>RH2</span><span>rollout→训练→发布→评测→恢复从未端到端跑过；启动器过时</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="diagrams" aria-labelledby="dg-h">
+  <div class="sec-head"><h2 id="dg-h">链路图</h2><p>编号是数据流顺序；没有画成箭头的步骤在图下方列出。</p></div>
+  <div class="diagrams">
+    <div class="figs">
+      <figure id="fig-rh2">
+        <div class="f-head"><h3>RH2 当前（miles＋RH2，现有启动器默认）</h3><p>单台主机；所有容器走本机 docker</p></div>
+        <div class="svgbox"><svg id="svg-rh2" viewBox="0 0 1100 660" role="img" aria-label="RH2 当前部署链路图"></svg></div>
+        <ol class="steps" id="steps-rh2"></ol>
+      </figure>
+      <figure id="fig-mimo">
+        <div class="f-head"><h3>MiMo</h3>
+          <div class="seg" role="group" aria-label="MiMo 视图">
+            <button type="button" id="btn-code" aria-pressed="true">公开代码（verl e2b9fc03）</button>
+            <button type="button" id="btn-rep" aria-pressed="false">报告 §6 架构</button>
+          </div></div>
+        <p id="mimo-cap" class="hint"></p>
+        <div class="svgbox"><svg id="svg-mimo" viewBox="0 0 1100 660" role="img" aria-label="MiMo 部署链路图"></svg></div>
+        <ol class="steps" id="steps-mimo"></ol>
+      </figure>
+    </div>
+    <aside class="detail" id="detail" aria-live="polite">
+      <div class="d-sys">细节</div>
+      <h3>点一个方框</h3>
+      <div class="hint">
+        <span>方框叠层表示多个实例；虚线框是同一个进程或集群。</span>
+        <span>红色虚线框是 RH2 的单进程瓶颈。</span>
+        <span>点方框上的橙色编号，跳到对应的可优化点。</span>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<section id="time" aria-labelledby="time-h">
+  <div class="sec-head"><h2 id="time-h">一次 attempt 的时间花在哪</h2><p>RH2 的 52 题 GPU 探针实测：101 次完整尝试的平均值，单位秒。</p></div>
+  <div class="time">
+    <figure>
+      <div class="svgbox"><svg id="svg-time" viewBox="0 0 760 250" role="img" aria-label="现在与模板化后的时间构成"></svg></div>
+      <div class="legend">
+        <span class="sw" style="--k:var(--c-infer)"><i></i>求解：Claude Code 运行（模型生成＋工具执行）</span>
+        <span class="sw" style="--k:var(--c-exec)"><i></i>actor 准备与收尾</span>
+        <span class="sw" style="--k:var(--c-env)"><i></i>评分</span>
+      </div>
+    </figure>
+    <div class="notes">
+      <div class="note"><span class="num-big">3.2×</span><b>非模型时间 / 求解时间</b><span>29,273 秒对 9,154 秒；评分侧 chown 占非模型时间 64%，actor 侧 chown 11%，两侧 Git 清理共 8%，评分安装 5%（需要编译缓存的只有两道 Pandas）。</span></div>
+      <div class="note"><span class="num-big">24% → 69%</span><b>求解时间占比（投影）</b><span>把属主、Git、编译缓存做进镜像后的估算，残余量取 CPU 实验实测；尚未在 GPU 上实测。</span></div>
+      <div class="note"><b>MiMo 不能直接放进这张图</b><span>报告只给了计算开销构成（rollout 43.8%、训练 43.5%、评分 12.7%），口径不同。</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="matrix" aria-labelledby="mx-h">
+  <div class="sec-head"><h2 id="mx-h">逐项对照</h2><p>最右列是对 RH2 的判断。</p></div>
+  <div class="tablebox"><table>
+    <thead><tr><th scope="col">维度</th><th scope="col">MiMo 报告 §6</th><th scope="col">MiMo 公开代码</th><th scope="col">RH2 当前</th><th scope="col">判断</th></tr></thead>
+    <tbody id="mx-body"></tbody>
+  </table></div>
+</section>
+
+<section id="opts" aria-labelledby="op-h">
+  <div class="sec-head"><h2 id="op-h">可优化点</h2><p>编号与 RH2 图上的橙色标记一致；本页只列出，不作决定。</p></div>
+  <div id="cards-wrap"></div>
+  <div class="decide">
+    <b>需要你定的语义与边界（不属于单纯优化）</b>
+    <ul>
+      <li>I18：MoE 路由回放取哪一次 forward 的路由（目前每轮都取整段路由带，实测占代理 CPU 约 83%）。</li>
+      <li>episode 计时从起容器开始，还是从领到环境、启动 Claude Code 开始。</li>
+      <li>环境放到外部沙箱后：隐藏测试能否放在第三方；模型网关怎么暴露；依赖供应政策。</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <span>依据：MiMo V2.6 报告文本 <code>runs/external_rl_infra_survey_20261004/papers/MiMo_V2_6.txt</code>（§6、§4）；MiMo 公开代码 <code>XiaomiMiMo/verl@e2b9fc03</code>、<code>uni-agent@c63e0b01</code>、<code>mimoagent@467f0a19</code>；RH2 <code>rh2/src/repoharness2/adapters/</code>、<code>reference/miles-rh2-integration</code>（fork 275e31eb2）、<code>rh2/experiments/miles_gpu_spike/launch.sh</code>；实测 <code>runs/env_pipeline_analysis_20261004/</code>、代理容量 <code>runs/proxy_capacity_20261004/RESULTS.md</code>。</span>
+  <span>RH2 的数值来自现有启动器默认值，它已过时（s1_compat、未设陈旧度），最终训练配置未定。MiMo 报告与公开代码不一致处已分开标注。文字分析见同目录 <code>claude_env_pipeline_analysis_20261004.md</code>。</span>
+</footer>
+</div>
+
+<script>
+(function(){
+const NS='http://www.w3.org/2000/svg';
+const LANE={ctrl:'--c-ctrl',exec:'--c-exec',env:'--c-env',infer:'--c-infer',data:'--c-data',train:'--c-train'};
+const EVL={rep:'MiMo 报告',code:'MiMo 公开代码',rh2:'RH2 代码',meas:'RH2 实测'};
+
+/* ---------- 可优化点 ---------- */
+const OPTS=[
+ {g:'环境与评分',id:1,t:'每题镜像预制',p:'把属主、Git 清理、依赖和 Claude Code 预先做进 actor 和 grader 模板；两道 Pandas 再加编译缓存。',ev:['meas','code'],imp:'GPU 利用率 · 稳定性',st:'评分侧已验证（L1/L2），actor 侧待做；B 线做题时产出'},
+ {g:'环境与评分',id:2,t:'环境放到外部沙箱',p:'actor 和 grader 都放到 Prime 这类托管沙箱，控制端只留编排；容量不再受单机 CPU、内存和磁盘限制。',ev:['code','rh2'],imp:'容量 · 简化',st:'待定：D1 放置位置、D2 网关暴露'},
+ {g:'环境与评分',id:3,t:'提前准备就绪环境',p:'题序可以提前算出：提前开少量就绪沙箱，领到即开跑，准备时间不再占着槽位。',ev:['rh2'],imp:'GPU 利用率',st:'待定：D3 计时起点'},
+ {g:'环境与评分',id:4,t:'评分不卡槽、不卡组',p:'样本槽位一直占到评分结束；组内 n 个全部评完才入缓冲，最慢的成员拖住整组。',ev:['rh2','rep'],imp:'GPU 利用率',st:'可先按评分时长调大并发，再考虑评完即补位'},
+ {g:'执行与调度',id:5,t:'拆分执行宿主',p:'全部会话的模型调用由一个代理线程处理。实测上限：老 Xeon 每秒约 1.6 轮、M5 约 9 轮；生产主机推算约 5–7 轮，每会话 4–10 秒一轮时约 20–75 个会话即占满。MiMo 用 8 个网关进程。',ev:['meas','rh2','code'],imp:'容量 · 稳定性',st:'已实测；拆分方式待讨论'},
+ {g:'执行与调度',id:6,t:'放开推理并发',p:'模型调用上限 32、默认只有 1 个引擎、Router 不按会话粘性，GPU 难以喂饱，前缀缓存难以命中。',ev:['rh2','code'],imp:'GPU 利用率',st:'随正式启动器一起定'},
+ {g:'执行与调度',id:7,t:'按来源和耗时调度',p:'按来源与耗时档分配在途预算，消费时用窗口化 FIFO 限制快题偏置；把陈旧度 2 写进启动器。',ev:['rep','rh2'],imp:'训练分布',st:'第一版用静态耗时档'},
+ {g:'执行与调度',id:14,t:'已结束 attempt 的内存滞留',p:'make_per_rollout_adapter 曾每个 attempt 新建一个类，方法闭包持有 hook，已结束 attempt 的路由带（约 0.6 GB）要等第 2 代垃圾回收才释放。已把类提到模块级：8 并发压测中会话全部结束后进程内存 9.1 GB → 1.1 GB，峰值 9.1 → 5.4 GB，每轮 CPU 不变。',ev:['meas','rh2'],imp:'稳定性 · 内存',st:'已修复并验证（10-05，未提交，待 Codex 审查）'},
+ {g:'推理',id:8,t:'上下文缓存与 KV 卸载',p:'工具等待期间把 KV 放到主机内存，回来只 prefill 新后缀；SWE 任务的工具时间很长。',ev:['rep'],imp:'GPU 利用率',st:'先测我们的前缀缓存命中率'},
+ {g:'推理',id:9,t:'投机解码',p:'DFlash 或 MTP 一类 draft 模型；MiMo 报告接受长度比 MTP 高 31.3%。',ev:['rep'],imp:'生成吞吐',st:'取决于目标模型是否有 draft'},
+ {g:'推理',id:10,t:'每轮只处理新增部分',p:'每轮整段回传路由带（3.2 万 token 时约 63 MiB）并重新 tokenize 整段对话。对照实测：不请求路由带时代理每轮 CPU 从 0.62 秒降到 0.10 秒（老 Xeon），内存从 8.6 GB 降到 0.8 GB。MiMo 网关只 tokenize 新后缀，报告把路由记录留在推理侧、结束时一次取回。',ev:['meas','code','rep'],imp:'容量 · 内存',st:'路由带改增量涉及 I18；与 I01 B 一起评估'},
+ {g:'训练与数据',id:11,t:'数据面分离',p:'逐轮 token、路由带等重负载不再经 RolloutManager 内存，driver 只调度元数据。',ev:['rep','code'],imp:'容量',st:'并发上去之后再做'},
+ {g:'训练与数据',id:12,t:'先跑通训练闭环',p:'rollout→learner→发布→评测→恢复从未端到端跑过；启动器过时，一次发布含 2 个优化步，与决定不一致。',ev:['rh2'],imp:'正确性',st:'前置缺口，不是优化'},
+ {g:'简化',id:13,t:'删去冗余设施',p:'每 attempt 网络加中继、评分侧两段式撤网、s1_compat 分支、slime 时代的占位协调器、未接线的原型。',ev:['rh2'],imp:'简化',st:'外部沙箱方案定下后一并清理'}
+];
+
+/* ---------- RH2 ---------- */
+const RH2={
+ groups:[
+  {x:8,y:8,w:1084,h:644,label:'单台 GPU 主机 · 现有启动器默认 6 卡训练 + 2 卡推理',cls:'host',lb:true},
+  {x:286,y:36,w:528,h:352,label:'RolloutManager 进程 · num_cpus=1 · 编排循环 + 代理线程，共用一把 GIL',cls:'hot',mk:[5,14]},
+  {x:836,y:36,w:240,h:352,label:'本机 Docker',cls:''}
+ ],
+ nodes:[
+  {id:'n_driver',lane:'train',x:28,y:52,w:236,h:88,t:'Ray driver',s:['train_async 主循环','按版本取组 → 训练 → 发布'],
+   d:['按需调用 rollout_manager.generate','现有启动器一次发布含 2 个优化步，与 B-4“一次版本一步”不一致'],ev:'rh2',src:'miles train_async.py:44-126；launch.sh:172-173'},
+  {id:'n_ds',lane:'ctrl',x:304,y:74,w:140,h:78,t:'数据源',s:['题序可提前算出'],mk:[3],
+   d:['整份数据预载，按 epoch 用固定种子洗牌','游标随 checkpoint 保存：接下来 K 组可提前算出','没有预读接口；自定义数据源可以加'],ev:'rh2',src:'miles rollout/data_source.py:60-200；utils/data.py:260-267'},
+  {id:'n_worker',lane:'ctrl',x:468,y:74,w:164,h:78,t:'rollout worker',s:['8 组 × 8 = 64 个 attempt'],mk:[7],
+   d:['组预算 = async_max_concurrent_samples ÷ n','每完成一个样本补位一个','缓冲满（16 组）时整个 worker 阻塞'],ev:'rh2',src:'fully_async_rollout.py:224-261；fully_async_data_buffer.py:197-276'},
+  {id:'n_admit',lane:'ctrl',x:648,y:74,w:150,h:78,t:'组准入 / 缓冲',s:['整组等最慢者'],mk:[4,7],
+   d:['组内全员合格才入缓冲；FATAL 直接停止 run','n 个都评完才入缓冲，最慢的成员拖住整组','陈旧度参数默认不设；决定 N=2 未写进启动器'],ev:'rh2',src:'group_admission.py:526-551；arguments.py:686-688；D2_B.md:62-64'},
+  {id:'n_orch',lane:'exec',x:304,y:176,w:494,h:84,t:'RH2 编排协程 ×64',s:['起容器 → Claude Code → 冻结 → 评分 → 交付','docker CLI 子进程、普查、导出都在这个循环里'],multi:true,mk:[3,5],
+   d:['episode 计时从起容器开始（默认 600 秒）','每个容器操作都是一个 docker CLI 子进程','普查、导出、projection 与评分队列共用同一事件循环','这些协程跑在 miles 的后台循环线程上；同进程还有 Ray actor 自己的循环和代理线程，三者共用一把 GIL','num_cpus=1 只是 Ray 的调度记账，不限制核数；限制来自 GIL：所有 Python 代码合计约一个核'],ev:'rh2',src:'generate.py:2763-5596；docker_sandbox.py:49-60；miles ray/placement_group.py:203'},
+  {id:'n_gq',lane:'exec',x:304,y:284,w:148,h:88,t:'评分队列',s:['4 并发 · 排队 8','槽位占到评分结束'],mk:[4],
+   d:['队列满时阻塞提交方','样本槽位和信号量一直占到评分结束','评分期限 3600 秒（含排队）'],ev:'rh2',src:'grading/queue.py:183-263；bringup.py:1478-1488；generate.py:2068'},
+  {id:'n_router',lane:'infer',x:476,y:284,w:148,h:88,t:'MilesRouter',s:['子进程','不按会话粘性'],mk:[6],
+   d:['RolloutManager 启动的子进程','按在途请求最少选引擎，忽略会话键','多引擎时前缀缓存难以命中'],ev:'rh2',src:'miles router/router.py:215-229；capture_wire.py:1269-1271'},
+  {id:'n_proxy',lane:'infer',x:648,y:284,w:150,h:88,t:'模型代理线程',s:['并发上限 32','每轮重渲染 prompt'],mk:[6,10],
+   d:['aiohttp 守护线程，所有会话共用，与事件循环同进程','能力令牌换内部会话 id；逐轮捕获 token、logprob、路由带、支持集、版本段','模型调用上限 32；每轮按消息重渲染整段 prompt、全量 tokenize','每轮回传整段上下文的路由带：3.2 万 token 时响应约 63 MiB','实测上限：老 Xeon 每秒约 1.6 轮（8 个会话即占满一个核），M5 约 9 轮；超过后只会排队，排队时间计入 600 秒预算','每轮 CPU 构成（py-spy）：sha256 约 38%、路由带 base64 解码约 23%、响应体接收与 JSON 约 28%、tokenize 约 9%'],ev:'meas',src:'bringup.py:988-997,1447-1457；capture_wire.py:1259-1445；launch.sh:97；runs/proxy_capacity_20261004/RESULTS.md'},
+  {id:'n_actor',lane:'env',x:852,y:74,w:208,h:100,t:'actor 容器 ×64',s:['Claude Code · 2 CPU / 4 GiB','现场建网络、清 Git、chown'],multi:true,mk:[1,2],
+   d:['每次 attempt 新建容器和一张内部网络','现场清 Git、chown，并上传安装 Claude Code','52 题实测：到第一条模型请求中位数 40.8 秒，R2E p90 240.6 秒'],ev:'meas',src:'generate.py:4776-5036；runs/env_pipeline_analysis_20261004/'},
+  {id:'n_relay',lane:'env',x:852,y:190,w:208,h:70,t:'出口中继 ×1',s:['每 attempt 一张内部网络'],mk:[13],
+   d:['每次运行一个容器，把请求转发到宿主上的模型代理','每个 attempt 建、拆一张 internal 网络并挂接中继','一次串行运行中，中继容器 docker rm -f 超过 60 秒超时，评分没有启动（原因未查明）'],ev:'rh2',src:'sandbox_profile.py:802-993'},
+  {id:'n_grader',lane:'env',x:852,y:284,w:208,h:88,t:'grader 容器',s:['每次评分新起、断网','现场 chown 中位数 191 秒'],multi:true,mk:[1,2],
+   d:['每次评分新容器、断网、候选以非 root 运行','现场 chown 加清 Git：可信 setup 中位数 191 秒','占非模型时间 64%；Dask 有 4 次超时没能评分'],ev:'meas',src:'grading/manager.py:2012-2073；runs/env_pipeline_analysis_20261004/'},
+  {id:'n_megatron',lane:'train',x:28,y:420,w:500,h:104,t:'训练 GPU ×6 · Megatron',s:['faithful DIS 损失；R3 路由回放','学习闭环尚未端到端跑过'],multi:true,mk:[12],xr:true,
+   d:['异步训练要求训练与推理分卡','faithful DIS 损失；R3 路由回放（I18 语义未定）','rollout→learner→发布→评测→恢复从未端到端跑过'],ev:'rh2',src:'miles train_async.py:48；faithful_dis_loss.py；a_line_status.md:64'},
+  {id:'n_sglang',lane:'infer',x:560,y:420,w:516,h:104,t:'推理 GPU ×2 · SGLang ×1（TP2）',s:['默认 radix 缓存；无投机解码、无 KV 卸载','发布时 retract 暂停并清缓存'],mk:[8,9],
+   d:['现有启动器只配 1 个引擎；最终配置未定','发布：版本加一 → 暂停（retract）并清缓存 → NCCL 广播 → 逐引擎核对版本','评测也用这组引擎'],ev:'rh2',src:'update_weight mixin.py:309-358；launch.sh:508-517'},
+  {id:'n_samples',lane:'data',x:28,y:552,w:1048,h:70,t:'样本负载：逐轮 token、logprob、路由带、支持集掩码、版本段',s:['在 RolloutManager 内存里组装，按 DP 切成 Ray 对象引用交给训练'],mk:[11],
+   d:['重负载全部经过 RolloutManager 进程内存','规模上去后会受这个进程的内存限制'],ev:'rh2',src:'rollout_manager.py:216-325'}
+ ],
+ edges:[
+  {n:'1',pts:[[444,113],[468,113]],b:[456,113]},
+  {n:'2',pts:[[550,152],[550,176]],b:[550,164]},
+  {n:'3',pts:[[798,200],[826,200],[826,112],[852,112]],b:[826,156],both:true},
+  {n:'4',pts:[[956,174],[956,190]],b:[978,182]},
+  {n:'5',pts:[[852,236],[826,236],[826,328],[798,328]],b:[826,282]},
+  {n:'6',pts:[[648,328],[624,328]],b:[636,328]},
+  {n:'6',pts:[[600,372],[600,420]],b:[612,408]},
+  {n:'7',pts:[[382,260],[382,284]],b:[382,272]},
+  {n:'7',pts:[[382,372],[382,398],[956,398],[956,372]],b:[700,398]},
+  {n:'8',pts:[[723,176],[723,152]],b:[723,164]},
+  {n:'9',pts:[[723,74],[723,24],[146,24],[146,52]],b:[430,24]},
+  {n:'10',pts:[[146,140],[146,420]],b:[146,280]},
+  {n:'11',pts:[[528,472],[560,472]],b:[544,472]}
+ ],
+ steps:['数据源按题序取下一组，复制 n 份','worker 为每个样本起一个编排协程','起 actor 容器：建网络、清 Git、chown、装 CC；结束后冻结导出、释放容器','Claude Code 的模型请求先到出口中继','中继转给代理线程：换会话、逐轮捕获','经 Router 送 SGLang 生成','提交评分队列，起 fresh grader 容器跑测试','评分→投影→门控后交付样本，这时才释放槽位','组内 n 个都完成才入缓冲；driver 按版本取组','交给 Megatron 训练','发布权重：retract 暂停、清缓存、NCCL 广播']
+};
+
+/* ---------- MiMo 公开代码 ---------- */
+const MCODE={
+ cap:'公开配方的实际运行方式：默认 4 种原生 agent 在 Pod 外运行，工具命令经 K8s exec 进 Pod；真实 Claude Code 跑在 Pod 内的模式存在，但没有训练配置使用。',
+ groups:[
+  {x:12,y:324,w:816,h:166,label:'GPU 节点 8 × 8 · 训练与推理同卡（colocate）',cls:''},
+  {x:846,y:20,w:242,h:470,label:'K8s 集群（可独立部署）',cls:''}
+ ],
+ nodes:[
+  {id:'m_runner',lane:'ctrl',x:24,y:48,w:240,h:92,t:'TaskRunnerV1（Ray actor）',s:['训练循环、数据加载','回放缓冲每 2 秒轮询一次'],
+   d:['持有训练器、数据加载、回放缓冲','回放缓冲每 2 秒轮询 TransferQueue；淘汰 k 组就补 k 组','陈旧度上限 2，超出即丢（运行中的组不丢）'],ev:'code',src:'verl trainer/ppo/v1/trainer_base.py；replay_buffer.py:495-710'},
+  {id:'m_tq',lane:'data',x:290,y:48,w:250,h:92,t:'TransferQueue（数据面）',s:['tokens、logprob、routed_experts','driver 只取需要的列'],
+   d:['外部包 TransferQueue 0.1.8','按键写入 tokens、masks、rollout_log_probs、rm_scores、routed_experts','训练侧按需读列'],ev:'code',src:'uni-agent framework.py:1579-1724；verl requirements.txt:28'},
+  {id:'m_fw',lane:'exec',x:566,y:48,w:250,h:92,t:'AgentFrameworkWorker',s:['1 个 Ray actor 管全部会话','并发信号量 2048'],
+   d:['所有会话的协程都在这一个 actor 里','信号量 MAX_CONCURRENT_SESSIONS（train.sh 为 2048）','会话收尾：只保留最长链，写入 TransferQueue'],ev:'code',src:'uni-agent framework.py:852-1189；entry.py:81-149'},
+  {id:'m_task',lane:'exec',x:24,y:196,w:250,h:92,t:'Ray task ×2048',s:['每会话一个，占 0.5 CPU','agent 循环跑在线程里'],multi:true,
+   d:['每会话一个 Ray task，占 0.5 CPU，调度到任意有空闲 CPU 的节点','agent 循环和 K8s 客户端在 asyncio.to_thread 里跑','CPU 不够时在 Ray 里排队，但会话墙钟已在计时'],ev:'code',src:'uni-agent framework.py:155-197,1026-1060；train.sh:70'},
+  {id:'m_gw',lane:'infer',x:300,y:196,w:240,h:92,t:'网关 actor ×8',s:['前缀匹配；逐链捕获','会话 URL 即凭证'],multi:true,
+   d:['8 个 FastAPI 网关，软亲和分布到 GPU 节点','重新套模板 tokenize，按前缀链捕获 token、logprob、routed_experts','会话 URL 即凭证；reward_info 端点没有鉴权'],ev:'code',src:'uni-agent gateway/manager.py:40-95；gateway.py:60-336；session.py:224-400'},
+  {id:'m_lb',lane:'infer',x:566,y:196,w:250,h:92,t:'负载均衡（1 个 actor）',s:['会话粘性到同一副本','否则选在途最少'],
+   d:['同一会话固定到同一副本，有利于前缀缓存命中','新会话选在途最少的副本'],ev:'code',src:'verl workers/rollout/llm_server.py:46-111'},
+  {id:'m_sglang',lane:'infer',x:28,y:364,w:380,h:106,t:'SGLang ×32 副本（TP2）',s:['收集时唤醒；一步结束时中止并休眠','被中止的请求带已生成 token 重新提交'],multi:true,
+   d:['64 卡 ÷ TP2 = 32 个副本，与 Megatron 同卡','一步结束：中止全部请求并休眠，释放权重与 KV','客户端保留已生成的 token 与 logprob，等引擎恢复后续传'],ev:'code',src:'trainer_colocate_async.py:48-59；llm_server.py:361-450'},
+  {id:'m_megatron',lane:'train',x:432,y:364,w:380,h:106,t:'Megatron ×64（CPU offload）',s:['训练与生成在 GPU 上不重叠','训练完 naive 同步权重'],multi:true,
+   d:['参数、梯度、优化器 offload 到 CPU','训练期间推理休眠，训练与生成不重叠','训练完：恢复显存 → 更新权重 → 恢复 KV → 继续生成'],ev:'code',src:'verl checkpoint_engine/base.py:447-496；engine_workers.py:760-801'},
+  {id:'m_pod',lane:'env',x:862,y:60,w:210,h:110,t:'Pod ×2048',s:['申请 0.5 CPU / 1Gi','上限 4 CPU / 8Gi'],multi:true,
+   d:['每会话一个 Pod；2048 个约申请 1,024 vCPU / 2 TiB','就绪等待上限 1200 秒；Pod 没有设置运行时限','训练暂停期间 Pod 照常运行'],ev:'code',src:'mimoagent environments/kubernetes.py:54-357'},
+  {id:'m_verify',lane:'env',x:862,y:196,w:210,h:92,t:'同 Pod 验证',s:['重置测试路径 → 跑测试','DeepSWE 改用新 Pod'],
+   d:['opensource-code：同 Pod 重置测试路径、应用测试补丁、跑测试','DeepSWE：从同一镜像起新 Pod 评分','测试环境损坏记 0 分，代码配方里不算基础设施失败'],ev:'code',src:'datasets/opensource_code.py:24-251；deepswe.py:20-371'},
+  {id:'m_img',lane:'env',x:862,y:314,w:210,h:110,t:'镜像预制',s:['工作树与工具链已在镜像','Git 截断，运行时只核对'],
+   d:['镜像必须已含任务工作树与工具链，盘上没有测试','Git 历史在构建时截断；运行时用 rev-list 核对，失败即中止','anti_hack_cleanup 清除构建残留'],ev:'code',src:'datasets/opensource_code.py:45-186；base.py:593-626'}
+ ],
+ edges:[
+  {n:'1',pts:[[144,48],[144,30],[691,30],[691,48]],b:[418,30]},
+  {n:'2',pts:[[691,140],[691,168],[149,168],[149,196]],b:[420,168]},
+  {n:'3·6',pts:[[230,196],[230,182],[838,182],[838,110],[862,110]],b:[788,182]},
+  {n:'4',pts:[[274,242],[300,242]],b:[287,242]},
+  {n:'5',pts:[[540,242],[566,242]],b:[553,242]},
+  {n:'5',pts:[[620,288],[620,312],[300,312],[300,364]],b:[460,312]},
+  {n:'7',pts:[[967,170],[967,196]],b:[985,183]},
+  {n:'8',pts:[[566,94],[540,94]],b:[553,94]},
+  {n:'9',pts:[[290,94],[264,94]],b:[277,94]},
+  {n:'10',pts:[[432,432],[408,432]],b:[420,432]}
+ ],
+ steps:[['1','TaskRunner 登记一批（64 题 × 16），派给 framework'],['2','framework 为每个会话建网关会话，再派一个 Ray task'],['3','Ray task 建 K8s Pod，核对 Git 已截断'],['4','agent 每轮经网关请求模型，网关前缀匹配并捕获'],['5','负载均衡按会话粘性送到 SGLang'],['6','工具命令经 K8s exec 在 Pod 内执行'],['7','同 Pod 跑测试得奖励，删 Pod，回报奖励'],['8','framework 收尾：只留最长链，写 TransferQueue'],['9','回放缓冲凑够 64 组；推理中止并休眠，Megatron 训练'],['10','naive 同步权重，恢复生成，被中止的请求续传']]
+};
+
+/* ---------- MiMo 报告 ---------- */
+const MREP={
+ cap:'报告 §6 的架构（Figure 14 加正文）：多租户宿主池、控制面与数据面分离、上下文缓存。报告没写 GPU 怎样分配、权重怎样传输、沙箱用什么运行时。',
+ groups:[
+  {x:12,y:20,w:620,h:244,label:'Payload Porter',cls:''},
+  {x:26,y:50,w:286,h:200,label:'控制面',cls:''},
+  {x:326,y:50,w:292,h:200,label:'数据面',cls:''},
+  {x:660,y:160,w:428,h:214,label:'推理引擎 · SGLang',cls:''},
+  {x:12,y:296,w:620,h:290,label:'Harness Pool · 常驻多租户宿主 actor',cls:''},
+  {x:660,y:404,w:428,h:182,label:'环境与评分（正文；Figure 14 未画）',cls:''}
+ ],
+ nodes:[
+  {id:'r_mixer',lane:'ctrl',x:40,y:158,w:258,h:80,t:'Sample Mixer',s:['按来源分配在途预算','按缺口加权选来源；按 KV 派发'],
+   d:['四个机制：自适应并发（Eq.6）、自适应调度（Eq.7）、预测式派发、样本回放','慢来源分到更多在途 rollout','按 KV 余量把新 rollout 放到 rank'],ev:'rep',src:'MiMo_V2_6.txt §6.3（p29–31）'},
+  {id:'r_packer',lane:'ctrl',x:40,y:80,w:258,h:64,t:'Packer（每 TP 组一个）',s:['只取本 CP 窗口触及的行'],
+   d:['每个训练 TP 组一个，组内共享一份只读副本','driver 不汇总整批'],ev:'rep',src:'MiMo_V2_6.txt §6.2（p29）'},
+  {id:'r_store',lane:'data',x:340,y:80,w:264,h:158,t:'分布式轨迹存储',s:['对象存储 / TransferQueue','token、logprob、MoE ID、top-p','优势写回；driver 只看元数据'],
+   d:['rollout 结束时负载只写一次','driver 只看标量奖励、长度和键','优势写回存储；全零优势的组默认丢弃'],ev:'rep',src:'MiMo_V2_6.txt §6.2（p28–29）'},
+  {id:'r_train',lane:'train',x:660,y:20,w:428,h:110,t:'训练引擎：Megatron-LM',s:['SWA CP、融合 loss、优化器状态放 CPU','R3 路由回放；top-p 候选集重归一'],
+   d:['1M 上下文','SWA 层在 CP 下只交换窗口内 KV','PG 与 OPD loss 融合到一个 kernel'],ev:'rep',src:'MiMo_V2_6.txt §6.4（p32–33）'},
+  {id:'r_decode',lane:'infer',x:676,y:192,w:198,h:78,t:'Prefill → Decode',s:['DFlash 投机解码','接受长度 +31.3%'],
+   d:['专家用 MXFP4','DFlash block-6：接受长度比 MTP 高 31.3%','FP8 draft：单节点吞吐约 +10.3%'],ev:'rep',src:'MiMo_V2_6.txt §6.4（p32–33）'},
+  {id:'r_ctx',lane:'infer',x:888,y:192,w:186,h:78,t:'Context Cache',s:['每段对话一个持久键'],
+   d:['同一策略版本内只 prefill 新后缀','路由记录、候选集、图像随 KV 留在缓存里'],ev:'rep',src:'MiMo_V2_6.txt §6.4（p32）'},
+  {id:'r_rec',lane:'infer',x:676,y:284,w:198,h:76,t:'MoE ID / Top-p 记录',s:['最终收集时一并返回'],
+   d:['R3：记录专家 ID，训练时回放','top-p 候选集用固定形状位图上传，之后全程稀疏，平均不到 5 个'],ev:'rep',src:'MiMo_V2_6.txt §6.4（p32）'},
+  {id:'r_host',lane:'infer',x:888,y:284,w:186,h:76,t:'主机内存池',s:['工具等待时卸载 KV'],
+   d:['工具等待期间 KV 卸到 pinned 主机内存','卸载与恢复走旁路 CUDA stream，不阻塞生成'],ev:'rep',src:'MiMo_V2_6.txt §6.4（p32）'},
+  {id:'r_envh',lane:'exec',x:28,y:330,w:278,h:104,t:'环境侧宿主（harness 实例）',s:['一进程导入一个 harness 代码库','阻塞的环境操作放后台线程'],multi:true,
+   d:['固定数量的常驻宿主 actor，每个承载多个 harness 实例','不同代码库分池，池的份额在启动时定下'],ev:'rep',src:'MiMo_V2_6.txt §6.2（p28）'},
+  {id:'r_loop',lane:'exec',x:342,y:330,w:278,h:104,t:'模型侧宿主（Agent Loop）',s:['共享事件循环、端点、代理、tokenizer','前缀匹配，只 tokenize 新后缀'],multi:true,
+   d:['每个宿主一个事件循环，承载多个 Agent Loop','原因：一个 rollout 一个 actor 会耗尽 GCS 节点的文件描述符','Agent Loop 负责环境的准备、交互、评测、清理'],ev:'rep',src:'MiMo_V2_6.txt §6.1–6.2（p27–28）'},
+  {id:'r_pen',lane:'exec',x:28,y:452,w:592,h:110,t:'Penalty Module',s:['规则命中 → mask、优势整形或早停','基础设施故障不进训练信号'],
+   d:['Rule 在 segment、context、sequence 三层判定','Strategy：mask、优势整形、只监控、组合早停','惩罚逐层升级，整组没有有效样本时拒绝该组'],ev:'rep',src:'MiMo_V2_6.txt §6.1（p27）'},
+  {id:'r_sbx',lane:'env',x:676,y:436,w:198,h:130,t:'沙箱',s:['容器级断网','Git 截到 base','可复位到固定初态'],multi:true,
+   d:['Code：容器级网络隔离，Git 截到 base，清理构建残留','运行时、镜像仓库、CPU 池规模报告未写'],ev:'rep',src:'MiMo_V2_6.txt §4（p11、p15）'},
+  {id:'r_grd',lane:'env',x:888,y:436,w:186,h:130,t:'评分 / 教师',s:['循环内跑测试','组评分异步，延迟隐藏','OPD：教师异步打分'],
+   d:['循环内跑测试；GRS、GAR 评分 agent 进入环境','组评分与 Agent Loop 并行，结果可滞后，回来后改写组奖励','OPD 教师打分写回同一存储；评分约占 12.7% 计算'],ev:'rep',src:'MiMo_V2_6.txt §6.2（p29）；§4（p17–18）；Fig.3'}
+ ],
+ edges:[
+  {n:'1',pts:[[40,198],[18,198],[18,382],[28,382]],b:[18,280]},
+  {n:'2',pts:[[306,382],[342,382]],b:[324,382],both:true},
+  {n:'3',pts:[[620,382],[642,382],[642,231],[676,231]],b:[642,306],both:true},
+  {n:'5',pts:[[475,296],[475,238]],b:[475,268]},
+  {n:'5',pts:[[250,296],[250,238]],b:[250,268]},
+  {n:'7',pts:[[298,203],[340,203]],b:[319,203]},
+  {n:'8',pts:[[604,120],[632,120],[632,75],[660,75]],b:[632,98]},
+  {n:'10',pts:[[874,130],[874,160]],b:[892,145]},
+  {n:'',pts:[[874,231],[888,231]]},
+  {n:'',pts:[[981,270],[981,284]]}
+ ],
+ steps:[['1','Sample Mixer 按来源预算与缺口选来源，把 rollout 派给宿主池'],['2','harness 实例调用 Agent Loop 的请求端点'],['3','Agent Loop 只发新增 token；缓存命中只 prefill 新后缀；工具等待时 KV 卸到主机'],['4','Penalty 规则命中：mask、整形或早停'],['5','循环内评测并清理；负载写入存储，元数据交给 driver'],['6','组评分与教师打分异步进行，回写存储'],['7','driver 按通过率接受组，算优势写回存储'],['8','各来源凑够份额后，Packer 按 CP 窗口从存储取数给训练'],['9','Megatron 训练（R3、top-p 重归一）'],['10','QDQ 专家后下发权重；中断的 rollout 续传（陈旧度 4）']]
+};
+
+/* ---------- 逐项对照 ---------- */
+const MX=[
+ ['执行宿主','固定数量的常驻多租户宿主 actor；一进程一事件循环，阻塞操作放后台线程','1 个 framework actor ＋ 每会话一个 Ray task（0.5 CPU）＋ 8 个网关 actor','一个 RolloutManager 进程（num_cpus=1）的一个事件循环承载全部编排、docker、评分；代理线程同进程','risk','风险'],
+ ['Agent 在哪跑','Agent Loop 暴露请求端点，由外部 agent 调用','默认原生 agent 在 Pod 外，工具经 K8s exec；真实 CLI 模式未用于训练','真实 Claude Code 在容器内运行','same','我们需要真实 CC'],
+ ['网关与鉴权','未写','会话 URL 即凭证；reward_info 端点无鉴权','每 attempt 能力令牌、会话守卫、中毒拦截；单线程，上限 32','strict','我们更严 · 并发受限'],
+ ['推理路由','预测式派发：按 KV 余量选 rank','32 个副本；会话粘性负载均衡','默认 1 个引擎；按在途最少路由，无会话粘性','opt','可借鉴'],
+ ['训推关系','训练期间 rollout 暂停（由措辞推断）；partial rollout 续传','同卡：中止并休眠 → 训练 → 同步 → 恢复；客户端续传','分卡 6＋2；发布时 retract 并清缓存；全异步模式禁用 partial rollout','same','不同取舍'],
+ ['缓存与解码','每段对话持久缓存键；工具等待时 KV 卸到主机内存；DFlash','每步丢弃 KV；未见投机解码','SGLang 默认 radix 缓存；无卸载、无投机解码','opt','可借鉴'],
+ ['环境','容器级断网；Git 截断；可复位','K8s Pod 每会话；申请 0.5 CPU / 1Gi；镜像预制，运行时只核对','本机 docker 每 attempt；现场清 Git、chown、装 CC；每 attempt 建网络','opt','可优化'],
+ ['评分','循环内测试＋异步组评分（GRS/GAR）；评分约占 12.7% 计算','同 Pod 同步验证；DeepSWE 用新 Pod','fresh grader 隔离评分；现场 chown 是非模型时间大头','opt','模板化可优化'],
+ ['调度与采样','Sample Mixer：来源预算、缺口加权、预测派发、启动回放','数据加载顺序；按步哈希选 harness','数据源顺序；按组派发、按样本补位','opt','可借鉴'],
+ ['陈旧度','4','2，超出即丢','默认不设；决定 N=2 未写进启动器','gap','缺口'],
+ ['数据面','分布式存储，driver 只看元数据，按 CP 窗口打包','TransferQueue','重负载经 RolloutManager 内存，再切成 Ray 对象引用','same','规模上来再做'],
+ ['训练信号','Penalty Module：mask、整形、早停；基础设施故障不进 loss','开关默认关；测试环境损坏记作真实失败','组准入、终止事实；基础设施失败不当 0 分','strict','我们更严'],
+ ['训推一致性','QDQ 权重、R3、top-p 候选集重归一','捕获 routed_experts','路由带（I18 未定）、支持集掩码、逐 token 版本段','same','相近'],
+ ['闭环成熟度','生产运行','可运行的配方','learner 闭环未端到端跑过；启动器过时','gap','缺口']
+];
+
+/* ---------- 渲染 ---------- */
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e}
+function defs(svg){const d=el('defs',{},svg);const m=el('marker',{id:svg.id+'-ah',viewBox:'0 0 10 10',refX:'9',refY:'5',markerWidth:'7',markerHeight:'7',orient:'auto-start-reverse'},d);el('path',{d:'M0,0 L10,5 L0,10 z',class:'arrowhead'},m)}
+function fitText(t,max){try{let fs=parseFloat(getComputedStyle(t).fontSize)||12;let n=0;while(t.getComputedTextLength()>max&&fs>8.5&&n<12){fs-=.5;t.style.fontSize=fs+'px';n++}}catch(e){}}
+let current=null;
+function render(svg,data,sys){
+  svg.innerHTML='';defs(svg);
+  for(const g of data.groups){
+    el('rect',{x:g.x,y:g.y,width:g.w,height:g.h,rx:8,class:'grp '+(g.cls||'')},svg);
+    const lt=el('text',{x:g.x+12,y:g.lb?g.y+g.h-9:g.y+18,class:'gl'+(g.cls==='hot'?' hot':'')},svg);lt.textContent=g.label;
+    if(g.mk){let x=g.x+g.w-16;for(const id of g.mk){marker(svg,x,g.y,id,'o');x-=24}}
+  }
+  for(const e of data.edges){
+    const d='M'+e.pts.map(p=>p.join(',')).join(' L');
+    const p=el('path',{d,class:'edge','marker-end':'url(#'+svg.id+'-ah)'},svg);
+    if(e.both)p.setAttribute('marker-start','url(#'+svg.id+'-ah)');
+  }
+  for(const n of data.nodes){
+    const g=el('g',{class:'node',tabindex:'0',role:'button','aria-label':n.t+'：'+n.s.join('，'),'data-id':n.id},svg);
+    g.style.setProperty('--lane','var('+LANE[n.lane]+')');
+    if(n.multi){el('rect',{x:n.x+7,y:n.y-7,width:n.w,height:n.h,rx:6,class:'stack'},g);el('rect',{x:n.x+3.5,y:n.y-3.5,width:n.w,height:n.h,rx:6,class:'stack'},g)}
+    el('rect',{x:n.x,y:n.y,width:n.w,height:n.h,rx:6,class:'box'},g);
+    const tt=el('text',{x:n.x+12,y:n.y+23,class:'t'},g);tt.textContent=n.t;
+    n.s.forEach((s,i)=>{const st=el('text',{x:n.x+12,y:n.y+44+i*18,class:'s'},g);st.textContent=s});
+    g.addEventListener('click',()=>select(svg,g,n,sys));
+    g.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();select(svg,g,n,sys)}});
+    let mx=n.x+n.w-14;
+    if(n.xr){marker(svg,mx,n.y,'!','x');mx-=24}
+    for(const id of (n.mk||[])){marker(svg,mx,n.y,id,'o');mx-=24}
+  }
+  for(const e of data.edges){
+    if(!e.n)continue;
+    const g=el('g',{class:'num'},svg);const w=e.n.length>2?28:(e.n.length>1?22:18);
+    el('rect',{x:e.b[0]-w/2,y:e.b[1]-9,width:w,height:18,rx:9,style:'fill:var(--ink)'},g);
+    const t=el('text',{x:e.b[0],y:e.b[1]+3.8,'text-anchor':'middle'},g);t.textContent=e.n;
+  }
+  requestAnimationFrame(()=>{svg.querySelectorAll('.node').forEach(g=>{const r=g.querySelector('.box');const max=parseFloat(r.getAttribute('width'))-22;g.querySelectorAll('text').forEach(t=>fitText(t,max))});svg.querySelectorAll('.gl').forEach(t=>fitText(t,600))});
+}
+function marker(svg,x,y,id,kind){
+  const g=el('g',{class:'mk '+kind,'data-opt':id,tabindex:kind==='o'?'0':'-1',role:kind==='o'?'link':'img','aria-label':kind==='o'?'可优化点 '+id:'结构风险'},svg);
+  el('circle',{cx:x,cy:y,r:10},g);const t=el('text',{x:x,y:y+3.8,'text-anchor':'middle'},g);t.textContent=id;
+  if(kind==='o'){const go=()=>gotoOpt(id);g.addEventListener('click',ev=>{ev.stopPropagation();go()});g.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();go()}})}
+}
+function select(svg,g,n,sys){
+  document.querySelectorAll('.node.sel').forEach(x=>x.classList.remove('sel'));
+  document.querySelectorAll('svg.dim').forEach(x=>x.classList.remove('dim'));
+  if(current===n.id){current=null;resetDetail();return}
+  current=n.id;g.classList.add('sel');svg.classList.add('dim');
+  const box=document.getElementById('detail');box.innerHTML='';
+  const sy=document.createElement('div');sy.className='d-sys';sy.textContent=sys;box.appendChild(sy);
+  const h=document.createElement('h3');h.textContent=n.t;box.appendChild(h);
+  const ul=document.createElement('ul');(n.d||n.s).forEach(s=>{const li=document.createElement('li');li.textContent=s;ul.appendChild(li)});box.appendChild(ul);
+  const ev=document.createElement('div');ev.className='opts';const c=document.createElement('span');c.className='chip '+n.ev;c.textContent=EVL[n.ev];ev.appendChild(c);box.appendChild(ev);
+  const src=document.createElement('div');src.className='src';src.textContent=n.src||'';box.appendChild(src);
+  if(n.mk&&n.mk.length){const o=document.createElement('div');o.className='opts';n.mk.forEach(id=>{const b=document.createElement('button');b.type='button';const dt=document.createElement('span');dt.className='dot o';dt.textContent=id;b.appendChild(dt);b.appendChild(document.createTextNode(OPTS.find(x=>x.id===id).t));b.addEventListener('click',()=>gotoOpt(id));o.appendChild(b)});box.appendChild(o)}
+}
+let defaultDetail='';
+function resetDetail(){document.getElementById('detail').innerHTML=defaultDetail}
+function gotoOpt(id){const c=document.getElementById('opt-'+id);if(!c)return;c.scrollIntoView({block:'center'});c.classList.add('flash');setTimeout(()=>c.classList.remove('flash'),1600)}
+function steps(ol,list){ol.innerHTML='';list.forEach(s=>{const li=document.createElement('li');if(Array.isArray(s)){li.className='multi';li.setAttribute('data-n',s[0]);li.textContent=s[1]}else li.textContent=s;ol.appendChild(li)})}
+
+/* 时间图：两条横条，同一比例尺（0–400 秒） */
+function timeChart(){
+  const svg=document.getElementById('svg-time');const X0=150,W=560,MAX=400,sc=W/MAX;
+  for(let v=0;v<=MAX;v+=100){const x=X0+v*sc;el('line',{x1:x,x2:x,y1:26,y2:178,class:'axis'},svg);const t=el('text',{x:x,y:196,class:'tick','text-anchor':'middle'},svg);t.textContent=v+' 秒'}
+  const rows=[{l:'现在（实测）',y:44,seg:[90.6,70.1,219.8]},{l:'模板化后（投影）',y:110,seg:[90.6,27.8,13.1]}];
+  const cols=['--c-infer','--c-exec','--c-env'];const names=['求解','actor','评分'];
+  rows.forEach(r=>{const lt=el('text',{x:X0-12,y:r.y+26,class:'bar-l','text-anchor':'end'},svg);lt.textContent=r.l;
+    const small=[];
+    let x=X0;r.seg.forEach((v,i)=>{const w=v*sc;el('rect',{x:x,y:r.y,width:w,height:40,style:'fill:var('+cols[i]+')'},svg);if(w>44){const t=el('text',{x:x+w/2,y:r.y+25,class:'bar-v','text-anchor':'middle'},svg);t.textContent=v.toFixed(1)}else small.push(names[i]+' '+v.toFixed(1));x+=w});
+    const tot=r.seg.reduce((a,b)=>a+b,0);const tt=el('text',{x:x+8,y:r.y+25,class:'tick'},svg);tt.textContent='合计 '+tot.toFixed(1)+(small.length?'（'+small.join(' · ')+'）':'')});
+  const nt=el('text',{x:X0,y:226,class:'tick'},svg);nt.textContent='投影：去掉评分与 actor 两侧的 chown 和 Git 清理、Pandas 编译，残余量取 CPU 实验实测（尚未在 GPU 上实测）';
+  requestAnimationFrame(()=>fitText(nt,600));
+}
+
+function matrix(){
+  const tb=document.getElementById('mx-body');
+  MX.forEach(r=>{const tr=document.createElement('tr');const th=document.createElement('th');th.scope='row';th.textContent=r[0];tr.appendChild(th);
+    for(let i=1;i<=3;i++){const td=document.createElement('td');td.textContent=r[i];tr.appendChild(td)}
+    const td=document.createElement('td');td.className='v';const s=document.createElement('span');s.className='tag '+r[4];s.textContent=r[5];td.appendChild(s);tr.appendChild(td);tb.appendChild(tr)});
+}
+function cards(){
+  const wrap=document.getElementById('cards-wrap');let grp='';let box=null;
+  OPTS.forEach(o=>{if(o.g!==grp){grp=o.g;const h=document.createElement('div');h.className='grp-title';h.textContent=grp;wrap.appendChild(h);box=document.createElement('div');box.className='cards';wrap.appendChild(box)}
+    const c=document.createElement('article');c.className='card';c.id='opt-'+o.id;
+    const top=document.createElement('div');top.className='c-top';const d=document.createElement('span');d.className='dot o';d.textContent=o.id;top.appendChild(d);const h=document.createElement('h3');h.textContent=o.t;top.appendChild(h);c.appendChild(top);
+    const p=document.createElement('p');p.textContent=o.p;c.appendChild(p);
+    const ev=document.createElement('div');ev.className='ev';o.ev.forEach(k=>{const s=document.createElement('span');s.className='chip '+k;s.textContent=EVL[k];ev.appendChild(s)});c.appendChild(ev);
+    const m=document.createElement('div');m.className='meta';m.innerHTML='';const a=document.createElement('span');a.innerHTML='<b>影响</b> ';a.appendChild(document.createTextNode(o.imp));const b=document.createElement('span');b.innerHTML='<b>状态</b> ';b.appendChild(document.createTextNode(o.st));m.appendChild(a);m.appendChild(b);c.appendChild(m);
+    box.appendChild(c)});
+}
+
+function setMimo(view){
+  const code=view==='code';document.getElementById('btn-code').setAttribute('aria-pressed',code);document.getElementById('btn-rep').setAttribute('aria-pressed',!code);
+  const data=code?MCODE:MREP;const svg=document.getElementById('svg-mimo');
+  svg.setAttribute('viewBox',code?'0 0 1100 506':'0 0 1100 600');
+  render(svg,data,code?'MiMo 公开代码':'MiMo 报告 §6');steps(document.getElementById('steps-mimo'),data.steps);
+  document.getElementById('mimo-cap').textContent=data.cap;
+  if(current){current=null;resetDetail()}
+  try{localStorage.setItem('rh2-mimo-view',view)}catch(e){}
+}
+
+defaultDetail=document.getElementById('detail').innerHTML;
+render(document.getElementById('svg-rh2'),RH2,'RH2 当前');
+steps(document.getElementById('steps-rh2'),RH2.steps);
+let v='code';try{v=localStorage.getItem('rh2-mimo-view')||'code'}catch(e){}
+setMimo(v==='rep'?'rep':'code');
+document.getElementById('btn-code').addEventListener('click',()=>setMimo('code'));
+document.getElementById('btn-rep').addEventListener('click',()=>setMimo('rep'));
+timeChart();matrix();cards();
+})();
+</script>

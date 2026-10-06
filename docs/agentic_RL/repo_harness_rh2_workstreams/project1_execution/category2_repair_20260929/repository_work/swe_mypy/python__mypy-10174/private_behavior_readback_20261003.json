@@ -1,0 +1,52 @@
+{
+  "as_of": "2026-10-03",
+  "instance_id": "python__mypy-10174",
+  "job": "mypy-private-controls-r3-20261002T173657Z-cdd6d3",
+  "scope": "作者回读冻结private_behavior的root行为诊断；不表示actor权限或新修订正式reward",
+  "image_id_actual": "sha256:9d63f1ddcbd277fa62d49e10d800908cfec54544e890fc5fe741d2101ca8eb7e",
+  "rows": {
+    "base": {
+      "command_rc": {
+        "identity": 0,
+        "collect": 0,
+        "case": 0
+      },
+      "execution_nodes": {
+        "mypy/test/testcheck.py::TypeCheckSuite::testStrictEqualityWithFixedLengthTupleInCheckWithoutStrictOptional": "PASSED"
+      },
+      "collected_selected_nodes": 1,
+      "preparation_all_rc0": true,
+      "cleanup_confirmed": true,
+      "case_log": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy-private-controls-r3-20261002T173657Z-cdd6d3/python__mypy-10174/base/case.out"
+    },
+    "gold": {
+      "command_rc": {
+        "identity": 0,
+        "collect": 0,
+        "case": 0
+      },
+      "execution_nodes": {
+        "mypy/test/testcheck.py::TypeCheckSuite::testStrictEqualityWithFixedLengthTupleInCheckWithoutStrictOptional": "PASSED"
+      },
+      "collected_selected_nodes": 1,
+      "preparation_all_rc0": true,
+      "cleanup_confirmed": true,
+      "case_log": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy-private-controls-r3-20261002T173657Z-cdd6d3/python__mypy-10174/gold/case.out"
+    },
+    "bad": {
+      "command_rc": {
+        "identity": 0,
+        "collect": 0,
+        "case": 1
+      },
+      "execution_nodes": {
+        "mypy/test/testcheck.py::TypeCheckSuite::testStrictEqualityWithFixedLengthTupleInCheckWithoutStrictOptional": "FAILED"
+      },
+      "collected_selected_nodes": 1,
+      "preparation_all_rc0": true,
+      "cleanup_confirmed": true,
+      "case_log": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy-private-controls-r3-20261002T173657Z-cdd6d3/python__mypy-10174/bad/case.out"
+    }
+  },
+  "conclusion": "新增case在base/gold通过，坏解失败来自应有不重叠诊断缺失；新增节点已在私有root collect/执行核实，正式consumer仍待验"
+}

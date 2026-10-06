@@ -1,0 +1,91 @@
+diff --git a/tests/func/params/test_show.py b/tests/func/params/test_show.py
+--- a/tests/func/params/test_show.py
++++ b/tests/func/params/test_show.py
+@@ -178,3 +178,26 @@
+         "DVC failed to load some parameters for following revisions: 'v1'."
+         in error
+     )
++
++def test_negative_python_params_lock_and_repro(tmp_dir, dvc):
++    from dvc.utils.serialize import load_yaml
++
++    original = "my_int = -7\nmy_float = -0.25\nnested = {'v': -3.5}\n"
++    tmp_dir.gen("params.py", original)
++    stage = dvc.run(
++        name="negative-params",
++        cmd="echo complete > out.txt",
++        params=["params.py:my_int,my_float,nested.v"],
++        outs=["out.txt"],
++    )
++    assert stage is not None
++    values = load_yaml("dvc.lock")["stages"]["negative-params"]["params"]["params.py"]
++    assert values == {"my_int": -7, "my_float": -0.25, "nested.v": -3.5}
++    assert (tmp_dir / "out.txt").read_text().strip() == "complete"
++    assert not dvc.reproduce("negative-params")
++
++    (tmp_dir / "params.py").write_text(original.replace("-0.25", "-0.375"))
++    assert dvc.reproduce("negative-params")
++    values = load_yaml("dvc.lock")["stages"]["negative-params"]["params"]["params.py"]
++    assert values == {"my_int": -7, "my_float": -0.375, "nested.v": -3.5}
++
+diff --git a/tests/unit/utils/serialize/test_python.py b/tests/unit/utils/serialize/test_python.py
+new file mode 100644
+--- /dev/null
++++ b/tests/unit/utils/serialize/test_python.py
+@@ -0,0 +1,56 @@
++import pytest
++
++from dvc.utils.serialize import parse_py
++
++
++@pytest.mark.parametrize(
++    "text,result",
++    [
++        ("BOOL = True", {"BOOL": True}),
++        ("INT = 5", {"INT": 5}),
++        ("FLOAT = 0.001", {"FLOAT": 0.001}),
++        ("STR = 'abc'", {"STR": "abc"}),
++        ("DICT = {'a': 1, 'b': 2}", {"DICT": {"a": 1, "b": 2}}),
++        ("LIST = [1, 2, 3]", {"LIST": [1, 2, 3]}),
++        ("SET = {1, 2, 3}", {"SET": {1, 2, 3}}),
++        ("TUPLE = (10, 100)", {"TUPLE": (10, 100)}),
++        ("NONE = None", {"NONE": None}),
++        ("UNARY_OP = -1", {"UNARY_OP": -1}),
++        (
++            """class TrainConfig:
++
++            EPOCHS = 70
++
++            def __init__(self):
++                self.layers = 5
++                self.layers = 9  # TrainConfig.layers param will be 9
++                bar = 3  # Will NOT be found since it's locally scoped
++            """,
++            {"TrainConfig": {"EPOCHS": 70, "layers": 9}},
++        ),
++    ],
++    ids=["bool", "int", "float", "str", "dict", "list", "set", "tuple", "none", "negative_int", "class"],
++)
++def test_parse_valid_types(text, result):
++    assert parse_py(text, "foo") == result
++
++
++@pytest.mark.parametrize(
++    "text",
++    [
++        "CONSTRUCTOR = dict(a=1, b=2)",
++        "SUM = 1 + 2",
++    ],
++    ids=["constructor", "sum"],
++)
++def test_parse_invalid_types(text):
++    assert parse_py(text, "foo") == {}
++
++def test_parse_negative_float_and_containers():
++    text = "rate = -0.25\nvalues = [-2, -0.75]\nconfig = {'shift': -3.5}\n"
++    assert parse_py(text, "params.py") == {
++        "rate": -0.25,
++        "values": [-2, -0.75],
++        "config": {"shift": -3.5},
++    }
++

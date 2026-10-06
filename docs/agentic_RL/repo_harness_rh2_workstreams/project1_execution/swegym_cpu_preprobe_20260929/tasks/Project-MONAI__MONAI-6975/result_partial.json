@@ -1,0 +1,1407 @@
+{
+  "task": "Project-MONAI__MONAI-6975",
+  "run": "reserve6-v1",
+  "scope": "actor/private complete; formal noop setup900 infrastructure failure reviewed",
+  "actor": {
+    "image": "sha256:789cb5d10d9b343a2e8b656581697a7127b56a0d467b1cc5b8779a79a0ff0727",
+    "base_commit": "392c5c1b860c0f0cfd0aa14e9d4b342c8b5ef5e7",
+    "commands_result": [
+      {
+        "id": "identity",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 1066,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "核base、CPU、解释器、实际transform.py导入与初态；NiBabel供旧Dataset测试"
+      },
+      {
+        "id": "lazy_value_matrix",
+        "rc": 1,
+        "status": "nonzero",
+        "expect": "nonzero",
+        "matches_expect": true,
+        "output_bytes": 4996,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "公开Compose/Dataset字典内存图像True/False/None：两次确定性Flipd的真实返回像素+有效lazy参数；wrap真实resample函数仅记录调用，不用操作长度代理、不要求唯一内部调用次数"
+      },
+      {
+        "id": "public_regression",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 9559,
+        "output_truncated_to": 200000,
+        "pytest": {
+          "passed": 56,
+          "warning": 20
+        },
+        "purpose": "base公开旧Compose/Dataset行为，使用测试自建临时NIfTI；未注入隐藏测试或外部图像"
+      }
+    ],
+    "cleanup": {
+      "container_rm": 0,
+      "network_failures": [],
+      "relay_failures": [],
+      "stub_rc": 0,
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "residual_after_force": []
+    },
+    "checks": {
+      "interpreter_in_tool_result": false,
+      "host_log_present": true,
+      "no_harness_dir_in_container": true,
+      "no_launcher_or_done_marker": true,
+      "message_start_matches_stub_requests": true,
+      "exit_code_zero": true,
+      "result_event_present": true,
+      "log_complete": true,
+      "bashenv_denied_for_agent": false,
+      "all_commands_ran": true,
+      "all_match_expect": true
+    }
+  },
+  "private": {
+    "base": {
+      "image": "sha256:789cb5d10d9b343a2e8b656581697a7127b56a0d467b1cc5b8779a79a0ff0727",
+      "preparation_rc": [
+        0,
+        0,
+        0
+      ],
+      "commands": [
+        {
+          "id": "lazy_value_matrix",
+          "rc": 1,
+          "seconds": 7.910215046000303,
+          "stdout_bytes": 4532,
+          "stderr_bytes": 464
+        },
+        {
+          "id": "public_regression",
+          "rc": 0,
+          "seconds": 15.321168784999827,
+          "stdout_bytes": 9559,
+          "stderr_bytes": 0
+        }
+      ],
+      "source_sha256": "1e39afa8d4464c4ef18ac3f1a05c654a213af65e4364fa194923faa92b156ee9",
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      },
+      "actual_observations": {
+        "lazy_value_matrix": [
+          {
+            "entry": "direct",
+            "mode": true,
+            "values": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "expected": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "dtype": "torch.float32",
+            "device": "cpu",
+            "trace": [
+              [
+                {
+                  "argument": true,
+                  "effective": true
+                }
+              ],
+              [
+                {
+                  "argument": true,
+                  "effective": true
+                }
+              ]
+            ],
+            "resample_function_calls": 1,
+            "policy_ok": true,
+            "value_ok": true
+          },
+          {
+            "entry": "dataset",
+            "mode": true,
+            "values": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "expected": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "dtype": "torch.float32",
+            "device": "cpu",
+            "trace": [
+              [
+                {
+                  "argument": false,
+                  "effective": false
+                }
+              ],
+              [
+                {
+                  "argument": false,
+                  "effective": false
+                }
+              ]
+            ],
+            "resample_function_calls": 0,
+            "policy_ok": false,
+            "value_ok": true
+          },
+          {
+            "entry": "direct",
+            "mode": false,
+            "values": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "expected": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "dtype": "torch.float32",
+            "device": "cpu",
+            "trace": [
+              [
+                {
+                  "argument": false,
+                  "effective": false
+                }
+              ],
+              [
+                {
+                  "argument": false,
+                  "effective": false
+                }
+              ]
+            ],
+            "resample_function_calls": 0,
+            "policy_ok": true,
+            "value_ok": true
+          },
+          {
+            "entry": "dataset",
+            "mode": false,
+            "values": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "expected": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "dtype": "torch.float32",
+            "device": "cpu",
+            "trace": [
+              [
+                {
+                  "argument": false,
+                  "effective": false
+                }
+              ],
+              [
+                {
+                  "argument": false,
+                  "effective": false
+                }
+              ]
+            ],
+            "resample_function_calls": 0,
+            "policy_ok": true,
+            "value_ok": true
+          },
+          {
+            "entry": "direct",
+            "mode": null,
+            "values": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "expected": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "dtype": "torch.float32",
+            "device": "cpu",
+            "trace": [
+              [
+                {
+                  "argument": null,
+                  "effective": true
+                }
+              ],
+              [
+                {
+                  "argument": null,
+                  "effective": true
+                }
+              ]
+            ],
+            "resample_function_calls": 1,
+            "policy_ok": true,
+            "value_ok": true
+          },
+          {
+            "entry": "dataset",
+            "mode": null,
+            "values": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "expected": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "dtype": "torch.float32",
+            "device": "cpu",
+            "trace": [
+              [
+                {
+                  "argument": false,
+                  "effective": false
+                }
+              ],
+              [
+                {
+                  "argument": false,
+                  "effective": false
+                }
+              ]
+            ],
+            "resample_function_calls": 0,
+            "policy_ok": false,
+            "value_ok": true
+          }
+        ]
+      }
+    },
+    "gold": {
+      "image": "sha256:789cb5d10d9b343a2e8b656581697a7127b56a0d467b1cc5b8779a79a0ff0727",
+      "preparation_rc": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "commands": [
+        {
+          "id": "lazy_value_matrix",
+          "rc": 0,
+          "seconds": 8.357305739000367,
+          "stdout_bytes": 4703,
+          "stderr_bytes": 338
+        },
+        {
+          "id": "public_regression",
+          "rc": 0,
+          "seconds": 15.611293134001244,
+          "stdout_bytes": 9559,
+          "stderr_bytes": 0
+        }
+      ],
+      "source_sha256": "5d8ba724a4e09bdf533c1030e0891a9acfb00a98069ca6586533cddb4e369bb5",
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      },
+      "actual_observations": {
+        "lazy_value_matrix": [
+          {
+            "entry": "direct",
+            "mode": true,
+            "values": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "expected": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "dtype": "torch.float32",
+            "device": "cpu",
+            "trace": [
+              [
+                {
+                  "argument": true,
+                  "effective": true
+                }
+              ],
+              [
+                {
+                  "argument": true,
+                  "effective": true
+                }
+              ]
+            ],
+            "resample_function_calls": 1,
+            "policy_ok": true,
+            "value_ok": true
+          },
+          {
+            "entry": "dataset",
+            "mode": true,
+            "values": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "expected": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "dtype": "torch.float32",
+            "device": "cpu",
+            "trace": [
+              [
+                {
+                  "argument": true,
+                  "effective": true
+                }
+              ],
+              [
+                {
+                  "argument": true,
+                  "effective": true
+                }
+              ]
+            ],
+            "resample_function_calls": 1,
+            "policy_ok": true,
+            "value_ok": true
+          },
+          {
+            "entry": "direct",
+            "mode": false,
+            "values": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "expected": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "dtype": "torch.float32",
+            "device": "cpu",
+            "trace": [
+              [
+                {
+                  "argument": false,
+                  "effective": false
+                }
+              ],
+              [
+                {
+                  "argument": false,
+                  "effective": false
+                }
+              ]
+            ],
+            "resample_function_calls": 0,
+            "policy_ok": true,
+            "value_ok": true
+          },
+          {
+            "entry": "dataset",
+            "mode": false,
+            "values": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "expected": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "dtype": "torch.float32",
+            "device": "cpu",
+            "trace": [
+              [
+                {
+                  "argument": false,
+                  "effective": false
+                }
+              ],
+              [
+                {
+                  "argument": false,
+                  "effective": false
+                }
+              ]
+            ],
+            "resample_function_calls": 0,
+            "policy_ok": true,
+            "value_ok": true
+          },
+          {
+            "entry": "direct",
+            "mode": null,
+            "values": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "expected": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "dtype": "torch.float32",
+            "device": "cpu",
+            "trace": [
+              [
+                {
+                  "argument": null,
+                  "effective": true
+                }
+              ],
+              [
+                {
+                  "argument": null,
+                  "effective": true
+                }
+              ]
+            ],
+            "resample_function_calls": 1,
+            "policy_ok": true,
+            "value_ok": true
+          },
+          {
+            "entry": "dataset",
+            "mode": null,
+            "values": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "expected": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "dtype": "torch.float32",
+            "device": "cpu",
+            "trace": [
+              [
+                {
+                  "argument": null,
+                  "effective": true
+                }
+              ],
+              [
+                {
+                  "argument": null,
+                  "effective": true
+                }
+              ]
+            ],
+            "resample_function_calls": 1,
+            "policy_ok": true,
+            "value_ok": true
+          }
+        ]
+      }
+    },
+    "degenerate": {
+      "image": "sha256:789cb5d10d9b343a2e8b656581697a7127b56a0d467b1cc5b8779a79a0ff0727",
+      "preparation_rc": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "commands": [
+        {
+          "id": "lazy_value_matrix",
+          "rc": 1,
+          "seconds": 8.154111091998857,
+          "stdout_bytes": 4681,
+          "stderr_bytes": 464
+        },
+        {
+          "id": "public_regression",
+          "rc": 0,
+          "seconds": 16.13577050099957,
+          "stdout_bytes": 9559,
+          "stderr_bytes": 0
+        }
+      ],
+      "source_sha256": "a8382325df5169732767963fa29553845514fe29b318ce60184bdcc12ddf369a",
+      "cleanup": {
+        "rm_rc": 0,
+        "query_rc": 0,
+        "remaining": [],
+        "stderr": ""
+      },
+      "actual_observations": {
+        "lazy_value_matrix": [
+          {
+            "entry": "direct",
+            "mode": true,
+            "values": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "expected": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "dtype": "torch.float32",
+            "device": "cpu",
+            "trace": [
+              [
+                {
+                  "argument": true,
+                  "effective": true
+                }
+              ],
+              [
+                {
+                  "argument": true,
+                  "effective": true
+                }
+              ]
+            ],
+            "resample_function_calls": 1,
+            "policy_ok": true,
+            "value_ok": true
+          },
+          {
+            "entry": "dataset",
+            "mode": true,
+            "values": [
+              [
+                [
+                  0.0,
+                  1.0,
+                  2.0,
+                  3.0
+                ],
+                [
+                  4.0,
+                  5.0,
+                  6.0,
+                  7.0
+                ],
+                [
+                  8.0,
+                  9.0,
+                  10.0,
+                  11.0
+                ]
+              ]
+            ],
+            "expected": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "dtype": "torch.float32",
+            "device": "cpu",
+            "trace": [
+              [
+                {
+                  "argument": true,
+                  "effective": true
+                }
+              ],
+              [
+                {
+                  "argument": true,
+                  "effective": true
+                }
+              ]
+            ],
+            "resample_function_calls": 1,
+            "policy_ok": true,
+            "value_ok": false
+          },
+          {
+            "entry": "direct",
+            "mode": false,
+            "values": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "expected": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "dtype": "torch.float32",
+            "device": "cpu",
+            "trace": [
+              [
+                {
+                  "argument": false,
+                  "effective": false
+                }
+              ],
+              [
+                {
+                  "argument": false,
+                  "effective": false
+                }
+              ]
+            ],
+            "resample_function_calls": 0,
+            "policy_ok": true,
+            "value_ok": true
+          },
+          {
+            "entry": "dataset",
+            "mode": false,
+            "values": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "expected": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "dtype": "torch.float32",
+            "device": "cpu",
+            "trace": [
+              [
+                {
+                  "argument": false,
+                  "effective": false
+                }
+              ],
+              [
+                {
+                  "argument": false,
+                  "effective": false
+                }
+              ]
+            ],
+            "resample_function_calls": 0,
+            "policy_ok": true,
+            "value_ok": true
+          },
+          {
+            "entry": "direct",
+            "mode": null,
+            "values": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "expected": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "dtype": "torch.float32",
+            "device": "cpu",
+            "trace": [
+              [
+                {
+                  "argument": null,
+                  "effective": true
+                }
+              ],
+              [
+                {
+                  "argument": null,
+                  "effective": true
+                }
+              ]
+            ],
+            "resample_function_calls": 1,
+            "policy_ok": true,
+            "value_ok": true
+          },
+          {
+            "entry": "dataset",
+            "mode": null,
+            "values": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "expected": [
+              [
+                [
+                  11.0,
+                  10.0,
+                  9.0,
+                  8.0
+                ],
+                [
+                  7.0,
+                  6.0,
+                  5.0,
+                  4.0
+                ],
+                [
+                  3.0,
+                  2.0,
+                  1.0,
+                  0.0
+                ]
+              ]
+            ],
+            "dtype": "torch.float32",
+            "device": "cpu",
+            "trace": [
+              [
+                {
+                  "argument": null,
+                  "effective": true
+                }
+              ],
+              [
+                {
+                  "argument": null,
+                  "effective": true
+                }
+              ]
+            ],
+            "resample_function_calls": 1,
+            "policy_ok": true,
+            "value_ok": true
+          }
+        ]
+      }
+    }
+  },
+  "formal": {
+    "noop": {
+      "reward": null,
+      "failure_category": "infra_failure",
+      "detail": "grading_control_surface_protect_timeout_after_900s",
+      "install": null,
+      "test": null,
+      "cleanup_confirmed": true
+    },
+    "gold": "not dispatched in reserve6-v1",
+    "degenerate": "not dispatched in reserve6-v1"
+  },
+  "remaining": [
+    "新目录setup1800单独正式复验尚未执行；不重跑actor/private",
+    "完整正式结果、安装、逐参考、gold/退化导出及清理",
+    "正式结果独立复核、最终用途；D6未实施"
+  ],
+  "failure_review": "failure_review_setup900.md",
+  "independent_actor_private_review": "../../reviews/reserve6_monai_behavior_review.md"
+}

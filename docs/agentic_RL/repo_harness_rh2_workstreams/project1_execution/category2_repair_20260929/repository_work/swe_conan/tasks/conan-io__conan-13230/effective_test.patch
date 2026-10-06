@@ -1,0 +1,45 @@
+diff --git a/conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py b/conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py
+--- a/conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py
++++ b/conans/test/unittests/client/toolchain/autotools/autotools_toolchain_test.py
+@@ -328,6 +328,19 @@
+     assert expected in env["LDFLAGS"]
+ 
+ 
++def test_crossbuild_from_macos_to_non_apple_os():
++    """Check we are not adding Apple-specific flags
++        when the os_build is Macos, but we are targetting
++        a non-Apple OS (e.g. Linux, Android, QNX)"""
++    conanfile = ConanFileMock()
++    conanfile.settings = MockSettings({"os": "Android", "arch": "armv8"})
++    conanfile.settings_build = MockSettings({"os": "Macos", "arch": "armv8"})
++    be = AutotoolsToolchain(conanfile)
++    assert be.apple_min_version_flag == ''
++    assert be.apple_arch_flag is None
++    assert be.apple_isysroot_flag is None
++
++
+ def test_apple_isysrootflag():
+     """Even when no cross building it is adjusted because it could target a Mac version"""
+     conanfile = ConanFileMock()
+@@ -512,3 +525,21 @@
+     assert '-mios-version-min=14 --flag1 --flag2' in env["CXXFLAGS"]
+     assert '-mios-version-min=14 --flag3 --flag4' in env["CFLAGS"]
+     assert '-mios-version-min=14 --flag5 --flag6' in env["LDFLAGS"]
++
++
++@pytest.mark.parametrize("sdk_path", [None, "/public-diagnostic-sdk"], ids=["no_sdk", "sdk_sentinel"])
++def test_linux_host_from_macos_has_no_apple_cflags(sdk_path, monkeypatch):
++    # 公开最小 recipe 只有 os/arch；核最终 flags，而非内部 Apple 属性的表示。
++    import shlex
++
++    # 环境会继承调用者的 CFLAGS；排除宿主遗留值，只检验当前工具链生成行为。
++    monkeypatch.delenv("CFLAGS", raising=False)
++    conanfile = ConanFileMock()
++    conanfile.settings = MockSettings({"os": "Linux", "arch": "x86_64"})
++    conanfile.settings_build = MockSettings({"os": "Macos", "arch": "armv8"})
++    if sdk_path is not None:
++        conanfile.conf.define("tools.apple:sdk_path", sdk_path)
++    toolchain = AutotoolsToolchain(conanfile)
++    assert toolchain.cflags == []
++    # 环境导出必须与同一公开 cflags 一致，不安装真实 SDK 或交叉编译器。
++    assert shlex.split(toolchain.vars()["CFLAGS"]) == []

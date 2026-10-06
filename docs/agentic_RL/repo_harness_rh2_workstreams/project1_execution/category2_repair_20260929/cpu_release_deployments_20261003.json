@@ -1,0 +1,621 @@
+{
+  "as_of": "2026-10-03T18:03:56.935074+00:00",
+  "writer": "publication_thread_only",
+  "interpretation": "可用的不可变候选及实际部署；每题绑定由题主记录，不自动切换旧作业。后续新作业使用cpu_actor_runtime_v2；此清单不代表题级验收或GPU就绪。",
+  "releases": [
+    {
+      "release_id": "cat2-cpu-r2e064065-swe5-20261003-v1",
+      "manifest_sha256": "282021962a92b510f077385660ac56acedcd7fac1d97e63db3baa98e4dcc057f",
+      "remote_relative_path": "releases/cat2-cpu-r2e064065-swe5-20261003-v1/",
+      "verified_hosts": [
+        "cpu-a",
+        "cpu-b",
+        "cpu-c"
+      ],
+      "checksummed_files": 794,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "scope": "初版新增Orange22题面064、DataLad隐藏测试065；SWE原接受5题不变",
+      "status": "transport_and_trusted_readback_verified_not_task_acceptance"
+    },
+    {
+      "release_id": "cat2-cpu-r2e066068-swe5-20261003-v1",
+      "manifest_sha256": "0ce1aaf92f625f385fdf0ed560a9f5d505e9c555c2c9a00d262d503c79f79863",
+      "remote_relative_path": "releases/cat2-cpu-r2e066068-swe5-20261003-v1/",
+      "verified_hosts": [
+        "cpu-b"
+      ],
+      "checksummed_files": 797,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "scope": "相对初版新增Scrapy066/067与coveragepy5dbb题面068",
+      "status": "transport_and_trusted_readback_verified_not_task_acceptance"
+    },
+    {
+      "release_id": "cat2-cpu-r2e069-swe6-20261003-v1",
+      "manifest_sha256": "40ca2914da2be665754175954defe4bbecfdb31efc1ad394153c09acfb5f9f15",
+      "remote_relative_path": "releases/cat2-cpu-r2e069-swe6-20261003-v1/",
+      "verified_hosts": [
+        "cpu-a",
+        "cpu-b"
+      ],
+      "checksummed_files": 812,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "scope": "相对第二版新增Moto5406消费者/材料及aiohttp4075题面069；不含后续Git或builder修复",
+      "status": "transport_and_trusted_readback_verified_not_task_acceptance"
+    },
+    {
+      "release_id": "cat2-cpu-r2e070077-swe6-20261003-v1",
+      "manifest_sha256": "621e73660ea5685b9a77c353e7f4f3664d7eefa073aed8454bae1ae3e32f388f",
+      "remote_relative_path": "releases/cat2-cpu-r2e070077-swe6-20261003-v1/",
+      "verified_hosts": [
+        "cpu-b",
+        "cpu-c"
+      ],
+      "checksummed_files": 823,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "scope": "相对第三版新增Pillow3a61/a682与coveragepy ea69/f5eb合并修订070–077；包含builder检查容器资源限制、标签及清理；不含Git pack修复",
+      "status": "transport_and_trusted_readback_verified_not_task_acceptance",
+      "builder_daemon_probe_status": "cpu_b_three_bash_cases_passed_with_limits_and_cleanup",
+      "builder_daemon_probe_evidence": "runs/category2_repair_20260929/host_setup_20261003/cpu-b/builder-daemon-20261002T174716Z/coordinator_readback.json",
+      "builder_daemon_probe_scope": "真实bash检查容器；未验证daemon build限额或全部故障路径"
+    },
+    {
+      "release_id": "cat2-cpu-r2e078079-swe7-git-20261003-v1",
+      "manifest_sha256": "80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9",
+      "remote_relative_path": "releases/cat2-cpu-r2e078079-swe7-git-20261003-v1/",
+      "verified_hosts": [
+        "cpu-a",
+        "cpu-b",
+        "cpu-c"
+      ],
+      "checksummed_files": 837,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "scope": "相对第四版新增MONAI3715与NumPy078/079合并材料；精确加入独立审查的Git四文件修复；builder与已真机验证第四版逐字相同",
+      "status": "transport_and_trusted_readback_verified_not_task_acceptance",
+      "git_fix_review": "../ordinary_probe_20260929/git_pack_fix_review_20261003.md",
+      "builder_daemon_probe_status": "same_builder_sha_as_cpu_b_three_case_verified_release4"
+    },
+    {
+      "release_id": "cat2-cpu-r2e080087-swe8-git-20261003-v1",
+      "manifest_sha256": "ab0a3a13fd65e0ea4cd60541ea3b37b01196170477e25832df246f33ea208828",
+      "remote_relative_path": "releases/cat2-cpu-r2e080087-swe8-git-20261003-v1/",
+      "verified_hosts": [
+        "cpu-a",
+        "cpu-b"
+      ],
+      "checksummed_files": 855,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "scope": "mypy10174新增1P2P；aio1c1/240/618及coverage016修订080–087；Git四文件/builder精确继承第五版",
+      "status": "transport_and_trusted_readback_verified_not_task_acceptance",
+      "affected_owner_packages": [
+        "swe_mypy",
+        "r2e_aiohttp",
+        "r2e_coveragepy"
+      ],
+      "binding_note": "Moto5406 tools v3继续固定第五版；其他题不自动换版",
+      "git_and_builder_verification": "exact_release5_bytes_inherited_verified_behavior"
+    },
+    {
+      "release_id": "cat2-cpu-r2e088-swe12-git-20261003-v1",
+      "manifest_sha256": "f9dfcd16c9c88e4f514512e61781856b7d6f1a71a20b64cd1843d20546c5009b",
+      "remote_relative_path": "releases/cat2-cpu-r2e088-swe12-git-20261003-v1/",
+      "verified_hosts": [
+        "cpu-a",
+        "cpu-c"
+      ],
+      "checksummed_files": 905,
+      "exact_member_set_verified": true,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "scope": "新增Moto6114、Pydantic5662/6283、DVC5839消费者与材料；DataLad6b6f修订088替代active065，补K7/K8兼容性断言；其余259题消费不变",
+      "status": "transport_and_trusted_readback_verified_not_task_acceptance",
+      "affected_owner_packages": [
+        "swe_moto",
+        "swe_pydantic",
+        "swe_dvc",
+        "r2e_datalad"
+      ],
+      "binding_note": "cpu-b无本次受影响题，保留原绑定；Moto5406 tools v3仍固定第五版；DataLad旧GPU请求继续暂停，等待088三方验收及非作者复核",
+      "git_builder_manager_verification": "exact_release6_bytes_verified",
+      "publication_review": "swe12_datalad088_publication_review_20261003.md"
+    },
+    {
+      "release_id": "cat2-cpu-r2e088-swe13-git-20261003-v1",
+      "manifest_sha256": "95ff56085fc2ccf6857829f960c23195a3dd332cfecabe8fe6b3f0c3817ebd08",
+      "remote_relative_path": "releases/cat2-cpu-r2e088-swe13-git-20261003-v1/",
+      "verified_hosts": [
+        "cpu-a"
+      ],
+      "checksummed_files": 923,
+      "exact_member_set_verified": true,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "scope": "相对第七版仅Moto5134追加mixed-list兼容性P2P，最终2F/13P；其余263题消费保持",
+      "status": "transport_and_trusted_readback_verified_not_task_acceptance",
+      "owner_thread_id": "01a0ebd7-4095-7dd1-8017-9648d7dba040",
+      "owner_thread_title": "负责处理第一类的模型探针",
+      "cpu_package": "coordination",
+      "job_prefix": "gpuowner-moto5134-",
+      "binding_note": "仅本题新noop/gold/原a3候选三臂使用；旧GPU工件及分数不改绑。本题不转交SWE Moto六题负责人，R7五题在途继续原版",
+      "shared_runtime_verification": "Git四文件、builder、manager、PreparedTaskFace与第七版逐字相同"
+    },
+    {
+      "release_id": "cat2-cpu-r2e089092-swe13-git-20261003-v1",
+      "manifest_sha256": "694a1cd364a4bc3348069bd9dd362c4432fbd25339b192d149a2f29d9a709230",
+      "remote_relative_path": "releases/cat2-cpu-r2e089092-swe13-git-20261003-v1/",
+      "verified_hosts": [
+        "cpu-c"
+      ],
+      "checksummed_files": 929,
+      "status": "transport_and_trusted_readback_verified_not_task_acceptance",
+      "scope": "Orange4014隐藏089、50f6题面090/隐藏091、9b54隐藏092及固定SciPy组合；保持SWE13；新组合CPU尚未验",
+      "local_checks": "101维护、3prepare、264消费仅3题变；不等于远端部署或题级验收",
+      "exact_member_set_verified": true,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "publication_receipt": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r9_publication_receipt.json",
+      "actual_registry": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v20.json",
+      "actual_pins": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/t1_input_pins_r2e_v21.json",
+      "metadata_note": "R9 manifest顶层registry19/pins20为封版时继承的陈旧说明；实际consumer固定registry20/pins21且文件集、SHA及可信读回一致。原manifest不改，以本回执明确纠正；后续封版须直接从实际consumer取值。"
+    },
+    {
+      "release_id": "cat2-cpu-r2e089092-swe14-preflight-20261003-v1",
+      "manifest_sha256": "00ac5c375629f59543f548fbc7b0cb3cbe7d1418f7a956d9deebcefab2e8a87c",
+      "remote_relative_path": "releases/cat2-cpu-r2e089092-swe14-preflight-20261003-v1/",
+      "verified_hosts": [
+        "cpu-a"
+      ],
+      "checksummed_files": 950,
+      "status": "transport_and_trusted_readback_verified_not_task_acceptance",
+      "scope": "mypy15184 nested v2 3F/2P and DVC5839 candidate UID wheel preflight",
+      "local_checks": "141 pass + old fixture count corrected with18 targeted pass;ruff;2prepare;264 scope only2changed",
+      "exact_member_set_verified": true,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "publication_receipts": [
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r10/dvc5839_support_receipt.json",
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r10/mypy15184_publication_receipt.json"
+      ]
+    },
+    {
+      "release_id": "cat2-cpu-r2e089092-swe17-dask-conan-20261003-v1",
+      "manifest_sha256": "bf1d0e8a279f996a7737de775c9a30abf3401dc34840ef54bf7e56b754991bb9",
+      "remote_relative_path": "releases/cat2-cpu-r2e089092-swe17-dask-conan-20261003-v1/",
+      "verified_hosts": [
+        "cpu-a",
+        "cpu-c"
+      ],
+      "checksummed_files": 980,
+      "status": "transport_and_trusted_readback_verified_not_task_acceptance",
+      "scope": "Dask7656 fixed E11/grader and 1F48P; Conan13230 3F34P and14177 2F11P",
+      "exact_member_set_verified": true,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "publication_receipts": [
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r11/dask7656_publication_receipt.json",
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r11/conan13230_publication_receipt.json",
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r11/conan14177_publication_receipt.json"
+      ]
+    },
+    {
+      "release_id": "cat2-cpu-r2e089092-swe21-conan-20261003-v1",
+      "manifest_sha256": "3fe07ef04c88f9883b2bc3040cac425374cbd7bcd23041fc4280e17ef62e7987",
+      "remote_relative_path": "releases/cat2-cpu-r2e089092-swe21-conan-20261003-v1/",
+      "verified_hosts": [
+        "cpu-a"
+      ],
+      "checksummed_files": 1020,
+      "status": "transport_and_trusted_readback_verified_not_task_acceptance",
+      "scope": "Conan13403 1F0P;11594 2F4P fixed ALL;15422 5F40P;12397 2F2P",
+      "exact_member_set_verified": true,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "publication_receipts": [
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r12/conan13403_publication_receipt.json",
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r12/conan11594_publication_receipt.json",
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r12/conan15422_publication_receipt.json",
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r12/conan12397_publication_receipt.json"
+      ]
+    },
+    {
+      "release_id": "cat2-cpu-r2e089092-swe27-pandas-moto-20261003-v1",
+      "manifest_sha256": "3fad18daff8db219294e10cbf08d4424d68cf7000d008bb983cba4bdc427b641",
+      "remote_relative_path": "releases/cat2-cpu-r2e089092-swe27-pandas-moto-20261003-v1/",
+      "verified_hosts": [
+        "cpu-a",
+        "cpu-c"
+      ],
+      "checksummed_files": 1094,
+      "status": "transport_and_trusted_readback_verified_not_task_acceptance",
+      "scope": "Pandas48106/50319 and Moto5960/6408/6185/7584",
+      "exact_member_set_verified": true,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "publication_receipts": [
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r13/pandas48106_publication_receipt.json",
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r13/pandas50319_publication_receipt.json",
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r13/moto5960_publication_receipt.json",
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r13/moto6408_publication_receipt.json",
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r13/moto6185_publication_receipt.json",
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r13/moto7584_publication_receipt.json"
+      ]
+    },
+    {
+      "release_id": "cat2-cpu-r2e089092-swe34-dvc-pyd-20261003-v1",
+      "manifest_sha256": "51b833975be2c3354be45b731552235a33070315f0039c8e6f54987de95f6ca8",
+      "remote_relative_path": "releases/cat2-cpu-r2e089092-swe34-dvc-pyd-20261003-v1/",
+      "verified_hosts": [
+        "cpu-a",
+        "cpu-c"
+      ],
+      "checksummed_files": 1220,
+      "status": "transport_and_trusted_readback_verified_not_task_acceptance",
+      "scope": "DVC6954/4166/9395 and Pydantic8316/8511/8567/9066",
+      "exact_member_set_verified": true,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "publication_receipts": [
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r14/dvc6954_publication_receipt.json",
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r14/dvc4166_publication_receipt.json",
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r14/dvc9395_publication_receipt.json",
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r14/pydantic8316_publication_receipt.json",
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r14/pydantic8511_publication_receipt.json",
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r14/pydantic8567_publication_receipt.json",
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r14/pydantic9066_publication_receipt.json"
+      ]
+    },
+    {
+      "release_id": "cat2-cpu-r2e089092-swe39-dask-monai-20261003-v1",
+      "manifest_sha256": "2b788d1ce84228a27894e04886ade347e91993f48ddc9bdeeb8f92de4aa92917",
+      "remote_relative_path": "releases/cat2-cpu-r2e089092-swe39-dask-monai-20261003-v1/",
+      "verified_hosts": [
+        "cpu-c"
+      ],
+      "checksummed_files": 1305,
+      "status": "transport_and_trusted_readback_verified_not_task_acceptance",
+      "scope": "Dask9378/7138/7305 and MONAI2446/6975",
+      "exact_member_set_verified": true,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "publication_receipts": [
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r15/dask9378_publication_receipt.json",
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r15/dask7138_publication_receipt.json",
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r15/dask7305_publication_receipt.json",
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r15/monai2446_publication_receipt.json",
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r15/monai6975_publication_receipt.json"
+      ]
+    },
+    {
+      "release_id": "cat2-cpu-r2e089092-swe40-dask8801-20261003-v1",
+      "manifest_sha256": "f98eddad0c75df00e8e8352d52819d602a06d5e5ccb8d40feacb8c2658a2b80a",
+      "remote_relative_path": "releases/cat2-cpu-r2e089092-swe40-dask8801-20261003-v1/",
+      "verified_hosts": [
+        "cpu-c"
+      ],
+      "checksummed_files": 1369,
+      "status": "transport_and_trusted_readback_verified_not_task_acceptance",
+      "scope": "Dask8801 v7-compat1 materials/source environment preserved",
+      "exact_member_set_verified": true,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "publication_receipts": [
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r16/dask8801_publication_receipt.json"
+      ]
+    },
+    {
+      "release_id": "cat2-cpu-r2e093-swe40-coverage-ea69-20261003-v1",
+      "manifest_sha256": "76aee53151d3b58758d00a9feb5a901b720b4b430f37d2057ed07c1ef0ce2fa6",
+      "remote_relative_path": "releases/cat2-cpu-r2e093-swe40-coverage-ea69-20261003-v1/",
+      "verified_hosts": [
+        "cpu-a",
+        "cpu-c"
+      ],
+      "checksummed_files": 1378,
+      "status": "transport_and_trusted_readback_verified_not_task_acceptance",
+      "scope": "EA69 statement-only r093; all grading and environment unchanged",
+      "exact_member_set_verified": true,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "publication_receipts": [
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r17/coverage_ea69_publication_receipt.json"
+      ],
+      "resource_support_receipts": [
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/support/coverage_ea69_r17_slot_support_v1/resource_support_receipt.json"
+      ]
+    },
+    {
+      "release_id": "cat2-cpu-r2e093-swe40-moto-offline-20261003-v1",
+      "manifest_sha256": "a84bdc339618e010440df3728c982b2d1d141b1f8295f69761984386ee3a512e",
+      "remote_relative_path": "releases/cat2-cpu-r2e093-swe40-moto-offline-20261003-v1/",
+      "verified_hosts": [
+        "cpu-a"
+      ],
+      "checksummed_files": 1419,
+      "status": "transport_and_trusted_readback_verified_not_task_acceptance",
+      "scope": "两道Moto COPY-only离线环境/只读固定wheel prerequisite消费；其它262消费者及全部264公开内容保持；不是题级CPU矩阵。",
+      "exact_member_set_verified": true,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "publication_receipts": [
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r18/moto6408_publication_receipt.json",
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r18/moto5960_publication_receipt.json"
+      ]
+    },
+    {
+      "release_id": "cat2-cpu-r2e093-swe40-pyd6283-moto6114-20261003-v1",
+      "manifest_sha256": "2cfdd9b4f1134c0915346b727b729665482c4c1121b550764833f16f2982402e",
+      "remote_relative_path": "releases/cat2-cpu-r2e093-swe40-pyd6283-moto6114-20261003-v1/",
+      "verified_hosts": [
+        "cpu-a"
+      ],
+      "checksummed_files": 1476,
+      "status": "transport_and_trusted_readback_verified_not_task_acceptance",
+      "scope": "仅两题固定P2P材料消费及两目标显式derived ledger expected-manifest元数据修正；其它262全spec和全部264公开保持，旧40 active题数及R2E48/093不变。",
+      "exact_member_set_verified": true,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "publication_receipts": [
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r19/pyd6283_publication_receipt.json",
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r19/moto6114_publication_receipt.json"
+      ]
+    },
+    {
+      "release_id": "cat2-cpu-r2e093-swe40-prepare900-20261003-v1",
+      "manifest_sha256": "2a4ceb0315ea959232151d70f29ccc48bd34bdb0cb7dcfbb4aa177fec07bd393",
+      "remote_relative_path": "releases/cat2-cpu-r2e093-swe40-prepare900-20261003-v1/",
+      "verified_hosts": [
+        "cpu-a"
+      ],
+      "checksummed_files": 1479,
+      "status": "transport_and_trusted_readback_verified_not_task_acceptance",
+      "scope": "仅8316/9395固定revision/material/image对的env_reset准备/reset300→900，及其实际replay预算账本政策记录。其它262完整spec、全264公开、材料、环境、测试/candidate/whole/cleanup预算、权限网络和资源不变。",
+      "exact_member_set_verified": true,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "publication_receipts": [
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r20/pyd8316_publication_receipt.json",
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r20/dvc9395_publication_receipt.json"
+      ]
+    },
+    {
+      "release_id": "cat2-cpu-r2e093-swe40-moto6114-prepare900-20261003-v1",
+      "manifest_sha256": "630f71fc1a4ae6f587f3161fae56d92927a91801ae4b08954a556ee059cada9c",
+      "remote_relative_path": "releases/cat2-cpu-r2e093-swe40-moto6114-prepare900-20261003-v1/",
+      "verified_hosts": [
+        "cpu-a"
+      ],
+      "checksummed_files": 1482,
+      "status": "transport_and_trusted_readback_verified_not_task_acceptance",
+      "scope": "仅6114固定v2材料显式1d8派生镜像的env_reset准备/reset300→900及账本政策记录；预算应用前核对实际镜像ID，不匹配保真实ID并有界拒绝，不计0。264默认完整spec、公开材料及其它263题不变；R20政策三文件字节保持，8316/9395既有900支持不变。测试/candidate/whole/cleanup预算、资源、保护权限、网络均不变。",
+      "exact_member_set_verified": true,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "publication_receipts": [
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r21/moto6114_publication_receipt.json"
+      ]
+    },
+    {
+      "release_id": "cat2-cpu-r2e094095-swe40-aio1c1-cancelled-20261003-v1",
+      "manifest_sha256": "aaa957435ca509a7733a1965a74915b26d86a3c7d09624786755ed50c9aea6c9",
+      "remote_relative_path": "releases/cat2-cpu-r2e094095-swe40-aio1c1-cancelled-20261003-v1/",
+      "verified_hosts": [
+        "cpu-a"
+      ],
+      "checksummed_files": 1491,
+      "status": "transport_and_trusted_readback_verified_not_task_acceptance",
+      "scope": "Only1c1 one new cancelled-main cleanup P2P;094/095 replace080/081,old58/statement/runner/reward preserved. Other263 specs/public and48gold same; SWE40/R20/R21 bytes same. Publication and transport only, newgrader/fiveCPU rows owner pending.",
+      "exact_member_set_verified": true,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "publication_receipts": [
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r22/aiohttp1c1_publication_receipt.json"
+      ]
+    },
+    {
+      "release_id": "cat2-cpu-r2e094095-swe40-dask-grader-env-20261003-v1",
+      "manifest_sha256": "7b758670a971aa3576cb41074aa86c1dd7bae046725b0fab4006d008e75c7c6d",
+      "remote_relative_path": "releases/cat2-cpu-r2e094095-swe40-dask-grader-env-20261003-v1/",
+      "verified_hosts": [
+        "cpu-c"
+      ],
+      "checksummed_files": 1494,
+      "status": "transport_and_trusted_readback_verified_not_new_task_acceptance",
+      "scope": {
+        "7305": "Exact accepted materials/image/full scripts, 5 env keys in candidate test after activation/install and after carry in the unused two-stage variant; setup/reset900.",
+        "9378": "Only setup/reset900; original full scripts unchanged.",
+        "unchanged": "Other262 specs, all264 public bundles and48 R2E gold, all source tests/references/actor, apply120/test1800, binary reward and model budgets.",
+        "expected_runtime": "deny_all/no_supply/single-shell,2CPU/4GiB/pids512; whole3600 supplied and verified by execution caller."
+      },
+      "exact_member_set_verified": true,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "publication_receipts": [
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r23/dask_grader_environment_support_receipt_v1.json"
+      ]
+    },
+    {
+      "release_id": "cat2-cpu-r2e094095-swe40-dask7138-prepare900-20261003-v1",
+      "manifest_sha256": "fefe742e0471d743d3d849ca869441ecaa02985d44fcc49f872ae3233fc64338",
+      "remote_relative_path": "releases/cat2-cpu-r2e094095-swe40-dask7138-prepare900-20261003-v1/",
+      "verified_hosts": [
+        "cpu-c"
+      ],
+      "checksummed_files": 1494,
+      "status": "transport_and_trusted_readback_verified_not_new_task_acceptance",
+      "scope": {
+        "7138": "Only env_reset preparation/reset300→900 under exact unchanged material/image/complete-script binding. No7305 five-key injection.",
+        "unchanged": "All five7138 scripts,470 references,actor/public/image/model budget unchanged; R23 two records and block preserved; other263 complete specs,264 public,48R2E gold same.",
+        "expected_runtime": "single-shell/deny_all/no_supply,2CPU/4GiB/pids512,apply120/test1800; whole3600 provided and verified by execution caller."
+      },
+      "exact_member_set_verified": true,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "publication_receipts": [
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r24/dask7138_setup900_support_receipt_v1.json"
+      ]
+    },
+    {
+      "release_id": "cat2-cpu-r2e094095-swe40-dask8801-prepare900-20261003-v1",
+      "manifest_sha256": "d971facbd80fe12ced3500a8c620f545e4d863de2235e0a5f6d4e7e789b7f22a",
+      "remote_relative_path": "releases/cat2-cpu-r2e094095-swe40-dask8801-prepare900-20261003-v1/",
+      "verified_hosts": [
+        "cpu-c"
+      ],
+      "checksummed_files": 1494,
+      "status": "transport_and_trusted_readback_verified_not_new_task_acceptance",
+      "scope": {
+        "8801": "Only env_reset preparation/reset300→900 under exact unchanged R16 v7-compat1/material/source image/full scripts binding; no7305 five-key injection.",
+        "unchanged": "All five8801 scripts,45 references,8563B/162CRLF public statement,actor/image/model budget unchanged. R24 three records and block preserved; other263 complete specs,264 public,48R2E gold same.",
+        "expected_runtime": "single-shell/deny_all/no_supply,UID54322,2CPU/4GiB/pids512,apply120/test1800; whole3600 explicitly supplied and verified by caller."
+      },
+      "exact_member_set_verified": true,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "publication_receipts": [
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r25/dask8801_setup900_support_receipt_v1.json"
+      ]
+    },
+    {
+      "release_id": "cat2-cpu-r2e094095-swe40-pyd8511-fieldinfo-v2-20261004-v1",
+      "manifest_sha256": "6e20365fcc2eef0489ae259903b52664117e04796597cc4be38af23ab1663f38",
+      "remote_relative_path": "releases/cat2-cpu-r2e094095-swe40-pyd8511-fieldinfo-v2-20261004-v1/",
+      "verified_hosts": [
+        "cpu-a"
+      ],
+      "checksummed_files": 1528,
+      "status": "transport_and_trusted_readback_verified_not_new_task_acceptance",
+      "scope": {
+        "task": "pydantic__pydantic-8511",
+        "revision": "pyd8511-behavior-v2",
+        "original173_references_preserved": true,
+        "added_P2P": 4,
+        "references": {
+          "F2P": 1,
+          "P2P": 176,
+          "total": 177
+        },
+        "public_all264_exact": true,
+        "other263_full_specs_exact": true,
+        "R2E48_gold_exact": true,
+        "E10_core2_14_5_and_budget_profile_security_same": true
+      },
+      "exact_member_set_verified": true,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "publication_receipts": [
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r26/publication_receipt_v1.json"
+      ]
+    },
+    {
+      "release_id": "cat2-cpu-r2e094095-swe40-pyd8511-fieldinfo-v2-test-target-20261004-v1",
+      "manifest_sha256": "897cac778bce053740d7ac6dce9b2e90ac96a553a119c0bbdfe7e62b298cfe0d",
+      "remote_relative_path": "releases/cat2-cpu-r2e094095-swe40-pyd8511-fieldinfo-v2-test-target-20261004-v1/",
+      "verified_hosts": [
+        "cpu-a"
+      ],
+      "checksummed_files": 1529,
+      "status": "transport_and_trusted_readback_verified_not_new_task_acceptance",
+      "scope": {
+        "task": "pydantic__pydantic-8511",
+        "revision": "pyd8511-behavior-v2",
+        "changed": "Exact fully validated FieldInfo v2 original vendor test file target restored",
+        "test_command": "pytest -rA --tb=short -vv -o console_output_style=classic --no-header tests/test_dataclasses.py",
+        "three_actual_prepare_scripts_verified": true,
+        "semantic_material_changed": false,
+        "original173_references_preserved": true,
+        "added_P2P": 4,
+        "references": {
+          "F2P": 1,
+          "P2P": 176,
+          "total": 177
+        },
+        "public_all264_exact": true,
+        "other263_full_specs_exact": true,
+        "R2E48_gold_exact": true,
+        "all21_material_copies_same": true,
+        "E10_core2_14_5_and_budget_profile_security_same": true
+      },
+      "exact_member_set_verified": true,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "publication_receipts": [
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r27/publication_receipt_v1.json"
+      ]
+    },
+    {
+      "release_id": "cat2-cpu-r2e096097-swe40-coverage-ea69-scoring51-20261004-v1",
+      "manifest_sha256": "fabc9e1f9996e4a998c503350b9618595ea7990f263d11f6779cb05945c837e4",
+      "remote_relative_path": "releases/cat2-cpu-r2e096097-swe40-coverage-ea69-scoring51-20261004-v1/",
+      "verified_hosts": [
+        "cpu-a"
+      ],
+      "checksummed_files": 1542,
+      "support_files": {
+        "support/ea69_original_overlay_historical.jsonl": {
+          "sha256": "3cc861b3264535edad987b36406d49074b8955c4d734ba0eb2e1737feaae35e1",
+          "size": 949
+        }
+      },
+      "status": "transport_and_trusted_readback_verified_not_new_task_acceptance",
+      "scope": {
+        "task": "coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5",
+        "new_revisions": [
+          "r2e-mr-096",
+          "r2e-mr-097"
+        ],
+        "retained_revisions": [
+          "r2e-mr-073",
+          "r2e-mr-093"
+        ],
+        "registry_version": 23,
+        "pins_version": 24,
+        "private_test2_sha256": "6fa2ecfd00f917a12867d75b2c855875b88446411a7f35dc5ed429829d1998fa",
+        "expected_sha256": "d766068e50bbeb338cd8a63e80b0c0e97ea9cfc83dde44b5f6e59fc6647e6b2a",
+        "expected_total": 51,
+        "old49_expected_and_existing_test2_method_AST_preserved": true,
+        "new_keys": [
+          "HtmlGitignoreTest.test_existing_patterns_do_not_skip_report_ignore",
+          "HtmlGitignoreTest.test_generated_extra_css_literal_names_are_ignored"
+        ],
+        "grading_digest": "sha256:f7a65179e75079ec0de30f55683ac2ecce3fe23f331633bc0b413b00a29abd10",
+        "final_hidden_tree_sha256": "sha256:f60525728e5ab5a1583e3d65121e366132a63d1f27f97a00910ebb195a40c9e3",
+        "source_public_base_recipe_unchanged": true,
+        "public_all264_exact": true,
+        "other263_complete_specs_exact": true,
+        "other47_R2E_gold_exact": true,
+        "SWE216_including_pyd8511_v2_test_target_preserved": true
+      },
+      "exact_member_set_verified": true,
+      "trusted_r2e_count": 48,
+      "trusted_swe_count": 216,
+      "publication_receipts": [
+        "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r28/publication_receipt_v1.json"
+      ]
+    }
+  ],
+  "latest_common_runtime_release": "cat2-cpu-r2e094095-swe40-dask8801-prepare900-20261003-v1",
+  "latest_material_release": "cat2-cpu-r2e096097-swe40-coverage-ea69-scoring51-20261004-v1",
+  "writer_thread_id": "01a08bd3-b639-7c71-a1ee-f3f4d05b3a0e",
+  "takeover_evidence": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/summary.json",
+  "dispatch_control": "active_after_board_migration",
+  "latest_sealed_material_release": "cat2-cpu-r2e096097-swe40-coverage-ea69-scoring51-20261004-v1",
+  "task_scoped_blocks": [
+    {
+      "task_id": "swe_gym_lite::iterative__dvc-5839",
+      "release_ids": [
+        "cat2-cpu-r2e088-swe12-git-20261003-v1",
+        "cat2-cpu-r2e088-swe13-git-20261003-v1",
+        "cat2-cpu-r2e089092-swe13-git-20261003-v1"
+      ],
+      "reason": "trusted setup root setgroups/setgid/setuid不符合既有cap契约；正式noop infra、尚未安装/测试；其他题无此分支不受影响",
+      "state": "needs_fixed_release_and_targeted_cpu_validation",
+      "evidence": "repository_work/swe_dvc/pause_checkpoint_20261003.md"
+    }
+  ],
+  "cpu_dispatch_resume_receipt": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/resume_v1/summary.json"
+}

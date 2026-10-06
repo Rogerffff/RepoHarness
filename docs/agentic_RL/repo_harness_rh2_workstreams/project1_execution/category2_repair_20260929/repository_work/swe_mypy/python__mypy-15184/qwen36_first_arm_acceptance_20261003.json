@@ -1,0 +1,113 @@
+{
+  "schema": "mypy_first_arm_owner_acceptance.v1",
+  "as_of": "2026-10-03",
+  "task_id": "swe_gym_lite::python__mypy-15184",
+  "job": "gpu1003-mypy15184-qwen36-a1",
+  "owner_thread": "01a0fd63-1eba-7133-951d-7dd3475840a4",
+  "request_id": "swe-mypy15184-nested-nominal-v2-20261003",
+  "request_sha256": "623bc39612a9812e92b3c5ec218480e916e3c4dae219c4e4f17d7e85056e993e",
+  "status": "semantic_and_execution_observation_accepted_actual_checkpoint_unverified",
+  "root_trace_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/qwen36_first_arm_trace_20261003.json",
+  "root_trace_sha256": "d840fd7f8098c186a316e4558e914ef41b1a2c9b35554dec1c25ad7c69904415",
+  "non_author_reviews": [
+    {
+      "role": "Production Tracer",
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/reviews/non_author_15184_qwen36_execution_trace_20261003.md",
+      "sha256": "51b6d0ff7b4bf6f4f594e6727c50041d5a02f4d0ee3a95a36cc10df38f069a4a",
+      "fresh": false,
+      "review_status": "narrow_scope_accepted",
+      "no_repeated_execution": true
+    },
+    {
+      "role": "Falsifier",
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/reviews/non_author_15184_qwen36_semantic_20261003.md",
+      "sha256": "19795ce9e9e4d52c1a2b2717a800d949432f83a34b549b6599b346e7deb9508b",
+      "fresh": false,
+      "review_status": "narrow_scope_accepted",
+      "no_repeated_execution": true
+    }
+  ],
+  "root_reconciliation": {
+    "root_independently_checked": "95件SHA/大小、原FP/完整baseline/tar与双census、精确1源码投影、首请求公开prompt、5正式参考、安装/runner/可信测试、正常终止和双层清理、40请求与39工具、8错误分类。",
+    "source_change": "完整messages.py与baseline仅assert_type_fail一处预期替换，其余字节不变；联合formatter遍历实例参数，不改有效断言guard/返回。",
+    "cpu_gpu_identity": "R10 manager SHA相同；实际GPU与已验CPU的scripts、正式command、四partition逐字段相同，CPU矩阵无需重跑。",
+    "peer_refinement": "执行报告首句原3F2P措辞已校正为3个F2P和2个P2P，不把新增嵌套参考当原参考。",
+    "unresolved_topic_finding": null
+  },
+  "formal_reward": 1,
+  "f2p_pass": 3,
+  "f2p_total": 3,
+  "p2p_fail": 0,
+  "p2p_total": 2,
+  "source_semantics": "顶层与嵌套类型名共同消歧，简洁无歧义名和有效assert_type保持；限当前源码路径/正式参考。",
+  "metrics": {
+    "solve_seconds": 62.946,
+    "attempt_seconds_including_env_freeze_cleanup": 109.337,
+    "cc_seconds": 59.483,
+    "cc_api_seconds": 39.784,
+    "gateway_response_seconds_sum": 38.788,
+    "grading_seconds": 96.78,
+    "grading_test_segment_seconds": 3.969,
+    "input_tokens_cumulative": 528184,
+    "output_tokens": 6067,
+    "cache_read_input_tokens": 0,
+    "cache_creation_input_tokens": 0,
+    "max_request_input_tokens": 21402,
+    "cc_turns": 40,
+    "gateway_requests": 40,
+    "tools": {
+      "Bash": 27,
+      "Read": 8,
+      "Edit": 4
+    },
+    "tool_total": 39,
+    "error_flags": 8,
+    "expected_negative_tool_rc1": [
+      1,
+      15,
+      18,
+      19,
+      37,
+      38
+    ],
+    "test_authoring_mistakes": [
+      23,
+      29
+    ],
+    "cc_cost_alias_estimate_usd": 2.792595,
+    "cc_cost_is_actual_gpu_bill": false,
+    "helper_read_gateway_request_offset_seconds": 6.346,
+    "first_source_edit_gateway_request_offset_seconds": 14.018,
+    "gateway_offsets_not_tool_process_times": true
+  },
+  "model_attribution": {
+    "assigned_model": "Qwen/Qwen3.6-35B-A3B",
+    "gateway_model_sent": "Qwen3.6-35B-A3B",
+    "response_alias": "slime-actor",
+    "checkpoint_identity_verified": false,
+    "scope": "历史来源链与本次路由支持有限归因；不声称本次实际加载权重已精确核实。",
+    "next": "GPU复用已有运行读回；缺证据继续披露，不为此自行重模型。"
+  },
+  "paired_request_closed": false,
+  "coder_first_arm_observed": false,
+  "new_cpu_required": false,
+  "new_material_revision_required": false,
+  "new_gpu_topic_blocker": null,
+  "training_eligible": false,
+  "holdout_eligible": false,
+  "remaining": [
+    "原请求仍claimed；GPU继续未运行Coder首臂及完整回传。",
+    "补已有实际checkpoint与运行路由读回；当前精确权重身份未验证。",
+    "两模型首轮收齐后按既有全批安排复测/行为比较；一次正常通过不证明稳定性。"
+  ],
+  "limits": [
+    "首次helper读取/编辑耗时为网关request到达offset，非工具实际执行起止。",
+    "诊断源码路径只直接记录mypy.__init__；无messages.py在pytest内部加载SHA，资源facts为null。无实际加载矛盾且本题语义/评分证据成立，不扩探针。",
+    "pipeline尾部输出完整范围有限，未记录pipefail/PIPESTATUS；不能声称全量suite通过。",
+    "39工具错误旗标8不等于8失败修法或8基础设施故障。",
+    "请求发送模型名为Qwen3.6-35B-A3B，响应alias为slime-actor；gateway checkpoint_identity_verified=false，服务配置与容器ID不足以证实际checkpoint。",
+    "CC duration/API/gateway/solve存在包含关系不相加；528184累计输入不等于单请求上下文；API alias费用不是本地BF16实际账单。",
+    "原请求仍claimed且只完成一个首臂，单次稳定性未知，不授予训练/留出资格。"
+  ],
+  "historical_raw_report_or_request_overwritten": false
+}

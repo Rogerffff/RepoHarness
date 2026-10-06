@@ -1,0 +1,987 @@
+{
+  "schema_id": "coveragepy.model_owner_seven_dimensions.v1",
+  "as_of": "2026-10-03",
+  "status": "first_arm_owner_and_non_author_semantic_review_complete_with_quality_limits",
+  "instance_id": "coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae",
+  "job_id": "gpu1003-coverage016a-coder-a1",
+  "model": "Qwen3-Coder-30B-A3B-Instruct",
+  "owner": "01a0fd63-c159-7331-b391-d78dd853ec75",
+  "summary": "Current R6 save/read target achieved, raw1/15-of15 retained. Actual root generated DB has orphan line_bits file_id=NULL; final helper can swallow failures and report unconditional success. No current material blocker or mandatory CPU; candidate not accepted as comprehensive production fix.",
+  "fixed_material": {
+    "release_id": "cat2-cpu-r2e080087-swe8-git-20261003-v1",
+    "revision_ids": [
+      "r2e-mr-001",
+      "r2e-mr-086",
+      "r2e-mr-087"
+    ],
+    "base_commit": "5bb5da50b182583036b7808bb32f2c8c191d9d26",
+    "image_id": "sha256:9635667f4fef122ff21c5846d5acd32d00a05f33b47495e2be8f79ed9ca45f9d",
+    "recipe_sha256": "sha256:98a6ecb6b08fc8e2e832dead72e644e3b55a7cfaa74eac59aac44ab48edb9916",
+    "public_delivery": {
+      "mode": "brief",
+      "base_prompt_sha256": "sha256:6fe556b077447647feba609e8731dd2ab765e3a0b1b105e0c611edfa5cf770f7",
+      "public_notes_sha256": "sha256:e984241ad9a577d78277443afecdcf20c1651a42ff953fb61bb2936287118756",
+      "delivered_prompt_sha256": "sha256:fe3caba586549f9f4796e6bb7b010d3cfd6321319229247af142f9d1f0db5bad"
+    },
+    "weights_revision": "b2cff646eb4bb1d68355c01b18ae02e7cf42d120",
+    "code_manifest_sha256": "sha256:e3a33fd824021b75c9ed32fe7a82800f4158bfcf5d5a9d0ca8a8329380716469",
+    "adapter_runtime_source": "services_v14 Coder launch bound to actual code/source/template/config; code_v4 actor+grader entry; actual before/after identity capture reused.",
+    "sampling_defaults": {
+      "temperature": 0.7,
+      "top_p": 0.8,
+      "top_k": 20,
+      "repetition_penalty": 1.05,
+      "max_new_tokens": 65536
+    },
+    "wide_budget": {
+      "version": "probe-wide-v1",
+      "max_context_len": 196608,
+      "max_new_tokens": 65536,
+      "max_turns": 240,
+      "wall_seconds": 10800,
+      "max_requests_per_session": 1024,
+      "first_byte_timeout_seconds": 1800,
+      "adapter_idle_drop_seconds": 14400
+    }
+  },
+  "original_score": {
+    "reward": 1,
+    "matched": 15,
+    "total": 15,
+    "test_rc": 0,
+    "additional_nonreference_skip": 1,
+    "skip_is_not_reference_pass": true,
+    "install_skipped": true,
+    "install_rc": null
+  },
+  "pair_state": "both_models_a1_completed_and_aggregate_ACK; repeats not yet completed",
+  "seven_dimensions": {
+    "method_root_cause": {
+      "assessment": "Precise SQLite encoding boundary, catches only UnicodeEncodeError on file insert, warns with repr and returns None without caching bad filename. Does not swallow whole save or abort normal loop; normal data and fresh read supported by formal086.",
+      "final_source_only": [
+        "coverage/sqldata.py"
+      ],
+      "source_lines": {
+        "_file_id": [
+          358,
+          379
+        ],
+        "downstream_add_lines": [
+          450,
+          463
+        ],
+        "downstream_add_arcs": [
+          484,
+          489
+        ],
+        "plugin_and_touch": [
+          509,
+          558
+        ]
+      },
+      "quality_findings": [
+        {
+          "kind": "actual_original_SQLite_orphan_line_data",
+          "evidence": {
+            "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/016a_coder_analysis_v1/generated_sqlite_readonly_observation.json",
+            "sha256": "sha256:b7910a713e7d400bda68f44f5a14656d8cc6374c9e8817d0597f5d19836841f0",
+            "bytes": 1463
+          },
+          "fact": "root .coverage contains one line_bits file_id=NULL row and normal.py file row; downstream add_lines continues writing after None. No candidate execution performed by owner.",
+          "scope": "Current save/read normal-data goal passes; this internal storage quality flaw is not a newly authorized grading criterion."
+        },
+        {
+          "kind": "static_unexecuted_plugin_path",
+          "fact": "add_file_tracers raises on _file_id(None); touch_file with nonempty plugin_name still calls it. Candidate does not guard this route; no new bad-name plugin execution evidence.",
+          "scope": "risk only, no blanket crash claim"
+        }
+      ],
+      "Qwen_difference": "Coder omits bad key from _file_map; Qwen caches bad key as None and still enumerates it. Both current target successes carry distinct quality flaws."
+    },
+    "localization_and_correction": {
+      "diagnostic_call": 3,
+      "traceback_line": 36,
+      "traceback_seconds_since_first": 2.293,
+      "explanation_line": 54,
+      "history": [
+        "L97 successful hash fallback edit, not tested",
+        "L106 abandoned fallback for simpler skip/warn on conceptual grounds",
+        "L110 edit used stale original method string and failed atL114",
+        "L123/L132 narrow readbacks confirmed state",
+        "L145 replaces complete current method; L162 reproduction no longer crashes"
+      ],
+      "limits": "L141 partial-edit explanation was inaccurate; original successful change was present. Self-correction did not validate the discarded hash strategy."
+    },
+    "tool_use": {
+      "calls": 30,
+      "counts": {
+        "Bash": 17,
+        "Write": 4,
+        "Read": 6,
+        "Edit": 3
+      },
+      "error_calls": [
+        [
+          32,
+          36,
+          "expected original reproduction failure"
+        ],
+        [
+          110,
+          114,
+          "stale old_string edit failure"
+        ],
+        [
+          344,
+          348,
+          "Git author identity unavailable"
+        ]
+      ],
+      "observations": [
+        "Full sqldata.py/backward.py reads and generic Unicode grep after direct SQLite traceback broadened context; targeted function/readbacks would suffice for narrow localization.",
+        "L313 final read and L322 diff inspect delivered source; three repeated long final summaries add output without new evidence.",
+        "Git source commit succeeded after setting local actor identity; FrozenPatch still contains all untracked helpers and generated DBs. No local owner repo commit performed."
+      ],
+      "candidate_entries": [
+        {
+          "path": ".coverage",
+          "operation": "add",
+          "object_type": "regular",
+          "mode": "100644",
+          "content_digest": "sha256:d7d502e01a0eb60ffa062121e7a9ff7ead4a2c85a22bfb884ba60a8e0c76db7c"
+        },
+        {
+          "path": "comprehensive_test.py",
+          "operation": "add",
+          "object_type": "regular",
+          "mode": "100644",
+          "content_digest": "sha256:fb791eb6d565eb4135634b3755baf8b3900ed357786071b2bfa9314492de1bfe"
+        },
+        {
+          "path": "coverage/sqldata.py",
+          "operation": "modify",
+          "object_type": "regular",
+          "mode": "100644",
+          "content_digest": "sha256:7846e94111d3db82560dee5c47a5e4ed5940ce6849921fa108226dd7b6c06aeb"
+        },
+        {
+          "path": "final_test.py",
+          "operation": "add",
+          "object_type": "regular",
+          "mode": "100644",
+          "content_digest": "sha256:d2b50ee14108e5974368264c727990311ecbec93545e2f072a2132d73fbacd2b"
+        },
+        {
+          "path": "reproduce_issue.py",
+          "operation": "add",
+          "object_type": "regular",
+          "mode": "100644",
+          "content_digest": "sha256:f2873e3359b459ea135bbedf62335452e2c3d551072394cbb7fa76af14790845"
+        },
+        {
+          "path": "test_normal.py",
+          "operation": "add",
+          "object_type": "regular",
+          "mode": "100644",
+          "content_digest": "sha256:ff249e937085325b22f7c8833b85d91463afb96412127ef4fdf1b29954892564"
+        },
+        {
+          "path": "tests/modules/.coverage",
+          "operation": "add",
+          "object_type": "regular",
+          "mode": "100644",
+          "content_digest": "sha256:7ec1d77fa342d663a584359bef213b8961f827c639abea994f928f11c4572157"
+        }
+      ],
+      "formal_control_pollution": "No runner/conftest/private control path edited; existing public tests not changed. New root helpers and generated DBs retained in original full FP; hygiene=false cannot alone establish absence of tests."
+    },
+    "parallelism": {
+      "assistant_multicall_batches": 0,
+      "same_assistant_tool_batches": [],
+      "actual_tool_overlap": "not evidenced; all model tool calls single",
+      "opportunities": [
+        "Independent backward/source inspection and independent greps could be grouped; edits, reproductions and commit dependencies must remain sequential."
+      ],
+      "pytest_worker_distinction": "Two single-node pytest commands used configured gw0/gw1/gw2 workers. This is project test runner parallelism, not model multi-tool capability. No speedup estimate."
+    },
+    "validation_quality": {
+      "actual_checks": [
+        {
+          "line": 36,
+          "result": "original reproduction fails UnicodeEncodeError"
+        },
+        {
+          "line": 162,
+          "result": "same reproduction after final edit no crash, warning and no-data-collected"
+        },
+        {
+          "line": 184,
+          "result": "normal helper save no crash"
+        },
+        {
+          "line": 199,
+          "result": "3 modules154pass1skip,2.43seconds; no full repo suite"
+        },
+        {
+          "line": 221,
+          "result": "comprehensive helper bad and normal separate saves, does not verify saved content/fresh read"
+        },
+        {
+          "line": 234,
+          "result": "original ordinary adding_lines1pass0.52seconds"
+        },
+        {
+          "line": 247,
+          "result": "original ordinary adding_arcs1pass0.54seconds"
+        },
+        {
+          "line": 295,
+          "result": "final bad/normal/mixed all printed actual success, but helper catches all exceptions and always exits0"
+        }
+      ],
+      "quality_limits": [
+        "final_test.py is a real weak oracle; no actual failure in its recorded run, no claim that solver hid a failed test.",
+        "Ordinary single-node lines/arcs are subsets of prior154, not new bad-name branch coverage.",
+        "Helpers do not assert normal lines/arcs/independent persistence; formal086 supplies goal-specific mixed normal+bad save/read evidence.",
+        "No new persistent targeted regression test in existing tests suite; leave temporary scripts/SQLite out of proposed production integration.",
+        "L256 read save around630, not warning method; generic warning grep did not test callback count/optional missing callback."
+      ],
+      "failed_or_discarded_evidence_preserved": true
+    },
+    "efficiency": {
+      "input_tokens": 708679,
+      "output_tokens": 5496,
+      "cache_read_tokens": 0,
+      "cache_creation_tokens": 0,
+      "generation_requests": 31,
+      "count_tokens_requests": 1,
+      "CC_turns": 31,
+      "tool_calls": 30,
+      "tool_counts": {
+        "Bash": 17,
+        "Write": 4,
+        "Read": 6,
+        "Edit": 3
+      },
+      "tool_is_error_count": 3,
+      "solve_seconds": 57.462,
+      "CC_wall_seconds": 54.044,
+      "CC_API_seconds": 47.253,
+      "CC_non_API_residual_seconds": 6.791,
+      "gateway_generation_response_seconds_sum": 46.49,
+      "actor_total_elapsed_seconds": 104.492467,
+      "actor_phase_seconds": {
+        "image_ready": 0.018,
+        "network_and_container": 1.272,
+        "git_sanitize": 2.183,
+        "trusted_init": 25.482,
+        "baseline_census": 0.195,
+        "quiescence": 0.552
+      },
+      "grader_timing": {
+        "schema_id": "rh2.grading_timing_record.v1",
+        "record_id": "timing_3141e7cf",
+        "trajectory_id": "gpu1003-coverage016a-coder-a1",
+        "task_id": "r2e_gym_subset::coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae",
+        "image_pull_seconds": 0.0,
+        "env_reset_seconds": 2.879,
+        "prep_seconds": 0.614,
+        "test_seconds": 2.677,
+        "total_grading_seconds": 32.552,
+        "queue_wait_seconds": 0.0,
+        "container_peak_memory_mb": 283.938,
+        "queue_depth_at_enqueue": null,
+        "backpressure_triggered": false
+      },
+      "max_prompt_tokens": 31234,
+      "max_observed_output_tokens": 632,
+      "CC_cost_USD_estimate": 3.6807950000000003,
+      "paid_cost_USD": null
+    },
+    "termination_and_same_condition_stability": {
+      "termination": "completed",
+      "CC_result": "success/end_turn",
+      "harness_exit_code": 0,
+      "formal_outcome": "resolved",
+      "budget_truncated": false,
+      "actual_gateway_max_tokens": [
+        65536
+      ],
+      "pair_a1_complete": true,
+      "stable_correctness_proven": false,
+      "limitations": [
+        "原件执行检查通过，不代题主语义终审、不自动授权训练用途；未 SSH/Docker/模型/项目测试/CPU矩阵或gold读取。",
+        "安装段明确跳过、installRC=null，正式testRC0不能改写为安装通过。",
+        "code_snapshot_id=null按实际队列argv/entry/shared/source_manifest外部绑定，baseline environment digest/grading identity为空，qualification absent不补造。",
+        "每臂实际before/after capture覆盖短窗口，未重哈weights或证明显存内权重逐字身份；context196608/response65536只是配置上限。",
+        "TTL14400依据实际adapter Cmd与固定配置，input service_readback仍config_only，不是长闲置寿命实测。",
+        "adapter未保存原始SGLang采样请求；固定默认值+wire+所有SSE/adapter paired facts复用已验运输，非新增model smoke。",
+        "资源11宿主切片中actor7/relay7/grader2采样；manager固定sanitize trajectory[:24]，匹配实际短容器名、完整run_id与image_id。未采样间隙未知、report峰值独立来源。",
+        "正式15参考无缺失/跳过；额外1项非参考SKIP仍保留，不能写全套16测试通过。",
+        "原FP source改动coverage/sqldata.py外有公开helper及generated .coverage；excluded_pathset_changed=true保留，题主负责候选质量及语义。",
+        "只读取本臂已闭原件，不读取Q17实时状态；没有单独宿主最终unit/network证据时不伪造该历史原件。"
+      ],
+      "cleanup": {
+        "actor": {
+          "container_rm": 0,
+          "container_left": "",
+          "network_failures": [],
+          "relay_failures": [],
+          "labeled_containers_left": [],
+          "labeled_networks_left": [],
+          "cleanup_ok": true
+        },
+        "manager_close": {
+          "prepare_cancelled": 0,
+          "containers_removed": [],
+          "containers_open": [],
+          "supply_open": [],
+          "cleanup_failures": [],
+          "regrade_events": 0,
+          "regrade_total": 0,
+          "regrade_declined": 0,
+          "containers_created_total": 1,
+          "containers_removed_total": 1,
+          "container_history_retained": 1,
+          "leases_total": 1
+        },
+        "gateway_drain": {
+          "session_id": "gpu1003-coverage016a-coder-a1",
+          "revoked": true,
+          "active_requests": 0,
+          "drained": true,
+          "ts": 1791002950.3646734
+        },
+        "quiescence": {
+          "at": "2026-10-03T04:49:10.918822+00:00",
+          "ok": true,
+          "snapshot_ref": "sha256:50ba7acde221b3d027be3f45f2c140f35fdd9a9220472699e338971d3961b61b",
+          "evidence": [
+            "agent_processes_zero",
+            "workspace_digest_stable_double_read"
+          ],
+          "barrier_stop": {
+            "residual": 0,
+            "kill_returned_at": 47499.467737969,
+            "kill_exit_code": 0,
+            "pkill_status": 1,
+            "kill_delivered_at": 47499.467737969,
+            "confirmed_at": 47499.517401058,
+            "observations": [
+              {
+                "issued_at": 47499.467755418,
+                "returned_at": 47499.517401058,
+                "residual": 0
+              }
+            ],
+            "observation_count": 1,
+            "timed_out": false,
+            "elapsed_seconds": 0.102,
+            "attempts": 1
+          },
+          "policy": "baseline_policy_r2e_v1"
+        }
+      },
+      "repeat_policy": "Per approved second-stage policy, preserve each first arm and add two clean attempts/model under same fixed task/recipe/public brief and corresponding model sampling; unseen/missing first arms take priority. No additional CPU matrix."
+    }
+  },
+  "tool_index": [
+    {
+      "line": 10,
+      "name": "Bash",
+      "input": {
+        "command": "find /testbed -name \"*.py\" | grep -E \"(coverage|data)\" | head -20",
+        "description": "Find relevant Python files in the coverage module"
+      },
+      "assistant_id": "msg_0d8151e8fec3d074490d6bba",
+      "timestamp": null,
+      "result_line": 14,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:48:11.899Z",
+      "result_content_SHA256": "sha256:6b7ce969e170c73a3105a047539096b4450da12cc55d5a524093073d1567fd2f",
+      "result_seconds_since_first_generation": 0.94
+    },
+    {
+      "line": 23,
+      "name": "Write",
+      "input": {
+        "file_path": "/testbed/reproduce_issue.py",
+        "content": "import coverage\n\n# Run coverage while executing code whose filename cannot be encoded in UTF-8\ncov = coverage.Coverage()\ncov.start()\nexec(compile(\"pass\", \"\\udcff.py\", \"exec\"))\ncov.stop()\ncov.save()  # This line raises UnicodeEncodeError"
+      },
+      "assistant_id": "msg_ba98e1320b7ebfa0617f92ef",
+      "timestamp": null,
+      "result_line": 27,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:48:12.682Z",
+      "result_content_SHA256": "sha256:ac6ec14e22cc1204664570ddbe66e1385b0f60df54f1009b450531af3e5caa7b",
+      "result_seconds_since_first_generation": 1.723
+    },
+    {
+      "line": 32,
+      "name": "Bash",
+      "input": {
+        "command": "python reproduce_issue.py",
+        "description": "Run the reproduction script to see the UnicodeEncodeError"
+      },
+      "assistant_id": "msg_22338fb7d172a5119d5e8d39",
+      "timestamp": null,
+      "result_line": 36,
+      "is_error": true,
+      "result_timestamp": "2026-10-03T04:48:13.252Z",
+      "result_content_SHA256": "sha256:dae27d21cabb8fa8b1b91e8ddb5f2037f206187fa88fcff62944f28f8e984d51",
+      "result_seconds_since_first_generation": 2.293
+    },
+    {
+      "line": 45,
+      "name": "Read",
+      "input": {
+        "file_path": "/testbed/coverage/sqldata.py"
+      },
+      "assistant_id": "msg_24accf08232ffc4842647009",
+      "timestamp": null,
+      "result_line": 49,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:48:13.762Z",
+      "result_content_SHA256": "sha256:b465754edf9baec7eada55c085cb34164407b78c40aceeb2276457bb1e089431",
+      "result_seconds_since_first_generation": 2.803
+    },
+    {
+      "line": 58,
+      "name": "Read",
+      "input": {
+        "file_path": "/testbed/coverage/backward.py"
+      },
+      "assistant_id": "msg_99b3a8fe88858ce736bda30a",
+      "timestamp": null,
+      "result_line": 62,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:48:15.468Z",
+      "result_content_SHA256": "sha256:f7eb3c3d3df67c9fac147174a90520cf84b139944294a2350ed82d3416e3790a",
+      "result_seconds_since_first_generation": 4.509
+    },
+    {
+      "line": 71,
+      "name": "Bash",
+      "input": {
+        "command": "grep -r \"UnicodeEncodeError\\|utf-8\" /testbed/coverage/ --include=\"*.py\" | head -10",
+        "description": "Search for Unicode encoding related code in coverage module"
+      },
+      "assistant_id": "msg_98959e0ec1888d6e2d8abd27",
+      "timestamp": null,
+      "result_line": 75,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:48:16.548Z",
+      "result_content_SHA256": "sha256:f4f3421f076c07e89b213d96512e031d1a8fe42491903fb6a19d4b6b5545d8ef",
+      "result_seconds_since_first_generation": 5.589
+    },
+    {
+      "line": 84,
+      "name": "Bash",
+      "input": {
+        "command": "grep -r \"surrogate\\|non-utf8\\|UnicodeEncodeError\" /testbed/tests/ --include=\"*.py\" | head -5",
+        "description": "Search for existing Unicode-related tests"
+      },
+      "assistant_id": "msg_de207649ce9e4201fcd4fd6e",
+      "timestamp": null,
+      "result_line": 88,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:48:17.456Z",
+      "result_content_SHA256": "sha256:fa6759842c84529a738fd4cbfaedca50876db3147a1b6cfd22b567abb8e0e478",
+      "result_seconds_since_first_generation": 6.497
+    },
+    {
+      "line": 97,
+      "name": "Edit",
+      "input": {
+        "replace_all": false,
+        "file_path": "/testbed/coverage/sqldata.py",
+        "old_string": "    def _file_id(self, filename, add=False):\n        \"\"\"Get the file id for `filename`.\n\n        If filename is not in the database yet, add it if `add` is True.\n        If `add` is not True, return None.\n        \"\"\"\n        if filename not in self._file_map:\n            if add:\n                with self._connect() as con:\n                    cur = con.execute(\"insert or replace into file (path) values (?)\", (filename,))\n                    self._file_map[filename] = cur.lastrowid\n        return self._file_map.get(filename)",
+        "new_string": "    def _file_id(self, filename, add=False):\n        \"\"\"Get the file id for `filename`.\n\n        If filename is not in the database yet, add it if `add` is True.\n        If `add` is not True, return None.\n        \"\"\"\n        if filename not in self._file_map:\n            if add:\n                with self._connect() as con:\n                    try:\n                        cur = con.execute(\"insert or replace into file (path) values (?)\", (filename,))\n                        self._file_map[filename] = cur.lastrowid\n                    except UnicodeEncodeError:\n                        # Handle filenames that can't be encoded in UTF-8\n                        # This can happen with certain surrogate characters\n                        # We'll use a fallback mechanism - store a hash of the filename instead\n                        import hashlib\n                        # Create a hash-based representation of the filename\n                        safe_filename = hashlib.md5(filename.encode('utf-8', errors='replace')).hexdigest()\n                        # Use a special prefix to indicate this is a hashed filename\n                        hashed_filename = f\"__HASHED__{safe_filename}\"\n                        cur = con.execute(\"insert or replace into file (path) values (?)\", (hashed_filename,))\n                        self._file_map[filename] = cur.lastrowid\n                        # Also store the original filename in a way that won't cause issues\n                        # This would require changes to the schema which we don't want to make\n                        # So we'll just log this as a warning if we had a warning system\n        return self._file_map.get(filename)"
+      },
+      "assistant_id": "msg_f00e1e9dfb3c8905ee9a567d",
+      "timestamp": null,
+      "result_line": 101,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:48:22.019Z",
+      "result_content_SHA256": "sha256:fd8171cef41f1af27abd53f0d6471cbc386f6264972f3040fca72836f6dc4a58",
+      "result_seconds_since_first_generation": 11.06
+    },
+    {
+      "line": 110,
+      "name": "Edit",
+      "input": {
+        "replace_all": false,
+        "file_path": "/testbed/coverage/sqldata.py",
+        "old_string": "    def _file_id(self, filename, add=False):\n        \"\"\"Get the file id for `filename`.\n\n        If filename is not in the database yet, add it if `add` is True.\n        If `add` is not True, return None.\n        \"\"\"\n        if filename not in self._file_map:\n            if add:\n                with self._connect() as con:\n                    cur = con.execute(\"insert or replace into file (path) values (?)\", (filename,))\n                    self._file_map[filename] = cur.lastrowid\n        return self._file_map.get(filename)",
+        "new_string": "    def _file_id(self, filename, add=False):\n        \"\"\"Get the file id for `filename`.\n\n        If filename is not in the database yet, add it if `add` is True.\n        If `add` is not True, return None.\n        \"\"\"\n        if filename not in self._file_map:\n            if add:\n                with self._connect() as con:\n                    try:\n                        cur = con.execute(\"insert or replace into file (path) values (?)\", (filename,))\n                        self._file_map[filename] = cur.lastrowid\n                    except UnicodeEncodeError:\n                        # Handle filenames that can't be encoded in UTF-8\n                        # This can happen with certain surrogate characters.\n                        # For now, we'll skip adding such files to avoid crashing.\n                        # In the future, we might want to implement a better solution,\n                        # but for now we gracefully degrade by not storing these files.\n                        if self._warn:\n                            self._warn(\"Could not store file with non-UTF8 filename: {}\".format(repr(filename)))\n                        return None\n        return self._file_map.get(filename)"
+      },
+      "assistant_id": "msg_7962eb738f335c6220276a48",
+      "timestamp": null,
+      "result_line": 114,
+      "is_error": true,
+      "result_timestamp": "2026-10-03T04:48:26.178Z",
+      "result_content_SHA256": "sha256:221f140f46f52a0e338f725f20d2a1b07fcfca40427f13b9f42d84e3917a5ad8",
+      "result_seconds_since_first_generation": 15.219
+    },
+    {
+      "line": 123,
+      "name": "Read",
+      "input": {
+        "file_path": "/testbed/coverage/sqldata.py",
+        "offset": 358,
+        "limit": 15
+      },
+      "assistant_id": "msg_af1d36789f1e63af9687db43",
+      "timestamp": null,
+      "result_line": 127,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:48:26.788Z",
+      "result_content_SHA256": "sha256:1233559aa85b15b7cec247870406c35f1bfa32f3ee43ea6be7277451f1c68e11",
+      "result_seconds_since_first_generation": 15.829
+    },
+    {
+      "line": 132,
+      "name": "Read",
+      "input": {
+        "file_path": "/testbed/coverage/sqldata.py",
+        "offset": 370,
+        "limit": 20
+      },
+      "assistant_id": "msg_37f190204281e2debf8677cd",
+      "timestamp": null,
+      "result_line": 136,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:48:27.317Z",
+      "result_content_SHA256": "sha256:ff7af5769ec48734396fbab334ea90c9b379f9f36ccb24a8a3e1a82bbd30effe",
+      "result_seconds_since_first_generation": 16.358
+    },
+    {
+      "line": 145,
+      "name": "Edit",
+      "input": {
+        "replace_all": true,
+        "file_path": "/testbed/coverage/sqldata.py",
+        "old_string": "    def _file_id(self, filename, add=False):\n        \"\"\"Get the file id for `filename`.\n\n        If filename is not in the database yet, add it if `add` is True.\n        If `add` is not True, return None.\n        \"\"\"\n        if filename not in self._file_map:\n            if add:\n                with self._connect() as con:\n                    try:\n                        cur = con.execute(\"insert or replace into file (path) values (?)\", (filename,))\n                        self._file_map[filename] = cur.lastrowid\n                    except UnicodeEncodeError:\n                        # Handle filenames that can't be encoded in UTF-8\n                        # This can happen with certain surrogate characters\n                        # We'll use a fallback mechanism - store a hash of the filename instead\n                        import hashlib\n                        # Create a hash-based representation of the filename\n                        safe_filename = hashlib.md5(filename.encode('utf-8', errors='replace')).hexdigest()\n                        # Use a special prefix to indicate this is a hashed filename\n                        hashed_filename = f\"__HASHED__{safe_filename}\"\n                        cur = con.execute(\"insert or replace into file (path) values (?)\", (hashed_filename,))\n                        self._file_map[filename] = cur.lastrowid\n                        # Also store the original filename in a way that won't cause issues\n                        # This would require changes to the schema which we don't want to make\n                        # So we'll just log this as a warning if we had a warning system\n        return self._file_map.get(filename)",
+        "new_string": "    def _file_id(self, filename, add=False):\n        \"\"\"Get the file id for `filename`.\n\n        If filename is not in the database yet, add it if `add` is True.\n        If `add` is not True, return None.\n        \"\"\"\n        if filename not in self._file_map:\n            if add:\n                with self._connect() as con:\n                    try:\n                        cur = con.execute(\"insert or replace into file (path) values (?)\", (filename,))\n                        self._file_map[filename] = cur.lastrowid\n                    except UnicodeEncodeError:\n                        # Handle filenames that can't be encoded in UTF-8\n                        # This can happen with certain surrogate characters.\n                        # For now, we'll skip adding such files to avoid crashing.\n                        # In the future, we might want to implement a better solution,\n                        # but for now we gracefully degrade by not storing these files.\n                        if self._warn:\n                            self._warn(\"Could not store file with non-UTF8 filename: {}\".format(repr(filename)))\n                        return None\n        return self._file_map.get(filename)"
+      },
+      "assistant_id": "msg_e4d5694728667257bc3c5b88",
+      "timestamp": null,
+      "result_line": 149,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:48:32.265Z",
+      "result_content_SHA256": "sha256:b378cc3577d9c35c3f875fdc2baf7e359eb83c8310da2824a2606719b53e8f04",
+      "result_seconds_since_first_generation": 21.306
+    },
+    {
+      "line": 158,
+      "name": "Bash",
+      "input": {
+        "command": "python reproduce_issue.py",
+        "description": "Test if our fix resolves the UnicodeEncodeError"
+      },
+      "assistant_id": "msg_9a17c2530421bf508424a583",
+      "timestamp": null,
+      "result_line": 162,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:48:32.895Z",
+      "result_content_SHA256": "sha256:e6f13bb5bda1ca6e449a8e7db3cb891292a09f2dd60db6aad8ada744ecda535d",
+      "result_seconds_since_first_generation": 21.936
+    },
+    {
+      "line": 171,
+      "name": "Write",
+      "input": {
+        "file_path": "/testbed/test_normal.py",
+        "content": "import coverage\n\n# Test normal case with valid UTF-8 filename\ncov = coverage.Coverage()\ncov.start()\nexec(compile(\"pass\", \"normal_file.py\", \"exec\"))\ncov.stop()\ncov.save()  # This should work fine\nprint(\"Normal case worked!\")"
+      },
+      "assistant_id": "msg_5129d2e73a5e211ed7ce7f59",
+      "timestamp": null,
+      "result_line": 175,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:48:34.078Z",
+      "result_content_SHA256": "sha256:69b7cabf68beafdecda9ec3d3174c98703f9b1cd2b1df02bc3ce4759d313b198",
+      "result_seconds_since_first_generation": 23.119
+    },
+    {
+      "line": 180,
+      "name": "Bash",
+      "input": {
+        "command": "python test_normal.py",
+        "description": "Test that normal functionality still works"
+      },
+      "assistant_id": "msg_e6fdfba0d004a081f999aa49",
+      "timestamp": null,
+      "result_line": 184,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:48:34.559Z",
+      "result_content_SHA256": "sha256:d2790a186f02153c3df5d2785ce2e9ff471362a6fca74b0e2f11f50bde9c3aa6",
+      "result_seconds_since_first_generation": 23.6
+    },
+    {
+      "line": 193,
+      "name": "Bash",
+      "input": {
+        "command": "python -m pytest -o addopts=\"\" tests/test_api.py tests/test_data.py tests/test_oddball.py -v",
+        "description": "Run relevant tests to ensure our fix doesn't break existing functionality"
+      },
+      "assistant_id": "msg_f8987178c4395af10e53a1a3",
+      "timestamp": null,
+      "result_line": 199,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:48:39.250Z",
+      "result_content_SHA256": "sha256:430c7b061545b282a4517949ee67c79e5021d4d4e1ba5f98234e4c6d7f96857b",
+      "result_seconds_since_first_generation": 28.291
+    },
+    {
+      "line": 208,
+      "name": "Write",
+      "input": {
+        "file_path": "/testbed/comprehensive_test.py",
+        "content": "import coverage\nimport sys\n\ndef test_unicode_filename():\n    \"\"\"Test that coverage handles Unicode filenames gracefully.\"\"\"\n    # Test the original issue case\n    cov = coverage.Coverage()\n    cov.start()\n    exec(compile(\"pass\", \"\\udcff.py\", \"exec\"))\n    cov.stop()\n\n    # This should not raise UnicodeEncodeError\n    try:\n        cov.save()\n        print(\"✓ Non-UTF8 filename handled gracefully\")\n    except UnicodeEncodeError:\n        print(\"✗ UnicodeEncodeError still occurs\")\n        return False\n\n    # Test normal case still works\n    cov2 = coverage.Coverage()\n    cov2.start()\n    exec(compile(\"pass\", \"normal_file.py\", \"exec\"))\n    cov2.stop()\n    cov2.save()\n    print(\"✓ Normal filename still works\")\n\n    return True\n\nif __name__ == \"__main__\":\n    success = test_unicode_filename()\n    if success:\n        print(\"All tests passed!\")\n    else:\n        print(\"Some tests failed!\")\n        sys.exit(1)"
+      },
+      "assistant_id": "msg_81b80243092f733298312c59",
+      "timestamp": null,
+      "result_line": 212,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:48:41.829Z",
+      "result_content_SHA256": "sha256:659f622c908658bcf909c329f0e4634b20f1164cf03c259f35fbdc3507e97c6a",
+      "result_seconds_since_first_generation": 30.87
+    },
+    {
+      "line": 217,
+      "name": "Bash",
+      "input": {
+        "command": "python comprehensive_test.py",
+        "description": "Run comprehensive test for Unicode filename handling"
+      },
+      "assistant_id": "msg_ebe9b7f781a0663c63929285",
+      "timestamp": null,
+      "result_line": 221,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:48:42.383Z",
+      "result_content_SHA256": "sha256:1569d5abf0f9f4dddc771b7f19678f491e1f24ad04104b8d6a644101c362a226",
+      "result_seconds_since_first_generation": 31.424
+    },
+    {
+      "line": 230,
+      "name": "Bash",
+      "input": {
+        "command": "python -m pytest tests/test_data.py::CoverageDataTest::test_adding_lines -v",
+        "description": "Run a specific test related to adding lines data"
+      },
+      "assistant_id": "msg_0e07205be23b6d8227cae6f0",
+      "timestamp": null,
+      "result_line": 234,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:48:44.084Z",
+      "result_content_SHA256": "sha256:0412444806296c8230bf2a33a8a464d219f0f976df57fcfee8af71f777407a71",
+      "result_seconds_since_first_generation": 33.125
+    },
+    {
+      "line": 243,
+      "name": "Bash",
+      "input": {
+        "command": "python -m pytest tests/test_data.py::CoverageDataTest::test_adding_arcs -v",
+        "description": "Run a test related to adding arc data"
+      },
+      "assistant_id": "msg_eeb556bdda17c30840abc3dd",
+      "timestamp": null,
+      "result_line": 247,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:48:45.648Z",
+      "result_content_SHA256": "sha256:df2a5ab47523b761d8d218ec31e3cf36e590575b2deab27ee15c632635b110bc",
+      "result_seconds_since_first_generation": 34.689
+    },
+    {
+      "line": 256,
+      "name": "Read",
+      "input": {
+        "file_path": "/testbed/coverage/control.py",
+        "limit": 20,
+        "offset": 630
+      },
+      "assistant_id": "msg_7cc9939f6c71b9c22f63448e",
+      "timestamp": null,
+      "result_line": 260,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:48:46.445Z",
+      "result_content_SHA256": "sha256:20e93076c0296cf5aa1cf7ad81b4e0abdeb700fb1371b60b02ff086decd06b89",
+      "result_seconds_since_first_generation": 35.486
+    },
+    {
+      "line": 269,
+      "name": "Bash",
+      "input": {
+        "command": "grep -r \"warn\" /testbed/tests/ --include=\"*.py\" | grep -i \"file.*name\\|unicode\\|encode\" | head -5",
+        "description": "Look for existing warning-related tests"
+      },
+      "assistant_id": "msg_f9205e4f1f1b7d22b0d80ef5",
+      "timestamp": null,
+      "result_line": 273,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:48:47.295Z",
+      "result_content_SHA256": "sha256:2ccd495d2207c27479cc43a41a33756df5a3c6231294a18b5c64f689e46ef3e3",
+      "result_seconds_since_first_generation": 36.336
+    },
+    {
+      "line": 282,
+      "name": "Write",
+      "input": {
+        "file_path": "/testbed/final_test.py",
+        "content": "import coverage\n\n# Test 1: Original issue case - should not crash\nprint(\"Test 1: Original issue case\")\ntry:\n    cov = coverage.Coverage()\n    cov.start()\n    exec(compile(\"pass\", \"\\udcff.py\", \"exec\"))\n    cov.stop()\n    cov.save()  # This used to raise UnicodeEncodeError\n    print(\"✓ No crash with non-UTF8 filename\")\nexcept Exception as e:\n    print(f\"✗ Failed with error: {e}\")\n\n# Test 2: Normal case still works\nprint(\"\\nTest 2: Normal filename\")\ntry:\n    cov2 = coverage.Coverage()\n    cov2.start()\n    exec(compile(\"pass\", \"normal_file.py\", \"exec\"))\n    cov2.stop()\n    cov2.save()\n    print(\"✓ Normal filename works\")\nexcept Exception as e:\n    print(f\"✗ Failed with error: {e}\")\n\n# Test 3: Multiple files with mixed encoding\nprint(\"\\nTest 3: Mixed filenames\")\ntry:\n    cov3 = coverage.Coverage()\n    cov3.start()\n    exec(compile(\"pass\", \"normal.py\", \"exec\"))\n    exec(compile(\"pass\", \"\\udcff.py\", \"exec\"))  # Non-UTF8\n    cov3.stop()\n    cov3.save()\n    print(\"✓ Mixed filenames handled\")\nexcept Exception as e:\n    print(f\"✗ Failed with error: {e}\")\n\nprint(\"\\nAll tests completed successfully!\")"
+      },
+      "assistant_id": "msg_6038468b6b2e2ffbca88b746",
+      "timestamp": null,
+      "result_line": 286,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:48:50.235Z",
+      "result_content_SHA256": "sha256:1f52ca36c7ec0b97e9fbf961e8557b93b2e00a23a7a11236eaa088fc33d56454",
+      "result_seconds_since_first_generation": 39.276
+    },
+    {
+      "line": 291,
+      "name": "Bash",
+      "input": {
+        "command": "python final_test.py",
+        "description": "Run final comprehensive test"
+      },
+      "assistant_id": "msg_941664b73c2d3701c02e70aa",
+      "timestamp": null,
+      "result_line": 295,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:48:50.786Z",
+      "result_content_SHA256": "sha256:6f0284953b0a4e93843d02bb7a4326d3a83798ecd13f80bc1b28984a6a18c1cc",
+      "result_seconds_since_first_generation": 39.827
+    },
+    {
+      "line": 304,
+      "name": "Bash",
+      "input": {
+        "command": "git status",
+        "description": "Check git status to see our changes"
+      },
+      "assistant_id": "msg_6c1b8aeca06346c4b33e3caa",
+      "timestamp": null,
+      "result_line": 308,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:48:54.437Z",
+      "result_content_SHA256": "sha256:a8b5a6664d817e71d62e8ce99b98fb8de1f715de5b7afceb84b396f6ccbde2e3",
+      "result_seconds_since_first_generation": 43.478
+    },
+    {
+      "line": 313,
+      "name": "Read",
+      "input": {
+        "file_path": "/testbed/coverage/sqldata.py",
+        "offset": 358,
+        "limit": 20
+      },
+      "assistant_id": "msg_3cefaeaee4f7082e9c46a1ca",
+      "timestamp": null,
+      "result_line": 317,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:48:54.990Z",
+      "result_content_SHA256": "sha256:31dd9d7d680c4702324ef9d80a22bdd9722335010620766981c22b59a28afbd8",
+      "result_seconds_since_first_generation": 44.031
+    },
+    {
+      "line": 322,
+      "name": "Bash",
+      "input": {
+        "command": "git diff coverage/sqldata.py",
+        "description": "Show the exact changes made to the file"
+      },
+      "assistant_id": "msg_62322e840b6fa613f8a9c145",
+      "timestamp": null,
+      "result_line": 326,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:48:55.511Z",
+      "result_content_SHA256": "sha256:180259f2eda7bbe1b27cda36ca7cc7d30a3de87e23851c79750af97638bc2bf4",
+      "result_seconds_since_first_generation": 44.552
+    },
+    {
+      "line": 335,
+      "name": "Bash",
+      "input": {
+        "command": "git add coverage/sqldata.py",
+        "description": "Stage our changes for commit"
+      },
+      "assistant_id": "msg_2787e45ee5af953195ef8978",
+      "timestamp": null,
+      "result_line": 339,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:48:58.953Z",
+      "result_content_SHA256": "sha256:9cef1004a72776b0430d10e19df35f56eb801506643c5b3369e1ea996d106a80",
+      "result_seconds_since_first_generation": 47.994
+    },
+    {
+      "line": 344,
+      "name": "Bash",
+      "input": {
+        "command": "git commit -m \"Fix UnicodeEncodeError with non-UTF8 filenames\n\nWhen coverage.py encounters a filename that cannot be encoded in UTF-8,\nit would crash with a UnicodeEncodeError. This fix catches the exception\nand handles it gracefully by issuing a warning and continuing execution.\n\nFixes the issue where executing code with filenames containing surrogate\ncharacters like '\\udcff.py' would cause coverage to crash instead of\nhandling them gracefully.\n\nCo-authored-by: Claude <noreply@anthropic.com>\"",
+        "description": "Commit our changes with a descriptive message"
+      },
+      "assistant_id": "msg_06f7daf37ae4020f1623a7fe",
+      "timestamp": null,
+      "result_line": 348,
+      "is_error": true,
+      "result_timestamp": "2026-10-03T04:49:00.204Z",
+      "result_content_SHA256": "sha256:a690c8371ff97dc020f6e1df532c9362ca47d76d9e1b51f803d876892e4407d2",
+      "result_seconds_since_first_generation": 49.245
+    },
+    {
+      "line": 353,
+      "name": "Bash",
+      "input": {
+        "command": "git config user.email \"claude@example.com\" && git config user.name \"Claude\" && git commit -m \"Fix UnicodeEncodeError with non-UTF8 filenames\n\nWhen coverage.py encounters a filename that cannot be encoded in UTF-8,\nit would crash with a UnicodeEncodeError. This fix catches the exception\nand handles it gracefully by issuing a warning and continuing execution.\n\nFixes the issue where executing code with filenames containing surrogate\ncharacters like '\\udcff.py' would cause coverage to crash instead of\nhandling them gracefully.\n\nCo-authored-by: Claude <noreply@anthropic.com>\"",
+        "description": "Set git identity and commit our changes"
+      },
+      "assistant_id": "msg_99c75f0d45adc939acb1ac89",
+      "timestamp": null,
+      "result_line": 357,
+      "is_error": false,
+      "result_timestamp": "2026-10-03T04:49:01.652Z",
+      "result_content_SHA256": "sha256:f96a3d6e7bb252a85493e4843abb0e9bcb76a5873e2ef5aa8beed0c3f2bde02b",
+      "result_seconds_since_first_generation": 50.693
+    }
+  ],
+  "resource_scope": {
+    "actor": {
+      "samples": 7,
+      "actual_CIDs": [
+        "d5914f0ebef938fd7c5ef4309116893e770c1db137b11e3436abf29f3ebbffa2"
+      ],
+      "first": "2026-10-03T04:47:36.773667+00:00",
+      "last": "2026-10-03T04:49:07.214945+00:00",
+      "max_sampled_memory_peak_bytes": 1061560320,
+      "gaps_unknown": true
+    },
+    "relay": {
+      "samples": 7,
+      "actual_CIDs": [
+        "12d51d6dfbb3633cc0885c27c17611d2f2da832c6f8abb48ad0e4b168def5d89"
+      ],
+      "first": "2026-10-03T04:47:36.773667+00:00",
+      "last": "2026-10-03T04:49:07.214945+00:00",
+      "max_sampled_memory_peak_bytes": 27602944,
+      "gaps_unknown": true
+    },
+    "grader": {
+      "samples": 2,
+      "actual_CIDs": [
+        "20a86113f8e26d5983eb6325e8edef4bb7b6aaed3f70108448a7bd5180c5b65f"
+      ],
+      "first": "2026-10-03T04:49:22.283185+00:00",
+      "last": "2026-10-03T04:49:37.352117+00:00",
+      "max_sampled_memory_peak_bytes": 104448000,
+      "gaps_unknown": true
+    }
+  },
+  "cpu_followup": {
+    "mandatory": false,
+    "current_material_blocker": false,
+    "optional_only": [
+      "If resolving candidate engineering quality: require no orphan rows under repeated bad filenames and verify targeted plugin/touch behavior; not a new ordinary grading criterion."
+    ],
+    "new_CPU_or_model_run_by_owner": false
+  },
+  "candidate_public_tests_modified": false,
+  "candidate_new_public_helpers": [
+    "comprehensive_test.py",
+    "final_test.py",
+    "reproduce_issue.py",
+    "test_normal.py"
+  ],
+  "new_material_blockers": [],
+  "training_qualified": false,
+  "evidence": [
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v16r2/results/gpu1003-coverage016a-coder-a1/attempt/harness/trajectory.jsonl",
+      "sha256": "sha256:3e74309b98c2edfff170128f2af0b728a6c96f0a0300602760a775d92f1126e3",
+      "bytes": 414093
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v16r2/results/gpu1003-coverage016a-coder-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "sha256:f33cda944ad820a4b68ccf110d337bb2727c8232f0d0637baca2b36a4575c315",
+      "bytes": 204057
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v16r2/results/gpu1003-coverage016a-coder-a1/attempt/frozen/baseline_manifest.json",
+      "sha256": "sha256:83f10fc56f7066b2331c373c708eb2384078ea89f19f27e29f33413ecc3e3b91",
+      "bytes": 77407
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v16r2/results/gpu1003-coverage016a-coder-a1/attempt/frozen/baseline.tar",
+      "sha256": "sha256:4a94e2246f9eb0befd317ed25336ad89bb14360d24bdc400136359d38069bd38",
+      "bytes": 4044800
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v16r2/results/gpu1003-coverage016a-coder-a1/attempt/candidate/coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae.diff",
+      "sha256": "sha256:97e87415a06f8e9ce6001cb0a2cde2ce2221be29630125b5ecad9d8f9db9f6b2",
+      "bytes": 9962
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v16r2/results/gpu1003-coverage016a-coder-a1/result.json",
+      "sha256": "sha256:0877e8dc2fb9c036da1805383b42a9fe0b97fc8641e73b87fdd530ef3894e79f",
+      "bytes": 2698
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v16r2/results/gpu1003-coverage016a-coder-a1/attempt/attempt.json",
+      "sha256": "sha256:864d6e64181be3646fd54130c85078bddc0fe87795ddd4f13a2812c428144aa4",
+      "bytes": 19666
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v14/coder/gateway/gpu1003-coverage016a-coder-a1/requests.jsonl",
+      "sha256": "sha256:0b97f8bbba3546955f8b923d6e9ff19bc5cb1e7dee42d52a5f0e85aacfff5ba1",
+      "bytes": 2892946
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v14/coder/gateway/gpu1003-coverage016a-coder-a1/responses.jsonl",
+      "sha256": "sha256:3dad69877d7d073830824ec20c1d63e21f99db7dd014ea7e116be04a46698780",
+      "bytes": 9964
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/coverage016a_coder_a1_execution_review_v1.json",
+      "sha256": "sha256:535fd4680e6789ec4b14449d97e0c0d8466a4e9f1295411dff28730243f94274",
+      "bytes": 14439
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/coverage016a_coder_a1_independent_evidence_checks_v1.json",
+      "sha256": "sha256:b3c2258276656ec6211534c49caca1ad777185d32705d8ff1a38d46b7c602a97",
+      "bytes": 66612
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/receipts/r2e-coveragepy-016a-r086087-cpu-r6-20261003-v1_two_model_v1.json",
+      "sha256": "sha256:d987ce644beaf5f0da8e72258c5cf69a12f244ea76da23ecbe0d48e7c1fc1d33",
+      "bytes": 16817
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/016a_coder_analysis_v1/closed110_owner_readback.json",
+      "sha256": "sha256:8e4347ef77e83782978fa1dd3809cdb279742cf5e60ee6107662f0bdb0531b5d",
+      "bytes": 284
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/016a_coder_analysis_v1/generated_sqlite_readonly_observation.json",
+      "sha256": "sha256:b7910a713e7d400bda68f44f5a14656d8cc6374c9e8817d0597f5d19836841f0",
+      "bytes": 1463
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/reviews/non_author_016a_coder_semantic_review_20261003.md",
+      "sha256": "sha256:7a3ff575bc28c7b706f9bda674acb9b417a3d1ef8827a8cda06a4b05113ba53f",
+      "bytes": 10171
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/reviews/non_author_016a_coder_semantic_review_20261003.json",
+      "sha256": "sha256:e7919a2c4dbd82f35481dda71bbf169106e2f87f167f2b0d52a49c018002ac48",
+      "bytes": 140320
+    }
+  ],
+  "review_scope": "Owner read complete assistant text and all30effective tool args/results, full production/helper diffs and existing SQLite original bytes; non-author existing-context semantic narrow review. Execution110SHA/bytes checked without rerun; not fresh public reader.",
+  "limits": [
+    "No new solver/model/CPU/project tests, no report score change.",
+    "CC alias cost is estimated, actual paid cost unknown.",
+    "code_snapshot_id, grading_materials_identity, env qualification absence preserved; no formal training acceptance.",
+    "Actual196608/65536 configured upper bounds do not prove observed196K peak capacity or repeat stability.",
+    "Local actor/grade sample stats not GPU-service exclusive usage; unsampled intervals unknown."
+  ]
+}

@@ -1,0 +1,378 @@
+{
+ "schema_id": "rh2.r2e_screening_record.v1",
+ "task_id": "r2e_gym_subset::numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d",
+ "instance_id": "numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d",
+ "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0",
+ "source_adapter_ref": "s2_r2e ingest_manifest_v0 (pin ea567fec…)",
+ "recipe_ref": {
+  "derived_image": "r2e_derive_v1+env_v1",
+  "resources": "default",
+  "env_recipe": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/recipes/env_pins_v1.json#numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d"
+ },
+ "code_snapshot_ref": "runs/r2e_snapshot_20260923.sha256 (388 files) + r2e_env_tools.sha256（远端 run_dev_probe.py cd2c85cd… / dev_probe_agent.sh 618e0e53… 与本机一致）",
+ "facts_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/facts.json",
+ "dev_probe_ref": "runs/r2e_t0_revisions_20260924/dev_probe_env43/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/dev_probe.json",
+ "checks": {
+  "R01": {
+   "status": "pass",
+   "note": "环境配方后复核：09-24 在 A 线机器按 r2e_derive_v1+env_v1（recipe sha256:0cda3024…）重建；env 步骤离线安装核过摘要的 wheel（build.log：RH2_ENV_PINNED=hypothesis:6.124.1->6.24.1）；导层完整性只放行匹配配方 venv_changed_globs 的 venv 路径（129 个；不匹配即判失败），env_pins_applied 以 agent 身份核对通过；隐藏测试树 20bd8d80… 不变；探针 GIT_HEAD 与 base_commit 一致。",
+   "evidence_refs": [
+    "runs/r2e_t0_revisions_20260924/derived/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/facts.json",
+    "runs/r2e_t0_revisions_20260924/derived/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/build.log",
+    "runs/r2e_t0_revisions_20260924/derived/results.json",
+    "runs/r2e_t0_revisions_20260924/dev_probe_env43/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/dev_probe.json"
+   ],
+   "by": "Claude（B 线，T0 实施验收）",
+   "previous": {
+    "status": "pass",
+    "note": "派生镜像 21 项复核通过；覆盖表 / 隐藏测试树 / 入口脚本 / HEAD 与评分面一致；探针 GIT_HEAD = base_commit 1798a7d46359，镜像 ID 与覆盖表一致（探针按 overlays.jsonl 的 ID inspect 通过）。"
+   }
+  },
+  "R02": {
+   "status": "pass",
+   "note": "noop 0 来自 1 个 mismatched 键（无 missing、无零解析）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-n_8d018062.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R03": {
+   "status": "pass",
+   "note": "公开 prompt 1063 字符，题面 962 字符、含代码块；公开复现脚本按题面复现成功（REPRO_OBSERVED=1）。示例可运行（np.ma.average 返回 nan），复现成功。 全局提示写 conda testbed（R2E 实为 .venv）属 E09，不计入本题。run_tests.sh / install.sh 在工作区可见：前者只含入口命令与隐藏测试目录名，后者是本仓库通用安装脚本（同仓各题逐字相同，followups A），不含修复。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/prepared_r2e/prompts.jsonl",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d.py",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+   ],
+   "by": "p2-subagent"
+  },
+  "R04": {
+   "status": "pass",
+   "note": "official / hygiene test_files = r2e_tests/{__init__.py,test_1.py} + run_tests.sh（r2e_official_files）；gold 只触碰 numpy/ma/extras.py，不在其中；解题不需要改 r2e_tests 以外的测试辅助文件。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/facts.json",
+    "rh2/src/repoharness2/adapters/slime/r2e_grading_scripts.py#L80-84"
+   ],
+   "by": "p2-subagent"
+  },
+  "R05": {
+   "status": "pass",
+   "note": "环境配方后：python → /testbed/.venv/bin/python 3.10.16；pytest 8.3.4（未动）；hypothesis 6.24.1（来源镜像 6.124.1，按仓库 test_requirements.txt 固定）；pip 仍缺失；导入方式不变（就地构建，/testbed 须在 sys.path 上）。配方前的记录见 previous。",
+   "evidence_refs": [
+    "runs/r2e_t0_revisions_20260924/dev_probe_env43/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/dev_probe.json",
+    "runs/r2e_t0_revisions_20260924/agent_pubtest_43e3_env.txt",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/recipes/env_pins_v1.json",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/agent_probe.log",
+    "runs/env_overnight_20260916/M3/facts/43e333e2ff64/pkgsrc.txt",
+    "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+   ],
+   "by": "Claude（B 线，T0 实施验收）",
+   "previous": {
+    "status": "pass",
+    "note": "python → /testbed/.venv/bin/python 3.10.16（PATH 首项，镜像 ENV）；pytest 8.3.4；pip 缺失（/testbed/.venv/bin/python: No module named pip；pip / pip3 / uv 命令都不存在，见 WHICH_* 键——本地 dev_probe.json 已用 run_dev_probe.py --reparse（parser v2）重建，远端副本仍是 v1、缺这些键）；gcc / make / git 有。导入方式：in-place 构建（install.sh 用 setup.py build_ext --inplace，followups A/B：in-tree .so 19 个），未装进 venv——/testbed 在 sys.path 上才能导入：cwd=/testbed 的 python -c / -m pytest 可以，/tmp 下失败（IMPORT_FROM_TMP_RC=1，ModuleNotFoundError），脚本放在 /testbed 之外时即使 cwd=/testbed 也失败（复现脚本 IMPORT_PLAIN=fail）。与 M3 一致。 hypothesis 6.124.1（followups B）。"
+   }
+  },
+  "R06": {
+   "status": "not_applicable",
+   "note": "期望 88 键全 PASSED，无 FAILED / ERROR 键；工作区无未跟踪资产目录。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/facts.json"
+   ],
+   "by": "p2-subagent"
+  },
+  "R07": {
+   "status": "pass",
+   "note": "派生镜像复核通过（两种 uid 的解释器可执行、私有目录不可读）；探针 chown 后 /testbed、site-packages、.venv/bin、HOME、/tmp 可写，/usr/local 不可写；/rh2_private 对 agent Permission denied，/testbed 与 / 下都没有 r2e_tests。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/facts.json",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/dev_probe.json"
+   ],
+   "by": "collate_facts.py + run_dev_probe.py"
+  },
+  "R08": {
+   "status": "pass",
+   "note": "环境配方后 gold 88/88、reward 1（两次）；grader 侧导入路径 /testbed/numpy/__init__.py（账本 observations.RH2_OBS_IMPORT_PATH，两次相同）。",
+   "evidence_refs": [
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-env43-gold-nu_615635a1.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-env43-gold-nu_c17d7c8a.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/ledger_env43_gold.jsonl"
+   ],
+   "by": "Claude（B 线，T0 实施验收）",
+   "previous": {
+    "status": "pass",
+    "note": "导入 /testbed/numpy/__init__.py；gold 88/88"
+   }
+  },
+  "R09": {
+   "status": "pass",
+   "note": "环境配方后：探针公开测试 numpy/tests/test__all__.py 收集 ok、运行 rc 0。与本题修复对应的 numpy/ma/tests/test_extras.py 以解题身份（uid 54321，rollout 同级资源与能力，无网络）`python -m pytest -q` 收集 ok：78 passed / 10 failed，TestAverage 6 passed。相关性核对：本题修复 numpy/ma/extras.py::average，目标键 TestAverage::test_masked_weights；10 个失败全部是 TestCov ×4 / TestCorrcoef ×6 的 AttributeError（pytest 8 不调用旧式 setup(self)，实例缺 data），测的是 ma.cov / ma.corrcoef，失败在准备阶段，与 average 无关 → 记为解题侧噪声，不算阻断。配方前的 issue（收集 rc 4）见 previous。",
+   "evidence_refs": [
+    "runs/r2e_t0_revisions_20260924/dev_probe_env43/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/dev_probe.json",
+    "runs/r2e_t0_revisions_20260924/agent_pubtest_43e3_env.txt",
+    "runs/r2e_t0_revisions_20260924/agent_pubtest_43e3_env_failures.txt",
+    "runs/r2e_t0_revisions_20260924/agent_pubtest.sh"
+   ],
+   "by": "Claude（B 线，T0 实施验收）",
+   "previous": {
+    "status": "issue",
+    "note": "探针公开测试 numpy/tests/test__all__.py：收集 rc 4、运行 rc 4（conftest 加载失败）。补充检查（按 gold 触碰文件选同目录测试，uid 54321 同级条件）：仓库内 numpy 测试整体收集失败：numpy/ma/tests/test_extras.py 与 numpy/tests/test__all__.py 都 rc 4（numpy/conftest.py:33 调 hypothesis.HealthCheck.all()，hypothesis 6.124.1 发 HypothesisDeprecationWarning，pytest.ini filterwarnings=error 把它变成错误；-W ignore / -W ignore::DeprecationWarning 都无效）。绕法 -o filterwarnings=ignore 或 --noconftest 后 test_extras.py 78 passed / 10 failed（pytest 8.3.4 不再调用 nose 风格 setup(self)：TestCov / TestCorrcoef 缺 data 属性）。公开复现 REPRO_OBSERVED=1。解题者不能直接跑仓库自带测试验证改动；隐藏测试不受影响。"
+   }
+  },
+  "R10": {
+   "status": "pass",
+   "note": "NET_CONNECT_RC=1（连 1.1.1.1:443 失败）、NET_DNS_RC=2；期望键里没有因网络失败的；解题与本题测试都不需要下载。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/dev_probe.json"
+   ],
+   "by": "run_dev_probe.py + p2-subagent"
+  },
+  "R11": {
+   "status": "not_applicable",
+   "note": "期望没有 FAILED / ERROR 键，gold 在无网络评分沙箱里全过（或已归因为资源 / 材料），无外部服务依赖的迹象。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-n_0a1393f3.eval.log"
+   ],
+   "by": "p2-subagent"
+  },
+  "R12": {
+   "status": "pass",
+   "note": "峰值 453 MB / 限额 4 GiB = 0.111; setup 20s test 2s；探针 chown -R /testbed 28.51 s（与中央复跑和其它包并发，偏高，不作校准）。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-n_0a1393f3.diagnostics.json",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/root_init.log"
+   ],
+   "by": "collate_facts.py + run_dev_probe.py"
+  },
+  "R13": {
+   "status": "pass",
+   "note": "环境配方后同条件（覆盖表镜像 b8f6f112…、期限 1800/1800）noop 两次都是 87/88 且只差目标键，gold 两次都是 88/88；reward 与差异集合一致，也与配方前两轮相同（旧引用保留）。",
+   "evidence_refs": [
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-env43-noop-nu_4e0e0d2d.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-env43-noop-nu_b771b1a8.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-env43-gold-nu_615635a1.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-env43-gold-nu_c17d7c8a.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_36aa83a6.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_a9803e94.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-n_0a1393f3.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-n_8d018062.eval.log"
+   ],
+   "by": "Claude（B 线，T0 实施验收）",
+   "previous": {
+    "status": "pass",
+    "note": "noop: noop 同条件 2 次 reward 与差异集合一致; gold: gold 同条件 2 次 reward 与差异集合一致"
+   }
+  },
+  "R14": {
+   "status": "pass",
+   "note": "R-f 每次 fresh 容器，cleanup.removed=true；omitted_cache_count 的 baseline 与 post 计数相同（没有新增缓存）；gold 行 candidate_test_like_paths=[]；探针前后 git status 行数 2 → 2。本轮四包并行，耗时不作校准。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl",
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/dev_probe.json"
+   ],
+   "by": "p2-subagent"
+  },
+  "R15": {
+   "status": "pass",
+   "note": "环境配方后 4 行（noop ×2 / gold ×2）与独立 runner 逐键一致（reward、差异集合、观测映射都相同）；gold 两行 M3 账本互核自洽，noop 行无账本 reward（None）。",
+   "evidence_refs": [
+    "runs/r2e_t0_revisions_20260924/reconcile/reconcile.json",
+    "runs/r2e_t0_revisions_20260924/reconcile/reconcile.md",
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   ],
+   "by": "Claude（B 线，T0 实施验收）",
+   "previous": {
+    "status": "pass",
+    "note": "2 行 agree（reward、差异集合、观测映射逐键相同）"
+   }
+  },
+  "R16": {
+   "status": "pass",
+   "note": "目标键 TestAverage.test_masked_weights ↔ 题面 NaN 权重下 ma.average 返回 nan；noop 原因 AssertionError。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-n_8d018062.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-n_0a1393f3.eval.log"
+   ],
+   "by": "collate_facts.py + p2-subagent"
+  },
+  "R17": {
+   "status": "pass",
+   "note": "派生镜像 git 清理与私有目录 700 复核通过；探针：HEAD 无子提交（children words 1）、refs 0、reflog 0、stash 0、无 remote；残留补丁样文件 6 个，都是 git 跟踪的上游文件 numpy/linalg/lapack_lite/f2c_*.patch（followups B），不是修复残留；?? install.sh 是本仓库通用安装脚本、不含修复（followups A）。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/facts.json",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+   ],
+   "by": "run_dev_probe.py + p2-subagent"
+  },
+  "R18": {
+   "status": "pass",
+   "note": "环境配方 env_pins_v1（E15）：只把 hypothesis 固定回仓库自己写的 6.24.1，pytest 不动；不改材料。同时换回 pytest 6.2.5 能让整个模块 88 passed，但会改变评分所用的 pytest 大版本，没有采用。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/recipes/env_pins_v1.json",
+    "runs/r2e_t0_revisions_20260924/diag43b/",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/decisions.md"
+   ],
+   "by": "Claude（B 线，T0 实施验收）",
+   "previous": {
+    "status": "pass",
+    "note": "无需修复配方或材料修订；只有解题侧条件（记入 solver_conditions，E10：进记录不进题面）。"
+   }
+  },
+  "R19": {
+   "status": "pass",
+   "note": "探针：systemd unit r2e-p2-probe-1825，命令见 packages/p2/README.md，输出 runs/…/p2/dev_probe/；补充检查脚本 pubtests.sh / followups.sh 与日志一并回传；R-f 运行 run_id r2e-rf-all-noop / r2e-rf-all-gold。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p2/probe.log",
+    "runs/r2e_env_repair_20260924/p2/pubtests.sh",
+    "runs/r2e_env_repair_20260924/p2/followups.sh"
+   ],
+   "by": "p2-subagent"
+  },
+  "R20": {
+   "status": "pass",
+   "note": "配方只用于本题（py3.10 镜像；来源 install.sh 装了不固定版本的 hypothesis 6.124.1）。其它 6 个 numpy 镜像是 hypothesis 6.79.4 + pytest 7.4.4，不继承；6.79.4 在本题同样发弃用警告（diag43/v1.public.txt），所以本题不照搬它。导入条件（/testbed 须在 sys.path）仍是 7 个 numpy 镜像共有。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/recipes/env_pins_v1.json",
+    "runs/r2e_t0_revisions_20260924/diag43/v1.public.txt",
+    "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+   ],
+   "by": "Claude（B 线，T0 实施验收）",
+   "previous": {
+    "status": "pass",
+    "note": "导入条件（/testbed 须在 sys.path）是本批 7 个 numpy 镜像共有的（同一 install.sh 就地构建，逐题探针实测），不外推到其它 numpy 版本 / 来源；hypothesis 6.124.1 + pytest 8.3.4 导致的公开测试问题只在本题（py3.10 镜像）出现。"
+   }
+  }
+ },
+ "issues": [
+  {
+   "category": "solver_condition",
+   "scope": "repo:numpy（本批 7 题）",
+   "summary": "numpy 就地构建、未装进 venv：/testbed 在 sys.path 上才能 import numpy；脚本放在 /testbed 之外（如 /tmp/x.py）即使 cwd=/testbed 也 ModuleNotFoundError；裸 pytest 收集失败，要用 python -m pytest（18b7cd9d 实测）。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/dev_probe.json",
+    "runs/env_overnight_20260916/M3/facts/43e333e2ff64/pkgsrc.txt",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/agent_probe.log",
+    "runs/r2e_env_repair_20260924/p2/followups/bare_pytest.log"
+   ],
+   "proposed_action": "记入解题侧条件（E10）；是否写进题包 / 系统提示由后续任务面决定（可给 PYTHONPATH=/testbed 或\"脚本放进 /testbed\"）。",
+   "status": "verified"
+  },
+  {
+   "category": "solver_condition",
+   "scope": "task（py3.10 镜像）",
+   "summary": "仓库自带 numpy 测试无法按常规收集（numpy/conftest.py 调 hypothesis.HealthCheck.all()，hypothesis 6.124.1 弃用警告被 pytest.ini filterwarnings=error 变成错误，rc 4）；绕法 -o filterwarnings=ignore 或 --noconftest 后，nose 风格 setup(self) 的类在 pytest 8.3.4 下不被调用（test_extras.py 10 failed）。隐藏测试不受影响。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p2/pubtests/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d.log",
+    "runs/r2e_env_repair_20260924/p2/followups/followups.log",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/dev_probe.json",
+    "runs/r2e_t0_revisions_20260924/agent_pubtest_43e3_env.txt",
+    "runs/r2e_t0_revisions_20260924/agent_pubtest_43e3_env_failures.txt",
+    "runs/r2e_t0_revisions_20260924/agent_pubtest.sh",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-env43-gold-nu_615635a1.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-env43-gold-nu_c17d7c8a.eval.log",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/recipes/env_pins_v1.json"
+   ],
+   "proposed_action": "本轮记入解题侧条件（给出绕法）；环境侧可在后续派生配方里把 hypothesis 固定到不弃用 HealthCheck.all() 的版本、pytest 固定到 <8（需先验证 gold / noop 不变）——不在本轮。",
+   "status": "verified",
+   "resolution": "09-24 环境配方 env_pins_v1（hypothesis 6.24.1）解决收集失败：以解题身份常规收集 ok，TestAverage 6 passed；剩余 TestCov / TestCorrcoef 10 个旧式 setup 失败与本题无关，记为解题侧噪声。隐藏测试结果不变（noop 87/88、gold 88/88 各两次）。"
+  }
+ ],
+ "solver_conditions": {
+  "cwd_required": "/testbed 必须在 sys.path 上：在 /testbed 下 python -c / python -m pytest 可以；/tmp 下或脚本在 /testbed 之外（即使 cwd=/testbed）ModuleNotFoundError；可设 PYTHONPATH=/testbed。跑测试要用 python -m pytest：裸 pytest（console script）收集即 ModuleNotFoundError（numpy/lib/tests 无 __init__.py，pytest 把测试目录而不是 /testbed 放进 sys.path）——18b7cd9d 实测，本题同一构建方式，推断相同",
+  "interpreter": "/testbed/.venv/bin/python（PATH 首项，镜像 ENV；3.10.16）",
+  "pip": "absent（No module named pip；无 pip / pip3 / uv 命令）",
+  "network": "none（NET_CONNECT_RC=1、DNS rc 2）",
+  "public_tests": "环境配方后：numpy/tests/test__all__.py 收集 ok / 运行 rc 0；相关模块 numpy/ma/tests/test_extras.py 常规 `python -m pytest` 收集 ok，78 passed / 10 failed，失败全部是 TestCov / TestCorrcoef（pytest 8.3.4 不调用旧式 setup(self)），与本题无关；TestAverage 6 passed。",
+  "repro": "REPRO_RC=0；REPRO_OBSERVED=1",
+  "notes": "隐藏测试不受配方影响（noop 87/88、gold 88/88 与配方前相同）。派生镜像 hypothesis 6.24.1（来源 6.124.1）。其它 numpy 镜像是 hypothesis 6.79.4 + pytest 7.4.4。 gcc / make / git 有；pip / pip3 / uv 无；无出网。"
+ },
+ "classification": "solver_condition",
+ "revision_refs": [],
+ "disposition": {
+  "state": "qualified_with_recipe",
+  "scope": "本题当前材料（expected_v0）+ r2e_derive_v1+env_v1（env_pins_v1）+ 默认 rollout profile",
+  "reason": "唯一的未完成项（相关公开测试收集失败，dev_blocking）已由环境配方解决并以解题身份复验；配方后真实评分 noop 0 / gold 1 各两次与配方前一致，与 M3 逐键一致；探针十项最小条件满足。",
+  "pending_checks": [],
+  "evidence_refs": [
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/recipes/env_pins_v1.json",
+   "runs/r2e_t0_revisions_20260924/dev_probe_env43/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/dev_probe.json",
+   "runs/r2e_t0_revisions_20260924/reconcile/reconcile.json",
+   "runs/r2e_t0_revisions_20260924/agent_pubtest_43e3_env.txt",
+   "runs/r2e_t0_revisions_20260924/agent_pubtest_43e3_env_failures.txt",
+   "runs/r2e_t0_revisions_20260924/agent_pubtest.sh",
+   "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-env43-noop-nu_4e0e0d2d.eval.log",
+   "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-env43-noop-nu_b771b1a8.eval.log",
+   "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-env43-gold-nu_615635a1.eval.log",
+   "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-env43-gold-nu_c17d7c8a.eval.log"
+  ],
+  "decided_by": "Claude 09-24 E15（T1 环境配方）",
+  "previous_state": "grading_ok_open_items",
+  "resolved_items": [
+   {
+    "kind": "dev_blocking",
+    "summary": "仓库自带 numpy 测试按常规用法收集即失败：numpy/conftest.py 调 hypothesis.HealthCheck.all()，镜像里 hypothesis 6.124.1 的弃用警告被 pytest.ini 的 filterwarnings=error 变成错误（rc 4）。与本题修复（numpy/ma/extras.py::average）对应的 numpy/ma/tests/test_extras.py::TestAverage 因此不能直接运行。绕法 `-o filterwarnings=ignore` 或 `--noconftest` 可收集：78 passed / 10 failed，失败都在 TestCorrcoef / TestCov（pytest 8 不调用旧式 setup），与本题无关。",
+    "evidence_refs": [
+     "runs/r2e_env_repair_20260924/p2/pubtests/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d.log",
+     "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+    ],
+    "next": "环境配方：派生镜像把 hypothesis 固定到兼容版本（本批其它 numpy 镜像为 6.79.4），修后以解题身份复验公开测试入口，并跑真实 noop/gold 确认隐藏测试结果不变；或由任务面激活文件声明 pytest 参数（A 线机制）。",
+    "resolved": {
+     "at": "2026-09-24",
+     "by": "Claude（B 线，T0 实施验收）",
+     "how": "环境配方 env_pins_v1（E15）",
+     "evidence_refs": [
+      "runs/r2e_t0_revisions_20260924/agent_pubtest_43e3_env.txt",
+      "runs/r2e_t0_revisions_20260924/agent_pubtest_43e3_env_failures.txt",
+      "runs/r2e_t0_revisions_20260924/agent_pubtest.sh",
+      "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-env43-noop-nu_4e0e0d2d.eval.log",
+      "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-env43-noop-nu_b771b1a8.eval.log",
+      "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-env43-gold-nu_615635a1.eval.log",
+      "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-env43-gold-nu_c17d7c8a.eval.log",
+      "runs/r2e_t0_revisions_20260924/dev_probe_env43/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/dev_probe.json",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/recipes/env_pins_v1.json"
+     ]
+    }
+   }
+  ],
+  "reviewer": null
+ },
+ "costs": {
+  "probe_seconds": 36.93,
+  "probe_runs": 1,
+  "rerun_attempts": 0,
+  "rerun_seconds": 0
+ },
+ "review_notes": [
+  {
+   "by": "Claude（验收，apply_r13.py）",
+   "at": "2026-09-23",
+   "change": "R13 由中央复跑并入：pass；disposition.state 'unknown' → 'environment_qualified'"
+  },
+  {
+   "by": "Claude（09-24 Codex R1 更正）",
+   "at": "2026-09-24",
+   "change": "disposition.state 'environment_qualified' → 'grading_ok_open_items'：已归因但未修复的开发故障不再计为环境合格（apply_r13 兜底提升已撤掉）"
+  },
+  {
+   "by": "Claude（B 线，T0 实施验收）",
+   "at": "2026-09-24",
+   "change": "disposition grading_ok_open_items → qualified_with_recipe：dev_blocking 由环境配方 env_pins_v1 解决（hypothesis 6.24.1），以解题身份复验公开测试、真实 grader noop 0 ×2 / gold 1 ×2、对账 4/4 一致；open_items 移入 resolved_items"
+  }
+ ],
+ "posthoc_refs": [
+  "runs/r2e_t0_revisions_20260924/replay/ledger_env43_noop.jsonl",
+  "runs/r2e_t0_revisions_20260924/replay/ledger_env43_gold.jsonl",
+  "runs/r2e_t0_revisions_20260924/reconcile/reconcile.json",
+  "runs/r2e_t0_revisions_20260924/derived/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/facts.json",
+  "runs/r2e_t0_revisions_20260924/derived/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/build.log",
+  "runs/r2e_t0_revisions_20260924/dev_probe_env43/numpy__43e333e2ff641f6dce852e46c9c650333b0d4b3d/dev_probe.json",
+  "runs/r2e_t0_revisions_20260924/agent_pubtest_43e3_env.txt",
+  "runs/r2e_t0_revisions_20260924/agent_pubtest_43e3_env_failures.txt",
+  "runs/r2e_t0_revisions_20260924/agent_pubtest.sh",
+  "runs/r2e_t0_revisions_20260924/diag43/",
+  "runs/r2e_t0_revisions_20260924/diag43b/"
+ ]
+}

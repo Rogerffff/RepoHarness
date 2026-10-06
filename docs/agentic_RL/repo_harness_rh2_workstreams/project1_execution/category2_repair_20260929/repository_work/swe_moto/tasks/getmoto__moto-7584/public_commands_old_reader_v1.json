@@ -1,0 +1,30 @@
+[
+  {
+    "id": "A",
+    "cmd": "cd /testbed\npython -c 'import sys, moto, boto3, botocore, pytest; from moto.sns.models import SNSBackend; print(sys.executable); print(sys.version); print(moto.__file__); print(boto3.__version__, botocore.__version__, pytest.__version__)'\n",
+    "timeout_s": 240,
+    "expect": "zero",
+    "purpose": "原公开读者开发命令；实际精确行为、节点收集与完整输出由题主另核"
+  },
+  {
+    "id": "B",
+    "cmd": "cd /testbed\nenv MOTO_TEST_ALLOW_AWS_REQUEST=false TEST_SERVER_MODE=false TEST_PROXY_MODE=false AWS_EC2_METADATA_DISABLED=true python - <<'PY'\nimport boto3\nfrom moto import mock_aws\n\nwith mock_aws():\n    client = boto3.client(\"sns\", region_name=\"us-east-1\")\n    app = client.create_platform_application(\n        Name=\"test\", Platform=\"GCM\", Attributes={}\n    )[\"PlatformApplicationArn\"]\n    endpoint = client.create_platform_endpoint(\n        PlatformApplicationArn=app, Token=\"test-token\"\n    )[\"EndpointArn\"]\n    topic = client.create_topic(Name=\"test-topic\")[\"TopicArn\"]\n    first = client.subscribe(\n        TopicArn=topic, Endpoint=endpoint, Protocol=\"application\"\n    )[\"SubscriptionArn\"]\n    repeated = client.subscribe(\n        TopicArn=topic, Endpoint=endpoint, Protocol=\"application\"\n    )[\"SubscriptionArn\"]\n    assert repeated == first\n    client.delete_endpoint(EndpointArn=endpoint)\n    try:\n        client.subscribe(TopicArn=topic, Endpoint=endpoint, Protocol=\"application\")\n    except client.exceptions.InvalidParameterException as exc:\n        assert exc.response[\"Error\"][\"Code\"] == \"InvalidParameter\"\n        assert exc.response[\"Error\"][\"Message\"] == (\n            \"Invalid parameter: Endpoint Reason: Endpoint does not exist for endpoint \"\n            + endpoint\n        )\n        assert exc.response[\"ResponseMetadata\"][\"HTTPStatusCode\"] == 400\n    else:\n        raise AssertionError(\"Deleted application endpoint was accepted\")\nPY\n",
+    "timeout_s": 240,
+    "expect": "nonzero",
+    "purpose": "原公开读者开发命令；实际精确行为、节点收集与完整输出由题主另核"
+  },
+  {
+    "id": "C1",
+    "cmd": "cd /testbed\nenv MOTO_TEST_ALLOW_AWS_REQUEST=false TEST_SERVER_MODE=false TEST_PROXY_MODE=false AWS_EC2_METADATA_DISABLED=true python -m pytest -q tests/test_sns/test_subscriptions_boto3.py\n",
+    "timeout_s": 240,
+    "expect": "zero",
+    "purpose": "原公开读者开发命令；实际精确行为、节点收集与完整输出由题主另核"
+  },
+  {
+    "id": "C2",
+    "cmd": "cd /testbed\nenv MOTO_TEST_ALLOW_AWS_REQUEST=false TEST_SERVER_MODE=false TEST_PROXY_MODE=false AWS_EC2_METADATA_DISABLED=true python -m pytest -q tests/test_sns/test_application_boto3.py\n",
+    "timeout_s": 240,
+    "expect": "zero",
+    "purpose": "原公开读者开发命令；实际精确行为、节点收集与完整输出由题主另核"
+  }
+]

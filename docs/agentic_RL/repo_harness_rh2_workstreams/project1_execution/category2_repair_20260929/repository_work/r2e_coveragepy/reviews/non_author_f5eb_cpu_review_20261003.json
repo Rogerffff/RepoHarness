@@ -1,0 +1,3968 @@
+{
+  "schema_id": "coveragepy.non_author_cpu_review.r6.v1",
+  "reviewed_at_utc": "2026-10-02T21:03:54.683129+00:00",
+  "status": "passed_for_versioned_ordinary_base_probe",
+  "blockers": [],
+  "instance_id": "coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96",
+  "reviewer": {
+    "role": "non-author Codex subagent",
+    "task": "/root/coveragepy_f5eb_cpu_review",
+    "requested_model": "GPT-6.1 Sol",
+    "requested_reasoning_effort": "high",
+    "fresh_public_reader": false,
+    "private_material_exposure": true
+  },
+  "scope": "仅固定R6本题普通基座探针CPU条件；不授训练资格",
+  "source_binding": {
+    "release_id": "cat2-cpu-r2e080087-swe8-git-20261003-v1",
+    "material_revision_ids": [
+      "r2e-mr-076",
+      "r2e-mr-077"
+    ],
+    "public_bundle_digest": "sha256:2ee3739dacf33472e747c08ce4a907d574727eb1150acd71929871a2d5ece633",
+    "grading_bundle_digest": "sha256:7c80b0e3cc847d888532f23a21a5654e2c5c28c208af8d40a3aa9deabfc2a012",
+    "statement_sha256": "sha256:6a516854b3c59b686b767267e0fe0a49d828934ccabd1a0e4b7159d9b883a88c",
+    "hidden_tests_tree_sha256": "sha256:897dfdc70655175a1155dc7d8f6edd6e506b74f106e79e2a3dc4439dff8429af",
+    "expected_output_json_sha256": "sha256:e150a338879b6703fba4950e2f3eeb284ea415140a6f68c1c80cf085aca6e0d9",
+    "run_tests_sh_sha256": "sha256:8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+    "expected_total": 8,
+    "manifest_sha256": "sha256:ab0a3a13fd65e0ea4cd60541ea3b37b01196170477e25832df246f33ea208828",
+    "base_commit": "17204597c33db2cc396d32b8f9931c35f2518675",
+    "source_ref_by_digest": "namanjain12/coveragepy_final@sha256:fb0335af8820e2f5cda1cc4ed82380546ed36fbd485da4181b8de9ef74b9ae28",
+    "derived_image_id": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+    "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+    "recipe_sha256": "sha256:a2000320bdbd7e1808e5986592fdb448caa3929f78d55e29ab63021e16ec7900"
+  },
+  "checks": {
+    "target_release_manifest_sha_verified": true,
+    "target_pins_sha_verified": true,
+    "registry_076_077_files_old_new_sha_verified": true,
+    "final_rb3h_byte_equal_to_prior_review": true,
+    "raw_statement_and_expected_before_verified": true,
+    "public_private_canonical_digest_verified": true,
+    "prepared_private_file_sha_verified": true,
+    "recipe_reconstructed_from_076_and_actual_scripts": true,
+    "derived_integrity_A_B_C_D_identical": true,
+    "original_gold_equals_fixed_validation_and_raw_extractor": true,
+    "all_16_complete_eval_segments_replayed_fixed_parser": true,
+    "independent_regex_status_maps_equal": true,
+    "all_8_keys_equal_ledger_diagnostics_author_maps": true,
+    "all_15_actual_patch_sha_match_original_source_patch": true,
+    "all_15_in_memory_hunk_application_match_frozen_source_blobs": true,
+    "all_16_baseline_full_json_identical": true,
+    "all_16_setup_tree_entry_runner_identity_match": true,
+    "all_16_natural_exit_and_cleanup_footer_verified": true,
+    "all_15_matrix_label_queries_rc_zero_residuals_empty": true,
+    "full_first_prompt_statement_and_rendered_prompt_verified": true,
+    "four_actual_CC_tool_use_result_SSE_roundtrips_verified": true,
+    "baseline_tar_all_335_content_git_modes_verified": true,
+    "census_entries_2978_excluded_paths_digest_rebuilt_both_sides": true,
+    "public_empty_transport_noop_identity_verified": true,
+    "supplement_v1_6_v2_15_target_files_size_sha_verified": true,
+    "public_brief_only_public_environment_facts": true
+  },
+  "formal_matrix": {
+    "planned_rows": 16,
+    "new_executed": 15,
+    "baseline_reuse_rows": 1,
+    "job": "covf5eb-matrix-r6-cpub-20261003-01",
+    "job_returncode": 0,
+    "is_model_result": false,
+    "rows": [
+      {
+        "candidate": "noop",
+        "match_count": 3,
+        "total": 8,
+        "reward": 0.0,
+        "mismatched": [
+          "JsonReportTest.test_branch_coverage",
+          "JsonReportTest.test_branch_totals_add_up_across_files",
+          "JsonReportTest.test_branch_totals_count_branch_arcs",
+          "JsonReportTest.test_branch_totals_from_saved_branch_data",
+          "JsonReportTest.test_branch_totals_without_branches"
+        ],
+        "per_key": {
+          "JsonReportTest.test_branch_coverage": {
+            "expected": "PASSED",
+            "observed": "FAILED",
+            "match": false
+          },
+          "JsonReportTest.test_branch_totals_add_up_across_files": {
+            "expected": "PASSED",
+            "observed": "FAILED",
+            "match": false
+          },
+          "JsonReportTest.test_branch_totals_count_branch_arcs": {
+            "expected": "PASSED",
+            "observed": "FAILED",
+            "match": false
+          },
+          "JsonReportTest.test_branch_totals_from_saved_branch_data": {
+            "expected": "PASSED",
+            "observed": "FAILED",
+            "match": false
+          },
+          "JsonReportTest.test_branch_totals_without_branches": {
+            "expected": "PASSED",
+            "observed": "FAILED",
+            "match": false
+          },
+          "JsonReportTest.test_context_non_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_simple_line_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          }
+        },
+        "patch_sha256": null,
+        "apply_method": "noop",
+        "projection": {
+          "frozen_patch_digest": "sha256:3dbedf3322f6cd052741c4132596305751d7a495d915208610dfc5eb679e7c3d",
+          "ignored_paths": [],
+          "included_paths": [],
+          "unsupported_shape_reasons": []
+        },
+        "image_id_actual": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+        "overlay": {
+          "derived_image_id": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+          "derived_image_ref": "rh2-r2e-covremaining-r6/coveragepy:f5eb5f215918-r2e_derive_v1m2s",
+          "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+          "recipe_sha256": "sha256:a2000320bdbd7e1808e5986592fdb448caa3929f78d55e29ab63021e16ec7900"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 1,
+          "seconds": 3.716,
+          "segment_completed": true
+        },
+        "failure_category": "tests_failed",
+        "infra_failure_detail": null,
+        "setup_hidden_tree": "897dfdc70655175a1155dc7d8f6edd6e506b74f106e79e2a3dc4439dff8429af",
+        "setup_entry_sha256": "8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+        "runner_observations": {
+          "RH2_OBS_IMPORT_PATH": "/testbed/coverage/__init__.py",
+          "RH2_OBS_PKG_VERSION": "5.0.5a0",
+          "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+          "RH2_OBS_RUNNER_DIGEST": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74",
+          "RH2_OBS_RUNNER_DIGEST_PRE": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74"
+        },
+        "runner_integrity_changed": false,
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "footer": {
+          "ledger": "/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/f5eb_public_e2e01/grade_cc/ledger.jsonl",
+          "rows": 1,
+          "manager_close": {
+            "prepare_cancelled": 0,
+            "containers_removed": [],
+            "containers_open": [],
+            "supply_open": [],
+            "cleanup_failures": [],
+            "regrade_events": 0,
+            "regrade_total": 0,
+            "regrade_declined": 0,
+            "containers_created_total": 1,
+            "containers_removed_total": 1,
+            "container_history_retained": 1,
+            "leases_total": 1
+          },
+          "halted": null,
+          "aborted": null,
+          "cleanup_failures": [],
+          "final_status": {
+            "exit_code": 0,
+            "reason": "ok",
+            "grader_containers_open": [],
+            "cleanup_failures_total": 0,
+            "cleanup_failures_resolved": false
+          }
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/grade_cc/eval_logs/evallog_replay-covf5eb-r6-public_e2067b58.eval.log",
+          "sha256": "sha256:35d358ca238070b01abeedcb6314e7ef7c1c2fd8269a78a3ed35487d25274c07"
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/grade_cc/ledger.jsonl",
+          "sha256": "sha256:e762e0b2b7cc907ea92ba993c58c5942addbf27dcd375555cf9fbcaaa682af50"
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/grade_cc/eval_logs/evallog_replay-covf5eb-r6-public_e2067b58.diagnostics.json",
+          "sha256": "sha256:df9d3c5cd7c1141d11fce463d4a4d2e96ce955c6f2ad0b1b9479103a84c8e05b"
+        },
+        "source_blobs": [],
+        "reused_from": "same-version actual public actor EMPTY FrozenPatch, original formal grade"
+      },
+      {
+        "candidate": "gold",
+        "match_count": 8,
+        "total": 8,
+        "reward": 1.0,
+        "mismatched": [],
+        "per_key": {
+          "JsonReportTest.test_branch_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_add_up_across_files": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_count_branch_arcs": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_from_saved_branch_data": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_without_branches": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_non_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_simple_line_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          }
+        },
+        "patch_sha256": "sha256:c8fa460d421020f5230fcf5c776bd85f449bb2d8bbfc4b37d98fa3eff1250e59",
+        "apply_method": "git_apply",
+        "projection": {
+          "frozen_patch_digest": "sha256:c6a81ebb79a18951f7932b0aff915ac419c29f4ff543c39cb2ed0177e6ccf2dd",
+          "ignored_paths": [],
+          "included_paths": [
+            "coverage/jsonreport.py"
+          ],
+          "unsupported_shape_reasons": []
+        },
+        "image_id_actual": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+        "overlay": {
+          "derived_image_id": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+          "derived_image_ref": "rh2-r2e-covremaining-r6/coveragepy:f5eb5f215918-r2e_derive_v1m2s",
+          "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+          "recipe_sha256": "sha256:a2000320bdbd7e1808e5986592fdb448caa3929f78d55e29ab63021e16ec7900"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 0,
+          "seconds": 3.505,
+          "segment_completed": true
+        },
+        "failure_category": null,
+        "infra_failure_detail": null,
+        "setup_hidden_tree": "897dfdc70655175a1155dc7d8f6edd6e506b74f106e79e2a3dc4439dff8429af",
+        "setup_entry_sha256": "8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+        "runner_observations": {
+          "RH2_OBS_IMPORT_PATH": "/testbed/coverage/__init__.py",
+          "RH2_OBS_PKG_VERSION": "5.0.5a0",
+          "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+          "RH2_OBS_RUNNER_DIGEST": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74",
+          "RH2_OBS_RUNNER_DIGEST_PRE": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74"
+        },
+        "runner_integrity_changed": false,
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "footer": {
+          "ledger": "/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/f5eb_formal_matrix01/gold/ledger.jsonl",
+          "rows": 1,
+          "manager_close": {
+            "prepare_cancelled": 0,
+            "containers_removed": [],
+            "containers_open": [],
+            "supply_open": [],
+            "cleanup_failures": [],
+            "regrade_events": 0,
+            "regrade_total": 0,
+            "regrade_declined": 0,
+            "containers_created_total": 1,
+            "containers_removed_total": 1,
+            "container_history_retained": 1,
+            "leases_total": 1
+          },
+          "halted": null,
+          "aborted": null,
+          "cleanup_failures": [],
+          "final_status": {
+            "exit_code": 0,
+            "reason": "ok",
+            "grader_containers_open": [],
+            "cleanup_failures_total": 0,
+            "cleanup_failures_resolved": false
+          }
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/gold/eval_logs/evallog_replay-covf5eb-r6-matrix_355f692f.eval.log",
+          "sha256": "sha256:2f352781451460e60cc2bc479526ea7b10c55c9fb86b76514cb863a857e8b692"
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/gold/ledger.jsonl",
+          "sha256": "sha256:9923c2d9ab58414365d0f6c53a311e85efc6be52506fd1cb1b7154cf01f2dbd0"
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/gold/eval_logs/evallog_replay-covf5eb-r6-matrix_355f692f.diagnostics.json",
+          "sha256": "sha256:55134c46f46df08bf3a35e97e66a272aab74177a75488a443cfc68b54ec4baaf"
+        },
+        "source_blobs": [
+          {
+            "path": "coverage/jsonreport.py",
+            "sha256": "sha256:c9bfca18f6a70f17f84a431d8651839da9eb63516539f90254a031a90ffbcf93",
+            "matches_embedded_digest": true
+          }
+        ],
+        "residuals": {
+          "containers": {
+            "query_rc": 0,
+            "left": []
+          },
+          "networks": {
+            "query_rc": 0,
+            "left": []
+          }
+        },
+        "patch_ref": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/gold/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-47263148/candidate.patch"
+      },
+      {
+        "candidate": "A1",
+        "match_count": 8,
+        "total": 8,
+        "reward": 1.0,
+        "mismatched": [],
+        "per_key": {
+          "JsonReportTest.test_branch_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_add_up_across_files": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_count_branch_arcs": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_from_saved_branch_data": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_without_branches": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_non_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_simple_line_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          }
+        },
+        "patch_sha256": "sha256:a90bfee41139035be189953cbf8126971745909f864d4de6901f7e6b7e98bf47",
+        "apply_method": "git_apply",
+        "projection": {
+          "frozen_patch_digest": "sha256:267a0082f35247a12b0c03566b8012edd8c754ff3df799aba9bcecbc1563b136",
+          "ignored_paths": [],
+          "included_paths": [
+            "coverage/jsonreport.py"
+          ],
+          "unsupported_shape_reasons": []
+        },
+        "image_id_actual": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+        "overlay": {
+          "derived_image_id": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+          "derived_image_ref": "rh2-r2e-covremaining-r6/coveragepy:f5eb5f215918-r2e_derive_v1m2s",
+          "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+          "recipe_sha256": "sha256:a2000320bdbd7e1808e5986592fdb448caa3929f78d55e29ab63021e16ec7900"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 0,
+          "seconds": 4.879,
+          "segment_completed": true
+        },
+        "failure_category": null,
+        "infra_failure_detail": null,
+        "setup_hidden_tree": "897dfdc70655175a1155dc7d8f6edd6e506b74f106e79e2a3dc4439dff8429af",
+        "setup_entry_sha256": "8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+        "runner_observations": {
+          "RH2_OBS_IMPORT_PATH": "/testbed/coverage/__init__.py",
+          "RH2_OBS_PKG_VERSION": "5.0.5a0",
+          "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+          "RH2_OBS_RUNNER_DIGEST": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74",
+          "RH2_OBS_RUNNER_DIGEST_PRE": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74"
+        },
+        "runner_integrity_changed": false,
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "footer": {
+          "ledger": "/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/f5eb_formal_matrix01/A1/ledger.jsonl",
+          "rows": 1,
+          "manager_close": {
+            "prepare_cancelled": 0,
+            "containers_removed": [],
+            "containers_open": [],
+            "supply_open": [],
+            "cleanup_failures": [],
+            "regrade_events": 0,
+            "regrade_total": 0,
+            "regrade_declined": 0,
+            "containers_created_total": 1,
+            "containers_removed_total": 1,
+            "container_history_retained": 1,
+            "leases_total": 1
+          },
+          "halted": null,
+          "aborted": null,
+          "cleanup_failures": [],
+          "final_status": {
+            "exit_code": 0,
+            "reason": "ok",
+            "grader_containers_open": [],
+            "cleanup_failures_total": 0,
+            "cleanup_failures_resolved": false
+          }
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/A1/eval_logs/evallog_replay-covf5eb-r6-matrix_3334dbc6.eval.log",
+          "sha256": "sha256:9532bd46ee4509ce391f61c880507cd16696a7b29ba74f240577ca24e8b1570a"
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/A1/ledger.jsonl",
+          "sha256": "sha256:c514089df5bffaaa1001e529a65298ca95b7176eb4e92a12687e98ec6efea1b5"
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/A1/eval_logs/evallog_replay-covf5eb-r6-matrix_3334dbc6.diagnostics.json",
+          "sha256": "sha256:791edf896b0564cd96c135a3ae1514bb7aa2c3b86d3ecb9f97c80b3bebbda75e"
+        },
+        "source_blobs": [
+          {
+            "path": "coverage/jsonreport.py",
+            "sha256": "sha256:9f67cce393b073c079f2b2a8c4accafd0a01e1f15bb4dbf9d18318bf09769881",
+            "matches_embedded_digest": true
+          }
+        ],
+        "residuals": {
+          "containers": {
+            "query_rc": 0,
+            "left": []
+          },
+          "networks": {
+            "query_rc": 0,
+            "left": []
+          }
+        },
+        "patch_ref": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/A1/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-329cffc4/candidate.patch"
+      },
+      {
+        "candidate": "C1",
+        "match_count": 8,
+        "total": 8,
+        "reward": 1.0,
+        "mismatched": [],
+        "per_key": {
+          "JsonReportTest.test_branch_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_add_up_across_files": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_count_branch_arcs": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_from_saved_branch_data": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_without_branches": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_non_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_simple_line_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          }
+        },
+        "patch_sha256": "sha256:7152e398251398c402af578b6ef062b6abca57342f824d34962036b5e8549d49",
+        "apply_method": "git_apply",
+        "projection": {
+          "frozen_patch_digest": "sha256:cfa53122a88ea2398d465591e04116b7bdbffdc6143ad2ca0ff27b630f1c84bc",
+          "ignored_paths": [],
+          "included_paths": [
+            "coverage/jsonreport.py"
+          ],
+          "unsupported_shape_reasons": []
+        },
+        "image_id_actual": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+        "overlay": {
+          "derived_image_id": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+          "derived_image_ref": "rh2-r2e-covremaining-r6/coveragepy:f5eb5f215918-r2e_derive_v1m2s",
+          "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+          "recipe_sha256": "sha256:a2000320bdbd7e1808e5986592fdb448caa3929f78d55e29ab63021e16ec7900"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 0,
+          "seconds": 3.365,
+          "segment_completed": true
+        },
+        "failure_category": null,
+        "infra_failure_detail": null,
+        "setup_hidden_tree": "897dfdc70655175a1155dc7d8f6edd6e506b74f106e79e2a3dc4439dff8429af",
+        "setup_entry_sha256": "8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+        "runner_observations": {
+          "RH2_OBS_IMPORT_PATH": "/testbed/coverage/__init__.py",
+          "RH2_OBS_PKG_VERSION": "5.0.5a0",
+          "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+          "RH2_OBS_RUNNER_DIGEST": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74",
+          "RH2_OBS_RUNNER_DIGEST_PRE": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74"
+        },
+        "runner_integrity_changed": false,
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "footer": {
+          "ledger": "/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/f5eb_formal_matrix01/C1/ledger.jsonl",
+          "rows": 1,
+          "manager_close": {
+            "prepare_cancelled": 0,
+            "containers_removed": [],
+            "containers_open": [],
+            "supply_open": [],
+            "cleanup_failures": [],
+            "regrade_events": 0,
+            "regrade_total": 0,
+            "regrade_declined": 0,
+            "containers_created_total": 1,
+            "containers_removed_total": 1,
+            "container_history_retained": 1,
+            "leases_total": 1
+          },
+          "halted": null,
+          "aborted": null,
+          "cleanup_failures": [],
+          "final_status": {
+            "exit_code": 0,
+            "reason": "ok",
+            "grader_containers_open": [],
+            "cleanup_failures_total": 0,
+            "cleanup_failures_resolved": false
+          }
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1/eval_logs/evallog_replay-covf5eb-r6-matrix_386cc35d.eval.log",
+          "sha256": "sha256:5d234e2de4ed66a2d76bf349fc6dfec11cd5440aa3f3545d74ee8d5196637021"
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1/ledger.jsonl",
+          "sha256": "sha256:fb5e92440ab744ad08710373290586cfe0c9c2fe546da225e6a2dbc14dc14b62"
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1/eval_logs/evallog_replay-covf5eb-r6-matrix_386cc35d.diagnostics.json",
+          "sha256": "sha256:321e4635dc7de178cd6d786a8dcfd5a4988313faf5bba1030fc9c419ceb1f684"
+        },
+        "source_blobs": [
+          {
+            "path": "coverage/jsonreport.py",
+            "sha256": "sha256:3d9564ae29756141de41273b0123635b17c429d9cc5997a8db6572e9336b830d",
+            "matches_embedded_digest": true
+          }
+        ],
+        "residuals": {
+          "containers": {
+            "query_rc": 0,
+            "left": []
+          },
+          "networks": {
+            "query_rc": 0,
+            "left": []
+          }
+        },
+        "patch_ref": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-deb095fa/candidate.patch"
+      },
+      {
+        "candidate": "D0",
+        "match_count": 4,
+        "total": 8,
+        "reward": 0.0,
+        "mismatched": [
+          "JsonReportTest.test_branch_totals_add_up_across_files",
+          "JsonReportTest.test_branch_totals_count_branch_arcs",
+          "JsonReportTest.test_branch_totals_from_saved_branch_data",
+          "JsonReportTest.test_branch_totals_without_branches"
+        ],
+        "per_key": {
+          "JsonReportTest.test_branch_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_add_up_across_files": {
+            "expected": "PASSED",
+            "observed": "FAILED",
+            "match": false
+          },
+          "JsonReportTest.test_branch_totals_count_branch_arcs": {
+            "expected": "PASSED",
+            "observed": "FAILED",
+            "match": false
+          },
+          "JsonReportTest.test_branch_totals_from_saved_branch_data": {
+            "expected": "PASSED",
+            "observed": "FAILED",
+            "match": false
+          },
+          "JsonReportTest.test_branch_totals_without_branches": {
+            "expected": "PASSED",
+            "observed": "FAILED",
+            "match": false
+          },
+          "JsonReportTest.test_context_non_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_simple_line_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          }
+        },
+        "patch_sha256": "sha256:6efd301325e1741160084d7f2a14217eb69eed465ac5bffe8cac47d65425b102",
+        "apply_method": "git_apply",
+        "projection": {
+          "frozen_patch_digest": "sha256:d5486daff8abcb781e595d2d61f545c3159ee10e12c3e55da26d630fd4859b55",
+          "ignored_paths": [],
+          "included_paths": [
+            "coverage/jsonreport.py"
+          ],
+          "unsupported_shape_reasons": []
+        },
+        "image_id_actual": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+        "overlay": {
+          "derived_image_id": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+          "derived_image_ref": "rh2-r2e-covremaining-r6/coveragepy:f5eb5f215918-r2e_derive_v1m2s",
+          "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+          "recipe_sha256": "sha256:a2000320bdbd7e1808e5986592fdb448caa3929f78d55e29ab63021e16ec7900"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 1,
+          "seconds": 3.821,
+          "segment_completed": true
+        },
+        "failure_category": "tests_failed",
+        "infra_failure_detail": null,
+        "setup_hidden_tree": "897dfdc70655175a1155dc7d8f6edd6e506b74f106e79e2a3dc4439dff8429af",
+        "setup_entry_sha256": "8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+        "runner_observations": {
+          "RH2_OBS_IMPORT_PATH": "/testbed/coverage/__init__.py",
+          "RH2_OBS_PKG_VERSION": "5.0.5a0",
+          "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+          "RH2_OBS_RUNNER_DIGEST": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74",
+          "RH2_OBS_RUNNER_DIGEST_PRE": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74"
+        },
+        "runner_integrity_changed": false,
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "footer": {
+          "ledger": "/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/f5eb_formal_matrix01/D0/ledger.jsonl",
+          "rows": 1,
+          "manager_close": {
+            "prepare_cancelled": 0,
+            "containers_removed": [],
+            "containers_open": [],
+            "supply_open": [],
+            "cleanup_failures": [],
+            "regrade_events": 0,
+            "regrade_total": 0,
+            "regrade_declined": 0,
+            "containers_created_total": 1,
+            "containers_removed_total": 1,
+            "container_history_retained": 1,
+            "leases_total": 1
+          },
+          "halted": null,
+          "aborted": null,
+          "cleanup_failures": [],
+          "final_status": {
+            "exit_code": 0,
+            "reason": "ok",
+            "grader_containers_open": [],
+            "cleanup_failures_total": 0,
+            "cleanup_failures_resolved": false
+          }
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/D0/eval_logs/evallog_replay-covf5eb-r6-matrix_53970f16.eval.log",
+          "sha256": "sha256:e7e45f91f817cb149a50623e0f9bc674ded9dceef3bfd69b4698dd6550b02c33"
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/D0/ledger.jsonl",
+          "sha256": "sha256:791cca5596d6a8bee14358022b8e9491f3eeb6192b611e038eac69ce9f0ce86f"
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/D0/eval_logs/evallog_replay-covf5eb-r6-matrix_53970f16.diagnostics.json",
+          "sha256": "sha256:5589eaee323ac7a96dd86bd8d81661b17f9f2b1a2eff45b27623d183ca2f2c17"
+        },
+        "source_blobs": [
+          {
+            "path": "coverage/jsonreport.py",
+            "sha256": "sha256:054ec4db91f9e97e769624d21b676f525cd335ba2cad5f27c11620b2b7ae8802",
+            "matches_embedded_digest": true
+          }
+        ],
+        "residuals": {
+          "containers": {
+            "query_rc": 0,
+            "left": []
+          },
+          "networks": {
+            "query_rc": 0,
+            "left": []
+          }
+        },
+        "patch_ref": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/D0/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-614c3a2c/candidate.patch"
+      },
+      {
+        "candidate": "C2",
+        "match_count": 5,
+        "total": 8,
+        "reward": 0.0,
+        "mismatched": [
+          "JsonReportTest.test_branch_totals_add_up_across_files",
+          "JsonReportTest.test_branch_totals_count_branch_arcs",
+          "JsonReportTest.test_branch_totals_from_saved_branch_data"
+        ],
+        "per_key": {
+          "JsonReportTest.test_branch_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_add_up_across_files": {
+            "expected": "PASSED",
+            "observed": "FAILED",
+            "match": false
+          },
+          "JsonReportTest.test_branch_totals_count_branch_arcs": {
+            "expected": "PASSED",
+            "observed": "FAILED",
+            "match": false
+          },
+          "JsonReportTest.test_branch_totals_from_saved_branch_data": {
+            "expected": "PASSED",
+            "observed": "FAILED",
+            "match": false
+          },
+          "JsonReportTest.test_branch_totals_without_branches": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_non_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_simple_line_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          }
+        },
+        "patch_sha256": "sha256:43b72ab93df599efc29cf77794011424b7d4bea1a21235f3ec00c16e15d81a70",
+        "apply_method": "git_apply",
+        "projection": {
+          "frozen_patch_digest": "sha256:c37e1e9f3bd10a77486ecb4e9f241950aed22681364fb8ec137f35ae37248d6c",
+          "ignored_paths": [],
+          "included_paths": [
+            "coverage/jsonreport.py"
+          ],
+          "unsupported_shape_reasons": []
+        },
+        "image_id_actual": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+        "overlay": {
+          "derived_image_id": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+          "derived_image_ref": "rh2-r2e-covremaining-r6/coveragepy:f5eb5f215918-r2e_derive_v1m2s",
+          "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+          "recipe_sha256": "sha256:a2000320bdbd7e1808e5986592fdb448caa3929f78d55e29ab63021e16ec7900"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 1,
+          "seconds": 3.545,
+          "segment_completed": true
+        },
+        "failure_category": "tests_failed",
+        "infra_failure_detail": null,
+        "setup_hidden_tree": "897dfdc70655175a1155dc7d8f6edd6e506b74f106e79e2a3dc4439dff8429af",
+        "setup_entry_sha256": "8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+        "runner_observations": {
+          "RH2_OBS_IMPORT_PATH": "/testbed/coverage/__init__.py",
+          "RH2_OBS_PKG_VERSION": "5.0.5a0",
+          "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+          "RH2_OBS_RUNNER_DIGEST": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74",
+          "RH2_OBS_RUNNER_DIGEST_PRE": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74"
+        },
+        "runner_integrity_changed": false,
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "footer": {
+          "ledger": "/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/f5eb_formal_matrix01/C2/ledger.jsonl",
+          "rows": 1,
+          "manager_close": {
+            "prepare_cancelled": 0,
+            "containers_removed": [],
+            "containers_open": [],
+            "supply_open": [],
+            "cleanup_failures": [],
+            "regrade_events": 0,
+            "regrade_total": 0,
+            "regrade_declined": 0,
+            "containers_created_total": 1,
+            "containers_removed_total": 1,
+            "container_history_retained": 1,
+            "leases_total": 1
+          },
+          "halted": null,
+          "aborted": null,
+          "cleanup_failures": [],
+          "final_status": {
+            "exit_code": 0,
+            "reason": "ok",
+            "grader_containers_open": [],
+            "cleanup_failures_total": 0,
+            "cleanup_failures_resolved": false
+          }
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C2/eval_logs/evallog_replay-covf5eb-r6-matrix_a935f946.eval.log",
+          "sha256": "sha256:a376dd9a13a248541712acf695667f54ebcd504b063517ded8dee6592dbbcb08"
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C2/ledger.jsonl",
+          "sha256": "sha256:03dfb89fafd09bd0e82f97eb397488ea8ac1f8ea0168a879d90b58bfadc6f193"
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C2/eval_logs/evallog_replay-covf5eb-r6-matrix_a935f946.diagnostics.json",
+          "sha256": "sha256:b991a67e4508ef22212ad85dd7e5e0e4a7a18fc33aa90b9876f6a6fc07eebb2a"
+        },
+        "source_blobs": [
+          {
+            "path": "coverage/jsonreport.py",
+            "sha256": "sha256:ba732b1e5f3adf5bc7ea8b89a1e65b6958fea1f21b1bc5f10387fc7c5ed0f425",
+            "matches_embedded_digest": true
+          }
+        ],
+        "residuals": {
+          "containers": {
+            "query_rc": 0,
+            "left": []
+          },
+          "networks": {
+            "query_rc": 0,
+            "left": []
+          }
+        },
+        "patch_ref": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C2/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-9d139126/candidate.patch"
+      },
+      {
+        "candidate": "W2",
+        "match_count": 5,
+        "total": 8,
+        "reward": 0.0,
+        "mismatched": [
+          "JsonReportTest.test_branch_totals_add_up_across_files",
+          "JsonReportTest.test_branch_totals_count_branch_arcs",
+          "JsonReportTest.test_branch_totals_from_saved_branch_data"
+        ],
+        "per_key": {
+          "JsonReportTest.test_branch_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_add_up_across_files": {
+            "expected": "PASSED",
+            "observed": "FAILED",
+            "match": false
+          },
+          "JsonReportTest.test_branch_totals_count_branch_arcs": {
+            "expected": "PASSED",
+            "observed": "FAILED",
+            "match": false
+          },
+          "JsonReportTest.test_branch_totals_from_saved_branch_data": {
+            "expected": "PASSED",
+            "observed": "FAILED",
+            "match": false
+          },
+          "JsonReportTest.test_branch_totals_without_branches": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_non_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_simple_line_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          }
+        },
+        "patch_sha256": "sha256:4b1b53a294977e4a130b4db06fcb5a5ec2ab1028c5ee483790ad735f354ce15e",
+        "apply_method": "git_apply",
+        "projection": {
+          "frozen_patch_digest": "sha256:341daef11b015bbf1d081f24eb414f582ff0ad9eea0c73ded599e13db5f76a3e",
+          "ignored_paths": [],
+          "included_paths": [
+            "coverage/jsonreport.py"
+          ],
+          "unsupported_shape_reasons": []
+        },
+        "image_id_actual": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+        "overlay": {
+          "derived_image_id": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+          "derived_image_ref": "rh2-r2e-covremaining-r6/coveragepy:f5eb5f215918-r2e_derive_v1m2s",
+          "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+          "recipe_sha256": "sha256:a2000320bdbd7e1808e5986592fdb448caa3929f78d55e29ab63021e16ec7900"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 1,
+          "seconds": 3.643,
+          "segment_completed": true
+        },
+        "failure_category": "tests_failed",
+        "infra_failure_detail": null,
+        "setup_hidden_tree": "897dfdc70655175a1155dc7d8f6edd6e506b74f106e79e2a3dc4439dff8429af",
+        "setup_entry_sha256": "8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+        "runner_observations": {
+          "RH2_OBS_IMPORT_PATH": "/testbed/coverage/__init__.py",
+          "RH2_OBS_PKG_VERSION": "5.0.5a0",
+          "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+          "RH2_OBS_RUNNER_DIGEST": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74",
+          "RH2_OBS_RUNNER_DIGEST_PRE": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74"
+        },
+        "runner_integrity_changed": false,
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "footer": {
+          "ledger": "/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/f5eb_formal_matrix01/W2/ledger.jsonl",
+          "rows": 1,
+          "manager_close": {
+            "prepare_cancelled": 0,
+            "containers_removed": [],
+            "containers_open": [],
+            "supply_open": [],
+            "cleanup_failures": [],
+            "regrade_events": 0,
+            "regrade_total": 0,
+            "regrade_declined": 0,
+            "containers_created_total": 1,
+            "containers_removed_total": 1,
+            "container_history_retained": 1,
+            "leases_total": 1
+          },
+          "halted": null,
+          "aborted": null,
+          "cleanup_failures": [],
+          "final_status": {
+            "exit_code": 0,
+            "reason": "ok",
+            "grader_containers_open": [],
+            "cleanup_failures_total": 0,
+            "cleanup_failures_resolved": false
+          }
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/W2/eval_logs/evallog_replay-covf5eb-r6-matrix_1ed8c764.eval.log",
+          "sha256": "sha256:68d4599517dd7a25bc6644a9e1ec43752e56df743a43eeb430c0a27a5c20c337"
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/W2/ledger.jsonl",
+          "sha256": "sha256:262344ae045c1ed1d3781f2232d2702cb6cd27a841327ed789cf852a227c7a5c"
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/W2/eval_logs/evallog_replay-covf5eb-r6-matrix_1ed8c764.diagnostics.json",
+          "sha256": "sha256:e38947589a1efcc2311551b04ad56e08fb07d0394ef6b00f7bb4b36fd0511d1c"
+        },
+        "source_blobs": [
+          {
+            "path": "coverage/jsonreport.py",
+            "sha256": "sha256:bf5f6ee49c7e72ae8607ed9c6902ef0832d67b224f5d3075b9f3e8ab99a2b86c",
+            "matches_embedded_digest": true
+          }
+        ],
+        "residuals": {
+          "containers": {
+            "query_rc": 0,
+            "left": []
+          },
+          "networks": {
+            "query_rc": 0,
+            "left": []
+          }
+        },
+        "patch_ref": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/W2/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-c5b6eeb8/candidate.patch"
+      },
+      {
+        "candidate": "C3",
+        "match_count": 7,
+        "total": 8,
+        "reward": 0.0,
+        "mismatched": [
+          "JsonReportTest.test_branch_totals_from_saved_branch_data"
+        ],
+        "per_key": {
+          "JsonReportTest.test_branch_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_add_up_across_files": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_count_branch_arcs": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_from_saved_branch_data": {
+            "expected": "PASSED",
+            "observed": "FAILED",
+            "match": false
+          },
+          "JsonReportTest.test_branch_totals_without_branches": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_non_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_simple_line_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          }
+        },
+        "patch_sha256": "sha256:d47b2ba81fcc7b6ac70c914d32aeedd510af1508833fe963c72f5f8ca5149420",
+        "apply_method": "git_apply",
+        "projection": {
+          "frozen_patch_digest": "sha256:1b11c6d77745a5cfc54c9e817d9cf06d01929c222f3f26d83b1244678ead4231",
+          "ignored_paths": [],
+          "included_paths": [
+            "coverage/jsonreport.py"
+          ],
+          "unsupported_shape_reasons": []
+        },
+        "image_id_actual": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+        "overlay": {
+          "derived_image_id": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+          "derived_image_ref": "rh2-r2e-covremaining-r6/coveragepy:f5eb5f215918-r2e_derive_v1m2s",
+          "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+          "recipe_sha256": "sha256:a2000320bdbd7e1808e5986592fdb448caa3929f78d55e29ab63021e16ec7900"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 1,
+          "seconds": 3.626,
+          "segment_completed": true
+        },
+        "failure_category": "tests_failed",
+        "infra_failure_detail": null,
+        "setup_hidden_tree": "897dfdc70655175a1155dc7d8f6edd6e506b74f106e79e2a3dc4439dff8429af",
+        "setup_entry_sha256": "8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+        "runner_observations": {
+          "RH2_OBS_IMPORT_PATH": "/testbed/coverage/__init__.py",
+          "RH2_OBS_PKG_VERSION": "5.0.5a0",
+          "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+          "RH2_OBS_RUNNER_DIGEST": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74",
+          "RH2_OBS_RUNNER_DIGEST_PRE": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74"
+        },
+        "runner_integrity_changed": false,
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "footer": {
+          "ledger": "/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/f5eb_formal_matrix01/C3/ledger.jsonl",
+          "rows": 1,
+          "manager_close": {
+            "prepare_cancelled": 0,
+            "containers_removed": [],
+            "containers_open": [],
+            "supply_open": [],
+            "cleanup_failures": [],
+            "regrade_events": 0,
+            "regrade_total": 0,
+            "regrade_declined": 0,
+            "containers_created_total": 1,
+            "containers_removed_total": 1,
+            "container_history_retained": 1,
+            "leases_total": 1
+          },
+          "halted": null,
+          "aborted": null,
+          "cleanup_failures": [],
+          "final_status": {
+            "exit_code": 0,
+            "reason": "ok",
+            "grader_containers_open": [],
+            "cleanup_failures_total": 0,
+            "cleanup_failures_resolved": false
+          }
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C3/eval_logs/evallog_replay-covf5eb-r6-matrix_08109e86.eval.log",
+          "sha256": "sha256:9bfbece02c28f3dc766b7aae4f7a1e18c4000d51433868f712182a72d697839f"
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C3/ledger.jsonl",
+          "sha256": "sha256:0b826729f32a2acb69d878b022cf862e20091ba5ecbdc7d3997b8770ad8975fb"
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C3/eval_logs/evallog_replay-covf5eb-r6-matrix_08109e86.diagnostics.json",
+          "sha256": "sha256:7c18dc88e1f30d462c2d4783113ec8e3564902f054f959b86ba0214143c07ef0"
+        },
+        "source_blobs": [
+          {
+            "path": "coverage/jsonreport.py",
+            "sha256": "sha256:5ec01e99e798385b17ae052aefcd7b642b16bc2ecb2cdf04bddf4a7c3ec8b6af",
+            "matches_embedded_digest": true
+          }
+        ],
+        "residuals": {
+          "containers": {
+            "query_rc": 0,
+            "left": []
+          },
+          "networks": {
+            "query_rc": 0,
+            "left": []
+          }
+        },
+        "patch_ref": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C3/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-27f287cd/candidate.patch"
+      },
+      {
+        "candidate": "LF",
+        "match_count": 7,
+        "total": 8,
+        "reward": 0.0,
+        "mismatched": [
+          "JsonReportTest.test_branch_totals_add_up_across_files"
+        ],
+        "per_key": {
+          "JsonReportTest.test_branch_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_add_up_across_files": {
+            "expected": "PASSED",
+            "observed": "FAILED",
+            "match": false
+          },
+          "JsonReportTest.test_branch_totals_count_branch_arcs": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_from_saved_branch_data": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_without_branches": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_non_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_simple_line_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          }
+        },
+        "patch_sha256": "sha256:cb4c69f13f1b6a918a37ba70cabdf6a8a1d601536477d0db65f07e4b53fccca6",
+        "apply_method": "git_apply",
+        "projection": {
+          "frozen_patch_digest": "sha256:d6b957f6a17c9d4b571da9952cbda5f2c4c204b7550dbacaa33e1d5a4b49c1ab",
+          "ignored_paths": [],
+          "included_paths": [
+            "coverage/jsonreport.py"
+          ],
+          "unsupported_shape_reasons": []
+        },
+        "image_id_actual": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+        "overlay": {
+          "derived_image_id": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+          "derived_image_ref": "rh2-r2e-covremaining-r6/coveragepy:f5eb5f215918-r2e_derive_v1m2s",
+          "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+          "recipe_sha256": "sha256:a2000320bdbd7e1808e5986592fdb448caa3929f78d55e29ab63021e16ec7900"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 1,
+          "seconds": 3.478,
+          "segment_completed": true
+        },
+        "failure_category": "tests_failed",
+        "infra_failure_detail": null,
+        "setup_hidden_tree": "897dfdc70655175a1155dc7d8f6edd6e506b74f106e79e2a3dc4439dff8429af",
+        "setup_entry_sha256": "8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+        "runner_observations": {
+          "RH2_OBS_IMPORT_PATH": "/testbed/coverage/__init__.py",
+          "RH2_OBS_PKG_VERSION": "5.0.5a0",
+          "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+          "RH2_OBS_RUNNER_DIGEST": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74",
+          "RH2_OBS_RUNNER_DIGEST_PRE": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74"
+        },
+        "runner_integrity_changed": false,
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "footer": {
+          "ledger": "/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/f5eb_formal_matrix01/LF/ledger.jsonl",
+          "rows": 1,
+          "manager_close": {
+            "prepare_cancelled": 0,
+            "containers_removed": [],
+            "containers_open": [],
+            "supply_open": [],
+            "cleanup_failures": [],
+            "regrade_events": 0,
+            "regrade_total": 0,
+            "regrade_declined": 0,
+            "containers_created_total": 1,
+            "containers_removed_total": 1,
+            "container_history_retained": 1,
+            "leases_total": 1
+          },
+          "halted": null,
+          "aborted": null,
+          "cleanup_failures": [],
+          "final_status": {
+            "exit_code": 0,
+            "reason": "ok",
+            "grader_containers_open": [],
+            "cleanup_failures_total": 0,
+            "cleanup_failures_resolved": false
+          }
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LF/eval_logs/evallog_replay-covf5eb-r6-matrix_78b97e95.eval.log",
+          "sha256": "sha256:551fd4db9580b7d32eb98e04fd7b7f20abffbc5a95ca8db206897acfc35d30fc"
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LF/ledger.jsonl",
+          "sha256": "sha256:0fb74204e1f616f78b566add980f1446ec16435375a7feb5f80036ae6a94cd40"
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LF/eval_logs/evallog_replay-covf5eb-r6-matrix_78b97e95.diagnostics.json",
+          "sha256": "sha256:24425a6d894830dc3ceebaa40831e9faec02f5a967136d3878575076f36a2af5"
+        },
+        "source_blobs": [
+          {
+            "path": "coverage/jsonreport.py",
+            "sha256": "sha256:73016cc1dda618ac884d7a0fc40b3aca40d4bec7cfae96958bd9e12e5621cf02",
+            "matches_embedded_digest": true
+          }
+        ],
+        "residuals": {
+          "containers": {
+            "query_rc": 0,
+            "left": []
+          },
+          "networks": {
+            "query_rc": 0,
+            "left": []
+          }
+        },
+        "patch_ref": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LF/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-7498704a/candidate.patch"
+      },
+      {
+        "candidate": "FC",
+        "match_count": 7,
+        "total": 8,
+        "reward": 0.0,
+        "mismatched": [
+          "JsonReportTest.test_branch_totals_add_up_across_files"
+        ],
+        "per_key": {
+          "JsonReportTest.test_branch_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_add_up_across_files": {
+            "expected": "PASSED",
+            "observed": "FAILED",
+            "match": false
+          },
+          "JsonReportTest.test_branch_totals_count_branch_arcs": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_from_saved_branch_data": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_without_branches": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_non_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_simple_line_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          }
+        },
+        "patch_sha256": "sha256:464014a7adb85802f5da8ad81540ae11b39747b0e988af940c444894f9096b05",
+        "apply_method": "git_apply",
+        "projection": {
+          "frozen_patch_digest": "sha256:b27c33993fa747f739b10f65ce0e3f51e49f9b71d1a642da1190233cc5e36379",
+          "ignored_paths": [],
+          "included_paths": [
+            "coverage/jsonreport.py"
+          ],
+          "unsupported_shape_reasons": []
+        },
+        "image_id_actual": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+        "overlay": {
+          "derived_image_id": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+          "derived_image_ref": "rh2-r2e-covremaining-r6/coveragepy:f5eb5f215918-r2e_derive_v1m2s",
+          "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+          "recipe_sha256": "sha256:a2000320bdbd7e1808e5986592fdb448caa3929f78d55e29ab63021e16ec7900"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 1,
+          "seconds": 3.503,
+          "segment_completed": true
+        },
+        "failure_category": "tests_failed",
+        "infra_failure_detail": null,
+        "setup_hidden_tree": "897dfdc70655175a1155dc7d8f6edd6e506b74f106e79e2a3dc4439dff8429af",
+        "setup_entry_sha256": "8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+        "runner_observations": {
+          "RH2_OBS_IMPORT_PATH": "/testbed/coverage/__init__.py",
+          "RH2_OBS_PKG_VERSION": "5.0.5a0",
+          "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+          "RH2_OBS_RUNNER_DIGEST": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74",
+          "RH2_OBS_RUNNER_DIGEST_PRE": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74"
+        },
+        "runner_integrity_changed": false,
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "footer": {
+          "ledger": "/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/f5eb_formal_matrix01/FC/ledger.jsonl",
+          "rows": 1,
+          "manager_close": {
+            "prepare_cancelled": 0,
+            "containers_removed": [],
+            "containers_open": [],
+            "supply_open": [],
+            "cleanup_failures": [],
+            "regrade_events": 0,
+            "regrade_total": 0,
+            "regrade_declined": 0,
+            "containers_created_total": 1,
+            "containers_removed_total": 1,
+            "container_history_retained": 1,
+            "leases_total": 1
+          },
+          "halted": null,
+          "aborted": null,
+          "cleanup_failures": [],
+          "final_status": {
+            "exit_code": 0,
+            "reason": "ok",
+            "grader_containers_open": [],
+            "cleanup_failures_total": 0,
+            "cleanup_failures_resolved": false
+          }
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/FC/eval_logs/evallog_replay-covf5eb-r6-matrix_6be3ce81.eval.log",
+          "sha256": "sha256:b5141a4f1d900428595887c85b2bf1267b8c743e7c7f0fe1dde808c27ca7d2dc"
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/FC/ledger.jsonl",
+          "sha256": "sha256:76abfa50ebe5b084c8681f8a21c3e91aef4da7d2a2d7b42146133e632caff3d1"
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/FC/eval_logs/evallog_replay-covf5eb-r6-matrix_6be3ce81.diagnostics.json",
+          "sha256": "sha256:624ae074ce27e75c626ee828b3d88289c0f599d294b5f24b859345897173ef54"
+        },
+        "source_blobs": [
+          {
+            "path": "coverage/jsonreport.py",
+            "sha256": "sha256:2b773f2aac3fcdd99b2fa4b3ad4b66b36bcf06263477353491a461c2765e18fc",
+            "matches_embedded_digest": true
+          }
+        ],
+        "residuals": {
+          "containers": {
+            "query_rc": 0,
+            "left": []
+          },
+          "networks": {
+            "query_rc": 0,
+            "left": []
+          }
+        },
+        "patch_ref": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/FC/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-60a7b254/candidate.patch"
+      },
+      {
+        "candidate": "C1swap",
+        "match_count": 6,
+        "total": 8,
+        "reward": 0.0,
+        "mismatched": [
+          "JsonReportTest.test_branch_totals_add_up_across_files",
+          "JsonReportTest.test_branch_totals_count_branch_arcs"
+        ],
+        "per_key": {
+          "JsonReportTest.test_branch_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_add_up_across_files": {
+            "expected": "PASSED",
+            "observed": "FAILED",
+            "match": false
+          },
+          "JsonReportTest.test_branch_totals_count_branch_arcs": {
+            "expected": "PASSED",
+            "observed": "FAILED",
+            "match": false
+          },
+          "JsonReportTest.test_branch_totals_from_saved_branch_data": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_without_branches": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_non_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_simple_line_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          }
+        },
+        "patch_sha256": "sha256:2f906736d83641682ca4523318098e30e7d49075e190db20bc39c2d046f87056",
+        "apply_method": "git_apply",
+        "projection": {
+          "frozen_patch_digest": "sha256:3e5e7d2747257b2c3c1d7b044f9af4c2ca448d14ccf466bef7e6c8faee45c14d",
+          "ignored_paths": [],
+          "included_paths": [
+            "coverage/jsonreport.py"
+          ],
+          "unsupported_shape_reasons": []
+        },
+        "image_id_actual": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+        "overlay": {
+          "derived_image_id": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+          "derived_image_ref": "rh2-r2e-covremaining-r6/coveragepy:f5eb5f215918-r2e_derive_v1m2s",
+          "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+          "recipe_sha256": "sha256:a2000320bdbd7e1808e5986592fdb448caa3929f78d55e29ab63021e16ec7900"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 1,
+          "seconds": 3.626,
+          "segment_completed": true
+        },
+        "failure_category": "tests_failed",
+        "infra_failure_detail": null,
+        "setup_hidden_tree": "897dfdc70655175a1155dc7d8f6edd6e506b74f106e79e2a3dc4439dff8429af",
+        "setup_entry_sha256": "8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+        "runner_observations": {
+          "RH2_OBS_IMPORT_PATH": "/testbed/coverage/__init__.py",
+          "RH2_OBS_PKG_VERSION": "5.0.5a0",
+          "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+          "RH2_OBS_RUNNER_DIGEST": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74",
+          "RH2_OBS_RUNNER_DIGEST_PRE": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74"
+        },
+        "runner_integrity_changed": false,
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "footer": {
+          "ledger": "/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/f5eb_formal_matrix01/C1swap/ledger.jsonl",
+          "rows": 1,
+          "manager_close": {
+            "prepare_cancelled": 0,
+            "containers_removed": [],
+            "containers_open": [],
+            "supply_open": [],
+            "cleanup_failures": [],
+            "regrade_events": 0,
+            "regrade_total": 0,
+            "regrade_declined": 0,
+            "containers_created_total": 1,
+            "containers_removed_total": 1,
+            "container_history_retained": 1,
+            "leases_total": 1
+          },
+          "halted": null,
+          "aborted": null,
+          "cleanup_failures": [],
+          "final_status": {
+            "exit_code": 0,
+            "reason": "ok",
+            "grader_containers_open": [],
+            "cleanup_failures_total": 0,
+            "cleanup_failures_resolved": false
+          }
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1swap/eval_logs/evallog_replay-covf5eb-r6-matrix_00a2b06f.eval.log",
+          "sha256": "sha256:eb28821f8f444fe6a1e1f60108629d96b4bcab3a5f5b83a727d16a78c0541d82"
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1swap/ledger.jsonl",
+          "sha256": "sha256:5f11d982e3f6ed30a3fbe7079d91cf40aa58b0948a98c8e4de7b4dedd4dae49e"
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1swap/eval_logs/evallog_replay-covf5eb-r6-matrix_00a2b06f.diagnostics.json",
+          "sha256": "sha256:b89db2b1ec733eed533aaa4899a35d147c9d5f2d444b218ff3b4f6ef88036ae7"
+        },
+        "source_blobs": [
+          {
+            "path": "coverage/jsonreport.py",
+            "sha256": "sha256:41c105d37b25053157a5a6cd61f860093022cb3844f1a5976fc99ddf124e958a",
+            "matches_embedded_digest": true
+          }
+        ],
+        "residuals": {
+          "containers": {
+            "query_rc": 0,
+            "left": []
+          },
+          "networks": {
+            "query_rc": 0,
+            "left": []
+          }
+        },
+        "patch_ref": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1swap/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-ca8df0e5/candidate.patch"
+      },
+      {
+        "candidate": "LM",
+        "match_count": 5,
+        "total": 8,
+        "reward": 0.0,
+        "mismatched": [
+          "JsonReportTest.test_context_non_relative",
+          "JsonReportTest.test_context_relative",
+          "JsonReportTest.test_simple_line_coverage"
+        ],
+        "per_key": {
+          "JsonReportTest.test_branch_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_add_up_across_files": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_count_branch_arcs": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_from_saved_branch_data": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_without_branches": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_non_relative": {
+            "expected": "PASSED",
+            "observed": "FAILED",
+            "match": false
+          },
+          "JsonReportTest.test_context_relative": {
+            "expected": "PASSED",
+            "observed": "FAILED",
+            "match": false
+          },
+          "JsonReportTest.test_simple_line_coverage": {
+            "expected": "PASSED",
+            "observed": "FAILED",
+            "match": false
+          }
+        },
+        "patch_sha256": "sha256:6269534ca5e8b936e198aaf0b94a3b00e5de964ea9ad760a16712ab494c82698",
+        "apply_method": "git_apply",
+        "projection": {
+          "frozen_patch_digest": "sha256:c0a143bbe9d5fdaca67bfb33e1fe9180aeec0b26349f9fe47d04a01245cba3a3",
+          "ignored_paths": [],
+          "included_paths": [
+            "coverage/jsonreport.py"
+          ],
+          "unsupported_shape_reasons": []
+        },
+        "image_id_actual": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+        "overlay": {
+          "derived_image_id": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+          "derived_image_ref": "rh2-r2e-covremaining-r6/coveragepy:f5eb5f215918-r2e_derive_v1m2s",
+          "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+          "recipe_sha256": "sha256:a2000320bdbd7e1808e5986592fdb448caa3929f78d55e29ab63021e16ec7900"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 1,
+          "seconds": 3.498,
+          "segment_completed": true
+        },
+        "failure_category": "tests_failed",
+        "infra_failure_detail": null,
+        "setup_hidden_tree": "897dfdc70655175a1155dc7d8f6edd6e506b74f106e79e2a3dc4439dff8429af",
+        "setup_entry_sha256": "8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+        "runner_observations": {
+          "RH2_OBS_IMPORT_PATH": "/testbed/coverage/__init__.py",
+          "RH2_OBS_PKG_VERSION": "5.0.5a0",
+          "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+          "RH2_OBS_RUNNER_DIGEST": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74",
+          "RH2_OBS_RUNNER_DIGEST_PRE": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74"
+        },
+        "runner_integrity_changed": false,
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "footer": {
+          "ledger": "/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/f5eb_formal_matrix01/LM/ledger.jsonl",
+          "rows": 1,
+          "manager_close": {
+            "prepare_cancelled": 0,
+            "containers_removed": [],
+            "containers_open": [],
+            "supply_open": [],
+            "cleanup_failures": [],
+            "regrade_events": 0,
+            "regrade_total": 0,
+            "regrade_declined": 0,
+            "containers_created_total": 1,
+            "containers_removed_total": 1,
+            "container_history_retained": 1,
+            "leases_total": 1
+          },
+          "halted": null,
+          "aborted": null,
+          "cleanup_failures": [],
+          "final_status": {
+            "exit_code": 0,
+            "reason": "ok",
+            "grader_containers_open": [],
+            "cleanup_failures_total": 0,
+            "cleanup_failures_resolved": false
+          }
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LM/eval_logs/evallog_replay-covf5eb-r6-matrix_b4628339.eval.log",
+          "sha256": "sha256:7fedeaadd44d708bddefa222896a58fc3a6c777777bab9d2ee187f08855d5896"
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LM/ledger.jsonl",
+          "sha256": "sha256:d1ab078d1d16c2f52463a4fa814b4860e66700db6574aa24a708c17a2acba847"
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LM/eval_logs/evallog_replay-covf5eb-r6-matrix_b4628339.diagnostics.json",
+          "sha256": "sha256:6a39c5199faa50eebb9ed00beec774d1ddc5e4cdc3a1496496befd719228a139"
+        },
+        "source_blobs": [
+          {
+            "path": "coverage/jsonreport.py",
+            "sha256": "sha256:2ddacfee666456a99992b7e160094eb99d906ec64ae96790fac667e8c4902f18",
+            "matches_embedded_digest": true
+          }
+        ],
+        "residuals": {
+          "containers": {
+            "query_rc": 0,
+            "left": []
+          },
+          "networks": {
+            "query_rc": 0,
+            "left": []
+          }
+        },
+        "patch_ref": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LM/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-53f7c674/candidate.patch"
+      },
+      {
+        "candidate": "XP",
+        "match_count": 7,
+        "total": 8,
+        "reward": 0.0,
+        "mismatched": [
+          "JsonReportTest.test_branch_coverage"
+        ],
+        "per_key": {
+          "JsonReportTest.test_branch_coverage": {
+            "expected": "PASSED",
+            "observed": "FAILED",
+            "match": false
+          },
+          "JsonReportTest.test_branch_totals_add_up_across_files": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_count_branch_arcs": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_from_saved_branch_data": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_without_branches": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_non_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_simple_line_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          }
+        },
+        "patch_sha256": "sha256:35fa00e43d0563ed7b60f8b65264f25fd602ec417237c2b047ea0e6b51ad620f",
+        "apply_method": "git_apply",
+        "projection": {
+          "frozen_patch_digest": "sha256:a9ffbef2659d58d37651662549951bdedd5e422985253e7df4409ea23d998eec",
+          "ignored_paths": [],
+          "included_paths": [
+            "coverage/jsonreport.py"
+          ],
+          "unsupported_shape_reasons": []
+        },
+        "image_id_actual": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+        "overlay": {
+          "derived_image_id": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+          "derived_image_ref": "rh2-r2e-covremaining-r6/coveragepy:f5eb5f215918-r2e_derive_v1m2s",
+          "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+          "recipe_sha256": "sha256:a2000320bdbd7e1808e5986592fdb448caa3929f78d55e29ab63021e16ec7900"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 1,
+          "seconds": 3.408,
+          "segment_completed": true
+        },
+        "failure_category": "tests_failed",
+        "infra_failure_detail": null,
+        "setup_hidden_tree": "897dfdc70655175a1155dc7d8f6edd6e506b74f106e79e2a3dc4439dff8429af",
+        "setup_entry_sha256": "8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+        "runner_observations": {
+          "RH2_OBS_IMPORT_PATH": "/testbed/coverage/__init__.py",
+          "RH2_OBS_PKG_VERSION": "5.0.5a0",
+          "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+          "RH2_OBS_RUNNER_DIGEST": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74",
+          "RH2_OBS_RUNNER_DIGEST_PRE": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74"
+        },
+        "runner_integrity_changed": false,
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "footer": {
+          "ledger": "/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/f5eb_formal_matrix01/XP/ledger.jsonl",
+          "rows": 1,
+          "manager_close": {
+            "prepare_cancelled": 0,
+            "containers_removed": [],
+            "containers_open": [],
+            "supply_open": [],
+            "cleanup_failures": [],
+            "regrade_events": 0,
+            "regrade_total": 0,
+            "regrade_declined": 0,
+            "containers_created_total": 1,
+            "containers_removed_total": 1,
+            "container_history_retained": 1,
+            "leases_total": 1
+          },
+          "halted": null,
+          "aborted": null,
+          "cleanup_failures": [],
+          "final_status": {
+            "exit_code": 0,
+            "reason": "ok",
+            "grader_containers_open": [],
+            "cleanup_failures_total": 0,
+            "cleanup_failures_resolved": false
+          }
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/XP/eval_logs/evallog_replay-covf5eb-r6-matrix_f29556ac.eval.log",
+          "sha256": "sha256:90ebbf8e19ebc06c568ce7ac0b9923636d5a2097360bef4ecde79f5b11f38040"
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/XP/ledger.jsonl",
+          "sha256": "sha256:6e65734d4bb044d402e78fec158bb523e373e56b2cd2ecaaf8ed773fa3440992"
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/XP/eval_logs/evallog_replay-covf5eb-r6-matrix_f29556ac.diagnostics.json",
+          "sha256": "sha256:695710f28d462d6eebad4b25f6565b0856964853e982dea697ac5f7053e5c910"
+        },
+        "source_blobs": [
+          {
+            "path": "coverage/jsonreport.py",
+            "sha256": "sha256:106795c611ec757339139ad84ac29385ba58a1bd74538615976d8aba6ed2c24a",
+            "matches_embedded_digest": true
+          }
+        ],
+        "residuals": {
+          "containers": {
+            "query_rc": 0,
+            "left": []
+          },
+          "networks": {
+            "query_rc": 0,
+            "left": []
+          }
+        },
+        "patch_ref": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/XP/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-e3ea7383/candidate.patch"
+      },
+      {
+        "candidate": "NB",
+        "match_count": 7,
+        "total": 8,
+        "reward": 0.0,
+        "mismatched": [
+          "JsonReportTest.test_branch_totals_without_branches"
+        ],
+        "per_key": {
+          "JsonReportTest.test_branch_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_add_up_across_files": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_count_branch_arcs": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_from_saved_branch_data": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_without_branches": {
+            "expected": "PASSED",
+            "observed": "FAILED",
+            "match": false
+          },
+          "JsonReportTest.test_context_non_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_simple_line_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          }
+        },
+        "patch_sha256": "sha256:7766fdcbba4c0b98dd02444b0b6a169a3f84230c4e9e9e54e2308396f2c2be1b",
+        "apply_method": "git_apply",
+        "projection": {
+          "frozen_patch_digest": "sha256:0aa6a9e10ac69fa1f88a8218565ff6c43894ac99157f422b67c595e0976d5513",
+          "ignored_paths": [],
+          "included_paths": [
+            "coverage/jsonreport.py"
+          ],
+          "unsupported_shape_reasons": []
+        },
+        "image_id_actual": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+        "overlay": {
+          "derived_image_id": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+          "derived_image_ref": "rh2-r2e-covremaining-r6/coveragepy:f5eb5f215918-r2e_derive_v1m2s",
+          "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+          "recipe_sha256": "sha256:a2000320bdbd7e1808e5986592fdb448caa3929f78d55e29ab63021e16ec7900"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 1,
+          "seconds": 3.758,
+          "segment_completed": true
+        },
+        "failure_category": "tests_failed",
+        "infra_failure_detail": null,
+        "setup_hidden_tree": "897dfdc70655175a1155dc7d8f6edd6e506b74f106e79e2a3dc4439dff8429af",
+        "setup_entry_sha256": "8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+        "runner_observations": {
+          "RH2_OBS_IMPORT_PATH": "/testbed/coverage/__init__.py",
+          "RH2_OBS_PKG_VERSION": "5.0.5a0",
+          "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+          "RH2_OBS_RUNNER_DIGEST": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74",
+          "RH2_OBS_RUNNER_DIGEST_PRE": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74"
+        },
+        "runner_integrity_changed": false,
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "footer": {
+          "ledger": "/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/f5eb_formal_matrix01/NB/ledger.jsonl",
+          "rows": 1,
+          "manager_close": {
+            "prepare_cancelled": 0,
+            "containers_removed": [],
+            "containers_open": [],
+            "supply_open": [],
+            "cleanup_failures": [],
+            "regrade_events": 0,
+            "regrade_total": 0,
+            "regrade_declined": 0,
+            "containers_created_total": 1,
+            "containers_removed_total": 1,
+            "container_history_retained": 1,
+            "leases_total": 1
+          },
+          "halted": null,
+          "aborted": null,
+          "cleanup_failures": [],
+          "final_status": {
+            "exit_code": 0,
+            "reason": "ok",
+            "grader_containers_open": [],
+            "cleanup_failures_total": 0,
+            "cleanup_failures_resolved": false
+          }
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/NB/eval_logs/evallog_replay-covf5eb-r6-matrix_8cd4f63a.eval.log",
+          "sha256": "sha256:f4678c907c176a453564b7315eb2c895c4b655ba35d33dbc147b2783516c0976"
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/NB/ledger.jsonl",
+          "sha256": "sha256:554dc93c208cde875d333d1f15088a5bb578a4730cb158b16358a8380563a325"
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/NB/eval_logs/evallog_replay-covf5eb-r6-matrix_8cd4f63a.diagnostics.json",
+          "sha256": "sha256:b4cb888ad9f95b3e8349293b8d0c1213bb52e4b5174d3fd26652f0e2fcfefa47"
+        },
+        "source_blobs": [
+          {
+            "path": "coverage/jsonreport.py",
+            "sha256": "sha256:4655310789bdf19581478de569deea4fec40f1f37192970af6de05034d971569",
+            "matches_embedded_digest": true
+          }
+        ],
+        "residuals": {
+          "containers": {
+            "query_rc": 0,
+            "left": []
+          },
+          "networks": {
+            "query_rc": 0,
+            "left": []
+          }
+        },
+        "patch_ref": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/NB/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-e739f2d1/candidate.patch"
+      },
+      {
+        "candidate": "wr_alldata_proj",
+        "match_count": 7,
+        "total": 8,
+        "reward": 0.0,
+        "mismatched": [
+          "JsonReportTest.test_branch_totals_add_up_across_files"
+        ],
+        "per_key": {
+          "JsonReportTest.test_branch_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_add_up_across_files": {
+            "expected": "PASSED",
+            "observed": "FAILED",
+            "match": false
+          },
+          "JsonReportTest.test_branch_totals_count_branch_arcs": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_from_saved_branch_data": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_without_branches": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_non_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_simple_line_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          }
+        },
+        "patch_sha256": "sha256:59492d2594766b5d0e6be08baf23b45b895a2712d1af20f391fe85d05a7e70c1",
+        "apply_method": "git_apply",
+        "projection": {
+          "frozen_patch_digest": "sha256:8afb9d41e2e46aade51a1d0ed445283a1534ffd21d664255af2c26bb63c84bc8",
+          "ignored_paths": [],
+          "included_paths": [
+            "coverage/jsonreport.py"
+          ],
+          "unsupported_shape_reasons": []
+        },
+        "image_id_actual": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+        "overlay": {
+          "derived_image_id": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+          "derived_image_ref": "rh2-r2e-covremaining-r6/coveragepy:f5eb5f215918-r2e_derive_v1m2s",
+          "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+          "recipe_sha256": "sha256:a2000320bdbd7e1808e5986592fdb448caa3929f78d55e29ab63021e16ec7900"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 1,
+          "seconds": 3.52,
+          "segment_completed": true
+        },
+        "failure_category": "tests_failed",
+        "infra_failure_detail": null,
+        "setup_hidden_tree": "897dfdc70655175a1155dc7d8f6edd6e506b74f106e79e2a3dc4439dff8429af",
+        "setup_entry_sha256": "8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+        "runner_observations": {
+          "RH2_OBS_IMPORT_PATH": "/testbed/coverage/__init__.py",
+          "RH2_OBS_PKG_VERSION": "5.0.5a0",
+          "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+          "RH2_OBS_RUNNER_DIGEST": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74",
+          "RH2_OBS_RUNNER_DIGEST_PRE": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74"
+        },
+        "runner_integrity_changed": false,
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "footer": {
+          "ledger": "/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/f5eb_formal_matrix01/wr_alldata_proj/ledger.jsonl",
+          "rows": 1,
+          "manager_close": {
+            "prepare_cancelled": 0,
+            "containers_removed": [],
+            "containers_open": [],
+            "supply_open": [],
+            "cleanup_failures": [],
+            "regrade_events": 0,
+            "regrade_total": 0,
+            "regrade_declined": 0,
+            "containers_created_total": 1,
+            "containers_removed_total": 1,
+            "container_history_retained": 1,
+            "leases_total": 1
+          },
+          "halted": null,
+          "aborted": null,
+          "cleanup_failures": [],
+          "final_status": {
+            "exit_code": 0,
+            "reason": "ok",
+            "grader_containers_open": [],
+            "cleanup_failures_total": 0,
+            "cleanup_failures_resolved": false
+          }
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/wr_alldata_proj/eval_logs/evallog_replay-covf5eb-r6-matrix_a790fee6.eval.log",
+          "sha256": "sha256:b07c985140dadcec14a636c4d6ef7ee9b395c4913a0593228b59d36299e8e9ad"
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/wr_alldata_proj/ledger.jsonl",
+          "sha256": "sha256:a02bed92478af2bff9fe067773464a2604724d548b97237dccb4ccc867a49022"
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/wr_alldata_proj/eval_logs/evallog_replay-covf5eb-r6-matrix_a790fee6.diagnostics.json",
+          "sha256": "sha256:23de4cd576e9706e18558c4942717f29dad86c135d8c1f439f607b1b153d5434"
+        },
+        "source_blobs": [
+          {
+            "path": "coverage/jsonreport.py",
+            "sha256": "sha256:012fb58e2c2ed14f794dbfac2652e75da445bc1be7f15fa6e1ab96c8a3918dee",
+            "matches_embedded_digest": true
+          }
+        ],
+        "residuals": {
+          "containers": {
+            "query_rc": 0,
+            "left": []
+          },
+          "networks": {
+            "query_rc": 0,
+            "left": []
+          }
+        },
+        "patch_ref": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/wr_alldata_proj/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-d47d5a6c/candidate.patch"
+      },
+      {
+        "candidate": "rv_sym_xml",
+        "match_count": 8,
+        "total": 8,
+        "reward": 1.0,
+        "mismatched": [],
+        "per_key": {
+          "JsonReportTest.test_branch_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_add_up_across_files": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_count_branch_arcs": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_from_saved_branch_data": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_branch_totals_without_branches": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_non_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_context_relative": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          },
+          "JsonReportTest.test_simple_line_coverage": {
+            "expected": "PASSED",
+            "observed": "PASSED",
+            "match": true
+          }
+        },
+        "patch_sha256": "sha256:be6587b0578cb96bad670bd7fd62fc6e36ebe5316a9458e4165703418859644b",
+        "apply_method": "git_apply",
+        "projection": {
+          "frozen_patch_digest": "sha256:4e34e27ddc905741321eddd153c57f8bed23b903f9c2a3ecbbe9584be904ddfa",
+          "ignored_paths": [],
+          "included_paths": [
+            "coverage/jsonreport.py"
+          ],
+          "unsupported_shape_reasons": []
+        },
+        "image_id_actual": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+        "overlay": {
+          "derived_image_id": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+          "derived_image_ref": "rh2-r2e-covremaining-r6/coveragepy:f5eb5f215918-r2e_derive_v1m2s",
+          "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+          "recipe_sha256": "sha256:a2000320bdbd7e1808e5986592fdb448caa3929f78d55e29ab63021e16ec7900"
+        },
+        "test": {
+          "exec_exit_code": 0,
+          "rc": 0,
+          "seconds": 3.393,
+          "segment_completed": true
+        },
+        "failure_category": null,
+        "infra_failure_detail": null,
+        "setup_hidden_tree": "897dfdc70655175a1155dc7d8f6edd6e506b74f106e79e2a3dc4439dff8429af",
+        "setup_entry_sha256": "8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+        "runner_observations": {
+          "RH2_OBS_IMPORT_PATH": "/testbed/coverage/__init__.py",
+          "RH2_OBS_PKG_VERSION": "5.0.5a0",
+          "RH2_OBS_PREFIX_OWNER_PRE": "54322",
+          "RH2_OBS_RUNNER_DIGEST": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74",
+          "RH2_OBS_RUNNER_DIGEST_PRE": "b03b5b69759282be413e59088e347b628a270f13e2ad18e256682457c344aa74"
+        },
+        "runner_integrity_changed": false,
+        "cleanup": {
+          "detail": "",
+          "removed": true,
+          "steps": [
+            "rm:ok"
+          ]
+        },
+        "footer": {
+          "ledger": "/work/rh2-category2-20261003/packages/r2e_coveragepy/cpu/remaining_r6_v1/f5eb_formal_matrix01/rv_sym_xml/ledger.jsonl",
+          "rows": 1,
+          "manager_close": {
+            "prepare_cancelled": 0,
+            "containers_removed": [],
+            "containers_open": [],
+            "supply_open": [],
+            "cleanup_failures": [],
+            "regrade_events": 0,
+            "regrade_total": 0,
+            "regrade_declined": 0,
+            "containers_created_total": 1,
+            "containers_removed_total": 1,
+            "container_history_retained": 1,
+            "leases_total": 1
+          },
+          "halted": null,
+          "aborted": null,
+          "cleanup_failures": [],
+          "final_status": {
+            "exit_code": 0,
+            "reason": "ok",
+            "grader_containers_open": [],
+            "cleanup_failures_total": 0,
+            "cleanup_failures_resolved": false
+          }
+        },
+        "log": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/rv_sym_xml/eval_logs/evallog_replay-covf5eb-r6-matrix_d4ed9faf.eval.log",
+          "sha256": "sha256:c408784c50ed11ddfb5f40a084aa78c617f7d2f7015542e7dc5e81471b613bb9"
+        },
+        "ledger": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/rv_sym_xml/ledger.jsonl",
+          "sha256": "sha256:11efd092b42dffed314b748ceaba9092552891928ca6abac9fc7ef648a7355aa"
+        },
+        "diagnostics": {
+          "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/rv_sym_xml/eval_logs/evallog_replay-covf5eb-r6-matrix_d4ed9faf.diagnostics.json",
+          "sha256": "sha256:f0da336dd5023394e63027e67089a5551d44f821973b6038cc1f0b09769ee387"
+        },
+        "source_blobs": [
+          {
+            "path": "coverage/jsonreport.py",
+            "sha256": "sha256:ff6339c4267971984446e72d03191ed833885e680806260ddb9705e666a68dbf",
+            "matches_embedded_digest": true
+          }
+        ],
+        "residuals": {
+          "containers": {
+            "query_rc": 0,
+            "left": []
+          },
+          "networks": {
+            "query_rc": 0,
+            "left": []
+          }
+        },
+        "patch_ref": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/rv_sym_xml/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-612f08a1/candidate.patch"
+      }
+    ]
+  },
+  "public_delivery": {
+    "is_model_result": false,
+    "solver": "actual Claude Code 2.1.205 against CPU stub",
+    "first_request_ref": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/stub/requests/messages_000.json",
+    "first_request_sha256": "sha256:9f467b229321bd260096938b1d5323e4190e07829e07b94fc5bcca4109e17e1d",
+    "statement_sha256": "sha256:6a516854b3c59b686b767267e0fe0a49d828934ccabd1a0e4b7159d9b883a88c",
+    "rendered_prompt_sha256": "sha256:c9bb55b0f2b1193db573c4bca8904971a1df0b2ea3a2d050347be5087b34cf6a",
+    "extra_devbrief_attached_to_CPU_first_prompt": false,
+    "python_version": "3.7.9",
+    "pytest_version": "4.6.6",
+    "coverage_version": "5.0.5a0",
+    "uid": 54321,
+    "workdir": "/testbed",
+    "interpreter": "/testbed/.venv/bin/python",
+    "import": "/testbed/coverage/__init__.py",
+    "commands_rc": {
+      "r2e_preflight": 0,
+      "environment_probe": 0,
+      "public_branch_report": 0,
+      "public_json_tests": 0
+    },
+    "original_public_json_tests": {
+      "passed": 4,
+      "seconds": 0.27,
+      "claim_scope": "base公开测试可运行；合理新增字段后旧完整字典预期需结合题面同步，不以旧格式单独否定修法"
+    },
+    "tool_timeouts_ms": [
+      120000,
+      60000,
+      120000,
+      240000
+    ],
+    "tool_command_difference": "CC去掉cd /testbed && 前缀，其余正文及timeout相同；cwd原件为/testbed",
+    "profile_parameters": {
+      "profile_id": "rh2.rollout_sandbox_profile.v1",
+      "schema_id": "rh2.sandbox_profile.v1",
+      "agent_user": "agent",
+      "agent_uid": 54321,
+      "trusted_init_caps": [
+        "CHOWN",
+        "DAC_OVERRIDE",
+        "DAC_READ_SEARCH",
+        "FOWNER",
+        "KILL"
+      ],
+      "pids_limit": 512,
+      "cpus": 2.0,
+      "memory_bytes": 4294967296,
+      "swap_bytes": 0,
+      "tmp_tmpfs_bytes": 1073741824,
+      "home_tmpfs_bytes": 268435456,
+      "tmpfs_mount_flags": "exec,nosuid,nodev",
+      "writable_layer_quota_bytes": 8589934592,
+      "require_writable_layer_quota": false,
+      "network": {
+        "mode": "isolated_internal_network_per_attempt",
+        "egress_subnet_pool": "10.212.0.0/16",
+        "egress_subnet_prefix": 29,
+        "relay_image": "python@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea",
+        "relay_alias": "rh2-egress-relay",
+        "model_proxy_listen_port": 18001,
+        "model_proxy_upstream": "172.17.0.1:18190",
+        "internal_services": [],
+        "forbidden_probe_targets": [
+          "169.254.169.254:80",
+          "1.1.1.1:443",
+          "8.8.8.8:53",
+          "172.17.0.1:18001"
+        ]
+      },
+      "hidden_paths": [
+        "/root"
+      ],
+      "bind_mounts_allowed": [],
+      "workdir": "/testbed",
+      "security_opt": [
+        "no-new-privileges"
+      ],
+      "cap_drop": [
+        "ALL"
+      ],
+      "init": true
+    },
+    "profile_digest": "sha256:7442237a391bf6e257972085aa9fffaa0574800d64294f830454eaea493296ba",
+    "prelaunch": {
+      "role": "rollout",
+      "container_name": "rh2r2e-coveragepy-f5eb5f2159180db-a3cac077",
+      "ok": true,
+      "violations": [],
+      "inspect_facts": {
+        "cap_drop": [
+          "ALL"
+        ],
+        "cap_add": [
+          "CAP_CHOWN",
+          "CAP_DAC_OVERRIDE",
+          "CAP_DAC_READ_SEARCH",
+          "CAP_FOWNER",
+          "CAP_KILL"
+        ],
+        "security_opt": [
+          "no-new-privileges"
+        ],
+        "privileged": false,
+        "pids_limit": 512,
+        "nano_cpus": 2000000000,
+        "memory": 4294967296,
+        "memory_swap": 4294967296,
+        "shm_size": 67108864,
+        "tmpfs": {
+          "/home/agent": "size=268435456,mode=0750,uid=54321,gid=54321,exec,nosuid,nodev",
+          "/tmp": "size=1073741824,mode=1777,exec,nosuid,nodev"
+        },
+        "storage_opt": {},
+        "binds": [],
+        "network_mode": "rh2r2e-coveragepy-f5eb5f2159180db-a3cac077-net",
+        "networks": [
+          "rh2r2e-coveragepy-f5eb5f2159180db-a3cac077-net"
+        ],
+        "mounts": [],
+        "config_user": "",
+        "config_env": [
+          "PATH=/testbed/.venv/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+          "DEBIAN_FRONTEND=noninteractive",
+          "VIRTUAL_ENV=/testbed/.venv"
+        ],
+        "running": true,
+        "image": "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+        "init": true
+      },
+      "probe_facts": {
+        "UID": "54321",
+        "GID": "54321",
+        "CAPPRM": "0000000000000000",
+        "CAPEFF": "0000000000000000",
+        "CAPBND": "000000000000002f",
+        "NNP": "1",
+        "CG_VERSION": "v2",
+        "CG_PIDS_MAX": "512",
+        "CG_MEMORY_MAX": "4294967296",
+        "CG_SWAP_MAX": "0",
+        "CG_CPU_MAX": "200000 100000",
+        "IFACES": "eth0,lo,",
+        "ROUTED_IFACES": "eth0,",
+        "DNS_EXTERNAL": "DENIED",
+        "HOME_WRITABLE": "1",
+        "TMP_WRITABLE": "1",
+        "MOUNT_TMP": "rw,nosuid,nodev,relatime,size=1048576k,inode64",
+        "MOUNT_HOME": "rw,nosuid,nodev,relatime,size=262144k,mode=750,uid=54321,gid=54321,inode64",
+        "TMP_EXEC": "1",
+        "HOME_EXEC": "1",
+        "NET_relay": "CONNECTED",
+        "NET_forbidden_0": "DENIED",
+        "NET_forbidden_1": "DENIED",
+        "NET_forbidden_2": "DENIED",
+        "NET_forbidden_3": "DENIED",
+        "NET_upstream_direct": "DENIED",
+        "HIDDEN_0": "DENIED:/root",
+        "ACTIVATION_READ": "1",
+        "ACTIVATION_WRITE": "DENIED",
+        "ACTIVATION_STAT": "0:644",
+        "GIT_REMOTES": "0",
+        "GIT_REFLOG": "0",
+        "GIT_REFS": "0",
+        "GIT_HEAD": "17204597c33db2cc396d32b8f9931c35f2518675",
+        "WORKDIR_WRITABLE": "1",
+        "WORKDIR_OWNER": "54321",
+        "RH2_PROBE_OK": "1"
+      },
+      "seconds": 0.3698
+    },
+    "activation": {
+      "role": "rollout",
+      "container_name": "rh2r2e-coveragepy-f5eb5f2159180db-a3cac077",
+      "ok": true,
+      "violations": [],
+      "inspect_facts": {},
+      "probe_facts": {
+        "ACT_EXPECTED_PREFIX": "/testbed/.venv",
+        "ACT_PYTHON": "/testbed/.venv/bin/python",
+        "ACT_SYS_EXECUTABLE": "/testbed/.venv/bin/python",
+        "ACT_SYS_PREFIX": "/testbed/.venv",
+        "ACT_CONDA_DEFAULT_ENV": "",
+        "ACT_VIRTUAL_ENV": "/testbed/.venv",
+        "RH2_ACTIVATION_PROBE_OK": "1"
+      },
+      "seconds": 0.2386
+    },
+    "actor_budgets": {
+      "wall_seconds": 1200,
+      "max_turns": 8,
+      "max_context_len": 32768,
+      "max_new_tokens": 4096
+    },
+    "grader_budgets": {
+      "candidate_stage_seconds": 900.0,
+      "cleanup_seconds": 120.0,
+      "grading_deadline_seconds": 3600.0,
+      "image_pull_seconds": 1800.0
+    },
+    "setup_test_budget": {
+      "before": 300.0,
+      "after": 300.0,
+      "test_seconds": 1800.0,
+      "source": "r2e_gym_subset::coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96"
+    },
+    "baseline_archive": {
+      "ref": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/attempt/frozen/baseline.tar",
+      "bytes": 4055040,
+      "entries": 335,
+      "sha256": "sha256:4cc91ec3bc31d9f9b73922a871c59b9d0db98e1ba45522039b5a13a21499e305",
+      "mode_contract": "Git semantics 100644/100755, not POSIX all permission bits",
+      "script_tar_modes": {
+        "install.sh": "0664",
+        "run_tests.sh": "0664"
+      }
+    },
+    "baseline_manifest_digest": "sha256:abbe27cfcaf9aa60cf86c623d823093787520ca40d0bfc21df82087e8af43b83",
+    "frozen_patch_digest": "sha256:32ae454437008606d3b5e778f1e5251989460e4b80a7903d519096d3f6966904",
+    "empty_frozen_patch": true,
+    "excluded_pathset_changed": [
+      true,
+      false
+    ],
+    "roundtrip": {
+      "ok": true,
+      "identity_equal": {
+        "task_id": true,
+        "workdir": true,
+        "public_bundle_digest": true,
+        "materialized_head": true,
+        "task_base_commit": true,
+        "policy": true,
+        "policy_digest": true,
+        "image_ids": true
+      },
+      "image_ids": [
+        "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59",
+        "sha256:92b4d84d8c80c452cc586695a32cb01ff1b2b540cf98c2c12be73cb18d618d59"
+      ],
+      "baseline_entries_equal": true,
+      "patch_entries_equal": true,
+      "excluded_evidence_matches": true,
+      "excluded_path_differences": [],
+      "excluded_difference_allowed": true,
+      "transport_digest_equal": true,
+      "candidate_excluded_pathset_changed": [
+        true,
+        false
+      ]
+    },
+    "actor_cleanup": {
+      "container_rm": 0,
+      "container_left": "",
+      "network_failures": [],
+      "relay_failures": [],
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "cleanup_ok": true
+    },
+    "residuals": {
+      "covf5eb-r6-public-20261003-01": {
+        "containers": [],
+        "networks": []
+      },
+      "covf5eb-r6-public-20261003-01-gcc": {
+        "containers": [],
+        "networks": []
+      },
+      "_clean": true
+    }
+  },
+  "reuse": {
+    "materials": "non_author_f5eb_material_review_20261003.md及2026-09-30旧独立复核；保留用户选A/final rb3h",
+    "shared_scope": "同固定R6的855成员及共用Git/builder有效验证复用；本轮独立核目标行/实际文件消费/身份",
+    "old_simulation": "不改记为本轮正式CPU或模型结果",
+    "rb3_vs_rb3h": "旧rb3只增零分支；final rb3h还核测量子集；当前SHA fd4d6ac9ca8e1edbe148e30cc73a1f48c9a3eecb4ffbaef5a388dbd430de2050"
+  },
+  "limits": [
+    "仅本地原件读取、SHA/size、JSON/AST及固定parser/文本内存重放；未SSH、Docker、项目测试、新CPU或模型实验。",
+    "接触本题私有测试与候选，不是fresh公开读者。",
+    "镜像现场行为依据保存的build、integrity、facts、trajectory、eval、ledger、footer和清理回执；未现场重验daemon build资源限额。",
+    "本地derived context无material文件/manifest.tsv，已从正式076和实际脚本独立重建配方并与build/facts/setup树闭合。",
+    "远端execution_inputs_r6_v1.json未另存独立本地原件；已核driver摘要及15实际patch/原source/FrozenPatch/原日志闭合。",
+    "GPU最终brief、首请求、镜像、服务、次数与预算由统一执行者核，不代填GPU身份。",
+    "card/cpu_matrix部分旧planned/running字样需按完成事实收口，不因此重复CPU。",
+    "CPU桩及固定候选不是模型结果，不授训练资格，不报未注明版本的原benchmark成绩。"
+  ],
+  "evidence_sha256": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/cpu/cpu_acceptance_r6_v1.json",
+      "size": 21943,
+      "sha256": "sha256:cf5d9f45f512b3946d45b78678358412a8530adc66cfc61a024f0f01f42ecb27"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/cpu/formal_matrix_r6_check.json",
+      "size": 18136,
+      "sha256": "sha256:ff0513b6f5de7f5eccd7419fc7170ffebb0d91da0363116e4e3776f57b761200"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/cpu/public_delivery_r6_check.json",
+      "size": 9173,
+      "sha256": "sha256:14e37437c60addd9760dd2c5377cdda80a4ac4c944893cd08bb111d4175574bd"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/cpu/prepared_r6_identity_check.json",
+      "size": 3354,
+      "sha256": "sha256:69c375ee93861245ae1ba169a0b64e79fe1cfb465788e53ad07d273cfcfefc0e"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/cpu/derived_r6_v1.json",
+      "size": 12731,
+      "sha256": "sha256:e7702c1d5cd7c77a2ac8e9f80f84722f2f8a1a370dbc3544be84c2817d360b25"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/probe_request_draft_r6_v1.json",
+      "size": 8084,
+      "sha256": "sha256:adcb3b689899d9c3b0f7de6ee11435e2abc63c061ec108fc31d4bad0167242b1"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/public_devbrief_20261003.md",
+      "size": 670,
+      "sha256": "sha256:840de42ff336cc91217a0f4e1f297a2c45c707ccf2caea8a73934af2ca5ee920"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/reviews/non_author_f5eb_material_review_20261003.md",
+      "size": 3706,
+      "sha256": "sha256:b3159876ada8a44b04c2d9b33d25ea2fb853043d6ee77239ee0618601227f86a"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category3_diagnosis_20260929/tasks/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/review.md",
+      "size": 24357,
+      "sha256": "sha256:7b9a703c088c8a05d4b59f6d111559bbb6c1ce1456ed947d3e495ab32647559f"
+    },
+    {
+      "path": "rh2/experiments/category3_cloud_20260929/cov_f5eb/review/materials/test_1_rb3h.py",
+      "size": 12432,
+      "sha256": "sha256:fd4d6ac9ca8e1edbe148e30cc73a1f48c9a3eecb4ffbaef5a388dbd430de2050"
+    },
+    {
+      "path": "rh2/experiments/category3_cloud_20260929/cov_f5eb/review/materials/test_1_rb3.py",
+      "size": 11907,
+      "sha256": "sha256:94a0dae163e8384f3a5ef5da7aee4564841281088ea8f348a351798a5d50090d"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/run_cpu_matrix.py",
+      "size": 7409,
+      "sha256": "sha256:962da7560ab099738a261e0408962342caff6e42c7d40c8ad348066636293c13"
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/manifest.json",
+      "size": 170366,
+      "sha256": "sha256:ab0a3a13fd65e0ea4cd60541ea3b37b01196170477e25832df246f33ea208828"
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/rh2/src/repoharness2/envpack/r2e_parsers.py",
+      "size": 10622,
+      "sha256": "sha256:339b7c80cca516dc7d1bcf9c11e3ff9a42f1bc993b5027a0d06c41c85d024b58"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/summary.json",
+      "size": 46541,
+      "sha256": "sha256:390cacca4570b57dd0d5df864ac2fa842869d11f04fa31e2b3918b1bd1ce5269"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/D0/grade.log",
+      "size": 893,
+      "sha256": "sha256:bd231ceb18649f33d0b0d2ee1a0c09367958a8478d1611fe453716128c7f4a2f"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/D0/ledger.jsonl",
+      "size": 6325,
+      "sha256": "sha256:791cca5596d6a8bee14358022b8e9491f3eeb6192b611e038eac69ce9f0ce86f"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LM/grade.log",
+      "size": 893,
+      "sha256": "sha256:c14cd63e0167ce160d9fcb8c8bd8a81ef19cabe61bcdb90362914756caf0cab8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LM/ledger.jsonl",
+      "size": 6224,
+      "sha256": "sha256:d1ab078d1d16c2f52463a4fa814b4860e66700db6574aa24a708c17a2acba847"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/FC/grade.log",
+      "size": 893,
+      "sha256": "sha256:90a0063098555999fd7f6d0119eb39562f54bc242749c6b09280c973ea3c2030"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/FC/ledger.jsonl",
+      "size": 6154,
+      "sha256": "sha256:76abfa50ebe5b084c8681f8a21c3e91aef4da7d2a2d7b42146133e632caff3d1"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1/grade.log",
+      "size": 891,
+      "sha256": "sha256:e89bd81febe05801ab38a0f03e69c04a0362c8f7f82e623281c3dc0181e1bade"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1/ledger.jsonl",
+      "size": 6091,
+      "sha256": "sha256:fb5e92440ab744ad08710373290586cfe0c9c2fe546da225e6a2dbc14dc14b62"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/W2/grade.log",
+      "size": 893,
+      "sha256": "sha256:ccfd36067378ed3ba50a636818791c315972336e794e21fd7542e472f77deaf5"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/W2/ledger.jsonl",
+      "size": 6270,
+      "sha256": "sha256:262344ae045c1ed1d3781f2232d2702cb6cd27a841327ed789cf852a227c7a5c"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/gold/grade.log",
+      "size": 893,
+      "sha256": "sha256:bce15211118793023dd3b3a9d8a9380172658b113e18789c8f60b724f65bd826"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/gold/ledger.jsonl",
+      "size": 6098,
+      "sha256": "sha256:9923c2d9ab58414365d0f6c53a311e85efc6be52506fd1cb1b7154cf01f2dbd0"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/rv_sym_xml/grade.log",
+      "size": 899,
+      "sha256": "sha256:25d1fd92bfd588e61619249511012dc8a34839e47ecba4b86871f02371bfe9e6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/rv_sym_xml/ledger.jsonl",
+      "size": 6122,
+      "sha256": "sha256:11efd092b42dffed314b748ceaba9092552891928ca6abac9fc7ef648a7355aa"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/job/stderr.log",
+      "size": 0,
+      "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/job/stdout.log",
+      "size": 2726,
+      "sha256": "sha256:24f8730b37d1e50e088e97b8b21ded001aa2d181ece0fc05a3047297d64fa566"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/job/status.json",
+      "size": 2992,
+      "sha256": "sha256:d70f199cb38b1a8b25fc82dba9725f43c83ea08c4993b1689f54938108813816"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/NB/grade.log",
+      "size": 893,
+      "sha256": "sha256:89e5aac1b6eb4013dfb1bfc07c8ea579e699ea8801e422c48613eb672f18e480"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/NB/ledger.jsonl",
+      "size": 6152,
+      "sha256": "sha256:554dc93c208cde875d333d1f15088a5bb578a4730cb158b16358a8380563a325"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/wr_alldata_proj/grade.log",
+      "size": 906,
+      "sha256": "sha256:baa3680ce2511716e8583d4be99183bcb7fd08d6aaed7423424d156d45ad3384"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/wr_alldata_proj/ledger.jsonl",
+      "size": 6204,
+      "sha256": "sha256:a02bed92478af2bff9fe067773464a2604724d548b97237dccb4ccc867a49022"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/A1/grade.log",
+      "size": 891,
+      "sha256": "sha256:1712d4f3118b439907d10139b8afc084a12ad81b44671792401639d1870966ec"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/A1/ledger.jsonl",
+      "size": 6090,
+      "sha256": "sha256:c514089df5bffaaa1001e529a65298ca95b7176eb4e92a12687e98ec6efea1b5"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C3/grade.log",
+      "size": 893,
+      "sha256": "sha256:7a3f470c5a6654a4fd1b004620e0ac3290d8574b6495b128075db3b2db405c4c"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C3/ledger.jsonl",
+      "size": 6158,
+      "sha256": "sha256:0b826729f32a2acb69d878b022cf862e20091ba5ecbdc7d3997b8770ad8975fb"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1swap/grade.log",
+      "size": 897,
+      "sha256": "sha256:2c8275bdda745c160e4a0509e8d2b42a02d3dc8c823fbf675965347e4c085a70"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1swap/ledger.jsonl",
+      "size": 6227,
+      "sha256": "sha256:5f11d982e3f6ed30a3fbe7079d91cf40aa58b0948a98c8e4de7b4dedd4dae49e"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C2/grade.log",
+      "size": 893,
+      "sha256": "sha256:f2e0ae2de40925743ceb6f30bafc84386dc6341d6c136876035ca6197e718d3e"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C2/ledger.jsonl",
+      "size": 6270,
+      "sha256": "sha256:03dfb89fafd09bd0e82f97eb397488ea8ac1f8ea0168a879d90b58bfadc6f193"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LF/grade.log",
+      "size": 893,
+      "sha256": "sha256:fd2792e29186c40800d1fe2993768ea3c4035816f2efb464fd6f4db64141ce08"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LF/ledger.jsonl",
+      "size": 6153,
+      "sha256": "sha256:0fb74204e1f616f78b566add980f1446ec16435375a7feb5f80036ae6a94cd40"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/XP/grade.log",
+      "size": 893,
+      "sha256": "sha256:17debd1d353b66f9a3dbb4bc3f6dc16b54832bd53f69e89c1d6f1241472e7850"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/XP/ledger.jsonl",
+      "size": 6137,
+      "sha256": "sha256:6e65734d4bb044d402e78fec158bb523e373e56b2cd2ecaaf8ed773fa3440992"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/D0/eval_logs/evallog_replay-covf5eb-r6-matrix_53970f16.eval.log",
+      "size": 5715,
+      "sha256": "sha256:e7e45f91f817cb149a50623e0f9bc674ded9dceef3bfd69b4698dd6550b02c33"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/D0/eval_logs/evallog_replay-covf5eb-r6-matrix_53970f16.diagnostics.json",
+      "size": 3988,
+      "sha256": "sha256:5589eaee323ac7a96dd86bd8d81661b17f9f2b1a2eff45b27623d183ca2f2c17"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/D0/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-614c3a2c/candidate.patch",
+      "size": 492,
+      "sha256": "sha256:6efd301325e1741160084d7f2a14217eb69eed465ac5bffe8cac47d65425b102"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/D0/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-614c3a2c/baseline_manifest.json",
+      "size": 77627,
+      "sha256": "sha256:848e537ce27425140c35f512eb36264704627ed6a35871d1019d5acf2ebc6cb8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/D0/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-614c3a2c/projection.json",
+      "size": 413,
+      "sha256": "sha256:bd6b05bb9cbaa0f9ba60f755736dda19e77e39c64010c9fbd8c47a1e6a881662"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/D0/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-614c3a2c/frozen_patch.json",
+      "size": 5681,
+      "sha256": "sha256:fd0dd7fc72d668881c8a05cba14956d74780dcf63d1858cf3ec1f6526a422786"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/D0/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-614c3a2c/classification.json",
+      "size": 93,
+      "sha256": "sha256:e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/D0/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-614c3a2c/stage.json",
+      "size": 838,
+      "sha256": "sha256:e1557912a61b5882fed65efc6a6011433085658cc82e29beb3ad12235b6804b6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LM/eval_logs/evallog_replay-covf5eb-r6-matrix_b4628339.diagnostics.json",
+      "size": 3885,
+      "sha256": "sha256:6a39c5199faa50eebb9ed00beec774d1ddc5e4cdc3a1496496befd719228a139"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LM/eval_logs/evallog_replay-covf5eb-r6-matrix_b4628339.eval.log",
+      "size": 11738,
+      "sha256": "sha256:7fedeaadd44d708bddefa222896a58fc3a6c777777bab9d2ee187f08855d5896"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LM/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-53f7c674/candidate.patch",
+      "size": 538,
+      "sha256": "sha256:6269534ca5e8b936e198aaf0b94a3b00e5de964ea9ad760a16712ab494c82698"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LM/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-53f7c674/baseline_manifest.json",
+      "size": 77627,
+      "sha256": "sha256:848e537ce27425140c35f512eb36264704627ed6a35871d1019d5acf2ebc6cb8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LM/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-53f7c674/projection.json",
+      "size": 413,
+      "sha256": "sha256:9010d0f8aa0fbbf05accd8c68997abb69dbae12fb9c7807de2badb747a670231"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LM/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-53f7c674/frozen_patch.json",
+      "size": 5745,
+      "sha256": "sha256:57ce90694193fcdc4c4ad47a332d3c5f79a25c40c85b55bcc88ce1df388a3bce"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LM/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-53f7c674/classification.json",
+      "size": 93,
+      "sha256": "sha256:e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LM/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-53f7c674/stage.json",
+      "size": 837,
+      "sha256": "sha256:39188db1782a49698e82908d69c30f9128693372cf90960accefa5b887e66882"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/FC/eval_logs/evallog_replay-covf5eb-r6-matrix_6be3ce81.eval.log",
+      "size": 4308,
+      "sha256": "sha256:b5141a4f1d900428595887c85b2bf1267b8c743e7c7f0fe1dde808c27ca7d2dc"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/FC/eval_logs/evallog_replay-covf5eb-r6-matrix_6be3ce81.diagnostics.json",
+      "size": 3805,
+      "sha256": "sha256:624ae074ce27e75c626ee828b3d88289c0f599d294b5f24b859345897173ef54"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/FC/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-60a7b254/candidate.patch",
+      "size": 941,
+      "sha256": "sha256:464014a7adb85802f5da8ad81540ae11b39747b0e988af940c444894f9096b05"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/FC/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-60a7b254/baseline_manifest.json",
+      "size": 77627,
+      "sha256": "sha256:848e537ce27425140c35f512eb36264704627ed6a35871d1019d5acf2ebc6cb8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/FC/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-60a7b254/projection.json",
+      "size": 413,
+      "sha256": "sha256:00555a96835f8c2d1d6061fa606737db8212823729ca4e30b884a9c4e4103c29"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/FC/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-60a7b254/frozen_patch.json",
+      "size": 5937,
+      "sha256": "sha256:ecd5af630e9b6336428391499cb99090fd083daee8d391d1c36663e3c63eba80"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/FC/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-60a7b254/classification.json",
+      "size": 93,
+      "sha256": "sha256:e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/FC/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-60a7b254/stage.json",
+      "size": 838,
+      "sha256": "sha256:4274e7df65091920256b5f500b904ba13f48986729867bfae566403e449a37ff"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1/eval_logs/evallog_replay-covf5eb-r6-matrix_386cc35d.diagnostics.json",
+      "size": 3745,
+      "sha256": "sha256:321e4635dc7de178cd6d786a8dcfd5a4988313faf5bba1030fc9c419ceb1f684"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1/eval_logs/evallog_replay-covf5eb-r6-matrix_386cc35d.eval.log",
+      "size": 1480,
+      "sha256": "sha256:5d234e2de4ed66a2d76bf349fc6dfec11cd5440aa3f3545d74ee8d5196637021"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-deb095fa/candidate.patch",
+      "size": 929,
+      "sha256": "sha256:7152e398251398c402af578b6ef062b6abca57342f824d34962036b5e8549d49"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-deb095fa/baseline_manifest.json",
+      "size": 77627,
+      "sha256": "sha256:848e537ce27425140c35f512eb36264704627ed6a35871d1019d5acf2ebc6cb8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-deb095fa/projection.json",
+      "size": 413,
+      "sha256": "sha256:33d8d8dcbeb066afee5fd7b924b43e86cc162e5ae2120049e5813447789fad0c"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-deb095fa/frozen_patch.json",
+      "size": 5921,
+      "sha256": "sha256:eff7f28c2c54fc0c70c8d5bb04033a4b81457239d13c50a2e6d54404b31192a6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-deb095fa/classification.json",
+      "size": 93,
+      "sha256": "sha256:e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-deb095fa/stage.json",
+      "size": 838,
+      "sha256": "sha256:a8f18be987851e3338e12b76e5dbc71dba7acdc6ba806322e2ff8ba2e1a40efb"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/W2/eval_logs/evallog_replay-covf5eb-r6-matrix_1ed8c764.eval.log",
+      "size": 4560,
+      "sha256": "sha256:68d4599517dd7a25bc6644a9e1ec43752e56df743a43eeb430c0a27a5c20c337"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/W2/eval_logs/evallog_replay-covf5eb-r6-matrix_1ed8c764.diagnostics.json",
+      "size": 3930,
+      "sha256": "sha256:e38947589a1efcc2311551b04ad56e08fb07d0394ef6b00f7bb4b36fd0511d1c"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/W2/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-c5b6eeb8/candidate.patch",
+      "size": 549,
+      "sha256": "sha256:4b1b53a294977e4a130b4db06fcb5a5ec2ab1028c5ee483790ad735f354ce15e"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/W2/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-c5b6eeb8/baseline_manifest.json",
+      "size": 77627,
+      "sha256": "sha256:848e537ce27425140c35f512eb36264704627ed6a35871d1019d5acf2ebc6cb8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/W2/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-c5b6eeb8/projection.json",
+      "size": 413,
+      "sha256": "sha256:42d5f7a732a562f1c5796003f03dd34603dcd8be5dfd1297ea3e0b5c5df242bd"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/W2/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-c5b6eeb8/frozen_patch.json",
+      "size": 5757,
+      "sha256": "sha256:65709b6ce0edb95ef121700081500243ec0e89d6e11953eaa49d77f24b8798ba"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/W2/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-c5b6eeb8/classification.json",
+      "size": 93,
+      "sha256": "sha256:e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/W2/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-c5b6eeb8/stage.json",
+      "size": 837,
+      "sha256": "sha256:403e36fa62a6fff269ebdd6729846428aa0883969f931a936677e1a00463af1f"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/gold/eval_logs/evallog_replay-covf5eb-r6-matrix_355f692f.eval.log",
+      "size": 1480,
+      "sha256": "sha256:2f352781451460e60cc2bc479526ea7b10c55c9fb86b76514cb863a857e8b692"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/gold/eval_logs/evallog_replay-covf5eb-r6-matrix_355f692f.diagnostics.json",
+      "size": 3747,
+      "sha256": "sha256:55134c46f46df08bf3a35e97e66a272aab74177a75488a443cfc68b54ec4baaf"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/gold/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-47263148/candidate.patch",
+      "size": 549,
+      "sha256": "sha256:c8fa460d421020f5230fcf5c776bd85f449bb2d8bbfc4b37d98fa3eff1250e59"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/gold/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-47263148/baseline_manifest.json",
+      "size": 77627,
+      "sha256": "sha256:848e537ce27425140c35f512eb36264704627ed6a35871d1019d5acf2ebc6cb8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/gold/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-47263148/projection.json",
+      "size": 417,
+      "sha256": "sha256:65c032ec5b4381c9a60175800c632b890133b70b6c76a853212b9c1b0d973616"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/gold/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-47263148/frozen_patch.json",
+      "size": 5761,
+      "sha256": "sha256:73825998d907b3bb0c80f7075a5cbb3a3c9f177a7e8c154e57d9b0dcbc51d376"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/gold/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-47263148/classification.json",
+      "size": 93,
+      "sha256": "sha256:e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/gold/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-47263148/stage.json",
+      "size": 838,
+      "sha256": "sha256:a7c58422d5dc4ca263839e86ef2008abfcc69ac37142026c3e3a09b88dd24906"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/rv_sym_xml/eval_logs/evallog_replay-covf5eb-r6-matrix_d4ed9faf.diagnostics.json",
+      "size": 3753,
+      "sha256": "sha256:f0da336dd5023394e63027e67089a5551d44f821973b6038cc1f0b09769ee387"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/rv_sym_xml/eval_logs/evallog_replay-covf5eb-r6-matrix_d4ed9faf.eval.log",
+      "size": 1480,
+      "sha256": "sha256:c408784c50ed11ddfb5f40a084aa78c617f7d2f7015542e7dc5e81471b613bb9"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/rv_sym_xml/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-612f08a1/candidate.patch",
+      "size": 1409,
+      "sha256": "sha256:be6587b0578cb96bad670bd7fd62fc6e36ebe5316a9458e4165703418859644b"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/rv_sym_xml/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-612f08a1/baseline_manifest.json",
+      "size": 77627,
+      "sha256": "sha256:848e537ce27425140c35f512eb36264704627ed6a35871d1019d5acf2ebc6cb8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/rv_sym_xml/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-612f08a1/projection.json",
+      "size": 429,
+      "sha256": "sha256:99803d2b1f55074737301610953357661d76cd26eaf1b9e40929cd8f9dffbcc0"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/rv_sym_xml/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-612f08a1/frozen_patch.json",
+      "size": 6353,
+      "sha256": "sha256:69cb580668fe63aa4ebe13c265692852dbb439554773c40cb383e87be4dd75c9"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/rv_sym_xml/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-612f08a1/classification.json",
+      "size": 93,
+      "sha256": "sha256:e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/rv_sym_xml/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-612f08a1/stage.json",
+      "size": 838,
+      "sha256": "sha256:b3d4e2f3341a9af88f2e900459874947228eb0c2f087682db649f0520593ee4f"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/NB/eval_logs/evallog_replay-covf5eb-r6-matrix_8cd4f63a.eval.log",
+      "size": 2719,
+      "sha256": "sha256:f4678c907c176a453564b7315eb2c895c4b655ba35d33dbc147b2783516c0976"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/NB/eval_logs/evallog_replay-covf5eb-r6-matrix_8cd4f63a.diagnostics.json",
+      "size": 3803,
+      "sha256": "sha256:b4cb888ad9f95b3e8349293b8d0c1213bb52e4b5174d3fd26652f0e2fcfefa47"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/NB/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-e739f2d1/candidate.patch",
+      "size": 652,
+      "sha256": "sha256:7766fdcbba4c0b98dd02444b0b6a169a3f84230c4e9e9e54e2308396f2c2be1b"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/NB/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-e739f2d1/baseline_manifest.json",
+      "size": 77627,
+      "sha256": "sha256:848e537ce27425140c35f512eb36264704627ed6a35871d1019d5acf2ebc6cb8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/NB/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-e739f2d1/projection.json",
+      "size": 413,
+      "sha256": "sha256:3c0e1fe3ae6a2bfaccd7a05b3f14b445d71990597b9b6d20bb957fc3405ceef1"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/NB/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-e739f2d1/frozen_patch.json",
+      "size": 5913,
+      "sha256": "sha256:68a12af9c0aefb54377c77cffd22ee1a17d64f3eb75754922205da8efe228b34"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/NB/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-e739f2d1/classification.json",
+      "size": 93,
+      "sha256": "sha256:e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/NB/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-e739f2d1/stage.json",
+      "size": 838,
+      "sha256": "sha256:69e5e5931a792d72cde8619e15a1daed2d0450b2bcc8dbf357a18f8f96494784"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/wr_alldata_proj/eval_logs/evallog_replay-covf5eb-r6-matrix_a790fee6.diagnostics.json",
+      "size": 3817,
+      "sha256": "sha256:23de4cd576e9706e18558c4942717f29dad86c135d8c1f439f607b1b153d5434"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/wr_alldata_proj/eval_logs/evallog_replay-covf5eb-r6-matrix_a790fee6.eval.log",
+      "size": 3850,
+      "sha256": "sha256:b07c985140dadcec14a636c4d6ef7ee9b395c4913a0593228b59d36299e8e9ad"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/wr_alldata_proj/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-d47d5a6c/candidate.patch",
+      "size": 785,
+      "sha256": "sha256:59492d2594766b5d0e6be08baf23b45b895a2712d1af20f391fe85d05a7e70c1"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/wr_alldata_proj/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-d47d5a6c/baseline_manifest.json",
+      "size": 77627,
+      "sha256": "sha256:848e537ce27425140c35f512eb36264704627ed6a35871d1019d5acf2ebc6cb8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/wr_alldata_proj/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-d47d5a6c/projection.json",
+      "size": 439,
+      "sha256": "sha256:afc2af47ef2823abcaa0c4b90a4c2d80a05758fb2b5e9a6f31e8309015aebace"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/wr_alldata_proj/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-d47d5a6c/frozen_patch.json",
+      "size": 6251,
+      "sha256": "sha256:24cef86a15a580a9ea4bfb9ca58969f7111c2f30233c1023795df6bec0d3f8a5"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/wr_alldata_proj/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-d47d5a6c/classification.json",
+      "size": 93,
+      "sha256": "sha256:e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/wr_alldata_proj/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-d47d5a6c/stage.json",
+      "size": 838,
+      "sha256": "sha256:7227873b4f052c2f474afd1374b5f24d8ed827420feeacdb5d5877e7360b5216"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/A1/eval_logs/evallog_replay-covf5eb-r6-matrix_3334dbc6.diagnostics.json",
+      "size": 3744,
+      "sha256": "sha256:791edf896b0564cd96c135a3ae1514bb7aa2c3b86d3ecb9f97c80b3bebbda75e"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/A1/eval_logs/evallog_replay-covf5eb-r6-matrix_3334dbc6.eval.log",
+      "size": 1480,
+      "sha256": "sha256:9532bd46ee4509ce391f61c880507cd16696a7b29ba74f240577ca24e8b1570a"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/A1/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-329cffc4/candidate.patch",
+      "size": 1418,
+      "sha256": "sha256:a90bfee41139035be189953cbf8126971745909f864d4de6901f7e6b7e98bf47"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/A1/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-329cffc4/baseline_manifest.json",
+      "size": 77627,
+      "sha256": "sha256:848e537ce27425140c35f512eb36264704627ed6a35871d1019d5acf2ebc6cb8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/A1/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-329cffc4/projection.json",
+      "size": 413,
+      "sha256": "sha256:0ce99dcbe2979610c9ee844e210405d3f09b81f99cc6ead7dc9a68c4cbf92048"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/A1/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-329cffc4/frozen_patch.json",
+      "size": 6177,
+      "sha256": "sha256:bc5b947d261fee80d80550ed1f6afb42a33cfeba6a3cda1a5de93a0b3634cecf"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/A1/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-329cffc4/classification.json",
+      "size": 93,
+      "sha256": "sha256:e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/A1/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-329cffc4/stage.json",
+      "size": 838,
+      "sha256": "sha256:e1fd767be3e6848faddb09a053cb0ebe5f49f41a7a1a8ad5dec9df6e0fb87c46"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C3/eval_logs/evallog_replay-covf5eb-r6-matrix_08109e86.eval.log",
+      "size": 2287,
+      "sha256": "sha256:9bfbece02c28f3dc766b7aae4f7a1e18c4000d51433868f712182a72d697839f"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C3/eval_logs/evallog_replay-covf5eb-r6-matrix_08109e86.diagnostics.json",
+      "size": 3808,
+      "sha256": "sha256:7c18dc88e1f30d462c2d4783113ec8e3564902f054f959b86ba0214143c07ef0"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C3/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-27f287cd/candidate.patch",
+      "size": 597,
+      "sha256": "sha256:d47b2ba81fcc7b6ac70c914d32aeedd510af1508833fe963c72f5f8ca5149420"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C3/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-27f287cd/baseline_manifest.json",
+      "size": 77627,
+      "sha256": "sha256:848e537ce27425140c35f512eb36264704627ed6a35871d1019d5acf2ebc6cb8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C3/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-27f287cd/projection.json",
+      "size": 413,
+      "sha256": "sha256:a79a5d807683b10fa066b8924ca30b3af20c1b2294b2ca160953ea731bc8a33c"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C3/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-27f287cd/frozen_patch.json",
+      "size": 5885,
+      "sha256": "sha256:f57a8f92ad5f01c342d75ebeacc6352212acd11cfd7c64f9933f8555262cf28f"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C3/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-27f287cd/classification.json",
+      "size": 93,
+      "sha256": "sha256:e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C3/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-27f287cd/stage.json",
+      "size": 838,
+      "sha256": "sha256:0f445c9617e0b065cde79720ec8c5a7aeec68b30e5ea81593c11165465377581"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1swap/eval_logs/evallog_replay-covf5eb-r6-matrix_00a2b06f.diagnostics.json",
+      "size": 3870,
+      "sha256": "sha256:b89db2b1ec733eed533aaa4899a35d147c9d5f2d444b218ff3b4f6ef88036ae7"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1swap/eval_logs/evallog_replay-covf5eb-r6-matrix_00a2b06f.eval.log",
+      "size": 5683,
+      "sha256": "sha256:eb28821f8f444fe6a1e1f60108629d96b4bcab3a5f5b83a727d16a78c0541d82"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1swap/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-ca8df0e5/candidate.patch",
+      "size": 929,
+      "sha256": "sha256:2f906736d83641682ca4523318098e30e7d49075e190db20bc39c2d046f87056"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1swap/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-ca8df0e5/baseline_manifest.json",
+      "size": 77627,
+      "sha256": "sha256:848e537ce27425140c35f512eb36264704627ed6a35871d1019d5acf2ebc6cb8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1swap/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-ca8df0e5/projection.json",
+      "size": 421,
+      "sha256": "sha256:02348bc7face1f14d8b32ce49acb43b064bb5fc2aab8b9388e99d0cac81f39bd"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1swap/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-ca8df0e5/frozen_patch.json",
+      "size": 5929,
+      "sha256": "sha256:36a0dc8fabac9a072227d422eb27deaffc29211ff8803b1868bf12bc5376b40a"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1swap/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-ca8df0e5/classification.json",
+      "size": 93,
+      "sha256": "sha256:e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1swap/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-ca8df0e5/stage.json",
+      "size": 838,
+      "sha256": "sha256:de3faa133385b42efb595f5ce90f696e4e9a270cbaabb8b8f827121b41d5ee88"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C2/eval_logs/evallog_replay-covf5eb-r6-matrix_a935f946.eval.log",
+      "size": 4560,
+      "sha256": "sha256:a376dd9a13a248541712acf695667f54ebcd504b063517ded8dee6592dbbcb08"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C2/eval_logs/evallog_replay-covf5eb-r6-matrix_a935f946.diagnostics.json",
+      "size": 3930,
+      "sha256": "sha256:b991a67e4508ef22212ad85dd7e5e0e4a7a18fc33aa90b9876f6a6fc07eebb2a"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C2/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-9d139126/candidate.patch",
+      "size": 572,
+      "sha256": "sha256:43b72ab93df599efc29cf77794011424b7d4bea1a21235f3ec00c16e15d81a70"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C2/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-9d139126/baseline_manifest.json",
+      "size": 77627,
+      "sha256": "sha256:848e537ce27425140c35f512eb36264704627ed6a35871d1019d5acf2ebc6cb8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C2/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-9d139126/projection.json",
+      "size": 413,
+      "sha256": "sha256:5f852cff492cc45255b2c567890a3641be50e6e56cd58c16e7549a3b073cfda1"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C2/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-9d139126/frozen_patch.json",
+      "size": 5789,
+      "sha256": "sha256:b410bd0c34cd0edbd76d46d33319b5d1c478649e9904406de81b186a48d9954b"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C2/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-9d139126/classification.json",
+      "size": 93,
+      "sha256": "sha256:e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C2/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-9d139126/stage.json",
+      "size": 838,
+      "sha256": "sha256:255270a5c16bc285cc1d34f25be4d0a9b5ede3c0ee94cd9aec032277fb7c8b31"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LF/eval_logs/evallog_replay-covf5eb-r6-matrix_78b97e95.diagnostics.json",
+      "size": 3806,
+      "sha256": "sha256:24425a6d894830dc3ceebaa40831e9faec02f5a967136d3878575076f36a2af5"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LF/eval_logs/evallog_replay-covf5eb-r6-matrix_78b97e95.eval.log",
+      "size": 3121,
+      "sha256": "sha256:551fd4db9580b7d32eb98e04fd7b7f20abffbc5a95ca8db206897acfc35d30fc"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LF/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-7498704a/candidate.patch",
+      "size": 1270,
+      "sha256": "sha256:cb4c69f13f1b6a918a37ba70cabdf6a8a1d601536477d0db65f07e4b53fccca6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LF/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-7498704a/baseline_manifest.json",
+      "size": 77627,
+      "sha256": "sha256:848e537ce27425140c35f512eb36264704627ed6a35871d1019d5acf2ebc6cb8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LF/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-7498704a/projection.json",
+      "size": 413,
+      "sha256": "sha256:731243e01b30f9374399bb69f018a7a961b3540c9afc81963ce4118357c1e84d"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LF/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-7498704a/frozen_patch.json",
+      "size": 5985,
+      "sha256": "sha256:9cd6a3ecbfe80045da157a56a262945082aace43b3e3c20f3df73e9632e075ff"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LF/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-7498704a/classification.json",
+      "size": 93,
+      "sha256": "sha256:e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/LF/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-7498704a/stage.json",
+      "size": 838,
+      "sha256": "sha256:be6d5990dc5a607635ab1ea41c568e8cf3242493c8a8d91f01fe62f73be5772e"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/XP/eval_logs/evallog_replay-covf5eb-r6-matrix_f29556ac.eval.log",
+      "size": 5871,
+      "sha256": "sha256:90ebbf8e19ebc06c568ce7ac0b9923636d5a2097360bef4ecde79f5b11f38040"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/XP/eval_logs/evallog_replay-covf5eb-r6-matrix_f29556ac.diagnostics.json",
+      "size": 3788,
+      "sha256": "sha256:695710f28d462d6eebad4b25f6565b0856964853e982dea697ac5f7053e5c910"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/XP/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-e3ea7383/candidate.patch",
+      "size": 758,
+      "sha256": "sha256:35fa00e43d0563ed7b60f8b65264f25fd602ec417237c2b047ea0e6b51ad620f"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/XP/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-e3ea7383/baseline_manifest.json",
+      "size": 77627,
+      "sha256": "sha256:848e537ce27425140c35f512eb36264704627ed6a35871d1019d5acf2ebc6cb8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/XP/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-e3ea7383/projection.json",
+      "size": 413,
+      "sha256": "sha256:9fbfb21004f9e696c87d60c5928036c5c3db5d43580398bad2f8d88cc146289f"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/XP/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-e3ea7383/frozen_patch.json",
+      "size": 6029,
+      "sha256": "sha256:93c8941d2e56d33a5c8c17bbfea86cd464ebc6b9365eeba038130c943c607ed4"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/XP/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-e3ea7383/classification.json",
+      "size": 93,
+      "sha256": "sha256:e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/XP/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-e3ea7383/stage.json",
+      "size": 838,
+      "sha256": "sha256:2702c7c4ec71c243fabcdb23859cdd70967effbfa1c6080ba1953ab4260910a4"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/summary.json",
+      "size": 15473,
+      "sha256": "sha256:0536ce53e7d32ac6bff1d5c63b6c836e340848fb53f95c3a49c3e62403ab9591"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/stub_script.json",
+      "size": 2921,
+      "sha256": "sha256:2ae891eadfb0bb61b012ac7238c31127517fd860d9761781ea56031eeab39faa"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/stub_stdout.log",
+      "size": 0,
+      "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/gateway_config.json",
+      "size": 336,
+      "sha256": "sha256:a49966e3a5b8692c16d243aa3bc67370c419b46586bc656bccb143602531c257"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/solve.log",
+      "size": 1912,
+      "sha256": "sha256:8207f66bb7c438fb292e1c2b6201b1475d4b938ecd0293b77dcc971f00e817b5"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/gateway_stdout.log",
+      "size": 119,
+      "sha256": "sha256:f6b534725226973cf931d527d7392798eaaad4be09f980ff58bdd1f6af65a081"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/grade_cc/roundtrip.json",
+      "size": 668,
+      "sha256": "sha256:fc188d4e664465321698a4dd6a77d60adf8de5c824244baad4b73b29d3a57fc9"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/grade_cc/grade.log",
+      "size": 2078,
+      "sha256": "sha256:9c5c61aefb315890ec0c7dfd5ef68497d27fa982b9514fd3c028126668abdc51"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/grade_cc/probe_config.json",
+      "size": 22,
+      "sha256": "sha256:de41cc0129da507586261f8e0ba441e60d96cf934c57fefd17ee84ffcfaae36f"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/grade_cc/ledger.jsonl",
+      "size": 6102,
+      "sha256": "sha256:e762e0b2b7cc907ea92ba993c58c5942addbf27dcd375555cf9fbcaaa682af50"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/job/stderr.log",
+      "size": 0,
+      "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/job/stdout.log",
+      "size": 983,
+      "sha256": "sha256:182d12fcfb85e32eb6701c64f3d89d2e2bcd7e8717f838d3ec6acaed70e8c41e"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/job/status.json",
+      "size": 3022,
+      "sha256": "sha256:9d6260eee2d650d8fde45e7fa5e87a7f243393c6aa332e8f651791ec7e6fdfee"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/stub/stub_log.json",
+      "size": 10325,
+      "sha256": "sha256:6c27e21c4e339b98f8ff47ff8551b62b2b2c8a4180c103e1f8f3ea371b0bc4a8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/attempt/prompt.txt",
+      "size": 1168,
+      "sha256": "sha256:c9bb55b0f2b1193db573c4bca8904971a1df0b2ea3a2d050347be5087b34cf6a"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/attempt/trajectory.jsonl",
+      "size": 23196,
+      "sha256": "sha256:06cbbd624386e58db6aab2fab1d7af69a80c7077024e3a2f5e7f4c5d8490a226"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/attempt/attempt.json",
+      "size": 16229,
+      "sha256": "sha256:35c2fc1d66c1ce5b19ddf94d690bb361f704f9687507daa4719c58b54ceef264"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/gateway/gateway_config.json",
+      "size": 316,
+      "sha256": "sha256:02fd1794755be64cc7975b4ff665d6de7e895739cadf43fa4ba44dbe13103a90"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/grade_cc/eval_logs/evallog_replay-covf5eb-r6-public_e2067b58.eval.log",
+      "size": 9954,
+      "sha256": "sha256:35d358ca238070b01abeedcb6314e7ef7c1c2fd8269a78a3ed35487d25274c07"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/grade_cc/eval_logs/evallog_replay-covf5eb-r6-public_e2067b58.diagnostics.json",
+      "size": 4040,
+      "sha256": "sha256:df9d3c5cd7c1141d11fce463d4a4d2e96ce955c6f2ad0b1b9479103a84c8e05b"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/grade_cc/probe_audit/budget.json",
+      "size": 139,
+      "sha256": "sha256:29c06f404e09f3a5fe44eb7f27778d72b464d24467ffeae1064e9e95c39f2a5a"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/grade_cc/probe_audit/baseline_census.txt",
+      "size": 243599,
+      "sha256": "sha256:63f5eec7adf1a4fe1341fa8f605836eb15647af61f6fe2e3036bf00dda1e69a2"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/grade_cc/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-948d6b0d/baseline_manifest.json",
+      "size": 77627,
+      "sha256": "sha256:848e537ce27425140c35f512eb36264704627ed6a35871d1019d5acf2ebc6cb8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/grade_cc/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-948d6b0d/projection.json",
+      "size": 404,
+      "sha256": "sha256:f0b4e51b61230d3632a93f78137fc2248c8d002327baf0cfb48fe424b13b452d"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/grade_cc/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-948d6b0d/frozen_patch.json",
+      "size": 785,
+      "sha256": "sha256:2334e78bae1a47f02d0cf220fd27af714577f8d0aeb76404d55206ed3e447fb3"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/grade_cc/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-948d6b0d/classification.json",
+      "size": 93,
+      "sha256": "sha256:e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/grade_cc/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-948d6b0d/stage.json",
+      "size": 833,
+      "sha256": "sha256:1a034062118b9dab8b736ae10b136a8f5ad60f7094b6a663508994d1f3ec5f4a"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/stub/requests/messages_001.json",
+      "size": 15158,
+      "sha256": "sha256:b29df7304007a0c741659b9175241b3a9bd905f96054b32d4d2388ccfaf373fe"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/stub/requests/messages_000.json",
+      "size": 13581,
+      "sha256": "sha256:9f467b229321bd260096938b1d5323e4190e07829e07b94fc5bcca4109e17e1d"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/stub/requests/messages_004.json",
+      "size": 18584,
+      "sha256": "sha256:89554539e7e383d04a2671e1c97d6c2f04a985a1c41206b94390c49605ec396a"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/stub/requests/messages_003.json",
+      "size": 17567,
+      "sha256": "sha256:c497c67d6213e3567247206de8c5e1fad476428fd5a8f7047d5dd677370fa503"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/stub/requests/messages_002.json",
+      "size": 15854,
+      "sha256": "sha256:c075c5cd1985b9b910f56495b3b3e42eedd2525df3768b6833068b9dd95c79a4"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/attempt/bringup_artifacts/cc_version_observed.json",
+      "size": 60,
+      "sha256": "sha256:c2b9bcf966c47d9a00227877026cb90b76afed482fd0df4e0ac12caab786bacb"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/attempt/harness/stderr.log",
+      "size": 0,
+      "sha256": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/attempt/harness/trajectory.jsonl",
+      "size": 23196,
+      "sha256": "sha256:06cbbd624386e58db6aab2fab1d7af69a80c7077024e3a2f5e7f4c5d8490a226"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/attempt/frozen/baseline_manifest.json",
+      "size": 77627,
+      "sha256": "sha256:848e537ce27425140c35f512eb36264704627ed6a35871d1019d5acf2ebc6cb8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/attempt/frozen/baseline_census.txt",
+      "size": 243599,
+      "sha256": "sha256:63f5eec7adf1a4fe1341fa8f605836eb15647af61f6fe2e3036bf00dda1e69a2"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/attempt/frozen/frozen_patch.json",
+      "size": 674,
+      "sha256": "sha256:178d9569139eb61f30249a642259f13c8d866133066e18bb4505e45ba0ca911d"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/attempt/frozen/classification.json",
+      "size": 92,
+      "sha256": "sha256:f5ffbaced0b3236a35e0fc6319c51b3077006f339e8a219377b606e8e26bce15"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/attempt/frozen/baseline.tar",
+      "size": 4055040,
+      "sha256": "sha256:4cc91ec3bc31d9f9b73922a871c59b9d0db98e1ba45522039b5a13a21499e305"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/attempt/facts/pip_freeze_before.txt",
+      "size": 1008,
+      "sha256": "sha256:28803929523d1d49e62c3e9b4a208eb697ee729e349527751f52cfc800941c10"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/attempt/facts/prelaunch.json",
+      "size": 2344,
+      "sha256": "sha256:74179859783cd7e0f2d0783ae3b80dcd00db6a70a7c099c658a627e357ccff6b"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/attempt/facts/agent_env_facts.txt",
+      "size": 1017,
+      "sha256": "sha256:deb2e21f591bf4b0bb81da0fff5474c3e7c3b1d7b33e53e24564fa3d6c65bfe0"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/attempt/facts/materialize_probe.txt",
+      "size": 165,
+      "sha256": "sha256:e9c81bd64e3b77586cb85c46557e7efc9c49ebab26f84889c68a1b5392f7c223"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/attempt/facts/r2e_preflight.txt",
+      "size": 104,
+      "sha256": "sha256:daab0589dc3105fbc35cf60921cdfede3acf6ca4356f9c706ac5d94f08b4b057"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/attempt/facts/pip_freeze_after.txt",
+      "size": 1008,
+      "sha256": "sha256:28803929523d1d49e62c3e9b4a208eb697ee729e349527751f52cfc800941c10"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/attempt/facts/activation_check.json",
+      "size": 465,
+      "sha256": "sha256:bbbf2a69a0ae73c55ec605c78e3ac99f86668180e83d856b1cf17c2ad8b5f066"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/gateway/covf5eb-r6-public-20261003-01/usage.json",
+      "size": 83,
+      "sha256": "sha256:73ed661c5ee440209faff885a250fc857720883e42cdc22a39d08db62a7fd122"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/gateway/covf5eb-r6-public-20261003-01/session_close.jsonl",
+      "size": 130,
+      "sha256": "sha256:e65a4aea3bd1fb4de73dc3f7eceb46844e7f25cf3227388d14bc1e9428c536cf"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/gateway/covf5eb-r6-public-20261003-01/requests.jsonl",
+      "size": 84497,
+      "sha256": "sha256:b1418a532bdaae0e7402ae1541c8020d84f238aef6ddc1302170406d26d07a07"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/gateway/covf5eb-r6-public-20261003-01/responses.jsonl",
+      "size": 1544,
+      "sha256": "sha256:7a47d1c5a495ceb37fae38368c4c496a2b4223f65216a73e65feb32bbd4b9238"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/gateway/covf5eb-r6-public-20261003-01/resp_4.sse",
+      "size": 1137,
+      "sha256": "sha256:1e9d9cf6977fe866961827ac751a3e94c5fbaae5639cf41979a7e6ad10372a4c"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/gateway/covf5eb-r6-public-20261003-01/resp_5.sse",
+      "size": 851,
+      "sha256": "sha256:fadd3282e25b2b4e2c9a1bf2c03d2115f1112464ee29d88cb558c9eb842532ee"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/gateway/covf5eb-r6-public-20261003-01/resp_1.sse",
+      "size": 2183,
+      "sha256": "sha256:39ed342a94c80addcc456689c18c0e41a6e55c8bb4d9df6e2cc1d7ec026bd85b"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/gateway/covf5eb-r6-public-20261003-01/resp_2.sse",
+      "size": 1187,
+      "sha256": "sha256:a833dc369cf790da398026d9879aa064a6018fe830a64dc7e66454cc60b48fa7"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_public_e2e01/gateway/covf5eb-r6-public-20261003-01/resp_3.sse",
+      "size": 1752,
+      "sha256": "sha256:2810fc2a4434ef3f0f5a55c98d803cfb6be92c93278b0224e380c8e1e0c0f40c"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/derived/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/facts.json",
+      "size": 5845,
+      "sha256": "sha256:00d8b724bd9ca70911a4baa3c17c91784391a1562372bd0a89165ec8afcc10dd"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/derived/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/integrity_base.txt",
+      "size": 401250,
+      "sha256": "sha256:b7b4bc23c5ac8841533471e8f17a37f0a01d0c06a5d0ff5f05ef9b570c923a77"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/derived/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/integrity_derived.txt",
+      "size": 401209,
+      "sha256": "sha256:d4c04e893ee3e77d9712731b768c3c799c2cfd837e4dca1ac8ca71e101dbe592"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/derived/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/build.log",
+      "size": 3497,
+      "sha256": "sha256:6c14d77eda56f3835e3c4399d35b9b4cd9d1d76845bfd3294d9aa6b187969b68"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/derived/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/context/Dockerfile",
+      "size": 376,
+      "sha256": "sha256:9f6bcb0b2b0d4ad268f75bc567419db5734a83e9830879f7bb9e8b00d92e4a8e"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/derived/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/context/recipe_v1.sh",
+      "size": 5982,
+      "sha256": "sha256:0da821a15fa389289f524c60d3a421bc940cce753e4ecf3d53560b7ab6b31df9"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/derived/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/context/sysconfig_v1.sh",
+      "size": 2093,
+      "sha256": "sha256:63ab3356e80bb6d9bccb682060c2769c03fc68a7b8273ece632eb5628347cc33"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/derived/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/context/material_v2.sh",
+      "size": 2775,
+      "sha256": "sha256:0d259ae34ca823ca3fcb29c46e09f6e5d0b149690a5336ec491a14b94a769a3d"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/prepared/prepared_manifest.json",
+      "size": 1846,
+      "sha256": "sha256:0f8e89800b5678529c5ee852657fc6bff5c95143cb192086d958de8e1df3d79f"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/prepared/prompts.jsonl",
+      "size": 5326,
+      "sha256": "sha256:ab8a1abbf471700569273ef456fb24f859ba44fbdd37a64e3e62b5f67a085ea7"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/prepared/rollout_task_views.jsonl",
+      "size": 9007,
+      "sha256": "sha256:92aadf9d60b23de4d33db68b4cf2150a020c8feda1667e80af2592773d07caee"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/prepared/replay_summary.json",
+      "size": 642,
+      "sha256": "sha256:f28fe916a7744b0332cf0da2d2abb64dd35bb96d83afb35699c2b4f4b9028759"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/private/host_grading_views.jsonl",
+      "size": 9695,
+      "sha256": "sha256:78b28860a8019d85dbc96c223eb3a90e79606511dcdc10e1d1482c5e8609c195"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/derived/overlays.jsonl",
+      "size": 2832,
+      "sha256": "sha256:3949e42d3bea6f4e46dec287aa360c9b19d370b4816fc95aa7abf1344ee712ac"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/raw_supplement_archive_v1_20261003.json",
+      "size": 12699,
+      "sha256": "sha256:e2656fd27b3ad88e73da8afa1266d79ed2ac57953eb084fafd81e1d6644f89ae"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/raw_supplement_archive_v2_f5_20261003.json",
+      "size": 4182,
+      "sha256": "sha256:397ca852222c2cbd23d53f0de16a02bb44bcd33fd5a3485e985e58bd33eab153"
+    }
+  ]
+}

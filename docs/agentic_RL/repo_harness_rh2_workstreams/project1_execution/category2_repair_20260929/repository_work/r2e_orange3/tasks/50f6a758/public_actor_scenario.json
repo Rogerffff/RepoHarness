@@ -1,0 +1,42 @@
+{
+  "name": "orange50f6_statement_public_actor_v1",
+  "task": "orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e",
+  "scope": "prepared_public_actor_scenario_not_run_not_model_quality_probe",
+  "source_public_commands_sha256": "sha256:a38f75e2352e89e676309a88483c5d67667b6384a636baf1edb80e4677988843",
+  "source_public_reading_sha256": "sha256:a88fd2823f70e48aad64cf0628dcdd8e9b00c34797762313d2b2625cba5c07f5",
+  "adaptation": "原fresh读者文件保留；actor副本只将warning正文捕获兼容text关键字，不改变断言与需求。",
+  "run_note": "材料与配方固定后，通过原r2e_probe_e2e.py --no-grade。base公开缺警告失败和修复后的旧冲突断言失败分列；本场景不修改项目源码或仓库测试。",
+  "steps": [
+    {
+      "kind": "bash_r2e_preflight"
+    },
+    {
+      "kind": "bash",
+      "id": "actor_identity_imports",
+      "command": "cd /testbed\nid\npwd\n.venv/bin/python - <<'PYINFO'\nimport sys, numpy, Orange\nfrom Orange.widgets.data import owcolor\nprint(\"interpreter\", sys.executable)\nprint(\"python_version\", sys.version.split()[0])\nprint(\"numpy\", numpy.__version__, numpy.__file__)\nprint(\"Orange\", Orange.__file__)\nprint(\"module\", owcolor.__file__)\nPYINFO",
+      "timeout_ms": 120000
+    },
+    {
+      "kind": "bash",
+      "id": "public_existing_regressions",
+      "command": "cd /testbed\nQT_QPA_PLATFORM=minimal xvfb-run --auto-servernum .venv/bin/python -m pytest -q \\\n  Orange/widgets/data/tests/test_owcolor.py::TestOWColor::test_parse_var_defs \\\n  Orange/widgets/data/tests/test_owcolor.py::TestOWColor::test_parse_var_defs_invalid \\\n  Orange/widgets/data/tests/test_owcolor.py::TestOWColor::test_parse_var_defs_shows_warnings \\\n  Orange/widgets/data/tests/test_owcolor.py::TestOWColor::test_load \\\n  Orange/widgets/data/tests/test_owcolor.py::DiscAttrTest::test_to_dict",
+      "timeout_ms": 180000
+    },
+    {
+      "kind": "bash",
+      "id": "public_issue_and_rename_contract",
+      "command": "set -eu\ncd /testbed\nowcolor_public_tmp=$(mktemp -d /tmp/owcolor-public-XXXXXX)\ntrap 'rm -rf \"$owcolor_public_tmp\"' EXIT\ncat > \"$owcolor_public_tmp/test_public_contract.py\" <<'PYTEST_PUBLIC'\nfrom unittest.mock import patch\nfrom Orange.widgets.data import owcolor\nfrom Orange.widgets.data.tests import test_owcolor as public_tests\nfrom Orange.widgets.tests.base import WidgetTest\n\n\nclass TestPublicOWColor(WidgetTest):\n    def setUp(self):\n        self.widget = self.create_widget(owcolor.OWColor)\n        public_tests.TestOWColor._create_descs(self)\n\n    def parse(self, definitions):\n        with patch.object(owcolor.QMessageBox, \"warning\") as warning, \\\n             patch.object(owcolor.QMessageBox, \"critical\") as critical:\n            self.widget._parse_var_defs(definitions)\n        critical.assert_not_called()\n        text = \"\\n\".join(\n            str(call[0][2] if len(call[0]) >= 3 else call[1].get(\"text\", \"\"))\n            for call in warning.call_args_list)\n        return warning, text\n\n    def names(self):\n        return [d.name for d in self.widget.disc_descs + self.widget.cont_descs]\n\n    def test_unused_categorical_definitions(self):\n        warning, text = self.parse({\"categorical\": {\n            \"foo\": {\"renamed_values\": {}},\n            \"bar\": {\"renamed_values\": {}}}, \"numeric\": {}})\n        warning.assert_called()\n        self.assertIn(\"foo\", text)\n        self.assertIn(\"bar\", text)\n        self.assertEqual(self.names(), [\"varA\", \"varB\", \"varC\", \"varD\", \"varE\"])\n\n    def test_unused_numeric_definition(self):\n        warning, text = self.parse({\"categorical\": {}, \"numeric\": {\"foo\": {}}})\n        warning.assert_called()\n        self.assertIn(\"foo\", text)\n        self.assertEqual(self.names(), [\"varA\", \"varB\", \"varC\", \"varD\", \"varE\"])\n\n    def test_duplicate_variable_renames(self):\n        definitions = [\n            {\"categorical\": {\"varA\": {\"rename\": \"varB\"}}, \"numeric\": {}},\n            {\"categorical\": {\"varA\": {\"rename\": \"X\"}},\n             \"numeric\": {\"varD\": {\"rename\": \"X\"}}},\n        ]\n        for case in definitions:\n            with self.subTest(definitions=case):\n                public_tests.TestOWColor._create_descs(self)\n                warning, text = self.parse(case)\n                warning.assert_called()\n                self.assertIn(\"duplicated names\", text)\n                self.assertEqual(self.names(), [\"varA\", \"varB\", \"varC\", \"varD\", \"varE\"])\n\n    def test_variable_name_swap(self):\n        warning, _ = self.parse({\n            \"categorical\": {\"varA\": {\"rename\": \"varD\"}},\n            \"numeric\": {\"varD\": {\"rename\": \"varA\"}}})\n        warning.assert_not_called()\n        self.assertEqual(self.names(), [\"varD\", \"varB\", \"varC\", \"varA\", \"varE\"])\n\n    def test_unused_rename_preserves_valid_rename(self):\n        warning, text = self.parse({\n            \"categorical\": {\"varA\": {\"rename\": \"X\"}},\n            \"numeric\": {\"var not\": {\"rename\": \"X\"}}})\n        warning.assert_called()\n        self.assertIn(\"var not\", text)\n        self.assertNotIn(\"duplicated names\", text)\n        self.assertEqual(self.names(), [\"X\", \"varB\", \"varC\", \"varD\", \"varE\"])\nPYTEST_PUBLIC\nQT_QPA_PLATFORM=minimal xvfb-run --auto-servernum .venv/bin/python -m pytest -q \\\n  \"$owcolor_public_tmp/test_public_contract.py::TestPublicOWColor\" \\\n  -k 'test_unused_ or test_duplicate_variable_renames or test_variable_name_swap'",
+      "timeout_ms": 180000
+    },
+    {
+      "kind": "bash",
+      "id": "public_original_conflict",
+      "command": "cd /testbed\nQT_QPA_PLATFORM=minimal xvfb-run --auto-servernum .venv/bin/python -m pytest -q Orange/widgets/data/tests/test_owcolor.py::TestOWColor::test_parse_var_defs_no_rename",
+      "timeout_ms": 180000
+    },
+    {
+      "kind": "text",
+      "text": "Public actor checks completed."
+    }
+  ]
+}

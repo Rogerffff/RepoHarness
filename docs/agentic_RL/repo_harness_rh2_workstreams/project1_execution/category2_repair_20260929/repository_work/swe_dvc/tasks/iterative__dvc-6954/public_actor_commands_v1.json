@@ -1,0 +1,30 @@
+[
+  {
+    "id": "identity",
+    "cmd": "python -c 'import sys,os,json,importlib.metadata as m,pygit2,dvc; print(\"RH2_SYS_EXECUTABLE=\"+sys.executable); print(\"RH2_CONDA=\"+str(os.environ.get(\"CONDA_DEFAULT_ENV\"))); print(json.dumps({\"uid\":os.getuid(),\"dvc\":dvc.__file__,\"pygit2\":m.version(\"pygit2\")})); assert os.getuid()==54321; assert m.version(\"pygit2\")==\"1.14.1\"; assert dvc.__file__.startswith(\"/testbed/\")'",
+    "timeout_s": 120,
+    "expect": "zero",
+    "purpose": "实际agent身份、激活解释器、当前DVC源码和公开pygit2依赖"
+  },
+  {
+    "id": "activation_permissions",
+    "cmd": "echo RH2_BASHENV_WRITE=$( ( : >> /rh2/bash_env ) 2>/dev/null && echo WRITABLE || echo DENIED ); test ! -w /rh2/bash_env",
+    "timeout_s": 60,
+    "expect": "zero",
+    "purpose": "既有激活文件保护核查"
+  },
+  {
+    "id": "public_tests",
+    "cmd": "PYTHONPATH=/testbed python -m pytest -q tests/func/params/test_show.py",
+    "timeout_s": 600,
+    "expect": "zero",
+    "purpose": "开发说明中的已有公开功能测试"
+  },
+  {
+    "id": "dependency_cli",
+    "cmd": "python -m pip check && PYTHONPATH=/testbed python -m dvc run --help && PYTHONPATH=/testbed python -m dvc repro --help",
+    "timeout_s": 180,
+    "expect": "zero",
+    "purpose": "公开依赖一致性与真实CLI帮助"
+  }
+]

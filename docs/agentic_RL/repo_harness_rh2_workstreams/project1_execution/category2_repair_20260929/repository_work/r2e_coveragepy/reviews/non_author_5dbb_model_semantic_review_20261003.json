@@ -1,0 +1,553 @@
+{
+  "schema_id": "coveragepy.non_author_model_semantic_review.v1",
+  "date": "2026-10-03",
+  "task_id": "r2e_gym_subset::coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9",
+  "non_author": true,
+  "fresh_public_reader": false,
+  "material_revisions": [
+    "r2e-mr-038",
+    "r2e-mr-039",
+    "r2e-mr-068"
+  ],
+  "cpu_version": "R5",
+  "expected_key_count": 76,
+  "user_decision": "A: once=True按slug去重，同slug不同message后续不重复，不同slug各显示一次",
+  "methods": [
+    "原baseline.tar源代码只读",
+    "原FrozenPatch逐项解码和摘要核对",
+    "原candidate diff/轨迹对照",
+    "内存SQLite query_only读取",
+    "原正式log逐键重新读取",
+    "复用已有效R5 CPU/有界执行审查"
+  ],
+  "not_performed": [
+    "SSH",
+    "Docker",
+    "调用模型",
+    "项目测试",
+    "原工件修改",
+    "全套CPU/执行复审",
+    "作者七维轨迹/效率分析"
+  ],
+  "statement_sha256": "b2a7f5fb3e3c76a8896ac0f8afb2e9b534bcfbd28baf6ebbe647ddd0857b2415",
+  "models": {
+    "coder": {
+      "job_id": "gpu1003-coveragepy5dbb-coder-a1",
+      "artifact_dir": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-coveragepy5dbb-coder-a1",
+      "source_semantics": "pass_for_approved_A",
+      "whole_patch_quality": "qualified_not_a_clean_fix_example",
+      "raw_reward": 1.0,
+      "raw_expected_match": 76,
+      "raw_expected_total": 76,
+      "frozen_patch_digest": "sha256:9b8da278e28bc6c8d6e9845afbfcee078208f34554d5fd35e1555bb12763707b",
+      "artifact_shas": {
+        "attempt/frozen/frozen_patch.json": "3eb0de97ea9fa855962e0d1d1336a3c1e569e0b1c86c86ac8f94a6bf544eb400",
+        "attempt/frozen/baseline.tar": "5568fccd9adfd6b3de2891edc8a7d0b6614f8ab712e06f0936d7aa65bbd717c1",
+        "attempt/frozen/baseline_manifest.json": "6eaeb8e6615d2eec996cebbd58878a91deede5a59ba7561c5c15d60f79bb74fb",
+        "attempt/candidate/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9.diff": "76b7d869a0fb37456b54522a73f6cd35faa830e80fc6e1b6514fa8a49c770d94",
+        "attempt/trajectory.jsonl": "58269b9d65d5af6dd8e8aec13b5b4da875ddb0c3e8fd70b00f8e42ef844dbffd",
+        "grading/report.json": "447b86dabbb818a79d8b424eb57e71b91641fb765b03fafe9f29fa07240c0006",
+        "grading/projection.json": "e0c2836070a4dd4890734e6024aa903b587429a35d56f7f8d8743304d6f5f019",
+        "grading/eval_logs/evallog_gpu1003-coveragepy5dbb-c_c0ebeb96.eval.log": "df6ccc8704c092a100ddfa06f500ece9373c7e73f9755040958e0de7e0909bf1",
+        "grading/eval_logs/evallog_gpu1003-coveragepy5dbb-c_c0ebeb96.diagnostics.json": "fd53019b47c8dabc4ee911c096e5fea8eaa36e4c6c5e0cba741449aa3706c6ed"
+      },
+      "baseline_relevant": {
+        "coverage/control.py": {
+          "sha256": "7d6a28cda461998f6a02a771e243198a5d62251efeafd65081d3c6433dd32cef",
+          "matches_manifest": true
+        },
+        "tests/coveragetest.py": {
+          "sha256": "7e04a0cb73d00104e41090928dafaf2964d6d41cc002a76fe96f62bdd7e9c83d",
+          "matches_manifest": true
+        },
+        "coverage/report.py": {
+          "sha256": "02f14e4b597f92bd2a301a5a4133b357eb6092bb783760af30902d05cd19a524",
+          "matches_manifest": true
+        },
+        "coverage/sqldata.py": {
+          "sha256": "d3823873dac7bcc15024e490d099239ad4beef3fcdffea671291bc6401b2c4b7",
+          "matches_manifest": true
+        },
+        "tests/test_api.py": {
+          "sha256": "642e168112ae3a3fa2eaf283ee045a6c31e0fb4abad8e6d9b102ff3cf434c73b",
+          "matches_manifest": true
+        },
+        "tests/test_testing.py": {
+          "sha256": "d057784e21b2cd95a17ebb93057f77888d37b8c34c90ed4a839783db774d86fb",
+          "matches_manifest": true
+        },
+        "setup.cfg": {
+          "sha256": "f31a1d281e54ec6f76e5a702a546e6dad86b2800764cf7eda5fdb3934ccac518",
+          "matches_manifest": true
+        },
+        ".gitignore": {
+          "sha256": "4700a63e2b916880ca2a534c5b1ffdaacd73e54ac614a475ac33717096adc182",
+          "matches_manifest": true
+        }
+      },
+      "entry_checks": [
+        {
+          "path": ".coverage",
+          "operation": "add",
+          "byte_size": 53248,
+          "sha256": "eb8911bf2e5931fed772665cbf7cd905bc825f346e8fab8a4ffbe4ada4917c27",
+          "matches_declared_digest": true,
+          "git_blob_sha1": "09c9ff5ce9860b73b93f848862270239364f8378"
+        },
+        {
+          "path": "comprehensive_test.py",
+          "operation": "add",
+          "byte_size": 1274,
+          "sha256": "a117763ed045899461ecf891ffcd929e35098adcb9afe825207143fb93e13bfa",
+          "matches_declared_digest": true,
+          "git_blob_sha1": "a0d8087458b8a9a1eb314d91ff0f73742d164d2f"
+        },
+        {
+          "path": "coverage/control.py",
+          "operation": "modify",
+          "byte_size": 40772,
+          "sha256": "9b55f28b9d5fc2261a5677998a4f0d97a3b3babd2444b124987421fdc96568b0",
+          "matches_declared_digest": true,
+          "git_blob_sha1": "2ab6a1eb0b1be4b9a5f3d882fdaaee7851aeb7e0"
+        },
+        {
+          "path": "final_validation.py",
+          "operation": "add",
+          "byte_size": 1989,
+          "sha256": "4a5b7bf82d94fd650d148be8e47c04ba104b7cc4d791bef27f1ba2448d465c08",
+          "matches_declared_digest": true,
+          "git_blob_sha1": "5dd9c1f260fd1f29583d25298ce9a4baec12fa6b"
+        },
+        {
+          "path": "original_issue_test.py",
+          "operation": "add",
+          "byte_size": 306,
+          "sha256": "695cf3787d533167f5061f29a7756892843781ba8e85ee81d094e79c113950c5",
+          "matches_declared_digest": true,
+          "git_blob_sha1": "ad61282ecda8348db8d384c51296f62ac5d57c35"
+        },
+        {
+          "path": "test_once_functionality.py",
+          "operation": "add",
+          "byte_size": 1640,
+          "sha256": "6be481a4b8da6b47a49092b9963ab53693999fd0ca37bd853a7ba913c9639fbc",
+          "matches_declared_digest": true,
+          "git_blob_sha1": "6cacea5219a8b97e01b066a5e58f352a1b7fd777"
+        },
+        {
+          "path": "test_once_issue.py",
+          "operation": "add",
+          "byte_size": 420,
+          "sha256": "2ea1aaf180519787be24f76bbd175fbf3bff35d11797a318c526dc3d8312555a",
+          "matches_declared_digest": true,
+          "git_blob_sha1": "997c1f720409f11c26ba39ae3742fcf5b68efa75"
+        },
+        {
+          "path": "tests/modules/.coverage",
+          "operation": "add",
+          "byte_size": 53248,
+          "sha256": "55a22fa2d362ae7cec9a4be3de24b6c17a42be2259269f225a457ba1c3c016dd",
+          "matches_declared_digest": true,
+          "git_blob_sha1": "a8f755bf49b2bafeb74e0aa13f2683d729be134f"
+        }
+      ],
+      "sqlite_generated_data": [
+        {
+          "path": ".coverage",
+          "sha256": "eb8911bf2e5931fed772665cbf7cd905bc825f346e8fab8a4ffbe4ada4917c27",
+          "schema_version": 7,
+          "table_counts": {
+            "arc": 0,
+            "context": 0,
+            "coverage_schema": 1,
+            "file": 0,
+            "line_bits": 0,
+            "meta": 3,
+            "tracer": 0
+          },
+          "metadata": {
+            "sys_argv": "['test_once_issue.py']",
+            "version": "5.0.2a1",
+            "when": "2026-10-02 20:34:43"
+          },
+          "file_paths": [],
+          "custom_views_triggers": [],
+          "interpretation": "公开开发产生的测量DB，无评分逻辑/断言，修复非必要项"
+        },
+        {
+          "path": "tests/modules/.coverage",
+          "sha256": "55a22fa2d362ae7cec9a4be3de24b6c17a42be2259269f225a457ba1c3c016dd",
+          "schema_version": 7,
+          "table_counts": {
+            "arc": 0,
+            "context": 1,
+            "coverage_schema": 1,
+            "file": 9,
+            "line_bits": 3,
+            "meta": 4,
+            "tracer": 0
+          },
+          "metadata": {
+            "sys_argv": "['/testbed/.venv/lib/python3.7/site-packages/pytest.py', '-o', 'addopts=', '-p', 'no:cacheprovider', '--color=no', '-x', 'tests/test_api.py']",
+            "version": "5.0.2a1",
+            "when": "2026-10-02 20:35:10",
+            "has_arcs": "0"
+          },
+          "file_paths": [
+            "/testbed/tests/modules/pkg1/__init__.py",
+            "/testbed/tests/modules/pkg1/p1a.py",
+            "/testbed/tests/modules/pkg1/sub/__init__.py",
+            "/testbed/tests/modules/pkg1/p1c.py",
+            "/testbed/tests/modules/pkg1/runmod2.py",
+            "/testbed/tests/modules/pkg1/__main__.py",
+            "/testbed/tests/modules/pkg1/sub/runmod3.py",
+            "/testbed/tests/modules/pkg1/sub/__main__.py",
+            "/testbed/tests/modules/pkg1/sub/ps1a.py"
+          ],
+          "custom_views_triggers": [],
+          "interpretation": "公开开发产生的测量DB，无评分逻辑/断言，修复非必要项"
+        }
+      ],
+      "source_behavior": {
+        "unexpected_once_keyword_fixed": true,
+        "same_slug_different_message_once_suppressed": true,
+        "different_slugs_once_each_displayed": true,
+        "duplicate_not_added_to_warnings": true,
+        "disabled_warning_returns_before_once_state": true,
+        "once_set_is_instance_local_not_config_disable_warnings": true,
+        "once_false_preserves_original_append_format_pid_stderr": true,
+        "report_ignore_errors_path": "coverage/report.py unchanged; _warn calls without once retain baseline behavior",
+        "None_empty_slug": "truthy slug check means repeat; not new R5 condition",
+        "write_exception_residual": "bookkeeping occurs before stderr.write; exceptional failure could consume once state; no observed evidence, not current gate"
+      },
+      "private_once_tests_bypass_capture_helper": true,
+      "formal_scope": "run_tests.sh只选择r2e_tests；正式once键直接调用真实_warn读stderr；新增公开脚本未入76键",
+      "findings": [
+        {
+          "id": "C1",
+          "priority": "P2",
+          "reachability": "test_only",
+          "path": "test_once_functionality.py",
+          "lines": [
+            12,
+            33
+          ],
+          "behavior": "两个新增测试调用不存在的cov.assert_warnings，原轨迹307/311记录2 failed/AttributeError，最终冻结保留原字节",
+          "impact": "完整候选不适合作为干净修复示例；全树pytest可能收集失败新增测试；不影响只选择r2e_tests的76键，不阻断材料/环境",
+          "recommendation": "若整理可合并修复，删除探索脚本或改为真实stderr断言，新工件独立身份；保留首轮原件/分数"
+        },
+        {
+          "id": "C2",
+          "priority": "observation",
+          "paths": [
+            "comprehensive_test.py",
+            "final_validation.py",
+            "original_issue_test.py",
+            "test_once_issue.py"
+          ],
+          "behavior": "打印MCVE/功能展示；final_validation无输出断言但返回True",
+          "impact": "真实输出可作为观察证据，不是全面自动测试通过"
+        }
+      ],
+      "trajectory_evidence": {
+        "wrong_intermediate_output": [
+          162,
+          184
+        ],
+        "final_set_edits": [
+          206,
+          215
+        ],
+        "final_once_output": [
+          224,
+          228
+        ],
+        "disable_regular_output": [
+          246,
+          250
+        ],
+        "warn6": [
+          259,
+          263
+        ],
+        "api74": [
+          272,
+          276
+        ],
+        "testing22": [
+          285,
+          289
+        ],
+        "new_tests_failed": [
+          307,
+          311
+        ],
+        "acknowledged_and_changed_to_print_probe": [
+          351,
+          355
+        ],
+        "final_print_probe": [
+          364,
+          368
+        ]
+      },
+      "new_execution_performed": false,
+      "control_py_unified_diff": "--- baseline/coverage/control.py\n+++ frozen/coverage/control.py\n@@ -206,6 +206,8 @@\n \n         # A record of all the warnings that have been issued.\n         self._warnings = []\n+        # A set of warning slugs that have already been displayed when once=True\n+        self._once_warnings = set()\n \n         # Other instance attributes, set later.\n         self._data = self._collector = None\n@@ -333,14 +335,24 @@\n \n         return not reason\n \n-    def _warn(self, msg, slug=None):\n+    def _warn(self, msg, slug=None, once=False):\n         \"\"\"Use `msg` as a warning.\n \n         For warning suppression, use `slug` as the shorthand.\n+        If `once` is True, then this warning will only be displayed once,\n+        even if called multiple times with the same slug.\n         \"\"\"\n         if slug in self.config.disable_warnings:\n             # Don't issue the warning\n             return\n+\n+        # Handle the once parameter - check if we've already issued this warning\n+        if once and slug:\n+            if slug in self._once_warnings:\n+                # This warning with this slug has already been displayed\n+                return\n+            # Mark this slug as having been displayed\n+            self._once_warnings.add(slug)\n \n         self._warnings.append(msg)\n         if slug:\n",
+      "test_like_paths": [
+        "comprehensive_test.py",
+        "original_issue_test.py",
+        "test_once_functionality.py",
+        "test_once_issue.py",
+        "tests/modules/.coverage"
+      ],
+      "reported_test_files_modified": false,
+      "formal_independent_read": {
+        "observed_count": 76,
+        "match_count": 76,
+        "missing": [],
+        "unexpected": [],
+        "mismatched": [],
+        "once_key_lines": {
+          "ApiTest.test_warn_once": 7825,
+          "ApiTest.test_warn_once_each_slug": 7827
+        }
+      }
+    },
+    "qwen36": {
+      "job_id": "gpu1003-coveragepy5dbb-qwen36-a1",
+      "artifact_dir": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-coveragepy5dbb-qwen36-a1",
+      "source_semantics": "pass_for_approved_A",
+      "whole_patch_quality": "pass_with_unnecessary_helper_and_generated_data",
+      "raw_reward": 1.0,
+      "raw_expected_match": 76,
+      "raw_expected_total": 76,
+      "frozen_patch_digest": "sha256:736f5598979392562bf0524a284a378b6729e7484e088c1b6e8eecc44b587e0d",
+      "artifact_shas": {
+        "attempt/frozen/frozen_patch.json": "7bf759018083c14673ee5918ee230d28591451cf9e467bf4416d089e56b381ca",
+        "attempt/frozen/baseline.tar": "ecf16687ecf90c1b287e9f5b932869f5b3c13b83f4b993e3da91e2982d8609e0",
+        "attempt/frozen/baseline_manifest.json": "6eaeb8e6615d2eec996cebbd58878a91deede5a59ba7561c5c15d60f79bb74fb",
+        "attempt/candidate/coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9.diff": "f8b60dc74dba35cd1dcfc31b295d4b15e3952ac66a42bc8f99303a97b69233ed",
+        "attempt/trajectory.jsonl": "3d4430d2a73184d2a7b79d38d8fd5417108b9055cc9cca93abe4055efafe7a15",
+        "grading/report.json": "8b290fa87c31b37c78d61f26a7691175b461fccd8dd64e93594aad82c3e82a05",
+        "grading/projection.json": "4a1d67c13f00bd356362ebf666c01ecff714b0215517c9e213890dfd3282576c",
+        "grading/eval_logs/evallog_gpu1003-coveragepy5dbb-q_1e223946.eval.log": "a3f573a436a7ea92785fc94ad9bbaae44cf5f3654fde4489f649b9cc0dcd85f3",
+        "grading/eval_logs/evallog_gpu1003-coveragepy5dbb-q_1e223946.diagnostics.json": "56bfa6f442c6635c9b0048cb80f2946bcabf3346ebf94153d1faabd726dc706f"
+      },
+      "baseline_relevant": {
+        "coverage/control.py": {
+          "sha256": "7d6a28cda461998f6a02a771e243198a5d62251efeafd65081d3c6433dd32cef",
+          "matches_manifest": true
+        },
+        "tests/coveragetest.py": {
+          "sha256": "7e04a0cb73d00104e41090928dafaf2964d6d41cc002a76fe96f62bdd7e9c83d",
+          "matches_manifest": true
+        },
+        "coverage/report.py": {
+          "sha256": "02f14e4b597f92bd2a301a5a4133b357eb6092bb783760af30902d05cd19a524",
+          "matches_manifest": true
+        },
+        "coverage/sqldata.py": {
+          "sha256": "d3823873dac7bcc15024e490d099239ad4beef3fcdffea671291bc6401b2c4b7",
+          "matches_manifest": true
+        },
+        "tests/test_api.py": {
+          "sha256": "642e168112ae3a3fa2eaf283ee045a6c31e0fb4abad8e6d9b102ff3cf434c73b",
+          "matches_manifest": true
+        },
+        "tests/test_testing.py": {
+          "sha256": "d057784e21b2cd95a17ebb93057f77888d37b8c34c90ed4a839783db774d86fb",
+          "matches_manifest": true
+        },
+        "setup.cfg": {
+          "sha256": "f31a1d281e54ec6f76e5a702a546e6dad86b2800764cf7eda5fdb3934ccac518",
+          "matches_manifest": true
+        },
+        ".gitignore": {
+          "sha256": "4700a63e2b916880ca2a534c5b1ffdaacd73e54ac614a475ac33717096adc182",
+          "matches_manifest": true
+        }
+      },
+      "entry_checks": [
+        {
+          "path": ".coverage",
+          "operation": "add",
+          "byte_size": 53248,
+          "sha256": "1a7bc54bbe65715bf3263338ba27b051815c48f6619bb024687ac4f3ab7d58d1",
+          "matches_declared_digest": true,
+          "git_blob_sha1": "decd98b465321abd8436ce59195066ac48734976"
+        },
+        {
+          "path": "coverage/control.py",
+          "operation": "modify",
+          "byte_size": 40567,
+          "sha256": "bfff9db516580346644b5ab7f0895708e013c1256847b0af5ffd668dc3b074e1",
+          "matches_declared_digest": true,
+          "git_blob_sha1": "4a0c112ace34b87a709d93d1e84ac7eafd359d44"
+        },
+        {
+          "path": "tests/coveragetest.py",
+          "operation": "modify",
+          "byte_size": 19007,
+          "sha256": "564ef4381770a9d0b83089fcdc48018578467187279b034e5c8aaf0f60acf262",
+          "matches_declared_digest": true,
+          "git_blob_sha1": "ec05c85bdf3b3dbe0d5694fd8f5f9f122ae4878a"
+        },
+        {
+          "path": "tests/modules/.coverage",
+          "operation": "add",
+          "byte_size": 53248,
+          "sha256": "3d8652976b9abb658f2c1826e9c3430c7f063d55bd099df64c7b9d13db05df17",
+          "matches_declared_digest": true,
+          "git_blob_sha1": "ba0a9db4f9be94babb21b4e90f154b267b7b2926"
+        }
+      ],
+      "sqlite_generated_data": [
+        {
+          "path": ".coverage",
+          "sha256": "1a7bc54bbe65715bf3263338ba27b051815c48f6619bb024687ac4f3ab7d58d1",
+          "schema_version": 7,
+          "table_counts": {
+            "arc": 0,
+            "context": 0,
+            "coverage_schema": 1,
+            "file": 0,
+            "line_bits": 0,
+            "meta": 3,
+            "tracer": 0
+          },
+          "metadata": {
+            "sys_argv": "['-c']",
+            "version": "5.0.2a1",
+            "when": "2026-10-02 21:08:31"
+          },
+          "file_paths": [],
+          "custom_views_triggers": [],
+          "interpretation": "公开开发产生的测量DB，无评分逻辑/断言，修复非必要项"
+        },
+        {
+          "path": "tests/modules/.coverage",
+          "sha256": "3d8652976b9abb658f2c1826e9c3430c7f063d55bd099df64c7b9d13db05df17",
+          "schema_version": 7,
+          "table_counts": {
+            "arc": 0,
+            "context": 1,
+            "coverage_schema": 1,
+            "file": 9,
+            "line_bits": 3,
+            "meta": 4,
+            "tracer": 0
+          },
+          "metadata": {
+            "sys_argv": "['/testbed/.venv/lib/python3.7/site-packages/pytest.py', '-o', 'addopts=', '-p', 'no:cacheprovider', '--color=no', '-rfE', 'tests/test_api.py', '-x', '-q']",
+            "version": "5.0.2a1",
+            "when": "2026-10-02 21:08:51",
+            "has_arcs": "0"
+          },
+          "file_paths": [
+            "/testbed/tests/modules/pkg1/__init__.py",
+            "/testbed/tests/modules/pkg1/p1a.py",
+            "/testbed/tests/modules/pkg1/sub/__init__.py",
+            "/testbed/tests/modules/pkg1/p1c.py",
+            "/testbed/tests/modules/pkg1/runmod2.py",
+            "/testbed/tests/modules/pkg1/__main__.py",
+            "/testbed/tests/modules/pkg1/sub/runmod3.py",
+            "/testbed/tests/modules/pkg1/sub/__main__.py",
+            "/testbed/tests/modules/pkg1/sub/ps1a.py"
+          ],
+          "custom_views_triggers": [],
+          "interpretation": "公开开发产生的测量DB，无评分逻辑/断言，修复非必要项"
+        }
+      ],
+      "source_behavior": {
+        "unexpected_once_keyword_fixed": true,
+        "same_slug_different_message_once_suppressed": true,
+        "different_slugs_once_each_displayed": true,
+        "duplicate_not_added_to_warnings": true,
+        "disabled_warning_returns_before_once_state": true,
+        "once_set_is_instance_local_not_config_disable_warnings": true,
+        "once_false_preserves_original_append_format_pid_stderr": true,
+        "report_ignore_errors_path": "coverage/report.py unchanged; _warn calls without once retain baseline behavior",
+        "None_empty_slug": "truthy slug check means repeat; not new R5 condition",
+        "write_exception_residual": "bookkeeping occurs before stderr.write; exceptional failure could consume once state; no observed evidence, not current gate"
+      },
+      "private_once_tests_bypass_capture_helper": true,
+      "formal_scope": "run_tests.sh只选择r2e_tests；正式once键直接调用真实_warn读stderr；新增公开脚本未入76键",
+      "findings": [
+        {
+          "id": "Q1",
+          "priority": "observation",
+          "reachability": "test_only",
+          "path": "tests/coveragetest.py",
+          "line": 267,
+          "behavior": "capture_warning扩签名接收once及未知kwargs；原追加/格式化/断言体逐字不变，仍记录所有调用，不执行真实once去重",
+          "necessity": "可解释为公开测试替身接口兼容辅助，但当前内部_warn无新增once调用，未见失败驱动；不是当前回归必需项",
+          "impact": "未删断言/改expected/skip；正式once直接读真实stderr，不能由helper替代通过；未知kwargs默默忽略限制完整参数验收",
+          "recommendation": "若整理生产补丁，可缩小或去除多余helper改动；不改原工件"
+        }
+      ],
+      "trajectory_evidence": {
+        "source_edits": [
+          173,
+          187
+        ],
+        "helper_edit": [
+          201
+        ],
+        "direct_once_stderr": [
+          219,
+          223
+        ],
+        "warn6": [
+          237,
+          241
+        ],
+        "edge_print_probes": [
+          255,
+          259
+        ],
+        "api74_pipeline_head": [
+          273,
+          277
+        ],
+        "testing22_pipeline_head": [
+          319,
+          323
+        ]
+      },
+      "new_execution_performed": false,
+      "control_py_unified_diff": "--- baseline/coverage/control.py\n+++ frozen/coverage/control.py\n@@ -207,6 +207,9 @@\n         # A record of all the warnings that have been issued.\n         self._warnings = []\n \n+        # Track slugs of warnings that should only be shown once.\n+        self._warned_slugs = set()\n+\n         # Other instance attributes, set later.\n         self._data = self._collector = None\n         self._plugins = None\n@@ -333,18 +336,26 @@\n \n         return not reason\n \n-    def _warn(self, msg, slug=None):\n+    def _warn(self, msg, slug=None, once=False):\n         \"\"\"Use `msg` as a warning.\n \n         For warning suppression, use `slug` as the shorthand.\n+\n+        If `once` is True, the warning will only be displayed once per slug.\n         \"\"\"\n         if slug in self.config.disable_warnings:\n             # Don't issue the warning\n             return\n \n+        if once and slug and slug in self._warned_slugs:\n+            # Already warned with this slug, don't display again\n+            return\n+\n         self._warnings.append(msg)\n         if slug:\n             msg = \"%s (%s)\" % (msg, slug)\n+            if once:\n+                self._warned_slugs.add(slug)\n         if self._debug.should('pid'):\n             msg = \"[%d] %s\" % (os.getpid(), msg)\n         sys.stderr.write(\"Coverage.py warning: %s\\n\" % msg)\n",
+      "test_like_paths": [
+        "tests/coveragetest.py",
+        "tests/modules/.coverage"
+      ],
+      "reported_test_files_modified": false,
+      "formal_independent_read": {
+        "observed_count": 76,
+        "match_count": 76,
+        "missing": [],
+        "unexpected": [],
+        "mismatched": [],
+        "once_key_lines": {
+          "ApiTest.test_warn_once": 7818,
+          "ApiTest.test_warn_once_each_slug": 7820
+        }
+      },
+      "helper_signature_only_change_verified": true
+    }
+  },
+  "blocker_for_same_material_inflight_jobs": null,
+  "new_cpu_required": false,
+  "allowed_use": [
+    "标明R5自建修订版本的首轮普通探针",
+    "候选源码语义与开发测试质量分析",
+    "后续GPU阶段按既定批次安排"
+  ],
+  "not_allowed_inference": [
+    "原benchmark成绩",
+    "训练资格",
+    "稳定能力",
+    "所有候选新增测试通过",
+    "test_files_modified=false代表全部公开测试未改"
+  ],
+  "stop_condition": "两臂最终源码满足已定A，test-like改动与生成物已逐项核，无当前材料阻断；候选质量与材料/环境缺陷分开。"
+}

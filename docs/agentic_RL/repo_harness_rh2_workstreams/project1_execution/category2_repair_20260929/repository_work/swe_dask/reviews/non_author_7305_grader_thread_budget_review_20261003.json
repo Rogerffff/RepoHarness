@@ -1,0 +1,419 @@
+{
+  "schema_id": "rh2.dask7305.non_author_grader_thread_budget_review.v1",
+  "reviewed_at": "2026-10-03T16:37:00+08:00",
+  "reviewer_role": "non_author_subagent",
+  "scope": "read-only runtime receipt, safe baseline source and historical CPU evidence; no execution or mutation beyond two write-once reports",
+  "conclusion": "minimal_new_run_environment_recovery_supported_pending_actual_acceptance",
+  "recovery_implemented_by_this_review": false,
+  "recovery_success_verified": false,
+  "new_score": null,
+  "training_qualification_granted": false,
+  "sources": [
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/dask7305_setup900_live_stall_0827_v1.json",
+      "bytes": 9214,
+      "sha256": "7349bb2dbbc0c956d8014ab8a4c13b21d9670c8d9b9cd2b32a5b9c0ecee2bf46"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/dask7305_thread_runtime_readback_0835_v2.json",
+      "bytes": 9791,
+      "sha256": "f85a3fbb41df8bc200e2ada0e94b1b5824001cc7a6efbb96bb63681d31b2e7d5"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23/results/gpu1003-dask7305-coder-a1/attempt/frozen/baseline.tar",
+      "bytes": 8949760,
+      "sha256": "04c1663b90bbf92af12e50c2cb1e22c935686136388312c1953ea054890d6d6b"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-formal-cpu-c-20261003-v2/remote/run/noop/ledger.jsonl",
+      "bytes": 22910,
+      "sha256": "65d269bee2c769c47174fd027541f734667ddee3a388afc6feef4b1554b7dc84"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-formal-cpu-c-20261003-v2/remote/run/noop/eval_logs/evallog_replay-dask7305-formal-c_63d95bbb.eval.log",
+      "bytes": 72518,
+      "sha256": "6669caea5c101d1cb9e639a84493e3cc739ffacfa5ecccf8bb84dd05828de6ff"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-formal-cpu-c-20261003-v2/remote/run/gold_full_auto/ledger.jsonl",
+      "bytes": 23302,
+      "sha256": "0ad635d275dac147ce0bb38d45e82cffb303d89e76a078d9b1cde85783b82075"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-formal-cpu-c-20261003-v2/remote/run/gold_full_auto/eval_logs/evallog_replay-dask7305-formal-c_3ef8d4ce.eval.log",
+      "bytes": 73650,
+      "sha256": "3ecab158b3daea85d49b8b5a92d9f88a73c7039ab983c9875616102cb6eff819"
+    }
+  ],
+  "safe_tar_members": [
+    {
+      "member": "dask/system.py",
+      "bytes": 1458,
+      "sha256": "fb9ff8c2f9d6dcdafc3c764c089103d08e313f91443c86bfcb3c87f51e808b95",
+      "regular_safe_read_without_extract_or_execution": true
+    },
+    {
+      "member": "dask/multiprocessing.py",
+      "bytes": 7366,
+      "sha256": "086ce5682e001154f0ac8c4c5b6b3bf36cc54e6f3de068a7c7f4ac07ce0a2dfe",
+      "regular_safe_read_without_extract_or_execution": true
+    },
+    {
+      "member": "dask/threaded.py",
+      "bytes": 2538,
+      "sha256": "ab4c4ab03099689d8ace6f890c206771284b7b5c0a0219e0c616bda0b9f058cd",
+      "regular_safe_read_without_extract_or_execution": true
+    },
+    {
+      "member": "dask/config.py",
+      "bytes": 17949,
+      "sha256": "ad388ea23c89ea98bb08549d48d8e15ef4d244b70de1979187ba8c6c683b4cd8",
+      "regular_safe_read_without_extract_or_execution": true
+    },
+    {
+      "member": "dask/dataframe/tests/test_shuffle.py",
+      "bytes": 37182,
+      "sha256": "b019a81adb92ddca708845b87866517551f7353739563f573707992da1d13b42",
+      "regular_safe_read_without_extract_or_execution": true
+    },
+    {
+      "member": "conftest.py",
+      "bytes": 992,
+      "sha256": "888aa2ec3a8ee16e61156caede9c9a8131092ec925aff3af9fb4980feb5f46f2",
+      "regular_safe_read_without_extract_or_execution": true
+    }
+  ],
+  "history": [
+    {
+      "name": "noop",
+      "ledger_path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-formal-cpu-c-20261003-v2/remote/run/noop/ledger.jsonl",
+      "ledger_line": 1,
+      "log_path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-formal-cpu-c-20261003-v2/remote/run/noop/eval_logs/evallog_replay-dask7305-formal-c_63d95bbb.eval.log",
+      "log_sha256_binding_matches": true,
+      "resource_policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "resource_facts": null,
+      "peak_memory_mb": 4096.0,
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 122.938,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "dask_worker_actual_unknown": true,
+      "native_thread_env_actual_unknown": true,
+      "pids_events_unknown": true,
+      "explicit_eight_pool_execution_proven": false,
+      "slow_skips_preserved": 3,
+      "log_rearrange_pass_lines": [
+        1621,
+        1622,
+        1623,
+        1624,
+        1625,
+        1626
+      ],
+      "log_skip_summary_line": 1699,
+      "log_summary_line": 1701
+    },
+    {
+      "name": "gold_full_auto",
+      "ledger_path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-formal-cpu-c-20261003-v2/remote/run/gold_full_auto/ledger.jsonl",
+      "ledger_line": 1,
+      "log_path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7305-formal-cpu-c-20261003-v2/remote/run/gold_full_auto/eval_logs/evallog_replay-dask7305-formal-c_3ef8d4ce.eval.log",
+      "log_sha256_binding_matches": true,
+      "resource_policy": {
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "cpus": 2.0,
+        "grader_profile_digest": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+        "memory_bytes": 4294967296,
+        "network": "deny_all",
+        "pids_limit": 512,
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "shm_bytes": 67108864,
+        "tmpfs_bytes": 1073741824,
+        "uid": 54322,
+        "user": "rh2grader"
+      },
+      "resource_facts": null,
+      "peak_memory_mb": 3114.652,
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 125.66,
+        "segment_completed": true
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "dask_worker_actual_unknown": true,
+      "native_thread_env_actual_unknown": true,
+      "pids_events_unknown": true,
+      "explicit_eight_pool_execution_proven": false,
+      "slow_skips_preserved": 3,
+      "log_rearrange_pass_lines": [
+        1642,
+        1643,
+        1644,
+        1645,
+        1646,
+        1647
+      ],
+      "log_skip_summary_line": 1721,
+      "log_summary_line": 1722
+    }
+  ],
+  "runtime_observed": {
+    "matching_container_ids": true,
+    "same_container_id": "4287fca768245406c746e5971402c5b78c3e8b56af92a0818737ca2c5973a1fe",
+    "image_config_id": "sha256:b4f186ca0a0139f4287b9203a666b9fd009af079ddad700bb2bf8019aede8b99",
+    "cpu_quota_NanoCpus": 2000000000,
+    "cpu_max": "200000 100000",
+    "visible_os_cpus": 24,
+    "affinity_cpus": 24,
+    "dask_CPU_COUNT": 24,
+    "dask_num_workers": null,
+    "cpu_probe_source_lines": [
+      237,
+      238,
+      239,
+      240
+    ],
+    "probe_UID_claim_basis": "GPU description and named candidate_UID_readonly_probe; stdout has no new id-u proof",
+    "pids_current": 500,
+    "pids_peak": 512,
+    "pids_limit": 512,
+    "pids_events_max": 1,
+    "oom": 0,
+    "oom_kill": 0,
+    "python_process_count": 26,
+    "python_threads_sum": 495,
+    "parent_pytest_threads": 39,
+    "spawn_process_count": 24,
+    "spawn_threads_sum": 455,
+    "spawn_thread_distribution": {
+      "32": 5,
+      "24": 12,
+      "1": 7
+    },
+    "openblas_mapped_python_process_count": 18,
+    "openblas_mapped_file": "libopenblasp-r0.3.25.so",
+    "allowed_thread_env_all_empty": true,
+    "env_scope": "selected thread-variable whitelist only; receipt does not enumerate the keys; not whole process environment",
+    "per_thread_library_attribution_proven": false,
+    "unique_sufficient_stall_cause_proven": false,
+    "sampling_is_atomic": false
+  },
+  "static_paths": [
+    {
+      "member": "dask/system.py",
+      "lines": [
+        22,
+        25,
+        27,
+        29,
+        34,
+        36,
+        38,
+        40,
+        43,
+        45,
+        47,
+        48,
+        53
+      ],
+      "claim": "CPU detection reads only v1 cfs quota paths, not v2 cpu.max; caches CPU_COUNT"
+    },
+    {
+      "member": "dask/config.py",
+      "lines": [
+        171,
+        174,
+        178,
+        179,
+        180,
+        194,
+        195,
+        196,
+        198,
+        202,
+        203,
+        205,
+        399,
+        400,
+        402,
+        647,
+        40,
+        55,
+        57,
+        355
+      ],
+      "claim": "DASK_NUM_WORKERS string 2 becomes integer config num_workers, canonical underscore/hyphen lookup supports scheduler"
+    },
+    {
+      "member": "dask/multiprocessing.py",
+      "lines": [
+        141,
+        143,
+        144,
+        145,
+        152,
+        184,
+        185,
+        186,
+        196,
+        197,
+        220,
+        222,
+        232,
+        233,
+        234
+      ],
+      "claim": "default spawn Pool obeys config2; explicit num_workers or supplied pool wins"
+    },
+    {
+      "member": "dask/threaded.py",
+      "lines": [
+        58,
+        59,
+        63,
+        64,
+        66,
+        69,
+        72,
+        76,
+        78
+      ],
+      "claim": "config2 creates ThreadPool(2); scheduler stays threaded"
+    },
+    {
+      "member": "dask/dataframe/tests/test_shuffle.py",
+      "lines": [
+        265,
+        266,
+        267,
+        272,
+        277,
+        278,
+        279,
+        292,
+        294,
+        303,
+        313,
+        314,
+        318,
+        424,
+        425,
+        434,
+        435,
+        437,
+        438,
+        439
+      ],
+      "claim": "original threads/processes branches and explicit slow spawn Pool(8) remain unchanged"
+    },
+    {
+      "member": "conftest.py",
+      "lines": [
+        30,
+        31,
+        34,
+        35,
+        36
+      ],
+      "claim": "slow requires --runslow; default official command intentionally skips it"
+    }
+  ],
+  "proposed_new_run_environment": {
+    "DASK_NUM_WORKERS": "2",
+    "OPENBLAS_NUM_THREADS": "1",
+    "OMP_NUM_THREADS": "1",
+    "MKL_NUM_THREADS": "1",
+    "NUMEXPR_NUM_THREADS": "1"
+  },
+  "environment_must_precede_import_and_spawn": true,
+  "inflight_environment_change_allowed": false,
+  "Dask_default_pools_statically_expected": 2,
+  "explicit_Pool8_remains_8": true,
+  "retains_original_schedulers_and_spawn": true,
+  "all_24_worker_interleavings_proven_preserved": false,
+  "changes_oracles_reference_set_markers_or_candidate": false,
+  "native_runtime_evidence": {
+    "OpenBLAS": "actual mapped library observed; per-library active thread count unknown; env effect not yet measured",
+    "OpenMP": "actual loaded backend and active threads unknown",
+    "MKL": "actual loaded backend and active threads unknown; pip freeze cannot rule out binary backend",
+    "NumExpr": "package present in original pip freeze; actual threadpool/count not observed"
+  },
+  "necessary_acceptance": {
+    "owner": "GPU recovery owner",
+    "new_fresh_run": true,
+    "targeted_original_processes_nodes": [
+      "dask/dataframe/tests/test_shuffle.py::test_rearrange[processes-tasks]",
+      "dask/dataframe/tests/test_shuffle.py::test_rearrange[processes-disk]"
+    ],
+    "targeted_must_actually_execute_spawn_and_finish": true,
+    "original_frozen_patch_canonical_sha256": "5e64758cd92207d53d5ed93525a9f02d4e4e067a197a066b14e836a8974959e2",
+    "formal_test_command": "pytest -n0 -rA  --color=no dask/dataframe/tests/test_shuffle.py",
+    "formal_reference_counts": {
+      "f2p": 1,
+      "p2p": 104,
+      "total": 105
+    },
+    "candidate_all_105_pass_required": false,
+    "complete_actual_reference_accounting_required": true,
+    "original_slow_skips_preserved": 3,
+    "record_actual_env_config_and_worker_consumption": true,
+    "pids_events_max_fresh_initial_and_final_zero_or_delta_zero": true,
+    "record_pids_peak_memory_events_and_cleanup": true,
+    "seventeen_control_matrix_rerun_required": false,
+    "preserve_original_infra_report": true,
+    "write_new_evidence_and_score_separately": true,
+    "auto_must_not_be_claimed_executed_after_earlier_f2p_assertion_stops": true
+  },
+  "optional_extra_eight_pool_check": {
+    "required_for_minimal_recovery": false,
+    "node": "dask/dataframe/tests/test_shuffle.py::test_set_index_consistent_divisions",
+    "command": "pytest -n0 -rA --color=no --runslow dask/dataframe/tests/test_shuffle.py::test_set_index_consistent_divisions",
+    "must_record_actual_pass_vs_skip": true,
+    "formal_105_reference_member": false,
+    "do_not_add_to_formal_denominator": true
+  },
+  "limits": [
+    "same time quota does not prove visible CPU or native threads equal2",
+    "history resource_facts null",
+    "selected env whitelist empty is not all environment empty",
+    "actual library mapped is not each thread attributed",
+    "runtime receipts do not prove completed new score or full raw FP binding",
+    "original infra and candidate semantic report unchanged",
+    "one original Coder sample, no training qualification"
+  ],
+  "stop_condition_met": true,
+  "markdown_path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_7305_grader_thread_budget_review_20261003.md",
+  "markdown_sha256": "b9fc7f1b82d8ee6203f5020c9d46b7a1bea384eb283dc22a0d549566bb02689c"
+}

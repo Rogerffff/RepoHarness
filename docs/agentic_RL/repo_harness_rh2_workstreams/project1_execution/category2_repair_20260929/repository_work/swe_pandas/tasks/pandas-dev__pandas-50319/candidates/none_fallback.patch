@@ -1,0 +1,15 @@
+diff --git a/pandas/_libs/tslibs/parsing.pyx b/pandas/_libs/tslibs/parsing.pyx
+--- a/pandas/_libs/tslibs/parsing.pyx
++++ b/pandas/_libs/tslibs/parsing.pyx
+@@ -962,7 +962,10 @@
+ 
+         parsed_formatted = parsed_datetime.strftime(attr_format)
+         for i, token_format in enumerate(format_guess):
+-            token_filled = _fill_token(tokens[i], padding)
++            try:
++                token_filled = _fill_token(tokens[i], padding)
++            except ValueError:
++                return None
+             if token_format is None and token_filled == parsed_formatted:
+                 format_guess[i] = attr_format
+                 tokens[i] = token_filled

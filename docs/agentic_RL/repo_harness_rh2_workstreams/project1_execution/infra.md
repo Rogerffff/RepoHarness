@@ -1382,3 +1382,41 @@
 - **实测**：52 题 GPU 探针共 101 次完整尝试，非模型时间是 Claude Code 求解时间的 3.2 倍。构成：评分侧权限交接（chown）64%，actor 侧 chown 11%，Git 清理 8%，编译 5%（只来自 pandas-48106 和 pandas-50319 两题）。Dask 有 4 次评分因权限步骤超时而没能评分。逐题数据见 `runs/env_pipeline_analysis_20261004/`。
 - **判断**：最大收益来自每题镜像预处理（属主、Git 证明、依赖、CC 预装，以及只对两道 Pandas 做编译缓存）。估算能去掉约 86% 的非模型时间，模型时间占比从约 24% 提到约 69%，这是投影。外部沙箱解决的是容量：Prime 默认额度够用，但按申请量计费，128–256 个 actor 每小时约 $6–24。同容器评分不恢复；新架构下可以删掉每 attempt 的 docker 网络加中继，以及评分侧两段式撤网。
 - **待用户决定**：D1 actor／grader 放在哪里（涉及隐藏测试是否放在 Prime）；D2 模型网关怎么暴露（安全边界）；D3 episode 计时起点（训练语义）；D4 评分离线、actor 只放行网关；D5 资源档位与费用上限；D6 让 B 线在做题时同步产出角色模板；D7 采样器第一版；D8 Prime 新额度。没有向 Codex 或 B 线发送消息，也没有提交。
+
+### 2026-10-04：RH2 与 MiMo 系统设计对照页 / Claude（A 线）
+
+- **入口**：[对照页](external_rl_infra_survey_20261004/rl_infra_mimo_vs_rh2.html)（离线可开）。三张部署图共用一套配色：RH2 当前（现有启动器默认值）、MiMo 公开代码（verl e2b9fc03 / uni-agent / mimoagent）、MiMo 报告 §6；另有一次 attempt 的时间构成、14 行逐项对照、13 个可优化点（O1–O13）。只列出，不作决定。
+- **高层判断（分析，非决定）**：分布式骨架与 MiMo 一致（Ray actor 承载 GPU 进程，asyncio 并发跑会话）。明显问题有四处：① rollout 侧只有一个 RolloutManager 进程（`num_cpus=1`，见 miles `ray/placement_group.py:203`），编排、docker CLI、普查、导出、评分调度共用一个事件循环，模型代理线程同进程共用 GIL；MiMo 报告用固定数量的多租户宿主 actor，公开代码用每会话 Ray task 加 8 个网关 actor。② 推理喂给量受限：模型调用上限 32（`bringup.py:989`）、默认 1 个引擎、MilesRouter 按在途最少选引擎，不按会话粘性（`router.py:215-229`）。③ 环境准备在关键路径上且在本机。④ 训练闭环从未端到端跑过；启动器一次发布含 2 个优化步（`launch.sh:172-173`），未设陈旧度。
+- **核对**：页面数字已对照代码与 `runs/env_pipeline_analysis_20261004/`。时间条的“求解”取 Claude Code 自报时长（101 次合计 9,154 秒；按 harness exec 计为 9,217 秒）；评分安装时间的 84% 来自两道 Pandas。headless Chrome 核对了 1440 / 1100 / 390 宽度和暗色；浏览器内测了点击、键盘、视图切换和跳转。
+- 没有新增待决定项；页尾列的语义问题（I18、episode 计时起点、外部沙箱边界）与上一条 D1–D3 相同。未提交。
+
+### 2026-10-04：模型代理容量实测与已结束 attempt 的内存滞留 / Claude（A 线）
+
+- **做了什么**：用户同意用 cpu-c 做验证、用完关闭。压测程序在 `rh2/experiments/proxy_capacity_20261004/`（不入库），被测进程与 bringup 同一装配（捕获线、会话守卫、RH2 Anthropic 适配器、生产 `ModelCallProxy`、`run_app_in_thread`），推理引擎换成按真实大小回传路由带的假引擎，Claude Code 换成按探针上下文规模校准的模拟客户端（首轮约 1.35 万 token，22 轮后约 3.0 万，平均约 2.2 万）。差异与用法见该目录 README；全部原始数据在 `runs/proxy_capacity_20261004/`。cpu-c 23:09 已暂停（stop）。
+- **实测：单个代理线程的上限**（引擎固定 2 秒、工具 1 秒；model_call 上限放开，只测代理本身）：
+  - cpu-c（Xeon E5-2673 v4，无 SHA 指令）：8 个会话即占满一个核，吞吐停在每秒 1.6–1.7 轮，每轮约 0.6 CPU 秒；会话再多只会排队，N=24 时每轮平均等待约 12 秒，N=64 时约 27 秒；代理循环心跳延迟 p99 约 0.4–0.7 秒，单次最长 0.75–2.1 秒。
+  - 本机 M5 Pro：每轮约 0.11 CPU 秒，N=32 时进程接近一个核（每秒 8.9 轮），上限约每秒 9 轮。
+  - 生产主机介于两者之间（有 SHA 指令，单核比 M5 慢）。按单核速度推算约每秒 5–7 轮（未实测）。若每个会话 4–10 秒发一轮，约 20–75 个会话就会把代理占满；排队时间计入 600 秒 episode 预算。
+- **每轮 CPU 花在哪**（cpu-c，py-spy 采样代理线程 150 秒，忙碌约 98%）：sha256 约 38%（`generate.py:746` `_canonical_meta_digest`、`:842` `_store`），路由带 base64 解码约 23%，约 40 MB 响应体的接收与 JSON 解析约 28%，全量 tokenize 约 9%。对照组（会话不请求路由带）：每轮 CPU 从 0.62 秒降到 0.10–0.11 秒，进程内存从 8.6 GB 降到 0.8 GB。即约 83% 的代理 CPU 来自“每轮整段回传路由带”，这与 I18（路由回放取哪次 forward）是同一个问题。
+- **新发现：已结束 attempt 的内存滞留**：`bringup.py:1041` `make_per_rollout_adapter` 每个 attempt 新定义一个类，`open_session` 的闭包引用 hook；类对象天然处在循环引用里，hook（含该 attempt 所有轮次的路由带，约 0.6 GB）只能等第 2 代垃圾回收释放，而 rollout 进程里没有显式 `gc.collect()`（miles 只在训练进程里调）。实测：N=4 时 12 个会话结束后进程常驻内存停在 7.5 GB 不降；本机用弱引用核实，强制回收前 26 个已收尾的 hook 中仍有 16–19 个存活，引用链指向 `make_per_rollout_adapter.<locals>.PerRolloutAdapter.open_session`；收尾时清掉这个闭包引用后全部立即释放。不影响每轮 CPU（cpu-c N=16：0.62 秒对 0.63 秒）。生产代码未改。
+- **顺带完成**：cpu-c 上的证据类文件（1.5 GB，13,581 个）已带回 `runs/cpu_c_evidence_20261004/`，镜像存档按用户 10-04 指示未下载，留存清单见该目录 README。
+- 待讨论（不是决定）：代理拆成多进程或按会话分片；路由带改为增量或 rollout 结束时一次取回（涉及 I18，训练语义由用户定）；逐轮摘要改为结束时一次算或换更便宜的校验；修掉闭包滞留；model_call=32 是另一道吞吐上限。未提交。
+
+### 2026-10-05：修复已结束 attempt 的内存滞留（已实施、已验证，未提交）/ Claude（A 线）
+
+- **用户要求**：先修掉闭包导致的内存滞留，随后验证。属内部实现修复，不涉及训练语义、公共契约或安全边界。
+- **改动**：`rh2/src/repoharness2/adapters/slime/bringup.py` 把 `PerRolloutAdapter` 从 `make_per_rollout_adapter` 函数体内提到模块级，`registry` / `shared_adapter` / `hook` 存为实例属性；四个方法的方法体逐字不变，只在开头取回局部变量；`finish_session` 里的 resolver 仍只捕获 `registry` 与 `sid`；工厂签名不变（生产 `_adapter_factory` 与测试都经它）。新增回归测试 `tests/adapters/test_glue_factories.py::test_per_rollout_adapter_releases_hook_without_cycle_gc`：关掉循环回收，适配器释放后 hook 必须立即释放。旧代码上该测试失败，新代码通过。
+- **生产路径核对**：attempt 收尾时 `generate.py:4618` 调 `adapter.drop_session`，其 `finally` 里 `registry.unregister` 摘掉 hook；此后 hook 只被 attempt 协程的局部变量引用，修复后协程结束即随引用计数释放。
+- **测试**（本机，Docker 在线）：`test_glue_factories.py` 5 passed；`ruff check` 通过（`ruff format` 按审查标准暂不启用，两文件改动前即不符合）。五目录 2143 passed / 2 skipped / 8 failed；双 lane 直接运行：A 529p/346s/1 failed，B 875p/1 failed。全部失败与本改动无关：用原版 `bringup.py`、其余工作树不变的源码副本复跑，同样的 8 例与 lane 那 1 例照样失败。8 例在评分侧（`grading/manager.py` 基线摘要不一致，该文件及 `material_revision.py` 有其他线程的在制改动）；lane 那 1 例是 `envpack/training_view.py` 在制重构移走了 `load_trusted_ingest_outputs`，测试仍在打旧位置的补丁。`scripts/miles_integration_lanes.sh` 因这 1 例在 `pipefail` 下静默退出，计数断言未能执行。
+- **功能验证**（本机 M5，压测程序 8 个并发各 4 分钟，不加模拟释放选项，`runs/proxy_capacity_20261004/fix_verify/`）：修复前 28 个已收尾会话的 hook 不做垃圾回收时仍有 13 个存活（引用来自上述闭包），修复后 0 个；进程内存峰值 9.1 GB → 5.4 GB，全部会话结束后 9.1 GB 不回落 → 1.1 GB；吞吐与每轮 CPU 不变（2.52 → 2.54 轮/秒，0.14 → 0.13 秒）。Linux 上的内存行为只有此前 cpu-c 的模拟释放结果（N=16：11.2 GB → 8.6 GB），修复后的代码未在 Linux 上复跑。
+- 未提交，待 Codex 独立审查。在跑会话自身的路由带仍留到交付才落盘（每个约 0.3–0.6 GB），那是“每轮整段回传路由带”的另一面，不在本修复范围内。
+
+
+### 2026-10-05：MiMo 架构对照与闭包内存修复独立复核 / Codex（A 线）
+
+- **范围与结论**：复核 Claude HTML、`tmp/链路优化.md`、当前 miles/RH2 生产路径及 `PerRolloutAdapter` 修复。详见 [复核与升级建议](external_rl_infra_survey_20261004/codex_rollout_manager_review_20261005.md)。按审查标准做生产追踪与反证核查；闭包修复通过，无本改动新增阻塞项；不是完整工作树或 learner 链路验收。
+- **纠正旧表述**：代理同步重活确实可饱和，但大块 SHA-256 释放 GIL，不能说整个进程只能一核；路由等价运输/存储优化与 I18 前向选取分开；MiMo 增量 tokenize 有全量回退，约 1 ms 不是其网关实测。生产 5–7 轮/秒仍是推算，未证明正式 GPU 瓶颈排序。
+- **补充遗漏**：64 是未完成成员配额，不是固定 8 组或驻留成员上限。真实 scheduler 类的长尾反例为 15 个未完成组、64 个未完成成员、120 个组内成员；还须计量完整组 buffer、训练批与载荷副本。旧 launcher 默认整批 debug dump 与重复 routing 摘要也是中心进程成本。升级需按字节反压，并统一全局模型额度、版本广播、停止/清理和产物生命周期。
+- **建议分期**：先等价有界线程/I/O 卸载，再比较 1/2/4 个常驻多会话宿主，保留一个轻量 manager。不建议每 attempt 一个进程；不把移到外部沙箱视为已解决中心代理瓶颈。长期 owner 迁移仍是方案待定；无新增或撤销挡板，无生产默认切换。
+- **独立验证**：四方法 AST 等价；真实 registry/hook 的五种生命周期旧/新 10 项对照通过（含 open/drop 失败与取消）；实际 miles integration fork 上相关测试 24 passed、0 skipped、0 failed；ruff 通过。初次默认 base pin 的 1 个能力 skip 已用正确 fork 补齐。作者的其他全量测试失败本轮未复跑；未重跑远端 Linux 或四分钟 RSS 基准，不要求为接受局部修复启动机器。证据 `runs/rollout_manager_review_20261005/`。
+- **修改归属**：仅新增本轮复核文档/探针、补调查 README 导航并追加本条；Claude HTML、讨论稿、生产代码和历史 evidence 均未改。无付费服务、Docker、GPU、提交或跨线程消息。本轮不改变训练字段、组准入、reward、预算、安全边界或既定失败语义。

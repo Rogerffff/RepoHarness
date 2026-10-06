@@ -1,0 +1,110 @@
+{
+  "scope": "private_preparation_not_published",
+  "as_of": "2026-10-03",
+  "instance_id": "scrapy__a95a338eeada7275a5289cf036136610ebaf07eb",
+  "owner_thread_id": "01a0fd64-a083-76d2-95e6-81e7e07c3b44",
+  "prepared_revision": "rev3_warning_filter_draft",
+  "shared_publisher": null,
+  "shared_revision_ids": "publisher_to_assign",
+  "entries_template": [
+    {
+      "revision_id": null,
+      "instance_id": "scrapy__a95a338eeada7275a5289cf036136610ebaf07eb",
+      "kind": "hidden_test_text_replace",
+      "target": "test_1.py",
+      "edits": [
+        {
+          "old": "class UtilsMiscPy3TestCase(unittest.TestCase):\n\n    def test_generators_return_something(self):\n",
+          "new": "class UtilsMiscPy3TestCase(unittest.TestCase):\n\n    def setUp(self):\n        # run_tests.sh runs pytest with `-W ignore` and PYTHONWARNINGS=ignore::UserWarning,\n        # 按测试恢复警告记录；公开断言不限定警告类别。\n        catcher = warnings.catch_warnings()\n        catcher.__enter__()\n        self.addCleanup(catcher.__exit__, None, None, None)\n        warnings.simplefilter(\"always\", Warning)\n\n    def test_generators_return_something(self):\n"
+        },
+        {
+          "old": "        partial_cb = partial(cb, arg1=42)\n        assert not is_generator_with_return_value(partial_cb)\n",
+          "new": "        partial_cb = partial(cb, arg1=42)\n        assert not is_generator_with_return_value(partial_cb)\n\n        def cb_with_return(arg1, arg2):\n            yield {}\n            return 1\n\n        assert is_generator_with_return_value(partial(cb_with_return, 1))\n        assert is_generator_with_return_value(partial(cb_with_return, arg1=42))\n\n        class Callbacks:\n            def method_with_return(self, arg1, arg2):\n                yield {}\n                return 1\n\n        assert is_generator_with_return_value(partial(Callbacks().method_with_return, 1))\n"
+        }
+      ],
+      "sha256_before": "sha256:baf73412e45b12e88bc5383d6ba11a64112d01d9b343fd85db5304b248111896",
+      "sha256_after": "sha256:07d1f42ce73286406f1f40727f707088e4d7d3d15fe22a16adaf78691a5f3414",
+      "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/r2e_tests/test_1.py",
+      "expected_change": null,
+      "decision_ref": "统一标准 v1 §5 / §9 D4；题级草案待非作者复核与正式验收",
+      "reason": "R-c 保留 rev2 的三条 partial 断言；R-a 恢复 warning 记录，按公开断言不新增 UserWarning 类别限制。",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/preparation.md"
+      ]
+    },
+    {
+      "revision_id": null,
+      "instance_id": "scrapy__a95a338eeada7275a5289cf036136610ebaf07eb",
+      "kind": "expected_text_replace",
+      "target": "expected_output_json",
+      "edits": [
+        {
+          "old": "\"UtilsMiscPy3TestCase.test_generators_return_something\": \"FAILED\"",
+          "new": "\"UtilsMiscPy3TestCase.test_generators_return_something\": \"PASSED\""
+        },
+        {
+          "old": "\"UtilsMiscPy3TestCase.test_indentation_error\": \"FAILED\"",
+          "new": "\"UtilsMiscPy3TestCase.test_indentation_error\": \"PASSED\""
+        }
+      ],
+      "sha256_before": "sha256:2c5d045cd0d33191f62a962df28fd04f7f95ae954adb3b8d91881b48b8a29dd0",
+      "sha256_after": "sha256:95f7d31faf0fa9838958db3a8121edc60a6181b7194f4801d674ef41802fe8e9",
+      "revised_file": null,
+      "expected_change": {
+        "changed": {
+          "UtilsMiscPy3TestCase.test_generators_return_something": [
+            "FAILED",
+            "PASSED"
+          ],
+          "UtilsMiscPy3TestCase.test_indentation_error": [
+            "FAILED",
+            "PASSED"
+          ]
+        },
+        "added": {},
+        "removed": []
+      },
+      "decision_ref": "统一标准 v1 §5 / §9 D4；题级草案待非作者复核与正式验收",
+      "reason": "两条已有公开警告测试恢复执行，期望 FAILED→PASSED；五键及顺序不变。",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/revision_plan.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/preparation.md"
+      ]
+    }
+  ],
+  "local_material_file": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/materials/rev3/r2e_tests/test_1.py",
+  "local_expected_file": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/materials/expected_output.json",
+  "parent": {
+    "base_commit": "9077d0f9b490114f117c668f115240c16afccedf",
+    "source_image_ref": "namanjain12/scrapy_final:a95a338eeada7275a5289cf036136610ebaf07eb",
+    "source_manifest_digest": "sha256:cd01a127a7c83ad8e59e0380f34dbf20e7469fe0ae4ebb051c83993dbc4d067d",
+    "hidden_tests_tree_sha256": "sha256:63928e22fc359d645cdd4af1a1a14d00cde84a3c8bf4f90811db12f40ce359b7",
+    "expected_output_sha256": "sha256:2c5d045cd0d33191f62a962df28fd04f7f95ae954adb3b8d91881b48b8a29dd0",
+    "current_revision_ids": [],
+    "statement_sha256": "sha256:eddf95214b7bbc41b0b1109eab8ab79319f9af065385831fcbf5eebff558bffb",
+    "run_tests_sh_sha256": "sha256:8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf"
+  },
+  "candidate_material": {
+    "hidden_tests_tree_sha256": "sha256:e1df8efb4b5dea62676a7762c4c35553f8187a59896f616bf4d1523d87ed6dc4",
+    "expected_output_sha256": "sha256:95f7d31faf0fa9838958db3a8121edc60a6181b7194f4801d674ef41802fe8e9",
+    "public_statement_changed": false,
+    "grading_script_changed": false
+  },
+  "positive_control": {
+    "candidate": "C1",
+    "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/cands/scrapy_a95a_C1.patch",
+    "sha256": "sha256:3345719910836649b43592970e37cb11b778690807b13d5fe4de5aac253a04d6",
+    "expected_score": 1,
+    "note": "修订版上 gold 为 0（只在 test_partial 的绑定方法断言失败），以后批量环境复验本题的正对照改用 C1"
+  },
+  "remaining": [
+    "rev3 过滤器与类别候选的非作者定向核查",
+    "共享维护者分配编号、安放文件并封板 ingest/pins",
+    "CPU 新宿主与派生材料镜像验收",
+    "正式矩阵与 C1 公开开发验证",
+    "统一探针接收及消息交付核对"
+  ],
+  "probe_ready": false,
+  "model_config_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/ordinary_probe_20260929/gpu_coordination_decisions_20261002.md"
+}

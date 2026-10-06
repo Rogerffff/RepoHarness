@@ -1,0 +1,22 @@
+{
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "        \"\\xffoo: bar\",\n    ),\n)\ndef test_bad_headers(parser: Any, hdr: str) -> None:\n",
+     "new": "        \"\\xffoo: bar\",\n        pytest.param(  # non-ASCII (Cyrillic o, UTF-8 d0 be) inside the field name\n            \"f\\N{CYRILLIC SMALL LETTER O}o: bar\",\n            id=\"nonascii-mid-name\",\n        ),\n    ),\n)\ndef test_bad_headers(parser: Any, hdr: str) -> None:\n"
+    },
+    {
+     "old": "def test_http_request_bad_status_line_whitespace(parser: Any) -> None:\n    text = b\"GET\\n/path\\fHTTP/1.1\\r\\n\\r\\n\"\n    with pytest.raises(http_exceptions.BadStatusLine):\n        parser.feed_data(text)\n",
+     "new": "def test_http_request_bad_status_line_whitespace(parser: Any) -> None:\n    text = b\"GET\\n/path\\fHTTP/1.1\\r\\n\\r\\n\"\n    with pytest.raises(http_exceptions.BadStatusLine):\n        parser.feed_data(text)\n\n\n@pytest.mark.parametrize(\n    \"line\",\n    (\n        b\"GET /path\\x0cHTTP/1.1\",  # FF alone as a separator\n        b\"GET\\x0b/path HTTP/1.1\",  # VT as a separator\n    ),\n    ids=(\"ff-separator\", \"vt-separator\"),\n)\ndef test_http_request_bad_status_line_other_whitespace(\n    parser: Any, line: bytes\n) -> None:\n    with pytest.raises(http_exceptions.BadStatusLine):\n        parser.feed_data(line + b\"\\r\\n\\r\\n\")\n"
+    },
+    {
+     "old": "def test_http_request_parser_bad_nonascii_uri(parser: Any) -> None:\n    with pytest.raises(http_exceptions.InvalidURLError):\n        parser.feed_data(b\"GET \\xff HTTP/1.1\\r\\n\\r\\n\")\n",
+     "new": "def test_http_request_parser_bad_nonascii_uri(parser: Any) -> None:\n    with pytest.raises(http_exceptions.InvalidURLError):\n        parser.feed_data(b\"GET \\xff HTTP/1.1\\r\\n\\r\\n\")\n\n\n@pytest.mark.parametrize(\n    \"line\",\n    (\n        b\"GET /pa\\nth HTTP/1.1\",  # LF inside the request-target\n        b\"GET /pa\\x0cth HTTP/1.1\",  # FF inside the request-target\n        b\"GET /pa\\rth HTTP/1.1\",  # CR inside the request-target\n        b\"GET /pa\\tth HTTP/1.1\",  # HTAB inside the request-target\n    ),\n    ids=(\"lf-in-target\", \"ff-in-target\", \"cr-in-target\", \"tab-in-target\"),\n)\ndef test_http_request_ctl_in_target_rejected(parser: Any, line: bytes) -> None:\n    # BadStatusLine (issue wording) or InvalidURLError (C-parser mapping) both ok\n    with pytest.raises(http_exceptions.BadHttpMessage):\n        parser.feed_data(line + b\"\\r\\n\\r\\n\")\n"
+    }
+   ]
+  }
+ ]
+}

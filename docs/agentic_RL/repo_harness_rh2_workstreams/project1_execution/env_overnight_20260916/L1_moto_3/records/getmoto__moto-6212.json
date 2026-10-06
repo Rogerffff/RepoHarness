@@ -1,0 +1,55 @@
+{
+ "task_id": "getmoto__moto-6212",
+ "source": "SWE-Gym lite (swe_gym_lite_full_f70b1a29)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl#getmoto__moto-6212",
+  "grading": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl#getmoto__moto-6212",
+  "validation": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl#getmoto__moto-6212",
+  "base_commit": "8c0c688c7b37f87dfcc00dbf6318d4dd959f91f5",
+  "worktree": "runs/env_overnight_20260916/L1_moto_3/wt/getmoto__moto-6212 (已删除)",
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-6212/gold/offline/a1/"
+ },
+ "public_view": {
+  "goal": "moto 4.1.7 自动创建的默认 athena workgroup \"primary\" 在 get_work_group 时返回 Configuration 为字符串，botocore 解析 WorkGroupConfiguration 结构体时抛 AttributeError: 'str' object has no attribute 'get'。要求 get_work_group(WorkGroup=\"primary\") 能正常返回。",
+  "constraints": [
+   "其它 workgroup（已存在或不存在）的 get_work_group 必须继续正常",
+   "list_work_groups 本来就正常，不能破坏"
+  ],
+  "unknowns_from_public_only": [
+   "题面没有说 primary 的 Configuration 应该是什么值：空 dict、还是像真实 AWS 那样带 ResultConfiguration/EnforceWorkGroupConfiguration/EngineVersion 的默认结构",
+   "题面没有说修复位置（models 层存 dict vs responses 层序列化时转换）",
+   "题面没有说 list_work_groups 返回条数的期望（F2P 里断言 == 1）"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 只碰 tests/test_athena/test_athena.py（base 已存在，425 行）", "golden_patch 只碰 moto/athena/models.py", "两者同指 primary workgroup 的 configuration 类型问题"], "note": "无二进制/LFS/子模块材料。", "by": "L1_moto_3"},
+  "2": {"status": "pass", "evidence_refs": ["base moto/athena/models.py:163-164 `self.create_work_group(\"primary\", \"\", \"\", [])`", "base moto/athena/models.py:199-208 get_work_group 直接回填 `\"Configuration\": wg.configuration`"], "note": "base 确实存在题面缺陷：primary 的 configuration 是空字符串，序列化后 botocore 解析结构体失败。", "by": "L1_moto_3"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 5449 字符，含完整复现代码与 traceback，无外链/图片/截断"], "note": "hints_text 只有一句 “Thanks for letting us know … Will raise a fix shortly.”，不含题面之外的关键信息。", "by": "L1_moto_3"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 触碰路径全集：tests/test_athena/test_athena.py"], "note": "无非测试源码路径；gold 触碰 moto/athena/models.py，不是测试样路径。", "by": "L1_moto_3"},
+  "17": {"status": "pass", "evidence_refs": ["同 4"], "note": "additional_exclusions 保持空。", "by": "L1_moto_3"},
+  "5": {"status": "pass", "evidence_refs": ["216 题全局索引：tests/test_athena/test_athena.py 与 moto/athena/models.py 均只被本题使用（runs/env_overnight_20260916/L1_moto_3/gidx_rev.json）"], "note": "无重复/派生。", "by": "L1_moto_3"},
+  "23": {"status": "issue", "evidence_refs": ["F2P test_get_primary_workgroup: `assert primary[\"Configuration\"] == {}`", "problem_statement 全文未规定 Configuration 的期望取值"], "note": "公开材料只能推出“Configuration 必须是结构体而非字符串”，推不出“必须恰好是空 dict”。若解题者按真实 AWS 语义填充默认 Configuration（AWS 实际会返回 EnforceWorkGroupConfiguration/EngineVersion 等），F2P 会拒绝。另 `assert len(list_work_groups()[\"WorkGroups\"]) == 1` 也是题面未明说的隐含约束（题面只说“自动创建 primary”）。", "by": "L1_moto_3"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 只断言 Name/Configuration 两个字段与 list 条数"], "note": "不强制实现位置：在 models 里把 configuration 改成 dict、或在 responses.get_work_group 序列化时把空串转 {}、或给 WorkGroup.configuration 设默认 {}，三种都能过 F2P。唯一被强制的是取值 {}（见 23）。", "by": "L1_moto_3"},
+  "25": {"status": "issue", "evidence_refs": ["F2P 只查 primary 这一个 workgroup"], "note": "硬编码式错误修复可过：例如在 responses.get_work_group 里 `if name == \"primary\": cfg = {}`，或只对空串做转换而不改 create_work_group 的参数类型。题面已说明的“其它 workgroup 也应正常”只由既有 P2P（test_create_and_get_workgroup 传了完整 Configuration）覆盖，未覆盖“用户创建时不传 Configuration”的分支。严重度 P3。", "by": "L1_moto_3"},
+  "26": {"status": "pass", "evidence_refs": ["eval.sh 实际命令 `pytest -n0 -rA tests/test_athena/test_athena.py`，整文件 17 个用例 = F2P 1 + P2P 16"], "note": "见 proposed_regression_tests。", "by": "L1_moto_3"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 仅 3 个 hunk，全在 moto/athena/models.py，且全部围绕 configuration 类型"], "note": "无无关改动，不依赖其它未交付改动。注意 gold 只改了类型注解 str->Dict[str, Any] 和 primary 的构造调用，运行期行为变化仅来自 `configuration=dict()`。", "by": "L1_moto_3"},
+  "29": {"status": "pass", "evidence_refs": ["hints_text 仅一句致谢，无代码", "problem_statement 无 PR/commit 链接"], "note": "无静态泄漏。", "by": "L1_moto_3"},
+  "6": {"status": "pass", "evidence_refs": ["gold 侧 stage1 日志 test 段 rc=0，17 passed"], "note": "纯进程内 mock，不需要权重/数据/外部服务。", "by": "L1_moto_3"},
+  "7": {"status": "issue", "evidence_refs": ["runs/env_probe_stage1_20260910/.../getmoto__moto-6212/gold/offline/a1/test_output.txt:327-353"], "note": "离线跑 `make init` 失败：pip 需要联网装 setuptools>=40.6.0，DNS 解析失败 → `make: *** [Makefile:18: init] Error 1`，RH2_PHASE_END install rc=2。测试仍全过，说明镜像里已有可用的 testbed 环境、/testbed 源码是生效的（gold 补丁改动被测试看到）。跨题共性问题，见 issues。", "by": "L1_moto_3"},
+  "11": {"status": "pass", "evidence_refs": ["grep 测试文件无 requests.get / 真实 endpoint"], "note": "test_athena 全部走 moto 自身 mock。", "by": "L1_moto_3"}
+ },
+ "issues": [
+  {"category": "requirement_underspecified", "severity": "P3", "evidence_refs": ["F2P `assert primary[\"Configuration\"] == {}`", "problem_statement 未规定该值"], "proposed_action": "保留题目，但在难度/噪声统计里标记“F2P 含题面未规定的精确取值”。若后续做题面增强，可在题面补一句“期望 primary 的 Configuration 为空对象”。", "next_experiment": "用一个把 primary Configuration 填成 AWS 风格默认值的补丁跑 F2P，确认它确实被拒（预期拒）。"},
+  {"category": "test_too_permissive", "severity": "P3", "evidence_refs": ["F2P 只查 primary 一个 workgroup"], "proposed_action": "作为 26 的扩展回归建议纳入，不改判分。", "next_experiment": "构造 `if name == \"primary\": return {...\"Configuration\": {}}` 的硬编码补丁跑 F2P+P2P，确认能通过（预期能通过）。"},
+  {"category": "infra_install_offline", "severity": "P2", "evidence_refs": ["stage1 gold 日志 install 段 rc=2（moto/pydantic 共 57 题同样 rc=2）"], "proposed_action": "确认 RH2 是否会把 install 阶段非零 rc 判成基础设施失败；若会，需要为 moto/pydantic 这类 `make init` 走网络的仓库单独处理（预装或跳过 install）。", "next_experiment": "查 rh2 grading 对 RH2_PHASE_END install rc 的消费逻辑；或在有网机器上对比 rc=0 与 rc=2 的判分是否一致。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只含测试文件；无混合职责路径，沿用第四组 B 的默认空排除。", "evidence_refs": ["test_patch 路径全集 = tests/test_athena/test_athena.py"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_athena/test_athena.py::test_create_and_get_workgroup", "reason": "已在 P2P，覆盖用户显式传 Configuration 的读回路径。"},
+  {"id": "新增：创建 workgroup 时不传 Configuration，再 get_work_group 断言 Configuration 是 dict", "reason": "堵住“只对 primary 硬编码”的错误修复（见检查 25）。"},
+  {"id": "tests/test_athena/ 整目录", "reason": "athena 后端面很小，整目录代价低；调用者只有 moto/athena/responses.py。"}
+ ],
+ "disposition_hint": {"state": "ready_for_probe", "reason": "材料干净、base 确有缺陷、gold 最小且对应、无文件边界问题；唯一噪声是 F2P 断言了题面未规定的精确取值 {}，属可接受的难度噪声。"},
+ "costs": {"minutes": 12}
+}

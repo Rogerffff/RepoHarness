@@ -1,0 +1,1736 @@
+{
+  "schema_id": "category2.orange22.first_probe_independent_semantic_review.v1",
+  "as_of": "2026-10-03",
+  "reviewer_role": "题主安排的非作者结果subagent；非fresh盲读",
+  "request_id": "r2e-orange22-r064-cpu-sysconfig-v1-20261003",
+  "stage": "first_two_arm_semantic_review_complete",
+  "scope": "只读本地已回收原件；复用执行完整性审查，独立核r064公开要求、真实FrozenPatch修法及关键行为七维，窄核作者分析决定性结论/指标。",
+  "receipt": {
+    "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/receipts/r2e-orange22-r064-cpu-sysconfig-v1-20261003.json",
+    "sha256": "sha256:5affdbc6725ea497584f8b60f3089f38b5dfc21d8736378cafa6cdaa919cd633",
+    "bytes": 23940
+  },
+  "models": [
+    {
+      "model_key": "coder",
+      "actual_model_name": "Qwen3-Coder-30B-A3B-Instruct",
+      "attempt": "gpu1003-orange322e9-coder-a1",
+      "semantic_verdict": "correct_root_cause_fix_preserving_public_contract",
+      "formal_score": {
+        "reward": 1,
+        "expected_match_count": 23,
+        "expected_total_count": 23,
+        "test_rc": 0,
+        "basis": "复用独立执行复核，result report count另核一致"
+      },
+      "sample_count": 1,
+      "termination": "completed",
+      "harness_exit_code": 0,
+      "public_prompt": {
+        "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/prompt.txt",
+        "sha256": "sha256:4a5094598ca2a2636e5f16599e8641cb82f34224af87c6c435bb6626a14ea489",
+        "bytes": 3395
+      },
+      "semantic_artifact_binding": {
+        "sources": {
+          "attempt": {
+            "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/attempt.json",
+            "sha256": "sha256:36cf1dfa472ea0e0b3fd3329ed75c3a5b00388058e78368c90259d4a3ee13d96",
+            "bytes": 17344
+          },
+          "trajectory": {
+            "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+            "sha256": "sha256:c3f635939ab140dfff9a5fcee648316361e481be7e1ad254c3144a31382e4d5d",
+            "bytes": 289709
+          },
+          "frozen_patch": {
+            "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/frozen/frozen_patch.json",
+            "sha256": "sha256:fb6e997504637658362365fa548e3a6a9721fffbb40f96f4541669d76c0f34bd",
+            "bytes": 32723
+          },
+          "baseline_manifest": {
+            "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/frozen/baseline_manifest.json",
+            "sha256": "sha256:38c9a6ca022d0ea22a71f777d14987cb7daf31d0294d994dc317e72a2cce0583",
+            "bytes": 411784
+          },
+          "result": {
+            "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/result.json",
+            "sha256": "sha256:3cc162242e02044ce0c9742c99dbbba796eb3f8a846d6f8b6766ef0397175a86",
+            "bytes": 2692
+          }
+        },
+        "receipt_source_sha_checks": {
+          "result": true,
+          "attempt": true,
+          "trajectory": true,
+          "frozen_patch": true,
+          "baseline_manifest": true
+        },
+        "baseline_tar": {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/frozen/baseline.tar",
+          "sha256": "sha256:0596fe3c34e906673b7a15a659861f7d04a477d944ba53404d7b7e492859d64e",
+          "full_transport_check_reused_from_execution_review": true
+        },
+        "selected_baseline_source_sha256": "sha256:949c15613e5a7494c470c45fe879694c49e87408e5004d9ed1430f4b68740b0f",
+        "selected_baseline_source_matches_manifest": true,
+        "frozen_entry_count": 1,
+        "frozen_entries": [
+          {
+            "path": "Orange/widgets/data/owcreateclass.py",
+            "operation": "modify",
+            "object_type": "regular",
+            "mode": "100644",
+            "content_digest": "sha256:9b73231252ba3f9a06675930204fdc6dcd58e7e04e09011714e7cb21ea2312bd"
+          }
+        ],
+        "decoded_frozen_content_digest_matches": true,
+        "all_observed_Edit_string_operations_reconstructed_in_memory_match_frozen_bytes": true,
+        "outside_target_AST_unchanged": true,
+        "changed_path_only": "Orange/widgets/data/owcreateclass.py",
+        "test_or_grading_control_changes_found": false,
+        "actual_candidate_executed_by_this_reviewer": false,
+        "diff": {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/candidate/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237.diff",
+          "sha256": "sha256:cceaca50bb5c67f34f9777812ea16d6f3e428f1e31d1f8e6ecda36675a3c5b7f",
+          "bytes": 924
+        }
+      },
+      "tool_count_by_type": {
+        "Read": 4,
+        "Bash": 13,
+        "Edit": 2
+      },
+      "tool_events": [
+        {
+          "ordinal": 1,
+          "tool_name": "Read",
+          "tool_use_id": "toolu_e2dfd6f2489e1ae8",
+          "call_event_line": 10,
+          "result_event_line": 14,
+          "result_at": "2026-10-02T20:42:12.276Z",
+          "is_error": null,
+          "result_content_sha256": "sha256:5f01711e78f2d735359931344844bd4e377fb400d3ecdbfc0e2fc587bdc4d273",
+          "target_file": "/testbed/Orange/widgets/data/owcreateclass.py",
+          "input_sha256": "sha256:1de06fa1cc43b1007b863405f37727c7fde07283640cfc17cd21676b68b6cdbd"
+        },
+        {
+          "ordinal": 2,
+          "tool_name": "Read",
+          "tool_use_id": "toolu_511d4e30942ebb07",
+          "call_event_line": 23,
+          "result_event_line": 27,
+          "result_at": "2026-10-02T20:42:13.163Z",
+          "is_error": null,
+          "result_content_sha256": "sha256:39ce9247fc234c880c457bc32b0c47e0b01c286988215f049e18d75171984043",
+          "target_file": "/testbed/Orange/widgets/data/tests/test_owcreateclass.py",
+          "input_sha256": "sha256:8cc099395812cc0bbb16ec3549c89342c3146e7fccfa66d42aa87afeb7c072f7"
+        },
+        {
+          "ordinal": 3,
+          "tool_name": "Bash",
+          "tool_use_id": "toolu_62b0e4c0caa8e2bc",
+          "call_event_line": 36,
+          "result_event_line": 40,
+          "result_at": "2026-10-02T20:42:21.661Z",
+          "is_error": false,
+          "result_content_sha256": "sha256:5f159f473ef1fa6bd7cd53e448f02cbf97c55dba070d297733fd86aac8213681",
+          "target_file": null,
+          "input_sha256": "sha256:c51821bf84ac1eabde932dd87c4229f5079ec261421b52d764c1fe8cb9c450a7"
+        },
+        {
+          "ordinal": 4,
+          "tool_name": "Bash",
+          "tool_use_id": "toolu_5226babce53b72a8",
+          "call_event_line": 49,
+          "result_event_line": 53,
+          "result_at": "2026-10-02T20:42:25.536Z",
+          "is_error": false,
+          "result_content_sha256": "sha256:ed4a3ee9cc5cc9d8b54f746fd41610f209b57454545f6432fbb94cdef10e22f6",
+          "target_file": null,
+          "input_sha256": "sha256:42461a687796c43087f30c13fe9c453ea3d2981b47027e164c47a5d8f2ffc500"
+        },
+        {
+          "ordinal": 5,
+          "tool_name": "Edit",
+          "tool_use_id": "toolu_f2392371d361574b",
+          "call_event_line": 62,
+          "result_event_line": 66,
+          "result_at": "2026-10-02T20:42:28.119Z",
+          "is_error": null,
+          "result_content_sha256": "sha256:ecb0248d270d923b175853699266eb22f09cb5b205f2186a6d387683384eb0ec",
+          "target_file": "/testbed/Orange/widgets/data/owcreateclass.py",
+          "input_sha256": "sha256:fa45e9d52817c64f5d374a34de721a71fd1e4ec36a8b060cceb4ddf4ff311710"
+        },
+        {
+          "ordinal": 6,
+          "tool_name": "Bash",
+          "tool_use_id": "toolu_88b46fbb4ccac641",
+          "call_event_line": 75,
+          "result_event_line": 79,
+          "result_at": "2026-10-02T20:42:31.359Z",
+          "is_error": false,
+          "result_content_sha256": "sha256:5f159f473ef1fa6bd7cd53e448f02cbf97c55dba070d297733fd86aac8213681",
+          "target_file": null,
+          "input_sha256": "sha256:c51821bf84ac1eabde932dd87c4229f5079ec261421b52d764c1fe8cb9c450a7"
+        },
+        {
+          "ordinal": 7,
+          "tool_name": "Read",
+          "tool_use_id": "toolu_a4e3c7c0df9ef9cd",
+          "call_event_line": 88,
+          "result_event_line": 92,
+          "result_at": "2026-10-02T20:42:32.081Z",
+          "is_error": null,
+          "result_content_sha256": "sha256:ae3933afc3455db223e7ae01a8a67ae001a39fe69d13b0ebaec0ed43c4b01ffd",
+          "target_file": "/testbed/Orange/widgets/data/owcreateclass.py",
+          "input_sha256": "sha256:52535496447adaf5c9ee7ad6bbb5587833ff6ccf583a6d5c574f7ec360b40e72"
+        },
+        {
+          "ordinal": 8,
+          "tool_name": "Read",
+          "tool_use_id": "toolu_fe35ed6e33b95908",
+          "call_event_line": 97,
+          "result_event_line": 101,
+          "result_at": "2026-10-02T20:42:32.633Z",
+          "is_error": null,
+          "result_content_sha256": "sha256:dc1e6cb8ddffae6b0add636f77224e7525c5e26a885df1b31545209359be8b84",
+          "target_file": "/testbed/Orange/widgets/data/owcreateclass.py",
+          "input_sha256": "sha256:a8408f7b04f80454cf99b6938dc81ea8b14b0ba4595b71acf39215d9f0b732a2"
+        },
+        {
+          "ordinal": 9,
+          "tool_name": "Bash",
+          "tool_use_id": "toolu_226cf46b77e08971",
+          "call_event_line": 110,
+          "result_event_line": 114,
+          "result_at": "2026-10-02T20:42:36.146Z",
+          "is_error": false,
+          "result_content_sha256": "sha256:5f159f473ef1fa6bd7cd53e448f02cbf97c55dba070d297733fd86aac8213681",
+          "target_file": null,
+          "input_sha256": "sha256:db866435388fd7e09f35c6ab1cc77aa313668c14dce4cca3eb52c285abadacd8"
+        },
+        {
+          "ordinal": 10,
+          "tool_name": "Bash",
+          "tool_use_id": "toolu_480b019cac506792",
+          "call_event_line": 123,
+          "result_event_line": 127,
+          "result_at": "2026-10-02T20:42:38.143Z",
+          "is_error": false,
+          "result_content_sha256": "sha256:d0e6fce75f844bbba78f0bb02415621ddea2b44a7ccc4c4eaef3b00f8df844c0",
+          "target_file": null,
+          "input_sha256": "sha256:b288fed6f8d877b8816ae10bd9280f2f1f87c09d78a6aff8c81759c641295fe8"
+        },
+        {
+          "ordinal": 11,
+          "tool_name": "Bash",
+          "tool_use_id": "toolu_e0efbc44aa33fbf4",
+          "call_event_line": 136,
+          "result_event_line": 140,
+          "result_at": "2026-10-02T20:42:45.839Z",
+          "is_error": false,
+          "result_content_sha256": "sha256:1effece9aeaebc5ff15a96f5f299826497f7bdfdeb3b4686926f2f34d9fe2238",
+          "target_file": null,
+          "input_sha256": "sha256:325dc3fe3eba11fa014e131f3bc31c9b208a543c585674480dc1cfea652f0b55"
+        },
+        {
+          "ordinal": 12,
+          "tool_name": "Edit",
+          "tool_use_id": "toolu_54fca8c80b1756df",
+          "call_event_line": 149,
+          "result_event_line": 153,
+          "result_at": "2026-10-02T20:42:48.731Z",
+          "is_error": null,
+          "result_content_sha256": "sha256:ecb0248d270d923b175853699266eb22f09cb5b205f2186a6d387683384eb0ec",
+          "target_file": "/testbed/Orange/widgets/data/owcreateclass.py",
+          "input_sha256": "sha256:f1aff0308367fd7e83f906fe0b564ea4991c40c0a94d66f2bd0ba016fa14626a"
+        },
+        {
+          "ordinal": 13,
+          "tool_name": "Bash",
+          "tool_use_id": "toolu_b318b5368753fb83",
+          "call_event_line": 158,
+          "result_event_line": 162,
+          "result_at": "2026-10-02T20:42:52.105Z",
+          "is_error": false,
+          "result_content_sha256": "sha256:fabbfd809fadb346e07e2bc4fd43989471d15299593d7018325a2dabbaf4d6fe",
+          "target_file": null,
+          "input_sha256": "sha256:db866435388fd7e09f35c6ab1cc77aa313668c14dce4cca3eb52c285abadacd8"
+        },
+        {
+          "ordinal": 14,
+          "tool_name": "Bash",
+          "tool_use_id": "toolu_76e587b8254ceccc",
+          "call_event_line": 171,
+          "result_event_line": 175,
+          "result_at": "2026-10-02T20:42:56.346Z",
+          "is_error": false,
+          "result_content_sha256": "sha256:618279b54e4f166b44b0a7733ee67d124afae5b4da560777a30bf0d228a22e3d",
+          "target_file": null,
+          "input_sha256": "sha256:f6d13ce32c478e6ee7b8e4cdac842aaf5766d21d2c30d6be687ca5df409c76fe"
+        },
+        {
+          "ordinal": 15,
+          "tool_name": "Bash",
+          "tool_use_id": "toolu_cfb1fe8213f180e1",
+          "call_event_line": 184,
+          "result_event_line": 188,
+          "result_at": "2026-10-02T20:43:01.027Z",
+          "is_error": false,
+          "result_content_sha256": "sha256:5d71899a4ad8ffdf5e4e75cd40086c666ec023fa625694f71825ca50e314a895",
+          "target_file": null,
+          "input_sha256": "sha256:6c7f695e8808efc2871d4452a69ec5dbcf6aeb23ca3dcc2949d459f0b1bb157b"
+        },
+        {
+          "ordinal": 16,
+          "tool_name": "Bash",
+          "tool_use_id": "toolu_9cd40c3e525053d5",
+          "call_event_line": 197,
+          "result_event_line": 201,
+          "result_at": "2026-10-02T20:43:04.121Z",
+          "is_error": false,
+          "result_content_sha256": "sha256:ae74652ddf1e6fdc812bd8ab6accc990c76d3a8e94fc7e664b6943a4db3acaf5",
+          "target_file": null,
+          "input_sha256": "sha256:c6029db83fa1d59b3689ab1b01049cc014ead7779d9cee1d5ef04cc96ae4fc67"
+        },
+        {
+          "ordinal": 17,
+          "tool_name": "Bash",
+          "tool_use_id": "toolu_f8465e0a1154f100",
+          "call_event_line": 210,
+          "result_event_line": 214,
+          "result_at": "2026-10-02T20:43:07.678Z",
+          "is_error": false,
+          "result_content_sha256": "sha256:fc595c9393ab046da11d391e7a0a0cf383f2709c90e758c761e8e8d6d92f061e",
+          "target_file": null,
+          "input_sha256": "sha256:9f81501fb341fe0037ec2976057661ea56be21f91c12d635e0a06a2e1ede5eec"
+        },
+        {
+          "ordinal": 18,
+          "tool_name": "Bash",
+          "tool_use_id": "toolu_8a1192551e0e0037",
+          "call_event_line": 223,
+          "result_event_line": 227,
+          "result_at": "2026-10-02T20:43:10.685Z",
+          "is_error": false,
+          "result_content_sha256": "sha256:3ebc3a72a3771b8449d804c1dd86b2c31231562124acf1b982ab2d8bd8ac3302",
+          "target_file": null,
+          "input_sha256": "sha256:dae87b83299d664991f33571f3add003bc82403e524581bd319fbf26cba9cbe1"
+        },
+        {
+          "ordinal": 19,
+          "tool_name": "Bash",
+          "tool_use_id": "toolu_05e0d265687e42df",
+          "call_event_line": 236,
+          "result_event_line": 240,
+          "result_at": "2026-10-02T20:43:15.067Z",
+          "is_error": false,
+          "result_content_sha256": "sha256:efa774a3f6eaab5cc60fcb0a952d953db97dd973f7d535e9acf9e86af95d1e03",
+          "target_file": null,
+          "input_sha256": "sha256:879e30fbae206b8ab48cda7ef00830b6b5e95eb98fd4b0cc58dc768fc2d7ffba"
+        }
+      ],
+      "dimensions": [
+        {
+          "dimension": "解题方法与修法",
+          "verdict": "最终正确逆置换修复；首Edit等价改写未修缺陷，后续依据原失败输出纠正",
+          "evidence": [
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 62,
+              "result_event_line": 66,
+              "tool_use_id": "toolu_f2392371d361574b",
+              "tool_ordinal": 5
+            },
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 75,
+              "result_event_line": 79,
+              "tool_use_id": "toolu_88b46fbb4ccac641",
+              "tool_ordinal": 6
+            },
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 136,
+              "result_event_line": 140,
+              "tool_use_id": "toolu_e0efbc44aa33fbf4",
+              "tool_ordinal": 11
+            },
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 149,
+              "result_event_line": 153,
+              "tool_use_id": "toolu_54fca8c80b1756df",
+              "tool_ordinal": 12
+            },
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 158,
+              "result_event_line": 162,
+              "tool_use_id": "toolu_b318b5368753fb83",
+              "tool_ordinal": 13
+            }
+          ],
+          "text_event_lines": [
+            84,
+            106,
+            119,
+            132
+          ]
+        },
+        {
+          "dimension": "定位能力",
+          "verdict": "首工具读对公开已给模块，第2工具读公开测试；正确根因实测到第11工具，不把首次读对位置等同诊断正确",
+          "evidence": [
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 10,
+              "result_event_line": 14,
+              "tool_use_id": "toolu_e2dfd6f2489e1ae8",
+              "tool_ordinal": 1
+            },
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 23,
+              "result_event_line": 27,
+              "tool_use_id": "toolu_511d4e30942ebb07",
+              "tool_ordinal": 2
+            },
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 123,
+              "result_event_line": 127,
+              "tool_use_id": "toolu_480b019cac506792",
+              "tool_ordinal": 10
+            },
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 136,
+              "result_event_line": 140,
+              "tool_use_id": "toolu_e0efbc44aa33fbf4",
+              "tool_ordinal": 11
+            }
+          ]
+        },
+        {
+          "dimension": "工具使用",
+          "verdict": "19调用准确配对；一次无效Edit及导入误归因增加Read/复现，没有真实工具层错误或导入故障",
+          "evidence": [
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 62,
+              "result_event_line": 66,
+              "tool_use_id": "toolu_f2392371d361574b",
+              "tool_ordinal": 5
+            },
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 75,
+              "result_event_line": 79,
+              "tool_use_id": "toolu_88b46fbb4ccac641",
+              "tool_ordinal": 6
+            },
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 88,
+              "result_event_line": 92,
+              "tool_use_id": "toolu_a4e3c7c0df9ef9cd",
+              "tool_ordinal": 7
+            },
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 97,
+              "result_event_line": 101,
+              "tool_use_id": "toolu_fe35ed6e33b95908",
+              "tool_ordinal": 8
+            },
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 110,
+              "result_event_line": 114,
+              "tool_use_id": "toolu_226cf46b77e08971",
+              "tool_ordinal": 9
+            },
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 123,
+              "result_event_line": 127,
+              "tool_use_id": "toolu_480b019cac506792",
+              "tool_ordinal": 10
+            }
+          ],
+          "text_event_lines": [
+            84,
+            106,
+            119
+          ]
+        },
+        {
+          "dimension": "并行调用",
+          "verdict": "本次仅单工具顺序调用；执行层并行支持未实测，模型能力不可判断",
+          "evidence": [
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 10,
+              "result_event_line": 14,
+              "tool_use_id": "toolu_e2dfd6f2489e1ae8",
+              "tool_ordinal": 1
+            },
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 23,
+              "result_event_line": 27,
+              "tool_use_id": "toolu_511d4e30942ebb07",
+              "tool_ordinal": 2
+            }
+          ],
+          "max_outstanding_tool_ids": 1,
+          "multi_tool_assistant_event_lines": []
+        },
+        {
+          "dimension": "验证质量",
+          "verdict": "原例和两公开重构例真实复现；修改后空/单值/重复输入、原例/数值/字符串检查，helper与整文件通过；早期打印检查读具体False/True，末次有assert",
+          "evidence": [
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 36,
+              "result_event_line": 40,
+              "tool_use_id": "toolu_62b0e4c0caa8e2bc",
+              "tool_ordinal": 3
+            },
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 49,
+              "result_event_line": 53,
+              "tool_use_id": "toolu_5226babce53b72a8",
+              "tool_ordinal": 4
+            },
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 158,
+              "result_event_line": 162,
+              "tool_use_id": "toolu_b318b5368753fb83",
+              "tool_ordinal": 13
+            },
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 171,
+              "result_event_line": 175,
+              "tool_use_id": "toolu_76e587b8254ceccc",
+              "tool_ordinal": 14
+            },
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 184,
+              "result_event_line": 188,
+              "tool_use_id": "toolu_cfb1fe8213f180e1",
+              "tool_ordinal": 15
+            },
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 197,
+              "result_event_line": 201,
+              "tool_use_id": "toolu_9cd40c3e525053d5",
+              "tool_ordinal": 16
+            },
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 210,
+              "result_event_line": 214,
+              "tool_use_id": "toolu_f8465e0a1154f100",
+              "tool_ordinal": 17
+            },
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 223,
+              "result_event_line": 227,
+              "tool_use_id": "toolu_8a1192551e0e0037",
+              "tool_ordinal": 18
+            }
+          ]
+        },
+        {
+          "dimension": "完成效率",
+          "verdict": "本次19工具/20回合/solve70.640s，存在等价Edit、重复读取及重复复现；整体作业535.279s含环境/评分，不能当解题时间",
+          "evidence": [
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 62,
+              "result_event_line": 66,
+              "tool_use_id": "toolu_f2392371d361574b",
+              "tool_ordinal": 5
+            },
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 88,
+              "result_event_line": 92,
+              "tool_use_id": "toolu_a4e3c7c0df9ef9cd",
+              "tool_ordinal": 7
+            },
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 97,
+              "result_event_line": 101,
+              "tool_use_id": "toolu_fe35ed6e33b95908",
+              "tool_ordinal": 8
+            },
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 110,
+              "result_event_line": 114,
+              "tool_use_id": "toolu_226cf46b77e08971",
+              "tool_ordinal": 9
+            },
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 158,
+              "result_event_line": 162,
+              "tool_use_id": "toolu_b318b5368753fb83",
+              "tool_ordinal": 13
+            },
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 184,
+              "result_event_line": 188,
+              "tool_use_id": "toolu_cfb1fe8213f180e1",
+              "tool_ordinal": 15
+            },
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 223,
+              "result_event_line": 227,
+              "tool_use_id": "toolu_8a1192551e0e0037",
+              "tool_ordinal": 18
+            }
+          ],
+          "result_event_line": 249
+        },
+        {
+          "dimension": "结束与稳定性",
+          "verdict": "正常completed/end_turn，正式reward1、23/23；仅1完整样本，稳定性未评价",
+          "evidence": [
+            {
+              "attempt": "gpu1003-orange322e9-coder-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+              "call_event_line": 236,
+              "result_event_line": 240,
+              "tool_use_id": "toolu_05e0d265687e42df",
+              "tool_ordinal": 19
+            }
+          ],
+          "final_text_event_line": 245,
+          "result_event_line": 249
+        }
+      ],
+      "process_caution": "第62行Edit保留原错误公式，仅改变量名；事件84/106/119误归因编辑或导入未生效，132才承认逻辑错误。",
+      "localization_milestones": [
+        {
+          "name": "first_relevant_read_result",
+          "result_event_line": 14,
+          "result_at": "2026-10-02T20:42:12.276Z",
+          "seconds_after_first_generation_request": 0.558835,
+          "measurement": "generation request to tool_result including generation and tool roundtrip; not pure localization or pure tool time"
+        },
+        {
+          "name": "first_correct_inverse_prototype_result",
+          "result_event_line": 140,
+          "result_at": "2026-10-02T20:42:45.839Z",
+          "seconds_after_first_generation_request": 34.121835,
+          "measurement": "generation request to tool_result including generation and tool roundtrip; not pure localization or pure tool time"
+        },
+        {
+          "name": "first_correct_actual_module_result",
+          "result_event_line": 162,
+          "result_at": "2026-10-02T20:42:52.105Z",
+          "seconds_after_first_generation_request": 40.387835,
+          "measurement": "generation request to tool_result including generation and tool roundtrip; not pure localization or pure tool time"
+        }
+      ],
+      "metrics": {
+        "gateway_requests": 20,
+        "turns": 20,
+        "input_tokens": 420128,
+        "output_tokens": 5832,
+        "solve_seconds": 70.64,
+        "CC_total_seconds": 67.03,
+        "CC_API_seconds": 47.473,
+        "actor_timings": {
+          "image_ready": 0.019,
+          "network_and_container": 1.244,
+          "git_sanitize": 12.933,
+          "trusted_init": 208.958,
+          "baseline_census": 1.338,
+          "quiescence": 2.669
+        },
+        "formal_grading_timings": {
+          "schema_id": "rh2.grading_timing_record.v1",
+          "record_id": "timing_2d1324b2",
+          "trajectory_id": "gpu1003-orange322e9-coder-a1",
+          "task_id": "r2e_gym_subset::orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237",
+          "image_pull_seconds": 0.0,
+          "env_reset_seconds": 13.96,
+          "prep_seconds": 1.448,
+          "test_seconds": 4.172,
+          "total_grading_seconds": 215.997,
+          "queue_wait_seconds": 0.0,
+          "container_peak_memory_mb": 2136.289,
+          "queue_depth_at_enqueue": null,
+          "backpressure_triggered": false
+        },
+        "dispatched_job_wall_seconds": 535.279035,
+        "queue_before_dispatch_seconds": null,
+        "grader_queue_wait_seconds": 0.0,
+        "cost_USD_is_not_self_hosted_invoice": true,
+        "token_and_time_causal_model_ranking_unsupported": true
+      },
+      "metric_sources": {
+        "gateway_requests": {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/services_v6/coder/gateway/gpu1003-orange322e9-coder-a1/requests.jsonl",
+          "sha256": "sha256:99ac2d8d2c662ccd592ddc899efe4c6eb9bd6d310382618838e1824605e0bb70",
+          "bytes": 1646999
+        },
+        "queue_receipt": {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/receipts/gpu1003-orange322e9-coder-a1.json",
+          "sha256": "sha256:295b8cd610de2238af9f3b28fc651e7294102015e8673be33de53c9d8c27ae8e",
+          "bytes": 1802
+        },
+        "attempt": {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/attempt.json",
+          "sha256": "sha256:36cf1dfa472ea0e0b3fd3329ed75c3a5b00388058e78368c90259d4a3ee13d96",
+          "bytes": 17344
+        },
+        "CC_result_trajectory": {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/attempt/trajectory.jsonl",
+          "sha256": "sha256:c3f635939ab140dfff9a5fcee648316361e481be7e1ad254c3144a31382e4d5d",
+          "bytes": 289709
+        },
+        "grading_result": {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v8r1/results/gpu1003-orange322e9-coder-a1/result.json",
+          "sha256": "sha256:3cc162242e02044ce0c9742c99dbbba796eb3f8a846d6f8b6766ef0397175a86",
+          "bytes": 2692
+        }
+      },
+      "actual_budget": {
+        "version": "probe-wide-v1",
+        "max_context_len": 196608,
+        "max_new_tokens": 65536,
+        "max_turns": 240,
+        "wall_seconds": 10800,
+        "max_requests_per_session": 1024,
+        "first_byte_timeout_seconds": 1800,
+        "adapter_idle_drop_seconds": 14400
+      },
+      "execution_review_reused": {
+        "path": "runs/ordinary_gpu_probe_20261002/reviews/orange322e9_coder_a1_execution_review.json",
+        "sha256": "sha256:464aa6d6ce036d80bf33c4df2f55f7d8e448b6ba0ea25c844b33c87a694e71a9",
+        "bytes": 17156
+      },
+      "parallel_ability_evaluated": false,
+      "repeated_stability_evaluated": false
+    },
+    {
+      "model_key": "qwen36",
+      "actual_model_name": "Qwen3.6-35B-A3B",
+      "attempt": "gpu1003-orange322e9-qwen36-a1",
+      "semantic_verdict": "correct_root_cause_fix_preserving_public_contract",
+      "formal_score": {
+        "reward": 1,
+        "expected_match_count": 23,
+        "expected_total_count": 23,
+        "test_rc": 0,
+        "basis": "复用独立执行复核，result report count另核一致"
+      },
+      "sample_count": 1,
+      "termination": "completed",
+      "harness_exit_code": 0,
+      "public_prompt": {
+        "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/prompt.txt",
+        "sha256": "sha256:4a5094598ca2a2636e5f16599e8641cb82f34224af87c6c435bb6626a14ea489",
+        "bytes": 3395
+      },
+      "semantic_artifact_binding": {
+        "sources": {
+          "attempt": {
+            "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/attempt.json",
+            "sha256": "sha256:04f078cf6b853cecac259031645f240eea8ff6929c7f19acd7f7e0c11ed582bb",
+            "bytes": 17339
+          },
+          "trajectory": {
+            "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+            "sha256": "sha256:51c0e30cdaa0576964a1ca351fb28ad6692b162da265cb3e18797420a025fa25",
+            "bytes": 188011
+          },
+          "frozen_patch": {
+            "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/frozen/frozen_patch.json",
+            "sha256": "sha256:6c017d50e415bf36b936168590fb69b14a11afd05695622557eb6620655fa6e3",
+            "bytes": 32285
+          },
+          "baseline_manifest": {
+            "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/frozen/baseline_manifest.json",
+            "sha256": "sha256:38c9a6ca022d0ea22a71f777d14987cb7daf31d0294d994dc317e72a2cce0583",
+            "bytes": 411784
+          },
+          "result": {
+            "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/result.json",
+            "sha256": "sha256:f54783b532f032392bab32e584fab2f9d864180a1b44e62d1140512f5695b57a",
+            "bytes": 2695
+          }
+        },
+        "receipt_source_sha_checks": {
+          "result": true,
+          "attempt": true,
+          "trajectory": true,
+          "frozen_patch": true,
+          "baseline_manifest": true
+        },
+        "baseline_tar": {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/frozen/baseline.tar",
+          "sha256": "sha256:467a6116c94c308d9babccdd1c798814e9067d59b8f1dc3966edf6ef7b7c616a",
+          "full_transport_check_reused_from_execution_review": true
+        },
+        "selected_baseline_source_sha256": "sha256:949c15613e5a7494c470c45fe879694c49e87408e5004d9ed1430f4b68740b0f",
+        "selected_baseline_source_matches_manifest": true,
+        "frozen_entry_count": 1,
+        "frozen_entries": [
+          {
+            "path": "Orange/widgets/data/owcreateclass.py",
+            "operation": "modify",
+            "object_type": "regular",
+            "mode": "100644",
+            "content_digest": "sha256:f9e0711c0ba784fafb5032229492c6a755812488250bbf4210e0595e1cd05b65"
+          }
+        ],
+        "decoded_frozen_content_digest_matches": true,
+        "all_observed_Edit_string_operations_reconstructed_in_memory_match_frozen_bytes": true,
+        "outside_target_AST_unchanged": true,
+        "changed_path_only": "Orange/widgets/data/owcreateclass.py",
+        "test_or_grading_control_changes_found": false,
+        "actual_candidate_executed_by_this_reviewer": false,
+        "diff": {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/candidate/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237.diff",
+          "sha256": "sha256:e93e5c2b89d974a019250270614f2ad09fd3bb7d9964d75ad1f9475102907568",
+          "bytes": 590
+        }
+      },
+      "tool_count_by_type": {
+        "Read": 3,
+        "Bash": 6,
+        "Edit": 1
+      },
+      "tool_events": [
+        {
+          "ordinal": 1,
+          "tool_name": "Read",
+          "tool_use_id": "toolu_97a112fb8c3c52b7",
+          "call_event_line": 11,
+          "result_event_line": 15,
+          "result_at": "2026-10-02T21:16:30.555Z",
+          "is_error": null,
+          "result_content_sha256": "sha256:5f01711e78f2d735359931344844bd4e377fb400d3ecdbfc0e2fc587bdc4d273",
+          "target_file": "/testbed/Orange/widgets/data/owcreateclass.py",
+          "input_sha256": "sha256:1de06fa1cc43b1007b863405f37727c7fde07283640cfc17cd21676b68b6cdbd"
+        },
+        {
+          "ordinal": 2,
+          "tool_name": "Read",
+          "tool_use_id": "toolu_cd907e63898d0fb8",
+          "call_event_line": 25,
+          "result_event_line": 29,
+          "result_at": "2026-10-02T21:16:39.949Z",
+          "is_error": null,
+          "result_content_sha256": "sha256:e8d48acbd6a3d38fd927ab43afd7285dc5d91c2e6e90f6321244982bf21f82c4",
+          "target_file": "/testbed/Orange/widgets/data/owcreateclass.py",
+          "input_sha256": "sha256:52535496447adaf5c9ee7ad6bbb5587833ff6ccf583a6d5c574f7ec360b40e72"
+        },
+        {
+          "ordinal": 3,
+          "tool_name": "Bash",
+          "tool_use_id": "toolu_f9fba99b5e78e348",
+          "call_event_line": 43,
+          "result_event_line": 47,
+          "result_at": "2026-10-02T21:16:48.505Z",
+          "is_error": false,
+          "result_content_sha256": "sha256:68cf1e0b545e7596f908ca5aac8d99f3be8ab20a801f0603f5c4fc2c26c1ba34",
+          "target_file": null,
+          "input_sha256": "sha256:07c5cbc328d1210a2165908a412eae0de379e3dc8ccc486765bf86d78ccb57fb"
+        },
+        {
+          "ordinal": 4,
+          "tool_name": "Bash",
+          "tool_use_id": "toolu_80303ad83358dc54",
+          "call_event_line": 57,
+          "result_event_line": 61,
+          "result_at": "2026-10-02T21:17:01.396Z",
+          "is_error": false,
+          "result_content_sha256": "sha256:a07e2b7085d08dbabb67a2bae0a693207c68903ef5e132bd66b27f3d39916564",
+          "target_file": null,
+          "input_sha256": "sha256:b37c3434f8a2b61e26e18620ee64ef99f820c1013661cc8cee3c55813421d619"
+        },
+        {
+          "ordinal": 5,
+          "tool_name": "Bash",
+          "tool_use_id": "toolu_2e1413bebae1a49d",
+          "call_event_line": 75,
+          "result_event_line": 79,
+          "result_at": "2026-10-02T21:17:04.105Z",
+          "is_error": false,
+          "result_content_sha256": "sha256:7ae579f13c0818e7f1a5280049938fb3d02229a4ed1aa7235e777c772119432f",
+          "target_file": null,
+          "input_sha256": "sha256:9a072e2a4991ec3b21bf5d1da9e5697ae634eb945cc4e6b9626854e65d022ddd"
+        },
+        {
+          "ordinal": 6,
+          "tool_name": "Edit",
+          "tool_use_id": "toolu_e262a896095d2926",
+          "call_event_line": 93,
+          "result_event_line": 97,
+          "result_at": "2026-10-02T21:17:06.649Z",
+          "is_error": null,
+          "result_content_sha256": "sha256:ecb0248d270d923b175853699266eb22f09cb5b205f2186a6d387683384eb0ec",
+          "target_file": "/testbed/Orange/widgets/data/owcreateclass.py",
+          "input_sha256": "sha256:99c9489ab74ce633a2a16a64f56e3ea99162b9556d96d37e93f5242e720aaf4e"
+        },
+        {
+          "ordinal": 7,
+          "tool_name": "Bash",
+          "tool_use_id": "toolu_72779466a0edec89",
+          "call_event_line": 111,
+          "result_event_line": 115,
+          "result_at": "2026-10-02T21:17:10.351Z",
+          "is_error": false,
+          "result_content_sha256": "sha256:8f5b640d48857c1d13e3a7062b59c5b2ba69a7d8c9597ddba45e6946b73a91ec",
+          "target_file": null,
+          "input_sha256": "sha256:a312b4bde0acfde6810bf4300b147b32eba80b3f70f642ba21401935951802e6"
+        },
+        {
+          "ordinal": 8,
+          "tool_name": "Bash",
+          "tool_use_id": "toolu_510a9fb0ae3600b8",
+          "call_event_line": 129,
+          "result_event_line": 133,
+          "result_at": "2026-10-02T21:17:13.267Z",
+          "is_error": false,
+          "result_content_sha256": "sha256:b9f7bbccda6d8c120a327a64fccbb87c9047be31d89a0a00036f4b31507ea43b",
+          "target_file": null,
+          "input_sha256": "sha256:221ffe8a72fecbac35e10f4e9994cfad4719e7242767d9ddb61779004d39d179"
+        },
+        {
+          "ordinal": 9,
+          "tool_name": "Bash",
+          "tool_use_id": "toolu_eb428381093c44ed",
+          "call_event_line": 147,
+          "result_event_line": 151,
+          "result_at": "2026-10-02T21:17:16.273Z",
+          "is_error": false,
+          "result_content_sha256": "sha256:d994e5990020f7f9c7b3e46e5bc7e5f4e0fa5a8e749e28f3df230a17b5137229",
+          "target_file": null,
+          "input_sha256": "sha256:84428af7d92c8a4bba6b1c19659ef4ffafcfd5e4c3d71269e176f519987d0ed9"
+        },
+        {
+          "ordinal": 10,
+          "tool_name": "Read",
+          "tool_use_id": "toolu_a5d06519b943a19a",
+          "call_event_line": 165,
+          "result_event_line": 169,
+          "result_at": "2026-10-02T21:17:16.989Z",
+          "is_error": null,
+          "result_content_sha256": "sha256:2c3be365cda997b1bb43ff11ffb54cfd9ad2272098359699c1c4703b44ca2546",
+          "target_file": "/testbed/Orange/widgets/data/owcreateclass.py",
+          "input_sha256": "sha256:b1de7653c9572c69e9620978b916adc4a6ffa4d4ba91e00e7878c10f4f806996"
+        }
+      ],
+      "dimensions": [
+        {
+          "dimension": "解题方法与修法",
+          "verdict": "最终double-argsort正确求逆；inv.argsort错假设经实测否定后才Edit；thinking21/35/53有多次错算，非一次性无误推导",
+          "evidence": [
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 43,
+              "result_event_line": 47,
+              "tool_use_id": "toolu_f9fba99b5e78e348",
+              "tool_ordinal": 3
+            },
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 57,
+              "result_event_line": 61,
+              "tool_use_id": "toolu_80303ad83358dc54",
+              "tool_ordinal": 4
+            },
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 75,
+              "result_event_line": 79,
+              "tool_use_id": "toolu_2e1413bebae1a49d",
+              "tool_ordinal": 5
+            },
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 93,
+              "result_event_line": 97,
+              "tool_use_id": "toolu_e262a896095d2926",
+              "tool_ordinal": 6
+            },
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 111,
+              "result_event_line": 115,
+              "tool_use_id": "toolu_72779466a0edec89",
+              "tool_ordinal": 7
+            }
+          ],
+          "thinking_event_lines": [
+            21,
+            35,
+            53
+          ]
+        },
+        {
+          "dimension": "定位能力",
+          "verdict": "首工具读对公开已给模块，第2工具重复定点读函数；第4工具才得到正确逆置换实测",
+          "evidence": [
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 11,
+              "result_event_line": 15,
+              "tool_use_id": "toolu_97a112fb8c3c52b7",
+              "tool_ordinal": 1
+            },
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 25,
+              "result_event_line": 29,
+              "tool_use_id": "toolu_cd907e63898d0fb8",
+              "tool_ordinal": 2
+            },
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 43,
+              "result_event_line": 47,
+              "tool_use_id": "toolu_f9fba99b5e78e348",
+              "tool_ordinal": 3
+            },
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 57,
+              "result_event_line": 61,
+              "tool_use_id": "toolu_80303ad83358dc54",
+              "tool_ordinal": 4
+            }
+          ]
+        },
+        {
+          "dimension": "工具使用",
+          "verdict": "10调用准确配对，唯一Edit发生在正确原型验证后；pytest管道head/tail未启用pipefail，成功工具返回不能独立证pytestRC",
+          "evidence": [
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 43,
+              "result_event_line": 47,
+              "tool_use_id": "toolu_f9fba99b5e78e348",
+              "tool_ordinal": 3
+            },
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 57,
+              "result_event_line": 61,
+              "tool_use_id": "toolu_80303ad83358dc54",
+              "tool_ordinal": 4
+            },
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 75,
+              "result_event_line": 79,
+              "tool_use_id": "toolu_2e1413bebae1a49d",
+              "tool_ordinal": 5
+            },
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 93,
+              "result_event_line": 97,
+              "tool_use_id": "toolu_e262a896095d2926",
+              "tool_ordinal": 6
+            },
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 129,
+              "result_event_line": 133,
+              "tool_use_id": "toolu_510a9fb0ae3600b8",
+              "tool_ordinal": 8
+            },
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 147,
+              "result_event_line": 151,
+              "tool_use_id": "toolu_eb428381093c44ed",
+              "tool_ordinal": 9
+            }
+          ]
+        },
+        {
+          "dimension": "并行调用",
+          "verdict": "本次仅单工具顺序调用；执行层并行支持未实测，模型能力不可判断",
+          "evidence": [
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 11,
+              "result_event_line": 15,
+              "tool_use_id": "toolu_97a112fb8c3c52b7",
+              "tool_ordinal": 1
+            },
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 25,
+              "result_event_line": 29,
+              "tool_use_id": "toolu_cd907e63898d0fb8",
+              "tool_ordinal": 2
+            }
+          ],
+          "max_outstanding_tool_ids": 1,
+          "multi_tool_assistant_event_lines": []
+        },
+        {
+          "dimension": "验证质量",
+          "verdict": "修改后真实模块对原例和两公开重构例有assert；helper1passed及整文件23passed/3skipped摘要完整，正式grader另有RC0，未新增候选运行",
+          "evidence": [
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 43,
+              "result_event_line": 47,
+              "tool_use_id": "toolu_f9fba99b5e78e348",
+              "tool_ordinal": 3
+            },
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 75,
+              "result_event_line": 79,
+              "tool_use_id": "toolu_2e1413bebae1a49d",
+              "tool_ordinal": 5
+            },
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 111,
+              "result_event_line": 115,
+              "tool_use_id": "toolu_72779466a0edec89",
+              "tool_ordinal": 7
+            },
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 129,
+              "result_event_line": 133,
+              "tool_use_id": "toolu_510a9fb0ae3600b8",
+              "tool_ordinal": 8
+            },
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 147,
+              "result_event_line": 151,
+              "tool_use_id": "toolu_eb428381093c44ed",
+              "tool_ordinal": 9
+            },
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 165,
+              "result_event_line": 169,
+              "tool_use_id": "toolu_a5d06519b943a19a",
+              "tool_ordinal": 10
+            }
+          ]
+        },
+        {
+          "dimension": "完成效率",
+          "verdict": "本次10工具/11回合/solve55.607s；输出含thinking，累计输入含上下文重复，不据单样本/不同采样断言普遍更快",
+          "evidence": [
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 25,
+              "result_event_line": 29,
+              "tool_use_id": "toolu_cd907e63898d0fb8",
+              "tool_ordinal": 2
+            },
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 43,
+              "result_event_line": 47,
+              "tool_use_id": "toolu_f9fba99b5e78e348",
+              "tool_ordinal": 3
+            },
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 57,
+              "result_event_line": 61,
+              "tool_use_id": "toolu_80303ad83358dc54",
+              "tool_ordinal": 4
+            },
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 75,
+              "result_event_line": 79,
+              "tool_use_id": "toolu_2e1413bebae1a49d",
+              "tool_ordinal": 5
+            }
+          ],
+          "result_event_line": 183
+        },
+        {
+          "dimension": "结束与稳定性",
+          "verdict": "正常completed/end_turn，正式reward1、23/23；最终置换方向措辞不准确，代码及实测正确，仅1完整样本",
+          "evidence": [
+            {
+              "attempt": "gpu1003-orange322e9-qwen36-a1",
+              "trajectory_path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+              "call_event_line": 165,
+              "result_event_line": 169,
+              "tool_use_id": "toolu_a5d06519b943a19a",
+              "tool_ordinal": 10
+            }
+          ],
+          "final_text_event_line": 179,
+          "result_event_line": 183
+        }
+      ],
+      "process_caution": "thinking21/35/53包含inv.argsort及数组演算错算/矛盾，正确公式由57→61工具实测确认；最终179行文字将置换方向说反。",
+      "localization_milestones": [
+        {
+          "name": "first_relevant_read_result",
+          "result_event_line": 15,
+          "result_at": "2026-10-02T21:16:30.555Z",
+          "seconds_after_first_generation_request": 1.353404,
+          "measurement": "generation request to tool_result including generation and tool roundtrip; not pure localization or pure tool time"
+        },
+        {
+          "name": "first_correct_inverse_prototype_result",
+          "result_event_line": 61,
+          "result_at": "2026-10-02T21:17:01.396Z",
+          "seconds_after_first_generation_request": 32.194404,
+          "measurement": "generation request to tool_result including generation and tool roundtrip; not pure localization or pure tool time"
+        },
+        {
+          "name": "first_correct_actual_module_result",
+          "result_event_line": 115,
+          "result_at": "2026-10-02T21:17:10.351Z",
+          "seconds_after_first_generation_request": 41.149404,
+          "measurement": "generation request to tool_result including generation and tool roundtrip; not pure localization or pure tool time"
+        }
+      ],
+      "metrics": {
+        "gateway_requests": 11,
+        "turns": 11,
+        "input_tokens": 170982,
+        "output_tokens": 7244,
+        "solve_seconds": 55.607,
+        "CC_total_seconds": 51.796,
+        "CC_API_seconds": 43.21,
+        "actor_timings": {
+          "image_ready": 0.019,
+          "network_and_container": 1.169,
+          "git_sanitize": 14.401,
+          "trusted_init": 208.424,
+          "baseline_census": 1.27,
+          "quiescence": 2.711
+        },
+        "formal_grading_timings": {
+          "schema_id": "rh2.grading_timing_record.v1",
+          "record_id": "timing_ae7d927c",
+          "trajectory_id": "gpu1003-orange322e9-qwen36-a1",
+          "task_id": "r2e_gym_subset::orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237",
+          "image_pull_seconds": 0.0,
+          "env_reset_seconds": 13.654,
+          "prep_seconds": 1.359,
+          "test_seconds": 4.258,
+          "total_grading_seconds": 220.227,
+          "queue_wait_seconds": 0.0,
+          "container_peak_memory_mb": 2139.586,
+          "queue_depth_at_enqueue": null,
+          "backpressure_triggered": false
+        },
+        "dispatched_job_wall_seconds": 524.827778,
+        "queue_before_dispatch_seconds": null,
+        "grader_queue_wait_seconds": 0.0,
+        "cost_USD_is_not_self_hosted_invoice": true,
+        "token_and_time_causal_model_ranking_unsupported": true
+      },
+      "metric_sources": {
+        "gateway_requests": {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/services_v7/qwen36/gateway/gpu1003-orange322e9-qwen36-a1/requests.jsonl",
+          "sha256": "sha256:e1a0af5a2f5077bab248e77f83ab185145d04d8a4337b38aa4d4c5d9cb62ebd1",
+          "bytes": 645036
+        },
+        "queue_receipt": {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/receipts/gpu1003-orange322e9-qwen36-a1.json",
+          "sha256": "sha256:888667aeade7a900908dc5bb9042152b547300b70ce4d7279407f5799499a43b",
+          "bytes": 1792
+        },
+        "attempt": {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/attempt.json",
+          "sha256": "sha256:04f078cf6b853cecac259031645f240eea8ff6929c7f19acd7f7e0c11ed582bb",
+          "bytes": 17339
+        },
+        "CC_result_trajectory": {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/attempt/trajectory.jsonl",
+          "sha256": "sha256:51c0e30cdaa0576964a1ca351fb28ad6692b162da265cb3e18797420a025fa25",
+          "bytes": 188011
+        },
+        "grading_result": {
+          "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v9/results/gpu1003-orange322e9-qwen36-a1/result.json",
+          "sha256": "sha256:f54783b532f032392bab32e584fab2f9d864180a1b44e62d1140512f5695b57a",
+          "bytes": 2695
+        }
+      },
+      "actual_budget": {
+        "version": "probe-wide-v1",
+        "max_context_len": 196608,
+        "max_new_tokens": 65536,
+        "max_turns": 240,
+        "wall_seconds": 10800,
+        "max_requests_per_session": 1024,
+        "first_byte_timeout_seconds": 1800,
+        "adapter_idle_drop_seconds": 14400,
+        "actual_requested_max_tokens_all": 65536,
+        "CC_modelUsage_maxOutputTokens_metadata": 32000,
+        "metadata32000_does_not_override_actual_gateway_request65536": true,
+        "derived_turn_sampling": [
+          {
+            "seq": 1,
+            "prompt_tokens": 4126,
+            "output_tokens": 208,
+            "sampling_params_source_derived_not_HTTP": {
+              "skip_special_tokens": false,
+              "spaces_between_special_tokens": false,
+              "no_stop_trim": true,
+              "max_new_tokens": 65536,
+              "temperature": 1.0,
+              "top_p": 0.95,
+              "top_k": 20
+            },
+            "sse": {
+              "path": "runs/ordinary_gpu_probe_20261002/remote/services_v7/qwen36/gateway/gpu1003-orange322e9-qwen36-a1/resp_1.sse",
+              "sha256": "39b23718d0d4121fe7927acb3a5bcf88327f637cd25df6723cc2d015d4c8a492",
+              "bytes": 1893
+            },
+            "blocks": [
+              "thinking",
+              "tool_use"
+            ]
+          },
+          {
+            "seq": 2,
+            "prompt_tokens": 11359,
+            "output_tokens": 1595,
+            "sampling_params_source_derived_not_HTTP": {
+              "skip_special_tokens": false,
+              "spaces_between_special_tokens": false,
+              "no_stop_trim": true,
+              "max_new_tokens": 65536,
+              "temperature": 1.0,
+              "top_p": 0.95,
+              "top_k": 20
+            },
+            "sse": {
+              "path": "runs/ordinary_gpu_probe_20261002/remote/services_v7/qwen36/gateway/gpu1003-orange322e9-qwen36-a1/resp_2.sse",
+              "sha256": "dccba66bc87eb91bad272b8ea5467afce19473c0771d74c3aa1a4f3f87a77537",
+              "bytes": 6307
+            },
+            "blocks": [
+              "thinking",
+              "tool_use"
+            ]
+          },
+          {
+            "seq": 3,
+            "prompt_tokens": 13091,
+            "output_tokens": 1123,
+            "sampling_params_source_derived_not_HTTP": {
+              "skip_special_tokens": false,
+              "spaces_between_special_tokens": false,
+              "no_stop_trim": true,
+              "max_new_tokens": 65536,
+              "temperature": 1.0,
+              "top_p": 0.95,
+              "top_k": 20
+            },
+            "sse": {
+              "path": "runs/ordinary_gpu_probe_20261002/remote/services_v7/qwen36/gateway/gpu1003-orange322e9-qwen36-a1/resp_3.sse",
+              "sha256": "799bcce0508631648e3e4d8416b84d39bfdf1523983a1de3de779c62b2db688a",
+              "bytes": 5053
+            },
+            "blocks": [
+              "thinking",
+              "text",
+              "tool_use"
+            ]
+          },
+          {
+            "seq": 4,
+            "prompt_tokens": 14461,
+            "output_tokens": 2164,
+            "sampling_params_source_derived_not_HTTP": {
+              "skip_special_tokens": false,
+              "spaces_between_special_tokens": false,
+              "no_stop_trim": true,
+              "max_new_tokens": 65536,
+              "temperature": 1.0,
+              "top_p": 0.95,
+              "top_k": 20
+            },
+            "sse": {
+              "path": "runs/ordinary_gpu_probe_20261002/remote/services_v7/qwen36/gateway/gpu1003-orange322e9-qwen36-a1/resp_4.sse",
+              "sha256": "6a3c2b9620583be552c013827a8d5475fa845e4eede8a70461200d405203f9d0",
+              "bytes": 8210
+            },
+            "blocks": [
+              "thinking",
+              "tool_use"
+            ]
+          },
+          {
+            "seq": 5,
+            "prompt_tokens": 16765,
+            "output_tokens": 402,
+            "sampling_params_source_derived_not_HTTP": {
+              "skip_special_tokens": false,
+              "spaces_between_special_tokens": false,
+              "no_stop_trim": true,
+              "max_new_tokens": 65536,
+              "temperature": 1.0,
+              "top_p": 0.95,
+              "top_k": 20
+            },
+            "sse": {
+              "path": "runs/ordinary_gpu_probe_20261002/remote/services_v7/qwen36/gateway/gpu1003-orange322e9-qwen36-a1/resp_5.sse",
+              "sha256": "6d7aa482c5a77f68f03e95d902b37baa2bcf7b58b18cdaac67b22618b1f583f7",
+              "bytes": 3077
+            },
+            "blocks": [
+              "thinking",
+              "text",
+              "tool_use"
+            ]
+          },
+          {
+            "seq": 6,
+            "prompt_tokens": 17390,
+            "output_tokens": 420,
+            "sampling_params_source_derived_not_HTTP": {
+              "skip_special_tokens": false,
+              "spaces_between_special_tokens": false,
+              "no_stop_trim": true,
+              "max_new_tokens": 65536,
+              "temperature": 1.0,
+              "top_p": 0.95,
+              "top_k": 20
+            },
+            "sse": {
+              "path": "runs/ordinary_gpu_probe_20261002/remote/services_v7/qwen36/gateway/gpu1003-orange322e9-qwen36-a1/resp_6.sse",
+              "sha256": "214879a3afe904242a1bb331afa030c7a2edfeb86b0ab5d4136ffe05c3b72766",
+              "bytes": 3165
+            },
+            "blocks": [
+              "thinking",
+              "text",
+              "tool_use"
+            ]
+          },
+          {
+            "seq": 7,
+            "prompt_tokens": 17873,
+            "output_tokens": 356,
+            "sampling_params_source_derived_not_HTTP": {
+              "skip_special_tokens": false,
+              "spaces_between_special_tokens": false,
+              "no_stop_trim": true,
+              "max_new_tokens": 65536,
+              "temperature": 1.0,
+              "top_p": 0.95,
+              "top_k": 20
+            },
+            "sse": {
+              "path": "runs/ordinary_gpu_probe_20261002/remote/services_v7/qwen36/gateway/gpu1003-orange322e9-qwen36-a1/resp_7.sse",
+              "sha256": "1109b3f02e913e430d61a69b66077aa3a680bb9c42f1f5a1b36808b301d5c588",
+              "bytes": 2837
+            },
+            "blocks": [
+              "thinking",
+              "text",
+              "tool_use"
+            ]
+          },
+          {
+            "seq": 8,
+            "prompt_tokens": 18477,
+            "output_tokens": 121,
+            "sampling_params_source_derived_not_HTTP": {
+              "skip_special_tokens": false,
+              "spaces_between_special_tokens": false,
+              "no_stop_trim": true,
+              "max_new_tokens": 65536,
+              "temperature": 1.0,
+              "top_p": 0.95,
+              "top_k": 20
+            },
+            "sse": {
+              "path": "runs/ordinary_gpu_probe_20261002/remote/services_v7/qwen36/gateway/gpu1003-orange322e9-qwen36-a1/resp_8.sse",
+              "sha256": "3c349b4dd009ca2bf6cf8d79b4caa8f530ce2ab78b7cfef7b87152fca1ef200c",
+              "bytes": 1965
+            },
+            "blocks": [
+              "thinking",
+              "text",
+              "tool_use"
+            ]
+          },
+          {
+            "seq": 9,
+            "prompt_tokens": 18844,
+            "output_tokens": 102,
+            "sampling_params_source_derived_not_HTTP": {
+              "skip_special_tokens": false,
+              "spaces_between_special_tokens": false,
+              "no_stop_trim": true,
+              "max_new_tokens": 65536,
+              "temperature": 1.0,
+              "top_p": 0.95,
+              "top_k": 20
+            },
+            "sse": {
+              "path": "runs/ordinary_gpu_probe_20261002/remote/services_v7/qwen36/gateway/gpu1003-orange322e9-qwen36-a1/resp_9.sse",
+              "sha256": "2def248d771df7d4b0ca947326965f102592b4e0c849d87d212394ca95fcc696",
+              "bytes": 1884
+            },
+            "blocks": [
+              "thinking",
+              "text",
+              "tool_use"
+            ]
+          },
+          {
+            "seq": 10,
+            "prompt_tokens": 19150,
+            "output_tokens": 104,
+            "sampling_params_source_derived_not_HTTP": {
+              "skip_special_tokens": false,
+              "spaces_between_special_tokens": false,
+              "no_stop_trim": true,
+              "max_new_tokens": 65536,
+              "temperature": 1.0,
+              "top_p": 0.95,
+              "top_k": 20
+            },
+            "sse": {
+              "path": "runs/ordinary_gpu_probe_20261002/remote/services_v7/qwen36/gateway/gpu1003-orange322e9-qwen36-a1/resp_10.sse",
+              "sha256": "54800728ff37ed77ff3cae869106133932f912628ffee1c098775bd97bee0280",
+              "bytes": 1823
+            },
+            "blocks": [
+              "thinking",
+              "text",
+              "tool_use"
+            ]
+          },
+          {
+            "seq": 11,
+            "prompt_tokens": 19446,
+            "output_tokens": 649,
+            "sampling_params_source_derived_not_HTTP": {
+              "skip_special_tokens": false,
+              "spaces_between_special_tokens": false,
+              "no_stop_trim": true,
+              "max_new_tokens": 65536,
+              "temperature": 1.0,
+              "top_p": 0.95,
+              "top_k": 20
+            },
+            "sse": {
+              "path": "runs/ordinary_gpu_probe_20261002/remote/services_v7/qwen36/gateway/gpu1003-orange322e9-qwen36-a1/resp_11.sse",
+              "sha256": "0148179914afc20fd1fe93427ead13f5c21eccd84c81a234ef848ea060ba9b6c",
+              "bytes": 3825
+            },
+            "blocks": [
+              "thinking",
+              "text"
+            ]
+          }
+        ],
+        "sampling_basis": "实际入站body/Sessiondefaults/prompt_len+冻结3 common._sampling_params/clamp确定性重算；非adapter→SGLang原始POST抓包",
+        "repetition_penalty": "无adapter/request覆盖；不臆造1.05"
+      },
+      "execution_review_reused": {
+        "path": "runs/ordinary_gpu_probe_20261002/reviews/orange322e9_qwen36_a1_execution_review.json",
+        "sha256": "sha256:4b861820cc6effb0dc294787dc7f2183c9fab859ad194a8fe9b44f7195a00e32",
+        "bytes": 56898
+      },
+      "parallel_ability_evaluated": false,
+      "repeated_stability_evaluated": false
+    }
+  ],
+  "root_cause_proof": {
+    "definitions": "p=argsort(idx), U=u[p], q=p inverse; np.unique supplies u[inv]=input",
+    "required_inverse_relation": "q[p[j]]=j for every unique position j",
+    "correct_reconstruction": "U[q[inv]]=u[p[q[inv]]]=u[inv]",
+    "coder_construction": "q=empty_like(p); q[p]=arange(k)",
+    "qwen_construction": "q=argsort(p)",
+    "empty_and_single_input": "k=0/1 permutation remains valid; Coder assigns all k entries since p is a permutation",
+    "preserved_contract": "first appearance unique order, original mapping length/integer indices, duplicates/strings within existing public one-dimensional np.unique support",
+    "unclaimed_extensions": [
+      "new NaN equality semantics",
+      "incomparable mixed object input",
+      "new multidimensional contract"
+    ]
+  },
+  "public_problem_and_lines_already_given": true,
+  "author_review": {
+    "report_md": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/22e98f8f/probe_analysis_20261003.md",
+      "sha256": "sha256:9bdf8d6b95741de5452b7034a38446ddd3c15cba9b0e36cadc243973c5662b80",
+      "bytes": 9298
+    },
+    "report_json": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/22e98f8f/probe_analysis_20261003.json",
+      "sha256": "sha256:e5c7b4faeb74f4dbc592620e06042d2adbf1064f213756180542cdcb485e95e4",
+      "bytes": 2238
+    },
+    "extracted_evidence_index": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/orange22_first_probe_author_evidence_v1.json",
+      "sha256": "sha256:673343750f0819fba401e6e471915c8f1447b28587ffbac85a186c2ab54fd766",
+      "bytes": 111605
+    },
+    "decisive_claims": [
+      {
+        "claim": "两份最终逆置换修法符合公开要求、保留已有行为、无绕过",
+        "assessment": "supported",
+        "basis": "actual baseline/frozen bytes and inverse-permutation proof; only target function changed; actual tool results and reused formal grading"
+      },
+      {
+        "claim": "Coder首次Edit等价、曾误归因导入、存在多余工作",
+        "assessment": "supported",
+        "evidence": "Coder62→66/75→79, text84/106/119, reads88→92/97→101, repeated110→114, correction132/136→140"
+      },
+      {
+        "claim": "Qwen在Edit前否定inv.argsort错假设",
+        "assessment": "supported_with_explicit_reasoning_caveat",
+        "evidence": "thinking21/35/53多次错算；43→47否定，57→61正确实测，93→97后才Edit。不能解读为全程推理正确。"
+      },
+      {
+        "claim": "Qwen最终方向措辞不准但不影响正确代码",
+        "assessment": "supported",
+        "evidence": "Qwen179 vs frozen158; correct p maps first-appearance rank to sorted-unique index; inverse maps sorted index to first-appearance rank"
+      },
+      {
+        "claim": "七维指标、延迟定义及计时分层",
+        "assessment": "supported",
+        "basis": "tool events/CC result/gateway first-generation timestamps/queue original receipts independently recomputed; API not pure GPU, queue pre-dispatch unknown"
+      },
+      {
+        "claim": "无并行/稳定能力结论，无必修题或新链路阻断",
+        "assessment": "supported_with_scope_limits",
+        "basis": "one complete sample per model, max outstanding tool1/no batch; execution support unknown; existing identity/resource contract limitations retained"
+      }
+    ],
+    "unresolved_required_corrections": [],
+    "author_independent_complete_false_is_snapshot_not_current_review_status": true
+  },
+  "findings": [
+    {
+      "id": "O22-S1",
+      "kind": "observed_model_process_limitation",
+      "blocking": false,
+      "description": "Coder首Edit语义等价，误归因加载后才纠正，不能用工具层零错误证明过程全正确。"
+    },
+    {
+      "id": "O22-S2",
+      "kind": "observed_model_reasoning_and_wording_limitation",
+      "blocking": false,
+      "description": "Qwen thinking多次错算/自相矛盾，最终回复置换方向措辞不准确；实际最终代码与实测正确。"
+    },
+    {
+      "id": "O22-S3",
+      "kind": "observed_validation_evidence_limit",
+      "blocking": false,
+      "description": "Qwen自测pytest接head/tail且无pipefail，不能只从成功工具返回认pytestRC；完整摘要和独立正式graderRC0支持本次通过。"
+    }
+  ],
+  "blocking_findings": [],
+  "independent_semantic_review_complete": true,
+  "both_final_candidates_semantically_correct_in_reviewed_scope": true,
+  "new_task_or_shared_chain_repair_required_by_this_review": false,
+  "requested_first_round_samples_complete": true,
+  "parallel_ability_evaluated": false,
+  "repeated_stability_evaluated": false,
+  "model_general_ability_evaluated": false,
+  "training_or_holdout_qualification_evaluated": false,
+  "limits": [
+    "每臂仅一次，公开已给模块、函数、失败例和验证入口；不能外推未知仓库定位或稳定能力。",
+    "本轮不运行候选/NumPy/测试/模型/容器，数学证成结合真实历史结果，原正式分与语义结论分列。",
+    "复用既有权重revision/只读mount关联，无本轮全权重重哈希；alias不独立证明checkpoint。",
+    "baseline environment digest null及code3 shared_entry路径/SHA错配外部关联按原执行审查保留，不回写工件。",
+    "资源仅有限采样；采样来自配置+代码派生，非SGLang出站原POST抓包；最大实际上下文远低196K。",
+    "API时间包含服务等待/传输；工具调用事件无timestamp，未伪造逐工具时长；派发前队列时间未知。",
+    "Qwen有thinking而Coder未暴露thinking，采样设置不同；累计输入重复上下文，不将单次token/时长当模型普遍优劣。",
+    "未发现新语义阻断，不等于GPU可退租；重复采样依全批安排，资源收口仍由相应负责人决定。"
+  ],
+  "only_written_files": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/reviews/orange22_first_probe_semantic_review_20261003.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/reviews/orange22_first_probe_semantic_review_20261003.json"
+  ],
+  "stop_condition": "本题两模型首轮候选及决定性行为非作者窄核完成；不重跑有效首轮，后续重复样本另按固定材料/预算接续。"
+}

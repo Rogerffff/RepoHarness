@@ -1,0 +1,499 @@
+[
+  {
+    "slow_network": false,
+    "fault": "none",
+    "necessary_records_complete": true,
+    "primary_cause": null,
+    "verdict_ok": true,
+    "wait_resolved": true,
+    "initial_wait_failure": [
+      {
+        "kind": "active_groups_unfinished",
+        "count": 1,
+        "groups": [
+          {
+            "group_index": null,
+            "sample_indices": [
+              0
+            ],
+            "instance_id": null,
+            "prompt_id": "pg0",
+            "rh2_prompt_group_id": null
+          }
+        ],
+        "reason": "active group tasks still running when the cancel deadline passed"
+      }
+    ],
+    "final_state": {
+      "worker": {
+        "state": "cancelled"
+      },
+      "active_groups": [
+        {
+          "state": "cancelled",
+          "facts": {
+            "group_index": null,
+            "sample_indices": [
+              0
+            ],
+            "instance_id": null,
+            "prompt_id": "pg0",
+            "rh2_prompt_group_id": null
+          }
+        }
+      ],
+      "all_settled": true,
+      "late_group_exceptions": []
+    },
+    "execution_closure": {
+      "orchestrator_present": true,
+      "attempts_audited": 1,
+      "attempts_records_incomplete": 0,
+      "attempts_records_incomplete_ids": [],
+      "inflight_unfinished": 0,
+      "rollout_containers_unreleased": [],
+      "quarantined_containers": [],
+      "grading_containers_open": [],
+      "record_write_failures": 0,
+      "egress_cleanup_failures": 0,
+      "egress_relay_left": null,
+      "evidence_failures": 0,
+      "first_cause": null,
+      "complete": true
+    },
+    "receipt_count": 1,
+    "execution_audit_file_exists": true,
+    "lease_released": true,
+    "network_entered": true,
+    "network_cancelled": false,
+    "network_residue": {},
+    "cleanup_failures": [],
+    "record_failure_types": [],
+    "inflight": {
+      "inflight_at_shutdown": 1,
+      "finished_in_grace": 1,
+      "cancelled": [],
+      "unfinished_after_cancel_wait": []
+    },
+    "evidence_directory_basename": "w5a-dual-loop-r3qakbih"
+  },
+  {
+    "slow_network": true,
+    "fault": "none",
+    "necessary_records_complete": false,
+    "primary_cause": "shutdown_failure: {\"schema_id\": \"rh2.rollout_fn_shutdown_failure.v1\", \"kind\": \"rollout_fn_shutdown_incomplete\", \"problems\": [{\"kind\": \"active_groups_unfinished\", \"count\": 1, \"groups\": [{\"group_index\": null, \"sample_indices\": [0], \"instance_id\": null, \"prompt_id\": \"pg0\", \"rh2_prompt_group_id\": null}], \"reason\": \"active group tasks still running when the cancel deadline passed\"}], \"worker_state\": \"c",
+    "verdict_ok": false,
+    "wait_resolved": false,
+    "initial_wait_failure": [
+      {
+        "kind": "active_groups_unfinished",
+        "count": 1,
+        "groups": [
+          {
+            "group_index": null,
+            "sample_indices": [
+              0
+            ],
+            "instance_id": null,
+            "prompt_id": "pg0",
+            "rh2_prompt_group_id": null
+          }
+        ],
+        "reason": "active group tasks still running when the cancel deadline passed"
+      }
+    ],
+    "final_state": {
+      "worker": {
+        "state": "cancelled"
+      },
+      "active_groups": [
+        {
+          "state": "cancelled",
+          "facts": {
+            "group_index": null,
+            "sample_indices": [
+              0
+            ],
+            "instance_id": null,
+            "prompt_id": "pg0",
+            "rh2_prompt_group_id": null
+          }
+        }
+      ],
+      "all_settled": true,
+      "late_group_exceptions": []
+    },
+    "execution_closure": {
+      "orchestrator_present": true,
+      "attempts_audited": 1,
+      "attempts_records_incomplete": 1,
+      "attempts_records_incomplete_ids": [
+        "exec_F22#p1-cafe1234"
+      ],
+      "inflight_unfinished": 0,
+      "rollout_containers_unreleased": [],
+      "quarantined_containers": [],
+      "grading_containers_open": [],
+      "record_write_failures": 0,
+      "egress_cleanup_failures": 0,
+      "egress_relay_left": null,
+      "evidence_failures": 0,
+      "first_cause": null,
+      "complete": false
+    },
+    "receipt_count": 1,
+    "execution_audit_file_exists": false,
+    "lease_released": true,
+    "network_entered": true,
+    "network_cancelled": true,
+    "network_residue": {},
+    "cleanup_failures": [],
+    "record_failure_types": [],
+    "inflight": {
+      "inflight_at_shutdown": 1,
+      "finished_in_grace": 0,
+      "cancelled": [
+        {
+          "trajectory_id": "exec_F22",
+          "physical_attempt_id": "exec_F22#p1-cafe1234",
+          "rollout_execution_id": "exec_F22",
+          "task_id": "psf__requests-2931",
+          "in_flight_seconds": 0.254,
+          "finished_after_cancel": true,
+          "termination_kind": "owner_cancelled",
+          "completion_class": "missing"
+        }
+      ],
+      "unfinished_after_cancel_wait": []
+    },
+    "evidence_directory_basename": "w5a-dual-loop-gdk3sut8"
+  },
+  {
+    "slow_network": false,
+    "fault": "receipt",
+    "necessary_records_complete": false,
+    "primary_cause": "shutdown_failure: {\"schema_id\": \"rh2.rollout_fn_shutdown_failure.v1\", \"kind\": \"rollout_fn_shutdown_incomplete\", \"problems\": [{\"kind\": \"active_groups_unfinished\", \"count\": 1, \"groups\": [{\"group_index\": null, \"sample_indices\": [0], \"instance_id\": null, \"prompt_id\": \"pg0\", \"rh2_prompt_group_id\": null}], \"reason\": \"active group tasks still running when the cancel deadline passed\"}], \"worker_state\": \"c",
+    "verdict_ok": false,
+    "wait_resolved": false,
+    "initial_wait_failure": [
+      {
+        "kind": "active_groups_unfinished",
+        "count": 1,
+        "groups": [
+          {
+            "group_index": null,
+            "sample_indices": [
+              0
+            ],
+            "instance_id": null,
+            "prompt_id": "pg0",
+            "rh2_prompt_group_id": null
+          }
+        ],
+        "reason": "active group tasks still running when the cancel deadline passed"
+      }
+    ],
+    "final_state": {
+      "worker": {
+        "state": "cancelled"
+      },
+      "active_groups": [
+        {
+          "state": "cancelled",
+          "facts": {
+            "group_index": null,
+            "sample_indices": [
+              0
+            ],
+            "instance_id": null,
+            "prompt_id": "pg0",
+            "rh2_prompt_group_id": null
+          }
+        }
+      ],
+      "all_settled": true,
+      "late_group_exceptions": []
+    },
+    "execution_closure": {
+      "orchestrator_present": true,
+      "attempts_audited": 1,
+      "attempts_records_incomplete": 1,
+      "attempts_records_incomplete_ids": [
+        "exec_F22#p1-cafe1234"
+      ],
+      "inflight_unfinished": 0,
+      "rollout_containers_unreleased": [],
+      "quarantined_containers": [],
+      "grading_containers_open": [],
+      "record_write_failures": 1,
+      "egress_cleanup_failures": 0,
+      "egress_relay_left": null,
+      "evidence_failures": 0,
+      "first_cause": null,
+      "complete": false
+    },
+    "receipt_count": 0,
+    "execution_audit_file_exists": true,
+    "lease_released": true,
+    "network_entered": true,
+    "network_cancelled": false,
+    "network_residue": {},
+    "cleanup_failures": [
+      "finalization_receipt_write_failed"
+    ],
+    "record_failure_types": [
+      "finalization_receipt_write_failed"
+    ],
+    "inflight": {
+      "inflight_at_shutdown": 1,
+      "finished_in_grace": 1,
+      "cancelled": [],
+      "unfinished_after_cancel_wait": []
+    },
+    "evidence_directory_basename": "w5a-dual-loop-1gpbqel1"
+  },
+  {
+    "slow_network": false,
+    "fault": "audit",
+    "necessary_records_complete": false,
+    "primary_cause": "shutdown_failure: {\"schema_id\": \"rh2.rollout_fn_shutdown_failure.v1\", \"kind\": \"rollout_fn_shutdown_incomplete\", \"problems\": [{\"kind\": \"active_groups_unfinished\", \"count\": 1, \"groups\": [{\"group_index\": null, \"sample_indices\": [0], \"instance_id\": null, \"prompt_id\": \"pg0\", \"rh2_prompt_group_id\": null}], \"reason\": \"active group tasks still running when the cancel deadline passed\"}], \"worker_state\": \"c",
+    "verdict_ok": false,
+    "wait_resolved": false,
+    "initial_wait_failure": [
+      {
+        "kind": "active_groups_unfinished",
+        "count": 1,
+        "groups": [
+          {
+            "group_index": null,
+            "sample_indices": [
+              0
+            ],
+            "instance_id": null,
+            "prompt_id": "pg0",
+            "rh2_prompt_group_id": null
+          }
+        ],
+        "reason": "active group tasks still running when the cancel deadline passed"
+      }
+    ],
+    "final_state": {
+      "worker": {
+        "state": "cancelled"
+      },
+      "active_groups": [
+        {
+          "state": "cancelled",
+          "facts": {
+            "group_index": null,
+            "sample_indices": [
+              0
+            ],
+            "instance_id": null,
+            "prompt_id": "pg0",
+            "rh2_prompt_group_id": null
+          }
+        }
+      ],
+      "all_settled": true,
+      "late_group_exceptions": []
+    },
+    "execution_closure": {
+      "orchestrator_present": true,
+      "attempts_audited": 1,
+      "attempts_records_incomplete": 1,
+      "attempts_records_incomplete_ids": [
+        "exec_F22#p1-cafe1234"
+      ],
+      "inflight_unfinished": 0,
+      "rollout_containers_unreleased": [],
+      "quarantined_containers": [],
+      "grading_containers_open": [],
+      "record_write_failures": 1,
+      "egress_cleanup_failures": 0,
+      "egress_relay_left": null,
+      "evidence_failures": 0,
+      "first_cause": null,
+      "complete": false
+    },
+    "receipt_count": 1,
+    "execution_audit_file_exists": false,
+    "lease_released": true,
+    "network_entered": true,
+    "network_cancelled": false,
+    "network_residue": {},
+    "cleanup_failures": [],
+    "record_failure_types": [
+      "audit_sink_failed_secondary"
+    ],
+    "inflight": {
+      "inflight_at_shutdown": 1,
+      "finished_in_grace": 1,
+      "cancelled": [],
+      "unfinished_after_cancel_wait": []
+    },
+    "evidence_directory_basename": "w5a-dual-loop-3jrhge8g"
+  },
+  {
+    "slow_network": false,
+    "fault": "optional_snapshot",
+    "necessary_records_complete": true,
+    "primary_cause": null,
+    "verdict_ok": true,
+    "wait_resolved": true,
+    "initial_wait_failure": [
+      {
+        "kind": "active_groups_unfinished",
+        "count": 1,
+        "groups": [
+          {
+            "group_index": null,
+            "sample_indices": [
+              0
+            ],
+            "instance_id": null,
+            "prompt_id": "pg0",
+            "rh2_prompt_group_id": null
+          }
+        ],
+        "reason": "active group tasks still running when the cancel deadline passed"
+      }
+    ],
+    "final_state": {
+      "worker": {
+        "state": "cancelled"
+      },
+      "active_groups": [
+        {
+          "state": "cancelled",
+          "facts": {
+            "group_index": null,
+            "sample_indices": [
+              0
+            ],
+            "instance_id": null,
+            "prompt_id": "pg0",
+            "rh2_prompt_group_id": null
+          }
+        }
+      ],
+      "all_settled": true,
+      "late_group_exceptions": []
+    },
+    "execution_closure": {
+      "orchestrator_present": true,
+      "attempts_audited": 1,
+      "attempts_records_incomplete": 0,
+      "attempts_records_incomplete_ids": [],
+      "inflight_unfinished": 0,
+      "rollout_containers_unreleased": [],
+      "quarantined_containers": [],
+      "grading_containers_open": [],
+      "record_write_failures": 0,
+      "egress_cleanup_failures": 0,
+      "egress_relay_left": null,
+      "evidence_failures": 0,
+      "first_cause": null,
+      "complete": true
+    },
+    "receipt_count": 1,
+    "execution_audit_file_exists": true,
+    "lease_released": true,
+    "network_entered": true,
+    "network_cancelled": false,
+    "network_residue": {},
+    "cleanup_failures": [],
+    "record_failure_types": [],
+    "inflight": {
+      "inflight_at_shutdown": 1,
+      "finished_in_grace": 1,
+      "cancelled": [],
+      "unfinished_after_cancel_wait": []
+    },
+    "evidence_directory_basename": "w5a-dual-loop-ldmgyhf4"
+  },
+  {
+    "slow_network": false,
+    "fault": "driver",
+    "necessary_records_complete": true,
+    "primary_cause": "RuntimeError: probe driver cause",
+    "verdict_ok": false,
+    "wait_resolved": null,
+    "initial_wait_failure": [
+      {
+        "kind": "active_groups_unfinished",
+        "count": 1,
+        "groups": [
+          {
+            "group_index": null,
+            "sample_indices": [
+              0
+            ],
+            "instance_id": null,
+            "prompt_id": "pg0",
+            "rh2_prompt_group_id": null
+          }
+        ],
+        "reason": "active group tasks still running when the cancel deadline passed"
+      }
+    ],
+    "final_state": null,
+    "execution_closure": {
+      "orchestrator_present": true,
+      "attempts_audited": 1,
+      "attempts_records_incomplete": 0,
+      "attempts_records_incomplete_ids": [],
+      "inflight_unfinished": 0,
+      "rollout_containers_unreleased": [],
+      "quarantined_containers": [],
+      "grading_containers_open": [],
+      "record_write_failures": 0,
+      "egress_cleanup_failures": 0,
+      "egress_relay_left": null,
+      "evidence_failures": 0,
+      "first_cause": "RuntimeError: probe driver cause",
+      "complete": false
+    },
+    "receipt_count": 1,
+    "execution_audit_file_exists": true,
+    "lease_released": true,
+    "network_entered": true,
+    "network_cancelled": false,
+    "network_residue": {},
+    "cleanup_failures": [],
+    "record_failure_types": [],
+    "inflight": {
+      "inflight_at_shutdown": 1,
+      "finished_in_grace": 1,
+      "cancelled": [],
+      "unfinished_after_cancel_wait": []
+    },
+    "evidence_directory_basename": "w5a-dual-loop-m_ee4xb7"
+  },
+  {
+    "case": "normal_completed_formal",
+    "delivered_count": 1,
+    "reward": 1.0,
+    "necessary_records_complete": true,
+    "receipt_count": 1,
+    "execution_audit_file_exists": true,
+    "shutdown_ok": true,
+    "execution_closure": {
+      "orchestrator_present": true,
+      "attempts_audited": 1,
+      "attempts_records_incomplete": 0,
+      "attempts_records_incomplete_ids": [],
+      "inflight_unfinished": 0,
+      "rollout_containers_unreleased": [],
+      "quarantined_containers": [],
+      "grading_containers_open": [],
+      "record_write_failures": 0,
+      "egress_cleanup_failures": 0,
+      "egress_relay_left": null,
+      "evidence_failures": 0,
+      "first_cause": null,
+      "complete": true
+    },
+    "evidence_directory_basename": "w5a-dual-loop-dy8d_bbx"
+  }
+]

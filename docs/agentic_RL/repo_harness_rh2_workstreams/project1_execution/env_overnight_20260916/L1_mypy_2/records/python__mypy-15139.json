@@ -1,0 +1,244 @@
+{
+ "task_id": "python__mypy-15139",
+ "source": "SWE-Gym lite / python/mypy PR 15139",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "16b936c15b074db858729ed218248ef623070e03",
+  "version": "1.4",
+  "python_version": "3.11",
+  "eval_cmd": "pytest -n0 -rA -k",
+  "f2p": [
+   "mypy/test/testcheck.py::TypeCheckSuite::check-lowercase.test::testTypeLowercaseSettingOff"
+  ],
+  "p2p": [],
+  "gold_paths": [
+   "mypy/messages.py"
+  ],
+  "test_patch_paths": [
+   "test-data/unit/check-lowercase.test"
+  ],
+  "runtime_evidence": "无（不在 stage1 样本、in_e2 空、无 DeepSeek 候选）"
+ },
+ "public_view": {
+  "goal": "题面：同一个 builtins.type 在 mypy 输出里出现三种写法（type / builtins.type / Type），要求统一或跟随源码写法。",
+  "constraints": [
+   "题面给完整最小复现，无外链、无图片、无截断",
+   "题面版本是 0.961，base 是 1.4——题面描述的现象与 base 未必逐字一致"
+  ],
+  "unknowns_from_public_only": [
+   "**题面从头到尾没有出现 --force-uppercase-builtins / --no-force-uppercase-builtins 这个选项**，而 F2P 正是用 `# flags: --python-version 3.9 --no-force-uppercase-builtins` 触发的；公开材料推不出要改的是这条开关下的分支",
+   "题面列了三处不一致（reveal_type 的 builtins.type、错误消息里的 Type、not indexable 里的 type），要改哪一处、改成哪一种，题面明确说'二选一'但没选",
+   "gold 完全没有动 reveal_type 的输出，而题面第一行举的就是 reveal_type"
+  ],
+  "base_code_evidence": [
+   "16b936c15:mypy/messages.py:2517-2520 format_type_inner 的 TypeType 分支硬编码 `return f\"Type[{format(typ.item)}]\"`",
+   "16b936c15:mypy/messages.py:2254、:2421、:2447 已有三处 `'tuple' if options.use_lowercase_names() else 'Tuple'` 的同款写法 —— 实现模板在 base 现成可抄",
+   "16b936c15:mypy/options.py:358-363 force_uppercase_builtins / use_lowercase_names()",
+   "16b936c15:test-data/unit/check-lowercase.test 已有 8 个 case（Tuple/List/Dict/Set × On/Off），本题正是给 Type 补上 Off 那一半"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "test-data/unit/check-lowercase.test 在 base 存在（8 个 case）",
+    "gold 目标 mypy/messages.py:2517 在 base 逐字一致"
+   ],
+   "note": "无二进制/LFS/子模块。",
+   "by": "L1_mypy_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "16b936c15:mypy/messages.py:2517 硬编码 'Type['"
+   ],
+   "note": "静态确认 base 在 use_lowercase_names() 为真时仍输出大写 Type。",
+   "by": "L1_mypy_2"
+  },
+  "3": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "problem_statement 769 字符，无外链/图片/截断",
+    "raw hints_text 555 字符：Jukka 给出了**具体的期望输出**——'reveal_type(x) # Revealed type is \"builtins.type[builtins.type]\"'、'Value of type \"type[type]\" is not indexable'，并说明 3.9+ 用 type[...]、3.8- 用 Type[...]"
+   ],
+   "note": "决定'改哪一处、按什么规则'的关键信息只在 hints 里（3.9+ 与 3.8- 的区分、reveal_type 保持 builtins.type）。agent 看不到 hints，题面只说'二选一'，选错就 0 分。",
+   "by": "L1_mypy_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只碰 test-data/unit/check-lowercase.test"
+   ],
+   "note": "无非测试源码；gold 不碰测试样路径。",
+   "by": "L1_mypy_2"
+  },
+  "17": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "同 file_rules"
+   ],
+   "note": "仓库级。",
+   "by": "L1_mypy_2"
+  },
+  "5": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "本包 python__mypy-12222 / 15184 / 15876 的 gold 也改 mypy/messages.py"
+   ],
+   "note": "messages.py 是 40 题里的热点文件（本包 4 题）。本题与它们改的函数不同（format_type_inner 的 TypeType 分支），不重复；但 15139(1.4) 与 15184(1.4) base_commit 相近，划分需注意。",
+   "by": "L1_mypy_2"
+  },
+  "23": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "题面无 --no-force-uppercase-builtins 字样；F2P 的 flags 行依赖它",
+    "gold 未改 reveal_type，而题面第一个例子就是 reveal_type"
+   ],
+   "note": "公开材料到 F2P 之间缺一环：'这个不一致其实由 force_uppercase_builtins 开关控制、要补的是 TypeType 在 lowercase 模式下的分支'。这一环只在 base 代码里（有 3 处同款模板可循），题面本身不足。",
+   "by": "L1_mypy_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 只断言一条 `# E: Incompatible types in assignment (expression has type \"type[type]\", variable has type \"int\")`"
+   ],
+   "note": "不强制唯一实现：在 format_type_inner 里加分支、或在 TypeType 的 __str__ 层处理，都能过。",
+   "by": "L1_mypy_2"
+  },
+  "25": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "F2P=1、P2P=0（grading_bundles_v2_v0:python__mypy-15139）",
+    "同文件 base 已有 8 个结构完全对称的 case（testTupleLowercaseSettingOff/On 等），一条都没进 P2P"
+   ],
+   "note": "漏放通道极浅：把 :2517 直接改成 `return f\"type[{format(typ.item)}]\"`（无条件小写）即可满分——那 8 个既有 case 测的是 tuple/list/dict/set，不受影响；真正会挂的是 check-classes.test 等文件里成百条断言 'Type[...]' 的用例，而它们不参与评分。",
+   "by": "L1_mypy_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "P2P=0，而同文件就有 8 条现成对称用例"
+   ],
+   "note": "本包里补回归成本最低的一题，见 proposed_regression_tests。",
+   "by": "L1_mypy_2"
+  },
+  "27": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "golden_patch 只改 2 行"
+   ],
+   "note": "gold 与题对应、不依赖未交付改动，但**不完整地回应了题面**：题面列了三处不一致，gold 只改了错误消息里的 Type→type，reveal_type 仍输出 builtins.type[...]。按 hints 里 Jukka 的说法这是有意为之，但题面读者无从得知。",
+   "by": "L1_mypy_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 无 PR/commit 链接、无修复代码"
+   ],
+   "note": "题面无泄漏；hints 有方案但不可见。",
+   "by": "L1_mypy_2"
+  },
+  "6": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "未实跑安装。",
+   "by": "L1_mypy_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P case 不需要 fixture"
+   ],
+   "note": "无外部依赖。",
+   "by": "L1_mypy_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "case 正文无网络调用"
+   ],
+   "note": "纯离线。",
+   "by": "L1_mypy_2"
+  },
+  "18": {
+   "status": "pass",
+   "evidence_refs": [
+    "kscan.json:python__mypy-15139 over_select=[]"
+   ],
+   "note": "无 -k 过选。注意 -k 'testTypeLowercaseSettingOff' 只选 1 条，同文件另外 8 条不会被跑到。",
+   "by": "L1_mypy_2"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "nodeid 4 段；16b936c15:mypy/test/data.py 含 DataFileCollector"
+   ],
+   "note": "形状一致。",
+   "by": "L1_mypy_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "grading_coverage",
+   "severity": "P1",
+   "evidence_refs": [
+    "P2P=0；check-lowercase.test 有 8 条现成对称 case"
+   ],
+   "proposed_action": "把 check-lowercase.test 的 8 条既有 case 全部纳入 P2P，并补一条 'testTypeLowercaseSettingOn'（默认大写模式下仍须输出 Type[...]）作为 F2P 的对偶。",
+   "next_experiment": "写无条件小写的假修复跑当前 F2P（预期满分），再跑 check-classes.test 全量（预期大面积失败），量化当前评分的盲区。"
+  },
+  {
+   "category": "requirement_underspecified",
+   "severity": "P1",
+   "evidence_refs": [
+    "题面无 force_uppercase_builtins 字样"
+   ],
+   "proposed_action": "若保留本题，把 hints 里 Jukka 的结论（3.9+ 用 type[...]、reveal_type 保持 builtins.type）写进题面。",
+   "next_experiment": "让模型只读题面实现，统计它去改 reveal_type 而非 format_type 的比例。"
+  },
+  {
+   "category": "file_boundary",
+   "severity": "P1",
+   "evidence_refs": [
+    "rh2/src/repoharness2/grading/manager.py:656/672/581"
+   ],
+   "proposed_action": "建议把 mypy/test/* 与 test-data/* 纳入 hygiene 保护（40 题 gold 均不触碰）。",
+   "next_experiment": "构造只改 mypy/test/helpers.py::assert_string_arrays_equal 的候选 patch 走一次评分，确认当前会判满分。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 test-data/unit/ 下的 .test 数据文件，gold 只碰 mypy/ 源码，两者无交集，按第四组 B 默认保持空。仓库级建议（需用户裁定、对 40 题统一生效）：把 'mypy/test/*' 与 'test-data/*' 加入 hygiene.test_globs——40 题 gold 无一触碰这两处（已对 validation_bundles 全量核对），而当前 agent 改 mypy/test/helpers.py、mypy/test/data.py 或 test-data/unit/fixtures/*.pyi 既不被 eval 的 git checkout 还原，也不被判 rejected_test_tampering。副作用：agent 在 test-data/ 下建临时文件会让整份提交作废，需一并决定。",
+  "evidence_refs": [
+   "rh2/src/repoharness2/grading/manager.py:656、:672、:581",
+   "rh2/src/repoharness2/contracts/grading.py:118-121"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "check-lowercase.test 的 8 条既有 case（testTupleLowercaseSettingOff/On、testListLowercaseSettingOff/On、testDictLowercaseSettingOff/On、testSetLowercaseSettingOff/On）",
+   "reason": "与 F2P 结构完全对称，零成本、直接堵住'无条件小写'。"
+  },
+  {
+   "id": "新增 testTypeLowercaseSettingOn（默认模式下仍输出 Type[...]）",
+   "reason": "F2P 只测了开关打开的一侧，另一侧完全无护栏。"
+  },
+  {
+   "id": "mypy/test/testcheck.py::TypeCheckSuite::check-classes.test 全文件",
+   "reason": "base 里大量断言 'Type[...]' 的用例集中在这里，是无条件小写修复的第一个受害者。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "P2P=0 而同文件就躺着 8 条对称用例；题面又缺了 force_uppercase_builtins 这一环。两处都便宜，补完是好题。"
+ },
+ "costs": {
+  "minutes": 20
+ }
+}

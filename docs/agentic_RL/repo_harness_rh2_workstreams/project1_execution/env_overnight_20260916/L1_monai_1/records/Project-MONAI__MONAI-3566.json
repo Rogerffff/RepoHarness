@@ -1,0 +1,75 @@
+{
+ "task_id": "Project-MONAI__MONAI-3566",
+ "source": "SWE-Gym lite / Project-MONAI/MONAI PR 3566 (created_at 2022-01-03)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "9417ff217843db1cee7aef53b367cf1a7b21b7da",
+  "version": "0.8", "python_version": "3.8",
+  "eval_cmd": "pytest -rA ", "actual_test_cmd": "pytest -rA  tests/test_load_image.py tests/test_timedcall_dist.py",
+  "f2p": ["tests/test_load_image.py::TestLoadImage::test_itk_meta"],
+  "p2p_n": 20,
+  "test_patch_paths": ["tests/test_load_image.py", "tests/test_timedcall_dist.py"],
+  "gold_paths": ["monai/data/image_reader.py"],
+  "stage1": "gold=RESOLVED_FULL（21 PASSED + 5 FAILED，46.29s）/ empty=RESOLVED_NO（20 PASSED + 6 FAILED），rc_install=0"
+ },
+ "public_view": {
+  "goal": "用 ITKReader 从目录加载 DICOM series 时，返回的 metadata 只有 spacing/affine 等几项，**不含 DICOM tag**。题面明确给出期望的 dict_keys（84 个 DICOM tag + 原有 6 项）。",
+  "constraints": [
+   "题面 1835 字符，含可运行复现与完整期望输出",
+   "题面的复现代码 `LoadImage(reader='ITKReader', pixel_type=itk.UC)` **不带任何新参数**，期望输出是『默认就应该带上 DICOM tag』"
+  ],
+  "unknowns_from_public_only": [
+   "gold 把新行为做成了**可选开关** `series_meta: bool = False`（默认关闭），与题面『默认就该有』的语义不一致",
+   "开关的名字 `series_meta` 题面里一个字都没有，但 F2P 必须用这个名字调用",
+   "多张切片的 meta 怎么合并？gold 只取第一张（代码里自带 TODO），题面没说"
+  ],
+  "base_code_evidence": [
+   "9417ff217:monai/data/image_reader.py ITKReader.__init__ 签名只有 channel_dim/series_name/reverse_indexing/**kwargs",
+   "9417ff217:monai/data/image_reader.py ITKReader.read 的 DICOM 目录分支只做 `img_.append(itk.imread(name, **kwargs_))`，不读 MetaDataDictionaryArray",
+   "9417ff217:tests/testing_data/CT_DICOM/ 目录在仓库内（17106/17136/17166/17196 四个 blob），F2P 不需要下载"
+  ]
+ },
+ "checks": {
+  "1": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["test_patch 的第二个文件 tests/test_timedcall_dist.py 的改动是把 `TimedCall(seconds=10 if linux else 60)` 改成 `seconds=20`，与 DICOM metadata 毫无关系"], "note": "材料对应性有瑕疵：test_patch 里混了一处**与题目无关的超时放宽**（上游 PR 顺手修的 flaky）。它带来的后果是 tests/test_timedcall_dist.py 的 5 条用例进了 P2P，而那是一组基于 multiprocessing spawn 的计时测试（见检查 10）。其余材料对应正常，无二进制/LFS/子模块（CT_DICOM 是仓库内的普通二进制 blob，已在 base）。", "by": "L1_monai_1"},
+  "2": {"status": "pass", "evidence_refs": ["9417ff217:monai/data/image_reader.py ITKReader.read 的 DICOM 分支", "stage1 empty 侧 test_itk_meta FAILED"], "note": "base 确含题面所述缺陷。", "by": "L1_monai_1"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 1835 字符，含复现与完整期望 dict_keys", "raw hints_text 为空"], "note": "无外链/图片/截断；引用的 tests/testing_data/CT_DICOM 在仓库内，复现可离线跑通。题面质量好。", "by": "L1_monai_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 两个路径都是 tests/test_*.py"], "note": "无非测试源码；gold 只碰 monai/data/image_reader.py。additional_exclusions 保持空。", "by": "L1_monai_1"},
+  "17": {"status": "pass", "evidence_refs": ["两个路径在 base 都存在"], "note": "恢复步骤可正常工作。", "by": "L1_monai_1"},
+  "5": {"status": "pass", "evidence_refs": ["dupidx.txt：monai/data/image_reader.py 与这两个测试文件在 26 道 MONAI 题里只被本题触碰"], "note": "无重复/派生。", "by": "L1_monai_1"},
+  "23": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["题面复现 `LoadImage(reader='ITKReader', pixel_type=itk.UC)` 无新参数，期望 metadata 默认含 DICOM tag", "F2P 调用 `LoadImage(reader='ITKReader', pixel_type=itk.UC, series_meta=True)`", "gold 的 `series_meta: bool = False`"], "note": "**公开材料完全推不出 F2P**，而且两者语义相反：题面要的是默认行为改变，gold/F2P 要的是一个**默认关闭**的新开关，且开关名 `series_meta` 只存在于 gold 与测试里。一个严格按题面实现『默认带上 DICOM tag』的候选，在 F2P 调用时会把 `series_meta=True` 当成未知 kwarg 传进 `itk.imread`，大概率直接 TypeError → 判 0。这是本包里『要求不可推断』最严重的一题。", "by": "L1_monai_1"},
+  "24": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["F2P 必须能接受 `series_meta=True` 这个精确关键字", "F2P 断言 `f'{label}={val}' == 'Series Description=Routine Brain '`（含结尾空格的精确字符串）"], "note": "**强制唯一实现**两层：(a) 新参数名必须叫 `series_meta`；(b) 必须把 tag 0008|103e 的值原样（含 DICOM 的尾部填充空格）放进 metadata，任何 strip/规范化都会让断言失败。第二层其实是好事（保真），第一层是硬伤。", "by": "L1_monai_1"},
+  "25": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["F2P 只查一个 tag（0008|103e）", "题面期望的是 84 个 tag 全在"], "note": "只验证一个 tag 存在且值正确，所以『只把 Series Description 塞进去』的硬编码修复也能满分。P2P 里的 test_itk_dicom_series_reader_0/1/2 能挡住『把原有 metadata 弄坏』，但挡不住『只补一个 tag』。", "by": "L1_monai_1"},
+  "26": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["P2P 20 条中有 5 条来自无关的 test_timedcall_dist.py"], "note": "有效回归只有 15 条（test_load_image.py），且其中 5 条同文件用例因 ITK 版本漂移被排除（检查 9）。见 proposed_regression_tests。", "by": "L1_monai_1"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 三个 hunk 全在 ITKReader（docstring、__init__ 增参、read 增分支）"], "note": "无与题无关的改动，不依赖未交付改动。局限：代码里自带 `# TODO: using the first slice's meta` —— gold 自认是不完整实现。", "by": "L1_monai_1"},
+  "29": {"status": "pass", "evidence_refs": ["题面无 PR/commit 链接、不含修复代码；hints_text 为空"], "note": "无泄漏（反而是信息不足，见检查 23）。", "by": "L1_monai_1"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 rc_install=0"], "note": "安装离线可完成（需要 itk，镜像已装）。", "by": "L1_monai_1"},
+  "7": {"status": "pass", "evidence_refs": ["F2P 读的 tests/testing_data/CT_DICOM 在 base 仓库内（git ls-tree 确认 4 个切片文件）"], "note": "无下载。这是本包里少数**用到仓库内二进制测试资产**的题，需要确保 image/checkout 完整包含它们。", "by": "L1_monai_1"},
+  "11": {"status": "pass", "evidence_refs": ["stage1 离线跑通 26 条"], "note": "不需要网络。", "by": "L1_monai_1"},
+  "9": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["gold/empty 两侧 test_itk_reader_1、test_itk_reader_3、test_kwargs、test_load_nifti_multichannel、test_register 都 FAILED", "gold/offline/a1/test_output.txt:734,785,842,895,951 `RuntimeError: Unknown type: itkMatrixF44`"], "note": "**镜像依赖漂移（第三例）**：镜像里的 itk 版本与 MONAI 0.8 不兼容（`itkMatrixF44` 类型未注册）。5 条用例两侧一致失败被排除出 P2P，判分不受影响，但同文件的有效回归从 20 条降到 15 条。与 MONAI-1121（np.int）、MONAI-2446（nibabel int64）同类。", "by": "L1_monai_1"},
+  "10": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["P2P 含 tests/test_timedcall_dist.py 的 5 条", "9417ff217:tests/utils.py TimedCall：`Wrap a test case so that it will run in a new process`，默认 `method='spawn'`，靠 `seconds` 超时判定", "test_patch 把 linux 下的超时从 10s 放宽到 20s，说明上游自己就遇到过 flaky", "整份评分 46.29s，是本包最慢的一题"], "note": "**计时 + 多进程 flaky 风险**：这 5 条 P2P 用 multiprocessing spawn 起子进程并按墙钟秒数判定超时。在负载高的训练机上（同机并发多个评分容器）超时判定会随机翻车，而它们与本题毫无关系。建议把它们移出 P2P。", "by": "L1_monai_1"},
+  "20": {"status": "pass", "evidence_refs": ["gold 21 PASSED / empty 20 PASSED，差异只在 test_itk_meta"], "note": "分差干净（5 条噪声失败两侧一致）。", "by": "L1_monai_1"}
+ },
+ "issues": [
+  {"category": "requirement_unreachable", "severity": "P1",
+   "evidence_refs": ["题面复现不带新参数且期望默认行为改变", "F2P 用 `series_meta=True`", "gold 的默认值是 False"],
+   "proposed_action": "题面与评分方向不一致（题面要默认开，gold 做成默认关的开关），且开关名无法从公开材料推出。建议改写题面：把『新增 ITKReader(series_meta=...) 开关、默认 False』写明；否则本题应 reject。",
+   "next_experiment": "让模型只看当前题面跑一次，统计它是否会（a）改默认行为、（b）猜到 series_meta 这个名字。预期 (b) 命中率接近 0。"},
+  {"category": "unrelated_test_in_p2p", "severity": "P2",
+   "evidence_refs": ["test_patch 对 tests/test_timedcall_dist.py 的超时放宽", "5 条 TimedCall 用例进入 P2P", "tests/utils.py TimedCall 用 multiprocessing spawn + 墙钟超时"],
+   "proposed_action": "把 tests/test_timedcall_dist.py 的 5 条移出 P2P（它们与 DICOM metadata 无关，且是计时型多进程测试，在负载下会 flaky）。同时把评分命令里的这个文件一起去掉，能显著削减 46.29s 的耗时。",
+   "next_experiment": "在同机并发 4 个评分容器的条件下重复跑本题 10 次，统计这 5 条的翻车率。"},
+  {"category": "image_dependency_drift", "severity": "P2",
+   "evidence_refs": ["gold/offline/a1/test_output.txt:734 等 5 处 `RuntimeError: Unknown type: itkMatrixF44`"],
+   "proposed_action": "镜像的 itk 与 MONAI 0.8 不兼容，5 条 test_load_image 用例永久失败。修好后可把它们加回 P2P。与 MONAI-1121 / MONAI-2446 合起来是同一个仓库级结论：这批 MONAI 镜像没有把依赖钉到对应年代。",
+   "next_experiment": "在镜像里 `pip show itk itk-core numpy nibabel`，与 MONAI 0.8 的 requirements 对照。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 两个路径都是测试文件，gold 只碰 monai/data/image_reader.py，无交集。注意 tests/test_timedcall_dist.py 虽与本题无关，但它确实是 official test_patch 的一部分，按第四组 B 的默认不做额外排除；建议的处置是改 P2P 名单而不是加排除。", "evidence_refs": ["grading_bundles_v2_v0:Project-MONAI__MONAI-3566 test_patch", "validation_bundles_v0:Project-MONAI__MONAI-3566 golden_patch"]},
+ "proposed_regression_tests": [
+  {"id": "把 tests/test_timedcall_dist.py 的 5 条移出 P2P", "reason": "与题无关、计时型多进程、上游自己都在放宽超时。"},
+  {"id": "新增：series_meta=False（默认）时 metadata **不含** DICOM tag", "reason": "gold 的默认值语义当前零覆盖，候选把默认改成 True 也能满分。"},
+  {"id": "新增：题面列出的若干个 tag（不只 0008|103e）都在 metadata 里", "reason": "挡住『只补一个 tag』的硬编码修复。"},
+  {"id": "tests/test_load_image.py 的 test_itk_reader_1/3、test_kwargs、test_register（修好 itk 版本后）", "reason": "ITKReader 的其它读取路径，gold 改的 read() 正是公共入口。"}
+ ],
+ "disposition_hint": {"state": "needs_repair", "reason": "环境可离线跑且分差干净，但三件事需要先处理：题面与 gold 的默认语义相反且开关名不可推断（P1）、P2P 里混入 5 条计时型多进程用例（P2）、itk 版本漂移让 5 条同文件回归失效（P2）。改题面 + 调 P2P 后可用；不改题面则建议 reject。"},
+ "costs": {"minutes": 24}
+}

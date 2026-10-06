@@ -1,0 +1,260 @@
+{
+  "schema_id": "coveragepy.non_author_model_candidate_semantic_review.v1",
+  "date": "2026-10-03",
+  "reviewer": "/root/coveragepy_f5eb_cpu_review; non-author Codex",
+  "fresh_public_reader": false,
+  "private_material_exposure": true,
+  "task_id": "r2e_gym_subset::coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96",
+  "job_id": "gpu1003-coveragef5eb-qwen36-a1",
+  "model": "Qwen3.6-35B-A3B",
+  "status": "passed_candidate_semantics_for_versioned_ordinary_base_probe",
+  "blockers": [],
+  "new_material_blockers": [],
+  "candidate_quality": "good_localized_source_fix_with_reasonable_public_expected_dictionary_sync",
+  "source_binding": {
+    "material_revision_ids": [
+      "r2e-mr-076",
+      "r2e-mr-077"
+    ],
+    "adopted_semantics": "user-selected A / final rb3h; per-file pair optional, if present both correct",
+    "delivered_prompt_sha256": "sha256:c10fd285b3fc598e74574e3345413778acd43ab8674489988fd518bed5a6a649",
+    "gpu_image_id": "sha256:4bee98cf7176cceb1b9c1ea66e817826ca27879c224b3ab0909be42e52863167",
+    "CPU_identity_is_not_GPU_identity": true,
+    "baseline_tar_sha256": "sha256:9a8eee2ed0c5b5008e1036a2879894079be4a7c5aab9dbd9ba10685ac53faf8b",
+    "frozen_patch_digest": "sha256:1ceb40539f6c6edc572a652503052559e4d228a3ddcce617e751382ad13550dc",
+    "included_paths": [
+      "coverage/jsonreport.py",
+      "tests/test_json.py"
+    ]
+  },
+  "changes": [
+    {
+      "path": "coverage/jsonreport.py",
+      "before_sha256": "sha256:82f4f4d9dc940d0b1be6d027e66ed8c103314847d901f0281aec04d8ab34c6f3",
+      "after_sha256": "sha256:3d9564ae29756141de41273b0123635b17c429d9cc5997a8db6572e9336b830d",
+      "mode": "100644",
+      "operation": "modify",
+      "AST_equal_after_removing_only_new_covered_missing_dict_pairs": true,
+      "diff": "--- baseline/coverage/jsonreport.py\n+++ candidate/coverage/jsonreport.py\n@@ -60,6 +60,8 @@\n             self.report_data[\"totals\"].update({\n                 'num_branches': self.total.n_branches,\n                 'num_partial_branches': self.total.n_partial_branches,\n+                'covered_branches': self.total.n_executed_branches,\n+                'missing_branches': self.total.n_missing_branches,\n             })\n \n         json.dump(\n@@ -95,5 +97,7 @@\n             reported_file['summary'].update({\n                 'num_branches': nums.n_branches,\n                 'num_partial_branches': nums.n_partial_branches,\n+                'covered_branches': nums.n_executed_branches,\n+                'missing_branches': nums.n_missing_branches,\n             })\n         return reported_file\n"
+    },
+    {
+      "path": "tests/test_json.py",
+      "before_sha256": "sha256:70116b13adea657318148c8a1aaae40d29e66cca8660611190bf4d839db36e54",
+      "after_sha256": "sha256:c58d781b68969f1e3115978aae4b387c8a2c42ea6e2755a44625986b9cd93602",
+      "mode": "100644",
+      "operation": "modify",
+      "AST_equal_after_removing_only_new_covered_missing_dict_pairs": true,
+      "diff": "--- baseline/tests/test_json.py\n+++ candidate/tests/test_json.py\n@@ -54,6 +54,8 @@\n                         'num_branches': 2,\n                         'excluded_lines': 0,\n                         'num_partial_branches': 1,\n+                        'covered_branches': 1,\n+                        'missing_branches': 1,\n                         'percent_covered': 60.0\n                     }\n                 }\n@@ -65,6 +67,8 @@\n                 'num_branches': 2,\n                 'excluded_lines': 0,\n                 'num_partial_branches': 1,\n+                'covered_branches': 1,\n+                'missing_branches': 1,\n                 'percent_covered': 60.0\n             }\n         }\n"
+    }
+  ],
+  "static_checks": {
+    "source_full_bytes_identical_to_CPU_C1": true,
+    "original_four_public_tests_preserved": true,
+    "public_helper_assertions_and_all_other_values_preserved": true,
+    "no_changed_fixture_or_conftest": true,
+    "no_hidden_runner_expected_map_test_mutation_in_candidate": true,
+    "source_not_hardcoded_not_test_specific_no_error_swallow": true
+  },
+  "semantic_checks": [
+    {
+      "requirement": "totals",
+      "status": "passed",
+      "basis": "candidate :63-64 reads self.total.n_executed_branches/n_missing_branches; report_one_file :80 retains self.total += nums"
+    },
+    {
+      "requirement": "optional_per_file_pair",
+      "status": "passed",
+      "basis": "candidate :100-101 reads own nums under measured-data has_arcs; keys added together; permitted by A"
+    },
+    {
+      "requirement": "saved_branch_data",
+      "status": "passed",
+      "basis": "coverage_data.has_arcs(), not config.branch; new reporting object can load branch data"
+    },
+    {
+      "requirement": "multiple_files",
+      "status": "passed",
+      "basis": "baseline Numbers.__add__ :255/:259 sums branch destinations and missing destinations"
+    },
+    {
+      "requirement": "measured_report_subset",
+      "status": "passed",
+      "basis": "get_analysis_to_report(morfs) uses include/omit; only yielded analyses contribute; Coverage.json_report :975 creates fresh reporter per call"
+    },
+    {
+      "requirement": "zero_branch_in_branch_mode",
+      "status": "passed",
+      "basis": "has_arcs gate independent of nonzero count; emits both zero values"
+    },
+    {
+      "requirement": "destination_arc_counts",
+      "status": "passed",
+      "basis": "baseline results :120 sums exits, :36 sums missing arcs; executed :204=destinations minus missing, not partial lines"
+    },
+    {
+      "requirement": "line_mode_existing_behavior",
+      "status": "passed",
+      "basis": "keys emitted only with has_arcs; existing line/context behavior unchanged"
+    }
+  ],
+  "public_test_edit": {
+    "verdict": "reasonable_expected_sync_not_evidence_of_cheating",
+    "added_entries": 4,
+    "deleted_entries": 0,
+    "changed_existing_values": 0,
+    "new_values": "branch test file summary and totals each covered_branches=1, missing_branches=1",
+    "basis": "one branch destination executed, one missing; original complete expected equality preserved; actual delivered brief describes potential sync need",
+    "green_public_tests_alone_not_semantic_proof": true,
+    "private_imports": "final rb3h imports tests.coveragetest, not tests.test_json; no helper mutation"
+  },
+  "observed_formal_result": {
+    "reward": 1.0,
+    "matched": 8,
+    "total": 8,
+    "test_rc": 0,
+    "scope": "原reward及8/8保留；执行闭环复用独立执行核查，语义另由源码与C1字节相同核定"
+  },
+  "trajectory_notes": {
+    "source_fix_then_original_public_test": "1 failed/3 passed, branch expected dict mismatch only",
+    "after_expected_sync": "4 passed in0.08s, final4 passed in0.07s",
+    "attempted_extra_test": "tests/test_report.py不存在，0 collected，不能称额外回归已完成",
+    "incorrect_demo_call": "outfile=file_object曾TypeError，之后纠正；最终源码无吞错/特例",
+    "final_summary_precision": "模型最终把per-file字段缺失写为issue的一部分；已定A仅允许其扩展，非必须。实现仍符合边界"
+  },
+  "scoring_pollution": {
+    "status": "not_found_in_frozen_candidate",
+    "actual_public_test_modified": true,
+    "raw_hygiene_test_files_modified": false,
+    "raw_field_limit": "false不能解释为公开测试未改；FrozenPatch/projection实际包含tests/test_json.py",
+    "hidden_tests_mutated": false,
+    "protected_runner_mutated": false,
+    "deleted_assertions_or_forced_pass": false
+  },
+  "cpu_requirements": {
+    "new_runs_required": false,
+    "concrete_request": null,
+    "reason": "生产源码逐字等于R6 C1正对照，final rb3h完整8键CPU已验且本次GPU8/8；公开测试仅新增正确字典预期，AST闭合；无新增语义缺口"
+  },
+  "allowed_uses": [
+    "本版普通基座修复能力诊断",
+    "按本题修订版本明确标注的必要能力比较"
+  ],
+  "not_granted": [
+    "训练资格",
+    "未注明修订的原benchmark成绩",
+    "只完成一臂便称两模型配对完成"
+  ],
+  "limits": [
+    "本轮只读本地tar/FP/源码/AST/轨迹/执行核查及既有CPU证据，未运行候选或项目测试，未SSH/Docker/安装/模型。",
+    "不是fresh公开读者；已接触本题私有rb3h与CPU候选。",
+    "完整七维/效率、模型服务/预算及总账由父线程承担。",
+    "未做全仓回归；针对公开问题与已决定A/final rb3h，不外推所有报告路径。",
+    "现无新材料阻断与必须追加CPU项；有新具体违例再聚焦处理。"
+  ],
+  "unchanged_baseline_semantic_support": [
+    {
+      "container_path": "coverage/results.py",
+      "baseline_sha256": "sha256:c62056cc71e0c5d24f78e21915364ab64598599ea32db4558f5f16309698ff45"
+    },
+    {
+      "container_path": "coverage/control.py",
+      "baseline_sha256": "sha256:7af0e710f51573313cc2e3a21c7eb7570c6fd66331b419d8231076caacb4c54e"
+    },
+    {
+      "container_path": "coverage/report.py",
+      "baseline_sha256": "sha256:02f14e4b597f92bd2a301a5a4133b357eb6092bb783760af30902d05cd19a524"
+    }
+  ],
+  "evidence_sha256": [
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v11/results/gpu1003-coveragef5eb-qwen36-a1/attempt/frozen/baseline.tar",
+      "size": 4055040,
+      "sha256": "sha256:9a8eee2ed0c5b5008e1036a2879894079be4a7c5aab9dbd9ba10685ac53faf8b"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v11/results/gpu1003-coveragef5eb-qwen36-a1/attempt/frozen/baseline_manifest.json",
+      "size": 77627,
+      "sha256": "sha256:d4661fd7c319247c825140b375c55181c2e856e907ed0364345d4d44a7128b99"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v11/results/gpu1003-coveragef5eb-qwen36-a1/attempt/frozen/frozen_patch.json",
+      "size": 13555,
+      "sha256": "sha256:97db169c1f03a339ea39a2e7d6be4cad280b738d864e8429a885ede8fb34413e"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v11/results/gpu1003-coveragef5eb-qwen36-a1/attempt/prompt.txt",
+      "size": 1959,
+      "sha256": "sha256:c10fd285b3fc598e74574e3345413778acd43ab8674489988fd518bed5a6a649"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v11/results/gpu1003-coveragef5eb-qwen36-a1/attempt/candidate/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96.diff",
+      "size": 1932,
+      "sha256": "sha256:4e9d3b02fa846913bc1e922996ac4d2a48fbcb761eabda25e77bfcd8b000cc01"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v11/results/gpu1003-coveragef5eb-qwen36-a1/attempt/trajectory.jsonl",
+      "size": 237501,
+      "sha256": "sha256:457bd9934e19ef9766013bb925351927e7173ff6e3b930981e9e37d2474bce50"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v11/results/gpu1003-coveragef5eb-qwen36-a1/grading/report.json",
+      "size": 1877,
+      "sha256": "sha256:d8e19276e3805b8b8d9df94b69fc91dca345bba18ee14febea8a29cbe4862f64"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v11/results/gpu1003-coveragef5eb-qwen36-a1/grading/projection.json",
+      "size": 360,
+      "sha256": "sha256:73c7dcdfc2c8c29c3542da6b4f98d593711d9a6ab6c9f3efba917905d5f039ae"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v11/results/gpu1003-coveragef5eb-qwen36-a1/grading/eval_logs/evallog_gpu1003-coveragef5eb-qwe_07b638b7.eval.log",
+      "size": 1502,
+      "sha256": "sha256:7e99bd931dccbe2de8e10c22c919479b120e16b07787c04c20b4e43cb0070f33"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v11/results/gpu1003-coveragef5eb-qwen36-a1/grading/eval_logs/evallog_gpu1003-coveragef5eb-qwe_07b638b7.diagnostics.json",
+      "size": 3733,
+      "sha256": "sha256:b0530afbc5767d64f2a1f6a7c4da39634a3e9d4a145879adb4acd5cc5f800b55"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/coveragepyf5eb_qwen36_a1_execution_review.md",
+      "size": 13100,
+      "sha256": "sha256:236490ae0c3aaa250cfa0472cec506d8ce7704103547437ba88b92439f41fdb4"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/coveragepyf5eb_qwen36_a1_execution_review.json",
+      "size": 109479,
+      "sha256": "sha256:714986e1efdfd867f24edcddee2472690d236da04e7260f1762c3436a757855e"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/reviews/non_author_f5eb_cpu_review_20261003.md",
+      "size": 11133,
+      "sha256": "sha256:f553d8c2e34fe00ac2c0d421fa9cd569fef52defb532ed615ce319b879841eea"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/reviews/non_author_f5eb_cpu_review_20261003.json",
+      "size": 181805,
+      "sha256": "sha256:d1b35179e30d3668b0b8139e7e2d877bc8d45060001fd32c0fabd5a0b9ea027e"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/reviews/non_author_f5eb_material_review_20261003.md",
+      "size": 3706,
+      "sha256": "sha256:b3159876ada8a44b04c2d9b33d25ea2fb853043d6ee77239ee0618601227f86a"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/materials/test_1_rb3h.py",
+      "size": 12432,
+      "sha256": "sha256:fd4d6ac9ca8e1edbe148e30cc73a1f48c9a3eecb4ffbaef5a388dbd430de2050"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f1140dc96/public_devbrief_20261003.md",
+      "size": 670,
+      "sha256": "sha256:840de42ff336cc91217a0f4e1f297a2c45c707ccf2caea8a73934af2ca5ee920"
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/f5eb_formal_matrix01/C1/artifacts/r2e_gym_subset--coveragepy__f5eb5f2159180db8cf0a1cf8b34bc96f/a1-deb095fa/frozen_patch.json",
+      "size": 5921,
+      "sha256": "sha256:eff7f28c2c54fc0c70c8d5bb04033a4b81457239d13c50a2e6d54404b31192a6"
+    }
+  ]
+}

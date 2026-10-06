@@ -1,0 +1,69 @@
+{
+  "format": "swe_dvc_private_diagnostic.v1",
+  "as_of": "2026-10-03",
+  "instance_id": "iterative__dvc-4166",
+  "revision_id": "dvc4166-behavior-v2-draft",
+  "kind": "private_pytest_diagnostic",
+  "formal_grading": false,
+  "qualifies_for_probe": false,
+  "image_id": "sha256:28ed5ef69d46c326ec183f8719e426611ca848046156fa98f9f6c7f35b46ebeb",
+  "effective_test_patch_sha256": "sha256:786588558c0e5c909475073912a54749ea254492406c24c5302aba13df360ade",
+  "results": [
+    {
+      "candidate": "noop",
+      "pytest_rc": 1,
+      "total_executed": 66,
+      "missing_references": [],
+      "f2p": {
+        "tests/func/test_ignore.py::test_ignore_file_in_parent_path[data_struct2-pattern_list2-result_set2]": "FAILED",
+        "tests/func/test_ignore.py::test_directory_rule_prunes_directory": "FAILED",
+        "tests/func/test_ignore.py::test_negated_directory_rule_recovers_non_example": "FAILED"
+      },
+      "p2p_counts": {
+        "PASSED": 60
+      },
+      "cleanup_removed": true
+    },
+    {
+      "candidate": "gold",
+      "pytest_rc": 0,
+      "total_executed": 66,
+      "missing_references": [],
+      "f2p": {
+        "tests/func/test_ignore.py::test_ignore_file_in_parent_path[data_struct2-pattern_list2-result_set2]": "PASSED",
+        "tests/func/test_ignore.py::test_directory_rule_prunes_directory": "PASSED",
+        "tests/func/test_ignore.py::test_negated_directory_rule_recovers_non_example": "PASSED"
+      },
+      "p2p_counts": {
+        "PASSED": 60
+      },
+      "cleanup_removed": true
+    },
+    {
+      "candidate": "strip_positive_trailing_slash",
+      "pytest_rc": 1,
+      "total_executed": 66,
+      "missing_references": [],
+      "f2p": {
+        "tests/func/test_ignore.py::test_ignore_file_in_parent_path[data_struct2-pattern_list2-result_set2]": "PASSED",
+        "tests/func/test_ignore.py::test_directory_rule_prunes_directory": "PASSED",
+        "tests/func/test_ignore.py::test_negated_directory_rule_recovers_non_example": "FAILED"
+      },
+      "p2p_counts": {
+        "FAILED": 1,
+        "PASSED": 59
+      },
+      "cleanup_removed": true
+    }
+  ],
+  "raw_evidence_root": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc4166-diagnostic-v3-001",
+  "raw_summary_sha256": "sha256:6de5ba49e177edc7b1980700fadf5c5f5b9db0c88eb707a929597366fcd0c725",
+  "original_diagnostic_reuse": "cpu_diagnostics_v2.json中的original三行仍有效，原补丁/依赖/候选未变；v1有效补丁的新否定目录曾在base通过，不能替代此v2矩阵",
+  "correction": "新增assert tree.isdir(kept)，在根目录层核否定目录恢复；旧v1材料及原日志保留",
+  "remaining": [
+    "共用正式版本发布",
+    "正式评分/资格及actor",
+    "非作者v2窄复核",
+    "模型探针"
+  ]
+}

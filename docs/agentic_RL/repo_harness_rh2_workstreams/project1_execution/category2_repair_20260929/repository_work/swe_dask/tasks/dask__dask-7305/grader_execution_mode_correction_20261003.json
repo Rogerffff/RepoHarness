@@ -1,0 +1,57 @@
+{
+  "schema": "dask_actual_execution_mode_correction.v1",
+  "as_of": "2026-10-03T18:00:23.406773+08:00",
+  "old_actual_mode": "single_shell_deny_all_supply_null",
+  "old_actual_scripts_digest": "sha256:f5d18ea25690356ea6a30217bcf8cbef090405cd579a7164c0786a905624e900",
+  "cause_of_correction": "两份脚本的存在不证明two-stage；manager.config.supply决定分支，原diagnostics和026都是single-shell。",
+  "sources": [
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v8/rh2/src/repoharness2/grading/manager.py",
+      "sha256": "1783533e1e3b66a57fcaa5a599a1da4f8e4e886318e24f040c6df91f294c1c1e",
+      "bytes": 225647
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/dask7305_original_fp_setup900_v1/exec_logs/026.json",
+      "sha256": "69ce9fff2b782fa0e227476e7bf55a2c44b56cfd2407fcfd04070b7fbd629d48",
+      "bytes": 9120
+    },
+    {
+      "path": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/support/dask7305_thread_budget_followup_v1/execution_mode_correction_v3.json",
+      "sha256": "b1f2bb37590ff6b642e6245cea4a39332afab6e67603e9fc9f13b82e63eb895f",
+      "bytes": 1933
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/dask7305_original_fp_setup900_v1/eval_logs/evallog_gpu1003-dask7305-coder-o_22a382da.diagnostics.json",
+      "sha256": "bb5358eaf7d72f68422a9b5b820a28ff526c3ed28a934447dc7850d3311bf12e",
+      "bytes": 40624
+    }
+  ],
+  "new_cpu_pure_bindings": {
+    "7305": {
+      "binding": {
+        "path": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask_same_fp_cpu_c_v1/pure_readback/pure_7305/binding.json",
+        "sha256": "33dcf50dee2a444f5e625585ff6913dbc377573bcae79eaa5bf74ea47abc4a52",
+        "bytes": 2081
+      },
+      "single_shell_scripts_digest": "sha256:a071ed0d14c576d2029f8bdb3b4d9e9f04e679be6e5dea8633c3b63607700450",
+      "two_stage_scripts_digest": "sha256:2651fd6f13d13bc1daf8c53549bd911072cd78a9904767b9a5efa89010d74cfe"
+    },
+    "9378": {
+      "binding": {
+        "path": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask_same_fp_cpu_c_v1/pure_readback/pure_9378/binding.json",
+        "sha256": "f7d2d0db3d728e163193b4b387907ce56bd97f06933c834b9d8da6f2846105b3",
+        "bytes": 1933
+      },
+      "single_shell_scripts_digest": "sha256:973844ec7101c4754a1a0d3ca73815717f75430a80a494d0dcb1d184f68bac69",
+      "two_stage_scripts_digest": "sha256:664b7c5e8ebb601bd8d1ede56d8e561fc8c5151223f638bc1511c3f0e97fc0ce"
+    }
+  },
+  "new_cpu_actual_execution_pending": true,
+  "7305_exports_actual_single_shell_location": "安装/conda激活后、pytest/native import前",
+  "after_install_entry_scope": "静态核carry恢复后的插入与完整摘要；本次不执行two-stage、不启供应网络",
+  "historical_publisher_alignment_preserved": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7305/publisher_environment_consumer_alignment_20261003.json",
+    "sha256": "60acb6ee4f43efc9867ec417bdd9e88c023306cc9dad8be210c5b4e4e62604a7",
+    "bytes": 1639
+  }
+}

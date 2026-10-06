@@ -1,0 +1,675 @@
+{
+  "schema": "dask_non_author_candidate_trajectory_review.v1",
+  "as_of": "2026-10-04T01:52:42.173556+08:00",
+  "review_date": "2026-10-04",
+  "task_id": "swe_gym_lite::dask__dask-7138",
+  "job_id": "gpu1003-dask7138-qwen36-a1",
+  "request_id": "probe-swe-dask-7138-20261003-v1",
+  "model": "Qwen/Qwen3.6-35B-A3B",
+  "reviewer_role": "首次本臂非作者窄核；已读题级与既有Coder/CPU资料，不冒称fresh全题盲审",
+  "verdict": "pass_for_current_candidate_semantics_and_observed_formal_references",
+  "blocking_findings": [],
+  "conclusion": "候选满足现行标量/array-like正确展开、返回Dask Array与array=兼容要求；正式470参考全过，未见本候选的误收/误拒或测试控制污染证据。完整运行身份与运输、ack和总账由父线程验收。",
+  "authority_and_scope": {
+    "coordination_authorized_non_author_review": true,
+    "public_goal_changed": false,
+    "grading_or_training_semantics_changed": false,
+    "mechanical_full_closed_manifest_and_code9_R25_binding_owner": "parent_task",
+    "all_139_originals_independently_reverified_by_this_reviewer": false,
+    "training_qualification": null,
+    "stable_model_ability_inferred": false,
+    "new_model_runs": 0,
+    "new_CPU_or_GPU_runs": 0,
+    "SSH_or_container_commands": 0,
+    "repository_or_candidate_execution": false,
+    "baseline_archive_extracted_to_filesystem": false,
+    "shared_source_original_current_docs_ledger_changed": false,
+    "only_new_review_files_written": true
+  },
+  "identity": {
+    "FP_canonical_digest": "sha256:e1f8877dfc4c912f3fc79bd4e25a4e6e5cc912da9e9920811bb7470e55f2f068",
+    "FP_entry_count": 2,
+    "FP_paths": [
+      "dask/array/routines.py",
+      "dask/array/tests/test_routines.py"
+    ],
+    "baseline_canonical_digest": "sha256:1bb7df741c80d1271ab92408e0277d129c0b866011b218b79a8295bc38ad49b2",
+    "baseline_objects": 425,
+    "baseline_regular_files": 424,
+    "baseline_symlinks": [
+      {
+        "path": "continuous_integration/environment-latest.yaml",
+        "target": "environment-3.8.yaml",
+        "target_sha256": "ef523fb1c0660b59ba18a75a4a5aba7c961fbd830bcf573d850e04062918b250",
+        "git_mode": "120000",
+        "tar_permission_mode": "0o777",
+        "mode_note": "Git 120000表示对象类型；不把symlink tar权限0777当普通文件权限比较。"
+      }
+    ],
+    "baseline_member_set_and_contents_verified": true,
+    "FP_entries_replayed_from_actual_baseline_and_trajectory": [
+      {
+        "tool_line": 113,
+        "success_line": 117,
+        "path": "dask/array/routines.py",
+        "old_string_count": 1,
+        "final_content_equals_FP": true,
+        "content_sha256": "5d245e5166c7b026b1d67cc943419c62dce98401f782dd684ea639df44fe96b6"
+      },
+      {
+        "tool_line": 173,
+        "success_line": 177,
+        "path": "dask/array/tests/test_routines.py",
+        "old_string_count": 1,
+        "final_content_equals_FP": true,
+        "content_sha256": "e768c42e12970eeeb66df03ff70216f58cd45907c2f6e8f680071d0c1e3a5d7f"
+      }
+    ],
+    "public_bundle_digest": "sha256:02e3a996c88ecb46121a606d5c910986ad2d22ceec7b4663babaeaf3ad6b8c8b",
+    "materials_identity": "sha256:3e94408ef02d1c2fb6c9113a5c86920325280b2a80962bf579d98087e283136e",
+    "revision_id": "dask7138-array-keyword-v1",
+    "effective_test_patch_sha256": "2f3c5c539816149a06b6c460b5d79d6b3223f452cd5862bcdbac41faf76bc44a",
+    "prepared_patch_equals_current_effective_patch": true
+  },
+  "semantic_review": {
+    "production_change": "def ravel(array): return asanyarray(array).reshape((-1,))",
+    "production_member_lines": [
+      1196,
+      1197,
+      1198
+    ],
+    "actual_baseline_asanyarray_import_line": 29,
+    "actual_baseline_asanyarray_implementation_lines": [
+      4058,
+      4095
+    ],
+    "existing_Dask_Array_pass_through_lines": [
+      4085,
+      4086
+    ],
+    "root_cause": "原输入直接访问reshape；list缺该方法。模型在修前实际复现AttributeError，再调用既有asanyarray后reshape。",
+    "compatibility": "保留array参数名；keyword在实际新增P2P通过。旧Array输入由asanyarray直接返回，接既有reshape。",
+    "positive_control_relation": "生产修法与既有compatible_ravel对照相同；不靠gold标签判正确，也没有重跑矩阵。",
+    "target_limits": [
+      "只认可当前题级目标与所列实证范围，不引入零拷贝或全部NumPy参数要求。",
+      "标量、tuple、混合嵌套及含非零/负数输入的实证来自trusted F2P，不冒称模型逐项自测。"
+    ]
+  },
+  "formal_results": {
+    "raw_reward": 1.0,
+    "outcome": "resolved",
+    "failure_category": null,
+    "infra_failure_detail": null,
+    "partitions": [
+      {
+        "partition": "original_f2p",
+        "total": 1,
+        "success": 1,
+        "failure": 0,
+        "missing": 0,
+        "skipped": 0,
+        "unaccounted": 0,
+        "reference_and_success_lists_equal_actual_prepared": true,
+        "all_present_once_in_formal_test_segment": true
+      },
+      {
+        "partition": "original_p2p",
+        "total": 468,
+        "success": 468,
+        "failure": 0,
+        "missing": 0,
+        "skipped": 0,
+        "unaccounted": 0,
+        "reference_and_success_lists_equal_actual_prepared": true,
+        "all_present_once_in_formal_test_segment": true
+      },
+      {
+        "partition": "added_p2p",
+        "total": 1,
+        "success": 1,
+        "failure": 0,
+        "missing": 0,
+        "skipped": 0,
+        "unaccounted": 0,
+        "reference_and_success_lists_equal_actual_prepared": true,
+        "all_present_once_in_formal_test_segment": true
+      }
+    ],
+    "reference_total": 470,
+    "unique_reference_total": 470,
+    "independent_eval_log_passed_total": 562,
+    "unique_eval_log_passed_total": 562,
+    "independent_nonpassed_nodes": [],
+    "all_reference_nodes_in_test_segment_once": true,
+    "module_scope_is_distinct_from_reference_scope": true,
+    "official_key_evidence_lines": {
+      "restored_trusted_test": [
+        352,
+        364
+      ],
+      "setup_attestation": [
+        385,
+        397
+      ],
+      "actual_install": [
+        567,
+        598
+      ],
+      "test_command_and_collect": [
+        608,
+        614
+      ],
+      "ravel_F_and_keyword_P": [
+        1090,
+        1093
+      ],
+      "summary_and_test_rc": [
+        1208,
+        1215
+      ]
+    },
+    "actual_install_test": {
+      "candidate_exec_exit_code": 0,
+      "candidate_segment_completed": true,
+      "install_failed_commands": [],
+      "install_rc_last_command": 0,
+      "install_seconds": 1.569,
+      "install_skipped": false,
+      "log_partial": false,
+      "markers_seen": [
+        "RH2_INSTALL_RC",
+        "RH2_TEST_RC",
+        "RH2_TS_INSTALL_END",
+        "RH2_TS_INSTALL_START",
+        "RH2_TS_TEST_END",
+        "RH2_TS_TEST_START"
+      ],
+      "test_rc": 0,
+      "test_seconds": 7.222
+    },
+    "trusted_setup_seconds": 464.814026,
+    "grade_total_seconds": 487.486,
+    "grade_queue_wait_seconds": 0.0
+  },
+  "test_control_review": {
+    "original_FP_contains_public_test_edit": true,
+    "actual_scoring_included_paths": [
+      "dask/array/routines.py"
+    ],
+    "excluded_public_test_path": "dask/array/tests/test_routines.py",
+    "candidate_added_public_test_name": "test_ravel_array_like",
+    "candidate_added_test_not_in_formal_log": true,
+    "trusted_test_restore_apply_ok": true,
+    "candidate_conftest_or_fixture_paths": [],
+    "candidate_test_like_paths_after_projection": [],
+    "control_protect_fields": {
+      "EXPECTED_FILES": "1",
+      "IRREGULAR_FILES": "",
+      "MISSING_FILES": "",
+      "MISSING_FILES_COUNT": "0",
+      "PROTECTED_DIRS": "4",
+      "PROTECTED_FILES": "1",
+      "RH2_PROTECT_OK": "1",
+      "TESTBED_STAT": "0 1777",
+      "WRITABLE_PREFIXES_DONE": "1",
+      "WRITABLE_PREFIXES_MISSING": ""
+    },
+    "formal_report_test_files_modified_false_scope": "评分投影；不否认模型改过公开测试。",
+    "runner_integrity_changed": true,
+    "resource_facts": null,
+    "runner_change_evidence": "正式install记录pytest8.3.2→7.4.4与editable安装；无逐文件runner diff，不能认定唯一归因或将true改false。",
+    "no_scoring_bypass_or_control_pollution_observed": "FP生产单行、完整trajectory只有两次Edit、评分仅生产文件、trusted restore/apply及完整log一致；不等同于通用防作弊审计。"
+  },
+  "trajectory_review": {
+    "lines": 293,
+    "bytes": 227942,
+    "harness_copy_bytes_equal": true,
+    "event_counts": {
+      "system": 41,
+      "stream_event": 189,
+      "assistant": 43,
+      "user": 19,
+      "result": 1
+    },
+    "turns": 20,
+    "model_requests": 20,
+    "tool_calls": {
+      "Bash": 12,
+      "Read": 5,
+      "Edit": 2
+    },
+    "tool_calls_total": 19,
+    "tool_result_errors": 1,
+    "tool_error_meaning": "L95/99为修前预期AttributeError复现，不是基础设施失败。",
+    "ordered_evidence": [
+      {
+        "tool_line": 11,
+        "result_line": 15,
+        "action": "定位core.py/routines.py"
+      },
+      {
+        "tool_line": 25,
+        "result_line": 29,
+        "action": "定位ravel源码行1197"
+      },
+      {
+        "tool_line": 39,
+        "result_line": 43,
+        "action": "局部读原实现"
+      },
+      {
+        "tool_line": 53,
+        "result_line": 57,
+        "action": "确认asanyarray已有导入/用例"
+      },
+      {
+        "tool_line": 81,
+        "result_line": 85,
+        "action": "读原公开ravel测试"
+      },
+      {
+        "tool_line": 95,
+        "result_line": 99,
+        "action": "原list输入AttributeError真实复现"
+      },
+      {
+        "tool_line": 113,
+        "result_line": 117,
+        "action": "生产唯一修复，未改参数名"
+      },
+      {
+        "tool_line": 127,
+        "result_line": 131,
+        "action": "修后flat/nested list打印与NumPy一致，未用assert"
+      },
+      {
+        "tool_line": 173,
+        "result_line": 177,
+        "action": "新增公开断言测试，评分排除"
+      },
+      {
+        "tool_line": 187,
+        "result_line": 191,
+        "action": "既有test_ravel单项通过"
+      },
+      {
+        "tool_line": 201,
+        "result_line": 205,
+        "action": "新增公开test_ravel_array_like单项通过"
+      },
+      {
+        "tool_line": 215,
+        "result_line": 219,
+        "action": "既有1D no-op单项通过"
+      },
+      {
+        "tool_line": 229,
+        "result_line": 233,
+        "action": "同模块筛选11pass/550deselected，包含前3项，不能相加为14独立节点"
+      },
+      {
+        "tool_line": 243,
+        "result_line": 247,
+        "action": "核Array.ravel委托routines函数"
+      },
+      {
+        "tool_line": 257,
+        "result_line": 261,
+        "action": "Dask二维方法打印匹配NumPy"
+      },
+      {
+        "tool_line": 275,
+        "result_line": 279,
+        "action": "查看最终diff"
+      },
+      {
+        "assistant_line": 289,
+        "result_line": 293,
+        "action": "最终只声明上述11项相关自测通过，范围与轨迹一致"
+      }
+    ],
+    "final_explanation_supported": true,
+    "selftest_limits": [
+      "没有模型自测array=或标量/tuple返回类型；由正式当前参考覆盖。",
+      "打印Match True不等于所有分支有assert；后续公开测试和正式测试提供断言。",
+      "pytest输出使用head/tail管道；不能仅凭Bash is_error=false推pytest成功，本轮有明确PASSED与完成汇总。"
+    ],
+    "efficiency": {
+      "solve_seconds": 26.193,
+      "CC_duration_ms": 22627,
+      "API_duration_ms": 16008,
+      "input_tokens_cumulative": 126475,
+      "output_tokens_total": 2505,
+      "input_token_note": "累计含重复上下文，不是唯一上下文大小。",
+      "max_tools_per_model_response_observed": 1,
+      "parallel_execution_observed": false,
+      "parallel_support_proven": null,
+      "improvement": "三个单项再被11项筛选重复；可合并有重叠的公开验证，并在同一窄范围显式核array=；局部只读可在入口支持时批量。复现→编辑→修后验证保留依赖顺序。",
+      "grade_trusted_setup_share": 0.9534920510537739,
+      "grade_cost_note": "可信准备464.814026s占487.486s约95.35%；与求解26.193s分开，不能将评分准备成本归给模型或凭一次耗时推稳定优势。"
+    }
+  },
+  "public_input_scope": {
+    "first_user_message_is_date_reminder_plus_original_problem_statement": true,
+    "actual_prepared_spec_prompt_equals_first_delivered_task_text": true,
+    "actual_prompt_and_solver_prompt_equal": true,
+    "CRLF_to_LF_normalization_count": 24,
+    "first_normalized_prompt_equals_saved_prompt": true,
+    "conversion_guidance_in_original_issue": true,
+    "original_asasanyarray_typo_preserved_in_task": true,
+    "old_generated_public_hints_not_delivered": true,
+    "Do_NOT_modify_tests_instruction_received": false,
+    "existing_scope_clarification_ref": "runs/category2_repair_20260929/swe_dask/model_analysis_20261003/dask7656_qwen36_a1_v1/public_hint_scope_GPU_clarification_v1.json",
+    "existing_scope_clarification_reused_no_new_pending_alignment": true,
+    "no_disobedience_inferred_from_public_test_edit": true,
+    "no_new_necessary_development_instruction_omission_found": true,
+    "private_identifiers_scan_all_20_request_bodies": {
+      "test_ravel_keyword_array": 0,
+      "effective_test.patch": 0,
+      "compatible_ravel": 0,
+      "dask7138-array-keyword-v1": 0,
+      "3e94408ef02d1c2fb6c9113a5c86920325280b2a80962bf579d98087e283136e": 0
+    },
+    "claim_limit": "首system/user与完整轨迹可见来源内未见私有测试/调查输入；不靠字符串扫描证明全环境隔离。"
+  },
+  "known_prior_results_retained": {
+    "Coder_original_GPU_reward": null,
+    "Coder_original_GPU_reason": "grading_control_surface_protect_timeout_after_300s",
+    "same_original_Coder_FP_CPU_reward": 0.0,
+    "same_original_Coder_FP_CPU_failed_node": "test_ravel_keyword_array",
+    "reused_prior_CPU_evidence_without_rerun": true,
+    "new_repeat_sample_added": 0,
+    "Qwen_is_one_new_first_model_solve": true,
+    "historical_results_rewritten": false
+  },
+  "residual_limits": [
+    "只有本Qwen首轮一个样本，原题面已指转换位置/方向，不能推出未引导定位能力或稳定修复率。",
+    "gateway audit checkpoint_identity_verified=false；模型权重attestation与全量checkpoint核由既有执行证据范围约束。",
+    "typed正式训练actor未接线，仍为既有image_override诊断；训练准入为null。",
+    "runner变化无逐文件归因、resource_facts=null保留；本核不代替父线程资源/清理和机械运输验收。",
+    "公开新增测试注释含issues/XXXX占位链接，属后续交付洁净度事项，未进入正式评分，不构成现行候选语义阻断。",
+    "revision/acceptance保留准备时draft/pending/null字段；本核以实际prepared/FP/正式log判当前实证，不篡改历史字段。"
+  ],
+  "review_dimension_applicability": {
+    "A": "生产纯函数修法与兼容核；本候选无新并发/状态机。",
+    "B": "只记本次诊断原分，不新增拒绝路径或训练资格。",
+    "C": "无新挡板；本语义范围无阻断，训练门仍未授。",
+    "D": "FP/projection实际路径已核；全部code9/R25部署真实性由父线程负责。",
+    "E": "独立完整log/470参考核，区分自测与trusted测试。",
+    "F": "现行array=要求及已澄清public范围一致。",
+    "G": "修前/修后python与正式生产ravel入口实证。",
+    "H": "以实际FP/baseline和formal日志为原件；draft状态不代替运行事实。",
+    "I": "满足现行语义可停止本核；不追加已有效CPU或理论反例重跑。",
+    "J": "生产一行复用既有函数，公开测试有非阻断占位注释。",
+    "K": "无新依赖/owner/抽象；复用asanyarray。",
+    "L": "20/19回合与重叠自测、可信准备成本分别记录，不推稳定性能。",
+    "M": "Coder None/CPU0/Qwen1各自原件保留；参考无缺席。",
+    "N": "保留旧array=，既有Array转换路径；pytest固定配方实证与限制保留。"
+  },
+  "stop_condition": "本臂现行候选语义与正式参考已足够收口；父线程完成机械身份/运输核后可按本范围落账。额外理论反例、已有有效CPU或未交旧hints不成为追加重跑理由。稳定能力、正式训练资格和全环境审计继续为未授/未覆盖。",
+  "read_artifact_count": 43,
+  "read_artifacts": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "de76dc6bab84209f40053433a68f82ff6feaf4708199473f1a67410f93d6d99c",
+      "bytes": 7626,
+      "read_scope": "授权与仓库规则"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/coordination_workflow_20261003.md",
+      "sha256": "00672909249942072b74c9bccb78617a9b4ab835a6ac64ba9a1190c35ac5fce3",
+      "bytes": 13024,
+      "read_scope": "非作者核查授权与分工"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/collaboration-protocol.md",
+      "sha256": "4fb97787272c173c79f203548e488c781526fef4234427cddab8c77e378265ef",
+      "bytes": 18723,
+      "read_scope": "治理规则"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/review-standards.md",
+      "sha256": "b56af8cf2805d50f109ed81c33a09bf8e9a10a52d3393741048556a85c0f2acd",
+      "bytes": 21690,
+      "read_scope": "审查维度与停止条件"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7138/card.md",
+      "sha256": "7c4ed76367eeb796089d82665662e74ff48a85e7584e3b7e48523fb6c011b737",
+      "bytes": 5415,
+      "read_scope": "题级现行目标与既有实证"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7138/revision.json",
+      "sha256": "fb29e9e0f0a6457d974256b95678b753f9c700e7051c5fb3d8c2dfec61b767cc",
+      "bytes": 77633,
+      "read_scope": "准备阶段修订依据，未用旧状态代替实际输入"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7138/acceptance_matrix.json",
+      "sha256": "2e581e4a566d0b909796fa803f5722c166f5714798c041bcb9b2c1fdaf564586",
+      "bytes": 2529,
+      "read_scope": "已批准矩阵预期，未视null为新评分"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7138/probe_request.json",
+      "sha256": "819534ee0ada1c63ec2a2ad4a37a22f97aa4642e8ac010ad7083b3a421b123da",
+      "bytes": 15160,
+      "read_scope": "固定首轮申请及引导限制"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7138/model_probe_coder_a1_analysis_20261003.md",
+      "sha256": "5b2d2a6af9b7d0ea6ab0f28caa30232f826d464a4decb7c0bb8ac1cf8cf85798",
+      "bytes": 3653,
+      "read_scope": "既有Coder轨迹分析复用"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7138/coder_original_FP_CPU_recovery_readback_20261003.md",
+      "sha256": "ae9b40368b98f599258d21596fac133e80b50b1e9240bad8f9a224220eaf1efc",
+      "bytes": 1888,
+      "read_scope": "同原FP CPU读回复用"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_7138_coder_a1_candidate_review_20261003_v2.md",
+      "sha256": "b868092c5b6bc7a271b9f83d33de42aec42bb60f4b571bea03d91a60c16333cf",
+      "bytes": 14391,
+      "read_scope": "既有非作者Coder核查复用"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_7138_original_fp_CPU_environment_recovery_review_20261003.md",
+      "sha256": "01799cc8e8f21e286135fbd8124d06a960257c8d98bc0240ff42b38c75cd7a59",
+      "bytes": 9541,
+      "read_scope": "既有CPU实际验收复用"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7138/effective_test.patch",
+      "sha256": "2f3c5c539816149a06b6c460b5d79d6b3223f452cd5862bcdbac41faf76bc44a",
+      "bytes": 1426,
+      "read_scope": "与实际prepared test patch字节比较"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7138/compatible_ravel.patch",
+      "sha256": "031783b6576e9410160e8ac515dbf49cedb7e5938facd0b9c9d7967d95d467e4",
+      "bytes": 282,
+      "read_scope": "既有正对照的生产修法比较"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/model_analysis_20261003/dask7656_qwen36_a1_v1/public_hint_scope_GPU_clarification_v1.json",
+      "sha256": "f331fc7787c5998589735263755d28624727885ca0f008ff41f09c83dc4a3b90",
+      "bytes": 1374,
+      "read_scope": "已有unchanged公开范围澄清"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7656/model_probe_qwen36_a1_analysis_20261003.json",
+      "sha256": "e0a0dc6f33b02bd1a2ba6a9b60441f2fc26d3b205b4c248dc5956620a4ff6511",
+      "bytes": 12515,
+      "read_scope": "仅复用public_delivery_clarification字段"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/preparation.md",
+      "sha256": "67b4918064955b1815843d47fb10f780eaa24fa67ac5700a1335cc996ad517fd",
+      "bytes": 5107,
+      "read_scope": "仅查当前概要和公开范围澄清段"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/ordinary_probe_20260929/gpu_coordination_decisions_20261002.md",
+      "sha256": "2d70bd54cfb80722e66d78901ed909f0c77648ffd6e32f3cd9f7023afc0c1804",
+      "bytes": 20418,
+      "read_scope": "仅核当前有效中性说明交付的既有决定段"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/probe-swe-dask-7138-20261003-v1_pair_execution_receipt_v1.json",
+      "sha256": "15eadf0d511bc3bd1da2bef73a9b30a307b68c93c6289725cafdb07b8f1f5bfb",
+      "bytes": 9691,
+      "read_scope": "双臂结果上下文；SHA核，不替代父线程全运输验收"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7138-qwen36-a1/result.json",
+      "sha256": "4f47d7143746f2451fecb36dbded1970ed4475cd9c548f869b33eb14a07e4b12",
+      "bytes": 2621,
+      "read_scope": "原评分与清理字段"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7138-qwen36-a1/grading/report.json",
+      "sha256": "231a9fec57acdc79e9b97d8fb5f4a46c24b59b199f4287406cf811bd842002ef",
+      "bytes": 1801,
+      "read_scope": "原评分报告"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7138-qwen36-a1/grading/status.json",
+      "sha256": "9e1735015de5f9d9837976991e7c09fe875e9e4545c6bb69dea1ef0e4b7842df",
+      "bytes": 2585,
+      "read_scope": "原评分状态"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7138-qwen36-a1/grading/projection.json",
+      "sha256": "c4b3536cba4a7952ee9ddcd284932f4995df956851ad52308abfd07d291b1965",
+      "bytes": 326,
+      "read_scope": "实际评分投影"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7138-qwen36-a1/attempt/attempt.json",
+      "sha256": "ac79b6986c5ee0b275f993e257fa9fed61cbc6d519ee37b76ce92f4834694a33",
+      "bytes": 16120,
+      "read_scope": "实际轨迹计数与有限运行metadata"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7138-qwen36-a1/attempt/candidate/dask__dask-7138.diff",
+      "sha256": "46b40f501a73269aeb49bc47eee8a02290ab920a9678762687b960ba5996a5f1",
+      "bytes": 1156,
+      "read_scope": "审阅diff"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7138-qwen36-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "b2fa13f401f61cadcccb96c77d34c5f83fdf17c041dca72d0fad4d0180eac1b4",
+      "bytes": 142936,
+      "read_scope": "实际FP全体内容及canonical摘要"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7138-qwen36-a1/attempt/frozen/baseline_manifest.json",
+      "sha256": "65c898817a5017b5d3f8f5085cef04250a7d1696504231247e1c5d92bb5c253f",
+      "bytes": 99708,
+      "read_scope": "实际baseline身份和425对象列表"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7138-qwen36-a1/attempt/frozen/baseline.tar",
+      "sha256": "0c73c83a30c4b01781b9fc49b5c720422e0875fdb25fb057964b050b1aba05da",
+      "bytes": 8816640,
+      "read_scope": "只在内存读取成员；424普通文件hash/mode和1symlink目标核"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7138-qwen36-a1/attempt/frozen/baseline_census.txt",
+      "sha256": "34f55413b7b21a169e177bdc6071e3b92aa1b72502ba32f638073ec37018921f",
+      "bytes": 47817,
+      "read_scope": "actor census与grader census字节比较"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7138-qwen36-a1/grading/baseline_rebuild_census.txt",
+      "sha256": "34f55413b7b21a169e177bdc6071e3b92aa1b72502ba32f638073ec37018921f",
+      "bytes": 47817,
+      "read_scope": "grader census镜像比较"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7138-qwen36-a1/attempt/frozen/classification.json",
+      "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6",
+      "bytes": 93,
+      "read_scope": "投影可用与私有路径集字段"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7138-qwen36-a1/attempt/trajectory.jsonl",
+      "sha256": "17c6eb5a8bf96a448ee5efcc204041ce4bde78bc637fb3a89a4989ed96708fba",
+      "bytes": 227942,
+      "read_scope": "293行全部JSON读取；所有完整assistant/tool内容逐项核"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7138-qwen36-a1/attempt/harness/trajectory.jsonl",
+      "sha256": "17c6eb5a8bf96a448ee5efcc204041ce4bde78bc637fb3a89a4989ed96708fba",
+      "bytes": 227942,
+      "read_scope": "完整副本逐字节比较"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7138-qwen36-a1/attempt/prompt.txt",
+      "sha256": "b02c916a8faba2fe3718f1e67a58d230df7863c8abd4864ec7e78781200f46c8",
+      "bytes": 1592,
+      "read_scope": "实际prompt文本"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7138-qwen36-a1/solver_prompt.txt",
+      "sha256": "b02c916a8faba2fe3718f1e67a58d230df7863c8abd4864ec7e78781200f46c8",
+      "bytes": 1592,
+      "read_scope": "实际prompt副本逐字节比较"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7138-qwen36-a1/grading/eval_logs/evallog_gpu1003-dask7138-qwen36-_a2437547.eval.log",
+      "sha256": "15dc1a0d53748ea766697b299bf2c1c9ad33b35a1e785a4f1bd2f3c73134b165",
+      "bytes": 74281,
+      "read_scope": "1215行完整日志及562节点独立计数"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7138-qwen36-a1/grading/eval_logs/evallog_gpu1003-dask7138-qwen36-_a2437547.diagnostics.json",
+      "sha256": "43d6db6432eacb09bec46c9e0a89d5c35204cb97580b7c56752267749c523a50",
+      "bytes": 80857,
+      "read_scope": "实际完整参考分区与测试控制字段"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7138-qwen36-a1/gateway_audit.json",
+      "sha256": "8d605c092151fc533cacfe792342c5b342d6bcd1786f74f719682da3867bedc7",
+      "bytes": 424,
+      "read_scope": "20请求及身份验证限制"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-qwen36-a1/prepared_dask_four_r25_code9_v1/dask7138/private/host_grading_views.jsonl",
+      "sha256": "865452a80389ee3975faa5ffbd1a5a101f7039e7a3a5a704e5964acc44fe1e79",
+      "bytes": 75877,
+      "read_scope": "实际私有材料与470参考"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-qwen36-a1/prepared_dask_four_r25_code9_v1/dask7138/prepared/prompts.jsonl",
+      "sha256": "5e98b17fa403941e38dde8a004b6e9bd23fb26ba50e58720f64bc224249cabc5",
+      "bytes": 2023,
+      "read_scope": "实际prepared spec.prompt"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-qwen36-a1/prepared_dask_four_r25_code9_v1/dask7138/prepared/rollout_task_views.jsonl",
+      "sha256": "f1a1ccc09572254187004ed345e12827b1803669a014cfc5d6dfc36c415a0c25",
+      "bytes": 3148,
+      "read_scope": "公开题包与未交付旧hints范围"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/dask4-r25-code9-v1/gpu1003-dask7138-qwen36-a1/requests.jsonl",
+      "sha256": "28f98f11c02c4381e88bc11057e27facfc72629bbbb1ef1f6f79fd62be40a28c",
+      "bytes": 492682,
+      "read_scope": "20请求全parse；首消息与system逐项读取，全部body私有标识检查"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-qwen36-a1/services_qwen_code8_v1/qwen36/adapter/gpu1003-dask7138-qwen36-a1.turns.jsonl",
+      "sha256": "5903cdf9950b64d2c409644aad5ac412a1fa3b6ac4527d7b5a132d6b33ebce35",
+      "bytes": 22603,
+      "read_scope": "20响应的完整parsed内容、计数与单工具观察"
+    }
+  ],
+  "output_paths": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_7138_qwen36_a1_candidate_review_20261004.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_7138_qwen36_a1_candidate_review_20261004.md"
+  ]
+}

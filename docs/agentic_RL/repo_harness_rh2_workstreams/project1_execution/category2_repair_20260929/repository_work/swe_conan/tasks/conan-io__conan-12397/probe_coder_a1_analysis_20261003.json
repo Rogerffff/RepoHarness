@@ -1,0 +1,171 @@
+{
+  "schema_id": "conan.owner.model_analysis.v1",
+  "as_of": "2026-10-03T06:09:47.989062+00:00",
+  "request_id": "swe-conan12397-r12-briefv1-20261003-v1",
+  "job_id": "gpu1003-conan12397-coder-a1",
+  "model": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+  "sample": 1,
+  "material_version": "conan12397-private-test-v1",
+  "budget_version": "probe-wide-v1",
+  "raw_score": {
+    "reward": 1,
+    "f2p": {
+      "passed": 2,
+      "total": 2
+    },
+    "p2p": {
+      "passed": 2,
+      "total": 2
+    }
+  },
+  "semantic_verdict": "correct_libcxx_link_args_root_cause_fix_within_configuration_generation_scope",
+  "candidate_findings": [
+    {
+      "priority": "P2",
+      "finding": "final validation statement exceeds actual execution scope"
+    }
+  ],
+  "task_material_findings": [],
+  "semantic_independent_review": {
+    "status": "completed_no_task_material_blocker",
+    "report": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_12397_coder_a1_semantic_review_20261003.md",
+      "sha256": "sha256:2f4c908570dcf42f69da5fd6304f870f92ad6574d13b54327bbab08e879d0c3e"
+    },
+    "scope": "non-author focused candidate semantics, exact references, model trajectory/validation; no CPU/GPU rerun"
+  },
+  "execution_independent_review": {
+    "status": "accepted_full_install_test_references_and_two_layer_cleanup",
+    "report": {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/conan12397_coder_a1_execution_review_v1.json",
+      "sha256": "sha256:50dcfde7ea30ba413df03a3ec2ed9e0596df7170c8d4b3b0a53dfa803f691d56"
+    },
+    "scope": "completed first Coder arm execution/transport only"
+  },
+  "owner_analysis": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-12397/probe_coder_a1_analysis_20261003.md",
+    "sha256": "sha256:d1cb39085718ea4f8b6a4fe213f9393561f65042da2585883f5b0ffb40286274"
+  },
+  "owner_readback": {
+    "path": "runs/category2_repair_20260929/conan_cpu_20261003/probe_analysis_12397_coder_a1_20261003_v1/owner_readback.json",
+    "sha256": "sha256:3217c324b869ee459db437276759b3bc9ce85f1541fa4dacf375174d5a0c4039"
+  },
+  "trajectory": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v18/results/gpu1003-conan12397-coder-a1/attempt/trajectory.jsonl",
+    "sha256": "60fb389dbc2a986d1f64a8c0711d4fdbaab7d1c7e897bd9f4b4ddcd722b5b352",
+    "bytes": 219117
+  },
+  "complete_candidate": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v18/results/gpu1003-conan12397-coder-a1/attempt/candidate/conan-io__conan-12397.diff",
+    "sha256": "5b8044238f3f42790185e812580761e0fbaecc18ddfe5f7f0855c00c3896233c",
+    "bytes": 2017
+  },
+  "frozen_patch": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v18/results/gpu1003-conan12397-coder-a1/attempt/frozen/frozen_patch.json",
+    "sha256": "6e599332b100df46cd2e7b84de9faaa80c0b203852ca8952e629863fbf7a9f13",
+    "bytes": 30474
+  },
+  "scoring_projection": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v18/results/gpu1003-conan12397-coder-a1/grading/projection.json",
+    "sha256": "882a9ba12ca4acb5da66dfeeb980a5b0c55bb15b7951c1ccca11f2b75e9d8c12",
+    "bytes": 336
+  },
+  "dimensions": {
+    "method": {
+      "heading": "方法",
+      "analysis": "行58正确定位 `_context()` 仅把 `self.libcxx` 加到 `cpp_args`，行62补 `cpp_link_args.append(self.libcxx)`，与公开issue的clang／libc++链接选择一致。保留helper对不同compiler/libcxx的条件、用户extra linker flags和Apple flags；没有把GCC ABI宏误加进链接参数，也没有只改objcpp后缀键来掩盖cpp缺项。新增公开回归为Linux生成配置，没有放宽旧断言；临时脚本被删除。没有测试识别或绕过，实际完整键评分避免substring误命中。\n\n这是配置生成范围内的根因修复，支持正确参数进入链接命令准备；没有真实clang／libc++包创建、编译或链接成功的原件。Apple cross亦为生成文件验证。"
+    },
+    "localization": {
+      "heading": "定位",
+      "analysis": "工具1限定meson路径找到文件，工具2读对生产源码，工具3读compiler helper，工具4读公开测试。首次生产读取距第一模型请求 **1.427秒**；正确根因文字行58对应第五响应完成 **5.064秒**，这是响应完成上界，不是首次产生判断的精确时刻。无错误修法回退；完整507行compiler模块读取可缩到libcxx相关符号，未据本样本评一般定位能力。"
+    },
+    "tools": {
+      "heading": "工具与纠错",
+      "analysis": "14次工具：**Bash8、Read3、Edit2、Write1**。编辑、精确测试路径、临时文件清理和最后diff确认正确。工具12的功能目录测试在工具fixture阶段出现3 errors（行153）：`shutil.which()`没有找到所需exe，`Path(None)`抛TypeError；11 skipped、6 deselected、0.38秒，`--maxfail=3`提前停止，未进入这些测试本体。原错误调用链未经过本次修订函数。\n\n行158正确识别为环境工具缺口，但没有核具体exe／修复后再跑，不能说完整functional范围已验证。pytest原非零作为 `is_error=true`保留，未掩盖；本轮不为超出固定评分范围的功能工具缺口修改已验镜像，也不把它当候选失败或全题环境失效。"
+    },
+    "parallel": {
+      "heading": "并行",
+      "analysis": "15响应前14各一个工具，最后结束；无工具重叠。读完源码后compiler helper与公开测试可独立读取。本次串行；CC／adapter实际多工具并行支持未独立建立，能力不可判断。相同TestClient工作树和缓存的pytest不直接列为安全并行机会。"
+    },
+    "verification": {
+      "heading": "验证",
+      "analysis": "| 轨迹结果 | 实际范围 |\n| --- | --- |\n| 行92 | 新Linux配置测试1通过，0.38秒 |\n| 行105 | 同一公开模块4通过，0.33秒，含上面新例；不是额外四个不重叠case |\n| 行118 | Meson单元模块1通过，0.04秒；构建命令mock，非实际链接 |\n| 行140 | 同一Linux配置临时脚本输出并assert cpp编译／链接参数；与新测试重复，不调用原issue的conan create编译链 |\n| 行153 | 功能范围3工具setup errors／11 skips／6 deselected；未通过 |\n| 可信grader | 固定2F／2P四参考全部通过，模型公开新增测试已被投影排除 |\n\n无旧树失败复现，也无真实链接复验。最终行184称“所有既有测试通过”并称手工脚本“复现准确场景”，超出证据：通过的只是有限公开模块，功能目录失败；脚本只生成配置。这个非生产阻断问题单独记为验证与披露不足，不能据raw1忽略。"
+    },
+    "efficiency": {
+      "heading": "效率",
+      "analysis": "求解 **30.374秒**，harness27.402秒；CC26.787秒／API23.654秒，差3.133秒不是纯工具时间。15回合累计输入 **271,298**／输出 **2,816 tokens**，最大单请求输入24,594；CC、gateway、adapter核一致。完整源码读取、重复Linux生成脚本与重复总结可减少；不跨题比较模型效率。\n\nGit清理10.497秒、可信初始化10.471秒和容器准备独立列账；评分总93.047秒、测试2.614秒、评分队列0秒，不混入求解时间。15条实际gateway请求均65536输出预算，CC32000汇总元数据未降低它；声明196608上下文／240回合／3小时未触及，不证明极限容量。CC费用1.42689美元是自动估算，非本地账单。"
+    },
+    "termination_and_stability": {
+      "heading": "结束与稳定性",
+      "analysis": "`completed/success/end_turn`、harness0，15gateway响应HTTP200且无流错误，无截断／拒绝。原件显示安全actor／grader收尾；13个有限采样存在未知间隔，不推全程峰值或利用率。仅一次Coder，Qwen3.6首次与整项回执尚缺，不判稳定成功率或训练资格。"
+    }
+  },
+  "metrics": {
+    "model_turns": 15,
+    "tool_calls": 14,
+    "tool_counts": {
+      "Bash": 8,
+      "Read": 3,
+      "Edit": 2,
+      "Write": 1
+    },
+    "reported_tool_errors": 1,
+    "error_rows": [
+      153
+    ],
+    "cumulative_input_tokens": 271298,
+    "cumulative_output_tokens": 2816,
+    "largest_request_input_tokens": 24594,
+    "solve_seconds": 30.374,
+    "harness_exec_seconds": 27.402,
+    "cc_duration_seconds": 26.787,
+    "cc_api_duration_seconds": 23.654,
+    "cc_non_api_residual_seconds_not_pure_tool_time": 3.133,
+    "first_relevant_source_read_since_first_request_seconds": 1.4267385005950928,
+    "initial_correct_root_location_response_completion_since_first_request_seconds": 5.063863039016724,
+    "diagnosis_response_trajectory_row": 58,
+    "environment_preparation_stage_seconds": {
+      "image_ready": 0.977,
+      "network_and_container": 1.259,
+      "git_sanitize": 10.497,
+      "trusted_init": 10.471,
+      "baseline_census": 0.183,
+      "quiescence": 0.45
+    },
+    "grading_timing": {
+      "schema_id": "rh2.grading_timing_record.v1",
+      "record_id": "timing_a1dd73c4",
+      "trajectory_id": "gpu1003-conan12397-coder-a1",
+      "task_id": "swe_gym_lite::conan-io__conan-12397",
+      "image_pull_seconds": 0.0,
+      "env_reset_seconds": 11.303,
+      "prep_seconds": 0.305,
+      "test_seconds": 2.614,
+      "total_grading_seconds": 93.047,
+      "queue_wait_seconds": 0.0,
+      "container_peak_memory_mb": 355.609,
+      "queue_depth_at_enqueue": null,
+      "backpressure_triggered": false
+    },
+    "cc_cost_usd_builtin_estimate_not_compute_bill": 1.4268899999999998
+  },
+  "reference_states": {
+    "conans/test/integration/toolchains/meson/test_mesontoolchain.py::test_apple_meson_keep_user_custom_flags": "PASSED",
+    "conans/test/integration/toolchains/meson/test_mesontoolchain.py::test_correct_quotes": "PASSED",
+    "conans/test/integration/toolchains/meson/test_mesontoolchain.py::test_extra_flags_via_conf": "PASSED",
+    "conans/test/integration/toolchains/meson/test_mesontoolchain.py::test_linux_native_clang_libcxx_link_args": "PASSED"
+  },
+  "non_reference_platform_skips": [],
+  "actual_gateway_output_limits": [
+    65536
+  ],
+  "candidate_repair_required_for_success": false,
+  "task_material_changes_required": false,
+  "CPU_or_model_rerun_required": false,
+  "ordinary_additional_samples": "deferred_coverage_first",
+  "paired_request_closed": false,
+  "pending_models": [
+    "Qwen/Qwen3.6-35B-A3B"
+  ],
+  "training_eligibility": "not_established"
+}

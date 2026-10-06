@@ -1,0 +1,74 @@
+{
+  "scope": "real wrapper body + shutdown event writer + report consumer; rollout/canonicalize/identity are stubs; synthetic 1-hour denominator",
+  "miles_wrapper_calls": {
+    "rollout_calls": 2,
+    "record_event_calls": 0
+  },
+  "after_legacy_control_calls": {
+    "rollout_calls": 4,
+    "record_event_calls": 2
+  },
+  "returned_rewards": [
+    1.0,
+    0.0
+  ],
+  "bringup_rows": [
+    {
+      "ts": 1790308328.745227,
+      "event": "shutdown_started",
+      "inflight": 0
+    },
+    {
+      "ts": 1790308328.7454422,
+      "event": "shutdown_completed",
+      "ok": true,
+      "first_cause": null,
+      "residue": {}
+    }
+  ],
+  "before_shutdown_effective_gradings": null,
+  "after_shutdown_effective_gradings": {
+    "resolved": {
+      "count": 0,
+      "per_hour": 0.0,
+      "per_gpu_hour": 0.0
+    },
+    "trusted_zero": {
+      "count": 0,
+      "per_hour": 0.0,
+      "per_gpu_hour": 0.0
+    },
+    "total": {
+      "count": 0,
+      "per_hour": 0.0,
+      "per_gpu_hour": 0.0
+    },
+    "source": "bringup_events grading 块（同 session 取最后一条）；可信 0 分 = unresolved + reward 0.0 + 模型负样本归因"
+  },
+  "after_shutdown_gradings_not_effective": {
+    "reward_unknown": 0,
+    "inconsistent": 0,
+    "delivered_without_grading_record": 0,
+    "evaluation_sessions_excluded": 0,
+    "rows_without_session_id": 2
+  },
+  "after_shutdown_reasons": [],
+  "legacy_control_effective_gradings": {
+    "resolved": {
+      "count": 1,
+      "per_hour": 1.0,
+      "per_gpu_hour": 0.125
+    },
+    "trusted_zero": {
+      "count": 1,
+      "per_hour": 1.0,
+      "per_gpu_hour": 0.125
+    },
+    "total": {
+      "count": 2,
+      "per_hour": 2.0,
+      "per_gpu_hour": 0.25
+    },
+    "source": "bringup_events grading 块（同 session 取最后一条）；可信 0 分 = unresolved + reward 0.0 + 模型负样本归因"
+  }
+}

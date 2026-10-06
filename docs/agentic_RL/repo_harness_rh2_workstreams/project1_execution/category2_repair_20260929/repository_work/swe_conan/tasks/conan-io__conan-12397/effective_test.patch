@@ -1,0 +1,90 @@
+diff --git a/conans/test/integration/toolchains/meson/test_mesontoolchain.py b/conans/test/integration/toolchains/meson/test_mesontoolchain.py
+--- a/conans/test/integration/toolchains/meson/test_mesontoolchain.py
++++ b/conans/test/integration/toolchains/meson/test_mesontoolchain.py
+@@ -58,8 +58,12 @@
+     content = t.load(MesonToolchain.cross_filename)
+     assert "c_args = ['-isysroot', '/other/sdk/path', '-arch', 'myarch', '-otherminversion=10.7']" in content
+     assert "c_link_args = ['-isysroot', '/other/sdk/path', '-arch', 'myarch', '-otherminversion=10.7']" in content
+-    assert "cpp_args = ['-isysroot', '/other/sdk/path', '-arch', 'myarch', '-otherminversion=10.7']" in content
+-    assert "cpp_link_args = ['-isysroot', '/other/sdk/path', '-arch', 'myarch', '-otherminversion=10.7']" in content
++    for key in ("cpp_args", "cpp_link_args"):
++        args = _rh2_meson_args(content, key)
++        assert "-stdlib=libc++" in args
++        assert "-otherminversion=10.7" in args
++        for pair in (["-isysroot", "/other/sdk/path"], ["-arch", "myarch"]):
++            assert any(args[i:i + 2] == pair for i in range(len(args) - 1))
+ 
+ 
+ @pytest.mark.skipif(sys.version_info.major == 2, reason="Meson not supported in Py2")
+@@ -71,7 +75,7 @@
+         compiler=gcc
+         compiler.version=9
+         compiler.cppstd=17
+-        compiler.libcxx=libstdc++11
++        compiler.libcxx=libstdc++
+         build_type=Release
+ 
+         [buildenv]
+@@ -91,7 +95,7 @@
+ 
+     t.run("install . -pr=profile")
+     content = t.load(MesonToolchain.native_filename)
+-    assert "cpp_args = ['-flag0', '-other=val', '-flag1', '-flag2']" in content
++    assert "cpp_args = ['-flag0', '-other=val', '-flag1', '-flag2', '-D_GLIBCXX_USE_CXX11_ABI=0']" in content
+     assert "c_args = ['-flag0', '-other=val', '-flag3', '-flag4']" in content
+     assert "c_link_args = ['-flag0', '-other=val', '-flag5', '-flag6']" in content
+     assert "cpp_link_args = ['-flag0', '-other=val', '-flag5', '-flag6']" in content
+@@ -118,3 +122,53 @@
+     assert "cpp_std = 'c++17'" in content
+     assert "backend = 'ninja'" in content
+     assert "buildtype = 'release'" in content
++
++
++def _rh2_meson_args(content, key):
++    # 读取完整 INI 键；安全解释列表/常量/拼接，避免 objcpp 后缀碰撞和引号约束。
++    import ast
++    import configparser
++
++    ini = configparser.RawConfigParser()
++    ini.read_string(content)
++    resolving = set()
++
++    def read(node):
++        if isinstance(node, ast.List):
++            return [read(element) for element in node.elts]
++        if isinstance(node, ast.Constant) and isinstance(node.value, str):
++            return node.value
++        if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Add):
++            left, right = read(node.left), read(node.right)
++            assert isinstance(left, list) and isinstance(right, list)
++            return left + right
++        if isinstance(node, ast.Name):
++            assert node.id not in resolving, "cyclic Meson constant"
++            resolving.add(node.id)
++            try:
++                return read(ast.parse(ini.get("constants", node.id), mode="eval").body)
++            finally:
++                resolving.remove(node.id)
++        raise AssertionError("unsupported Meson argument expression: " + ast.dump(node))
++
++    value = read(ast.parse(ini.get("built-in options", key), mode="eval").body)
++    assert isinstance(value, list) and all(isinstance(item, str) for item in value)
++    return value
++
++
++def test_linux_native_clang_libcxx_link_args():
++    profile = textwrap.dedent("""
++        [settings]
++        os=Linux
++        arch=x86_64
++        compiler=clang
++        compiler.version=14
++        compiler.libcxx=libc++
++        build_type=Release
++    """)
++    client = TestClient()
++    client.save({"conanfile.txt": "[generators]\nMesonToolchain", "profile": profile})
++    client.run("install . -pr:h=profile -pr:b=profile")
++    content = client.load(MesonToolchain.native_filename)
++    assert "-stdlib=libc++" in _rh2_meson_args(content, "cpp_args")
++    assert "-stdlib=libc++" in _rh2_meson_args(content, "cpp_link_args")

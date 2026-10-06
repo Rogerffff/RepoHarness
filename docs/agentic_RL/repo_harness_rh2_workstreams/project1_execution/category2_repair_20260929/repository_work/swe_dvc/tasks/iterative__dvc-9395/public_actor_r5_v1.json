@@ -1,0 +1,133 @@
+{
+  "format": "swe_dvc_public_actor_result.v1",
+  "as_of": "2026-10-03",
+  "instance_id": "iterative__dvc-9395",
+  "job_id": "dvc9395-public-actor-20261003-v1-001",
+  "release_id": "cat2-cpu-r2e078079-swe7-git-20261003-v1",
+  "release_manifest_sha256": "sha256:80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9",
+  "prepared_summary_sha256": "sha256:fca6e8f1ffb8237ad4f06ee29a394fc69442830515d9af669358a8c18367d701",
+  "public_bundle_digest": "sha256:1f95551f8b887dc01d5a2c2fba8aef01a449c701e1577dec4905181f14abafd9",
+  "input_sha256": "sha256:da833fcf54eb27c870f797fae067d61b1541ae8c6b62e36fff4270f1d3151c41",
+  "actual_image_id": "sha256:c093861f62b8071b3c1e5b3142abd5843888421364e69dd728cb80856f621b60",
+  "base_commit": "c75a5583b3840ba90a8e800a0f42c1cb120916db",
+  "helper_sha256": "sha256:91c8bb818c10f6492be45f20ada71f252fcb6884aed5c12539c109cb4fe689d0",
+  "public_development_sha256": "sha256:7323939989fe68455a468c41cecb83884eb2c9dd863cc8a98b6873c4810a8456",
+  "commands_sha256": "sha256:49c50eedd24522d54343e8c39b841745ba211755506c005ca6b2ea48551e3508",
+  "cc_version_observed": "2.1.205 (Claude Code)",
+  "cc_platform_tarball_sha256": "sha256:d3dadfa9cde294ac82c755eb6d889291228849180bac5d677ad1a4027aca1bc4",
+  "actual_profile": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmp_tmpfs_bytes": 1073741824,
+    "home_tmpfs_bytes": 268435456,
+    "writable_layer_quota_bytes": 8589934592,
+    "pids_limit": 512
+  },
+  "profile_digest": "sha256:a0d183d13a4a099cd0bd62d9e19fca7019428f7d08f5b69522a3ead4b565c68f",
+  "command_results": [
+    {
+      "id": "identity",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 147,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "实际agent身份、激活解释器、当前DVC源码和公开pygit2依赖"
+    },
+    {
+      "id": "activation_permissions",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 25,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "既有激活文件保护核查"
+    },
+    {
+      "id": "public_tests",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 391,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "开发说明中的已有公开测试；原件读回需确认17个实例实际通过且无skip／缺失"
+    },
+    {
+      "id": "dependency_cli",
+      "rc": 0,
+      "status": "rc0",
+      "expect": "zero",
+      "matches_expect": true,
+      "output_bytes": 2347,
+      "output_truncated_to": 200000,
+      "pytest": null,
+      "purpose": "公开依赖一致性与真实CLI帮助"
+    }
+  ],
+  "public_tests_actual": {
+    "passed": 17,
+    "failed": 0,
+    "skipped": 0,
+    "missing": 0,
+    "elapsed_seconds": 24.69,
+    "summary_line": "17 passed in 24.69s",
+    "summary_parser_in_frozen_helper_returned": null,
+    "raw_capture": "captures/public_tests.out",
+    "reason": "Read actual complete output; frozen helper regex does not parse the -q summary."
+  },
+  "public_delivery": {
+    "task_statement_sha256": "sha256:60357b7feee97830da0f9866e8b7cb69c17272f8fa535cb4e2de2eb96e5c3b56",
+    "development_sha256": "sha256:7323939989fe68455a468c41cecb83884eb2c9dd863cc8a98b6873c4810a8456",
+    "first_request_has_exact_statement_and_development": true,
+    "first_request_sha256": "sha256:46adeb7fb517230bf6b811348079c7e137eec621dbee8dcee0480daa331b7d47"
+  },
+  "cleanup": {
+    "container_rm": 0,
+    "network_failures": [],
+    "relay_failures": [],
+    "stub_rc": 0,
+    "labeled_containers_left": [],
+    "labeled_networks_left": [],
+    "residual_after_force": []
+  },
+  "slot_process_returncode": 0,
+  "started_at_utc": "2026-10-02T20:53:11Z",
+  "finished_at_utc": "2026-10-02T20:54:58Z",
+  "actor_public_environment_check": "passed_and_non_author_readback_complete",
+  "non_author_runtime_review": {
+    "path": "../../reviews/non_author_actor4166_9395_runtime_review_20261003.md",
+    "sha256": "sha256:c914c520234eaee7da6fd9d3c20d9a84c8bd67aa509236d0c00c752ceab55632",
+    "status": "no_new_blocking_findings",
+    "kind": "non_author_public_actor_runtime_readback",
+    "fixed_raw_request_sha256": "sha256:2a3eea0b29dd3300fd98683f363b0634a74f1dd921e5dc73097813984687a6b5",
+    "scope": "actual public environment execution and delivery only; not formal reward or model probe",
+    "prior_navigation_snapshot": "../../reviews/history/public_actor_9395_r5_v1_author_readback_20261003.json",
+    "prior_navigation_sha256": "sha256:2fcdd566c030d6355da155d4148ef660cd98cce72b0659bbec12aeff7c5dbfb7"
+  },
+  "formal_grading": false,
+  "model_probe": false,
+  "qualifies_for_probe": false,
+  "evidence_root": "runs/category2_repair_20260929/repository_work/swe_dvc/public_actor_evidence/public9395_r5_actor001_v1",
+  "archive": "runs/category2_repair_20260929/repository_work/swe_dvc/public_actor_evidence/public9395_r5_actor001_v1.tar.gz",
+  "archive_sha256": "sha256:6ce54dddfc789236a16839d17ab037002c11908619ff3ee78acd794c49a1d126",
+  "earlier_admission_only": [],
+  "remaining": [
+    "new material publication/deployment",
+    "formal six controls with correct c3_frozenfix",
+    "non-author formal CPU/runtime readback",
+    "model probes and trajectory analysis"
+  ],
+  "still_needs_cpu": true,
+  "still_needs_gpu": true,
+  "evidence_limits": [
+    "Baseline file SHA guards ran but their stdout and full test-file bytes were not separately archived",
+    "pytest -q counts and complete file selectors were checked; no independent per-node collect-only run",
+    "Configured writable layer quota is not confirmed as enforced"
+  ]
+}

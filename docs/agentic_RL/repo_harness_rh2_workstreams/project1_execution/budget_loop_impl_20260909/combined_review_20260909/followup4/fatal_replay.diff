@@ -1,0 +1,78 @@
+--- followup3/production_probe.py
++++ followup4/fatal_replay.py
+@@ -1,4 +1,4 @@
+-"""第三次窄复核：六项 fatal 的来源、通知时序与物化取消接缝；不调用 Docker。
++"""第四次窄复核：沿用上轮真实通知器与物化故障 IO，验证首因先传播、清理跨期仍完成；不调用 Docker。
+ 
+ 复用维护夹具的外部接口替身，generate、真实物化、期限、receipt 与清理路径均不替换。
+ 结论记录实际行为；已知反例断言也按实测现状冻结，不能当作业务应有行为的测试 oracle。
+@@ -160,8 +160,19 @@
+             "failure_details": [f.detail for f in audit.failure_records],
+             "events": list(events),
+         }
+-        if rm_gate == "release":
+-            release_rm.set()
++        assert during_cleanup["fatal_notifications"] == 1, during_cleanup
++        assert during_cleanup["receipt_count"] == 1, during_cleanup
++        assert events[0].startswith("fatal:"), events
++        if rm_gate == "cross_deadline":
++            # 沿用真实 episode 期限与 rm 门控；仅在到期后释放清理，不让验证自身超时取消任务。
++            await asyncio.sleep(max(0.0, audit.episode_deadline_monotonic - chain.orchestrator._clock()) + 0.05)
++            during_cleanup["observed_after_deadline"] = chain.orchestrator._clock() > audit.episode_deadline_monotonic
++            during_cleanup["still_cleaning_after_deadline"] = not generated.done()
++            during_cleanup["notifications_after_deadline"] = len(state.fatal_seen)
++            assert during_cleanup["observed_after_deadline"] and during_cleanup["still_cleaning_after_deadline"]
++            assert during_cleanup["notifications_after_deadline"] == 1
++            assert "rm_cancelled" not in events, events
++        release_rm.set()
+     try:
+         outputs = await asyncio.wait_for(generated, timeout=3.0)
+     except FatalExecutionInfrastructureError as exc:
+@@ -202,13 +213,7 @@
+     }
+     assert result["cleanup_completed"] and result["inflight_after_audit"] == 0
+     assert result["receipt_cleanup_records"] == 1
+-    if rm_gate == "cross_deadline":
+-        # 当前反例：物化异常清理被期限取消，首因 fatal 消失，容器与私网均残留。
+-        assert result["result"] == "returned" and result["status"] == "aborted", result
+-        assert result["outcome_reason"] == "episode_deadline_in_materialize", result
+-        assert result["receipt_disposition"] == "aborted" and not result["fatal_notifications"], result
+-        assert result["containers_removed"] == 0 and result["private_networks_registered"] == 1, result
+-    elif kind in {"digest_query_failure", "lineage_query_failure"}:
++    if kind in {"digest_query_failure", "lineage_query_failure"}:
+         expected = "rollout_image_digest_inspect_failed" if kind.startswith("digest") else "rollout_testbed_probe_failed"
+         assert result["status"] == "aborted" and result["outcome_reason"] == expected, result
+         assert not result["fatal_notifications"] and result["receipt_disposition"] == "aborted", result
+@@ -229,7 +234,7 @@
+         assert result["reason"] == expected and result["fatal_notifications"] == [expected], result
+         assert result["receipt_disposition"] == "fatal_run_halt" and result["receipt_reason"] == expected, result
+         assert result["outcome_reason"] is None and result["grading_calls"] == 0, result
+-    if rm_gate != "cross_deadline" and kind != "identity_incomplete":
++    if kind != "identity_incomplete":
+         assert result["containers_removed"] == 1 and result["lease_released"], result
+         assert result["private_networks_registered"] == 0, result
+     if result["opened_sessions"]:
+@@ -243,6 +248,7 @@
+     for kind in ("digest_mismatch", "lineage_mismatch"):
+         results.append(await run_case(kind, rm_gate="release"))
+         results.append(await run_case(kind, rm_gate="cross_deadline"))
++    results.append(await run_case("workspace_contract_invalid", rm_gate="cross_deadline"))
+     for kind in (
+         "identity_incomplete", "workspace_contract_invalid", "artifact_persist_failure", "mask_missing",
+         "digest_query_failure", "lineage_query_failure", "digest_match",
+@@ -260,13 +266,13 @@
+         "rh2/src/repoharness2/adapters/slime/sandbox_profile.py",
+     )
+     payload = {
+-        "scope": "第三次窄复核的六项 fatal 与直接物化接缝；真实 Docker 不在本脚本范围",
++        "scope": "第四次窄复核的 F1 修后回放与必要正例；真实 Docker 不在本脚本范围",
+         "cases": results,
+         "direct_seams": seams,
+         "source_digests": {p: hashlib.sha256((ROOT / p).read_bytes()).hexdigest() for p in sources},
+         "probe_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+     }
+-    Path(__file__).with_name("production_probe_result.json").write_text(
++    Path(__file__).with_name("fatal_replay_result.json").write_text(
+         json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+     )
+ 

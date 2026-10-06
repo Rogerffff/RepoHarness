@@ -1,0 +1,49 @@
+{
+ "task": "pillow__3ac9396e8c991e7baab66187af2a35c3f4e83605",
+ "image": "sha256:6f98a901ad4e56f30f567b45ff1c4e39a234dc8a8d7ca89e1410de74cf2ba6f9",
+ "recipe_id": "r2e_derive_v1+sysconfig_v1",
+ "patch": "/work/r2e/trials/pillow/3ac9396e/pillow_3ac9_K4_tag_len_1.patch",
+ "edits": "/work/r2e/trials/pillow/3ac9396e/draft_ab.json",
+ "expected": "/work/r2e/trials/pillow/3ac9396e/expected_ab.json",
+ "kind": "trial_not_formal_grading",
+ "apply": "Checking patch PIL/TiffTags.py...\nApplied patch PIL/TiffTags.py cleanly.\nRH2_APPLY_RC=0\n",
+ "edits_apply": "RH2_TRIAL_EDITS_APPLIED=1\n",
+ "test_seconds": 0.4,
+ "markers": true,
+ "observed": {
+  "TestFileTiffMetadata.test_div_zero_other_unregistered_tag": "ERROR",
+  "TestFileTiffMetadata.test_empty_metadata": "PASSED",
+  "TestFileTiffMetadata.test_exif_div_zero": "ERROR",
+  "TestFileTiffMetadata.test_iccprofile": "PASSED",
+  "TestFileTiffMetadata.test_iccprofile_binary": "PASSED",
+  "TestFileTiffMetadata.test_no_duplicate_50741_tag": "PASSED",
+  "TestFileTiffMetadata.test_read_metadata": "PASSED",
+  "TestFileTiffMetadata.test_rt_metadata": "PASSED",
+  "TestFileTiffMetadata.test_unregistered_int_tag_type": "PASSED",
+  "TestFileTiffMetadata.test_write_metadata": "PASSED",
+  "Test_IFDRational.test_ifd_rational_save": "PASSED",
+  "Test_IFDRational.test_nonetype": "PASSED",
+  "Test_IFDRational.test_sanity": "PASSED"
+ },
+ "n_observed": 13,
+ "log_tail": "RH2_INSTALL_SKIPPED=1\n>>>>> Start Test Output\n============================= test session starts =============================\nplatform linux -- Python 3.9.21\nrootdir: /testbed\n...=== orphaned temp file: /tmp/tempqn7dzxpf.tiff\n.=== orphaned temp file: /tmp/tempp53i_6ke.tiff\n....=== orphaned temp file: /tmp/temphcizt9xs.tif\n.=== orphaned temp file: /tmp/tempus8znf39.tiff\n.=== orphaned temp file: /tmp/tempe1hwg55a.tiff\n.=== orphaned temp file: /tmp/tempbn78hyfm.tiff\n=== orphaned temp file: /tmp/temp3lnnduba.tiff\n..\ncollected 13 items\n\n=================================== ERRORS =====================================\n__________ TestFileTiffMetadata.test_div_zero_other_unregistered_tag __________\nTraceback (most recent call last):\n  File \"/opt/py/cpython-3.9.21-linux-x86_64-gnu/lib/python3.9/unittest/case.py\", line 59, in testPartExecutor\n    yield\n  File \"/opt/py/cpython-3.9.21-linux-x86_64-gnu/lib/python3.9/unittest/case.py\", line 592, in run\n    self._callTestMethod(testMethod)\n  File \"/opt/py/cpython-3.9.21-linux-x86_64-gnu/lib/python3.9/unittest/case.py\", line 550, in _callTestMethod\n    method()\n  File \"/testbed/r2e_tests/test_1.py\", line 208, in test_div_zero_other_unregistered_tag\n    im.save(out, tiffinfo=info, compression='raw')\n  File \"/testbed/PIL/Image.py\", line 1675, in save\n    save_handler(self, fp, filename)\n  File \"/testbed/PIL/TiffImagePlugin.py\", line 1446, in _save\n    offset = ifd.save(fp)\n  File \"/testbed/PIL/TiffImagePlugin.py\", line 715, in save\n    data = self._write_dispatch[typ](self, *values)\n  File \"/testbed/PIL/TiffImagePlugin.py\", line 571, in <lambda>\n    b\"\".join(self._pack(fmt, value) for value in values))\n  File \"/testbed/PIL/TiffImagePlugin.py\", line 571, in <genexpr>\n    b\"\".join(self._pack(fmt, value) for value in values))\n  File \"/testbed/PIL/TiffImagePlugin.py\", line 546, in _pack\n    return struct.pack(self._endian + fmt, *values)\nstruct.error: required argument is not an integer\n__________ TestFileTiffMetadata.test_exif_div_zero __________\nTraceback (most recent call last):\n  File \"/opt/py/cpython-3.9.21-linux-x86_64-gnu/lib/python3.9/unittest/case.py\", line 59, in testPartExecutor\n    yield\n  File \"/opt/py/cpython-3.9.21-linux-x86_64-gnu/lib/python3.9/unittest/case.py\", line 592, in run\n    self._callTestMethod(testMethod)\n  File \"/opt/py/cpython-3.9.21-linux-x86_64-gnu/lib/python3.9/unittest/case.py\", line 550, in _callTestMethod\n    method()\n  File \"/testbed/r2e_tests/test_1.py\", line 197, in test_exif_div_zero\n    self.assertEqual(0, reloaded.tag_v2[41988][0].numerator)\nTypeError: 'IFDRational' object is not subscriptable\n\n==================== short test summary info ====================\nERROR test_1::TestFileTiffMetadata::test_div_zero_other_unregistered_tag\nPASSED test_1::TestFileTiffMetadata::test_empty_metadata\nERROR test_1::TestFileTiffMetadata::test_exif_div_zero\nPASSED test_1::TestFileTiffMetadata::test_iccprofile\nPASSED test_1::TestFileTiffMetadata::test_iccprofile_binary\nPASSED test_1::TestFileTiffMetadata::test_no_duplicate_50741_tag\nPASSED test_1::TestFileTiffMetadata::test_read_metadata\nPASSED test_1::TestFileTiffMetadata::test_rt_metadata\nPASSED test_1::TestFileTiffMetadata::test_unregistered_int_tag_type\nPASSED test_1::TestFileTiffMetadata::test_write_metadata\nPASSED test_2::Test_IFDRational::test_ifd_rational_save\nPASSED test_2::Test_IFDRational::test_nonetype\nPASSED test_2::Test_IFDRational::test_sanity\n=================== 2 errors, 11 passed in 0.05s ===================\n>>>>> End Test Output\nRH2_TEST_RC=1\n",
+ "stderr_tail": "",
+ "expected_n": 13,
+ "missing": [],
+ "extra": [],
+ "status_diff": [
+  [
+   "TestFileTiffMetadata.test_div_zero_other_unregistered_tag",
+   "PASSED",
+   "ERROR"
+  ],
+  [
+   "TestFileTiffMetadata.test_exif_div_zero",
+   "PASSED",
+   "ERROR"
+  ]
+ ],
+ "match": false,
+ "verdict": "mismatch",
+ "seconds": 85.9
+}

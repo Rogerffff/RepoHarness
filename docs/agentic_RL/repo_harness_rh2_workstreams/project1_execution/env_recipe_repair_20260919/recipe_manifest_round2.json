@@ -1,0 +1,112 @@
+{
+  "round": "round2",
+  "verified_at_sg": "2026-09-19T13:46:32.438734+08:00",
+  "verified_cases": [
+    {
+      "instance_id": "Project-MONAI__MONAI-3205",
+      "recipe": "recipes/Dockerfile.monai3205-assets-v1",
+      "image": {
+        "base": "sha256:d277a0d0304b66634cdd0d3fd5bc7158a5311225592c9ac9a7a0a19bb6597830",
+        "base_digest": "xingyaoww/sweb.eval.x86_64.project-monai_s_monai-3205@sha256:897f5328040fbfb92462207d87bf0909c1a3516fe994392b730fec4b9e7a75ae",
+        "image_id": "sha256:aa761dde7babafd260810b75ce21750e19a4d7aff389e07c1416358d78a425d6",
+        "tag": "rh2-envrepair/monai3205:20260919-assets-v1",
+        "base_layers_preserved": true,
+        "representative_contents": [
+          "95ed167d5607dbd46a6986501c572d90f50e8753\n4859cc467b166e3fb8c50dbb985a2fa3e6f9b5d47133b1d3cecaadff4ecc3b2a  /opt/miniconda3/envs/testbed/bin/python3\n94aa2298486deb492b89aea8332c627782fdd317c53a9d873a343d20db2a6da3  monai/apps/datasets.py\n",
+          "95ed167d5607dbd46a6986501c572d90f50e8753\n4859cc467b166e3fb8c50dbb985a2fa3e6f9b5d47133b1d3cecaadff4ecc3b2a  /opt/miniconda3/envs/testbed/bin/python3\n94aa2298486deb492b89aea8332c627782fdd317c53a9d873a343d20db2a6da3  monai/apps/datasets.py\n"
+        ],
+        "metacopy_unchanged": "Y",
+        "recipe_sha256": "bc9e8d257310050c0844ead04eb82638a8813767a32725dbb0a98790c7c484df"
+      },
+      "asset": {
+        "url": "https://msd-for-monai.s3-us-west-2.amazonaws.com/Task04_Hippocampus.tar",
+        "bytes": 28425216,
+        "md5": "9d24dba78a72977dbd1d2e110310f31b",
+        "sha256": "282d808a3e84e5a52f090d9dd4c0b0057b94a6bd51ad41569aef5ff303287771",
+        "expected_md5_from_frozen_monai": true,
+        "regular_files": 664,
+        "expanded_regular_bytes": 27936245,
+        "top_entries": [
+          "./._Task04_Hippocampus",
+          "Task04_Hippocampus",
+          "Task04_Hippocampus/._.DS_Store",
+          "Task04_Hippocampus/.DS_Store",
+          "Task04_Hippocampus/._labelsTr",
+          "Task04_Hippocampus/labelsTr",
+          "Task04_Hippocampus/._imagesTr",
+          "Task04_Hippocampus/imagesTr",
+          "Task04_Hippocampus/._imagesTs",
+          "Task04_Hippocampus/imagesTs"
+        ],
+        "at": 1789795214.809724
+      },
+      "verification": {
+        "fresh_attempts": 2,
+        "noop_reward": 0,
+        "gold_reward": 1,
+        "reference_tests": 1,
+        "reference_missing": 0,
+        "local_analysis": "runs/env_recipe_repair_20260919/round2/analysis_2.json",
+        "limitations": "受控noop/gold及该题实际参考测试；未做候选能力测试或正式入池；并行负载不用于性能归因。"
+      }
+    }
+  ],
+  "dependency_batch": {
+    "images": {
+      "dvc4778-install-v2": {
+        "task": "iterative__dvc-4778",
+        "base": "rh2-envrepair/dvc4778:20260919-pathspec-v1",
+        "base_id": "sha256:67c7cb28956692e300225f6fb0513e355d4c2cca8193e9318f69fd94ddd19bb5",
+        "image_id": "sha256:6c2282aecb2b27ee509b4eb6a13377f6733f131a9c36b624c2c2efecd5fb01cc",
+        "tag": "rh2-envrepair/dvc4778-install-v2:20260919",
+        "representative_content": "f8ba5daae23ffc5c2135f86670bd562d6ce654d7\ndiff --git a/setup.py b/setup.py\nindex 828a3f632..9b012d934 100644\n--- a/setup.py\n+++ b/setup.py\n@@ -128,7 +128,7 @@ tests_requirements = [\n     \"pydocstyle<4.0\",\n     \"jaraco.windows==3.9.2\",\n     \"mock-ssh-server>=0.8.2\",\n-    \"moto==1.3.14.dev464\",\n+    \"moto==1.3.14\",\n     \"rangehttpserver==1.2.0\",\n     \"beautifulsoup4==4.4.0\",\n     \"flake8-bugbear\",\na4c97cf2f9eac20b2d239d3b076ccb730ab65154a0b70dc41108deca0f8207a8  /opt/miniconda3/envs/testbed/bin/python3\n3.9.19 (main, May  6 2024, 19:43:03) \n[GCC 11.2.0]\n",
+        "recipe_sha256": "15e906d9747b64a1423914fa9b3f0b9a1a5cf29aef299284ccede2776d61b96b"
+      },
+      "mypy11966-wheels-v1": {
+        "task": "python__mypy-11966",
+        "base": "xingyaoww/sweb.eval.x86_64.python_s_mypy-11966@sha256:a26d2701efaa1f61c8148bd181042e2b53184f08abfebaf781a2144a41564500",
+        "base_id": "sha256:22fc1329c7d37c2d718c0495992310a7d1d4985c220d4a384dfd1f00bd145196",
+        "image_id": "sha256:36a656bcd984f543a535911d3c3014f6c262dbcbe842785c527226d1ad347d12",
+        "tag": "rh2-envrepair/mypy11966-wheels-v1:20260919",
+        "representative_content": "48d810d5ed25f898d4f220a7476b6b267c289b9a\n90b2be464014a4f67def45c8ea8d5a636f5d259e85a910039e5e7eb3382716ca  /opt/miniconda3/envs/testbed/bin/python3\n3.10.14 (main, May  6 2024, 19:42:50) [GCC 11.2.0]\n",
+        "recipe_sha256": "894fc69e04bdaf0b94688a51809b20e93979d1a5da7ae7854892bace37be1ede"
+      },
+      "moto6913-wheels-v1": {
+        "task": "getmoto__moto-6913",
+        "base": "xingyaoww/sweb.eval.x86_64.getmoto_s_moto-6913@sha256:e3f5f6152654cdf0f95ef63c4db3c5358716687af376f2ee7920c7d35227ef6a",
+        "base_id": "sha256:3c4200045d1510c72b75b65e8a2079c01564bce6ffd9213dea9b653be3378dc4",
+        "image_id": "sha256:c0d5652cd96bd3c5cdaea279843e42b5ef78ee1d9b0666a2e486fe8210d68365",
+        "tag": "rh2-envrepair/moto6913-wheels-v1:20260919",
+        "representative_content": "f59e178f272003ba39694d68390611e118d8eaa9\n2638c82c979909996b1653acea5ec989f940d9d1cc018c8127ca35cfc1f84330  /opt/miniconda3/envs/testbed/bin/python3\n3.12.4 | packaged by Anaconda, Inc. | (main, Jun 18 2024, 15:12:24) [GCC 11.2.0]\n",
+        "recipe_sha256": "50a01cb2c415981fbaeadac446ee485289088f2a78849169c6cdccdbc2da6024"
+      },
+      "monai1121-numpy-v2": {
+        "task": "Project-MONAI__MONAI-1121",
+        "base": "rh2-envrepair/monai1121:20260919-assets-v1",
+        "base_id": "sha256:7f6828631a6ceb2b015229cbf14e528dade9f0230533ffa11ed365089a8e33e7",
+        "image_id": "sha256:b3bccbbee1887d67b83232c451588cb0f7226dd41f12d4af10b520b96d3e05bd",
+        "tag": "rh2-envrepair/monai1121-numpy-v2:20260919",
+        "representative_content": "5b91f937234a69fb299f220fc4bbdd8ef51ae37d\n4859cc467b166e3fb8c50dbb985a2fa3e6f9b5d47133b1d3cecaadff4ecc3b2a  /opt/miniconda3/envs/testbed/bin/python3\n3.8.20 (default, Oct  3 2024, 15:24:27) \n[GCC 11.2.0]\n",
+        "recipe_sha256": "14f42af19bab16b96903dddb0b752acc943714d820cb88e72c892c11a3130b35"
+      },
+      "dask7138-pytest-v1": {
+        "task": "dask__dask-7138",
+        "base": "xingyaoww/sweb.eval.x86_64.dask_s_dask-7138@sha256:91df52cb66bb64003ecf4721832eae373c701536aa3dcb85ddc7d9e0ea757736",
+        "base_id": "sha256:8da379ba385fb50070429c697a92cdb5673b8475b0b48a7da7e8642cc99eef3e",
+        "image_id": "sha256:281a1a511f29617325b7663eba79fe6a51d9710c9fbb2ee40f13df09f8332389",
+        "tag": "rh2-envrepair/dask7138-pytest-v1:20260919",
+        "representative_content": "9bb586a6b8fac1983b7cea3ab399719f93dbbb29\ne9af75d51c77af70a16107206e9b30f37171d5f6f9547eb6ca2a407766e66ede  /opt/miniconda3/envs/testbed/bin/python3\n3.8.15 | packaged by conda-forge | (default, Nov 22 2022, 08:46:39) \n[GCC 10.4.0]\n",
+        "recipe_sha256": "b3fab7aab4e8c608e4fc256fb4817e4ad69c6a6804355d38c616cfb2cc767348"
+      }
+    },
+    "attempts": 11,
+    "analysis": "runs/env_recipe_repair_20260919/round2b/analysis_11.json",
+    "conclusions": {
+      "dvc4778": "安装成功；受控新增依赖安装前缺席/安装后存在，gold55pass4skip；其它DVC尚待扩展。",
+      "mypy11966": "build/install成功；noop/gold=0/1。",
+      "moto6913": "build/install成功；noop/gold=0/1，17P2P通过。",
+      "monai1121": "NumPy兼容4处已恢复；35P2P通过，6helper收集错误待材料批。",
+      "dask7138": "pytest兼容92处已恢复；gold561pass，noop仅目标1fail；468P2P通过。"
+    }
+  }
+}

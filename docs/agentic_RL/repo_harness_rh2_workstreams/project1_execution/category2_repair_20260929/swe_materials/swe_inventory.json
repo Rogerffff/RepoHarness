@@ -1,0 +1,1375 @@
+{
+  "schema": "swe_category2_material_plan.v1",
+  "as_of": "2026-09-29",
+  "status": "preparation_only",
+  "starting_inventory": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/starting_inventory.json",
+    "sha256": "25a83b5d00b0c2bf5f1351da13fe2dd98d1b691628b09b602e352d8071e5def6",
+    "bytes": 88512
+  },
+  "scope": {
+    "tasks": 28,
+    "category": 2,
+    "excludes_category3": true,
+    "remote_executor": "root",
+    "local_execution": "仅文件读取、SHA、JSON与材料一致性核验；未运行项目测试/模型/容器/SSH"
+  },
+  "decision_scan": {
+    "confirmed_new_user_decisions": [],
+    "ordinary_public_requirement_repairs": "已有授权；不新增用户审批",
+    "shared_d6": "本材料只登记需求，能力状态由另一agent核定"
+  },
+  "packs": [
+    {
+      "order": "01",
+      "name": "现成 mypy 旧测试引用",
+      "instance_ids": [
+        "python__mypy-10424",
+        "python__mypy-17071"
+      ]
+    },
+    {
+      "order": "02",
+      "name": "已有对照的原五题余项",
+      "instance_ids": [
+        "pydantic__pydantic-8511",
+        "conan-io__conan-15422"
+      ]
+    },
+    {
+      "order": "03",
+      "name": "地区、对象身份及默认值",
+      "instance_ids": [
+        "getmoto__moto-5406",
+        "getmoto__moto-6114",
+        "pydantic__pydantic-8793"
+      ]
+    },
+    {
+      "order": "04",
+      "name": "内外行为及返回参数类型",
+      "instance_ids": [
+        "Project-MONAI__MONAI-2446",
+        "Project-MONAI__MONAI-5932",
+        "dask__dask-7656"
+      ]
+    },
+    {
+      "order": "05",
+      "name": "图像标签及真实返回像素",
+      "instance_ids": [
+        "Project-MONAI__MONAI-4583",
+        "Project-MONAI__MONAI-6975"
+      ]
+    },
+    {
+      "order": "06",
+      "name": "真实构建与双 profile",
+      "instance_ids": [
+        "conan-io__conan-11594",
+        "conan-io__conan-13230"
+      ]
+    },
+    {
+      "order": "07",
+      "name": "非示例相等行为",
+      "instance_ids": [
+        "pydantic__pydantic-5662",
+        "pydantic__pydantic-6283"
+      ]
+    },
+    {
+      "order": "08",
+      "name": "已有公开行为的核心缺口",
+      "instance_ids": [
+        "iterative__dvc-5839",
+        "iterative__dvc-6954",
+        "python__mypy-10174"
+      ]
+    },
+    {
+      "order": "09",
+      "name": "完整投影与标签归属",
+      "instance_ids": [
+        "getmoto__moto-5960",
+        "getmoto__moto-6408"
+      ]
+    },
+    {
+      "order": "10",
+      "name": "训练模式与完整配置键",
+      "instance_ids": [
+        "Project-MONAI__MONAI-3715",
+        "conan-io__conan-12397"
+      ]
+    },
+    {
+      "order": "11",
+      "name": "节点身份及文件目录成对控制",
+      "instance_ids": [
+        "iterative__dvc-4166",
+        "pandas-dev__pandas-48106"
+      ]
+    },
+    {
+      "order": "12",
+      "name": "公开复现与合理解接受性",
+      "instance_ids": [
+        "python__mypy-15184",
+        "pandas-dev__pandas-50319",
+        "dask__dask-7138"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "instance_id": "python__mypy-10424",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "01",
+      "pack_label": "现成 mypy 旧测试引用",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "关闭收窄的错误补丁得 1，公开回归四项失败；安装子命令 rc=1 曾被段末 rc=0 掩盖。",
+      "existing_control_status": "已实证 C1 原 reward=1 且四项旧收窄失败；gold 保护旧行为。",
+      "repair_preparation": "复用两个现成 TypeEquals case，追加 P2P 和实际 selector；保留原 F2P 与题面；重新绑定可离线 editable 安装的派生 grader。",
+      "recommended_matrix": "noop→0（F2P失败）；gold→1；C1_disable_narrowing→0（新P2P失败）。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "D6消费者、固定离线安装及逐步rc未验；不能将09-25失败安装当已完成。"
+      ],
+      "source_next_action": "将现成普通收窄测试接入版本化 P2P，并收口候选安装子命令失败；正确解与已知错解对照通过后进入普通探针。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "sha256": "977b923d39171cdcff2de9ea4ce39c62d2a69bcfb8abb1e3ef1f9e8575d8c0a8",
+          "bytes": 310510
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/python__mypy-10424/card.md",
+          "sha256": "8cf99b835f7b939c419bf6bab4bbfba9e4adc5ded769de958b50ec46865dc803",
+          "bytes": 2462
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/mypy_pydantic.md",
+          "sha256": "51aaee5984baa2473c010682f30577f7cd698f8abc60faceb82a66be4c0ff03c",
+          "bytes": 4800
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "python__mypy-17071",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "01",
+      "pack_label": "现成 mypy 旧测试引用",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "禁用 unbound 检查可得 1，却接受真实未绑定类型；安装子命令失败仍需单列。",
+      "existing_control_status": "已实证 C1 原 reward=1；真正unbound被放过，testUnboundTypeVar失败；四份历史成功模型补丁已有负例复核。",
+      "repair_preparation": "复用 check-typevar-unbound.test::testUnboundTypeVar；保留TypeGuard/TypeIs两F2P及两P2P；核collector文件层和安装。",
+      "recommended_matrix": "noop→0；gold→1；C1_disable_check→0；可选q36_a1旧成功工件→1（只在接受性需要时加一行）。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "D6与离线安装未在当前链验；旧summary rc0是echo/tail外层值，必须读诊断正文。"
+      ],
+      "source_next_action": "把已有真正 unbound 负例接入正式参考，同时核候选安装；成功修法通过、禁用检查候选被拒后再探针。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "sha256": "977b923d39171cdcff2de9ea4ce39c62d2a69bcfb8abb1e3ef1f9e8575d8c0a8",
+          "bytes": 310510
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-17071/card.md",
+          "sha256": "3da093677531692ae9393779ddc1fbd20e73801560b1a449da12baed21cc1ac2",
+          "bytes": 2652
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/mypy_pydantic.md",
+          "sha256": "51aaee5984baa2473c010682f30577f7cd698f8abc60faceb82a66be4c0ff03c",
+          "bytes": 4800
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "pydantic__pydantic-8511",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "02",
+      "pack_label": "已有对照的原五题余项",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "gold 在字段继承组合引入 TypeError，窄修可用；两者原评分均 1，安装也并非全成功。",
+      "existing_control_status": "R4：gold与窄修原分均1；gold引入三类继承TypeError，窄修原例/继承均过。",
+      "repair_preparation": "复用R4三类无本地注解继承控制与只读本地annotations窄修；固定Python3.8及pydantic-install配方，先处理pdm/make失败。",
+      "recommended_matrix": "noop原例失败；窄修→1；原gold→0（继承保护）；保留正常repr/default/factory。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "正确对照存在；安装pdm rc127、make rc2须收口，不能为保gold删护栏。"
+      ],
+      "source_next_action": "以已核窄修作正对照，将三类继承保护接入正式验收，收口安装失败并复验；保留原 gold 失败事实。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "sha256": "977b923d39171cdcff2de9ea4ce39c62d2a69bcfb8abb1e3ef1f9e8575d8c0a8",
+          "bytes": 310510
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/pydantic__pydantic-8511/card.md",
+          "sha256": "3c0af97427325116959a2321692de7abc963e2692bbcf63e698a2549b5ffcb0e",
+          "bytes": 2548
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/mypy_pydantic.md",
+          "sha256": "51aaee5984baa2473c010682f30577f7cd698f8abc60faceb82a66be4c0ff03c",
+          "bytes": 4800
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "conan-io__conan-15422",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "02",
+      "pack_label": "已有对照的原五题余项",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "真实得 1 的候选漏掉默认 jobs 或多配置路径；开发工具与 G1 exec 已修。",
+      "existing_control_status": "已有12个正式1；3份真实候选漏默认jobs或多配置；DS a4纯生成器差异按既定范围不判错。",
+      "repair_preparation": "复用CMake3.23.5、真实conan入口及G1修复；默认CPU helper结果、显式2/7、多配置追加纳入断言，并核生成schema能被所用CMake读取。",
+      "recommended_matrix": "noop→0；gold及已核正确候选→1；Coder a1/a3与DS a1→0；Q36 a2单核schema兼容原因。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "须保留既定生成器范围；工具已修勿重列缺失，schema4兼容风险不能自动算已失败。"
+      ],
+      "source_next_action": "补默认 jobs、多配置生成器及所用 CMake/schema 兼容验收；正确修法通过、已存漏修候选被拒后再进普通探针。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "sha256": "977b923d39171cdcff2de9ea4ce39c62d2a69bcfb8abb1e3ef1f9e8575d8c0a8",
+          "bytes": 310510
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/conan-io__conan-15422/card.md",
+          "sha256": "41f1f832555a72ce0288652b4a6619d576aa3030f40bf957e0aee1b3c3c2e834",
+          "bytes": 2510
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/dvc_conan_dask.md",
+          "sha256": "a776a5775da0f411e6724c10adfbf47b63f246fbd28c86725600f76a7891039d",
+          "bytes": 5430
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "getmoto__moto-5406",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "03",
+      "pack_label": "地区、对象身份及默认值",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "恒返回 East2 ARN 的错误补丁得 1；公开 East1 行为失败。",
+      "existing_control_status": "CPU18：noop0/gold1/恒East2错解1；East1公开行为失败。",
+      "repair_preparation": "优先复用公开test_create_table_standard的East1 ARN断言，与East2 F2P同版选入；复用原actor/27项证据。",
+      "recommended_matrix": "noop→0；gold→1；constant_east2→0（East1 ARN）。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "D6新引用实际执行；不扩成全流/备份/CloudFormation回归。"
+      ],
+      "source_next_action": "把已有双地区断言接入有版本的 SWE 修订机制，复验正确／错误对照。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/getmoto__moto-5406/result.md",
+          "sha256": "4e46859022404589807d0a34d26aaee6461c3a411f36921283c53f4228516c09",
+          "bytes": 7964
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "sha256": "977b923d39171cdcff2de9ea4ce39c62d2a69bcfb8abb1e3ef1f9e8575d8c0a8",
+          "bytes": 310510
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch05/results/getmoto__moto-5406/card.md",
+          "sha256": "8ae010221f66ab7cb68f4f532039d90f051c29b66c07a5acead8eaa5232321a2",
+          "bytes": 2536
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/moto_pandas.md",
+          "sha256": "263507a2c3c5931048b537e2fa8dff6c7897dae5609988a14dbc8bb52db0bb6e",
+          "bytes": 5289
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/root_progress_review.md",
+          "sha256": "9f4f49468831c3e015b41437d6afd658b2041314e77e0f14571f4ff065618c04",
+          "bytes": 14223
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/getmoto__moto-5406/result.json",
+          "sha256": "54b8874e1ab6e527c097c2acbad2b9474033b0bd8db4e1eec92dd7b14b2cdc6f",
+          "bytes": 65693
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "getmoto__moto-6114",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "03",
+      "pack_label": "地区、对象身份及默认值",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "按 B ARN 返回 A、数量仍为 1 的错误补丁得满分。",
+      "existing_control_status": "CPU18：noop0/gold1/按B ARN返回A错解1；正式35项只核长度。",
+      "repair_preparation": "把已有双集群请求B/返回Identifier和ARN断言并入版本；复用离线构建资产层。",
+      "recommended_matrix": "noop→0；gold→1；返回首对象→0；原名称查询和旧列表行为保留。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "不把creating/available状态差异整包判错；跨账号/服务ARN未定范围不混入。"
+      ],
+      "source_next_action": "新增对象 Identifier／ARN 身份断言，经 D6 版本入口复验。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/getmoto__moto-6114/result.md",
+          "sha256": "29b37eafdaad586de7ee619141bc50785e95394eb867f794199add47b86b47a8",
+          "bytes": 9692
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "sha256": "977b923d39171cdcff2de9ea4ce39c62d2a69bcfb8abb1e3ef1f9e8575d8c0a8",
+          "bytes": 310510
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch04/results/getmoto__moto-6114/card.md",
+          "sha256": "cd160ad0466ab57cea0a2560709f35f89c7f7bf1184ae8f1d602e8efa9c29378",
+          "bytes": 3887
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/moto_pandas.md",
+          "sha256": "263507a2c3c5931048b537e2fa8dff6c7897dae5609988a14dbc8bb52db0bb6e",
+          "bytes": 5289
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/root_progress_review.md",
+          "sha256": "9f4f49468831c3e015b41437d6afd658b2041314e77e0f14571f4ff065618c04",
+          "bytes": 14223
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/getmoto__moto-6114/result.json",
+          "sha256": "49e573e120279a531b4754a9a13564facf4140fd73a4304598ee272a3db286da",
+          "bytes": 70500
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "pydantic__pydantic-8793",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "03",
+      "pack_label": "地区、对象身份及默认值",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "强制 required 的补丁得 1，却破坏公开默认值 5 和两项旧测试。",
+      "existing_control_status": "CPU18：noop0/gold1/forced_required1；默认5和两项公开旧测试被破坏。",
+      "repair_preparation": "复用create_model+Annotated真实默认值/工厂控制；优先用现成default测试能否直接入P2P，否则将已跑最小断言独立版本化。",
+      "recommended_matrix": "noop→0；gold→1；forced_required→0（M().x或is_required）。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "保持内外Field默认优先级争议在范围外；不要求内部字典形状。"
+      ],
+      "source_next_action": "补已有默认值及旧行为断言，经正式版本入口复验。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/pydantic__pydantic-8793/result.md",
+          "sha256": "437e511589596c4abb5a7e04622ec94dc569629d4c5f2ed865e3206247e861aa",
+          "bytes": 4735
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/card.md",
+          "sha256": "462bb878b5ec71cd87ab739702b5d8eb869f82be1c989556d401ef5aea7c3fc8",
+          "bytes": 2554
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/screening_record.json",
+          "sha256": "7156b9a3c6a3969cc505b17af44ee1fa4f71f65eb49746308cedb7018b3513a9",
+          "bytes": 33827
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-8793/review.md",
+          "sha256": "44cdd9760a30ccc71348db70a8af7ddd7e92cfccbea090b67c4b34e0a69a6e49",
+          "bytes": 14853
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/root_progress_review.md",
+          "sha256": "9f4f49468831c3e015b41437d6afd658b2041314e77e0f14571f4ff065618c04",
+          "bytes": 14223
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/pydantic__pydantic-8793/result.json",
+          "sha256": "07a7a9d6f8fef92fb2c258e96e3658348a662ba4c6642354070d4657c0696974",
+          "bytes": 20079
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "Project-MONAI__MONAI-2446",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "04",
+      "pack_label": "内外行为及返回参数类型",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "NiBabel 开发缺口已修；只保外部数组顺序、破坏内部 shuffle／cache 的补丁得 1。",
+      "existing_control_status": "CPU18：noop0/gold1/只保护外部数组列表错解1；内部shuffle/cache顺序错误。",
+      "repair_preparation": "复用NiBabel修复和同输入内外顺序/缓存矩阵；使用确定随机种子或受控排列核实际行为。",
+      "recommended_matrix": "noop→0；gold→1；不打乱数组列表候选→0（内部shuffle/cache）。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "4GiB出现回收压力须保留；不把私有root行为等同actor权限。"
+      ],
+      "source_next_action": "将已有同输入内外行为对照接入版本化验收并复验。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/Project-MONAI__MONAI-2446/result.md",
+          "sha256": "14c6e3ae9a5a499e34cecfa9ec97a89bec8cd8145f9466848f03fe055efe4ab0",
+          "bytes": 8682
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-2446/card.md",
+          "sha256": "842962f54bbe1ffe9c90011e2413049d0c4104d102b673be6ee76240dd8886fe",
+          "bytes": 2578
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-2446/screening_record.json",
+          "sha256": "8212128ffdacb6c0288e554545e269fd8d59700eda4eb01094f7266bf71034e7",
+          "bytes": 36706
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-2446/review.md",
+          "sha256": "fe1132c2edd7fdc3aa603c7c905d6058b24fb1c1d59b773116a52c0a9fbb80e4",
+          "bytes": 8830
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/root_progress_review.md",
+          "sha256": "9f4f49468831c3e015b41437d6afd658b2041314e77e0f14571f4ff065618c04",
+          "bytes": 14223
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/Project-MONAI__MONAI-2446/result.json",
+          "sha256": "f52926061f7bfafd7595c9bb8fcfcc579a41ea18ce83cba77a15e6c906bc7458",
+          "bytes": 49812
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "Project-MONAI__MONAI-5932",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "04",
+      "pack_label": "内外行为及返回参数类型",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "反转顺序的错误修法得 1，另一长短引用顺序失败。",
+      "existing_control_status": "CPU18：noop0/gold1/反转引用顺序错解1；长名在前原本正常路径退化。",
+      "repair_preparation": "复用short_first/long_first同一表达式双顺序，核真实解析值；原解析18旧测已验。",
+      "recommended_matrix": "noop→0；gold→1；reverse_order→0（long_first）。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "别用只无异常替代真实数值；保留requirements初态。"
+      ],
+      "source_next_action": "将已有双顺序、真实解析值对照纳入验收并复验。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/Project-MONAI__MONAI-5932/result.md",
+          "sha256": "a51008d00c728d5c9c53c50570d4dca4f36e1e145dcca0e1a66ea79fe1b286de",
+          "bytes": 10086
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-5932/card.md",
+          "sha256": "941f5e8f3cab16c4158083a36779ac8d20d7f8cbda36cc8fc2b97e27d9d70138",
+          "bytes": 2375
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-5932/screening_record.json",
+          "sha256": "b578a619b7d4a7bf1967309e16b4d28d134c57424714e4f23620e17566299b36",
+          "bytes": 55405
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-5932/review.md",
+          "sha256": "6d580a435977cd750e891093ece7d8c3bba580ffa4194efcd2669726ab408edd",
+          "bytes": 9496
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/root_progress_review.md",
+          "sha256": "9f4f49468831c3e015b41437d6afd658b2041314e77e0f14571f4ff065618c04",
+          "bytes": 14223
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/Project-MONAI__MONAI-5932/result.json",
+          "sha256": "d521c73657c44a23689fdab24b2dc9f4855267d37fc0142cbcb8d829cf7773be",
+          "bytes": 61656
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "dask__dask-7656",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "04",
+      "pack_label": "内外行为及返回参数类型",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "错误候选改变传给 delayed 函数的 dataclass 参数类型仍得 1；题面自带修法提示。",
+      "existing_control_status": "CPU18：noop0/gold1；opaque错解0，另一候选1但传给delayed函数的dataclass类型改变。",
+      "repair_preparation": "复用现成类型和字段值诊断；加入被调用函数实际收到的参数类型及值，而非只验最终字符串。",
+      "recommended_matrix": "noop→0；gold→1；类型退化→0；已被拒opaque不必无变化重跑。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "准备曾300秒超时，采用已验setup900；题面修法提示如实披露。"
+      ],
+      "source_next_action": "把已有类型及字段值行为断言接入正式验收，报告提示程度。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/dask__dask-7656/result.md",
+          "sha256": "a85b9efca648533d5edf2fc00523575cb3fd3e5011e3c444a1f6402afbcead30",
+          "bytes": 8420
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7656/card.md",
+          "sha256": "d418124acf8c07c1b8d979206d4cb4b8f32df25eaaa97089aed5e87356b60a32",
+          "bytes": 2383
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7656/screening_record.json",
+          "sha256": "e0e9d1f513bbb069e16d601519b935829781b1190a48ebdcd0f61aedb67754c3",
+          "bytes": 71213
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7656/review.md",
+          "sha256": "0c6ada66a26b1c828d0cbcf5a4877f3bfd0f1df494dc843b748251d88cdb8489",
+          "bytes": 10632
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/root_progress_review.md",
+          "sha256": "9f4f49468831c3e015b41437d6afd658b2041314e77e0f14571f4ff065618c04",
+          "bytes": 14223
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/dask__dask-7656/result.json",
+          "sha256": "60083ccbbbef0ee1ba6fe399400ab0d8dba001d7ca6fadec7f51a2b8b44d54c6",
+          "bytes": 50002
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "Project-MONAI__MONAI-4583",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "05",
+      "pack_label": "图像标签及真实返回像素",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "只修 2D 的补丁得 1，公开稀疏 3D 标签仍错误；CPU 范围已固定。",
+      "existing_control_status": "CPU18：noop0/gold1/2D-only1；稀疏3D标签被误算背景。",
+      "repair_preparation": "复用2D/3D、numpy/torch、真实标签及dtype矩阵，固定CPU身份；把3D护栏入正式引用。",
+      "recommended_matrix": "noop→0；gold→1；2D-only→0（稀疏3D标签）。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "CPU校准不声称CUDA已验；尊重dtype/device已有条件。"
+      ],
+      "source_next_action": "纳入已跑的 2D／3D 标签及 dtype 断言，保留 CPU／CUDA 身份条件。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/Project-MONAI__MONAI-4583/result.md",
+          "sha256": "0b97962796a8dbd304cd07a20ad8d59cc7a62ed4c50cda64459c93c8e0ef438c",
+          "bytes": 6111
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-4583/card.md",
+          "sha256": "0e3fe65854f953afe509b089b4f5a0e94c755eefe50fa397824ffaf84fcc0b10",
+          "bytes": 1892
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-4583/screening_record.json",
+          "sha256": "5634b51d0959dfe8e4bd26c58b86fa608c03c52e9ab6fb9b19dff4c570338c70",
+          "bytes": 43631
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-4583/review.md",
+          "sha256": "57304ad969211a62cc94911c8947e17065158f6e5a84b468b0fa5cadf4958a7f",
+          "bytes": 7025
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/root_progress_review.md",
+          "sha256": "9f4f49468831c3e015b41437d6afd658b2041314e77e0f14571f4ff065618c04",
+          "bytes": 14223
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/Project-MONAI__MONAI-4583/result.json",
+          "sha256": "c8430e56af5127afe804bfafc8d8eb0bdb9bf2f5de3c4f78b88e89f464953840",
+          "bytes": 30694
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "Project-MONAI__MONAI-6975",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "05",
+      "pack_label": "图像标签及真实返回像素",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "退化补丁正确打印 lazy／resample 信息却丢掉返回图像，仍得 1。",
+      "existing_control_status": "CPU18新正式0/1/1；退化日志正确但丢弃返回图像；旧setup900超时另列。",
+      "repair_preparation": "复用direct/Dataset×True/False/None六行矩阵，核实际像素和有效lazy语义，不约束唯一resample调用次数。",
+      "recommended_matrix": "noop→0；gold→1；丢弃返回值候选→0。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "沿用已验setup1800版本，测试预算不混改；4GiB压力与并发变化记录。"
+      ],
+      "source_next_action": "按已跑 direct／Dataset 矩阵核实际像素并修验收；沿用验证过的准备预算。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/Project-MONAI__MONAI-6975/result.md",
+          "sha256": "98f3fbce5931b8c45b3ba3323ccb2088d1bed4f26e649bbced3828d9131e93fe",
+          "bytes": 8278
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-6975/card.md",
+          "sha256": "8751ec4a97b76f62f6656f51f603df1a261d56512bc6f2162bc2ea85dd966c43",
+          "bytes": 2596
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-6975/screening_record.json",
+          "sha256": "5350c5ef0811a185b098e08f9df4aa9c5de5cedd77f3c66dc138c808972f41a9",
+          "bytes": 56005
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-6975/review.md",
+          "sha256": "5df98374f4fee26f61980ae926c9474709ccb40d9496c11a0493bab63155b72c",
+          "bytes": 11746
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/root_progress_review.md",
+          "sha256": "9f4f49468831c3e015b41437d6afd658b2041314e77e0f14571f4ff065618c04",
+          "bytes": 14223
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/Project-MONAI__MONAI-6975/result.json",
+          "sha256": "d9d50bee931574d257d1175129869f27e00403921c610b516436e85bef2d1c1d",
+          "bytes": 39314
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "conan-io__conan-11594",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "06",
+      "pack_label": "真实构建与双 profile",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "Ninja 已补；Release 变 Debug 的错误补丁仍得 1。",
+      "existing_control_status": "CPU18：补Ninja后actor可真实配置；noop0/gold1/丢配置1，实际Debug而非Release。",
+      "repair_preparation": "复用Ninja1.10.2.4离线wheel、未改CMake3.22.1及真实CTest marker；核构建配置与marker内容。",
+      "recommended_matrix": "noop→0；gold→1；drop_configuration→0（Release未执行）。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "需要真实构建资产与双Ninja节点绑定；只命令字符串不够。"
+      ],
+      "source_next_action": "补真实构建配置及执行 marker 验收，避免只核命令字符串。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/conan-io__conan-11594/result.md",
+          "sha256": "5a0c11483bd929615006c6dcfe4fec1d384c173e818442a5ee478797ef88fb84",
+          "bytes": 10940
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-11594/card.md",
+          "sha256": "509e340cb3a46151f23e403c389836e134cfac58de43cadd77648df2900c4f07",
+          "bytes": 2037
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-11594/screening_record.json",
+          "sha256": "5f183738cdd9f1368f36e9b8e48cc17f83117d68a1f68494dc4997d49ce3d0f4",
+          "bytes": 26086
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-11594/review.md",
+          "sha256": "71c4cc8d83db2a1849df1bd48e8def2ade1f4cfa734f51206cc73b0ad54c5ce8",
+          "bytes": 7176
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/root_progress_review.md",
+          "sha256": "9f4f49468831c3e015b41437d6afd658b2041314e77e0f14571f4ff065618c04",
+          "bytes": 14223
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/conan-io__conan-11594/result.json",
+          "sha256": "dd69bcab3f2aec563c5d391652144e0eb54d12b502f678d3a681ececb12ab925",
+          "bytes": 72085
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "conan-io__conan-13230",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "06",
+      "pack_label": "真实构建与双 profile",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "Android-only 修法得 1，公开 Linux host 路径仍生成错误 xcrun flags。",
+      "existing_control_status": "CPU18：noop0/gold1/Android-only1，公开Linux host仍生错误Apple flags。",
+      "repair_preparation": "复用Macos build/Linux host双profile的真实conan CLI输出；核精确flags并保留有意raise终止。",
+      "recommended_matrix": "noop→0；gold→1；Android-only→0（Linux flags）；原Android参考保留。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "无需无关SDK/交叉编译；CLI退出1按目标raise解释，不当环境失败。"
+      ],
+      "source_next_action": "用真实双 profile 的 Linux flags 对照补验收，不安装无关 SDK。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/conan-io__conan-13230/result.md",
+          "sha256": "58abb8837ea9e4a0c32eec8543f1c95b96f15447984da46033c01d79f4b391bf",
+          "bytes": 7289
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-13230/card.md",
+          "sha256": "aa8dd96db6ced0074cb64ad15e1cc68651c06a09c8bf6b5a2d46e22f022a0066",
+          "bytes": 2026
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-13230/screening_record.json",
+          "sha256": "8b238a8e34e76c83f7fa99f2a1e0359f807ceb79f883556e36b904edb8c8a27b",
+          "bytes": 24276
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-13230/review.md",
+          "sha256": "c036f69469895f2a291688c9e7380ff23168481eb645b6fa5a0f1fb74eaa72e6",
+          "bytes": 7828
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/root_progress_review.md",
+          "sha256": "9f4f49468831c3e015b41437d6afd658b2041314e77e0f14571f4ff065618c04",
+          "bytes": 14223
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/conan-io__conan-13230/result.json",
+          "sha256": "7073bad7c2c1fa8118ac4e08b86986186c24e8cb9e51908e87e8a17275847c9f",
+          "bytes": 28286
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "pydantic__pydantic-5662",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "07",
+      "pack_label": "非示例相等行为",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "ANY-only 修法得 1，一般 matcher 委托仍错误。",
+      "existing_control_status": "CPU18：noop0/gold1/all_nonmodels_equal0/any_only1，普通matcher未收到委托。",
+      "repair_preparation": "复用普通true/false/NotImplemented matcher行为，保留dict/object及7项旧比较护栏。",
+      "recommended_matrix": "noop→0；gold→1；any_only→0；all_nonmodels_equal→0。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "不以精确内部调用次数定义正确性；setup900版本已验。"
+      ],
+      "source_next_action": "将已验证的一般 matcher 与 dict／object 控制接入验收。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/pydantic__pydantic-5662/result.md",
+          "sha256": "25e5966bea71e339d93ddb4ef6a7f225d8d6fb29236b450f3fae1f1ac27ba9dc",
+          "bytes": 5187
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5662/card.md",
+          "sha256": "fcaa88c02d8af79e5ea51cec691fa9ffc7a11cf595130ca0340471bfda1dd40f",
+          "bytes": 2290
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5662/screening_record.json",
+          "sha256": "d9561abd73ed15092a596b9da232bcd2bd6a980db8c44887ae80728d5c68be00",
+          "bytes": 35940
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-5662/review.md",
+          "sha256": "c17569ab5f2547f58abd01f544dce2f96edcf60d74df383b2bf41212217cb4cd",
+          "bytes": 27694
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/root_progress_review.md",
+          "sha256": "9f4f49468831c3e015b41437d6afd658b2041314e77e0f14571f4ff065618c04",
+          "bytes": 14223
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/pydantic__pydantic-5662/result.json",
+          "sha256": "d62ee71f8efe1945db3fb2d0229120cf6f01bbe2a548621aced3e94ea3efb413",
+          "bytes": 2350
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "pydantic__pydantic-6283",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "07",
+      "pack_label": "非示例相等行为",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "验证式构造退化已被原 P2P 拒绝，但目标相等性仍只直接验示例；非 42 控制已跑。",
+      "existing_control_status": "CPU18：noop0/gold1/validate_construct0；非42 TextRoot补充base失败、gold与退化相等。",
+      "repair_preparation": "把已验TextRoot另一合法值的相等断言入版本，保留原test_construct/test_construct_nested无验证护栏。",
+      "recommended_matrix": "noop→0；gold→1；validate_construct仍0；可用示例特判候选校准新增断言（尚未执行）。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "不能因旧退化已拒绝就免补核心非示例；不要求内部__dict__精确结构。"
+      ],
+      "source_next_action": "保留不验证构造护栏，补已验证的非示例相等性及必要私有字段组合。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/pydantic__pydantic-6283/result.md",
+          "sha256": "1a11a159a0f5d83e14b8c962212d0f1787573ca0200da066e87fd90e47298cc0",
+          "bytes": 7310
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-6283/card.md",
+          "sha256": "45c6fed4f195519d8678b83efb03fb58454ed05833b2dbc0f9238c728784c06c",
+          "bytes": 2519
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-6283/screening_record.json",
+          "sha256": "d64933b6421ab8789eea93f9490d651d3061ba7a603efc4bff2af01c76cd0082",
+          "bytes": 42098
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/pydantic__pydantic-6283/review.md",
+          "sha256": "ec37db32c3673f0e14b43d5d3d4bc94e37a859a16ff5747d745439e1ab813826",
+          "bytes": 8030
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/reviews/root_progress_review.md",
+          "sha256": "9f4f49468831c3e015b41437d6afd658b2041314e77e0f14571f4ff065618c04",
+          "bytes": 14223
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/pydantic__pydantic-6283/result.json",
+          "sha256": "c23ffc514e1ef0901478d44cfab78eb7872358ef136d167ae456d0ff32d6bf8c",
+          "bytes": 3490
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "iterative__dvc-5839",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "08",
+      "pack_label": "已有公开行为的核心缺口",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "开发依赖已修；模型失败已确认为舍入语义过度修改，没有已证评分假阳性。",
+      "existing_control_status": "默认/4/8真实CLI已有行为证据及10个成功候选；硬编码8未评分。",
+      "repair_preparation": "复用pathspec0.8.1和固定YAML，直接核输出小数位数/数值，维持默认5；准备硬编码8窄候选。",
+      "recommended_matrix": "noop→0；gold/真实成功候选→1；硬编码8→0预期未实测。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "标量float旧不舍入不当新缺陷；不改为有效数字。"
+      ],
+      "source_next_action": "把已跑的默认／4／8 CLI 实际数值断言纳入验收；核 gold、真实成功候选与硬编码8候选。硬编码候选得分仍未实测，不预填。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "sha256": "977b923d39171cdcff2de9ea4ce39c62d2a69bcfb8abb1e3ef1f9e8575d8c0a8",
+          "bytes": 310510
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/results/iterative__dvc-5839/card.md",
+          "sha256": "c8c138f950236f9d9d2d5448254be6e46f328c95129f0a116608ec2ba0002cad",
+          "bytes": 2359
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/dvc_conan_dask.md",
+          "sha256": "a776a5775da0f411e6724c10adfbf47b63f246fbd28c86725600f76a7891039d",
+          "bytes": 5430
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "iterative__dvc-6954",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "08",
+      "pack_label": "已有公开行为的核心缺口",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "pygit2 已补；六条有效模型尝试通过公开数值与锁文件检查，另一次为 infra。",
+      "existing_control_status": "公开负int/float/nested、lock更新已验；int-only退化未评分。",
+      "repair_preparation": "复用pygit2 1.14.1，负float及容器负值用parse→run/repro→lock实际输出验证，新增引用避免旧参数空白合键。",
+      "recommended_matrix": "noop→0；gold/成功候选→1；int-only→0预期未实测。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "非法调用/算术表达式不扩题；旧坏行gold shell引号错误不能当DVC缺陷。"
+      ],
+      "source_next_action": "加入已验证的负 float／容器负值及必要 lock 行为验收，复验 gold 和 int-only 候选；保留非法表达式不扩题的决定。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "sha256": "977b923d39171cdcff2de9ea4ce39c62d2a69bcfb8abb1e3ef1f9e8575d8c0a8",
+          "bytes": 310510
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/iterative__dvc-6954/card.md",
+          "sha256": "c6ccf2aca6efd99bafde4b03a907ad86c7fe987af50f5b5ebca30b2e300e3c1c",
+          "bytes": 2340
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/dvc_conan_dask.md",
+          "sha256": "a776a5775da0f411e6724c10adfbf47b63f246fbd28c86725600f76a7891039d",
+          "bytes": 5430
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "python__mypy-10174",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "08",
+      "pack_label": "已有公开行为的核心缺口",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "公开开发验证通过；过宽关闭比较检查只是尚未运行的疑点。",
+      "existing_control_status": "正式actor原例复现/32旧测通过；公开同开关负例缺正式保护，错解得分未实测。",
+      "repair_preparation": "从已有公开strict-equality用例选同no-strict-optional条件的不重叠成员检查，或复用已提1 in tuple[str]行为；固定派生安装与dirty初态。",
+      "recommended_matrix": "noop→0；gold→1且真不重叠报警；关闭全部比较候选→0预期。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "不要把未执行错解写误奖；切换strict-optional须清除相反inline flags。"
+      ],
+      "source_next_action": "补同开关下真实不重叠比较的公开负例，验证 gold 保留诊断、关闭全部比较的候选被拒；不把尚未跑的错误候选写成已误奖。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "sha256": "977b923d39171cdcff2de9ea4ce39c62d2a69bcfb8abb1e3ef1f9e8575d8c0a8",
+          "bytes": 310510
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-10174/card.md",
+          "sha256": "c51c2fc6252dd740a56f2c8397941d3b07fcc13a5e535a384dfa858f5acd5e6e",
+          "bytes": 3482
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/mypy_pydantic.md",
+          "sha256": "51aaee5984baa2473c010682f30577f7cd698f8abc60faceb82a66be4c0ff03c",
+          "bytes": 4800
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "getmoto__moto-5960",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "09",
+      "pack_label": "完整投影与标签归属",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "GSI KEYS_ONLY 核心断言缺失；参数节点合键已见，尚未造成当前对照错分。",
+      "existing_control_status": "GSI INCLUDE/KEYS_ONLY公开行为已有base/gold；KEYS_ONLY评分缺失，错解未评分；158执行/157解析有合键。",
+      "repair_preparation": "加入两种GSI scan全部项目字段集合/数量和索引投影后原表保持；同时核引用全节点身份。",
+      "recommended_matrix": "noop→0；gold→1；漏KEYS_ONLY→0预期；只复用一份目的明确错解。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "LSI保持原参考；额外范围争议不扩大；先修已确认节点身份。"
+      ],
+      "source_next_action": "补 INCLUDE／KEYS_ONLY 的字段集合验收，核引用节点身份，运行 gold 与漏修 KEYS_ONLY 候选后再进入普通探针。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "sha256": "977b923d39171cdcff2de9ea4ce39c62d2a69bcfb8abb1e3ef1f9e8575d8c0a8",
+          "bytes": 310510
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-5960/card.md",
+          "sha256": "8a961031155fd8a8abb579f34092ca6153830961292cdf4260fe87f972f90f49",
+          "bytes": 3165
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/moto_pandas.md",
+          "sha256": "263507a2c3c5931048b537e2fa8dff6c7897dae5609988a14dbc8bb52db0bb6e",
+          "bytes": 5289
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "getmoto__moto-6408",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "09",
+      "pack_label": "完整投影与标签归属",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "公开开发条件可用；首项断言未完整约束 tag 归属，尚无错误候选得分证据。",
+      "existing_control_status": "原actor题面失败，29旧测过；gold修两已有镜像迁移；首项断言不保护完整tag归属。",
+      "repair_preparation": "用两已有manifest核全部标签集合、唯一归属和来源其它tag；准备只排序、误删其它tag候选。",
+      "recommended_matrix": "noop→0；gold→1；只排序/全删来源→0预期。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "新manifest目的邻接旧缺陷另列范围，不能静默扩入本包。"
+      ],
+      "source_next_action": "补现有两镜像完整标签集合与对象归属断言，核正确解、只改返回排序和误删其它标签的候选；新目的镜像的邻接旧缺陷另定范围。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "sha256": "977b923d39171cdcff2de9ea4ce39c62d2a69bcfb8abb1e3ef1f9e8575d8c0a8",
+          "bytes": 310510
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/getmoto__moto-6408/card.md",
+          "sha256": "5795800e2d7290b55773fd644980e4771d86ff713008f36366c0b7fbc4a3367d",
+          "bytes": 3056
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/moto_pandas.md",
+          "sha256": "263507a2c3c5931048b537e2fa8dff6c7897dae5609988a14dbc8bb52db0bb6e",
+          "bytes": 5289
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "Project-MONAI__MONAI-3715",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "10",
+      "pack_label": "训练模式与完整配置键",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "公开 train 目标没有决定性验收，当前主要覆盖 eval。",
+      "existing_control_status": "公开train核心目标缺验收；旧两参考只保护eval/空构造；gold静态合理。",
+      "repair_preparation": "先备CPU合成数据和Ignite，定义forward时training/梯度及with退出恢复断言，保留eval/枚举。",
+      "recommended_matrix": "noop→0；gold须先验正对照；eval-only或强制eval→0预期。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "actor与可信train运行正对照仍待；未通过不转第1类，不要求完整GPU训练。"
+      ],
+      "source_next_action": "补 forward 时 training／梯度及退出恢复的行为断言；核 actor 后验正确与退化候选。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-3715/card.md",
+          "sha256": "173624ebcbeb67ce3533718d01aec98ce0a9e3430c08e2448cc222ccf5767796",
+          "bytes": 2445
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-3715/screening_record.json",
+          "sha256": "7c1b557ec06926649426c0e5350739dbbdf159718d870634cd4e57adbf2e0244",
+          "bytes": 34119
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-3715/review.md",
+          "sha256": "d7ef243690cab4685aa65de5b487c72a40fa53f548316be4b552a71e524b7a81",
+          "bytes": 8742
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "conan-io__conan-12397",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "10",
+      "pack_label": "训练模式与完整配置键",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "cpp 键匹配不完整、Linux native Clang 路径缺测，公开目标明确。",
+      "existing_control_status": "cpp_link_args子串可匹配objcpp_link_args；Linux native缺测，只有静态候选。",
+      "repair_preparation": "原Apple与公开Linux clang/libc++配置按完整键读取；复用公开生成helper，不安装无关完整编译器。",
+      "recommended_matrix": "noop→0；gold先验证→1；objcpp-only及Apple-only→0预期。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "实际actor配置生成待验；顺序接受性只在相关差异发生时调查。"
+      ],
+      "source_next_action": "按完整键名检查 Apple／Linux 生成结果，验证只修 objcpp 的错解被拒。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-12397/card.md",
+          "sha256": "10e6f8e01f3a969cf082511fac3445f1c885a5ee9a05a358906fb3f2e5d16b26",
+          "bytes": 2380
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-12397/screening_record.json",
+          "sha256": "c032e93dd5bb90af5d737222fe340b76a3df251f27a5a999208c74387ac3287f",
+          "bytes": 52154
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/conan-io__conan-12397/review.md",
+          "sha256": "33eb86f830db6a7581a2c139f0cccb047f9ad89509e95b5ade4ed47ee5005ce0",
+          "bytes": 12098
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "iterative__dvc-4166",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "11",
+      "pack_label": "节点身份及文件目录成对控制",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "pathspec 与 networkx 开发修订已验；需要固定与 grader 一致的版本及初态。",
+      "existing_control_status": "pathspec/networkx actor已修；两参数节点合键，文件/目录成对判据仍不足。",
+      "repair_preparation": "固定pathspec0.8.1/networkx2.3兼容配方及setup.py初态；绑定完整节点，构造混合状态和同名普通文件/目录。",
+      "recommended_matrix": "旧gold→1；noop→0；只裁尾/候选应被文件目录护栏拒；混合PASS/FAIL不可覆盖。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "公共parser/绑定消费者由D6负责人核；不回溯修改旧分数。"
+      ],
+      "source_next_action": "固定已验 pathspec/networkx 配方，核当前材料的节点身份；消除合键并补同名文件／目录对照，复验 gold 和只裁尾斜杠的部分修法。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "sha256": "977b923d39171cdcff2de9ea4ce39c62d2a69bcfb8abb1e3ef1f9e8575d8c0a8",
+          "bytes": 310510
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/iterative__dvc-4166/card.md",
+          "sha256": "60607bf5a8249e3d47829c8d40e863d418e60f735f2bfca56231643600e7837b",
+          "bytes": 2922
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/dvc_conan_dask.md",
+          "sha256": "a776a5775da0f411e6724c10adfbf47b63f246fbd28c86725600f76a7891039d",
+          "bytes": 5430
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "pandas-dev__pandas-48106",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "11",
+      "pack_label": "节点身份及文件目录成对控制",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "安装及三组 Period 绑定已修；两组 tz 别名仍合键，当前成员均通过。",
+      "existing_control_status": "pandas_meta_v3及3组Period绑定已验，剩两tz别名仍各合并2/4节点，六节点均PASS。",
+      "repair_preparation": "复用现行安装/参考版本；列全六tz节点，补完整身份绑定及混合状态/缺席回放，保留3组Period。",
+      "recommended_matrix": "noop0/gold1原事实保留；新绑定gold1；混合失败/缺席必须如实拒绝，正常六PASS接受。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "尚无候选错分实测；合成摘要控制不冒作真实候选；重编译源码生效检查。"
+      ],
+      "source_next_action": "核当前版本两组 tz 引用绑定，补独立身份／混合状态对照并完成版本验收；不将历史0/1追溯改分。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "sha256": "977b923d39171cdcff2de9ea4ce39c62d2a69bcfb8abb1e3ef1f9e8575d8c0a8",
+          "bytes": 310510
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/pandas-dev__pandas-48106/card.md",
+          "sha256": "014af74e0bd19001a661e6eab57a75ee5d34d246dd2e0491310d531f7d4dbc1d",
+          "bytes": 3071
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/moto_pandas.md",
+          "sha256": "263507a2c3c5931048b537e2fa8dff6c7897dae5609988a14dbc8bb52db0bb6e",
+          "bytes": 5289
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "python__mypy-15184",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "12",
+      "pack_label": "公开复现与合理解接受性",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "题面原例在 base 上已成功；公开替代复现可用，旧决定保留该限制，现按普通探针标准先修说明。",
+      "existing_control_status": "原SupportsIndex题面例base成功；公开a.C/b.C同名类复现已验且gold修。",
+      "repair_preparation": "中性改公开复现，保留限定名目标；准备新的公开读者，不给其gold/隐藏测试；核assert_type正例及失败文案。",
+      "recommended_matrix": "新公开例base失败/gold通过；无歧义短名不退化；旧错误候选按新复现核。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "公开材料变更需新版本/干净尝试；旧模型行为不能直接当新题面成绩。"
+      ],
+      "source_next_action": "以有公开依据且已验证的同名类例中性修订复现说明，保持限定名目标，补新公开读者及正确／错误行为核对。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "sha256": "977b923d39171cdcff2de9ea4ce39c62d2a69bcfb8abb1e3ef1f9e8575d8c0a8",
+          "bytes": 310510
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/python__mypy-15184/card.md",
+          "sha256": "1e72fa48031a33f461c517774490be262c3a597ca101aa59809b1db37689ae76",
+          "bytes": 2972
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/mypy_pydantic.md",
+          "sha256": "51aaee5984baa2473c010682f30577f7cd698f8abc60faceb82a66be4c0ff03c",
+          "bytes": 4800
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "pandas-dev__pandas-50319",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "12",
+      "pack_label": "公开复现与合理解接受性",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "题面明示返回 None 或猜出格式均可，测试仅接受格式；另有参数合键记录。",
+      "existing_control_status": "公开允许None或格式，唯一F2P只接受格式；None合理路线未运行；两参数别名合键。",
+      "repair_preparation": "构造局部ValueError→None候选并核原有格式及调用者回退；修oracle接受公开两路线，并补全节点绑定。",
+      "recommended_matrix": "noop→0；gold→1；保留其它行为的None解→1；恒None/吞掉其它错误→0预期。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "Cython重建/当前actor待验；None路线未证前不声称已解除误拒。"
+      ],
+      "source_next_action": "构造保留其它行为的 None 路线，按公开允许范围修验收并做正负对照；不再仅以 P5 暂挂。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/status.json",
+          "sha256": "977b923d39171cdcff2de9ea4ce39c62d2a69bcfb8abb1e3ef1f9e8575d8c0a8",
+          "bytes": 310510
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch03/results/pandas-dev__pandas-50319/card.md",
+          "sha256": "6bba1f65029754353b57d5b589071c727996e947bf0ccb1486e452bf32aa44d2",
+          "bytes": 2751
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/moto_pandas.md",
+          "sha256": "263507a2c3c5931048b537e2fa8dff6c7897dae5609988a14dbc8bb52db0bb6e",
+          "bytes": 5289
+        },
+        {
+          "path": "runs/swegym_quality_batch03_20260921_v1/public/pandas-dev__pandas-50319/user_prompt.txt",
+          "sha256": "5b01dfa063c7ec1ff8d742ad8c80c798802702452ab81b50f54315453d73ed50",
+          "bytes": 1072
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    },
+    {
+      "instance_id": "dask__dask-7138",
+      "source": "SWE",
+      "starting_category": 2,
+      "current_category": 2,
+      "state": "materials_planned_not_formally_repaired",
+      "pack": "12",
+      "pack_label": "公开复现与合理解接受性",
+      "owner": "root（执行与持续题主）；cat2_swe_first_materials（本材料）",
+      "known_gap": "gold 重命名参数会破坏旧 array= 调用；题面包含修法提示。",
+      "existing_control_status": "gold重命名形参使旧array=调用失效，静态确定；旧pytest兼容配方已验。",
+      "repair_preparation": "保留array形参而添加转换主体的兼容候选；加入array=调用和原标量/list/ndarray行为，固定pytest7.4.4配方。",
+      "recommended_matrix": "noop原目标失败；兼容候选→1；原gold→0（array=护栏）。",
+      "blockers": [
+        "D6正式材料版本/选择器/参考消费者由共用机制负责人核验；本目录不实现。",
+        "先验兼容正对照/actor；题面自带修法提示保留说明；不要求未承诺零拷贝。"
+      ],
+      "source_next_action": "保留旧关键字签名验证兼容实现，加入该回归控制并核 actor。",
+      "material_entries": [
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7138/card.md",
+          "sha256": "38bfa12c81c8e6c22e2b13eb8ccca4cef9350d5e657e9b9403a9c3dd6e3f1d2b",
+          "bytes": 2983
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7138/screening_record.json",
+          "sha256": "daee0892e8195d3518e9b0b9cf249afe0ae09bd6d54c988838f74dacb43c80d2",
+          "bytes": 50509
+        },
+        {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/dask__dask-7138/review.md",
+          "sha256": "2fdcba3a700cc66de393e308c83c3c038be9e4a3ab0807d0c18844790c2d6640",
+          "bytes": 12976
+        }
+      ],
+      "new_owner_decision_required": false,
+      "ordinary_probe_release": "修订版本的相关开发操作、正确解通过、已知漏修被拒/误拒解除、逐节点/安装/源码/清理和独立复核齐全后逐题交接；当前仍第2类。"
+    }
+  ]
+}

@@ -1,0 +1,170 @@
+{
+  "schema_id": "conan.owner.model_analysis.v1",
+  "as_of": "2026-10-03T14:57:53.042440+00:00",
+  "request_id": "swe-conan14177-r11-briefv2-20261003-v1",
+  "job_id": "gpu1003-conan14177-qwen36-a1",
+  "model": "Qwen/Qwen3.6-35B-A3B",
+  "sample": 1,
+  "material_version": "conan14177-cloud-test-v2-regroup-v1",
+  "budget_version": "probe-wide-v1",
+  "raw_score": {
+    "reward": 1,
+    "f2p": {
+      "passed": 2,
+      "total": 2
+    },
+    "p2p": {
+      "passed": 11,
+      "total": 11
+    }
+  },
+  "semantic_verdict": "correct_opt_in_filename_logging_preserving_original_patch_selection_and_metadata",
+  "candidate_findings": [],
+  "task_material_findings": [],
+  "semantic_independent_review": {
+    "status": "completed_no_current_task_material_blocker",
+    "report": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_14177_qwen36_a1_semantic_review_20261003.md",
+      "sha256": "sha256:381e880517cdfdf23a07c2cdb13c76a1e1e366cfa49b19b5c9160e184ec34e5b"
+    },
+    "scope": "complete candidate, projection, current public semantics and exact references; no dynamic rerun; limitations in report"
+  },
+  "execution_independent_review": {
+    "status": "execution_evidence_verified_with_scope_limits",
+    "report": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_14177_qwen36_a1_execution_review_20261003.md",
+      "sha256": "sha256:0b0cd2666f19c72d3c72d4254311a3add3e19b77bbded128883f1dc29f7d2022"
+    },
+    "scope": "current closed execution/transport/full baseline/HTTP/exact references/cleanup; resource and weight limits retained"
+  },
+  "owner_analysis": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-14177/probe_qwen36_a1_analysis_20261003.md",
+    "sha256": "sha256:b4348da244d36c355b88a9c7756f6df5ecbac9a34eec5051a90ceaa9c4137af7"
+  },
+  "owner_readback": {
+    "path": "runs/category2_repair_20260929/conan_cpu_20261003/probe_analysis_14177_qwen36_a1_20261003_v1/owner_readback.json",
+    "sha256": "sha256:d084b3cd20ddde354f76ee191903cc1f50bd47e01f1f34a38b49157b5c492830"
+  },
+  "trajectory": {
+    "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-conan14177-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-conan14177-qwen36-a1/attempt/trajectory.jsonl",
+    "sha256": "a5ffe162cbdcb34b990f79947b16194701e5610c645ca06362d586c8e90a4da7",
+    "bytes": 187118
+  },
+  "complete_candidate": {
+    "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-conan14177-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-conan14177-qwen36-a1/attempt/candidate/conan-io__conan-14177.diff",
+    "sha256": "e56a787281b6ba1dbc58c716607fbbb940f5c82aca800a101ba338661d89772c",
+    "bytes": 1822
+  },
+  "frozen_patch": {
+    "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-conan14177-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-conan14177-qwen36-a1/attempt/frozen/frozen_patch.json",
+    "sha256": "99d86af6a0c2824df1c3455b9143d3f910210a9c19f2019704b8506f9c5570e7",
+    "bytes": 9002
+  },
+  "scoring_projection": {
+    "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-conan14177-qwen36-a1/queue_qwen_first10_v1/results/gpu1003-conan14177-qwen36-a1/grading/projection.json",
+    "sha256": "a74399c45f637d2dabbc52ea7e1a63037cee322f25ce1fde98df53aa030f7a3b",
+    "bytes": 336
+  },
+  "dimensions": {
+    "method": {
+      "heading": "方法",
+      "analysis": "行79一次生产Edit增加`verbose=False`和文档；在现有patch_file分支复制entry后，先保存原相对文件名，verbose时调用`conanfile.output.info('Applying: ...')`，再pop一次并按原export_sources_folder join，向原`patch()`传剩余metadata。没有第二次pop错误，也没有mutate原conan_data。\n\n版本筛选、无version时list行为、缺conandata／无patches／非法类型／非法entry、strip／fuzz／base_path、异常传播及patch_string支路未改。False仅不增加文件名日志，旧patch_type／description日志仍输出；不能说False为全程静默。用户要看输出文件名，不要求本轮显示机器全路径或改变真实补丁应用。"
+    },
+    "localization": {
+      "heading": "定位",
+      "analysis": "工具1搜索当前helper，工具2完整读生产，首次源码读取距第一模型请求 **1.880秒**；工具3读原13公开单测和mock设计，工具4确认files导出。行75明确实现可选verbose，四工具后行79编辑，第5模型响应完成上界 **10.679秒**。没有改前运行verbose失败复现；基于issue与明确签名扩展定位，生产改动一次保持到最终，无回退。"
+    },
+    "tools": {
+      "heading": "工具与纠错",
+      "analysis": "14工具为**Bash8、Read5、Edit1**。唯一显式错误行137：内联脚本造了patch_file路径但没实际文件，真实patch_ng.fromfile触发FileNotFoundError，没到后面的日志assert，也没应用第二补丁。这不是helper应吞异常的证据。\n\n模型随后按公开测试的mock方法替换patch_ng.fromfile/fromstring，MockPatchset.apply返回True，try/finally恢复patch_ng原函数。行155两文件日志及默认不增Applying检查通过；行173按指定version选两文件，另一版本文件不输出、type旧日志仍在，patch_string无Applying。未更改生产或删旧例迎合缺文件。mock不记录apply的实际路径／参数和文件变更，覆盖限日志与分支；公开旧单测及可信参考分别补参数与旧行为。"
+    },
+    "parallel": {
+      "heading": "并行",
+      "analysis": "15实际gateway／adapter请求、CC15回合，前14响应各一个工具，最后结束；无实际多工具批次或重叠证据。生产与公开测试读取后files导出可独立批量读取，本次串行。mock替换和try/finally恢复在各独立Python进程中，编辑／改后检查依赖前一步；重复pytest涉及同工作树，不能据无显式依赖推安全并发或并行加速。"
+    },
+    "verification": {
+      "heading": "验证",
+      "analysis": "| 轨迹行 | 实际结果及范围 |\n| --- | --- |\n| 119／191 | 公开files目录两次各61 collected／48 deselected／13P，为同组旧patch例重复运行，不算26独立例或61P |\n| 137 | 初次内联真实fromfile缺文件，脚本非零；未完成两日志assert或False检查 |\n| 155 | mock成功：两文件verbose日志，默认False不新增Applying；不验证实际文件补丁 |\n| 173 | mock成功：版本筛选两文件、排除另一版本、type旧日志仍输出、patch_string无文件名输出；不证明完整真实patch_string可解析 |\n| 209／223 | CLI显示Conan2.1.0-dev；直接原模块13P，与前两次同13节点，没有扩大独立覆盖 |\n| 可信grader | 保留13完整节点2F11P全P，verbose文件名顺序、False旧metadata及路径／参数／异常回归；patch_ng仍受控mock，非真实补丁文件应用 |\n\n最终“13 existing pass”与原输出相符，versioned／nonversioned及patch_string日志观察也确有mock原件。应明确mock底层，不称原issue两份真实补丁已应用；False句子按“无额外输出”理解，不能抹掉原metadata日志。本臂没有新增测试落盘，自测并非可信评分来源；原评分依赖固定云端测试消费。"
+    },
+    "efficiency": {
+      "heading": "效率",
+      "analysis": "求解 **36.810秒**，harness33.880秒；CC33.268／API30.250秒，残差3.018秒不是纯工具时间。15请求累计输入 **169,819**／输出 **5,028 tokens**，最大单输入17,520，gateway／adapter／CC核同。源码定位清晰，唯一错误通过完善mock而非改坏生产纠正；公开13例运行三次、生产全文重复Read无新行为范围，存在减少空间。\n\nGit15.298秒、可信初始化8.138秒等准备单列；评分94.183秒，reset16.072／prep0.277／test2.162，队列0。实际15请求max_tokens65536，CC32000只是元数据；196608上下文、240回合和3小时未触及，不证明极限容量。费用0.974795美元为CC估算，非GPU账单。"
+    },
+    "termination_and_stability": {
+      "heading": "结束与稳定性",
+      "analysis": "completed／success／end_turn、harness0，15HTTP均200，无stream error或截断／拒绝。完整退出、实际PID1成功journal、actor／grader清理及gateway revoked／drained／active0合读；not-found／默认0不能单独证明。有限资源间隔采样、权重未重hash及完整限额边界保留，不据短样本推出容量或全程峰值。\n\n两模型各首次一次均raw1；Qwen仅生产，Coder完整候选还有公开新增测试和demo，但实际保护投影与原13参考独立成立。不同runtime code7／code8及方法质量分别记录，不建立稳定成功率、模型排名、训练／留出资格；普通追加采样按覆盖优先暂缓。"
+    }
+  },
+  "metrics": {
+    "model_requests": 15,
+    "cc_num_turns_metadata": 15,
+    "tool_calls": 14,
+    "tool_counts": {
+      "Bash": 8,
+      "Read": 5,
+      "Edit": 1
+    },
+    "reported_tool_errors": 1,
+    "error_rows": [
+      137
+    ],
+    "cumulative_input_tokens": 169819,
+    "cumulative_output_tokens": 5028,
+    "largest_request_input_tokens": 17520,
+    "solve_seconds": 36.81,
+    "harness_exec_seconds": 33.88,
+    "cc_duration_seconds": 33.268,
+    "cc_api_duration_seconds": 30.25,
+    "cc_non_api_residual_seconds_not_pure_tool_time": 3.018,
+    "first_relevant_source_read_since_first_request_seconds": 1.8803017139434814,
+    "initial_correct_root_location_response_completion_since_first_request_seconds": 10.678602695465088,
+    "diagnosis_response_trajectory_row": 75,
+    "environment_preparation_stage_seconds": {
+      "image_ready": 0.021,
+      "network_and_container": 1.209,
+      "git_sanitize": 15.298,
+      "trusted_init": 8.138,
+      "baseline_census": 0.158,
+      "quiescence": 0.393
+    },
+    "grading_timing": {
+      "schema_id": "rh2.grading_timing_record.v1",
+      "record_id": "timing_d941d29e",
+      "trajectory_id": "gpu1003-conan14177-qwen36-a1",
+      "task_id": "swe_gym_lite::conan-io__conan-14177",
+      "image_pull_seconds": 0.0,
+      "env_reset_seconds": 16.072,
+      "prep_seconds": 0.277,
+      "test_seconds": 2.162,
+      "total_grading_seconds": 94.183,
+      "queue_wait_seconds": 0.0,
+      "container_peak_memory_mb": 328.594,
+      "queue_depth_at_enqueue": null,
+      "backpressure_triggered": false
+    },
+    "cc_cost_usd_builtin_estimate_not_compute_bill": 0.9747950000000001
+  },
+  "reference_states": {
+    "conans/test/unittests/tools/files/test_patches.py::test_apply_in_build_from_patch_in_source": "PASSED",
+    "conans/test/unittests/tools/files/test_patches.py::test_base_path": "PASSED",
+    "conans/test/unittests/tools/files/test_patches.py::test_multiple_no_version": "PASSED",
+    "conans/test/unittests/tools/files/test_patches.py::test_multiple_with_version": "PASSED",
+    "conans/test/unittests/tools/files/test_patches.py::test_single_apply_fail": "PASSED",
+    "conans/test/unittests/tools/files/test_patches.py::test_single_no_patchset": "PASSED",
+    "conans/test/unittests/tools/files/test_patches.py::test_single_patch_arguments": "PASSED",
+    "conans/test/unittests/tools/files/test_patches.py::test_single_patch_description": "PASSED",
+    "conans/test/unittests/tools/files/test_patches.py::test_single_patch_extra_fields": "PASSED",
+    "conans/test/unittests/tools/files/test_patches.py::test_single_patch_file": "PASSED",
+    "conans/test/unittests/tools/files/test_patches.py::test_single_patch_file_from_forced_build": "PASSED",
+    "conans/test/unittests/tools/files/test_patches.py::test_single_patch_string": "PASSED",
+    "conans/test/unittests/tools/files/test_patches.py::test_single_patch_type": "PASSED"
+  },
+  "candidate_repair_required_for_current_scope": false,
+  "task_material_changes_required": false,
+  "CPU_or_model_rerun_required": false,
+  "ordinary_additional_samples": "deferred_coverage_first",
+  "paired_request_closed": true,
+  "pending_models": [],
+  "owner_ACK_pending": false,
+  "training_eligibility": "not_established"
+}

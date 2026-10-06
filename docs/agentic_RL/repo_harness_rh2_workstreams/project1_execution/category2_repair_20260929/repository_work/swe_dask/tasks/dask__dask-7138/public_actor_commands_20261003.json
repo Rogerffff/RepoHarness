@@ -1,0 +1,30 @@
+[
+  {
+    "id": "identity_import",
+    "cmd": "id; pwd; git rev-parse HEAD; git status --porcelain; python - <<'PY'\nimport sys,numpy,dask,dask.array,pytest\nprint('PYTHON',sys.executable,sys.version)\nprint('DASK',dask.__file__,dask.__version__)\nprint('NUMPY',numpy.__version__,'PYTEST',pytest.__version__)\nassert dask.__file__.startswith('/testbed/')\nassert pytest.__version__=='7.4.4'\nPY",
+    "timeout_s": 60,
+    "expect": "zero",
+    "purpose": "公开源码、身份、解释器与已验证兼容配方"
+  },
+  {
+    "id": "issue_public_list",
+    "cmd": "python - <<'PY'\nimport numpy as np\nimport dask.array as da\nprint('NUMPY',np.ravel([0,0]))\nprint('DASK',da.ravel([0,0]))\nPY",
+    "timeout_s": 60,
+    "expect": "nonzero",
+    "purpose": "原公开题面例子，未修复的list输入应AttributeError，须读实际异常"
+  },
+  {
+    "id": "public_legacy_keyword",
+    "cmd": "python - <<'PY'\nimport numpy as np\nimport dask.array as da\narray=da.arange(8,chunks=4).reshape((2,4))\nresult=da.ravel(array=array)\nassert isinstance(result,da.Array)\nnp.testing.assert_equal(result.compute(),np.arange(8))\nprint('LEGACY_ARRAY_KEYWORD_PASS')\nPY",
+    "timeout_s": 60,
+    "expect": "zero",
+    "purpose": "公开base函数的原array=合法调用；不含新测试或gold"
+  },
+  {
+    "id": "public_routines_regression",
+    "cmd": "python -m pytest -p no:cacheprovider -n0 -rA --color=no dask/array/tests/test_routines.py",
+    "timeout_s": 900,
+    "expect": "zero",
+    "purpose": "base现有公开routines模块；按历史pytest7.4.4跑，无私有测试"
+  }
+]

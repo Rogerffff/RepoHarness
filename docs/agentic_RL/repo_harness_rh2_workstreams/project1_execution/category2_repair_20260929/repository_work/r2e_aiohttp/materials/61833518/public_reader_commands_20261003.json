@@ -1,0 +1,14 @@
+[
+  {
+    "id": "61833518_public_example",
+    "cmd": "python - <<'PY'\nimport zlib\nfrom unittest import mock\nfrom aiohttp import protocol\n\npayload = b'data'\ncompressor = zlib.compressobj(wbits=-zlib.MAX_WBITS)\ncompressed_data = compressor.compress(payload) + compressor.flush()\n\n# 检查传给 write() 的实际字节，而不是 mock.call 对象本身的真值。\ntransport = mock.Mock()\nmsg = protocol.Response(transport, 200)\nmsg.add_headers(('content-length', str(len(compressed_data))))\nmsg.add_chunking_filter(2)\nmsg.add_compression_filter('deflate')\nmsg.send_headers()\nmsg.write(payload)\nmsg.write_eof()\nchunks = [call.args[0] for call in transport.write.call_args_list]\nassert all(chunks), chunks\n\n# HTTP/1.1 chunked 路径：终止块应在末尾，解压后仍有完整载荷。\ntransport = mock.Mock()\nmsg = protocol.Response(transport, 200)\nmsg.add_compression_filter('deflate')\nmsg.send_headers()\nmsg.write(payload)\nmsg.write_eof()\nwire = b''.join(call.args[0] for call in transport.write.call_args_list)\nheaders, rest = wire.split(b'\\r\\n\\r\\n', 1)\nassert b'transfer-encoding: chunked' in headers.lower()\ndata = []\nwhile True:\n    line, separator, rest = rest.partition(b'\\r\\n')\n    assert separator, 'missing chunk size'\n    size = int(line, 16)\n    if size == 0:\n        assert rest == b'\\r\\n', 'data after the terminating chunk'\n        break\n    assert len(rest) >= size + 2 and rest[size:size + 2] == b'\\r\\n'\n    data.append(rest[:size])\n    rest = rest[size + 2:]\nassert zlib.decompress(b''.join(data), -zlib.MAX_WBITS) == payload\nPY",
+    "timeout_s": 60,
+    "expect": "未执行。公开 base 静态预期第一段 all(chunks) 暴露空 write 参数；失败会阻止第二段继续。修复后整段应退出 0、合法末尾零块之后无数据且 deflate 解压等于 payload。环境与 zlib 实际输出未知。"
+  },
+  {
+    "id": "61833518_public_regression",
+    "cmd": "python -m pytest -q tests/test_http_protocol.py tests/test_web_response.py",
+    "timeout_s": 120,
+    "expect": "未执行。公开 protocol/web_response 回归应通过，保留压缩字节、两种过滤器顺序、合法末尾零块与空 write 返回值；收集与依赖未知。"
+  }
+]

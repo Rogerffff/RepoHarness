@@ -1,0 +1,44 @@
+[
+ {
+  "id": "import_version",
+  "timeout_s": 60,
+  "expect": "zero",
+  "purpose": "导入与版本：确认 python 是 /testbed/.venv 的 3.7.9、numpy 从 /testbed/numpy 导入（工作树内已就地构建）、版本为 1.12.0.dev0+…，以及默认打印选项 threshold=1000、edgeitems=3、linewidth=75。修复前后输出应相同。",
+  "cmd": "PYTHONDONTWRITEBYTECODE=1 python -c \"import sys, numpy as np; print(sys.executable, sys.version.split()[0]); print(np.__version__, np.__file__); print(np.get_printoptions())\""
+ },
+ {
+  "id": "repro_issue_repr",
+  "timeout_s": 60,
+  "expect": "nonzero",
+  "purpose": "题面复现（经公开 API）：打印题面示例的 repr 并与题面 Expected 逐字比较（含模板结尾换行）。修复前（base）预计 data 段占 6 行：0、49 个 --、1950…1999，没有 ...，随后 AssertionError、退出码 1；修复后预计只打印三行 Expected 文本、退出码 0。",
+  "cmd": "PYTHONDONTWRITEBYTECODE=1 python -c \"import numpy as np; a = np.ma.arange(2000); a[1:50] = np.ma.masked; r = repr(a); print(r); exp = 'masked_array(data = [0 -- -- ..., 1997 1998 1999],\\n             mask = [False  True  True ..., False False False],\\n       fill_value = 999999)\\n'; assert r == exp, 'repr differs from the expected output in the issue'\""
+ },
+ {
+  "id": "diag_sizes",
+  "timeout_s": 60,
+  "expect": "any",
+  "purpose": "边界观察（只看输出，不作判定）：对 (2000,)、(500,)、(150,5)、(101,10)、(200,200) 五种形状的掩码数组，打印 str 是否含 ... 以及显示的元素个数（tokens，省略号记 1 个）。base 静态推导：ellipsis/tokens 依次为 False/100、False/100、False/500、False/1000、True/43。与 numpy 默认摘要规则一致的结果依次为 True/7、False/500、False/750、True/43、True/43；题面只要求第一行（(2000,) 变为 True/7），其余用于看候选修复覆盖到哪一层。",
+  "cmd": "PYTHONDONTWRITEBYTECODE=1 python -c \"import numpy as np; mk = lambda shp: np.ma.masked_array(np.arange(int(np.prod(shp))).reshape(shp), mask=(np.arange(int(np.prod(shp))).reshape(shp) % 7 == 1)); res = [(shp, str(mk(shp))) for shp in [(2000,), (500,), (150, 5), (101, 10), (200, 200)]]; [print(shp, 'size', int(np.prod(shp)), 'ellipsis', '...' in s, 'tokens', len(s.replace('[', ' ').replace(']', ' ').split())) for shp, s in res]\""
+ },
+ {
+  "id": "pytest_print_related",
+  "timeout_s": 300,
+  "expect": "zero",
+  "purpose": "相关公开测试（回归保护）：test_core.py 的 test_str_repr、test_fancy_printoptions、test_mvoid_print、test_mvoid_multidim_print，与 test_subclassing.py 的 test_subclass_repr、test_subclass_str，覆盖小数组 repr 模板、结构化 dtype、masked_print_option 自定义显示和子类 __str__。静态判断修复前后都应为 6 passed（其余 deselected）；不写 .pytest_cache。",
+  "cmd": "PYTHONDONTWRITEBYTECODE=1 python -m pytest -q -p no:cacheprovider numpy/ma/tests/test_core.py numpy/ma/tests/test_subclassing.py -k \"str_repr or print or subclass_repr or subclass_str\""
+ },
+ {
+  "id": "pytest_ma_core_full",
+  "timeout_s": 600,
+  "expect": "any",
+  "purpose": "单文件回归（只看输出）：跑完整 numpy/ma/tests/test_core.py，记录 passed/failed 数。Python 3.7 上跑 1.12 开发版可能存在与本题无关的既有失败，所以 expect=any；用于比较修复前后失败集合是否新增。",
+  "cmd": "PYTHONDONTWRITEBYTECODE=1 python -m pytest -q -p no:cacheprovider numpy/ma/tests/test_core.py"
+ },
+ {
+  "id": "diag_perf_large",
+  "timeout_s": 180,
+  "expect": "any",
+  "purpose": "性能观察（只看输出，不作判定）：对 10**7 元素、每 7 个掩 1 个的一维掩码数组计时 repr。base 只把首尾各 50 个转 object，预计很快、data 段显示 100 个元素且无 ...；修复后 data 段预计为 [-- 1 2 ..., -- 9999998 9999999]。若修复改为整体转 object，耗时和内存会明显上升（千万个 Python 对象，数百 MB 量级），题面没有性能验收标准，只供参考。",
+  "cmd": "PYTHONDONTWRITEBYTECODE=1 python -c \"import time, numpy as np; a = np.ma.arange(10**7); a[::7] = np.ma.masked; t = time.time(); r = repr(a); print('repr_seconds', round(time.time() - t, 3)); print(r)\""
+ }
+]

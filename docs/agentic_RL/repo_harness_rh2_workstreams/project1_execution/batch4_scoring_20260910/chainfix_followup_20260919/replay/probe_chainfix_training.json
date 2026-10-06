@@ -1,0 +1,1641 @@
+{
+  "method": "真实 pytest + 真实 python -I -S 内存 compile；真实 SWEGradingManager.grade；容器/资源读数为有界替身，无容器执行",
+  "old_r1_unrelated": {
+    "baseline": {
+      "returncode": 0,
+      "stdout": "..                                                                       [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_thing.py::test_feature\nPASSED tests/test_thing.py::test_stable\n2 passed in 0.01s\n"
+    },
+    "pytest": {
+      "returncode": 2,
+      "stdout": "\n==================================== ERRORS ====================================\n_____________________ ERROR collecting tests/test_thing.py _____________________\nImportError while importing test module '/testbed/tests/test_thing.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\n<USER_HOME>/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/importlib/__init__.py:90: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_thing.py:1: in <module>\n    from qualified_external_fixture import VALUE\nE   ModuleNotFoundError: No module named 'qualified_external_fixture'\n=========================== short test summary info ============================\nERROR tests/test_thing.py\n!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n1 error in 0.05s\n"
+    },
+    "grade": {
+      "verdict": {
+        "instance_id": "getmoto__moto-0001",
+        "apply_ok": true,
+        "resolution": "RESOLVED_NO",
+        "resolved": false,
+        "f2p_rate": 0.0,
+        "p2p_rate": 0.0,
+        "f2p_success": [],
+        "f2p_failure": [
+          "tests/test_thing.py::test_feature"
+        ],
+        "p2p_success": [],
+        "p2p_failure": [
+          "tests/test_thing.py::test_stable"
+        ],
+        "num_parsed_tests": 1,
+        "num_parsed_outside_segment": 0,
+        "reference_missing": [
+          "tests/test_thing.py::test_feature",
+          "tests/test_thing.py::test_stable"
+        ],
+        "reference_skipped": [],
+        "parser_source": "swegym_parsers@242429c1"
+      },
+      "source_fields": {
+        "outcome": "unresolved",
+        "failure_category": "tests_failed",
+        "reward": 0.0,
+        "f2p_pass_count": 0,
+        "f2p_total_count": 1,
+        "p2p_fail_count": 1,
+        "p2p_total_count": 1
+      },
+      "shape": {
+        "stage": "test_collection",
+        "rule": "pytest_error_collecting",
+        "evidence": [
+          "_____________________ ERROR collecting tests/test_thing.py _____________________",
+          "test_rc=2"
+        ]
+      },
+      "trigger": "reference_all_missing",
+      "report": {
+        "schema_id": "rh2.grading_report.v1",
+        "report_id": "rpt_grading_03b1e795",
+        "trajectory_id": "old_r1_unrelated",
+        "task_id": "rh2-fixture.tiny-0001",
+        "grader_name": "swebench_official_parser",
+        "grader_version": "swebench-4.1.0",
+        "outcome": "failed_to_grade",
+        "failure_category": "test_log_parse_failed",
+        "reward": null,
+        "reward_scale_version": "binary_v1",
+        "f2p_pass_count": null,
+        "f2p_total_count": null,
+        "p2p_fail_count": null,
+        "p2p_total_count": null,
+        "execution_failure_stage": null,
+        "execution_failure_evidence": [],
+        "grading_semantics": "swe_f2p_p2p",
+        "expected_match_count": null,
+        "expected_total_count": null,
+        "patch_hygiene": {
+          "cleaned_patch_digest": "sha256:4a849518fc2339fb9ce66b781386880277294acdffcdd28cca90bd729ad32fcf",
+          "digest_kind": "cleaned_diff_text",
+          "replayed_on_clean_checkout": true,
+          "test_files_modified": false,
+          "forbidden_path_touched": false,
+          "forbidden_paths": [],
+          "verdict": "clean"
+        },
+        "infra_failure_detail": "reference_all_missing:unattributed:no_syntax_error_at_candidate_path",
+        "eval_log_ref": {
+          "ref_id": "evallog_old_r1_unrelated_03b1e795",
+          "sha256": "sha256:b2d234a4a126a7df721e90a1bcec04c96e686079417fbdd4df7b70af6a459b82",
+          "byte_size": 1240
+        },
+        "timings": {
+          "schema_id": "rh2.grading_timing_record.v1",
+          "record_id": "timing_03b1e795",
+          "trajectory_id": "old_r1_unrelated",
+          "task_id": "rh2-fixture.tiny-0001",
+          "image_pull_seconds": 0.0,
+          "env_reset_seconds": 0.0,
+          "prep_seconds": 0.0,
+          "test_seconds": 0.0,
+          "total_grading_seconds": 0.002,
+          "queue_wait_seconds": 0.0,
+          "container_peak_memory_mb": 1.0,
+          "queue_depth_at_enqueue": null,
+          "backpressure_triggered": false
+        },
+        "graded_at_utc": "2026-09-19T07:19:21.296982Z"
+      },
+      "decision": {
+        "candidate_python_paths": [
+          "src/unused.py"
+        ],
+        "compile_probe": null,
+        "evidence": [],
+        "install_rc_baseline": 0,
+        "kind": "unattributed",
+        "missing": [
+          "no_syntax_error_at_candidate_path"
+        ],
+        "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+        "referenced_candidate_paths": [],
+        "resource": {
+          "container_oom_killed": false,
+          "oom_kill_events": 0,
+          "pids_events_max": 0,
+          "signal_exit": false,
+          "test_rc": 2
+        },
+        "rule": "pytest_error_collecting",
+        "stage": "test_collection",
+        "syntax_error_locations": {},
+        "trigger": "reference_all_missing"
+      },
+      "compile_runs": [],
+      "resource_reads": 1
+    }
+  },
+  "r1_path_in_argument_not_exception_location": {
+    "baseline": {
+      "returncode": 0,
+      "stdout": "..                                                                       [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_thing.py::test_feature\nPASSED tests/test_thing.py::test_stable\n2 passed in 0.01s\n"
+    },
+    "pytest": {
+      "returncode": 2,
+      "stdout": "\n==================================== ERRORS ====================================\n_____________________ ERROR collecting tests/test_thing.py _____________________\nImportError while importing test module '/testbed/tests/test_thing.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\n<USER_HOME>/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/importlib/__init__.py:90: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_thing.py:4: in <module>\n    VALUE = load_metadata(\"src/unused.py\")\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\ntests/test_thing.py:2: in load_metadata\n    from qualified_external_fixture import VALUE\nE   ModuleNotFoundError: No module named 'qualified_external_fixture'\n=========================== short test summary info ============================\nERROR tests/test_thing.py\n!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n1 error in 0.05s\n"
+    },
+    "bad": {
+      "verdict": {
+        "instance_id": "getmoto__moto-0001",
+        "apply_ok": true,
+        "resolution": "RESOLVED_NO",
+        "resolved": false,
+        "f2p_rate": 0.0,
+        "p2p_rate": 0.0,
+        "f2p_success": [],
+        "f2p_failure": [
+          "tests/test_thing.py::test_feature"
+        ],
+        "p2p_success": [],
+        "p2p_failure": [
+          "tests/test_thing.py::test_stable"
+        ],
+        "num_parsed_tests": 1,
+        "num_parsed_outside_segment": 0,
+        "reference_missing": [
+          "tests/test_thing.py::test_feature",
+          "tests/test_thing.py::test_stable"
+        ],
+        "reference_skipped": [],
+        "parser_source": "swegym_parsers@242429c1"
+      },
+      "source_fields": {
+        "outcome": "unresolved",
+        "failure_category": "tests_failed",
+        "reward": 0.0,
+        "f2p_pass_count": 0,
+        "f2p_total_count": 1,
+        "p2p_fail_count": 1,
+        "p2p_total_count": 1
+      },
+      "shape": {
+        "stage": "test_collection",
+        "rule": "pytest_error_collecting",
+        "evidence": [
+          "_____________________ ERROR collecting tests/test_thing.py _____________________",
+          "test_rc=2"
+        ]
+      },
+      "trigger": "reference_all_missing",
+      "report": {
+        "schema_id": "rh2.grading_report.v1",
+        "report_id": "rpt_grading_3cc38f89",
+        "trajectory_id": "r1_mentioned_bad",
+        "task_id": "rh2-fixture.tiny-0001",
+        "grader_name": "swebench_official_parser",
+        "grader_version": "swebench-4.1.0",
+        "outcome": "failed_to_grade",
+        "failure_category": "test_log_parse_failed",
+        "reward": null,
+        "reward_scale_version": "binary_v1",
+        "f2p_pass_count": null,
+        "f2p_total_count": null,
+        "p2p_fail_count": null,
+        "p2p_total_count": null,
+        "execution_failure_stage": null,
+        "execution_failure_evidence": [],
+        "grading_semantics": "swe_f2p_p2p",
+        "expected_match_count": null,
+        "expected_total_count": null,
+        "patch_hygiene": {
+          "cleaned_patch_digest": "sha256:4a849518fc2339fb9ce66b781386880277294acdffcdd28cca90bd729ad32fcf",
+          "digest_kind": "cleaned_diff_text",
+          "replayed_on_clean_checkout": true,
+          "test_files_modified": false,
+          "forbidden_path_touched": false,
+          "forbidden_paths": [],
+          "verdict": "clean"
+        },
+        "infra_failure_detail": "reference_all_missing:unattributed:no_syntax_error_at_candidate_path",
+        "eval_log_ref": {
+          "ref_id": "evallog_r1_mentioned_bad_3cc38f89",
+          "sha256": "sha256:b3b56598480a3cf83780d5a360fb67f5dcabd8102c179fae2f4c115d10601fa2",
+          "byte_size": 1366
+        },
+        "timings": {
+          "schema_id": "rh2.grading_timing_record.v1",
+          "record_id": "timing_3cc38f89",
+          "trajectory_id": "r1_mentioned_bad",
+          "task_id": "rh2-fixture.tiny-0001",
+          "image_pull_seconds": 0.0,
+          "env_reset_seconds": 0.0,
+          "prep_seconds": 0.0,
+          "test_seconds": 0.0,
+          "total_grading_seconds": 0.001,
+          "queue_wait_seconds": 0.0,
+          "container_peak_memory_mb": 1.0,
+          "queue_depth_at_enqueue": null,
+          "backpressure_triggered": false
+        },
+        "graded_at_utc": "2026-09-19T07:19:21.588201Z"
+      },
+      "decision": {
+        "candidate_python_paths": [
+          "src/unused.py"
+        ],
+        "compile_probe": null,
+        "evidence": [],
+        "install_rc_baseline": 0,
+        "kind": "unattributed",
+        "missing": [
+          "no_syntax_error_at_candidate_path"
+        ],
+        "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+        "referenced_candidate_paths": [],
+        "resource": {
+          "container_oom_killed": false,
+          "oom_kill_events": 0,
+          "pids_events_max": 0,
+          "signal_exit": false,
+          "test_rc": 2
+        },
+        "rule": "pytest_error_collecting",
+        "stage": "test_collection",
+        "syntax_error_locations": {},
+        "trigger": "reference_all_missing"
+      },
+      "compile_runs": [],
+      "resource_reads": 1
+    },
+    "clean_same_log": {
+      "verdict": {
+        "instance_id": "getmoto__moto-0001",
+        "apply_ok": true,
+        "resolution": "RESOLVED_NO",
+        "resolved": false,
+        "f2p_rate": 0.0,
+        "p2p_rate": 0.0,
+        "f2p_success": [],
+        "f2p_failure": [
+          "tests/test_thing.py::test_feature"
+        ],
+        "p2p_success": [],
+        "p2p_failure": [
+          "tests/test_thing.py::test_stable"
+        ],
+        "num_parsed_tests": 1,
+        "num_parsed_outside_segment": 0,
+        "reference_missing": [
+          "tests/test_thing.py::test_feature",
+          "tests/test_thing.py::test_stable"
+        ],
+        "reference_skipped": [],
+        "parser_source": "swegym_parsers@242429c1"
+      },
+      "source_fields": {
+        "outcome": "unresolved",
+        "failure_category": "tests_failed",
+        "reward": 0.0,
+        "f2p_pass_count": 0,
+        "f2p_total_count": 1,
+        "p2p_fail_count": 1,
+        "p2p_total_count": 1
+      },
+      "shape": {
+        "stage": "test_collection",
+        "rule": "pytest_error_collecting",
+        "evidence": [
+          "_____________________ ERROR collecting tests/test_thing.py _____________________",
+          "test_rc=2"
+        ]
+      },
+      "trigger": "reference_all_missing",
+      "report": {
+        "schema_id": "rh2.grading_report.v1",
+        "report_id": "rpt_grading_b7d18272",
+        "trajectory_id": "r1_mentioned_clean",
+        "task_id": "rh2-fixture.tiny-0001",
+        "grader_name": "swebench_official_parser",
+        "grader_version": "swebench-4.1.0",
+        "outcome": "failed_to_grade",
+        "failure_category": "test_log_parse_failed",
+        "reward": null,
+        "reward_scale_version": "binary_v1",
+        "f2p_pass_count": null,
+        "f2p_total_count": null,
+        "p2p_fail_count": null,
+        "p2p_total_count": null,
+        "execution_failure_stage": null,
+        "execution_failure_evidence": [],
+        "grading_semantics": "swe_f2p_p2p",
+        "expected_match_count": null,
+        "expected_total_count": null,
+        "patch_hygiene": {
+          "cleaned_patch_digest": "sha256:2ba71068cd47786facc7fd483316a15c463d465c0416dd76d587888dd38bdd82",
+          "digest_kind": "cleaned_diff_text",
+          "replayed_on_clean_checkout": true,
+          "test_files_modified": false,
+          "forbidden_path_touched": false,
+          "forbidden_paths": [],
+          "verdict": "clean"
+        },
+        "infra_failure_detail": "reference_all_missing:unattributed:no_syntax_error_at_candidate_path",
+        "eval_log_ref": {
+          "ref_id": "evallog_r1_mentioned_clean_b7d18272",
+          "sha256": "sha256:b3b56598480a3cf83780d5a360fb67f5dcabd8102c179fae2f4c115d10601fa2",
+          "byte_size": 1366
+        },
+        "timings": {
+          "schema_id": "rh2.grading_timing_record.v1",
+          "record_id": "timing_b7d18272",
+          "trajectory_id": "r1_mentioned_clean",
+          "task_id": "rh2-fixture.tiny-0001",
+          "image_pull_seconds": 0.0,
+          "env_reset_seconds": 0.0,
+          "prep_seconds": 0.0,
+          "test_seconds": 0.0,
+          "total_grading_seconds": 0.001,
+          "queue_wait_seconds": 0.0,
+          "container_peak_memory_mb": 1.0,
+          "queue_depth_at_enqueue": null,
+          "backpressure_triggered": false
+        },
+        "graded_at_utc": "2026-09-19T07:19:21.590518Z"
+      },
+      "decision": {
+        "candidate_python_paths": [
+          "src/unused.py"
+        ],
+        "compile_probe": null,
+        "evidence": [],
+        "install_rc_baseline": 0,
+        "kind": "unattributed",
+        "missing": [
+          "no_syntax_error_at_candidate_path"
+        ],
+        "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+        "referenced_candidate_paths": [],
+        "resource": {
+          "container_oom_killed": false,
+          "oom_kill_events": 0,
+          "pids_events_max": 0,
+          "signal_exit": false,
+          "test_rc": 2
+        },
+        "rule": "pytest_error_collecting",
+        "stage": "test_collection",
+        "syntax_error_locations": {},
+        "trigger": "reference_all_missing"
+      },
+      "compile_runs": [],
+      "resource_reads": 1
+    }
+  },
+  "r3_termination_matrix": {
+    "baseline": {
+      "returncode": 0,
+      "stdout": "..                                                                       [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_thing.py::test_feature\nPASSED tests/test_thing.py::test_stable\n2 passed in 0.01s\n"
+    },
+    "pytest": {
+      "returncode": 2,
+      "stdout": "\n==================================== ERRORS ====================================\n_____________________ ERROR collecting tests/test_thing.py _____________________\n../../../../../../../../../rh2/.venv/lib/python3.12/site-packages/_pytest/python.py:508: in importtestmodule\n    mod = import_path(\n../../../../../../../../../rh2/.venv/lib/python3.12/site-packages/_pytest/pathlib.py:596: in import_path\n    importlib.import_module(module_name)\n<USER_HOME>/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/importlib/__init__.py:90: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n<frozen importlib._bootstrap>:1387: in _gcd_import\n    ???\n<frozen importlib._bootstrap>:1360: in _find_and_load\n    ???\n<frozen importlib._bootstrap>:1331: in _find_and_load_unlocked\n    ???\n<frozen importlib._bootstrap>:935: in _load_unlocked\n    ???\n../../../../../../../../../rh2/.venv/lib/python3.12/site-packages/_pytest/assertion/rewrite.py:188: in exec_module\n    exec(co, module.__dict__)\ntests/test_thing.py:1: in <module>\n    from src.thing import VALUE\nE     File \"/testbed/src/thing.py\", line 1\nE       def feature(:\nE                   ^\nE   SyntaxError: invalid syntax\n=========================== short test summary info ============================\nERROR tests/test_thing.py\n!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n1 error in 0.09s\n"
+    },
+    "known_zero": {
+      "verdict": {
+        "instance_id": "getmoto__moto-0001",
+        "apply_ok": true,
+        "resolution": "RESOLVED_NO",
+        "resolved": false,
+        "f2p_rate": 0.0,
+        "p2p_rate": 0.0,
+        "f2p_success": [],
+        "f2p_failure": [
+          "tests/test_thing.py::test_feature"
+        ],
+        "p2p_success": [],
+        "p2p_failure": [
+          "tests/test_thing.py::test_stable"
+        ],
+        "num_parsed_tests": 1,
+        "num_parsed_outside_segment": 0,
+        "reference_missing": [
+          "tests/test_thing.py::test_feature",
+          "tests/test_thing.py::test_stable"
+        ],
+        "reference_skipped": [],
+        "parser_source": "swegym_parsers@242429c1"
+      },
+      "source_fields": {
+        "outcome": "unresolved",
+        "failure_category": "tests_failed",
+        "reward": 0.0,
+        "f2p_pass_count": 0,
+        "f2p_total_count": 1,
+        "p2p_fail_count": 1,
+        "p2p_total_count": 1
+      },
+      "shape": {
+        "stage": "test_collection",
+        "rule": "pytest_error_collecting",
+        "evidence": [
+          "_____________________ ERROR collecting tests/test_thing.py _____________________",
+          "test_rc=2"
+        ]
+      },
+      "trigger": "reference_all_missing",
+      "report": {
+        "schema_id": "rh2.grading_report.v1",
+        "report_id": "rpt_grading_771485f3",
+        "trajectory_id": "r3_known_zero",
+        "task_id": "rh2-fixture.tiny-0001",
+        "grader_name": "swebench_official_parser",
+        "grader_version": "swebench-4.1.0",
+        "outcome": "unresolved",
+        "failure_category": "candidate_execution_failed",
+        "reward": 0.0,
+        "reward_scale_version": "binary_v1",
+        "f2p_pass_count": null,
+        "f2p_total_count": null,
+        "p2p_fail_count": null,
+        "p2p_total_count": null,
+        "execution_failure_stage": "test_collection",
+        "execution_failure_evidence": [
+          "_____________________ ERROR collecting tests/test_thing.py _____________________",
+          "test_rc=2",
+          "E     File \"/testbed/src/thing.py\", line 1",
+          "compile_probe:src/thing.py:SyntaxError:line=1:invalid syntax",
+          "env_qualification:ok:ledger_e2_A.jsonl:rpt_gold_1"
+        ],
+        "grading_semantics": "swe_f2p_p2p",
+        "expected_match_count": null,
+        "expected_total_count": null,
+        "patch_hygiene": {
+          "cleaned_patch_digest": "sha256:20f9817f085719db60c9f5e9d95d8025986ac4d51ed9cbea1217ca0dd7dad16c",
+          "digest_kind": "cleaned_diff_text",
+          "replayed_on_clean_checkout": true,
+          "test_files_modified": false,
+          "forbidden_path_touched": false,
+          "forbidden_paths": [],
+          "verdict": "clean"
+        },
+        "infra_failure_detail": null,
+        "eval_log_ref": {
+          "ref_id": "evallog_r3_known_zero_771485f3",
+          "sha256": "sha256:4f8f374aa962516a7f9caf15df0de85c3f38aaa9d3e068b4b5b921f2ec38c1c4",
+          "byte_size": 1797
+        },
+        "timings": {
+          "schema_id": "rh2.grading_timing_record.v1",
+          "record_id": "timing_771485f3",
+          "trajectory_id": "r3_known_zero",
+          "task_id": "rh2-fixture.tiny-0001",
+          "image_pull_seconds": 0.0,
+          "env_reset_seconds": 0.0,
+          "prep_seconds": 0.0,
+          "test_seconds": 0.0,
+          "total_grading_seconds": 0.022,
+          "queue_wait_seconds": 0.0,
+          "container_peak_memory_mb": 1.0,
+          "queue_depth_at_enqueue": null,
+          "backpressure_triggered": false
+        },
+        "graded_at_utc": "2026-09-19T07:19:21.955953Z"
+      },
+      "decision": {
+        "candidate_python_paths": [
+          "src/thing.py"
+        ],
+        "compile_probe": {
+          "error": null,
+          "error_paths": [
+            "src/thing.py:SyntaxError:line=1:invalid syntax"
+          ],
+          "interpreter": "<REPO>/rh2/.venv/bin/python",
+          "missing": [],
+          "ok": [],
+          "paths_probed": [
+            "src/thing.py"
+          ]
+        },
+        "evidence": [
+          "_____________________ ERROR collecting tests/test_thing.py _____________________",
+          "test_rc=2",
+          "E     File \"/testbed/src/thing.py\", line 1",
+          "compile_probe:src/thing.py:SyntaxError:line=1:invalid syntax",
+          "env_qualification:ok:ledger_e2_A.jsonl:rpt_gold_1"
+        ],
+        "install_rc_baseline": 0,
+        "kind": "candidate",
+        "missing": [],
+        "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+        "referenced_candidate_paths": [
+          "src/thing.py"
+        ],
+        "resource": {
+          "container_oom_killed": false,
+          "oom_kill_events": 0,
+          "pids_events_max": 0,
+          "signal_exit": false,
+          "test_rc": 2
+        },
+        "rule": "pytest_error_collecting",
+        "stage": "test_collection",
+        "syntax_error_locations": {
+          "src/thing.py": [
+            1
+          ]
+        },
+        "trigger": "reference_all_missing"
+      },
+      "compile_runs": [
+        {
+          "script": "#!/bin/bash\ncd /testbed\npython -I -S - <<'RH2_COMPILE_EOF'\nimport sys\npaths = ['src/thing.py']\nprint('RH2_COMPILE_INTERPRETER=' + sys.executable)\nfor p in paths:\n    try:\n        with open(p, 'rb') as fh:\n            src = fh.read()\n    except OSError:\n        print('RH2_COMPILE_MISSING=' + p); continue\n    try:\n        compile(src, p, 'exec', dont_inherit=True)\n    except SyntaxError as exc:  # SyntaxError 含 IndentationError / TabError\n        msg = str(exc.msg or exc).replace('\\n', ' ')[:160]\n        print('RH2_COMPILE_ERROR=%s:%s:line=%s:%s' % (p, type(exc).__name__, exc.lineno, msg)); continue\n    except ValueError as exc:  # 源码含空字节等\n        print('RH2_COMPILE_ERROR=%s:%s:line=?:%s' % (p, type(exc).__name__, str(exc)[:160])); continue\n    print('RH2_COMPILE_OK=' + p)\nRH2_COMPILE_EOF\n",
+          "rc": 0,
+          "stdout": "RH2_COMPILE_INTERPRETER=<REPO>/rh2/.venv/bin/python\nRH2_COMPILE_ERROR=src/thing.py:SyntaxError:line=1:invalid syntax\n"
+        }
+      ],
+      "resource_reads": 1
+    },
+    "pids_event_only": {
+      "verdict": {
+        "instance_id": "getmoto__moto-0001",
+        "apply_ok": true,
+        "resolution": "RESOLVED_NO",
+        "resolved": false,
+        "f2p_rate": 0.0,
+        "p2p_rate": 0.0,
+        "f2p_success": [],
+        "f2p_failure": [
+          "tests/test_thing.py::test_feature"
+        ],
+        "p2p_success": [],
+        "p2p_failure": [
+          "tests/test_thing.py::test_stable"
+        ],
+        "num_parsed_tests": 1,
+        "num_parsed_outside_segment": 0,
+        "reference_missing": [
+          "tests/test_thing.py::test_feature",
+          "tests/test_thing.py::test_stable"
+        ],
+        "reference_skipped": [],
+        "parser_source": "swegym_parsers@242429c1"
+      },
+      "source_fields": {
+        "outcome": "unresolved",
+        "failure_category": "tests_failed",
+        "reward": 0.0,
+        "f2p_pass_count": 0,
+        "f2p_total_count": 1,
+        "p2p_fail_count": 1,
+        "p2p_total_count": 1
+      },
+      "shape": {
+        "stage": "test_collection",
+        "rule": "pytest_error_collecting",
+        "evidence": [
+          "_____________________ ERROR collecting tests/test_thing.py _____________________",
+          "test_rc=2"
+        ]
+      },
+      "trigger": "reference_all_missing",
+      "report": {
+        "schema_id": "rh2.grading_report.v1",
+        "report_id": "rpt_grading_61dc1953",
+        "trajectory_id": "r3_pids_event_only",
+        "task_id": "rh2-fixture.tiny-0001",
+        "grader_name": "swebench_official_parser",
+        "grader_version": "swebench-4.1.0",
+        "outcome": "failed_to_grade",
+        "failure_category": "infra_failure",
+        "reward": null,
+        "reward_scale_version": "binary_v1",
+        "f2p_pass_count": null,
+        "f2p_total_count": null,
+        "p2p_fail_count": null,
+        "p2p_total_count": null,
+        "execution_failure_stage": null,
+        "execution_failure_evidence": [],
+        "grading_semantics": "swe_f2p_p2p",
+        "expected_match_count": null,
+        "expected_total_count": null,
+        "patch_hygiene": {
+          "cleaned_patch_digest": "sha256:20f9817f085719db60c9f5e9d95d8025986ac4d51ed9cbea1217ca0dd7dad16c",
+          "digest_kind": "cleaned_diff_text",
+          "replayed_on_clean_checkout": true,
+          "test_files_modified": false,
+          "forbidden_path_touched": false,
+          "forbidden_paths": [],
+          "verdict": "clean"
+        },
+        "infra_failure_detail": "candidate_resource_terminated:reference_all_missing:pids_quota_hits",
+        "eval_log_ref": {
+          "ref_id": "evallog_r3_pids_event_only_61dc1953",
+          "sha256": "sha256:4f8f374aa962516a7f9caf15df0de85c3f38aaa9d3e068b4b5b921f2ec38c1c4",
+          "byte_size": 1797
+        },
+        "timings": {
+          "schema_id": "rh2.grading_timing_record.v1",
+          "record_id": "timing_61dc1953",
+          "trajectory_id": "r3_pids_event_only",
+          "task_id": "rh2-fixture.tiny-0001",
+          "image_pull_seconds": 0.0,
+          "env_reset_seconds": 0.0,
+          "prep_seconds": 0.0,
+          "test_seconds": 0.0,
+          "total_grading_seconds": 0.001,
+          "queue_wait_seconds": 0.0,
+          "container_peak_memory_mb": 1.0,
+          "queue_depth_at_enqueue": null,
+          "backpressure_triggered": false
+        },
+        "graded_at_utc": "2026-09-19T07:19:21.959471Z"
+      },
+      "decision": {
+        "candidate_python_paths": null,
+        "compile_probe": null,
+        "evidence": [],
+        "install_rc_baseline": null,
+        "kind": "resource",
+        "missing": [],
+        "qualification": null,
+        "referenced_candidate_paths": null,
+        "resource": {
+          "container_oom_killed": false,
+          "oom_kill_events": 0,
+          "pids_events_max": 1,
+          "signal_exit": false,
+          "test_rc": 2
+        },
+        "resource_detail": "pids_quota_hits",
+        "rule": "pytest_error_collecting",
+        "stage": "test_collection",
+        "trigger": "reference_all_missing"
+      },
+      "compile_runs": [],
+      "resource_reads": 1
+    },
+    "oom_positive": {
+      "verdict": {
+        "instance_id": "getmoto__moto-0001",
+        "apply_ok": true,
+        "resolution": "RESOLVED_NO",
+        "resolved": false,
+        "f2p_rate": 0.0,
+        "p2p_rate": 0.0,
+        "f2p_success": [],
+        "f2p_failure": [
+          "tests/test_thing.py::test_feature"
+        ],
+        "p2p_success": [],
+        "p2p_failure": [
+          "tests/test_thing.py::test_stable"
+        ],
+        "num_parsed_tests": 1,
+        "num_parsed_outside_segment": 0,
+        "reference_missing": [
+          "tests/test_thing.py::test_feature",
+          "tests/test_thing.py::test_stable"
+        ],
+        "reference_skipped": [],
+        "parser_source": "swegym_parsers@242429c1"
+      },
+      "source_fields": {
+        "outcome": "unresolved",
+        "failure_category": "tests_failed",
+        "reward": 0.0,
+        "f2p_pass_count": 0,
+        "f2p_total_count": 1,
+        "p2p_fail_count": 1,
+        "p2p_total_count": 1
+      },
+      "shape": {
+        "stage": "test_collection",
+        "rule": "pytest_error_collecting",
+        "evidence": [
+          "_____________________ ERROR collecting tests/test_thing.py _____________________",
+          "test_rc=2"
+        ]
+      },
+      "trigger": "reference_all_missing",
+      "report": {
+        "schema_id": "rh2.grading_report.v1",
+        "report_id": "rpt_grading_37215674",
+        "trajectory_id": "r3_oom",
+        "task_id": "rh2-fixture.tiny-0001",
+        "grader_name": "swebench_official_parser",
+        "grader_version": "swebench-4.1.0",
+        "outcome": "failed_to_grade",
+        "failure_category": "infra_failure",
+        "reward": null,
+        "reward_scale_version": "binary_v1",
+        "f2p_pass_count": null,
+        "f2p_total_count": null,
+        "p2p_fail_count": null,
+        "p2p_total_count": null,
+        "execution_failure_stage": null,
+        "execution_failure_evidence": [],
+        "grading_semantics": "swe_f2p_p2p",
+        "expected_match_count": null,
+        "expected_total_count": null,
+        "patch_hygiene": {
+          "cleaned_patch_digest": "sha256:20f9817f085719db60c9f5e9d95d8025986ac4d51ed9cbea1217ca0dd7dad16c",
+          "digest_kind": "cleaned_diff_text",
+          "replayed_on_clean_checkout": true,
+          "test_files_modified": false,
+          "forbidden_path_touched": false,
+          "forbidden_paths": [],
+          "verdict": "clean"
+        },
+        "infra_failure_detail": "candidate_resource_terminated:reference_all_missing:oom_kill_events",
+        "eval_log_ref": {
+          "ref_id": "evallog_r3_oom_37215674",
+          "sha256": "sha256:4f8f374aa962516a7f9caf15df0de85c3f38aaa9d3e068b4b5b921f2ec38c1c4",
+          "byte_size": 1797
+        },
+        "timings": {
+          "schema_id": "rh2.grading_timing_record.v1",
+          "record_id": "timing_37215674",
+          "trajectory_id": "r3_oom",
+          "task_id": "rh2-fixture.tiny-0001",
+          "image_pull_seconds": 0.0,
+          "env_reset_seconds": 0.0,
+          "prep_seconds": 0.0,
+          "test_seconds": 0.0,
+          "total_grading_seconds": 0.001,
+          "queue_wait_seconds": 0.0,
+          "container_peak_memory_mb": 1.0,
+          "queue_depth_at_enqueue": null,
+          "backpressure_triggered": false
+        },
+        "graded_at_utc": "2026-09-19T07:19:21.961858Z"
+      },
+      "decision": {
+        "candidate_python_paths": null,
+        "compile_probe": null,
+        "evidence": [],
+        "install_rc_baseline": null,
+        "kind": "resource",
+        "missing": [],
+        "qualification": null,
+        "referenced_candidate_paths": null,
+        "resource": {
+          "container_oom_killed": false,
+          "oom_kill_events": 1,
+          "pids_events_max": 0,
+          "signal_exit": false,
+          "test_rc": 2
+        },
+        "resource_detail": "oom_kill_events",
+        "rule": "pytest_error_collecting",
+        "stage": "test_collection",
+        "trigger": "reference_all_missing"
+      },
+      "compile_runs": [],
+      "resource_reads": 1
+    },
+    "all_unknown": {
+      "verdict": {
+        "instance_id": "getmoto__moto-0001",
+        "apply_ok": true,
+        "resolution": "RESOLVED_NO",
+        "resolved": false,
+        "f2p_rate": 0.0,
+        "p2p_rate": 0.0,
+        "f2p_success": [],
+        "f2p_failure": [
+          "tests/test_thing.py::test_feature"
+        ],
+        "p2p_success": [],
+        "p2p_failure": [
+          "tests/test_thing.py::test_stable"
+        ],
+        "num_parsed_tests": 1,
+        "num_parsed_outside_segment": 0,
+        "reference_missing": [
+          "tests/test_thing.py::test_feature",
+          "tests/test_thing.py::test_stable"
+        ],
+        "reference_skipped": [],
+        "parser_source": "swegym_parsers@242429c1"
+      },
+      "source_fields": {
+        "outcome": "unresolved",
+        "failure_category": "tests_failed",
+        "reward": 0.0,
+        "f2p_pass_count": 0,
+        "f2p_total_count": 1,
+        "p2p_fail_count": 1,
+        "p2p_total_count": 1
+      },
+      "shape": {
+        "stage": "test_collection",
+        "rule": "pytest_error_collecting",
+        "evidence": [
+          "_____________________ ERROR collecting tests/test_thing.py _____________________"
+        ]
+      },
+      "trigger": "reference_all_missing",
+      "report": {
+        "schema_id": "rh2.grading_report.v1",
+        "report_id": "rpt_grading_360bd787",
+        "trajectory_id": "r3_all_unknown",
+        "task_id": "rh2-fixture.tiny-0001",
+        "grader_name": "swebench_official_parser",
+        "grader_version": "swebench-4.1.0",
+        "outcome": "failed_to_grade",
+        "failure_category": "test_log_parse_failed",
+        "reward": null,
+        "reward_scale_version": "binary_v1",
+        "f2p_pass_count": null,
+        "f2p_total_count": null,
+        "p2p_fail_count": null,
+        "p2p_total_count": null,
+        "execution_failure_stage": null,
+        "execution_failure_evidence": [],
+        "grading_semantics": "swe_f2p_p2p",
+        "expected_match_count": null,
+        "expected_total_count": null,
+        "patch_hygiene": {
+          "cleaned_patch_digest": "sha256:20f9817f085719db60c9f5e9d95d8025986ac4d51ed9cbea1217ca0dd7dad16c",
+          "digest_kind": "cleaned_diff_text",
+          "replayed_on_clean_checkout": true,
+          "test_files_modified": false,
+          "forbidden_path_touched": false,
+          "forbidden_paths": [],
+          "verdict": "clean"
+        },
+        "infra_failure_detail": "reference_all_missing:unattributed:termination_facts_unknown:oom_kill_events+pids_events_max+container_oom_killed+test_rc",
+        "eval_log_ref": {
+          "ref_id": "evallog_r3_all_unknown_360bd787",
+          "sha256": "sha256:1b18a713597758fe21b261c003ec7a0a6591d61c5228e1ea5e12cb4a8c8ec1b8",
+          "byte_size": 1783
+        },
+        "timings": {
+          "schema_id": "rh2.grading_timing_record.v1",
+          "record_id": "timing_360bd787",
+          "trajectory_id": "r3_all_unknown",
+          "task_id": "rh2-fixture.tiny-0001",
+          "image_pull_seconds": 0.0,
+          "env_reset_seconds": 0.0,
+          "prep_seconds": 0.0,
+          "test_seconds": 0.0,
+          "total_grading_seconds": 0.001,
+          "queue_wait_seconds": 0.0,
+          "container_peak_memory_mb": 1.0,
+          "queue_depth_at_enqueue": null,
+          "backpressure_triggered": false
+        },
+        "graded_at_utc": "2026-09-19T07:19:21.963970Z"
+      },
+      "decision": {
+        "candidate_python_paths": [
+          "src/thing.py"
+        ],
+        "compile_probe": null,
+        "evidence": [],
+        "install_rc_baseline": 0,
+        "kind": "unattributed",
+        "missing": [
+          "termination_facts_unknown:oom_kill_events+pids_events_max+container_oom_killed+test_rc"
+        ],
+        "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+        "referenced_candidate_paths": [
+          "src/thing.py"
+        ],
+        "resource": {
+          "container_oom_killed": null,
+          "oom_kill_events": null,
+          "pids_events_max": null,
+          "signal_exit": false,
+          "test_rc": null
+        },
+        "rule": "pytest_error_collecting",
+        "stage": "test_collection",
+        "syntax_error_locations": {
+          "src/thing.py": [
+            1
+          ]
+        },
+        "trigger": "reference_all_missing"
+      },
+      "compile_runs": [],
+      "resource_reads": 0
+    },
+    "test_rc_unknown": {
+      "verdict": {
+        "instance_id": "getmoto__moto-0001",
+        "apply_ok": true,
+        "resolution": "RESOLVED_NO",
+        "resolved": false,
+        "f2p_rate": 0.0,
+        "p2p_rate": 0.0,
+        "f2p_success": [],
+        "f2p_failure": [
+          "tests/test_thing.py::test_feature"
+        ],
+        "p2p_success": [],
+        "p2p_failure": [
+          "tests/test_thing.py::test_stable"
+        ],
+        "num_parsed_tests": 1,
+        "num_parsed_outside_segment": 0,
+        "reference_missing": [
+          "tests/test_thing.py::test_feature",
+          "tests/test_thing.py::test_stable"
+        ],
+        "reference_skipped": [],
+        "parser_source": "swegym_parsers@242429c1"
+      },
+      "source_fields": {
+        "outcome": "unresolved",
+        "failure_category": "tests_failed",
+        "reward": 0.0,
+        "f2p_pass_count": 0,
+        "f2p_total_count": 1,
+        "p2p_fail_count": 1,
+        "p2p_total_count": 1
+      },
+      "shape": {
+        "stage": "test_collection",
+        "rule": "pytest_error_collecting",
+        "evidence": [
+          "_____________________ ERROR collecting tests/test_thing.py _____________________"
+        ]
+      },
+      "trigger": "reference_all_missing",
+      "report": {
+        "schema_id": "rh2.grading_report.v1",
+        "report_id": "rpt_grading_4b977f4e",
+        "trajectory_id": "r3_rc_unknown",
+        "task_id": "rh2-fixture.tiny-0001",
+        "grader_name": "swebench_official_parser",
+        "grader_version": "swebench-4.1.0",
+        "outcome": "failed_to_grade",
+        "failure_category": "test_log_parse_failed",
+        "reward": null,
+        "reward_scale_version": "binary_v1",
+        "f2p_pass_count": null,
+        "f2p_total_count": null,
+        "p2p_fail_count": null,
+        "p2p_total_count": null,
+        "execution_failure_stage": null,
+        "execution_failure_evidence": [],
+        "grading_semantics": "swe_f2p_p2p",
+        "expected_match_count": null,
+        "expected_total_count": null,
+        "patch_hygiene": {
+          "cleaned_patch_digest": "sha256:20f9817f085719db60c9f5e9d95d8025986ac4d51ed9cbea1217ca0dd7dad16c",
+          "digest_kind": "cleaned_diff_text",
+          "replayed_on_clean_checkout": true,
+          "test_files_modified": false,
+          "forbidden_path_touched": false,
+          "forbidden_paths": [],
+          "verdict": "clean"
+        },
+        "infra_failure_detail": "reference_all_missing:unattributed:termination_facts_unknown:test_rc",
+        "eval_log_ref": {
+          "ref_id": "evallog_r3_rc_unknown_4b977f4e",
+          "sha256": "sha256:1b18a713597758fe21b261c003ec7a0a6591d61c5228e1ea5e12cb4a8c8ec1b8",
+          "byte_size": 1783
+        },
+        "timings": {
+          "schema_id": "rh2.grading_timing_record.v1",
+          "record_id": "timing_4b977f4e",
+          "trajectory_id": "r3_rc_unknown",
+          "task_id": "rh2-fixture.tiny-0001",
+          "image_pull_seconds": 0.0,
+          "env_reset_seconds": 0.0,
+          "prep_seconds": 0.0,
+          "test_seconds": 0.0,
+          "total_grading_seconds": 0.001,
+          "queue_wait_seconds": 0.0,
+          "container_peak_memory_mb": 1.0,
+          "queue_depth_at_enqueue": null,
+          "backpressure_triggered": false
+        },
+        "graded_at_utc": "2026-09-19T07:19:21.966811Z"
+      },
+      "decision": {
+        "candidate_python_paths": [
+          "src/thing.py"
+        ],
+        "compile_probe": null,
+        "evidence": [],
+        "install_rc_baseline": 0,
+        "kind": "unattributed",
+        "missing": [
+          "termination_facts_unknown:test_rc"
+        ],
+        "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+        "referenced_candidate_paths": [
+          "src/thing.py"
+        ],
+        "resource": {
+          "container_oom_killed": false,
+          "oom_kill_events": 0,
+          "pids_events_max": 0,
+          "signal_exit": false,
+          "test_rc": null
+        },
+        "rule": "pytest_error_collecting",
+        "stage": "test_collection",
+        "syntax_error_locations": {
+          "src/thing.py": [
+            1
+          ]
+        },
+        "trigger": "reference_all_missing"
+      },
+      "compile_runs": [],
+      "resource_reads": 1
+    }
+  },
+  "r1_startup_positive": {
+    "pytest": {
+      "returncode": 4,
+      "stdout": "ImportError while loading conftest '/testbed/tests/conftest.py'.\ntests/conftest.py:1: in <module>\n    from src.thing import VALUE\nE     File \"/testbed/src/thing.py\", line 1\nE       def feature(:\nE                   ^\nE   SyntaxError: invalid syntax\n"
+    },
+    "grade": {
+      "verdict": {
+        "instance_id": "getmoto__moto-0001",
+        "apply_ok": true,
+        "resolution": "RESOLVED_NO",
+        "resolved": false,
+        "f2p_rate": 0.0,
+        "p2p_rate": 0.0,
+        "f2p_success": [],
+        "f2p_failure": [
+          "tests/test_thing.py::test_feature"
+        ],
+        "p2p_success": [],
+        "p2p_failure": [
+          "tests/test_thing.py::test_stable"
+        ],
+        "num_parsed_tests": 0,
+        "num_parsed_outside_segment": 0,
+        "reference_missing": [
+          "tests/test_thing.py::test_feature",
+          "tests/test_thing.py::test_stable"
+        ],
+        "reference_skipped": [],
+        "parser_source": "swegym_parsers@242429c1"
+      },
+      "source_fields": {
+        "outcome": "unresolved",
+        "failure_category": "tests_failed",
+        "reward": 0.0,
+        "f2p_pass_count": 0,
+        "f2p_total_count": 1,
+        "p2p_fail_count": 1,
+        "p2p_total_count": 1
+      },
+      "shape": {
+        "stage": "test_startup",
+        "rule": "pytest_conftest_import_error",
+        "evidence": [
+          "ImportError while loading conftest '/testbed/tests/conftest.py'.",
+          "test_rc=4"
+        ]
+      },
+      "trigger": "zero_parsed",
+      "report": {
+        "schema_id": "rh2.grading_report.v1",
+        "report_id": "rpt_grading_09197a3c",
+        "trajectory_id": "r1_startup",
+        "task_id": "rh2-fixture.tiny-0001",
+        "grader_name": "swebench_official_parser",
+        "grader_version": "swebench-4.1.0",
+        "outcome": "unresolved",
+        "failure_category": "candidate_execution_failed",
+        "reward": 0.0,
+        "reward_scale_version": "binary_v1",
+        "f2p_pass_count": null,
+        "f2p_total_count": null,
+        "p2p_fail_count": null,
+        "p2p_total_count": null,
+        "execution_failure_stage": "test_startup",
+        "execution_failure_evidence": [
+          "ImportError while loading conftest '/testbed/tests/conftest.py'.",
+          "test_rc=4",
+          "E     File \"/testbed/src/thing.py\", line 1",
+          "compile_probe:src/thing.py:SyntaxError:line=1:invalid syntax",
+          "env_qualification:ok:ledger_e2_A.jsonl:rpt_gold_1"
+        ],
+        "grading_semantics": "swe_f2p_p2p",
+        "expected_match_count": null,
+        "expected_total_count": null,
+        "patch_hygiene": {
+          "cleaned_patch_digest": "sha256:20f9817f085719db60c9f5e9d95d8025986ac4d51ed9cbea1217ca0dd7dad16c",
+          "digest_kind": "cleaned_diff_text",
+          "replayed_on_clean_checkout": true,
+          "test_files_modified": false,
+          "forbidden_path_touched": false,
+          "forbidden_paths": [],
+          "verdict": "clean"
+        },
+        "infra_failure_detail": null,
+        "eval_log_ref": {
+          "ref_id": "evallog_r1_startup_09197a3c",
+          "sha256": "sha256:4cb98ea5cf06dcfdb1b664d320b5c98117831f4981747c781816a1a6377cfedd",
+          "byte_size": 560
+        },
+        "timings": {
+          "schema_id": "rh2.grading_timing_record.v1",
+          "record_id": "timing_09197a3c",
+          "trajectory_id": "r1_startup",
+          "task_id": "rh2-fixture.tiny-0001",
+          "image_pull_seconds": 0.0,
+          "env_reset_seconds": 0.0,
+          "prep_seconds": 0.0,
+          "test_seconds": 0.0,
+          "total_grading_seconds": 0.022,
+          "queue_wait_seconds": 0.0,
+          "container_peak_memory_mb": 1.0,
+          "queue_depth_at_enqueue": null,
+          "backpressure_triggered": false
+        },
+        "graded_at_utc": "2026-09-19T07:19:22.092672Z"
+      },
+      "decision": {
+        "candidate_python_paths": [
+          "src/thing.py"
+        ],
+        "compile_probe": {
+          "error": null,
+          "error_paths": [
+            "src/thing.py:SyntaxError:line=1:invalid syntax"
+          ],
+          "interpreter": "<REPO>/rh2/.venv/bin/python",
+          "missing": [],
+          "ok": [],
+          "paths_probed": [
+            "src/thing.py"
+          ]
+        },
+        "evidence": [
+          "ImportError while loading conftest '/testbed/tests/conftest.py'.",
+          "test_rc=4",
+          "E     File \"/testbed/src/thing.py\", line 1",
+          "compile_probe:src/thing.py:SyntaxError:line=1:invalid syntax",
+          "env_qualification:ok:ledger_e2_A.jsonl:rpt_gold_1"
+        ],
+        "install_rc_baseline": 0,
+        "kind": "candidate",
+        "missing": [],
+        "qualification": "ok:ledger_e2_A.jsonl:rpt_gold_1",
+        "referenced_candidate_paths": [
+          "src/thing.py"
+        ],
+        "resource": {
+          "container_oom_killed": false,
+          "oom_kill_events": 0,
+          "pids_events_max": 0,
+          "signal_exit": false,
+          "test_rc": 4
+        },
+        "rule": "pytest_conftest_import_error",
+        "stage": "test_startup",
+        "syntax_error_locations": {
+          "src/thing.py": [
+            1
+          ]
+        },
+        "trigger": "zero_parsed"
+      },
+      "compile_runs": [
+        {
+          "script": "#!/bin/bash\ncd /testbed\npython -I -S - <<'RH2_COMPILE_EOF'\nimport sys\npaths = ['src/thing.py']\nprint('RH2_COMPILE_INTERPRETER=' + sys.executable)\nfor p in paths:\n    try:\n        with open(p, 'rb') as fh:\n            src = fh.read()\n    except OSError:\n        print('RH2_COMPILE_MISSING=' + p); continue\n    try:\n        compile(src, p, 'exec', dont_inherit=True)\n    except SyntaxError as exc:  # SyntaxError 含 IndentationError / TabError\n        msg = str(exc.msg or exc).replace('\\n', ' ')[:160]\n        print('RH2_COMPILE_ERROR=%s:%s:line=%s:%s' % (p, type(exc).__name__, exc.lineno, msg)); continue\n    except ValueError as exc:  # 源码含空字节等\n        print('RH2_COMPILE_ERROR=%s:%s:line=?:%s' % (p, type(exc).__name__, str(exc)[:160])); continue\n    print('RH2_COMPILE_OK=' + p)\nRH2_COMPILE_EOF\n",
+          "rc": 0,
+          "stdout": "RH2_COMPILE_INTERPRETER=<REPO>/rh2/.venv/bin/python\nRH2_COMPILE_ERROR=src/thing.py:SyntaxError:line=1:invalid syntax\n"
+        }
+      ],
+      "resource_reads": 1
+    }
+  },
+  "r2_isolated_compile": {
+    "returncode": 0,
+    "stdout": "RH2_COMPILE_INTERPRETER=<REPO>/rh2/.venv/bin/python\nRH2_COMPILE_ERROR=src/bad.py:SyntaxError:line=1:invalid syntax\nRH2_COMPILE_OK=src/good.py\nRH2_COMPILE_OK=json.py\nRH2_COMPILE_OK=py_compile.py\nRH2_COMPILE_OK=sitecustomize.py\nRH2_COMPILE_OK=usercustomize.py\n"
+  },
+  "old_r4_completed": {
+    "baseline": {
+      "returncode": 0,
+      "stdout": "..                                                                       [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_thing.py::test_feature[before]\nPASSED tests/test_thing.py::test_stable[before]\n2 passed in 0.01s\n"
+    },
+    "pytest": {
+      "returncode": 1,
+      "stdout": "F.                                                                       [100%]\n=================================== FAILURES ===================================\n_____________________________ test_feature[after] ______________________________\n\ncase = 'after'\n\n    @pytest.mark.parametrize(\"case\", [label], ids=[label])\n    def test_feature(case):\n>       assert case == \"before\"\nE       AssertionError: assert 'after' == 'before'\nE         \nE         - before\nE         + after\n\ntests/test_thing.py:7: AssertionError\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_thing.py::test_stable[after]\nFAILED tests/test_thing.py::test_feature[after] - AssertionError: assert 'aft...\n1 failed, 1 passed in 0.02s\n"
+    },
+    "grade": {
+      "verdict": {
+        "instance_id": "getmoto__moto-0001",
+        "apply_ok": true,
+        "resolution": "RESOLVED_NO",
+        "resolved": false,
+        "f2p_rate": 0.0,
+        "p2p_rate": 0.0,
+        "f2p_success": [],
+        "f2p_failure": [
+          "tests/test_thing.py::test_feature[before]"
+        ],
+        "p2p_success": [],
+        "p2p_failure": [
+          "tests/test_thing.py::test_stable[before]"
+        ],
+        "num_parsed_tests": 2,
+        "num_parsed_outside_segment": 0,
+        "reference_missing": [
+          "tests/test_thing.py::test_feature[before]",
+          "tests/test_thing.py::test_stable[before]"
+        ],
+        "reference_skipped": [],
+        "parser_source": "swegym_parsers@242429c1"
+      },
+      "source_fields": {
+        "outcome": "unresolved",
+        "failure_category": "tests_failed",
+        "reward": 0.0,
+        "f2p_pass_count": 0,
+        "f2p_total_count": 1,
+        "p2p_fail_count": 1,
+        "p2p_total_count": 1
+      },
+      "shape": null,
+      "trigger": "reference_all_missing",
+      "report": {
+        "schema_id": "rh2.grading_report.v1",
+        "report_id": "rpt_grading_b5badb3b",
+        "trajectory_id": "old_r4",
+        "task_id": "rh2-fixture.tiny-0001",
+        "grader_name": "swebench_official_parser",
+        "grader_version": "swebench-4.1.0",
+        "outcome": "unresolved",
+        "failure_category": "tests_failed",
+        "reward": 0.0,
+        "reward_scale_version": "binary_v1",
+        "f2p_pass_count": 0,
+        "f2p_total_count": 1,
+        "p2p_fail_count": 1,
+        "p2p_total_count": 1,
+        "execution_failure_stage": null,
+        "execution_failure_evidence": [],
+        "grading_semantics": "swe_f2p_p2p",
+        "expected_match_count": null,
+        "expected_total_count": null,
+        "patch_hygiene": {
+          "cleaned_patch_digest": "sha256:a7a96c243586fce6712ce0b9ecd903c3070184a350a0a2e798f22a1a97a89a12",
+          "digest_kind": "cleaned_diff_text",
+          "replayed_on_clean_checkout": true,
+          "test_files_modified": false,
+          "forbidden_path_touched": false,
+          "forbidden_paths": [],
+          "verdict": "clean"
+        },
+        "infra_failure_detail": null,
+        "eval_log_ref": {
+          "ref_id": "evallog_old_r4_b5badb3b",
+          "sha256": "sha256:fbd68b028790304c63dbc59169bc76d17b5ffe258cc0a0a44e017208084f79dc",
+          "byte_size": 1145
+        },
+        "timings": {
+          "schema_id": "rh2.grading_timing_record.v1",
+          "record_id": "timing_b5badb3b",
+          "trajectory_id": "old_r4",
+          "task_id": "rh2-fixture.tiny-0001",
+          "image_pull_seconds": 0.0,
+          "env_reset_seconds": 0.0,
+          "prep_seconds": 0.0,
+          "test_seconds": 0.0,
+          "total_grading_seconds": 0.001,
+          "queue_wait_seconds": 0.0,
+          "container_peak_memory_mb": 1.0,
+          "queue_depth_at_enqueue": null,
+          "backpressure_triggered": false
+        },
+        "graded_at_utc": "2026-09-19T07:19:22.360238Z"
+      },
+      "decision": {
+        "candidate_python_paths": null,
+        "compile_probe": null,
+        "evidence": [],
+        "install_rc_baseline": null,
+        "kind": "source_rule",
+        "missing": [
+          "shape_undetermined"
+        ],
+        "qualification": null,
+        "referenced_candidate_paths": null,
+        "resource": null,
+        "rule": null,
+        "stage": null,
+        "trigger": "reference_all_missing"
+      },
+      "compile_runs": [],
+      "resource_reads": 0
+    }
+  },
+  "r4_completed_nested_traceback": {
+    "baseline": {
+      "returncode": 0,
+      "stdout": "..                                                                       [100%]\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_thing.py::test_feature[before]\nPASSED tests/test_thing.py::test_stable[before]\n2 passed in 0.03s\n"
+    },
+    "pytest": {
+      "returncode": 1,
+      "stdout": "F.                                                                       [100%]\n=================================== FAILURES ===================================\n_____________________________ test_feature[after] ______________________________\n\ncase = 'after'\n\n    @pytest.mark.parametrize(\"case\", [label], ids=[label])\n    def test_feature(case):\n>       subprocess.run([sys.executable, \"-c\", \"import qualified_external_fixture\"], check=True)\n\ntests/test_thing.py:7: \n_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ \n\ninput = None, capture_output = False, timeout = None, check = True\npopenargs = (['<REPO>/rh2/.venv/bin/python', '-c', 'import qualified_external_fixture'],)\nkwargs = {}\n\n    def run(*popenargs,\n            input=None, capture_output=False, timeout=None, check=False, **kwargs):\n        \"\"\"Run command with arguments and return a CompletedProcess instance.\n    \n        The returned instance will have attributes args, returncode, stdout and\n        stderr. By default, stdout and stderr are not captured, and those attributes\n        will be None. Pass stdout=PIPE and/or stderr=PIPE in order to capture them,\n        or pass capture_output=True to capture both.\n    \n        If check is True and the exit code was non-zero, it raises a\n        CalledProcessError. The CalledProcessError object will have the return code\n        in the returncode attribute, and output & stderr attributes if those streams\n        were captured.\n    \n        If timeout (seconds) is given and the process takes too long,\n         a TimeoutExpired exception will be raised.\n    \n        There is an optional argument \"input\", allowing you to\n        pass bytes or a string to the subprocess's stdin.  If you use this argument\n        you may not also use the Popen constructor's \"stdin\" argument, as\n        it will be used internally.\n    \n        By default, all communication is in bytes, and therefore any \"input\" should\n        be bytes, and the stdout and stderr will be bytes. If in text mode, any\n        \"input\" should be a string, and stdout and stderr will be strings decoded\n        according to locale encoding, or by \"encoding\" if set. Text mode is\n        triggered by setting any of text, encoding, errors or universal_newlines.\n    \n        The other arguments are the same as for the Popen constructor.\n        \"\"\"\n        if input is not None:\n            if kwargs.get('stdin') is not None:\n                raise ValueError('stdin and input arguments may not both be used.')\n            kwargs['stdin'] = PIPE\n    \n        if capture_output:\n            if kwargs.get('stdout') is not None or kwargs.get('stderr') is not None:\n                raise ValueError('stdout and stderr arguments may not be used '\n                                 'with capture_output.')\n            kwargs['stdout'] = PIPE\n            kwargs['stderr'] = PIPE\n    \n        with Popen(*popenargs, **kwargs) as process:\n            try:\n                stdout, stderr = process.communicate(input, timeout=timeout)\n            except TimeoutExpired as exc:\n                process.kill()\n                if _mswindows:\n                    # Windows accumulates the output in a single blocking\n                    # read() call run on child threads, with the timeout\n                    # being done in a join() on those threads.  communicate()\n                    # _after_ kill() is required to collect that and add it\n                    # to the exception.\n                    exc.stdout, exc.stderr = process.communicate()\n                else:\n                    # POSIX _communicate already populated the output so\n                    # far into the TimeoutExpired exception.\n                    process.wait()\n                raise\n            except:  # Including KeyboardInterrupt, communicate handled that.\n                process.kill()\n                # We don't call process.wait() as .__exit__ does that for us.\n                raise\n            retcode = process.poll()\n            if check and retcode:\n>               raise CalledProcessError(retcode, process.args,\n                                         output=stdout, stderr=stderr)\nE               subprocess.CalledProcessError: Command '['<REPO>/rh2/.venv/bin/python', '-c', 'import qualified_external_fixture']' returned non-zero exit status 1.\n\n<USER_HOME>/.local/share/uv/python/cpython-3.12.13-macos-aarch64-none/lib/python3.12/subprocess.py:571: CalledProcessError\n----------------------------- Captured stderr call -----------------------------\nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\nModuleNotFoundError: No module named 'qualified_external_fixture'\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED tests/test_thing.py::test_stable[after]\nFAILED tests/test_thing.py::test_feature[after] - subprocess.CalledProcessErr...\n1 failed, 1 passed in 0.04s\n"
+    },
+    "all_refs_missing": {
+      "verdict": {
+        "instance_id": "getmoto__moto-0001",
+        "apply_ok": true,
+        "resolution": "RESOLVED_NO",
+        "resolved": false,
+        "f2p_rate": 0.0,
+        "p2p_rate": 0.0,
+        "f2p_success": [],
+        "f2p_failure": [
+          "tests/test_thing.py::test_feature[before]"
+        ],
+        "p2p_success": [],
+        "p2p_failure": [
+          "tests/test_thing.py::test_stable[before]"
+        ],
+        "num_parsed_tests": 2,
+        "num_parsed_outside_segment": 0,
+        "reference_missing": [
+          "tests/test_thing.py::test_feature[before]",
+          "tests/test_thing.py::test_stable[before]"
+        ],
+        "reference_skipped": [],
+        "parser_source": "swegym_parsers@242429c1"
+      },
+      "source_fields": {
+        "outcome": "unresolved",
+        "failure_category": "tests_failed",
+        "reward": 0.0,
+        "f2p_pass_count": 0,
+        "f2p_total_count": 1,
+        "p2p_fail_count": 1,
+        "p2p_total_count": 1
+      },
+      "shape": null,
+      "trigger": "reference_all_missing",
+      "report": {
+        "schema_id": "rh2.grading_report.v1",
+        "report_id": "rpt_grading_ad6d9a2e",
+        "trajectory_id": "r4_nested",
+        "task_id": "rh2-fixture.tiny-0001",
+        "grader_name": "swebench_official_parser",
+        "grader_version": "swebench-4.1.0",
+        "outcome": "unresolved",
+        "failure_category": "tests_failed",
+        "reward": 0.0,
+        "reward_scale_version": "binary_v1",
+        "f2p_pass_count": 0,
+        "f2p_total_count": 1,
+        "p2p_fail_count": 1,
+        "p2p_total_count": 1,
+        "execution_failure_stage": null,
+        "execution_failure_evidence": [],
+        "grading_semantics": "swe_f2p_p2p",
+        "expected_match_count": null,
+        "expected_total_count": null,
+        "patch_hygiene": {
+          "cleaned_patch_digest": "sha256:a7a96c243586fce6712ce0b9ecd903c3070184a350a0a2e798f22a1a97a89a12",
+          "digest_kind": "cleaned_diff_text",
+          "replayed_on_clean_checkout": true,
+          "test_files_modified": false,
+          "forbidden_path_touched": false,
+          "forbidden_paths": [],
+          "verdict": "clean"
+        },
+        "infra_failure_detail": null,
+        "eval_log_ref": {
+          "ref_id": "evallog_r4_nested_ad6d9a2e",
+          "sha256": "sha256:2c9eb35a22e50c5738f1e6a717e448356994d827fe3fed661ebff04182ca23f2",
+          "byte_size": 5318
+        },
+        "timings": {
+          "schema_id": "rh2.grading_timing_record.v1",
+          "record_id": "timing_ad6d9a2e",
+          "trajectory_id": "r4_nested",
+          "task_id": "rh2-fixture.tiny-0001",
+          "image_pull_seconds": 0.0,
+          "env_reset_seconds": 0.0,
+          "prep_seconds": 0.0,
+          "test_seconds": 0.0,
+          "total_grading_seconds": 0.001,
+          "queue_wait_seconds": 0.0,
+          "container_peak_memory_mb": 1.0,
+          "queue_depth_at_enqueue": null,
+          "backpressure_triggered": false
+        },
+        "graded_at_utc": "2026-09-19T07:19:22.644419Z"
+      },
+      "decision": {
+        "candidate_python_paths": null,
+        "compile_probe": null,
+        "evidence": [],
+        "install_rc_baseline": null,
+        "kind": "source_rule",
+        "missing": [
+          "shape_undetermined"
+        ],
+        "qualification": null,
+        "referenced_candidate_paths": null,
+        "resource": null,
+        "rule": null,
+        "stage": null,
+        "trigger": "reference_all_missing"
+      },
+      "compile_runs": [],
+      "resource_reads": 0
+    },
+    "one_reference_present": {
+      "verdict": {
+        "instance_id": "getmoto__moto-0001",
+        "apply_ok": true,
+        "resolution": "RESOLVED_NO",
+        "resolved": false,
+        "f2p_rate": 0.0,
+        "p2p_rate": 1.0,
+        "f2p_success": [],
+        "f2p_failure": [
+          "tests/test_thing.py::test_feature[before]"
+        ],
+        "p2p_success": [
+          "tests/test_thing.py::test_stable[after]"
+        ],
+        "p2p_failure": [],
+        "num_parsed_tests": 2,
+        "num_parsed_outside_segment": 0,
+        "reference_missing": [
+          "tests/test_thing.py::test_feature[before]"
+        ],
+        "reference_skipped": [],
+        "parser_source": "swegym_parsers@242429c1"
+      },
+      "source_fields": {
+        "outcome": "unresolved",
+        "failure_category": "tests_failed",
+        "reward": 0.0,
+        "f2p_pass_count": 0,
+        "f2p_total_count": 1,
+        "p2p_fail_count": 0,
+        "p2p_total_count": 1
+      },
+      "shape": null,
+      "trigger": null,
+      "report": {
+        "schema_id": "rh2.grading_report.v1",
+        "report_id": "rpt_grading_a6b96460",
+        "trajectory_id": "r4_nested_partial_refs",
+        "task_id": "rh2-fixture.tiny-0001",
+        "grader_name": "swebench_official_parser",
+        "grader_version": "swebench-4.1.0",
+        "outcome": "unresolved",
+        "failure_category": "tests_failed",
+        "reward": 0.0,
+        "reward_scale_version": "binary_v1",
+        "f2p_pass_count": 0,
+        "f2p_total_count": 1,
+        "p2p_fail_count": 0,
+        "p2p_total_count": 1,
+        "execution_failure_stage": null,
+        "execution_failure_evidence": [],
+        "grading_semantics": "swe_f2p_p2p",
+        "expected_match_count": null,
+        "expected_total_count": null,
+        "patch_hygiene": {
+          "cleaned_patch_digest": "sha256:a7a96c243586fce6712ce0b9ecd903c3070184a350a0a2e798f22a1a97a89a12",
+          "digest_kind": "cleaned_diff_text",
+          "replayed_on_clean_checkout": true,
+          "test_files_modified": false,
+          "forbidden_path_touched": false,
+          "forbidden_paths": [],
+          "verdict": "clean"
+        },
+        "infra_failure_detail": null,
+        "eval_log_ref": {
+          "ref_id": "evallog_r4_nested_partial_refs_a6b96460",
+          "sha256": "sha256:2c9eb35a22e50c5738f1e6a717e448356994d827fe3fed661ebff04182ca23f2",
+          "byte_size": 5318
+        },
+        "timings": {
+          "schema_id": "rh2.grading_timing_record.v1",
+          "record_id": "timing_a6b96460",
+          "trajectory_id": "r4_nested_partial_refs",
+          "task_id": "rh2-fixture.tiny-0001",
+          "image_pull_seconds": 0.0,
+          "env_reset_seconds": 0.0,
+          "prep_seconds": 0.0,
+          "test_seconds": 0.0,
+          "total_grading_seconds": 0.001,
+          "queue_wait_seconds": 0.0,
+          "container_peak_memory_mb": 1.0,
+          "queue_depth_at_enqueue": null,
+          "backpressure_triggered": false
+        },
+        "graded_at_utc": "2026-09-19T07:19:22.646812Z"
+      },
+      "decision": null,
+      "compile_runs": [],
+      "resource_reads": 0
+    },
+    "one_reference_present_and_pids_event": {
+      "verdict": {
+        "instance_id": "getmoto__moto-0001",
+        "apply_ok": true,
+        "resolution": "RESOLVED_NO",
+        "resolved": false,
+        "f2p_rate": 0.0,
+        "p2p_rate": 1.0,
+        "f2p_success": [],
+        "f2p_failure": [
+          "tests/test_thing.py::test_feature[before]"
+        ],
+        "p2p_success": [
+          "tests/test_thing.py::test_stable[after]"
+        ],
+        "p2p_failure": [],
+        "num_parsed_tests": 2,
+        "num_parsed_outside_segment": 0,
+        "reference_missing": [
+          "tests/test_thing.py::test_feature[before]"
+        ],
+        "reference_skipped": [],
+        "parser_source": "swegym_parsers@242429c1"
+      },
+      "source_fields": {
+        "outcome": "unresolved",
+        "failure_category": "tests_failed",
+        "reward": 0.0,
+        "f2p_pass_count": 0,
+        "f2p_total_count": 1,
+        "p2p_fail_count": 0,
+        "p2p_total_count": 1
+      },
+      "shape": null,
+      "trigger": null,
+      "report": {
+        "schema_id": "rh2.grading_report.v1",
+        "report_id": "rpt_grading_f1f98d52",
+        "trajectory_id": "r4_nested_partial_refs_pids",
+        "task_id": "rh2-fixture.tiny-0001",
+        "grader_name": "swebench_official_parser",
+        "grader_version": "swebench-4.1.0",
+        "outcome": "unresolved",
+        "failure_category": "tests_failed",
+        "reward": 0.0,
+        "reward_scale_version": "binary_v1",
+        "f2p_pass_count": 0,
+        "f2p_total_count": 1,
+        "p2p_fail_count": 0,
+        "p2p_total_count": 1,
+        "execution_failure_stage": null,
+        "execution_failure_evidence": [],
+        "grading_semantics": "swe_f2p_p2p",
+        "expected_match_count": null,
+        "expected_total_count": null,
+        "patch_hygiene": {
+          "cleaned_patch_digest": "sha256:a7a96c243586fce6712ce0b9ecd903c3070184a350a0a2e798f22a1a97a89a12",
+          "digest_kind": "cleaned_diff_text",
+          "replayed_on_clean_checkout": true,
+          "test_files_modified": false,
+          "forbidden_path_touched": false,
+          "forbidden_paths": [],
+          "verdict": "clean"
+        },
+        "infra_failure_detail": null,
+        "eval_log_ref": {
+          "ref_id": "evallog_r4_nested_partial_refs_p_f1f98d52",
+          "sha256": "sha256:2c9eb35a22e50c5738f1e6a717e448356994d827fe3fed661ebff04182ca23f2",
+          "byte_size": 5318
+        },
+        "timings": {
+          "schema_id": "rh2.grading_timing_record.v1",
+          "record_id": "timing_f1f98d52",
+          "trajectory_id": "r4_nested_partial_refs_pids",
+          "task_id": "rh2-fixture.tiny-0001",
+          "image_pull_seconds": 0.0,
+          "env_reset_seconds": 0.0,
+          "prep_seconds": 0.0,
+          "test_seconds": 0.0,
+          "total_grading_seconds": 0.001,
+          "queue_wait_seconds": 0.0,
+          "container_peak_memory_mb": 1.0,
+          "queue_depth_at_enqueue": null,
+          "backpressure_triggered": false
+        },
+        "graded_at_utc": "2026-09-19T07:19:22.650095Z"
+      },
+      "decision": null,
+      "compile_runs": [],
+      "resource_reads": 0
+    }
+  },
+  "source_sha256": {
+    "rh2/src/repoharness2/grading/manager.py": "645bf5e5899b12589d4920e19d501dae139b0fc8b6797bf00f9ff5c41461a36e",
+    "rh2/src/repoharness2/envpack/scoring.py": "b6c8b9bd3e9cac604bc0d03b0b243ef9646de369e94bb6a65e60eadd3a64f5ab",
+    "rh2/tests/grading/test_w3b_grader_profile_unit.py": "33cf9ab09485b676be406cac6a7912f2cd7d495a45848d98dc59fd0b571c5cc3",
+    "rh2/tests/adapters/test_batch4_pa_transport.py": "329de3b526d17868645a40cad5e2020fd2a79cee13c3561d3f90714c5f01b98d"
+  },
+  "old_probe_copy_sha256": "101810f5803759e8c13438bf0b9140972c70bd253e3e749a1a033a2cd4e16fb2"
+}

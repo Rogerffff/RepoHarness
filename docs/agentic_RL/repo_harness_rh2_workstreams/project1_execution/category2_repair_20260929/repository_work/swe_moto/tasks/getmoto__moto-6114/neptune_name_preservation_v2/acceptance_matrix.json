@@ -1,0 +1,84 @@
+{
+  "schema": "moto.acceptance_matrix.plan.v1",
+  "as_of": "2026-10-03",
+  "instance_id": "getmoto__moto-6114",
+  "required_evidence": [
+    "实际固定材料／镜像／代码／配方",
+    "安装与测试完整执行／逐参考状态／退出码",
+    "新增或修正断言的真实执行与目标失败位置",
+    "完整日志、工件、异常及两层清理",
+    "有效正对照与非作者核查"
+  ],
+  "never_send_to_solver": [
+    "gold",
+    "负对照",
+    "私有测试断言",
+    "题主分析"
+  ],
+  "status": "planned_not_run",
+  "material_request": "revision_request.json",
+  "reference_counts": {
+    "fail_to_pass": 1,
+    "pass_to_pass": 36
+  },
+  "controls": [
+    {
+      "name": "noop",
+      "role": "noop",
+      "patch": null,
+      "expected_reward": 0
+    },
+    {
+      "name": "gold",
+      "role": "positive",
+      "patch": {
+        "path": "runs/swegym_quality_batch04_20260921_v1/private/getmoto__moto-6114/gold.patch",
+        "sha256": "bfae681e1044acffe64d7d65c1615b5545f4b62b2625961b7a6fe7d0ad591bbc",
+        "bytes": 635
+      },
+      "expected_reward": 1
+    },
+    {
+      "name": "degenerate_first_object",
+      "role": "known_wrong",
+      "patch": {
+        "path": "runs/swegym_cpu_preprobe_20260929/task_inputs/getmoto__moto-6114/private/degenerate_first_object.patch",
+        "sha256": "5c042121e4bf56693c71f418c139b628d108b0c1fcd67bc0af48201e471c6451",
+        "bytes": 492
+      },
+      "expected_reward": 0,
+      "old_original_material_reward_observed": 1
+    },
+    {
+      "name": "qwen_a1_exact_source",
+      "role": "actual_model_regression_negative",
+      "patch": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_moto/tasks/getmoto__moto-6114/neptune_name_preservation_v2/exact_qwen_a1_source.patch",
+        "sha256": "bb5eab97577260270def73fc06f8a0aa4917727cb9348afbe871f5905b2eb747",
+        "bytes": 6463
+      },
+      "expected_reward": 0,
+      "observed_old_r7_gpu_raw_reward": 1,
+      "expected_failure_scope": "new2P fail / original35 pass; planned, not yet scored under37",
+      "identity_boundary": "create a new local diagnostic candidate under the new material; never rebind original GPU FrozenPatch"
+    }
+  ],
+  "formal_run_count": 4,
+  "shared_code_snapshot": null,
+  "cpu_host": "cpu-a",
+  "new_host_identity_check": true,
+  "resource_limits": "保持R7 2CPU/4GiB/PID512/shm64MiB，setup300/apply120/test1800/candidate900/whole1800/cleanup120，经cpu_slot包内串行。",
+  "required_additional_evidence": [
+    "37项真实pytest collection/逐引用（原1F34P逐项保留）",
+    "base/gold两条名称P2P真实通过，wrong_first原F失败；候选两个P2P实际失败体",
+    "发布的新grading/context/registry digest与有效patch/原公开face/预算精确一致",
+    "使用已验证CPU1d8dCOPY供给时实际绑定source/layers/wheels/UID；与GPU旧43f分开",
+    "原GPU raw1/FrozenPatch不改；新候选绑定和实际分数独立保存"
+  ],
+  "formal_cpu_accepted": false,
+  "actor_executed": false,
+  "model_attempts": 0,
+  "actual_rewards": null,
+  "probe_submission": "not_submitted",
+  "reuse_or_targeted_actor_validation": "公开face未改；原R7真实CC复用边界及UID事实保留，发布新身份后的实际消费/激活/UID/受影响路径须核，不预告typed actor或训练资格"
+}

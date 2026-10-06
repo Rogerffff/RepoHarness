@@ -1,0 +1,367 @@
+{
+ "task_id": "r2e_gym_subset::pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8",
+ "instance_id": "pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8",
+ "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0（当前材料与来源材料相同，material_revisions 为空）",
+ "task_pins": {
+  "base_commit": "608ccd059438d21f8b2b307e93066e4551376035",
+  "source_commit_hash": "2b061b68dbbf4fb590ab532b6fdffea8ee063ae8",
+  "problem_statement_sha256": "sha256:8c7172a7750ab5e8e926ff20436fb142ea8645d33a071b6bf6334bbdb28989ec",
+  "expected_sha256": "sha256:b62258a388d2a76a13fd922ffefdf75673435ac0229bbd776f3778f270e83a23",
+  "hidden_tests_tree_sha256": "sha256:ee7e03a0aaf814884395f1c81dcb94f290773141dd501b338bd1c3d02a615382",
+  "run_tests_sh_sha256": "sha256:8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+  "golden_patch_sha256": "sha256:1b14f5d10b2039aff74b2c3b6b6e9270dfef56180e4d9f991c55842eb773dbfd"
+ },
+ "source_adapter_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/：grading_bundles_r2e_v0.jsonl 与 validation_bundles_v0.jsonl 第 37 行；public_bundles_v0.jsonl 行 sha256 500ed7bd…；spec_vendor r2e_gym_subset_e8b9fcbc；parser r2e_prime_pytest_v1，键归一化 prime_decolor_v1",
+ "recipe_ref": {
+  "derived_image": "r2e_derive_v1",
+  "derived_image_ref": "rh2-r2e-derived/pillow:2b061b68dbbf-r2e_derive_v1",
+  "derived_image_id": "sha256:006d96edc2e396111ea3fb70258ccbcd7e04bd147ba8b28e54bb63de2c90dfc1",
+  "recipe_sha256": "sha256:0da821a15fa389289f524c60d3a421bc940cce753e4ecf3d53560b7ab6b31df9",
+  "source_image": "namanjain12/pillow_final:2b061b68dbbf4fb590ab532b6fdffea8ee063ae8（manifest sha256:05f579903d9453fc5a8ae8481c9784bd702f98180476d6f093b2bb64527e754e）",
+  "env_recipe": null,
+  "resource_recipe": null,
+  "resources": "默认档：2 CPU / 4 GiB / /tmp 1 GiB，network deny_all；评分用户 uid 54322"
+ },
+ "code_snapshot_ref": "评分 grader_version r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe；scripts_digest sha256:1de4e6dd…（取自 current 账本行）。解析规则见 rh2/src/repoharness2/envpack/r2e_parsers.py，本轮只读核对，没有运行",
+ "facts_ref": {
+  "run_refs": "runs/r2e_static_prep_20260924/v2/private/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/run_refs.json",
+  "env_facts": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/facts.json",
+  "runs": [
+   {
+    "role": "noop",
+    "condition": "current 材料，派生镜像，R-f 09-23",
+    "ledger": "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl",
+    "line": 37,
+    "reward": 0.0,
+    "match": "54/55，唯一不符键 TestImage.test_open_formats",
+    "log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_90eb28b3.eval.log"
+   },
+   {
+    "role": "gold",
+    "condition": "current 材料，派生镜像，R-f 09-23",
+    "ledger": "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl",
+    "line": 37,
+    "reward": 1.0,
+    "match": "55/55",
+    "log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_d21a126c.eval.log"
+   },
+   {
+    "role": "noop",
+    "condition": "current 材料，派生镜像，环境轮复跑",
+    "ledger": "runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl",
+    "line": 37,
+    "reward": 0.0,
+    "match": "54/55，唯一不符键 TestImage.test_open_formats",
+    "log": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_118b9a70.eval.log"
+   },
+   {
+    "role": "gold",
+    "condition": "current 材料，派生镜像，环境轮复跑",
+    "ledger": "runs/r2e_env_repair_20260924/_rerun2/ledger_gold.jsonl",
+    "line": 37,
+    "reward": 1.0,
+    "match": "55/55",
+    "log": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_ed596d34.eval.log"
+   },
+   {
+    "role": "gold_independent_reference",
+    "condition": "M3 独立 runner，来源镜像，来源材料",
+    "ledger": "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl",
+    "lines": [10, 57],
+    "reward": 1,
+    "match": "两次均 passed；逐键状态与 RH2 相同（53 PASSED、2 FAILED）",
+    "logs": [
+     "runs/env_overnight_20260916/M3/gold_ledger/logs_r2e/pillow/2b061b68dbbf/gold/a1/test_output.txt",
+     "runs/env_overnight_20260916/M3/gold_ledger/logs_r2e/pillow/2b061b68dbbf/gold/a2/test_output.txt"
+    ]
+   }
+  ],
+  "image_level_probe": [
+   "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/agent_probe.log",
+   "runs/r2e_env_repair_20260924/p4/targeted_public_tests/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/agent_probe.log",
+   "runs/r2e_env_repair_20260924/p4/image_readout/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8.txt"
+  ],
+  "note": "两组 noop / gold 日志在地址与时间戳归一化后逐行相同；各 sha256 已与 run_refs.json 核对一致"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "note": "题面、base、gold、隐藏测试、期望映射对应同一个上游提交 2b061b68：gold 是该提交中 src/PIL/Image.py 的改动；隐藏 test_1.py = base Tests/test_image.py + 新增 test_open_formats（多 20 行）；隐藏 helper.py 与 base Tests/helper.py 逐字相同；M3 gold_meta 显示该提交只改了 Image.py 和 Tests/test_image.py"
+  },
+  "2": {
+   "status": "issue",
+   "note": "初态的真实缺口是 Image.open 没有 formats 参数，noop 目标键正是因此失败（报 unexpected keyword argument 'formats'），这部分成立。但题面描述的 save/show TypeError 不是库本身的缺陷：库函数调用复现为 REPRO_OBSERVED=0，该报错只出现在两个死键里"
+  },
+  "3": {
+   "status": "issue",
+   "note": "解题者收到的题面不准确：它假定 formats 已经存在；把 pytest 8 的伪影写成了缺陷；示例与目标断言冲突；称 show() 已弃用。另外只有静态渲染的 user_prompt.txt，没有捕获实际发给模型的消息"
+  },
+  "4": {
+   "status": "pass",
+   "note": "合法修复只需改 src/PIL/Image.py；gold 评分投影的 included_paths 为 ['src/PIL/Image.py']；不需要额外排除任何路径"
+  },
+  "5": {
+   "status": "issue",
+   "note": "同池 pillow 题 2d01f7d0、3a61c9e9、4bc64835、a682ceaf、f9d3ee0f 的公开 base 已包含上游终版的 formats 实现（含 i.upper() 与按需 init()），公开测试里也有 test_open_formats；3ac9396e 早于这个特性。划分训练/评测时需要记录这层关系"
+  },
+  "6": {
+   "status": "pass",
+   "note": "不需要新增依赖。install.sh 执行 uv pip install setuptools pytest pytest-cov PyQt5，并以 -e 可编辑方式安装本仓库（见 image_readout）；pytest 没有固定版本，装到的是 8.3.4，这正是两个死键的来源"
+  },
+  "7": {
+   "status": "pass",
+   "note": "Tests/images/hopper.png 与 hopper.jpg 等测试资源都在工作树里，评分时可用"
+  },
+  "8": {
+   "status": "pass",
+   "note": "评分侧（uid 54322）已实测；解题侧（agent/54321，派生镜像内 docker exec）为镜像层面实测：/testbed 与 home 可写。正式 actor 链还没有验证"
+  },
+  "9": {
+   "status": "pass",
+   "note": "评分侧与探针都显示 import PIL 指向 /testbed/src/PIL/__init__.py，版本 8.0.0.dev0；cwd=/tmp 时也如此"
+  },
+  "10": {
+   "status": "pass",
+   "note": "镜像层面实测：python、pytest（8.3.4）和 git 都可用，公开测试能跑。但公开 Tests/test_image.py 有 2 例预存失败，而且报错与题面逐字相同，会形成误导（见 issues）"
+  },
+  "11": {
+   "status": "pass",
+   "note": "准备、解题、评分各阶段都不需要网络；gold 在 deny_all 下得 1"
+  },
+  "12": {
+   "status": "not_applicable",
+   "note": "不依赖外部服务"
+  },
+  "13": {
+   "status": "pass",
+   "note": "内存峰值约 466 MB，限额 4 GiB；测试段约 0.3–0.8 s"
+  },
+  "14": {
+   "status": "pass",
+   "note": "当前材料下 noop、gold 各跑 2 次，逐键结果一致；M3 在来源镜像上跑 gold 2 次，结果也一致。effect_noise / effect_spread 用的是没有播种的 C rand()，在测试顺序固定时结果基本确定（静态推断）"
+  },
+  "15": {
+   "status": "not_checked"
+  },
+  "16": {
+   "status": "pass",
+   "note": "gold 补丁通过冻结与投影交付到评分端，git_apply 的返回码为 0"
+  },
+  "17": {
+   "status": "pass",
+   "note": "评分前放回 r2e_tests/{__init__,helper,test_1}.py 与 run_tests.sh（RH2_SETUP_RESTORED=3，TEST_FILES=4），不与 gold 修改的路径相交"
+  },
+  "18": {
+   "status": "issue",
+   "note": "两个期望 FAILED 的键都在构造 pytest.warns(None) 时失败（_pytest/recwarn.py:279），测试体没有执行。它们虽然有状态，却不验证任何行为"
+  },
+  "19": {
+   "status": "pass",
+   "note": "解析器对期望侧与观测侧用同一规则去除 ANSI 颜色码；55 个键去色后互不相同；本题键里没有 SKIP/XFAIL"
+  },
+  "20": {
+   "status": "pass",
+   "note": "noop 得 0，完全来自目标键 test_open_formats（unexpected keyword argument 'formats'）；gold 55/55"
+  },
+  "21": {
+   "status": "pass",
+   "note": "没有安装、收集或平台层面的失败；segment_completed=True，num_parsed_tests=55"
+  },
+  "22": {
+   "status": "pass",
+   "note": "M3 独立 runner 在来源镜像上的 gold 结果逐键与 RH2 相同；历史对账 R15 结论为 agree（reconcile.json 本身没有打开）"
+  },
+  "23": {
+   "status": "issue",
+   "note": "题面示例与 Expected 第 1 条要求 Image.open('hopper.png', formats=['JPEG']) 正常工作，但隐藏断言（H/test_1.py:96-98）要求同一调用抛 UnidentifiedImageError；Actual Behavior 描述的是 pytest 8 伪影；Expected 第 3 条称 show() 已弃用，与公开文档相反。只有 restrict 这个词支持测试所选的语义"
+  },
+  "24": {
+   "status": "issue",
+   "note": "按题面示例实现的先试后回退语义，静态判断必得 0，这是本题的触发反例。低风险误拒：formats=123 时显式抛 ValueError、只接受 list、没有匹配时抛自定义异常。均未运行"
+  },
+  "25": {
+   "status": "issue",
+   "note": "静态推断：formats=None 时取 list(ID) 快照的实现预测得 1，但在新进程里会打不开任何图片；gold 加上无参 show() 的 DeprecationWarning 预测得 1。两者都待 CPU 验证"
+  },
+  "26": {
+   "status": "issue",
+   "note": "默认 open 路径有 52 个回归键覆盖，但都发生在 init() 之后；save / show 的警告行为（公开测试 Tests/test_image.py:593-601、763-773）没有任何有效键保护"
+  },
+  "27": {
+   "status": "issue",
+   "note": "轻微：gold 对新进程里尚未注册的格式（如 TIFF）、小写或未知的格式名会抛 KeyError（Image.py:2905-2913），上游后来修正了这一点；这些情况没有测到，所以不会误拒更完整的修复。gold 也不满足题面 Expected 的字面要求，这反证题面有误"
+  },
+  "28": {
+   "status": "not_applicable",
+   "note": "本轮没有实施任何修订，也没有新增断言。建议的题面修订属于公开规格纠错，需另行审定"
+  },
+  "29": {
+   "status": "issue",
+   "note": "派生镜像内镜像层面实测没有泄漏：/r2e_tests 不存在，私有目录拒绝访问，无 refs、reflog 或补丁残留。平台共性问题：正式 actor 目前用来源镜像，其中 /r2e_tests 可读、git 历史里有修复提交（环境卡 §2），B 线正在修改，不属于本题材料"
+  },
+  "30": {
+   "status": "unknown",
+   "note": "评分与解题都没有网络；预训练是否见过 Pillow 上游实现未知；没有真实求解轨迹"
+  },
+  "31": {
+   "status": "unknown",
+   "note": "候选可以修改根目录的 conftest.py、Tests/helper.py（由 pytest_plugins 加载）和 setup.cfg，这些改动在评分时都会生效，属于 R2E 通用控制面，未逐题做攻击验证。能让两个死键翻转的途径只有改测试设施，而翻转会判 0"
+  },
+  "32": {
+   "status": "pass",
+   "note": "断言检查的是异常类型、mode 和 size 等行为，不匹配文本，也不只检查文件是否存在"
+  },
+  "33": {
+   "status": "not_checked"
+  },
+  "34": {
+   "status": "not_checked"
+  },
+  "35": {
+   "status": "not_checked"
+  },
+  "36": {
+   "status": "not_checked"
+  },
+  "37": {
+   "status": "not_applicable",
+   "note": "没有已实施的修订。建议的修订只改公开规格（题面纠错），不改环境，也不改测试标准"
+  },
+  "38": {
+   "status": "not_applicable"
+  },
+  "39": {
+   "status": "not_applicable"
+  },
+  "40": {
+   "status": "not_applicable"
+  }
+ },
+ "issues": [
+  {
+   "id": "statement_conflict",
+   "category": "task_quality",
+   "scope": "task",
+   "summary": "公开题面误导，而且与目标断言冲突。它假定 formats 已经存在；把 pytest 8 拒绝 pytest.warns(None) 产生的 TypeError 写成 save/show 的缺陷；示例 PNG 配 formats=['JPEG'] 被写成应当成功，测试却要求抛 UnidentifiedImageError；还称 show() 已弃用",
+   "evidence_level": "测试代码可直接确定 + 历史执行（评分日志；探针复现 REPRO_OBSERVED=0，身份 agent/54321）",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/public/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/user_prompt.txt",
+    "runs/r2e_static_prep_20260924/v2/private/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/hidden_tests/test_1.py:89-107",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_90eb28b3.eval.log",
+    "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/agent_probe.log",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8.md"
+   ],
+   "proposed_action": "修订公开题面（历史提案中的选项 B）：删掉 TypeError 与 save/show 的叙述以及 formats 已存在的前提；示例改成与 restrict 一致；核心语义写明 restrict、没有匹配时抛 UnidentifiedImageError、None 表示全部格式，list/tuple 可作为 API 约定写入；隐藏测试与期望不改。以回退语义候选作为触发反例，在派生镜像上评分确认得 0。需用户决定",
+   "status": "open"
+  },
+  {
+   "id": "dead_keys_leave_warning_behavior_unprotected",
+   "category": "test_coverage",
+   "scope": "task",
+   "summary": "test_no_resource_warning_on_save 与 test_show_deprecation 在 pytest 8.3.4 下测试体不执行，save/show 的警告行为因此不受保护。题面 Expected 第 2、3 条诱导出的有害改动（例如给无参 show() 加 DeprecationWarning）预测仍会得 1",
+   "evidence_level": "静态推断",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_d21a126c.eval.log",
+    "runs/r2e_static_prep_20260924/v2/public/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/worktree/Tests/test_image.py:763-773"
+   ],
+   "proposed_action": "CPU 对照候选 (iii)：gold 加上 show() 警告，预测得 1。题面修订后这条的重要性下降。可选的测试支撑修订：把 pytest.warns(None) 换成语义等价的 warnings.catch_warnings(record=True)，这样两个键会从 FAILED 变为 PASSED，是否偏离来源期望由用户决定",
+   "status": "open"
+  },
+  {
+   "id": "fresh_process_default_open_uncovered",
+   "category": "test_coverage",
+   "scope": "task",
+   "summary": "评分会话中第一次 init() 发生在 test_open_formats 的 A2 分支里，所有 formats=None 的调用都在其后。因此在 preinit() 之前取 list(ID) 快照的实现预测会得 1，但在新进程里第一次调用 Image.open 会抛 UnidentifiedImageError",
+   "evidence_level": "静态推断",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/hidden_tests/test_1.py:89-107",
+    "runs/r2e_static_prep_20260924/v2/public/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/worktree/src/PIL/Image.py:347-412"
+   ],
+   "proposed_action": "CPU 对照候选 (ii)：评分一次，另外在新进程里执行 python -c 打开 Tests/images/hopper.png。若要新增子进程检查，这属于新断言，需要单独审定",
+   "status": "open"
+  },
+  {
+   "id": "gold_incomplete_unregistered_formats",
+   "category": "reference_solution",
+   "scope": "task",
+   "summary": "gold 对新进程里尚未注册的格式（如 TIFF）、小写格式名和未知格式名会抛 KeyError，上游后来补上了 i.upper() 与按需 init()。没有测到，所以不会误拒更完整的实现",
+   "evidence_level": "静态推断",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/gold.patch",
+    "runs/r2e_static_prep_20260924/v2/public/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/worktree/src/PIL/Image.py:2893-2913"
+   ],
+   "proposed_action": "只记录",
+   "status": "open"
+  },
+  {
+   "id": "cross_task_answer_visibility",
+   "category": "relation",
+   "scope": "repo:pillow",
+   "summary": "同池 5 道 pillow 题的公开 base 已含本题答案的上游终版和对应的公开测试",
+   "evidence_level": "公开包核对",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/public/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96/worktree/src/PIL/Image.py"
+   ],
+   "proposed_action": "划分数据时记录：本题不应作留出评测，同时让这些题进入训练；或者反过来",
+   "status": "open"
+  },
+  {
+   "id": "public_test_noise_echoes_statement",
+   "category": "solver_condition",
+   "scope": "task",
+   "summary": "公开 Tests/test_image.py 在 base 上有 2 例预存失败，报错与题面逐字相同，可能被当作复现成功；此外没有 pip，public_hints 里 conda/pip 的说法也与实际不符",
+   "evidence_level": "镜像层面实测（agent/54321）",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p4/targeted_public_tests/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/agent_probe.log",
+    "runs/r2e_env_repair_20260924/p4/dev_probe/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/agent_probe.log"
+   ],
+   "proposed_action": "按 E10 写入解题侧条件；题面修订后不必再额外说明",
+   "status": "open"
+  },
+  {
+   "id": "formal_actor_uses_source_image",
+   "category": "platform",
+   "scope": "global",
+   "summary": "正式 actor 取 public.image，也就是来源镜像：其中 /r2e_tests 可读，git 历史里有修复提交；解释器前缀与提示还写着 conda",
+   "evidence_level": "代码事实（R2E 环境卡 §2，09-25）",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/r2e_environment_card.md"
+   ],
+   "proposed_action": "B 线实现、A 线审查；进入正式 actor 之前必须修改",
+   "status": "open"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": []
+ },
+ "revision_refs": [],
+ "disposition": {
+  "scope": "static_review",
+  "state": "needs_review",
+  "reason": "题意/测试争议：公开题面误导，且与目标断言直接冲突；不是环境问题。隐藏测试、期望映射、gold 与环境自洽，重复评分稳定。修订题面后可作为静态候选，等待 actor 验证",
+  "recommendation": "B：修订公开题面，隐藏测试与期望不改。原题面不进训练",
+  "next_step": "起草题面修订版，以回退语义候选作为触发反例，在派生镜像上评分确认得 0；同一批顺带跑 list(ID) 快照候选与 gold 加 show() 警告候选；然后交用户决定",
+  "previous_state": "grading_ok_open_items（环境阶段，open_items: statement_conflict，deferred_to 题意与评分质量筛查）",
+  "history_delta": "处置不变；证据级别上调（镜像层面探针）；与历史的分歧见 old_findings_delta.md §4",
+  "probe_candidate": false,
+  "reviewer": null
+ },
+ "usage": {
+  "intended_use": "development_diagnostic",
+  "reviewer_exposure": "私有主审看过 gold、隐藏测试、期望映射、评分日志、历史调查（初判保存之后），以及同池 pillow 题公开包的 formats 片段；另看过批次协调记录 assignments.json（已登记）",
+  "not_for_solver": true,
+  "note": "本记录不是正式训练或评测批准"
+ },
+ "costs": {
+  "tokens": null,
+  "usd": null,
+  "new_cpu_seconds": null,
+  "note": "本轮没有运行任何项目代码或容器；引用的运行耗时见各账本"
+ },
+ "review_refs": {
+  "public_read": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/public_read.md",
+  "analysis_before_history": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/analysis_before_history.md",
+  "old_findings_delta": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/old_findings_delta.md",
+  "card": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8/card.md"
+ }
+}

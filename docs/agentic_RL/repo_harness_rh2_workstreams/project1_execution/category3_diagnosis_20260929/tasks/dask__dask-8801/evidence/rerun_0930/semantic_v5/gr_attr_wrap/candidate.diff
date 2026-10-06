@@ -1,0 +1,20 @@
+diff --git a/dask/config.py b/dask/config.py
+index 282ef73a6..736936cc0 100644
+--- a/dask/config.py
++++ b/dask/config.py
+@@ -180,10 +180,13 @@ def collect_yaml(paths: Sequence[str] = paths) -> list[dict]:
+         try:
+             with open(path) as f:
+                 data = yaml.safe_load(f.read()) or {}
+-                configs.append(data)
++            update({}, data)  # make sure the file can be merged
+         except OSError:
+             # Ignore permission errors
+-            pass
++            continue
++        except Exception as exc:
++            raise ValueError(f"Could not load Dask config file {path}: {exc}") from exc
++        configs.append(data)
+ 
+     return configs
+ 

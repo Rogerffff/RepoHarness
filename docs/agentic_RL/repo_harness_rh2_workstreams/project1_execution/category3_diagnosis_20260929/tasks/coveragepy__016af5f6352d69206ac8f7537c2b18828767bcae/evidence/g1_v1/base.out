@@ -1,0 +1,34 @@
+main.py
+\377.py
+main ran
+Traceback (most recent call last):
+  File "/root/.local/share/uv/python/cpython-3.7.9-linux-x86_64-gnu/lib/python3.7/runpy.py", line 193, in _run_module_as_main
+    "__main__", mod_spec)
+  File "/root/.local/share/uv/python/cpython-3.7.9-linux-x86_64-gnu/lib/python3.7/runpy.py", line 85, in _run_code
+    exec(code, run_globals)
+  File "/testbed/coverage/__main__.py", line 8, in <module>
+    sys.exit(main())
+  File "/testbed/coverage/cmdline.py", line 824, in main
+    status = CoverageScript().command_line(argv)
+  File "/testbed/coverage/cmdline.py", line 555, in command_line
+    return self.do_run(options, args)
+  File "/testbed/coverage/cmdline.py", line 710, in do_run
+    self.coverage.save()
+  File "/testbed/coverage/control.py", line 642, in save
+    data = self.get_data()
+  File "/testbed/coverage/control.py", line 697, in get_data
+    self._post_save_work()
+  File "/testbed/coverage/control.py", line 722, in _post_save_work
+    self._data.touch_file(file_path, plugin_name)
+  File "/testbed/coverage/sqldata.py", line 544, in touch_file
+    self._file_id(filename, add=True)
+  File "/testbed/coverage/sqldata.py", line 367, in _file_id
+    cur = con.execute("insert or replace into file (path) values (?)", (filename,))
+  File "/testbed/coverage/sqldata.py", line 1032, in execute
+    return self.con.execute(sql, parameters)
+UnicodeEncodeError: 'utf-8' codec can't encode character '\udcff' in position 8: surrogates not allowed
+[run rc=1]
+Name      Stmts   Miss  Cover
+-----------------------------
+main.py       1      0   100%
+[report rc=0]

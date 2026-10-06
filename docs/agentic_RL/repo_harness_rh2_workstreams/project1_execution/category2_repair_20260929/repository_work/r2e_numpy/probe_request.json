@@ -1,0 +1,232 @@
+{
+  "schema_id": "rh2.ordinary_gpu_probe.owner_request.v1",
+  "request_id": "r2e-numpy-d805-078079-cpu-v1-20261003",
+  "status": "cpu_acceptance_complete_ready_for_executor_validation",
+  "package_id": "r2e_numpy",
+  "package_path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_numpy",
+  "owner_thread_id": "01a0fd64-4b16-7923-99c3-66e8561b5782",
+  "tasks": [
+    {
+      "task_id": "r2e_gym_subset::numpy__d805e9b66228e68a0eb14d901cd350159c49af18",
+      "instance_id": "numpy__d805e9b66228e68a0eb14d901cd350159c49af18",
+      "purpose": "在修订后真实harness下观察基座能否修复一维masked array打印问题；由本题主审实际候选行为与原评分，发现题级缺陷后继续修复。",
+      "allowed_uses": [
+        "题目与环境质量诊断",
+        "有明确适用条件的基座表现观察"
+      ],
+      "limits": [
+        "本轮正对照已验范围是一维公开要求与229键验收，不涵盖所有dtype、子类、打印配置、二维或性能。",
+        "本题自建修订须按078/079版本报告；gold正式预期0，健全性正对照须用K-A5c。",
+        "沿用同仓答案暴露X1与留出划分边界；本请求不授予训练或留出资格。",
+        "共享测试控制保护E3按用户决定延后；实际控制修改与原reward分列审计，不把原分直接当语义正确性。"
+      ],
+      "source_binding": {
+        "release_id": "cat2-cpu-r2e078079-swe7-git-20261003-v1",
+        "local_release_dir": "runs/category2_repair_20260929/releases_20261003/r2e_078_079_swe7_git_candidate_v1",
+        "external_manifest": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_078_079_swe7_git_candidate_v1/manifest.json",
+          "sha256": "sha256:80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9"
+        },
+        "members_verified": 837,
+        "registry": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_078_079_swe7_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v17.json",
+          "sha256": "sha256:2af5c20fec2293c27f0ffc967f0345edc4fe89978a536299f9963261c932f72d"
+        },
+        "input_pins": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_078_079_swe7_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/t1_input_pins_r2e_v18.json",
+          "sha256": "sha256:7b8ee0127d9bd36cfc65bfd7aa9d1bfcb68d7d30c539c1d699c77257a47c3d27"
+        },
+        "material_revision_ids": [
+          "r2e-mr-078",
+          "r2e-mr-079"
+        ],
+        "public_statement_revision": "r2e-mr-079",
+        "hidden_test_file": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_078_079_swe7_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files_20261003_v17/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/test_1.py",
+          "sha256": "sha256:09d0aa6d80f85d394fc0a7971e23de8dd43a79d817749f0246693f62898bf67a"
+        },
+        "hidden_tests_tree_sha256": "sha256:4a5af0576a4cb97a731e577e3e3cab283e9b27f863da024d738a9c1662cd3fcf",
+        "expected_output_json_sha256": "sha256:4ed3f5bcaea6016adb71885f0befe9dd1e056d460d7e6410e9a40fc84be11dd6",
+        "expected_total": 229,
+        "run_tests_sh_sha256": "sha256:8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+        "problem_statement_sha256": "sha256:0d6302a3be3a39d0828c4fc5cf3b9e4d70ce6099b9bc61f6cf4275aad276225e",
+        "private_reference_bindings": [
+          {
+            "name": "K-A5c",
+            "role": "healthy_positive_reference",
+            "expected_score": 1,
+            "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_numpy/private/candidates/numpy_d805_KA5c.patch",
+            "sha256": "sha256:c343ac75de6e122550efb9c93d2e0d88596afe5c8cfd6270f48eade8a7050ffa"
+          },
+          {
+            "name": "source_gold",
+            "role": "known_incomplete_reference_not_health_positive",
+            "expected_score": 0,
+            "path": "runs/category2_repair_20260929/r2e_numpy/cpu_b_20261003/formal-inputs-20261003-03/candidates/gold.diff",
+            "sha256": "sha256:a1adb8d1abdb7402bb4565bac61fa79506f46c68a0b648e996e96477ed1f7cde"
+          }
+        ],
+        "all_candidate_bindings": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_numpy/acceptance_matrix.json",
+          "sha256": "sha256:39c484f704362ef0d33b358fb9a638eb28d9e4d1a5c00fa1f2bb2ca01dd4e10d"
+        },
+        "image_applied_hidden_material_ids": [
+          "r2e-mr-078"
+        ],
+        "host_grading_revision_ids": [
+          "r2e-mr-078",
+          "r2e-mr-079"
+        ]
+      },
+      "image": {
+        "source_ref_by_digest": "namanjain12/numpy_final@sha256:46a9c6ae07ec34c3297ce6a5f71afbdc9e7b83bd5b086a8f4d82a0877b4d73c1",
+        "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+        "recipe_sha256": "sha256:5c42642527f014fca20bc0b7174b4f58d85c22c060fa3c84138816dc1006c6a4",
+        "cpu_derived_image_id": "sha256:e5c5233cedd4a61525d87bb4f967b2a93f106c6826494bc14326782062b004ac",
+        "cpu_facts": {
+          "path": "runs/category2_repair_20260929/r2e_numpy/cpu_b_20261003/remote_evidence/packages/r2e_numpy/builds/new078079-release5-v1/numpy__d805e9b66228e68a0eb14d901cd350159c49af18/facts.json",
+          "sha256": "sha256:fb49093f29af43c3ccea50baf794396ac305ca82261677ef60ba34476d96b269"
+        },
+        "recipe_scripts": [
+          {
+            "path": "runs/category2_repair_20260929/releases_20261003/r2e_078_079_swe7_git_candidate_v1/repo/rh2/scripts/r2e_derive/recipe_v1.sh",
+            "sha256": "sha256:0da821a15fa389289f524c60d3a421bc940cce753e4ecf3d53560b7ab6b31df9"
+          },
+          {
+            "path": "runs/category2_repair_20260929/releases_20261003/r2e_078_079_swe7_git_candidate_v1/repo/rh2/scripts/r2e_derive/material_v2.sh",
+            "sha256": "sha256:0d259ae34ca823ca3fcb29c46e09f6e5d0b149690a5336ec491a14b94a769a3d"
+          },
+          {
+            "path": "runs/category2_repair_20260929/releases_20261003/r2e_078_079_swe7_git_candidate_v1/repo/rh2/scripts/r2e_derive/sysconfig_v1.sh",
+            "sha256": "sha256:63ab3356e80bb6d9bccb682060c2769c03fc68a7b8273ece632eb5628347cc33"
+          }
+        ],
+        "builder": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_078_079_swe7_git_candidate_v1/repo/rh2/scripts/build_r2e_derived.py",
+          "sha256": "sha256:5af7dc214976336ea440674bc4416cfa0a805881463798e05ebbb3e33af19471"
+        },
+        "gpu_actual_image_id": null,
+        "gpu_binding_policy": "由执行者核固定版本并准备实际GPU镜像ID；CPU身份只作证据，不代填GPU镜像。",
+        "environment_install_note": "沿来源镜像既有Python3.7/NumPy环境，隐藏测试搬迁及sysconfig_v1均已固化；无新增依赖安装或pytest版本改装。"
+      },
+      "public_development_brief": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_numpy/public/solver_environment_brief.md",
+        "sha256": "sha256:fb84fe5addc9dfb5e46c4d75c5b51d2196a0bd9403bf9c68ce23a73b1f9f247e",
+        "public_reader_review": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_numpy/reviews/solver_environment_brief_review.md",
+          "sha256": "sha256:cd18b130ca9978467f3772532325ebc58fc54f78d06f2da8245b80561553e0f9"
+        },
+        "visibility": "fresh solver只接正式公开题面与本中性说明；CPU调查、私有测试、参考补丁和全部内部工作包不可交付。",
+        "actual_delivery_requirement": "统一入口生成的完整题面加说明须核实际首条CC请求；CPU实际只验正式题面与public_hints，不冒称该独立说明已进入GPU。"
+      },
+      "cpu_acceptance": {
+        "status": "independently_verified_passed",
+        "evidence_index": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_numpy/cpu_acceptance_v1.json",
+          "sha256": "sha256:91edb0038c2a8c021b959656a2034afdedf808086452e2394613c1c23f1e291c"
+        },
+        "index_stage_note": "Immutable author-stage index retains pending-review text; final non-author report is bound separately below.",
+        "formal_matrix": {
+          "rows": 10,
+          "strict_expected_keys_per_row": 229,
+          "scores": {
+            "K-A5c": 1,
+            "K-A5b": 0,
+            "hybrid": 0,
+            "gold": 0,
+            "noop": 0,
+            "K-DE": 0,
+            "K-DC": 0,
+            "K-DF": 0,
+            "DG-e": 0,
+            "DG-g": 0
+          },
+          "formal_driver_returncodes": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "outer_job_returncode": 1,
+          "outer_author_check_error": "DG-g input and actual projection only change numpy/core/arrayprint.py; hardcoded ma/core.py post-run check failed after all ten drivers. Offline and independent original-evidence reviews close the check error; no score rerun or rc rewrite.",
+          "offline_original_evidence_audit": {
+            "path": "runs/category2_repair_20260929/r2e_numpy/cpu_b_20261003/final_matrix_audit.json",
+            "sha256": "sha256:af8c07b4b47aa9b6f3999de5cd806cab276587e6817528f9b653468d1c5ac519"
+          }
+        },
+        "public_actor": {
+          "kind": "real_CC_with_scripted_stub_not_model_probe",
+          "actual_formal_prompt_in_first_generation": true,
+          "public_hints_in_generation": 3,
+          "generation_requests": 7,
+          "Bash_calls": 6,
+          "public_tests_passed": 6,
+          "public_tests_deselected": 234,
+          "warnings": 2,
+          "base_repro_returncode": 1,
+          "base_repro_note": "expected initial issue reproduced; not a repaired-source result",
+          "harness_returncode": 0,
+          "scoreable_frozen_delta_empty": true,
+          "excluded_pathset_changed": true,
+          "separate_GPU_brief_actual_delivery": "not_yet_run; executor must deliver and audit actual first request",
+          "cleanup": "zero remaining labelled containers, processes, sessions, relays and networks per original receipts",
+          "summary": {
+            "path": "runs/category2_repair_20260929/r2e_numpy/cpu_b_20261003/remote_evidence/packages/r2e_numpy/acceptance/new078079-public-v1/actor/summary.json",
+            "sha256": "sha256:fd71266eff7fba54785719809706178458cd8684f2fb9337dd128ae0dd0094ea"
+          }
+        },
+        "cleanup": "all ten formal candidate and manager layers plus public actor verified clean",
+        "scope": "revision quality and submission eligibility; not model outcome, runtime admission, training eligibility or held-out qualification"
+      },
+      "non_author_review": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_numpy/reviews/cpu_acceptance_review.md",
+        "sha256": "sha256:7b8e55ed6c077b49489200095e3fc77fc3f79cc5c613d9fae8691d1bc3fccd9e",
+        "status": "passed",
+        "blocking_findings": 0,
+        "scope": "new_078079_formal_ten_actual_public_CC_and_full_frozen_evidence",
+        "reviewer_model": "gpt-6.1-sol",
+        "reasoning_effort": "high",
+        "disclosure": "non_author_non_executor_read_only; reviewer knows prior private context and is not a fresh solver"
+      },
+      "positive_control_override": {
+        "name": "K-A5c",
+        "expected_score": 1,
+        "patch": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_numpy/private/candidates/numpy_d805_KA5c.patch",
+          "sha256": "sha256:c343ac75de6e122550efb9c93d2e0d88596afe5c8cfd6270f48eade8a7050ffa"
+        },
+        "cpu_evidence": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_numpy/cpu_acceptance_v1.json",
+          "sha256": "sha256:91edb0038c2a8c021b959656a2034afdedf808086452e2394613c1c23f1e291c"
+        },
+        "cpu_result": "new078079 formal 229/229 PASSED with correct frozen projection, exits and cleanup; independent review passed",
+        "validated_scope": "tested one-dimensional requirements and 229 original expected keys; no blanket dtype, subclass, 2D or performance claim",
+        "visibility": "host-side executor acceptance only; never append to solver prompt"
+      },
+      "original_gold_is_negative": true,
+      "original_gold_expected_score": 0
+    }
+  ],
+  "model_budget": {
+    "decision_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/ordinary_probe_20260929/gpu_coordination_decisions_20261002.md",
+    "budget_id": "probe-wide-v1",
+    "attempts_per_model": 1,
+    "models": [
+      "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+      "Qwen/Qwen3.6-35B-A3B"
+    ]
+  },
+  "executor_resolves": [
+    "不可变GPU运行请求与代码版本",
+    "实际GPU宿主镜像ID和来源/材料一致性",
+    "独立公开说明的实际首请求交付",
+    "模型服务/预算/单卡排队准入"
+  ],
+  "result_owner_policy": "完整证据回到原owner后，继续审公开要求、实际候选与原评分，必要修订与复验仍由本线程负责。"
+}

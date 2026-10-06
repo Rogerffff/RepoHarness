@@ -1,0 +1,19 @@
+# 四题的正式CPU接续记录
+
+2026-10-03。四题publish回执及cpu-a部署已核，绑定R14 `cat2-cpu-r2e089092-swe34-dvc-pyd-20261003-v1`，manifest SHA `51b833975be2c3354be45b731552235a33070315f0039c8e6f54987de95f6ca8`、1220成员。**四题均已完成本版本范围的组合CPU及公开actor验收，并提交固定普通GPU探针。** 本目录保留R14原始运行身份。8316旧R14五行0／1／1／1／0与第六行保护超时infra/null不回写；后续R20新十九行及公开actor已独立完成并获[最终组合核查](../../reviews/non_author_8316_r20_combined_cpu_review_20261003.md)和题主核收，见[新版本接续记录](../8316_r20_resume/README.md)。原广域hold已按具体范围原字节归档，当前本包无在途CPU，GPU实际兼容与模型结果仍待。 8511新尝试`pyd8511-formal-20261002232906-r14-f1f09`实际0／0／1、173参考完整，gold三类继承失败，narrow全过；公开actor`pyd8511-actor-20261002234027-r14-3deca`实际三命令及公开首消息通过。[非作者核查](../../reviews/non_author_8511_cpu_review_20261003.md)通过完整452文件baseline及430原件、清理零残留；GPU实际wheel可读镜像仍须核，首次双槽忙75原件保留。9066事实见下文及其独立报告。
+
+[矩阵计划](matrix_plan.json)保留8511三候选、8567先五个主要候选、再四个已知机制代表，共九候选，以及9066五候选。8316先六行验证正式消费，再补其余独立失真机制，合计24行；按非作者意见合并三项同机制负对照、复用其余合理实现的已有语义意见，34份原工件都保留。8567新增四行分别代表B1／B2／B3／Python-only；其它旧v4适用证据复用，旧分不重绑v5。两份正对照的[语义窄核](../../reviews/non_author_8567_positive_semantics_20261003.md)没有新增材料阻断，后续完整162参考实际运行及组合核查已通过，见[8567结果](../../tasks/pydantic__pydantic-8567/cpu_result_20261003.md)。实际用途须结合原件与各题完成范围，不能由计划或预期分数判断。
+
+[执行脚本草稿](run_formal.py)从已运行R7入口接续：仅将版本SHA／精确成员数改为冻结输入绑定、支持四个题ID，并按每题F2P数量核参考总数。七段正式脚本、原评分、2 CPU／4 GiB、预算和清理逻辑不变。parser检查命名为`reference_parser_complete`，只指正式参考，不声称所有非参考节点均被完整解析。已完成AST语法检查，R14本地新consumer prepare及actor/host spec、补丁/参考/安装/镜像join已通过；不是远端题级验收。
+
+[非作者执行入口窄核](../../reviews/non_author_remaining_runner_review_20261003.md)已通过：独立核66份固定输入、四题本地prepare身份与41候选预期，没有新增阻断。审查未运行远端矩阵或actor，不能据此提交四题GPU探针；完整CPU原件仍需另行核查。
+
+发布回执、材料及cpu-a部署已核，新的固定`formal_inputs.json`和actor输入已生成，本地新prepare的有效补丁、参考、按题E10/core和actor/host spec均通过；已上传新输入目录并逐文件核SHA。后续仍通过既有CPU作业槽运行。本目录不是新公共运行标准，不修改control/setup或共享consumer；旧R7输入、prepared和FrozenPatch保持原身份。
+
+8511／9066实际公开actor开发与交付已完成。9066正式作业`pyd9066-formal-20261002235809-r14-19f71`实际0／0／1／1／0、五行各370参考，654原件及公开actor`pyd9066-actor-20261003001628-r14-6ff79`的32原件获[非作者核查](../../reviews/non_author_9066_cpu_review_20261003.md)通过；完整482文件baseline、候选运输及清理通过，固定探针已发送。8567正式job`pyd8567-formal-20261003001737-r14-b631d`的控制面保护调用0099超时300.071秒，c3保持null。两行各162参考实际0分、375原件及完整458项baseline获[非作者窄核](../../reviews/non_author_8567_partial_cpu_review_20261003.md)通过，归档时零残留。共享CPU支持的新保护诊断已按原300秒完成，回执原件核收后，仅解除本包基础设施暂停；这不证明旧c3已评分或旧超时原因已查明。[新七行输入](../8567_resume_v1/README.md)独立静态核查通过，并已在新目录逐件核收上传。新job `pyd8567-formal-20261003013213-r14s1-a8dbf` 于01:32:16 UTC实际进入cpu-a槽1，仅补c3及未跑六行；于02:00:39 UTC结束rc0，七行实际1／0／1／0／0／0／0，各162参考完整、928原件绑定核收且零残留；公开actor首派75未入槽、无题目执行；第二派 `pyd8567-actor-20261003020814-r14-e919a` 实际结束rc0。原两行与新七行及actor获[组合独立核查](../../reviews/non_author_8567_combined_cpu_review_20261003.md)通过，固定探针已落账并实际发送；旧null和失败原件保留。8316 job `pyd8316-formal-20261003020938-r14-d2baf` 于02:09:41 UTC在slot1开始，前五行0／1／1／1／0；第六w_acr_max8在保护0210超时300.110秒，安装与pytest未开始，原null保留。于02:34:26 UTC自然停止rc1，759原件归档，零残留；[部分结果](../../tasks/pydantic__pydantic-8316/cpu_result_20261003.md)已获非作者部分核查通过，在该R14轮结束时，共享支持已领取且本包新CPU派发hold；后续按R20固定范围完成接续，当前状态见页首。私有正式矩阵不能替代公开actor证据；公共输入未变，派生镜像不机械重建。仍需CPU/GPU，未达到退租条件。
+
+[公开actor执行草稿](run_actor.py)从已完成的两题入口接续，使用新发布版本、独立diagnostics_v2输出和公开wheel派生镜像；实际镜像/资源、UID/Python/core/源码可写性、原公开示例、已有测试及公开首消息分别核对。十二条命令的bash语法、Python3.8 AST及公开base中已有节点名已检查，expect沿devcheck规定的zero/nonzero格式；命令与SHA见[清单](public_actor_commands/manifest.json)。8511／9066／8567实际运行已通过；8316后续在R20实际运行并通过核查，专门BASH_ENV权限拒绝检查未测，不称全角色隔离验收。
+
+本机私有generate_remaining_inputs.py已用实际R14发布目录、bundle目录与四份已读发布回执生成本目录两份固定输入；精确release成员、材料清单、有效补丁/参考/按题安装登记及候选字节全部通过后才写入。源版本或字节不符则停止，不能用草稿生成伪发布证据。旧R7两题inputs/runner与历史actor入口不覆盖。
+
+已生成[固定正式输入](formal_inputs.json)及[固定actor输入](actor_inputs.json)，候选共41行（8316为24、8511为3、8567为9、9066为5）。远端formal_v2的66输入成员大小／SHA和精确集合通过；复用原6题派生镜像，不修改旧formal_v1或历史prepared。8511首尝试 `pyd8511-formal-20261002230939-r14-8d68e` 只返回All CPU slots busy，没有题目运行，不计题目0分。

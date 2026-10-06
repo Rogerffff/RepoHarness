@@ -1,0 +1,212 @@
+{
+ "task_id": "conan-io__conan-13788",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "c1b3978914dd09e4c07fc8d1e688d5636fda6e79",
+  "version": "1.60",
+  "image": "xingyaoww/sweb.eval.x86_64.conan-io_s_conan-13788:latest",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/conan-io__conan-13788/{gold,empty}/offline/a1/",
+  "pkg_scans": "runs/env_overnight_20260916/L1_conan/{prescan2,envscan,collide}.json"
+ },
+ "public_view": {
+  "目标行为": "题面是一段提问：生成的 lockfile 里同一个 build_requires 包出现了两次、版本不同，一个来自 profile、一个来自 recipe 自身；提问者问 Is that supposed to be allowed? I would have expected this to be forbidden，以及用这个 lockfile 安装时到底装哪个版本。相关代码：conans/model/graph_lock.py::GraphLock.lock_node 把 locked_requires 按 ref.name 建索引，同名不同 context 的两个节点互相覆盖。",
+  "约束": "只改非测试源码；conan 1.x 的 lockfile 格式与既有 build_require 行为要保持。",
+  "公开材料无法确定的点": [
+   "题面没有说期望结果：提问者倾向于禁止（报错），gold 选的是允许并按 host/build context 区分。两者方向相反。",
+   "题面没有复现步骤、没有 profile 内容、没有日志（Logs 段不存在）。",
+   "题面没有提到 context / build_require_context 这个概念。"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 唯一路径 conans/test/integration/graph_lock/graph_lock_build_requires_test.py 在 base 存在（269 行）",
+    "gold 唯一路径 conans/model/graph_lock.py 在 base 存在"
+   ],
+   "note": "同一 PR。注意该测试文件是 _test.py 后缀，moto 口径会误报为非测试源码。无二进制/LFS/子模块。",
+   "by": "L1_conan"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show c1b39789:conans/model/graph_lock.py L541 refs = {self._nodes[id_].ref.name: ...}（只按名字建索引）",
+    "stage1 empty：test_duplicated_build_host_require[True] FAILED"
+   ],
+   "note": "base 确含题面所述现象。",
+   "by": "L1_conan"
+  },
+  "3": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "problem_statement 仅 545 字符，无复现、无 profile、无 lockfile 片段、无日志",
+    "raw.hints_text 6010 字符（不可见），是维护者与提问者逐步澄清 graph 结构、context 与期望行为的长讨论"
+   ],
+   "note": "求解者实际收到的输入远少于定位问题所需；决定性的澄清全在不可见的 hints 里。",
+   "by": "L1_conan"
+  },
+  "4_17": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan2.json: test_patch_nontest=[]（conan 口径）"
+   ],
+   "note": "gold 不碰测试路径。",
+   "by": "L1_conan"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "本包内无其它 graph_lock 题"
+   ],
+   "note": "无同族题。",
+   "by": "L1_conan"
+  },
+  "23": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "题面 I would have expected this to be forbidden",
+    "gold 的方向是允许同名不同 context 共存并正确解析",
+    "F2P 断言 install pkg --lockfile=conan.lock 之后输出 tool/4.0 from local cache - Cache"
+   ],
+   "note": "公开材料不仅没给期望结果，还把求解者引向相反方向（报错禁止）。一个实现了 禁止同名重复 并抛 ConanException 的解会 100% 失败。",
+   "by": "L1_conan"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 只断言 CLI 输出里的 tool/4.0 from local cache - Cache"
+   ],
+   "note": "按 (name, context) 建索引、按 node id 建索引、或在 require 侧先分桶都能过，不强制 gold 的写法。",
+   "by": "L1_conan"
+  },
+  "25": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "F2P 只有 test_requires=True 一个参数；[False] 变体在 base 就通过，被列进 P2P"
+   ],
+   "note": "判分只覆盖 force_host_context=True 的 build requirement 这一种组合；profile 的 [tool_requires] 与 recipe 的 tool_requires 同名不同版本（题面原始场景）没有单独检查。",
+   "by": "L1_conan"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "P2P 9 条覆盖同文件 GraphLockBuildRequireTestCase 的 8 个用例（含 test_package_both_contexts、test_package_different_id_both_contexts、test_duplicated_build_require）加参数化 [False]"
+   ],
+   "note": "host/build 双 context 的既有行为由 test_package_both_contexts 家族守住，回归保护是本包里较好的。",
+   "by": "L1_conan"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 4 行改动，只改 lock_node 的索引键与查表"
+   ],
+   "note": "gold 正确、最小、不依赖未交付改动。它没有回答题面的另一个问题（是否应该禁止），但那属于产品判断。",
+   "by": "L1_conan"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "scripts/leak.py: 4 行 gold 新增，0 命中题面"
+   ],
+   "note": "无静态泄漏。",
+   "by": "L1_conan"
+  },
+  "6_7_11": {
+   "status": "pass",
+   "evidence_refs": [
+    "envscan.json: 该文件无 @pytest.mark.tool，唯一 http 命中是 L246 注释里的 issue 链接",
+    "stage1 gold 10/10 PASSED、0 SKIPPED"
+   ],
+   "note": "TestClient 在临时 cache 里 create/install 本地生成的 recipe，不访问 conancenter、不需要编译器、不写真实家目录。",
+   "by": "L1_conan"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "scripts/collide.py 无输出"
+   ],
+   "note": "参数化 ID 是 [True]/[False]，无空格；P2P 里 8 条是 Class::method 形态，也无空格。",
+   "by": "L1_conan"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan2.json: gold 10/10 PASSED；empty 9 PASSED + 1 FAILED"
+   ],
+   "note": "分差来自目标行为。",
+   "by": "L1_conan"
+  },
+  "31": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "conans/test/.gitignore 第 1 行就是 conftest_user.py（1.51/1.54/1.60/2.0/2.1 五个 base 一致）",
+    "conans/test/conftest.py 用 from conans.test.conftest_user import tools_locations（1.x）/ tools_locations + default_profiles（2.x）并 merge 覆盖默认值",
+    "scripts 补扫：本题目标测试文件里无模块级 pytestmark、无 pytest.mark.tool、无 pytest.skip(、无 sys.exit/os._exit、无 conftest_user 引用"
+   ],
+   "note": "发现一个仓库级控制面：候选可以在 /testbed 新建 conans/test/conftest_user.py，它被官方 conftest 无条件 import 并 merge，而且它在 conans/test/.gitignore 里、也不在 test_patch 路径内，所以既不会被 git checkout <base> -- <path> 恢复，也不会被不带 -x 的 git clean 删掉；文件里的任意代码会在 pytest 收集阶段执行。本题是 conan 1.x：tools.py 不消费 default_profiles，可改的只有 tools_locations（把工具标记从 fail 变成 skip）。 本题用 TestClient 跑集成测试，受 default_profiles 影响面更大。 本题的 F2P/P2P 本身没有可被跳过或提前退出的入口（见上条补扫）。按第四组 B，未发现依据前不新增排除清单，只记录观测。",
+   "by": "L1_conan"
+  }
+ },
+ "issues": [
+  {
+   "category": "misleading_problem_statement",
+   "severity": "P1",
+   "evidence_refs": [
+    "public.problem_statement",
+    "validation.golden_patch"
+   ],
+   "proposed_action": "题面需要补上维护者最终确认的期望：同名包在 host 与 build 两个 context 里可以共存，lockfile 解析应按 context 区分；并给出最小复现（profile 的 [tool_requires] 一个版本 + recipe 的 host-context 依赖另一个版本）。否则求解者按题面做会去实现报错禁止。",
+   "next_experiment": "盲解一次记录模型选择的方向（禁止 vs 区分 context）；同时把实现禁止的解跑官方 F2P，确认 0 分，入库为误导题面反例。"
+  },
+  {
+   "category": "input_incomplete",
+   "severity": "P2",
+   "evidence_refs": [
+    "problem_statement 545 字符、无 Logs 段",
+    "hints_text 6010 字符"
+   ],
+   "proposed_action": "把 hints 里已澄清的复现条件提炼进题面（不泄漏修法）。",
+   "next_experiment": "对比补全复现条件前后的盲解成功率。"
+  },
+  {
+   "category": "control_surface_conftest_user",
+   "severity": "P2",
+   "evidence_refs": [
+    "conans/test/.gitignore:1",
+    "conans/test/conftest.py 的 conftest_user import 段",
+    "conans/test/utils/tools.py 的 from conans.test.conftest import default_profiles（仅 2.x）"
+   ],
+   "proposed_action": "仓库级处置，见 repo_level_findings.md §10：建议在 conan 的评分配方里，在可信 setup 阶段删除 /testbed/conans/test/conftest_user.py（或对整个 conans/test/ 做 git clean -xfd 后再 checkout），而不是逐题加 additional_exclusions。",
+   "next_experiment": "在 conan 镜像里写一个 conftest_user.py（例如 tools_locations={'cmake':{'disabled':True}} 或 2.x 下改 default_profiles['Linux'] 的 compiler），跑本题官方 eval，确认它是否改变逐 ID 结果；同时确认 RH2 的恢复步骤之后该文件是否仍在。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰 conans/test/integration/graph_lock/graph_lock_build_requires_test.py（纯测试文件）；gold 不碰测试路径。",
+  "evidence_refs": [
+   "runs/env_overnight_20260916/L1_conan/prescan2.json"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "conans/test/integration/graph_lock/graph_lock_test.py",
+   "reason": "沿调用者：lock_node 是所有 lockfile 应用路径的公共入口，这个文件覆盖普通 require 的锁定，能抓到索引键变更影响非 build_require 场景。"
+  },
+  {
+   "id": "conans/test/integration/graph_lock/test_lock_build_requires.py 或 conans/test/integration/graph_lock/graph_lock_py_requires_test.py",
+   "reason": "py_requires 与 build_requires 共用 locked_requires 结构，改索引键后应确认 py_requires 的锁定未受影响。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "needs_repair",
+  "reason": "机制干净、gold 最小、P2P 覆盖好，但题面既不给期望结果又把方向指反，且缺复现；不补题面则本题主要考验记忆而非推理。"
+ },
+ "costs": {
+  "minutes": 22
+ }
+}

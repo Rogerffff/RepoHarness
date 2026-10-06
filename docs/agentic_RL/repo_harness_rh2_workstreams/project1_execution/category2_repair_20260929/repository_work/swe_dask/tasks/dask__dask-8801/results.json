@@ -1,0 +1,874 @@
+{
+  "schema": "dask_task_result_preparation.v1",
+  "instance_id": "dask__dask-8801",
+  "revision_id": "dask8801-behavior-semantic-v7-compat1",
+  "current_checks": {
+    "source_public_hash": "pass",
+    "original_test_matches_grading": "pass",
+    "patch_apply_against_exported_base": "pass",
+    "effective_python_ast": "pass",
+    "trusted_original_parent_and_exports": "pass",
+    "candidate_patch_context_and_ast": "pass"
+  },
+  "verification_scope": "本机离线字节、补丁上下文和语法检查；没有导入 Dask、运行 pytest 或使用远端机器",
+  "cpu_formal_acceptance": "R16_29_rows_and_actual_fresh_semantics_independently_accepted_for_authorized_diagnostic",
+  "actor_development": "original_public_actor_and_nonroot_permissions_complete_new_statement_pending",
+  "independent_acceptance": "actual_source_current_public_and_formal_CPU_fresh_diagnostics_accepted_with_scope_limits",
+  "model_probe": "both_first_arms_analyzed_behavior1_diagnostic_fail_acknowledged",
+  "new_reward_rows": [
+    {
+      "original_model_job_id": "gpu1003-dask8801-coder-a1",
+      "CPU_grading_job_id": "dask8801-original-fp-cpu-recovery-20261003-v1",
+      "raw_behavior_score": 1.0,
+      "diagnostic_goal_state": "fail_diagnostic_semantics",
+      "new_model_sample": false,
+      "training_reward": null,
+      "readback": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/coder_original_FP_CPU_recovery_readback_20261003.json",
+        "sha256": "c7df16bd1f0cd543fd4f48f01597ead0af2fad2e52c24d2b5d6433149c1a47a3",
+        "bytes": 18669
+      }
+    }
+  ],
+  "offline_candidate_checks": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/offline_candidate_checks.json",
+  "isolated_config_api_check": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/local_config_checks.json",
+    "candidate_count": 44,
+    "scope": "isolated_config_api_only_not_full_dask_not_formal_grader",
+    "not_formal_acceptance": true
+  },
+  "diagnostic_rule_status": "prompt_v3_fresh_local_controls_23_of_23_and_heldout_24_of_24_match_2_uncertain_retained_not_formal_cpu",
+  "known_false_accept_on_isolated_api": {
+    "candidate": "wrong_missing_file_reason",
+    "patch": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/wrong_missing_file_reason.patch",
+      "sha256": "059a87ac21ea907124fb05c61081696df33cbc418e1cf557d88bf0e25d2ed836"
+    },
+    "required_semantic_result": "reject",
+    "observed_api_checks": "pass",
+    "formal_reward": null,
+    "reason": "已存在文件的内容不为mapping，却误报文件不存在；本轮原因区别不足以核原因真假"
+  },
+  "original_public_image_preparation": {
+    "state": "preflight_staging_layout_failed_before_docker",
+    "attempt": "dask8801-cpu-c-20261003-v1",
+    "not_a_task_acceptance_failure": true,
+    "evidence": "runs/category2_repair_20260929/swe_dask/image_preparation/dask8801-cpu-c-20261003-v1/control_job_q05/readback_manifest.json",
+    "corrected_input_snapshot": "a251a743b5ad572b",
+    "next_dispatch": "disabled_until_user_resume",
+    "v6_reason_rule": "not_adopted_unchanged",
+    "v2": {
+      "attempt": "dask8801-cpu-c-20261003-v2",
+      "snapshot_id": "a251a743b5ad572b",
+      "state": "cancelled_pending_wait_only_no_acquired_job",
+      "busy_attempts": 5,
+      "not_a_task_failure": true,
+      "receipt": {
+        "path": "runs/category2_repair_20260929/swe_dask/cpu_rotation_hold_datalad088_20261003.json",
+        "sha256": "8736aee1a184952939a5391ed2bce887a8e8ac8e55569b03030759fe6692ba25"
+      }
+    }
+  },
+  "execution_pause": {
+    "state": "paused_after_safe_completion",
+    "checkpoint": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/pause_checkpoint_20261003.md",
+    "new_dispatch": "disabled_until_user_resume",
+    "new_subagents": "disabled_until_user_resume",
+    "new_gpu_requests": "disabled_until_user_resume",
+    "cpu_receipt": "runs/category2_repair_20260929/swe_dask/cpu_pause_20261003.json"
+  },
+  "execution_resume": {
+    "state": "resumed_cpu_gate_open_task_material_blocks_retained",
+    "authority": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/coordination_workflow_20261003.md",
+    "cpu_host": "cpu-c",
+    "existing_attempts": "reuse_frozen_scope_no_repeat",
+    "cpu_dispatch": "fixed_cpu_c_slots_open_by_publication_receipt_20261003_0432_SGT",
+    "review_agent": "/root/dask_cpu_and_7305_review",
+    "gpu_request": "not_submitted",
+    "cpu_resource_authority": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/cpu_resources_20261003.md"
+  },
+  "original_environment_resume": {
+    "attempt": "dask8801-cpu-c-20261003-v3",
+    "state": "completed_original_image_verified",
+    "scope": "original_image_only_no_v6_acceptance",
+    "readback_manifest": {
+      "path": "runs/category2_repair_20260929/swe_dask/image_preparation/dask8801-cpu-c-20261003-v3/remote/readback_manifest.json",
+      "sha256": "f37ec4e8fd96f3a58d16588674f1d047524fc53d2ced044eaba82c74dbffa3d3"
+    },
+    "image": {
+      "path": "runs/category2_repair_20260929/swe_dask/image_preparation/dask8801-cpu-c-20261003-v3/remote/build/image.json",
+      "sha256": "37a957fc18d9b3c5e85b0f380bce67ce5a8560fbde9762dcfc7019639c3a1c68"
+    },
+    "snapshot": "a251a743b5ad572b",
+    "source_manifest_sha256": "80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9"
+  },
+  "original_public_actor_resume": {
+    "state": "completed_original_public_actor_only_not_revision_acceptance",
+    "attempt": "dask8801-public-cpu-c-20261003-v1",
+    "readback_manifest": {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask8801-public-cpu-c-20261003-v1/remote/readback_manifest.json",
+      "sha256": "7ddfbabae95da9b46143f5c06073bfca3f6ae044eadd2ca88b7e507f2182c7a5"
+    },
+    "status": {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask8801-public-cpu-c-20261003-v1/remote/run/status.json",
+      "sha256": "7df388fb092342ad171576918a1d00bb226e6ba594536866019b90c8b5c58dca"
+    },
+    "actor": {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask8801-public-cpu-c-20261003-v1/remote/run/actor/attempt.json",
+      "sha256": "9128f6083a4276f6b0dc8d5a5af03332440f75d786efd8081c2f96ab47ca0b55"
+    },
+    "prelaunch": {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask8801-public-cpu-c-20261003-v1/remote/run/actor/prelaunch.json",
+      "sha256": "c83c740da0d761226d46bf86ac87efb3fbf23a85c356a47f0f33477619c67151"
+    },
+    "public_commands": [
+      {
+        "id": "identity_import",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 310,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "原公开源码、非root身份及真实完整导入"
+      },
+      {
+        "id": "issue_public_import_scalar",
+        "rc": 1,
+        "status": "nonzero",
+        "expect": "nonzero",
+        "matches_expect": true,
+        "output_bytes": 674,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "原公开堆栈的str配置导致完整import dask失败；读实际异常，不应用私有材料"
+      },
+      {
+        "id": "public_config_regression",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 6930,
+        "output_truncated_to": 200000,
+        "pytest": {
+          "passed": 43
+        },
+        "purpose": "原公开config模块，包含真实非root file/directory权限测试"
+      }
+    ],
+    "original_statement_exact_delivery": true,
+    "first_request_sha256": "66427f43d5ecf32b2840f2717e5a30adebd93af9c504587a142a5663de9db2be",
+    "model_inference": "none_scripted_stub",
+    "formal_reward": null,
+    "report": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/cpu_readback_20261003.md",
+      "sha256": "7c4a3c211e458dcb9823afbc84cdafad1398135d7a5f6a05c795cfbec652d438"
+    }
+  },
+  "model_result_analysis_plan": {
+    "authority": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/overnight_watch_20261003.md",
+    "state": "pending_real_model_results",
+    "initial_scope": "each_approved_model_one_complete_attempt_then_batch_repetitions_per_shared_decision",
+    "required": [
+      "candidate_semantics_and_root_cause",
+      "localization_accuracy_and_self_correction_with_trajectory_steps",
+      "tool_usage",
+      "parallel_opportunity_and_runtime_support_or_not_judgable",
+      "verification_quality",
+      "tokens_turns_calls_and_model_work_time_separate_from_queue_or_environment_time"
+    ],
+    "incomplete_conditions": [
+      "budget_or_timeout_truncation",
+      "missing_model_or_score",
+      "infrastructure_failure"
+    ],
+    "single_sample_limit": "no_stable_capability_claim",
+    "resource_requirement": "CPU_and_GPU_still_required_for_pending_formal_acceptance_and_probe_repetitions"
+  },
+  "reason_oracle_review": {
+    "state": "historical_v6_false_accept_confirmed_task_diagnostic_followup_authorized",
+    "review": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_8801_reason_oracle_20261003.json",
+      "sha256": "664d93e1f110a6a1993e45f373b09c106ff7301f2804982fe39d11ba9e15dbbb"
+    },
+    "visible_reason_pair_evidence": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/reason_pair_evidence_20261003.json",
+      "sha256": "245adb2ca751a849f3f6349a924896f70700c0c43d0fe17447a016fb0e83e5ea"
+    },
+    "new_semantic_judge": "fixed_prompt_config_fresh_non_author_calibration_running_not_adopted",
+    "v6_publication_and_probe": "blocked"
+  },
+  "reviewed_card_snapshot": {
+    "path": "runs/category2_repair_20260929/swe_dask/review_history/non_author_8801_reason_oracle_20261003/dask8801_card_at_review.md",
+    "sha256": "6fa1c7804e0bf1f9ddf506332dab8aa157840b4db13b1f48dccd0034ece44e31",
+    "reason": "current card appended actual original CPU result after static review; exact reviewed bytes preserved"
+  },
+  "reason_scoring_decision_20261003": {
+    "state": "authorized_diagnostic_implementation_local_controls_completed_independent_validation_running",
+    "authority": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/overnight_watch_20261003.md#dask-8801-的题级裁定",
+    "human_delegation_message_id": "01a0fe6f-15cd-7e20-91da-cabc9137208a",
+    "decision_owner_thread_id": "01a0fd33-15f2-78b0-aaf3-be51d6cb06c7",
+    "mechanism": "deterministic_behavior_plus_trusted_facts_visible_diagnostics_non_author_codex_adjudication",
+    "uncertainty": "needs_evidence_or_needs_review_not_default_zero_or_one",
+    "training_reward_scope": "not_authorized_for_automatic_training_reward",
+    "prior_user_question": "superseded_by_explicit_delegated_decision",
+    "v6_blocker": "retained_not_yet_fixed_or_verified"
+  },
+  "current_v7_preparation": {
+    "revision_id": "dask8801-behavior-semantic-v7-compat1",
+    "state": "R16_material_published_CPU_chain_queued_no_current_results",
+    "local_control_count": 29,
+    "compatibility_branch_count": 10,
+    "mandatory_full_diagnostics": 13,
+    "conditional_rejected_falsy_diagnostics_max": 10,
+    "strict_gold_api_diagnostics": 22,
+    "falsy_empty_api_diagnostics": 12,
+    "formal_cpu_done": false,
+    "automatic_training_reward_authorized": false,
+    "semantic_judge_prompt": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/semantic_judge_prompt_v3.txt",
+      "sha256": "9d49671b56ae155f9183d8a0280ff7e779959de2697cdf3887ba4f558f2c19c1"
+    },
+    "semantic_judge_config": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/semantic_controls/judge_config_v3_bound.json",
+      "sha256": "7e7e861112af22ec7be814a084e395070a5806777eff908dd02c746e8c8acfea"
+    },
+    "new_anonymous_calibration_inputs": 321,
+    "new_calibration_verdicts": {
+      "pass": 226,
+      "fail": 95,
+      "uncertain": 0
+    },
+    "new_heldout_inputs": 24,
+    "new_heldout_verdicts": {
+      "pass": 9,
+      "fail": 13,
+      "uncertain": 2,
+      "compared_to_labels": true
+    },
+    "candidate_semantic_controls_matched": 23,
+    "heldout_matched": 24,
+    "control_validation": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/semantic_control_validation_v7_compat1_20261003.json",
+      "sha256": "da276e0907c0f4160ad9c37b96762ba9461993ea12dade9d4ab2239e11adb81d"
+    },
+    "public_reader": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/fresh_public_reader_8801_v7_compatibility_bytefix_20261003.md",
+      "sha256": "6d67fcb32c9b0be0257c2693fcec6628fbb6a3df09d7ce29d541f0da5716b2c9"
+    },
+    "host_review": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_8801_v7_compatibility_review_20261003.md",
+      "sha256": "a64a0ee1eb6739fadfc7d3c8189fe106bf9491d4e2f0552dd33748aa4ad2e91c"
+    },
+    "actual_prompt_delivery": "new_statement_exact_bytes_queued_not_observed",
+    "limitation": "isolated API and synthetic controls; full Dask CPU and real candidate semantic judgments required"
+  },
+  "formal_publication_receipt": {
+    "path": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r16/dask8801_publication_receipt.json",
+    "sha256": "cc1e9a4a5bc08eaa6c7753e27ba07cebc2f4e0118a32d325f6977042bea7606c"
+  },
+  "R16_binding_intake": {
+    "path": "runs/category2_repair_20260929/swe_dask/formal_preflight_r16_20261003/binding_intake.json",
+    "sha256": "61b37b008d213819c9d6f4ce75b408e762db1e833857b89328eac8965fbadb6e"
+  },
+  "R16_CPU_chain": {
+    "state": "serial_slot_chain_launched_waiting_prior_package_batch_no_CPU_score",
+    "batch": "dask-current-r16-cpu-c-20261003-v2",
+    "snapshot_id": "17b987e5cdcac007",
+    "members": 37,
+    "launch_receipt": {
+      "path": "runs/category2_repair_20260929/swe_dask/batch_runs/dask-current-r16-cpu-c-20261003-v2/launch_receipt.json",
+      "sha256": "974efbe6e4b72b5617811ec689849688183919c5b72d0f4dbab9a80dde317950"
+    },
+    "plan": {
+      "path": "runs/category2_repair_20260929/swe_dask/batch_runs/dask-current-r16-cpu-c-20261003-v2/plan.json",
+      "sha256": "b612ed09b7aae0cea4738b9138deb2a90c0279c566af96e85e810a56f49f8b06"
+    },
+    "sealed_payload": {
+      "path": "runs/category2_repair_20260929/swe_dask/batch_runs/dask-current-r16-cpu-c-20261003-v2/launch_payload.json",
+      "sha256": "a614e8973024a574ef8779d7c686fac9d13e8adca000abc4a25a39d3428f1119"
+    },
+    "dispatch_adapter_review": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_8801_r16_dispatch_adapter_review_20261003.json",
+      "sha256": "42baed9bdd962a447f36a252693a1c7b15ce4e9453033343d808cde54aebe96c"
+    },
+    "source_prepare_attempt": "dask8801-source-image-cpu-c-20261003-v2",
+    "public_actor_attempt": "dask8801-current-public-cpu-c-20261003-v2",
+    "formal_attempt": "dask8801-formal-cpu-c-20261003-v2",
+    "formal_rows_planned": 29,
+    "formal_rows_verified": 0,
+    "model_inference": false,
+    "automatic_training_reward": false
+  },
+  "R16_readback_tool": {
+    "path": "runs/category2_repair_20260929/swe_dask/finalize_8801_formal_behavior_r16_20261003.py",
+    "sha256": "7d31edc355114a86266f94cefc0d320327928c5e9e600719c8c03e1a63f8af4b",
+    "state": "prepared_host_readback_tool_independently_checked_pending_actual_CPU_input",
+    "scope": "host_readback_and_fresh_anonymous_job_preparation_only_not_CPU_or_semantic_acceptance",
+    "actual_CPU_readback_consumed": false,
+    "actual_semantic_verdicts_created": false,
+    "automatic_training_reward_authorized": false,
+    "independent_tool_review": {
+      "json": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_8801_r16_readback_tool_preflight_review_20261003.json",
+        "sha256": "f827274b1b50f5ca27a50e19894351cd5570beb3b830f8dbf15ff50aaadfc3e1"
+      },
+      "report": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_8801_r16_readback_tool_preflight_review_20261003.md",
+        "sha256": "3b994cae4b20ab2a209278eda96d1760172252a682ccc8029b9aca7e8bf28d2e"
+      },
+      "scope": "fixed_input_preflight_and_28_path_input_18_synthetic_readback_conditions_only_not_actual_CPU_public_or_semantic_acceptance"
+    }
+  },
+  "R16_current_source_public_actor": {
+    "state": "actual_source_and_scripted_current_public_actor_independently_accepted_with_scope_limits",
+    "report": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/current_public_source_actor_readback_r16_20261003.json",
+      "sha256": "a893ae7263608d11a0509bad86fd1b3a963b1efe24c959a2968276a7d5b67e7f"
+    },
+    "current_statement_actual_bytes": 8563,
+    "actual_CRLF_preserved": 162,
+    "actual_actor_UID": 54321,
+    "model_inference": false,
+    "independent_review": {
+      "json": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_8801_current_public_actor_r16_review_20261003.json",
+        "sha256": "14244dcbc9c8db07b2beb821ec5ab3bfe7df9469d10198029cc43e164675db99"
+      },
+      "markdown": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_8801_current_public_actor_r16_review_20261003.md",
+        "sha256": "17983372f0c2e9dc708c6333dc5ff2845324b78bb077ffb036878f213476099c"
+      },
+      "checks_passed": 188,
+      "scope": "source_preparation_and_current_public_scripted_actor_only",
+      "actual_formal_matrix_or_semantics_accepted": false
+    }
+  },
+  "R16_current_formal_matrix": {
+    "state": "complete_behavior_and_fresh_diagnostic_results_independently_accepted_with_scope_limits",
+    "attempt_id": "dask8801-formal-cpu-c-20261003-v2",
+    "expected_rows": 29,
+    "actual_rows": 29,
+    "whole_matrix_completed": true,
+    "formal_report": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/formal_cpu_behavior_readback_r16_20261003.json",
+      "sha256": "f580c6b60a60a23c01958f6b6363a0c98583fb03806ce8faad1e0d5a926f28ad"
+    },
+    "readback_manifest": {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask8801-formal-cpu-c-20261003-v2/remote/readback_manifest.json",
+      "sha256": "ecba4e10ce6c86fafd96a32b68c4bb932ae708243102be37433613bbd467a2bf"
+    },
+    "transport_members": 306,
+    "transport_bytes": 7202870,
+    "transport_excluded": [],
+    "actual_fresh_semantic_verdicts": {
+      "report": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/formal_cpu_diagnostic_readback_r16_20261003.json",
+        "sha256": "18e93e7dcc5c696711bafa8220593260f401c238c24bc3bd1a0d36c86c064845"
+      },
+      "fresh_inputs": 420,
+      "verdict_counts": {
+        "pass": 313,
+        "fail": 107,
+        "uncertain": 0
+      },
+      "uncertain_count": 0,
+      "control_mismatches": [],
+      "pending_parser_equivalence_review": [
+        "gr_csafe_loader"
+      ],
+      "provenance_crosscheck": {
+        "path": "runs/category2_repair_20260929/swe_dask/actual_semantic_judges_r16_20261003/actual_fresh_provenance_crosscheck.json",
+        "sha256": "ed2c672b51cbc98333f97f385870f4ab7165cb971161ea9b1424fc5bd47cd88c"
+      },
+      "scope_limit": "initial finish provenance SHA only; current actual contents and spawn observation bound by separate crosscheck, nonauthor review pending"
+    },
+    "required_fresh_verdicts": 420,
+    "capture_incomplete_candidates": [],
+    "fresh_semantic_dispatch": {
+      "path": "runs/category2_repair_20260929/swe_dask/actual_semantic_judges_r16_20261003/dispatch_manifest.json",
+      "sha256": "e106e2513e77312a94d9064492547637e21571cb141726c454e4097554c31e0a"
+    },
+    "automatic_training_reward_authorized": false,
+    "final_acceptance": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/formal_final_acceptance_r16_20261003.json",
+      "sha256": "8556bfa495bee3ab441ce76a0fc59570d779e0252b96e1dd251aa0bc813ae33c"
+    }
+  },
+  "R16_final_acceptance": {
+    "state": "accepted_for_authorized_ordinary_probe_only",
+    "owner_disposition": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/formal_final_acceptance_r16_20261003.json",
+      "sha256": "8556bfa495bee3ab441ce76a0fc59570d779e0252b96e1dd251aa0bc813ae33c"
+    },
+    "independent_review": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_8801_formal_cpu_r16_review_20261003.json",
+      "sha256": "1a737b087a81252483e7f368d2ab363956e1ee236af9ac590c0c28608a293be4"
+    },
+    "independent_review_md": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_8801_formal_cpu_r16_review_20261003.md",
+      "sha256": "7395249049362fb5ce42c98b91b2f1f68e1c33f38205c28d80f2885347227d82"
+    },
+    "parser_fixed_fixture_pending_closed": true,
+    "automatic_training_reward_authorized": false
+  },
+  "probe_request": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/probe_request.json",
+    "sha256": "2afb838064e341c2ae9355c5d136b1de1672647370c3d879d5fb07999e53ddcd"
+  },
+  "ordinary_gpu_probe": {
+    "state": "both_first_arms_analyzed_behavior1_diagnostic_fail_acknowledged",
+    "request_id": "probe-swe-dask-8801-20261003-v1",
+    "request": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/probe_request.json",
+      "sha256": "2afb838064e341c2ae9355c5d136b1de1672647370c3d879d5fb07999e53ddcd"
+    },
+    "delivery": {
+      "path": "runs/category2_repair_20260929/swe_dask/board_updates/resume_20261003/8801.probe.delivery.json",
+      "sha256": "66805e62573fd1bab65114c04fd8b0d85c694402bf06dce5c908bd8bfd394e3c"
+    },
+    "model_results_received": true,
+    "automatic_training_reward_authorized": false,
+    "observed_board_revision": 5,
+    "first_Coder_owner_analysis": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/model_probe_coder_a1_analysis_20261003.json",
+      "sha256": "cb17d453ba4620ebe7e9bf88c60fac1deb6d753753a38dc45c9c7754c08f014b",
+      "bytes": 10472
+    },
+    "first_Coder_final_readback": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/coder_original_FP_CPU_recovery_readback_20261003.json",
+      "sha256": "c7df16bd1f0cd543fd4f48f01597ead0af2fad2e52c24d2b5d6433149c1a47a3",
+      "bytes": 18669
+    },
+    "new_raw_behavior_score": 1.0,
+    "diagnostic_goal_state": "fail_diagnostic_semantics",
+    "fresh_semantic_counts": {
+      "pass": 19,
+      "fail": 4,
+      "uncertain": 0
+    },
+    "valid_capture_counts": {
+      "diagnostic": 23,
+      "compatibility": 10,
+      "import_exception": 1
+    },
+    "original_GPU_None_preserved": true,
+    "received_models": [
+      "coder",
+      "qwen36"
+    ],
+    "missing_models": [],
+    "new_model_samples_from_CPU_recovery": 0,
+    "other_model_results_received": true,
+    "training_qualification": null,
+    "request_remains_claimed_not_acknowledged": false,
+    "observed_probe_request_revision": 5,
+    "as_of": "2026-10-04T02:15:17.373660+08:00",
+    "complete_model_pair_received": true,
+    "pair_receipt": {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/probe-swe-dask-8801-20261003-v1_pair_execution_receipt_v1.json",
+      "sha256": "09c5046485087f483c18b78ac62f8f22a3c190c4c63a4d2cd51dd803a882b124",
+      "bytes": 9805
+    },
+    "owner_pair_analysis": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/model_probe_qwen36_a1_analysis_20261004.json",
+      "sha256": "c0e57d6b3061cbfae19b2af5b5ec3be19eaf954fedbf280714b3d6fd57605e7d",
+      "bytes": 22402
+    },
+    "owner_pair_report": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/model_probe_qwen36_a1_analysis_20261004.md",
+      "sha256": "0127c5944ef4fbf689506113dbd32ccac8326243e683b7a6f8f380b0dd67ba47",
+      "bytes": 3563
+    },
+    "pair_receipt_acknowledged": true,
+    "active_request_id": null,
+    "first_Qwen_owner_analysis": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/model_probe_qwen36_a1_analysis_20261004.json",
+      "sha256": "c0e57d6b3061cbfae19b2af5b5ec3be19eaf954fedbf280714b3d6fd57605e7d",
+      "bytes": 22402
+    },
+    "first_Qwen_fresh_diagnostics": {
+      "input": {
+        "path": "runs/category2_repair_20260929/swe_dask/semantic_judgement_20261004/actual_job_a1_v1/judge_inputs.json",
+        "sha256": "72eb091d83cf528c113d2bc00c4b088fb4c85531666484d8ab81fa615ad268b0",
+        "bytes": 13771
+      },
+      "prompt": {
+        "path": "runs/category2_repair_20260929/swe_dask/semantic_judgement_20261004/actual_job_a1_v1/judge_prompt.txt",
+        "sha256": "9d49671b56ae155f9183d8a0280ff7e779959de2697cdf3887ba4f558f2c19c1",
+        "bytes": 3190
+      },
+      "private_binding": {
+        "path": "runs/category2_repair_20260929/swe_dask/semantic_judgement_20261004/actual_job_a1_v1/private_run_binding.json",
+        "sha256": "943e8a029da63a43011afa6e85d5a237cc232969dd0f21fe6abdf2d9db6cc358",
+        "bytes": 4989
+      },
+      "job": {
+        "path": "runs/category2_repair_20260929/swe_dask/semantic_judgement_20261004/actual_job_a1_v1/job.json",
+        "sha256": "b673464fcca4218143cd16dc40297a7da10f936be63ddc72c4eea008050d77ee",
+        "bytes": 1531
+      },
+      "verdict": {
+        "path": "runs/category2_repair_20260929/swe_dask/semantic_judgement_20261004/actual_job_a1_v1/independent_verdicts_v1.json",
+        "sha256": "c0fc12e7c31e6287d51f34fd6e95c38f7db0b6312a40a3183682df0d3b5a6ebb",
+        "bytes": 6529
+      },
+      "provenance": {
+        "path": "runs/category2_repair_20260929/swe_dask/semantic_judgement_20261004/actual_job_a1_v1/independent_judge_provenance_v1.json",
+        "sha256": "221711ab6e992252dd75f0e3572c5b02385e382ac1949ee38810a17d84b00d27",
+        "bytes": 2430
+      },
+      "outcome": {
+        "path": "runs/category2_repair_20260929/swe_dask/semantic_judgement_20261004/actual_job_a1_v1/diagnostic_outcome.json",
+        "sha256": "accfe6ab51e5f5bd02a4cc2dda4aa149260084b48c4f933b96748e85d1f1d728",
+        "bytes": 9073
+      },
+      "custom_GPU_binding_crosscheck": {
+        "path": "runs/category2_repair_20260929/swe_dask/model_analysis_20261004/dask8801_qwen36_a1_v1/anonymous_GPU_binding_crosscheck_v1.json",
+        "sha256": "a37917e206ed97e9682fb6f681016b8ef11d10eb7039aa505efbc7761606f54f",
+        "bytes": 4669
+      },
+      "counts": {
+        "diagnostic_inputs": 13,
+        "pass": 9,
+        "fail": 4,
+        "uncertain": 0,
+        "compatibility_branches": 10,
+        "empty_configuration_branches": 10,
+        "import_packets": 1,
+        "import_included_in_13": true
+      },
+      "full_import_packet_and_before_after_bindings_complete": true,
+      "old_Coder_23_and_420_control_verdicts_not_reused": true,
+      "semantic_result": "fail_diagnostic_semantics",
+      "anonymous_ID_recipe": "GPU_material_FP_log_config_prompt_payload_v1_not_legacy_CPU_ledger_key",
+      "no_false_CPU_ledger_or_apply_user_metadata": true
+    },
+    "existing_fresh_semantic_counts_scope": "original_Coder_FP_CPU_recovery_only_23_not_Qwen13",
+    "existing_valid_capture_counts_scope": "original_Coder_FP_CPU_recovery_only",
+    "model_pair_behavior_semantic_results": [
+      {
+        "model": "Coder",
+        "model_job_id": "gpu1003-dask8801-coder-a1",
+        "original_GPU_raw_reward": null,
+        "original_state": "infra_failure_prepare300_preserved",
+        "CPU_derived_raw_behavior_reward": 1,
+        "CPU_grading_job_id": "dask8801-original-fp-cpu-recovery-20261003-v1",
+        "CPU_readback": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/coder_original_FP_CPU_recovery_readback_20261003.json",
+          "sha256": "c7df16bd1f0cd543fd4f48f01597ead0af2fad2e52c24d2b5d6433149c1a47a3",
+          "bytes": 18669
+        },
+        "diagnostic_goal": "fail_diagnostic_semantics",
+        "fresh_semantics": {
+          "diagnostic_inputs": 23,
+          "pass": 19,
+          "fail": 4,
+          "uncertain": 0,
+          "compatibility_branches": 10,
+          "import_included_in_23": true
+        },
+        "new_solve_or_sample": false
+      },
+      {
+        "model": "Qwen3.6",
+        "model_job_id": "gpu1003-dask8801-qwen36-a1",
+        "original_GPU_raw_behavior_reward": 1,
+        "F2P_pass_total": [
+          2,
+          2
+        ],
+        "P2P_fail_total": [
+          0,
+          43
+        ],
+        "diagnostic_goal": "fail_diagnostic_semantics",
+        "fresh_semantics": {
+          "diagnostic_inputs": 13,
+          "pass": 9,
+          "fail": 4,
+          "uncertain": 0,
+          "compatibility_branches": 10,
+          "empty_configuration_branches": 10,
+          "import_packets": 1,
+          "import_included_in_13": true
+        }
+      }
+    ]
+  },
+  "original_FP_CPU_recovery_20261003": {
+    "state": "environment_recovery_and_original_candidate_diagnostic_acceptance_complete",
+    "readback": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/coder_original_FP_CPU_recovery_readback_20261003.json",
+      "sha256": "c7df16bd1f0cd543fd4f48f01597ead0af2fad2e52c24d2b5d6433149c1a47a3",
+      "bytes": 18669
+    },
+    "owner_CPU_environment_dependency_closed": true,
+    "source_files_retained": true,
+    "whole_host_retirement_authorized": false
+  },
+  "validated_grader_environment_consumer_support": {
+    "request_id": "support-swe-dask8801-setup900-20261003-v1",
+    "request": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/publication_requests/support-swe-dask8801-setup900-20261003-v1.json",
+      "sha256": "2458578f8d41d41f7b4a0f8f1817a7a0b18b15c86f5587a530bcb96a57f8dd00",
+      "bytes": 8422
+    },
+    "state": "source_support_preserved_actual_new_Qwen_GPU_code9_R25_bound",
+    "receipt": {
+      "path": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r25/dask8801_setup900_support_receipt_v1.json",
+      "sha256": "67f2ecc26b0d2e4b09c266e53f0969de20d736e088ce7d074cab3550137afbed",
+      "bytes": 9656
+    },
+    "release_id": "cat2-cpu-r2e094095-swe40-dask8801-prepare900-20261003-v1",
+    "manifest_sha256": "d971facbd80fe12ced3500a8c620f545e4d863de2235e0a5f6d4e7e789b7f22a",
+    "source_members_verified": 1494,
+    "policy_sha256": "43bcb4c7d87e85b463f30de52fca82149acf476914c4ac6df81f953cbe004eac",
+    "owner_adoption_check": {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask8801_same_fp_cpu_c_v1/R25_owner_adoption_check_v1.json",
+      "sha256": "e5808948710eb627e39cc7b4d4229b05b2bc9ab62deb1996af6a8f57ff83ea14",
+      "bytes": 16967
+    },
+    "actual_GPU_delivery": {
+      "path": "runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask8801_same_fp_cpu_c_v1/R25_consumer_GPU_delivery_v1.json",
+      "sha256": "dcdd13eb13e49f95183dc6bc9ad1f73c9680aed4ff9d2b0f23abecb47a6ac264",
+      "bytes": 2666
+    },
+    "source_CPU_deployed": true,
+    "actual_new_GPU_consumer_binding_verified": true,
+    "scope": "only8801 setup900; source/scripts45 refs unchanged; R24 three policies retained; no7305 caps",
+    "new_CPU_or_model_runs": 0,
+    "actual_Qwen_binding_analysis": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/model_probe_qwen36_a1_analysis_20261004.json",
+      "sha256": "c0e57d6b3061cbfae19b2af5b5ec3be19eaf954fedbf280714b3d6fd57605e7d",
+      "bytes": 22402
+    },
+    "as_of": "2026-10-04T02:15:17.373660+08:00"
+  },
+  "model_probe_pair_analysis": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/model_probe_qwen36_a1_analysis_20261004.json",
+    "sha256": "c0e57d6b3061cbfae19b2af5b5ec3be19eaf954fedbf280714b3d6fd57605e7d",
+    "bytes": 22402
+  },
+  "actual_Qwen_code9_R25_execution_binding": {
+    "runtime": "code_v9",
+    "consumer": "R25",
+    "execution_receipt": {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/dask8801_qwen36_code9_execution_receipt_v1/execution_receipt.json",
+      "sha256": "cb0c7124c31ade0d30fc1b077a121cad22af532037728c247737a50bbd3cb942",
+      "bytes": 73778
+    },
+    "native_policy_fields_preserved": {
+      "policy_sha256": "43bcb4c7d87e85b463f30de52fca82149acf476914c4ac6df81f953cbe004eac",
+      "request_id": "support-swe-dask8801-setup900-20261003-v1",
+      "request_input_sha256": "2458578f8d41d41f7b4a0f8f1817a7a0b18b15c86f5587a530bcb96a57f8dd00",
+      "actual_image_id": "sha256:695d2cc28e303a0224c1109fe245f7296c6290d480124fa4fd4cc2ad072124b1",
+      "apply_seconds": 120,
+      "cpu_acceptance_sha256": "c9f53b5d2ab5e4ee84cc24a52de5cd906f4d8493ccb4da92b4d2276a08bc5ef3",
+      "env_reset_seconds": 900,
+      "grading_bundle_digest": "sha256:5df17259f9159fe73cbce4b8a5a93af2eeee385a4c52f3510575ee6b3247c2e5",
+      "image": "xingyaoww/sweb.eval.x86_64.dask_s_dask-8801:latest",
+      "image_manifest_digest": "sha256:21e77aea7025bad694a5c600ed6d4b372c80c83bc319fafa2fedb23d9ff48483",
+      "materials_identity": "sha256:b5cf41d813f263bc4d3d04985ecfde892677fb05ef6b6f1e5f95b93758e49b1b",
+      "new_script_sha256": {
+        "candidate_install_script": "5626531c75bc41c952470e4e38ce4afe34ac9701b2144a2c45bda50abe258acc",
+        "candidate_test_after_install_script": "82b18ca9f976ff0db8ea82981d774c83515e729438126ebb57c25ce52eb1a84a",
+        "candidate_test_script": "0c49baef272670826826a2f4744e5c2d44543721f2d275f09b483f0f7f1df2b4",
+        "eval_script": "e0e30c9bd3aabd435565b96617f5e12ae84d005054cbfd03f1f925f162ad9006",
+        "trusted_setup_script": "151bdd15ee70b0d2689d29631a6f5b9c43048be96fc7b49b281800843b9ee88e"
+      },
+      "old_script_sha256": {
+        "candidate_install_script": "5626531c75bc41c952470e4e38ce4afe34ac9701b2144a2c45bda50abe258acc",
+        "candidate_test_after_install_script": "82b18ca9f976ff0db8ea82981d774c83515e729438126ebb57c25ce52eb1a84a",
+        "candidate_test_script": "0c49baef272670826826a2f4744e5c2d44543721f2d275f09b483f0f7f1df2b4",
+        "eval_script": "e0e30c9bd3aabd435565b96617f5e12ae84d005054cbfd03f1f925f162ad9006",
+        "trusted_setup_script": "151bdd15ee70b0d2689d29631a6f5b9c43048be96fc7b49b281800843b9ee88e"
+      },
+      "old_scripts_digest": "sha256:835811ced3255278f9fd36b35e68ae6deee2791ed710367d832e4d9954af67e5",
+      "recipe_id": "dask8801-original-FP-setup900-v1",
+      "reference_total": 45,
+      "revision_id": "dask8801-behavior-semantic-v7-compat1",
+      "selected_env": null,
+      "single_shell_scripts_digest": "sha256:835811ced3255278f9fd36b35e68ae6deee2791ed710367d832e4d9954af67e5",
+      "test_seconds": 1800,
+      "whole_seconds": 3600,
+      "two_stage_scripts_digest": "sha256:470c7ca676303026b0faf63614e66b3444c7478d6be65738ca049cf8927d8106",
+      "actual_image_inspect_verified": false,
+      "actual_execution_mode": null,
+      "CPU_acceptance_scope": "single_shell_deny_all_no_supply",
+      "two_stage_execution_verified": false,
+      "training_qualification": null,
+      "consumer_source_sha256": "sha256:789aa2dbdd4ede98460cbfd4ca33b3d4652729f0ed0e284e34940ff1ed2bc0b5",
+      "execution_mode_declared": "single_shell",
+      "supply_config_declared": null,
+      "profile_parameters": {
+        "profile_id": "rh2.grader_sandbox_profile.v1",
+        "schema_id": "rh2.sandbox_profile.v1",
+        "candidate_exec_user": "rh2grader",
+        "candidate_exec_uid": 54322,
+        "trusted_init_caps": [
+          "CHOWN",
+          "DAC_OVERRIDE",
+          "DAC_READ_SEARCH",
+          "FOWNER",
+          "KILL"
+        ],
+        "pids_limit": 512,
+        "cpus": 2.0,
+        "memory_bytes": 4294967296,
+        "swap_bytes": 0,
+        "tmp_tmpfs_bytes": 1073741824,
+        "writable_layer_quota_bytes": 8589934592,
+        "require_writable_layer_quota": false,
+        "shm_size_bytes": 67108864,
+        "tmpfs_mount_flags": "exec,nosuid,nodev",
+        "candidate_writable_prefixes": [
+          "/opt/miniconda3/envs/testbed"
+        ],
+        "network": {
+          "mode": "deny_all",
+          "forbidden_probe_targets": [
+            "169.254.169.254:80",
+            "1.1.1.1:443",
+            "172.17.0.1:18001"
+          ]
+        },
+        "bind_mounts_allowed": [
+          "declared_readonly_snapshot_only"
+        ],
+        "testbed_path": "/testbed",
+        "security_opt": [
+          "no-new-privileges"
+        ],
+        "cap_drop": [
+          "ALL"
+        ]
+      }
+    },
+    "actor_actual_image_id": "sha256:695d2cc28e303a0224c1109fe245f7296c6290d480124fa4fd4cc2ad072124b1",
+    "grader_actual_image_id": "sha256:695d2cc28e303a0224c1109fe245f7296c6290d480124fa4fd4cc2ad072124b1",
+    "same_complete_single_shell_scripts_as_Coder_CPU": true,
+    "selected_env": null,
+    "setup_apply_test_whole_seconds": [
+      900,
+      120,
+      1800,
+      3600
+    ],
+    "static_after_install_not_executed": true,
+    "resource_observation": {
+      "actor": {
+        "samples": 6,
+        "actual_image_ids": [
+          "sha256:695d2cc28e303a0224c1109fe245f7296c6290d480124fa4fd4cc2ad072124b1"
+        ],
+        "PID_peak": 44,
+        "memory_peak_bytes": 918851584,
+        "pids_max_event": 0,
+        "memory_events_max": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        }
+      },
+      "relay": {
+        "samples": 6,
+        "actual_image_ids": [
+          "sha256:ec7d6c95cd3692a2e2d228a8b1ca74e4025b54121fcc4c5da6f09cfa473315ad"
+        ],
+        "PID_peak": 7,
+        "memory_peak_bytes": 27611136,
+        "pids_max_event": 0,
+        "memory_events_max": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        }
+      },
+      "grader": {
+        "samples": 26,
+        "actual_image_ids": [
+          "sha256:695d2cc28e303a0224c1109fe245f7296c6290d480124fa4fd4cc2ad072124b1"
+        ],
+        "PID_peak": 8,
+        "memory_peak_bytes": 1951412224,
+        "pids_max_event": 0,
+        "memory_events_max": {
+          "low": 0,
+          "high": 0,
+          "max": 0,
+          "oom": 0,
+          "oom_kill": 0,
+          "oom_group_kill": 0
+        }
+      }
+    },
+    "raw_resource_facts_preserved": null,
+    "observation_gaps_unknown": true,
+    "full_Docker_Config_kernel_profile_child_environment_attestation_claimed": false,
+    "cleanup_ok": true,
+    "manager_created_removed": [
+      1,
+      1
+    ],
+    "gateway_drained_active0": true
+  },
+  "current_state": "first_model_pair_analysis_closed_v7_diagnostic_only_v6_blocked",
+  "model_probe_pair_reward_rows": [
+    {
+      "model": "Coder",
+      "model_job_id": "gpu1003-dask8801-coder-a1",
+      "original_GPU_raw_reward": null,
+      "original_state": "infra_failure_prepare300_preserved",
+      "CPU_derived_raw_behavior_reward": 1,
+      "CPU_grading_job_id": "dask8801-original-fp-cpu-recovery-20261003-v1",
+      "CPU_readback": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/coder_original_FP_CPU_recovery_readback_20261003.json",
+        "sha256": "c7df16bd1f0cd543fd4f48f01597ead0af2fad2e52c24d2b5d6433149c1a47a3",
+        "bytes": 18669
+      },
+      "diagnostic_goal": "fail_diagnostic_semantics",
+      "fresh_semantics": {
+        "diagnostic_inputs": 23,
+        "pass": 19,
+        "fail": 4,
+        "uncertain": 0,
+        "compatibility_branches": 10,
+        "import_included_in_23": true
+      },
+      "new_solve_or_sample": false
+    },
+    {
+      "model": "Qwen3.6",
+      "model_job_id": "gpu1003-dask8801-qwen36-a1",
+      "original_GPU_raw_behavior_reward": 1,
+      "F2P_pass_total": [
+        2,
+        2
+      ],
+      "P2P_fail_total": [
+        0,
+        43
+      ],
+      "diagnostic_goal": "fail_diagnostic_semantics",
+      "fresh_semantics": {
+        "diagnostic_inputs": 13,
+        "pass": 9,
+        "fail": 4,
+        "uncertain": 0,
+        "compatibility_branches": 10,
+        "empty_configuration_branches": 10,
+        "import_packets": 1,
+        "import_included_in_13": true
+      }
+    }
+  ]
+}

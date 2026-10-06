@@ -1,0 +1,68 @@
+{
+  "schema": "coveragepy.candidate_boundary_followup.v1",
+  "as_of": "2026-10-03",
+  "status": "prepared_not_submitted_or_executed",
+  "scope": "R17 Coder a1候选语义边界；不是新评分版本或新GPU请求",
+  "source_job": "gpu1003-coverageea69-r17-coder-a1",
+  "baseline_and_candidate": "保留原FP591da512…与基线7d9fea8…；不能用修好后的候选替代原a1",
+  "public_basis": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/materials/statement_preserve_public_v2.txt",
+    "sha256": "sha256:39b6b28abc08b21a76a71d8908a7e37a00040cbfc3f9d92ee12bc37b3b6a194f"
+  },
+  "current_criterion": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/materials/test_2_preserve_v1.py",
+    "sha256": "sha256:e5fee9fb81700d682e45c5c25cdc18035000e1dd86bf78fb2c8391ee61105497"
+  },
+  "cases": [
+    {
+      "id": "normal_preserve_control",
+      "existing_content_repr": "# User-owned rules\\ncustom.tmp\\n",
+      "expected": "原字节串仍在；首次与再次生成后真实Git忽略所有报告产物",
+      "source": "当前已运行评分fixture，作为复验正控制"
+    },
+    {
+      "id": "blank_line_CRLF",
+      "existing_content_repr": "# User-owned rules\\r\\n\\r\\ncustom.tmp\\r\\n",
+      "expected": "比较原用户内容及真实Git行为；将格式保留与规则语义分开报告，不自动扩大评分语义",
+      "known": "splitlines/w重写会删空行及改换行，静态已证，尚无本候选目标运行"
+    },
+    {
+      "id": "already_static_rule_order",
+      "existing_content_repr": "# User-owned rules\\nstyle.css\\ncustom.tmp\\n",
+      "expected": "检查原用户规则顺序/内容变化，报告是否仍满足公开内容保留；真实Git分别核报告与用户规则行为",
+      "known": "style.css会被过滤后移到自动规则段，静态已证"
+    },
+    {
+      "id": "no_trailing_newline",
+      "existing_content_repr": "# User-owned rules\\ncustom.tmp",
+      "expected": "旧内容不丢；新增规则与末行正确分隔，不限制append/encoding等修法"
+    },
+    {
+      "id": "regeneration",
+      "report_count": 3,
+      "expected": "每次真实Git都忽略报告；记录*.html重复增长，幂等文本作为质量观察而非新增硬验收"
+    },
+    {
+      "id": "special_extra_css",
+      "basenames": [
+        "!custom.css",
+        "#custom.css",
+        "custom[ab].css"
+      ],
+      "expected": "配置可复制的原文件名与生成CSS必须真实被Git忽略；同时核正常extra.css正控制",
+      "known": "候选直接把basename写成Git模式，特殊名风险为静态推导，尚未目标运行"
+    }
+  ],
+  "validation_controls": "真实Git status或check-ignore逐生成产物；基线和已验合理safe_append控制分开；原候选/原分保留；不更改公开tests或评分runner以迎合候选",
+  "decision_after_validation": "确认具体正常输入边界漏验后，按公开依据决定窄补验收与版本；不靠单成功样本判训练资格",
+  "CPU_request_id": null,
+  "CPU_job_started": false,
+  "new_GPU_dispatch": false,
+  "current_R17_pair": "继续等待新Qwen；原claimed请求不取消或重复",
+  "ordinary_repeats": "GPU覆盖优先暂缓",
+  "source_original_frozen_patch": {
+    "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-coverageea69-r17-coder-a1/queue_v29/results/gpu1003-coverageea69-r17-coder-a1/attempt/frozen/frozen_patch.json",
+    "sha256": "sha256:85c2211228edd88e9012924fc118c7e3cc1e814859a6b3ac2cda26d86367e388",
+    "bytes": 27080
+  }
+}

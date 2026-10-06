@@ -1,0 +1,15 @@
+{
+  "schema": "swe_pydantic8511.diagnostic_executable_bit_fix_disposition.v1",
+  "v1_hold": "pyd8511-retention-20261003T151418Z-v1",
+  "v2_hold": "pyd8511-retention-20261003T152527Z-v2",
+  "observed_v2_mismatch": "452内容SHA均相同，仅build-docs.sh/tests/test_fastapi.sh/tests/test_pydantic_settings.sh/tests/test_validators_dataclass.py/update_v1.sh执行位由true变false；候选行为未执行。",
+  "mechanism_inference": "tar恢复时先chown至54321，root无FOWNER后chmod可能作为ExtractError被默认errorlevel忽略；本轮实际缺执行位已证，底层推断与实际分列。",
+  "concrete_fix": "所有内容仍从原archive恢复，由UID54321在已拥有文件上显式按冻结manifest的100644/100755恢复mode，然后原全部452 SHA/执行位严格比较不变。",
+  "strict_identity_relaxed": false,
+  "image_rebuilt": false,
+  "capabilities_added": false,
+  "new_runner": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/cpu_acceptance_20261003/8511_fieldinfo_retention_diagnostic_v1/run_diagnostic_v3.py",
+  "new_runner_sha256": "9f351c27b973df9d45054aeb26de2c90d9ed7b7cc5df25c28f8f1b0b2fb769d7",
+  "scope": "只修本诊断restorer，不改公共入口、原候选、材料、173/raw1或其它题；两旧hold保持。",
+  "authorized_next_operation": "一次有界v3三候选/四保留行为，仍600/120秒，新的任何identity或infra停止。"
+}

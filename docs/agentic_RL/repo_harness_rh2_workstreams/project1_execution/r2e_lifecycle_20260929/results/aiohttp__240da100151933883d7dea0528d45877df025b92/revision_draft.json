@@ -1,0 +1,152 @@
+{
+ "instance_id": "aiohttp__240da100151933883d7dea0528d45877df025b92",
+ "template": "R-c",
+ "items": [
+  {
+   "id": "R-c-1",
+   "fixes": "T2c + T2b（唯一目标断言只用题面示例字面值；DG1 在当前材料正式评分 1.0）",
+   "new_key": "ProxyConnectorTests.test_request_port_other_url"
+  },
+  {
+   "id": "R-c-2",
+   "fixes": "v1 §4 第 4 步 S1（WR1 在当前材料正式评分 1.0、WR2 试跑 1；二者破坏 host/port 语义）",
+   "new_key": "ProxyConnectorTests.test_https_connect_port"
+  }
+ ],
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "        self.assertEqual(req.path, 'http://localhost:1234/path')\n",
+     "new": "        self.assertEqual(req.path, 'http://localhost:1234/path')\n\n    @unittest.mock.patch('aiohttp.connector.ClientRequest')\n    def test_request_port_other_url(self, ClientRequestMock):\n        # Not the issue's example: another host, port and path, through the\n        # public connect() entry.  The explicit port must stay in req.path.\n        proxy_req = ClientRequest('GET', 'http://proxy.example.com')\n        ClientRequestMock.return_value = proxy_req\n\n        loop_mock = unittest.mock.Mock()\n        connector = aiohttp.ProxyConnector('http://proxy.example.com',\n                                           loop=loop_mock)\n\n        tr, proto = unittest.mock.Mock(), unittest.mock.Mock()\n        self._fake_coroutine(loop_mock.create_connection, (tr, proto))\n\n        req = ClientRequest('GET', 'http://www.python.org:8080/some/path')\n        self.loop.run_until_complete(connector.connect(req))\n        self.assertEqual(req.path, 'http://www.python.org:8080/some/path')\n\n    @unittest.mock.patch('aiohttp.connector.ClientRequest')\n    def test_https_connect_port(self, ClientRequestMock):\n        # Same as test_https_connect but with an explicit non-default port:\n        # the CONNECT target is still host:port, with the port given once.\n        loop_mock = unittest.mock.Mock()\n        proxy_req = ClientRequest('GET', 'http://proxy.example.com',\n                                  loop=loop_mock)\n        ClientRequestMock.return_value = proxy_req\n\n        proxy_resp = ClientResponse('get', 'http://proxy.example.com')\n        proxy_req.send = send_mock = unittest.mock.Mock()\n        send_mock.return_value = proxy_resp\n        proxy_resp.start = start_mock = unittest.mock.Mock()\n        self._fake_coroutine(start_mock, unittest.mock.Mock(status=200))\n\n        connector = aiohttp.ProxyConnector(\n            'http://proxy.example.com', loop=loop_mock)\n\n        tr, proto = unittest.mock.Mock(), unittest.mock.Mock()\n        self._fake_coroutine(loop_mock.create_connection, (tr, proto))\n\n        req = ClientRequest('GET', 'https://www.python.org:8443')\n        self.loop.run_until_complete(connector._create_connection(req))\n\n        self.assertEqual(proxy_req.method, 'CONNECT')\n        self.assertEqual(proxy_req.path, 'www.python.org:8443')\n"
+    }
+   ]
+  }
+ ],
+ "expected_after": {
+  "HttpConnectionTests.test_close": "PASSED",
+  "HttpConnectionTests.test_del": "PASSED",
+  "HttpConnectionTests.test_release": "PASSED",
+  "BaseConnectorTests.test_cleanup": "PASSED",
+  "BaseConnectorTests.test_close": "PASSED",
+  "BaseConnectorTests.test_connect": "PASSED",
+  "BaseConnectorTests.test_create_conn": "PASSED",
+  "BaseConnectorTests.test_ctor_loop": "PASSED",
+  "BaseConnectorTests.test_del": "PASSED",
+  "BaseConnectorTests.test_get": "PASSED",
+  "BaseConnectorTests.test_get_expired": "PASSED",
+  "BaseConnectorTests.test_release": "PASSED",
+  "BaseConnectorTests.test_release_close": "PASSED",
+  "BaseConnectorTests.test_release_not_opened": "PASSED",
+  "BaseConnectorTests.test_release_not_started": "PASSED",
+  "BaseConnectorTests.test_start_cleanup_task": "PASSED",
+  "BaseConnectorTests.test_tcp_connector_ctor": "PASSED",
+  "ProxyConnectorTests.test_auth": "PASSED",
+  "ProxyConnectorTests.test_auth__not_modifying_request": "PASSED",
+  "ProxyConnectorTests.test_auth_from_url": "PASSED",
+  "ProxyConnectorTests.test_auth_utf8": "PASSED",
+  "ProxyConnectorTests.test_connect": "PASSED",
+  "ProxyConnectorTests.test_ctor": "PASSED",
+  "ProxyConnectorTests.test_ctor2": "PASSED",
+  "ProxyConnectorTests.test_https_connect": "PASSED",
+  "ProxyConnectorTests.test_https_connect_http_proxy_error": "PASSED",
+  "ProxyConnectorTests.test_https_connect_resp_start_error": "PASSED",
+  "ProxyConnectorTests.test_https_connect_runtime_error": "PASSED",
+  "ProxyConnectorTests.test_proxy_auth": "PASSED",
+  "ProxyConnectorTests.test_proxy_connection_error": "PASSED",
+  "ProxyConnectorTests.test_request_port": "PASSED",
+  "ProxyConnectorTests.test_request_port_other_url": "PASSED",
+  "ProxyConnectorTests.test_https_connect_port": "PASSED",
+  "HttpClientConnectorTests.test_tcp_connector": "FAILED",
+  "HttpClientConnectorTests.test_unix_connector": "FAILED"
+ },
+ "positive_control": "gold",
+ "acceptance": {
+  "gold": {
+   "expected_score": 1,
+   "expected_fail_keys": [],
+   "trial": "trials/rev_gold.json",
+   "trial_verdict": "match 35/35",
+   "patch": "runs/r2e_static_prep_20260924/v3/private/aiohttp__240da100151933883d7dea0528d45877df025b92/gold.patch"
+  },
+  "noop": {
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "ProxyConnectorTests.test_request_port",
+    "ProxyConnectorTests.test_request_port_other_url"
+   ],
+   "trial": "trials/rev_noop.json",
+   "trial_verdict": "mismatch 35/35; FAILED=ProxyConnectorTests.test_request_port, ProxyConnectorTests.test_request_port_other_url",
+   "patch": "none"
+  },
+  "DG1": {
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "ProxyConnectorTests.test_request_port_other_url"
+   ],
+   "trial": "trials/rev_DG1.json",
+   "trial_verdict": "mismatch 35/35; FAILED=ProxyConnectorTests.test_request_port_other_url",
+   "patch": "cands/aiohttp_240d_DG1.patch"
+  },
+  "WR1": {
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "ProxyConnectorTests.test_https_connect_port"
+   ],
+   "trial": "trials/rev_WR1.json",
+   "trial_verdict": "mismatch 35/35; FAILED=ProxyConnectorTests.test_https_connect_port",
+   "patch": "cands/aiohttp_240d_WR1.patch"
+  },
+  "WR2": {
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "ProxyConnectorTests.test_https_connect_port"
+   ],
+   "trial": "trials/rev_WR2.json",
+   "trial_verdict": "mismatch 35/35; FAILED=ProxyConnectorTests.test_https_connect_port",
+   "patch": "cands/aiohttp_240d_WR2.patch"
+  },
+  "AL1": {
+   "expected_score": 1,
+   "expected_fail_keys": [],
+   "trial": "trials/rev_AL1.json",
+   "trial_verdict": "match 35/35",
+   "patch": "cands/aiohttp_240d_AL1.patch"
+  },
+  "SC1": {
+   "expected_score": 1,
+   "expected_fail_keys": [],
+   "trial": "trials/rev_SC1.json",
+   "trial_verdict": "match 35/35",
+   "patch": "cands/aiohttp_240d_SC1.patch"
+  }
+ },
+ "paths_note": "trials/ 与 cands/ 相对本题目录；runs/ 开头的路径相对仓库根。acceptance 只含修订版试跑；当前材料上的对照见 revision_plan.md §5.1",
+ "candidate_patch_sha256": {
+  "gold": "sha256:df75d1d24bc411e2ce46712930054181bb5b6321f6f1892961f3ee75cd0b3739",
+  "DG1": "sha256:efa105365fa81c3a6390953d1fa86b1c91149476e8d53060cb0072c4382cb758",
+  "WR1": "sha256:b8b809c11de35988b9dc627b044cc0c4fd115744293ed620c2dae99e2db4b38c",
+  "WR2": "sha256:1b8a32ebc735c479d4bbb92f2d076f1602a10d3e770b652f1dc4548b98c1a62f",
+  "AL1": "sha256:a2e5e694251ed0a2d67f61e88a36341cdc66e691b3d89e962eeaf9eacb287f29",
+  "SC1": "sha256:ab0d861d07649e49d415b5de8e2d672e551ca8887286e0f9a3ff70162f821cc2"
+ },
+ "parent_material": {
+  "hidden_test_file": "runs/r2e_static_prep_20260924/v3/private/aiohttp__240da100151933883d7dea0528d45877df025b92/hidden_tests/test_1.py",
+  "hidden_test_file_sha256": "sha256:530b4631b50acb55a1f3cdc4db0330479299a4913f0bcabaaffd928b68e90c8d",
+  "hidden_tests_tree_sha256": "sha256:b74735a5daa24446307ee80a01e2a9b3d6056b5d42a7206bdeb56b776f0412af",
+  "expected_output_sha256": "sha256:5444ee2acbf99088cb932eaf1daf171855dfb3feba081b7b25fa04290bedec31",
+  "expected_n": 33,
+  "material_revisions": []
+ },
+ "trial_image": {
+  "image_id": "sha256:a6dee3349d2715d2d2a16d1ee087421f9289d0eda8b6b48558cf4e9bafd19711",
+  "recipe_id": "r2e_derive_v1+sysconfig_v1"
+ },
+ "trial_draft_sha256": {
+  "draft.json": "sha256:50364a10f7b51d2997d71cbcbd0ee984237ee0ccc1cd1536e3b203077f1fa53d",
+  "expected_after.json": "sha256:2ad2304cd7c8e529909c345a9a0353982170465991587976092d77f8784899a6"
+ },
+ "revised_test_file_sha256": "sha256:5ad37c35056ed5b91c814514ae96489c1526e81751240531fd80ad1e7fbf0895"
+}

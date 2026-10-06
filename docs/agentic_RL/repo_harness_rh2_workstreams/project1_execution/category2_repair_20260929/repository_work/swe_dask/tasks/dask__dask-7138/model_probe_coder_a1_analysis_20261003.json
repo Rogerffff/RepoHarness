@@ -1,0 +1,171 @@
+{
+  "schema": "dask_actual_model_owner_analysis.v1",
+  "as_of": "2026-10-03T19:20:25.925726+08:00",
+  "owner_thread_id": "01a0fd62-996e-7953-8af9-856540ff3015",
+  "instance_id": "dask__dask-7138",
+  "revision_id": "dask7138-array-keyword-v1",
+  "request_id": "probe-swe-dask-7138-20261003-v1",
+  "request_sha256": "819534ee0ada1c63ec2a2ad4a37a22f97aa4642e8ac010ad7083b3a421b123da",
+  "job_id": "gpu1003-dask7138-coder-a1",
+  "model": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+  "budget_version": "probe-wide-v1",
+  "actual_budget": {
+    "context_tokens": 196608,
+    "response_tokens": 65536,
+    "turns": 240,
+    "solve_seconds": 10800,
+    "generation_request_guard": 1024
+  },
+  "original_bundle": {
+    "files": 508,
+    "bytes": 37710899,
+    "manifest": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/gpu1003-dask7138-coder-a1_closed_manifest_v1.json",
+      "sha256": "8df01ab39be672264d938cccd1679121d20dda8a6be3f1af822b59db004d05ab",
+      "bytes": 96249
+    },
+    "sync_receipt": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/sync_receipt_v3.json",
+      "sha256": "7810ca6f7920f0abb37dfc8d6aff147ccde59d78cade61ffb54115940f82a247",
+      "bytes": 327727
+    },
+    "authoritative_closed_copy": true
+  },
+  "candidate_independent_review": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_7138_coder_a1_candidate_review_20261003.json",
+    "sha256": "33a04fc2913791a4f58b3e1f32def5780269eeb113d960d1c33c9f9e603b94ac",
+    "bytes": 26396
+  },
+  "candidate_independent_review_md": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_7138_coder_a1_candidate_review_20261003_v2.md",
+    "sha256": "b868092c5b6bc7a271b9f83d33de42aec42bb60f4b571bea03d91a60c16333cf",
+    "bytes": 14391
+  },
+  "original_report": {
+    "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/queue_v26/results/gpu1003-dask7138-coder-a1/grading/report.json",
+    "sha256": "f94224785111770ceade4a28548dbf4ec0fe7eb79163112e75faf2a23c6c44b2",
+    "bytes": 1874
+  },
+  "original_result": {
+    "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/queue_v26/results/gpu1003-dask7138-coder-a1/result.json",
+    "sha256": "b0ab30e96395ae96a4cb0f6304f993ee58eaad3de7a043691fb2ef0bc21bf3fb",
+    "bytes": 2694
+  },
+  "trajectory": {
+    "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/queue_v26/results/gpu1003-dask7138-coder-a1/attempt/harness/trajectory.jsonl",
+    "sha256": "672cd15c527cfe5f931c1b88db5397e0017a82be816c6a48e7bd2aee731981b4",
+    "bytes": 443599
+  },
+  "identity": {
+    "original_FP_digest": "sha256:451557c761f6f47f984e06695b51f66591f7ecaa8589c1188c1a5e7c6a5365e4",
+    "baseline_digest": "sha256:1bb7df741c80d1271ab92408e0277d129c0b866011b218b79a8295bc38ad49b2",
+    "materials_identity": "sha256:3e94408ef02d1c2fb6c9113a5c86920325280b2a80962bf579d98087e283136e",
+    "actor_image_id": "sha256:fdd298b61309ae2df4cb9f528351526b7b3817c42fc34f47f98152a92a520881",
+    "grader_image_id": "sha256:625b404c6c1c40da31df4edfea6052a10fbd30b7fb49d58072b6ee2b215fab13",
+    "references": 470,
+    "single_shell_scripts_digest": "sha256:6f61a742aacc681b4e07e2b1825cd1d8cba5450da1791e2aae7b9eee659c0d5b"
+  },
+  "execution": {
+    "status": "completed_solve_original_grader_prepare_infra_None",
+    "raw_reward": null,
+    "failure_category": "infra_failure",
+    "formal_reference_results": null,
+    "install_started": false,
+    "test_started": false,
+    "termination": "completed",
+    "budget_exhausted": false,
+    "cleanup_verified": true,
+    "grader_candidate_UID_actual": null
+  },
+  "candidate_semantics": {
+    "status": "positional_conversion_supported_keyword_compatibility_statically_broken",
+    "source_modify": "dask/array/routines.py::ravel",
+    "actual_change": "def ravel(array_like): return asanyarray(array_like).reshape((-1,))",
+    "positive": "复用已导入asanyarray，位置参数的list/tuple/numpy/nested/scalar及已有Dask Array转为可reshape输入；实际公开例子与筛选测试支持这条路径。",
+    "P1": "原签名array被改为array_like，现行已批准P2P要求da.ravel(array=...)。derived_from只附文档并返回原函数，不提供参数别名；Python绑定必然失败。当前是静态缺陷，尚未预写正式raw0。",
+    "minimal_future_repair": "保留array参数名并调用asanyarray(array)；若开展修复需新候选身份，不改本次原FrozenPatch。现有compatible_ravel正对照已验，不重复三行。",
+    "patch_hygiene": "原FP五项：源码、一个公开测试修改及三helper。正式投影排除dask/array/tests/test_routines.py，四项投影摘要与原清理结果一致；私有正式断言不受模型公开测试编辑替换。未见conftest/runner修改或绕过证据。",
+    "new_material_defect_found": false,
+    "material_repair_required": false,
+    "qualification": null,
+    "automatic_training_reward_granted": false
+  },
+  "behavior_analysis": {
+    "localization": "L10搜索定位routines/core；L23读整个routines，随后core.py前1000行、grep和小段复读。L97见原list的AttributeError；L106修改正确生产函数。题面已给asanyarray方向，不能称无引导发现。",
+    "correction": "先复现再一次源码编辑，L123原例修后成功；没有array=测试、关键字回归发现或第二次修正。源码定位正确并不等于兼容闭环完成。",
+    "tools": "24次工具均按可见顺序串行，13 Bash/6 Read/3 Write/2 Edit。长文件读取与重复测试可收窄；三个单节点各1pass之后再-k ravel的11pass包含这三个，不能相加为14个独立测试。工具is_error共0，但修前脚本catch异常并exit0，实际内容确有失败。",
+    "parallel": {
+      "observed": "未见同一assistant消息多工具、执行重叠或后台任务。",
+      "opportunity": "定位后独立只读源码小段可批量；修前复现、生产编辑、修后验证有依赖，应串行。",
+      "runtime_support": "本臂只运行单工具；虽广告五种工具，不能推断多工具执行支持或模型并行能力。"
+    },
+    "verification": "L145打印六类输入与NumPy比较，部分helpercatch错误而非断言；L223/236/249三个单节点通过，L262筛选11pass/550deselected。正式470参考未执行。位置输入验证有依据；漏掉公开旧array=签名及全模块回归。",
+    "reporting_problem": "L302/306称全部既有测试通过、完整向后兼容、完全匹配NumPy API，超过11项筛选自测，且与关键字静态回归矛盾。不推断欺骗动机。",
+    "stability": "只有一个完整Coder求解，当前没有正式分、Qwen首轮或重复；不授稳定能力/成功率结论。"
+  },
+  "metrics": {
+    "input_tokens": 865585,
+    "output_tokens": 3642,
+    "input_token_scope": "逐HTTP提示token累加，含重复上下文，非单次或去重token。",
+    "HTTP_generations": 25,
+    "CC_turns": 25,
+    "tools_total": 24,
+    "tool_calls": {
+      "Bash": 13,
+      "Read": 6,
+      "Write": 3,
+      "Edit": 2
+    },
+    "tool_result_errors": 0,
+    "solve_seconds": 48.03,
+    "CC_duration_seconds": 44.374,
+    "CC_API_duration_seconds": 37.119,
+    "grading_seconds": 313.299,
+    "grader_trusted_setup_seconds": 300.485823,
+    "grader_queue_seconds": 0.0,
+    "pre_dispatch_queue_seconds": null,
+    "multi_tool_generation_observed": false,
+    "parallel_execution_support": "未验证",
+    "termination": "completed"
+  },
+  "source_archive_dependency": {
+    "state": "target_load_inspect_and_actual_run_identity_verified",
+    "receipt": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7138-coder-a1/q26_binder_image_readback_merge_v1/actual_image_readback.json",
+      "sha256": "a551f7ef9b0d2d2157fa53174495800bea9930df33b1568e4135f77fed4ef88a",
+      "bytes": 22740
+    },
+    "archive_bytes": 1885056720,
+    "archive_sha256": "b85801da7759df2584e3acbedd7b3bd122ff92e17ea15d7b65f99ebd5f06d3a0",
+    "source_files_retained": true,
+    "whole_host_retirement_authorized": false
+  },
+  "score_recovery": {
+    "state": "setup900_only_pure_constructed_non_author_worker_review_pending_actual_not_dispatched_at_analysis",
+    "pure_receipt": {
+      "path": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/category2_repair_20260929/swe_dask/environment_recovery_20261003/dask7138_same_fp_cpu_c_v1/deploy_and_pure_receipt_v3.json",
+      "sha256": "df66e16b3c999fd4583f981d16e46d3f32fedf016fb9f7dc8cb9bc2ea3dcc2c7",
+      "bytes": 29775
+    },
+    "same_original_FP": true,
+    "new_model_calls": 0,
+    "new_model_samples": 0,
+    "only_change": "setup300to900",
+    "no_7305_env_variables": true,
+    "does_not_rewrite_original_None": true
+  },
+  "limits": [
+    "模型公开题面带转换方向，私有keyword测试未交solver。",
+    "gateway审计checkpoint_identity_verified=false；未全量重新hash权重或做GPU attestation，不能升级成已验证。",
+    "原Config canonical摘要与CPU四键表示匹配，Id/platform/RootFS相同；CPU完整17键另冻结，不能冒称拿到原GPU完整raw Config。",
+    "原评分候选段未开始，配置UID54322不能冒充已实际执行id-u；资源离散采样gaps_unknown。",
+    "旧None和508封包保持，新的CPU读回另立；不重复59控制行或新增模型样本。"
+  ],
+  "remaining": [
+    "独立复核仅setup900新worker/input和唯一CPU槽派发后，执行同原FP补评分并逐470参考验收。",
+    "若实际恢复通过，另立7138环境consumer支持，不追加到已封存7305/9378 R23请求。",
+    "Qwen/Qwen3.6-35B-A3B首轮及逐轨迹分析；重复依全局首轮优先。",
+    "正式训练typed actor和训练资格另按标准。"
+  ],
+  "request_closure": "partial_first_model_only_request_remains_claimed_no_ack_or_resubmit"
+}

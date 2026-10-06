@@ -1,0 +1,552 @@
+{
+ "record_kind": "static_review",
+ "task_id": "r2e_gym_subset::aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2",
+ "instance_id": "aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2",
+ "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0（material_revisions=[]；expected sha256:f0423107…；hidden tests tree sha256:7570cfed…；run_tests.sh sha256:8285765f…）",
+ "source_adapter_ref": {
+  "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl:5（line_sha256 c22fa362…）",
+  "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/validation_bundles_v0.jsonl:5（line_sha256 a8cc7d51…）",
+  "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl（line_sha256 478ad542…）",
+  "spec_vendor_id": "r2e_gym_subset_e8b9fcbc",
+  "parser_id": "r2e_prime_pytest_v1（rule_source prime_envs_c4d04dfe，normalization prime_decolor_v1）"
+ },
+ "recipe_ref": {
+  "derived_image_recipe": "r2e_derive_v1（recipe_sha256 sha256:0da821a1…，评分侧构建）",
+  "derived_image_ref": "rh2-r2e-derived/aiohttp:618335186f22-r2e_derive_v1",
+  "grading_image_id": "sha256:d58fc357ac0ee9c4cb87d8b1355d67d358c006f6d628444bf34bb43e1bbccd92",
+  "actor_devcheck_image_id": "sha256:0bf7bf28a3380ed5a626028fa02e4df860f5533fc660d42be293f8e4afc5e2ec（同配方另一次本地构建，未逐层对账）",
+  "base_image": "namanjain12/aiohttp_final:618335186f22834c0d8daabcf53ccf44d42488a2（manifest sha256:67aefa17…）",
+  "resources": "default：2 CPU / 4 GiB / /tmp 1 GiB / pids 512；无资源配方",
+  "env_recipe": null
+ },
+ "code_snapshot_ref": {
+  "grader": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe；scripts_digest sha256:60c7a8fe…（账本）",
+  "actor_devcheck": "Claude Code 2.1.205；profile_digest sha256:149b3abe…；env_activation_script sha256:18b28c16…；R2E 层 rh2/experiments/r2e_actor_20260925/r2e_devcheck.py（协调者告知即正式任务面，改动待 A 线审查）"
+ },
+ "facts_ref": {
+  "environment_facts": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/facts.json（collate_facts.py 汇总；来源：评分账本与日志、M3 参考）",
+  "static_analysis": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/analysis_before_history.md",
+  "history_delta": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/old_findings_delta.md",
+  "card": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/card.md",
+  "actor_devcheck": "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/{orig,private_gold}/",
+  "grading_runs": [
+   "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl:5（noop，45/47，mismatched=两个目标键）",
+   "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl:5（gold，47/47）",
+   "runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl:5（noop，45/47）",
+   "runs/r2e_env_repair_20260924/_rerun2/ledger_gold.jsonl:5（gold，47/47）"
+  ],
+  "independent_reference": [
+   "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl:25（gold a1，47 passed，来源镜像）",
+   "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl:73（gold a2，47 passed，来源镜像）"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "note": "隐藏测试 test_1.py sha256 89f3cf5e…、树摘要 7570cfed…、gold ce89afa4…、expected f0423107… 与评分面一致；base ff3dec42；隐藏测试 = 公开 tests/test_http_protocol.py 在 3 个测试里各加一句 assertTrue(all(chunks))；gold 能在带兼容改写的初态上干净应用",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/grading_bundle.json",
+    "runs/r2e_static_prep_20260924/v2/private/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/hidden_tests/test_1.py",
+    "runs/r2e_static_prep_20260924/v2/public/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/worktree/tests/test_http_protocol.py",
+    "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/private_gold/private_control.json"
+   ],
+   "by": "主审（静态核对 + 既有执行证据）"
+  },
+  "2": {
+   "status": "pass",
+   "note": "noop 下两个目标键都失败在 assertTrue(all(chunks))（test_1.py:474、:438，AssertionError: False is not true）；C2、C3 在 base 下以 agent 54321 经 CC Bash 复现：出现空写入，chunked 正文以零长结束块开头",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-a_9e959e21.eval.log",
+    "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/captures/mcve_c2_writes.out",
+    "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/captures/mcve_c3_chunked.out"
+   ],
+   "by": "主审"
+  },
+  "3": {
+   "status": "unknown",
+   "note": "R-f 渲染出的任务正文与 user_prompt.txt 逐字相同（1248 字符，代码块完整）。正式链中组装后的完整消息（R2E 提示加正文）没有捕获：devcheck 的 user 消息被换成了 devcheck 指令。协调者称提示措辞已改、待 A 线审查，本人没有见到新文本",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/prepared_r2e/prompts.jsonl:5",
+    "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/stub/requests/messages_000.json"
+   ],
+   "by": "主审"
+  },
+  "4": {
+   "status": "pass",
+   "note": "合法解只需改 aiohttp/protocol.py；评分只删除并重放 r2e_tests/ 与 run_tests.sh，不做其它 reset；不需要额外路径规则",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl:5",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/r2e_environment_card.md"
+   ],
+   "by": "主审"
+  },
+  "6": {
+   "status": "pass",
+   "note": "venv 为 Python 3.9.21；本题不需要新依赖，也不需要编译（纯 Python，Cython 扩展都有回退）；没有 pip / uv 记为解题侧条件",
+   "evidence_refs": [
+    "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/captures/env.out"
+   ],
+   "by": "主审"
+  },
+  "7": {
+   "status": "not_applicable",
+   "note": "本题不需要权重、数据或外部文件",
+   "evidence_refs": [],
+   "by": "主审"
+  },
+  "8": {
+   "status": "pass",
+   "note": "actor 以 agent 54321 运行（devcheck，/testbed 属主为 54321 且可写）；评分以 rh2grader 54322 运行（账本）",
+   "evidence_refs": [
+    "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/prelaunch.json",
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl:5"
+   ],
+   "by": "主审"
+  },
+  "9": {
+   "status": "pass",
+   "note": "评分侧 RH2_OBS_IMPORT_PATH=/testbed/aiohttp/__init__.py；devcheck 中 aiohttp.protocol 的 __file__ 为 /testbed/aiohttp/protocol.py",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl:5",
+    "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/captures/env.out"
+   ],
+   "by": "主审"
+  },
+  "10": {
+   "status": "pass",
+   "note": "python -m pytest tests/test_http_protocol.py 为 47 passed；C2、C3 可以运行。裸 pytest 收集报 ImportError，/testbed 须在 sys.path 上（posthoc3）。tests/test_wsgi.py 加 tests/test_web_response.py 在 base 和 gold 下都有 3 个与本题无关的 cookie 失败。整目录 tests/ 有 4 个文件含 asyncio.async，收集即报 SyntaxError（静态推断）",
+   "evidence_refs": [
+    "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/captures/test_http_protocol.out",
+    "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/captures/test_wsgi_web_response.out",
+    "runs/r2e_env_repair_20260924/p1/dev_probe_posthoc3/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/dev_probe.json"
+   ],
+   "by": "主审"
+  },
+  "11": {
+   "status": "pass",
+   "note": "准备、解题、安装、测试各阶段都不需要网络；正式任务面下外部 DNS 与直连上游都被拒，只有模型 relay 连通",
+   "evidence_refs": [
+    "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/prelaunch.json"
+   ],
+   "by": "主审"
+  },
+  "12": {
+   "status": "not_applicable",
+   "note": "测试只用 mock transport，不依赖外部服务",
+   "evidence_refs": [],
+   "by": "主审"
+  },
+  "13": {
+   "status": "pass",
+   "note": "评分内存峰值 171–178 MB，测试耗时 0.72–0.89 s（默认 2 CPU / 4 GiB）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl:5",
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl:5"
+   ],
+   "by": "主审"
+  },
+  "14": {
+   "status": "pass",
+   "note": "noop、gold 同条件各跑 2 次，日志去掉时间戳后逐字相同；M3 在来源镜像上跑 gold 两次都是 47 passed。次数有限",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-a_9e959e21.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_85db626f.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-a_cd51c4a5.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_88837e37.eval.log"
+   ],
+   "by": "主审"
+  },
+  "16": {
+   "status": "unknown",
+   "note": "gold 回放时投影 included_paths=[aiohttp/protocol.py]，apply_ok；actor 侧真实编辑 → 冻结 → 投影本题没有演练。另见 I3：还原兼容改写会作为 delta 重放",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl:5",
+    "rh2/src/repoharness2/grading/manager.py:377-393"
+   ],
+   "by": "主审"
+  },
+  "17": {
+   "status": "pass",
+   "note": "RH2_SETUP_RESTORED=2，隐藏测试树摘要一致，没有缺失或异常的测试文件",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-a_cd51c4a5.eval.log"
+   ],
+   "by": "主审"
+  },
+  "18": {
+   "status": "pass",
+   "note": "收集 47 个、解析 47 个、段外解析 0 个，segment_completed=true",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl:5",
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl:5"
+   ],
+   "by": "主审"
+  },
+  "19": {
+   "status": "pass",
+   "note": "47 键均为 TestHttpMessage.<方法名>，没有重名，只含 PASSED；隐藏测试只有一个文件，不存在跨文件撞键",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/expected_output.json"
+   ],
+   "by": "主审"
+  },
+  "20": {
+   "status": "pass",
+   "note": "noop 与 gold 的差异正好是两个目标键，失败原因就是目标断言",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-a_9e959e21.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-a_cd51c4a5.eval.log"
+   ],
+   "by": "主审"
+  },
+  "21": {
+   "status": "pass",
+   "note": "没有安装、收集或 infra 失败；noop 的 failure_category=tests_failed",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl:5"
+   ],
+   "by": "主审"
+  },
+  "22": {
+   "status": "pass",
+   "note": "M3 在来源镜像上跑 gold 两次都是 47/47；reconcile 中本题 noop 与 gold 两行都 agree",
+   "evidence_refs": [
+    "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl:25",
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   ],
+   "by": "主审"
+  },
+  "23": {
+   "status": "issue",
+   "note": "见 I2：题面示例断言按原样写恒为真；示例配置（Content-Length）与标题所说的提前 EOF（chunked 写出器）不是同一路径",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/public/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/user_prompt.txt",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2.py"
+   ],
+   "by": "主审"
+  },
+  "24": {
+   "status": "pass",
+   "note": "静态追踪：A1（在压缩过滤器处修）与 A2（在写出器处修）都可以通过；P2、P3 被拒有公开依据。替代解没有实际执行",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/analysis_before_history.md"
+   ],
+   "by": "主审（静态推断）"
+  },
+  "25": {
+   "status": "issue",
+   "note": "见 I1：标题场景（压缩在最后 + chunked 写出器）没有键覆盖，只改 _write_length_payload 的 P1 预计得 1",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/hidden_tests/test_1.py",
+    "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/captures/mcve_c3_chunked.out"
+   ],
+   "by": "主审（静态推断）"
+  },
+  "26": {
+   "status": "pass",
+   "note": "gold 只丢弃过滤器产出的空块；调用方 web_reqrep、client_reqrep、wsgi、multipart 都已追踪；应用 gold 后 3 个公开测试文件没有新增失败。其余测试文件没有跑",
+   "evidence_refs": [
+    "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/private_gold/private_control.json"
+   ],
+   "by": "主审"
+  },
+  "27": {
+   "status": "pass",
+   "note": "gold 同时修好 C2 与 C3（私有对照）；只有 2 行，没有无关改动；没有修的 R9（不经过滤器直接 write(b'')）超出题面范围",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/gold.patch",
+    "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/private_gold/private_control.json"
+   ],
+   "by": "主审"
+  },
+  "28": {
+   "status": "not_applicable",
+   "note": "本版本没有修订，审查者也没有新增断言",
+   "evidence_refs": [],
+   "by": "主审"
+  },
+  "29": {
+   "status": "pass",
+   "note": "正式任务面（协调者告知：派生镜像，待 A 线审查）下 preflight 三项都是 ok：隐藏测试不可见；HEAD 没有子提交；refs、remotes、reflog 都是 0",
+   "evidence_refs": [
+    "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/captures/r2e_preflight.out",
+    "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/attempt.json"
+   ],
+   "by": "主审"
+  },
+  "30": {
+   "status": "pass",
+   "note": "DNS_EXTERNAL、NET_upstream_direct、NET_forbidden_* 都是 DENIED",
+   "evidence_refs": [
+    "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/prelaunch.json"
+   ],
+   "by": "主审"
+  },
+  "31": {
+   "status": "unknown",
+   "note": "共享控制面没有逐题审：评分不会清掉根目录 conftest.py 与 ini 文件里的 addopts。本题没有特有的 helper 通道，隐藏测试只导入 aiohttp.hdrs 与 aiohttp.protocol",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/r2e_environment_card.md"
+   ],
+   "by": "主审"
+  },
+  "32": {
+   "status": "issue",
+   "note": "目标断言检查的是 Content-Length 写出器下没有空的 transport.write，这只是代理性质，没有检查标题描述的线上行为（与 I1 同源）",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/hidden_tests/test_1.py"
+   ],
+   "by": "主审（静态推断）"
+  },
+  "37": {
+   "status": "not_applicable",
+   "note": "本版本没有修订",
+   "evidence_refs": [],
+   "by": "主审"
+  },
+  "38": {
+   "status": "not_applicable",
+   "note": "本版本没有修订",
+   "evidence_refs": [],
+   "by": "主审"
+  },
+  "39": {
+   "status": "not_applicable",
+   "note": "本版本没有共享修复",
+   "evidence_refs": [],
+   "by": "主审"
+  }
+ },
+ "issues": [
+  {
+   "id": "I1",
+   "category": "test_coverage_gap",
+   "checks": [
+    25,
+    32
+   ],
+   "scope": "task",
+   "summary": "隐藏测试没有覆盖标题场景（压缩过滤器在最后 + chunked 写出器 → 提前写出结束块）。只在 HttpMessage._write_length_payload 里跳过空块的部分修复 P1，预计 47/47 得 1，但 C3 仍复现提前结束块",
+   "evidence_level": "执行证实：AP1 真实评分 47/47 得 1，语义化 C3 不通过（runs/r2e_actor_20260925/grader/、postcheck_validate/）",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/hidden_tests/test_1.py",
+    "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/captures/mcve_c3_chunked.out",
+    "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/private_gold/private_control.json"
+   ],
+   "proposed_action": "若用户批准修订：补一个隐藏键，配置为 HTTP/1.1、不设 Content-Length、只加 deflate 压缩过滤器，断言分块完整、终止唯一、解压等于原载荷（不要求字节相等），并验证 gold、AP2 通过而 AP1 失败。修订前，探针对得 1 的补丁一律加跑语义化 C3",
+   "status": "open"
+  },
+  {
+   "id": "I2",
+   "category": "statement_clarity",
+   "checks": [
+    3,
+    23
+   ],
+   "scope": "task",
+   "summary": "题面示例断言 all(write.mock_calls) 按原样写恒为真（mock._Call 是长度为 3 的元组），照抄的人会以为复现不了；示例配置（Content-Length）与标题所说的提前 EOF（chunked 写出器）不是同一条路径，可能引导出只修 chunked 写出器的 P2（得 0；因示例本身是 Content-Length 配置，判 0 有依据）。旧 R03 的'照写即复现'被部分推翻：旧复现脚本其实改用了 c[1][0]",
+   "evidence_level": "静态推断（unittest.mock 语义）",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/public/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/user_prompt.txt",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2.py"
+   ],
+   "proposed_action": "可选的公开规格修订：把示例断言改为 [c[1][0] for c in write.mock_calls]。不影响评分，优先级低",
+   "status": "proposed"
+  },
+  {
+   "id": "I3",
+   "category": "solver_condition",
+   "checks": [
+    10,
+    16
+   ],
+   "scope": "task（同族 240da100 未核）",
+   "summary": "来源镜像的兼容改写（4 个文件里 asyncio.async( → asyncio.create_task(loop=)）是未提交修改，在 CC 的 gitStatus 中显示为 M。候选如果把它们还原（git checkout / restore，或 stash 后忘了 pop），这些还原就是相对基线的 delta，会在评分时直接写入；asyncio.async( 在 Python 3.9 下是语法错误，结果 import aiohttp 失败、隐藏测试全部收集失败、得 0",
+   "evidence_level": "静态推断，加代码阅读（FrozenDeltaSource 按基线清单逐路径直接写文件）",
+   "evidence_refs": [
+    "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/stub/requests/messages_000.json",
+    "runs/env_overnight_20260916/M3/facts/618335186f22/facts/initial.diff",
+    "rh2/src/repoharness2/grading/manager.py:377-393"
+   ],
+   "proposed_action": "由任务面决定（E10）：在提示中写明这 4 个 M 文件是环境兼容改写、不要还原；或者把改写并入基线提交，这会影响候选 diff 的基准，需要 A 线评估",
+   "status": "proposed"
+  },
+  {
+   "id": "E1",
+   "category": "solver_condition",
+   "checks": [
+    6,
+    10
+   ],
+   "scope": "repo:aiohttp（本题已核）",
+   "summary": "环境侧条件（历史已核，本次确认）：/testbed 须在 sys.path 上，测试要用 python -m pytest（裸 pytest 收集报 ImportError）；venv 没有 pip，也没有 uv 和网络；兼容改写使真实客户端与服务端报 TypeError: create_task() got an unexpected keyword argument 'loop'；tests/test_http_protocol.py 47/47；test_web_response.py 有 3 个与本题无关的 cookie 失败（新增）；本镜像的 install.sh 调用 make .develop，但 Makefile 只有 develop 目标（静态推断，可以解释包为什么没装进 venv）",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/screening_record.json",
+    "runs/r2e_env_repair_20260924/p1/dev_probe_posthoc2/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p1/dev_probe_posthoc3/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/dev_probe.json",
+    "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/captures/test_wsgi_web_response.out"
+   ],
+   "proposed_action": "按 E10 作为解题侧条件记录；建议在题包或提示中给出：相关公开测试是 tests/test_http_protocol.py，用 python -m pytest，并用 mock transport 验证",
+   "status": "confirmed"
+  },
+  {
+   "id": "S1",
+   "category": "shared_actor_surface",
+   "checks": [
+    3,
+    29
+   ],
+   "scope": "source:r2e_gym_subset",
+   "summary": "正式 actor 改用派生镜像、.venv 解释器前缀与 R2E 提示措辞（协调者 09-25 告知已实施，待 A 线审查）；组装后的完整消息本人没有见到",
+   "evidence_refs": [
+    "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/activation_check.json",
+    "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/attempt.json"
+   ],
+   "proposed_action": "A 线审查通过后，在正式链上捕获一次实际消息，核对提示文字与题面渲染",
+   "status": "implemented_pending_review"
+  }
+ ],
+ "candidate_patches": [
+  {
+   "id": "gold",
+   "change": "HttpMessage.write() 的过滤器循环里，把 self.writer.send(chunk) 改成 if chunk: self.writer.send(chunk)",
+   "expected_hidden": "47/47，reward 1",
+   "expected_c3": "通过，正文 b'6\\r\\nKI,I\\x04\\x00\\r\\n0\\r\\n\\r\\n'",
+   "evidence_level": "已执行（评分两次加私有对照）"
+  },
+  {
+   "id": "A1",
+   "change": "HttpMessage.add_compression_filter 的非 EOF 分支，把 yield zcomp.compress(chunk) 改成 data = zcomp.compress(chunk) 加 if data: yield data；随后的 chunk = yield EOL_MARKER 与 EOF 分支都不动",
+   "expected_hidden": "47/47，reward 1",
+   "expected_c3": "通过，正文与 gold 相同",
+   "evidence_level": "静态推断"
+  },
+  {
+   "id": "A2",
+   "change": "_write_chunked_payload 在 chunk = bytes(chunk) 之后，_write_length_payload 与 _write_eof_payload 在 except aiohttp.EofStream: break 之后，各加一句 if not chunk: continue",
+   "expected_hidden": "47/47，reward 1",
+   "expected_c3": "通过，正文与 gold 相同",
+   "evidence_level": "静态推断"
+  },
+  {
+   "id": "P1",
+   "change": "只在 HttpMessage._write_length_payload 的 except aiohttp.EofStream: break 之后加 if not chunk: continue",
+   "expected_hidden": "47/47，reward 1（假阳性）",
+   "expected_c3": "失败：正文仍以 b'0\\r\\n\\r\\n' 开头，完整为 b'0\\r\\n\\r\\n6\\r\\nKI,I\\x04\\x00\\r\\n0\\r\\n\\r\\n'",
+   "evidence_level": "静态推断"
+  },
+  {
+   "id": "P2",
+   "change": "只在 HttpMessage._write_chunked_payload 的 chunk = bytes(chunk) 之后加 if not chunk: continue",
+   "expected_hidden": "45/47（test_write_payload_chunked_and_deflate、test_write_payload_deflate_filter FAILED），reward 0",
+   "expected_c3": "通过",
+   "evidence_level": "静态推断"
+  },
+  {
+   "id": "P3",
+   "change": "只把 filter_pipe 最内层循环里的 yield chunk 改成 if chunk: yield chunk",
+   "expected_hidden": "46/47（test_write_payload_deflate_filter FAILED），reward 0",
+   "expected_c3": "失败：单个过滤器不经过 filter_pipe",
+   "evidence_level": "静态推断"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "没有证据表明需要额外路径规则：合法解只改 aiohttp/protocol.py，评分只删除并重放 r2e_tests/ 与 run_tests.sh",
+  "evidence_refs": [
+   "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl:5"
+  ],
+  "applied_version": null
+ },
+ "revision_refs": [],
+ "disposition": {
+  "state": "needs_review",
+  "scope": "static_review",
+  "reason": "静态候选待 actor 验证。材料对应，初态确有缺陷，noop/gold 分差来自目标行为且可重复，正式任务面的开发条件已由 devcheck 核对。另有 I1（测试漏掉标题场景；已实测：AP1 得 1 而 C3 失败）、I2（题面误导）、I3（还原兼容改写会导致得 0）三项，都不阻塞诊断用途",
+  "conditions": [
+   "作为基座探针候选时，每个得 1 的补丁都要加跑语义化 C3：分块格式完整、终止块恰好一个且在末尾、拼起来解压等于原载荷；允许与 gold 不同的合法分帧，不要求字节等于 gold。脚本 rh2/experiments/r2e_actor_20260925/postcheck/aiohttp_61833518_c3.py，入口 run_postcheck.py；已用 gold / AP2 通过、AP1 与 base 不通过验证。 原始 reward 与后检结论分两列报，直到 I1 解决或出修订版",
+   "正式 actor 面（派生镜像、.venv 前缀、R2E 提示）待 A 线审查通过"
+  ],
+  "suggested_list": "probe_candidates（附上述条件；不冒用 ready_for_probe）",
+  "evidence_refs": [
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/card.md",
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/old_findings_delta.md"
+  ],
+  "reviewer": null,
+  "next_step": "I1 已实测确认（AP1 得 1、C3 失败）。是否出补标题场景测试的修订版由用户决定（修订 Q2）；修订版的新断言用语义判定，不要求字节等于 gold。",
+  "postcheck": {
+   "script": "rh2/experiments/r2e_actor_20260925/postcheck/aiohttp_61833518_c3.py",
+   "runner": "rh2/experiments/r2e_actor_20260925/postcheck/run_postcheck.py",
+   "validated": {
+    "pass": [
+     "gold",
+     "AP2"
+    ],
+    "fail": [
+     "base",
+     "AP1"
+    ]
+   },
+   "added_at": "2026-09-25",
+   "source": "Codex 复核 r2e_static_actor_review_20260925/README.md"
+  }
+ },
+ "usage": {
+  "intended_use": "development_diagnostic",
+  "exposure_notes": "本主审读过 gold、隐藏测试、期望映射、评分日志、devcheck 与私有对照，以及历史环境审查记录（09-24 P1 包）；公开读者只读了公开包。本记录不提供给模型 solver。题面几乎逐字暴露目标测试 test_write_payload_chunked_and_deflate 的配置与断言形态（R2E 合成题面的常态）。本记录不是正式训练或评测批准"
+ },
+ "costs": {
+  "container_wall_seconds": null,
+  "agent_tokens": null,
+  "human_decisions": null,
+  "source_refs": [
+   "本次静态审查没有运行容器，也没有调用付费模型；评分侧与 devcheck 的耗时见 facts_ref 所列账本与 attempt.json"
+  ]
+ },
+ "history_delta_summary": {
+  "confirmed": "环境结论：导入条件、无 pip、无出网、兼容改写的 TypeError、公开测试噪声、gold/noop 可解释且可重复、git 卫生",
+  "overturned": "R03 的'照写即复现'被部分推翻（I2）；findings 的'无影响判分的缺口'按题意与测试口径被部分推翻（I1）",
+  "supplemented": "R04 补充还原陷阱（I3）；R16 补充标题场景缺覆盖（I1）；公开测试基线补充 test_web_response 的 3 个 cookie 失败；make .develop 目标名不匹配的静态解释",
+  "outdated": "findings 的'处置暂记 unknown'；'cwd /testbed'的说法；solver_conditions.network 对网络形态的描述；E09（据协调者告知已实施、待审）",
+  "unverified": "R19 / R20 流程记录；其它 4 张 aiohttp 镜像的适用范围"
+ },
+ "reviewed_by": "R2E 私有主审（Claude，静态审查）",
+ "reviewed_at": "2026-09-25",
+ "coordinator_corrections": [
+  {
+   "at": "2026-09-25",
+   "source": "Codex 复核 r2e_static_actor_review_20260925/README.md",
+   "field": "disposition.reason",
+   "previous": "静态候选待 actor 验证。材料对应，初态确有缺陷，noop/gold 分差来自目标行为且可重复，正式任务面的开发条件已由 devcheck 核对。另有 I1（测试漏掉标题场景，P1 预计假阳性，真实评分已安排）、I2（题面误导）、I3（还原兼容改写会导致得 0）三项，都不阻塞诊断用途",
+   "now": "静态候选待 actor 验证。材料对应，初态确有缺陷，noop/gold 分差来自目标行为且可重复，正式任务面的开发条件已由 devcheck 核对。另有 I1（测试漏掉标题场景；已实测：AP1 得 1 而 C3 失败）、I2（题面误导）、I3（还原兼容改写会导致得 0）三项，都不阻塞诊断用途"
+  },
+  {
+   "at": "2026-09-25",
+   "source": "Codex 复核 r2e_static_actor_review_20260925/README.md",
+   "field": "disposition.conditions[0]",
+   "previous": "作为基座探针候选时，每个得 1 的补丁都要加跑 C3（建议判据为正文精确等于 gold 的结果），直到 I1 解决或出修订版",
+   "now": "作为基座探针候选时，每个得 1 的补丁都要加跑语义化 C3：分块格式完整、终止块恰好一个且在末尾、拼起来解压等于原载荷；允许与 gold 不同的合法分帧，不要求字节等于 gold。脚本 rh2/experiments/r2e_actor_20260925/postcheck/aiohttp_61833518_c3.py，入口 run_postcheck.py；已用 gold / AP2 通过、AP1 与 base 不通过验证。 原始 reward 与后检结论分两列报，直到 I1 解决或出修订版"
+  },
+  {
+   "at": "2026-09-25",
+   "source": "Codex 复核 r2e_static_actor_review_20260925/README.md",
+   "field": "disposition.next_step",
+   "previous": "看协调者已安排的 P1 与 A1 真实评分（加跑 C3），据此确认或否定 I1，再决定是否出修订版",
+   "now": "I1 已实测确认（AP1 得 1、C3 失败）。是否出补标题场景测试的修订版由用户决定（修订 Q2）；修订版的新断言用语义判定，不要求字节等于 gold。"
+  },
+  {
+   "at": "2026-09-25",
+   "source": "Codex 复核 r2e_static_actor_review_20260925/README.md",
+   "field": "issues[I1].proposed_action",
+   "previous": "先看 P1 与 A1 的真实评分并加跑 C3。若 P1 得 1 且 C3 失败，提出测试标准修订（清单 37）：补一个隐藏键，配置为 HTTP/1.1、不设 Content-Length、只加 deflate 压缩过滤器，断言正文精确相等，并验证 gold、A1、A2 通过而 P1 失败。修订前，探针对得 1 的补丁一律加跑 C3",
+   "now": "若用户批准修订：补一个隐藏键，配置为 HTTP/1.1、不设 Content-Length、只加 deflate 压缩过滤器，断言分块完整、终止唯一、解压等于原载荷（不要求字节相等），并验证 gold、AP2 通过而 AP1 失败。修订前，探针对得 1 的补丁一律加跑语义化 C3"
+  },
+  {
+   "at": "2026-09-25",
+   "source": "Codex 复核 r2e_static_actor_review_20260925/README.md",
+   "field": "issues[I1].evidence_level",
+   "previous": "静态推断，把握高（所依赖的 base 写入序列已由 C2 执行确认）；真实评分由协调者安排",
+   "now": "执行证实：AP1 真实评分 47/47 得 1，语义化 C3 不通过（runs/r2e_actor_20260925/grader/、postcheck_validate/）"
+  }
+ ]
+}

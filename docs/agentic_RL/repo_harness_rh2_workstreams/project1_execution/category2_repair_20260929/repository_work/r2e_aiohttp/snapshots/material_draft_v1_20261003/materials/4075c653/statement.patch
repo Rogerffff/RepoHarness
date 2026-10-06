@@ -1,0 +1,11 @@
+--- current/problem_statement
++++ draft/problem_statement
+@@ -7,7 +7,7 @@
+ **Example Buggy Code:**
+ ```python
+ def test_invalid_header(parser):
+-    invalid_header = "\xffoo: bar".encode()
++    invalid_header = "\xffoo: bar"
+     request = f"POST / HTTP/1.1\r\n{invalid_header}\r\n\r\n".encode()
+     parser.feed_data(request)
+ 

@@ -1,0 +1,333 @@
+{
+  "schema_id": "rh2.r2e_pillow_model_semantic_audit.v1",
+  "as_of": "2026-10-03",
+  "attempt_id": "gpu1003-pillow2d01-qwen36-a1",
+  "instance_id": "pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+  "model": "Qwen/Qwen3.6-35B-A3B",
+  "status": "owner_audited_pending_executor_independent_transport_review",
+  "official_report": {
+    "schema_id": "rh2.grading_report.v1",
+    "report_id": "rpt_grading_66eae539",
+    "trajectory_id": "gpu1003-pillow2d01-qwen36-a1",
+    "task_id": "r2e_gym_subset::pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+    "grader_name": "swebench_official_parser",
+    "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+    "outcome": "unresolved",
+    "failure_category": "tests_failed",
+    "reward": 0.0,
+    "reward_scale_version": "binary_v1",
+    "f2p_pass_count": null,
+    "f2p_total_count": null,
+    "p2p_fail_count": null,
+    "p2p_total_count": null,
+    "execution_failure_stage": null,
+    "execution_failure_evidence": [],
+    "grading_semantics": "r2e_expected_map",
+    "expected_match_count": 60,
+    "expected_total_count": 62,
+    "patch_hygiene": {
+      "cleaned_patch_digest": "sha256:5c4dcaefd9519c03bb17bad723ddbf773e7e842173c50ada55a58316a997270b",
+      "digest_kind": "applied_entry_set",
+      "replayed_on_clean_checkout": true,
+      "test_files_modified": false,
+      "forbidden_path_touched": false,
+      "forbidden_paths": [],
+      "verdict": "clean"
+    },
+    "infra_failure_detail": null,
+    "eval_log_ref": {
+      "ref_id": "evallog_gpu1003-pillow2d01-qwen3_66eae539",
+      "sha256": "sha256:04511904b518d2961b154d111fb79f58bddcadb5d80353a4c4d6f3c19475fa8d",
+      "byte_size": 13543
+    },
+    "timings": {
+      "schema_id": "rh2.grading_timing_record.v1",
+      "record_id": "timing_66eae539",
+      "trajectory_id": "gpu1003-pillow2d01-qwen36-a1",
+      "task_id": "r2e_gym_subset::pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+      "image_pull_seconds": 0.0,
+      "env_reset_seconds": 9.216,
+      "prep_seconds": 0.608,
+      "test_seconds": 0.989,
+      "total_grading_seconds": 50.193,
+      "queue_wait_seconds": 0.0,
+      "container_peak_memory_mb": 492.117,
+      "queue_depth_at_enqueue": null,
+      "backpressure_triggered": false
+    },
+    "graded_at_utc": "2026-10-02T18:21:07.474569Z"
+  },
+  "independent_expected_map_readback": {
+    "total": 62,
+    "matches": 60,
+    "keys_equal": true,
+    "mismatches": [
+      {
+        "key": "TestFileTiff.test_photometric[1]",
+        "expected": "PASSED",
+        "observed": "FAILED"
+      },
+      {
+        "key": "TestFileTiff.test_photometric[L]",
+        "expected": "PASSED",
+        "observed": "FAILED"
+      }
+    ],
+    "known_expected_failed_unchanged": true
+  },
+  "public_delivery": {
+    "original_statement_exactly_in_prompt": true,
+    "statement_sha256": "sha256:ad8f5c57410407c9373ed601063a9f588b0eb534e39ede1da2e1aff2e6c33003",
+    "reviewed_brief_body_in_prompt": true,
+    "brief_rendering": "outer trailing whitespace stripped; body unchanged",
+    "brief_source_sha256": "sha256:ef6cd806aa0602c36674cb5fd526f7c60fda7f7d27cfcb5e58e1cd0496bc6647",
+    "prompt_sha256": "sha256:784cd77def70d0f34b26f000652cb0b2a8003a8f9e759052beb2775bd2ec80c7"
+  },
+  "actual_solve": {
+    "harness_exit_code": 0,
+    "termination": "completed",
+    "solve_seconds": 49.725,
+    "harness_log_complete": true,
+    "wall_seconds": 10800,
+    "max_turns": 240,
+    "max_context_len": 196608,
+    "max_new_tokens": 65536,
+    "budget_version": "probe-wide-v1",
+    "gateway_drain": {
+      "session_id": "gpu1003-pillow2d01-qwen36-a1",
+      "revoked": true,
+      "active_requests": 0,
+      "drained": true,
+      "ts": 1790965214.5590222
+    },
+    "cleanup": {
+      "container_rm": 0,
+      "container_left": "",
+      "network_failures": [],
+      "relay_failures": [],
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "cleanup_ok": true
+    },
+    "trajectory_summary": {
+      "assistant_events": 65,
+      "tool_calls": {
+        "Bash": 21,
+        "Read": 3,
+        "Edit": 1
+      },
+      "tool_calls_total": 25,
+      "tool_result_errors": 2,
+      "cc_result": {
+        "subtype": "success",
+        "is_error": false,
+        "num_turns": 26,
+        "duration_ms": 46093,
+        "duration_api_ms": 39921,
+        "total_cost_usd": 1.87272,
+        "stop_reason": "end_turn",
+        "usage": {
+          "input_tokens": 342549,
+          "cache_creation_input_tokens": 0,
+          "cache_read_input_tokens": 0,
+          "output_tokens": 6399,
+          "server_tool_use": {
+            "web_search_requests": 0,
+            "web_fetch_requests": 0
+          },
+          "service_tier": "standard",
+          "cache_creation": {
+            "ephemeral_1h_input_tokens": 0,
+            "ephemeral_5m_input_tokens": 0
+          },
+          "inference_geo": "",
+          "iterations": [],
+          "speed": "standard"
+        },
+        "modelUsage": {
+          "slime-actor": {
+            "inputTokens": 342549,
+            "outputTokens": 6399,
+            "cacheReadInputTokens": 0,
+            "cacheCreationInputTokens": 0,
+            "webSearchRequests": 0,
+            "costUSD": 1.87272,
+            "contextWindow": 196608,
+            "maxOutputTokens": 32000
+          }
+        }
+      },
+      "init": {
+        "model": "slime-actor",
+        "permissionMode": "bypassPermissions",
+        "claude_code_version": "2.1.205",
+        "tools": [
+          "Bash",
+          "Edit",
+          "NotebookEdit",
+          "Read",
+          "Write"
+        ],
+        "mcp_servers": [],
+        "cwd": "/testbed"
+      }
+    },
+    "image_used": "sha256:a473288fadb9440c5ad95c0bd7035dd6ea9e185eb20fd0f21dfe890da0dfee93",
+    "overlay": {
+      "derived_image_ref": "rh2-gpu1003-pillow2d01-v1/pillow:2d01f7d02243-r2e_derive_v1m2s",
+      "derived_image_id": "sha256:a473288fadb9440c5ad95c0bd7035dd6ea9e185eb20fd0f21dfe890da0dfee93",
+      "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+      "recipe_sha256": "sha256:54e35b094ecff3dffe724f34443a928519da09480152c21d60b44752b111845a",
+      "base_image_ref": "namanjain12/pillow_final:2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+      "built_at_utc": "2026-10-02 18:03:46.094625+00:00"
+    }
+  },
+  "candidate": {
+    "form": "frozen_patch_v1+verified_git_transport",
+    "export_ok": true,
+    "empty": false,
+    "frozen_export_ok": true,
+    "frozen_patch_digest": "sha256:ca8cb133c0677e3fc942c084fc14f330c6600e9c459172ebc1d5eda04072bc76",
+    "baseline_manifest_digest": "sha256:1e637a9b2ca207cfef88c25daad21af6846a144729cd8cd82e5ea09c836fc535",
+    "entry_count": 1,
+    "entries": [
+      {
+        "path": "src/PIL/TiffImagePlugin.py",
+        "operation": "modify",
+        "object_type": "regular",
+        "mode": "100644",
+        "content_digest": "sha256:4bca3a3d4e86d4512890e9446a5678004c61cc164d78c04f27f68f1d4384c5c9"
+      }
+    ],
+    "files": [
+      "src/PIL/TiffImagePlugin.py"
+    ],
+    "excluded_pathset_changed": false,
+    "classification": {
+      "verdict": "projectable",
+      "reasons": []
+    },
+    "unsafe": false,
+    "export_segments": {
+      "post_census": 0.5137913549988298,
+      "artifact_capture": 0.0611352239993721
+    },
+    "post_omitted_cache": {
+      "dirs": 1,
+      "files": 7
+    },
+    "render": {
+      "base_tree": "7eb93eaa8d57054ae95fafeef1ca4390ce91444f",
+      "post_tree": "fb4d0e55466e0c77e3bfa7f7c2d4c3f25b2ed56d",
+      "selfcheck_apply_cached_tree": "fb4d0e55466e0c77e3bfa7f7c2d4c3f25b2ed56d",
+      "selfcheck_ok": true,
+      "forced_binary_paths": [],
+      "attributes_mode": "none",
+      "diff_headers": 1,
+      "files_in_patch": [
+        "src/PIL/TiffImagePlugin.py"
+      ],
+      "binary_hunks": 0,
+      "git_version": "git version 2.43.0",
+      "bytes": 564,
+      "sha256": "sha256:5daef678c3cf7baf4961f764ba41b87ba07d371c9e00bca75f31b8c6e39a78a3",
+      "path": "candidate/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96.diff",
+      "baseline_paths_fetched": 1,
+      "baseline_bytes_source": "actual_pre_solver_archive"
+    },
+    "bytes": 564,
+    "sha256": "sha256:5daef678c3cf7baf4961f764ba41b87ba07d371c9e00bca75f31b8c6e39a78a3"
+  },
+  "transport": {
+    "source": "original_frozen_patch",
+    "frozen_patch_digest": "sha256:ca8cb133c0677e3fc942c084fc14f330c6600e9c459172ebc1d5eda04072bc76",
+    "baseline_manifest_digest": "sha256:1e637a9b2ca207cfef88c25daad21af6846a144729cd8cd82e5ea09c836fc535",
+    "baseline_rebuild_passed": true,
+    "manager_close": {
+      "prepare_cancelled": 0,
+      "containers_removed": [],
+      "containers_open": [],
+      "supply_open": [],
+      "cleanup_failures": [],
+      "regrade_events": 0,
+      "regrade_total": 0,
+      "regrade_declined": 0,
+      "containers_created_total": 1,
+      "containers_removed_total": 1,
+      "container_history_retained": 1,
+      "leases_total": 1
+    },
+    "cleanup_ok": true,
+    "candidate_review_diff_ok": true
+  },
+  "semantic_result": {
+    "classification": "implementation_incomplete_image_roundtrip",
+    "changed_source": [
+      "src/PIL/TiffImagePlugin.py"
+    ],
+    "fixes_tag_override": true,
+    "preserves_roundtrip_pixels": false,
+    "failure_location": "test_1.py:460 assert_image_equal(original,reloaded), both 1/L",
+    "interpretation": "只保留标签0，没有同步写出像素语义；模型自己验证的是标签值及现有公开回归。往返断言早已存在于固定评分材料，不是因模型得0新增；属于既有C2式漏修。两个旧pytest兼容FAILED不额外扣分。没有当前证据支持评分误拒或环境阻断。",
+    "limits": [
+      "单次0不代表模型总体能力或整题难度",
+      "公开测试通过不证明题面全部行为正确",
+      "不把确定性CPU正确解计入模型成绩",
+      "没有申请超出probe-wide-v1的额外模型尝试"
+    ]
+  },
+  "evidence_files": {
+    "runs/ordinary_gpu_probe_20261002/remote/queue_v5/results/gpu1003-pillow2d01-qwen36-a1/result.json": {
+      "sha256": "sha256:40e600214e7a86eca055b3d685ed1286d1a4aca6c821d9994f6b221fa25a2acc",
+      "size": 2701
+    },
+    "runs/ordinary_gpu_probe_20261002/remote/queue_v5/results/gpu1003-pillow2d01-qwen36-a1/input_check.json": {
+      "sha256": "sha256:55828bb6e7d44b97a5731328f7f00bc4479d95ff81a9199f5f65fda7150c1e99",
+      "size": 2575
+    },
+    "runs/ordinary_gpu_probe_20261002/remote/queue_v5/results/gpu1003-pillow2d01-qwen36-a1/gateway_audit.json": {
+      "sha256": "sha256:ec77fdc3f40fde60908c1baed915a224aa9204b6dc2ff37500532ee533a7d6c5",
+      "size": 396
+    },
+    "runs/ordinary_gpu_probe_20261002/remote/queue_v5/results/gpu1003-pillow2d01-qwen36-a1/solver_prompt.txt": {
+      "sha256": "sha256:784cd77def70d0f34b26f000652cb0b2a8003a8f9e759052beb2775bd2ec80c7",
+      "size": 6522
+    },
+    "runs/ordinary_gpu_probe_20261002/remote/queue_v5/results/gpu1003-pillow2d01-qwen36-a1/grading/report.json": {
+      "sha256": "sha256:f00f181ace6a5953e9a70ba940852dd06e8a9910db955e8bf73e966f793b6455",
+      "size": 1881
+    },
+    "runs/ordinary_gpu_probe_20261002/remote/queue_v5/results/gpu1003-pillow2d01-qwen36-a1/grading/projection.json": {
+      "sha256": "sha256:7c59ffff7777ade40d067475b927926151a83bde1d38bfd9cd027ac8762a9e87",
+      "size": 334
+    },
+    "runs/ordinary_gpu_probe_20261002/remote/queue_v5/results/gpu1003-pillow2d01-qwen36-a1/grading/status.json": {
+      "sha256": "sha256:724d230e13ce71abe2b033e70a78dc4fd285ab6240fd5beeccbab8c99d178f70",
+      "size": 2665
+    },
+    "runs/ordinary_gpu_probe_20261002/remote/queue_v5/results/gpu1003-pillow2d01-qwen36-a1/attempt/attempt.json": {
+      "sha256": "sha256:c72603cb110d6e4bf8c4fc8b1c8718e2d5eb97b6af96d71550d0a62abb45a443",
+      "size": 17234
+    },
+    "runs/ordinary_gpu_probe_20261002/remote/queue_v5/results/gpu1003-pillow2d01-qwen36-a1/attempt/frozen/baseline_manifest.json": {
+      "sha256": "sha256:165962423f07cfc26f0a5bc57e8f250a776a02d288a9df69e608135c4f4e2884",
+      "size": 345763
+    },
+    "runs/ordinary_gpu_probe_20261002/remote/queue_v5/results/gpu1003-pillow2d01-qwen36-a1/attempt/frozen/frozen_patch.json": {
+      "sha256": "sha256:9a70bf220f53ebcc20e2dc934952666ca17a9f29d09e2d5ea114f221f8ce11a2",
+      "size": 95749
+    },
+    "runs/ordinary_gpu_probe_20261002/remote/queue_v5/results/gpu1003-pillow2d01-qwen36-a1/attempt/harness/trajectory.jsonl": {
+      "sha256": "sha256:90be374c6ee9f7387a5d865b7e896f7a2394fea65e6e7c250b128059347b6c9e",
+      "size": 276740
+    },
+    "runs/ordinary_gpu_probe_20261002/remote/queue_v5/results/gpu1003-pillow2d01-qwen36-a1/attempt/candidate/pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96.diff": {
+      "sha256": "sha256:5daef678c3cf7baf4961f764ba41b87ba07d371c9e00bca75f31b8c6e39a78a3",
+      "size": 564
+    },
+    "runs/ordinary_gpu_probe_20261002/remote/queue_v5/results/gpu1003-pillow2d01-qwen36-a1/grading/eval_logs/evallog_gpu1003-pillow2d01-qwen3_66eae539.eval.log": {
+      "sha256": "sha256:04511904b518d2961b154d111fb79f58bddcadb5d80353a4c4d6f3c19475fa8d",
+      "size": 13543
+    }
+  }
+}

@@ -1,0 +1,69 @@
+diff --git a/doc/source/whatsnew/v1.5.0.rst b/doc/source/whatsnew/v1.5.0.rst
+index a1a2149da7..daf7638dea 100644
+--- a/doc/source/whatsnew/v1.5.0.rst
++++ b/doc/source/whatsnew/v1.5.0.rst
+@@ -890,6 +890,7 @@ Categorical
+ ^^^^^^^^^^^
+ - Bug in :meth:`Categorical.view` not accepting integer dtypes (:issue:`25464`)
+ - Bug in :meth:`CategoricalIndex.union` when the index's categories are integer-dtype and the index contains ``NaN`` values incorrectly raising instead of casting to ``float64`` (:issue:`45362`)
++- Bug in :meth:`Series.loc` when setting a non-category scalar with enlargement on a :class:`Series` with ``CategoricalDtype`` incorrectly raising instead of casting to a compatible dtype
+ 
+ Datetimelike
+ ^^^^^^^^^^^^
+diff --git a/pandas/core/indexing.py b/pandas/core/indexing.py
+index b143e1e50a..05a005b6a0 100644
+--- a/pandas/core/indexing.py
++++ b/pandas/core/indexing.py
+@@ -31,6 +31,7 @@ from pandas.core.dtypes.cast import (
+ from pandas.core.dtypes.common import (
+     is_array_like,
+     is_bool_dtype,
++    is_categorical_dtype,
+     is_extension_array_dtype,
+     is_hashable,
+     is_integer,
+@@ -2113,9 +2114,12 @@ class _iLocIndexer(_LocationIndexer):
+             elif not self.obj.empty and not is_object_dtype(self.obj.dtype):
+                 # We should not cast, if we have object dtype because we can
+                 # set timedeltas into object series
+-                curr_dtype = self.obj.dtype
+-                curr_dtype = getattr(curr_dtype, "numpy_dtype", curr_dtype)
+-                new_dtype = maybe_promote(curr_dtype, value)[0]
++                if is_categorical_dtype(self.obj.dtype):
++                    new_dtype = None
++                else:
++                    curr_dtype = self.obj.dtype
++                    curr_dtype = getattr(curr_dtype, "numpy_dtype", curr_dtype)
++                    new_dtype = maybe_promote(curr_dtype, value)[0]
+             else:
+                 new_dtype = None
+ 
+diff --git a/pandas/tests/series/indexing/test_setitem.py b/pandas/tests/series/indexing/test_setitem.py
+index 244ad9884b..584f78fa32 100644
+--- a/pandas/tests/series/indexing/test_setitem.py
++++ b/pandas/tests/series/indexing/test_setitem.py
+@@ -542,6 +542,24 @@ class TestSetitemWithExpansion:
+         expected = Series([1, 2, 10], dtype=any_numeric_ea_dtype)
+         tm.assert_series_equal(ser, expected)
+ 
++    @pytest.mark.parametrize(
++        "ser, expected",
++        [
++            (
++                Series(["a", "b", "c"], dtype="category"),
++                Series(["a", "b", "c", 0], dtype=object),
++            ),
++            (
++                Series([1, 2, 3], dtype="category"),
++                Series([1, 2, 3, 0], dtype="int64"),
++            ),
++        ],
++    )
++    def test_setitem_enlarge_categorical_series(self, ser, expected):
++        # setting a non-category scalar with enlargement should not raise
++        ser.loc[3] = 0
++        tm.assert_series_equal(ser, expected)
++
+     @pytest.mark.parametrize("indexer", [1, 2])
+     @pytest.mark.parametrize(
+         "na, target_na, dtype, target_dtype",

@@ -1,0 +1,707 @@
+{
+  "as_of_utc": "2026-10-03T16:14:34.149972+00:00",
+  "release_id": "cat2-cpu-r2e089092-swe27-pandas-moto-20261003-v1",
+  "release_manifest_sha256": "3fad18daff8db219294e10cbf08d4424d68cf7000d008bb983cba4bdc427b641",
+  "tasks": {
+    "48106": {
+      "label": "pandas48106-formal-r13-v1-387bf7b5d4",
+      "local_inputs": "runs/category2_repair_20260929/pandas_cpu_20261003/pandas48106-formal-r13-v1-387bf7b5d4",
+      "remote": "/work/rh2-category2-20261003/packages/swe_pandas/formal_checks/pandas48106-formal-r13-v1-387bf7b5d4",
+      "release_id": "cat2-cpu-r2e089092-swe27-pandas-moto-20261003-v1",
+      "manifest_sha256": "3fad18daff8db219294e10cbf08d4424d68cf7000d008bb983cba4bdc427b641",
+      "revision_id": "pandas48106-complete-bindings-e19-v1",
+      "arms": [
+        {
+          "name": "noop",
+          "patch": null,
+          "patch_sha256": null,
+          "expected_source_sha256": "ae7fd950e2bbb75ba2d2d0879e2f9850cc04726aae123af42c3ed019b56eaf5f",
+          "expected_reward": 0
+        },
+        {
+          "name": "gold",
+          "patch": "gold.patch",
+          "patch_sha256": "cf099ba87549e41673503275a6e66263685a795770c42c373d1fd41554fed23d",
+          "expected_source_sha256": "e671c46d20c4f82abd9e4a7847722df04bb70524bb355e801f7c7b0e5c2d9a5a",
+          "expected_reward": 1
+        }
+      ],
+      "status": "cpu_accepted_both_first_arms_reviewed_diagnostic_closed",
+      "input_manifest_sha256": "74e0546a88ea7b1b7c3ef7e2f0b4a2bccb9f8b9aa0b43b67f33bcead6f1ad4e9",
+      "job_id": "pandas48106-formal-r13-v1-c8c68284885c",
+      "remote_output": "/work/rh2-category2-20261003/packages/swe_pandas/formal_checks/pandas48106-formal-r13-v1-387bf7b5d4/outputs/pandas48106-formal-r13-v1-c8c68284885c",
+      "launcher_pid": 266215,
+      "completed_arm_receipts": [
+        {
+          "arm": "noop",
+          "receipt_ref": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_48106_received_noop_v1/receipt_manifest.json",
+          "receipt_sha256": "b1659cd6e886556c720d55c2fd30c51bedb1aa94e08408578b69637ec5c379c3",
+          "files": 42,
+          "bytes": 2425875,
+          "reward": 0.0,
+          "failure_category": "tests_failed",
+          "f2p_pass": 0,
+          "f2p_total": 16,
+          "p2p_fail": 0,
+          "p2p_total": 1020,
+          "reference_missing_count": 0,
+          "candidate_cleanup_removed": true,
+          "cli_exit_code": 0,
+          "containers_open": [],
+          "supply_open": [],
+          "scope": "Finished NoOp only; author and independent raw result cross-check complete; Gold running",
+          "non_author_review": {
+            "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/reviews/non_author_48106_formal_noop_review_20261003.md",
+            "sha256": "21175165ef3690b64195c3f0ac4ba9b338e624e8459cb9bc04375fdedd6d92c6",
+            "scope": "Current formal NoOp only; no blockers found, full Gold/matrix still pending"
+          },
+          "physical_p2p_count": 1028,
+          "physical_p2p_passed": 1028,
+          "binding_group_count": 5,
+          "binding_member_count": 13,
+          "binding_members_passed": 13,
+          "qualification_source_eligible": true,
+          "qualification_actually_consumed_by_gold": false
+        }
+      ],
+      "probe_draft_not_submitted": "runs/category2_repair_20260929/pandas_cpu_20261003/probe_draft_48106_20261003_v1.json",
+      "whole_matrix_receipt": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_48106_received_whole_v1/receipt_manifest.json",
+        "sha256": "65b466412dbc31dc3d9c3391fa86f4fd58b4749d0ca0c1fd9463aca62744c77f",
+        "files": 60,
+        "bytes": 4255048
+      },
+      "gold_author_readback": {
+        "reward": 1.0,
+        "outcome": "resolved",
+        "failure_category": null,
+        "f2p_pass": 16,
+        "f2p_total": 16,
+        "p2p_fail": 0,
+        "p2p_total": 1020,
+        "reference_missing_count": 0,
+        "install_seconds": 638.555,
+        "install_rc": 0,
+        "test_seconds": 16.721,
+        "test_rc": 0,
+        "uid": 54322,
+        "source_sha256": "e671c46d20c4f82abd9e4a7847722df04bb70524bb355e801f7c7b0e5c2d9a5a",
+        "candidate_kind": "cc",
+        "candidate_cleanup_removed": true,
+        "cli_final_status": "0/ok",
+        "manager_containers_open": [],
+        "manager_supply_open": []
+      },
+      "final_residue": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_48106_final_residue_readback_20261003_v1.json",
+        "sha256": "6d676c2a0ecafeb3ad18e411651ddae5f16b60625c1e029bff12f7e788e14a9e",
+        "scope": "two exact own run labels and grader names; containers/networks empty"
+      },
+      "non_author_gold_matrix_review": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/reviews/non_author_48106_formal_gold_matrix_review_20261003.md",
+        "sha256": "d09e83e78e40a1088aa68964c945ce5d48ac622095cfbfc3042a90ae6bb670ec",
+        "scope": "Whole new Gold and final cleanup narrow review passed; NoOp/material/public actor prior accepted scopes reused"
+      },
+      "probe_request": {
+        "request_id": "probe-swe-pandas-48106-20261003-v1",
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/tasks/pandas-dev__pandas-48106/probe_request_20261003_v1.json",
+        "sha256": "f180ceaed187ae85ba6e1614a90d3a1597843102ddbc4d43b23211896da67235",
+        "delivery_ref": "runs/category2_repair_20260929/pandas_cpu_20261003/gpu_48106_submission_delivery_20261003_v1.json",
+        "scope": "Both configured BF16 models once, fixed input unchanged; both returned and owner analyses/incremental independent reviews complete, request acked and active pointer cleared; no repeats or training qualification."
+      },
+      "final_residue_v2": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_48106_final_residue_readback_20261003_v2.json",
+        "sha256": "89e5cc0889414dfbf3351145b58a5d4495b8af968e2f473846899a8fec57d175",
+        "scope": "Six exact own-label/name queries with raw argv/rc/stdout/stderr, all zero residue"
+      },
+      "gpu_exact_image_export": {
+        "status": "gpu_actual_fixed_image_observed_first_coder_completed",
+        "label": "pandas48106-e19-export-20261003-v1",
+        "job_id": "pandas48106-e19-export-v1-56aa11ee8094",
+        "supervisor_pid": 540480,
+        "input_manifest_sha256": "7ab1feb95f8594232b86954ede7e62f4f121443341bb236e8440594f6189faf3",
+        "source_image_id": "sha256:53b17fe21e906498091df64913c28682c23c6eaad8fbc7106fffa737d170860a",
+        "scope": "Exact already-validated grader export only through shared prepare; no task/matrix rerun or image rebuild; original request immutable; source archive kept pending GPU transfer/load/readback",
+        "finished_at_utc": "2026-10-03T03:05:55Z",
+        "returncode": 0,
+        "archive_bytes": 4032609124,
+        "archive_sha256": "b2a1450fc2a30aa5fc4ae89331e58410315604e1c8bc8838d32ce17a4354e115",
+        "source_full_gzip_stream_verified": true,
+        "source_config_and_layers_match_validated_image": true,
+        "small_original_receipts": {
+          "path": "runs/category2_repair_20260929/pandas_cpu_20261003/image_exports/pandas48106-e19-export-20261003-v1/received/receipt_manifest.json",
+          "sha256": "135f484ea21910709b82ec6c467e90a8f1f1839ee32f42162fcfaf7af4dee1f6",
+          "files": 20,
+          "bytes": 41545
+        },
+        "gpu_transfer_supply": {
+          "path": "runs/category2_repair_20260929/pandas_cpu_20261003/image_exports/pandas48106-e19-export-20261003-v1/gpu_image_transfer_supply.json",
+          "sha256": "8c27726d035b731cfad5cb19429e041e299e9e41ad6f9b4e368fcc906ab756e1"
+        },
+        "actual_delivery_ref": "runs/category2_repair_20260929/pandas_cpu_20261003/image_exports/pandas48106-e19-export-20261003-v1/gpu_supply_delivery.json",
+        "gpu_actual_image_id": "sha256:53b17fe21e906498091df64913c28682c23c6eaad8fbc7106fffa737d170860a",
+        "source_image_and_archive_preserved_until_gpu_confirmation": true,
+        "gpu_actual_image_evidence": {
+          "path": "runs/category2_repair_20260929/pandas_cpu_20261003/gpu_analysis_20261003/pandas48106_coder_a1_v1/resource_identity_readback_v1.json",
+          "sha256": "5b4067284708a670f68345fcc8bda070ddb1d6665a71250721d0edda6d920af2"
+        }
+      },
+      "first_coder_analysis": {
+        "job_id": "gpu1003-pandas48106-coder-a1",
+        "execution_receipt": {
+          "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/pandas48106_first_coder_execution_receipt_v1.json",
+          "sha256": "ee3e77426810e47d35c8ef4807c4431400371cee5cdd06eef7a2a3e7c26bd43b"
+        },
+        "author_report": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/tasks/pandas-dev__pandas-48106/probe_analysis_coder_20261003_v1.md",
+          "sha256": "23bb3577dd334fc7b4643e754c0ed108917665099bb8cede94396792a211e1a1"
+        },
+        "author_evidence": {
+          "path": "runs/category2_repair_20260929/pandas_cpu_20261003/gpu_analysis_20261003/pandas48106_coder_a1_v1/evidence.json",
+          "sha256": "77905233687995d9bdbe0065b1494a65a43b2635a537e0bef0418eba4fdf5c50"
+        },
+        "resource_image_readback": {
+          "path": "runs/category2_repair_20260929/pandas_cpu_20261003/gpu_analysis_20261003/pandas48106_coder_a1_v1/resource_identity_readback_v1.json",
+          "sha256": "5b4067284708a670f68345fcc8bda070ddb1d6665a71250721d0edda6d920af2"
+        },
+        "raw_reward": 0.0,
+        "f2p_passed": 1,
+        "f2p_total": 16,
+        "p2p_passed": 1020,
+        "p2p_total": 1020,
+        "semantic_verdict": "partial_example_fix_wrong_category_preservation",
+        "non_author_review": {
+          "status": "accepted_read_back",
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/reviews/non_author_48106_coder_first_probe_review_20261003.md",
+          "sha256": "cc044eb09868a4e76c4552111584a216334df17cc843836f7c077f76f0066f95",
+          "scope": "New first Coder candidate/trajectory/score only; not blind review, not earlier CPU acceptance or paired request closure",
+          "material_defect_found": false
+        },
+        "material_defect_found": false,
+        "paired_request_closed": false,
+        "other_model_first_arm": "pending",
+        "ordinary_resampling": "deferred_coverage_first",
+        "gpu_non_author_execution_review": {
+          "json": {
+            "path": "runs/ordinary_gpu_probe_20261002/reviews/closed_three_execution_increment_non_author_20261003_v1.json",
+            "sha256": "1df8968be5fb6399a856cf37c48141d9550253a002255ddc9f3576679bece4ed"
+          },
+          "report": {
+            "path": "runs/ordinary_gpu_probe_20261002/reviews/closed_three_execution_increment_non_author_20261003_v1.md",
+            "sha256": "343339c0b70098c2e6e634095d329392ceda2261ce77fb1307c70b84c3afb950"
+          },
+          "job_id": "gpu1003-pandas48106-coder-a1",
+          "status": "accepted_owner_readback",
+          "scope": "Execution-only; Pandas large archives reuse sync_v3 SHA, other members independently hashed by GPU reviewer. Not owner semantic acceptance, training qualification or paired request closure."
+        }
+      },
+      "first_qwen36_analysis": {
+        "job_id": "gpu1003-pandas48106-qwen36-a1",
+        "execution_receipt": {
+          "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/pandas48106_qwen36_execution_receipt_v1/execution_receipt.json",
+          "sha256": "3ccedb8ccf5da4d291ee5ba65db39f8352b51ca7f20074adc4095671c65a455b"
+        },
+        "closed_manifest": {
+          "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pandas48106-qwen36-a1/qwen_next12_closed_v1/gpu1003-pandas48106-qwen36-a1/closed_manifest.json",
+          "sha256": "6bbb0e35c3ae438db0df1b0a4d705bdbda9f4219c1a7ab425737d9919c8558b3"
+        },
+        "author_report": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/tasks/pandas-dev__pandas-48106/probe_analysis_qwen36_and_pair_20261003_v1.md",
+          "sha256": "923c2a4018548e9489d9cf0025c46f74810f8f3b7e98fc5bcf97d57545b99659"
+        },
+        "author_evidence": {
+          "path": "runs/category2_repair_20260929/pandas_cpu_20261003/gpu_analysis_20261003/pandas48106_qwen36_a1_v1/evidence.json",
+          "sha256": "64e57e539630f6b51844d7d9304f08fb16443a9930a805ede67b61a7cb43f630"
+        },
+        "resource_image_readback": {
+          "path": "runs/category2_repair_20260929/pandas_cpu_20261003/gpu_analysis_20261003/pandas48106_qwen36_a1_v1/resource_identity_readback_v1.json",
+          "sha256": "2f26b7278c377f75517e32271045b0ab06f039507c081a174e31ec38e2ba2c33"
+        },
+        "snapshot_files": 229,
+        "snapshot_bytes": 177875796,
+        "raw_reward": 0.0,
+        "f2p_passed": 1,
+        "f2p_total": 16,
+        "p2p_passed": 1020,
+        "p2p_total": 1020,
+        "semantic_verdict": "partial_example_fix_category_and_missing_value_dtype_failure",
+        "same_15_failed_f2p_as_coder": true,
+        "material_defect_found": false,
+        "model_actor_validation": "7 public pytest footers and printed examples; no category-in-value/NA dtype assertions. Pipeline lacks separate pytest RC; wrong path corrected.",
+        "metrics": {
+          "solve_seconds": 96.005,
+          "cc_duration_seconds": 92.336,
+          "cc_api_seconds": 52.936,
+          "gateway_generation_requests": 32,
+          "unique_assistant_message_ids": 32,
+          "cc_recorded_turns": 34,
+          "tool_calls": 33,
+          "tools": {
+            "Read": 6,
+            "Bash": 26,
+            "Edit": 1
+          },
+          "tool_result_errors": 3,
+          "cumulative_input_tokens": 500628,
+          "output_tokens": 8526,
+          "cache_read_tokens": 0,
+          "cache_creation_tokens": 0,
+          "max_reported_single_request_input_tokens": 24017,
+          "grading_total_seconds": 1199.113,
+          "phase_segments_seconds": {
+            "delta_apply": 0.203294,
+            "grader_baseline_rebuild": 0.61979,
+            "grader_cleanup": null,
+            "grader_start_and_verify": 70.535088,
+            "grader_trusted_setup": 796.779411,
+            "parser_and_report": null,
+            "test": 329.293853
+          },
+          "raw_install_seconds": 319.988,
+          "raw_test_wrapper_seconds": 7.83,
+          "pytest_footer_seconds": 4.94,
+          "queue_wait_field_only": 0.0
+        },
+        "parallelism": {
+          "max_outstanding_tool_calls": 2,
+          "parallel_batches": [
+            {
+              "original_jsonl_line": 19,
+              "pending_tool_ids": [
+                "toolu_65069ee73904d297",
+                "toolu_6c0968d97cc27687"
+              ]
+            },
+            {
+              "original_jsonl_line": 172,
+              "pending_tool_ids": [
+                "toolu_2324990dc998fd49",
+                "toolu_ed04ce127e2ab7b7"
+              ]
+            }
+          ],
+          "available_tools": [
+            "Bash",
+            "Edit",
+            "NotebookEdit",
+            "Read",
+            "Write"
+          ],
+          "cross_agent_ability": "not_assessable_no_agent_tool",
+          "interpretation": "Two genuine batched tool calls; rest serial, not 34 generations"
+        },
+        "identity_boundaries": {
+          "actor_actual_image_id": "sha256:0e706113dce17d30fade5723a2a71c162afa253d777fd7fa139c5b89cf05c4b8",
+          "grader_recorded_identity": "local_build:sha256:53b17fe21e906498091df64913c28682c23c6eaad8fbc7106fffa737d170860a",
+          "material_identity": "sha256:15859c0693ca6330f58b274bd6ea24de9504daac1653a7cc6a7a3f8010c24315",
+          "bindings_sha256": "sha256:4c628adf0150848e756bae3afb917af9d248b2c983c30612a9e6925a266f3b08",
+          "actual_noop_qualification": "ok:noop_ledger.jsonl:rpt_grading_3268a121",
+          "gateway_checkpoint_identity_verified_original": false,
+          "compile_probe_original": null,
+          "actual_model": "Qwen/Qwen3.6-35B-A3B",
+          "actual_model_revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+          "download_file_count_scalar_original": 40,
+          "listed_actual_sizes_count": 37,
+          "fresh_weight_hash_attestation": false,
+          "CC_maxOutputTokens_metadata_original": 32000,
+          "gateway_actual_request_max_tokens": 65536,
+          "training_qualified": false
+        },
+        "non_author_review": {
+          "status": "accepted_read_back",
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/reviews/non_author_48106_qwen36_first_probe_review_20261003.md",
+          "sha256": "7e229abdbf6c7303284787c0668a7c5e93c6b83c70e62e3eb674c7c16cc94def",
+          "scope": "New Qwen first arm independently read and hashed; final author comparison, not blind or new dynamic CPU/GPU reproduction; prior CPU/Coder scopes reused",
+          "material_defect_found": false
+        },
+        "ordinary_resampling": "deferred_coverage_first",
+        "new_cpu_or_gpu_run_required_for_verdict": false
+      },
+      "paired_first_probe_closeout": {
+        "status": "diagnostic_closed_both_normal_semantic_failures",
+        "request_id": "probe-swe-pandas-48106-20261003-v1",
+        "execution_receipt": {
+          "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/probe-swe-pandas-48106-20261003-v1_pair_execution_receipt_v1.json",
+          "sha256": "d207c88635ee7f7d7d9f5bd2856665a0e933f1ea4d8eb5d2d2d594708ab6c6f0"
+        },
+        "each_model_first_once_complete": true,
+        "owner_analysis_and_incremental_non_author_reviews_complete": true,
+        "original_raw_rewards": {
+          "coder": 0.0,
+          "qwen36": 0.0
+        },
+        "same_failure_references": 15,
+        "model_patch_correct": false,
+        "score_interpretation_confirmed": true,
+        "material_defect_found": false,
+        "training_qualified": false,
+        "acknowledged_at": "2026-10-03T15:47:46.979162+00:00",
+        "request_revision": 5,
+        "active_request_id": null,
+        "task_progress_revision": 16,
+        "historical_scope_note": "First-Coder analysis and per-arm mechanical paired_request_closed=false/other_model pending are preserved as their earlier point-in-time facts; this newer pair closeout is current."
+      }
+    },
+    "50319": {
+      "label": "pandas50319-formal-r13-v3-7feee5549e",
+      "local_inputs": "runs/category2_repair_20260929/pandas_cpu_20261003/pandas50319-formal-r13-v3-7feee5549e",
+      "remote": "/work/rh2-category2-20261003/packages/swe_pandas/formal_checks/pandas50319-formal-r13-v3-7feee5549e",
+      "release_id": "cat2-cpu-r2e089092-swe27-pandas-moto-20261003-v1",
+      "manifest_sha256": "3fad18daff8db219294e10cbf08d4424d68cf7000d008bb983cba4bdc427b641",
+      "revision_id": "pandas50319-dot-date-full-bindings-v1",
+      "arms": [
+        {
+          "name": "noop",
+          "patch": null,
+          "patch_sha256": null,
+          "expected_source_sha256": "5c8e81b9914bc6448b21a909cf13d3c2e7799e63e92d386042dd4262b6d048aa",
+          "expected_reward": 0
+        },
+        {
+          "name": "gold",
+          "patch": "gold/pandas-dev__pandas-50319.gold.patch",
+          "patch_sha256": "70ca3fa70b50975e2fe34f0f790e66f9f7c7a1453220c0bf6d69d30d145214ec",
+          "expected_source_sha256": "ea2c0d7a5fbec68b265d43bade8a4d02bf4863368928a8be9e9bd77345aa3227",
+          "expected_reward": 1
+        },
+        {
+          "name": "none_fallback",
+          "patch": "none_fallback.patch",
+          "patch_sha256": "eab59f565bc7a7a6f3c40192774468457cf89a3c45640decb2f2c8035c5473f6",
+          "expected_source_sha256": "54262be7b7f417a620f4f15e8703453bc703652a8e4001a0d1e8f8cca594a8ca",
+          "expected_reward": 1
+        },
+        {
+          "name": "constant_none",
+          "patch": "constant_none.patch",
+          "patch_sha256": "1f223f792bcb08fd15ab90aecff103146b92c1aebb6d15a8b9c1679162b1e2f5",
+          "expected_source_sha256": "baa06e68aa61f71f13cb044480c88011acec2160038d53178e7d5f4628fabaaa",
+          "expected_reward": 0
+        },
+        {
+          "name": "bad_format",
+          "patch": "bad_format.patch",
+          "patch_sha256": "00aafc40dd24c4b00233d7b13fc621017e4f12ae31a15a019f0fea1e8f497bf9",
+          "expected_source_sha256": "c9d69582dfb22ed35cc14530613cf7e51358c60f48be9376698af58ffe913476",
+          "expected_reward": 0
+        },
+        {
+          "name": "reported_only_none",
+          "patch": "reported_only_none.patch",
+          "patch_sha256": "2339ea2766c1e8146f468d30949031e15b5a3f63b5d7c2af36fcd63487c091d4",
+          "expected_source_sha256": "019d0e80aa34cf59270138806ad8600d40779bd68d2b0480345386dce78c0fae",
+          "expected_reward": 0
+        }
+      ],
+      "status": "cpu_accepted_both_first_arms_reviewed_diagnostic_closed",
+      "supersedes_unlaunched_input": "pandas50319-formal-r13-v2-39df5b7669",
+      "reason": "V2 gold-dir/qualification retained; correct cleanup summary key; cooperate with async cancellation to let frozen CLI manager close run. Actual interruption cleanup still must be verified, not claimed from static code.",
+      "input_manifest_sha256": "1f998778711889e91fc0954b61367be2985dfafd447f01c3fc0bf83f604a0530",
+      "deferred_guard": {
+        "pid": 278109,
+        "created_at_utc": "2026-10-02T23:12:35.622847+00:00",
+        "wait_bound_seconds": 10800,
+        "launcher_sha256": "d099f45dab8c699ca4b5e1266c0d6a814d4a5e38b505ea35e8e6ffff5ac9bf6e",
+        "guard_sha256": "b65a0363f05d40962d4d6253d2fff4f77a83fe7e3b4715eb1c9a746a0c223920",
+        "launch_conditions": "48106 two CLI0 with real0/1 tests outcome, source/image identity matched, missing0, actual candidate cleanup and manager no open resources; frozen V3 input reverified; cpu_slot controls acquisition",
+        "scope": "One finite own-package serial successor; no slot while waiting; any non75 task error or prior validation error stops, no blind experiment retry",
+        "result": "successor_supervisor_started_exit0"
+      },
+      "job_id": "pandas50319-formal-r13-v3-2f897642547c",
+      "remote_output": "/work/rh2-category2-20261003/packages/swe_pandas/formal_checks/pandas50319-formal-r13-v3-7feee5549e/outputs/pandas50319-formal-r13-v3-2f897642547c",
+      "launcher_pid": 292611,
+      "started_at_utc": "2026-10-02T23:29:36Z",
+      "five_arm_receipt": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_five_arms_v1/receipt_manifest.json",
+        "sha256": "f2f364344cec3f4145cf969b1aa5485dadad9acd5bcbd81c1a3a492f3cac7cf9",
+        "files": 109,
+        "bytes": 6219157,
+        "scope": "completed five arms only; last arm and whole job still running"
+      },
+      "completed_rewards": {
+        "noop": 0.0,
+        "gold": 1.0,
+        "none_fallback": 1.0,
+        "constant_none": 0.0,
+        "bad_format": 0.0,
+        "reported_only_none": 0.0
+      },
+      "author_readback_scope": "All127 raw size/SHA; all six real normal scores, fresh source/extension observations, full2F109P partitions/missing0, candidate and CLI cleanup, whole job0 and final18query raw provenance read. Existing public actor/static/calibration scope reused. Narrow independent full matrix review pending; no real model result.",
+      "whole_matrix_receipt": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/receipt_manifest.json",
+        "sha256": "ee180c751b3432bd336be3d2352ac7a99af19c3fc576feac5fbb0315e9f36e52",
+        "files": 127,
+        "bytes": 7430507
+      },
+      "job_finished_at_utc": "2026-10-03T01:41:52Z",
+      "final_residue": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_50319_final_residue_readback_20261003_v1.json",
+        "sha256": "4a78bbaa0df3d63b53657b521ccb43712f488c6c3ea739b8e11e5baa4ef7dd56",
+        "transport_path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_50319_final_residue_transport_20261003_v1.json",
+        "transport_sha256": "389646b5f01a753be70ec6f79e094fb8fca17a9722d400d660b328937d03f325",
+        "scope": "18 exact labels/names raw argv/rc/stdout/stderr, zero own containers/networks"
+      },
+      "canonical_gold_input_supplement": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_50319_canonical_gold_supplement_20261003_v1/receipt_manifest.json",
+        "sha256": "f948e05afeee332c67356e75bca61ef4b74176e1710266cb295d00dbce937e9c",
+        "scope": "Missing recursive gold input only,709 bytes SHA70ca3f…214ec; exact frozen V3 and actual remote canonical input; original127 receipt unchanged"
+      },
+      "non_author_formal_matrix_review": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/reviews/non_author_50319_formal_matrix_review_20261003.md",
+        "sha256": "6b796b30864a1daf7a282c7b510233afd9e4e35308f4594284d47092d4115ac0",
+        "scope": "New six-arm full matrix and cleanup accepted, canonicalGold archive gap closed; existing material/publicactor/rootcalibration review scopes reused"
+      },
+      "probe_request": {
+        "request_id": "probe-swe-pandas-50319-20261003-v1",
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/tasks/pandas-dev__pandas-50319/probe_request_20261003_v1.json",
+        "sha256": "10fa9a121bf0ee3611b3a9b464a1a19b3adaba6b3384c24215a0a47b12c7a2e2",
+        "delivery_ref": "runs/category2_repair_20260929/pandas_cpu_20261003/gpu_50319_submission_delivery_20261003_v1.json",
+        "scope": "Both configured BF16 models once, fixed input unchanged; both returned, owner and new independent analyses accepted, request acked and active pointer cleared. No repeats or training qualification."
+      },
+      "latest_gpu_message": {
+        "reported_started_at_utc": "2026-10-03T11:47:51Z",
+        "source_thread_id": "01a0ebd7-4095-7dd1-8017-9648d7dba040",
+        "scope": "GPU direct message reports live first Coder arm; no closed result or owner analysis claimed"
+      },
+      "first_coder_analysis": {
+        "job_id": "gpu1003-pandas50319-coder-a1",
+        "execution_receipt": {
+          "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/pandas50319_first_coder_execution_receipt_v1.json",
+          "sha256": "a8c170f1c43ff75ef876265563096cf92acb739f4c05a04f2ae961a09c1f4824"
+        },
+        "author_report": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/tasks/pandas-dev__pandas-50319/probe_analysis_coder_20261003_v1.md",
+          "sha256": "b1a42358e671d25506d3b907f40a5103bc0081f83fc1002ce75bfca988ff4004"
+        },
+        "author_evidence": {
+          "path": "runs/category2_repair_20260929/pandas_cpu_20261003/gpu_analysis_20261003/pandas50319_coder_a1_v1/evidence.json",
+          "sha256": "6b56e727b08e97bef97ec77fea86078b14bdacaed12eec5f103a0c82071f1ec3"
+        },
+        "resource_image_readback": {
+          "path": "runs/category2_repair_20260929/pandas_cpu_20261003/gpu_analysis_20261003/pandas50319_coder_a1_v1/resource_identity_readback_v1.json",
+          "sha256": "247fe164ffa9b0dfbb5f22778ec419775a7c183501d5f9f86510fee2acaad813"
+        },
+        "raw_reward": 1.0,
+        "f2p_partition": "replacement_f2p",
+        "f2p_passed": 2,
+        "f2p_total": 2,
+        "p2p_passed": 109,
+        "p2p_total": 109,
+        "semantic_verdict": "success_within_public_none_or_correct_format_contract",
+        "specific_return_branch_observed": false,
+        "candidate_array_conversion_observed": false,
+        "model_actor_validation_completed": false,
+        "formal_grader_fresh_parsing_build_observed": true,
+        "non_author_review": {
+          "status": "accepted_read_back",
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/reviews/non_author_50319_coder_first_probe_review_20261003.md",
+          "sha256": "073ab33d51fc64d06cc719f1e51a592e55ca9a05a1ed5741795080ab1efba4f3",
+          "scope": "New first Coder candidate/trajectory/score and bounded semantic contract; not blind review, not older CPU acceptance or paired request closure",
+          "material_defect_found": false
+        },
+        "material_defect_found": false,
+        "paired_request_closed": false,
+        "other_model_first_arm": "pending",
+        "ordinary_resampling": "deferred_coverage_first",
+        "gpu_non_author_execution_review": {
+          "json": {
+            "path": "runs/ordinary_gpu_probe_20261002/reviews/closed_three_execution_increment_non_author_20261003_v1.json",
+            "sha256": "1df8968be5fb6399a856cf37c48141d9550253a002255ddc9f3576679bece4ed"
+          },
+          "report": {
+            "path": "runs/ordinary_gpu_probe_20261002/reviews/closed_three_execution_increment_non_author_20261003_v1.md",
+            "sha256": "343339c0b70098c2e6e634095d329392ceda2261ce77fb1307c70b84c3afb950"
+          },
+          "job_id": "gpu1003-pandas50319-coder-a1",
+          "status": "accepted_owner_readback",
+          "scope": "Execution-only; Pandas large archives reuse sync_v3 SHA, other members independently hashed by GPU reviewer. Not owner semantic acceptance, training qualification or paired request closure."
+        }
+      },
+      "first_qwen36_analysis": {
+        "job_id": "gpu1003-pandas50319-qwen36-a1",
+        "execution_receipt": {
+          "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/pandas50319_qwen36_execution_receipt_v1/execution_receipt.json",
+          "sha256": "e1b22549ff2dcaae46a5a53bf82701001a17a5239701299c5fa54f4c234e3c6d"
+        },
+        "closed_manifest": {
+          "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-pandas50319-qwen36-a1/qwen_next12_closed_v1/gpu1003-pandas50319-qwen36-a1/closed_manifest.json",
+          "sha256": "bba3c256524179954fde99df157d2642e60f35881bb971eb48cdc3701e99f3d3"
+        },
+        "author_report": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/tasks/pandas-dev__pandas-50319/probe_analysis_qwen36_and_pair_20261004_v1.md",
+          "sha256": "e1e21658d7a3111429b66690ed5a1e90cd6d18b499905972b84d52ab038d3a3f"
+        },
+        "author_evidence": {
+          "path": "runs/category2_repair_20260929/pandas_cpu_20261003/gpu_analysis_20261004/pandas50319_qwen36_a1_v1/evidence.json",
+          "sha256": "5e913c93f8a362115e069f413b472ad25e68e9b6f71f71bde21625bf69347cd0"
+        },
+        "resource_image_readback": {
+          "path": "runs/category2_repair_20260929/pandas_cpu_20261003/gpu_analysis_20261004/pandas50319_qwen36_a1_v1/resource_identity_readback_v1.json",
+          "sha256": "dee1568ef0567a4d917acb7406ffcf8042ccdc2fb7f7f9cbe3b0994344e2424c"
+        },
+        "snapshot_files": 227,
+        "snapshot_bytes": 280036452,
+        "raw_reward": 1.0,
+        "f2p_partition": "replacement_f2p",
+        "f2p_passed": 2,
+        "f2p_total": 2,
+        "p2p_passed": 109,
+        "p2p_total": 109,
+        "semantic_verdict": "success_within_public_none_or_correct_format_contract",
+        "model_actor_sample_return_observed": "%d.%m.%Y %H:%M:%S.%f",
+        "formal_second_f_specific_return_branch_observed": false,
+        "candidate_array_conversion_observed": false,
+        "model_actor_validation_completed": true,
+        "actor_build_rc_separately_captured": false,
+        "formal_grader_fresh_parsing_build_observed": true,
+        "metrics": {
+          "solve_seconds": 386.155,
+          "cc_duration_seconds": 382.439,
+          "cc_api_seconds": 34.707,
+          "gateway_generation_requests": 25,
+          "unique_assistant_message_ids": 25,
+          "cc_recorded_turns": 25,
+          "tool_calls": 24,
+          "tools": {
+            "Read": 6,
+            "Bash": 17,
+            "Edit": 1
+          },
+          "tool_result_errors": 1,
+          "cumulative_input_tokens": 312515,
+          "output_tokens": 5518,
+          "cache_read_tokens": 0,
+          "cache_creation_tokens": 0,
+          "max_reported_single_request_input_tokens": 22098,
+          "grading_total_seconds": 994.782,
+          "phase_segments_seconds": {
+            "delta_apply": 5.532605,
+            "grader_baseline_rebuild": 0.627544,
+            "grader_cleanup": null,
+            "grader_start_and_verify": 74.7048,
+            "grader_trusted_setup": 591.119062,
+            "parser_and_report": null,
+            "test": 321.975505
+          },
+          "raw_install_seconds": 317.562,
+          "raw_test_wrapper_seconds": 2.989,
+          "pytest_footer_seconds": 0.22,
+          "queue_wait_field_only": 0.0
+        },
+        "parallelism": {
+          "max_outstanding_tool_calls": 1,
+          "batched_tools": false,
+          "background_build_overlapped_checks_and_waits": true,
+          "available_tools": [
+            "Bash",
+            "Edit",
+            "NotebookEdit",
+            "Read",
+            "Write"
+          ],
+          "cross_agent_ability": "not_assessable_no_agent_tool",
+          "interpretation": "Tool protocol serial, background build lives during later checks; not all processes fully serial"
+        },
+        "identity_boundaries": {
+          "actor_actual_image_id": "sha256:a3f20f616f78963bee9c87426b8a93c28fb63a6ade97d0f444115279c28f859a",
+          "grader_actual_image_id": "sha256:a3f20f616f78963bee9c87426b8a93c28fb63a6ade97d0f444115279c28f859a",
+          "grader_recorded_manifest_identity": "sha256:e645e4346df9200174e8b879ad8fb7a09f64f91c7375311e2569596d054ba21e",
+          "material_identity": "sha256:aec98b708135a7f293dc888a0a4cf70090584a6ea40fd1a32f0f087aac652979",
+          "bindings_sha256": "sha256:d2d78ebe7df4115b4d2d8e748fd83ff54e68c3234b3d91c814bff65c468097cd",
+          "actual_gold_qualification": "ok:gold_ledger.jsonl:rpt_grading_a29b64e6",
+          "gateway_checkpoint_identity_verified_original": false,
+          "compile_probe_original": null,
+          "actual_model": "Qwen/Qwen3.6-35B-A3B",
+          "actual_model_revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+          "download_file_count_scalar_original": 40,
+          "listed_actual_sizes_count": 37,
+          "all_37_sizes_matched": true,
+          "fresh_weight_hash_attestation": false,
+          "CC_maxOutputTokens_metadata_original": 32000,
+          "gateway_actual_request_max_tokens": 65536,
+          "profile_only_difference_from_Coder": "network.model_proxy_upstream",
+          "training_qualified": false
+        },
+        "non_author_review": {
+          "status": "accepted_read_back",
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/reviews/non_author_50319_qwen36_first_probe_review_20261004.md",
+          "sha256": "46cc9defd26ef03a462327c28cc5332def4d877dc7b00bf7c5fec59e9b66562f",
+          "scope": "New Qwen first arm original candidate/score/trajectory/identity independently checked, author compared after original read; not blind or new dynamic experiment. Prior CPU/Coder scopes reused.",
+          "material_defect_found": false
+        },
+        "material_defect_found": false,
+        "ordinary_resampling": "deferred_coverage_first",
+        "new_cpu_or_gpu_run_required_for_verdict": false
+      },
+      "paired_first_probe_closeout": {
+        "status": "diagnostic_closed_both_success_within_bounded_public_contract",
+        "request_id": "probe-swe-pandas-50319-20261003-v1",
+        "execution_receipt": {
+          "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/probe-swe-pandas-50319-20261003-v1_pair_execution_receipt_v1.json",
+          "sha256": "3bffd0623ab64925274dc9b879692f3902d71d2b6fb7aa2d367b031cb0497f0e"
+        },
+        "each_model_first_once_complete": true,
+        "owner_analysis_and_incremental_non_author_reviews_complete": true,
+        "original_raw_rewards": {
+          "coder": 1.0,
+          "qwen36": 1.0
+        },
+        "score_interpretation_confirmed": true,
+        "material_defect_found": false,
+        "training_qualified": false,
+        "acknowledged_at": "2026-10-03T16:11:29.689762+00:00",
+        "request_revision": 5,
+        "active_request_id": null,
+        "task_progress_revision": 16,
+        "historical_scope_note": "Prior Coder arm and mechanical closed/pending fields remain earlier point-in-time facts; this newer pair closeout is current. Original raw/null/false artifacts unchanged."
+      },
+      "historical_missing_model_progress": {
+        "source_thread_id": "01a0ebd7-4095-7dd1-8017-9648d7dba040",
+        "model": "Qwen3.6",
+        "reported_stage": "formal_grading",
+        "closed_result_received": false,
+        "scope": "Earlier direct GPU report while Qwen formal grading was still in progress; superseded by current pair closeout, not a current missing result."
+      }
+    }
+  },
+  "public_actor_reuse_scope": "公开包不变，原source actor证据按已有范围复用；不声称训练typed actor已接入",
+  "formal_score_status": "both_current_cpu_matrices_and_required_independent_reviews_accepted",
+  "cpu_needed": false,
+  "gpu_needed": false,
+  "probe_ready": true,
+  "training_qualified": false,
+  "execution_review_findings": {
+    "48106_inflight_retained": {
+      "gold_driver_kind": "cc (patch payload is validation gold bytes)",
+      "gold_not_P_A_qualification": true,
+      "qualification_plan": "use eligible current formal noop ledger if normal full-reference result",
+      "summary_cleanup_key_wrong": "matrix_state key may be null; read raw ledger.cleanup and CLI manager_close",
+      "interruption_cleanup_not_proven": true
+    },
+    "50319_cold_v3_fixes": [
+      "canonical gold-dir role",
+      "explicit noop/gold qualification inputs",
+      "ledger.cleanup summary",
+      "cooperative asyncio signal cancellation; actual cleanup still must be read"
+    ]
+  },
+  "resume_actions": [
+    "两题CPU修订对照、发布运输与四个首轮作者分析及新增非作者窄核均完成；两成对请求returned/ack，活动指针均已清；旧受阻材料仍保留",
+    "48106两模型均0：数值样例修好，相同15个category/NA dtype目标未修；50319两模型均1：不同局部修法在已验公开契约内成功，Qwen完成actor编译和原样例断言，Coder自测构建未闭合",
+    "当前本包无必需新增CPU/GPU依赖，按现行覆盖优先暂缓普通追加；保留两例正式返回分支/候选数组路线/通用身份false字段的范围，不推稳定率或训练资格，不操作机器停机销毁"
+  ],
+  "probe_ready_by_task": {
+    "48106": true,
+    "50319": true
+  },
+  "probe_execution_complete": true,
+  "model_results_received": true,
+  "first_model_coverage": {
+    "received_closed_arms": 4,
+    "requested_first_arms": 4,
+    "owner_and_incremental_non_author_reviewed_arms": 4,
+    "diagnostic_closed_tasks": 2,
+    "scope": "Two Pandas tasks, Coder and Qwen3.6 once per task.48106 both normal0/semantic failure;50319 both normal1/within-public-contract success. Not stable rate, source-wide quality, saturation or training qualification."
+  },
+  "resource_need_scope": "Pandas two-task current revision/CPU validation/image supply and four first-model arms plus incremental independent analysis complete. No required new CPU/GPU experiment for current conclusions. This scope does not cover other owners or authorize host shutdown/destruction."
+}

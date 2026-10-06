@@ -1,0 +1,30 @@
+diff --git a/dvc/stage/__init__.py b/dvc/stage/__init__.py
+index d98285949..ef0bd3573 100644
+--- a/dvc/stage/__init__.py
++++ b/dvc/stage/__init__.py
+@@ -581,6 +581,8 @@ class Stage(params.StageParams):
+             args = ("outputs", "frozen ") if self.frozen else ("data sources", "")
+             logger.info("Verifying %s in %s%s", *args, self)
+             if not dry:
++                if kwargs.get("pull"):
++                    self._pull_missing_outputs(jobs=kwargs.get("jobs"))
+                 self._check_missing_outputs()
+ 
+         if not dry:
+@@ -614,6 +616,16 @@ class Stage(params.StageParams):
+     def _check_missing_outputs(self) -> None:
+         check_missing_outputs(self)
+ 
++    def _pull_missing_outputs(self, jobs=None) -> None:
++        """Download and checkout outputs that are missing from the workspace."""
++        missing = [out for out in self.outs if out.use_cache and not out.exists]
++        for out in missing:
++            logger.info("Pulling missing output '%s' of %s", out, self)
++            for odb, objs in out.get_used_objs().items():
++                if objs:
++                    self.repo.cloud.pull(objs, jobs=jobs, odb=odb)
++            out.checkout(allow_missing=True)
++
+     def filter_outs(self, fs_path) -> Iterable["Output"]:
+         def _func(o):
+             return o.fs.path.isin_or_eq(fs_path, o.fs_path)

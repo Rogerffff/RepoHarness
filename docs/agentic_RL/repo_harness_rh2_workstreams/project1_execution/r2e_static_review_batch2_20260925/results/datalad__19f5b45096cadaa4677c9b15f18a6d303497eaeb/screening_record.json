@@ -1,0 +1,398 @@
+{
+  "record_convention": "swegym_task_audit_20260920/quality_batch01_20260921/record_template.md；checks 用 environment_screening_checklist_20260915.md 的 1-40 编号，稀疏记录",
+  "task_id": "r2e_gym_subset::datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb",
+  "instance_id": "datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb",
+  "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0（无材料修订；expected sha256:42b8016a…，hidden_tests_tree sha256:2e5d11bf…，gold sha256:adfb3a3b…）",
+  "source_adapter_ref": {
+    "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl 第 12 行（line_sha256 dfb6ab33…）",
+    "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl（line_sha256 51de9121…）",
+    "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/validation_bundles_v0.jsonl 第 12 行（line_sha256 3585180c…）",
+    "review_materials": "runs/r2e_static_prep_20260924/v3/{public,private}/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/"
+  },
+  "recipe_ref": {
+    "derived_image_recipe": "r2e_derive_v1",
+    "env_recipe": null,
+    "resource_recipe": null,
+    "resources": "默认：2 CPU / 4 GiB / /tmp 1 GiB / pids 512",
+    "grader_image_id": "sha256:19535845821d92a147b7f39aeed14bd9f1d92ebd8484bdf6fd46346a1276ff86（R-f 机构建，当前材料的 4 次评分运行）",
+    "actor_devcheck_image_id": "sha256:851a10b63cec8c004768bdbc44f222c8e7332e089f9ce417cafbf8d81b2320df（同配方另一构建：devcheck 与两份私有 gold 对照；隐藏测试未在此构建上运行）"
+  },
+  "code_snapshot_ref": {
+    "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+    "grader_scripts_digest": "sha256:d2af423cd35625fa31f87a65eacf4e6cfa245c519be8fa149be534e2cd933de5",
+    "actor_devcheck": "experiments/r2e_actor_20260925/r2e_devcheck.py（未跟踪实验脚本）+ Claude Code 2.1.205 + 桩端点",
+    "history_code_snapshot": "runs/r2e_snapshot_20260923.sha256（引自旧 screening_record，未复核）"
+  },
+  "facts_ref": {
+    "grader_runs_current_material": [
+      {
+        "role": "noop",
+        "condition": "R-f，默认 profile",
+        "ledger": "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl",
+        "line": 12,
+        "log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-d_89096c54.eval.log",
+        "result": "0.0，18/19，不符 test_run_exit_code（assert 1 == 3）"
+      },
+      {
+        "role": "gold",
+        "condition": "R-f，默认 profile",
+        "ledger": "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl",
+        "line": 12,
+        "log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-d_61fad0eb.eval.log",
+        "result": "1.0，19/19"
+      },
+      {
+        "role": "noop",
+        "condition": "环境轮中央复跑",
+        "ledger": "runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl",
+        "line": 12,
+        "log": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_573a33ad.eval.log",
+        "result": "0.0，18/19，与 R-f noop 规范化后逐行相同"
+      },
+      {
+        "role": "gold",
+        "condition": "环境轮中央复跑",
+        "ledger": "runs/r2e_env_repair_20260924/_rerun2/ledger_gold.jsonl",
+        "line": 12,
+        "log": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_255516cc.eval.log",
+        "result": "1.0，19/19，与 R-f gold 规范化后逐行相同"
+      }
+    ],
+    "independent_reference": [
+      {
+        "role": "gold",
+        "condition": "M3 独立 runner，来源镜像",
+        "ledger": "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl",
+        "line": 5,
+        "logs": [
+          "runs/env_overnight_20260916/M3/gold_ledger/logs_r2e/datalad/19f5b45096ca/gold/a1/test_output.txt",
+          "runs/env_overnight_20260916/M3/gold_ledger/logs_r2e/datalad/19f5b45096ca/gold/a2/test_output.txt"
+        ],
+        "result": "两次 19 passed / 1 skipped"
+      },
+      {
+        "role": "noop（清理 git 后）",
+        "condition": "M3，来源镜像",
+        "log": "runs/env_overnight_20260916/M3/facts/19f5b45096ca/git_scrub/out_after.txt",
+        "result": "只 test_run_exit_code 失败"
+      }
+    ],
+    "actor_devcheck": {
+      "dir": "runs/r2e_actor_20260925/devcheck/datalad__19f5b45096cadaa4677c9b15f18a6d3/orig/",
+      "condition": "正式启动路径 + 真实 Claude Code 2.1.205 + 桩端点，agent uid 54321，base（无候选）",
+      "result": "R2E 预检 3 项 ok；pr1 = 1/1/0/1/0；pr2 AssertionError（test_main.py:83）；pr3 7 passed；pr4 2+1 passed；pr5 exit=1"
+    },
+    "private_gold_control_full": {
+      "file": "runs/r2e_actor_20260925/devcheck/datalad__19f5b45096cadaa4677c9b15f18a6d3/private_gold_full/private_control_full.json",
+      "sha256": "9d36f7556f1f39fcf56bee5e38cfff939757e75a2ba06ab327ef064acfc22238",
+      "condition": "同一派生构建 851a10b6…，一次性容器，root，network=none，只应用 gold，输出未截断",
+      "result": "pr1 = 3/3/0/1/0；pr2 run_main(exit_code=3) passed；pr3 7 passed；pr4 2+1 passed；pr5 exit=3"
+    },
+    "history": {
+      "facts": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/facts.json",
+      "screening_record": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/screening_record.json",
+      "agent_probe": "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/agent_probe.log",
+      "public_tests": "runs/r2e_env_repair_20260924/p2/pubtests/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb.log",
+      "m3_pkgsrc": "runs/env_overnight_20260916/M3/facts/19f5b45096ca/pkgsrc.txt"
+    },
+    "cross_task_scan": "runs/r2e_static_prep_20260924/cross_task_gold_scan.json"
+  },
+  "checks": {
+    "1": {
+      "status": "pass",
+      "note": "题面、base、gold、隐藏测试、expected、镜像对应同一任务：哈希与 bundle、账本一致；base 是修复提交的父提交（M3 facts head_is_parent_of_fix=yes）；初态 diff 0 字节。"
+    },
+    "2": {
+      "status": "pass",
+      "note": "noop 只在 test_run_exit_code 失败，原因 assert 1 == 3，与题面一致（评分实跑 ×2 + M3）；agent 身份下 base 复现 EXIT 1（devcheck pr1、pr2、pr5）。"
+    },
+    "3": {
+      "status": "unknown",
+      "note": "只有静态渲染 user_prompt.txt；devcheck 用的是桩脚本消息，未捕获真实题面消息。"
+    },
+    "4": {
+      "status": "pass",
+      "note": "合法修复位于非测试源码（gold 为 datalad/cli/main.py），投影 included_paths 与之一致；无需额外排除。"
+    },
+    "5": {
+      "status": "pass",
+      "note": "本题 gold 未出现在同仓其它 4 题的公开工作树（机械比对 + 人工核对）；反向，58ba5165 的修复已在本题初态（datalad/interface/base.py:218,223），作同族关系记录，见 issues。"
+    },
+    "6": {
+      "status": "pass",
+      "note": ".venv 完整，纯 Python 修改，不需要新依赖。"
+    },
+    "7": {
+      "status": "pass",
+      "note": "git 2.34.1、/usr/bin/git-annex、/testbed/.venv/bin/datalad 齐备（devcheck env.out）；argcomplete 可用（评分侧 test_completion PASSED）。"
+    },
+    "8": {
+      "status": "pass",
+      "note": "解题侧 agent uid 54321（devcheck）；评分侧 rh2grader uid 54322（账本 policy）。"
+    },
+    "9": {
+      "status": "pass",
+      "note": "导入路径为 /testbed/datalad（账本 RH2_OBS_IMPORT_PATH；devcheck cwd=/ 亦同）；gold 下 console script 退出 3，证明子进程也用到改动（private_gold_full pr5）；site-packages 只有 editable 的 dist-info（M3 pkgsrc）。"
+    },
+    "10": {
+      "status": "pass",
+      "note": "公开复现与测试命令在正式链 agent 身份下都能运行（devcheck pr1-pr5）；完整公开 test_main.py 为 18 passed / 1 skipped（历史 pubtests，uid 54321，非正式链）。git 身份需解题者自己设置，见 issues。"
+    },
+    "11": {
+      "status": "pass",
+      "note": "各阶段都不需要网络；解题侧外部 DNS 与直连被拒（prelaunch），评分侧 deny_all。"
+    },
+    "12": {
+      "status": "not_applicable",
+      "note": "测试不依赖外部服务。"
+    },
+    "13": {
+      "status": "pass",
+      "note": "内存峰值 751-813 MB / 4 GiB，测试 11-12 s，评分全程约 104 s（账本）。"
+    },
+    "14": {
+      "status": "pass",
+      "note": "证据有限：noop 与 gold 同条件各 2 次，去掉时间戳与临时路径后逐行相同；另有 M3 的 gold 2 次。"
+    },
+    "15": {
+      "status": "not_checked",
+      "note": "未做缓存复用与并发对照。"
+    },
+    "16": {
+      "status": "pass",
+      "note": "只核了 gold：git_apply 投影后正常交付；一般交付形态沿用共享审查，未逐题复核。"
+    },
+    "17": {
+      "status": "pass",
+      "note": "评分只替换 r2e_tests/ 与 run_tests.sh，不与源码路径重叠。"
+    },
+    "18": {
+      "status": "pass",
+      "note": "收集 20 项，short test summary 完整，rc 与结果一致。"
+    },
+    "19": {
+      "status": "pass",
+      "note": "19 个键全部为 PASSED；SKIPPED 的 test_help_np 不成键。注意：该 skip 依赖 stdin 不是 TTY（ui/utils.py:40-51）。"
+    },
+    "20": {
+      "status": "pass",
+      "note": "noop 与 gold 只在目标键上不同。"
+    },
+    "21": {
+      "status": "pass",
+      "note": "无基础设施或执行失败，stage_error 为 null。"
+    },
+    "22": {
+      "status": "pass",
+      "note": "M3 来源镜像下 gold 19/19 且键集合相同；noop 在同一个键上失败。"
+    },
+    "23": {
+      "status": "issue",
+      "note": "公开文档互相矛盾：run.py:105-106 的 docstring、CHANGELOG.md:1191 的 0.16.0 条目、cli.rst:61-71 三者说法不一，题面没有说明 Python API 是否要改；示例的三处导入写错；R8/R10 的语义（continue、多个失败、其它命令）未约定。"
+    },
+    "24": {
+      "status": "pass",
+      "note": "静态判断：唯一的精确约束是 Python 层 sys.stderr 必须为空（test_1.py:86-87），依据是题面示例使用 run_main 的默认参数；修复的实现位置与范围不受限制。K1、K4 待实跑。"
+    },
+    "25": {
+      "status": "issue",
+      "note": "静态推断，待 CPU 实跑：唯一目标键只测退出码 3 与 --explicit，K3（取首条失败记录的 exit_code 且不回退）和硬编码 3 预期都得 1。"
+    },
+    "26": {
+      "status": "issue",
+      "note": "静态推断，待 CPU 实跑：Python API 与 rerun 语义、--on-failure ignore、非命令失败仍退 1 这几条都没有键保护，K2（按 docstring 恢复 CommandError）预期得 1。"
+    },
+    "27": {
+      "status": "pass",
+      "note": "gold 已由私有对照执行确认：C1 五例依次为 3/3/0/1/0，console script 退出 3，公开 run/rerun 测试通过；没有无关改动。docstring 与实现不符的问题仍在（gold 没有修改 docstring）。"
+    },
+    "28": {
+      "status": "not_applicable",
+      "note": "无材料修订。"
+    },
+    "29": {
+      "status": "pass",
+      "note": "git 已清理（refs、remotes、reflog 都为 0，HEAD 没有子提交）；工作树里没有修复标记（grep 7504、7641 与 gold 行都无结果）；site-packages 里没有 datalad 源码副本（M3 pkgsrc）。"
+    },
+    "30": {
+      "status": "pass",
+      "note": "解题侧外部网络被拒（prelaunch）。"
+    },
+    "31": {
+      "status": "unknown",
+      "note": "通用通道：隐藏测试依赖 base 版 datalad/tests/utils_pytest.py 等测试辅助，评分时不重置；本题没有特有入口，未做篡改实验。"
+    },
+    "32": {
+      "status": "issue",
+      "note": "静态推断：verifier 只比对一个固定输出值（退出码 3），硬编码 3 就能通过（K5），待 CPU 实跑。"
+    },
+    "33": {
+      "status": "not_checked",
+      "note": "未做真实模型求解；devcheck 只有桩端点，不算求解。"
+    },
+    "34": {
+      "status": "not_checked"
+    },
+    "35": {
+      "status": "not_checked"
+    },
+    "36": {
+      "status": "not_checked"
+    },
+    "37": {
+      "status": "not_applicable",
+      "note": "无修订。"
+    },
+    "38": {
+      "status": "not_applicable",
+      "note": "无修订。"
+    },
+    "39": {
+      "status": "not_applicable",
+      "note": "无共享修复。"
+    },
+    "40": {
+      "status": "not_checked"
+    }
+  },
+  "issues": [
+    {
+      "id": "datalad_19f5-test-coverage-narrow",
+      "category": "test_quality",
+      "checks": [
+        "25",
+        "26",
+        "32"
+      ],
+      "summary": "隐藏测试唯一的目标键只测题面原例（run --explicit 'exit 3' → 3）。任意 N、非命令失败仍退 1、--on-failure ignore 退 0、Python API 与 rerun 不变，这几条都没有键保护。回归实现 K2、部分实现 K3 和硬编码 3 预期都得 1。",
+      "evidence_level": "静态推断（读完隐藏测试全文）；gold 在这些路径上正确已由私有对照执行确认；K1-K5 待正式评分实跑",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/v3/private/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/hidden_tests/test_1.py",
+        "runs/r2e_actor_20260925/devcheck/datalad__19f5b45096cadaa4677c9b15f18a6d3/private_gold_full/private_control_full.json"
+      ],
+      "impact": "reward=1 只能证明题面原例已修好。用于训练奖励时会奖励回归或部分实现；用于诊断探针时，只影响对通过结果的解释。",
+      "proposed_action": "先用正式评分实跑 K2、K3（同批跑 K1、K4，K5 可选）。作诊断探针时，对通过的补丁另跑公开回归复核（C1 五例、test_run.py::test_basics、test_rerun.py::test_run_failure）。若要进入训练奖励，可按公开要求补测，这是 T0 修订，需用户决定，并须用 gold 和 K1-K5 双向复验。",
+      "status": "open"
+    },
+    {
+      "id": "datalad_19f5-public-docs-conflict",
+      "category": "prompt_quality",
+      "checks": [
+        "23"
+      ],
+      "summary": "公开文档对 run 失败时的 Python API 语义说法不一：Run docstring 说抛 CommandError，0.16.0 changelog 说抛 IncompleteResultsError 且 CLI 不再转发退出码，cli.rst 把命令失败列为转发退出码的一类。题面没有交代这段历史。题面示例的三处导入写错（历史已确认）。",
+      "evidence_level": "静态阅读",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/v3/public/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/worktree/datalad/core/local/run.py",
+        "runs/r2e_static_prep_20260924/v3/public/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/worktree/CHANGELOG.md",
+        "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+      ],
+      "impact": "会把解题者引向 K2 路线（破坏 Python API 却得 1）；题意本身仍然可以恢复。",
+      "proposed_action": "只记录，不提议改题面；与测试补测一并由用户决定。",
+      "status": "open"
+    },
+    {
+      "id": "datalad_19f5-stderr-exactness",
+      "category": "test_strictness",
+      "checks": [
+        "24"
+      ],
+      "summary": "run_main 默认 expect_stderr=False，经 print(..., file=sys.stderr) 输出说明的正确修复会判 0；经日志、ui.error 或 os.write(2, …) 输出则不受影响。",
+      "evidence_level": "静态推断；gold 下 stderr 为空已由评分实跑确认；K4 待跑",
+      "impact": "低：约束有公开依据（题面示例使用 run_main 的默认参数），不按误拒合理解计。",
+      "proposed_action": "用 K4 实跑确认后，把它作为已知的严格点记录下来。",
+      "status": "open"
+    },
+    {
+      "id": "datalad_19f5-git-identity-absent",
+      "category": "solver_condition",
+      "checks": [
+        "8",
+        "10"
+      ],
+      "summary": "agent 的 HOME（tmpfs）没有 git user.name / user.email，不设身份时 create 报 Author identity unknown；v3 的 public_hints 没有提到这一点。评分不受影响，因为隐藏 conftest 会临时设置 HOME 和身份。",
+      "evidence_level": "历史探针实测（agent_probe.log:146）；本批正式链 devcheck env.out 仍打印身份警告",
+      "evidence_refs": [
+        "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/agent_probe.log",
+        "runs/r2e_actor_20260925/devcheck/datalad__19f5b45096cadaa4677c9b15f18a6d3/orig/captures/env.out"
+      ],
+      "proposed_action": "沿用历史 known_issue 的处理：由 A 线或任务面决定是在 rollout 初始化时写入身份，还是写进提示。本审查不改。",
+      "status": "open"
+    },
+    {
+      "id": "datalad_19f5-relation-58ba5165",
+      "category": "task_relation",
+      "checks": [
+        "5"
+      ],
+      "summary": "机械比对显示 58ba5165 的 gold 新增行 6/6 出现在本题公开工作树中；公开包一侧核对到的正则已是修复后的 .*? 形式。本题 gold 不出现在同仓其它题的公开包中。",
+      "evidence_level": "机械比对 + 公开包一侧核对；未读 58ba5165 私有包",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/cross_task_gold_scan.json"
+      ],
+      "proposed_action": "划分数据时把两题记为同族：若 58ba5165 留作评测，本题初态已包含其答案。",
+      "status": "recorded"
+    },
+    {
+      "id": "datalad_19f5-skip-depends-on-tty",
+      "category": "grader_config_sensitivity",
+      "checks": [
+        "19",
+        "14"
+      ],
+      "summary": "test_help_np 在 stdin 不是 TTY 时 SKIPPED，因此不成键；若改用 TTY 评分，所有候选（含 gold）都会多出一个键而判 0。6 份日志的结果一致。",
+      "evidence_level": "静态阅读 + 6 份日志",
+      "proposed_action": "保持评分不分配 TTY；无需其它动作。",
+      "status": "recorded"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": []
+  },
+  "revision_refs": [],
+  "disposition": {
+    "scope": "static_review",
+    "state": "needs_review",
+    "reason": "静态候选待 actor 验证（真实模型求解未做）；另有测试偏窄：唯一目标键只测题面原例，K2/K3 类回归或部分实现按静态推断得 1，待正式评分实跑确认。未发现合理解被误拒的具体证据。",
+    "static_candidate": true,
+    "prior_disposition": {
+      "state": "environment_qualified",
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/datalad__19f5b45096cadaa4677c9b15f18a6d303497eaeb/screening_record.json",
+      "relation": "环境维度仍然成立；本审查补充测试质量与题面文档两个维度，没有推翻旧结论"
+    },
+    "pending": [
+      "K1-K4 正式评分实跑（K5 可选）",
+      "真实模型求解（清单 33-36）",
+      "实际渲染消息（清单 3）",
+      "独立 reviewer 复核"
+    ],
+    "next_step": "用正式评分代码实跑 K2 与 K3（预期都得 1，用于确认漏测），同批跑 K1（预期 1）与 K4（预期 0）；候选的逐句补丁描述见 card.md §5。",
+    "reviewer": null
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "approved_for_training_or_eval": false,
+    "reviewer_exposure": "主审读过 gold.patch、隐藏测试、expected、全部运行原件与私有 gold 对照；历史记录在 analysis_before_history.md 保存之后才读。",
+    "solver_visibility": "本记录与所有审查产物不提供给解题模型。",
+    "interpretation_caveat": "reward=1 只证明题面原例已修好；判断 R2/R4/R6/R7 需另做公开回归。"
+  },
+  "costs": {
+    "review_tokens": null,
+    "review_usd": null,
+    "grader_seconds_observed": [
+      104.044,
+      104.821,
+      103.794,
+      104.737
+    ],
+    "devcheck_wall_seconds_observed": 59,
+    "candidate_runs": null
+  },
+  "coordinator_notes": [
+    {
+      "date": "2026-09-25",
+      "by": "Claude B（协调者）",
+      "note": "本记录写于候选实跑之前，'待实跑''预期'为当时推断。实跑结果见 docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/grader_candidates.md，主审与复核的对照见同目录 results/<instance_id>/review.md，批次结论见 README.md §3。协调者未改动本记录的其它字段。"
+    }
+  ]
+}

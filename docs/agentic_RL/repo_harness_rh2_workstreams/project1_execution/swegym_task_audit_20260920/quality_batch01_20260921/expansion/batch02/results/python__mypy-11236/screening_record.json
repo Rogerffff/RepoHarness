@@ -1,0 +1,601 @@
+{
+  "task_id": "python__mypy-11236",
+  "task_revision": "upstream",
+  "source_adapter_ref": {
+    "source": "SWE-Gym lite / python/mypy 0.920",
+    "source_refs": "runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/source_refs.json (exact S2 ingest line 187 for public/grading/validation)",
+    "raw_history_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl:201",
+    "grading_ref": "runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/grading.json",
+    "execution_selection": {
+      "command": "pytest -n0 -rA -k testLiteralAndInstanceSubtyping",
+      "collected": 9846,
+      "selected": 1,
+      "deselected": 9845,
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/eval_logs/evallog_replay-er19-iw1-python___74f1c394.eval.log:560–579",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/eval_logs/evallog_replay-er19-iw1-python___32643f4f.eval.log:546–595"
+      ]
+    },
+    "frozen_reward_references": {
+      "FAIL_TO_PASS": [
+        "mypy/test/testcheck.py::TypeCheckSuite::testLiteralAndInstanceSubtyping"
+      ],
+      "PASS_TO_PASS": []
+    },
+    "current_mechanisms": [
+      "rh2/src/repoharness2/adapters/slime/prepared_task_face.py:312–356",
+      "rh2/src/repoharness2/envpack/spec_vendor.py:183–191",
+      "rh2/src/repoharness2/envpack/scoring.py:234–270",
+      "rh2/src/repoharness2/grading/manager.py:1197–1249"
+    ],
+    "scope_note": "执行选集、冻结F2P/P2P与实际静态阅读范围不同；官方修改旧case未执行也未被引用。正常完整pytest rc1中的非引用失败不自动把奖励变0，全局失败另判。"
+  },
+  "recipe_ref": {
+    "name": "install-wave1:python__mypy-11236",
+    "image_record": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/image.json",
+    "build_log": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/build.log",
+    "common_build_mechanism": "runs/env_recipe_repair_20260919/install_wave1/run_install_wave1.py:24–71 (只读通用机制；本题参数以image/build原件为准)",
+    "public_actor_image": "xingyaoww/sweb.eval.x86_64.python_s_mypy-11236:latest",
+    "public_manifest_digest": "sha256:6b6a59ea714d1d4e1bf5c09d2e576aed035532099c8634a750ab738e33d9cc9e",
+    "base_image_id": "sha256:d64f775bd6258407d6fe847af333afd1f8666c69f38751eef7d6b2b4eb34aa37",
+    "grader_image_id": "sha256:853ffff2219f5167a87f7f310b17b8362d098f66745c20d0406c44c2c708edd0",
+    "scripts_digest": "sha256:3877bc8ad683910926b4ab2a8144a30986cd6a88d16cabb6676f852b36697c18",
+    "observed_initial_diff": "共同test-requirements.txt新增types-typing-extensions==3.7.3；gold另有subtypes两行。保留既存初态，不伪装完全clean base。",
+    "identity_boundary": "派生grader rh2grader/54322；candidate.apply_user agent/54321只代表脚本应用阶段。正式actor使用public image/agent54321，未证明开发资格。",
+    "evidence_refs": [
+      "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/ledger.jsonl:1",
+      "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/ledger.jsonl:1",
+      "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/eval_logs/evallog_replay-er19-iw1-python___74f1c394.eval.log:272–294,472–555",
+      "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/eval_logs/evallog_replay-er19-iw1-python___32643f4f.eval.log:271–280,458–541",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §6"
+    ]
+  },
+  "code_snapshot_ref": {
+    "base_commit": "209a7193feb4bbfa38d09232b0a5a916e9d2e605",
+    "base_tree": "b032d831a01ba53aea221e5a9355e218dca0a77e",
+    "public_base": "runs/swegym_quality_batch02_20260921_v2/public/python__mypy-11236/base",
+    "identity_ref": "runs/swegym_quality_batch02_20260921_v2/public/python__mypy-11236/base_identity.json",
+    "gold_patch_ref": "runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/gold.patch",
+    "gold_patch_sha256": "96d1a2e3a08c9f52d7a7ce94fa2de15ee638beba3817cc14394b9426d3f17dc1",
+    "test_patch_ref": "runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/test.patch",
+    "frozen_gold_artifact": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/artifacts/swe_gym_lite--python__mypy-11236/a1-c1f6bc21",
+    "frozen_noop_artifact": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/artifacts/swe_gym_lite--python__mypy-11236/a1-3d8f796c",
+    "baseline_manifest_digest": "fd0214a7ee032c21366f570d277c79bebf004f64a6265e06a7e13856656b6ef7",
+    "public_bundle_digest": "6b4766513389eb70737240fc4c9d78b15f75ab1bd712680478e9ea58480c19d9",
+    "audit_scope": "协调层完成全包源行/blob/mode/日志身份核验；本主审仅核本题必要HEAD/patch/唯一gold frozen源码entry及原日志。详细实际阅读区段在封存初稿，不称全仓阅读。"
+  },
+  "facts_ref": [
+    {
+      "ref": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/ledger.jsonl:1",
+      "kind": "historical_real_RH2",
+      "run_id": "er19-iw1-python__mypy-11236-gold",
+      "task_id": "swe_gym_lite::python__mypy-11236",
+      "attempt": 1,
+      "candidate": "gold",
+      "log_ref": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/eval_logs/evallog_replay-er19-iw1-python___74f1c394.eval.log",
+      "log_sha256": "b3c642eaa547d3305fdbd1c430ac75b056dc7e79e31dbd5035b911b98d56c2d2",
+      "observed": "完整安装成功；test rc0、1 passed、reward1、F2P1/1、P2P0/0；missing/skipped空、parsed1、outside0、execution_failure_decision=null。install6.212s/test3.951s、峰值122.664MiB是历史阶段观测，不是本轮cost。"
+    },
+    {
+      "ref": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/ledger.jsonl:1",
+      "kind": "historical_real_RH2",
+      "run_id": "er19-iw1-python__mypy-11236-noop",
+      "task_id": "swe_gym_lite::python__mypy-11236",
+      "attempt": 1,
+      "candidate": "noop",
+      "log_ref": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/eval_logs/evallog_replay-er19-iw1-python___32643f4f.eval.log",
+      "log_sha256": "66b83257ad1498dc45040afb402d02d3f6248a6c8981e1c6d8bcd3ee15b187ba",
+      "observed": "完整安装成功；test rc1、1 failed、reward0、F2P0/1、P2P0/0；正确返回的额外诊断为实际失败。install6.7s/test4.266s、峰值130.535MiB是历史阶段观测，不是本轮cost。"
+    },
+    {
+      "ref": "runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/environment_record.json",
+      "kind": "historical_summary_read_after_seal",
+      "observed": "完整读到verified_environment_pair、install_wave1与checks摘要；仅作来源摘要，与原账本/日志层次分开；未跟进analysis_149.json。"
+    },
+    {
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md",
+      "kind": "sealed_independent_static_review",
+      "sha256": "2569d428660d3d94807b468a66f62d52733cabed9cc7b8ac71b6690efd8cc310",
+      "observed": "八方面、逐个新增/修改断言、现有调用者/回归、替代与部分实现、actor/投影/评分/泄漏及完整实际阅读范围；历史前保存后未回写。"
+    },
+    {
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/old_findings_delta.md",
+      "kind": "history_delta",
+      "observed": "H每项确认/推翻/过时/未核实分开；原hints及旧索引精确原件只在门禁后读取，无新实验。"
+    },
+    {
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_1/records/python__mypy-11236.json",
+      "kind": "old_static_claims_not_execution",
+      "observed": "全文只在history refs开放后读；旧P2P零保护/唯一实现/unsafe等主张不直接继承为证据。"
+    },
+    {
+      "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl:201",
+      "kind": "raw_task_history",
+      "observed": "仅本题一行，problem_statement1257字符/hints_text14157字符完整读；未访链接；有修复路线与Union组合关联警告。"
+    },
+    {
+      "ref": "runs/env_overnight_20260916/L1_mypy_1/dupidx.txt:12,66; kcheck_all.txt:1–4",
+      "kind": "task_limited_old_metadata",
+      "observed": "仅本题匹配行和本题块；H缩写docs定位不存在，实际runs原件已找到。共享源码文件不是重复题证明；selector1/overselect0。"
+    }
+  ],
+  "checks": {
+    "1": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/source_refs.json: S2 public/grading/validation第187行；协调层已核整包，本主审没有重复全blob校验",
+        "runs/swegym_quality_batch02_20260921_v2/public/python__mypy-11236/base_identity.json: base=209a7193feb4bbfa38d09232b0a5a916e9d2e605, tree=b032d831a01ba53aea221e5a9355e218dca0a77e",
+        "runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/gold.patch、runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/test.patch；runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/ledger.jsonl:1与runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/ledger.jsonl:1的HEAD/候选/镜像对应",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/eval_logs/evallog_replay-er19-iw1-python___74f1c394.eval.log:272–294与runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/eval_logs/evallog_replay-er19-iw1-python___32643f4f.eval.log:271–280：保留共同初态test-requirements stub pin；gold另有预期两行",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl:201:仅本题repo/base/version核对；未读其它行"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "2": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/public/python__mypy-11236/base/mypy/checkexpr.py:3306–3315与subtypes.py:278–297：多同长tuple上下文放弃且已知Instance不匹配Literal",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/eval_logs/evallog_replay-er19-iw1-python___32643f4f.eval.log:572–575：合法布尔标签return及Final(1,)多报错误；runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/eval_logs/evallog_replay-er19-iw1-python___74f1c394.eval.log:571–572通过",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §1/§2：该因果链有no-op实际失败；公开原例CLI和全部flags尚未原样执行，不能外推"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "3": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/public/python__mypy-11236/user_prompt.txt:14–27：完整原例、导入与目标Python3.7/strict等flags；期望栏虽空，所需接受行为清楚",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl:201:problem_statement1257字符、hints_text14157字符；原hints只在封存后读取",
+        "rh2/src/repoharness2/adapters/slime/prepared_task_face.py:342–356：公开任务面静态隔离；真实actor渲染消息/截断未捕获",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/old_findings_delta.md:不能由原材料完整证明实际actor输入完整"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "4": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/gold.patch：合法源码subtypes.py两行；未触官方恢复文件",
+        "rh2/src/repoharness2/adapters/slime/prepared_task_face.py:312–338：test_files仅test-data/unit/check-literal.test，test_globs=()",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/artifacts/swe_gym_lite--python__mypy-11236/a1-c1f6bc21/frozen_patch.json与候选投影：gold源码交付；范围仅已观察候选，不宣称所有文件操作已验",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §1/§7：可读公开源码、CLI及旧测试支持合法源码路线；additional_exclusions=[]"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "5": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/env_overnight_20260916/L1_mypy_1/dupidx.txt:12,66：仅本题匹配行；subtypes.py共享路径推翻H的唯一文件主张，但共享文件不是重复题证明",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/old_findings_delta.md:未做跨来源同族/回移植/留出重叠或预训练污染审计"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "6": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/image.json与build.log：派生镜像只加离线wheel及PIP环境；pins setuptools75.1.0/wheel0.44.0/packaging24.1",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/eval_logs/evallog_replay-er19-iw1-python___74f1c394.eval.log:472–555、runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/eval_logs/evallog_replay-er19-iw1-python___32643f4f.eval.log:458–541：完整requirements/editable build isolation/wheel安装成功，不只依赖末尾rc0",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §6：当前派生grader已恢复该次安装；正式actor/public image的依赖、wheel与权限未验"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "7": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/test.patch:66与runs/swegym_quality_batch02_20260921_v2/public/python__mypy-11236/base/test-data/unit/fixtures/bool.pyi：真实F2P使用既有stub",
+        "runs/swegym_quality_batch02_20260921_v2/public/python__mypy-11236/base/test-data/unit/fixtures/tuple.pyi与lib-stub/typing_extensions.pyi:17,20：相关旧case fixture及Final/Literal定义已读",
+        "runs/swegym_quality_batch02_20260921_v2/public/python__mypy-11236/base/mypy/test/data.py:69–75、267–277；runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/eval_logs/evallog_replay-er19-iw1-python___74f1c394.eval.log:560–579真实加载测试成功；仅对应已读/执行资产，不称全镜像泄漏审计"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "8": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/ledger.jsonl:1、runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/ledger.jsonl:1：评分policy rh2grader/54322，conda prefix可写且owner54322；candidate.apply_user=agent/54321只是脚本应用阶段",
+        "rh2/src/repoharness2/adapters/slime/prepared_task_face.py:342–356及sandbox_profile.py:311–340：formal actor public image/agent54321；没有本题该身份开发验证"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "9": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/artifacts/swe_gym_lite--python__mypy-11236/a1-c1f6bc21/candidate.patch及frozen_patch.json：唯一subtypes.py entry与公开base+gold精确文本相等；noop entries=[]",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/eval_logs/evallog_replay-er19-iw1-python___74f1c394.eval.log:272–294、509–533；runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/eval_logs/evallog_replay-er19-iw1-python___32643f4f.eval.log:271–280、494–519：候选diff、editable构建与安装原件",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/ledger.jsonl:1、runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/ledger.jsonl:1：导入/testbed/mypy/__init__.py，runner前后digest一致；同条件F2P分差",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §2/§6：仅已观察grader候选关联；未独立观测actor的subtypes/checkexpr文件或编译模块遮蔽"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "10": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/public/python__mypy-11236/base/pytest.ini:22与mypy/test/data.py:260–281：开发窄测需兼容pytest/xdist和可写临时目录",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §6：正式actor身份、sys.executable、实际模块路径、CLI和窄测试未运行；grader成功不等价"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "11": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/image.json、build.log：准备阶段预置离线wheel；runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/ledger.jsonl:1、runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/ledger.jsonl:1：安装/测试deny_all",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §6/§7：已运行数据测试无外部服务；formal actor工具/网络与来源expected生成条件未核，四阶段不能混写为全离线已验"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "12": {
+      "status": "not_applicable",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/test.patch:23–66、runs/swegym_quality_batch02_20260921_v2/public/python__mypy-11236/base/mypy/test/testcheck.py:194–224：当前case用本地源码/fixture构建和完整诊断比较，无目标外部服务或下载等价捷径；此结论仅适用所审case"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "13": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/ledger.jsonl:1、runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/ledger.jsonl:1：2CPU/4GiB、PID512、shm64MiB、tmp1GiB；本次峰值122.664/130.535MiB，无OOM/超时归因",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §6：单case历史资源不证明formal actor、整文件、并发或求解预算充足"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "14": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/run_refs.json：只引用单次gold/noop；本轮没有同状态fresh重复，不将两种不同候选视为稳定性复测"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "15": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/ledger.jsonl:1、runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/ledger.jsonl:1：cleanup removed=true、共同baseline/public digest，单对照未见残留线索",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §2/§6：未执行连续复用、缓存或并发对照"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "16": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/artifacts/swe_gym_lite--python__mypy-11236/a1-c1f6bc21/{stage.json,classification.json,projection.json,frozen_patch.json}与runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/artifacts/swe_gym_lite--python__mypy-11236/a1-3d8f796c对应工件：projectable、stage_error=null、HEAD等于base；gold仅subtypes源码entry，noop空",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §2：唯一gold entry做精确文本核对；未将其外推到提交/新文件/重命名/删除等全部交付类型"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "17": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/test.patch:1：官方触碰单文件test-data/unit/check-literal.test，与gold无交集",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/eval_logs/evallog_replay-er19-iw1-python___74f1c394.eval.log:295–302、runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/eval_logs/evallog_replay-er19-iw1-python___32643f4f.eval.log:281–288：实际checkout该文件后应用官方patch",
+        "rh2/src/repoharness2/adapters/slime/prepared_task_face.py:312–338；grading/manager.py:243–261：test_globs=()，精确恢复；不声称所有tests/helpers/fixtures都恢复"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "18": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/eval_logs/evallog_replay-er19-iw1-python___74f1c394.eval.log:560–579、runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/eval_logs/evallog_replay-er19-iw1-python___32643f4f.eval.log:546–595：pytest -n0 -rA -k testLiteralAndInstanceSubtyping；各9846 collected、9845 deselected、1 selected，明确结束和rc0/1",
+        "runs/env_overnight_20260916/L1_mypy_1/kcheck_all.txt:1–4：本题selector1/overselect0",
+        "runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/test.patch:4–17：旧修改case的header不在hunk，未选也不在引用；这是明确记录的执行范围缺口，不虚称已跑全部patch行为"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "19": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/grading.json：冻结F2P唯一mypy/test/testcheck.py::TypeCheckSuite::testLiteralAndInstanceSubtyping，P2P=[]",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/ledger.jsonl:1、runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/ledger.jsonl:1与日志最终PASSED/FAILED：parsed1、missing/skipped空、outside0",
+        "rh2/src/repoharness2/envpack/scoring.py:234–270：冻结引用评分；vendor派生执行选集是另一层"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "20": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/ledger.jsonl:1：reward1、F2P1/1、P2P0/0；runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/ledger.jsonl:1：reward0、F2P0/1、P2P0/0",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/eval_logs/evallog_replay-er19-iw1-python___32643f4f.eval.log:564–579：原例同类合法返回的3个额外诊断导致失败；保留1note+6预期errors，非零解析/安装失败凑出的0",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/eval_logs/evallog_replay-er19-iw1-python___74f1c394.eval.log:571–579：gold完整case通过；共同配方和初态pin已记录"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "21": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/eval_logs/evallog_replay-er19-iw1-python___74f1c394.eval.log:472–579、runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/eval_logs/evallog_replay-er19-iw1-python___32643f4f.eval.log:458–595：安装、测试体断言、pytest总结与rc分开可见；仅单对照无重试挑绿",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/ledger.jsonl:1、runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/ledger.jsonl:1：stage_error=null、execution_failure_decision=null；N失败来自参考case",
+        "rh2/src/repoharness2/grading/manager.py:1197–1249与envpack/scoring.py:234–270：正常完整pytest rc1不自动令未引用失败变reward0；全局失败另判"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "22": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §2/§7：已有真实RH2派生grader证据；没有本题同条件来源runner独立对照",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/old_findings_delta.md 原件范围：H引用另一题stage1命令不用于本题；限定本题stage1路径未定位原件，不构造本题成绩"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "23": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/public/python__mypy-11236/user_prompt.txt:14–27、base/docs/source/literal_types.rst:93–142及types.py:809–833：公开目标/Final语义可调查，无需隐藏hints猜修复层",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §1/§3/§4：原例与新F2P同机制但形状不同；Final扩展合理性及精确got文案约束仍待合法替代验证",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/old_findings_delta.md 对H检查3/23：不把未列举每个反例或不见gold思路自动判要求不足",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/review.md"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "24": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/test.patch:57,59与runs/swegym_quality_batch02_20260921_v2/public/python__mypy-11236/base/mypy/checkexpr.py:2106–2114、messages.py:1682–1708：上下文方案可能形成真Literal诊断，存在具体文案约束风险",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §4：保留长度/完整Union/fallback的tuple局部比较可不改Instance显示；未证明只有gold能过",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/old_findings_delta.md 对H检查24：仅splice不自动改Final(2,)赋值；完整正确替代解及被拒现象均未执行，不认定已证误拒",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/review.md"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "25": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §4：具体未运行部分候选用zip逐项已知Literal比较却漏长度；可能通过现有同长度F2P而误接收原题Union下(1,999)",
+        "runs/swegym_quality_batch02_20260921_v2/public/python__mypy-11236/base/mypy/subtypes.py:350–355与test-data/unit/check-tuples.test:1207–1233：长度负例有既有语义依据",
+        "runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/test.patch:47–65：6错误能拦直接对所有Literal return True；推翻H的该满分假修复主张",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/old_findings_delta.md：未写候选、未评分，coverage gap及静态假设不等于已发生false positive",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/review.md"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "26": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §5：实际静态读check-literal直接return/tuple context/Final/collection，check-tuples长度/星号及函数实参调用者",
+        "runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/grading.json：P2P=[]，F2P内部有6反例而非零保护",
+        "runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/test.patch:4–17：修改旧case未执行；旧known-broken错误期待已官方替换，不能把维持旧误报当合理回归",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §5：未运行上述回归或穷举泛型/重载/protocol/enum/增量路径"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "27": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/gold.patch:8–9、runs/swegym_quality_batch02_20260921_v2/public/python__mypy-11236/base/mypy/subtypes.py:204–209/397–401与types.py:1628–1630：两行复用原选项及fallback+value比较，静态支持目标",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/eval_logs/evallog_replay-er19-iw1-python___74f1c394.eval.log:560–579：当前派生grader冻结F2P已通过；没有原题CLI/flags或修改旧case/更广回归运行",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl:201:unsafe担忧有条件，不是具体gold反例；base/checker.py:2227–2231、erasetype.py:134–151已读普通值擦除边界但未全调用图证明"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "28": {
+      "status": "not_applicable",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §4/§8与docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/old_findings_delta.md：本轮未增加断言、改题面/oracle/expected；建议的(2,)/(1,999)源于公开Literal/tuple语义，未加入奖励；无已实施审查者规则待验",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/review.md"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "29": {
+      "status": "unknown",
+      "evidence_refs": [
+        "rh2/src/repoharness2/adapters/slime/prepared_task_face.py:342–356与runs/swegym_quality_batch02_20260921_v2/public/python__mypy-11236/base_identity.json：静态公开分层及无导出Git；不是actor全可见面审计",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl:201:14157字符hints含详细路线，仅主审在封存后看到；docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/old_findings_delta.md披露；没有证据证明实际solver已读，也没有实际actor排漏",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §7：public image预装包、Git对象/缓存/mount及工具可见性未验证"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "30": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §7：本轮未联网或访问hints中的issue/PR；也无真实actor工具/网络取答案实验或求解轨迹，不能从提示约束证明外部答案不可达"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "31": {
+      "status": "unknown",
+      "evidence_refs": [
+        "rh2/src/repoharness2/grading/manager.py:243–261/594：精确恢复及保留命名空间；test_globs=()不保护全部helper/config",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/ledger.jsonl:1、runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/ledger.jsonl:1：runner前后digest一致仅正常候选事实",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §7：未运行删除测试/伪造输出/helper绕过候选，不按假设新增exclusions或宣称无漏洞"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "32": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/public/python__mypy-11236/base/mypy/test/testcheck.py:194–224：调用真实build.build并比较完整诊断，不检查gold文本/helper名或文件存在",
+        "runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/test.patch:31–65：4个合法返回位置、1note、6错误保护具体值/类型/分支关联；reveal_type(f())是声明类型观察，不单独证明未标注函数推断",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §3/§4：精确格式及长度漏测另列未知，pass仅说明实际verifier属性与公开机制相关"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "33": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §8：没有真实Claude Code/模型工具闭环或盲解；脚本应用gold不能替代真实开发工作流"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "34": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §8：无真实求解失败轨迹；noop是对照候选，不是模型能力失败样本"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "35": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §8：无真实模型成功候选；gold运行是特权参考对照，不称独立诚实解题成功"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "36": {
+      "status": "not_checked",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §8：未观察目标基座、训练收益、成功率、token或有效奖励成本；不因单case/短gold认定难度"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "37": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/image.json、build.log及runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/eval_logs/evallog_replay-er19-iw1-python___74f1c394.eval.log:272–294/runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/eval_logs/evallog_replay-er19-iw1-python___32643f4f.eval.log:271–280：已存在离线build资产和共同stub pin属当前引用条件",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §2/§6与docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/old_findings_delta.md：本轮没有题面/test/gold/reward或环境修改；test.patch是原任务材料；revision_refs=[]，不把环境摘要标签当任务修订"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "38": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/run_refs.json、runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/image.json与本题冻结工件提供重建线索；单对照不是独立复验",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md封存SHA256=2569d428660d3d94807b468a66f62d52733cabed9cc7b8ac71b6690efd8cc310；本阶段未回写；尚未读取独立reviewer或实际复验结果",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/review.md",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/review.md: all three independent initials sealed before main/history conclusions; independent static review complete, no new runtime or actor reproduction"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "39": {
+      "status": "not_applicable",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §8与docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/old_findings_delta.md：本轮仅写本题审查文件，没有共享代码/配方/镜像/测试/评分修改；不声称既存共享安装配方全部任务已回归"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    },
+    "40": {
+      "status": "unknown",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md与docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/old_findings_delta.md：先封存无历史分析后开放H，纠正旧零保护/唯一实现/不安全定性并保留具体待验反例；没有因coverage gap直接淘汰",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/old_findings_delta.md：独立reviewer未读，未做跨池抽样或误排率统计；不能由该题推全池有效率"
+      ],
+      "by": "b2_investigate_mypy; b2_review_mypy independent review; /root static consolidation; no new runtime"
+    }
+  },
+  "issues": [
+    {
+      "category": "actor_development_unverified",
+      "scope": "formal public image / UID54321",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §6",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/ledger.jsonl:1",
+        "rh2/src/repoharness2/adapters/slime/prepared_task_face.py:342–356"
+      ],
+      "proposed_action": "Verify formal public-image actor identity, actual messages, interpreter/algorithm-module imports, dependencies, write permissions and answer visibility before solver development. This is separate from a fixed-grader semantic CPU check and does not block that narrower diagnostic.",
+      "status": "unknown"
+    },
+    {
+      "category": "original_repro_and_regression_execution_gap",
+      "scope": "公开单元素Union原例/flags、修改旧case及相关回归",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §1/§3/§5",
+        "runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/test.patch:4–17",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/eval_logs/evallog_replay-er19-iw1-python___74f1c394.eval.log:560–579",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/eval_logs/evallog_replay-er19-iw1-python___32643f4f.eval.log:546–595"
+      ],
+      "proposed_action": "First fixed-grader base/gold public single-element Union example with (2,) and (1,999) rejection controls. Select modified old Final case or complete alternative later if findings justify it; do not silently expand frozen references.",
+      "status": "observed_scope_limit"
+    },
+    {
+      "category": "alternative_diagnostic_contract",
+      "scope": "未运行的正确上下文替代路线与精确got文本",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §4",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/old_findings_delta.md H检查24对照",
+        "runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/test.patch:57,59",
+        "runs/swegym_quality_batch02_20260921_v2/public/python__mypy-11236/base/mypy/checkexpr.py:2106–2114",
+        "runs/swegym_quality_batch02_20260921_v2/public/python__mypy-11236/base/mypy/messages.py:1682–1708"
+      ],
+      "proposed_action": "在后续授权实验构造保留完整Union关联、Final和既有边界的替代解，先证功能正确再观察冻结F2P。当前不能称唯一实现或既成false negative，也不放宽oracle。",
+      "status": "unknown"
+    },
+    {
+      "category": "partial_tuple_arity_hypothesis",
+      "scope": "未实现、未评分的zip-only局部subtype部分候选",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §4",
+        "runs/swegym_quality_batch02_20260921_v2/public/python__mypy-11236/base/mypy/subtypes.py:350–355",
+        "runs/swegym_quality_batch02_20260921_v2/public/python__mypy-11236/base/test-data/unit/check-tuples.test:1207–1233",
+        "runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/test.patch:31–65"
+      ],
+      "proposed_action": "后续并行记录该具体候选的原冻结分数与原题Union下(1,999)的独立拒绝行为。静态预计不等于错误实现满分事实；现有6反例已反驳无条件接受Literal的旧假修复。",
+      "status": "unknown"
+    },
+    {
+      "category": "answer_exposure_boundary",
+      "scope": "raw hints / actual actor filesystem and tools",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl:201",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/old_findings_delta.md 原件与暴露范围",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §7"
+      ],
+      "proposed_action": "后续实际actor核对渲染与可见面，确认14157字符raw hints及特权gold/test/报告未被暴露；本轮只确认主审在封存后读过，不认定solver泄漏或全环境无泄漏。",
+      "status": "unknown"
+    },
+    {
+      "category": "control_plane_and_repeatability_unprobed",
+      "scope": "test helpers/config、重置/并发及同状态复测",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md §6/§7",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/ledger.jsonl:1",
+        "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/ledger.jsonl:1",
+        "rh2/src/repoharness2/grading/manager.py:243–261/594"
+      ],
+      "proposed_action": "交统一机制/执行负责人按具体风险安排正反候选及必要fresh复测；正常gold/noop的runner digest相同不证明任意控制面安全。无证据不新增路径排除。",
+      "status": "unknown"
+    },
+    {
+      "category": "diagnostic_and_actor_gate_separation",
+      "scope": "Post-review sequencing correction, not a new task or environment change",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/review.md"
+      ],
+      "proposed_action": "The priority semantic experiment can run under its own fixed grader condition. Formal actor qualification is required before model development; neither result substitutes for the other. Optional candidate hypotheses are not additional mandatory admission gates.",
+      "status": "independent_review_consolidated"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "官方patch仅触check-literal.test这一测试数据文件；gold及合理替代源码路径不与之重叠。当前test_globs=()，不把所有测试/fixtures/helper默认为恢复或排除。没有支持新增路径规则的正反实验证据。",
+    "evidence_refs": [
+      "runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/test.patch",
+      "runs/swegym_quality_batch02_20260921_v2/private/python__mypy-11236/gold.patch",
+      "rh2/src/repoharness2/adapters/slime/prepared_task_face.py:312–338",
+      "rh2/src/repoharness2/grading/manager.py:243–261",
+      "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/eval_logs/evallog_replay-er19-iw1-python___74f1c394.eval.log:295–302",
+      "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/eval_logs/evallog_replay-er19-iw1-python___32643f4f.eval.log:281–288"
+    ],
+    "applied_version": "current RH2 inspected in authoritative ROOT; no additional rule changes"
+  },
+  "revision_refs": [],
+  "disposition": {
+    "state": "needs_review",
+    "scope": "static_review",
+    "reason": "Limited static diagnostic candidate after independent review. One frozen F2P includes four legal returns, one note and six negative assertions; actual target differential is supported. Modified old Final case was not executed. Exact-diagnostic alternative and tuple-arity partial hypotheses remain unexecuted; actual actor and broad regression safety are unknown.",
+    "evidence_refs": [
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/analysis_before_history.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/old_findings_delta.md",
+      "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/ledger.jsonl:1",
+      "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/ledger.jsonl:1",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/review.md",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_batch01_20260921/expansion/batch02/results/python__mypy-11236/reviewer_initial.md"
+    ],
+    "reviewer": "/root/b2_review_mypy; independent final review consolidated by /root"
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "exposure_notes": [
+      "特权主审已读本题gold/test/冻结参考、原运行及sealed public_read；不是盲解solver。",
+      "analysis_before_history.md先封存SHA256=2569d428660d3d94807b468a66f62d52733cabed9cc7b8ac71b6690efd8cc310；之后按明确门禁读取H、raw本题hints全文及environment_record。",
+      "旧dupidx命中本题的共享路径行同时出现另一ID；未跟进别题结论、reviewer或汇总，不用其它题结论当本题证据。",
+      "复用已读当前ROOT的RH2机制和方法；整包来源/blob/mode由协调层核验，未重复遍历。",
+      "无项目代码/测试/安装/网络/Docker/SSH/付费模型执行，无源码/原测试/gold/reward/共享镜像改动；只做静态读、JSON/hash/文本元数据处理和指定报告写入。",
+      "所有建议执行与静态推断显式分开；报告与其答案信息不能提供给后续solver，也不授予正式训练/评测或能力成绩资格。",
+      "Fresh independent reviewer sealed all three initial drafts before conclusions. Final review and coordinator consolidation completed; shared-version source exposure is disclosed, not a duplicate-task or held-out-independence proof."
+    ]
+  },
+  "costs": {
+    "container_wall_seconds": null,
+    "agent_tokens": null,
+    "human_decisions": null,
+    "source_refs": [
+      "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/ledger.jsonl:1 and runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/noop/ledger.jsonl:1 contain historical phase durations only; not current audit costs",
+      "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_mypy_1/records/python__mypy-11236.json:旧minutes=38为自述，不用作本轮工具观测或模型成本",
+      "本轮无可归属的token/费用/人类决策计数；unknown=null"
+    ]
+  }
+}

@@ -1,0 +1,149 @@
+{
+  "status": "pass",
+  "scope": "local_material_checks_and_isolated_url_assertions",
+  "python_version": "3.12.13",
+  "edit_count": 4,
+  "parent_tree_sha256": "sha256:8af0fcf7d682f26fce9ea48ebd2290cbdaaff67f479610c9d2ee90e00a2f990e",
+  "draft_tree_sha256": "sha256:7c0a5adcca94e3747a8ff2b0bbab7ea94eba162526e036d5e6a1ddf7460c5e6c",
+  "expected_key_count": 17,
+  "test_function_names_unchanged": true,
+  "existing_helper_call_count": 30,
+  "candidate_assertion_checks": [
+    {
+      "candidate": "noop",
+      "modified_assertions": "reject",
+      "failures": [
+        {
+          "check": "weired_url:/",
+          "error": "'file:implicit' != 'ssh:implicit'"
+        },
+        {
+          "check": "my_host:path/sp1",
+          "error": "'file:implicit' != 'ssh:implicit'"
+        },
+        {
+          "check": "data_server.example.org:/srv/ds",
+          "error": "'file:implicit' != 'ssh:implicit'"
+        },
+        {
+          "check": "is_url:weired_url:/",
+          "error": "False is not true"
+        },
+        {
+          "check": "is_url:my_host:path/sp1",
+          "error": "False is not true"
+        }
+      ],
+      "existing_helper_calls": "not_checked_for_negative_candidate",
+      "formal_reward": null
+    },
+    {
+      "candidate": "gold",
+      "modified_assertions": "pass",
+      "failures": [],
+      "existing_helper_calls": "pass",
+      "formal_reward": null
+    },
+    {
+      "candidate": "C-A",
+      "modified_assertions": "pass",
+      "failures": [],
+      "existing_helper_calls": "pass",
+      "formal_reward": null
+    },
+    {
+      "candidate": "C-B",
+      "modified_assertions": "reject",
+      "failures": [
+        {
+          "check": "fields_reconstruction",
+          "error": "'example.com:path/sp1/fname' != 'example.com/path/sp1:fname'"
+        }
+      ],
+      "existing_helper_calls": "not_checked_for_negative_candidate",
+      "formal_reward": null
+    },
+    {
+      "candidate": "D-eq",
+      "modified_assertions": "reject",
+      "failures": [
+        {
+          "check": "weired_url:/",
+          "error": "'file:implicit' != 'ssh:implicit'"
+        },
+        {
+          "check": "my_host:path/sp1",
+          "error": "'file:implicit' != 'ssh:implicit'"
+        },
+        {
+          "check": "data_server.example.org:/srv/ds",
+          "error": "'file:implicit' != 'ssh:implicit'"
+        },
+        {
+          "check": "is_url:weired_url:/",
+          "error": "False is not true"
+        },
+        {
+          "check": "is_url:my_host:path/sp1",
+          "error": "False is not true"
+        }
+      ],
+      "existing_helper_calls": "not_checked_for_negative_candidate",
+      "formal_reward": null
+    },
+    {
+      "candidate": "D-eq-minus",
+      "modified_assertions": "reject",
+      "failures": [
+        {
+          "check": "weired_url:/",
+          "error": "'file:implicit' != 'ssh:implicit'"
+        },
+        {
+          "check": "my_host:path/sp1",
+          "error": "'file:implicit' != 'ssh:implicit'"
+        },
+        {
+          "check": "data_server.example.org:/srv/ds",
+          "error": "'file:implicit' != 'ssh:implicit'"
+        },
+        {
+          "check": "is_url:weired_url:/",
+          "error": "False is not true"
+        },
+        {
+          "check": "is_url:my_host:path/sp1",
+          "error": "False is not true"
+        }
+      ],
+      "existing_helper_calls": "not_checked_for_negative_candidate",
+      "formal_reward": null
+    },
+    {
+      "candidate": "D-hard",
+      "modified_assertions": "reject",
+      "failures": [
+        {
+          "check": "my_host:path/sp1",
+          "error": "'file:implicit' != 'ssh:implicit'"
+        },
+        {
+          "check": "data_server.example.org:/srv/ds",
+          "error": "'file:implicit' != 'ssh:implicit'"
+        },
+        {
+          "check": "is_url:my_host:path/sp1",
+          "error": "False is not true"
+        }
+      ],
+      "existing_helper_calls": "not_checked_for_negative_candidate",
+      "formal_reward": null
+    }
+  ],
+  "limitations": [
+    "本机标准库与原环境 Python 3.7.9 不同。",
+    "未导入完整 DataLad、nose 或 pytest；只抽取原 URL 代码和修改处断言。",
+    "未运行容器、真实身份、冻结运输、解析器或 17 键正式评分；不是 CPU 验收。",
+    "正式修订编号、发布路径及镜像仍待落实。"
+  ]
+}

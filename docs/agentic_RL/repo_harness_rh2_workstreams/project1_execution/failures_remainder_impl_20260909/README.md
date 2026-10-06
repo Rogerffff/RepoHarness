@@ -1,6 +1,6 @@
 # 第 2 组剩余实施 Brief：丢组成本观测（I15/I20）、窄重评分（I16）、退出改判（I13）
 
-日期：2026-09-09。作者：Claude（A 线）。状态：**v2.3——N1–N4 已实施提交（§9）；Codex 集成审查 R1–R7 已修复（§11）；[针对性复核](combined_review_20260910/followup1/README.md)（2026-09-10）R1/R3/R4/R5/R7 通过，R2 余项（P1）与 R6 余项（P2）已接受并修复提交（§12），待 Codex 只核对 R2 余项及直接回归。** 计划正文（§0–§8）保持 v2（按 Codex [计划审查](review_20260909/README.md) R1–R4 与 §5/§6 修正后）。 前置：预算终止闭环已由[第四次窄复核](../budget_loop_impl_20260909/combined_review_20260909/followup4/README.md)关闭（合同 A、F1 通过），本批不重开。
+日期：2026-09-09。作者：Claude（A 线）。状态：**v2.3——N1–N4 已实施提交（§9）；Codex 于 2026-09-10 对 HEAD `f7521d94` 完成[最终窄复核](combined_review_20260910/followup2/README.md)：R2 余项（P1）与 R6 余项（P2）关闭，结合此前 R1/R3/R4/R5/R7 通过，本批实施审查收口，可进入下一切片。** 修复经过见 §11–§12；计划正文（§0–§8）保持 v2（按 Codex [计划审查](review_20260909/README.md) R1–R4 与 §5/§6 修正后）。前置：预算终止闭环已由[第四次窄复核](../budget_loop_impl_20260909/combined_review_20260909/followup4/README.md)关闭（合同 A、F1 通过），本批不重开。
 
 所用决定与链接：[决策分组 §4.1](../decision_batches_20260908.md)（I13 的 fork 文件、I15/I20、I16、I17/I20 纯观测均在已批实施位置表内）、[第 2 组决策](../batch2_failures_20260908/README.md)（I13 §3、I15 §4、I16 §5）、[I15/I16 补充说明 §8](../batch2_failures_20260908/i15_i16_sampling_and_retry_20260909.md)。I05/I12 已随预算闭环落地。第三组（I17–I20）owner 尚未决策：本批只做 §4.1 已批的纯观测部分，不碰 loss / 准入 / 路由来源。
 
@@ -194,4 +194,3 @@ R1：每个可能创建的名字都收口或明确 fatal；R2：到期停止全�
 ### 12.2 证据（作者本机，不是 Codex 批准）
 
 ruff 全过；全量 `pytest tests -q`（集成树）**2252 passed, 0 skipped, 0 failed（158s；上一轮 2245 + 7 个新反例）**；lanes 清净环境实跑 lane A **407 passed / 316 skipped**、lane B **723 passed / 0 skipped**（计数 `6d8f7f69`）。没有真实 Docker / SWE 镜像 / CC / API / GPU。请 Codex 按其 §5 停止条件只核对 R2 余项与直接回归；R6 余项已一并修复，若认可即可关闭。
-

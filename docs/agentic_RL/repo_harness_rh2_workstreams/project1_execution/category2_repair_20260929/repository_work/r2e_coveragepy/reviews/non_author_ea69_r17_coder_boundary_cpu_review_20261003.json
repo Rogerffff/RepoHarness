@@ -1,0 +1,2478 @@
+{
+  "schema": "coveragepy.non_author_r17_coder_boundary_cpu_review.v1",
+  "date": "2026-10-03",
+  "reviewer": "已有本题上下文的非材料作者核查者；不是fresh public reader",
+  "status": "raw_evidence_passed_public_generated_css_failure_confirmed_and_minimal_criterion_draft_passed_narrow_validation",
+  "scope": "新CPU边界闭批和新增单方法CPU草稿验证；复用既有R17原件审查，不重审旧506件",
+  "actions_taken": "仅本地读取、SHA/bytes、归档内存读取与结果一致性重算；未启动CPU/GPU、SSH、Docker、项目测试、模型或重评分；只写指定两份新报告",
+  "boundary_job": {
+    "package": "r2e_coveragepy",
+    "job": "covea69-r17-coder-boundary-cpua-20261003-01",
+    "mode": "run",
+    "slot": 0,
+    "command": [
+      "timeout",
+      "420",
+      "/work/rh2-category2-20261003/runtime_cpu_v2/rh2/.venv/bin/python",
+      "/work/rh2-category2-20261003/packages/r2e_coveragepy/inputs/covea69-r17-coder-boundary-cpua-20261003-01/remote_job.py"
+    ],
+    "cwd": "/root",
+    "started_at_utc": "2026-10-03T13:50:57Z",
+    "supervisor_pid": 1107531,
+    "status": "finished",
+    "child_pid": 1107532,
+    "returncode": 0,
+    "finished_at_utc": "2026-10-03T13:51:09Z"
+  },
+  "criterion_job": {
+    "package": "r2e_coveragepy",
+    "job": "covea69-r17-coder-criterion-cpua-20261003-01",
+    "mode": "run",
+    "slot": 0,
+    "command": [
+      "timeout",
+      "420",
+      "/work/rh2-category2-20261003/runtime_cpu_v2/rh2/.venv/bin/python",
+      "/work/rh2-category2-20261003/packages/r2e_coveragepy/inputs/covea69-r17-coder-criterion-cpua-20261003-01/remote_job.py"
+    ],
+    "cwd": "/root",
+    "started_at_utc": "2026-10-03T14:00:45Z",
+    "supervisor_pid": 1108980,
+    "status": "finished",
+    "child_pid": 1108981,
+    "returncode": 0,
+    "finished_at_utc": "2026-10-03T14:00:59Z"
+  },
+  "evidence_integrity": {
+    "boundary_archive_files": 21,
+    "boundary_archive_bytes": 4667553,
+    "boundary_archive_SHA_bytes_all_match": true,
+    "criterion_archive_files": 27,
+    "criterion_archive_bytes": 4372188,
+    "criterion_archive_SHA_bytes_all_match": true,
+    "boundary_output_tar_matches_four_results": true,
+    "criterion_output_tar_matches_eight_results": true,
+    "baseline_tar_and_manifest_and_FP_exactly_match_original_GPU": true,
+    "baseline360_archive_contents_and_git_modes_independently_rechecked": true,
+    "runtime_each_arm_baseline_verified_paths": 360,
+    "original_FP_file_sha256": "85c2211228edd88e9012924fc118c7e3cc1e814859a6b3ac2cda26d86367e388",
+    "original_FP_canonical": "sha256:591da512f8615d902fda2f8337bd0d56c9ae4bcc1c19abd6d82d01120d5fa877",
+    "candidate_html_sha256": "631eb6014e4b3a3f2a2c88d105acfc3597a0cce4c5778436ec1051c1bd9035fb",
+    "baseline_canonical": "sha256:7d9fea8c8926ccc665aa1d9f71cf316338ed712d0277d46efdaf75c2a285385e",
+    "candidate_unmodified": true,
+    "POSIX_mode_limit": "归档install.sh/run_tests.sh0664与Git100644按可执行位契约一致，不假称逐位0644。"
+  },
+  "runner_review": {
+    "fresh_process_per_arm": true,
+    "fresh_repository_per_fixture": true,
+    "real_git": "subprocess git，明确cwd；系统/全局excludes隔离，check-ignore --no-index -v只作解释，-q返回0作为ignored真值，接受返回0/1且其它错误断言失败；git status --porcelain --untracked-files=all独立佐证。",
+    "negation_verbose_not_confused_with_ignore": true,
+    "argument_safety": "均参数数组且--隔开路径，含!/#/[文件名不经shell解释。",
+    "sample": "真实sample.py由compile(source, actual_path, exec)在timid=True的Coverage下收集；每次coverage_percent100，有实际index/status/静态/页面/配置CSS。",
+    "generated_census": "只核当次输出顶层文件，排除.gitignore与预置用户custom.tmp；notes/style.css是用户子目录观察，不算报告产物。本批报告生成产物都在顶层。",
+    "outcome_not_forced_pass": "结果是诊断记录，runner0只说明观察完整；不会断言所有fixture通过，因此不得把job0当候选通过。",
+    "result_internal_consistency": "逐stage核b64/text/SHA、generated列表与git_generated键、quiet exit与ignored、未ignored路径实际出现在gitstatus、per-round与case聚合相符。"
+  },
+  "environment": {
+    "host": "CPU-A，按题主正式资源入口保存的slot0 finished回执",
+    "actual_container": {
+      "id": "ce31b311686f38a1aed120cfe45776af2e2f043400f588e9dabfa72343ea0e6a",
+      "image": "sha256:9877b37b29ed7b187c7382fe8f2eb9b6f99d08d2129fc66134289d28943d71ec",
+      "host_config": {
+        "NanoCpus": 2000000000,
+        "Memory": 4294967296,
+        "PidsLimit": 512,
+        "NetworkMode": "none",
+        "Binds": null
+      },
+      "mounts": [],
+      "labels": {
+        "org.opencontainers.image.ref.name": "ubuntu",
+        "org.opencontainers.image.version": "22.04",
+        "rh2.category2.job": "covea69-r17-coder-boundary-cpua-20261003-01",
+        "rh2.category2.package": "r2e_coveragepy"
+      }
+    },
+    "criterion_container": {
+      "id": "a3b3f3faf197f5381788ccf0a84eab8d7cfda9cdff13603ed9f6b5b5baa2f81f",
+      "image": "sha256:9877b37b29ed7b187c7382fe8f2eb9b6f99d08d2129fc66134289d28943d71ec",
+      "host_config": {
+        "NanoCpus": 2000000000,
+        "Memory": 4294967296,
+        "PidsLimit": 512,
+        "NetworkMode": "none",
+        "Binds": null
+      },
+      "mounts": [],
+      "labels": {
+        "org.opencontainers.image.ref.name": "ubuntu",
+        "org.opencontainers.image.version": "22.04",
+        "rh2.category2.job": "covea69-r17-coder-criterion-cpua-20261003-01",
+        "rh2.category2.package": "r2e_coveragepy"
+      }
+    },
+    "probe_uid": 54321,
+    "probe_gid": 54321,
+    "root_controller_not_solver": "root仅建容器/复制/采集，实际探针与Git为UID54321",
+    "interpreter": "/testbed/.venv/bin/python",
+    "python": "3.7.9",
+    "coverage": "6.1a0",
+    "git": "2.34.1",
+    "source_modules": "/diag/arms/<arm>/coverage，分别来自GPU360文件原基线及原FP/已验safe_append；每臂单独进程避免import缓存串臂。",
+    "cpu_image": "sha256:9877b37b29ed7b187c7382fe8f2eb9b6f99d08d2129fc66134289d28943d71ec",
+    "gpu_original_image": "sha256:e23fbbed8b6f809347e38ee9684699314fda0e14a948a06b9d368e29c8db38d2",
+    "recipe": "sha256:85b488e5c8a0078f952842c9f5a12f7f949b51029c3f3c80f3f0fec4b14cbb0b",
+    "cpus": 2,
+    "memory_bytes": 4294967296,
+    "pids_limit": 512,
+    "network": "none",
+    "mounts": [],
+    "scope_limits": "这是源码/Git边界诊断，不是完整普通actor sandbox、正式评分或新模型求解。CPU与GPU镜像ID和Git版本不同，按既有source/recipe/固定环境适用证据复用，未称字节同一镜像或新GPU验证。"
+  },
+  "results": {
+    "baseline": {
+      "fixture_count": 3,
+      "generation_count": 6,
+      "passed_generated_ignored_fixtures": 0,
+      "coverage_module": "/diag/arms/baseline/coverage/__init__.py",
+      "html_module_sha256": "c1e9dd130184d6fc97140c6e7a2b49df12f826bcf86e92ced29c29e5fa0f9bc9",
+      "uid": 54321,
+      "cases": [
+        {
+          "case": "normal",
+          "extra_css": null,
+          "before_user_git": {
+            "htmlcov/custom.tmp": {
+              "ignored": true,
+              "exit": 0,
+              "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+            },
+            "htmlcov/notes/style.css": {
+              "ignored": false,
+              "exit": 1,
+              "verbose": ""
+            }
+          },
+          "all_generated_ignored_every_round": false,
+          "stages": [
+            {
+              "round": 1,
+              "generated_count": 8,
+              "all_generated_ignored": false,
+              "failures": {
+                "htmlcov/coverage_html.js": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/favicon_32.png": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/index.html": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/keybd_closed.png": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/keybd_open.png": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/sample_py.html": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/status.json": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/style.css": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                }
+              },
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? htmlcov/.gitignore\n?? htmlcov/coverage_html.js\n?? htmlcov/favicon_32.png\n?? htmlcov/index.html\n?? htmlcov/keybd_closed.png\n?? htmlcov/keybd_open.png\n?? htmlcov/notes/style.css\n?? htmlcov/sample_py.html\n?? htmlcov/status.json\n?? htmlcov/style.css\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 0,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            },
+            {
+              "round": 2,
+              "generated_count": 8,
+              "all_generated_ignored": false,
+              "failures": {
+                "htmlcov/coverage_html.js": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/favicon_32.png": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/index.html": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/keybd_closed.png": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/keybd_open.png": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/sample_py.html": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/status.json": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/style.css": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                }
+              },
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? htmlcov/.gitignore\n?? htmlcov/coverage_html.js\n?? htmlcov/favicon_32.png\n?? htmlcov/index.html\n?? htmlcov/keybd_closed.png\n?? htmlcov/keybd_open.png\n?? htmlcov/notes/style.css\n?? htmlcov/sample_py.html\n?? htmlcov/status.json\n?? htmlcov/style.css\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 0,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            }
+          ]
+        },
+        {
+          "case": "existing_static_order",
+          "extra_css": null,
+          "before_user_git": {
+            "htmlcov/custom.tmp": {
+              "ignored": true,
+              "exit": 0,
+              "verbose": "htmlcov/.gitignore:4:custom.tmp\thtmlcov/custom.tmp\n"
+            },
+            "htmlcov/notes/style.css": {
+              "ignored": false,
+              "exit": 1,
+              "verbose": "htmlcov/.gitignore:3:!notes/style.css\thtmlcov/notes/style.css\n"
+            }
+          },
+          "all_generated_ignored_every_round": false,
+          "stages": [
+            {
+              "round": 1,
+              "generated_count": 8,
+              "all_generated_ignored": false,
+              "failures": {
+                "htmlcov/coverage_html.js": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/favicon_32.png": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/index.html": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/keybd_closed.png": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/keybd_open.png": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/sample_py.html": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/status.json": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                }
+              },
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? htmlcov/.gitignore\n?? htmlcov/coverage_html.js\n?? htmlcov/favicon_32.png\n?? htmlcov/index.html\n?? htmlcov/keybd_closed.png\n?? htmlcov/keybd_open.png\n?? htmlcov/notes/style.css\n?? htmlcov/sample_py.html\n?? htmlcov/status.json\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 0,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:4:custom.tmp\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": "htmlcov/.gitignore:3:!notes/style.css\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            },
+            {
+              "round": 2,
+              "generated_count": 8,
+              "all_generated_ignored": false,
+              "failures": {
+                "htmlcov/coverage_html.js": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/favicon_32.png": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/index.html": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/keybd_closed.png": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/keybd_open.png": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/sample_py.html": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/status.json": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                }
+              },
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? htmlcov/.gitignore\n?? htmlcov/coverage_html.js\n?? htmlcov/favicon_32.png\n?? htmlcov/index.html\n?? htmlcov/keybd_closed.png\n?? htmlcov/keybd_open.png\n?? htmlcov/notes/style.css\n?? htmlcov/sample_py.html\n?? htmlcov/status.json\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 0,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:4:custom.tmp\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": "htmlcov/.gitignore:3:!notes/style.css\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            }
+          ]
+        },
+        {
+          "case": "extra_css_normal",
+          "extra_css": "extra.css",
+          "before_user_git": {
+            "htmlcov/custom.tmp": {
+              "ignored": true,
+              "exit": 0,
+              "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+            },
+            "htmlcov/notes/style.css": {
+              "ignored": false,
+              "exit": 1,
+              "verbose": ""
+            }
+          },
+          "all_generated_ignored_every_round": false,
+          "stages": [
+            {
+              "round": 1,
+              "generated_count": 9,
+              "all_generated_ignored": false,
+              "failures": {
+                "htmlcov/coverage_html.js": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/extra.css": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/favicon_32.png": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/index.html": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/keybd_closed.png": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/keybd_open.png": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/sample_py.html": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/status.json": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/style.css": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                }
+              },
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? extra.css\n?? htmlcov/.gitignore\n?? htmlcov/coverage_html.js\n?? htmlcov/extra.css\n?? htmlcov/favicon_32.png\n?? htmlcov/index.html\n?? htmlcov/keybd_closed.png\n?? htmlcov/keybd_open.png\n?? htmlcov/notes/style.css\n?? htmlcov/sample_py.html\n?? htmlcov/status.json\n?? htmlcov/style.css\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 0,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            },
+            {
+              "round": 2,
+              "generated_count": 9,
+              "all_generated_ignored": false,
+              "failures": {
+                "htmlcov/coverage_html.js": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/extra.css": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/favicon_32.png": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/index.html": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/keybd_closed.png": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/keybd_open.png": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/sample_py.html": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/status.json": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                },
+                "htmlcov/style.css": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                }
+              },
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? extra.css\n?? htmlcov/.gitignore\n?? htmlcov/coverage_html.js\n?? htmlcov/extra.css\n?? htmlcov/favicon_32.png\n?? htmlcov/index.html\n?? htmlcov/keybd_closed.png\n?? htmlcov/keybd_open.png\n?? htmlcov/notes/style.css\n?? htmlcov/sample_py.html\n?? htmlcov/status.json\n?? htmlcov/style.css\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 0,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "safe_append": {
+      "fixture_count": 9,
+      "generation_count": 19,
+      "passed_generated_ignored_fixtures": 9,
+      "coverage_module": "/diag/arms/safe_append/coverage/__init__.py",
+      "html_module_sha256": "fc692f80ab396a633088aea9d7c758f73ec113cc3a32848dab89ae070cf60345",
+      "uid": 54321,
+      "cases": [
+        {
+          "case": "normal",
+          "extra_css": null,
+          "before_user_git": {
+            "htmlcov/custom.tmp": {
+              "ignored": true,
+              "exit": 0,
+              "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+            },
+            "htmlcov/notes/style.css": {
+              "ignored": false,
+              "exit": 1,
+              "verbose": ""
+            }
+          },
+          "all_generated_ignored_every_round": true,
+          "stages": [
+            {
+              "round": 1,
+              "generated_count": 8,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 0,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:5:*\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:5:*\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            },
+            {
+              "round": 2,
+              "generated_count": 8,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 0,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:8:*\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:8:*\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            }
+          ]
+        },
+        {
+          "case": "blank_crlf",
+          "extra_css": null,
+          "before_user_git": {
+            "htmlcov/custom.tmp": {
+              "ignored": true,
+              "exit": 0,
+              "verbose": "htmlcov/.gitignore:3:custom.tmp\thtmlcov/custom.tmp\n"
+            },
+            "htmlcov/notes/style.css": {
+              "ignored": false,
+              "exit": 1,
+              "verbose": ""
+            }
+          },
+          "all_generated_ignored_every_round": true,
+          "stages": [
+            {
+              "round": 1,
+              "generated_count": 8,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 0,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:6:*\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:6:*\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            },
+            {
+              "round": 2,
+              "generated_count": 8,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 0,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:9:*\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:9:*\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            }
+          ]
+        },
+        {
+          "case": "existing_static_order",
+          "extra_css": null,
+          "before_user_git": {
+            "htmlcov/custom.tmp": {
+              "ignored": true,
+              "exit": 0,
+              "verbose": "htmlcov/.gitignore:4:custom.tmp\thtmlcov/custom.tmp\n"
+            },
+            "htmlcov/notes/style.css": {
+              "ignored": false,
+              "exit": 1,
+              "verbose": "htmlcov/.gitignore:3:!notes/style.css\thtmlcov/notes/style.css\n"
+            }
+          },
+          "all_generated_ignored_every_round": true,
+          "stages": [
+            {
+              "round": 1,
+              "generated_count": 8,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 0,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:7:*\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:7:*\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            },
+            {
+              "round": 2,
+              "generated_count": 8,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 0,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:10:*\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:10:*\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            }
+          ]
+        },
+        {
+          "case": "no_final_newline",
+          "extra_css": null,
+          "before_user_git": {
+            "htmlcov/custom.tmp": {
+              "ignored": true,
+              "exit": 0,
+              "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+            },
+            "htmlcov/notes/style.css": {
+              "ignored": false,
+              "exit": 1,
+              "verbose": ""
+            }
+          },
+          "all_generated_ignored_every_round": true,
+          "stages": [
+            {
+              "round": 1,
+              "generated_count": 8,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 0,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:4:*\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:4:*\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            },
+            {
+              "round": 2,
+              "generated_count": 8,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 0,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:7:*\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:7:*\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            }
+          ]
+        },
+        {
+          "case": "repeat_three",
+          "extra_css": null,
+          "before_user_git": {
+            "htmlcov/custom.tmp": {
+              "ignored": true,
+              "exit": 0,
+              "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+            },
+            "htmlcov/notes/style.css": {
+              "ignored": false,
+              "exit": 1,
+              "verbose": ""
+            }
+          },
+          "all_generated_ignored_every_round": true,
+          "stages": [
+            {
+              "round": 1,
+              "generated_count": 8,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 0,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:5:*\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:5:*\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            },
+            {
+              "round": 2,
+              "generated_count": 8,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 0,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:8:*\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:8:*\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            },
+            {
+              "round": 3,
+              "generated_count": 8,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 0,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:11:*\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:11:*\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            }
+          ]
+        },
+        {
+          "case": "extra_css_normal",
+          "extra_css": "extra.css",
+          "before_user_git": {
+            "htmlcov/custom.tmp": {
+              "ignored": true,
+              "exit": 0,
+              "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+            },
+            "htmlcov/notes/style.css": {
+              "ignored": false,
+              "exit": 1,
+              "verbose": ""
+            }
+          },
+          "all_generated_ignored_every_round": true,
+          "stages": [
+            {
+              "round": 1,
+              "generated_count": 9,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? extra.css\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 0,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:5:*\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:5:*\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            },
+            {
+              "round": 2,
+              "generated_count": 9,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? extra.css\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 0,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:8:*\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:8:*\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            }
+          ]
+        },
+        {
+          "case": "extra_css_negation",
+          "extra_css": "!custom.css",
+          "before_user_git": {
+            "htmlcov/custom.tmp": {
+              "ignored": true,
+              "exit": 0,
+              "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+            },
+            "htmlcov/notes/style.css": {
+              "ignored": false,
+              "exit": 1,
+              "verbose": ""
+            }
+          },
+          "all_generated_ignored_every_round": true,
+          "stages": [
+            {
+              "round": 1,
+              "generated_count": 9,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? !custom.css\n?? .coverage\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 0,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:5:*\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:5:*\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            },
+            {
+              "round": 2,
+              "generated_count": 9,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? !custom.css\n?? .coverage\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 0,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:8:*\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:8:*\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            }
+          ]
+        },
+        {
+          "case": "extra_css_comment",
+          "extra_css": "#custom.css",
+          "before_user_git": {
+            "htmlcov/custom.tmp": {
+              "ignored": true,
+              "exit": 0,
+              "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+            },
+            "htmlcov/notes/style.css": {
+              "ignored": false,
+              "exit": 1,
+              "verbose": ""
+            }
+          },
+          "all_generated_ignored_every_round": true,
+          "stages": [
+            {
+              "round": 1,
+              "generated_count": 9,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? #custom.css\n?? .coverage\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 0,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:5:*\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:5:*\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            },
+            {
+              "round": 2,
+              "generated_count": 9,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? #custom.css\n?? .coverage\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 0,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:8:*\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:8:*\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            }
+          ]
+        },
+        {
+          "case": "extra_css_brackets",
+          "extra_css": "custom[ab].css",
+          "before_user_git": {
+            "htmlcov/custom.tmp": {
+              "ignored": true,
+              "exit": 0,
+              "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+            },
+            "htmlcov/notes/style.css": {
+              "ignored": false,
+              "exit": 1,
+              "verbose": ""
+            }
+          },
+          "all_generated_ignored_every_round": true,
+          "stages": [
+            {
+              "round": 1,
+              "generated_count": 9,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? custom[ab].css\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 0,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:5:*\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:5:*\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            },
+            {
+              "round": 2,
+              "generated_count": 9,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? custom[ab].css\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 0,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:8:*\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:8:*\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "original_coder": {
+      "fixture_count": 9,
+      "generation_count": 19,
+      "passed_generated_ignored_fixtures": 6,
+      "coverage_module": "/diag/arms/original_coder/coverage/__init__.py",
+      "html_module_sha256": "631eb6014e4b3a3f2a2c88d105acfc3597a0cce4c5778436ec1051c1bd9035fb",
+      "uid": 54321,
+      "cases": [
+        {
+          "case": "normal",
+          "extra_css": null,
+          "before_user_git": {
+            "htmlcov/custom.tmp": {
+              "ignored": true,
+              "exit": 0,
+              "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+            },
+            "htmlcov/notes/style.css": {
+              "ignored": false,
+              "exit": 1,
+              "verbose": ""
+            }
+          },
+          "all_generated_ignored_every_round": true,
+          "stages": [
+            {
+              "round": 1,
+              "generated_count": 8,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? htmlcov/.gitignore\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 1,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:9:style.css\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            },
+            {
+              "round": 2,
+              "generated_count": 8,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? htmlcov/.gitignore\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 2,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:10:style.css\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            }
+          ]
+        },
+        {
+          "case": "blank_crlf",
+          "extra_css": null,
+          "before_user_git": {
+            "htmlcov/custom.tmp": {
+              "ignored": true,
+              "exit": 0,
+              "verbose": "htmlcov/.gitignore:3:custom.tmp\thtmlcov/custom.tmp\n"
+            },
+            "htmlcov/notes/style.css": {
+              "ignored": false,
+              "exit": 1,
+              "verbose": ""
+            }
+          },
+          "all_generated_ignored_every_round": true,
+          "stages": [
+            {
+              "round": 1,
+              "generated_count": 8,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? htmlcov/.gitignore\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": false,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 1,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:9:style.css\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            },
+            {
+              "round": 2,
+              "generated_count": 8,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? htmlcov/.gitignore\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": false,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 2,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:10:style.css\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            }
+          ]
+        },
+        {
+          "case": "existing_static_order",
+          "extra_css": null,
+          "before_user_git": {
+            "htmlcov/custom.tmp": {
+              "ignored": true,
+              "exit": 0,
+              "verbose": "htmlcov/.gitignore:4:custom.tmp\thtmlcov/custom.tmp\n"
+            },
+            "htmlcov/notes/style.css": {
+              "ignored": false,
+              "exit": 1,
+              "verbose": "htmlcov/.gitignore:3:!notes/style.css\thtmlcov/notes/style.css\n"
+            }
+          },
+          "all_generated_ignored_every_round": true,
+          "stages": [
+            {
+              "round": 1,
+              "generated_count": 8,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? htmlcov/.gitignore\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": false,
+              "original_nonblank_lines_in_order_observation": false,
+              "html_pattern_count_observation": 1,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:3:custom.tmp\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:10:style.css\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            },
+            {
+              "round": 2,
+              "generated_count": 8,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? htmlcov/.gitignore\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": false,
+              "original_nonblank_lines_in_order_observation": false,
+              "html_pattern_count_observation": 2,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:3:custom.tmp\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:11:style.css\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            }
+          ]
+        },
+        {
+          "case": "no_final_newline",
+          "extra_css": null,
+          "before_user_git": {
+            "htmlcov/custom.tmp": {
+              "ignored": true,
+              "exit": 0,
+              "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+            },
+            "htmlcov/notes/style.css": {
+              "ignored": false,
+              "exit": 1,
+              "verbose": ""
+            }
+          },
+          "all_generated_ignored_every_round": true,
+          "stages": [
+            {
+              "round": 1,
+              "generated_count": 8,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? htmlcov/.gitignore\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 1,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:9:style.css\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            },
+            {
+              "round": 2,
+              "generated_count": 8,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? htmlcov/.gitignore\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 2,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:10:style.css\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            }
+          ]
+        },
+        {
+          "case": "repeat_three",
+          "extra_css": null,
+          "before_user_git": {
+            "htmlcov/custom.tmp": {
+              "ignored": true,
+              "exit": 0,
+              "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+            },
+            "htmlcov/notes/style.css": {
+              "ignored": false,
+              "exit": 1,
+              "verbose": ""
+            }
+          },
+          "all_generated_ignored_every_round": true,
+          "stages": [
+            {
+              "round": 1,
+              "generated_count": 8,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? htmlcov/.gitignore\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 1,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:9:style.css\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            },
+            {
+              "round": 2,
+              "generated_count": 8,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? htmlcov/.gitignore\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 2,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:10:style.css\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            },
+            {
+              "round": 3,
+              "generated_count": 8,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? htmlcov/.gitignore\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 3,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:11:style.css\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            }
+          ]
+        },
+        {
+          "case": "extra_css_normal",
+          "extra_css": "extra.css",
+          "before_user_git": {
+            "htmlcov/custom.tmp": {
+              "ignored": true,
+              "exit": 0,
+              "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+            },
+            "htmlcov/notes/style.css": {
+              "ignored": false,
+              "exit": 1,
+              "verbose": ""
+            }
+          },
+          "all_generated_ignored_every_round": true,
+          "stages": [
+            {
+              "round": 1,
+              "generated_count": 9,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? extra.css\n?? htmlcov/.gitignore\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 1,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:10:style.css\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            },
+            {
+              "round": 2,
+              "generated_count": 9,
+              "all_generated_ignored": true,
+              "failures": {},
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? extra.css\n?? htmlcov/.gitignore\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 2,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:11:style.css\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            }
+          ]
+        },
+        {
+          "case": "extra_css_negation",
+          "extra_css": "!custom.css",
+          "before_user_git": {
+            "htmlcov/custom.tmp": {
+              "ignored": true,
+              "exit": 0,
+              "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+            },
+            "htmlcov/notes/style.css": {
+              "ignored": false,
+              "exit": 1,
+              "verbose": ""
+            }
+          },
+          "all_generated_ignored_every_round": false,
+          "stages": [
+            {
+              "round": 1,
+              "generated_count": 9,
+              "all_generated_ignored": false,
+              "failures": {
+                "htmlcov/!custom.css": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                }
+              },
+              "coverage_percent": 100.0,
+              "git_status": "?? !custom.css\n?? .coverage\n?? htmlcov/!custom.css\n?? htmlcov/.gitignore\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 1,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:10:style.css\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            },
+            {
+              "round": 2,
+              "generated_count": 9,
+              "all_generated_ignored": false,
+              "failures": {
+                "htmlcov/!custom.css": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                }
+              },
+              "coverage_percent": 100.0,
+              "git_status": "?? !custom.css\n?? .coverage\n?? htmlcov/!custom.css\n?? htmlcov/.gitignore\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 2,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:11:style.css\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            }
+          ]
+        },
+        {
+          "case": "extra_css_comment",
+          "extra_css": "#custom.css",
+          "before_user_git": {
+            "htmlcov/custom.tmp": {
+              "ignored": true,
+              "exit": 0,
+              "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+            },
+            "htmlcov/notes/style.css": {
+              "ignored": false,
+              "exit": 1,
+              "verbose": ""
+            }
+          },
+          "all_generated_ignored_every_round": false,
+          "stages": [
+            {
+              "round": 1,
+              "generated_count": 9,
+              "all_generated_ignored": false,
+              "failures": {
+                "htmlcov/#custom.css": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                }
+              },
+              "coverage_percent": 100.0,
+              "git_status": "?? #custom.css\n?? .coverage\n?? htmlcov/#custom.css\n?? htmlcov/.gitignore\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 1,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:10:style.css\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            },
+            {
+              "round": 2,
+              "generated_count": 9,
+              "all_generated_ignored": false,
+              "failures": {
+                "htmlcov/#custom.css": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                }
+              },
+              "coverage_percent": 100.0,
+              "git_status": "?? #custom.css\n?? .coverage\n?? htmlcov/#custom.css\n?? htmlcov/.gitignore\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 2,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:11:style.css\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            }
+          ]
+        },
+        {
+          "case": "extra_css_brackets",
+          "extra_css": "custom[ab].css",
+          "before_user_git": {
+            "htmlcov/custom.tmp": {
+              "ignored": true,
+              "exit": 0,
+              "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+            },
+            "htmlcov/notes/style.css": {
+              "ignored": false,
+              "exit": 1,
+              "verbose": ""
+            }
+          },
+          "all_generated_ignored_every_round": false,
+          "stages": [
+            {
+              "round": 1,
+              "generated_count": 9,
+              "all_generated_ignored": false,
+              "failures": {
+                "htmlcov/custom[ab].css": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                }
+              },
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? custom[ab].css\n?? htmlcov/.gitignore\n?? htmlcov/custom[ab].css\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 1,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:10:style.css\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            },
+            {
+              "round": 2,
+              "generated_count": 9,
+              "all_generated_ignored": false,
+              "failures": {
+                "htmlcov/custom[ab].css": {
+                  "ignored": false,
+                  "exit": 1,
+                  "verbose": ""
+                }
+              },
+              "coverage_percent": 100.0,
+              "git_status": "?? .coverage\n?? custom[ab].css\n?? htmlcov/.gitignore\n?? htmlcov/custom[ab].css\n?? sample.py\n",
+              "original_bytes_prefix_preserved_observation": true,
+              "original_nonblank_lines_in_order_observation": true,
+              "html_pattern_count_observation": 2,
+              "comment_and_custom_rule_retained": true,
+              "user_git_after": {
+                "htmlcov/custom.tmp": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:2:custom.tmp\thtmlcov/custom.tmp\n"
+                },
+                "htmlcov/notes/style.css": {
+                  "ignored": true,
+                  "exit": 0,
+                  "verbose": "htmlcov/.gitignore:11:style.css\thtmlcov/notes/style.css\n"
+                }
+              },
+              "user_file_bytes_unchanged": {
+                "htmlcov/custom.tmp": true,
+                "htmlcov/notes/style.css": true
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "conclusion": {
+    "diagnostic_fixture_arms": 21,
+    "report_generations": 44,
+    "generated_path_round_checks": 370,
+    "baseline": "3 fixture均未忽略全部生成产物（预期负控制）。",
+    "safe_append": "9 fixture、19轮全部生成产物ignored。",
+    "candidate": "6常规fixture全部ignored；!custom.css/#custom.css/custom[ab].css各自两轮对应生成CSS quietRC1且真实gitstatus列为未跟踪，其他当轮报告产物ignored。",
+    "confirmed_public_goal_failure": "extra_css是现有公开配置，合法路径成功复制为报告产物；R17 statement明确要求all generated HTML report files被Git忽略且再次生成保持。因此三个特殊文件名已证明候选遗漏明确公开目标，不是新格式要求，不是infra。",
+    "current_scoring_coverage_gap": "现行49键虽全部通过，未覆盖上述实际正常可配置的文件名行为。应在新评分材料版本补一条行为验收，不回写历史49/49 reward1。",
+    "not_new_hard_requirements": "blank/CRLF归一、非blank原顺序变化、*.html重复增长仅格式/内容观察；本轮不把逐字节保留或文本幂等追加为硬要求。",
+    "existing_static_order": "notes/style.css之前未ignored，safe/model之后都ignored；user字节不变。safe追加*本就覆盖该例外，不能据此判model独有行为失败。",
+    "material_unrunnable": false,
+    "full_public_semantic_success": false,
+    "training_qualification": false,
+    "original_formal_49_of_49_reward1_retained": true,
+    "old_reports_unchanged": true,
+    "queued_Qwen_auto_cancelled": false,
+    "unrelated_GPU_stopped": false,
+    "new_pair_ACK": false
+  },
+  "criterion_addendum": {
+    "draft_sha256": "4ff56808d8b38aa22242e8d28f4b7fe00160729bd8f7f3ad4ac33b2e7f82b9f3",
+    "expected_draft_sha256": "7d70216586c39e2f98457b9b2cce26931325305d20a0ece2253a8d9dc80fc950",
+    "scope": "只增加HtmlGitignoreTest.test_generated_extra_css_literal_names_are_ignored；existing49状态不变，expected50仅新增1键PASSED。",
+    "old_test_body_and_imports_unchanged_AST": true,
+    "draft_equals_actual_CPU_input_bytes": true,
+    "assertion_semantics": "循环extra.css/!custom.css/#custom.css/custom[ab].css，每种独立输出目录，普通已有两行.gitignore，真实覆盖收集与extra_css复制后逐生成文件quiet check-ignore，重复两次；不检查规则字符串，不限制*、转义、append、encoding或其它正确修法。",
+    "artifact_keys_not_solver_solution": "测试只描述已经公开的产物忽略行为，不提供solver实现；保持公开statement无变更，仍需固定正式材料身份。",
+    "validation": {
+      "uid": 54321,
+      "python": "3.7.9 (default, Aug 23 2020, 00:57:53) \n[Clang 10.0.1 ]",
+      "criterion_is_draft_only": true,
+      "full_formal_score_recomputed": false,
+      "rows": [
+        {
+          "arm": "baseline",
+          "returncode": 1,
+          "command": [
+            "/testbed/.venv/bin/python",
+            "-m",
+            "pytest",
+            "-q",
+            "tests/test_literal_css_criterion_draft.py::HtmlGitignoreTest::test_generated_extra_css_literal_names_are_ignored"
+          ],
+          "html_sha256": "c1e9dd130184d6fc97140c6e7a2b49df12f826bcf86e92ced29c29e5fa0f9bc9",
+          "criterion_sha256": "4ff56808d8b38aa22242e8d28f4b7fe00160729bd8f7f3ad4ac33b2e7f82b9f3",
+          "expected_for_discrimination": 1
+        },
+        {
+          "arm": "safe_append",
+          "returncode": 0,
+          "command": [
+            "/testbed/.venv/bin/python",
+            "-m",
+            "pytest",
+            "-q",
+            "tests/test_literal_css_criterion_draft.py::HtmlGitignoreTest::test_generated_extra_css_literal_names_are_ignored"
+          ],
+          "html_sha256": "fc692f80ab396a633088aea9d7c758f73ec113cc3a32848dab89ae070cf60345",
+          "criterion_sha256": "4ff56808d8b38aa22242e8d28f4b7fe00160729bd8f7f3ad4ac33b2e7f82b9f3",
+          "expected_for_discrimination": 0
+        },
+        {
+          "arm": "original_coder",
+          "returncode": 1,
+          "command": [
+            "/testbed/.venv/bin/python",
+            "-m",
+            "pytest",
+            "-q",
+            "tests/test_literal_css_criterion_draft.py::HtmlGitignoreTest::test_generated_extra_css_literal_names_are_ignored"
+          ],
+          "html_sha256": "631eb6014e4b3a3f2a2c88d105acfc3597a0cce4c5778436ec1051c1bd9035fb",
+          "criterion_sha256": "4ff56808d8b38aa22242e8d28f4b7fe00160729bd8f7f3ad4ac33b2e7f82b9f3",
+          "expected_for_discrimination": 1
+        }
+      ]
+    },
+    "actual_positive_control": "safe方法rc0，完整循环四种文件名和两次生成；成功日志为点数+rc，没有伪造summary footer。",
+    "actual_negative_controls": "原FP方法rc1，于!custom.css首轮quietRC1失败；baseline方法rc1，于普通extra.css输出中的coverage_html.js首轮失败。都是行为断言，不是收集/环境失败。",
+    "short_circuit_limit": "新增单方法遇首个失败停止，不能说它为原FP独立跑完#与[案例；三种特殊名两轮全量反例来自先前boundary闭批。",
+    "full_formal50_recomputed": false,
+    "new_release_or_image_validated": false,
+    "minimal_next_material_scope": "该草稿及expected50范围合理，可进入新不可变评分材料修订；需要正式登记/发布绑定新test_2、hidden tree、expected和grader身份，并按受影响单方法/材料消费窄验。保留原public statement、runner及旧49要求；没有理由重跑旧506闭包、全部历史矩阵或模型。"
+  },
+  "cleanup": {
+    "boundary": {
+      "remove_ok": true,
+      "remaining_own_containers": [],
+      "shared_images_untouched": true,
+      "completed_at": "2026-10-03T13:51:09Z"
+    },
+    "criterion": {
+      "remove_ok": true,
+      "remaining_own_containers": [],
+      "shared_images_untouched": true,
+      "completed_at": "2026-10-03T14:00:59Z"
+    },
+    "boundary_probe_exit": {
+      "returncode": 0,
+      "elapsed_seconds": 10.381893024008605,
+      "maximum_arm_seconds": 90
+    },
+    "criterion_probe_exit": {
+      "returncode": 0,
+      "elapsed_seconds": 13.061654261007789,
+      "maximum_arm_seconds": 90
+    },
+    "both_slot_jobs_finished_rc0": true,
+    "job_and_probe_stderr_empty": true,
+    "containers_remaining_zero": true,
+    "shared_image_unchanged": "runner只移除本job label容器，未操作共享镜像；原cleanup陈述保留，非另行全机镜像审计。"
+  },
+  "read_and_reuse_boundary": {
+    "independently_read": "本轮完整runner源码、两批新manifest/输入身份/所有结果字段与三臂pytest原日志；21+27文件SHA/bytes、360基线tar和原FP选择性比对、结果内部一致性。",
+    "reused": "旧R17原CPU来源/配方/公开交付及原49分通过，以先前固定非作者报告引用；没有重新审旧506件、旧模型完整轨迹或重放完整49评分。",
+    "not_performed": "没有新运行、正式50键全套、发布后的grader/setup身份、全机资源/镜像审计、另一模型审查。"
+  },
+  "evidence_refs": {
+    "boundary/archive_manifest.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_boundary_cpu_v1/closed_raw/archive_manifest.json",
+      "sha256": "01a91a190ea1d480b9bbac4eacad131bfe04a63d0ceb5faa5d4f4e4d0b6a70f2",
+      "bytes": 3682
+    },
+    "boundary/job/status.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_boundary_cpu_v1/closed_raw/job/status.json",
+      "sha256": "f2254c2e9dfefa01dfbebc324608588bd76a63bd7432d3ca74dfd6ecfe917b79",
+      "bytes": 565
+    },
+    "boundary/job/stderr.log": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_boundary_cpu_v1/closed_raw/job/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "boundary/job/stdout.log": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_boundary_cpu_v1/closed_raw/job/stdout.log",
+      "sha256": "03e2cd55c8e7771a4bf24ba9f2ca113f0ad104c4c636997a9b7d97b85bebccc2",
+      "bytes": 3492
+    },
+    "boundary/cpu/cleanup.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_boundary_cpu_v1/closed_raw/cpu/cleanup.json",
+      "sha256": "6cfffbc0ae364f1dfccd832833f3a0ca6618b927ffd8f9f342912479c035051a",
+      "bytes": 135
+    },
+    "boundary/cpu/container_identity.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_boundary_cpu_v1/closed_raw/cpu/container_identity.json",
+      "sha256": "4d504fdf7f539374be14205bad92c91da5f09903f454869ccf8e5edb2e2631a1",
+      "bytes": 563
+    },
+    "boundary/cpu/container_output.tar": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_boundary_cpu_v1/closed_raw/cpu/container_output.tar",
+      "sha256": "ef9c3c1da861b2cbc4c2326efca0e01dda83c73fb4214a9bb1d3e0b42ac13c85",
+      "bytes": 168960
+    },
+    "boundary/cpu/host_identity.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_boundary_cpu_v1/closed_raw/cpu/host_identity.json",
+      "sha256": "4d0d32722aaeb482d8c2b5441efc643201003c8170315f9034b989adeebb880c",
+      "bytes": 576
+    },
+    "boundary/cpu/probe_exit.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_boundary_cpu_v1/closed_raw/cpu/probe_exit.json",
+      "sha256": "edaeaa95cc91f14985b4e980841d15316dd86049dde7a6478b83c9248fc73539",
+      "bytes": 92
+    },
+    "boundary/cpu/probe_stderr.log": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_boundary_cpu_v1/closed_raw/cpu/probe_stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "boundary/cpu/probe_stdout.log": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_boundary_cpu_v1/closed_raw/cpu/probe_stdout.log",
+      "sha256": "4003c33deee0a87974c9bc440a654ed011c0ae894cce2a70955a6389b5d2f4f1",
+      "bytes": 3490
+    },
+    "boundary/cpu/results/baseline.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_boundary_cpu_v1/closed_raw/cpu/results/baseline.json",
+      "sha256": "813ba09da57b407674ffed230955156549284ea28baf1bff60e12a96da8a004e",
+      "bytes": 20484
+    },
+    "boundary/cpu/results/identity_setup.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_boundary_cpu_v1/closed_raw/cpu/results/identity_setup.json",
+      "sha256": "b746efa0ad16b9764712cc9bf474af4f51e5ffe45a1ac6beca82308287a544bd",
+      "bytes": 2129
+    },
+    "boundary/cpu/results/original_coder.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_boundary_cpu_v1/closed_raw/cpu/results/original_coder.json",
+      "sha256": "b2f261bed5723f38db42dfd7ffdfe14c2821a43be71ef9149a3fbd80c1240056",
+      "bytes": 73484
+    },
+    "boundary/cpu/results/safe_append.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_boundary_cpu_v1/closed_raw/cpu/results/safe_append.json",
+      "sha256": "bc05c755c4a20acd8e64b301e319d701667518fe308450fb56c56eaa65ba2fbf",
+      "bytes": 68072
+    },
+    "boundary/inputs/baseline.tar": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_boundary_cpu_v1/closed_raw/inputs/baseline.tar",
+      "sha256": "2138be5b5c3d196c08bfaeb4d46dc51a8c1018895eab712aec977c28bdb8c64a",
+      "bytes": 4198400
+    },
+    "boundary/inputs/baseline_manifest.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_boundary_cpu_v1/closed_raw/inputs/baseline_manifest.json",
+      "sha256": "fc422c66fa64f59a4038aa0f2ae76cd1b5b21dcd2176b412d0d501eaa09fe259",
+      "bytes": 83474
+    },
+    "boundary/inputs/boundary_probe.py": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_boundary_cpu_v1/closed_raw/inputs/boundary_probe.py",
+      "sha256": "b1a19d8535035f91ead2be9c9cb29dceb1cfbd17f28e01e34a57246a508d2c6f",
+      "bytes": 9558
+    },
+    "boundary/inputs/frozen_patch.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_boundary_cpu_v1/closed_raw/inputs/frozen_patch.json",
+      "sha256": "85c2211228edd88e9012924fc118c7e3cc1e814859a6b3ac2cda26d86367e388",
+      "bytes": 27080
+    },
+    "boundary/inputs/packet_manifest.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_boundary_cpu_v1/closed_raw/inputs/packet_manifest.json",
+      "sha256": "978998ac030ddd6a0f0e5b1f4a649cd8827381829e43c9c85d81632016e5ea23",
+      "bytes": 1089
+    },
+    "boundary/inputs/remote_job.py": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_boundary_cpu_v1/closed_raw/inputs/remote_job.py",
+      "sha256": "aae52d23bff94ad755088fa6ab2a546348b23c111e66681903fdbb9fa5315dc6",
+      "bytes": 5363
+    },
+    "boundary/inputs/safe_append.patch": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_boundary_cpu_v1/closed_raw/inputs/safe_append.patch",
+      "sha256": "4049a09d2d6ec220aeff034db378cc95e3f49f8572f2de110438ba059d3a68d3",
+      "bytes": 547
+    },
+    "criterion/archive_manifest.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/archive_manifest.json",
+      "sha256": "bcaac4061ea193079f28fb00e7eafe20e60955953bced72a8d61691e7133770d",
+      "bytes": 4659
+    },
+    "criterion/job/status.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/job/status.json",
+      "sha256": "6dee5bc5139e3f6dc923089462ae28f6193fa1f93295fcde9b5bb5eac1bd5982",
+      "bytes": 567
+    },
+    "criterion/job/stderr.log": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/job/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "criterion/job/stdout.log": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/job/stdout.log",
+      "sha256": "508ea4758374482173e08ade9547dc5256ef5430c3003ca6a54d0eef6050eade",
+      "bytes": 6292
+    },
+    "criterion/cpu/cleanup.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/cpu/cleanup.json",
+      "sha256": "20c1a1b8792fe8676d0515a8efa96820b080cc46dabe55ebbd94ab3f4f4d756d",
+      "bytes": 135
+    },
+    "criterion/cpu/container_identity.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/cpu/container_identity.json",
+      "sha256": "c5c92f691df65cfedc41a606ed450324602a39895806a00aa45e9bc3489a8970",
+      "bytes": 564
+    },
+    "criterion/cpu/container_output.tar": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/cpu/container_output.tar",
+      "sha256": "efb265e8f18474eed7b53674019a1395e039d7b61230e8312c2680ac87263825",
+      "bytes": 15872
+    },
+    "criterion/cpu/host_identity.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/cpu/host_identity.json",
+      "sha256": "1e5a02b6fac4986ff439291004830b01ff558fc53d138dd7e080f72a2bb2aa91",
+      "bytes": 577
+    },
+    "criterion/cpu/probe_exit.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/cpu/probe_exit.json",
+      "sha256": "ff7f22dfc612de5dbab4cf4aeb2f445df7acf08db3f7f7a152c533dc056314c2",
+      "bytes": 92
+    },
+    "criterion/cpu/probe_stderr.log": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/cpu/probe_stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "criterion/cpu/probe_stdout.log": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/cpu/probe_stdout.log",
+      "sha256": "bbe094f58e5321216e81bfc8e9b06efe665c693ed5f03fa46e2e3820d498502d",
+      "bytes": 6290
+    },
+    "criterion/cpu/results/baseline_pytest_stderr.log": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/cpu/results/baseline_pytest_stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "criterion/cpu/results/baseline_pytest_stdout.log": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/cpu/results/baseline_pytest_stdout.log",
+      "sha256": "6d3ad535f093cca5323ace72981029efb3898f4b0506226ecbe1d251167af00b",
+      "bytes": 2444
+    },
+    "criterion/cpu/results/criterion_validation.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/cpu/results/criterion_validation.json",
+      "sha256": "790a08f6bb2533cc715058b032f5fe865dde65aaf3562f284c0b3325513d6c7b",
+      "bytes": 1743
+    },
+    "criterion/cpu/results/identity_setup.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/cpu/results/identity_setup.json",
+      "sha256": "77178db144d355844fdca7b8d221b420d28b03f7d3b87e5ed8a25d0ecd7f81c5",
+      "bytes": 2253
+    },
+    "criterion/cpu/results/original_coder_pytest_stderr.log": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/cpu/results/original_coder_pytest_stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "criterion/cpu/results/original_coder_pytest_stdout.log": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/cpu/results/original_coder_pytest_stdout.log",
+      "sha256": "089bd1680f723b66ff4fd30c0f2d5d9db8e88d192819306ce0fd36dbe412449c",
+      "bytes": 2442
+    },
+    "criterion/cpu/results/safe_append_pytest_stderr.log": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/cpu/results/safe_append_pytest_stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "criterion/cpu/results/safe_append_pytest_stdout.log": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/cpu/results/safe_append_pytest_stdout.log",
+      "sha256": "ccac8dc2ea7d37fef45493be42deca1113ee991d49cc2b2d59e9a359d2d7f92b",
+      "bytes": 123
+    },
+    "criterion/inputs/baseline.tar": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/inputs/baseline.tar",
+      "sha256": "2138be5b5c3d196c08bfaeb4d46dc51a8c1018895eab712aec977c28bdb8c64a",
+      "bytes": 4198400
+    },
+    "criterion/inputs/baseline_manifest.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/inputs/baseline_manifest.json",
+      "sha256": "fc422c66fa64f59a4038aa0f2ae76cd1b5b21dcd2176b412d0d501eaa09fe259",
+      "bytes": 83474
+    },
+    "criterion/inputs/boundary_probe.py": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/inputs/boundary_probe.py",
+      "sha256": "b1a19d8535035f91ead2be9c9cb29dceb1cfbd17f28e01e34a57246a508d2c6f",
+      "bytes": 9558
+    },
+    "criterion/inputs/criterion_probe.py": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/inputs/criterion_probe.py",
+      "sha256": "eabf029c19368c1450ef1de2d790537f9cd016dc4fbcff10d3f74c13d7780fb4",
+      "bytes": 1872
+    },
+    "criterion/inputs/frozen_patch.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/inputs/frozen_patch.json",
+      "sha256": "85c2211228edd88e9012924fc118c7e3cc1e814859a6b3ac2cda26d86367e388",
+      "bytes": 27080
+    },
+    "criterion/inputs/packet_manifest.json": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/inputs/packet_manifest.json",
+      "sha256": "719f3ea5358c626278b6b0cb3dc63b2fbbbceab4d51e74534040037da07224a0",
+      "bytes": 1209
+    },
+    "criterion/inputs/remote_job.py": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/inputs/remote_job.py",
+      "sha256": "2ec26b2094563aa4009b51e1c0351e7ef875a17fc1cf3f61a767474bb495d3e5",
+      "bytes": 5365
+    },
+    "criterion/inputs/safe_append.patch": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/inputs/safe_append.patch",
+      "sha256": "4049a09d2d6ec220aeff034db378cc95e3f49f8572f2de110438ba059d3a68d3",
+      "bytes": 547
+    },
+    "criterion/inputs/test_2_generated_css_v2_draft.py": {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_r17_coder_criterion_cpu_v1/closed_raw/inputs/test_2_generated_css_v2_draft.py",
+      "sha256": "4ff56808d8b38aa22242e8d28f4b7fe00160729bd8f7f3ad4ac33b2e7f82b9f3",
+      "bytes": 5289
+    },
+    "public_statement": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/materials/statement_preserve_public_v2.txt",
+      "sha256": "39b6b28abc08b21a76a71d8908a7e37a00040cbfc3f9d92ee12bc37b3b6a194f",
+      "bytes": 1463
+    },
+    "criterion_draft": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/materials/test_2_generated_css_v2_draft.py",
+      "sha256": "4ff56808d8b38aa22242e8d28f4b7fe00160729bd8f7f3ad4ac33b2e7f82b9f3",
+      "bytes": 5289
+    },
+    "criterion_expected_draft": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/materials/expected_generated_css_v2_draft.json",
+      "sha256": "7d70216586c39e2f98457b9b2cce26931325305d20a0ece2253a8d9dc80fc950",
+      "bytes": 2809
+    },
+    "existing_test_2": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/materials/test_2_preserve_v1.py",
+      "sha256": "e5fee9fb81700d682e45c5c25cdc18035000e1dd86bf78fb2c8391ee61105497",
+      "bytes": 3879
+    },
+    "prior_non_author_semantic_review": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/reviews/non_author_ea69_r17_coder_semantic_review_20261003.json",
+      "sha256": "70230da67ca174c63ea23112e4ad80e722a37ad6221d879a6efac216bf6ba037",
+      "bytes": 72591
+    },
+    "prior_non_author_cpu_review": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/reviews/non_author_ea69_r17_actual_cpu_review_20261003.json",
+      "sha256": "6705dc8cce9bfd86e2048df9a667370fe56c95ab5991c2c1558526bc8b7a6729",
+      "bytes": 54880
+    }
+  },
+  "markdown_sha256": "4171a87601150f4d870cfe996455d3e206b1754a4a91b0448d18ef0a390a327f"
+}

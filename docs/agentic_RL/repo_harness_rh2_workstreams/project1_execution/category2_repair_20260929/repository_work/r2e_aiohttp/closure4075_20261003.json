@@ -1,0 +1,67 @@
+{
+  "schema_id": "rh2.category2.aiohttp.owner_task_closure.v1",
+  "as_of": "2026-10-02T20:31:36.185712+00:00",
+  "instance_id": "aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a",
+  "scope": "R069题面及不变v11评分下的探索性基座首轮；固定无C扩展Python范围",
+  "status": "current_exploratory_round_closed",
+  "request": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/probe_request.json",
+    "sha256": "sha256:a690ca68439326d124ee3abdb52b0078cacbe9134d5dc6ecac5b4a8ec88fe09f"
+  },
+  "aggregate_execution_receipt": {
+    "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/receipts/aiohttp4075-r069-probe-wide-v1-20261003.json",
+    "sha256": "sha256:c9216a5005e14e4b611cf9baff8674dfe8dcf6b5a0dfede170dc6837c344e909"
+  },
+  "owner_semantics": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/results4075_qwen36_a1_20261003.json",
+      "sha256": "sha256:08e1f9318a9ec2127ecdb3e8c4159f453aaff1cf3ab48e6ddf6cb8dadda65807"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/results4075_coder_a1_20261003.json",
+      "sha256": "sha256:e843ee2e02a963fbc1de283e28eb110869e6072624b4b95bf1126c675eaee12f"
+    }
+  ],
+  "independent_execution_reviews": [
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/aiohttp4075_qwen36_a1_execution_review.md",
+      "sha256": "sha256:653012092526202f6116ad595c6a3d6a5f2bd105edb740058a1cc3a998af5e03"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/aiohttp4075_coder_a1_execution_review.md",
+      "sha256": "sha256:085a747f5f160d0a5f70a739bd51c3294124414d145cb40ae4cee1a119285dc2"
+    }
+  ],
+  "models_each_one": true,
+  "formal_results": {
+    "qwen36": {
+      "reward": 1,
+      "matched": 136,
+      "expected_total": 136,
+      "passed": 133,
+      "fixed_c_only_failed": 3,
+      "test_returncode": 1,
+      "solve_seconds": 104.545
+    },
+    "coder": {
+      "reward": 1,
+      "matched": 136,
+      "expected_total": 136,
+      "passed": 133,
+      "fixed_c_only_failed": 3,
+      "test_returncode": 1,
+      "solve_seconds": 153.218
+    }
+  },
+  "owner_judgment": "两模型真实候选均符合当前公开修订目标，完整逐键评分与题主语义无新材料阻断。候选不是仅识别题面字面串；已考虑Qwen曾误拒UTF-8后经公开回归修正、Coder冗余检查与额外8个文件。原FrozenPatch及分数不变，本轮目标完成，不另采样。",
+  "candidate_quality": "Coder原9项工件保留；额外诊断/说明/.coverage是补丁整洁度问题，现行投影允许，不偷偷删文件后评分。",
+  "metadata_limit": "shared_entry路径/SHA关联错配已有独立报告提供正确R2E父入口与base祖父入口，实际code_v3及全基线/工件/评分可串联；统一执行者下次冻结处理，不重跑。",
+  "use": "保留本轮成功样本作为材料质量和基座能力诊断；各模型仅一次，不能据2次成功估计可靠成功率或直接宣布训练难度。",
+  "remaining_required_work_in_this_round": [],
+  "limitations": [
+    "不是136全PASS，不宣称有C扩展的评分适用。",
+    "没有完整HTTP协议正确性或未登记边界的保证。",
+    "不授予训练/留出资格；aiohttp同仓整体划分。"
+  ],
+  "future_trigger": "只有新的实际材料缺陷、环境变化或有明确诊断目的时，按版本处理并建立关联新请求。"
+}

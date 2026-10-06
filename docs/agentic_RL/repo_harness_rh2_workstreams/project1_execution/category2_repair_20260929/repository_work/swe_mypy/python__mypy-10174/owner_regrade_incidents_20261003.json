@@ -1,0 +1,52 @@
+{
+  "schema": "swe_mypy.owner_regrade_incidents.v1",
+  "created_at_utc": "2026-10-03T00:14:36.535862+00:00",
+  "scope": "题主窄复验编排问题；不改旧GPU结果，不归模型/题目失败",
+  "incidents": [
+    {
+      "job": "mypy10174-gpu-original-regrade-r3-20261002T235343Z-c0d3fd",
+      "wrapper_rc": 1,
+      "stage": "fresh_prepare",
+      "cause": "误要求含prepared_at_utc的fresh清单SHA等于旧清单；逐字段只时间变化，成员/private SHA相同",
+      "containers_created": 0,
+      "candidate_or_tests_executed": false,
+      "raw_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r3-20261002T235343Z-c0d3fd",
+      "raw_archive_sha256": "676cf4e4a2fbf3bad7ff3d1889aafb0e99c6d6245059861855a5a52aaf66a9a4",
+      "fixed_in_worker_sha256": "64754d020213034bcc64c10c8572a8401ee92e3254aee88a35c7da621e54f696"
+    },
+    {
+      "job": "mypy10174-gpu-original-regrade-r8-20261003T000817Z-cca2a8",
+      "wrapper_rc": 1,
+      "stage": "post_owner_install_source_probe",
+      "cause": "源码cwd egg-info被metadata.distribution默认选中，无direct_url；实际pip editable构建和安装已RC0，不能把default元数据缺URL当安装失败",
+      "baseline_rebuild_passed": true,
+      "owner_install_commands_actual_rc": [
+        0,
+        0,
+        0
+      ],
+      "wheel_permissions": "3x0644",
+      "formal_candidate_script_or_tests_executed": false,
+      "cleanup": {
+        "prepare_cancelled": 0,
+        "containers_removed": [],
+        "containers_open": [],
+        "supply_open": [],
+        "cleanup_failures": [],
+        "regrade_events": 0,
+        "regrade_total": 0,
+        "regrade_declined": 0,
+        "containers_created_total": 1,
+        "containers_removed_total": 1,
+        "container_history_retained": 1,
+        "leases_total": 1
+      },
+      "raw_ref": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r8-20261003T000817Z-cca2a8",
+      "raw_archive_sha256": "cab66bcda32cec1a4e4794d98dd44f68b7439a206c731039ef67bc754c6e2285",
+      "fixed_in_worker_sha256": "86ed921a2796bb389f7dc118e84fa1f69919485032132625d142da2a9ac7ee16",
+      "fix": "保存所有实际mypy distribution元数据，保留default null；要求site-packages dist-info editable URL而不更改sys.path，源码SHA/loader/import路径约束保持。"
+    }
+  ],
+  "input_binding_sha256": "6bbcb0ea7d151a92e19a86f6294d25a4e6d9c30e40b4efa620cf60d4b19147cd",
+  "original_fp_baseline_projection_unchanged": true
+}

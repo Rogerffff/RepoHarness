@@ -1,0 +1,57 @@
+{
+  "schema_id": "rh2.category2.aiohttp.record_correction.v1",
+  "as_of": "2026-10-02T18:58:57.146252+00:00",
+  "instance_id": "aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2",
+  "status": "historical_candidate_labels_corrected_by_slot_and_patch_identity",
+  "basis": {
+    "path": "runs/r2e_lifecycle_20260929/formal_v5/remote/slots_manifest.json",
+    "sha256": "sha256:815eae1dd37fa72670c9f505b7b6ca4c66c413815b8f0f56728ef7a1fcf91846"
+  },
+  "preserved_owner_readback": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/results6183_v5_log_readback_20261003.json",
+    "sha256": "sha256:fddc79cb2d6cf1ad59cff95570d0542fbc130012d67b76dabfbbe1313283f899"
+  },
+  "preserved_review_handoff": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/review_handoff_6183_r085_cpu_20261003.json",
+    "sha256": "sha256:8c59b154aff8b14b5ed85ae0997db2515fc5b27dd890968506a0d66b6c4281e5"
+  },
+  "corrected_rows": [
+    {
+      "slot": "s3",
+      "correct_candidate": "AP2",
+      "previous_summary_label": "A1",
+      "patch_sha256": "sha256:0548e104256c9f358b312c24e5b319d99b19c78cbaafac85ae708fd11c1db08e",
+      "log": {
+        "path": "runs/r2e_lifecycle_20260929/formal_v5/remote/s3_logs/evallog_replay-r2e-v5-s3-0928195_6a6312ec.eval.log",
+        "sha256": "sha256:e6b85c49e00f071c660481edb3bba3d58170e581fd531258a123ad75c7bbe1f9"
+      },
+      "ledger": {
+        "path": "runs/r2e_lifecycle_20260929/formal_v5/ledgers/ledger_s3.jsonl",
+        "sha256": "sha256:3b41cef597912f132615f5c4c55954a21c73a5aa87a8874af8655f1f0984daa7"
+      },
+      "ledger_line": 6,
+      "expected_match": 49,
+      "expected_total": 49,
+      "reward": 1
+    },
+    {
+      "slot": "s4",
+      "correct_candidate": "A1",
+      "previous_summary_label": "AP2",
+      "patch_sha256": "sha256:5b38357b44e604a5823d436f030f871490b84e7c471c279a40a4636fdb5232e7",
+      "log": {
+        "path": "runs/r2e_lifecycle_20260929/formal_v5/remote/s4_logs/evallog_replay-r2e-v5-s4-0928195_9f732244.eval.log",
+        "sha256": "sha256:72cc686607e16536a51490714d6fce72944d6baa2442c86fbb4a09b3e9a5766e"
+      },
+      "ledger": {
+        "path": "runs/r2e_lifecycle_20260929/formal_v5/ledgers/ledger_s4.jsonl",
+        "sha256": "sha256:5d400633e041cfb4245c31ff6b07203654fd6bbe8867660659ef950ec3ec97ca"
+      },
+      "ledger_line": 5,
+      "expected_match": 49,
+      "expected_total": 49,
+      "reward": 1
+    }
+  ],
+  "effect": "旧作者摘要把s3、s4的候选名称对调。实际补丁SHA、原日志、49/49与reward1均不变；s3=AP2 (both writers)，s4=A1 (compression filter)。不回写冻结原件，不重跑，后续probe_request用本更正映射。"
+}

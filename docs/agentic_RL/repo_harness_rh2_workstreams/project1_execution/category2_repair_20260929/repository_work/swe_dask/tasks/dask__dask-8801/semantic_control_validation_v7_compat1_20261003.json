@@ -1,0 +1,2716 @@
+{
+  "schema": "dask8801_fixed_semantic_validation.v2",
+  "judge_version": "fixed_prompt_v3_inherited_session_explicit_v3_path",
+  "revision_id": "dask8801-behavior-semantic-v7-compat1",
+  "state": "known_controls_and_heldout_match_not_formal_cpu",
+  "scope": "fresh independent anonymous semantic judgments of actual isolated API capture and synthetic heldout; labels read only after judgments finished",
+  "input_hashes": {
+    "calibration_inputs_v3.json": "37377d98995c6f21d624d6404658299f659d11c673bc91f2de2f2c09e7ccb8a0",
+    "calibration_bindings_private_v3.json": "495df83b63ec68ba60c08304749bd8f94c5936b78ad877738e86469c4dec628b",
+    "calibration_verdicts_v3.json": "67156f28db65ac02a65972ae19a069632f246ff204fb111548e9357757a022e7",
+    "calibration_judge_provenance_v3.json": "756224863b8622b1ca2ffc2cbfa74c0d67291afa922a34098d7584426f687c8f",
+    "heldout_validation_inputs_v3.json": "9809106061d21723ccc4a017d7f91d91c635fe59608ad903b1ce4fa050977e12",
+    "heldout_verdicts_v3.json": "2a998f7c08b55a4a8f2251939ecfc76da16acaf97d62728a12e145748cad7f98",
+    "heldout_judge_provenance_v3.json": "62c559776e3bd1333849754e29672cd3ced870ca832fa42ce6022e80cc3e7af5",
+    "heldout_expected_v1.json": "0ceafd2f0a9e6fb0b400790c93597ad8ea79dbe6b843a7858cb2f272df56069b",
+    "projection_control_expected_private_v2.json": "74c9427d3ed5f8f783400a28a12c5d3d474d7a57526a91560595905d1796d759",
+    "judge_config_v3.json": "64dd5644ccc59364b0eeb19d653695be7a7d3c985882c648f4319b820e8a041f",
+    "judge_config_v3_bound.json": "7e7e861112af22ec7be814a084e395070a5806777eff908dd02c746e8c8acfea",
+    "judge_config_v3_path_correction.json": "bd05e9d0a224cdcc73093046c00f2f7e6095b0a24409d700211a9206382bac45"
+  },
+  "prompt_sha256": "9d49671b56ae155f9183d8a0280ff7e779959de2697cdf3887ba4f558f2c19c1",
+  "collector_protocol_sha256": "7886a70ac59d051eca4459c6e32d94b77159c6890341183041dc73df03d1292a",
+  "local_capture_sha256": "1782e5ce1a9f7ff040177dfd1baf27ea9cd26c5de3ae2aefd70ce7b5ddd6090f",
+  "old_28_captures_unchanged_after_adding_behavior_negative": true,
+  "output_integrity": {
+    "calibration": {
+      "count": 321,
+      "state": "complete",
+      "verdicts": {
+        "pass": 226,
+        "fail": 95
+      }
+    },
+    "heldout": {
+      "count": 24,
+      "state": "complete",
+      "verdicts": {
+        "pass": 9,
+        "fail": 13,
+        "uncertain": 2
+      }
+    }
+  },
+  "control_candidate_rows": [
+    {
+      "candidate": "gold",
+      "expected_semantic_control": "pass",
+      "isolated_diagnostic_semantics": "pass",
+      "matches": true,
+      "cases": [
+        {
+          "case_id": "falsy_bool:directory",
+          "id": "c1e82f08c2238c8ac2c23446c0a23436e",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_bool:file",
+          "id": "c295a095153a6b8b3b7ae47c179e230d0",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:directory",
+          "id": "c6f82d8087c706385bf45a5c0df1f1c04",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:file",
+          "id": "c563c1c2ddfb7c54048d57eed292b0515",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:directory",
+          "id": "cb83c67f7088676f24370ed7de3767f06",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:file",
+          "id": "c8e3d6f757de709d88827855114f21afe",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:directory",
+          "id": "c9ddeb1af2d75155630d6c9ddf3901506",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:file",
+          "id": "c2ebda1915e8f0a1d4e2f6d4c6626b83d",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:directory",
+          "id": "c418d2c6c3f034d14eb6c1fddc93a2488",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:file",
+          "id": "c0b1246e3e91f7e8599e75c4d9874bb55",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:directory",
+          "id": "cd38afb911e051d3b4037de2785b0fcec",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:file",
+          "id": "c81346016b20bd856982caade297b3dab",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:directory",
+          "id": "ca5dfaf9fda4127d4bf5bf543d6a94194",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:file",
+          "id": "cbe61a5a9a81cb2af9e18319170c5ebad",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:directory",
+          "id": "c008cced6f5d5061fa38bf40f0bc841d1",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:file",
+          "id": "ca2b686125d3332324c6e6dd0e587dea2",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:directory",
+          "id": "c7300c38708e5504c419d89b662a3d3ea",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:file",
+          "id": "c6035901ba2aeff7bfb7da693921fac7c",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:directory",
+          "id": "c1dc9abe0c7a0f0ee485f95691dcc7bbc",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:file",
+          "id": "c869aee676b76b1797ee645b1253e449a",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:directory",
+          "id": "c7e661dbe5270b96000686e89787803e5",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:file",
+          "id": "cd14d9d98ee69a19819f5f3486ac6a1e0",
+          "verdict": "pass"
+        }
+      ]
+    },
+    {
+      "candidate": "reasonable_named_values",
+      "expected_semantic_control": "pass",
+      "isolated_diagnostic_semantics": "pass",
+      "matches": true,
+      "cases": [
+        {
+          "case_id": "falsy_bool:directory",
+          "id": "cd5d91a8683ed1fc24e4a040623670aab",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_bool:file",
+          "id": "cffd7f6dc7a0f58d01030dd2d898c06ea",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:directory",
+          "id": "c61f60382ca4968fda2ed5748f4f9d928",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:file",
+          "id": "c7d367972353336ecbb70d16945e43eef",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:directory",
+          "id": "c3512d139acf317d3fd49aa51a6838670",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:file",
+          "id": "c7bd9c3628c155a5505aef24038d60bf9",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:directory",
+          "id": "c722722bb011e74a34c8aad8d08affab1",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:file",
+          "id": "c39f754aa7c8c46561bf332c6f4663e19",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:directory",
+          "id": "c1038d1c2ce6f64c2d8e7f9718d1b0b5d",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:file",
+          "id": "c9a9c193851b4822c7ad586ab679238e8",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:directory",
+          "id": "c89597bd6255c7ca1d6c046b2b96c167b",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:file",
+          "id": "c640e456ed3b05c3470a808716a4056c0",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:directory",
+          "id": "c8dee8419bb4a47ad8d9afc00b765fa0d",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:file",
+          "id": "c7d31b8741b2e0dd9cd8f5a4a9b764e94",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:directory",
+          "id": "c96d83e00aadb2826861a2c03d1a0c56b",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:file",
+          "id": "c9bc053721b2bc9c8e0ce7b0ac480bb89",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:directory",
+          "id": "c110e3479cab6e99dc61caece71dabf00",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:file",
+          "id": "c31f514fa8a51efff8181b4fb204ee235",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:directory",
+          "id": "c1dc9abe0c7a0f0ee485f95691dcc7bbc",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:file",
+          "id": "c869aee676b76b1797ee645b1253e449a",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:directory",
+          "id": "c7e661dbe5270b96000686e89787803e5",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:file",
+          "id": "cd14d9d98ee69a19819f5f3486ac6a1e0",
+          "verdict": "pass"
+        }
+      ]
+    },
+    {
+      "candidate": "wrong_missing_file_reason",
+      "expected_semantic_control": "fail",
+      "isolated_diagnostic_semantics": "fail",
+      "matches": true,
+      "cases": [
+        {
+          "case_id": "falsy_bool:directory",
+          "id": "c7b19cdad49323bd02f2e0c3d8490ad4b",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_bool:file",
+          "id": "c828ab3b201537f659c4502479cfc7c27",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_float:directory",
+          "id": "c00b295de4519598c97a6fe8203bf5268",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_float:file",
+          "id": "ca886172ab0c1ba09a105aaecca6b62c7",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_int:directory",
+          "id": "cfa26a83bcbc653026fb88c1b49e84102",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_int:file",
+          "id": "cbf13f4f9e6de0991a193894fdd69e55d",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_list:directory",
+          "id": "c6cd7975e25416679584a53ff22c1541c",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_list:file",
+          "id": "c5bd9b502bc9880279fafd9a9e7ae5586",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_str:directory",
+          "id": "c9b67be75b799e667432cce00b79ffb1c",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_str:file",
+          "id": "cdfc64842f5ff004fc98c8eca1c878e67",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_float:directory",
+          "id": "c1fb75c536f9e129b8b05387365ac4c57",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_float:file",
+          "id": "c9e08f17cd598b8bfecacfc16caf26d28",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_int:directory",
+          "id": "cf8bb0724dfebf127ef138e886fd6b87f",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_int:file",
+          "id": "c31fd7df1a6481a83fa00c4db7a52cc92",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_list:directory",
+          "id": "c9e4db28b23db34a1780d9f25d0b0e266",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_list:file",
+          "id": "c7458c0e627c49925b058b99b2f77ae7e",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_str:directory",
+          "id": "c4c024ce8f2a9e7c322f1d72091eca814",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_str:file",
+          "id": "c8e4a2b4cf750fc1881715f2bd4e3a6fc",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "syntax_brace:directory",
+          "id": "c1dc9abe0c7a0f0ee485f95691dcc7bbc",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:file",
+          "id": "c869aee676b76b1797ee645b1253e449a",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:directory",
+          "id": "c7e661dbe5270b96000686e89787803e5",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:file",
+          "id": "cd14d9d98ee69a19819f5f3486ac6a1e0",
+          "verdict": "pass"
+        }
+      ]
+    },
+    {
+      "candidate": "wr_perm_fatal",
+      "expected_semantic_control": "pass",
+      "isolated_diagnostic_semantics": "pass",
+      "matches": true,
+      "cases": [
+        {
+          "case_id": "falsy_bool:directory",
+          "id": "c1e82f08c2238c8ac2c23446c0a23436e",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_bool:file",
+          "id": "c295a095153a6b8b3b7ae47c179e230d0",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:directory",
+          "id": "c6f82d8087c706385bf45a5c0df1f1c04",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:file",
+          "id": "c563c1c2ddfb7c54048d57eed292b0515",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:directory",
+          "id": "cb83c67f7088676f24370ed7de3767f06",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:file",
+          "id": "c8e3d6f757de709d88827855114f21afe",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:directory",
+          "id": "c9ddeb1af2d75155630d6c9ddf3901506",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:file",
+          "id": "c2ebda1915e8f0a1d4e2f6d4c6626b83d",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:directory",
+          "id": "c418d2c6c3f034d14eb6c1fddc93a2488",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:file",
+          "id": "c0b1246e3e91f7e8599e75c4d9874bb55",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:directory",
+          "id": "cd38afb911e051d3b4037de2785b0fcec",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:file",
+          "id": "c81346016b20bd856982caade297b3dab",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:directory",
+          "id": "ca5dfaf9fda4127d4bf5bf543d6a94194",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:file",
+          "id": "cbe61a5a9a81cb2af9e18319170c5ebad",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:directory",
+          "id": "c008cced6f5d5061fa38bf40f0bc841d1",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:file",
+          "id": "ca2b686125d3332324c6e6dd0e587dea2",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:directory",
+          "id": "c7300c38708e5504c419d89b662a3d3ea",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:file",
+          "id": "c6035901ba2aeff7bfb7da693921fac7c",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:directory",
+          "id": "c1dc9abe0c7a0f0ee485f95691dcc7bbc",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:file",
+          "id": "c869aee676b76b1797ee645b1253e449a",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:directory",
+          "id": "c7e661dbe5270b96000686e89787803e5",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:file",
+          "id": "cd14d9d98ee69a19819f5f3486ac6a1e0",
+          "verdict": "pass"
+        }
+      ]
+    },
+    {
+      "candidate": "wr_wrong_reason",
+      "expected_semantic_control": "fail",
+      "isolated_diagnostic_semantics": "fail",
+      "matches": true,
+      "cases": [
+        {
+          "case_id": "falsy_bool:directory",
+          "id": "c4c835d26d4af86e17be89552db46b625",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_bool:file",
+          "id": "c11a5269e8245c7aa2a5863c0edc08517",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_float:directory",
+          "id": "c4ce146e4edf6cbd37721dfcaa004af6a",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_float:file",
+          "id": "cf9c654f9626a1a03b44e615455f1dd53",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_int:directory",
+          "id": "c4ff31cdf04c5e6735a734641692d532a",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_int:file",
+          "id": "c3ae5b9e4aee3fb1da734b69e05e2f1e5",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_list:directory",
+          "id": "c6ae8d135f8e80468e3735abebfa8681b",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_list:file",
+          "id": "cd4e9ff76786322d5ea2423863c4d49f3",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_str:directory",
+          "id": "cadf5f717232ac06613cc92c7f0681230",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_str:file",
+          "id": "c42830e70b9aaaad7f4c286411c72b850",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_float:directory",
+          "id": "c4f88660f58aeab0ffd777d9ad6008fe1",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_float:file",
+          "id": "cabe04366dd66866bf98c9831d5cb888e",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_int:directory",
+          "id": "c511c5c0785210018446424c5da7691b6",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_int:file",
+          "id": "c7382aaeef70e522ad938621b2a653eca",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_list:directory",
+          "id": "c4ec5025f38c79467aec2fa9ca6475de0",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_list:file",
+          "id": "cfea67ccb0a1397005000270a1c813953",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_str:directory",
+          "id": "c63abe49c023916b11f9d8c4e934634e6",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_str:file",
+          "id": "c814795e649bc1d2ccf77241c95d28f1c",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "syntax_brace:directory",
+          "id": "cb7485bd6a8e9928e9a7c9b3da5295c1a",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:file",
+          "id": "c19c58423727125f2d47b54f0bee3e0f5",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:directory",
+          "id": "cb973625d30c5d7116b657582b32e9073",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:file",
+          "id": "c0477439f64e49a75ee734b3a803a1310",
+          "verdict": "pass"
+        }
+      ]
+    },
+    {
+      "candidate": "wrong_file",
+      "expected_semantic_control": "fail",
+      "isolated_diagnostic_semantics": "fail",
+      "matches": true,
+      "cases": [
+        {
+          "case_id": "nonmapping_float:directory",
+          "id": "c8e183475f5f3749a791f910e98e80eb1",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_float:file",
+          "id": "c81346016b20bd856982caade297b3dab",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:directory",
+          "id": "c3941389ee7ac0db6119398b1ec4d6f66",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_int:file",
+          "id": "cbe61a5a9a81cb2af9e18319170c5ebad",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:directory",
+          "id": "cd724231e87ae01193172435a5c8c028d",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_list:file",
+          "id": "ca2b686125d3332324c6e6dd0e587dea2",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:directory",
+          "id": "c8595978141913b2448a2cd16f46ac976",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_str:file",
+          "id": "c6035901ba2aeff7bfb7da693921fac7c",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:directory",
+          "id": "c1dc9abe0c7a0f0ee485f95691dcc7bbc",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:file",
+          "id": "c869aee676b76b1797ee645b1253e449a",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:directory",
+          "id": "c7e661dbe5270b96000686e89787803e5",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:file",
+          "id": "cd14d9d98ee69a19819f5f3486ac6a1e0",
+          "verdict": "pass"
+        }
+      ]
+    },
+    {
+      "candidate": "wr_zip_misalign",
+      "expected_semantic_control": "fail",
+      "isolated_diagnostic_semantics": "fail",
+      "matches": true,
+      "cases": [
+        {
+          "case_id": "falsy_bool:directory",
+          "id": "c67fd1f22ac7078163adce18d59f934be",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_bool:file",
+          "id": "c295a095153a6b8b3b7ae47c179e230d0",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:directory",
+          "id": "c21e185a23ff3182d3832ea7398f4e2c6",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_float:file",
+          "id": "c563c1c2ddfb7c54048d57eed292b0515",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:directory",
+          "id": "cf50a80cc64b24a4e1551124d77ecc8d8",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_int:file",
+          "id": "c8e3d6f757de709d88827855114f21afe",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:directory",
+          "id": "c066e7b4ae8d28cc9b95ef53a018911e7",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_list:file",
+          "id": "c2ebda1915e8f0a1d4e2f6d4c6626b83d",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:directory",
+          "id": "c98b50a4bf7bde7c09bc6f28dd2e55eb4",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_str:file",
+          "id": "c0b1246e3e91f7e8599e75c4d9874bb55",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:directory",
+          "id": "c1b379468833a21e592610066be52e1fc",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_float:file",
+          "id": "c81346016b20bd856982caade297b3dab",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:directory",
+          "id": "c1c21c7366a2a5beebf5d8c0bb9f3d7b7",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_int:file",
+          "id": "cbe61a5a9a81cb2af9e18319170c5ebad",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:directory",
+          "id": "c098081620deaa99bb7cd0b5eb984e8f5",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_list:file",
+          "id": "ca2b686125d3332324c6e6dd0e587dea2",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:directory",
+          "id": "cf96889cc013e10e49807bf172028ed63",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_str:file",
+          "id": "c6035901ba2aeff7bfb7da693921fac7c",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:directory",
+          "id": "c1dc9abe0c7a0f0ee485f95691dcc7bbc",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:file",
+          "id": "c869aee676b76b1797ee645b1253e449a",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:directory",
+          "id": "c7e661dbe5270b96000686e89787803e5",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:file",
+          "id": "cd14d9d98ee69a19819f5f3486ac6a1e0",
+          "verdict": "pass"
+        }
+      ]
+    },
+    {
+      "candidate": "wr_zip_misalign_orempty",
+      "expected_semantic_control": "fail",
+      "isolated_diagnostic_semantics": "fail",
+      "matches": true,
+      "cases": [
+        {
+          "case_id": "nonmapping_float:directory",
+          "id": "c1b379468833a21e592610066be52e1fc",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_float:file",
+          "id": "c81346016b20bd856982caade297b3dab",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:directory",
+          "id": "c1c21c7366a2a5beebf5d8c0bb9f3d7b7",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_int:file",
+          "id": "cbe61a5a9a81cb2af9e18319170c5ebad",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:directory",
+          "id": "c098081620deaa99bb7cd0b5eb984e8f5",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_list:file",
+          "id": "ca2b686125d3332324c6e6dd0e587dea2",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:directory",
+          "id": "cf96889cc013e10e49807bf172028ed63",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_str:file",
+          "id": "c6035901ba2aeff7bfb7da693921fac7c",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:directory",
+          "id": "c1dc9abe0c7a0f0ee485f95691dcc7bbc",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:file",
+          "id": "c869aee676b76b1797ee645b1253e449a",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:directory",
+          "id": "c7e661dbe5270b96000686e89787803e5",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:file",
+          "id": "cd14d9d98ee69a19819f5f3486ac6a1e0",
+          "verdict": "pass"
+        }
+      ]
+    },
+    {
+      "candidate": "wr_all_files",
+      "expected_semantic_control": "fail",
+      "isolated_diagnostic_semantics": "fail",
+      "matches": true,
+      "cases": [
+        {
+          "case_id": "falsy_bool:directory",
+          "id": "c61c6fb2bccab08024dc2b9ead846e995",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_bool:file",
+          "id": "cdd805dc9b79ae2cd09415bce23dfd30a",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:directory",
+          "id": "c08990ac66354601f04614c21d33de66b",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_float:file",
+          "id": "c02e82e5c28ebbb3274824e0ad5ebaff6",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:directory",
+          "id": "cc4416674d29f2e9c1c83ecfa70fea4ac",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_int:file",
+          "id": "ceaacdf76bf8ffd1151286890ffc280cf",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:directory",
+          "id": "c64d496592ab23b25b902e7c05ec136d9",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_list:file",
+          "id": "c4a49fb1a48d8b93e49174acf529d43d7",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:directory",
+          "id": "c761b7a8e861c8627994f365bd0ea5148",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_str:file",
+          "id": "c22fa6d31aa910e5a25ea77e3ce25fa54",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:directory",
+          "id": "caa2947ca236292246b5073e96673134c",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_float:file",
+          "id": "c13d32b1dcc09b56197c026b2d0960400",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:directory",
+          "id": "c640bc6557f009cd23c0e431c4ad92ced",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_int:file",
+          "id": "cda1876e9e970050e5fb00ab09d67a756",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:directory",
+          "id": "cfe966fce53ec01706761ecab69f15593",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_list:file",
+          "id": "cd532d0048a4b5381e6805aac4e0c233a",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:directory",
+          "id": "c04cb18b18a0ff0b9058140c2e565abbe",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_str:file",
+          "id": "c92320797be5d14c5e7484983616ab552",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:directory",
+          "id": "cadabc1537b93892e926280dc592468da",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "syntax_brace:file",
+          "id": "cd2e6d44f04c43596dcbb5975f50cc110",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:directory",
+          "id": "c0c81a4b22d959a64befefbfcccca4f17",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "syntax_tab:file",
+          "id": "c02dae1b3f1ae78991f829845de6a81f3",
+          "verdict": "pass"
+        }
+      ]
+    },
+    {
+      "candidate": "wr_dir_named",
+      "expected_semantic_control": "fail",
+      "isolated_diagnostic_semantics": "fail",
+      "matches": true,
+      "cases": [
+        {
+          "case_id": "falsy_bool:directory",
+          "id": "cd39313a9b22d2ac4f79d455804b97340",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_bool:file",
+          "id": "c45f46e8a93ad67f974e4534d2e96287f",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:directory",
+          "id": "ca0477dbe71bedcf04b8fe47744db205f",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_float:file",
+          "id": "cbcbe0e0abcddfdd70dc74ce93393ffc0",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:directory",
+          "id": "c5648f7e091739845cb5780675d3b37f3",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_int:file",
+          "id": "cb91a9bf1c9a0435417dd01106c770307",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:directory",
+          "id": "c3d6504410837439bb55bfab480fad14c",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_list:file",
+          "id": "c2ca901ca4b8bc01c53faf650c18ae866",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:directory",
+          "id": "c5b2ac7cb1bf7f141dfc0575866137566",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_str:file",
+          "id": "cb927427a9751571cbe120cab89094ce2",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:directory",
+          "id": "caac9061f212e26f0de53699756955492",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_float:file",
+          "id": "c6b02273144a9e866c4fbb48f9b60d9a9",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:directory",
+          "id": "c09a73d1a0b7419032e35faee9dd7201d",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_int:file",
+          "id": "ceb5dc4a664d555d85f23ed0138b98e38",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:directory",
+          "id": "cafb877f1deffa1d06b79869aa1fb7d82",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_list:file",
+          "id": "c2ba18713d5c2c00c0cded2cbfeba81c7",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:directory",
+          "id": "c9c4318a0e8b5076aab343afa7350322f",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_str:file",
+          "id": "c4e66f224bb932b5c86f3c697522b8bf3",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:directory",
+          "id": "cf63dc6c5e574089378ab8f0b0ce765b5",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "syntax_brace:file",
+          "id": "cedc6867d3991575e14f3e0ee577527a4",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:directory",
+          "id": "c7e242b2ef2e3351ee0c0e60c6aac3d67",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "syntax_tab:file",
+          "id": "cb2487b7d4adcee1ec57e4e4445bb6d33",
+          "verdict": "pass"
+        }
+      ]
+    },
+    {
+      "candidate": "noreason",
+      "expected_semantic_control": "fail",
+      "isolated_diagnostic_semantics": "fail",
+      "matches": true,
+      "cases": [
+        {
+          "case_id": "falsy_bool:directory",
+          "id": "c925f736dfc97ed3f11eda100e772a75f",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_bool:file",
+          "id": "c4270c4e6b949843bf08c32cf0e0aa06c",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_float:directory",
+          "id": "ca54e1c56229fae7d280e283d50c0b189",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_float:file",
+          "id": "c6da8480e0b1250f860476410e3df0b3d",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_int:directory",
+          "id": "cd0f43867af18644a0b0b3795e6fce8bc",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_int:file",
+          "id": "c68a01140f51922c37d7f53cc6956189c",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_list:directory",
+          "id": "cb6528153e84c38497eb8aa2c8f8a574c",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_list:file",
+          "id": "c013d3ab6a7e4c9b3b6c7fd4473b80d21",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_str:directory",
+          "id": "c3be3470dd2b44cca423b6bea1e4329c6",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "falsy_str:file",
+          "id": "c791b0ee57dfbfe215953165eb61c4aec",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_float:directory",
+          "id": "c1a2dca3088ba0f7c11f7b73b501a4572",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_float:file",
+          "id": "c2e127808628927346eb3254352954842",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_int:directory",
+          "id": "ce7ae301bdb77f14b31d24afb148c13cb",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_int:file",
+          "id": "c66f88b55bb422ec5ac20da8a50df7084",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_list:directory",
+          "id": "c0a293da3c5fa1a54214d16f4060c9e3e",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_list:file",
+          "id": "c4e0220f1f7bc8da330e1e1f541f62e87",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_str:directory",
+          "id": "ca85afa7a940c813a4bd2f05a2dc65bb8",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "nonmapping_str:file",
+          "id": "c2d1ad07ebf1c7cb6907bae45d4baf2a3",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "syntax_brace:directory",
+          "id": "cd431359ef3499c4cb7180d362cb2aed1",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "syntax_brace:file",
+          "id": "cf2232e96d3e619e04fe35e32b4c36b9c",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "syntax_tab:directory",
+          "id": "c4f7186e3f02188b6d04fa85915979408",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "syntax_tab:file",
+          "id": "cccc5a63efa74e0255234433ee015f6fa",
+          "verdict": "fail"
+        }
+      ]
+    },
+    {
+      "candidate": "parsererror_only",
+      "expected_semantic_control": "fail",
+      "isolated_diagnostic_semantics": "fail",
+      "matches": true,
+      "cases": [
+        {
+          "case_id": "falsy_bool:directory",
+          "id": "c1e82f08c2238c8ac2c23446c0a23436e",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_bool:file",
+          "id": "c295a095153a6b8b3b7ae47c179e230d0",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:directory",
+          "id": "c6f82d8087c706385bf45a5c0df1f1c04",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:file",
+          "id": "c563c1c2ddfb7c54048d57eed292b0515",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:directory",
+          "id": "cb83c67f7088676f24370ed7de3767f06",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:file",
+          "id": "c8e3d6f757de709d88827855114f21afe",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:directory",
+          "id": "c9ddeb1af2d75155630d6c9ddf3901506",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:file",
+          "id": "c2ebda1915e8f0a1d4e2f6d4c6626b83d",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:directory",
+          "id": "c418d2c6c3f034d14eb6c1fddc93a2488",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:file",
+          "id": "c0b1246e3e91f7e8599e75c4d9874bb55",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:directory",
+          "id": "cd38afb911e051d3b4037de2785b0fcec",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:file",
+          "id": "c81346016b20bd856982caade297b3dab",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:directory",
+          "id": "ca5dfaf9fda4127d4bf5bf543d6a94194",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:file",
+          "id": "cbe61a5a9a81cb2af9e18319170c5ebad",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:directory",
+          "id": "c008cced6f5d5061fa38bf40f0bc841d1",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:file",
+          "id": "ca2b686125d3332324c6e6dd0e587dea2",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:directory",
+          "id": "c7300c38708e5504c419d89b662a3d3ea",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:file",
+          "id": "c6035901ba2aeff7bfb7da693921fac7c",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:directory",
+          "id": "c1dc9abe0c7a0f0ee485f95691dcc7bbc",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:file",
+          "id": "c869aee676b76b1797ee645b1253e449a",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:directory",
+          "id": "cebe0a34d55fa9be3b7b5a78de5e80453",
+          "verdict": "fail"
+        },
+        {
+          "case_id": "syntax_tab:file",
+          "id": "ce9df28b73f5042cde22e37370c7c21b1",
+          "verdict": "fail"
+        }
+      ]
+    },
+    {
+      "candidate": "import_swallow",
+      "expected_semantic_control": "pass",
+      "isolated_diagnostic_semantics": "pass",
+      "matches": true,
+      "cases": [
+        {
+          "case_id": "falsy_bool:directory",
+          "id": "c1e82f08c2238c8ac2c23446c0a23436e",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_bool:file",
+          "id": "c295a095153a6b8b3b7ae47c179e230d0",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:directory",
+          "id": "c6f82d8087c706385bf45a5c0df1f1c04",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:file",
+          "id": "c563c1c2ddfb7c54048d57eed292b0515",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:directory",
+          "id": "cb83c67f7088676f24370ed7de3767f06",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:file",
+          "id": "c8e3d6f757de709d88827855114f21afe",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:directory",
+          "id": "c9ddeb1af2d75155630d6c9ddf3901506",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:file",
+          "id": "c2ebda1915e8f0a1d4e2f6d4c6626b83d",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:directory",
+          "id": "c418d2c6c3f034d14eb6c1fddc93a2488",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:file",
+          "id": "c0b1246e3e91f7e8599e75c4d9874bb55",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:directory",
+          "id": "cd38afb911e051d3b4037de2785b0fcec",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:file",
+          "id": "c81346016b20bd856982caade297b3dab",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:directory",
+          "id": "ca5dfaf9fda4127d4bf5bf543d6a94194",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:file",
+          "id": "cbe61a5a9a81cb2af9e18319170c5ebad",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:directory",
+          "id": "c008cced6f5d5061fa38bf40f0bc841d1",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:file",
+          "id": "ca2b686125d3332324c6e6dd0e587dea2",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:directory",
+          "id": "c7300c38708e5504c419d89b662a3d3ea",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:file",
+          "id": "c6035901ba2aeff7bfb7da693921fac7c",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:directory",
+          "id": "c1dc9abe0c7a0f0ee485f95691dcc7bbc",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:file",
+          "id": "c869aee676b76b1797ee645b1253e449a",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:directory",
+          "id": "c7e661dbe5270b96000686e89787803e5",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:file",
+          "id": "cd14d9d98ee69a19819f5f3486ac6a1e0",
+          "verdict": "pass"
+        }
+      ]
+    },
+    {
+      "candidate": "rv_import_warn",
+      "expected_semantic_control": "pass",
+      "isolated_diagnostic_semantics": "pass",
+      "matches": true,
+      "cases": [
+        {
+          "case_id": "falsy_bool:directory",
+          "id": "c1e82f08c2238c8ac2c23446c0a23436e",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_bool:file",
+          "id": "c295a095153a6b8b3b7ae47c179e230d0",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:directory",
+          "id": "c6f82d8087c706385bf45a5c0df1f1c04",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:file",
+          "id": "c563c1c2ddfb7c54048d57eed292b0515",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:directory",
+          "id": "cb83c67f7088676f24370ed7de3767f06",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:file",
+          "id": "c8e3d6f757de709d88827855114f21afe",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:directory",
+          "id": "c9ddeb1af2d75155630d6c9ddf3901506",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:file",
+          "id": "c2ebda1915e8f0a1d4e2f6d4c6626b83d",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:directory",
+          "id": "c418d2c6c3f034d14eb6c1fddc93a2488",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:file",
+          "id": "c0b1246e3e91f7e8599e75c4d9874bb55",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:directory",
+          "id": "cd38afb911e051d3b4037de2785b0fcec",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:file",
+          "id": "c81346016b20bd856982caade297b3dab",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:directory",
+          "id": "ca5dfaf9fda4127d4bf5bf543d6a94194",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:file",
+          "id": "cbe61a5a9a81cb2af9e18319170c5ebad",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:directory",
+          "id": "c008cced6f5d5061fa38bf40f0bc841d1",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:file",
+          "id": "ca2b686125d3332324c6e6dd0e587dea2",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:directory",
+          "id": "c7300c38708e5504c419d89b662a3d3ea",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:file",
+          "id": "c6035901ba2aeff7bfb7da693921fac7c",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:directory",
+          "id": "c1dc9abe0c7a0f0ee485f95691dcc7bbc",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:file",
+          "id": "c869aee676b76b1797ee645b1253e449a",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:directory",
+          "id": "c7e661dbe5270b96000686e89787803e5",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:file",
+          "id": "cd14d9d98ee69a19819f5f3486ac6a1e0",
+          "verdict": "pass"
+        }
+      ]
+    },
+    {
+      "candidate": "chain_cause",
+      "expected_semantic_control": "pass",
+      "isolated_diagnostic_semantics": "pass",
+      "matches": true,
+      "cases": [
+        {
+          "case_id": "falsy_bool:directory",
+          "id": "ce74a43f1c3e8d82abbd8d0ec2aca6e0c",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_bool:file",
+          "id": "c0d3dfa326699af96c2757244946c7466",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:directory",
+          "id": "c48cc1c45426e7bd97cd60bb5c3fdaad3",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:file",
+          "id": "cd65b10eec29c3c1088fe6ea59dbcea25",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:directory",
+          "id": "c78b8133139623a456959f011dfd889f3",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:file",
+          "id": "cbdc3b7452a6195974e71e19de64c534f",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:directory",
+          "id": "c4d0a47b757ad84b21aeac1f7b3450073",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:file",
+          "id": "c0c3c32942f17fc5c92079394388b2af1",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:directory",
+          "id": "c740642a5782bf2a03a3a7732d5800def",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:file",
+          "id": "cc0a8013f435563d965490346b526e51a",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:directory",
+          "id": "c19e83d035d69395be0f4660489fda015",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:file",
+          "id": "cd085025e1e1aa22aaf9c8cb4cebf6237",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:directory",
+          "id": "c657fdb84092fc8cb0bad92b4544e3b2e",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:file",
+          "id": "cb9e441010b80d1f6e729714b000bfa89",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:directory",
+          "id": "cd60ecedb1b57ddc4d3c6dbc1f9678379",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:file",
+          "id": "c19d16e6f8e86d06a2d82e4b0b3549fe2",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:directory",
+          "id": "c64280f1390c46301f035c98ef1c531d5",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:file",
+          "id": "c75b130ae24b036b4d3f407630491386e",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:directory",
+          "id": "c60dc353dd92be87de564ff8fe06deb8e",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:file",
+          "id": "ca41bb84332b04582252ce0b3ab3105dc",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:directory",
+          "id": "c4fddc8b44e6bb19986099e1c920458f1",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:file",
+          "id": "ccf0c05bef68cc28a6051773ce539de4e",
+          "verdict": "pass"
+        }
+      ]
+    },
+    {
+      "candidate": "gr_attr_wrap",
+      "expected_semantic_control": "pass",
+      "isolated_diagnostic_semantics": "pass",
+      "matches": true,
+      "cases": [
+        {
+          "case_id": "nonmapping_float:directory",
+          "id": "cf43a223510d39a39167e68b5410db615",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:file",
+          "id": "c0fe85915b3f179c3cc47c6fcfdefb1b1",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:directory",
+          "id": "c573b82e3de5edbc384dc53361dadb526",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:file",
+          "id": "c42891b0803e70354fea269eff54d12e9",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:directory",
+          "id": "cb7e53971305facec747503791ab7dc28",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:file",
+          "id": "cb59e4ff40c1e56feb7f8f832c066fc95",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:directory",
+          "id": "c04572eb827bb5187a95cdab0e10d3c07",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:file",
+          "id": "c296d0ca6e050e0dea907dc71e9d7208c",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:directory",
+          "id": "c941a3e9b2643cdfe5568980b87ab9da0",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:file",
+          "id": "cacd66a0f21544628ed0b018d31a231a5",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:directory",
+          "id": "c9924eddd7bf9d47b0c067cbb0ded3d60",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:file",
+          "id": "c0fb444272df5313ef902a71f557de13f",
+          "verdict": "pass"
+        }
+      ]
+    },
+    {
+      "candidate": "ok_aggregate",
+      "expected_semantic_control": "pass",
+      "isolated_diagnostic_semantics": "pass",
+      "matches": true,
+      "cases": [
+        {
+          "case_id": "falsy_bool:directory",
+          "id": "c99f8b4ee9c96b23b260dd02b695dbfcb",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_bool:file",
+          "id": "cd37e6cababc5388bbc5dc9e3ae9b6f8f",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:directory",
+          "id": "c4abcfd7ddd73904880a3a877ea42a5f9",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:file",
+          "id": "ca31d132c5017a0f4209b7e96b3ea21e5",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:directory",
+          "id": "ccf55efe03fadd7c7e6d0428b51a4ab6e",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:file",
+          "id": "c6c36056faed66faceb5feac3e18df613",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:directory",
+          "id": "c082a2a4009a67e43bd4e32820b35c258",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:file",
+          "id": "c9968f2c2808c4fa4b559aa7b84876573",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:directory",
+          "id": "c81153e1dc13fdfcfd251bb2f4364e021",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:file",
+          "id": "cfeac757b3faea68529b4412e87a91e79",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:directory",
+          "id": "c6ee19b99e7a771fda9e92b15e1efe4d7",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:file",
+          "id": "c91ae68b31b9e77513186ee0e67fd2f89",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:directory",
+          "id": "c5885c0c99c36d66fa913ff060dea2bf1",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:file",
+          "id": "c5d69b85787143f63b939f2bd3cbe5e5b",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:directory",
+          "id": "c5a13afc8321c13c6d4d7b40d6af5b5b4",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:file",
+          "id": "ceb38865a6619ef1fbe8490aa45d75325",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:directory",
+          "id": "c79aeb202c5c1daae8bafcc2406ffecff",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:file",
+          "id": "caa5de7f427b0b4bd36f044524c659b74",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:directory",
+          "id": "cfd2be798f0c58e8949c8bcf89bb748c5",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:file",
+          "id": "c88fe7a5b3c2323b73c732ec7a3d582b0",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:directory",
+          "id": "c2c313190162072a138a54a19dc06c394",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:file",
+          "id": "cf9e6fd4be851351e40a85f15369ffee0",
+          "verdict": "pass"
+        }
+      ]
+    },
+    {
+      "candidate": "ok_object_value",
+      "expected_semantic_control": "pass",
+      "isolated_diagnostic_semantics": "pass",
+      "matches": true,
+      "cases": [
+        {
+          "case_id": "falsy_bool:directory",
+          "id": "c6f018d79591fcc7db12de4870b5b5351",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_bool:file",
+          "id": "c287e4720ea42f98679f31a827a69ef22",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:directory",
+          "id": "c166d9ea0be6d6fd38da0fd19aa9aa491",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:file",
+          "id": "c5470202d666bcc3f97964b86a0aec664",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:directory",
+          "id": "c39a558bd92d3862b753d38c86f49ce16",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:file",
+          "id": "c11da1caa9e207ff4f0c3a20795747bf4",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:directory",
+          "id": "c74867142bec5290382bdd32b24f4a535",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:file",
+          "id": "c2d271c44492c274e7b8e88dfc36eaedf",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:directory",
+          "id": "ca3564b6d7daa7486fe373ca60a8354e5",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:file",
+          "id": "ca063828953dd906174e15f00b438dd3f",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:directory",
+          "id": "c2de78657000950fa826e34b3f41aab67",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:file",
+          "id": "cd22bb33fe59fa45e3bf459e9d790b6d6",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:directory",
+          "id": "c4b25b9728844f9935a94de69acc59393",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:file",
+          "id": "cc69d31d99c7ce0f683fc255a1f940103",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:directory",
+          "id": "c80463a4b8630eb792cb4eee33ab8728d",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:file",
+          "id": "c2e04245aeef147c1f593ddc925c9dfeb",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:directory",
+          "id": "cef5fa9b7c29015424ca0e13c112c0d20",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:file",
+          "id": "c58d14cbbda0aed9c9b1a4e9d6448e76b",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:directory",
+          "id": "ce231b10670d19bc08464d079c0e6cd54",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:file",
+          "id": "c1f928d550cb5da87f2527acfcf048176",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:directory",
+          "id": "cf44983487f47008837cca9c9c5575c83",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:file",
+          "id": "c673dda0d3a6fa902cede0b4888da58c2",
+          "verdict": "pass"
+        }
+      ]
+    },
+    {
+      "candidate": "ok_map_settings",
+      "expected_semantic_control": "pass",
+      "isolated_diagnostic_semantics": "pass",
+      "matches": true,
+      "cases": [
+        {
+          "case_id": "falsy_bool:directory",
+          "id": "c729cea39a495eab25588a7d716f347d9",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_bool:file",
+          "id": "ccceacc843953674aadf9fe58f9b43a6a",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:directory",
+          "id": "c82f1053895659ff1f86ccf2f03125720",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:file",
+          "id": "c7025092ddc6abf00bf8b7e404f2cf219",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:directory",
+          "id": "c0791d205002f636fbe308d7b6669b790",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:file",
+          "id": "c799b8c0e920434b3d7b3661500b44247",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:directory",
+          "id": "c3458ab33399bf521bb5eb8862e228aa3",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:file",
+          "id": "c1e18128815388b76299d2aa4e0e754e0",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:directory",
+          "id": "c422cc5a5b991870c43ade51019859154",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:file",
+          "id": "cdff5af611e448f6f0a3bfea3828a85ef",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:directory",
+          "id": "cfc959810413f57452608b012f5ca1ada",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:file",
+          "id": "c4bee065682c4761cb8dff3cc84dc3d0b",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:directory",
+          "id": "cdbfa8f47eb509c0d3c2c5ec48ead0c77",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:file",
+          "id": "c2846fed6257b9509d08c7d606ae13010",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:directory",
+          "id": "c2d781a9a9c353e86614705239f976b5b",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:file",
+          "id": "ccd36169e1b7059a59fdabf04efe69edf",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:directory",
+          "id": "c0a7e0f3768028d2d7f774af00766d191",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:file",
+          "id": "cf580e17c682352d611b5dffce8f9e0a7",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:directory",
+          "id": "ca73d9c7203b2d38158c63e5950d5df42",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:file",
+          "id": "c014c87c816330a331ad72892037f292e",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:directory",
+          "id": "cb9d6a0db4482bab4fd6d7bcff52ed689",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:file",
+          "id": "caf2f039c2fde7599662dd0919b6129e3",
+          "verdict": "pass"
+        }
+      ]
+    },
+    {
+      "candidate": "ok_dictionary_typeerror",
+      "expected_semantic_control": "pass",
+      "isolated_diagnostic_semantics": "pass",
+      "matches": true,
+      "cases": [
+        {
+          "case_id": "falsy_bool:directory",
+          "id": "ce6fa048dcbbc1ee1b7cd0b092a0722d5",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_bool:file",
+          "id": "c122f4fb7f1b401acae34d8ade0cf0203",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:directory",
+          "id": "c39b2ae2a307688822a281f7f4327ebb6",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:file",
+          "id": "c06539d3e11ef2abece58788a4c3c3c96",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:directory",
+          "id": "c6cff7812c7098f2a449eb22ed276d2c4",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:file",
+          "id": "c9ba9f959ddad27e9ed87fbafe3fa6f74",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:directory",
+          "id": "c3bc129e11eea1b59066a0d0e9ddb60b7",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:file",
+          "id": "c5d033b27cf158c6bd1d6d8795d83b9f1",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:directory",
+          "id": "c4d93b038ca860b41d0c2ea558f3f75dd",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:file",
+          "id": "c9ada0cbd34e2bc488108e2df07f7a166",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:directory",
+          "id": "c0b99a077296a0a19e6b6346728c01906",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:file",
+          "id": "c54d77fd81c80db6d8b688c1835e7c8ae",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:directory",
+          "id": "c7ecf62ea6e5ab0d19f2dcd255124791d",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:file",
+          "id": "ca8595a07c0418fcb8eb78c1330ab989a",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:directory",
+          "id": "c6b559cd0b6a229ea942a58f8ee079da3",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:file",
+          "id": "c8f37c2eca40dd88cd6d4dc07ed574181",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:directory",
+          "id": "c6c448ce4541554aa45d4b3f4d1a0bb56",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:file",
+          "id": "cb1717b09ff788629972486143f942344",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:directory",
+          "id": "c11577187511bda22474b0c2ef18440c7",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:file",
+          "id": "c3d5f32fa205292b0b3508eb818960de8",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:directory",
+          "id": "c28c0ae8bd07fcbb91fa77f3d15eb2610",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:file",
+          "id": "c6e9a6f08a4912610c779c16de77d0ff2",
+          "verdict": "pass"
+        }
+      ]
+    },
+    {
+      "candidate": "ok_yamlerror_subclass",
+      "expected_semantic_control": "pass",
+      "isolated_diagnostic_semantics": "pass",
+      "matches": true,
+      "cases": [
+        {
+          "case_id": "falsy_bool:directory",
+          "id": "c5d5efd710b36c0aeaa9e5f6c0f8c750b",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_bool:file",
+          "id": "c95318936a19104c2c0caea56b5460a99",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:directory",
+          "id": "ceb31eb73255c5d116a933c094967581f",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:file",
+          "id": "c7f6bad98ac965e7c8881da1f3410f769",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:directory",
+          "id": "cf4b8dd196531c8bb69f27d00220e1d05",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:file",
+          "id": "c6af976e8e32e8486bd51b90199a469fe",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:directory",
+          "id": "cf513bfabf2dda5fbb89ebb459678cc3d",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:file",
+          "id": "cab5f05b556c8d962a4ff5f4f21daa67a",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:directory",
+          "id": "cb2f50b100387e8fa9191ac5f34ec9d50",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:file",
+          "id": "c007701a1afd29817661d21739a9c2d64",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:directory",
+          "id": "cb2b0fad2282968d7f094e161e1438150",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:file",
+          "id": "c2566a909ae792fe911777f2f71e4a137",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:directory",
+          "id": "c3eee0df7640ba57508a75f770f9fd9bd",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:file",
+          "id": "c34bfdbb0dee403530652b6259f2833e5",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:directory",
+          "id": "c6063fbdeb0149e3c222c9b46c001ae25",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:file",
+          "id": "cefa9679621d8f68abcdfde3619f64efc",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:directory",
+          "id": "c25dc7796e1bd45e3d4cc2db6629779f4",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:file",
+          "id": "cdd432ff816625aa330fc8bf3d94f778b",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:directory",
+          "id": "cb72669536e783f9133dfbbd3f0d6c283",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:file",
+          "id": "c481a3cbd1040a0e76af76f985d93758e",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:directory",
+          "id": "ca2621487a3bc63fdf913a10128b40f66",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:file",
+          "id": "cd856b43dab9af3178157587ddab4ba68",
+          "verdict": "pass"
+        }
+      ]
+    },
+    {
+      "candidate": "gr_csafe_loader",
+      "expected_semantic_control": "pass",
+      "isolated_diagnostic_semantics": "pass",
+      "matches": true,
+      "cases": [
+        {
+          "case_id": "falsy_bool:directory",
+          "id": "c1e82f08c2238c8ac2c23446c0a23436e",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_bool:file",
+          "id": "c295a095153a6b8b3b7ae47c179e230d0",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:directory",
+          "id": "c6f82d8087c706385bf45a5c0df1f1c04",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_float:file",
+          "id": "c563c1c2ddfb7c54048d57eed292b0515",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:directory",
+          "id": "cb83c67f7088676f24370ed7de3767f06",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_int:file",
+          "id": "c8e3d6f757de709d88827855114f21afe",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:directory",
+          "id": "c9ddeb1af2d75155630d6c9ddf3901506",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_list:file",
+          "id": "c2ebda1915e8f0a1d4e2f6d4c6626b83d",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:directory",
+          "id": "c418d2c6c3f034d14eb6c1fddc93a2488",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "falsy_str:file",
+          "id": "c0b1246e3e91f7e8599e75c4d9874bb55",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:directory",
+          "id": "cd38afb911e051d3b4037de2785b0fcec",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:file",
+          "id": "c81346016b20bd856982caade297b3dab",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:directory",
+          "id": "ca5dfaf9fda4127d4bf5bf543d6a94194",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:file",
+          "id": "cbe61a5a9a81cb2af9e18319170c5ebad",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:directory",
+          "id": "c008cced6f5d5061fa38bf40f0bc841d1",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:file",
+          "id": "ca2b686125d3332324c6e6dd0e587dea2",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:directory",
+          "id": "c7300c38708e5504c419d89b662a3d3ea",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:file",
+          "id": "c6035901ba2aeff7bfb7da693921fac7c",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:directory",
+          "id": "c4c62990815fd4d8fff5fa114cbf62311",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:file",
+          "id": "cdb766bb1d8b845453d668eafba4a3bf3",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:directory",
+          "id": "c8675e88f445ae1ae06e9db2eced0d6a3",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:file",
+          "id": "cf9e7269d53f985e7071f213d0466cf82",
+          "verdict": "pass"
+        }
+      ]
+    },
+    {
+      "candidate": "ok_falsy_empty",
+      "expected_semantic_control": "pass",
+      "isolated_diagnostic_semantics": "pass",
+      "matches": true,
+      "cases": [
+        {
+          "case_id": "nonmapping_float:directory",
+          "id": "c4eabfe8a6933bb057f6bd79b92d20d58",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_float:file",
+          "id": "cbea936f8cbb73f3a5dcaa399db44bd34",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:directory",
+          "id": "cb23d9b16a02f5fdc8e66ed7a1ff17f6f",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_int:file",
+          "id": "cb0b4f58bcba7bfacbe3bb3cc74f30dba",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:directory",
+          "id": "cfabbf93df9eb8a237ab45dadbbe5ef16",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_list:file",
+          "id": "c67c3b8ac097f645149fe645f3c15e1f8",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:directory",
+          "id": "c97a282c3120aee196d23d2cb449a6ab2",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "nonmapping_str:file",
+          "id": "c7fcf4a85f06f881f2b25d6135c8aa0f9",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:directory",
+          "id": "ccbe9fcad7ee271a395359a64c69bb457",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_brace:file",
+          "id": "c76b1fc744a1b5f36c0cb0d9c7cfc46a6",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:directory",
+          "id": "c662bc7494a47b2df751a71dbe6e22705",
+          "verdict": "pass"
+        },
+        {
+          "case_id": "syntax_tab:file",
+          "id": "cd43103b6606450112ca3f90c56a9e514",
+          "verdict": "pass"
+        }
+      ]
+    }
+  ],
+  "heldout_comparisons": [
+    {
+      "id": "f3d9272c681a4eb1a0658bf413de097c",
+      "expected": "pass",
+      "actual": "pass",
+      "matches": true
+    },
+    {
+      "id": "8ae405bfe4d94ac398b412c51f72806d",
+      "expected": "fail",
+      "actual": "fail",
+      "matches": true
+    },
+    {
+      "id": "d058a0c7348744be9601edfaa529cb82",
+      "expected": "pass",
+      "actual": "pass",
+      "matches": true
+    },
+    {
+      "id": "39fb91404b8d4f31860ef0a7f927ce55",
+      "expected": "pass",
+      "actual": "pass",
+      "matches": true
+    },
+    {
+      "id": "c01b365928cf45adba90d7e918fe4273",
+      "expected": "fail",
+      "actual": "fail",
+      "matches": true
+    },
+    {
+      "id": "517364e0afb5487d9c02641df75be8a9",
+      "expected": "pass",
+      "actual": "pass",
+      "matches": true
+    },
+    {
+      "id": "af873249fdc34e309bb76828c5e10da4",
+      "expected": "pass",
+      "actual": "pass",
+      "matches": true
+    },
+    {
+      "id": "906ef8c146a340f6b15f24d602a0c3e7",
+      "expected": "fail",
+      "actual": "fail",
+      "matches": true
+    },
+    {
+      "id": "1edaf659737d46d4a1625fb0328e97c0",
+      "expected": "fail",
+      "actual": "fail",
+      "matches": true
+    },
+    {
+      "id": "75cad90618434c4f8f806299bb8ed731",
+      "expected": "fail",
+      "actual": "fail",
+      "matches": true
+    },
+    {
+      "id": "e608af291ec04b858c6dcb4285749e13",
+      "expected": "pass",
+      "actual": "pass",
+      "matches": true
+    },
+    {
+      "id": "b94620d813ea4817932f016ace574b0d",
+      "expected": "pass",
+      "actual": "pass",
+      "matches": true
+    },
+    {
+      "id": "2099bd845d924ea68a37c610ff35e78b",
+      "expected": "fail",
+      "actual": "fail",
+      "matches": true
+    },
+    {
+      "id": "dc64ea61795e434aa8397b152063cf8d",
+      "expected": "fail",
+      "actual": "fail",
+      "matches": true
+    },
+    {
+      "id": "4c2e60987ff54fd5a30519df08bce174",
+      "expected": "pass",
+      "actual": "pass",
+      "matches": true
+    },
+    {
+      "id": "66f21807b4624e30b940ec157d9faac3",
+      "expected": "fail",
+      "actual": "fail",
+      "matches": true
+    },
+    {
+      "id": "0d51e24989c7476ab59f2138067cbdf4",
+      "expected": "uncertain",
+      "actual": "uncertain",
+      "matches": true
+    },
+    {
+      "id": "fa4071bd97ae485bb327c80046e5296f",
+      "expected": "uncertain",
+      "actual": "uncertain",
+      "matches": true
+    },
+    {
+      "id": "kc68c1534b480d5045fd7fbe6",
+      "expected": "pass",
+      "actual": "pass",
+      "matches": true
+    },
+    {
+      "id": "kc8387c5456a773d77a75d9c7",
+      "expected": "fail",
+      "actual": "fail",
+      "matches": true
+    },
+    {
+      "id": "kdad9e02084521b29f6953c74",
+      "expected": "fail",
+      "actual": "fail",
+      "matches": true
+    },
+    {
+      "id": "k871889d9db3cc68a8edec95e",
+      "expected": "fail",
+      "actual": "fail",
+      "matches": true
+    },
+    {
+      "id": "kaf549462f0788c7d733f7f5e",
+      "expected": "fail",
+      "actual": "fail",
+      "matches": true
+    },
+    {
+      "id": "k3ee64b8ca20cdca5cebee246",
+      "expected": "fail",
+      "actual": "fail",
+      "matches": true
+    }
+  ],
+  "uncertain_heldout_retained": 2,
+  "automatic_training_reward_authorized": false,
+  "limitations": [
+    "not actual full Dask import/P2P/original CPU image/formal score",
+    "behavior-wrong candidates with adequate API reasons can pass isolated semantics; not full qualification",
+    "actual formal/model candidates require fresh case-bound independent judgments; calibration results not reused",
+    "historical v3 config prompt_path stale; both judges explicitly read v3 by SHA, future bound config corrects only documentation path; effective policy/backend unchanged",
+    "exact backend version/effort not exposed; future session configuration changes require new controls",
+    "no universal natural-language accuracy claim; 2 ambiguous heldout retained uncertain"
+  ]
+}

@@ -1,0 +1,758 @@
+{
+  "status": "reviewed_static_plans",
+  "execution_status": "not_executed",
+  "scope": "selective_future_cpu_plans_only",
+  "items": [
+    {
+      "queue_id": "dvc3576-cli-contract",
+      "instance_id": "iterative__dvc-3576",
+      "priority": 2,
+      "status": "reviewed_static_plan_not_executed",
+      "execution_status": "not_executed",
+      "question": "公开CLI行为与helper返回约束是否导致具体误拒；缺旧数字展示及两种合理stderr解释分别是什么？",
+      "source_condition": {
+        "base_commit": "a338fad036bd9ac8bdd79ecec964f8c5558609c4",
+        "public_image_manifest_digest": "sha256:398036ee0fbb99c24dc50037d0f316c299c70caf154d579facf6ae42a6197c0b",
+        "historical_grader_image": "sha256:0c322496575e0bca8592b7114fc069fab01cfabc225944b51346a97871533cf8",
+        "historical_grader_ledger": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3576/gold/ledger.jsonl:1",
+        "recipe_ref": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-3576/gold/recipe/recipe.json",
+        "actor_condition": "正式public-image actor仍待实际入口验证；历史派生grader条件不代表actor条件。"
+      },
+      "variants": [
+        "base",
+        "gold",
+        "caller_layer_alternative"
+      ],
+      "candidate_construction": [
+        "保留_show_diff({})旧返回；在非JSON空diff的命令调用层发送状态到stderr且不输出表。对新增数值按公开例显示Change=-，保留正常数值/非数值既有约定。"
+      ],
+      "diagnostic_steps": [
+        "建立真实Git父提交；分别构造旧提交含stage却缺metrics文件、旧提交连stage也没有的情形。",
+        "分别记录缺旧值/HEAD无变化的text、--show-json之stdout、stderr、退出码；JSON单独解析，检查数值新值和缺侧表示。",
+        "保持原冻结7个引用，对三个变体分别保存完整RH2结果；命令层替代解首先须满足公开行为，不能只凭helper失败称误拒。",
+        "允许沉默与必须保留状态两种解释分别报告；运行本身不能裁决规范歧义。"
+      ],
+      "replay_entry": {
+        "wrapper": "runs/env_recipe_repair_20260919/dvc_install_v1c/replay_with_install_recipe.py",
+        "required_args": [
+          "--code-root <authoritative RH2 code directory ending in rh2>",
+          "--recipe <this task recipe JSON>",
+          "--audit-dir <new output>/recipe",
+          "-- run --prepared-summary <existing prepared summary> --task-ids iterative__dvc-3576",
+          "--candidate <noop or patch:absolute-file>",
+          "--derived-image sha256:0c322496575e0bca8592b7114fc069fab01cfabc225944b51346a97871533cf8",
+          "--derived-image-recipe dvc-install-v1:iterative__dvc-3576",
+          "--eval-log-dir <new output>/eval_logs --artifacts-dir <new output>/artifacts --ledger <new output>/ledger.jsonl"
+        ],
+        "entry_check": "Static CLI/wrapper source checked; prepared-summary location and runtime image availability must be resolved by CPU owner, no invented runnable host path."
+      },
+      "evidence_to_save": [
+        "variant diff and SHA",
+        "source/import and actual actor/grader identities",
+        "original and effective spec/recipe identities",
+        "behavior stdout/stderr/RC",
+        "per-node/alias/reference states and reward",
+        "projection/official restoration/install/cleanup evidence"
+      ],
+      "depends_on": [
+        "later CPU/resource authorization and fixed entry",
+        "concrete candidate patch inspection before execution"
+      ],
+      "review_refs": [
+        "results/iterative__dvc-3576/public_read.md:105-144",
+        "results/iterative__dvc-3576/reviewer_initial.md",
+        "results/iterative__dvc-3576/review.md",
+        "results/iterative__dvc-3576/card.md"
+      ],
+      "custom_candidate_patch_status": "not_created; source-only diagnostic specification for later authorized CPU owner",
+      "actor_gate": "Actual actor verification is required before model development, not before this fixed-grader semantic diagnostic."
+    },
+    {
+      "queue_id": "dvc4166-directory-type",
+      "instance_id": "iterative__dvc-4166",
+      "priority": 1,
+      "status": "reviewed_static_plan_not_executed",
+      "execution_status": "not_executed",
+      "question": "目录专属规则及题面否定模式，是否被自然过窄实现绕过？",
+      "source_condition": {
+        "base_commit": "520e01f11305aba1994df354adef86e6d90180de",
+        "public_image_manifest_digest": "sha256:f32dbb8cd78ee8146529185f79532b3e3dca61c06a10c4ede6ca48ba26b15041",
+        "historical_grader_image": "sha256:cfcef64300c96ff4e7dfd2c92bdf6025f9213df5e9574db72103174371b0107a",
+        "historical_grader_ledger": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4166/gold/ledger.jsonl:1",
+        "recipe_ref": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-4166/gold/recipe/recipe.json",
+        "actor_condition": "正式public-image actor仍待实际入口验证；历史派生grader条件不代表actor条件。"
+      },
+      "variants": [
+        "base",
+        "gold",
+        "positive_trailing_slash_removal"
+      ],
+      "candidate_construction": [
+        "仅对正向末尾/规则去掉/后再编译；保留否定规则原样。按实际diff核对，不硬编码case或测试ID。"
+      ],
+      "diagnostic_steps": [
+        "核心矩阵：普通文件subdir与含叶文件目录subdir分别应用subdir/；非空scripts目录比较 /* + !/scripts/ 与 /* + !/scripts。其余公开模式可观察，不预设七组同义。",
+        "正向目录专属模式与否定目录模式都做文件/目录成对对照，并保留父目录被排除后不应自动重开后代的语义。",
+        "记录63实际案例、62解析身份及59冻结引用；前导空格两节点身份碰撞单列，不据当前全PASS断言混合状态reward已错。"
+      ],
+      "replay_entry": {
+        "wrapper": "runs/env_recipe_repair_20260919/dvc_install_v1c/replay_with_install_recipe.py",
+        "required_args": [
+          "--code-root <authoritative RH2 code directory ending in rh2>",
+          "--recipe <this task recipe JSON>",
+          "--audit-dir <new output>/recipe",
+          "-- run --prepared-summary <existing prepared summary> --task-ids iterative__dvc-4166",
+          "--candidate <noop or patch:absolute-file>",
+          "--derived-image sha256:cfcef64300c96ff4e7dfd2c92bdf6025f9213df5e9574db72103174371b0107a",
+          "--derived-image-recipe dvc-install-v1:iterative__dvc-4166",
+          "--eval-log-dir <new output>/eval_logs --artifacts-dir <new output>/artifacts --ledger <new output>/ledger.jsonl"
+        ],
+        "entry_check": "Static CLI/wrapper source checked; prepared-summary location and runtime image availability must be resolved by CPU owner, no invented runnable host path."
+      },
+      "evidence_to_save": [
+        "variant diff and SHA",
+        "source/import and actual actor/grader identities",
+        "original and effective spec/recipe identities",
+        "behavior stdout/stderr/RC",
+        "per-node/alias/reference states and reward",
+        "projection/official restoration/install/cleanup evidence"
+      ],
+      "depends_on": [
+        "later CPU/resource authorization and fixed entry",
+        "concrete candidate patch inspection before execution"
+      ],
+      "review_refs": [
+        "results/iterative__dvc-4166/analysis_before_history.md",
+        "results/iterative__dvc-4166/reviewer_initial.md",
+        "results/iterative__dvc-4166/review.md",
+        "results/iterative__dvc-4166/card.md"
+      ],
+      "custom_candidate_patch_status": "not_created; source-only diagnostic specification for later authorized CPU owner",
+      "actor_gate": "Actual actor verification is required before model development, not before this fixed-grader semantic diagnostic."
+    },
+    {
+      "queue_id": "dvc1681-checksum-compatibility",
+      "instance_id": "iterative__dvc-1681",
+      "priority": 1,
+      "status": "reviewed_static_plan_not_executed",
+      "execution_status": "not_executed",
+      "question": "仅在checksum内规范化的正常解是否被误拒，默认目录的过窄修复是否漏保护非默认目录？",
+      "source_condition": {
+        "base_commit": "9175c45b1472070e02521380e4db8315d7c910c4",
+        "public_image_manifest_digest": "sha256:47f2213bba1f71e6674cef8027d6cd7df892c480bb2a27a58391162a268eee8e",
+        "historical_grader_image": "sha256:d71db46cbc0fdd24b26db0202e326bc9ec9764b07b19704fb293383849220a70",
+        "historical_grader_ledger": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-1681/gold/ledger.jsonl:1",
+        "recipe_ref": "runs/env_recipe_repair_20260919/dvc_install_v1c/tasks/iterative__dvc-1681/gold/recipe/recipe.json",
+        "actor_condition": "正式public-image actor仍待实际入口验证；历史派生grader条件不代表actor条件。"
+      },
+      "variants": [
+        "base",
+        "gold",
+        "checksum_local_normalization"
+      ],
+      "candidate_construction": [
+        "正常替代：保留dumpd的原表示，仅在_compute_md5局部字典中把绝对wdir相对self.path所在目录正规化，已经相对的./..保持；随后沿原规则忽略默认值。"
+      ],
+      "diagnostic_steps": [
+        "先用题面固定旧YAML核顶层changed_md5，再用小型本地旧无wdir/显式dot文件核干净状态；缺原XML/缓存时仅检元数据，不要求完整status为空。避免仅用新实现自生成checksum。",
+        "真实默认与非默认wdir、stage路径与进程cwd不同的对照；改变非默认工作目录仍应改变checksum，原cmd/deps/outs哈希契约保留。",
+        "分别记录13个冻结引用与行为层结果；直接dumpd表示断言、mock注入哈希断言、真实旧文件兼容性三种证据分开。",
+        "固定deny_all，必要时DVC_TEST抑制updater/analytics；updater日志不代表成功联网。"
+      ],
+      "replay_entry": {
+        "wrapper": "runs/env_recipe_repair_20260919/dvc_install_v1c/replay_with_install_recipe.py",
+        "required_args": [
+          "--code-root <authoritative RH2 code directory ending in rh2>",
+          "--recipe <this task recipe JSON>",
+          "--audit-dir <new output>/recipe",
+          "-- run --prepared-summary <existing prepared summary> --task-ids iterative__dvc-1681",
+          "--candidate <noop or patch:absolute-file>",
+          "--derived-image sha256:d71db46cbc0fdd24b26db0202e326bc9ec9764b07b19704fb293383849220a70",
+          "--derived-image-recipe dvc-install-v1:iterative__dvc-1681",
+          "--eval-log-dir <new output>/eval_logs --artifacts-dir <new output>/artifacts --ledger <new output>/ledger.jsonl"
+        ],
+        "entry_check": "Static CLI/wrapper source checked; prepared-summary location and runtime image availability must be resolved by CPU owner, no invented runnable host path."
+      },
+      "evidence_to_save": [
+        "variant diff and SHA",
+        "source/import and actual actor/grader identities",
+        "original and effective spec/recipe identities",
+        "behavior stdout/stderr/RC",
+        "per-node/alias/reference states and reward",
+        "projection/official restoration/install/cleanup evidence"
+      ],
+      "depends_on": [
+        "later CPU/resource authorization and fixed entry",
+        "concrete candidate patch inspection before execution"
+      ],
+      "review_refs": [
+        "results/iterative__dvc-1681/reviewer_initial.md",
+        "results/iterative__dvc-1681/public_read.md",
+        "results/iterative__dvc-1681/review.md",
+        "results/iterative__dvc-1681/card.md"
+      ],
+      "custom_candidate_patch_status": "not_created; source-only diagnostic specification for later authorized CPU owner",
+      "actor_gate": "Actual actor verification is required before model development, not before this fixed-grader semantic diagnostic.",
+      "optional_extension": {
+        "variant": "dumpd_default_only",
+        "purpose": "Retain natural-partial hypothesis without making a fourth route another entry gate.",
+        "construction": "自然部分实现：dumpd只把wdir固定为.，其余逻辑保持；用于检验真实非默认wdir是否仍影响checksum，非推荐修复。"
+      }
+    },
+    {
+      "queue_id": "mypy10308-original-protocol",
+      "instance_id": "python__mypy-10308",
+      "priority": 1,
+      "status": "reviewed_static_plan_not_executed",
+      "execution_status": "not_executed",
+      "question": "公开Vector/Matrix原例在固定来源的base/gold是否消除internal error，冻结协变用例是否遗漏原例特性？",
+      "source_condition": {
+        "base_commit": "1567e36165b00d532f232cb3d33d1faf04aaf63d",
+        "public_image_manifest_digest": "sha256:8204090027b336ea9218901ad8a83c34436f128a41041673243c25ff5fcc69c3",
+        "historical_grader_image": "sha256:9acbdc2f996afc47c0f85a9b3f6cb67d62055a22bf1545d29f26e44ee1a8b51d",
+        "historical_grader_ledger": "runs/env_recipe_repair_20260919/materials_v2/runs/python__mypy-10308-gold/ledger.jsonl:1",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+materials-v2",
+        "environment_refs": [
+          "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10308/image.json",
+          "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-10308/build.log"
+        ]
+      },
+      "variants": [
+        "base",
+        "gold"
+      ],
+      "optional_extension": {
+        "variant": "covariant_protocol_guard_only",
+        "purpose": "Only consider after the priority base/gold public behavior result warrants it; not a mandatory admission experiment."
+      },
+      "custom_candidate_patch_status": "not_created; no candidate implemented or run",
+      "diagnostic_steps": [
+        "原样保留float上界、显式self、递归Union和公开六个CLI flags，记录完整输出及traceback；目标是无internal error，不预设正常类型/变型诊断也必须为空。",
+        "同一条件记录原冻结F2P，以及实际执行但非冻结的Hashable状态。materials-v2输入、原/修订grading digest及恢复的四个路径分别保存。",
+        "核心先做base/gold公开原例；若有必要区分评分盲区，同组扩展仅对协变protocol启用成员guard的部分候选，并先确认未硬编码case名称。"
+      ],
+      "replay_entry": {
+        "script": "rh2/scripts/replay_grade.py",
+        "required_args": [
+          "run --prepared-summary <existing prepared summary> --task-ids python__mypy-10308",
+          "--candidate <noop or patch:absolute-file>",
+          "--derived-image sha256:9acbdc2f996afc47c0f85a9b3f6cb67d62055a22bf1545d29f26e44ee1a8b51d",
+          "--derived-image-recipe verified-assets-dependencies+materials-v1",
+          "--eval-log-dir <new output>/eval_logs --artifacts-dir <new output>/artifacts --ledger <new output>/ledger.jsonl"
+        ],
+        "entry_check": "Static entry only; CPU owner must resolve existing prepared summary/image/runtime. Historical remote /work paths are not asserted to exist locally.",
+        "wrapper": "runs/env_recipe_repair_20260919/materials_v2/replay_with_install_recipe.py",
+        "wrapper_args": [
+          "--code-root <ROOT/rh2>",
+          "--materials <ROOT/runs/env_recipe_repair_20260919/materials_v2/materials.json>",
+          "--audit-dir <new output>/materials",
+          "-- before replay subcommand"
+        ],
+        "materials_input_sha256": "f7d0650d6ae35328dd69bbb72d3e1908237b9a408486d00d02fdb4d42e70fddc",
+        "materials_boundary": "Use input version/tasks map; per-run audit file is not wrapper input. Existing label materials-v1 differs from effective grader materials-v2; preserve both fields and effective digests."
+      },
+      "actor_gate": "Fixed-grader semantics and actual actor qualification are separate. Capture interpreter/source import for any CPU; actual public-image actor must be verified before model-development use.",
+      "depends_on": [
+        "later CPU/resource authorization and fixed entry",
+        "inspect any custom candidate patch before execution"
+      ],
+      "evidence_to_save": [
+        "public reproduction source and CLI flags",
+        "actual image/interpreter/module source and role",
+        "original/effective material/recipe identities",
+        "complete diagnostics, traceback and RC",
+        "per-node/reference states and reward",
+        "projection/restoration/install/cleanup and candidate diff SHA"
+      ],
+      "review_refs": [
+        "results/python__mypy-10308/analysis_before_history.md",
+        "results/python__mypy-10308/card.md",
+        "results/python__mypy-10308/review.md"
+      ]
+    },
+    {
+      "queue_id": "mypy17071-typeguard-unbound",
+      "instance_id": "python__mypy-17071",
+      "priority": 1,
+      "status": "reviewed_static_plan_not_executed",
+      "execution_status": "not_executed",
+      "question": "公开TypeGuard回调修复是否同时保留真正未绑定TypeVar诊断；TypeIs要求的范围如何体现？",
+      "source_condition": {
+        "base_commit": "4310586460e0af07fa8994a0b4f03cb323e352f0",
+        "public_image_manifest_digest": "sha256:ffc5cb69679917b638305b44d91ad941f22934fbb49acb20eac12f2fdae3ed99",
+        "historical_grader_image": "sha256:65be15358f008d20c0dd256c9e70e3f09c85154113ea04875f1a71e98ed751fe",
+        "historical_grader_ledger": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-17071/gold/ledger.jsonl:1",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "environment_refs": [
+          "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-17071/image.json",
+          "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-17071/build.log"
+        ]
+      },
+      "variants": [
+        "base",
+        "gold"
+      ],
+      "optional_extension": {
+        "variant": "skip_unbound_check_if_any_guard_callback",
+        "purpose": "Only consider after the priority base/gold public behavior result warrants it; not a mandatory admission experiment."
+      },
+      "custom_candidate_patch_status": "not_created; no candidate implemented or run",
+      "diagnostic_steps": [
+        "仅补齐公开例缺失的imports、T声明和明显缩进，保留type_guard逻辑；base/gold对照目标type-var诊断和返回str推断。",
+        "加入回调只含U、外层直接返回另一T的真实未绑定负例；保留原4引用及TypeIs对称结果，分数不单独裁决issue范围。",
+        "若首项结果需要区分错误接受，再加入仅凭存在任意guard/is回调就略过unbound检查、未核同一TypeVar身份的部分候选；先核公开负例和完整候选，非默认必测。"
+      ],
+      "replay_entry": {
+        "script": "rh2/scripts/replay_grade.py",
+        "required_args": [
+          "run --prepared-summary <existing prepared summary> --task-ids python__mypy-17071",
+          "--candidate <noop or patch:absolute-file>",
+          "--derived-image sha256:65be15358f008d20c0dd256c9e70e3f09c85154113ea04875f1a71e98ed751fe",
+          "--derived-image-recipe install-wave1:python__mypy-17071",
+          "--eval-log-dir <new output>/eval_logs --artifacts-dir <new output>/artifacts --ledger <new output>/ledger.jsonl"
+        ],
+        "entry_check": "Static entry only; CPU owner must resolve existing prepared summary/image/runtime. Historical remote /work paths are not asserted to exist locally."
+      },
+      "actor_gate": "Fixed-grader semantics and actual actor qualification are separate. Capture interpreter/source import for any CPU; actual public-image actor must be verified before model-development use.",
+      "depends_on": [
+        "later CPU/resource authorization and fixed entry",
+        "inspect any custom candidate patch before execution"
+      ],
+      "evidence_to_save": [
+        "public reproduction source and CLI flags",
+        "actual image/interpreter/module source and role",
+        "original/effective material/recipe identities",
+        "complete diagnostics, traceback and RC",
+        "per-node/reference states and reward",
+        "projection/restoration/install/cleanup and candidate diff SHA"
+      ],
+      "review_refs": [
+        "results/python__mypy-17071/analysis_before_history.md",
+        "results/python__mypy-17071/card.md",
+        "results/python__mypy-17071/review.md"
+      ]
+    },
+    {
+      "queue_id": "mypy11236-literal-tuple-contract",
+      "instance_id": "python__mypy-11236",
+      "priority": 1,
+      "status": "reviewed_static_plan_not_executed",
+      "execution_status": "not_executed",
+      "question": "公开单元素Literal元组Union是否修复，并保持值/长度/Final边界？",
+      "source_condition": {
+        "base_commit": "209a7193feb4bbfa38d09232b0a5a916e9d2e605",
+        "public_image_manifest_digest": "sha256:6b6a59ea714d1d4e1bf5c09d2e576aed035532099c8634a750ab738e33d9cc9e",
+        "historical_grader_image": "sha256:853ffff2219f5167a87f7f310b17b8362d098f66745c20d0406c44c2c708edd0",
+        "historical_grader_ledger": "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/gold/ledger.jsonl:1",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "environment_refs": [
+          "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/image.json",
+          "runs/env_recipe_repair_20260919/install_wave1/tasks/python__mypy-11236/build.log"
+        ]
+      },
+      "variants": [
+        "base",
+        "gold"
+      ],
+      "optional_extension": {
+        "variant": "tuple_zip_without_arity_guard",
+        "purpose": "Only consider after the priority base/gold public behavior result warrants it; not a mandatory admission experiment."
+      },
+      "custom_candidate_patch_status": "not_created; no candidate implemented or run",
+      "diagnostic_steps": [
+        "按公开单元素Union函数和Python3.7、strict/strict-optional/warn-return-any条件做base/gold对照，补加(2,)与(1,999)负例。",
+        "保留原F2P的所有合法分支、1个note及6条反例；另记录官方patch修改但原命令未选中的testLiteralFinalGoesOnlyOneLevelDown，不把其新增执行偷换为冻结P2P。",
+        "若需要检验具体错误接受，在同组扩展只用zip逐项比较但缺长度检查的tuple局部候选；必须先确认保留其它值/类型/分支反例，报告行为和分数两层。"
+      ],
+      "replay_entry": {
+        "script": "rh2/scripts/replay_grade.py",
+        "required_args": [
+          "run --prepared-summary <existing prepared summary> --task-ids python__mypy-11236",
+          "--candidate <noop or patch:absolute-file>",
+          "--derived-image sha256:853ffff2219f5167a87f7f310b17b8362d098f66745c20d0406c44c2c708edd0",
+          "--derived-image-recipe install-wave1:python__mypy-11236",
+          "--eval-log-dir <new output>/eval_logs --artifacts-dir <new output>/artifacts --ledger <new output>/ledger.jsonl"
+        ],
+        "entry_check": "Static entry only; CPU owner must resolve existing prepared summary/image/runtime. Historical remote /work paths are not asserted to exist locally."
+      },
+      "actor_gate": "Fixed-grader semantics and actual actor qualification are separate. Capture interpreter/source import for any CPU; actual public-image actor must be verified before model-development use.",
+      "depends_on": [
+        "later CPU/resource authorization and fixed entry",
+        "inspect any custom candidate patch before execution"
+      ],
+      "evidence_to_save": [
+        "public reproduction source and CLI flags",
+        "actual image/interpreter/module source and role",
+        "original/effective material/recipe identities",
+        "complete diagnostics, traceback and RC",
+        "per-node/reference states and reward",
+        "projection/restoration/install/cleanup and candidate diff SHA"
+      ],
+      "review_refs": [
+        "results/python__mypy-11236/analysis_before_history.md",
+        "results/python__mypy-11236/card.md",
+        "results/python__mypy-11236/review.md"
+      ]
+    },
+    {
+      "queue_id": "moto7584-subscribe-order-and-message",
+      "instance_id": "getmoto__moto-7584",
+      "priority": 1,
+      "status": "reviewed_static_plan_not_executed",
+      "execution_status": "not_executed",
+      "question": "原题先订阅后删除再订阅与私测删除后首次订阅是否分离；正确ARN错误文案是否被拒？",
+      "source_condition": {
+        "base_commit": "cc1193076090f9daf90970db286b6b41581dd8bc",
+        "public_image_manifest_digest": "sha256:3b263c0c4745d890400b7beaf08c10b5413f86ae7983dd4bf14d93e43cd2fbf9",
+        "historical_image_id_actual": "sha256:5d879f39ae06cd7e1245af6a278fb8a680227331ca9810d2e9a3a450d6ee8f40",
+        "historical_image_identity": "local_build:sha256:5d879f39ae06cd7e1245af6a278fb8a680227331ca9810d2e9a3a450d6ee8f40",
+        "historical_grader_ledger": "runs/env_recipe_repair_20260919/install_wave1/tasks/getmoto__moto-7584/gold/ledger.jsonl:1",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1"
+      },
+      "variants": [
+        "base",
+        "gold",
+        "validate_endpoint_before_duplicate_return"
+      ],
+      "custom_candidate_patch_status": "not_created; source-only diagnostic construction, not an independent solver attempt",
+      "diagnostic_steps": [
+        "只用本地mock SNS，同一topic/endpoint/protocol分别做create→subscribe→delete→subscribe及create→delete→subscribe，另保留有效endpoint订阅。无需live AWS。",
+        "公开合规候选在重复订阅早返回前校验application endpoint；错误消息使用题面完整请求ARN，不额外拼接arn。保存diff，不改测试。",
+        "base/gold/候选逐个记录响应、HTTP状态、Code和完整错误文本，再跑原20项/冻结1+19并定位失败断言。若行为不满足公开要求，不把单纯私测失败叫误拒。",
+        "gold中的AWS注释和aws_verified标记只是历史材料声明；本实验核本地行为，不能凭该标记替公开要求改义。"
+      ],
+      "replay_entry": {
+        "script": "rh2/scripts/replay_grade.py",
+        "required_args": [
+          "run --prepared-summary <existing prepared summary> --task-ids getmoto__moto-7584",
+          "--candidate <noop or patch:absolute-file>",
+          "--eval-log-dir <new output>/eval_logs --artifacts-dir <new output>/artifacts --ledger <new output>/ledger.jsonl",
+          "--derived-image sha256:5d879f39ae06cd7e1245af6a278fb8a680227331ca9810d2e9a3a450d6ee8f40",
+          "--derived-image-recipe install-wave1:getmoto__moto-7584"
+        ],
+        "entry_check": "Static specification. CPU owner resolves prepared summary/runtime; baseline image_id=null is not fabricated as a known local image ID."
+      },
+      "actor_gate": "Historical mock/grader verification and actual public-image actor development qualification are separate.",
+      "depends_on": [
+        "later CPU/resource authorization and fixed entry",
+        "inspect custom candidate patch before execution"
+      ],
+      "evidence_to_save": [
+        "candidate diff SHA and legal scope",
+        "public operation/input sequence and complete responses",
+        "actual import/interpreter/image/role",
+        "official per-test and reference outcomes/reward",
+        "projection/restoration/install/cleanup"
+      ],
+      "review_refs": [
+        "results/getmoto__moto-7584/analysis_before_history.md",
+        "results/getmoto__moto-7584/card.md",
+        "results/getmoto__moto-7584/review.md"
+      ],
+      "candidate_use": "known_specification_conflict_diagnostic_only; not solver-capability candidate admission"
+    },
+    {
+      "queue_id": "moto5752-filter-scope",
+      "instance_id": "getmoto__moto-5752",
+      "priority": 1,
+      "status": "reviewed_static_plan_not_executed",
+      "execution_status": "not_executed",
+      "question": "仅修复Equals标签AND顺序的自然候选，是否只被新增w/world前缀验收拒绝？",
+      "source_condition": {
+        "base_commit": "b2300f1eae1323e3e8bc45f97e530ce129dff12e",
+        "public_image_manifest_digest": "sha256:2665296135d73d6ed10e225ac3942fcc9086811fdfa0ede89a8465a63716c134",
+        "historical_image_id_actual": null,
+        "historical_image_identity": "sha256:2665296135d73d6ed10e225ac3942fcc9086811fdfa0ede89a8465a63716c134",
+        "historical_grader_ledger": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w04-1/ledger.jsonl:8",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1"
+      },
+      "variants": [
+        "base",
+        "gold",
+        "tag_equals_continue"
+      ],
+      "custom_candidate_patch_status": "not_created; source-only diagnostic construction, not an independent solver attempt",
+      "diagnostic_steps": [
+        "用公开MWE两个参数，比较两种标签顺序的返回Name集合，不只看数量；同组加入标签与普通字段Equals的组合和多Values OR。",
+        "窄候选只把旧tag相等匹配改为未命中False、命中continue外层，保留其余Option逻辑；这是一条待判范围的旧行为保留路线，不预先声称完整公共API实现。 原hints同时缺正确字段和命中continue；只修拼写的片段不能代替此候选。",
+        "记录base/gold/候选原80个冻结引用与新增F2P内部四处断言；真正区分前缀的是w/world，a/a不足以区分。",
+        "BeginsWith的公开校验许可是范围证据；候选被拒的运行事实仍不能独自裁决是否不公平。tag Contains先被公开校验阻断，不加入不可达缺陷控制。"
+      ],
+      "replay_entry": {
+        "script": "rh2/scripts/replay_grade.py",
+        "required_args": [
+          "run --prepared-summary <existing prepared summary> --task-ids getmoto__moto-5752",
+          "--candidate <noop or patch:absolute-file>",
+          "--eval-log-dir <new output>/eval_logs --artifacts-dir <new output>/artifacts --ledger <new output>/ledger.jsonl"
+        ],
+        "entry_check": "Static specification. CPU owner resolves prepared summary/runtime; baseline image_id=null is not fabricated as a known local image ID."
+      },
+      "actor_gate": "Historical mock/grader verification and actual public-image actor development qualification are separate.",
+      "depends_on": [
+        "later CPU/resource authorization and fixed entry",
+        "inspect custom candidate patch before execution"
+      ],
+      "evidence_to_save": [
+        "candidate diff SHA and legal scope",
+        "public operation/input sequence and complete responses",
+        "actual import/interpreter/image/role",
+        "official per-test and reference outcomes/reward",
+        "projection/restoration/install/cleanup"
+      ],
+      "review_refs": [
+        "results/getmoto__moto-5752/analysis_before_history.md",
+        "results/getmoto__moto-5752/card.md",
+        "results/getmoto__moto-5752/review.md"
+      ]
+    },
+    {
+      "queue_id": "pandas56849-alias-warning-contract",
+      "instance_id": "pandas-dev__pandas-56849",
+      "priority": 1,
+      "status": "reviewed_static_plan_not_executed",
+      "execution_status": "not_executed",
+      "question": "仅规范化已识别旧别名并以M发出弃用警告的合理候选，是否在公开行为正确时被小写m警告匹配拒绝？",
+      "source_condition": {
+        "base_commit": "612823e824805b97a2dbe258ba808dc572083d49",
+        "public_image_manifest_digest": "sha256:a8a1cad925505ccd8abad28474286566aed5b0ead05b235354c0611228daf13a",
+        "historical_image_id_actual": null,
+        "historical_image_identity": "sha256:a8a1cad925505ccd8abad28474286566aed5b0ead05b235354c0611228daf13a",
+        "historical_grader_ledger": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-3/ledger.jsonl:12",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1"
+      },
+      "variants": [
+        "base",
+        "gold",
+        "normalize_recognized_deprecated_name_before_warning"
+      ],
+      "candidate_construction": "Only when name.upper() is an existing deprecated offset alias, normalize name before the existing warning/remap. Preserve is_period separation and case-sensitive valid aliases such as ms/MS; never uppercase every token. Inspect the concrete patch before execution.",
+      "custom_candidate_patch_status": "not_created",
+      "diagnostic_steps": [
+        "在隔离固定镜像中明确重编候选offsets.pyx，记录真实模块路径与扩展来源，防止旧二进制掩盖源码变更。",
+        "对公开20个月末、m倍数/一个共享to_offset入口及freq属性分别记录行为；保留合法大小写单位与Period旧行为，不要求完整全仓绿。",
+        "重放原426实际节点/420冻结键，定位新F2P警告regex及test_to_offset_invalid中2h20m/-m的filter失败。warning helper用re.search，允许前缀；不能把所有文本变化都假设为拒绝。",
+        "先证明候选公开行为和有依据的FutureWarning/ME含义正确，再判精确大小写是否造成误拒。四个合并参数键的现有成员均PASS，单列身份限制，不虚构混合状态错误奖励。"
+      ],
+      "replay_entry": {
+        "script": "rh2/scripts/replay_grade.py",
+        "required_args": [
+          "run --prepared-summary <existing prepared summary> --task-ids pandas-dev__pandas-56849",
+          "--candidate <noop or patch:absolute-file>",
+          "--eval-log-dir <new output>/eval_logs --artifacts-dir <new output>/artifacts --ledger <new output>/ledger.jsonl"
+        ],
+        "entry_check": "Baseline uses pinned public manifest; actual local image ID unavailable in ledger. CPU owner resolves image/runtime/prepared-summary; source import and Cython rebuild must be observed."
+      },
+      "actor_gate": "Fixed-grader semantic comparison can be separate; actual public-image actor must demonstrate checkout import and extension rebuild before model development.",
+      "depends_on": [
+        "later CPU/resource authorization and fixed entry",
+        "inspect candidate patch and build plan"
+      ],
+      "evidence_to_save": [
+        "candidate diff SHA",
+        "compiled extension/import source and image/interpreter",
+        "public output/warnings/frequency attributes",
+        "per-node/reference outcomes/reward",
+        "projection/restoration/install/build/cleanup"
+      ],
+      "review_refs": [
+        "results/pandas-dev__pandas-56849/analysis_before_history.md",
+        "results/pandas-dev__pandas-56849/old_findings_delta.md",
+        "results/pandas-dev__pandas-56849/card.md",
+        "results/pandas-dev__pandas-56849/review.md"
+      ]
+    },
+    {
+      "queue_id": "moto5134-public-actor-development",
+      "instance_id": "getmoto__moto-5134",
+      "priority": 1,
+      "status": "reviewed_static_plan_not_executed",
+      "execution_status": "not_executed",
+      "question": "正式public-image actor能否从当前checkout运行公开存在性矩阵与本地Logs复现，并区分目标失败和依赖失败？",
+      "source_condition": {
+        "base_commit": "0e3ac260682f3354912fe552c61d9b3e590903b8",
+        "public_image_manifest_digest": "sha256:79117a6d6ffeaa6b146eb86c7959b7421ad4387c80b18fb4c835e4074ec10847",
+        "historical_grader_image": "sha256:6aefb17daa7c99b95c250c36f9440e662cbc86f2f222aa17135264e35811d820",
+        "historical_grader_ledger": "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/gold/ledger.jsonl:1",
+        "recipe_ref": "runs/env_recipe_repair_20260919/sqs_v1/recipes/getmoto__moto-5134.json",
+        "boundary": "Historical repaired grader is a separate condition; no current oracle conflict or score bypass established."
+      },
+      "variants": [
+        "original_base_in_formal_public_actor"
+      ],
+      "custom_candidate_patch_status": "not_needed_for_priority_actor_check; no diagnostic candidate fabricated",
+      "diagnostic_steps": [
+        "由现有正式actor入口记录实际public输入、UID/HOME/cwd/PATH、解释器、moto.__file__、boto3/botocore/pytest/sure、工作区与临时目录写权限，明确是否导入当前checkout。",
+        "运行public_read中C2存在性矩阵及C3本地mock_events/mock_logs双detail复现，dummy凭据、eu-west-1、TEST_SERVER_MODE=false；null错误应与缺键/字符串旧行为分开记录。禁止运行题面未mock的AWS对照。",
+        "核旧EventPattern和旧Logs相关测试。只有需要全integration文件时才检查SQS protocol及依赖覆写是否真正落到actor；不把COPY-only镜像当已消费修订。",
+        "既有repaired grader的17项/14冻结引用成功不重写成actor事实；无具体语义争议则不额外造正反候选。"
+      ],
+      "actor_entry": {
+        "source": "rh2/src/repoharness2/adapters/slime/prepared_task_face.py:342-357",
+        "status": "actual unified actor entry must be provided by execution owner; no standalone verified actor launcher in this audit",
+        "public_checks_ref": "results/getmoto__moto-5134/public_read.md (C2/C3/C4)",
+        "grader_replay_if_needed": {
+          "wrapper": "runs/env_recipe_repair_20260919/sqs_v1/replay_with_install_recipe.py",
+          "required_args": [
+            "--code-root <ROOT/rh2>",
+            "--recipe <ROOT/runs/env_recipe_repair_20260919/sqs_v1/recipes/getmoto__moto-5134.json>",
+            "--audit-dir <new output>/recipe",
+            "-- run --prepared-summary <existing summary> --task-ids getmoto__moto-5134 --candidate <noop or patch:absolute-file>",
+            "--derived-image sha256:6aefb17daa7c99b95c250c36f9440e662cbc86f2f222aa17135264e35811d820",
+            "--derived-image-recipe sqs_v1:getmoto__moto-5134",
+            "--eval-log-dir <new output>/eval_logs --artifacts-dir <new output>/artifacts --ledger <new output>/ledger.jsonl"
+          ],
+          "boundary": "Optional historical-condition comparison only; this grader command does not qualify the actor."
+        }
+      },
+      "depends_on": [
+        "later CPU authorization and actual actor entry"
+      ],
+      "evidence_to_save": [
+        "actual actor input/render/tool identities and image",
+        "source imports/versions/permissions",
+        "public matrix and Logs responses/RC",
+        "environment-versus-target failure classification",
+        "installed SDK pins/protocol only if SQS used"
+      ],
+      "review_refs": [
+        "results/getmoto__moto-5134/analysis_before_history.md",
+        "results/getmoto__moto-5134/card.md",
+        "results/getmoto__moto-5134/review.md"
+      ]
+    },
+    {
+      "queue_id": "pandas48106-remaining-reference-aliases",
+      "instance_id": "pandas-dev__pandas-48106",
+      "priority": 1,
+      "status": "reviewed_static_plan_not_executed",
+      "execution_status": "not_executed",
+      "question": "三组Period修复之外，两组tz截断引用在完整摘要的混合状态/成员缺席下是否错误聚合？",
+      "source_condition": {
+        "base_commit": "8b72297c8799725e98cb2c6aee664325b752194f",
+        "historical_grader_image": "sha256:7fce0487dca32159e8480a7426e1f7cddeadeb60fd9687fb41617266f56c0ec7",
+        "historical_grader_ledger": "runs/env_recipe_repair_20260919/pandas_meta_v3/tasks/pandas-dev__pandas-48106/gold/ledger.jsonl:1",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+reference-bindings-v1",
+        "bindings_input": "runs/env_recipe_repair_20260919/pandas_meta_v3/reference_bindings_v1.json (only own task)",
+        "historical_code_root": "/work/env_recipe_repair_20260919/resources_v1/code/rh2 (local exact copy absent)",
+        "current_code_boundary": "Current ROOT/rh2 source is readable, not certified byte-identical to historical resources_v1 run. Pin source bytes for the new diagnostic."
+      },
+      "variants": [
+        "existing_all_pass_log",
+        "mixed_status_complete_summary_controls",
+        "member_absent_control"
+      ],
+      "custom_candidate_patch_status": "not_needed_for_parser_diagnostic; no business candidate or official test edits",
+      "diagnostic_steps": [
+        "由delta原始行定位datetimeindex_tz的2成员和partial_slice_non_monotonicity的4成员，保存完整nodeids、冻结alias和原始日志hash。既存六项均PASS只支持该次分差。",
+        "先确认该pytest版本完整-rA摘要顺序；当前parse_log_pytest只识别行首状态词，不能用执行先后或原位置直接改状态来冒充真实pytest输出。",
+        "在明确版本的原解析/绑定入口对全PASS、mixed FAILED/PASSED、XFAIL/SKIPPED、缺一成员的诊断输入比较完整成员与alias状态；记录每个有效摘要位置及最终覆盖。合成日志标明为解析器控制，不冒作真实候选运行。",
+        "保持当前3组Period绑定/16F2P+1020P2P不变。只有具体错聚合被验证后，再提出另外两组all-members显式绑定的版本化修订；本轮不修改生产材料或reward。"
+      ],
+      "diagnostic_entry": {
+        "parser_source": "rh2/src/repoharness2/envpack/swegym_parsers.py:44-55",
+        "binding_source": "runs/env_recipe_repair_20260919/pandas_meta_v3/reference_bindings.py:14-32,46-68",
+        "entry_status": "Focused source-backed plan; no new diagnostic script created or run. Runtime owner must choose/pin interpretable source snapshot and pytest summary evidence."
+      },
+      "replay_entry": {
+        "wrapper": "runs/env_recipe_repair_20260919/pandas_meta_v3/replay_with_install_recipe.py",
+        "required_args": [
+          "--code-root <ROOT/rh2 or explicitly pinned RH2 snapshot>",
+          "--recipe <this task input recipe>",
+          "--bindings <ROOT/runs/env_recipe_repair_20260919/pandas_meta_v3/reference_bindings_v1.json>",
+          "--audit-dir <new output>/recipe",
+          "-- run --prepared-summary <existing summary> --task-ids pandas-dev__pandas-48106 --candidate <noop or patch:absolute-file>",
+          "--derived-image sha256:7fce0487dca32159e8480a7426e1f7cddeadeb60fd9687fb41617266f56c0ec7",
+          "--derived-image-recipe pandas_meta_v3:pandas-dev__pandas-48106",
+          "--eval-log-dir <new output>/eval_logs --artifacts-dir <new output>/artifacts --ledger <new output>/ledger.jsonl"
+        ],
+        "purpose": "Optional real-grader confirmation if the focused identity diagnostic justifies it, not a mandatory recompilation before checking parser aggregation."
+      },
+      "actor_gate": "Actor/public image UID54321 development qualification remains a separate enablement condition.",
+      "depends_on": [
+        "later CPU authorization and pinned parsing source/input",
+        "preserve synthetic-versus-real-run evidence distinction"
+      ],
+      "evidence_to_save": [
+        "exact complete nodes/aliases and original log hashes",
+        "actual summary order and any synthetic transformations",
+        "parser/binding/source digests",
+        "per-node observations/alias states/missing/skip/reward interpretation",
+        "original unchanged reference groups and all-three-existing bindings"
+      ],
+      "review_refs": [
+        "results/pandas-dev__pandas-48106/old_findings_delta.md",
+        "results/pandas-dev__pandas-48106/card.md",
+        "results/pandas-dev__pandas-48106/review.md"
+      ]
+    },
+    {
+      "queue_id": "pandas53958-type-export-contract",
+      "instance_id": "pandas-dev__pandas-53958",
+      "priority": 1,
+      "status": "reviewed_static_plan_not_executed",
+      "execution_status": "not_executed",
+      "question": "typing新名字绑定单例而不是真实类型的自然错误候选，是否仍被名称列表oracle接受？",
+      "source_condition": {
+        "base_commit": "1186ee0080a43a08c3431a5bfa86898f6ec3b54d",
+        "public_image_manifest_digest": "sha256:b45817ed11542705d541028f48e9ce8026e783feb14440454141fc6d8129df21",
+        "historical_image_id_actual": null,
+        "historical_image_identity": "sha256:b45817ed11542705d541028f48e9ce8026e783feb14440454141fc6d8129df21",
+        "historical_grader_ledger": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-2/ledger.jsonl:12",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1"
+      },
+      "variants": [
+        "gold",
+        "singleton_values_exported_as_types"
+      ],
+      "candidate_construction": "In pandas/api/typing/__init__.py, preserve all existing exports and __all__; import pandas._libs.NaT as NaTType and pandas._libs.missing.NA as NAType. This ordinary value-versus-class mistake changes production exports only. Inspect the concrete patch and import path; no test/helper/parser edits.",
+      "custom_candidate_patch_status": "not_created",
+      "diagnostic_steps": [
+        "固定既有官方test.patch、1F2P+10P2P与grader条件；比较gold和上述自然错误候选，保存原RH2分数及全部11项结果。",
+        "在同一实际源码导入下直接核NAType is type(pd.NA)、NaTType is type(pd.NaT)，并记录基本类型用途；不把dir字符串相等当对象身份。",
+        "只有错误对象实际通过官方验收且身份检查失败，才认定该具体误收；若其它失败阻止得分，应按观察修正静态预测。",
+        "保留_libs-only真类导出作为可选后续规范对照；其得0不能决定题面是否应接受该路线，不作为第二个必测。公开旧名称白名单与官方恢复后名单分开，额外scalar测试不能代替新入口身份检查。"
+      ],
+      "replay_entry": {
+        "script": "rh2/scripts/replay_grade.py",
+        "required_args": [
+          "run --prepared-summary <existing prepared summary> --task-ids pandas-dev__pandas-53958",
+          "--candidate <noop or patch:absolute-file>",
+          "--eval-log-dir <new output>/eval_logs --artifacts-dir <new output>/artifacts --ledger <new output>/ledger.jsonl"
+        ],
+        "entry_check": "Baseline pinned public manifest. Runtime owner resolves prepared summary and actual interpreter/check-out import; historical null image_id is not fabricated."
+      },
+      "actor_gate": "Actual public-image actor identity/import/permissions remain a separate model-development enablement condition.",
+      "depends_on": [
+        "later CPU/resource authorization and fixed entry",
+        "inspect the concrete singleton-export candidate patch"
+      ],
+      "evidence_to_save": [
+        "variant diff SHA",
+        "canonical type identity and export lists",
+        "actual source import/image/role",
+        "per-test/reference states and reward",
+        "official restoration/install/cleanup",
+        "explicit distinction between public scope choice and observed score"
+      ],
+      "review_refs": [
+        "results/pandas-dev__pandas-53958/analysis_before_history.md",
+        "results/pandas-dev__pandas-53958/review.md",
+        "results/pandas-dev__pandas-53958/card.md"
+      ],
+      "priority_rationale": "Coordinator adopts independent reviewer priority over investigator namespace-first proposal: object identity tests the uncontested type goal; score alone cannot settle namespace specification. Disagreement remains in the sealed main draft and final review.",
+      "optional_followup": "Only if later scope decisions or evidence justify it: inspect _libs-only canonical-class export and score separately. No custom patch created and no extra mandatory gate."
+    }
+  ],
+  "updated_at": "2026-09-20T20:53:34.414835+00:00",
+  "owner": "batch02 coordinator; execution delegated later by overall coordinator",
+  "common_conditions": {
+    "authorization": "本轮仅静态方案，不执行CPU/容器/远端或模型；实施须由总协调者安排现存入口和资源。",
+    "identity": "固定每题base、实际镜像ID/digest、Python/相关依赖及工作区预改；base/gold/候选使用可对账条件，不以公共latest标签代替内容身份。",
+    "roles": "正式actor计划agent/54321、grader为rh2grader/54322；补丁apply_user不等于actor会话。UID/HOME/cwd/PATH/解释器、源码导入、权限与实际消息需真实入口证明。",
+    "grading": "保持原始题目及冻结F2P/P2P与reward；附加公开诊断单列。已有版本化fixture/安装修订注明实际spec digest和生效入口，不能把修订运行当未修原始材料。",
+    "projection": "候选仅按指定生产改动构造；保存diff/SHA、投影/排除、官方文件恢复、安装、逐ID执行/skip/缺席、完整日志/RC/reward与清理。",
+    "evidence": "历史局部脚本、旧独立runner、历史RH2、当前CPU和真实模型分别标记；静态预测不是观测，需求歧义不能由得分或多数判断消除。",
+    "entry": "当前rh2/scripts/replay_grade.py:123声明noop、patch:<file>、gold-dir:<dir>、patch-dir:<dir>。wrapper按自己功能使用--recipe或--materials并带--code-root；没有已实现的正式actor薄入口验收记录。",
+    "selectivity": "一般覆盖缺口不自动阻塞受限用途；每题只优先最有区分力的下一步，未成熟或无需新实验的题不机械凑CPU条目。"
+  }
+}

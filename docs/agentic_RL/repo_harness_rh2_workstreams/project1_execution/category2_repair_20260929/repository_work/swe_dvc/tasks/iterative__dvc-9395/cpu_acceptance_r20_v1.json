@@ -1,0 +1,56 @@
+{
+  "format": "swe_dvc_cpu_acceptance.v1",
+  "as_of_utc": "2026-10-03T04:22:35.165278+00:00",
+  "instance_id": "iterative__dvc-9395",
+  "release_id": "cat2-cpu-r2e093-swe40-prepare900-20261003-v1",
+  "release_manifest_sha256": "sha256:2a4ceb0315ea959232151d70f29ccc48bd34bdb0cb7dcfbb4aa177fec07bd393",
+  "status": "ordinary_probe_cpu_acceptance_complete",
+  "formal_matrix": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/formal_matrix_r20_v1.json",
+    "sha256": "sha256:759924ac16166deae54144b6be02cd9e040f73c5d02d064bdd505fadc421e3be"
+  },
+  "public_actor": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-9395/public_actor_r5_v1.json",
+    "sha256": "sha256:1852b4375a69987e4c55c4052c38dd196c8c05554f1bde334310364daff504fe"
+  },
+  "public_actor_applicability": "R5 verified actual public actor + R20 unchanged public/code/image scope and actual new prepared payload/prompt equality; no invented R20 actor run",
+  "independent_reviews": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/reviews/non_author_public_actor_r14_reuse_review_20261003.md",
+      "sha256": "sha256:24276eef103c12df70f261a9b05a56c33a251a98a480300555582a3b561f9c97"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/reviews/non_author_dvc9395_r20_budget_support_review_20261003.md",
+      "sha256": "sha256:88c26bddb9becd4ced787eb77b6b094acd59e3ae57d7b050728fe649bb27320b"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/reviews/non_author_formal9395_r20_runtime_review_20261003.md",
+      "sha256": "sha256:0413230dfd6553e31b52a1ddad146ce7d05508272d87e7787df84790bdfaf00b"
+    }
+  ],
+  "public_contract_review": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/public_contract_review_20261003.json",
+    "sha256": "sha256:a1e42b08d2ada761fb4ed6e694db81dba0231ae597d2c776a46caeb0424eb7ac"
+  },
+  "formal_controls": {
+    "noop": 0.0,
+    "gold": 0.0,
+    "c3_frozenfix": 1.0,
+    "c3_missing_only": 0.0,
+    "up351_port": 0.0,
+    "w_swallow3": 0.0
+  },
+  "scope": "Current fixed material/environment ordinary base-model diagnostic only; no training/holdout/full security qualification",
+  "evidence_limitations": [
+    "成功六项ledger.resource_facts均null；唯一正确对照live HostConfig只证明单个时点2CPU/4GiB/PID512/none。root trusted setup/protect与candidate UID54322 exec分开，不能外推全程OOM/PID/peak或最低资源。",
+    "官方diagnostics.num_parsed_tests42/43包含captured logging；完整pytest实际41节点、40参考逐项闭合，reward未受额外非参考键影响。collector v2仅修离线汇总，官方parser原限制仍保留。",
+    "六次trusted setup聚合149–249秒均低于旧300；R20实际使用900政策已证，未证明扩预算导致恢复、具体旧chown根因或效率改善。旧R14两次protect300 infra/null独立保留。",
+    "R5真实公开actor17pass仅按相同公共payload、prompt正文、镜像和actor执行代码范围复用；R20metadata环境digest更新，没有新R20 actor、typed训练集成或完整baseline字节封存。旧pytest-q helper计数null、无独立collect-only逐节点/完整stdout pin，8GiB quota只配置未证强制。",
+    "原测试仍含内部mock约束，合理替代模型解得0须审公开目标和实际行为；issue明确必要缺失恢复，其它新增边界由公开源码/API依据支撑。",
+    "GPU实际镜像/消费者/模型权重与预算尚待执行者原件。若GPU image不同c093须共享发布精确新policy/image/consumer配对，actual spec/ledger900，不冒填CPU身份或静默退300。",
+    "当前固定普通基座诊断CPU验收；不推断旧原版正式reward、完整安全、稳定性、训练或holdout资格。"
+  ],
+  "still_needs_gpu": true,
+  "still_needs_cpu_for_this_task": false,
+  "retirement_ready": false
+}

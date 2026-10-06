@@ -1,0 +1,23 @@
+[
+  {
+    "id": "public_environment",
+    "timeout_s": 120,
+    "expect": "any",
+    "purpose": "核对公开工作区中的解释器、源码导入和运行身份",
+    "cmd": "PYTHONDONTWRITEBYTECODE=1 python - <<'RH2_AIO_PUBLIC'\nimport json,os,sys,aiohttp\nprint(json.dumps({'uid':os.getuid(),'gid':os.getgid(),'python':sys.version,'executable':sys.executable,'aiohttp':aiohttp.__version__,'source':aiohttp.__file__,'virtual_env':os.environ.get('VIRTUAL_ENV')},sort_keys=True))\nprint('RH2_SYS_EXECUTABLE='+sys.executable)\ntry:\n    fd = os.open('/rh2/bash_env', os.O_WRONLY | os.O_APPEND)\nexcept PermissionError:\n    print('RH2_BASHENV_WRITE=DENIED')\nexcept OSError as exc:\n    print('RH2_BASHENV_WRITE=ERROR', repr(exc))\nelse:\n    os.close(fd)\n    print('RH2_BASHENV_WRITE=WRITABLE')\nRH2_AIO_PUBLIC\n"
+  },
+  {
+    "id": "pr1_1_cmd",
+    "timeout_s": 300,
+    "expect": "any",
+    "purpose": "从公开 startup 示例记录异常传播及重复日志事实",
+    "cmd": "python - <<'EOF'\nimport logging\nfrom aiohttp import web\n\nrecords = []\n\nclass Collect(logging.Handler):\n    def emit(self, record):\n        records.append(record)\n\nlogging.getLogger().addHandler(Collect())\n\nasync def context(app):\n    raise RuntimeError(\"Unexpected error occurred\")\n    yield\n\napp = web.Application()\napp.cleanup_ctx.append(context)\ntry:\n    web.run_app(app, print=None)\nexcept RuntimeError as exc:\n    print(\"raised:\", repr(exc))\nelse:\n    print(\"raised: nothing\")\nhits = [\n    r for r in records\n    if (r.exc_info and isinstance(r.exc_info[1], RuntimeError))\n    or \"Unexpected error occurred\" in r.getMessage()\n]\nprint(\"log records about the error:\", len(hits),\n      [r.name + \": \" + r.getMessage().splitlines()[0] for r in hits])\nEOF"
+  },
+  {
+    "id": "public_run_app_tests",
+    "timeout_s": 900,
+    "expect": "any",
+    "purpose": "运行目标相关公开 run_app 测试",
+    "cmd": "PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider --color=no -rfE tests/test_run_app.py"
+  }
+]

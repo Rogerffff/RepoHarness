@@ -1,0 +1,155 @@
+{
+  "schema_id": "conan.owner.model_analysis.v1",
+  "as_of": "2026-10-03T05:23:37.716076+00:00",
+  "request_id": "swe-conan11594-r12-briefv2-20261003-v1",
+  "job_id": "gpu1003-conan11594-coder-a1",
+  "model": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+  "sample": 1,
+  "material_version": "conan11594-private-test-v1",
+  "budget_version": "probe-wide-v1",
+  "raw_score": {
+    "reward": 1,
+    "f2p": {
+      "passed": 2,
+      "total": 2
+    },
+    "p2p": {
+      "passed": 4,
+      "total": 4
+    },
+    "logical_references": 6,
+    "complete_raw_nodes": 7
+  },
+  "semantic_verdict": "correct_default_target_root_cause_fix_and_preserved_configuration_forwarding_non_author_reviewed",
+  "semantic_independent_review": {
+    "status": "completed_no_blocking_finding",
+    "report": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_11594_coder_a1_semantic_review_20261003.md",
+      "sha256": "sha256:6e27c869397a213f5f0f86c0bc1b67729426732e9e7c906a172b97e536694500"
+    },
+    "reviewer_role": "non_author_semantic_falsifier",
+    "scope": "source target selection/config forwarding and unchanged boundaries, all candidate changes, fixed reference mapping, model selftests/final statements; static readback, no CPU/GPU rerun"
+  },
+  "execution_independent_review": {
+    "status": "execution_evidence_verified_with_scope_limits",
+    "report": {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/conan11594_coder_a1_execution_review_v1.json",
+      "sha256": "4be7e58d6ace46c3969cb3b001792592b232669985044c672e8324b578ad7275",
+      "bytes": 20124
+    },
+    "scope": "reuse GPU non-author execution audit within recorded identity/transport/cleanup and limited resource scope; no worst-case context capacity or repeated full weight hash claim"
+  },
+  "owner_analysis": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-11594/probe_coder_a1_analysis_20261003.md",
+    "sha256": "sha256:008e6d483abac63bb02aee2f1df761045841c309d2dff364c1435393c9e24d57"
+  },
+  "owner_readback": {
+    "path": "runs/category2_repair_20260929/conan_cpu_20261003/probe_analysis_11594_coder_a1_20261003_v1/owner_readback.json",
+    "sha256": "sha256:d546db92c4df82833624c5fbbc021e523b8eedbed0bf96d80d928cffc8a7aa2b"
+  },
+  "trajectory": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v17/results/gpu1003-conan11594-coder-a1/attempt/trajectory.jsonl",
+    "sha256": "017afaf4e5c51b9b3e5828815504e1eecc017e4d6b0662714567d66ae8586271",
+    "bytes": 233537
+  },
+  "complete_candidate": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v17/results/gpu1003-conan11594-coder-a1/attempt/candidate/conan-io__conan-11594.diff",
+    "sha256": "ca6c034cf2cea1390c5267d6dacd2b9f58c83a4b5b87b9172b5befadc2d7e423",
+    "bytes": 943
+  },
+  "frozen_patch": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v17/results/gpu1003-conan11594-coder-a1/attempt/frozen/frozen_patch.json",
+    "sha256": "740f493e4821f62f3f83e79a20b4928704e5f744a6217fbc3c5ea0baca393442",
+    "bytes": 10238
+  },
+  "scoring_projection": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v17/results/gpu1003-conan11594-coder-a1/grading/projection.json",
+    "sha256": "66074ab626d278e88956b3c89def8d34ac33141b3981adfab361085546b3514e",
+    "bytes": 332
+  },
+  "dimensions": {
+    "method": "correct RUN_TESTS vs test default target; preserves multi-config helper and --config; no bypass; skip_test/explicit target/argument forwarding unchanged",
+    "localization": "third tool reads correct source at1.862seconds; root cause after four tools; response completion upper bound3.650seconds; later legacy/full-tree reads add context",
+    "tools": "21calls Bash15/Read3/Edit1/Write2; testbed itself matches */test* and defeats test-dir filtering; unrelated pytest failure masked by ||echo, no full output read/diagnosis",
+    "parallel": "actual serial single-tool requests; utils/test read opportunity exists; dispatch overlap support not independently established, capability undetermined",
+    "verification": "import and two duplicate expression simulations only; unrelated pytest1failed/78passed/2skipped; solver no real CTest, authoritative grader real Release plus generator cases7allpassed; intermediate broad validation overstated, final omits failure/limits",
+    "efficiency": "39.538seconds solve,22turns,283679cumulativeinput/3416output; largest input18488; preparation/grading/queue separate; no general cross-model efficiency conclusion",
+    "termination_and_stability": "completed/end_turn; HTTP22all200; no truncation; one sample only; Qwen3.6 pending, paired request claimed, stability undetermined"
+  },
+  "metrics": {
+    "model_turns": 22,
+    "tool_calls": 21,
+    "tool_counts": {
+      "Bash": 15,
+      "Read": 3,
+      "Edit": 1,
+      "Write": 2
+    },
+    "reported_tool_errors": 0,
+    "masked_nonzero_command": {
+      "tool_index": 19,
+      "trajectory_result_row": 242,
+      "command": "python -m pytest conans/test/unittests/util/tools_test.py -v -k \"test\" 2>/dev/null || echo \"No specific test found, but that's okay\"",
+      "actual_pytest_summary": "1 failed, 78 passed, 2 skipped, 3 warnings in 6.75s",
+      "failure": "ToolsTest::test_download_retries_errors, google.es DNS failure; unrelated to CMake target selection",
+      "model_read_full_output": false,
+      "retry": false
+    },
+    "cumulative_input_tokens": 283679,
+    "cumulative_output_tokens": 3416,
+    "largest_request_input_tokens": 18488,
+    "solve_seconds": 39.538,
+    "harness_exec_seconds": 36.605,
+    "cc_duration_seconds": 35.996,
+    "cc_api_duration_seconds": 26.784,
+    "cc_non_api_residual_seconds_not_pure_tool_time": 9.212,
+    "first_model_request_epoch": 1791003155.281714,
+    "first_relevant_source_read_result_epoch": 1791003157.144,
+    "correct_diagnosis_response_completion_epoch": 1791003158.9313447,
+    "correct_diagnosis_response_completion_since_first_request_seconds": 3.6496307849884033,
+    "first_relevant_source_read_since_first_request_seconds": 1.86228609085083,
+    "environment_preparation_stage_seconds": {
+      "image_ready": 0.02,
+      "network_and_container": 1.322,
+      "git_sanitize": 10.118,
+      "trusted_init": 10.23,
+      "baseline_census": 0.19,
+      "quiescence": 0.438
+    },
+    "grading_timing": {
+      "schema_id": "rh2.grading_timing_record.v1",
+      "record_id": "timing_197a1e4e",
+      "trajectory_id": "gpu1003-conan11594-coder-a1",
+      "task_id": "swe_gym_lite::conan-io__conan-11594",
+      "image_pull_seconds": 0.0,
+      "env_reset_seconds": 10.844,
+      "prep_seconds": 0.305,
+      "test_seconds": 2.661,
+      "total_grading_seconds": 97.41,
+      "queue_wait_seconds": 0.0,
+      "container_peak_memory_mb": 363.879,
+      "queue_depth_at_enqueue": null,
+      "backpressure_triggered": false
+    },
+    "cc_cost_usd_is_builtin_estimate_not_local_compute_bill": 1.5037949999999998
+  },
+  "same_budget_actual_gateway_output_limits": [
+    65536
+  ],
+  "model_public_test_full_output": {
+    "archive_member": ".claude/projects/-testbed/5ab5f459-19f8-4009-8504-f9c8bdec852e/tool-results/bk2x4jm74.txt",
+    "extracted": {
+      "path": "runs/category2_repair_20260929/conan_cpu_20261003/probe_analysis_11594_coder_a1_20261003_v1/model_tools_test_full_output.txt",
+      "sha256": "58829b870a104803c30d305a4158b7d84bb83bfe764dd0f0285d284c4de784ee",
+      "bytes": 72953
+    }
+  },
+  "changes_required": [],
+  "cpu_rerun_required_for_this_arm": false,
+  "model_rerun_required_for_this_arm": false,
+  "paired_request_closed": false,
+  "pending_models": [
+    "Qwen/Qwen3.6-35B-A3B"
+  ],
+  "training_eligibility": "not_established"
+}

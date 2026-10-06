@@ -1,0 +1,11 @@
+--- followup3/stop_cases_replay.py
++++ followup4/stop_cases_replay.py
+@@ -128,7 +128,7 @@
+         verdicts = [decide_member_disposition(AdmissionPayloadV1.model_validate(s.metadata["rh2_admission"]), policy=make_disposition_policy()) for s in delivered]
+         result["member_verdicts"] = [{"verdict": v.verdict, "reason": v.reason_code} for v in verdicts]
+         assert result["barrier_passed"] and result["grading_calls"] == 1
+-        expected = "hard_wall_timeout" if kind in ("kill_effect_after_wall", "kill_reply_late_but_effect_before_wall", "kill_failed_alive_after_wall", "kill_ok_positive_count_after_wall") else "max_turns_exhausted"
++        expected = "hard_wall_timeout" if kind in ("confirmation_after_wall", "kill_effect_after_wall", "kill_reply_late_but_effect_before_wall", "kill_failed_alive_after_wall", "kill_ok_positive_count_after_wall") else "max_turns_exhausted"
+         assert result["termination"] == expected
+         expected_verdict = "DROP_GROUP" if expected == "hard_wall_timeout" else "KEEP_FULL"
+         assert all(v.verdict == expected_verdict for v in verdicts)

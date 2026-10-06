@@ -1,0 +1,78 @@
+{
+  "format": "swe_dvc_formal_cpu_infra_failure.v1",
+  "at_utc": "2026-10-03T00:37:46.644907+00:00",
+  "instance_id": "iterative__dvc-9395",
+  "job_id": "dvc9395-r14-noop-20261003-002355",
+  "release_id": "cat2-cpu-r2e089092-swe34-dvc-pyd-20261003-v1",
+  "release_manifest_sha256": "sha256:51b833975be2c3354be45b731552235a33070315f0039c8e6f54987de95f6ca8",
+  "report": {
+    "execution_failure_evidence": [],
+    "execution_failure_stage": null,
+    "expected_match": null,
+    "expected_total": null,
+    "f2p_pass": null,
+    "f2p_total": null,
+    "failure_category": "infra_failure",
+    "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+dvc9395-behavior-v2-draft",
+    "grading_semantics": "swe_f2p_p2p",
+    "infra_failure_detail": "grading_control_surface_protect_timeout_after_300s",
+    "outcome": "failed_to_grade",
+    "p2p_fail": null,
+    "p2p_total": null,
+    "report_id": "rpt_grading_0de0e7b2",
+    "reward": null
+  },
+  "phases": {
+    "delta_apply": 0.18186,
+    "grader_baseline_rebuild": 0.480778,
+    "grader_cleanup": 1.461088,
+    "grader_start_and_verify": 44.802543,
+    "grader_trusted_setup": 301.435441,
+    "parser_and_report": 0.41463,
+    "test": null
+  },
+  "trusted_setup": {
+    "RH2_SETUP_ABSENT_TEST_FILES": "0",
+    "RH2_SETUP_APPLY_RC": "0",
+    "RH2_SETUP_EXPECTED_TEST_FILES": "2",
+    "RH2_SETUP_IRREGULAR_TEST_FILES": "",
+    "RH2_SETUP_OK": "1",
+    "RH2_SETUP_RESTORED": "2",
+    "RH2_SETUP_TEST_FILES": "2"
+  },
+  "candidate_prerequisite": null,
+  "installation": null,
+  "test": null,
+  "actual_oom_facts": {
+    "container_oom_killed": false,
+    "oom_kill_events": 0,
+    "pids_events_max": 0
+  },
+  "actual_peak_memory_mb": 509.734,
+  "cleanup": {
+    "detail": "",
+    "removed": true,
+    "steps": [
+      "rm:ok"
+    ]
+  },
+  "raw_archive": {
+    "path": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r14_noop_002355_v1.tar.gz",
+    "sha256": "sha256:e2d3a1cfb6cc30ba7f4dd24c93cf1cf9745521c2a8dd101fea017a013d075df9"
+  },
+  "raw_receipt": {
+    "path": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r14_noop_002355_v1.receipt.json",
+    "sha256": "sha256:69dc47c5be41b237a47d3e9474f743d56f2de1b8b190826c3848e8c8ec33a094"
+  },
+  "raw_manifest": {
+    "path": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal9395_r14_noop_002355_v1/manifest.json",
+    "sha256": "sha256:37d596be112697382ede0dfd717a466d8a245eb3f5428c407ff12366c2804579"
+  },
+  "no_retry_without_change": true,
+  "observed_cause": "Trusted restore/apply attest succeeded. Manager _run_eval then timed out while executing grader_protect_control_surface_script using spec.env_reset_timeout_seconds default300; candidate UID preflight/install/tests never started. Actual subcommand within protection has no delivered stdout, so chown location is not yet proven.",
+  "inferences_and_limits": [
+    "Protection source recursively chowns /testbed and candidate writable prefix /opt/miniconda3/envs/testbed before test ownership/sticky attest; expensive overlay ownership work is a plausible cause, not a measured root cause.",
+    "No OOM/pid exhaustion observed in retained facts; do not infer CPU/disk contention or task behavior failure solely from elapsed time.",
+    "No old original reward inference, no new formal control matrix/model or training qualification."
+  ]
+}

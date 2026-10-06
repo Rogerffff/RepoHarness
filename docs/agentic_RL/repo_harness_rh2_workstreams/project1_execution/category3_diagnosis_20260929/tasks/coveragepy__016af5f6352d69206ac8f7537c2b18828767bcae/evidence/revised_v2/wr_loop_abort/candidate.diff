@@ -1,0 +1,65 @@
+diff --git a/coverage/sqldata.py b/coverage/sqldata.py
+index 613a280c..ee0e4ec3 100644
+--- a/coverage/sqldata.py
++++ b/coverage/sqldata.py
+@@ -438,19 +438,22 @@ class CoverageData(SimpleReprMixin):
+             return
+         with self._connect() as con:
+             self._set_context_id()
+-            for filename, linenos in iitems(line_data):
+-                linemap = nums_to_numbits(linenos)
+-                file_id = self._file_id(filename, add=True)
+-                query = "select numbits from line_bits where file_id = ? and context_id = ?"
+-                existing = list(con.execute(query, (file_id, self._current_context_id)))
+-                if existing:
+-                    linemap = numbits_union(linemap, existing[0][0])
++            try:
++                for filename, linenos in iitems(line_data):
++                    linemap = nums_to_numbits(linenos)
++                    file_id = self._file_id(filename, add=True)
++                    query = "select numbits from line_bits where file_id = ? and context_id = ?"
++                    existing = list(con.execute(query, (file_id, self._current_context_id)))
++                    if existing:
++                        linemap = numbits_union(linemap, existing[0][0])
+ 
+-                con.execute(
+-                    "insert or replace into line_bits "
+-                    " (file_id, context_id, numbits) values (?, ?, ?)",
+-                    (file_id, self._current_context_id, linemap),
+-                )
++                    con.execute(
++                        "insert or replace into line_bits "
++                        " (file_id, context_id, numbits) values (?, ?, ?)",
++                        (file_id, self._current_context_id, linemap),
++                    )
++            except UnicodeEncodeError:
++                pass
+ 
+     def add_arcs(self, arc_data):
+         """Add measured arc data.
+@@ -470,14 +473,17 @@ class CoverageData(SimpleReprMixin):
+             return
+         with self._connect() as con:
+             self._set_context_id()
+-            for filename, arcs in iitems(arc_data):
+-                file_id = self._file_id(filename, add=True)
+-                data = [(file_id, self._current_context_id, fromno, tono) for fromno, tono in arcs]
+-                con.executemany(
+-                    "insert or ignore into arc "
+-                    "(file_id, context_id, fromno, tono) values (?, ?, ?, ?)",
+-                    data,
+-                )
++            try:
++                for filename, arcs in iitems(arc_data):
++                    file_id = self._file_id(filename, add=True)
++                    data = [(file_id, self._current_context_id, fromno, tono) for fromno, tono in arcs]
++                    con.executemany(
++                        "insert or ignore into arc "
++                        "(file_id, context_id, fromno, tono) values (?, ?, ?, ?)",
++                        data,
++                    )
++            except UnicodeEncodeError:
++                pass
+ 
+     def _choose_lines_or_arcs(self, lines=False, arcs=False):
+         """Force the data file to choose between lines and arcs."""

@@ -1,0 +1,52 @@
+{
+ "statement_example": {
+  "endpoint": "arn:aws:sns:us-east-1:123456789012:endpoint/GCM/test/76d6832e-e99e-47d5-9f4f-44c309f66431",
+  "first": {
+   "raised": false,
+   "value": "arn:aws:sns:us-east-1:123456789012:test-topic:405677cf-f70c-4a79-a92e-527437449551"
+  },
+  "second_after_delete": {
+   "raised": true,
+   "code": "InvalidParameter",
+   "message": "Invalid parameter: Endpoint Reason: Endpoint does not exist for endpoint arn:aws:sns:us-east-1:123456789012:endpoint/GCM/test/76d6832e-e99e-47d5-9f4f-44c309f66431"
+  }
+ },
+ "deleted_never_subscribed": {
+  "endpoint": "arn:aws:sns:us-east-1:123456789012:endpoint/GCM/test/94de047f-3f61-4638-b092-2d9aa78c76a4",
+  "subscribe": {
+   "raised": true,
+   "code": "InvalidParameter",
+   "message": "Invalid parameter: Endpoint Reason: Endpoint does not exist for endpoint arn:aws:sns:us-east-1:123456789012:endpoint/GCM/test/94de047f-3f61-4638-b092-2d9aa78c76a4"
+  }
+ },
+ "never_created_endpoint": {
+  "endpoint": "arn:aws:sns:us-east-1:123456789012:endpoint/GCM/test/00000000-0000-0000-0000-000000000000",
+  "subscribe": {
+   "raised": true,
+   "code": "InvalidParameter",
+   "message": "Invalid parameter: Endpoint Reason: Endpoint does not exist for endpoint arn:aws:sns:us-east-1:123456789012:endpoint/GCM/test/00000000-0000-0000-0000-000000000000"
+  }
+ },
+ "valid_twice": {
+  "first": {
+   "raised": false,
+   "value": "arn:aws:sns:us-east-1:123456789012:test-topic:33ee19db-42cc-4b47-96b9-6a280a7a0ce7"
+  },
+  "second": {
+   "raised": false,
+   "value": "arn:aws:sns:us-east-1:123456789012:test-topic:33ee19db-42cc-4b47-96b9-6a280a7a0ce7"
+  },
+  "same_arn": true,
+  "listed": 1
+ },
+ "other_protocols": {
+  "sqs": {
+   "raised": false,
+   "value": "arn:aws:sns:us-east-1:123456789012:t2:ae57f1c9-33eb-482a-b622-72e6f602682f"
+  },
+  "email": {
+   "raised": false,
+   "value": "arn:aws:sns:us-east-1:123456789012:t2:67071d5b-5426-48ac-847b-35d56cab98b1"
+  }
+ }
+}

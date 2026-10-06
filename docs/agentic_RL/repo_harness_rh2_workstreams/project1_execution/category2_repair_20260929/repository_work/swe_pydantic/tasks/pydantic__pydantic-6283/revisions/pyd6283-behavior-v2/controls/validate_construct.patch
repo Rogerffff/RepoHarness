@@ -1,0 +1,11 @@
+--- a/pydantic/main.py
++++ b/pydantic/main.py
+@@ -190,6 +190,8 @@
+         Returns:
+             A new instance of the `Model` class with validated data.
+         """
++        if cls.__pydantic_root_model__:
++            return cls(values['root'])
+         m = cls.__new__(cls)
+         fields_values: dict[str, Any] = {}
+         defaults: dict[str, Any] = {}  # keeping this separate from `fields_values` helps us compute `_fields_set`

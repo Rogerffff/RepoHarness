@@ -1,0 +1,31 @@
+diff --git a/modin/core/io/column_stores/parquet_dispatcher.py b/modin/core/io/column_stores/parquet_dispatcher.py
+index 0b40ea3f..76d41f6c 100644
+--- a/modin/core/io/column_stores/parquet_dispatcher.py
++++ b/modin/core/io/column_stores/parquet_dispatcher.py
+@@ -690,6 +690,7 @@ class ParquetDispatcher(ColumnStoreDispatcher):
+         if (
+             dataset.pandas_metadata
+             and "column_indexes" in dataset.pandas_metadata
++            and dataset.pandas_metadata["column_indexes"]
+             and dataset.pandas_metadata["column_indexes"][0]["numpy_type"] == "int64"
+         ):
+             columns = pandas.Index(columns).astype("int64").to_list()
+diff --git a/modin/pandas/test/test_io.py b/modin/pandas/test/test_io.py
+index b13fda64..715fb501 100644
+--- a/modin/pandas/test/test_io.py
++++ b/modin/pandas/test/test_io.py
+@@ -1426,6 +1426,14 @@ class TestParquet:
+                 comparator=comparator,
+             )
+ 
++    def test_read_parquet_index_false(self, engine):
++        with ensure_clean(".parquet") as unique_filename:
++            pandas.DataFrame(
++                {"col1": np.arange(100), "col2": np.arange(100)}
++            ).to_parquet(unique_filename, index=False)
++
++            eval_io(fn_name="read_parquet", engine=engine, path=unique_filename)
++
+     # Tests issue #6778
+     def test_read_parquet_no_extension(self, engine, make_parquet_file):
+         with ensure_clean(".parquet") as unique_filename:

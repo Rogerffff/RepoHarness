@@ -1,0 +1,340 @@
+{
+ "schema_id": "rh2.r2e_screening_record.v1",
+ "task_id": "r2e_gym_subset::datalad__58ba5165234cb16de0e8463ee75097362099835f",
+ "instance_id": "datalad__58ba5165234cb16de0e8463ee75097362099835f",
+ "task_revision": "r2e_gym_subset_e8b9fcbc/material_revisions_v1:r2e-mr-002",
+ "source_adapter_ref": "s2_r2e ingest_manifest v2（t1_input_pins_r2e_v2 pin 60e187a0…；manifest pin 706abc8a…；含 material_revisions_v1）",
+ "recipe_ref": {
+  "derived_image": "r2e_derive_v1+material_v1",
+  "resources": "default"
+ },
+ "code_snapshot_ref": "runs/r2e_snapshot_20260923.sha256 (388 files) + r2e_env_tools.sha256（远端 run_dev_probe.py cd2c85cd… / dev_probe_agent.sh 618e0e53… 与本机一致）",
+ "facts_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/datalad__58ba5165234cb16de0e8463ee75097362099835f/facts.json",
+ "dev_probe_ref": "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__58ba5165234cb16de0e8463ee75097362099835f/dev_probe.json",
+ "checks": {
+  "R01": {
+   "status": "pass",
+   "note": "修订后复核：09-24 在 A 线机器按 r2e_derive_v1+material_v1（recipe sha256:0ca00d15…）重建；material 步骤写前核原摘要、写后核新摘要（build.log：RH2_MATERIAL_APPLIED=test_1.py、RH2_MATERIAL_TREE=86561f1a…），私有隐藏测试树与评分面 hidden_tests_tree_sha256 一致（来源树 f8e64d3a… → 修订后 86561f1a…）；派生复核全部通过。",
+   "evidence_refs": [
+    "runs/r2e_t0_revisions_20260924/derived/datalad__58ba5165234cb16de0e8463ee75097362099835f/facts.json",
+    "runs/r2e_t0_revisions_20260924/derived/datalad__58ba5165234cb16de0e8463ee75097362099835f/build.log",
+    "runs/r2e_t0_revisions_20260924/derived/results.json"
+   ],
+   "by": "Claude（B 线，T0 实施验收）",
+   "previous": {
+    "status": "pass",
+    "note": "派生镜像 21 项复核通过；覆盖表 / 隐藏测试树 / 入口脚本 / HEAD 与评分面一致；探针 GIT_HEAD = base_commit 8833dcd935b3，镜像 ID 与覆盖表一致（探针按 overlays.jsonl 的 ID inspect 通过）。"
+   }
+  },
+  "R02": {
+   "status": "pass",
+   "note": "修订后 noop 0 来自 2 个 mismatched 键（test_alter_interface_docs_for_api / _for_cmdline），无 missing、无零解析；两次相同。",
+   "evidence_refs": [
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-n_01f61d30.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-n_27b66c55.eval.log"
+   ],
+   "by": "Claude（B 线，T0 实施验收）",
+   "previous": {
+    "status": "pass",
+    "note": "noop 0 来自 2 个 mismatched 键（无 missing、无零解析）"
+   }
+  },
+  "R03": {
+   "status": "pass",
+   "note": "公开 prompt 1297 字符，题面 1194 字符、含代码块；公开复现脚本按题面复现成功（REPRO_OBSERVED=1）。题面完整（含 demo_doc 示例）；未写函数所在模块（datalad/cli/interface.py），工作区可查到。 全局提示写 conda testbed（R2E 实为 .venv）属 E09，不计入本题。run_tests.sh / install.sh 在工作区可见：前者只含入口命令与隐藏测试目录名，后者是本仓库通用安装脚本（同仓各题逐字相同，followups A），不含修复。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/prepared_r2e/prompts.jsonl",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/datalad__58ba5165234cb16de0e8463ee75097362099835f.py",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__58ba5165234cb16de0e8463ee75097362099835f/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+   ],
+   "by": "p2-subagent"
+  },
+  "R04": {
+   "status": "pass",
+   "note": "修订后（r2e-mr-002）隐藏 test_1 从 .test_2（隐藏测试里的上游修复后版本）导入 demo_doc 等，解题不再需要改 r2e_tests 以外的测试辅助模块；gold 只触碰 datalad/cli/interface.py、datalad/interface/base.py 即 4/4。修订前的 issue 见 previous。",
+   "evidence_refs": [
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-g_5a93d4f7.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-g_31763a71.eval.log",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/datalad__58ba5165234cb16de0e8463ee75097362099835f/r2e_tests/test_1.py",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v1.json"
+   ],
+   "by": "Claude（B 线，T0 实施验收）",
+   "previous": {
+    "status": "issue",
+    "note": "official / hygiene test_files = r2e_tests/{__init__.py,conftest.py,test_1.py,test_2.py} + run_tests.sh；gold 触碰 datalad/cli/interface.py, datalad/interface/base.py，不在其中。但要让 test_alter_interface_docs_for_cmdline 通过，只能改 r2e_tests 以外的测试辅助模块 datalad/interface/tests/test_docs.py（隐藏 test_1 从它导入 demo_doc；候选对它的改动会被重放）——这不是题面要求的改动，属缺测试支撑材料。"
+   }
+  },
+  "R05": {
+   "status": "pass",
+   "note": "python → /testbed/.venv/bin/python 3.9.21（PATH 首项，镜像 ENV）；pytest 8.3.4；pip 缺失（/testbed/.venv/bin/python: No module named pip；pip / pip3 / uv 命令都不存在，见 WHICH_* 键——本地 dev_probe.json 已用 run_dev_probe.py --reparse（parser v2）重建，远端副本仍是 v1、缺这些键）；gcc / make / git 有。导入方式：editable finder（uv pip install -e .），/tmp 下也导入 /testbed/datalad/__init__.py（IMPORT_FROM_TMP_RC=0）。 git-annex 在（followups A）。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__58ba5165234cb16de0e8463ee75097362099835f/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__58ba5165234cb16de0e8463ee75097362099835f/agent_probe.log",
+    "runs/env_overnight_20260916/M3/facts/58ba5165234c/pkgsrc.txt",
+    "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+   ],
+   "by": "run_dev_probe.py + p2-subagent"
+  },
+  "R06": {
+   "status": "not_applicable",
+   "note": "期望 4 键全 PASSED，无 FAILED / ERROR 键；工作区无未跟踪资产目录。gold 后仍不符的 cmdline 键见 R08 / R16（材料问题，不是 R06 的非 PASSED 期望键）。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/datalad__58ba5165234cb16de0e8463ee75097362099835f/facts.json"
+   ],
+   "by": "p2-subagent"
+  },
+  "R07": {
+   "status": "pass",
+   "note": "派生镜像复核通过（两种 uid 的解释器可执行、私有目录不可读）；探针 chown 后 /testbed、site-packages、.venv/bin、HOME、/tmp 可写，/usr/local 不可写；/rh2_private 对 agent Permission denied，/testbed 与 / 下都没有 r2e_tests。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/datalad__58ba5165234cb16de0e8463ee75097362099835f/facts.json",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__58ba5165234cb16de0e8463ee75097362099835f/dev_probe.json"
+   ],
+   "by": "collate_facts.py + run_dev_probe.py"
+  },
+  "R08": {
+   "status": "pass",
+   "note": "修订后 gold 4/4、reward 1（两次）；候选代码生效；grader 侧导入路径 /testbed/datalad/__init__.py（账本 observations.RH2_OBS_IMPORT_PATH，两次相同）。",
+   "evidence_refs": [
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-g_5a93d4f7.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-g_31763a71.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/ledger_t0_gold.jsonl"
+   ],
+   "by": "Claude（B 线，T0 实施验收）",
+   "previous": {
+    "status": "issue",
+    "note": "gold 导入 /testbed/datalad/__init__.py（候选代码生效），但 gold 3/4：test_alter_interface_docs_for_cmdline 仍 FAILED。已归因为材料问题——隐藏 test_1 从仓库内修复前的 datalad/interface/tests/test_docs.py 取 demo_doc（gold 按规则不含测试路径）。沙盒 dry-run：B1（test_1 改从 test_2 导入）/ A（恢复修复后的支撑文件）下 gold 4/4、noop 仍 2/4。"
+   }
+  },
+  "R09": {
+   "status": "pass",
+   "note": "探针公开测试 datalad/tests/test__main__.py：收集 ok、运行 rc 0。补充检查（按 gold 触碰文件选同目录测试，uid 54321 同级条件，事后选择）：datalad/cli/tests/test_interface.py 2 passed、datalad/interface/tests/test_docs.py 2 passed（base 上的 demo_doc 不含方括号示例，公开测试不暴露该缺陷）。公开复现 REPRO_RC=0、REPRO_OBSERVED=1。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__58ba5165234cb16de0e8463ee75097362099835f/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p2/pubtests/datalad__58ba5165234cb16de0e8463ee75097362099835f.log",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/repros/datalad__58ba5165234cb16de0e8463ee75097362099835f.py",
+    "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+   ],
+   "by": "run_dev_probe.py + p2-subagent"
+  },
+  "R10": {
+   "status": "pass",
+   "note": "NET_CONNECT_RC=1（连 1.1.1.1:443 失败）、NET_DNS_RC=2；期望键里没有因网络失败的；解题与本题测试都不需要下载。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__58ba5165234cb16de0e8463ee75097362099835f/dev_probe.json"
+   ],
+   "by": "run_dev_probe.py + p2-subagent"
+  },
+  "R11": {
+   "status": "not_applicable",
+   "note": "期望没有 FAILED / ERROR 键，gold 在无网络评分沙箱里全过（或已归因为资源 / 材料），无外部服务依赖的迹象。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-d_d14560df.eval.log"
+   ],
+   "by": "p2-subagent"
+  },
+  "R12": {
+   "status": "pass",
+   "note": "峰值 710 MB / 限额 4 GiB = 0.173; setup 76s test 1s；探针 chown -R /testbed 99.62 s（与中央复跑和其它包并发，偏高，不作校准）。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-d_d14560df.diagnostics.json",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__58ba5165234cb16de0e8463ee75097362099835f/root_init.log"
+   ],
+   "by": "collate_facts.py + run_dev_probe.py"
+  },
+  "R13": {
+   "status": "pass",
+   "note": "修订后同条件（覆盖表镜像 a5d5a8c2…、期限 1800/1800）noop 两次都是 2/4（api、cmdline 不符），gold 两次都是 4/4；reward 与差异集合一致。修订前 R-f 两轮也一致（旧引用保留）。",
+   "evidence_refs": [
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-n_01f61d30.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-n_27b66c55.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-g_5a93d4f7.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-g_31763a71.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-reps-noop-_6f98fd93.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-d_b87bead5.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-reps-gold-_ecaadf7f.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-d_d14560df.eval.log"
+   ],
+   "by": "Claude（B 线，T0 实施验收）",
+   "previous": {
+    "status": "pass",
+    "note": "noop / gold 各 2 次（R-f reps 与 all）reward 与差异集合一致。注意两次的镜像 ID 不同（reps e60dcb33… / all 8412861f…）：runbook §7 记录重建只改了 OCI index 摘要、config 不变。"
+   }
+  },
+  "R14": {
+   "status": "pass",
+   "note": "R-f 每次 fresh 容器，cleanup.removed=true；omitted_cache_count 的 baseline 与 post 计数相同（没有新增缓存）；gold 行 candidate_test_like_paths=[]；探针前后 git status 行数 2 → 2。本轮四包并行，耗时不作校准。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl",
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__58ba5165234cb16de0e8463ee75097362099835f/dev_probe.json"
+   ],
+   "by": "p2-subagent"
+  },
+  "R15": {
+   "status": "pass",
+   "note": "隐藏测试修订后没有同版本的独立 runner 参考：对账工具把这 4 行单列、不计入一致总数。noop 2 行与修订前参考（M3）逐键一致；gold 与修订前参考不同（cmdline FAILED→PASSED）是修订本身的效果。修订版的对照用 p2 包 09-24 沙盒 dry-run B1（一次性容器，非正式评分链）：noop {api, cmdline FAILED; dedent, name_generation PASSED}、gold 4 键全 PASSED，与正式链两次结果逐键相同。",
+   "evidence_refs": [
+    "runs/r2e_t0_revisions_20260924/reconcile/reconcile.json",
+    "runs/r2e_env_repair_20260924/p2/dryrun_58ba/noop_B1.log",
+    "runs/r2e_env_repair_20260924/p2/dryrun_58ba/gold_B1.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-n_01f61d30.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-n_27b66c55.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-g_5a93d4f7.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-g_31763a71.eval.log"
+   ],
+   "by": "Claude（B 线，T0 实施验收）",
+   "previous": {
+    "status": "pass",
+    "note": "2 行 agree（reward、差异集合、观测映射逐键相同）；参考 runner 的 gold 也是 0（两次），与 RH2 一致——缺陷在来源材料。"
+   }
+  },
+  "R16": {
+   "status": "pass",
+   "note": "修订后 noop 不符 {api, cmdline}，gold 全部符合 → 两个目标键都是活键，其中 cmdline 正对应题面示例；修订前 cmdline 在任何源码修复下都 FAILED 的问题已消除。",
+   "evidence_refs": [
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-n_01f61d30.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-n_27b66c55.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-g_5a93d4f7.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-g_31763a71.eval.log"
+   ],
+   "by": "Claude（B 线，T0 实施验收）",
+   "previous": {
+    "status": "issue",
+    "note": "noop 不符 {cmdline, api}，gold 仍不符 {cmdline} → 目标键只有 test_alter_interface_docs_for_api；而题面示例恰恰是 cmdline 函数。cmdline 键在任何源码修复下都不通过（隐藏 test_1 用仓库内修复前的 demo_doc），见 material_revisions 提案。"
+   }
+  },
+  "R17": {
+   "status": "pass",
+   "note": "派生镜像 git 清理与私有目录 700 复核通过；探针：HEAD 无子提交（children words 1）、refs 0、reflog 0、stash 0、无 remote；无 *.orig / *.rej / *.patch / *.diff 残留；?? install.sh 是本仓库通用安装脚本、不含修复（followups A）。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/datalad__58ba5165234cb16de0e8463ee75097362099835f/facts.json",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__58ba5165234cb16de0e8463ee75097362099835f/dev_probe.json",
+    "runs/r2e_env_repair_20260924/p2/followups/followups.log"
+   ],
+   "by": "run_dev_probe.py + p2-subagent"
+  },
+  "R18": {
+   "status": "pass",
+   "note": "按用户 09-24 批准的 T0-2 方案 B1 实施为封板修订单 r2e-mr-002（test_1.py 一行导入改为 from .test_2 import (；修订后全文另存并核摘要），派生镜像加 material_v1 步骤；expected 不变。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v1.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/datalad__58ba5165234cb16de0e8463ee75097362099835f/r2e_tests/test_1.py",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/t1_input_pins_r2e_v2.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/decisions.md"
+   ],
+   "by": "Claude（B 线，T0 实施验收）",
+   "previous": {
+    "status": "pass",
+    "note": "材料修订（隐藏测试 / 评分面支撑材料）：只出提案 material_revisions/…md（推荐 B1，决定前先 C2 隔离）；没有改任何材料。解题侧条件另记。"
+   }
+  },
+  "R19": {
+   "status": "pass",
+   "note": "探针：systemd unit r2e-p2-probe-1825，命令见 packages/p2/README.md，输出 runs/…/p2/dev_probe/；补充检查脚本 pubtests.sh / followups.sh 与日志一并回传；R-f 运行 run_id r2e-rf-all-noop / r2e-rf-all-gold；dry-run 脚本 dryrun_58ba.sh。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p2/probe.log",
+    "runs/r2e_env_repair_20260924/p2/pubtests.sh",
+    "runs/r2e_env_repair_20260924/p2/followups.sh",
+    "runs/r2e_env_repair_20260924/p2/dryrun_58ba/dryrun_58ba.sh"
+   ],
+   "by": "p2-subagent"
+  },
+  "R20": {
+   "status": "pass",
+   "note": "editable 安装与 agent HOME 无 git 身份是本批 5 个 datalad 镜像共有的；隐藏 conftest 5 题逐字相同（sha256 551a34e5…）；材料提案只针对本题。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p2/followups/followups.log",
+    "runs/r2e_env_repair_20260924/p2/dev_probe/summary.json"
+   ],
+   "by": "p2-subagent"
+  }
+ },
+ "issues": [
+  {
+   "category": "material",
+   "scope": "task",
+   "summary": "隐藏 test_1 从仓库内修复前的 datalad/interface/tests/test_docs.py 导入 demo_doc / demo_paramdoc（上游修复提交改了它，gold 按规则排除测试路径，R2E 只把新版放进 r2e_tests/test_2.py），test_alter_interface_docs_for_cmdline 在任何源码修复下都 FAILED → gold 3/4。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-d_d14560df.eval.log",
+    "runs/r2e_env_repair_20260924/p2/dryrun_58ba/hash.log",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/datalad__58ba5165234cb16de0e8463ee75097362099835f.md",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl",
+    "rh2/src/repoharness2/envpack/r2e_parsers.py#L143",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v1.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/datalad__58ba5165234cb16de0e8463ee75097362099835f/r2e_tests/test_1.py",
+    "runs/r2e_t0_revisions_20260924/derived/datalad__58ba5165234cb16de0e8463ee75097362099835f/build.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-g_5a93d4f7.eval.log",
+    "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-g_31763a71.eval.log"
+   ],
+   "proposed_action": "提案（T0）：推荐 B1（test_1 改为 from .test_2 import …，新材料版本 + 重建该题派生镜像），决定前先 C2 隔离；dry-run 已验证 B1 / A 下 gold 4/4、noop 2/4。",
+   "status": "verified",
+   "resolution": "用户 09-24 批准 B1；实施为 r2e-mr-002 + 派生配方 r2e_derive_v1+material_v1。A 线机器真实 grader noop 0（2/4）×2、gold 1（4/4）×2，与沙盒 dry-run B1 逐键相同。"
+  },
+  {
+   "category": "solver_condition",
+   "scope": "repo:datalad（本批 5 题）",
+   "summary": "agent HOME（空 tmpfs）没有 git 身份：datalad 建数据集 / 提交会失败（Author identity unknown）；较新版本导入时打印 git 身份警告。本题复现没有涉及 git 操作，同一初始化，推断相同。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/p2/dev_probe/datalad__58ba5165234cb16de0e8463ee75097362099835f/dev_probe.json"
+   ],
+   "proposed_action": "记入解题侧条件；或由 rollout 初始化为 agent 写入 git 身份（A 线接缝，本轮不改）。评分不受影响：隐藏 conftest 自带临时 HOME + git 身份。",
+   "status": "open"
+  }
+ ],
+ "solver_conditions": {
+  "cwd_required": "不要求（editable finder；/tmp 下也导入 /testbed/datalad）——M3 的\"需 cwd\"标记为误报",
+  "interpreter": "/testbed/.venv/bin/python（PATH 首项，镜像 ENV；3.9.21）",
+  "pip": "absent（No module named pip；无 pip / pip3 / uv 命令）",
+  "network": "none（NET_CONNECT_RC=1、DNS rc 2）",
+  "public_tests": "datalad/tests/test__main__.py（探针）：收集 ok / 运行 rc 0；相关模块：datalad/cli/tests/test_interface.py 2 passed、datalad/interface/tests/test_docs.py 2 passed（base 上的 demo_doc 不含方括号示例，公开测试不暴露该缺陷）",
+  "repro": "REPRO_RC=0；REPRO_OBSERVED=1",
+  "notes": "agent HOME 无 git 身份：建数据集 / 提交前需 git config --global（HOME 可写）或设 GIT_AUTHOR_* / GIT_COMMITTER_*；git-annex 在。 M3 的\"导入需 cwd=/testbed\"同样是误报（pkgsrc 里 /tmp 导入得 /testbed/datalad/__init__.py，前面是 git 身份警告）；探针 IMPORT_FROM_TMP_RC=0。 gcc / make / git 有；pip / pip3 / uv 无；无出网。"
+ },
+ "classification": "material",
+ "revision_refs": [
+  "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v1.json#r2e-mr-002",
+  "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/datalad__58ba5165234cb16de0e8463ee75097362099835f/r2e_tests/test_1.py",
+  "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/material_revisions/datalad__58ba5165234cb16de0e8463ee75097362099835f.md"
+ ],
+ "disposition": {
+  "state": "qualified_with_revision",
+  "scope": "材料 material_revisions_v1（r2e-mr-002）+ r2e_derive_v1+material_v1 + 默认 rollout profile",
+  "reason": "隐藏测试缺支撑材料的问题已按用户批准的修订解决；修订后真实评分 noop 0 / gold 1 各两次一致，与沙盒 B1 逐键相同；探针十项最小条件满足。agent HOME 无 git 身份是解题侧条件（本题复现不涉及 git 操作，与其它 4 个 datalad 题同口径），不算未完成项。",
+  "pending_checks": [],
+  "evidence_refs": [
+   "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v1.json",
+   "runs/r2e_t0_revisions_20260924/derived/datalad__58ba5165234cb16de0e8463ee75097362099835f/build.log",
+   "runs/r2e_t0_revisions_20260924/reconcile/reconcile.json",
+   "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-n_01f61d30.eval.log",
+   "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-n_27b66c55.eval.log",
+   "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-g_5a93d4f7.eval.log",
+   "runs/r2e_t0_revisions_20260924/replay/eval_logs/evallog_replay-r2e-t0-revision-g_31763a71.eval.log"
+  ],
+  "decided_by": "用户 09-24 批准 T0-2 方案 B1；Claude 实施与验证",
+  "previous_state": "held_material",
+  "reviewer": null
+ },
+ "costs": {
+  "probe_seconds": 109.74,
+  "probe_runs": 1,
+  "rerun_attempts": 0,
+  "rerun_seconds": 0,
+  "sandbox_dryrun_runs": 6
+ },
+ "posthoc_refs": [
+  "runs/r2e_t0_revisions_20260924/replay/ledger_t0_noop.jsonl",
+  "runs/r2e_t0_revisions_20260924/replay/ledger_t0_gold.jsonl",
+  "runs/r2e_t0_revisions_20260924/reconcile/reconcile.json",
+  "runs/r2e_t0_revisions_20260924/derived/datalad__58ba5165234cb16de0e8463ee75097362099835f/facts.json",
+  "runs/r2e_t0_revisions_20260924/derived/datalad__58ba5165234cb16de0e8463ee75097362099835f/build.log"
+ ],
+ "review_notes": [
+  {
+   "by": "Claude（B 线，T0 实施验收）",
+   "at": "2026-09-24",
+   "change": "disposition held_material → qualified_with_revision：r2e-mr-002 + material_v1 已实施并用真实 grader 验证（noop 0 ×2 / gold 1 ×2，与沙盒 B1 逐键相同）；R01/R02/R04/R08/R13/R15/R16/R18 按修订后证据更新，旧值留在各项 previous"
+  }
+ ]
+}

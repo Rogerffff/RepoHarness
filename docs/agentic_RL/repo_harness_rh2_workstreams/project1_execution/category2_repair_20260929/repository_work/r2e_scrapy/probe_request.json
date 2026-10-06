@@ -1,0 +1,132 @@
+{
+  "schema_id": "rh2.ordinary_gpu_probe.owner_request.v1",
+  "request_id": "r2e-scrapy-a95a-cpu-rev4-20261003",
+  "status": "cpu_acceptance_complete_pending_executor_review",
+  "package_id": "r2e_scrapy",
+  "package_path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy",
+  "owner_thread_id": "01a0fd64-a083-76d2-95e6-81e7e07c3b44",
+  "owner_thread_title": "R2E | Scrapy 题目修订",
+  "tasks": [
+    {
+      "task_id": "r2e_gym_subset::scrapy__a95a338eeada7275a5289cf036136610ebaf07eb",
+      "instance_id": "scrapy__a95a338eeada7275a5289cf036136610ebaf07eb",
+      "purpose": "在修订后的真实harness中观察基座处理functools.partial生成器判断、绑定方法与警告行为的能力；题主回读轨迹与候选后审评分一致性并接续必要修复。",
+      "allowed_uses": [
+        "普通基座诊断与必要能力比较"
+      ],
+      "limits": [
+        "原gold保留为负对照；C1是独立依据的私有正对照，不进入模型上下文，也不作为模型成绩。",
+        "已记录本题答案／隐藏测试出现在Scrapy75450e75初态，本题初态又包含9a15fcf8、e9387529修复；按D3同侧分配、控制重复采样。本次只作标明材料版本的基座诊断，不授予训练或heldout资格。",
+        "公开题面不变；warning类别不作私有实现限制，正式期望为五个PASSED键。"
+      ],
+      "source_binding": {
+        "release_id": "cat2-cpu-r2e078079-swe7-git-20261003-v1",
+        "local_release_dir": "runs/category2_repair_20260929/releases_20261003/r2e_078_079_swe7_git_candidate_v1",
+        "external_manifest": "runs/category2_repair_20260929/releases_20261003/r2e_078_079_swe7_git_candidate_v1/manifest.json",
+        "registry": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_078_079_swe7_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v17.json",
+          "sha256": "sha256:2af5c20fec2293c27f0ffc967f0345edc4fe89978a536299f9963261c932f72d"
+        },
+        "input_pins": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_078_079_swe7_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/t1_input_pins_r2e_v18.json",
+          "sha256": "sha256:7b8ee0127d9bd36cfc65bfd7aa9d1bfcb68d7d30c539c1d699c77257a47c3d27"
+        },
+        "material_revision_ids": [
+          "r2e-mr-066",
+          "r2e-mr-067"
+        ],
+        "hidden_test_file": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_078_079_swe7_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files_20261003_v14/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/test_1.py",
+          "sha256": "sha256:9c6bc43ef5eead9453128d7d40959afb7bfd0d9e85c4c068a6d17993c991abac"
+        },
+        "hidden_tests_tree_sha256": "sha256:e6f17ed8b7f80a0c0d6654f35d60e42bfd39a187f8c2442b854e388206349aeb",
+        "expected_output_json_sha256": "sha256:95f7d31faf0fa9838958db3a8121edc60a6181b7194f4801d674ef41802fe8e9",
+        "expected_total": 5,
+        "run_tests_sh_sha256": "sha256:8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+        "problem_statement_sha256": "sha256:eddf95214b7bbc41b0b1109eab8ab79319f9af065385831fcbf5eebff558bffb",
+        "base_commit": "9077d0f9b490114f117c668f115240c16afccedf",
+        "effective_positive_control": {
+          "path": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/inputs/scrapy-a95a-inputs-20261002T170126Z/candidates/C1.patch",
+          "sha256": "sha256:3345719910836649b43592970e37cb11b778690807b13d5fe4de5aac253a04d6",
+          "visibility": "private_cpu_acceptance_only"
+        },
+        "external_manifest_sha256": "sha256:80ee228dbe7497b65354f817df689e4819497f5b1152d1143e26fa4be2ed42f9",
+        "reference_binding": {
+          "path": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/scrapy-a95a-dev-b-20261002T183830Z/remote_evidence/acceptance/prepared_r5/gold/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb.gold.patch",
+          "sha256": "sha256:59a59f254e5f6b3351035fe7bb483904d488ea4ec5adfc2dea87153e2478d613",
+          "reference_is_positive": false,
+          "reason": "正式gold在partial绑定方法处失败，保留负对照，不用gold=1伪造环境通过。",
+          "source": "固定release受信validation面导出，CPU准备时与冻结输入逐字核对",
+          "local_export_path": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/scrapy-a95a-dev-b-20261002T183830Z/remote_evidence/acceptance/prepared_r5/gold/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb.gold.patch"
+        }
+      },
+      "image": {
+        "source_ref_by_digest": "namanjain12/scrapy_final@sha256:cd01a127a7c83ad8e59e0380f34dbf20e7469fe0ae4ebb051c83993dbc4d067d",
+        "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+        "recipe_sha256": "sha256:22f7c2ec0e7620445acec40a03e771081a29de50e54c8dec88ac991cc05eac0a",
+        "cpu_derived_image_id": "sha256:ac29555d3b7cceaf6d2ce5654eda8d04408bcea370e6373963a04565b7d05ded",
+        "cpu_facts": {
+          "path": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/scrapy-a95a-build-b-20261002T175157Z/remote_evidence/derived/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/facts.json",
+          "sha256": "sha256:fb78a3016f64161b89a381dfab21a979ac0cec1fb9e102c42f9cc52dacb3ae41"
+        },
+        "builder": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_078_079_swe7_git_candidate_v1/repo/rh2/scripts/build_r2e_derived.py",
+          "sha256": "sha256:5af7dc214976336ea440674bc4416cfa0a805881463798e05ebbb3e33af19471"
+        },
+        "environment_install_note": "来源Python3.9.21/pytest8.3.4/Scrapy2.7.0与现有sysconfig_v1；本题无额外env_pins，没有降级pytest或改装Scrapy依赖。",
+        "gpu_binding_policy": "由统一执行者在GPU宿主重新准备并核来源／材料／配方和实际image ID，不冒填CPU ID作为GPU ID。"
+      },
+      "public_development_brief": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/public_dev_notes.md",
+        "sha256": "sha256:49cc51a8b8c559c1e7e4b601f13e5f05684fd141eb80ca64e41cadf3d1969f8e",
+        "visibility": "仅原公开题面与这份中性公开说明进入fresh solver；私有父目录、gold、候选、验收矩阵及私有诊断不得进入模型上下文。",
+        "cpu_actor_validation": "real_CC_stub_5_commands_public_repro_and_four_tests_passed"
+      },
+      "cpu_acceptance": {
+        "owner_record": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/cpu_acceptance.json",
+          "sha256": "sha256:fbb8dd1e7b908923430c0e1255a2254414b7d3cebb2b704f7a0a09afed24a7bd"
+        },
+        "owner_report": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/cpu_acceptance_20261003.md",
+          "sha256": "sha256:d9d594ab2a8711559d7560ceddf5475bb0a2290c95d69092978e9f4749000c6a"
+        },
+        "non_author_review": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/review_cpu_acceptance_20261003.md",
+          "sha256": "sha256:e73f726461f73509228090fa103ea81ab13833f29bd65a40852001c26b8aa9c7"
+        },
+        "matrix_evidence": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/scrapy-a95a-matrix-b-20261002T175619Z/remote_evidence",
+        "development_evidence": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/scrapy-a95a-dev-b-20261002T183830Z/remote_evidence",
+        "development_transfer_manifest": {
+          "path": "runs/category2_repair_20260929/r2e_scrapy_cpu_20261003/scrapy-a95a-dev-b-20261002T183830Z/remote_evidence/transfer_inventory.json",
+          "sha256": "sha256:f2e6ff5c8ef2ff8b2ad9c894efdb0b2fb92140c50da750209a510cee5940d7c1"
+        },
+        "formal_positive": "C1和C1_RuntimeWarning各1分，5/5，无missing/extra",
+        "formal_negative": "gold/noop/D/C2/C2b/C3各0分，精确失败键与预期一致；gold只作绑定方法缺陷负对照",
+        "public_actor": "真实CC2.1.205桩驱动，UID54321，5/5命令退出0，公开复现False、4个公开测试通过，无模型成绩",
+        "private_warning_lists": "各22块=16空+6单条，仅UserWarning/RuntimeWarning类别不同，文案/来源/行号相同，无无关警告混入，filters恢复",
+        "cleanup": "八次candidate/grade及actor/relay/network/stub和两个私有观测均正常退出、自有残留为空",
+        "cpu_acceptance_complete": true,
+        "execution_version_split": "已完成矩阵绑定R4；R5新prepared+actor。各冻loader确认本题材料完全一致，复用已验镜像，无旧FrozenPatch改绑。",
+        "transport_permission_boundary": "本地回收prepared/private只是字节证据，未复制源chmod/mtime；GPU须从固定R5重新生成prepared/private并保留权限，不消费回收副本作为运行输入。"
+      }
+    }
+  ],
+  "model_budget": {
+    "decision_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/ordinary_probe_20260929/gpu_coordination_decisions_20261002.md",
+    "budget_id": "probe-wide-v1",
+    "attempts_per_model": 1,
+    "models": [
+      "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+      "Qwen/Qwen3.6-35B-A3B"
+    ]
+  },
+  "executor_resolves": [
+    "不可变GPU运行请求和实际代码版本",
+    "实际GPU镜像ID及来源／材料一致性",
+    "中性说明实际消息交付",
+    "模型服务／预算／队列准入",
+    "重新生成GPU本机prepared/private并核私有权限，避免使用CPU回收副本路径/权限"
+  ],
+  "result_owner_policy": "回执只表示执行状态；本题主继续审公开要求、实际候选与评分，处理发现的误拒／漏判与后续修订。"
+}

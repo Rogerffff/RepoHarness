@@ -1,0 +1,33 @@
+{
+  "request_id": "r2e-coveragepy-ea69-r17-cpu-slot-20261003-v1",
+  "owner_thread_id": "01a0fd63-c159-7331-b391-d78dd853ec75",
+  "at": "2026-10-03T00:32:54.368597+00:00",
+  "kind": "cpu_support",
+  "scope": "cpu-c/r2e_coveragepy/EA69 R17 narrow verification",
+  "current_allocation": {
+    "host": "cpu-c",
+    "gateway_port": 18210,
+    "stub_port": 18211,
+    "total_slots": 2,
+    "prepare_limit": 1
+  },
+  "release_id": "cat2-cpu-r2e093-swe40-coverage-ea69-20261003-v1",
+  "manifest_sha256": "76aee53151d3b58758d00a9feb5a901b720b4b430f37d2057ed07c1ef0ce2fa6",
+  "observed": "5 prepare admissions rc75 all slots busy; job directory absent and no owned Docker job launched",
+  "readonly_inflight_snapshot": [
+    {
+      "package": "swe_pandas",
+      "job": "pandas50319-formal-r13-v3-2f897642547c",
+      "started_at_utc": "2026-10-02T23:29:36Z"
+    },
+    {
+      "package": "swe_dask",
+      "job": "dask7305-formal-cpu-c-20261003-v2-q01",
+      "started_at_utc": "2026-10-03T00:08:35Z"
+    }
+  ],
+  "requested_action": "安排本包后续一个prepare名额（固定源镜像拉取+同配方构建），随后一个run名额做首请求+空候选往返。若CPU-C长时间无槽，可告知已有同版空闲主机的正式分配；在新分配前保持CPU-C，不要求中断其他包或增加全机并发。",
+  "evidence_root": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3",
+  "actual_job_started": false,
+  "no_new_semantics_or_recipe": true
+}

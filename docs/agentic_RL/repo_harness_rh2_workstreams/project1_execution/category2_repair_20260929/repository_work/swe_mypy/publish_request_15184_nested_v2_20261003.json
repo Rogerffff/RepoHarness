@@ -1,0 +1,125 @@
+{
+  "schema": "category2.owner_publication_input.v1",
+  "request_id": "swe-mypy15184-nested-v2-publish-20261003",
+  "task_key": "swe_gym_lite::python__mypy-15184",
+  "owner_thread_id": "01a0fd63-1eba-7133-951d-7dd3475840a4",
+  "package_id": "swe_mypy",
+  "cpu_host": "cpu-a",
+  "material_version": "mypy15184-nested-v2-proposal-bd8ec9e6c8b6",
+  "version_scope": "作者固定准备材料，尚非生产登记或不可变发布",
+  "requested_work": "接续15184公开R-f替换、既有有效assert_type P2P及最小嵌套F2P的受限consumer/登记，冻结封包并部署cpu-a；返回实际public/grading/effective patch/reference/registry/producer及release身份。共享实现与消费身份由发布方核，题级正式CPU/非作者复核由题主完成。",
+  "proposal": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/revision_proposal.json",
+    "sha256": "bd8ec9e6c8b6dbd94d1a015998d8be6782d0d155f2ce7d31940be1196bf6f76e"
+  },
+  "public_materials": {
+    "statement": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/public/problem_statement_v1.txt",
+      "sha256": "c17659095d0b4ab71caf2fab52dfaa52e9da009212381a7dc46053c015499178"
+    },
+    "bundle_draft": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/public/public_bundle_draft.json",
+      "sha256": "129e7341efd8699b2a379262647bb4868c8569429903d745cf5c15d54dba7606"
+    },
+    "bundle_canonical_digest": "sha256:77b85678b3f20ef5689e4a9b646518ae1247407ff44b250803563c11dce3ea7e",
+    "reader_input_manifest": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/public/reader_input_manifest.json",
+      "sha256": "1595a6c23cdd1de33b5ca5e46493f60bd4cd31d3c683c1c17a3d9ae362672a64"
+    },
+    "fresh_static_review": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/reviews/fresh_public_reader_20261003.md",
+      "sha256": "02bcf5a6c2c06dab40d165b889433d9e4871c57ea04df92f6b0c16ba56438bda"
+    },
+    "reuse": "公开输入字节不变，复用既有fresh静态审；嵌套私有测试不交solver。"
+  },
+  "grading_materials": {
+    "parent_grading_digest": "sha256:4d06500507c04fe8fe2843025d01f53ea8b6854f9fc72e1656bf7781b7da9b18",
+    "original_test_patch": {
+      "path": "runs/swegym_quality_batch03_20260921_v1/private/python__mypy-15184/test.patch",
+      "sha256": "sha256:63e112197db7864cb74f6c827e0fff35664e98b0a407ff2bb2871eb22600bded",
+      "bytes": 1023
+    },
+    "effective_test_patch": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/private/effective_test_nested_draft_v2.patch",
+      "sha256": "sha256:e6d5eb0ef39aeeb08a945d3ce6aeb340a7f8b4fd56e599247dbef3b99bf4e532",
+      "bytes": 1320
+    },
+    "new_case_body": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/private/generic_case_draft_v2.test",
+      "sha256": "sha256:3b607c875f41361f1dee14d16af7c85a2e386aba900e5b0e491d70292751da99",
+      "bytes": 312
+    },
+    "existing_public_test_base": {
+      "path": "runs/swegym_quality_batch03_20260921_v1/public/python__mypy-15184/base/test-data/unit/check-expressions.test",
+      "sha256": "sha256:f541a8781c01edf4a27209cc1569e61d1d8a4741c3d4bc381548d0b1239ce3b9",
+      "bytes": 62119
+    },
+    "reference_requirements": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/private/revised_binding_requirements_20261003.json",
+      "sha256": "25bcdad7fdc027ff28f383458240c2899db0a7f437c68d6c2dd7d46b358d3725"
+    },
+    "target_reference_partitions": {
+      "original_f2p": 2,
+      "original_p2p": 1,
+      "added_existing_p2p": 1,
+      "added_f2p": 1,
+      "total": 5
+    },
+    "consumer_constraints": [
+      "check-assert-type-fail.test在精确base不存在，官方test.patch创建该文件；不能将新case伪装为base既有节点或按已有文件基线恢复。",
+      "保留官方原三个case正文与参考；只新增nested_v2一个F2P及base中testAssertType一个P2P。其它四项开发case不升格评分。",
+      "官方原选择加上testAssertType时需精确节点/选择范围；不得因-k子串扩大执行后把额外节点当五正式键。",
+      "公开与私有拆分、恢复/应用/选择/保护、reference分区与材料身份一起消费；不改变vendor安装、Git/builder或既有旧题材料。"
+    ]
+  },
+  "cpu_and_reviews": {
+    "original_formal_matrix": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/original_cpu_readback_20261003.json",
+      "sha256": "9114782e443304764058033f83b05fe53783ac7ccdb935aa92768276e1181f3c"
+    },
+    "existing_positive_assert_type_private": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/private_behavior_readback_20261003.json",
+      "sha256": "599d3151e2da5d3e038d09709721c66a519ed9b2293b3b38b3d917209950820d"
+    },
+    "nested_v2_private": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/nested_guard_cpu_readback_20261003.json",
+      "sha256": "e7ddd77fafef6d4a4739ea31cde1e4f6a84f7f9ccd1737601e9c417e8024b5a6"
+    },
+    "actual_public_actor": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/python__mypy-15184/actor_cpu_readback_20261003.json",
+      "sha256": "5c33759c67ce4311bec8e12698e03dd7b239548d9710c3b9165e7b45362ba06c"
+    },
+    "non_author_execution_trace": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/reviews/non_author_cpu_execution_trace_20261003.md",
+      "sha256": "851a72b9da0b1c828252dd506b36eafaf793f7f39519ead1b32954c7a2f21159"
+    },
+    "non_author_falsifier": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/reviews/non_author_cpu_falsifier_20261003.md",
+      "sha256": "4c418ea5fbf80c21f21f13942856ee17ef22670951dbf144017f8eed1b284968"
+    },
+    "scope": "原正式0/1/1/1确认两类错解；有效断言P2P拒always_reject，nested_v2拒top_only且gold通过。两非作者已见gold/private、非fresh，支持当前材料依据与私有执行事实；正式新五参考0/1/0/0仍待题主执行。v1误期望list使gold失败的证据保留，v2依据公开base配置修正List格式。"
+  },
+  "current_cpu_environment": {
+    "actual_image_id": "sha256:76b5b2646a9eb134e6349ee8e214bb84eb6030c34a234e167351acdec5dd8c54",
+    "fixed_base": "xingyaoww/sweb.eval.x86_64.python_s_mypy-15184@sha256:affb925329f2dfb2173482c64a1b65648b250777b66b0d7417ee5340fce74835",
+    "prepared_image_evidence": {
+      "path": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy15184-image-r1-20261002T170855Z-d21f39/image_prepare.json",
+      "sha256": "80f7a27a6da2c08ee141c06791a9c77eb3bf3d1f4f4cc9044babaa4f5ec5206f"
+    },
+    "host_runtime": "runtime_cpu_v2/rh2/.venv/bin/python",
+    "profile": "2CPU/4GiB，既有cpu_slot；暂停门尚未移除，不提前运行",
+    "interpretation": "proposal中的历史environment_reuse未安装/未知远端字段保留原字节；本字段引用本轮真实已准备镜像和安装/actor原件，不能混为一次新正式验收。"
+  },
+  "expected_receipt": [
+    "不可变release/manifest路径与SHA、cpu-a实际部署/可信loader校验",
+    "实际受信public/grading/environment digest、有效test.patch SHA、五参考及分区/选择串",
+    "registry/producer绑定及受影响consumer维护核查",
+    "未完成或需要补充的具体输入"
+  ],
+  "not_requested": [
+    "GPU派发",
+    "题级终审替代",
+    "重复fresh公开读者",
+    "重跑已完成原矩阵/私有校准/公开actor"
+  ]
+}

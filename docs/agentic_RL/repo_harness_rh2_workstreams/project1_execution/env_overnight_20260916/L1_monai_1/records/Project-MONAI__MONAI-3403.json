@@ -1,0 +1,70 @@
+{
+ "task_id": "Project-MONAI__MONAI-3403",
+ "source": "SWE-Gym lite / Project-MONAI/MONAI PR 3403 (created_at 2021-11-25)",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "d625b61104f952834a4ead5b10ba3c7a309ffa7a",
+  "version": "0.8", "python_version": "3.8",
+  "eval_cmd": "pytest -rA ", "actual_test_cmd": "pytest -rA  tests/test_correct_crop_centers.py",
+  "f2p": ["tests/test_correct_crop_centers.py::TestCorrectCropCenters::test_torch_0", "tests/test_correct_crop_centers.py::TestCorrectCropCenters::test_torch_1"],
+  "p2p_n": 0,
+  "test_patch_paths": ["tests/test_correct_crop_centers.py"],
+  "gold_paths": ["monai/transforms/utils.py"],
+  "stage1": "gold=RESOLVED_FULL（2/2 PASSED，5.04s）/ empty=RESOLVED_NO（2/2 FAILED），rc_install=0"
+ },
+ "public_view": {
+  "goal": "`correct_crop_centers` 的输出元素类型随输入类型而变（例子里返回 `[tensor(1), tensor(5), 1]`——同一个列表里既有 tensor 又有 int）。要求输出类型不依赖数据。",
+  "constraints": ["题面 459 字符，含可直接运行的最小复现与实际输出", "题面只说『不应依赖数据』，**没有说应该统一成哪种类型**"],
+  "unknowns_from_public_only": [
+   "统一成 int 还是统一成 torch.Tensor？题面不说，gold 选了 int",
+   "要不要顺便停止就地修改传入的 centers 列表？题面没提，gold 顺手改成返回新列表",
+   "题面例子里 `1` 那一项其实是 numpy 标量被 clip 后的结果，题面没展开解释"
+  ],
+  "base_code_evidence": [
+   "d625b6110:monai/transforms/utils.py:446-453 `for i, c in enumerate(centers): ... centers[i] = center_i; return centers` —— 未越界的元素保持原类型（torch.Tensor），越界的被换成 numpy 标量，于是同一列表里类型不一致；而且**就地改写**了调用方传入的 list",
+   "调用方：d625b6110:monai/transforms/utils.py:510（generate_pos_neg_label_crop_centers）与 :566（generate_label_classes_crop_centers）"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["tests/test_correct_crop_centers.py 在 base 存在（33 行）", "gold 目标 monai/transforms/utils.py:415/442-453 上下文匹配"], "note": "无二进制/LFS/子模块。gold 用到的 `convert_data_type` 在 base 的同文件已导入（否则 gold 自身会 NameError——已核对 import 存在于 base）。", "by": "L1_monai_1"},
+  "2": {"status": "pass", "evidence_refs": ["d625b6110:monai/transforms/utils.py:446-453", "stage1 empty 侧 2/2 FAILED"], "note": "base 确含题面所述缺陷。", "by": "L1_monai_1"},
+  "3": {"status": "pass", "evidence_refs": ["problem_statement 459 字符，含复现与输出", "raw hints_text 为空"], "note": "无外链/图片/截断。", "by": "L1_monai_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 只碰 tests/test_correct_crop_centers.py"], "note": "无非测试源码。additional_exclusions 保持空。", "by": "L1_monai_1"},
+  "17": {"status": "pass", "evidence_refs": ["同上"], "note": "恢复不覆盖候选源码。", "by": "L1_monai_1"},
+  "5": {"status": "pass", "evidence_refs": ["dupidx.txt：monai/transforms/utils.py 在 26 道 MONAI 题里只被本题改"], "note": "无重复/派生。语义上与同包的 MONAI-2446 同类（都是『函数不该就地改写调用方数据』），但 2446 是题面明写的目标，本题是 gold 顺手做的。", "by": "L1_monai_1"},
+  "23": {"status": "issue", "severity_hint": "P2", "evidence_refs": ["测试的形参命名与实参顺序不一致：`def test_torch(self, spatial_size, centers, label_spatial_shape)` 配 `TESTS=[[[1,5,0],[2,2,2],[10,10,10]]]`，调用却是 `correct_crop_centers(centers, spatial_size, label_spatial_shape)`，实际传入 centers=[2,2,2]、spatial_size=[1,5,0]——与题面例子（centers=[1,5,0]、spatial_shape=[2,2,2]）**正好相反**"], "note": "两个缺口：(a) 题面不说统一成哪种类型，F2P 只查『两次调用的结果类型相同』，所以实际要求比题面弱；(b) F2P **没有复现题面的那组参数**（形参名与实参对调了），题面例子本身不在评分范围内。", "by": "L1_monai_1"},
+  "24": {"status": "pass", "evidence_refs": ["F2P 的新断言是 `self.assertEqual(type(result1[0]), type(result2[0]))`，只查一致性不查具体类型"], "note": "不强制唯一实现：统一成 int、统一成 np.int64、统一成 torch.Tensor 都能过。", "by": "L1_monai_1"},
+  "25": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["P2P = []（零回归保护）", "F2P 只有类型一致性与 assert_allclose 两条断言", "调用方 monai/transforms/utils.py:510/566 把结果继续传给 crop 逻辑"], "note": "**两个明确可被放过的错误修复**：(a) 统一返回 `torch.tensor(...)` —— F2P 全过，但改变了公开返回类型，两个调用方与所有 RandCropByPosNegLabel 系 transform 的下游行为都会变，没有任何测试会发现；(b) gold 顺手把『就地改写 centers』改成返回新列表，这一点**完全没有测试**——候选保留就地改写照样满分。", "by": "L1_monai_1"},
+  "26": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["P2P = []"], "note": "必须补，见 proposed_regression_tests。", "by": "L1_monai_1"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 两个 hunk：docstring 一句 + 重写 clip 循环"], "note": "gold 除修复类型外还做了两件题面没要求的事：改成返回新列表（不再就地改写）、用 `min(max(...))` 代替两个 if。都属于同一函数的合理清理，不算无关改动，但它们没有对应测试。", "by": "L1_monai_1"},
+  "29": {"status": "pass", "evidence_refs": ["题面无 PR/commit 链接、不含修复代码；hints_text 为空"], "note": "无泄漏。", "by": "L1_monai_1"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 rc_install=0"], "note": "安装离线可完成。", "by": "L1_monai_1"},
+  "7": {"status": "pass", "evidence_refs": ["测试全部内存构造"], "note": "无外部资产。", "by": "L1_monai_1"},
+  "11": {"status": "pass", "evidence_refs": ["stage1 离线 2/2 通过，5.04s"], "note": "不需要网络。", "by": "L1_monai_1"},
+  "10": {"status": "pass", "evidence_refs": ["纯 CPU、确定性、无并发"], "note": "无 GPU/多进程/共享内存需求。", "by": "L1_monai_1"},
+  "20": {"status": "pass", "evidence_refs": ["gold 2 PASSED / empty 2 FAILED，无第三条用例"], "note": "分差干净，但整份评分只有 2 条用例——分辨率很低（见检查 25）。", "by": "L1_monai_1"}
+ },
+ "issues": [
+  {"category": "no_regression_coverage", "severity": "P1",
+   "evidence_refs": ["pass_to_pass == []", "调用方 utils.py:510/566"],
+   "proposed_action": "P2P 为空且被改函数在两个采样入口的热路径上。建议纳入 tests/test_rand_crop_by_pos_neg_label.py、tests/test_rand_crop_by_label_classes.py、tests/test_generate_pos_neg_label_crop_centers.py（按该版本实际存在的文件名取），作为整文件基线。",
+   "next_experiment": "在 gold 上跑这三个文件取基线通过集，量一下耗时（本题当前只有 5s，加进来后需要重新评估单题成本）。"},
+  {"category": "reward_hacking_surface", "severity": "P1",
+   "evidence_refs": ["F2P 只查类型一致性", "gold 改的『不再就地改写 centers』无任何断言"],
+   "proposed_action": "补两条断言：(a) `isinstance(result[0], int)`（把返回类型钉死，与 gold 一致）；(b) 调用后传入的 centers 列表未被改动（与 MONAI-2446 同型的断言）。",
+   "next_experiment": "写一个『统一返回 torch.tensor 且保留就地改写』的假修复，跑当前 F2P，预期 RESOLVED_FULL。"},
+  {"category": "test_not_reproducing_statement", "severity": "P2",
+   "evidence_refs": ["test_torch 形参名与实参顺序对调，实际 centers=[2,2,2]、spatial_size=[1,5,0]"],
+   "proposed_action": "把题面那组参数（centers=[1,5,0]、spatial_size=[2,2,2]）作为一条独立用例加进去。当前评分没有覆盖题面的例子。",
+   "next_experiment": "在 base 与 gold 上分别用题面参数调用一次，确认 base 返回 `[tensor(1), tensor(5), 1]`、gold 返回三个 int。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只碰测试文件，gold 只碰 monai/transforms/utils.py。", "evidence_refs": ["grading_bundles_v2_v0:Project-MONAI__MONAI-3403 test_patch", "validation_bundles_v0:Project-MONAI__MONAI-3403 golden_patch"]},
+ "proposed_regression_tests": [
+  {"id": "tests/test_rand_crop_by_pos_neg_label.py 与 tests/test_rand_crop_by_label_classes.py 全文件", "reason": "generate_pos_neg_label_crop_centers / generate_label_classes_crop_centers 是 correct_crop_centers 仅有的两个内部调用方，返回类型变化会直接传导到这里。"},
+  {"id": "新增：题面原例（centers=[1,5,0], spatial_size=[2,2,2], label_spatial_shape=[10,10,10]）的返回值与类型断言", "reason": "当前 F2P 因为形参命名对调没有覆盖题面例子。"},
+  {"id": "新增：调用后输入 centers 列表未被就地修改", "reason": "gold 顺手修了这个行为，但零覆盖。"},
+  {"id": "新增：allow_smaller=True 且 ROI 大于图像的分支", "reason": "gold 改写的循环紧邻这条分支，当前无测试。"}
+ ],
+ "disposition_hint": {"state": "needs_repair", "reason": "环境干净（离线 5s、分差精确），题面质量好；但 P2P=0、F2P 只有 2 条且不覆盖题面例子，多种错误修复能满分。补 P2P 与两条断言后可用。"},
+ "costs": {"minutes": 19}
+}

@@ -1,0 +1,100 @@
+{
+  "instance_id": "scrapy__a95a338eeada7275a5289cf036136610ebaf07eb",
+  "scope": "expected_not_run",
+  "historical_rev2_runs": 9,
+  "current_rev3_planned_runs": 10,
+  "rows": [
+    {
+      "candidate": "C1",
+      "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/cands/scrapy_a95a_C1.patch",
+      "repeats": 2,
+      "expected_score": 1,
+      "expected_fail_keys": []
+    },
+    {
+      "candidate": "gold",
+      "patch": "runs/r2e_static_prep_20260924/v3/private/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/gold.patch",
+      "repeats": 1,
+      "expected_score": 0,
+      "expected_fail_keys": [
+        "UtilsMiscPy3TestCase.test_partial"
+      ]
+    },
+    {
+      "candidate": "noop",
+      "patch": null,
+      "repeats": 2,
+      "expected_score": 0,
+      "expected_fail_keys": [
+        "UtilsMiscPy3TestCase.test_partial"
+      ]
+    },
+    {
+      "candidate": "D",
+      "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/cands/scrapy_a95a_D.patch",
+      "repeats": 1,
+      "expected_score": 0,
+      "expected_fail_keys": [
+        "UtilsMiscPy3TestCase.test_partial"
+      ]
+    },
+    {
+      "candidate": "C2",
+      "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/cands/scrapy_a95a_C2.patch",
+      "repeats": 1,
+      "expected_score": 0,
+      "expected_fail_keys": [
+        "UtilsMiscPy3TestCase.test_generators_return_something",
+        "UtilsMiscPy3TestCase.test_indentation_error",
+        "UtilsMiscPy3TestCase.test_partial"
+      ]
+    },
+    {
+      "candidate": "C2b",
+      "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/cands/scrapy_a95a_C2b.patch",
+      "repeats": 1,
+      "expected_score": 0,
+      "expected_fail_keys": [
+        "UtilsMiscPy3TestCase.test_generators_return_something",
+        "UtilsMiscPy3TestCase.test_indentation_error"
+      ]
+    },
+    {
+      "candidate": "C3",
+      "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/scrapy__a95a338eeada7275a5289cf036136610ebaf07eb/cands/scrapy_a95a_C3.patch",
+      "repeats": 1,
+      "expected_score": 0,
+      "expected_fail_keys": [
+        "UtilsMiscPy3TestCase.test_generators_return_something",
+        "UtilsMiscPy3TestCase.test_partial"
+      ]
+    },
+    {
+      "candidate": "C1_RuntimeWarning",
+      "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_scrapy/candidates/C1_RuntimeWarning.patch",
+      "repeats": 1,
+      "expected_score": 1,
+      "expected_fail_keys": [],
+      "semantic_review": "pending_non_author",
+      "purpose": "检验类别变化是否被 rev2 误拒，及窄恢复稿是否保留公开条数／文案行为。"
+    }
+  ],
+  "unchanged_key_count": 5,
+  "paired_diagnostic_not_in_rev3_count": {
+    "candidate": "C1_RuntimeWarning",
+    "material": "rev2",
+    "repeats": 1,
+    "expected_score": 0,
+    "expected_fail_keys": [
+      "UtilsMiscPy3TestCase.test_generators_return_something",
+      "UtilsMiscPy3TestCase.test_indentation_error"
+    ],
+    "purpose": "需要目标环境直接确认误拒时，与 rev3 类别对照配对；不复跑旧九方试跑。"
+  },
+  "requirements": [
+    "冻结材料/镜像/入口版本",
+    "完整日志、候选 apply 与五键核对",
+    "C1 为正对照，原 gold 保留负对照",
+    "分列旧试跑、正式评分与类别对照"
+  ]
+}

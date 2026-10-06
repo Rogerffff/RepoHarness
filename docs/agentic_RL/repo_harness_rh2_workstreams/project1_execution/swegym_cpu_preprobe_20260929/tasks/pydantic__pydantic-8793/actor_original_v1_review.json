@@ -1,0 +1,182 @@
+{
+  "instance_id": "pydantic__pydantic-8793",
+  "attempt": "actor_original_v1",
+  "status": "public_actor_development_verified_with_scope_limits",
+  "evidence_scope": "确定性CC桩通过正式actor启动/工具通道运行公开开发命令；不是自主模型、正式题面交付或正式评分验收。",
+  "facts": {
+    "image_id": "sha256:e61eaef6ac2759d2f5e96f20126a3ac51121f2e17de7d43238f8237770382162",
+    "base_commit": "832225b90672c68e2d4067bd0ffecf834d62b48b",
+    "initial_modifications": [
+      "pdm.lock",
+      "pyproject.toml"
+    ],
+    "uid": 54321,
+    "python": "/opt/miniconda3/envs/testbed/bin/python",
+    "python_version": "3.8.19",
+    "pydantic_source": "/testbed/pydantic/__init__.py",
+    "core": "2.16.2",
+    "source_write_check": true,
+    "cc_version": "2.1.205 (Claude Code)",
+    "commands": [
+      {
+        "id": "public_identity",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 468,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "公开 base 身份、可写源文件、checkout 导入和 core 2.16.2；实际消息由 runner 另留证。"
+      },
+      {
+        "id": "public_required",
+        "rc": 1,
+        "status": "nonzero",
+        "expect": "nonzero",
+        "matches_expect": true,
+        "output_bytes": 899,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "题面原例及公开必填语义。base 仅预期 rc=1 且 PUBLIC_BEHAVIOR_FAILURES 为 schema_required/field_required/missing_validation；ImportError、超时和其它异常不是已复现。修复后同命令应 rc0。"
+      },
+      {
+        "id": "public_defaults",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 19,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "公开 fields 文档默认值/默认工厂保留，不把 Annotated 一律改必填。"
+      },
+      {
+        "id": "public_existing_tests",
+        "rc": 0,
+        "status": "rc0",
+        "expect": "zero",
+        "matches_expect": true,
+        "output_bytes": 214,
+        "output_truncated_to": 200000,
+        "pytest": null,
+        "purpose": "base 已有公开开发测试；需记录实际收集及通过数量，collection error 不是目标 bug。"
+      }
+    ],
+    "behavior": "原例required仅foo；bar/baz.is_required=False；缺值被接受为Ellipsis；三个失败项精确匹配。合法全输入/默认5/工厂7均成功。",
+    "public_existing_tests": {
+      "passed": 72,
+      "skipped": 1,
+      "seconds": 0.54,
+      "skip_reason": "未捕获-rs，具体node未由日志直接给出。静态公开test_annotated_alias在Python<3.10因repr不同skip，另两skip仅PyPy；与本次CPython3.8单skip一致（推断，不冒称运行node已捕获）。"
+    },
+    "tool_calls": 4,
+    "tool_results": 4,
+    "tool_ids_matched": true,
+    "stream_bad_lines": 0,
+    "log_complete": true,
+    "cleanup": {
+      "container_rm": 0,
+      "network_failures": [],
+      "relay_failures": [],
+      "stub_rc": 0,
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "residual_after_force": []
+    },
+    "prelaunch_and_activation_ok": true
+  },
+  "measurement_notes": {
+    "utc_start": "2026-09-28T17:03:56Z",
+    "utc_finish": "2026-09-28T17:04:35Z",
+    "elapsed_seconds_from_timestamps": 39,
+    "solve_seconds": 15.034,
+    "wall_seconds_field": {
+      "value": 1800,
+      "meaning": "配置预算1800秒，不是耗时"
+    },
+    "resource_profile": {
+      "cpus": 2.0,
+      "memory_bytes": 4294967296,
+      "tmp_tmpfs_bytes": 1073741824,
+      "home_tmpfs_bytes": 268435456,
+      "writable_layer_quota_bytes": 8589934592,
+      "pids_limit": 512
+    },
+    "stub_reported_token_cost": "不作为真实模型tokens/API费用；桩输出不是计费证据"
+  },
+  "summary_corrections": [
+    {
+      "field": "checks.interpreter_in_tool_result=false",
+      "reason": "父Runner只查RH2_SYS_EXECUTABLE=前缀；实际PY_CHECK JSON和activation都有精确testbed解释器正证据。"
+    },
+    {
+      "field": "checks.bashenv_denied_for_agent=false",
+      "reason": "本清单没有RH2_BASHENV_WRITE探针标记；prelaunch记录ACTIVATION_WRITE=DENIED。不将未运行检查视作权限失败，也不声称已做tool内攻击探针。"
+    },
+    {
+      "field": "commands_result.pytest=null",
+      "reason": "pytest-sugar输出Results多行不被现有正则识别；原capture明确72 passed/1 skipped。"
+    },
+    {
+      "field": "image_facts.inspect_rc=1",
+      "reason": "先inspect时镜像未在本地；后续container/prelaunch固定实际e61ea...身份。pull失败与否不凭这个字段猜，镜像digest需root pull记录佐证。"
+    }
+  ],
+  "usage": {
+    "development": "公开命令路径已验",
+    "capability_comparison": "conditional：正式题面/提示交付、评分矩阵与独立复核待完成",
+    "training": "conditional：决定性非示例/退化质量验收及本批正式正负对照待完成",
+    "gpu_ready": false
+  },
+  "remaining": [
+    "root恢复公开wheelhouse并验证当前候选安装/正式评分noop、gold与退化候选",
+    "本题gold/退化公开行为对照、Ellipsis与内层默认边界观察",
+    "actor正式题面/public_hints交付单独待核；本次是诊断控制消息",
+    "单skip已有公开源码版本条件支持；若后续需其精确node则窄-rs核，不重跑整批",
+    "初始pyproject/pdm.lock实质差异与来源需root版本记录对应；本次只捕获stat/status",
+    "独立复核，公共GPU接线和预算决定"
+  ],
+  "evidence": [
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/actor_original_v1/attempt.json",
+      "sha256": "908097715730c7d17bc93a69519cbc45d622812543fcf6c8cffc2736f58e91ed"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/actor_original_v1/prelaunch.json",
+      "sha256": "15dedc117b4cd8de83a8d7a1e1b8028e3b00e23b852173a094e0f4d43ef2c6a3"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/actor_original_v1/activation_check.json",
+      "sha256": "0215fe2107b5ddf2c77a11aa8cf855d218ba782a0b2da6fc25d3302495a13ecc"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/actor_original_v1/harness/trajectory.jsonl",
+      "sha256": "ae133d930440d752e6643234dbb7e972f1b4c7270d8b197581da06a906502a34"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/actor_original_v1/stub/requests/messages_000.json",
+      "sha256": "9037ce9978322a7c5a268f25b921320423163ee70e62ce165788a6187a853251"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/actor_original_v1/captures/public_identity.out",
+      "sha256": "b72b1ae891e0a88c59e2133e3472fbae6d099494c8cf51565d593c0ceab3417e"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/actor_original_v1/captures/public_required.out",
+      "sha256": "5cf1efae1a4e210608a764e041721c51187b8652a17392bd57844e9a310698c0"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/actor_original_v1/captures/public_defaults.out",
+      "sha256": "beb773756a4f540e9505fae3d90e0ce71ad4c0742349348cd9a5bb24a56122af"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/actor_original_v1/captures/public_existing_tests.out",
+      "sha256": "6e09404750d16f0c2b84ba22248b521661f29d691f7d4803cb86b069261ca4ee"
+    },
+    {
+      "path": "runs/swegym_cpu_preprobe_20260929/remote/results/pydantic__pydantic-8793/actor_original_v1/post_run_facts_root.txt",
+      "sha256": "30bfe6bea539e64730964a400bb40d2d21d008b1e365201be4200c62ab9aa839"
+    }
+  ]
+}

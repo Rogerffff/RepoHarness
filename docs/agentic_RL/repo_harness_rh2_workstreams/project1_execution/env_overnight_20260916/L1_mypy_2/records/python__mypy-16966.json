@@ -1,0 +1,272 @@
+{
+ "task_id": "python__mypy-16966",
+ "source": "SWE-Gym lite / python/mypy PR 16966（单成员枚举的穷尽性检查）",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "3c87af272cbf7c49699b7508c7f51365da139c05",
+  "version": "1.10",
+  "python_version": "3.12",
+  "eval_cmd": "pytest -rA -k",
+  "f2p": [
+   "mypy/test/testcheck.py::TypeCheckSuite::check-python310.test::testMatchEnumSingleChoice"
+  ],
+  "p2p": [
+   "mypy/test/testcheck.py::TypeCheckSuite::check-python310.test::testMatchLiteralPatternEnumNegativeNarrowing"
+  ],
+  "gold_paths": [
+   "mypy/checkpattern.py"
+  ],
+  "test_patch_paths": [
+   "test-data/unit/check-python310.test"
+  ],
+  "k_expression": "testMatchEnumSingleChoice or testMatchLiteralPatternEnumNegativeNarrowing or testMatchLiteralPatternEnumCustomEquals-skip",
+  "runtime_evidence": "无（不在 stage1 样本、in_e2 空、无 DeepSeek 候选）"
+ },
+ "public_view": {
+  "goal": "只有一个成员的 Enum，`match` 里匹配完唯一成员后 `assert_never(x)` 仍报 'Argument 1 to \"assert_never\" has incompatible type \"MyEnum\"'；要求穷尽性检查通过。",
+  "constraints": [
+   "题面给完整最小复现，并附一个'加第二个成员就正常'的对照，把问题范围缩得很准；无外链、无图片、无截断"
+  ],
+  "unknowns_from_public_only": [
+   "根因在 checkpattern 的 rest_type 计算（default=current_type 导致单成员时 rest 没有被收窄成 Uninhabited），题面没有线索；hints 里维护者也明说 'Not sure'",
+   "F2P 额外要求 `always_assigned: int | None` 在 match 之后 reveal 成 builtins.int（即 `case _` 分支被判为不可达），题面只提 assert_never",
+   "多成员枚举的 reveal_type 精度要不要同时保证（P2P 新增了三行 reveal_type 断言），题面没提"
+  ],
+  "base_code_evidence": [
+   "3c87af272:mypy/checkpattern.py:200-208 visit_value_pattern：`conditional_types_with_intersection(current_type, [get_type_range(typ)], o, default=current_type)` —— default 用 current_type，单成员枚举时 rest_type 退回整个枚举类型而不是 Uninhabited",
+   "3c87af272:test-data/unit/check-python310.test 在 base 有 132 个 case"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "test-data/unit/check-python310.test 在 base 存在（132 个 case）",
+    "gold 目标 mypy/checkpattern.py:205 在 base 逐字一致"
+   ],
+   "note": "无二进制/LFS/子模块。",
+   "by": "L1_mypy_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "3c87af272:mypy/checkpattern.py:205 default=current_type"
+   ],
+   "note": "静态确认 base 含题面缺陷。",
+   "by": "L1_mypy_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 1503 字符，含正反对照",
+    "raw hints_text 1943 字符：维护者指了 checkpattern.py / semanal_enum.py / plugins/enums.py / reachability.py 四个可能方向，明说自己不熟"
+   ],
+   "note": "hints 只给方向不给答案，且方向是四选一，对 agent 没有决定性优势。题面质量较好。",
+   "by": "L1_mypy_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只碰 test-data/unit/check-python310.test"
+   ],
+   "note": "无非测试源码；gold 不碰测试样路径。",
+   "by": "L1_mypy_2"
+  },
+  "17": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "同 file_rules"
+   ],
+   "note": "仓库级。",
+   "by": "L1_mypy_2"
+  },
+  "5": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "本题 base_commit 3c87af272 就是 python__mypy-16963 的上游修复 commit",
+    "本包另有 12417 / 16905 两题也改 match 相关代码并共用 check-python310.test"
+   ],
+   "note": "16963→16966 是紧邻两题，划分必须同侧；match 主题在本包共 3 题。",
+   "by": "L1_mypy_2"
+  },
+  "23": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "F2P 额外断言 `reveal_type(always_assigned)  # N: Revealed type is \"builtins.int\"`（即 case _ 分支不可达）"
+   ],
+   "note": "题面只提 assert_never 报错。不过'穷尽后另一分支不可达'是同一机制的直接推论，属于要求略多于题面而非相反。",
+   "by": "L1_mypy_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P/P2P 断言都是 reveal_type 结果与是否报错"
+   ],
+   "note": "不强制唯一实现：改 default、或在 rest_type 上另做收窄，都能过。",
+   "by": "L1_mypy_2"
+  },
+  "25": {
+   "status": "pass",
+   "evidence_refs": [
+    "P2P testMatchLiteralPatternEnumNegativeNarrowing 被 test_patch 加了三行 `reveal_type(m)  # N: Revealed type is \"Literal[__main__.Medal.gold/silver/bronze]\"`，钉住多成员枚举的窄化精度不能因为本次改动而退化"
+   ],
+   "note": "少见地有判别力：把 default 随便改成别的（例如 UninhabitedType 恒定）会让多成员情形的 narrowed/rest 计算出错，P2P 会抓到。缺点是 P2P 只有这一条，check-python310.test 的另外 130 个 case 全不参与。",
+   "by": "L1_mypy_2"
+  },
+  "26": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "P2P 仅 1 条"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_mypy_2"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 只改 1 行（default=current_type → default=get_proper_type(typ)）"
+   ],
+   "note": "gold 正确、最小、无题外改动、不依赖未交付改动。",
+   "by": "L1_mypy_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 无 PR/commit 链接、无修复代码"
+   ],
+   "note": "题面无泄漏；hints 只给搜索方向。",
+   "by": "L1_mypy_2"
+  },
+  "6": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "未实跑安装。",
+   "by": "L1_mypy_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P case 用 [builtins fixtures/bool.pyi]，在仓库内"
+   ],
+   "note": "无外部依赖。",
+   "by": "L1_mypy_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "case 正文无网络调用"
+   ],
+   "note": "纯离线。",
+   "by": "L1_mypy_2"
+  },
+  "18": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "rh2/src/repoharness2/envpack/spec_vendor.py:188-190 derive_test_command：mypy 的选择器= `re.findall(r'\\[case ([^\\]]+)\\]', test_patch)` 直接拼 -k，**不做任何清洗**",
+    "本题 test_patch 的上下文里出现了 `[case testMatchLiteralPatternEnumCustomEquals-skip]`，所以实际 -k 表达式含 `testMatchLiteralPatternEnumCustomEquals-skip` 这个带连字符的词",
+    "3c87af272:mypy/test/data.py:649-695 `_case_name_pattern` 会把 `-skip` 后缀剥掉，运行时 nodeid 是 ...::testMatchLiteralPatternEnumCustomEquals（不含 -skip）",
+    "base test-requirements.in 要求 pytest>=7.4.0",
+    "本机复验（rh2/.venv，pytest 9.1.1）：`_pytest.mark.expression` 的标识符正则是 `(:?\\w|:|\\+|-|\\.|\\[|\\]|\\\\|/)+`（含连字符），`Expression.compile('testA or testB-skip or testC')` 编译通过"
+   ],
+   "note": "两个后果：(a) 该选择器在运行时匹配不到任何 nodeid（data.py 会剥掉 -skip 后缀），属空转；(b) 原先担心的『带连字符的 -k 表达式非法导致评分命令失败』**已在本机排除**——pytest 的表达式词法把连字符算进标识符（本机 pytest 9.1.1 实测编译通过，该正则自 pytest 6.0 引入表达式解析器起形态一致）。残留不确定性：评分镜像里的 pytest 版本（1.8+ 段按 test-requirements.in 是 >=7.4.0，0.800 段是 6.x）未实跑确认，但风险已从『可能整题失败』降为『低』。真正的问题只剩：上游有意标 -skip 的那条边界用例（testMatchLiteralPatternEnumCustomEquals，自定义 __eq__ 的枚举）完全没人守。",
+   "by": "L1_mypy_2"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "nodeid 4 段；3c87af272:mypy/test/data.py 含 DataFileCollector"
+   ],
+   "note": "形状一致。",
+   "by": "L1_mypy_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "eval_cmd_malformed_selector",
+   "severity": "P3",
+   "evidence_refs": [
+    "spec_vendor.py:188-190 的 `\\[case ([^\\]]+)\\]` 正则连 `-skip` 后缀一起捕获",
+    "本题与 python__mypy-10308 是 40 题里仅有的两例",
+    "本机复验：pytest 9.1.1 的 -k 表达式接受连字符标识符，编译通过（rh2/.venv）"
+   ],
+   "proposed_action": "选择器派生（spec_vendor.derive_test_command）建议剥掉 mypy 的 magic 后缀（-skip / -xfail / -writescache / -only_when_* / -posix / -windows / -skip_path_normalization），并在派生后校验每个 selector 在应用 test_patch 后的文件里确实存在。注意这会偏离与上游 fork make_test_command 的逐字对齐，属口径变更需用户裁定。优先级已从 P1 降为 P3：连字符不会让 -k 表达式非法（已本机复验），当前只是选择器空转。",
+   "next_experiment": "（可选）在评分镜像里跑一次该 -k 表达式确认 rc；更有价值的是决定要不要把 testMatchLiteralPatternEnumCustomEquals 从 -skip 放出来跑——它是自定义 __eq__ 枚举这条边界的唯一用例。"
+  },
+  {
+   "category": "grading_coverage",
+   "severity": "P2",
+   "evidence_refs": [
+    "P2P 仅 1 条；check-python310.test 另有 131 个 case"
+   ],
+   "proposed_action": "补 P2P：check-python310.test 全文件，以及 check-narrowing.test 里的穷尽性用例。",
+   "next_experiment": "gold 上整文件跑 check-python310.test 取基线通过集。"
+  },
+  {
+   "category": "dataset_split",
+   "severity": "P2",
+   "evidence_refs": [
+    "本题 base_commit == 16963 的上游修复 commit"
+   ],
+   "proposed_action": "与 16963 同侧划分。",
+   "next_experiment": "无。"
+  },
+  {
+   "category": "eval_cmd_parallelism",
+   "severity": "P2",
+   "evidence_refs": [
+    "eval_cmd 'pytest -rA -k'（无 -n0）",
+    "base pyproject.toml addopts = \"-nauto --strict-markers --strict-config\"",
+    "test-requirements.in 含 pytest>=7.4.0 与 pytest-xdist>=1.34.0"
+   ],
+   "proposed_action": "本题会在 pytest-xdist 全核并行下评分（本包 5 题、40 题里 6 题如此）。建议统一补 -n0 或明确记录并行口径。",
+   "next_experiment": "同机对比带/不带 -n0 的逐 case 状态、墙钟耗时与峰值内存。"
+  },
+  {
+   "category": "file_boundary",
+   "severity": "P1",
+   "evidence_refs": [
+    "rh2/src/repoharness2/grading/manager.py:656/672/581"
+   ],
+   "proposed_action": "建议把 mypy/test/* 与 test-data/* 纳入 hygiene 保护（40 题 gold 均不触碰）。",
+   "next_experiment": "构造只改 mypy/test/helpers.py::assert_string_arrays_equal 的候选 patch 走一次评分，确认当前会判满分。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 test-data/unit/ 下的 .test 数据文件，gold 只碰 mypy/ 源码，两者无交集，按第四组 B 默认保持空。仓库级建议（需用户裁定、对 40 题统一生效）：把 'mypy/test/*' 与 'test-data/*' 加入 hygiene.test_globs——40 题 gold 无一触碰这两处（已对 validation_bundles 全量核对），而当前 agent 改 mypy/test/helpers.py、mypy/test/data.py 或 test-data/unit/fixtures/*.pyi 既不被 eval 的 git checkout 还原，也不被判 rejected_test_tampering。副作用：agent 在 test-data/ 下建临时文件会让整份提交作废，需一并决定。",
+  "evidence_refs": [
+   "rh2/src/repoharness2/grading/manager.py:656、:672、:581",
+   "rh2/src/repoharness2/contracts/grading.py:118-121"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "mypy/test/testcheck.py::TypeCheckSuite::check-python310.test 全文件（132 个 case）",
+   "reason": "gold 改的是 visit_value_pattern 的 rest_type 计算，所有值模式用例都受影响。"
+  },
+  {
+   "id": "check-narrowing.test 里 assert_never / 穷尽性相关 case",
+   "reason": "穷尽性是本题的目标语义，主战场在这里。"
+  },
+  {
+   "id": "check-enum.test 全文件",
+   "reason": "单成员/多成员枚举的字面量收窄边界。"
+  },
+  {
+   "id": "testMatchLiteralPatternEnumCustomEquals（当前被 -skip 跳过）",
+   "reason": "自定义 __eq__ 的枚举是本次收窄最可能出错的边界，上游把它标成 skip，等于这条边界完全没人守。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "题面、gold（一行）、F2P/P2P 质量都不错，P2P 有判别力；原先担心的 -k 表达式非法风险已本机排除，剩下的只是选择器空转与 P2P 偏薄，可以先跑探针。"
+ },
+ "costs": {
+  "minutes": 30
+ }
+}

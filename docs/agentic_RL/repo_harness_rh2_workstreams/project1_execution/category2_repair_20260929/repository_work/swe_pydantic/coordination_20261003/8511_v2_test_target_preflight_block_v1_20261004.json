@@ -1,0 +1,84 @@
+{
+  "schema": "swe_pydantic8511.v2_test_target_preflight_block.v1",
+  "as_of": "2026-10-04",
+  "status": "actual_prepared_test_scope_drift_CPU_not_started",
+  "release_id": "cat2-cpu-r2e094095-swe40-pyd8511-fieldinfo-v2-20261004-v1",
+  "manifest_sha256": "6e20365fcc2eef0489ae259903b52664117e04796597cc4be38af23ab1663f38",
+  "formal_inputs": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/cpu_acceptance_20261003/8511_fieldinfo_v2/formal_inputs.json",
+    "bytes": 73128,
+    "sha256": "51a2937c9fdade43eb1f2a035047397837923cbcd60b9c89062cfd3ac8a99d83"
+  },
+  "effective_patch": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/tasks/pydantic__pydantic-8511/revisions/pyd8511-behavior-v2/effective_test.patch",
+    "bytes": 4083,
+    "sha256": "6f7360d58088c01d59ac51133758ee2404ad21725d859144a14c58765b670125"
+  },
+  "consumer_source": {
+    "path": "runs/category2_repair_20260929/releases_20261004/r2e_094095_swe40_pyd8511_fieldinfo_v2_v1/repo/rh2/src/repoharness2/envpack/spec_vendor.py",
+    "bytes": 15987,
+    "sha256": "cc9a3a0ce53dcfc493e4140204e894d75937384e2b4361338be2f8afc020f99f"
+  },
+  "actual_local_prepare_status": {
+    "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/local_prepare_8511_v2_attempt02/status.json",
+    "bytes": 18396,
+    "sha256": "0ec360c893b227ac33078b0720c4e1d2e2cfa40335634a55ceaf4d8ef27c6f89"
+  },
+  "actual_scripts": {
+    "candidate_test_script": {
+      "binding": {
+        "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/local_prepare_8511_v2_attempt02/candidate_test_script.sh",
+        "bytes": 1266,
+        "sha256": "7ebfffdbc13afadbed01413e51da4034ae190dce98ebca6715e4ed409bf9a8f5"
+      },
+      "actual_commands": [
+        {
+          "line": 30,
+          "command": "pytest -rA --tb=short -vv -o console_output_style=classic --no-header"
+        }
+      ]
+    },
+    "candidate_test_after_install_script": {
+      "binding": {
+        "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/local_prepare_8511_v2_attempt02/candidate_test_after_install_script.sh",
+        "bytes": 648,
+        "sha256": "1f93c485e60172921f393481c3697dbed21e530ec66a17a9129744ff32375026"
+      },
+      "actual_commands": [
+        {
+          "line": 17,
+          "command": "pytest -rA --tb=short -vv -o console_output_style=classic --no-header"
+        }
+      ]
+    },
+    "eval_script": {
+      "binding": {
+        "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/local_prepare_8511_v2_attempt02/eval_script.sh",
+        "bytes": 6564,
+        "sha256": "a62dd4c21f28f054c0386a28d75eea30262a3137b7d245193fd42738b4cbd950"
+      },
+      "actual_commands": [
+        {
+          "line": 181,
+          "command": "pytest -rA --tb=short -vv -o console_output_style=classic --no-header"
+        }
+      ]
+    }
+  },
+  "expected_test_command": "pytest -rA --tb=short -vv -o console_output_style=classic --no-header tests/test_dataclasses.py",
+  "actual_test_command": "pytest -rA --tb=short -vv -o console_output_style=classic --no-header",
+  "cause": "derive_test_directives仅从diff --git头提取目标文件；有效v2为标准unified diff，实际三个评分脚本没有目标文件参数。",
+  "material_identity_transport_verified": true,
+  "actor_host_spec_equal_but_both_same_wrong_test_scope": true,
+  "prior_identity_readback": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/coordination_20261003/8511_v2_publication_owner_readback_v1_20261004.json",
+    "bytes": 26759,
+    "sha256": "2b92d0029dc2d138d399a026ce3886b9decb5b59e863bd9cbd8581f873fd584f"
+  },
+  "prior_identity_readback_scope_correction": "原证书只证明摘要/成员及actor-host一致；当前证据否定正式命令范围验收，不删除或改原件。",
+  "CPU_job_started": false,
+  "model_sampling": 0,
+  "blocked_input_only": true,
+  "old173_raw1_FP_preserved": true,
+  "repair_scope": "共享发布方保持已封21材料/177参考字节与其它263spec，只对受审SWEPyd8511FieldInfoRevision固定路径恢复原vendor目标文件命令；实际prepare及源级测试核实后封新代码release并部署，禁止热改R26。"
+}

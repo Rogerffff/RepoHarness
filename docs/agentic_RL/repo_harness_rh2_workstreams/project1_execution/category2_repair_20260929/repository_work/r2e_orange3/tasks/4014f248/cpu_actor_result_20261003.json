@@ -1,0 +1,70 @@
+{
+  "schema_id": "category2.orange4014.r9_cpu_actor_result.v1",
+  "recorded_at": "2026-10-02T22:21:24.051668+00:00",
+  "release_id": "cat2-cpu-r2e089092-swe13-git-20261003-v1",
+  "instance_id": "orange3__4014f2483e3bab0621c9ae0f994947c008183253",
+  "job": "orange-4014f248-r9-actor-c-20261003-v2",
+  "actual_cc_native_and_fresh_formal_grade_verified": true,
+  "actual_cc_version": "2.1.205 (Claude Code)",
+  "actual_native_build": {
+    "before_so_sha256": "sha256:9ee458d033a235e8530e828fec9d0722dd8efefdc82662bc79306aa5af022850",
+    "after_so_sha256": "sha256:f1d05c0f51a1f8475fcbb8df200f580ddceb398cb394930cb08bf17d328b3678",
+    "actor_loaded_extension_path": "/testbed/Orange/preprocess/_discretize.cpython-37m-x86_64-linux-gnu.so",
+    "source_edit_exact": true,
+    "build_rc": 0,
+    "sixth_step_semantic_output_verified": true
+  },
+  "formal_score": {
+    "execution_failure_evidence": [],
+    "execution_failure_stage": null,
+    "expected_match": 27,
+    "expected_total": 27,
+    "f2p_pass": null,
+    "f2p_total": null,
+    "failure_category": null,
+    "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+    "grading_semantics": "r2e_expected_map",
+    "infra_failure_detail": null,
+    "outcome": "resolved",
+    "p2p_fail": null,
+    "p2p_total": null,
+    "report_id": "rpt_grading_41e05082",
+    "reward": 1.0
+  },
+  "readback": {
+    "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_actor_complete_v2_readback_receipt.json",
+    "sha256": "sha256:e676fdaf50969a9b96bd92fe08382052745083e84ad3ca9e92cc53edffd15b73",
+    "bytes": 669
+  },
+  "manifest": {
+    "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_actor_complete_v2/readback_manifest.json",
+    "sha256": "sha256:13efc5a06d1d1cba606f33db7c38c9f66f74a32f7974c4d76c9471ec0ce8078c",
+    "bytes": 16848
+  },
+  "author_check": {
+    "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_actual_cc_author_check.json",
+    "sha256": "sha256:c880bf085a7a23e0cd3fdb58d7bd297b2f2d24d0e9f950325cfcb161808feb37",
+    "bytes": 50176
+  },
+  "resource_observations": {
+    "samples": 25,
+    "unique_containers": 4,
+    "nonzero_exit_or_oom_events": [],
+    "ledger_resource_facts": null
+  },
+  "actual_base_model_result": false,
+  "independent_review_complete": false,
+  "limits": [
+    "固定合成端点驱动真实CC，只验证CPU链；不是基座模型能力、token/费用或宽预算探针。",
+    "build显式退出0导致外层RH2_STEP_RC:build不执行，真实BUILD_RC和完整结果已核；Bash层实际timeout600000ms。",
+    "actor实测扩展路径与紧邻hash，grader没有扩展.__file__/hash直接快照；原生投影、同像fresh评分、原件往返与paired pyx_only=0支持实际消费，不冒称直接grader加载hash。",
+    "资源只有25次有限采样，relay未设CPU上限；ledger.resource_facts=null，不作全程OOM0结论。",
+    "中性公开brief为已独立核的后续GPU输入，本次CPU HTTP只实际交题面；没有更改隐藏题面或预算。"
+  ],
+  "historical_failed_v1": {
+    "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/resume_20261003/r9_4014_actor_failed_v1_author_receipt.json",
+    "sha256": "sha256:8d8b65c01928ec18fa80ca0bde068f41a9d94f23c65016893c17c3abe8847fa6",
+    "bytes": 6256
+  },
+  "historical_v1_diagnostic_option_removed_only": true
+}

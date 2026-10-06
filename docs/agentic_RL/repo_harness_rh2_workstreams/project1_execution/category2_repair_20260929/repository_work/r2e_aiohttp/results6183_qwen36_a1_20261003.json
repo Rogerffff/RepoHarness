@@ -1,0 +1,135 @@
+{
+  "schema_id": "rh2.category2.aiohttp.owner_gpu_result.v1",
+  "created_at": "2026-10-03T04:41:49.881579+00:00",
+  "task_id": "r2e_gym_subset::aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2",
+  "job_id": "gpu1003-aiohttp6183-qwen36-a1",
+  "request_id": "aiohttp6183-r085-probe-wide-v1-20261003",
+  "model_label": "qwen36",
+  "model_revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+  "owner_verdict": "accepted_current_exploratory_task_goal",
+  "raw_grade": {
+    "reward": 1.0,
+    "outcome": "resolved",
+    "failure_category": null,
+    "expected_match_count": 49,
+    "expected_total_count": 49
+  },
+  "owner_formal_reparse": {
+    "matched": 49,
+    "expected": 49,
+    "PASSED": 49,
+    "missing": 0,
+    "complete_log": true,
+    "qualification_not_injected": true
+  },
+  "original_candidate": {
+    "entry_count": 1,
+    "paths": [
+      "aiohttp/protocol.py"
+    ],
+    "all_original_entries_graded": true,
+    "no_candidate_cleanup_for_acceptance": true,
+    "goal": "过滤compress及flush的空压缩输出，保留EOF/EOL及合法末尾零终止块。",
+    "actual_public_verification": "两段复现均从原缺陷失败转通过；实际非空write与终止块/解压均核；修改后47个公开测试通过；另检查gzip/大载荷/多次写入/单字节/空载荷。",
+    "coverage_limit": "额外脚本的有限样例不扩大本题正式HTTP版本/gzip保证；没有全仓运行保证。"
+  },
+  "behavior": {
+    "localization": "先复现真实write与chunked wire，确认compress小载荷输出b空字节，再窄改compression filter。",
+    "correction": "无修法回退，最终候选保留原兼容预置；修改前head截断的pytest输出不足证明全通过，修改后完整结尾及正式日志补证。",
+    "tools": {
+      "Read": 3,
+      "Bash": 11,
+      "Edit": 1,
+      "total": 15,
+      "error_flags": 2,
+      "errors": "两个原目标复现的断言失败，不是基础设施失败。"
+    },
+    "parallel": {
+      "multi_tool_generation_batches": 3,
+      "generation_first_lines": [
+        7,
+        44,
+        141
+      ],
+      "opportunities": "独立阅读与两段复現可同批；修改与复验有依赖。",
+      "actual_execution_overlap": "unknown，工具缺完整起止时间。",
+      "stable_parallel_ability_inference": false
+    },
+    "usage": {
+      "generation_requests": 13,
+      "cc_turns": 16,
+      "input_tokens": 277936,
+      "output_tokens": 7341,
+      "input_definition": "累计逐次请求上下文，不是峰值context。"
+    },
+    "time": {
+      "solve_seconds": 51.421,
+      "cc_api_seconds": 44.958,
+      "cc_total_seconds": 48.038,
+      "trusted_init_seconds_outside_solver": 8.158,
+      "grading_seconds": 10.217,
+      "model_queue_wait": "unknown",
+      "api_pure_model_compute": "unknown",
+      "cc_non_api_pure_tool_time": "unknown"
+    }
+  },
+  "execution": {
+    "code": "code_v4",
+    "code_snapshot_id_original": null,
+    "image": "sha256:cfc4f547e3336c59f39841883b209ab0568cc719144aea87e4c7ee73aadc0d13",
+    "baseline": "sha256:096115266c81b72a6f28e517ccfdeb2e8903c44f7822031113bf2daedb1f5781",
+    "frozen": "sha256:f9d097e6746d50d9f28d36d740253f47e2491cbdffecf73f6ea3cb506c5003f6",
+    "termination": "completed",
+    "cleanup": {
+      "container_rm": 0,
+      "container_left": "",
+      "network_failures": [],
+      "relay_failures": [],
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "cleanup_ok": true
+    },
+    "gateway_drain": {
+      "session_id": "gpu1003-aiohttp6183-qwen36-a1",
+      "revoked": true,
+      "active_requests": 0,
+      "drained": true,
+      "ts": 1790979410.4571135
+    },
+    "pip_freeze_changed_metadata": false
+  },
+  "runtime_evidence_limits": [
+    "仅执行证据核查；题级语义、候选质量与训练准入由题主负责。未远端、未容器、未模型、未重跑CPU。",
+    "安装段明确RH2_INSTALL_SKIPPED，install RC为空；test完整结束且RC0，不能表述为重新安装通过。",
+    "code_snapshot_id仍为空；按queue code_v4 argv、entry/shared/parent SHA及e3a33冻结manifest外部关联，不改原件；本轮未重新核远端529运行文件。",
+    "gateway checkpoint_identity_verified=false；复用已验engine bind/full revision与server实际readback，不以CC alias证明weights身份，未再逐weights SHA。",
+    "adapter turns未保存原始SGLang sampling_params/backend request ID；核固定配置默认值、每条gateway无采样override、完整SSE/usage配对，复用既有transport验收。",
+    "CC modelUsage.maxOutputTokens=32000为CC元数据；实际全部gateway max_tokens=65536。196608配置不等于已证明196K峰值可承载。",
+    "input service_readback为config_only、TTL observed为空；14400为固定启动参数/已验服务事实，不称本臂测得TTL。",
+    "资源仅15秒离散样本；未采样间隙和缺失字段保留未知。grader diagnostics.resource_facts为空，peak_memory_mb单列；8GiB writable quota require=false。",
+    "host grading材料含私有参考；solver只收到核定公开prompt/brief。未把expected map、hidden tests或gold交付solver。",
+    "另有1条count_tokens非生成请求，HTTP200；单列不混入模型turn/SSE统计。",
+    "grader安装原段跳过，trusted setup原件无缺失且runner integrity未变、UID54322/import来自仓库；env_qualification=absent，不能升级为新增正式环境资格。baseline.environment_package_digest为空，使用input assignment与prepared/host SHA外部关联。"
+  ],
+  "refs": {
+    "original_result": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v10/results/gpu1003-aiohttp6183-qwen36-a1/result.json",
+      "sha256": "sha256:d0f8c12d6441e29a26ef57b3c5d4c5567876fa6a7e8137be3a965a903930eb55"
+    },
+    "owner_readback": {
+      "path": "runs/category2_repair_20260929/r2e_aiohttp/gpu6183_qwen_a1_owner_readback_v1/owner_readback.json",
+      "sha256": "sha256:0813bb6feaa70d7d6738e16ae7ecae2bcc302a766a0c0314d28e362bc85da335"
+    },
+    "independent_gpu_execution_review": {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/aiohttp6183_qwen36_a1_execution_review.json",
+      "sha256": "sha256:e45d86c5e96cb50f013c542e18a4b0c2b37bd69a90a14a68414de4c985ca055d"
+    },
+    "aggregate_receipt_readback": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/aggregate_receipt_readback6183_20261003.json",
+      "sha256": "sha256:dd06a41fc85d8f3614f7a70c6a70d81316f61c5e21d120835c842602b242a4b0"
+    }
+  },
+  "permitted_use": "探索性题目质量和基座诊断；未授训练/留出资格。",
+  "next": "首轮核收后统一第二阶段同条件重复，不以一次49/49称稳定能力。",
+  "requires_cpu_now": false
+}

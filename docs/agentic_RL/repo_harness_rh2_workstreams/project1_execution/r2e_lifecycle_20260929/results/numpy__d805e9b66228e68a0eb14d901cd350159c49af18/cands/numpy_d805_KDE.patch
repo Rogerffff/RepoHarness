@@ -1,0 +1,12 @@
+diff --git a/numpy/ma/core.py b/numpy/ma/core.py
+--- a/numpy/ma/core.py
++++ b/numpy/ma/core.py
+@@ -3798,7 +3798,7 @@ def __str__(self):
+                     # object dtype, extract the corners before the conversion.
+                     for axis in range(self.ndim):
+                         if data.shape[axis] > self._print_width:
+-                            ind = self._print_width // 2
++                            ind = 750
+                             arr = np.split(data, (ind, -ind), axis=axis)
+                             data = np.concatenate((arr[0], arr[2]), axis=axis)
+                             arr = np.split(mask, (ind, -ind), axis=axis)

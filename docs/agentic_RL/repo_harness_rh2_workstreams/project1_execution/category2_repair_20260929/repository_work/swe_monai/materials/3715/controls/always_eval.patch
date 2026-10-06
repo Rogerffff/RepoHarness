@@ -1,0 +1,19 @@
+diff --git a/monai/engines/evaluator.py b/monai/engines/evaluator.py
+--- a/monai/engines/evaluator.py
++++ b/monai/engines/evaluator.py
+@@ -114,13 +114,8 @@
+             event_to_attr=event_to_attr,
+             decollate=decollate,
+         )
+-        self.mode = look_up_option(mode, ForwardMode)
+-        if mode == ForwardMode.EVAL:
+-            self.mode = eval_mode
+-        elif mode == ForwardMode.TRAIN:
+-            self.mode = train_mode
+-        else:
+-            raise ValueError(f"unsupported mode: {mode}, should be 'eval' or 'train'.")
++        look_up_option(mode, ForwardMode)
++        self.mode = eval_mode
+ 
+     def run(self, global_epoch: int = 1) -> None:
+         """

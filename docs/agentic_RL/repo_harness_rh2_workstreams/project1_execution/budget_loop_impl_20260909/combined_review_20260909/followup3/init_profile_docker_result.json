@@ -1,0 +1,261 @@
+{
+  "docker_version": "29.4.1",
+  "arch": "arm64",
+  "image_id": "sha256:9059d9d7db987b86299e052ff6630cd95e5a770336967c21110e53289a877433",
+  "cases": [
+    {
+      "case": "natural",
+      "container": "rh2-review-init-de73b3bfeb",
+      "network": "rh2-review-init-net-de73b3bfeb",
+      "inspect_violations": [],
+      "profile_parameters": {
+        "profile_id": "rh2.rollout_sandbox_profile.v1",
+        "schema_id": "rh2.sandbox_profile.v1",
+        "agent_user": "agent",
+        "agent_uid": 54321,
+        "trusted_init_caps": [
+          "CHOWN",
+          "DAC_OVERRIDE",
+          "DAC_READ_SEARCH",
+          "FOWNER",
+          "KILL"
+        ],
+        "pids_limit": 64,
+        "cpus": 0.5,
+        "memory_bytes": 268435456,
+        "swap_bytes": 0,
+        "tmp_tmpfs_bytes": 33554432,
+        "home_tmpfs_bytes": 16777216,
+        "writable_layer_quota_bytes": 8589934592,
+        "require_writable_layer_quota": false,
+        "network": {
+          "mode": "isolated_internal_network_per_attempt",
+          "egress_subnet_pool": "10.212.0.0/16",
+          "egress_subnet_prefix": 29,
+          "relay_image": "python@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea",
+          "relay_alias": "rh2-egress-relay",
+          "model_proxy_listen_port": 18001,
+          "model_proxy_upstream": "host.docker.internal:18000",
+          "internal_services": [],
+          "forbidden_probe_targets": [
+            "169.254.169.254:80",
+            "1.1.1.1:443",
+            "8.8.8.8:53",
+            "172.17.0.1:18001"
+          ]
+        },
+        "hidden_paths": [
+          "/root"
+        ],
+        "bind_mounts_allowed": [],
+        "workdir": "/testbed",
+        "security_opt": [
+          "no-new-privileges"
+        ],
+        "cap_drop": [
+          "ALL"
+        ],
+        "init": true
+      },
+      "profile_digest": "sha256:8a063a11fedbcc701c1bb39ed66c4da1781387597bfec1f77a91cab164a930a1",
+      "host_config_init": true,
+      "pid1": "1     0 Ss   docker-init",
+      "profile_run_args": [
+        "run",
+        "--detach",
+        "--init",
+        "--network",
+        "rh2-review-init-net-de73b3bfeb",
+        "--cap-drop",
+        "ALL",
+        "--cap-add",
+        "CHOWN",
+        "--cap-add",
+        "DAC_OVERRIDE",
+        "--cap-add",
+        "DAC_READ_SEARCH",
+        "--cap-add",
+        "FOWNER",
+        "--cap-add",
+        "KILL",
+        "--security-opt",
+        "no-new-privileges",
+        "--pids-limit",
+        "64",
+        "--cpus",
+        "0.5",
+        "--memory",
+        "268435456",
+        "--memory-swap",
+        "268435456",
+        "--tmpfs",
+        "/tmp:size=33554432,mode=1777",
+        "--tmpfs",
+        "/home/agent:size=16777216,mode=0750,uid=54321,gid=54321",
+        "--label",
+        "rh2.review=budget-followup3",
+        "--name",
+        "rh2-review-init-de73b3bfeb",
+        "node:22-bookworm",
+        "sleep",
+        "infinity"
+      ],
+      "same_parameters_without_init_digest": "sha256:1425b3d2bb1b387cc220f6c2128103d5691f67653d8401c32ec79f8d4d7b6cbe",
+      "negative_init_inspect_violations": [
+        "HostConfig.Init=False != True（PID 1 须为 docker-init 回收孤儿）"
+      ],
+      "agent_uid": "54321",
+      "natural_exit_code": 0,
+      "agent_rows_before_stop": "",
+      "stop": {
+        "residual": 0,
+        "kill_returned_at": 803621.597706208,
+        "kill_exit_code": 0,
+        "pkill_status": 1,
+        "kill_delivered_at": 803621.597706208,
+        "confirmed_at": 803621.652239208,
+        "observations": [
+          {
+            "issued_at": 803621.597739291,
+            "returned_at": 803621.652239208,
+            "residual": 0
+          }
+        ],
+        "timed_out": false,
+        "elapsed_seconds": 0.109,
+        "attempts": 1
+      },
+      "agent_rows_after_stop": "",
+      "container_removed": true,
+      "network_removed": true
+    },
+    {
+      "case": "forced",
+      "container": "rh2-review-init-f4ee2773db",
+      "network": "rh2-review-init-net-f4ee2773db",
+      "inspect_violations": [],
+      "profile_parameters": {
+        "profile_id": "rh2.rollout_sandbox_profile.v1",
+        "schema_id": "rh2.sandbox_profile.v1",
+        "agent_user": "agent",
+        "agent_uid": 54321,
+        "trusted_init_caps": [
+          "CHOWN",
+          "DAC_OVERRIDE",
+          "DAC_READ_SEARCH",
+          "FOWNER",
+          "KILL"
+        ],
+        "pids_limit": 64,
+        "cpus": 0.5,
+        "memory_bytes": 268435456,
+        "swap_bytes": 0,
+        "tmp_tmpfs_bytes": 33554432,
+        "home_tmpfs_bytes": 16777216,
+        "writable_layer_quota_bytes": 8589934592,
+        "require_writable_layer_quota": false,
+        "network": {
+          "mode": "isolated_internal_network_per_attempt",
+          "egress_subnet_pool": "10.212.0.0/16",
+          "egress_subnet_prefix": 29,
+          "relay_image": "python@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea",
+          "relay_alias": "rh2-egress-relay",
+          "model_proxy_listen_port": 18001,
+          "model_proxy_upstream": "host.docker.internal:18000",
+          "internal_services": [],
+          "forbidden_probe_targets": [
+            "169.254.169.254:80",
+            "1.1.1.1:443",
+            "8.8.8.8:53",
+            "172.17.0.1:18001"
+          ]
+        },
+        "hidden_paths": [
+          "/root"
+        ],
+        "bind_mounts_allowed": [],
+        "workdir": "/testbed",
+        "security_opt": [
+          "no-new-privileges"
+        ],
+        "cap_drop": [
+          "ALL"
+        ],
+        "init": true
+      },
+      "profile_digest": "sha256:8a063a11fedbcc701c1bb39ed66c4da1781387597bfec1f77a91cab164a930a1",
+      "host_config_init": true,
+      "pid1": "1     0 Ss   docker-init",
+      "profile_run_args": [
+        "run",
+        "--detach",
+        "--init",
+        "--network",
+        "rh2-review-init-net-f4ee2773db",
+        "--cap-drop",
+        "ALL",
+        "--cap-add",
+        "CHOWN",
+        "--cap-add",
+        "DAC_OVERRIDE",
+        "--cap-add",
+        "DAC_READ_SEARCH",
+        "--cap-add",
+        "FOWNER",
+        "--cap-add",
+        "KILL",
+        "--security-opt",
+        "no-new-privileges",
+        "--pids-limit",
+        "64",
+        "--cpus",
+        "0.5",
+        "--memory",
+        "268435456",
+        "--memory-swap",
+        "268435456",
+        "--tmpfs",
+        "/tmp:size=33554432,mode=1777",
+        "--tmpfs",
+        "/home/agent:size=16777216,mode=0750,uid=54321,gid=54321",
+        "--label",
+        "rh2.review=budget-followup3",
+        "--name",
+        "rh2-review-init-f4ee2773db",
+        "node:22-bookworm",
+        "sleep",
+        "infinity"
+      ],
+      "same_parameters_without_init_digest": "sha256:1425b3d2bb1b387cc220f6c2128103d5691f67653d8401c32ec79f8d4d7b6cbe",
+      "negative_init_inspect_violations": [
+        "HostConfig.Init=False != True（PID 1 须为 docker-init 回收孤儿）"
+      ],
+      "agent_uid": "54321",
+      "agent_states_before_stop": [
+        "Ss",
+        "S"
+      ],
+      "stop": {
+        "residual": 0,
+        "kill_returned_at": 803622.6575425,
+        "kill_exit_code": 0,
+        "pkill_status": 0,
+        "kill_delivered_at": 803622.6575425,
+        "confirmed_at": 803622.708868875,
+        "observations": [
+          {
+            "issued_at": 803622.657570333,
+            "returned_at": 803622.708868875,
+            "residual": 0
+          }
+        ],
+        "timed_out": false,
+        "elapsed_seconds": 0.106,
+        "attempts": 1
+      },
+      "agent_rows_after_stop": "",
+      "container_removed": true,
+      "network_removed": true
+    }
+  ]
+}

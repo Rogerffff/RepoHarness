@@ -1,0 +1,20 @@
+diff --git a/moto/sns/models.py b/moto/sns/models.py
+index 25b1bf93d..44433acc8 100644
+--- a/moto/sns/models.py
++++ b/moto/sns/models.py
+@@ -515,6 +515,15 @@ class SNSBackend(BaseBackend):
+         old_subscription = self._find_subscription(topic_arn, endpoint, protocol)
+         if old_subscription:
+             return old_subscription
++
++        if protocol == "application":
++            try:
++                self.get_endpoint(endpoint)
++            except SNSNotFoundError:
++                raise SNSInvalidParameter(
++                    f"Invalid parameter: Endpoint Reason: Endpoint does not exist for endpoint {endpoint}"
++                )
++
+         topic = self.get_topic(topic_arn)
+         subscription = Subscription(self.account_id, topic, endpoint, protocol)
+         attributes = {

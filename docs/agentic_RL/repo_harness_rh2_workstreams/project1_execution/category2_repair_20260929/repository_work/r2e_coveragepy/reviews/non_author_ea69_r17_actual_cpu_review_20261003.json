@@ -1,0 +1,1275 @@
+{
+  "schema_id": "coveragepy.ea69.r17.actual_cpu.non_author_review.v1",
+  "date": "2026-10-03",
+  "reviewer": "non_author_existing_context_reviewer",
+  "fresh_public_reader": false,
+  "status": "passed_actual_r17_cpu_narrow_review",
+  "findings": [],
+  "method": "只读本地原件；AST抽取固定parser纯函数内存重放完整段；SHA/tar/JSON/基线内容/Git模式/排除证据逐项核对。未运行新SSH、Docker、模型、项目测试或安装。",
+  "supports_new_fixed_gpu_request": true,
+  "training_qualification": false,
+  "model_result": false,
+  "release_manifest_sha256": "76aee53151d3b58758d00a9feb5a901b720b4b430f37d2057ed07c1ef0ce2fa6",
+  "cpu_host": "cpu-a",
+  "ports": {
+    "gateway": 18210,
+    "stub": 18211
+  },
+  "resource_support_receipt_sha256": "d8fe9eeb19a0c45ff20795796bb1f0f38e7f4ef453f0ad33337352d8c4aeb8da",
+  "archive": {
+    "manifest_sha256": "96847fba397822f456de38e2f1882eea6c8f1ddb2998a3770d42e42c3f3e1b42",
+    "tgz_sha256": "fe87c7e12088b7fca2d38eb675c64a9743d639b1b3f976cb78cb7556f0c535bb",
+    "payload_files": 87,
+    "payload_bytes": 6982615,
+    "tgz_regular_files_including_manifest": 88,
+    "all_local_and_tar_payload_SHA_size_verified": true,
+    "excluded": [
+      {
+        "path": "cpu/public_e2e01/gateway_control.key",
+        "reason": "expired ephemeral control secret not evidence"
+      }
+    ]
+  },
+  "launch_and_slots": {
+    "C_to_A_declared_text_delta_exact": true,
+    "raw_remote_bodies_match_A_launcher_BODY": true,
+    "only_host_job_attempt_output_dispatch_script_names_changed": true,
+    "C_old_files_preserved": true,
+    "C_7_local_receipts_rc75_not_actual_jobs": true,
+    "C_receipt_count_basis": "6 dispatch-directory receipts plus early top-level receipt",
+    "job_states": {
+      "covea69-r17-prepare-cpua-20261003-01": {
+        "package": "r2e_coveragepy",
+        "job": "covea69-r17-prepare-cpua-20261003-01",
+        "mode": "prepare",
+        "slot": 0,
+        "command": [
+          "/work/rh2-category2-20261003/runtime_cpu_v2/rh2/.venv/bin/python",
+          "/work/rh2-category2-20261003/packages/r2e_coveragepy/jobscripts/prepare_r17_cpu_a_remote_job.py"
+        ],
+        "cwd": "/work/rh2-category2-20261003/packages/r2e_coveragepy",
+        "started_at_utc": "2026-10-03T00:50:52Z",
+        "supervisor_pid": 570281,
+        "status": "finished",
+        "child_pid": 570282,
+        "returncode": 0,
+        "finished_at_utc": "2026-10-03T00:51:48Z"
+      },
+      "covea69-r17-public-cpua-20261003-01": {
+        "package": "r2e_coveragepy",
+        "job": "covea69-r17-public-cpua-20261003-01",
+        "mode": "run",
+        "slot": 1,
+        "command": [
+          "/work/rh2-category2-20261003/runtime_cpu_v2/rh2/.venv/bin/python",
+          "/work/rh2-category2-20261003/packages/r2e_coveragepy/jobscripts/narrow_r17_cpu_a_remote_job.py"
+        ],
+        "cwd": "/work/rh2-category2-20261003/packages/r2e_coveragepy",
+        "started_at_utc": "2026-10-03T00:52:54Z",
+        "supervisor_pid": 573035,
+        "status": "finished",
+        "child_pid": 573036,
+        "returncode": 0,
+        "finished_at_utc": "2026-10-03T00:55:57Z"
+      }
+    },
+    "concurrency": {
+      "per_host_slots": 2,
+      "prepare_limit": 1,
+      "prepare_consumes_slot": true,
+      "package_max_one_active": true
+    }
+  },
+  "public_delivery": {
+    "first_request_sha256": "8afc1e064d29bd386c053d797f58bf8eaaff178ab21614b436d08c6250859c49",
+    "prompt_sha256": "19aa60c71f97c59184b24f99cccdfee77fa7745bc201e7e7bd67066259f05d24",
+    "statement_sha256": "39b6b28abc08b21a76a71d8908a7e37a00040cbfc3f9d92ee12bc37b3b6a194f",
+    "brief_sha256": "475e3ee69e2e28b4812c1b464a1c9e8381011e9f4959551e05c162387823e2e9",
+    "complete_prompt_exact_in_first_request_user_text": true,
+    "prompt_formula_exact": true,
+    "known_gold_private_test_positive_control_markers_absent": true,
+    "attempt_public_lineage_matches": true,
+    "actual_prepared_public_host_prompt_exact_local_R17_static": true,
+    "entries_sha256": {
+      "public_notes_cpu_solve.py": "sha256:96353a9700fb99b515056edac2c213667db0bb46e4b768aab6e9ed6fc41d7463",
+      "r2e_probe_e2e.py": "sha256:a5b23b49f126b76a1512a3a6f184bb7e16276c4e9cf137dc7cdc46d3af4ee4fc",
+      "stub_anthropic_endpoint.py": "sha256:dab06b7a5ed681e9938c6033f41e3bd6947cdc19c0e333e7fc5a859d805f5138",
+      "model_gateway.py": "sha256:b481eaf27b8a38d86dfb90bd79504b770ccb2ffe27ad42e739714858ca5d2b43"
+    },
+    "tools": [
+      "Bash",
+      "Bash"
+    ],
+    "tool_use_results_bijection": true,
+    "preflight_ok": true,
+    "encoding_marker": true,
+    "public_HTML_passed": 46,
+    "public_HTML_warnings": 2,
+    "compat_rc": 0,
+    "CC_version": "2.1.205",
+    "CC_tar_sha256": "sha256:d3dadfa9cde294ac82c755eb6d889291228849180bac5d677ad1a4027aca1bc4"
+  },
+  "environment": {
+    "source_ref": "namanjain12/coveragepy_final@sha256:e6069f48a7815401ea56658b9eaeeae97581d0f1c890c31b44b94ca435d34cdf",
+    "source_image_id": "sha256:a7d8c3d7776099609f662109459389452c692b6acc275512a821dac4300eff93",
+    "source_platform": "linux/amd64",
+    "actual_actor_grader_overlay_image": "sha256:9877b37b29ed7b187c7382fe8f2eb9b6f99d08d2129fc66134289d28943d71ec",
+    "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+    "recipe_sha256_recomputed": "sha256:85b488e5c8a0078f952842c9f5a12f7f949b51029c3f3c80f3f0fec4b14cbb0b",
+    "base_recipe_sha256_recomputed": "sha256:dcb118253b2a1ce5d94054ea057815abc203f38f027d4e3fbf353033999b829e",
+    "hidden_tree_sha256": "sha256:d9860e3e4c82c0d005cc5fdb3027ac0b489128eec2ffafdb306fc33d991c3430",
+    "runner_sha256": "sha256:8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+    "expected_sha256": "sha256:b3482977f4b14e436b61638b92950c68bea93f5cda15cf7854d4c87ff3627527",
+    "base_commit": "7fd1ea39925f0856ff607bb30796bc948a8c829d",
+    "integrity_raw_sections_A_B_C_D_equal": true,
+    "integrity_counts": [
+      393,
+      4683,
+      49
+    ],
+    "only_python_link_and_pyvenv_home_relocated": true,
+    "agent_uid": 54321,
+    "grader_uid": 54322,
+    "actor_interpreter": "/testbed/.venv/bin/python",
+    "actor_python_version": "3.7.9",
+    "cwd": "/testbed",
+    "formal_coverage_import": "/testbed/coverage/__init__.py",
+    "formal_coverage_version": "6.1a0",
+    "public_pytest_version_basis": "6.2.5 fixed same-source environment; actual CC public pytest ran",
+    "pip_module_absent_before_after_same": true,
+    "actor_import_limit": "Actual CC imports tests.test_html and warning paths show /testbed/tests; exact coverage.__file__ is formal grader observation, not a new actor import-print command."
+  },
+  "formal_noop": {
+    "candidate_entries": 0,
+    "export_ok": true,
+    "empty": true,
+    "actor_frozen_digest": "sha256:fe39f2cfa0320a8682ce0ef3c47455a4e85051750ace5b2434aafe758c19e957",
+    "replay_frozen_digest": "sha256:97e390309022833709258077c1153d7ea9a6cc7034dd4b4fb560065e929f75b0",
+    "reward": 0,
+    "expected_match": 41,
+    "expected_total": 49,
+    "test_rc": 1,
+    "exec_rc": 0,
+    "driver_rc": 0,
+    "failure_category": "tests_failed",
+    "infra_failure": false,
+    "stage_error": null,
+    "log_partial": false,
+    "test_segment_complete": true,
+    "test_segment_count": 1,
+    "parsed_outside_segment": 0,
+    "missing": [],
+    "unexpected": [],
+    "parser_sha256": "339b7c80cca516dc7d1bcf9c11e3ff9a42f1bc993b5027a0d06c41c85d024b58",
+    "observations_equal_old_R6_noop": true,
+    "ledger_diagnostics_author_agree": true,
+    "per_key": [
+      {
+        "key": "HtmlDeltaTest.test_file_becomes_100",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlDeltaTest.test_html_created",
+        "expected": "PASSED",
+        "observed": "FAILED",
+        "old_R6_noop": "FAILED",
+        "matched": false
+      },
+      {
+        "key": "HtmlDeltaTest.test_html_delta_from_coverage_change",
+        "expected": "PASSED",
+        "observed": "FAILED",
+        "old_R6_noop": "FAILED",
+        "matched": false
+      },
+      {
+        "key": "HtmlDeltaTest.test_html_delta_from_coverage_version_change",
+        "expected": "PASSED",
+        "observed": "FAILED",
+        "old_R6_noop": "FAILED",
+        "matched": false
+      },
+      {
+        "key": "HtmlDeltaTest.test_html_delta_from_settings_change",
+        "expected": "PASSED",
+        "observed": "FAILED",
+        "old_R6_noop": "FAILED",
+        "matched": false
+      },
+      {
+        "key": "HtmlDeltaTest.test_html_delta_from_source_change",
+        "expected": "PASSED",
+        "observed": "FAILED",
+        "old_R6_noop": "FAILED",
+        "matched": false
+      },
+      {
+        "key": "HtmlDeltaTest.test_status_format_change",
+        "expected": "PASSED",
+        "observed": "FAILED",
+        "old_R6_noop": "FAILED",
+        "matched": false
+      },
+      {
+        "key": "HtmlGitignoreTest.test_existing_gitignore_is_preserved_and_report_ignored",
+        "expected": "PASSED",
+        "observed": "FAILED",
+        "old_R6_noop": "FAILED",
+        "matched": false
+      },
+      {
+        "key": "HtmlGitignoreTest.test_html_report_is_ignored_by_git",
+        "expected": "PASSED",
+        "observed": "FAILED",
+        "old_R6_noop": "FAILED",
+        "matched": false
+      },
+      {
+        "key": "HtmlGoldTest.test_a",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlGoldTest.test_b_branch",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlGoldTest.test_bom",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlGoldTest.test_isolatin1",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlGoldTest.test_omit_1",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlGoldTest.test_omit_2",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlGoldTest.test_omit_3",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlGoldTest.test_omit_4",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlGoldTest.test_omit_5",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlGoldTest.test_other",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlGoldTest.test_partial",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlGoldTest.test_styled",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlGoldTest.test_tabbed",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlGoldTest.test_unicode",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlTest.test_extensionless_file_collides_with_extension",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlTest.test_has_date_stamp_in_files",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlTest.test_html_skip_covered",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlTest.test_html_skip_empty",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlTest.test_missing_source_file_incorrect_message",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlTest.test_report_skip_covered",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlTest.test_report_skip_covered_100",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlTest.test_report_skip_covered_branches",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlTest.test_report_skip_empty",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlTest.test_reporting_on_unmeasured_file",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlTitleTest.test_default_title",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlTitleTest.test_non_ascii_title_set_in_config_file",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlTitleTest.test_title_set_in_args",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlTitleTest.test_title_set_in_config_file",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlWithContextsTest.test_dynamic_contexts",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlWithContextsTest.test_dynamic_contexts_relative_files",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlWithContextsTest.test_filtered_dynamic_contexts",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlWithContextsTest.test_no_contexts_warns_no_contexts",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlWithUnparsableFilesTest.test_decode_error",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlWithUnparsableFilesTest.test_dothtml_not_python",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlWithUnparsableFilesTest.test_dotpy_not_python",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlWithUnparsableFilesTest.test_dotpy_not_python_ignored",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlWithUnparsableFilesTest.test_execed_liar_ignored",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlWithUnparsableFilesTest.test_execed_liar_ignored_indentation_error",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "HtmlWithUnparsableFilesTest.test_formfeeds",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      },
+      {
+        "key": "ReportingTest.test_no_data_to_report_on_html",
+        "expected": "PASSED",
+        "observed": "PASSED",
+        "old_R6_noop": "PASSED",
+        "matched": true
+      }
+    ]
+  },
+  "transport": {
+    "baseline_manifest_digest": "sha256:c2833307ee4ede12c6f49f3afe0a5072465cc594ea43c2c09ac78b236489a1de",
+    "baseline_manifest_actor_replay_exact": true,
+    "baseline_entries": 360,
+    "baseline_entries_equal_R6": true,
+    "tar_sha256": "c73f3b98746849f4ab0aa0cf6bfb182c6fba0cb8f43201f67c9acf2d78fbbee0",
+    "tar360_content_Git_mode_verified": true,
+    "tar_install_run_POSIX_modes": [
+      "0664",
+      "0664"
+    ],
+    "mode_scope": "Git100644/100755 semantics verified; no claim exact POSIX0644",
+    "excluded_census_entries": 4850,
+    "actor_replay_census_bytes_equal": true,
+    "excluded_census_digest_recomputed": "sha256:2fae4a5a9dd0d293c1a1356a28ad94cbeb6e8a98e6c4ff45776d8350733c5387",
+    "excluded_path_differences": [],
+    "frozen_entries_both_empty": true,
+    "actual_original_noop_transport": true,
+    "full_frozen_digest_equality_not_claimed": true,
+    "candidate_excluded_pathset_changed": [
+      true,
+      false
+    ],
+    "roundtrip": {
+      "ok": true,
+      "identity_equal": {
+        "task_id": true,
+        "workdir": true,
+        "public_bundle_digest": true,
+        "materialized_head": true,
+        "task_base_commit": true,
+        "policy": true,
+        "policy_digest": true,
+        "image_ids": true
+      },
+      "image_ids": [
+        "sha256:9877b37b29ed7b187c7382fe8f2eb9b6f99d08d2129fc66134289d28943d71ec",
+        "sha256:9877b37b29ed7b187c7382fe8f2eb9b6f99d08d2129fc66134289d28943d71ec"
+      ],
+      "baseline_entries_equal": true,
+      "patch_entries_equal": true,
+      "excluded_evidence_matches": true,
+      "excluded_path_differences": [],
+      "excluded_difference_allowed": true,
+      "transport_digest_equal": true,
+      "candidate_excluded_pathset_changed": [
+        true,
+        false
+      ],
+      "available": true,
+      "baseline": {
+        "entries_equal": true
+      },
+      "frozen_patch": {
+        "entries_equal": true
+      },
+      "ledger_patch_sha256_equals_render": true
+    }
+  },
+  "cleanup": {
+    "actor": {
+      "container_rm": 0,
+      "container_left": "",
+      "network_failures": [],
+      "relay_failures": [],
+      "labeled_containers_left": [],
+      "labeled_networks_left": [],
+      "cleanup_ok": true
+    },
+    "grader": {
+      "detail": "",
+      "removed": true,
+      "steps": [
+        "rm:ok"
+      ]
+    },
+    "endpoints_stopped_rcs": [
+      0,
+      0
+    ],
+    "residuals": {
+      "coverageea69-r17-public-cpua-20261003-01": {
+        "containers": [],
+        "networks": []
+      },
+      "coverageea69-r17-public-cpua-20261003-01-gcc": {
+        "containers": [],
+        "networks": []
+      },
+      "_clean": true
+    },
+    "slot_jobs_finished_rc0": true,
+    "post_finish_readback": {
+      "assigned_ports": {
+        "18210": "free",
+        "18211": "free"
+      },
+      "owned_actor_grader_relay_containers": [],
+      "owned_task_networks": [],
+      "job_states": {
+        "covea69-r17-prepare-cpua-20261003-01": {
+          "package": "r2e_coveragepy",
+          "job": "covea69-r17-prepare-cpua-20261003-01",
+          "mode": "prepare",
+          "slot": 0,
+          "command": [
+            "/work/rh2-category2-20261003/runtime_cpu_v2/rh2/.venv/bin/python",
+            "/work/rh2-category2-20261003/packages/r2e_coveragepy/jobscripts/prepare_r17_cpu_a_remote_job.py"
+          ],
+          "cwd": "/work/rh2-category2-20261003/packages/r2e_coveragepy",
+          "started_at_utc": "2026-10-03T00:50:52Z",
+          "supervisor_pid": 570281,
+          "status": "finished",
+          "child_pid": 570282,
+          "returncode": 0,
+          "finished_at_utc": "2026-10-03T00:51:48Z"
+        },
+        "covea69-r17-public-cpua-20261003-01": {
+          "package": "r2e_coveragepy",
+          "job": "covea69-r17-public-cpua-20261003-01",
+          "mode": "run",
+          "slot": 1,
+          "command": [
+            "/work/rh2-category2-20261003/runtime_cpu_v2/rh2/.venv/bin/python",
+            "/work/rh2-category2-20261003/packages/r2e_coveragepy/jobscripts/narrow_r17_cpu_a_remote_job.py"
+          ],
+          "cwd": "/work/rh2-category2-20261003/packages/r2e_coveragepy",
+          "started_at_utc": "2026-10-03T00:52:54Z",
+          "supervisor_pid": 573035,
+          "status": "finished",
+          "child_pid": 573036,
+          "returncode": 0,
+          "finished_at_utc": "2026-10-03T00:55:57Z"
+        }
+      },
+      "at": "2026-10-03T01:09:07.711885+00:00",
+      "status": "read_only_post_finish_check_passed"
+    },
+    "preparation_residual_readback": {
+      "preparation_containers": [],
+      "at": "2026-10-03T01:09:55.057650+00:00"
+    }
+  },
+  "budgets": {
+    "wall": 1200,
+    "max_turns": 6,
+    "context": 32768,
+    "request_output": 4096,
+    "gateway_cap": 12,
+    "requests": 3,
+    "cpus": 2,
+    "memory_bytes": 4294967296,
+    "pids_limit": 512,
+    "setup": 300,
+    "candidate": 900,
+    "wrapper_grade": 5400,
+    "formal_test": 1800,
+    "formal_apply": 120,
+    "ledger": {
+      "candidate_stage_seconds": 900.0,
+      "cleanup_seconds": 120.0,
+      "grading_deadline_seconds": 3600.0,
+      "image_pull_seconds": 1800.0
+    }
+  },
+  "reuse": {
+    "old_matrix": "R6 seven fixed CPU controls reused only private payload/source/base/hidden/runner/expected/recipe invariant scope",
+    "matrix_values": "safe_append/encoding49of49=1; original gold/CA/CC48of49=0; CB/RE47of49=0",
+    "original_gold_negative": true,
+    "old_Qwen": "Original reward0/48of49 and old public-delivery omission limits remain on old version; not R17 first arm",
+    "fresh_reader": "Separate existing fresh statement reader version-bound; this reviewer not fresh"
+  },
+  "author_acceptance_sha256": "bf2716f66c8c8cacaa37109bb9ca42942fdac80243cb79a57f9107c1a66c83c8",
+  "limits": [
+    "CPU stub and controls are not model outcomes; supports new fixed GPU request, not training eligibility.",
+    "New GPU request must bind R17, actual actor/grader identity, unchanged brief, budget and new job lineage; do not rebind old Qwen result.",
+    "Only expired gateway_control.key is archive_manifest exclusion; baseline regenerable-cache omissions are separately recorded policy facts.",
+    "Archived run plus separately saved post-finish/preparation readbacks prove this completion; reviewer performed no new live remote queries."
+  ],
+  "evidence": [
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/pre_run_identity.json",
+      "sha256": "af22514c73fc682936bbd73e24f7f24ebfd4577ebcd2d186cebdcb0ac6271cf5",
+      "bytes": 1206,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/prepared/prepared_manifest.json",
+      "sha256": "3a766e2a8a9243949431d97958abaaf3f1ba1aef47bb3035e9f8d45e1898a30d",
+      "bytes": 990,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/prepared/prompts.jsonl",
+      "sha256": "507f5d42b96d9ed38ac56dd0caaf513fd56a1f557e5fc6c1eb6a90409dd1944e",
+      "bytes": 2094,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/prepared/replay_summary.json",
+      "sha256": "bbdefa8240226609a5cf45a112feb41cd911116b71bb0b2208a3f9ba3e63a8cf",
+      "bytes": 508,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/prepared/rollout_task_views.jsonl",
+      "sha256": "d4c4ef36da0d1c2b4e3ad90e3e529c5f64b61643c26ec2a32aca2a08a6d1e9be",
+      "bytes": 3321,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/private/host_grading_views.jsonl",
+      "sha256": "dc8761483ce32c141d33070a2ae600ce78e389d4f5619b43a863228150a4dc9f",
+      "bytes": 4837,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/.docker_label_shim/docker",
+      "sha256": "2c83825ecc21a844e891a137bc6e08a988e2885341e5c5c12c7494868e104506",
+      "bytes": 548,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/attempt/attempt.json",
+      "sha256": "405cdca5d57b9f8eb2aaf63f357c45099d723439054084b97dd2a2fc2765fc41",
+      "bytes": 17423,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/attempt/bringup_artifacts/cc_version_observed.json",
+      "sha256": "c2b9bcf966c47d9a00227877026cb90b76afed482fd0df4e0ac12caab786bacb",
+      "bytes": 60,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/attempt/cc_home.tgz",
+      "sha256": "9a97d81d5e0f72a8f230240dd3a508d213b43b619b6a22777a38bc56157f0e07",
+      "bytes": 4655,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/attempt/facts/activation_check.json",
+      "sha256": "6bde1f7ec192478d9540a1f6fa9e505597eb9423091d473f52c1e0c211c780a8",
+      "bytes": 465,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/attempt/facts/agent_env_facts.txt",
+      "sha256": "572c11aed525cc9e51304e1fa33b82dfaaab5607e4fd0ae965f3e94b70181eeb",
+      "bytes": 995,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/attempt/facts/materialize_probe.txt",
+      "sha256": "4673f5923effdc53aa8971367b338f294a05751c6fc830133a2ebc8f670cd2a8",
+      "bytes": 165,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/attempt/facts/pip_freeze_after.txt",
+      "sha256": "c691ef2a998cae5e0c21e8a9ddfe23759ac2717a2a1444f4e39d8c9b8de870cd",
+      "bytes": 47,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/attempt/facts/pip_freeze_before.txt",
+      "sha256": "c691ef2a998cae5e0c21e8a9ddfe23759ac2717a2a1444f4e39d8c9b8de870cd",
+      "bytes": 47,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/attempt/facts/prelaunch.json",
+      "sha256": "a46af55c4ac23820afdcd183a15b89f42a41673e575cb1aabeef804aef8a2b27",
+      "bytes": 2344,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/attempt/facts/r2e_preflight.txt",
+      "sha256": "daab0589dc3105fbc35cf60921cdfede3acf6ca4356f9c706ac5d94f08b4b057",
+      "bytes": 104,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/attempt/frozen/baseline.tar",
+      "sha256": "c73f3b98746849f4ab0aa0cf6bfb182c6fba0cb8f43201f67c9acf2d78fbbee0",
+      "bytes": 4198400,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/attempt/frozen/baseline_census.txt",
+      "sha256": "18037c0c32c11f2ca090d7b8561087d48aa8dacf666e215c5e7eb1c5230ea900",
+      "bytes": 431259,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/attempt/frozen/baseline_manifest.json",
+      "sha256": "02da3475083de6e5f31dbad169c5dc4f810a55c46bd748448514c833ae8ad2ea",
+      "bytes": 83474,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/attempt/frozen/classification.json",
+      "sha256": "f5ffbaced0b3236a35e0fc6319c51b3077006f339e8a219377b606e8e26bce15",
+      "bytes": 92,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/attempt/frozen/frozen_patch.json",
+      "sha256": "abeb5157193dce0709e495eab64e7099a9e1d4f5344e5ccd3a940ab1878d1f43",
+      "bytes": 696,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/attempt/harness/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/attempt/harness/trajectory.jsonl",
+      "sha256": "d13266b639d141056f1322931f336e65bf3c5b9fffab48618b715a68814e0be7",
+      "bytes": 17107,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/attempt/prompt.txt",
+      "sha256": "19aa60c71f97c59184b24f99cccdfee77fa7745bc201e7e7bd67066259f05d24",
+      "bytes": 3796,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/attempt/trajectory.jsonl",
+      "sha256": "d13266b639d141056f1322931f336e65bf3c5b9fffab48618b715a68814e0be7",
+      "bytes": 17107,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/gateway/coverageea69-r17-public-cpua-20261003-01/requests.jsonl",
+      "sha256": "db3c7256c5cdc1bd9e549f0a4fb59aa90f51071d2617dde463c4366fa504779a",
+      "bytes": 56881,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/gateway/coverageea69-r17-public-cpua-20261003-01/resp_1.sse",
+      "sha256": "f890a78e1941f20267293548571cf728d93b5d7678127c0d95b552dc39188f74",
+      "bytes": 2183,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/gateway/coverageea69-r17-public-cpua-20261003-01/resp_2.sse",
+      "sha256": "541606a27047826353b2271cbf696cc71f251cd6a5a6b402e5b923df24b1155b",
+      "bytes": 2337,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/gateway/coverageea69-r17-public-cpua-20261003-01/resp_3.sse",
+      "sha256": "4a70eb5af419f86b4892d44f1294bcbfcb354f372001dec1e8ab10e921efa16b",
+      "bytes": 851,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/gateway/coverageea69-r17-public-cpua-20261003-01/responses.jsonl",
+      "sha256": "401132fe6cac509024cfc0f02d2a0bff1eceaae22b1944b875c839bec4dc71ae",
+      "bytes": 926,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/gateway/coverageea69-r17-public-cpua-20261003-01/session_close.jsonl",
+      "sha256": "afb85bc8f0f1ed1441b80a274741e0ea4457d8f3fd230ef9003b282d928ed999",
+      "bytes": 140,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/gateway/coverageea69-r17-public-cpua-20261003-01/usage.json",
+      "sha256": "1f94e74f68b7d92dc0e58e1edf79164d7a1c133ec9ff10d9d48a54c04d10277f",
+      "bytes": 83,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/gateway/gateway_config.json",
+      "sha256": "367b6e1f5a24416356e152dae6739a8ecf4044fefa032f65e349f9002b3b4a75",
+      "bytes": 328,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/gateway_config.json",
+      "sha256": "8db8057783082100cf1033840dbd34cb74f889887b02a484dfd05e0a8b7c46c8",
+      "bytes": 349,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/gateway_stdout.log",
+      "sha256": "337961484a85252d51023d975a01e5beff072bdf4e486aa58c9637a259b09bab",
+      "bytes": 119,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/grade_cc/artifacts/r2e_gym_subset--coveragepy__ea6906b092d9bb09285094eee94e322d/a1-4d4a7380/baseline_manifest.json",
+      "sha256": "02da3475083de6e5f31dbad169c5dc4f810a55c46bd748448514c833ae8ad2ea",
+      "bytes": 83474,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/grade_cc/artifacts/r2e_gym_subset--coveragepy__ea6906b092d9bb09285094eee94e322d/a1-4d4a7380/classification.json",
+      "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6",
+      "bytes": 93,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/grade_cc/artifacts/r2e_gym_subset--coveragepy__ea6906b092d9bb09285094eee94e322d/a1-4d4a7380/frozen_patch.json",
+      "sha256": "1d386188e5d5c946d2b561d362833d29938dabaffce6bbef9eb8b18db7320fad",
+      "bytes": 807,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/grade_cc/artifacts/r2e_gym_subset--coveragepy__ea6906b092d9bb09285094eee94e322d/a1-4d4a7380/projection.json",
+      "sha256": "c196eb6e8637fee34b3106dce9c86693d7ce50dd2211cb3e905f92bbb84f8d0d",
+      "bytes": 426,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/grade_cc/artifacts/r2e_gym_subset--coveragepy__ea6906b092d9bb09285094eee94e322d/a1-4d4a7380/stage.json",
+      "sha256": "65a692bcef55935c02052b889fdf6d59cddca7054710984dc531f67598aa0eab",
+      "bytes": 833,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/grade_cc/eval_logs/evallog_replay-coverageea69-r17-_b333250b.diagnostics.json",
+      "sha256": "f0237e379f11b7845f6e77af6fd85a7fe8106a13e6aa7cfdeb0cae20da2c8236",
+      "bytes": 4269,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/grade_cc/eval_logs/evallog_replay-coverageea69-r17-_b333250b.eval.log",
+      "sha256": "10991ac578b956a6697fd4730615b0a35f31243a764e3bae96cc84b5944f145e",
+      "bytes": 21980,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/grade_cc/grade.log",
+      "sha256": "f0f8000a2af110ac37f0e128176e17080787898b7d77083f36d37e4b7eacfe66",
+      "bytes": 2108,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/grade_cc/ledger.jsonl",
+      "sha256": "b240f48634df762ae00d58605f2cd00c85cd495f5f8fcdf86eda9ecf51974121",
+      "bytes": 6284,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/grade_cc/probe_audit/baseline_census.txt",
+      "sha256": "18037c0c32c11f2ca090d7b8561087d48aa8dacf666e215c5e7eb1c5230ea900",
+      "bytes": 431259,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/grade_cc/probe_audit/budget.json",
+      "sha256": "7b974bf97639582c4cd505f31efd00388b554bd2c5771161484c0db6af1f12c6",
+      "bytes": 139,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/grade_cc/probe_config.json",
+      "sha256": "de41cc0129da507586261f8e0ba441e60d96cf934c57fefd17ee84ffcfaae36f",
+      "bytes": 22,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/grade_cc/roundtrip.json",
+      "sha256": "e0902bbd63a4c26729c1e7fc7d2694ce14061552c38230386751188d7422dbfd",
+      "bytes": 668,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/solve.log",
+      "sha256": "da981672c623ab4a3fa318f4c84f61fe2af9168290df17f9d24b31626006794e",
+      "bytes": 1977,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/stub/requests/messages_000.json",
+      "sha256": "8afc1e064d29bd386c053d797f58bf8eaaff178ab21614b436d08c6250859c49",
+      "bytes": 16439,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/stub/requests/messages_001.json",
+      "sha256": "96cc7a43fb01c6b3a570aac0ffdcd03ddb75141039ca27c73e27761cbbc4a0e4",
+      "bytes": 18016,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/stub/requests/messages_002.json",
+      "sha256": "a615c48d63365c69d712a87de7455d8403ff8817c748b71d51ba70d7a0a1b426",
+      "bytes": 20254,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/stub/stub_log.json",
+      "sha256": "c5cf6a3a9faec570a9732be95bf46948715542decfa8bb8e100e024297436125",
+      "bytes": 7081,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/stub_script.json",
+      "sha256": "310452f792be693ca41cb424daef278cd02508937c6aa1f7762b2a7a46db1690",
+      "bytes": 2750,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/stub_stdout.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/public_e2e01/summary.json",
+      "sha256": "ba4b8463ad839857c3cfeeba6146869f57ee374e9d03191e7913c3a54be8d13b",
+      "bytes": 14088,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/cpu/source_facts.json",
+      "sha256": "ef51ac6e0d1f3f0331b24f96e6113d5e4965805992ddaefcfd325045f0debfac",
+      "bytes": 1936,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/derived/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/build.log",
+      "sha256": "c23abbb6f45a398ea7e8983d077cc509d709d138913c5658d5e96bb775bbe9a8",
+      "bytes": 3541,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/derived/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/context/Dockerfile",
+      "sha256": "9f6bcb0b2b0d4ad268f75bc567419db5734a83e9830879f7bb9e8b00d92e4a8e",
+      "bytes": 376,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/derived/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/context/material/files/test_1.py",
+      "sha256": "30f34e643804fbe5c2575ce8469c1bf4dd5f912f1214ade93fbd9968759e9361",
+      "bytes": 42253,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/derived/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/context/material/files/test_2.py",
+      "sha256": "e5fee9fb81700d682e45c5c25cdc18035000e1dd86bf78fb2c8391ee61105497",
+      "bytes": 3879,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/derived/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/context/material/manifest.tsv",
+      "sha256": "82b434e2c74334f49b856b8210aec23651e3e82baa7351d939622263b2d0be8e",
+      "bytes": 217,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/derived/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/context/material_v2.sh",
+      "sha256": "0d259ae34ca823ca3fcb29c46e09f6e5d0b149690a5336ec491a14b94a769a3d",
+      "bytes": 2775,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/derived/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/context/recipe_v1.sh",
+      "sha256": "0da821a15fa389289f524c60d3a421bc940cce753e4ecf3d53560b7ab6b31df9",
+      "bytes": 5982,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/derived/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/context/sysconfig_v1.sh",
+      "sha256": "63ab3356e80bb6d9bccb682060c2769c03fc68a7b8273ece632eb5628347cc33",
+      "bytes": 2093,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/derived/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/facts.json",
+      "sha256": "629a670fcab1de08af3d7c0f2c0447ffe181744248e949d837557ef68390e87c",
+      "bytes": 5853,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/derived/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/integrity_base.txt",
+      "sha256": "820187e681e8303b2c649ac727ca66a445ca86aeadca72fbf5fe27be9a283852",
+      "bytes": 693063,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/derived/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/integrity_derived.txt",
+      "sha256": "c5a179bec10521aaefcbc1ba8c37fc52988277073a65cfcd52338f6c3c695888",
+      "bytes": 693022,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/derived/overlays.jsonl",
+      "sha256": "168701a8822395d247039206f464df754738ebf615cb78cf05f3e8b0ca1872cf",
+      "bytes": 940,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/derived/results.json",
+      "sha256": "64b43d4e61d03ebbd6f1a330a374310aa4806396af7d87e83b7fdc0d804e520a",
+      "bytes": 1315,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/inputs/packet_manifest.json",
+      "sha256": "b83480ffc46c832fb48045b974e74b4701839dd4a809913d91aee5f954781bbb",
+      "bytes": 2882,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/inputs/prepare_source_image.py",
+      "sha256": "5958e5b8e1067383f70a0f8261fd6e2b1c9e5edbfd6f84c4683e81e72606826c",
+      "bytes": 2976,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/inputs/public_devbrief_20261003.md",
+      "sha256": "475e3ee69e2e28b4812c1b464a1c9e8381011e9f4959551e05c162387823e2e9",
+      "bytes": 2106,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/inputs/public_notes_cpu_solve.py",
+      "sha256": "96353a9700fb99b515056edac2c213667db0bb46e4b768aab6e9ed6fc41d7463",
+      "bytes": 3078,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/inputs/public_preserve_cpu_e2e.py",
+      "sha256": "9302124d5ad280e4041c1f4fba4516db0284d4907ba62e735b371bc002bdd19f",
+      "bytes": 3364,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/inputs/public_preserve_delivery_v3.json",
+      "sha256": "418cc4e5bdd3c56ecb2beea98c6768d64b79300657cec3da22f80fec4b2b54cd",
+      "bytes": 1861,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/inputs/source_manifest_v1.json",
+      "sha256": "95b8ae0500b8233a96f01f63b1b7fb95ed9f876b68291e32a12624949e2e53ba",
+      "bytes": 344,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/inputs/statement_preserve_public_v2.txt",
+      "sha256": "39b6b28abc08b21a76a71d8908a7e37a00040cbfc3f9d92ee12bc37b3b6a194f",
+      "bytes": 1463,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/jobs/covea69-r17-prepare-cpua-20261003-01/status.json",
+      "sha256": "b755ca761925537e922e279061a2792fc05c61179b59e84294ca1ce9753bac57",
+      "bytes": 559,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/jobs/covea69-r17-prepare-cpua-20261003-01/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/jobs/covea69-r17-prepare-cpua-20261003-01/stdout.log",
+      "sha256": "45f656f719e09fdf2ea38c927679e4c7db789df032792713bc58af16ce4aac7f",
+      "bytes": 6667,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/jobs/covea69-r17-public-cpua-20261003-01/status.json",
+      "sha256": "f5fe1e8d37f77031c6fb1bdad709fe588598ae6373ef04e8261e2cb07cac31f0",
+      "bytes": 553,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/jobs/covea69-r17-public-cpua-20261003-01/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/jobs/covea69-r17-public-cpua-20261003-01/stdout.log",
+      "sha256": "c165e121ec8d3506b50fc3010a9b95263e4f276d01c41acf19f42cae19276ce3",
+      "bytes": 3610,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/launchers/prepare_r17_cpu_a_remote_job.py",
+      "sha256": "390b95f79d74114daa07f88760327752ab27ab64322d6900d63018b21146ede4",
+      "bytes": 2528,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/launchers/narrow_r17_cpu_a_remote_job.py",
+      "sha256": "8cac41668cd07b05b1f15ad7398bfebe26cc7235e60db130574c4738e6ae3ddf",
+      "bytes": 4475,
+      "independently_verified": true
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1/archive_manifest.json",
+      "sha256": "96847fba397822f456de38e2f1882eea6c8f1ddb2998a3770d42e42c3f3e1b42",
+      "bytes": 17521
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_raw_closed_v1.tgz",
+      "sha256": "fe87c7e12088b7fca2d38eb675c64a9743d639b1b3f976cb78cb7556f0c535bb",
+      "bytes": 1562299
+    },
+    {
+      "path": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/support/coverage_ea69_r17_slot_support_v1/resource_support_receipt.json",
+      "sha256": "d8fe9eeb19a0c45ff20795796bb1f0f38e7f4ef453f0ad33337352d8c4aeb8da",
+      "bytes": 2408
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/cpu/cpu_acceptance_r17_v1.json",
+      "sha256": "bf2716f66c8c8cacaa37109bb9ca42942fdac80243cb79a57f9107c1a66c83c8",
+      "bytes": 12672
+    },
+    {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_093_swe40_coverage_ea69_v1/repo/rh2/src/repoharness2/envpack/r2e_parsers.py",
+      "sha256": "339b7c80cca516dc7d1bcf9c11e3ff9a42f1bc993b5027a0d06c41c85d024b58",
+      "bytes": 10622
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/remaining_r6_v1/ea69_public_e2e02/grade_cc/eval_logs/evallog_replay-covea69-r6-public_50bfbd91.eval.log",
+      "sha256": "86f7f642a45aee2f1d6f39a7aa640399e11acd0e525bbb09e3adb32e0b4d2f43",
+      "bytes": 21980
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/reviews/non_author_ea69_r17_pre_run_check_20261003.json",
+      "sha256": "d1431052182f139d1a100a4e1ef9d301b5927b6841a027553382c666874bc971",
+      "bytes": 16037
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/reviews/non_author_ea69_public_delivery_wrapper_review_20261003.json",
+      "sha256": "aac4ad0fc979658640cea61cb7e222c7e6119fe9eeb2c1ec195c47df0eebc3cb",
+      "bytes": 5641
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/reviews/non_author_ea69_cpu_review_20261003.json",
+      "sha256": "f22a1f78a14bbdfdd91a8914fdb03267bc513e4641baa6d31fd814e4416f6207",
+      "bytes": 109426
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/reviews/fresh_ea69_statement_preserve_reader_20261003.json",
+      "sha256": "fdf6e1cb483b691073ef13af04fbf6f3a62d982a6dde8ae392955a293862f398",
+      "bytes": 2826
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_post_finish_readback_v1.json",
+      "sha256": "c705bb54858676c4b2ca892844f9424af94eb86d5da33764ef1f36ca9012239c",
+      "bytes": 1590
+    },
+    {
+      "path": "runs/category2_repair_20260929/coveragepy_owner_cpu/ea69_public_preserve_v3/cpu_a_preparation_residual_readback_v1.json",
+      "sha256": "6f46ab0bd07f67e1bbd81123bb2b0ca767a81c84e94a27d9865bf98ebd7071fd",
+      "bytes": 79
+    }
+  ]
+}

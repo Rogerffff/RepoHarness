@@ -1,0 +1,146 @@
+{
+  "scope": "本机离线；196 条真实评分记录（本轮 98 + R-f 98）、336 份参考日志、48 题 facts/record/probe、8 题抽验；不新增真实容器运行。",
+  "issues": [],
+  "observations": [
+    {
+      "kind": "repeat_budget_change",
+      "rows": 98,
+      "difference_central_rf": {
+        "candidate_stage_seconds": [
+          900.0,
+          1800.0
+        ],
+        "grading_deadline_seconds": [
+          3600.0,
+          1800.0
+        ]
+      },
+      "interpretation": "资源 policy、镜像、candidate 和评分脚本相同；timeout budgets 不同。全部完整执行且两轮最大 phases 总和小于 900 秒，支持同 profile 的逐键重复，不应称所有运行条件逐字段相同。"
+    },
+    {
+      "kind": "stale_summary_count",
+      "actual_nonpassed_tasks": 20,
+      "actual_keys": 93,
+      "status_counts": {
+        "FAILED": 34,
+        "ERROR": 59
+      },
+      "document_claim": "README/known_issues：16 题；可信输入和 facts 均为 20 题，20/20 R06 有原因与引用，没有发现漏审四题。"
+    },
+    {
+      "kind": "stale_reference_task_count",
+      "actual": 47,
+      "denominator": 48,
+      "document_claim": "README §2：46 题 agree；94/96 行 = 47 题 × noop/gold，只有 numpy 一题不一致。"
+    },
+    {
+      "kind": "sample_parser_version",
+      "stored_derived_equal": 3,
+      "after_explicit_pip_fix_equal": 8,
+      "interpretation": "5 份 _accept 的 v2 pip_ok=true 与原始 No module named pip 矛盾；仅该字段不同。最小十条件不含 pip，原始关键字段和最小条件全同。"
+    }
+  ],
+  "rows": {
+    "central_noop": {
+      "count": 48,
+      "rewards": {
+        "0.0": 48
+      },
+      "reference_maps_equal": 47
+    },
+    "central_gold": {
+      "count": 48,
+      "rewards": {
+        "1.0": 45,
+        "0.0": 3
+      },
+      "reference_maps_equal": 47
+    },
+    "central_resource_noop": {
+      "count": 1,
+      "rewards": {
+        "0.0": 1
+      },
+      "reference_maps_equal": 1
+    },
+    "central_resource_gold": {
+      "count": 1,
+      "rewards": {
+        "1.0": 1
+      },
+      "reference_maps_equal": 1
+    },
+    "rf_noop": {
+      "count": 48,
+      "rewards": {
+        "0.0": 48
+      },
+      "reference_maps_equal": 47
+    },
+    "rf_gold": {
+      "count": 48,
+      "rewards": {
+        "1.0": 45,
+        "0.0": 3
+      },
+      "reference_maps_equal": 47
+    },
+    "rf_resource_noop": {
+      "count": 1,
+      "rewards": {
+        "0.0": 1
+      },
+      "reference_maps_equal": 1
+    },
+    "rf_resource_gold": {
+      "count": 1,
+      "rewards": {
+        "1.0": 1
+      },
+      "reference_maps_equal": 1
+    }
+  },
+  "repeat_comparisons": 98,
+  "repeat_maps_equal": 98,
+  "unique_reference_logs": 336,
+  "central_archive_files_equal": 204,
+  "reference_ledger_hash_reward_checked": 240,
+  "evidence_references_checked": 3406,
+  "generic_references_resolved_manually": [
+    "tasks/<iid>/facts.json → rh2_runs[].non_passed_reasons",
+    "runbook_rf §7"
+  ],
+  "max_phases_seconds_by_ledger": {
+    "central_noop": 243.205037,
+    "central_gold": 240.315809,
+    "central_resource_noop": 36.971244,
+    "central_resource_gold": 32.895107,
+    "rf_noop": 195.213335,
+    "rf_gold": 194.9503,
+    "rf_resource_noop": 32.709358,
+    "rf_resource_gold": 32.413559
+  },
+  "all_minimum_conditions": 48,
+  "public_repros_observed": 46,
+  "pip_absent": 27,
+  "classification": {
+    "solver_condition": 25,
+    "material": 13,
+    "env_ok": 9,
+    "resource": 1
+  },
+  "disposition": {
+    "environment_qualified": 42,
+    "held_material": 2,
+    "qualified_with_recipe": 1,
+    "needs_decision": 3
+  },
+  "nonpassed_expected_tasks": 20,
+  "nonpassed_expected_status_counts": {
+    "FAILED": 34,
+    "ERROR": 59
+  },
+  "acceptance_count": 8,
+  "acceptance_stored_derived_equal": 3,
+  "acceptance_after_pip_correction_equal": 8
+}

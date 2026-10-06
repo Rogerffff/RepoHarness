@@ -1,0 +1,12 @@
+diff --git a/pandas/_libs/tslibs/parsing.pyx b/pandas/_libs/tslibs/parsing.pyx
+--- a/pandas/_libs/tslibs/parsing.pyx
++++ b/pandas/_libs/tslibs/parsing.pyx
+@@ -878,6 +878,8 @@
+         datetime format string (for `strftime` or `strptime`),
+         or None if it can't be guessed.
+     """
++    return None
++
+     day_attribute_and_format = (("day",), "%d", 2)
+ 
+     # attr name, format, padding (if any)

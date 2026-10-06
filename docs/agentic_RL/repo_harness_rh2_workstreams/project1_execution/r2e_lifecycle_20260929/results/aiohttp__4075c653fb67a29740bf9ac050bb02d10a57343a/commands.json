@@ -1,0 +1,37 @@
+[
+  {
+    "id": "env_import_versions",
+    "timeout_s": 60,
+    "expect": "zero",
+    "purpose": "导入与版本：确认 python 指向 /testbed/.venv（预计 3.9.21），aiohttp 3.9.0b0 从 /testbed/aiohttp/__init__.py 导入；同时记录两个环境未知项：C 扩展是否可用（c_parser_available、aiohttp/*.so 列表）以及 pytest_cov 是否安装。修复前后输出应一致。",
+    "cmd": "cd /testbed && (ls aiohttp/*.so 2>/dev/null || echo 'no aiohttp/*.so in /testbed'); PYTHONDONTWRITEBYTECODE=1 python -c \"import sys, importlib.util as u, aiohttp, aiohttp.http_parser as hp; print('python', sys.version.split()[0], sys.executable); print('aiohttp', aiohttp.__version__, aiohttp.__file__); print('NO_EXTENSIONS', hp.NO_EXTENSIONS, 'c_parser_available', hasattr(hp, 'HttpRequestParserC'), 'default_request_parser', hp.HttpRequestParser.__module__); print({m: u.find_spec(m) is not None for m in ('pytest', 'pytest_cov', 'brotli', 'trustme')})\""
+  },
+  {
+    "id": "repro_parser_issue_cases",
+    "timeout_s": 120,
+    "expect": "nonzero",
+    "purpose": "题面复现（解析器层）：对每个可用的请求解析器（py；C 扩展可用时再加 c）喂 6 个原始请求，逐行打印 OK/FAIL。输出一律经 ascii() 转义，避免终端编码影响退出码。修复前预计：py 行的 new_hdr_name_nonascii 打印 parsed [('POST', '/', [('\\xffoo', 'bar')])]（即字段名 ÿoo 被接受），new_reqline_lf_ff 打印 parsed [('GET', '/path', [])]，两行都是 FAIL；issue_ex1_literal 是题面例 1 的字面写法（bytes 塞进 f-string），修复前就已经是 OK（抛 InvalidHeader，因为字段名里有字面反斜杠）；三行 keep_* 为 OK；最后打印 FAILS 2，退出码 1。如果有 c 行，预计全部 OK（未验证）。修复后预计全部 OK，FAILS 0，退出码 0；若修复后只剩 c 行 FAIL，说明已编译的 C 扩展本身不拒绝这些输入，需要单独记录。",
+    "cmd": "cd /testbed && PYTHONDONTWRITEBYTECODE=1 python - <<'EOF'\nimport asyncio\nimport sys\nfrom unittest import mock\n\nimport aiohttp\nimport aiohttp.http_parser as hp\nfrom aiohttp import http_exceptions as he\n\nparsers = [(\"py\", hp.HttpRequestParserPy)]\nif hasattr(hp, \"HttpRequestParserC\"):\n    parsers.append((\"c\", hp.HttpRequestParserC))\n\nliteral = \"\\xffoo: bar\".encode()  # issue example 1 taken literally: bytes inside an f-string\ncases = [  # (name, raw request, expected exception class; None = must parse)\n    (\"new_hdr_name_nonascii\", \"POST / HTTP/1.1\\r\\n\\xffoo: bar\\r\\n\\r\\n\".encode(), he.BadHttpMessage),\n    (\"issue_ex1_literal\", f\"POST / HTTP/1.1\\r\\n{literal}\\r\\n\\r\\n\".encode(), he.BadHttpMessage),\n    (\"new_reqline_lf_ff\", b\"GET\\n/path\\x0cHTTP/1.1\\r\\n\\r\\n\", he.BadStatusLine),\n    (\"keep_plain_get\", b\"GET /path HTTP/1.1\\r\\n\\r\\n\", None),\n    (\"keep_utf8_hdr_value\", \"GET /path HTTP/1.1\\r\\nx-test:\\u0442\\u0435\\u0441\\u0442\\r\\n\\r\\n\".encode(), None),\n    (\"keep_nonascii_uri\", b\"GET \\xff HTTP/1.1\\r\\n\\r\\n\", he.InvalidURLError),\n]\n\nloop = asyncio.new_event_loop()\nfails = 0\nprint(\"aiohttp\", aiohttp.__version__, \"parsers:\", [n for n, _ in parsers])\nfor pname, cls in parsers:\n    for cname, data, exp in cases:\n        p = cls(mock.Mock(), loop, 2**16, max_line_size=8190, max_headers=32768, max_field_size=8190)\n        try:\n            msgs = p.feed_data(data)[0]\n            got = \"parsed \" + ascii([(m.method, m.path, list(m.headers.items())) for m, _ in msgs])\n            ok = exp is None and len(msgs) == 1\n        except Exception as e:\n            got = ascii(e)[:160]\n            ok = exp is not None and isinstance(e, exp)\n        fails += not ok\n        print(\"OK  \" if ok else \"FAIL\", pname, cname, data, \"->\", got)\nloop.close()\nprint(\"FAILS\", fails)\nsys.exit(1 if fails else 0)\nEOF"
+  },
+  {
+    "id": "repro_server_400_py_parser",
+    "timeout_s": 120,
+    "expect": "nonzero",
+    "purpose": "公开 API 复现（aiohttp.web 服务端）：设 AIOHTTP_NO_EXTENSIONS=1，让服务器使用纯 Python 请求解析器（首行会打印 aiohttp.http_parser.HttpRequestParser），在 127.0.0.1 的随机端口启动应用，发送题面的两种原始请求并读取状态行。修复前预计两行都是 FAIL ... -> HTTP/1.1 200 OK，退出码 1。修复后预计两行都是 OK ... -> HTTP/1.0 400 Bad Request（错误响应沿用 HTTP/1.0 的占位消息），退出码 0；stderr 出现 'Error handling request' 日志属于正常。若打印 SETUP_ERROR 且退出码为 3，说明环境不能监听本地端口，与题目无关。",
+    "cmd": "cd /testbed && AIOHTTP_NO_EXTENSIONS=1 PYTHONDONTWRITEBYTECODE=1 python - <<'EOF'\nimport asyncio\nimport sys\n\nimport aiohttp.http\nfrom aiohttp import web\n\nCASES = [\n    (\"hdr_name_nonascii\", \"POST / HTTP/1.1\\r\\n\\xffoo: bar\\r\\n\\r\\n\".encode()),\n    (\"reqline_lf_ff\", b\"GET\\n/path\\x0cHTTP/1.1\\r\\n\\r\\n\"),\n]\n\n\nasync def handler(request):\n    return web.Response(text=\"handled\")\n\n\nasync def main():\n    cls = aiohttp.http.HttpRequestParser\n    print(\"server request parser:\", cls.__module__ + \".\" + cls.__name__)\n    app = web.Application()\n    app.router.add_route(\"*\", \"/{tail:.*}\", handler)\n    runner = web.AppRunner(app, access_log=None)\n    await runner.setup()\n    try:\n        site = web.TCPSite(runner, \"127.0.0.1\", 0, shutdown_timeout=1)\n        await site.start()\n    except OSError as e:\n        print(\"SETUP_ERROR: cannot listen on 127.0.0.1:\", repr(e))\n        await runner.cleanup()\n        return -1\n    host, port = runner.addresses[0][:2]\n    bad = 0\n    for name, data in CASES:\n        reader, writer = await asyncio.open_connection(host, port)\n        writer.write(data)\n        await writer.drain()\n        try:\n            line = await asyncio.wait_for(reader.readline(), 10)\n            status = line.decode(\"latin-1\").strip() or \"EMPTY\"\n        except (asyncio.TimeoutError, ConnectionError) as e:\n            status = \"NO_STATUS \" + repr(e)\n        writer.close()\n        parts = status.split()\n        ok = len(parts) >= 2 and parts[1] == \"400\"\n        bad += not ok\n        print(\"OK  \" if ok else \"FAIL\", name, data, \"->\", status)\n    await runner.cleanup()\n    return bad\n\n\nrc = asyncio.run(main())\nsys.exit(3 if rc < 0 else (1 if rc else 0))\nEOF"
+  },
+  {
+    "id": "public_http_parser_tests",
+    "timeout_s": 600,
+    "expect": "zero",
+    "purpose": "相关公开测试（回归）：跑 tests/test_http_parser.py。先探测 C 扩展：不可用时导出 AIOHTTP_NO_EXTENSIONS=1，否则 test_c_parser_loaded、test_invalid_character、test_invalid_linebreak 会因缺少 C 扩展在修复前后都失败（它们按 NO_EXTENSIONS 跳过，而不是按 C 扩展是否可用）。-o addopts=\"\" 去掉 setup.cfg 里的 --cov（既不依赖 pytest-cov，也不在 /testbed 写 .coverage），再补回 -m \"not dev_mode\"。修复前后预计都全部通过、退出码 0。修复后若有失败，多半是破坏了应保留的行为：非 ASCII 请求目标应抛 InvalidURLError，UTF-8 头值应被接受，LineTooLong 的长度口径不变，getpath 的消息里不能有转义换行。",
+    "cmd": "cd /testbed && if PYTHONDONTWRITEBYTECODE=1 python -c \"import aiohttp._http_parser\" 2>/dev/null; then echo 'C parser importable: py-parser and c-parser params both run'; else echo 'C parser not importable: exporting AIOHTTP_NO_EXTENSIONS=1 so the three C-only tests are skipped'; export AIOHTTP_NO_EXTENSIONS=1; fi; PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider -o addopts=\"\" -m \"not dev_mode\" -q -rfEs tests/test_http_parser.py"
+  },
+  {
+    "id": "public_related_tests",
+    "timeout_s": 600,
+    "expect": "zero",
+    "purpose": "共享代码的回归：HeadersParser 也被 multipart 分段头解析使用（aiohttp/multipart.py L699），异常类的构造与消息由 test_http_exceptions 覆盖，客户端响应解析由 test_client_proto 覆盖。修复前后预计都全部通过、退出码 0；修复后若失败，说明改动共享的 HeadersParser、异常类或响应解析器时引入了回归。",
+    "cmd": "cd /testbed && PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider -o addopts=\"\" -m \"not dev_mode\" -q -rfE tests/test_http_exceptions.py tests/test_multipart.py tests/test_client_proto.py"
+  }
+]

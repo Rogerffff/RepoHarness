@@ -1,0 +1,275 @@
+{
+ "task_id": "iterative__dvc-5839",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+  "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+  "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+  "raw": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/raw/swe_gym_lite_full_f70b1a29.jsonl",
+  "repo_clone": "runs/env_overnight_20260916/repos/dvc",
+  "base_commit": "daf07451f8e8f3e76a791c696b0ea175e8ed3ac1",
+  "version": "2.0",
+  "python_version": "3.9",
+  "eval_cmd": "pytest -rA",
+  "image": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-5839:latest",
+  "workdir": "/testbed",
+  "test_patch_paths": [
+   "tests/unit/command/test_metrics.py"
+  ],
+  "gold_paths": [
+   "dvc/command/metrics.py"
+  ],
+  "n_f2p": 1,
+  "n_p2p": 21,
+  "stage1_log": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/iterative__dvc-5839/{gold,empty}/offline/a1/",
+  "signals": {
+   "in_e2": [],
+   "fragile_reference_id": false,
+   "stage1": {
+    "empty": {
+     "verdict": "RESOLVED_NO",
+     "rc_install": 0
+    },
+    "gold": {
+     "verdict": "RESOLVED_FULL",
+     "rc_install": 0,
+     "p2p_missing": 0,
+     "f2p_missing": 0
+    }
+   },
+   "deepseek_candidate_oracle": null
+  }
+ },
+ "public_view": {
+  "目标行为": "`dvc metrics show --precision N` 应真正生效；当前无论给不给 `--precision`，输出都按 5 位小数四舍五入。",
+  "约束": "题面给了 metrics.yaml 样例（科学计数法）、实际输出、`dvc doctor` 全量输出，并**明确表示自己也不确定期望语义**——列了两种可能（标准计数法的小数位数 vs 科学计数法的有效位数）并说第二种更有用但可能要改 CLI。",
+  "公开材料无法确定的点": [
+   "科学计数法下 precision 的语义（题面自己提出的两个版本，都没有被实现——gold 只是把参数传下去，仍然是 `round(val, precision)` 的标准语义）。",
+   "改在哪：base 的 `_show_metrics` **已经有 `precision=None` 形参并正确实现**（base:dvc/command/metrics.py:14-37），`CmdMetricsShow.run` 只是漏了没传。`_show_diff` 那边（第 161 行）传了。这个『只差一个实参』的事实只能靠读代码发现。",
+   "评分形态：F2P 是纯 mock 断言 `_show_metrics` 被以特定参数调用，不渲染任何数字。"
+  ],
+  "base 关键代码": "dvc/command/metrics.py:14-21 `_show_metrics(metrics, markdown=False, all_branches=False, all_tags=False, all_commits=False, precision=None)`；:92-97 `CmdMetricsShow.run` 调用它时只传了前 5 个；对比 :161 `CmdMetricsDiff` 正确传了 `precision=self.args.precision`。"
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "repos/dvc a8b7fda5a2396aa451c1f2a4d226ae9d152a3715 `metrics: pass --precision to _show_metrics (#5839)` --stat: dvc/command/metrics.py 1, tests/unit/command/test_metrics.py 19"
+   ],
+   "note": "gold（1 行）与 test_patch 与上游一致，无丢件。",
+   "by": "L1_dvc_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "base:dvc/command/metrics.py:92-97 少传一个实参",
+    "stage1 empty: test_metrics_show FAILED"
+   ],
+   "note": "缺陷在 base 存在，且与题面症状一致（precision 永远是 None → 回落到 DEFAULT_PRECISION=5）。",
+   "by": "L1_dvc_2"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 1722 字符，含 metrics.yaml、实际输出、两种期望输出、dvc doctor"
+   ],
+   "note": "题面完整、无截断、无外链图片。`raw hints_text` 为空（0 字符）。",
+   "by": "L1_dvc_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 仅 tests/unit/command/test_metrics.py",
+    "gold 仅 dvc/command/metrics.py"
+   ],
+   "note": "零交集。additional_exclusions 空。",
+   "by": "L1_dvc_2"
+  },
+  "17": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh git checkout 目标"
+   ],
+   "note": "纯测试文件恢复；test_patch 改写的是既有 `test_metrics_show` 的断言，不是新增。",
+   "by": "L1_dvc_2"
+  },
+  "5": {
+   "status": "issue",
+   "evidence_refs": [
+    "prescan.json: iterative__dvc-4124 的 test_patch 也含 tests/unit/command/test_metrics.py"
+   ],
+   "note": "与 4124 共用同一个测试文件（4124 改的是 dvc/utils/diff.py 的尾换行），本题 base 已含 4124 的参考解。同文件同族，划分留意。",
+   "by": "L1_dvc_2"
+  },
+  "23": {
+   "status": "issue",
+   "evidence_refs": [
+    "problem_statement 的 Expected 一节自陈不确定",
+    "gold 只是把参数传下去"
+   ],
+   "note": "题面的核心问句（科学计数法下 precision 该怎么算）**没有被回答**：gold 保持 `round(val, precision)`，所以 `--precision 8` 下 `5.0172572763074186e-09` 仍会显示成 `0.0`。题面列的两个期望输出没有一个成立。从公开材料能推出『把 `--precision` 传下去』这件事（对比 `CmdMetricsDiff` 就能发现），但推不出『题面问的语义问题不在本题范围内』。",
+   "by": "L1_dvc_2"
+  },
+  "24": {
+   "status": "issue",
+   "evidence_refs": [
+    "test_patch: `m2 = mocker.patch(\"dvc.command.metrics._show_metrics\", spec=_show_metrics, return_value=\"\")` 与 `m2.assert_called_once_with({}, markdown=False, all_tags=True, all_branches=True, all_commits=True, precision=8)`",
+    "base:dvc/command/metrics.py:14-21 的形参表"
+   ],
+   "note": "F2P **把一个私有函数 `_show_metrics` 的调用签名钉死**：必须由 `CmdMetricsShow.run` 调用它，且恰好绑定这 6 个参数。因为用了 `spec=_show_metrics`，mock 会按真实签名归一化位置/关键字参数，所以 gold 的全位置调用与关键字调用都能过——这一点设计得好。但其它同样正确的实现会判 0：例如把 precision 传进 `repo.metrics.show()`、或在 `run()` 里拿到 table 后再处理、或给 `_show_metrics` 换个名字/换个调用点。这些要求题面零依据。",
+   "by": "L1_dvc_2"
+  },
+  "25": {
+   "status": "issue",
+   "evidence_refs": [
+    "F2P 全程 mock，`m2` 的 return_value 是空字符串",
+    "P2P 里 test_metrics_diff_precision 测的是 diff 不是 show"
+   ],
+   "note": "**F2P 不渲染任何数字**：`_show_metrics` 被完全替换成 mock，所以『--precision 8 的输出与不给时不同』这件事一次都没被验证。只要 `run()` 把 `self.args.precision` 传进那个调用即可满分，哪怕 `_show_metrics` 内部把 precision 丢掉。题面的原始输出对比零覆盖。",
+   "by": "L1_dvc_2"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "smstat.json 5839: gold real=22 全 PASSED",
+    "P2P 21 条覆盖 metrics show/diff 的 json、markdown、precision、no-changes 等路径"
+   ],
+   "note": "整文件全绿，P2P 包含 `test_metrics_diff_precision`（diff 侧的 precision 正向用例），能拦住把 `_show_diff` 一起改坏的实现。",
+   "by": "L1_dvc_2"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "上游 --stat 1 行"
+   ],
+   "note": "gold 一行、无夹带、不依赖未交付改动。它是最小且正确的修复，但没有回答题面的语义问题（见 check 23）。",
+   "by": "L1_dvc_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "leak.py: gold_added=1 ps_match=0 hints_match=0；hints_text 为空"
+   ],
+   "note": "题面不含修复代码，hints 为空字符串（该题没有讨论线程）。",
+   "by": "L1_dvc_2"
+  },
+  "6": {
+   "status": "pass",
+   "evidence_refs": [
+    "smstat.json: gold 22/22 全 PASSED；deps_scan2.txt 本题未命中 pathspec/networkx"
+   ],
+   "note": "本题测试文件不触发 dvcignore。install 段仍需网络。",
+   "by": "L1_dvc_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 全 mock"
+   ],
+   "note": "无外部资产。",
+   "by": "L1_dvc_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 无 URL/requests"
+   ],
+   "note": "测试段纯本地、纯内存。",
+   "by": "L1_dvc_2"
+  },
+  "18": {
+   "status": "pass",
+   "evidence_refs": [
+    "stage1 eval.sh `pytest -rA tests/unit/command/test_metrics.py`；gold real=22 = F2P 1 + P2P 21"
+   ],
+   "note": "收集集合与 F2P∪P2P 完全相等，零过选零漏选。",
+   "by": "L1_dvc_2"
+  },
+  "19": {
+   "status": "issue",
+   "evidence_refs": [
+    "伪键 'Could'"
+   ],
+   "note": "同 3677。",
+   "by": "L1_dvc_2"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "empty 21 PASSED/1 FAILED；gold 22/22"
+   ],
+   "note": "分差恰为 F2P 一条。",
+   "by": "L1_dvc_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "评分钉死内部调用签名",
+   "severity": "P2",
+   "evidence_refs": [
+    "m2.assert_called_once_with(...) 对私有函数 _show_metrics 的断言"
+   ],
+   "proposed_action": "改成断言渲染结果（例如 caplog 里出现 8 位小数），而不是断言私有函数被怎样调用；或在题面写明『把 --precision 传给 _show_metrics』。",
+   "next_experiment": "写一个把 precision 传进 `repo.metrics.show()` 并在那里 round 的实现，跑 F2P，预期 m1/m2 两条断言都失败。"
+  },
+  {
+   "category": "F2P 不验证实际输出",
+   "severity": "P2",
+   "evidence_refs": [
+    "m2 的 return_value=\"\"，`_show_metrics` 被整体 mock"
+   ],
+   "proposed_action": "补一条端到端：给定 `mae: 1.4832495253358502e-05`，`--precision 8` 与默认输出必须不同。",
+   "next_experiment": "在 base/gold 上各跑该新断言。"
+  },
+  {
+   "category": "题面问题未被回答",
+   "severity": "P3",
+   "evidence_refs": [
+    "problem_statement 的 Expected 一节",
+    "gold 保持 round(val, precision)"
+   ],
+   "proposed_action": "题面补一句『本次只修复 --precision 未被传递；科学计数法的显示语义另议』，否则解答者可能花时间去实现题面列的两个版本并最终判 0。",
+   "next_experiment": "无。"
+  },
+  {
+   "category": "同族",
+   "severity": "P3",
+   "evidence_refs": [
+    "4124 共用 tests/unit/command/test_metrics.py"
+   ],
+   "proposed_action": "4124 与 5839 划分同侧。",
+   "next_experiment": "无。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只有 tests/unit/command/test_metrics.py；gold 只改 dvc/command/metrics.py。沿用第四组 B 默认空。",
+  "evidence_refs": [
+   "test_patch",
+   "golden_patch"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "新增：`dvc metrics show --precision 8` 的 caplog 输出与默认输出不同（用题面的科学计数法样例）",
+   "reason": "当前 F2P 把 `_show_metrics` 整体 mock，实际渲染零覆盖。"
+  },
+  {
+   "id": "tests/unit/command/test_metrics.py::test_metrics_diff_precision（已在 P2P）",
+   "reason": "diff 侧的 precision 正向用例，保护共享的 round 逻辑，已覆盖。"
+  },
+  {
+   "id": "tests/func/test_metrics.py 中 metrics show 的端到端用例",
+   "reason": "gold 改的是 CLI 命令层，func 层零覆盖。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "判分链路很干净（22/22 全绿、收集集合与参考集完全相等、无依赖问题、gold 一行），缺陷是 F2P 用 mock 钉死私有函数调用签名且完全不验证渲染结果；作为探针题可用，作为训练题应先补一条端到端断言。"
+ },
+ "costs": {
+  "minutes": 16
+ },
+ "by": "L1_dvc_2 (Claude Opus 5, 2026-09-16, 静态审查)"
+}

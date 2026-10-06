@@ -1,0 +1,16 @@
+{
+  "allowed_tools": [
+    "bash",
+    "edit"
+  ],
+  "base_commit": "13f35ad0915e70c2c299e2eb308968c86117132d",
+  "image": "xingyaoww/sweb.eval.x86_64.python_s_mypy-15184:latest",
+  "image_manifest_digest": "sha256:affb925329f2dfb2173482c64a1b65648b250777b66b0d7417ee5340fce74835",
+  "instance_id": "python__mypy-15184",
+  "problem_statement": "assert_type: Use fully qualified types when names are ambiguous\n\nWhen assert_type reports a mismatch between distinct types with the same short\nname, the diagnostic should distinguish those types using qualified names.\nNames that are already unambiguous should remain concise.\n\nThe issue can be reproduced with these three files in the same directory:\n\na.py:\n```python\nclass C: ...\n```\n\nb.py:\n```python\nclass C: ...\n```\n\nt.py:\n```python\nimport a, b\nfrom typing_extensions import assert_type\ndef g(x: a.C) -> None:\n    assert_type(x, b.C)\n```\n\nRun `python -m mypy t.py` in that directory using the repository's Python\nenvironment. The current diagnostic says `Expression is of type \"C\", not \"C\"`.\nIt should distinguish a.C from b.C while still reporting the type mismatch.\n\nThis task concerns the diagnostic for a genuine type mismatch. Correct\nassert_type calls should continue to succeed and preserve their existing\nexpression type.\n",
+  "problem_statement_sha256": "sha256:c17659095d0b4ab71caf2fab52dfaa52e9da009212381a7dc46053c015499178",
+  "public_hints": "You are a software engineer fixing a real GitHub issue in the repository checked out at /testbed (your bash tool already runs there).\n- The project's Python environment is a pre-activated conda env named `testbed`: `python`, `pip` and the repo's test tools already point at it.\n- Explore the code, find the root cause, and edit NON-TEST source files to fix the issue.\n- Do NOT modify test files: grading resets the test files to their original state before running the official test suite, so test edits never count.\n- You may run tests to verify your fix, but keep runs narrow (a single test file or module) to save time.\n- When you are confident the fix is complete, reply with a short summary and stop calling tools.",
+  "repo": "python/mypy",
+  "schema_id": "rh2.public_task_bundle.v1",
+  "workdir": "/testbed"
+}

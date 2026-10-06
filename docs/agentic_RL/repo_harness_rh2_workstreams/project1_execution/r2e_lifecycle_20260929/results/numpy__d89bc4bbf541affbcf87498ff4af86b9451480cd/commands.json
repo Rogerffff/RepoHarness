@@ -1,0 +1,44 @@
+[
+  {
+    "id": "import_numpy_version",
+    "timeout_s": 120,
+    "expect": "zero",
+    "purpose": "导入与版本（建议，未执行）：确认 python 是 /testbed/.venv/bin/python（Python 3.7.9），numpy 从 /testbed/numpy/__init__.py 导入（就地构建），版本以 1.16.0.dev0+ 开头。修复前后都应退出码 0、输出相同；若导入失败，说明编译扩展或 sys.path 条件与 environment_brief.md 不符，后续命令都无意义。",
+    "cmd": "cd /testbed && PYTHONDONTWRITEBYTECODE=1 python -c \"import sys, numpy; print(sys.executable); print(sys.version.split()[0]); print(numpy.__version__); print(numpy.__file__)\""
+  },
+  {
+    "id": "repro_histogram2d_density",
+    "timeout_s": 120,
+    "expect": "nonzero",
+    "purpose": "题面示例原样调用 np.histogram2d(x, y, bins=5, density=True)（建议，未执行）。修复前（base）：TypeError: histogram2d() got an unexpected keyword argument 'density'，退出码非 0。修复后：打印 5x5 矩阵，反对角线约 0.3125（=1/(5*0.8*0.8)）、其余为 0，integral 约 1.0，末行 OK: histogram2d density=True，退出码 0。两条断言都对应题面明示语义：每格 = 计数/总数/格面积，面积加权和为 1。",
+    "cmd": "cd /testbed && PYTHONDONTWRITEBYTECODE=1 python -c \"import numpy as np; x = [1, 2, 3, 4, 5]; y = [5, 4, 3, 2, 1]; H, xe, ye = np.histogram2d(x, y, bins=5, density=True); area = np.outer(np.diff(xe), np.diff(ye)); C = np.histogram2d(x, y, bins=5)[0]; print(H); print('integral =', (H * area).sum()); assert np.isclose((H * area).sum(), 1.0), 'explicit: integral over range should be 1'; assert np.allclose(H, C / C.sum() / area), 'explicit: density = count / total / bin_area'; print('OK: histogram2d density=True')\""
+  },
+  {
+    "id": "repro_histogramdd_density",
+    "timeout_s": 120,
+    "expect": "nonzero",
+    "purpose": "三维、非等宽格的 np.histogramdd(sample, bins=..., density=True)（建议，未执行；题面没有 nd 示例，此命令为自拟）。修复前（base）：先正常算出计数，随后 TypeError: histogramdd() got an unexpected keyword argument 'density'，退出码非 0。修复后：打印 shape (3, 2, 4) integral = 约 1.0，末行 OK: histogramdd density=True，退出码 0。前两条断言（以 explicit: 开头）对应题面明示语义；后两条（以 inferred: 开头：density=False 等于普通计数、带 weights 时按区间内总权重归一）是从一维 histogram 与现有 normed 实现推知的，并非题面明示，失败时应单独看待。",
+    "cmd": "cd /testbed && PYTHONDONTWRITEBYTECODE=1 python -c \"import numpy as np; rng = np.random.RandomState(0); s = rng.rand(200, 3); w = rng.rand(200); bins = [[0, 0.2, 0.5, 1], [0, 0.5, 1], [0, 0.1, 0.4, 0.7, 1]]; C, e = np.histogramdd(s, bins=bins); vol = np.einsum('i,j,k->ijk', *[np.diff(b) for b in e]); H = np.histogramdd(s, bins=bins, density=True)[0]; print('shape', H.shape, 'integral =', (H * vol).sum()); assert np.isclose((H * vol).sum(), 1.0), 'explicit: integral over range should be 1'; assert np.allclose(H, C / C.sum() / vol), 'explicit: density = count / total / bin_volume'; assert np.array_equal(np.histogramdd(s, bins=bins, density=False)[0], C), 'inferred: density=False should give plain counts'; Cw = np.histogramdd(s, bins=bins, weights=w)[0]; Hw = np.histogramdd(s, bins=bins, weights=w, density=True)[0]; assert np.allclose(Hw, Cw / Cw.sum() / vol), 'inferred: weighted density normalised by total weight'; print('OK: histogramdd density=True')\""
+  },
+  {
+    "id": "pytest_histogram2d_public",
+    "timeout_s": 300,
+    "expect": "zero",
+    "purpose": "仓库已有公开测试 TestHistogram2d（建议，未执行；6 条：test_simple、test_asym、test_norm、test_all_outliers、test_empty、test_binparameter_combination，其中 test_asym 与 test_norm 用 normed=True 且不捕获告警）。修复前后都应 6 passed（其余 deselected）。修复后若失败，多半是 normed 旧行为被改动，或修复新增了告警——worktree/pytest.ini 的 filterwarnings = error 会把告警变成测试失败。",
+    "cmd": "cd /testbed && PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider -q numpy/lib/tests/test_twodim_base.py -k TestHistogram2d"
+  },
+  {
+    "id": "pytest_histogramdd_public",
+    "timeout_s": 300,
+    "expect": "zero",
+    "purpose": "仓库已有公开测试 TestHistogramdd（建议，未执行；15 条，其中 test_simple、test_weights、test_normed_non_uniform_2d、test_normed_non_uniform_1d 用 normed=True，并有精确相等断言）。修复前后都应 15 passed（其余 deselected）。修复后失败说明 normed 旧行为、数值（末位）或告警发生了变化。只选这个类，不跑整个文件：一维 TestHistogram 用了 nose 风格 setup/teardown，在较新 pytest 上可能产生与本题无关的告警（未验证）。",
+    "cmd": "cd /testbed && PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider -q numpy/lib/tests/test_histograms.py -k TestHistogramdd"
+  },
+  {
+    "id": "compat_normed_positional",
+    "timeout_s": 120,
+    "expect": "zero",
+    "purpose": "旧接口兼容检查（建议，未执行；属可合理推知，非题面明示）：按 base 的位置顺序调用 histogram2d(x, y, bins, range, normed, weights) 与 histogramdd(sample, bins, range, normed, weights)，normed=True 仍应给出带权密度，两函数结果一致。修复前后都应打印 OK: positional order and normed=True preserved 并退出码 0；修复后失败说明新参数挤占了原有位置，或 normed 语义被改变。",
+    "cmd": "cd /testbed && PYTHONDONTWRITEBYTECODE=1 python -c \"import numpy as np; rng = np.random.RandomState(1); x = rng.rand(50); y = rng.rand(50); w = rng.rand(50); r = [[0, 1], [0, 1]]; a = np.histogram2d(x, y, 4, r, True, w)[0]; b = np.histogram2d(x, y, bins=4, range=r, normed=True, weights=w)[0]; c = np.histogramdd(np.c_[x, y], 4, r, True, w)[0]; C = np.histogramdd(np.c_[x, y], 4, r, False, w)[0]; assert np.allclose(a, b), 'positional histogram2d(x, y, bins, range, normed, weights) changed'; assert np.allclose(a, c), 'histogram2d and histogramdd disagree'; assert np.allclose(a, C / C.sum() / 0.0625), 'normed=True is no longer the weighted density'; print('OK: positional order and normed=True preserved')\""
+  }
+]

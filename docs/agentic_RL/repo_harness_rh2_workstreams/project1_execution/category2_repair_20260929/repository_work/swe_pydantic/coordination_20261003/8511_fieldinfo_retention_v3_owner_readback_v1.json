@@ -1,0 +1,978 @@
+{
+  "schema": "swe_pydantic8511.fieldinfo_retention_owner_readback.v1",
+  "as_of": "2026-10-03",
+  "job": "pyd8511-retention-20261003T153716Z-v3",
+  "status": "actual_direct_behavior_and_identity_resource_cleanup_verified",
+  "formal177reference_CPU_acceptance": false,
+  "model_calls": 0,
+  "original173_reward_preserved": true,
+  "image_ID": "sha256:df6c3affb7ea6fd826f44863ec92926f7b52558dd0f1b42e05f97aec9fe8ca68",
+  "base_commit": "e4fa099d5adde70acc80238ff810c87a5cec7ebf",
+  "baseline_canonical_digest": "sha256:40135f281c216e76a04de6772eaaadcdfd0b46d949e98c5164f29cba2f454e45",
+  "original_FP_digest": "sha256:4c305765cca042e14a8b79ebafa304394739f982b0eb68a471a47efbf92b3da1",
+  "input_sha256": "739d5c0aa889c512e6c996a67ac65b9422a21fbe2469c9855b1302badc2eb27a",
+  "runner_sha256": "9f351c27b973df9d45054aeb26de2c90d9ed7b7cc5df25c28f8f1b0b2fb769d7",
+  "commands_checked": 38,
+  "archive_members_checked": 148,
+  "variants": {
+    "baseline": {
+      "CID": "fae2230e46646729f005fb6e5696597fcc0b87c3be59450de0865ec2c48d0892",
+      "diagnostic_rc": 0,
+      "cases": {
+        "hidden_factory": {
+          "passed": true,
+          "observation": {
+            "value": [],
+            "independent_factory_values": true
+          }
+        },
+        "inherited_hidden_factory": {
+          "passed": true,
+          "observation": {
+            "value": [],
+            "independent_factory_values": true
+          }
+        },
+        "hidden_gt_constraint": {
+          "passed": true,
+          "observation": {
+            "valid_input": 2,
+            "invalid_input_rejected": [
+              {
+                "type": "greater_than",
+                "loc": [
+                  "x"
+                ],
+                "msg": "Input should be greater than 0",
+                "input": 0,
+                "ctx": {
+                  "gt": 0
+                },
+                "url": "https://errors.pydantic.dev/2.6/v/greater_than"
+              }
+            ]
+          }
+        },
+        "hidden_alias": {
+          "passed": true,
+          "observation": {
+            "x": 2
+          }
+        }
+      },
+      "full452_SHA_execute_before_after_equal": true,
+      "actual_UID": 54321,
+      "actual_CapEff": 0,
+      "NoNewPrivs": 1,
+      "resource_sample_count": 5,
+      "sampled_memory_current_max": 26304512,
+      "observed_cgroup_memory_peak_max": 36175872,
+      "sampled_pids_current_max": 8,
+      "observed_cgroup_pids_peak_max": 8,
+      "cleanup_verified": true
+    },
+    "narrow": {
+      "CID": "b9363a3aa0770a0ef16f6540da4cb4652f689a1d6ae6fc55577d9e766c113cb5",
+      "diagnostic_rc": 0,
+      "cases": {
+        "hidden_factory": {
+          "passed": true,
+          "observation": {
+            "value": [],
+            "independent_factory_values": true
+          }
+        },
+        "inherited_hidden_factory": {
+          "passed": true,
+          "observation": {
+            "value": [],
+            "independent_factory_values": true
+          }
+        },
+        "hidden_gt_constraint": {
+          "passed": true,
+          "observation": {
+            "valid_input": 2,
+            "invalid_input_rejected": [
+              {
+                "type": "greater_than",
+                "loc": [
+                  "x"
+                ],
+                "msg": "Input should be greater than 0",
+                "input": 0,
+                "ctx": {
+                  "gt": 0
+                },
+                "url": "https://errors.pydantic.dev/2.6/v/greater_than"
+              }
+            ]
+          }
+        },
+        "hidden_alias": {
+          "passed": true,
+          "observation": {
+            "x": 2
+          }
+        }
+      },
+      "full452_SHA_execute_before_after_equal": true,
+      "actual_UID": 54321,
+      "actual_CapEff": 0,
+      "NoNewPrivs": 1,
+      "resource_sample_count": 5,
+      "sampled_memory_current_max": 12537856,
+      "observed_cgroup_memory_peak_max": 36225024,
+      "sampled_pids_current_max": 8,
+      "observed_cgroup_pids_peak_max": 8,
+      "cleanup_verified": true
+    },
+    "qwen_original": {
+      "CID": "8281ddd0cd3bb67a6add1fbbcc6bf4c876565682bf75c3a72ae8e8e6cda4e733",
+      "diagnostic_rc": 1,
+      "cases": {
+        "hidden_factory": {
+          "passed": false,
+          "exception_type": "ValidationError",
+          "message": "1 validation error for HiddenFactory\nx\n  Field required [type=missing, input_value=ArgsKwargs(()), input_type=ArgsKwargs]\n    For further information visit https://errors.pydantic.dev/2.6/v/missing"
+        },
+        "inherited_hidden_factory": {
+          "passed": false,
+          "exception_type": "ValidationError",
+          "message": "1 validation error for Child\nx\n  Field required [type=missing, input_value=ArgsKwargs(()), input_type=ArgsKwargs]\n    For further information visit https://errors.pydantic.dev/2.6/v/missing"
+        },
+        "hidden_gt_constraint": {
+          "passed": false,
+          "exception_type": "AssertionError",
+          "message": "Field(gt=0, repr=False) must reject explicit x=0"
+        },
+        "hidden_alias": {
+          "passed": false,
+          "exception_type": "AssertionError",
+          "message": "1"
+        }
+      },
+      "full452_SHA_execute_before_after_equal": true,
+      "actual_UID": 54321,
+      "actual_CapEff": 0,
+      "NoNewPrivs": 1,
+      "resource_sample_count": 5,
+      "sampled_memory_current_max": 26693632,
+      "observed_cgroup_memory_peak_max": 36360192,
+      "sampled_pids_current_max": 8,
+      "observed_cgroup_pids_peak_max": 8,
+      "cleanup_verified": true
+    }
+  },
+  "slot": {
+    "package": "swe_pydantic",
+    "job": "pyd8511-retention-20261003T153716Z-v3",
+    "mode": "run",
+    "slot": 0,
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=20",
+      "600",
+      "/work/rh2-category2-20261003/runtime_cpu_v2/rh2/.venv/bin/python",
+      "-B",
+      "/work/rh2-category2-20261003/packages/swe_pydantic/fieldinfo_retention_v1/inputs_v3/run_diagnostic_v3.py",
+      "--out",
+      "/work/rh2-category2-20261003/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3"
+    ],
+    "cwd": "/",
+    "started_at_utc": "2026-10-03T15:37:16Z",
+    "supervisor_pid": 1132950,
+    "status": "finished",
+    "child_pid": 1132951,
+    "returncode": 0,
+    "finished_at_utc": "2026-10-03T15:37:27Z"
+  },
+  "actual_PID1_success_event": {
+    "__REALTIME_TIMESTAMP": "1791041847080572",
+    "_PID": "1",
+    "UNIT": "rh2-pyd8511-retention-20261003T153716Z-v3.service",
+    "MESSAGE": "rh2-pyd8511-retention-20261003T153716Z-v3.service: Deactivated successfully."
+  },
+  "bindings": [
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/jobs/swe_pydantic/pyd8511-retention-20261003T153716Z-v3/status.json",
+      "bytes": 734,
+      "sha256": "068521c6a44c19f620aee133bcd087d425aea90a53f7300276df50e312957a76"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/jobs/swe_pydantic/pyd8511-retention-20261003T153716Z-v3/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/jobs/swe_pydantic/pyd8511-retention-20261003T153716Z-v3/stdout.log",
+      "bytes": 112,
+      "sha256": "efaed553cddbc3cd51f1ad08462b8d8739476e529228f2d3ccf6950eed666b19"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/inputs_v3/baseline.tar",
+      "bytes": 7075840,
+      "sha256": "6207027aa65a3caad3ce78cbb4d08081b2f74a56432bbd6b25e91a1062c472d2"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/inputs_v3/baseline_dataclasses.py",
+      "bytes": 12497,
+      "sha256": "3fd9cc00c536227d63b4232c60e67ce45521b1b7d8473cf7c8bd9866d9a1539f"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/inputs_v3/baseline_manifest.json",
+      "bytes": 107617,
+      "sha256": "9c61a99b9720ca2d4a1d2ce61c855f05d9839d4de2b5830e96c72fb332837672"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/inputs_v3/frozen_patch.json",
+      "bytes": 18256,
+      "sha256": "4f0aa344d0595d05cea68a448bce3cdda581d8d09f589a1141c666d963f1ba22"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/inputs_v3/inputs.json",
+      "bytes": 2316,
+      "sha256": "739d5c0aa889c512e6c996a67ac65b9422a21fbe2469c9855b1302badc2eb27a"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/inputs_v3/narrow.patch",
+      "bytes": 2772,
+      "sha256": "f45af25b4ac1db57168576ea939aa3ad892481cbbfd9c92bd8fe02bd2d590cdc"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/inputs_v3/narrow_dataclasses.py",
+      "bytes": 12923,
+      "sha256": "337e4d552b22aef94960740b385c7ca93cd1b09619997e74e4e93da6427190df"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/inputs_v3/qwen_original_dataclasses.py",
+      "bytes": 13034,
+      "sha256": "161678b86e6cdde428771594d2c5e2d4f1016108a2c9fa9b7d900bc0fb28401d"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/inputs_v3/retention_probe.py",
+      "bytes": 2369,
+      "sha256": "7abeb8bec075045bbb37f9409159df837900a2bce537516b88bc98b9efcb0a78"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/inputs_v3/run_diagnostic_v3.py",
+      "bytes": 9830,
+      "sha256": "9f351c27b973df9d45054aeb26de2c90d9ed7b7cc5df25c28f8f1b0b2fb769d7"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/journal_v3.jsonl",
+      "bytes": 5305,
+      "sha256": "404dcd24430379b420bf48c822b4b99913dad87a6d12d0b98b2727180cabf14a"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/launch_receipt_v3.json",
+      "bytes": 1285,
+      "sha256": "714fc594626fbe2ef542d9dcae4f3a69d986a4705d42ca7ff741ab8401d0d553"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_cleanup_query.exec.json",
+      "bytes": 249,
+      "sha256": "a95f383f57a669dadc6be3a32085c8970e9b55e04a9e0af311b32ea593a9924c"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_cleanup_query.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_cleanup_query.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_copy_baseline.exec.json",
+      "bytes": 322,
+      "sha256": "d8ab9ec1e235914c2d5aa7cd3503f0d0cb14247fa47c8a3bfb48edb8a33844da"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_copy_baseline.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_copy_baseline.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_create.exec.json",
+      "bytes": 761,
+      "sha256": "a7b4972db59a22c31025b98cf76446d942d52f3d5dd5b58d9ac62d46a0960aa4"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_create.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_create.stdout",
+      "bytes": 65,
+      "sha256": "f4b4d338b51b9c0af1fe75d6c30f485004ffb51feaf5b28364772e10bcf2deb7"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_inspect.exec.json",
+      "bytes": 195,
+      "sha256": "a573835e40ea4f1b8474a2bce66f1a3c55752a41645e78bb3126c76ee5397f53"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_inspect.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_inspect.stdout",
+      "bytes": 9306,
+      "sha256": "9aa6b39ca0954a1da2b8b92373f75cc282a7d912936ac137fe72d2507e12d8e5"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_restore.exec.json",
+      "bytes": 266,
+      "sha256": "d91f6d9f022a1985c14864135e21bc5f181326ba119e28c33d0131b3acae50c3"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_restore.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_restore.stdin",
+      "bytes": 280,
+      "sha256": "303bfc0bb23b330241d41c97fb46c0b1f086d8492e407290342124d83748ce0a"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_restore.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_restore_frozen_modes.exec.json",
+      "bytes": 301,
+      "sha256": "cbdeb7d6b0a4ca74f57a4340b97dcc5668cc1f019aad98c937af1dd63cafb6ad"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_restore_frozen_modes.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_restore_frozen_modes.stdin",
+      "bytes": 19094,
+      "sha256": "5e3ec4ad04c62ab468220d675019b67208c66f96d525c5b00c7a6fad73e2aba6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_restore_frozen_modes.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_retention_probe.exec.json",
+      "bytes": 431,
+      "sha256": "39fca3c5dfd424449ba36a72d27174e66415332794fc95b0b96cebab788dda49"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_retention_probe.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_retention_probe.stdin",
+      "bytes": 2369,
+      "sha256": "7abeb8bec075045bbb37f9409159df837900a2bce537516b88bc98b9efcb0a78"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_retention_probe.stdout",
+      "bytes": 811,
+      "sha256": "b57dfe3607f3c79a818eebec5e7cfb913b5bbdb7749889f045c150e77c5816f7"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_rm.exec.json",
+      "bytes": 199,
+      "sha256": "3a0d9ee31dd37a725445128ac06f2a8b1c31075db3d2196c58638cf5a97b1e56"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_rm.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_rm.stdout",
+      "bytes": 65,
+      "sha256": "f4b4d338b51b9c0af1fe75d6c30f485004ffb51feaf5b28364772e10bcf2deb7"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_source_identity_after.exec.json",
+      "bytes": 430,
+      "sha256": "6b109fe014c398b27398c276543d964434e384963d900a147cb3b9cce33f5de8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_source_identity_after.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_source_identity_after.stdin",
+      "bytes": 61924,
+      "sha256": "3266f044d9418e5e56427ff72e71d98ae976843f057199fa9aefada20be1ce56"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_source_identity_after.stdout",
+      "bytes": 62920,
+      "sha256": "1523acef326f85baeb7ab667e08c5f417c42218ecd4e6c1639d50b9f0e039f59"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_source_identity_before.exec.json",
+      "bytes": 429,
+      "sha256": "05e8cf6a83292bf9c4656e8a99974b8f11d8f1b2ae3ef3ca4237eed2e6f0803b"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_source_identity_before.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_source_identity_before.stdin",
+      "bytes": 61924,
+      "sha256": "3266f044d9418e5e56427ff72e71d98ae976843f057199fa9aefada20be1ce56"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_source_identity_before.stdout",
+      "bytes": 62920,
+      "sha256": "eae77ff88305cc1de9056dda20959861c89b1e08298c28f24caacb427287f5bb"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_start.exec.json",
+      "bytes": 192,
+      "sha256": "33d8a90130cda8fd108fa7e410e70545af13bb52ffd2572990b1475fe934e606"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_start.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_start.stdout",
+      "bytes": 65,
+      "sha256": "f4b4d338b51b9c0af1fe75d6c30f485004ffb51feaf5b28364772e10bcf2deb7"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_write.exec.json",
+      "bytes": 268,
+      "sha256": "ef11b44c740857df32fb0f774526e370220ad2c225b8373bf8dff4381f17a67c"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_write.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_write.stdin",
+      "bytes": 16809,
+      "sha256": "84368f060361c3fd7eb5eb41006289a7361acfcb652b5a226c2dd0d99d956e57"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/baseline_write.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/image_inspect.exec.json",
+      "bytes": 214,
+      "sha256": "cc2e9791288f287d7f60e685179b43385440c68214b7fe91568909265dfcb81b"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/image_inspect.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/image_inspect.stdout",
+      "bytes": 4551,
+      "sha256": "62db8bcd32fb6c9677609dbefede5d500df2d9cf98d44b2ea0ea52e61f3eca13"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/job_cleanup_query.exec.json",
+      "bytes": 251,
+      "sha256": "63961301557b544061bd78ceb8ebaac07984a9e600a9ef92b7ebaff51cf0ced8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/job_cleanup_query.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/job_cleanup_query.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_cleanup_query.exec.json",
+      "bytes": 249,
+      "sha256": "119915d5da59c64ab50cb7a0bb45d5c7b0ffae37c482bf4c10a10af7a764bb86"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_cleanup_query.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_cleanup_query.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_copy_baseline.exec.json",
+      "bytes": 322,
+      "sha256": "95db00cfd7501a6d258d8b5566a3c6041c6d7706c79eec1422ed9bbc37ea7182"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_copy_baseline.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_copy_baseline.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_create.exec.json",
+      "bytes": 760,
+      "sha256": "fe7e581456794865c534a4ef85789af68c955cfee453f1c415fe825889fe4894"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_create.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_create.stdout",
+      "bytes": 65,
+      "sha256": "86e1bf16b66c23fe8ca8c07647a1c3ab306df17587b6f2297380e5ba41273367"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_inspect.exec.json",
+      "bytes": 194,
+      "sha256": "d8bcc4aaa779c72b8c5fab438112e2013a1bcb25924f03a13efc13a2a76eb72b"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_inspect.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_inspect.stdout",
+      "bytes": 9303,
+      "sha256": "11b103d7959e6a726601ba487d2b3fb248333396ca68b19cdf610c4294021297"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_restore.exec.json",
+      "bytes": 268,
+      "sha256": "ab5145da00d284b708e4a630356e91b1545a2293df1dcf92cabc3511be239fbf"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_restore.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_restore.stdin",
+      "bytes": 280,
+      "sha256": "303bfc0bb23b330241d41c97fb46c0b1f086d8492e407290342124d83748ce0a"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_restore.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_restore_frozen_modes.exec.json",
+      "bytes": 299,
+      "sha256": "6e187e6bb2a83adab9a755498b9e8973ef7a0bd763d749649424749bc4870159"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_restore_frozen_modes.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_restore_frozen_modes.stdin",
+      "bytes": 19094,
+      "sha256": "5e3ec4ad04c62ab468220d675019b67208c66f96d525c5b00c7a6fad73e2aba6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_restore_frozen_modes.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_retention_probe.exec.json",
+      "bytes": 431,
+      "sha256": "29314a0d2f93ad1733ddbd4bd7ddacc13fbc97d144a0b6c7eb3f3420d29c3e94"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_retention_probe.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_retention_probe.stdin",
+      "bytes": 2369,
+      "sha256": "7abeb8bec075045bbb37f9409159df837900a2bce537516b88bc98b9efcb0a78"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_retention_probe.stdout",
+      "bytes": 811,
+      "sha256": "b57dfe3607f3c79a818eebec5e7cfb913b5bbdb7749889f045c150e77c5816f7"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_rm.exec.json",
+      "bytes": 199,
+      "sha256": "659f5810e6d139439fb1e9b2ca41c5ba878feeb6bdf8db38f79a35b008239eb1"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_rm.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_rm.stdout",
+      "bytes": 65,
+      "sha256": "86e1bf16b66c23fe8ca8c07647a1c3ab306df17587b6f2297380e5ba41273367"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_source_identity_after.exec.json",
+      "bytes": 431,
+      "sha256": "d5d13d4d26b9295e1e3bd1231e7be91a893d5a5e082270d57c6732b3d9d6f8d2"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_source_identity_after.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_source_identity_after.stdin",
+      "bytes": 61924,
+      "sha256": "e0caa3d2bbec47d756a7a47446d1f16adcc00c3a571431093294d069c08ddc45"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_source_identity_after.stdout",
+      "bytes": 62920,
+      "sha256": "04aaaa9e52ba551d7cbe13885a9cfc6a2a693556c121e2e16cfbc19d7153d26b"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_source_identity_before.exec.json",
+      "bytes": 431,
+      "sha256": "1351b6299dde9cfb32387cd5a2be9e78c90832ba377e568e5ba5b3a47fcb1984"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_source_identity_before.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_source_identity_before.stdin",
+      "bytes": 61924,
+      "sha256": "e0caa3d2bbec47d756a7a47446d1f16adcc00c3a571431093294d069c08ddc45"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_source_identity_before.stdout",
+      "bytes": 62920,
+      "sha256": "653902039a292e3439651ee0cacffd2f41af07389642b65b0a33e090c21d9d6b"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_start.exec.json",
+      "bytes": 192,
+      "sha256": "3bf1b6ea24edaaf2fabae31d0cf1612d6a57b9710b58bd84e2d70233a17c8c02"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_start.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_start.stdout",
+      "bytes": 65,
+      "sha256": "86e1bf16b66c23fe8ca8c07647a1c3ab306df17587b6f2297380e5ba41273367"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_write.exec.json",
+      "bytes": 268,
+      "sha256": "741c9ba8a212e3fcd3435737b5a701cc93d6aa243a850b99dff205f514b45076"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_write.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_write.stdin",
+      "bytes": 17377,
+      "sha256": "72bdf511c51bd53f4a38f5670c57f0c8ff890bc4ebee5dbb5a36c6870b03a076"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/narrow_write.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_cleanup_query.exec.json",
+      "bytes": 249,
+      "sha256": "830e87e78384c9945cdc26be1f27c53812f87da84d036c01a7a0e8ecf40a8f51"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_cleanup_query.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_cleanup_query.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_copy_baseline.exec.json",
+      "bytes": 322,
+      "sha256": "0f2d4ff2079477910a46d9f5ece343df305a3ae5ea56b8d132e53c0d360ec493"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_copy_baseline.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_copy_baseline.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_create.exec.json",
+      "bytes": 765,
+      "sha256": "905cd306837651044fa2142da31761b5151c378da707560f09fc96466ff938b8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_create.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_create.stdout",
+      "bytes": 65,
+      "sha256": "6c815c53a9912e165a56f809912f9f2601c5212139a5cfcb8ca89710a43e2999"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_inspect.exec.json",
+      "bytes": 195,
+      "sha256": "9d26158f64842bf33d165ae805faa47a9b482e7a5a353d1efbf13e0b34bf9259"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_inspect.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_inspect.stdout",
+      "bytes": 9311,
+      "sha256": "e2548fd05b123154850686295402a983ab921958834354c4847084a351b76a11"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_restore.exec.json",
+      "bytes": 266,
+      "sha256": "48b2ee8b5ba54550ecc12dc2cd9fa71c2207d1b43bbf919250240598d92801d5"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_restore.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_restore.stdin",
+      "bytes": 280,
+      "sha256": "303bfc0bb23b330241d41c97fb46c0b1f086d8492e407290342124d83748ce0a"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_restore.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_restore_frozen_modes.exec.json",
+      "bytes": 301,
+      "sha256": "a2a98199f8b5b8732f45c7dfabf450a9cf47b413bda0da311bb5f632a8c7cc45"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_restore_frozen_modes.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_restore_frozen_modes.stdin",
+      "bytes": 19094,
+      "sha256": "5e3ec4ad04c62ab468220d675019b67208c66f96d525c5b00c7a6fad73e2aba6"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_restore_frozen_modes.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_retention_probe.exec.json",
+      "bytes": 431,
+      "sha256": "e3fb7122648fc3020dc192858efa4d3d5bb7d2b00f836260f641aaf4b802e01e"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_retention_probe.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_retention_probe.stdin",
+      "bytes": 2369,
+      "sha256": "7abeb8bec075045bbb37f9409159df837900a2bce537516b88bc98b9efcb0a78"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_retention_probe.stdout",
+      "bytes": 1075,
+      "sha256": "79dee11edfd8215fcdc05ae7f94750ddc69ef620cb81cc289ac046376886dc3a"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_rm.exec.json",
+      "bytes": 200,
+      "sha256": "3a3f50460bea1eef459e756db1fc952a3739cf533f34e2e39ec5d23baf7b5ff0"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_rm.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_rm.stdout",
+      "bytes": 65,
+      "sha256": "6c815c53a9912e165a56f809912f9f2601c5212139a5cfcb8ca89710a43e2999"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_source_identity_after.exec.json",
+      "bytes": 430,
+      "sha256": "0459b388d0d8b66da8c5fda57b541939a8115b331ffb2856042cc3c6f712f7a3"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_source_identity_after.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_source_identity_after.stdin",
+      "bytes": 61924,
+      "sha256": "060d605cbacdccbacee8f5831cc9fd48bc9d0910148a2f1585301ae5f6e485b3"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_source_identity_after.stdout",
+      "bytes": 62920,
+      "sha256": "63e24e8911ebd70946c21b6380908afaa4ec3425aa3f2e9ebc92a60cc32eb044"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_source_identity_before.exec.json",
+      "bytes": 430,
+      "sha256": "f1c445f4ef43a1e02614e1dbf7602d19904bf7e5f060d8bdaecfcc8d2197d8d4"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_source_identity_before.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_source_identity_before.stdin",
+      "bytes": 61924,
+      "sha256": "060d605cbacdccbacee8f5831cc9fd48bc9d0910148a2f1585301ae5f6e485b3"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_source_identity_before.stdout",
+      "bytes": 62920,
+      "sha256": "e90b581777e457e2995733d1ae9bf9c245444d7cdec71a696057596323f52652"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_start.exec.json",
+      "bytes": 191,
+      "sha256": "e3fc8485370f0e2f78e52a620c6a42a5519adec74df20d5cfbbbaccfeb4811e7"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_start.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_start.stdout",
+      "bytes": 65,
+      "sha256": "6c815c53a9912e165a56f809912f9f2601c5212139a5cfcb8ca89710a43e2999"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_write.exec.json",
+      "bytes": 268,
+      "sha256": "c01fcc215b5cc7f6d795465305992e2ec25a5e5f7ba41ad9e750bb98a412bdbf"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_write.stderr",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_write.stdin",
+      "bytes": 17525,
+      "sha256": "aadf8bf2d5cdebef3f40edbfbac76274241fdaa89b8c9c8c727af28713b5c75f"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/qwen_original_write.stdout",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3/packages/swe_pydantic/fieldinfo_retention_v1/outputs/pyd8511-retention-20261003T153716Z-v3/results.json",
+      "bytes": 521626,
+      "sha256": "3ae7bffa90ba3263bd70355f5e4e088acd21684dae75e28ad4111b962bfb377f"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3.tar.gz",
+      "bytes": 3195457,
+      "sha256": "6ff4a4b36934ebf661a761213fbd99280105c9c6ed867dbd12a0969d654bf177"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/8511_retention_original_evidence_v3_sync_receipt.json",
+      "bytes": 259,
+      "sha256": "9ca2cfe302c880905457035cc3dbaff9eefd8864af030c396f821fcbdd9771ca"
+    },
+    {
+      "path": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/category2_repair_20260929/swe_pydantic/cpu_preparation_20261003/read_8511_retention_v3_owner_v1.py",
+      "bytes": 10420,
+      "sha256": "11a0f764a1ed13982434c14320ce5f52670b93ed3f9b57c32aba4f292260c2fb"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/cpu_acceptance_20261003/8511_fieldinfo_retention_diagnostic_v1/plan.md",
+      "bytes": 2632,
+      "sha256": "0d4bf64ae18bd841c0141f0e1b91818e8fed30245bbea92d625694bc5a74fa69"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/coordination_20261003/8511_fieldinfo_retention_executable_bit_fix_disposition_v3.json",
+      "bytes": 1464,
+      "sha256": "7f6089789e9a690881015c9f49cea184ebd0c1a76d8d229b09ec7561b234164e"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/coordination_20261003/8511_fieldinfo_retention_v1_v2_infra_owner_readback_v1.json",
+      "bytes": 37367,
+      "sha256": "cb4f73b8512cecb1c4ad7ec84e056840225349abc34ec12b670ee7907b1e4608"
+    }
+  ],
+  "limits": [
+    "direct behavior diagnostic is not formal RH2 reward or complete actor/sandbox training qualification",
+    "source SHA and execute bits cover all452 canonical members; no restored gitHEAD attestation",
+    "root bootstrap granted CHOWN/DAC_OVERRIDE only; measured behavior ran UID54321 with effective/permitted/inherited/ambient caps0",
+    "finite0.5s resource samples; unobserved instants unknown",
+    "v1/v2 zero-behavior infrastructure failures preserved; missing executable-bit mechanism remains inference",
+    "new177reference material and full positive/negative matrix still pending"
+  ],
+  "training_eligibility": false
+}

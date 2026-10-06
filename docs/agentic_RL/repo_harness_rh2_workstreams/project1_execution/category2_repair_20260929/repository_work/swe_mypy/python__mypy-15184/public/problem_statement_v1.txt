@@ -1,0 +1,33 @@
+assert_type: Use fully qualified types when names are ambiguous
+
+When assert_type reports a mismatch between distinct types with the same short
+name, the diagnostic should distinguish those types using qualified names.
+Names that are already unambiguous should remain concise.
+
+The issue can be reproduced with these three files in the same directory:
+
+a.py:
+```python
+class C: ...
+```
+
+b.py:
+```python
+class C: ...
+```
+
+t.py:
+```python
+import a, b
+from typing_extensions import assert_type
+def g(x: a.C) -> None:
+    assert_type(x, b.C)
+```
+
+Run `python -m mypy t.py` in that directory using the repository's Python
+environment. The current diagnostic says `Expression is of type "C", not "C"`.
+It should distinguish a.C from b.C while still reporting the type mismatch.
+
+This task concerns the diagnostic for a genuine type mismatch. Correct
+assert_type calls should continue to succeed and preserve their existing
+expression type.

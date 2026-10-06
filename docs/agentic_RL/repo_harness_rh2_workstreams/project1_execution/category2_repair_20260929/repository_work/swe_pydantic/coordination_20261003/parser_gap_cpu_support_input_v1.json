@@ -1,0 +1,46 @@
+{
+  "schema": "swe_pydantic.shared_parser_gap.v1",
+  "owner_thread_id": "01a0fd62-62c8-7cc3-b49f-e959fca60a14",
+  "scope": {
+    "component": "swegym_pytest_pydantic_parser",
+    "observed_cpu_host": "cpu-a"
+  },
+  "observed_job": "pyd6283-formal-20261002185959-dbe65",
+  "source_release": "cat2-cpu-r2e088-swe12-git-20261003-v1",
+  "findings": [
+    {
+      "kind": "non_blocking_parser_gap_outside_reference_set",
+      "detail": "两个含空格参数名的dict[int, bool]非参考节点被冻结parser截断为dict[int,，状态为bool]]；独立原始日志核两项均PASSED。40正式参考的解析和分数均正确。",
+      "reachability": "production_observed",
+      "source_file": "runs/category2_repair_20260929/releases_20261003/r2e_088_swe12_git_candidate_v1/repo/rh2/src/repoharness2/envpack/swegym_parsers.py",
+      "source_lines": [
+        78,
+        82
+      ],
+      "invariant": "完整节点ID必须对应合法终态；字典长度不是有效终态数",
+      "minimal_probe_input": "tests/test_root_model.py::test_root_model_specialized[dict[int, bool]] PASSED",
+      "observed_probe_output": {
+        "tests/test_root_model.py::test_root_model_specialized[dict[int,": "bool]]"
+      },
+      "suggested_disposition": "deferred_with_owner_and_gate",
+      "suggested_owner": "发布线程维护共享parser，题主跟踪",
+      "gate": "将含空格参数ID纳入参考前修复；当前6283普通GPU探针不阻断",
+      "acceptance": "保持完整参数ID并正确解析PASSED／FAILED及百分比行；受影响解析与40正式参考回归一致，原结果不回写",
+      "owner_response": "not_recorded_by_this_review"
+    }
+  ],
+  "cpu_review_ref": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/reviews/non_author_6283_cpu_review_20261003.md",
+    "sha256": "7c17ee9f424b17dacf542183f586c8d948a938edc9db9865e0c34c9f6f40fe8e"
+  },
+  "review_summary_ref": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/reviews/non_author_6283_cpu_review_20261003.json",
+    "sha256": "e7f433b90685db5e3ce2d11f9dfc2b0fe66b4fe61179384adf6651840efa72b4"
+  },
+  "non_blocking_for_current_task": "6283正式40参考均正确解析，不包含这两个非参考参数节点；原reward0/1/0不改，不要求重跑6283矩阵",
+  "requested_action": "共享维护者确认维护归属并安排窄修；带空格参数节点保持完整ID和有效PASSED/FAILED，含进度百分比的真实行也需核。纳入这类正式参考前须验收；不将parser字典长度称为有效终态数。",
+  "affected_tasks": [
+    "swe_gym_lite::pydantic__pydantic-6283"
+  ],
+  "unverified_scope": "其它题尚未据此全池审计；不宣称存在其它题误分。"
+}

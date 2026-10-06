@@ -1,0 +1,331 @@
+{
+  "task_id": "getmoto__moto-5134",
+  "task_revision": "upstream; base0e3ac260682f3354912fe552c61d9b3e590903b8; task/reward unchanged, existing sqs_v1 diagnostic install override",
+  "source_adapter_ref": "S2 public/grading/validation line59; spec_vendor_id=swegym_constants_242429c1; swe_f2p_p2p; swebench-4.1.0+swegym_parsers@242429c1",
+  "recipe_ref": [
+    "runs/env_recipe_repair_20260919/sqs_v1/recipes/getmoto__moto-5134.json; sha256:afa572ae92636fc40c99275082f4cb7debb07322109ab802a37f91bc2c7de858",
+    "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/{gold,noop}/recipe/recipe.json; runtime script replacement audited",
+    "runs/env_recipe_repair_20260919/sqs_v1/replay_with_install_recipe.py:35-40,61-93 and run_compat_cases.py:23-57,65-81",
+    "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/image.json; COPY-only derived sha256:6aefb17daa7c99b95c250c36f9440e662cbc86f2f222aa17135264e35811d820; wheels installed later by actual revised_install, not by build"
+  ],
+  "code_snapshot_ref": "runs/swegym_quality_batch02_20260921_v2/public/getmoto__moto-5134/base_identity.json; base0e3ac260682f3354912fe552c61d9b3e590903b8; treeab7f05b7fa775f24a93863be3cbfacf22b2811b7",
+  "facts_ref": [
+    "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/gold/ledger.jsonl:1;install0/test0/2F2P+12P2P/reward1,17totalpassed",
+    "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/noop/ledger.jsonl:1;install0/test1/0F2P+12P2P/reward0,15passed2targetfailed",
+    "analysis_before_history.md; sealed sha256:88cf0906fe19f3877dbf314d961cc15b5465282a075cb781e3807977aae61fee",
+    "old_findings_delta.md; oldstage1 gold all14references passed but3nonreferenceSQS failed, separated from current repaired environment"
+  ],
+  "checks": {
+    "1": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/private/getmoto__moto-5134/source_refs.json; exact S2 public/grading/validation line59 equality",
+        "runs/swegym_quality_batch02_20260921_v2/public/getmoto__moto-5134/base_identity.json; base0e3ac260682f3354912fe552c61d9b3e590903b8, precise Terraform gitlink recorded; relevant task assets sufficient statically"
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "2": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/public/getmoto__moto-5134/base/moto/events/models.py:830,857-861; missing and null conflated",
+        "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/noop/eval_logs/evallog_replay-er19-sqs_v1-getmo_ee16eb53.eval.log:831-841,890-894; actual target assertion and lost null event"
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "3": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/public/getmoto__moto-5134/user_prompt.txt and public_bundle.json; complete static issue render, actual actor messages/public_hints application unverified"
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "4": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/private/getmoto__moto-5134/test.patch:1-3,20-22; only two pure test paths",
+        "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/gold/artifacts/swe_gym_lite--getmoto__moto-5134/a1-0b03a823/projection.json; models.py deliverable",
+        "rh2/src/repoharness2/adapters/slime/prepared_task_face.py:312-336; test_globs=()"
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "5": {
+      "status": "unknown",
+      "evidence_refs": [
+        "old_findings_delta.md; no cross-task records or gold inspected; old same-package non-overlap does not establish independent repair",
+        "review.md; Independent reviewer and coordinator directly inspected later5752 and7584 public bases at events/models.py:839,868 and888,917 respectively; both contain this missing-key/exists mechanism. This is a version-inclusion exposure relation, not proof of duplicate tasks or observed runtime leakage."
+      ],
+      "by": "b2_investigate_moto; b2_review_moto; coordinator"
+    },
+    "6": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/image.json and build.log; COPY-only derived layer",
+        "runs/env_recipe_repair_20260919/sqs_v1/recipes/getmoto__moto-5134.json; offline four-pin recipe",
+        "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/gold/eval_logs/evallog_replay-er19-sqs_v1-getmo_949cd6be.eval.log:502-552,598-602,832-846; actual wheels installed, query model, editable source, pins retained; grader scope"
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "7": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/public/getmoto__moto-5134/base_identity.json; tests/terraformtests/terraform-provider-aws@f34a786a6672e5629456a523e2b74cc4d368db45 not materialized, unrelated to minimal mock",
+        "analysis_before_history.md section5; test data local, real actor wheel/assets visibility unverified"
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "8": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/{gold,noop}/ledger.jsonl:1; grader54322 writable conda prefix, candidate.apply_user54321 distinct",
+        "analysis_before_history.md section5; formal actor not run"
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "9": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/{gold,noop}/ledger.jsonl:1; import /testbed/moto/__init__.py,3.1.9.dev, runner digest unchanged",
+        "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/gold/artifacts/swe_gym_lite--getmoto__moto-5134/a1-0b03a823/candidate.patch; gold byte correspondence; historical grader scope only"
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "10": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/public/getmoto__moto-5134/base/tests/test_events/test_event_pattern.py and public_read C2-C4; practical public validation path",
+        "analysis_before_history.md section5; actual public-image actor environment/permissions unverified"
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "11": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/public/getmoto__moto-5134/base/moto/core/models.py:392-407; in-process mock unless TEST_SERVER_MODE",
+        "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/{gold,noop}/ledger.jsonl:1; deny_all grading succeeded",
+        "Public issue's unmocked AWS comparison not necessary or performed; formal actor/preparation network assumptions still bounded"
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "12": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/private/getmoto__moto-5134/test.patch:29-44; mock_events+mock_logs explicit region",
+        "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/gold/eval_logs/evallog_replay-er19-sqs_v1-getmo_949cd6be.eval.log:931-957; actual mock tests completed; scope selected tests, not live AWS verification"
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "13": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/{gold,noop}/ledger.jsonl:1; historical2CPU4GiB, tests2.141/2.049s, peak281.293/287.906MiB",
+        "No actual actor or representative concurrency qualification"
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "14": {
+      "status": "unknown",
+      "evidence_refs": [
+        "Only one paired sqs_v1 attempt inspected. Stage1 uses different dependency conditions and does not establish fixed-recipe repetition."
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "16": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/gold/artifacts/swe_gym_lite--getmoto__moto-5134/a1-0b03a823/{stage.json,projection.json,frozen_patch.json,candidate.patch}; only models.py included, base HEAD and derived runtime identity",
+        "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/noop/artifacts/swe_gym_lite--getmoto__moto-5134/a1-7019d833/projection.json; empty"
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "17": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/gold/eval_logs/evallog_replay-er19-sqs_v1-getmo_949cd6be.eval.log:318-328; exact base restoration of tests/test_events/test_event_pattern.py and tests/test_events/test_events_integration.py then official patch",
+        "runs/swegym_quality_batch02_20260921_v2/private/getmoto__moto-5134/test.patch; no production source restored"
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "18": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/gold/eval_logs/evallog_replay-er19-sqs_v1-getmo_949cd6be.eval.log:856-865,931-957;17completed",
+        "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/noop/eval_logs/evallog_replay-er19-sqs_v1-getmo_ee16eb53.eval.log:819-828,1047-1068;17completed with2target failures",
+        "analysis_before_history.md section2; all12 P2P bodies and3 extra selected SQS bodies read, Archive only static"
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "19": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/private/getmoto__moto-5134/grading.json; frozen2F2P12P2P",
+        "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/{gold,noop}/ledger.jsonl:1; no missing references, current summaries17unique with3nonreferenceSQS",
+        "rh2/src/repoharness2/envpack/swegym_parsers.py:44-55,89; one truncated JSON dump ID uniquely matches frozen reference; broader parser collision risk not asserted as current failure"
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "20": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/{gold,noop}/ledger.jsonl:1; same sqs_v1 install0, goldF2P2/P2P12/reward1, noopF2P0/P2P12/reward0",
+        "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/noop/eval_logs/evallog_replay-er19-sqs_v1-getmo_ee16eb53.eval.log:831-841,980-986; direct target cause"
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "21": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5134/gold/offline/a1/test_output.txt:772-816,867-888; old three nonreference SQS KeyErrors despite all14 references passing",
+        "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5134/empty/offline/a1/test_output.txt:1002-1011; same3plus2target failures",
+        "old_findings_delta.md; complete ordinary pytest rc1 distinguished from reference outcome and global execution failure"
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "23": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/public/getmoto__moto-5134/user_prompt.txt:37-43,95-124; null exists and actual Logs delivery",
+        "runs/swegym_quality_batch02_20260921_v2/private/getmoto__moto-5134/test.patch:8,16,29-95; direct and complementary assertions",
+        "runs/swegym_quality_batch02_20260921_v2/public/getmoto__moto-5134/base/tests/test_events/test_event_pattern.py:23-45; missing/object constraints public"
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "24": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/private/getmoto__moto-5134/test.patch; no reference to new UNDEFINED or helper layout; external boolean and integration detail equality",
+        "analysis_before_history.md section3; explicit presence flag alternative static, not executed; ordinary string sentinel claim qualified in delta"
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "25": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/private/getmoto__moto-5134/test.patch:5-18; null/missing positive and negative combinations plus preserved old assertions",
+        "analysis_before_history.md section3; natural incomplete fixes rejected by inspected assertions; no adversarial candidate run or exhaustive correctness claim"
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "26": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/public/getmoto__moto-5134/base/tests/test_events/test_event_pattern.py and test_events_integration.py; all12 P2P bodies and3additionalSQS bodies read and current gold passed",
+        "runs/swegym_quality_batch02_20260921_v2/public/getmoto__moto-5134/base/tests/test_events/test_events.py:1074-1113,1573-1645,2195-2270; four related Archive tests read but not executed",
+        "No concrete newly broken behavior found; wider service regression not qualified"
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "27": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/private/getmoto__moto-5134/gold.patch:8-28; sentinel distinguishes missing/null while dict and other old values retained",
+        "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/gold/ledger.jsonl:1; target and all selected tests passed",
+        "analysis_before_history.md section3; existing missing-parent/prefix/numeric limitations not conflated with new regression"
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "28": {
+      "status": "pass",
+      "evidence_refs": [
+        "analysis_before_history.md sections3,6; no forced extra AWS API, string-sentinel design, parser collision task or unrelated null-prefix requirement; actor validation remains only priority"
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "29": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/public/getmoto__moto-5134/base_identity.json; exported Git metadata absent, runtime visibility not checked",
+        "old_findings_delta.md; old raw-hints-only-thanks claim not independently opened, absence of patch in prompt insufficient for leak exclusion"
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "31": {
+      "status": "unknown",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/public/getmoto__moto-5134/base/tests/{__init__.py,helpers.py} and setup.cfg; related fixture/config read",
+        "No tampering probe or task-specific evidence for extra exclusions; test_globs=()"
+      ],
+      "by": "b2_investigate_moto"
+    },
+    "37": {
+      "status": "pass",
+      "evidence_refs": [
+        "runs/env_recipe_repair_20260919/sqs_v1/replay_with_install_recipe.py:61-74; only original install replaced",
+        "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/{gold,noop}/recipe/{candidate_test_script,eval_script}.{before,after}.sh; exact install-only replacement verified",
+        "No new review changes to task, test, gold, expected, recipe or reward. Existing diagnostic dependency repair distinguished from task revision."
+      ],
+      "by": "b2_investigate_moto"
+    }
+  },
+  "issues": [
+    {
+      "category": "formal_actor_conditions_unverified",
+      "scope": "formal public-image agent54321 vs observed sqs_v1 derived rh2grader54322",
+      "evidence_refs": [
+        "runs/swegym_quality_batch02_20260921_v2/public/getmoto__moto-5134/public_bundle.json",
+        "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/{gold,noop}/ledger.jsonl:1",
+        "rh2/src/repoharness2/adapters/slime/prepared_task_face.py:342-357"
+      ],
+      "proposed_action": "Prioritize only the public-image actor CPU development-path validation in initial section6: actual imports/paths/versions and permissions, public exists matrix, local Logs MWE and old narrow tests. If using full integration, verify SQS model and whether dependency recipe actually reaches actor; COPY-only image alone is insufficient.",
+      "status": "unknown"
+    },
+    {
+      "category": "historical_full_suite_failure_omitted",
+      "scope": "historical environment evidence, already repaired in inspected sqs_v1 grader scope",
+      "evidence_refs": [
+        "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/getmoto__moto-5134/gold/offline/a1/test_output.txt:772-816,867-888",
+        "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/gold/eval_logs/evallog_replay-er19-sqs_v1-getmo_949cd6be.eval.log:526-552,842,931-957"
+      ],
+      "proposed_action": "Preserve both observations: old14referencepasses with3nonreferenceSQS failures/test1 and current17passed/test0 after consumed dependency recipe. Do not retroactively force old reward0, call nonreference cases P2P, or infer formal actor readiness.",
+      "status": "pass"
+    },
+    {
+      "category": "bounded_parser_and_leakage_evidence",
+      "scope": "current fixed mapping and review exposure",
+      "evidence_refs": [
+        "old_findings_delta.md",
+        "runs/swegym_quality_batch02_20260921_v2/private/getmoto__moto-5134/grading.json",
+        "rh2/src/repoharness2/envpack/swegym_parsers.py:44-55"
+      ],
+      "proposed_action": "Retain current unique truncated dump ID binding; no oracle/parser change. Later public bases contain this repair mechanism (review.md), while duplicate/grouping implications, actual runtime leakage and fixed-recipe repeatability remain unknown.",
+      "status": "unknown"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "Official restoration touches only tests/test_events/test_event_pattern.py and tests/test_events/test_events_integration.py; test_globs=(); models.py fix projectable. No evidence justifies more exclusions.",
+    "evidence_refs": [
+      "runs/swegym_quality_batch02_20260921_v2/private/getmoto__moto-5134/test.patch:1-3,20-22",
+      "runs/env_recipe_repair_20260919/sqs_v1/tasks/getmoto__moto-5134/gold/eval_logs/evallog_replay-er19-sqs_v1-getmo_949cd6be.eval.log:318-328",
+      "rh2/src/repoharness2/adapters/slime/prepared_task_face.py:312-336"
+    ],
+    "applied_version": "baseline_policy_v2; unchanged by static review"
+  },
+  "revision_refs": [],
+  "disposition": {
+    "state": "needs_review",
+    "scope": "static_review",
+    "reason": "Independent review consolidated. Limited static candidate: public target, assertions, gold and historical repaired-grader differential align; no concrete semantic conflict found. Actual public-image actor development conditions and exposure remain unverified. Historical nonreference SQS failures are preserved separately from reference scoring.",
+    "evidence_refs": [
+      "analysis_before_history.md",
+      "old_findings_delta.md",
+      "card.md",
+      "review.md"
+    ],
+    "reviewer": "b2_investigate_moto; independent b2_review_moto; coordinator consolidated"
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "exposure_notes": [
+      "Privileged review read exact gold, hidden test changes/references and original grader artifacts; not solver context.",
+      "Before seal, environment_record instance_id/checks/observations (including environment result summary and recipe pointers) seen; analysis/history values and quality links remained closed.",
+      "After coordinator seal, only authorized5134 quality record and exact same-task stage1 eval/log/status/patch originals read. No reviewer, cross-task aggregate or live AWS accessed. Raw hints claim remains unverified.",
+      "Independent reviewer final comparison completed after all three reviewer drafts were sealed. Independent reviewer and coordinator directly inspected later5752 and7584 public bases at events/models.py:839,868 and888,917 respectively; both contain this missing-key/exists mechanism. This is a version-inclusion exposure relation, not proof of duplicate tasks or observed runtime leakage."
+    ]
+  },
+  "costs": {
+    "container_wall_seconds": null,
+    "agent_tokens": null,
+    "human_decisions": null,
+    "source_refs": []
+  }
+}

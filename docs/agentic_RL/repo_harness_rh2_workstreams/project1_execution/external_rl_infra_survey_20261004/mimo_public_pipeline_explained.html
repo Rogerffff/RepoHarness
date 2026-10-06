@@ -1,0 +1,671 @@
+<meta charset="utf-8">
+<title>MiMo 公开链路拆解</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+/* 布局：先给短答案 → 基础概念卡 → 部署图（谁在哪台机器）→ 清单 → 资源划分 → 一次会话的时序 → 一个训练步 → 数据通道 → 对照 RH2；颜色只编码“组件类型”和“通信方式” */
+:root{
+  --bg:#f3f4f0; --surface:#ffffff; --surface-2:#ebede7; --ink:#1c221f; --muted:#59645f; --faint:#89938d; --line:#cbd1c9;
+  --grid:rgba(28,34,31,.045); --on-fill:#ffffff;
+  --t-actor:#2b6a90; --t-task:#9a5f0c; --t-proc:#6a4891; --t-thread:#56677a; --t-ext:#2c7650; --t-data:#8c4b22; --t-gpu:#a3353a;
+  --warn:#c26a10; --risk:#bb3129;
+  --font-sans:"IBM Plex Sans","Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif;
+  --font-cjk:"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei","IBM Plex Sans",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r:6px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101412; --surface:#171c19; --surface-2:#1f2522; --ink:#e2e7e3; --muted:#a3aea8; --faint:#78837d; --line:#333b36;
+  --grid:rgba(226,231,227,.05); --on-fill:#101412;
+  --t-actor:#6cb0d8; --t-task:#d9a64c; --t-proc:#ad90da; --t-thread:#9bb0c4; --t-ext:#69bc8f; --t-data:#d4905f; --t-gpu:#e47f82;
+  --warn:#f0a64d; --risk:#ef6c61; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101412; --surface:#171c19; --surface-2:#1f2522; --ink:#e2e7e3; --muted:#a3aea8; --faint:#78837d; --line:#333b36;
+  --grid:rgba(226,231,227,.05); --on-fill:#101412;
+  --t-actor:#6cb0d8; --t-task:#d9a64c; --t-proc:#ad90da; --t-thread:#9bb0c4; --t-ext:#69bc8f; --t-data:#d4905f; --t-gpu:#e47f82;
+  --warn:#f0a64d; --risk:#ef6c61; color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-sans);font-size:15px;line-height:1.6;margin:0}
+.wrap{max-width:1400px;margin:0 auto;padding-inline:20px;padding-block:28px 64px}
+h1,h2,h3{font-family:var(--font-cjk);text-wrap:balance;margin:0}
+h1{font-size:28px;font-weight:700}
+h2{font-size:21px;font-weight:700}
+h3{font-size:15.5px;font-weight:700}
+p{margin:0}
+code,.mono{font-family:var(--font-mono);font-size:.9em}
+.eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lede{color:var(--muted);max-width:72ch}
+header{display:grid;gap:14px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);margin-inline:-20px;padding:8px 20px;display:flex;gap:4px;flex-wrap:wrap}
+nav.toc a{color:var(--muted);text-decoration:none;font-size:14px;padding:4px 10px;border-radius:999px;white-space:nowrap}
+nav.toc a:hover,nav.toc a:focus-visible{background:var(--surface-2);color:var(--ink);outline:none}
+section{padding-top:34px;display:grid;gap:14px;scroll-margin-top:50px}
+.sec-head{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;justify-content:space-between}
+.sec-head p{color:var(--muted);font-size:14px}
+
+/* 类型标记 */
+.ty{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;white-space:nowrap}
+.ty i{width:12px;height:12px;border-radius:3px;border:1.5px solid var(--k);background:color-mix(in srgb,var(--k) 15%,var(--surface));display:inline-block}
+.ty.dash i{border-style:dashed}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;color:var(--muted);font-size:13px;align-items:center}
+.mech{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;white-space:nowrap}
+.mech svg{width:28px;height:10px}
+.pill{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 7px;border-radius:4px;white-space:nowrap;line-height:1.5}
+.pill.actor{background:color-mix(in srgb,var(--t-actor) 15%,var(--surface));color:var(--t-actor)}
+.pill.task{background:color-mix(in srgb,var(--t-task) 17%,var(--surface));color:var(--t-task)}
+.pill.proc{background:color-mix(in srgb,var(--t-proc) 15%,var(--surface));color:var(--t-proc)}
+.pill.thread{background:color-mix(in srgb,var(--t-thread) 17%,var(--surface));color:var(--t-thread)}
+.pill.ext{background:color-mix(in srgb,var(--t-ext) 15%,var(--surface));color:var(--t-ext)}
+.pill.data{background:color-mix(in srgb,var(--t-data) 15%,var(--surface));color:var(--t-data)}
+.inf{display:inline-block;font-size:11px;font-weight:600;color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 55%,var(--line));border-radius:4px;padding:0 5px;margin-left:4px;line-height:1.6;vertical-align:1px}
+
+/* 短答案 */
+.answers{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px}
+.ans{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:6px;align-content:start;min-width:0}
+.ans .q{font-family:var(--font-cjk);font-size:13px;color:var(--muted);font-weight:500}
+.ans .a{font-size:14.5px}
+.ans b{font-weight:600}
+.verdict{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:var(--r);padding:12px 14px;display:grid;gap:6px;font-size:14.5px}
+.verdict ul{margin:0;padding-left:18px;display:grid;gap:4px}
+
+/* 基础卡 */
+.basics{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px}
+.basics.wide{grid-template-columns:repeat(auto-fill,minmax(360px,1fr))}
+.bcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:grid;gap:8px;align-content:start;min-width:0}
+.bcard h3{display:flex;gap:8px;align-items:center}
+.bcard .tag{font-family:var(--font-mono);font-size:11px;color:var(--faint);font-weight:500}
+.bcard p{font-size:14px}
+.bcard .eg{font-size:13.5px;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px}
+.bcard .eg b{color:var(--ink);font-weight:600}
+pre{margin:0;background:var(--surface-2);border-radius:4px;padding:8px 10px;overflow-x:auto;font-family:var(--font-mono);font-size:12.5px;line-height:1.5;color:var(--ink)}
+.subgrp{font-family:var(--font-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.note{background:var(--surface-2);border-radius:var(--r);padding:12px 14px;font-size:14px;display:grid;gap:6px}
+.note ul{margin:0;padding-left:18px;display:grid;gap:4px}
+
+/* 图 */
+.figwrap{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:16px;align-items:start}
+figure{margin:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:grid;gap:10px;min-width:0}
+figure .f-head{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;justify-content:space-between}
+figure .f-head p{color:var(--muted);font-size:13.5px}
+.svgbox{overflow-x:auto;border-radius:4px;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:20px 20px}
+.svgbox svg{display:block;width:100%;height:auto}
+#svg-dep{min-width:940px}
+#svg-seq{min-width:940px}
+.tl svg{min-width:860px}
+aside.detail{position:sticky;top:60px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:10px;min-width:0}
+aside.detail .d-ty{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+aside.detail h3{font-size:17px}
+aside.detail dl{margin:0;display:grid;grid-template-columns:64px minmax(0,1fr);gap:4px 8px;font-size:13.5px}
+aside.detail dt{color:var(--faint)}
+aside.detail dd{margin:0}
+aside.detail ul{margin:0;padding-left:18px;display:grid;gap:4px;font-size:14px}
+aside.detail .src{font-family:var(--font-mono);font-size:11.5px;color:var(--faint);word-break:break-all}
+.hint{color:var(--muted);font-size:13.5px;display:grid;gap:6px}
+
+svg text{font-family:var(--font-cjk)}
+.node{cursor:pointer;outline:none}
+.node .box{fill:color-mix(in srgb,var(--k) 10%,var(--surface));stroke:var(--k);stroke-width:1.4}
+.node .stack{fill:var(--surface);stroke:var(--k);stroke-width:1;opacity:.55}
+.node .t{fill:var(--ink);font-size:13.5px;font-weight:700}
+.node .s{fill:var(--muted);font-size:11.5px}
+.node:hover .box{stroke-width:2.2}
+.node:focus-visible .box,.node.sel .box{stroke-width:2.8;fill:color-mix(in srgb,var(--k) 20%,var(--surface))}
+.node.dim .box{stroke-dasharray:4 3}
+svg.dimmed .node:not(.sel){opacity:.45}
+.grp{fill:none;stroke:var(--faint);stroke-width:1.1;stroke-dasharray:6 4}
+.grp.host{stroke:var(--line);stroke-dasharray:none;stroke-width:1.4}
+.grp.pg{stroke:var(--t-actor);stroke-width:1.4;stroke-dasharray:7 4}
+.grp.bundle{stroke:var(--line);stroke-dasharray:3 3}
+.grp.ext{stroke:var(--t-ext);stroke-width:1.3}
+.gl{fill:var(--muted);font-size:12.5px;font-weight:500}
+.gl.pg{fill:var(--t-actor);font-weight:600}
+.gl.ext{fill:var(--t-ext);font-weight:600}
+.gl.small{font-size:11.5px}
+.edge{fill:none;stroke-width:1.7}
+.edge.rpc{stroke:var(--t-actor)}
+.edge.http{stroke:var(--t-task);stroke-dasharray:6 4}
+.edge.k8s{stroke:var(--t-ext)}
+.edge.tq{stroke:var(--t-data);stroke-dasharray:2 3;stroke-width:2}
+.edge.ipc{stroke:var(--t-gpu)}
+.edge.link{stroke:var(--t-proc);stroke-width:1.2;opacity:.8}
+.ah-rpc{fill:var(--t-actor)} .ah-http{fill:var(--t-task)} .ah-k8s{fill:var(--t-ext)} .ah-tq{fill:var(--t-data)} .ah-ipc{fill:var(--t-gpu)}
+
+/* 时序图 */
+.lane-h .box{stroke-width:1.4}
+.life{stroke:var(--line);stroke-dasharray:4 4;stroke-width:1.2}
+.sl{fill:var(--ink);font-size:12.5px}
+.sl .n{font-family:var(--font-mono);font-weight:600;fill:var(--muted)}
+.rep{fill:none;stroke:var(--faint);stroke-width:1.2}
+.rep-t{fill:var(--muted);font-size:12px}
+ol.steps{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:6px 20px;font-size:13.5px;counter-reset:s}
+ol.steps li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:8px;align-items:start}
+ol.steps li::before{counter-increment:s;content:counter(s);font-family:var(--font-mono);font-size:11px;font-weight:600;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:var(--bg);margin-top:1px}
+ol.steps .who{color:var(--muted)}
+ol.steps .src{font-family:var(--font-mono);font-size:11px;color:var(--faint)}
+
+/* 时间线 */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:2px;background:var(--surface-2)}
+.seg button{all:unset;cursor:pointer;font-size:13px;padding:5px 12px;border-radius:999px;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+.seg button:focus-visible{outline:2px solid var(--t-actor);outline-offset:1px}
+.bar-t{fill:var(--on-fill);font-size:12px;font-weight:500}
+.bar-t.dark{fill:var(--ink)}
+.lane-l{fill:var(--ink);font-size:13px;font-weight:600}
+.lane-s{fill:var(--muted);font-size:11.5px}
+.mark-l{stroke:var(--risk);stroke-width:1.4;stroke-dasharray:4 3}
+.mark-t{fill:var(--risk);font-size:12px;font-weight:600}
+.tlnotes{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:8px 22px;font-size:13.5px;margin:0;padding:0;list-style:none}
+.tlnotes li{position:relative;padding-left:14px}
+.tlnotes li::before{content:'';position:absolute;left:0;top:.6em;width:6px;height:6px;border-radius:1px;background:var(--faint)}
+
+/* 表 */
+.filters{display:flex;flex-wrap:wrap;gap:6px}
+.filters button{all:unset;cursor:pointer;font-size:13px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted);background:var(--surface)}
+.filters button[aria-pressed="true"]{color:var(--ink);border-color:var(--ink)}
+.filters button:focus-visible{outline:2px solid var(--t-actor);outline-offset:1px}
+.tablebox{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+table{border-collapse:collapse;width:100%;min-width:960px;font-size:13.5px}
+th,td{text-align:left;vertical-align:top;padding:9px 12px;border-bottom:1px solid var(--line)}
+thead th{font-family:var(--font-cjk);font-size:13px;color:var(--muted);font-weight:600;background:var(--surface-2)}
+tbody th{font-family:var(--font-mono);font-weight:600;font-size:13px;white-space:nowrap}
+tbody tr:last-child th,tbody tr:last-child td{border-bottom:none}
+td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* 资源 */
+.res{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px;align-items:start}
+.calc{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:grid;gap:10px}
+.calc label{font-size:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.calc input{font:inherit;font-family:var(--font-mono);width:90px;padding:4px 8px;border:1px solid var(--line);border-radius:4px;background:var(--surface-2);color:var(--ink)}
+.calc input:focus-visible{outline:2px solid var(--t-actor)}
+.calc .rows{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;font-size:14px}
+.calc .rows span:nth-child(even){font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right}
+.calc .out{font-size:14px;padding:8px 10px;border-radius:4px;background:var(--surface-2)}
+.rules{display:grid;gap:8px}
+.rule{display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;font-size:14px}
+.rule .who{font-family:var(--font-mono);font-size:12.5px;font-weight:600}
+
+footer{margin-top:36px;padding-top:14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--faint);display:grid;gap:6px}
+footer code{color:var(--muted)}
+
+@media (max-width:1180px){.figwrap{grid-template-columns:minmax(0,1fr)}aside.detail{position:static}}
+@media (max-width:860px){.split,.res{grid-template-columns:minmax(0,1fr)}.rule{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:820px){.wrap{padding-inline:16px}nav.toc{margin-inline:-16px;padding-inline:16px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}h1{font-size:23px}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">MiMo 公开代码 · verl e2b9fc03 · uni-agent c63e0b01 · mimoagent 467f0a19 · 2026-10-04 整理</div>
+  <h1>MiMo 公开链路拆解</h1>
+  <p class="lede">按 code recipe 的默认配置（8 台 × 8 卡，colocate_async）讲：有哪些 Ray actor、Ray task、子进程和线程，资源怎么划分，数据怎么在进程之间走。先回顾 Ray 和 K8s 的基础概念，再看部署图和时序。标“推断”的地方没有在代码里直接确认。</p>
+  <div class="legend">
+    <span class="ty" style="--k:var(--t-actor)"><i></i>Ray actor（常驻进程）</span>
+    <span class="ty" style="--k:var(--t-task)"><i></i>Ray task（一次性进程）</span>
+    <span class="ty" style="--k:var(--t-proc)"><i></i>子进程</span>
+    <span class="ty" style="--k:var(--t-thread)"><i></i>线程</span>
+    <span class="ty" style="--k:var(--t-ext)"><i></i>K8s（外部服务）</span>
+    <span class="ty" style="--k:var(--t-data)"><i></i>数据存储</span>
+  </div>
+</header>
+
+<nav class="toc" aria-label="页面目录">
+  <a href="#answers">短答案</a><a href="#basics">基础回顾</a><a href="#deploy">部署图</a><a href="#inventory">组件清单</a><a href="#resources">资源划分</a><a href="#session">一次会话</a><a href="#step">一个训练步</a><a href="#channels">数据通道</a><a href="#rh2">对照 RH2</a>
+</nav>
+
+<section id="answers" aria-labelledby="ans-h">
+  <div class="sec-head"><h2 id="ans-h">先给短答案</h2><p>细节在后面各节。</p></div>
+  <div class="answers">
+    <div class="ans"><span class="q">整体结构</span><span class="a">四层：<b>训练驱动</b>（1 个 actor）；<b>GPU 上的训练与推理</b>（64 个 Megatron actor 和 32 个 SGLang actor 共用同一批卡）；<b>agent 层</b>（框架、网关、负载均衡等 actor，外加每会话一个 Ray task）；<b>环境</b>（每会话一个 K8s Pod）。</span></div>
+    <div class="ans"><span class="q">Ray task 是不是沙箱</span><span class="a"><b>不是。</b>Ray task 是在 Ray 集群上驱动 agent 的一个进程，记账 0.5 个 CPU；沙箱是它通过 K8s API 另外创建的 Pod，可以在另一个集群。</span></div>
+    <div class="ans"><span class="q">Ray 怎么分资源，用不用 group</span><span class="a"><b>用 placement group：</b>每台节点一个 STRICT_PACK 的 PG，8 个 bundle 各 {GPU:1, CPU:3}，Megatron worker 放进 bundle。SGLang、网关和每会话 task 都不在 PG 里，靠节点亲和或默认调度。</span></div>
+    <div class="ans"><span class="q">rollout 结果要不要用 Ray 同步</span><span class="a"><b>大数据不走 Ray：</b>样本写进 TransferQueue（张量走 ZMQ<span class="inf">推断</span>），Ray 调用只传键和标签。Ray 负责调度和控制消息；会话内的轨迹在网关内存里攒，收尾时作为 Ray 返回值交给框架。</span></div>
+  </div>
+  <div class="verdict">
+    <b>你说的“默认 colocate，但也能训推分离、权重同步和 partial rollout 都接好了”：基本对，有三点要补充。</b>
+    <ul>
+      <li>代码里有 <code>separate_async</code> 模式：推理池单独一个 PG，权重用 NCCL 等 checkpoint engine 同步，partial rollout 复用同一个续传客户端。<b>code recipe 默认没开</b>（<code>TRAINER_MODE</code> 默认 <code>colocate_async</code>）。</li>
+      <li>开启有约束：<code>rollout.nnodes &gt; 0</code>，checkpoint engine 不能是 naive，<code>train_batch_size = parameter_sync_step × ppo_mini_batch_size</code>。训练池启动时也兼做推理，第一次采样后切到训练，<b>之后切回推理的逻辑是 TODO</b>（<code>should_switch_to_rollout</code> 恒返回 False）。</li>
+      <li>上游 <code>verl/experimental/fully_async_policy</code> 是另一套全异步实现（Rollouter + Trainer + MessageQueue），和 v1 的 <code>separate_async</code> 不是同一份代码。</li>
+    </ul>
+  </div>
+</section>
+
+<section id="basics" aria-labelledby="bs-h">
+  <div class="sec-head"><h2 id="bs-h">基础回顾</h2><p>每张卡片：概念是什么，在 MiMo 里对应哪里。</p></div>
+  <div class="subgrp">进程与 Ray</div>
+  <div class="basics wide">
+    <div class="bcard"><h3>进程 / 线程 / 协程</h3>
+      <p>进程有独立内存和自己的 GIL；线程共享进程内存，同一时刻只有一个线程在执行 Python；协程在一个线程的事件循环里轮流执行，遇到 <code>await</code> 才让出。</p>
+      <p class="eg"><b>MiMo：</b>一个 Ray task 是一个进程。它的主线程跑 <code>asyncio.run</code>，同步的 agent 代码交给 <code>to_thread</code> 开出的工作线程，避免阻塞事件循环。</p></div>
+    <div class="bcard"><h3>集群：GCS 与 raylet <span class="tag">cluster</span></h3>
+      <p>head 节点上的 GCS 记录所有 actor、task、placement group 和对象的元数据。每台节点跑一个 raylet，负责本机调度、启动 worker 进程和管理对象存储。</p>
+      <p class="eg"><b>MiMo：</b>先用 <code>ray start</code> 起好集群（8 台 GPU 节点加一个无 GPU 的 head），driver 再用 <code>ray.init(address="auto")</code> 连上。</p></div>
+    <div class="bcard"><h3>资源只是记账 <span class="tag">resources</span></h3>
+      <p><code>num_cpus</code> 和 <code>num_gpus</code> 只用来判断“放不放得下”，不绑核，也不限制实际用量。GPU 的隔离靠 Ray 给 actor 设置 <code>CUDA_VISIBLE_DEVICES</code>。数值可以是小数，比如 0.5 CPU、⅓ GPU。</p>
+      <p class="eg"><b>MiMo：</b>每会话 task 记 0.5 CPU，实际用多少不受限。SGLang server 申请 0 张 GPU，自己设置 <code>CUDA_VISIBLE_DEVICES</code> 去用卡，所以 Ray 并不知道它占着 GPU。</p></div>
+    <div class="bcard"><h3>Ray task：一次性的远程函数 <span class="tag">task</span></h3>
+      <p><code>f.remote()</code> 立即返回一个 ObjectRef；raylet 找一台有空闲资源的节点，从进程池借一个 worker 进程执行，执行完把进程还回池子复用。<b>同时运行 N 个 task，就同时占用 N 个 worker 进程。</b>task 没有状态，返回值放进对象存储；默认在系统故障时重试 3 次。</p>
+<pre>@ray.remote(num_cpus=0.5)
+def run_session(cfg): ...
+
+ref = run_session.remote(cfg)  # 立即返回
+await ref                      # 要结果时再等</pre>
+      <p class="eg"><b>MiMo：</b>每个会话一个 task（<code>framework.py:176</code>），一批 64 题 × 16 = 1024 个，并发上限 2048。task 只返回 None，轨迹不经它回传。</p></div>
+    <div class="bcard"><h3>Ray actor：常驻的远程对象 <span class="tag">actor</span></h3>
+      <p><code>Cls.remote()</code> 创建时独占一个进程，状态一直留在进程里，之后通过句柄调用方法。默认调度时需要 1 个空闲 CPU，运行起来后占 0 个。</p>
+<pre>@ray.remote
+class Gateway:
+    async def create_session(self, sid): ...
+
+gw = Gateway.options(
+    scheduling_strategy=NodeAffinitySchedulingStrategy(
+        node_id, soft=True)).remote()</pre>
+      <p class="eg"><b>MiMo：</b>Megatron worker、SGLang server、网关、框架、负载均衡都是 actor；共约 124 个，其中 TransferQueue 的 9 个是推断。</p></div>
+    <div class="bcard"><h3>Ray actor 的三种并发方式</h3>
+      <p>普通 actor：方法调用排队，一次执行一个。<b>async actor</b>：只要有 <code>async def</code> 方法，所有调用都跑在一个事件循环上，默认最多 1000 个同时进行。threaded actor：设置 <code>max_concurrency</code>，用线程池并发。</p>
+      <p class="eg"><b>MiMo：</b>网关和 AgentFrameworkWorker 都是 async actor。网关还把 uvicorn 挂在同一个循环上，所以 HTTP 请求和 Ray 方法调用共用一个线程。</p></div>
+    <div class="bcard"><h3>Placement group <span class="tag">PG</span></h3>
+      <p>一次性预留一组资源块（bundle），要么全部给，要么一个都不给。策略：PACK（尽量同机）、SPREAD（尽量分散）、STRICT_PACK（必须同机）、STRICT_SPREAD（必须不同机）。之后可以把 actor 指定放进某个 bundle。</p>
+<pre>pg = placement_group(
+    [{"GPU": 1, "CPU": 3}] * 8, strategy="STRICT_PACK")
+Worker.options(
+    num_gpus=1/3,
+    scheduling_strategy=PlacementGroupSchedulingStrategy(
+        placement_group=pg,
+        placement_group_bundle_index=i)).remote()</pre>
+      <p class="eg"><b>MiMo：</b>每台节点一个这样的 PG，按节点 IP 排序（<code>single_controller/ray/base.py:146-157</code>）。</p></div>
+    <div class="bcard"><h3>调度策略与通信组 <span class="tag">scheduling</span></h3>
+      <p>调度有三种：默认（随便找有资源的节点）、NodeAffinity（硬绑定或软绑定某台节点）、指定 PG 的 bundle。<code>ray.util.collective</code> 可以在 actor 之间建 NCCL 或 gloo 通信组。</p>
+      <p class="eg"><b>MiMo：</b>网关软亲和 GPU 节点，SGLang server 硬亲和；<code>separate_async</code> 模式用 collective 广播权重。</p></div>
+    <div class="bcard"><h3>对象存储与 ObjectRef <span class="tag">object store</span></h3>
+      <p>每台节点有一块共享内存。task 的返回值和大参数放在这里，同机读取不用拷贝，跨机由 Ray 自动传输。ObjectRef 是取数据的凭证，用 <code>ray.get</code> 或 <code>await</code> 取。</p>
+      <p class="eg"><b>MiMo：</b>训练器把 prompt 批通过 Ray 调用参数（经对象存储）交给框架。训练张量不走这里，走 TransferQueue。</p></div>
+  </div>
+  <div class="subgrp">K8s 与 Pod</div>
+  <div class="split">
+    <div class="basics" style="grid-template-columns:minmax(0,1fr)">
+      <div class="bcard"><h3>集群 = 控制面 + 工作节点</h3>
+        <p>控制面：<b>API server</b>（所有操作的唯一入口）、etcd（存集群状态）、scheduler（按资源申请选节点）、controller（维持期望状态）。每台工作节点上有 <b>kubelet</b>，按 API server 的指令通过容器运行时（如 containerd）起停容器。</p>
+        <p class="eg"><b>对比 docker：</b><code>docker run</code> 只在本机起容器；K8s 在很多台机器之上挑一台来起。RH2 现在是每台机器各管各的 docker。</p></div>
+      <div class="bcard"><h3>Pod</h3>
+        <p>最小的调度单位：一个或几个容器，共享网络（一个 IP）和挂载卷，整体被放到某一台节点上运行。可以先理解成“集群帮你挑一台机器起的容器”。</p>
+<pre>spec:
+  containers:
+  - name: main
+    image: &lt;任务镜像&gt;
+    command: ["bash","-lc","..."]   # 空转，等 exec 进来
+    resources:
+      requests: {cpu: "0.5", memory: 1Gi}
+      limits:   {cpu: "4",   memory: 8Gi}</pre></div>
+    </div>
+    <div class="basics" style="grid-template-columns:minmax(0,1fr)">
+      <div class="bcard"><h3>requests 与 limits</h3>
+        <p>requests 用于调度：节点上的可分配量减去已占的 requests，够了才放得下。limits 是 cgroup 上限：CPU 超了被限速，内存超了被 OOM 杀掉。</p>
+        <p class="eg"><b>MiMo：</b>每个 Pod 申请 0.5 CPU / 1 Gi，最多用到 4 CPU / 8 Gi。2048 个 Pod 一共申请 1024 CPU / 2 TiB。</p></div>
+      <div class="bcard"><h3>exec</h3>
+        <p>和 <code>kubectl exec</code> 一样：客户端 → API server → 目标节点的 kubelet → 容器运行时，在已运行的容器里启动一个进程，输入输出通过 websocket 流回来。</p>
+        <p class="eg"><b>MiMo：</b>每条工具命令、每次测试都这样执行（<code>kubernetes.py:474-546</code>）。</p></div>
+      <div class="bcard"><h3>kubeconfig 与 namespace</h3>
+        <p>kubeconfig 里写着 API server 地址和凭证；namespace 是集群里的隔离分区。</p>
+        <p class="eg"><b>MiMo：</b>task 用 <code>KUBECONFIG</code> 连集群，namespace 默认 <code>default</code>。Ray 调度 Python 进程，K8s 调度容器，两边是独立的集群，task 通过 K8s API 远程操作 Pod。</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="deploy" aria-labelledby="dp-h">
+  <div class="sec-head"><h2 id="dp-h">部署图：谁在哪台机器上</h2><p>展开 1 台 GPU 节点，另外 7 台相同。点方框看细节。</p></div>
+  <div class="figwrap">
+    <figure>
+      <div class="svgbox"><svg id="svg-dep" viewBox="0 0 1100 640" role="img" aria-label="MiMo 部署图"></svg></div>
+      <div class="legend">
+        <span class="mech"><svg viewBox="0 0 28 10"><line x1="1" y1="5" x2="27" y2="5" class="edge rpc"/></svg>Ray 调用</span>
+        <span class="mech"><svg viewBox="0 0 28 10"><line x1="1" y1="5" x2="27" y2="5" class="edge http"/></svg>HTTP</span>
+        <span class="mech"><svg viewBox="0 0 28 10"><line x1="1" y1="5" x2="27" y2="5" class="edge k8s"/></svg>K8s API</span>
+        <span class="mech"><svg viewBox="0 0 28 10"><line x1="1" y1="5" x2="27" y2="5" class="edge ipc"/></svg>权重：同卡 CUDA IPC</span>
+        <span class="mech"><svg viewBox="0 0 28 10"><line x1="1" y1="5" x2="27" y2="5" class="edge link"/></svg>父进程与子进程</span>
+        <span class="ty dash" style="--k:var(--t-actor)"><i></i>虚线框：本配置下通常闲置</span>
+      </div>
+    </figure>
+    <aside class="detail" id="detail" aria-live="polite">
+      <div class="eyebrow">细节</div>
+      <h3>点一个方框</h3>
+      <div class="hint">
+        <span>叠层方框表示同类有多个。</span>
+        <span>蓝色虚线框是 placement group；每个 bundle 对应一张卡。</span>
+        <span>SGLang server 不在 PG 里，它自己指定用哪两张卡。</span>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<section id="inventory" aria-labelledby="iv-h">
+  <div class="sec-head"><h2 id="iv-h">组件清单</h2><p>按 8 台 × 8 卡的默认配置计数。</p></div>
+  <div class="filters" role="group" aria-label="按类型筛选">
+    <button type="button" data-f="all" aria-pressed="true">全部</button>
+    <button type="button" data-f="actor" aria-pressed="false">Ray actor</button>
+    <button type="button" data-f="task" aria-pressed="false">Ray task</button>
+    <button type="button" data-f="proc" aria-pressed="false">子进程</button>
+    <button type="button" data-f="thread" aria-pressed="false">线程</button>
+    <button type="button" data-f="ext" aria-pressed="false">K8s</button>
+  </div>
+  <div class="tablebox"><table>
+    <thead><tr><th scope="col">组件</th><th scope="col">类型</th><th scope="col">数量</th><th scope="col">在哪</th><th scope="col">资源记账</th><th scope="col">做什么</th></tr></thead>
+    <tbody id="inv"></tbody>
+  </table></div>
+</section>
+
+<section id="resources" aria-labelledby="rs-h">
+  <div class="sec-head"><h2 id="rs-h">Ray 怎么划分资源</h2><p>不同组件用不同的放置方式。</p></div>
+  <div class="res">
+    <div class="rules">
+      <div class="rule"><span class="who" style="color:var(--t-actor)">Megatron worker</span><span><b>进 PG。</b>每台节点一个 STRICT_PACK 的 PG，8 个 bundle 各 {GPU:1, CPU:3}。每个 worker 申请 ⅓ 张卡（<code>max_colocate_count = 3</code>，给最多 3 个角色共卡留位置）。本配置不开 KL、不用 critic，只剩 actor 一个角色，被合并进一个 <code>WorkerDict</code> 进程。</span></div>
+      <div class="rule"><span class="who" style="color:var(--t-actor)">SGLang server</span><span><b>不进 PG。</b>硬节点亲和，申请 0 张卡，自己设 <code>CUDA_VISIBLE_DEVICES</code> 用两张卡（TP2），和 Megatron 共用显存：生成时 Megatron 参数卸到 CPU，训练时 SGLang 释放权重和 KV。</span></div>
+      <div class="rule"><span class="who" style="color:var(--t-actor)">网关 / RewardLoopWorker</span><span>软节点亲和，按存活的 GPU 节点轮流放，每台一个；没有 GPU 节点时退到 CPU 节点。</span></div>
+      <div class="rule"><span class="who" style="color:var(--t-actor)">训练驱动、框架、LB</span><span>默认调度，代码里没指定位置。</span></div>
+      <div class="rule"><span class="who" style="color:var(--t-task)">每会话 Ray task</span><span>默认调度，各记 0.5 CPU，没有亲和。哪台节点有空闲逻辑 CPU 就放哪台；集群里主要是 GPU 训练机<span class="inf">推断</span>。CPU 不够时 task 在 Ray 里排队，但会话的墙钟计时已经开始。</span></div>
+    </div>
+    <div class="calc">
+      <b>算一算：逻辑 CPU 够不够放 2048 个会话</b>
+      <label for="vcpu">每台节点上报给 Ray 的 CPU 数（示例值）<input id="vcpu" type="number" min="24" max="1024" step="8" value="192"></label>
+      <div class="rows" id="calc-rows"></div>
+      <div class="out" id="calc-out"></div>
+      <span class="hint">只算 PG 预留和 task 记账；actor 运行时默认占 0 CPU，SGLang 的 CPU 设置未核对。真实 CPU 消耗不受这个数限制。</span>
+    </div>
+  </div>
+</section>
+
+<section id="session" aria-labelledby="ss-h">
+  <div class="sec-head"><h2 id="ss-h">一次会话的时序</h2><p>每条竖线是一个组件；箭头颜色表示通信方式。7–9 每轮重复。</p></div>
+  <figure>
+    <div class="svgbox"><svg id="svg-seq" viewBox="0 0 1100 640" role="img" aria-label="一次会话的时序图"></svg></div>
+    <ol class="steps" id="seq-steps"></ol>
+  </figure>
+</section>
+
+<section id="step" aria-labelledby="st-h">
+  <div class="sec-head"><h2 id="st-h">一个训练步怎么推进</h2>
+    <div class="seg" role="group" aria-label="训练器模式">
+      <button type="button" id="b-colo" aria-pressed="true">colocate_async（默认）</button>
+      <button type="button" id="b-sep" aria-pressed="false">separate_async（未启用）</button>
+    </div></div>
+  <figure class="tl">
+    <p class="hint" id="tl-cap"></p>
+    <div class="svgbox"><svg id="svg-tl" viewBox="0 0 1100 250" role="img" aria-label="训练步时间线"></svg></div>
+    <ul class="tlnotes" id="tl-notes"></ul>
+  </figure>
+</section>
+
+<section id="channels" aria-labelledby="ch-h">
+  <div class="sec-head"><h2 id="ch-h">数据在进程之间怎么走</h2><p>回答“要不要用 Ray 同步 rollout 结果”。</p></div>
+  <div class="tablebox"><table>
+    <thead><tr><th scope="col">数据</th><th scope="col">从 → 到</th><th scope="col">走什么</th><th scope="col">位置</th></tr></thead>
+    <tbody id="ch"></tbody>
+  </table></div>
+  <div class="note"><b>结论</b><ul>
+    <li>Ray 负责调度和控制消息：创建会话、提交 task、分发“这一批是哪些键”。</li>
+    <li>训练样本这类大数据写进 TransferQueue，训练侧的 64 个 worker 拿到键之后自己去拉，不经 Ray 对象存储汇总到驱动进程。</li>
+    <li>权重不经过 Ray：同卡用 CUDA IPC，分离模式用 NCCL。</li>
+  </ul></div>
+</section>
+
+<section id="rh2" aria-labelledby="rh-h">
+  <div class="sec-head"><h2 id="rh-h">对照 RH2</h2><p>同样的角色在两边分别是什么。</p></div>
+  <div class="tablebox"><table>
+    <thead><tr><th scope="col">角色</th><th scope="col">MiMo 公开代码</th><th scope="col">RH2 当前（miles）</th></tr></thead>
+    <tbody id="map"></tbody>
+  </table></div>
+</section>
+
+<footer>
+  <span>依据：本地源码 <code>runs/external_rl_infra_survey_20261004/sources/XiaomiMiMo__{verl,uni-agent,mimoagent}</code>；关键位置见各节行号。资源划分与 <code>separate_async</code> 的开关条件已人工复核源码。</span>
+  <span>标“推断”：SGLang 子进程数量、TransferQueue 的进程形态与传输方式、Ray task 实际落在哪些节点、RewardLoopWorker 是否闲置。Ray 版本未固定（<code>ray[default]</code>，<code>setup.py</code> 要求 ≥ 2.41.0）。</span>
+</footer>
+</div>
+
+<script>
+(function(){
+const NS='http://www.w3.org/2000/svg';
+const TY={actor:'--t-actor',task:'--t-task',proc:'--t-proc',thread:'--t-thread',ext:'--t-ext',data:'--t-data'};
+const TYN={actor:'Ray actor',task:'Ray task',proc:'子进程',thread:'线程',ext:'K8s',data:'数据存储'};
+function el(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e}
+function fit(t,max){try{let fs=parseFloat(getComputedStyle(t).fontSize)||12,n=0;while(t.getComputedTextLength()>max&&fs>8.5&&n<14){fs-=.5;t.style.fontSize=fs+'px';n++}}catch(e){}}
+function defs(svg){const d=el('defs',{},svg);['rpc','http','k8s','tq','ipc'].forEach(m=>{const mk=el('marker',{id:svg.id+'-'+m,viewBox:'0 0 10 10',refX:'9',refY:'5',markerWidth:'7',markerHeight:'7',orient:'auto-start-reverse'},d);el('path',{d:'M0,0 L10,5 L0,10 z',class:'ah-'+m},mk)})}
+
+/* ---------- 部署图 ---------- */
+const G=[
+ {x:12,y:24,w:764,h:604,label:'GPU 节点 · 共 8 台（展开其中 1 台）',cls:'host'},
+ {x:28,y:56,w:732,h:254,label:'Ray placement group · STRICT_PACK · 8 个 bundle，每个 {GPU:1, CPU:3}',cls:'pg'},
+ {x:28,y:400,w:732,h:212,label:'节点 CPU（PG 之外）',cls:''},
+ {x:232,y:522,w:516,h:82,label:'一个 task 进程里的线程',cls:'',small:true},
+ {x:792,y:24,w:296,h:352,label:'单例 actor · 位置由 Ray 默认调度决定',cls:''},
+ {x:792,y:392,w:296,h:236,label:'K8s 集群 · 由 kubeconfig 指定，可与 Ray 分开',cls:'ext'}
+];
+for(let i=0;i<8;i++)G.push({x:40+i*90,y:86,w:84,h:206,label:'GPU '+i,cls:'bundle',small:true});
+const N=[];
+for(let i=0;i<8;i++){
+  N.push({id:'mg'+i,ty:'actor',x:46+i*90,y:112,w:72,h:76,t:'Megatron',s:['WorkerDict','⅓ GPU'],ref:'mg'});
+  N.push({id:'sc'+i,ty:'proc',x:46+i*90,y:200,w:72,h:80,t:'scheduler',s:['SGLang','子进程'],ref:'sc'});
+}
+for(let j=0;j<4;j++)N.push({id:'sg'+j,ty:'actor',x:40+j*180,y:324,w:174,h:60,t:'SGLangHttpServer',s:['0 GPU · 管 GPU '+(2*j)+'–'+(2*j+1)],ref:'sg'});
+N.push(
+ {id:'gw',ty:'actor',x:40,y:432,w:176,h:78,t:'GatewayActor ×1',s:['async actor · 软亲和','HTTP 与 Ray 调用同一循环'],ref:'gw'},
+ {id:'rw',ty:'actor',x:40,y:522,w:176,h:74,t:'RewardLoopWorker',s:['备用打分','本配置通常闲置'],ref:'rw',dim:true},
+ {id:'tk',ty:'task',x:232,y:432,w:516,h:78,t:'每会话 Ray task（本节点若干个）',s:['0.5 逻辑 CPU · 每个 task 占一个 worker 进程','建 Pod → 调网关 → exec 工具 → 打分 → 删 Pod'],ref:'tk',multi:true},
+ {id:'th1',ty:'thread',x:244,y:546,w:160,h:50,t:'主线程',s:['asyncio.run'],ref:'th1'},
+ {id:'th2',ty:'thread',x:408,y:546,w:160,h:50,t:'工作线程',s:['to_thread 跑同步 harness'],ref:'th2'},
+ {id:'th3',ty:'thread',x:572,y:546,w:164,h:50,t:'exec 读线程',s:['每次 exec 一个'],ref:'th3'},
+ {id:'tr',ty:'actor',x:806,y:54,w:268,h:70,t:'TaskRunnerV1',s:['训练主循环 · ReplayBuffer','数据加载 8 个子进程'],ref:'tr'},
+ {id:'afw',ty:'actor',x:806,y:134,w:268,h:70,t:'AgentFrameworkWorker',s:['async actor · 全部会话的协程','收尾、写 TransferQueue'],ref:'afw'},
+ {id:'lb',ty:'actor',x:806,y:214,w:268,h:58,t:'GlobalRequestLoadBalancer',s:['会话粘性 + 最少在途'],ref:'lb'},
+ {id:'tq',ty:'data',x:806,y:282,w:268,h:80,t:'TransferQueue',s:['控制器 ×1 + 存储单元 ×8','推断为 Ray actor，张量走 ZMQ'],ref:'tq'},
+ {id:'api',ty:'ext',x:806,y:422,w:268,h:58,t:'API server（控制面）',s:['建 Pod、exec、删 Pod 都经它'],ref:'api'},
+ {id:'pod',ty:'ext',x:806,y:500,w:260,h:112,t:'Pod（每会话 1 个）',s:['任务镜像，只跑空转 bash','requests 0.5 CPU / 1 Gi','limits 4 CPU / 8 Gi'],ref:'pod',multi:true}
+);
+const E=[
+ {m:'rpc',p:[[200,432],[200,384]]},
+ {m:'http',p:[[232,458],[216,458]]},
+ {m:'k8s',p:[[748,451],[806,451]]},
+ {m:'k8s',p:[[940,480],[940,500]]}
+];
+for(let i=0;i<8;i++)E.push({m:'ipc',p:[[82+i*90,188],[82+i*90,200]]});
+const LINKS=[];
+for(let j=0;j<4;j++){const a=82+2*j*90,b=82+(2*j+1)*90,c=40+j*180+87;LINKS.push([[a,280],[a,301],[b,301],[b,280]]);LINKS.push([[c,301],[c,324]])}
+
+const D={
+ mg:{n:'Megatron worker（WorkerDict）',ty:'actor',cnt:'64，每卡 1 个',loc:'PG 的 bundle 里，STRICT_PACK',res:'⅓ GPU（逻辑）',li:['ActorRolloutRefWorker：Megatron 训练、算 logprob、持有 checkpoint engine','角色合并进一个 WorkerDict 进程（create_colocated_worker_cls）','推权重：清显存 → 取参数 → CUDA IPC 交给同卡 SGLang → 参数卸到 CPU'],src:'trainer_base.py:1007-1020；base.py:146-157,629,988-1032；engine_workers.py:760-801'},
+ sc:{n:'SGLang scheduler',ty:'proc',cnt:'64，每卡 1 个（推断）',loc:'SGLang server 启动的子进程，跑在对应 GPU 上',res:'Ray 不记账',li:['真正执行模型前向的进程（TP 的一个 rank）','训练时被 sleep：释放权重和 KV 缓存','数量按 sglang 的子进程结构推断'],src:'sglang _launch_subprocesses；async_sglang_server.py:498-519'},
+ sg:{n:'SGLangHttpServer',ty:'actor',cnt:'32，每节点 4 个（TP2）',loc:'硬节点亲和',res:'0 GPU；手动设 CUDA_VISIBLE_DEVICES',li:['内含 TokenizerManager 和 HTTP 服务；另有 detokenizer 子进程（推断）','abort / sleep / wake / 更新权重的入口','网关通过 Ray 调用它的 generate，发送 token ids，不走 HTTP'],src:'async_sglang_server.py:540-548,666-690,819-888；replica.py:107-117'},
+ gw:{n:'GatewayActor',ty:'actor',cnt:'8，每 GPU 节点 1 个',loc:'软节点亲和，按存活 GPU 节点轮流放',res:'默认（未设 num_cpus）',li:['接 OpenAI / Anthropic / Responses 兼容的模型请求','对消息做链式 sha256 前缀匹配，只 tokenize 新增部分','经 LB 选副本后 Ray 调用 SGLang；遇到 abort 每 1 秒重试，用 prompt+已生成续传','会话状态存在 actor 内存；收尾时把轨迹作为返回值交给框架','uvicorn 挂在 actor 的事件循环上：HTTP 和 Ray 方法共用一个线程'],src:'manager.py:40-95；gateway.py:91,261-267,313-318；session.py:224-340,467-552；llm_server.py:386-450'},
+ rw:{n:'RewardLoopWorker',ty:'actor',cnt:'8',loc:'每节点 1 个（软亲和）',res:'—',li:['备用的打分 actor','本配置由 runner 用 POST /reward_info 回报奖励，只有拿不到时才用它（推断为通常闲置）'],src:'reward.yaml:5；framework.py:1145-1150'},
+ tk:{n:'每会话 Ray task',ty:'task',cnt:'每批 1024 个，并发上限 2048',loc:'默认调度：任意有空闲逻辑 CPU 的节点',res:'0.5 CPU（只是记账）',li:['task 本身就是驱动 agent 的进程，不是沙箱','只设了 num_cpus；没有重试、亲和、runtime_env 等选项','执行：建 Pod → agent 循环（模型请求打网关）→ exec 工具 → 跑测试打分 → 删 Pod → POST 奖励','返回 None；轨迹在网关里，奖励经 HTTP 交给网关','超时时先 ray.cancel，30 秒后强杀；强杀会跳过删 Pod（推断可能残留）'],src:'framework.py:155-197,1052-1060,1200-1284；mimoagent_runner.py:259-407'},
+ th1:{n:'task 主线程',ty:'thread',cnt:'每 task 1 个',loc:'task 进程内',res:'—',li:['asyncio.run(runner)','选 harness，把同步代码交给 to_thread，最后 POST reward_info'],src:'framework.py:190；mimoagent_runner.py:381-407'},
+ th2:{n:'task 工作线程',ty:'thread',cnt:'每 task 1 个',loc:'task 进程内',res:'—',li:['跑同步的 mimoagent harness','K8s Python 客户端、同步 OpenAI SDK、打分、删 Pod 都在这里','多个工具调用时另开线程池并行'],src:'mimoagent_runner.py:259-325,388；agents/default.py:281-282'},
+ th3:{n:'exec 读线程',ty:'thread',cnt:'每次 exec 1 个',loc:'task 进程内',res:'—',li:['从 K8s exec 的 websocket 读输出','codex 的 ptc 模式另外起一个本地子进程和十几个线程'],src:'kubernetes.py:535；code_mode_host.py:413-440'},
+ tr:{n:'TaskRunnerV1',ty:'actor',cnt:'1',loc:'默认调度',res:'裸 @ray.remote：调度时 1 CPU，运行时 0',li:['训练主循环 fit：投批 → 采样 → 训练 → 同步权重','ReplayBuffer 是它进程里的普通对象，每 2 秒查一次 TransferQueue 的标签','数据加载有 8 个子进程，另有一个落盘线程'],src:'main_ppo.py:93-156；trainer_base.py:647-847,952,1458-1461；replay_buffer.py:495-710'},
+ afw:{n:'AgentFrameworkWorker',ty:'actor',cnt:'1',loc:'默认调度（未确认）',res:'默认',li:['async actor：每批一个协程，按题再按 16 个样本展开，信号量上限 2048','给每个会话建网关会话、提交 Ray task、每 ≤5 秒查一次进度','收尾：取回轨迹、选最长链、打分、写 TransferQueue、标记 finished','张量构造在事件循环线程上同步完成'],src:'entry.py:81-149；framework.py:811-990,1036-1251,1579-1752'},
+ lb:{n:'GlobalRequestLoadBalancer',ty:'actor',cnt:'1',loc:'未确认',res:'默认',li:['按 session_id 粘性：同一会话固定到同一 SGLang 副本，利于前缀缓存命中','新会话选在途请求最少的副本','粘性表是 LRU，最多 10000 条'],src:'llm_server.py:46-111,220-226,581-586'},
+ tq:{n:'TransferQueue',ty:'data',cnt:'控制器 1 + 存储单元 8',loc:'未确认',res:'—',li:['外部包 TransferQueue 0.1.8，键值形式存样本','训练器写 prompt 键（pending）；框架写样本键和 finished 标签','训练侧 worker 按键自己拉张量，算完写回','形态与传输：配置注释写 ZMQ 内存存储，推断控制器和存储单元都是 Ray actor'],src:'requirements.txt:28；transfer_queue.yaml:18-29；trainer_base.py:1609-1624；framework.py:1600-1609'},
+ api:{n:'K8s API server',ty:'ext',cnt:'1 个集群',loc:'K8s 控制面',res:'—',li:['task 里的 K8s 客户端经它创建 Pod、轮询就绪（每约 4 秒，最长 1200 秒）、exec、删除','创建前先随机等 0–10 秒，失败最多退避重试 10 次'],src:'kubernetes.py:179-205,278-356,474-546,961-1071'},
+ pod:{n:'Pod（沙箱）',ty:'ext',cnt:'每会话 1 个，最多 2048',loc:'kubeconfig 指向的集群；无 nodeSelector',res:'requests 0.5 CPU / 1 Gi；limits 4 CPU / 8 Gi',li:['镜像是任务镜像，容器只跑一个空转的 bash','工具命令和测试都经 exec 在这里执行','restartPolicy OnFailure；没有 activeDeadlineSeconds'],src:'kubernetes.py:56-64,221-267；config/agent/code/mini-*.yaml'}
+};
+
+let selId=null;
+const detail=document.getElementById('detail');const defaultDetail=detail.innerHTML;
+function showDetail(key){
+  const d=D[key];detail.innerHTML='';
+  const top=document.createElement('div');top.className='d-ty';const p=document.createElement('span');p.className='pill '+d.ty;p.textContent=TYN[d.ty];top.appendChild(p);detail.appendChild(top);
+  const h=document.createElement('h3');h.textContent=d.n;detail.appendChild(h);
+  const dl=document.createElement('dl');[['数量',d.cnt],['在哪',d.loc],['资源',d.res]].forEach(([a,b])=>{const dt=document.createElement('dt');dt.textContent=a;const dd=document.createElement('dd');dd.textContent=b;dl.appendChild(dt);dl.appendChild(dd)});detail.appendChild(dl);
+  const ul=document.createElement('ul');d.li.forEach(s=>{const li=document.createElement('li');li.textContent=s;ul.appendChild(li)});detail.appendChild(ul);
+  const s=document.createElement('div');s.className='src';s.textContent=d.src;detail.appendChild(s);
+}
+function renderDep(){
+  const svg=document.getElementById('svg-dep');defs(svg);
+  G.forEach(g=>{el('rect',{x:g.x,y:g.y,width:g.w,height:g.h,rx:g.cls==='bundle'?5:8,class:'grp '+g.cls},svg);const t=el('text',{x:g.x+(g.cls==='bundle'?8:12),y:g.y+(g.small?15:18),class:'gl'+(g.cls==='pg'?' pg':g.cls==='ext'?' ext':'')+(g.small?' small':'')},svg);t.textContent=g.label;t.dataset.max=g.w-20});
+  LINKS.forEach(p=>el('path',{d:'M'+p.map(q=>q.join(',')).join(' L'),class:'edge link'},svg));
+  E.forEach(e=>el('path',{d:'M'+e.p.map(q=>q.join(',')).join(' L'),class:'edge '+e.m,'marker-end':'url(#svg-dep-'+e.m+')'},svg));
+  N.forEach(n=>{
+    const g=el('g',{class:'node'+(n.dim?' dim':''),tabindex:'0',role:'button','aria-label':n.t+'：'+n.s.join('，')},svg);g.style.setProperty('--k','var('+TY[n.ty]+')');
+    if(n.multi){el('rect',{x:n.x+7,y:n.y-7,width:n.w,height:n.h,rx:6,class:'stack'},g);el('rect',{x:n.x+3.5,y:n.y-3.5,width:n.w,height:n.h,rx:6,class:'stack'},g)}
+    el('rect',{x:n.x,y:n.y,width:n.w,height:n.h,rx:6,class:'box'},g);
+    const pad=n.w<100?7:12;
+    const t=el('text',{x:n.x+pad,y:n.y+(n.h<56?20:22),class:'t'},g);t.textContent=n.t;
+    n.s.forEach((s,i)=>{const st=el('text',{x:n.x+pad,y:n.y+(n.h<56?38:41)+i*17,class:'s'},g);st.textContent=s});
+    const go=()=>{svg.querySelectorAll('.node.sel').forEach(x=>x.classList.remove('sel'));if(selId===n.id){selId=null;svg.classList.remove('dimmed');detail.innerHTML=defaultDetail;return}selId=n.id;g.classList.add('sel');svg.classList.add('dimmed');showDetail(n.ref)};
+    g.addEventListener('click',go);g.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();go()}});
+  });
+  requestAnimationFrame(()=>{svg.querySelectorAll('.node').forEach(g=>{const b=g.querySelector('.box');const w=+b.getAttribute('width');const max=w-(w<100?12:22);g.querySelectorAll('text').forEach(t=>fit(t,max))});svg.querySelectorAll('.gl').forEach(t=>fit(t,+t.dataset.max||700))});
+}
+
+/* ---------- 清单 ---------- */
+const INV=[
+ ['TaskRunnerV1','actor','1','默认调度','调度 1 CPU，运行 0','训练主循环、ReplayBuffer、数据加载（8 个子进程）'],
+ ['WorkerDict（Megatron）','actor','64','每卡 1 个，PG bundle 内','⅓ GPU','训练、算 logprob、把权重推给同卡 SGLang'],
+ ['SGLangHttpServer','actor','32','每节点 4 个，硬亲和','0 GPU，自设 CUDA_VISIBLE_DEVICES','分词、HTTP 入口，abort / sleep / wake'],
+ ['SGLang scheduler','proc','64（推断）','每卡 1 个','Ray 不记账','模型前向（TP rank）'],
+ ['SGLang detokenizer','proc','32（推断）','每副本 1 个','Ray 不记账','token 转文本'],
+ ['GlobalRequestLoadBalancer','actor','1','未固定','默认','会话粘性 + 最少在途'],
+ ['GatewayActor','actor','8','每 GPU 节点 1 个，软亲和','默认','模型请求入口、前缀匹配、增量分词、存轨迹、续传'],
+ ['AgentFrameworkWorker','actor','1','未固定','默认','全部会话的协程、提交 task、收尾、写 TQ'],
+ ['RewardLoopWorker','actor','8','每节点 1 个，软亲和','—','备用打分，本配置通常闲置（推断）'],
+ ['TQ 控制器 + 存储单元','actor','1 + 8（推断）','未确认','—','样本元数据与张量存储'],
+ ['数据加载 worker','proc','8','TaskRunnerV1 的子进程','—','读题、组 prompt 批'],
+ ['每会话 runner','task','每批 1024，上限 2048','任意有空闲 CPU 的节点','0.5 CPU','驱动 agent：建 Pod、调网关、exec、打分、删 Pod'],
+ ['get_master_addr_port','task','1 次','PG 的 bundle 0','—','取分布式训练的主地址'],
+ ['task 主线程','thread','每 task 1','task 进程内','—','asyncio.run，最后 POST 奖励'],
+ ['task 工作线程','thread','每 task 1','task 进程内','—','to_thread 跑同步 harness：K8s 客户端、OpenAI SDK、打分'],
+ ['exec 读线程','thread','每次 exec 1','task 进程内','—','读 websocket 输出'],
+ ['工具线程池','thread','按需','task 进程内','—','多个工具调用并行'],
+ ['网关事件循环','thread','每网关 1','网关 actor 内','—','HTTP（uvicorn）与 Ray 方法共用；分词在循环上同步执行'],
+ ['K8s API server','ext','1 个集群','K8s 控制面','—','所有 Pod 操作的入口'],
+ ['Pod','ext','每会话 1，最多 2048','K8s 节点','requests 0.5/1Gi，limits 4/8Gi','任务镜像；命令经 exec 执行']
+];
+function renderInv(f){
+  const tb=document.getElementById('inv');tb.innerHTML='';
+  INV.filter(r=>f==='all'||r[1]===f).forEach(r=>{const tr=document.createElement('tr');const th=document.createElement('th');th.scope='row';th.textContent=r[0];tr.appendChild(th);
+    const td=document.createElement('td');const p=document.createElement('span');p.className='pill '+r[1];p.textContent=TYN[r[1]];td.appendChild(p);tr.appendChild(td);
+    [r[2],r[3],r[4],r[5]].forEach((v,i)=>{const c=document.createElement('td');if(i===0)c.className='num';c.textContent=v;tr.appendChild(c)});tb.appendChild(tr)});
+}
+document.querySelectorAll('.filters button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.filters button').forEach(x=>x.setAttribute('aria-pressed',x===b));renderInv(b.dataset.f)}));
+
+/* ---------- 资源计算 ---------- */
+function calc(){
+  const inp=document.getElementById('vcpu');let v=parseFloat(inp.value);if(!isFinite(v)||v<0)v=0;
+  const pg=24,free=Math.max(0,v-pg),per=Math.floor(free/0.5),tot=per*8;
+  const rows=document.getElementById('calc-rows');rows.innerHTML='';
+  [['每节点逻辑 CPU',v],['PG 预留（8 × 3）',pg],['剩给 task 的',free],['每节点可同时放的 task（÷0.5）',per],['8 台合计',tot],['需要（并发上限）',2048]].forEach(([a,b])=>{const x=document.createElement('span');x.textContent=a;const y=document.createElement('span');y.textContent=b;rows.appendChild(x);rows.appendChild(y)});
+  document.getElementById('calc-out').textContent=tot>=2048?'够：2048 个会话可以同时拿到 CPU 记账。':'不够：超出的 '+(2048-tot)+' 个 task 会在 Ray 里排队，而会话计时已经开始。';
+}
+document.getElementById('vcpu').addEventListener('input',calc);
+
+/* ---------- 时序图 ---------- */
+const LANES=[['训练驱动','TaskRunnerV1','actor'],['数据存储','TransferQueue','data'],['agent 框架','AgentFrameworkWorker','actor'],['网关 ×8','GatewayActor','actor'],['推理 ×32','LB + SGLang','actor'],['会话 runner','Ray task','task'],['沙箱','K8s Pod','ext']];
+const LX=i=>80+i*155;
+const STEPS=[
+ [0,1,'tq','写 prompt（pending）','训练驱动：按 uid 写 prompt 键，标 pending','trainer_base.py:1609-1620'],
+ [0,2,'rpc','generate_sequences.remote（即发即走）','训练驱动 → 框架；ObjectRef 直接丢弃，结果只走 TQ','trainer_base.py:1624；entry.py:143-149'],
+ [2,2,'','拆成 64 题 × 16 个会话，信号量上限 2048','框架的事件循环','framework.py:811-990'],
+ [2,3,'rpc','create_session','框架 → 网关，返回会话句柄与 URL','framework.py:1036；gateway.py:282-306'],
+ [2,5,'rpc','提交 Ray task；之后每 ≤5 秒查一次','框架；超时 4800 秒、空闲 720 秒','framework.py:1052-1077,1204-1246'],
+ [5,6,'k8s','建 Pod，等就绪','task 的工作线程','mimoagent_runner.py:259-261；kubernetes.py:264-356'],
+ [5,3,'http','每轮模型请求','task 工作线程里的同步 OpenAI SDK → 网关 uvicorn','openai_chat.py:97；session.py:224-340'],
+ [3,4,'rpc','token ids → generate','网关：前缀匹配、只 tokenize 新增；LB 选副本后 Ray 调用 SGLang','session.py:467-552,267；llm_server.py:220-263'],
+ [5,6,'k8s','exec 工具命令','task 工作线程，websocket 读线程收输出','kubernetes.py:437-584'],
+ [5,6,'k8s','跑测试打分；删 Pod','task 工作线程','mimoagent_runner.py:282-325'],
+ [5,3,'http','POST reward_info','task 主线程；task 返回 None','mimoagent_runner.py:407；gateway.py:157-165'],
+ [3,2,'rpc','finalize → 返回轨迹','框架调用网关，轨迹作为 Ray 返回值交回','framework.py:1089-1188；gateway.py:313-318'],
+ [2,1,'tq','写样本，标 finished','框架：选最长链，按 {uid}_{s}_{i} 写样本，组完成后标 finished；张量构造在事件循环上同步完成','framework.py:906-931,1600-1609'],
+ [1,0,'tq','查标签，凑 64 组','训练驱动里的 ReplayBuffer 每 2 秒查一次；凑够 64 组后 abort 推理并开始训练','replay_buffer.py:145-230,676-699；trainer_colocate_async.py:55-59']
+];
+function renderSeq(){
+  const svg=document.getElementById('svg-seq');defs(svg);
+  const y0=92,dy=38,H=y0+dy*(STEPS.length-1)+40;svg.setAttribute('viewBox','0 0 1100 '+H);
+  LANES.forEach((l,i)=>{const x=LX(i);el('line',{x1:x,x2:x,y1:58,y2:H-8,class:'life'},svg);
+    const g=el('g',{class:'node lane-h'},svg);g.style.setProperty('--k','var('+TY[l[2]]+')');g.style.cursor='default';
+    el('rect',{x:x-71,y:10,width:142,height:46,rx:6,class:'box'},g);const t=el('text',{x:x,y:29,class:'t','text-anchor':'middle'},g);t.textContent=l[0];const s=el('text',{x:x,y:46,class:'s','text-anchor':'middle'},g);s.textContent=l[1];
+    requestAnimationFrame(()=>{fit(t,132);fit(s,132)})});
+  STEPS.forEach((st,k)=>{const y=y0+k*dy;const a=LX(st[0]),b=LX(st[1]);
+    if(st[0]===st[1]){el('path',{d:`M${a},${y-8} h22 v14 h-18`,class:'edge rpc','marker-end':'url(#svg-seq-rpc)'},svg);
+      const t=el('text',{x:a+30,y:y+4,class:'sl'},svg);const n=el('tspan',{class:'n'},t);n.textContent=(k+1)+'  ';t.appendChild(document.createTextNode(st[3]));return}
+    el('path',{d:`M${a},${y} L${b},${y}`,class:'edge '+st[2],'marker-end':'url(#svg-seq-'+st[2]+')'},svg);
+    const t=el('text',{x:(a+b)/2,y:y-7,class:'sl','text-anchor':'middle'},svg);const n=el('tspan',{class:'n'},t);n.textContent=(k+1)+'  ';t.appendChild(document.createTextNode(st[3]));
+    requestAnimationFrame(()=>fit(t,Math.abs(b-a)-12));
+  });
+  const ya=y0+6*dy-14,yb=y0+8*dy+6,xr=1062;el('path',{d:`M${xr-8},${ya} h8 V${yb} h-8`,class:'rep'},svg);const rt=el('text',{x:xr+6,y:(ya+yb)/2+4,class:'rep-t'},svg);rt.textContent='每轮';
+  const ol=document.getElementById('seq-steps');STEPS.forEach(st=>{const li=document.createElement('li');const d=document.createElement('div');const a=document.createElement('div');a.textContent=st[3];const w=document.createElement('div');w.className='who';w.textContent=st[4];const s=document.createElement('div');s.className='src';s.textContent=st[5];d.appendChild(a);d.appendChild(w);d.appendChild(s);li.appendChild(d);ol.appendChild(li)});
+}
+
+/* ---------- 训练步时间线 ---------- */
+const TL={
+ colo:{cap:'64 张卡在“推理”和“训练”之间来回切换，同一时刻只做一件事；Pod 里的工具和测试一直在跑。示意图，不按比例。',
+  lanes:[['64 张 GPU','训练与推理同卡'],['网关里的客户端','续传状态在这里'],['Ray task 与 Pod','CPU 侧']],
+  segs:[
+   [0,180,560,'SGLang 生成（32 个副本）','--t-proc'],[0,560,622,'abort','--warn'],[0,622,860,'Megatron 训练：old logp → 优势 → 更新','--t-gpu'],[0,860,935,'权重 IPC','--t-data'],[0,935,1080,'resume，继续生成','--t-proc'],
+   [1,180,560,'请求正常往返','--t-actor'],[1,560,935,'被 abort：保留已生成 token，每 1 秒重试','--faint'],[1,935,1080,'带已生成部分重发','--t-actor'],
+   [2,180,1080,'一直在跑：工具命令和测试照常执行；模型请求在网关处等待','--t-ext']],
+  marks:[[560,'ReplayBuffer 凑够 64 组（陈旧度 ≤ 2）']],
+  notes:['触发：ReplayBuffer 每 2 秒查一次 TQ，凑够 64 个已完成、陈旧度 ≤ 2 的组就开始这一步；陈旧度超标的组整组丢弃并补投新题。','abort 时 SGLang 返回已生成的 token；网关里的客户端累积它们，恢复后用“prompt＋已生成”重发，并扣减 max_tokens。','KV 缓存在 sleep 时已经释放，续传要重新 prefill（推断）。','权重同步是 naive 模式：同卡 CUDA IPC，经 gloo 汇到 tp0 后交给 SGLang，不用 NCCL，也不经共享存储。','开训前先投 1 个 warmup 批，之后每步预投下一批，所以 CPU 侧始终有会话在跑。','“异步”指未完成的轨迹可以跨权重版本续传，以及环境在 CPU 侧不停；GPU 本身不同时训练和推理。']},
+ sep:{cap:'推理池和训练池用不同的卡，各自不停；每个训练步含 parameter_sync_step（默认 4）次 mini-batch 更新，步末同步一次权重。示意图，不按比例；code recipe 默认没开。',
+  lanes:[['推理池 GPU','独立 PG rollout_pool_i'],['训练池 GPU','启动时也兼做推理'],['网关里的客户端','续传状态在这里']],
+  segs:[
+   [0,180,600,'持续生成','--t-proc'],[0,600,640,'同步','--t-data'],[0,640,1040,'持续生成','--t-proc'],[0,1040,1080,'同步','--t-data'],
+   [1,180,285,'更新 1','--t-gpu'],[1,285,390,'更新 2','--t-gpu'],[1,390,495,'更新 3','--t-gpu'],[1,495,600,'更新 4','--t-gpu'],[1,600,640,'广播','--t-data'],[1,640,745,'更新 1','--t-gpu'],[1,745,850,'更新 2','--t-gpu'],[1,850,955,'更新 3','--t-gpu'],[1,955,1040,'更新 4','--t-gpu'],[1,1040,1080,'广播','--t-data'],
+   [2,180,600,'请求正常往返','--t-actor'],[2,600,640,'续传','--faint'],[2,640,1040,'请求正常往返','--t-actor'],[2,1040,1080,'续传','--faint']],
+  marks:[[600,'同步权重'],[1040,'同步权重']],
+  notes:['开启条件：TRAINER_MODE=separate_async、rollout.nnodes > 0、checkpoint engine 不能是 naive（trainer_separate_async.py:55-61）。','同步顺序：abort → 释放 KV → 建通信组 → 发送/接收 → 收尾 → 恢复 KV → resume（checkpoint_engine/base.py:498-538）。','NCCL 后端：权重用 ray.util.collective 广播，元数据走 ZMQ；推理侧再用 CUDA IPC 交给 SGLang。另有 nixl、mooncake 等后端。','一个同步周期内，old logp 用 CPU 上保存的 π_old 快照计算（trainer_separate_async.py:103-127）。','训练池启动时处于推理模式，第一次采样结束后切到训练；之后切回推理的判断是 TODO，恒返回 False，所以训练池之后只训练。','陈旧度控制和 colocate_async 相同，partial rollout 复用同一个续传客户端。']}
+};
+function renderTL(mode){
+  const d=TL[mode];const svg=document.getElementById('svg-tl');svg.innerHTML='';
+  document.getElementById('b-colo').setAttribute('aria-pressed',mode==='colo');document.getElementById('b-sep').setAttribute('aria-pressed',mode==='sep');
+  document.getElementById('tl-cap').textContent=d.cap;
+  const LY=[56,120,184],BH=44;
+  d.lanes.forEach((l,i)=>{const a=el('text',{x:0,y:LY[i]+20,class:'lane-l'},svg);a.textContent=l[0];const b=el('text',{x:0,y:LY[i]+37,class:'lane-s'},svg);b.textContent=l[1]});
+  d.segs.forEach(s=>{const y=LY[s[0]],w=s[2]-s[1];const r=el('rect',{x:s[1]+1,y:y,width:w-2,height:BH,rx:4},svg);r.style.fill='var('+s[4]+')';if(s[4]==='--faint')r.style.opacity='.55';
+    const t=el('text',{x:s[1]+w/2,y:y+BH/2+4,class:'bar-t'+(s[4]==='--faint'?' dark':''),'text-anchor':'middle'},svg);t.textContent=s[3];requestAnimationFrame(()=>{fit(t,w-10);if(t.getComputedTextLength&&t.getComputedTextLength()>w-6)t.textContent=''})});
+  d.marks.forEach(m=>{el('line',{x1:m[0],x2:m[0],y1:30,y2:236,class:'mark-l'},svg);const t=el('text',{x:m[0]+(m[0]>900?-6:6),y:42,class:'mark-t','text-anchor':m[0]>900?'end':'start'},svg);t.textContent=m[1]});
+  const ul=document.getElementById('tl-notes');ul.innerHTML='';d.notes.forEach(n=>{const li=document.createElement('li');li.textContent=n;ul.appendChild(li)});
+  try{localStorage.setItem('mimo-tl',mode)}catch(e){}
+}
+document.getElementById('b-colo').addEventListener('click',()=>renderTL('colo'));
+document.getElementById('b-sep').addEventListener('click',()=>renderTL('sep'));
+
+/* ---------- 数据通道 ---------- */
+const CH=[
+ ['prompt 批','训练驱动 → 框架','Ray 调用参数（经对象存储）','trainer_base.py:1624'],
+ ['会话句柄','框架 ↔ 网关','Ray 调用','framework.py:1036'],
+ ['模型请求与回复（消息）','Ray task → 网关','HTTP（OpenAI / Anthropic 兼容）','session.py:224-340'],
+ ['token ids、logprob','网关 → SGLang','Ray 调用（不走 HTTP）','llm_server.py:263；async_sglang_server.py:636-652'],
+ ['工具命令与输出','Ray task → Pod','K8s API exec（websocket）','kubernetes.py:474-546'],
+ ['奖励','Ray task → 网关','HTTP POST /reward_info','mimoagent_runner.py:407'],
+ ['整条轨迹','网关 → 框架','Ray 返回值（finalize）','gateway.py:313-318'],
+ ['训练样本张量','框架 → TQ → 64 个 GPU worker','TransferQueue：Ray 只传键和标签，张量走 ZMQ（推断）','framework.py:1600-1609；transferqueue_utils.py:376-420'],
+ ['训练批分发','训练驱动 → 64 个 worker','Ray 调用只传 KVBatchMeta（键＋标签），worker 自己从 TQ 拉','decorator.py:225-280'],
+ ['权重（colocate）','Megatron → 同卡 SGLang','CUDA IPC 句柄，经 gloo 汇到 tp0 后交给 SGLang','sglang_rollout.py:201-210,345-369'],
+ ['权重（separate）','训练池 → 推理池','NCCL 广播（ray.util.collective）＋ ZMQ 元数据','nccl_checkpoint_engine.py:49-90']
+];
+const tb=document.getElementById('ch');CH.forEach(r=>{const tr=document.createElement('tr');const th=document.createElement('th');th.scope='row';th.style.fontFamily='var(--font-cjk)';th.textContent=r[0];tr.appendChild(th);[r[1],r[2],r[3]].forEach((v,i)=>{const td=document.createElement('td');td.textContent=v;if(i===2){td.style.fontFamily='var(--font-mono)';td.style.fontSize='12px';td.style.color='var(--muted)'}tr.appendChild(td)});tb.appendChild(tr)});
+
+/* ---------- 对照 RH2 ---------- */
+const MAP=[
+ ['训练驱动','TaskRunnerV1（1 个 actor）','miles driver（train_async 主循环）'],
+ ['训练进程','64 个 Megatron actor，进 PG','6 卡 Megatron actor（现有启动器默认）'],
+ ['推理','32 个 SGLang actor，与训练同卡','1 个 SGLang 引擎（TP2），单独 2 卡'],
+ ['路由','LB actor，按会话粘性','MilesRouter 子进程，不按会话粘性'],
+ ['模型请求入口','8 个网关 actor（各自一个进程）','RolloutManager 里的 1 个代理线程'],
+ ['会话协调','AgentFrameworkWorker（1 个 async actor）','RolloutManager 的 miles 后台循环'],
+ ['每会话执行者','Ray task（独立进程，0.5 CPU）','编排协程（同一进程）＋容器里的 Claude Code'],
+ ['沙箱','K8s Pod（可另一个集群）','本机 docker 容器'],
+ ['样本数据面','TransferQueue（Ray 只传键）','经 RolloutManager 内存，再切成 Ray 对象'],
+ ['训推关系','同卡切换（默认）；可选分离模式','分卡全异步，发布时 NCCL 广播'],
+ ['partial rollout','abort 后由网关里的客户端续传','全异步模式下未启用']
+];
+const mb=document.getElementById('map');MAP.forEach(r=>{const tr=document.createElement('tr');const th=document.createElement('th');th.scope='row';th.style.fontFamily='var(--font-cjk)';th.textContent=r[0];tr.appendChild(th);[r[1],r[2]].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.appendChild(td)});mb.appendChild(tr)});
+
+renderDep();renderInv('all');calc();renderSeq();
+let m='colo';try{m=localStorage.getItem('mimo-tl')==='sep'?'sep':'colo'}catch(e){}
+renderTL(m);
+})();
+</script>

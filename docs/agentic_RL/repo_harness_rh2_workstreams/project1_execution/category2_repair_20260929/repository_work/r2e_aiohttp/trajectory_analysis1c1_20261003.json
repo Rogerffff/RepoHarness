@@ -1,0 +1,165 @@
+{
+  "schema_id": "rh2.category2.aiohttp.owner_first_round_behavior.v1",
+  "created_at": "2026-10-03T05:08:16.019516+00:00",
+  "task_id": "r2e_gym_subset::aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52",
+  "request_id": "aiohttp1c1-r080081-probe-wide-v1-20261003",
+  "scope": "固定两模型首轮各1；不是统一第二阶段或正式训练。",
+  "owner_first_round_analysis_complete": true,
+  "normal_solver_completions": 2,
+  "valid_formal_grades": 2,
+  "invalid_formal_grades": 0,
+  "formal_invalid_not_coerced_to_zero": true,
+  "semantic_results": [
+    {
+      "model": "qwen36",
+      "owner_verdict": "accepted_current_duplicate_error_goal_with_scope_limits",
+      "raw_reward": 1.0,
+      "analysis": {
+        "localization": "先读run_app/runner/cleanup context，实际复现caller RuntimeError与重复loop报告。",
+        "candidate_semantics": "_cancel_tasks在取消前记already_done；对已完成异常任务去重，对取消过程中新cleanup异常仍按原handler报告；当前run_app传main或all_tasks，后者不含done。",
+        "correction": "修正/tmp导入路径和缺logging；生产代码一次Edit。pending脚本误把stopper写成coroutine，打印成功不证明精确中断路径。",
+        "validation": "实际重复报告由1到0，caller RuntimeError保留；公开55 passed；正式58键精确通过包括新增中断后cleanup新错可观察键。",
+        "events": {
+          "edit_request_line": 158,
+          "edit_result_line": 162,
+          "post_fix_duplicate_check_result_line": 180,
+          "public_55_passed_result_line": 200
+        },
+        "tools": {
+          "Read": 5,
+          "Bash": 10,
+          "Edit": 1,
+          "total": 16,
+          "error_flags": 2,
+          "error_interpretation": "2个错误标志是原临时脚本导入/缺logging；pipe与打印成功另核，不全算infra。"
+        },
+        "parallel": {
+          "multi_tool_generation_batches": [
+            {
+              "first_line": 7,
+              "count": 2
+            }
+          ],
+          "opportunities": "独立读源/测试与独立复现有同批机会；修改、复验、恢复有依赖。",
+          "actual_execution_overlap": "unknown；缺完整工具起止时间",
+          "stable_parallel_ability_inference": false
+        },
+        "usage": {
+          "generation_requests": 16,
+          "cc_turns": 17,
+          "input_tokens": 559669,
+          "output_tokens": 7145,
+          "input_definition": "累计逐次请求上下文，不是峰值context。"
+        },
+        "time": {
+          "solve_seconds": 82.05,
+          "cc_api_seconds": 47.1,
+          "cc_total_seconds": 78.79,
+          "trusted_init_seconds_outside_solver": 60.605,
+          "grading_seconds": 93.092,
+          "model_queue_wait": "unknown",
+          "api_pure_model_compute": "unknown",
+          "cc_non_api_pure_tool_time": "unknown"
+        }
+      },
+      "limits": [
+        "已有done均正在向caller传播的注释过宽，不外推直接调用helper的任意done集合。",
+        "pending脚本实际TypeError且新FAIL仍报告；不能替代正式KeyboardInterrupt参考。"
+      ]
+    },
+    {
+      "model": "coder",
+      "owner_verdict": "accepted_current_duplicate_error_goal_cancelled_main_cleanup_residual",
+      "raw_reward": 1.0,
+      "analysis": {
+        "localization": "先读web和公开测试，实际复现caller异常与重复loop报告，定位run_app finally。",
+        "candidate_semantics": "主任务done且有exception时跳过仅main的_cancel_tasks，其它任务/asyncgens/close按原序；新条件缺cancelled guard。",
+        "correction": "一次生产Edit；comprehensive helper错误要求去重后stderr仍1次，随后修正理解，用其它实际脚本验证原异常传播；未再改生产代码，失败helper原样保留。",
+        "validation": "公开55 passed，startup/cleanup信号、cancel-failed-task、正常coroutine app各1 passed；正式58键通过。",
+        "events": {
+          "edit_request_line": 88,
+          "edit_result_line": 92,
+          "post_fix_reproduction_result_line": 105,
+          "public_55_passed_result_line": 120,
+          "mistaken_helper_result_line": 142
+        },
+        "tools": {
+          "Read": 3,
+          "Bash": 10,
+          "Write": 5,
+          "Edit": 1,
+          "total": 19,
+          "error_flags": 3,
+          "error_interpretation": "3个错误标志包括原目标复现异常与错误helper要求；不能全算infra。"
+        },
+        "parallel": {
+          "multi_tool_generation_batches": [],
+          "opportunities": "独立读源/测试与独立复现有同批机会；修改、复验、恢复有依赖。",
+          "actual_execution_overlap": "unknown；缺完整工具起止时间",
+          "stable_parallel_ability_inference": false
+        },
+        "usage": {
+          "generation_requests": 20,
+          "cc_turns": 20,
+          "input_tokens": 571371,
+          "output_tokens": 4996,
+          "input_definition": "累计逐次请求上下文，不是峰值context。"
+        },
+        "time": {
+          "solve_seconds": 92.988,
+          "cc_api_seconds": 46.1,
+          "cc_total_seconds": 89.617,
+          "trusted_init_seconds_outside_solver": 62.054,
+          "grading_seconds": 95.537,
+          "model_queue_wait": "unknown",
+          "api_pure_model_compute": "unknown",
+          "cc_non_api_pure_tool_time": "unknown"
+        }
+      },
+      "limits": [
+        "public coroutine app可以令主任务done+cancelled；Task.exception()抛CancelledError，静态上会跳过后续任务取消/asyncgens/loop.close。本轮轨迹未触发，无新反例运行。",
+        "test_run_app_coro只测正常返回；58/58不证明全取消边界，最后all tests断言也不覆盖遗留失败helper。"
+      ]
+    }
+  ],
+  "comparison_boundaries": {
+    "same_material_public_prompt_canonical_baseline_and_image": true,
+    "named_budget": "probe-wide-v1",
+    "sampling": "各模型既定默认值；不声称两模型采样数值相同。",
+    "profiles": "UID54321/2CPU/4GiB/512pids相同；relay端口和摘要不同，不称同profile digest。",
+    "model_time_vs_environment_tool_queue": "原solver/CC API/CC总时长、trusted_init与grade分别列；API非纯模型计算，CC差额非纯工具时间，排队未知。",
+    "single_trial": "不能下稳定成功率、稳定并行能力或广泛正确性结论。",
+    "qwen_queue": "实际queue_v11，非Q10。"
+  },
+  "review_method": "主审原件/逐键核算，加GPU独立执行与一次非作者双角色窄核；已见私有，不是fresh盲审。",
+  "refs": {
+    "human_analysis": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/1c1_trajectory_analysis_20261003.md",
+      "sha256": "sha256:0feeb7855ff61edae0a1c880f09f29647cc3ea4e0954a288017931765c4efe70"
+    },
+    "qwen_owner_result": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/results1c1_qwen36_a1_20261003.json",
+      "sha256": "sha256:3e5eb2d6e54dd0d0fa4e41e1bf66a8b4ea1acff625c18492cb6c73e7459a3b56"
+    },
+    "coder_owner_result": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/results1c1_coder_a1_20261003.json",
+      "sha256": "sha256:c7cc3eef5023bb71a70770126f0b3589e7b942d9a4604eeb7c652abecb55c806"
+    },
+    "aggregate_readback": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/aggregate_receipt_readback1c1_20261003.json",
+      "sha256": "sha256:da83f6d98e667640b64705ea8b9343671b7afa869111fb60a7b1a5b78b24f550"
+    },
+    "independent_review_acceptance": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/review_acceptance1c1_240d_gpu_first_round_20261003.json",
+      "sha256": "sha256:969c8e2b6f4e4019bf5665aa52c89b2d173392eebd9b06f25e7eca9376f25e08"
+    }
+  },
+  "requires_cpu_now": false,
+  "known_cpu_reruns": [],
+  "known_cpu_repairs": [],
+  "pending_required_cpu_archives": [],
+  "second_stage_repetition_pending": true,
+  "first_round_retry_to_force_success": false,
+  "training_or_holdout_eligibility_granted": false,
+  "next": "核收原请求并清活动交接；保留全部原候选和原分；第二阶段按统一门槛/队列同条件重复。"
+}

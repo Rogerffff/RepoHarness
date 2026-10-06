@@ -1,0 +1,190 @@
+{
+  "task_id": "r2e_gym_subset::pillow__4bc6483564ae1a254911e98280b9a501f047a2e0",
+  "instance_id": "pillow__4bc6483564ae1a254911e98280b9a501f047a2e0",
+  "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0（无材料修订；静态筛查材料 v3，协调者确认 v3–v9 对本题相同）",
+  "source_adapter_ref": {
+    "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl:41（line_sha256 b89fc34812b841bf12388f63a346a8a4b6dce6bb0a3405aece51b07579656ecf）",
+    "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl（line_sha256 7f4fa7dc8b9afb627aecfb7a5cbf2e55d254bda595dd1d361db53dcd26b91f07）",
+    "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/validation_bundles_v0.jsonl:41",
+    "static_packages": "runs/r2e_static_prep_20260924/v3/{public,private}/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/"
+  },
+  "recipe_ref": {
+    "current": {
+      "derived_image_ref": "rh2-r2e-derived/pillow:4bc6483564ae-r2e_derive_v1s",
+      "derived_image_id": "sha256:d6de40456fb7254f4e21b0f5018a35b52b9a5619e14f1ed4f9a87e66f4fd0b44",
+      "recipe_id": "r2e_derive_v1+sysconfig_v1",
+      "recipe_sha256": "sha256:e2e17bf12b0edf5d1f77eb315a7c8cd91e36dde70b6a272c81b04976b98a7270",
+      "base_image_manifest_digest": "sha256:d9a22bd174e9a38c9ed80d1b0858d1845de2514363b550444e6b0249dd3b113a",
+      "resources": "default：2 CPU / 4 GiB / /tmp 1 GiB（无逐题资源配方）"
+    },
+    "superseded_for_comparison": {
+      "recipe_id": "r2e_derive_v1",
+      "recipe_sha256": "sha256:0da821a15fa389289f524c60d3a421bc940cce753e4ecf3d53560b7ab6b31df9",
+      "derived_image_id": "sha256:28c11ac277e6e46eb2d940534919dbaaa25addd3d2080a3574368f066ca19e5c",
+      "note": "09-23 / 09-24 旧机；noop / gold 键级结果与新机一致"
+    }
+  },
+  "code_snapshot_ref": {
+    "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+    "scripts_digest": "sha256:e46437a93a9db55da7f43245c2a7de009ea33c53d951b102147d3fa51e8c5185",
+    "grader_profile_digest_new_machine": "sha256:3ec1bfa87ff800d5d2c5e53e874603f6850b64e1392baa167968b9ec31a50a94",
+    "devcheck": "rh2/experiments/r2e_actor_20260925/r2e_devcheck.py；overlays.jsonl sha256:3e9fc923af23735bdbd64a6db41b6925e8466eac604745e8a6c824a3938127c8；rollout profile sha256:68d162a7e97001630928b48f016114af935701be8c89efbc03444272225ecb61；Claude Code 2.1.205（桩端点）"
+  },
+  "facts_ref": [
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l1_noop.jsonl:11",
+    "runs/r2e_lifecycle_20260929/env_verify/ledger_l1_gold.jsonl:11",
+    "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/",
+    "runs/r2e_lifecycle_20260929/inv/pillow_4bc6/",
+    "runs/r2e_static_prep_20260924/v3/private/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/run_refs.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/facts.json（旧机，历史对照）"
+  ],
+  "checks": {
+    "1": {"status": "pass", "by": "私有主审（静态 + 日志）", "note": "base ImageOps.py 的 blob c6201d8ff 等于 gold 前像；题面 commit 等于 base；隐藏测试树 7e15b739… 在新旧日志中一致；期望 sha256 d8bc5a2b… 与评分面一致", "evidence_refs": ["runs/r2e_static_prep_20260924/v3/private/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/grading_bundle.json", "runs/r2e_lifecycle_20260929/inv/pillow_4bc6/logs_D1/evallog_replay-r2e-inv-4bc6-D1-0_a13fcfcb.eval.log"]},
+    "2": {"status": "pass", "by": "日志 + devcheck", "note": "noop 只有 test_sanity 失败，原因是题面所述 OSError（ImageOps.py:58）；题面原例在解题身份下原样复现，原始像素为 1", "evidence_refs": ["runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-p_8c5689aa.eval.log", "runs/r2e_lifecycle_20260929/env_verify/ledger_l1_noop.jsonl:11", "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/orig/captures/repro_issue_example.out"]},
+    "3": {"status": "unknown", "by": "私有主审", "note": "公开包的渲染与 v3 公开提示已静态核对；模型实际收到的完整任务消息未捕获（devcheck 用的是专用提示）", "evidence_refs": ["runs/r2e_static_prep_20260924/v3/public/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/public_bundle.json"]},
+    "4": {"status": "pass", "by": "账本", "note": "gold 与 4 个候选的投影都包含 src/PIL/ImageOps.py；无额外排除", "evidence_refs": ["runs/r2e_lifecycle_20260929/env_verify/ledger_l1_gold.jsonl:11", "runs/r2e_lifecycle_20260929/inv/pillow_4bc6/ledger_D1.jsonl"]},
+    "5": {"status": "issue", "by": "私有主审（逐条 grep 核对机械比对）", "note": "X1：本题 gold 逐字出现在 pillow 3a61c9e9 / f9d3ee0f / a682ceaf 的初始工作树；本题初态含 2b061b68、2d01f7d0 的修复与三题新测试", "evidence_refs": ["runs/r2e_static_prep_20260924/cross_task_gold_scan.json", "runs/r2e_static_prep_20260924/cross_task_test_scan.json"]},
+    "6": {"status": "pass", "by": "devcheck + 账本", "note": "解题与评分同一派生镜像；python 3.9.21、pytest 8.3.4、packaging 24.2；编译扩展在树内；本题不需要构建", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/orig/captures/env_pil_import.out"]},
+    "7": {"status": "pass", "by": "devcheck + 日志", "note": "Tests/images 资产齐全；jpg / zlib / libtiff 可用；读 .jpg 的键都 PASSED", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/orig/captures/env_pil_import.out"]},
+    "8": {"status": "pass", "by": "devcheck + 账本", "note": "解题身份 uid 54321 下 8 条命令都符合预期、激活文件不可写；评分身份 54322", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/devcheck.log"]},
+    "9": {"status": "pass", "by": "账本 + 私有行为检查", "note": "解题侧与评分侧都从 /testbed/src/PIL 导入；4 个候选的行为差异与补丁一致", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/pillow_4bc6/pcheck_canon_D1.json", "runs/r2e_lifecycle_20260929/inv/pillow_4bc6/pcheck_canon_W1.json"]},
+    "10": {"status": "pass", "by": "devcheck", "note": "正式启动路径（CC 2.1.205 + 桩）下公开命令 8/8 符合预期；最小公开验证为亚秒级（pytest_imageops 0.54 s）", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/orig/attempt.json"]},
+    "11": {"status": "pass", "by": "账本 + devcheck", "note": "各阶段都不需要网络；评分 deny_all", "evidence_refs": ["runs/r2e_lifecycle_20260929/env_verify/ledger_l1_gold.jsonl:11"]},
+    "12": {"status": "not_applicable", "by": "私有主审", "note": "不依赖外部服务", "evidence_refs": []},
+    "13": {"status": "pass", "by": "账本", "note": "内存峰值 510–513 MB / 4 GiB；测试 1.6–2.3 s；新机评分可信准备约 82 s（旧机 24 s，是机器差异）", "evidence_refs": ["runs/r2e_lifecycle_20260929/env_verify/ledger_l1_gold.jsonl:11"]},
+    "14": {"status": "pass", "by": "账本", "note": "noop 0 与 gold 1 各 3 次（旧机 2 次、新机 1 次），键级一致；M3 在来源镜像上 gold 2 次", "evidence_refs": ["runs/r2e_static_prep_20260924/v3/private/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/run_refs.json", "runs/r2e_lifecycle_20260929/env_verify/ledger_l1_noop.jsonl:11"]},
+    "16": {"status": "pass", "by": "账本", "note": "git_apply；apply rc 0；日志 git status 显示 M src/PIL/ImageOps.py", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/pillow_4bc6/logs_D1/evallog_replay-r2e-inv-4bc6-D1-0_a13fcfcb.eval.log"]},
+    "17": {"status": "pass", "by": "日志", "note": "RH2_SETUP_RESTORED=3、EXPECTED_TEST_FILES=4；隐藏 helper 与 base Tests/helper.py 相同，由 grader 恢复", "evidence_refs": ["runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-p_48c7d1b3.eval.log"]},
+    "18": {"status": "pass", "by": "日志", "note": "收集 24 个、执行 24 个；segment_completed", "evidence_refs": ["runs/r2e_lifecycle_20260929/env_verify/ledger_l1_gold.jsonl:11"]},
+    "19": {"status": "pass", "by": "账本", "note": "期望键带 ANSI，prime_decolor_v1 规范化后 24/24 对上", "evidence_refs": ["runs/r2e_lifecycle_20260929/env_verify/ledger_l1_gold.jsonl:11"]},
+    "20": {"status": "pass", "by": "日志", "note": "noop 与 gold 只差 test_sanity，原因是目标 OSError", "evidence_refs": ["runs/r2e_lifecycle_20260929/env_verify/ledger_l1_noop.jsonl:11"]},
+    "21": {"status": "pass", "by": "账本", "note": "无 stage_error；noop 的 failure_category=tests_failed", "evidence_refs": ["runs/r2e_lifecycle_20260929/env_verify/ledger_l1_noop.jsonl:11"]},
+    "22": {"status": "pass", "by": "历史对账", "note": "旧机与 M3 独立 runner 逐键一致；新镜像没有重做", "evidence_refs": ["docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/facts.json"]},
+    "23": {"status": "issue", "by": "私有主审 + devcheck 私有对照", "note": "S2 登记（P4 / G1）：题面示例 color=1 是非规范存储值，反相输出没有定义；gold 实测输出 254，按 1-bit 语义仍全白", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/private_control.json"]},
+    "24": {"status": "pass", "by": "正式评分", "note": "替代解 A1（1-bit 归一）与 A2（放宽 _lut）都是 1.0", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/pillow_4bc6/ledger_A1.jsonl", "runs/r2e_lifecycle_20260929/inv/pillow_4bc6/ledger_A2.jsonl"]},
+    "25": {"status": "issue", "by": "正式评分 + 私有行为检查", "note": "S1：退化 D1 1.0（输出等于输入）；W1 1.0（调用者的输入被改）", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/pillow_4bc6/ledger_D1.jsonl", "runs/r2e_lifecycle_20260929/inv/pillow_4bc6/ledger_W1.jsonl", "runs/r2e_lifecycle_20260929/inv/pillow_4bc6/pcheck_canon_D1.json", "runs/r2e_lifecycle_20260929/inv/pillow_4bc6/pcheck_canon_W1.json"]},
+    "26": {"status": "issue", "by": "私有主审", "note": "S2（T3）：隐藏测试对 L/RGB 反相只做冒烟；gold 未改 L/RGB 路径（公开命令 check_l_rgb_unchanged 在 gold 下通过）", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/private_control.json"]},
+    "27": {"status": "issue", "by": "私有主审 + devcheck 私有对照", "note": "S2 注记（G1）：gold 规范输入正确、只改 1 行、无回归；对原例的非规范值输出 254（读法分歧，不作处置依据）", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/pillow_4bc6/pcheck_canon_gold.json", "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/private_control.json"]},
+    "28": {"status": "unknown", "by": "私有主审", "note": "R-c 草案待复核与实测；其中 mode == \"1\" 断言的依据较弱，已标为可删", "evidence_refs": ["docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/card.md"]},
+    "29": {"status": "pass", "by": "devcheck", "note": "git_sanitize 后 refs / remotes / reflog / unreachable 均为 0；HEAD=base；R2E 预检 GIT_HISTORY 与 HIDDEN_TESTS 均 ok", "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/orig/attempt.json"]},
+    "30": {"status": "not_checked", "by": "私有主审", "note": "正式链出网面属 A 线，本轮未测", "evidence_refs": []},
+    "31": {"status": "not_checked", "by": "私有主审", "note": "共享评分控制面不逐题复查", "evidence_refs": []},
+    "32": {"status": "issue", "by": "正式评分", "note": "与 25 同根：只验证了不抛错", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/pillow_4bc6/ledger_D1.jsonl"]},
+    "37": {"status": "not_applicable", "by": "私有主审", "note": "尚未修订；建议的 R-c 属于测试纠错，不改任务目标", "evidence_refs": []}
+  },
+  "issues": [
+    {
+      "id": "T2-core-unasserted",
+      "code": "T2a+T2b",
+      "severity": "S1",
+      "category": "test",
+      "scope": "task",
+      "summary": "核心要求“真正反相”在隐藏测试中没有断言；test_1.py:66 只做 ImageOps.invert(hopper(\"1\")) 冒烟。退化候选 D1（对 mode \"1\" 返回 image.copy()）正式评分 1.0（24/24），私有检查显示输出等于输入",
+      "evidence_level": "当前 CPU（正式评分 + 日志 + 私有行为检查）",
+      "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/pillow_4bc6/ledger_D1.jsonl", "runs/r2e_lifecycle_20260929/inv/pillow_4bc6/logs_D1/evallog_replay-r2e-inv-4bc6-D1-0_a13fcfcb.eval.log", "runs/r2e_lifecycle_20260929/inv/pillow_4bc6/pcheck_canon_D1.json"],
+      "proposed_action": "R-c：在 hidden_tests/test_1.py 新增 test_invert_mode_1（hopper(\"1\")、独立 oracle、mode / size、输入不变），期望映射加 1 个 PASSED 键；正对照用 gold；验收矩阵见 card.md 附录 A",
+      "status": "open"
+    },
+    {
+      "id": "T2-step4-input-mutation",
+      "code": "T2（v1 §4 第 4 步）",
+      "severity": "S1",
+      "category": "test",
+      "scope": "task",
+      "summary": "W1（结果正确但原地修改调用者的图）正式评分 1.0，破坏了有文档、常用的行为（操作返回新图，原地修改须注明：Image.py:2418-2421、ImageOps.py:575-576；TIFF 调用方直接传入用户的图：TiffImagePlugin.py:1666-1675）。与 T2-core-unasserted 同根",
+      "evidence_level": "当前 CPU（正式评分 + 私有行为检查）",
+      "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/pillow_4bc6/ledger_W1.jsonl", "runs/r2e_lifecycle_20260929/inv/pillow_4bc6/pcheck_canon_W1.json"],
+      "proposed_action": "与上条同一 R-c 中的输入不变断言；若复核认为依据不足可删掉该行，S1 仍由 D1 成立",
+      "status": "open"
+    },
+    {
+      "id": "P4-G1-noncanonical-example",
+      "code": "P4 / G1",
+      "severity": "S2",
+      "category": "statement/gold",
+      "scope": "task",
+      "summary": "题面示例 Image.new(\"1\", …, color=1) 存储字节 1；gold 输出 254，tobytes 不等于全黑，convert(\"L\") 极值 (255, 255)，按 1-bit 语义看不出反相。两种读法（按字节取反，或按 1-bit 值取反）在公开材料中都有依据；测试与 R-c 都不断言，两类实现都得 1",
+      "evidence_level": "当前 CPU（devcheck 私有 gold 对照）+ 源码",
+      "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/private_control.json", "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/orig/captures/repro_issue_example.out"],
+      "proposed_action": "登记；不对非规范值断言。若要求按 1-bit 语义反相，属任务目标选择（P5 范畴），交用户决定，建议不做",
+      "status": "registered"
+    },
+    {
+      "id": "T3-l-rgb-values",
+      "code": "T3",
+      "severity": "S2",
+      "category": "test",
+      "scope": "task",
+      "summary": "隐藏测试对 L/RGB 反相只做冒烟，没有值断言",
+      "evidence_level": "静态",
+      "evidence_refs": ["runs/r2e_static_prep_20260924/v3/private/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/hidden_tests/test_1.py"],
+      "proposed_action": "登记；可选在同一轮 R-c 加 test_invert_l_rgb_values（card.md 附录 A.3）",
+      "status": "registered"
+    },
+    {
+      "id": "X1-cross-task",
+      "code": "X1",
+      "severity": "register",
+      "category": "relation",
+      "scope": "repo:pillow",
+      "summary": "本题 gold 逐字出现在 pillow 3a61c9e9 / f9d3ee0f / a682ceaf 的公开初始工作树；本题初态含 2b061b68、2d01f7d0 的修复及 2b061b68 / 2d01f7d0 / 3ac9396e 的新测试",
+      "evidence_level": "静态（逐条 grep 核对机械比对）",
+      "evidence_refs": ["runs/r2e_static_prep_20260924/cross_task_gold_scan.json", "runs/r2e_static_prep_20260924/cross_task_test_scan.json"],
+      "proposed_action": "训练时控制重复采样；留出评测按仓库划分（D3）",
+      "status": "registered"
+    },
+    {
+      "id": "solver-hint-pip-wording",
+      "code": "（旧 solver_condition issue）",
+      "severity": "none",
+      "category": "solver_condition",
+      "scope": "repo:pillow",
+      "summary": "旧记录：公开提示说 pip 可用，而 venv 实际无 pip。现行提示已写 “pip may be unavailable”，devcheck 实测无 pip",
+      "evidence_level": "当前 CPU（devcheck）+ 公开包",
+      "evidence_refs": ["runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/orig/captures/env.out", "runs/r2e_static_prep_20260924/v3/public/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/public_bundle.json"],
+      "proposed_action": "无",
+      "status": "resolved"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "合法修复只涉及 src/PIL/ImageOps.py，已在投影内；没有证据需要额外路径规则",
+    "evidence_refs": ["runs/r2e_lifecycle_20260929/env_verify/ledger_l1_gold.jsonl:11"],
+    "applied_version": null
+  },
+  "revision_refs": [],
+  "disposition": {
+    "state": "needs_repair",
+    "scope": "static_review",
+    "reason": "题意与测试层的 S1：核心反相结果与输入不变都没有断言，退化 D1 与 W1 正式评分都是 1.0。修法在预授权模板 R-c 内（草案见 card.md 附录 A），待协调者实施、跑验收矩阵、Codex 复核。环境与开发条件已实测无阻塞，不需要环境修复",
+    "evidence_refs": [
+      "runs/r2e_lifecycle_20260929/inv/pillow_4bc6/ledger_D1.jsonl",
+      "runs/r2e_lifecycle_20260929/inv/pillow_4bc6/ledger_W1.jsonl",
+      "runs/r2e_lifecycle_20260929/env_verify/ledger_l1_noop.jsonl:11",
+      "runs/r2e_lifecycle_20260929/env_verify/ledger_l1_gold.jsonl:11",
+      "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/devcheck.log"
+    ],
+    "reviewer": null
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "exposure_notes": "私有主审读过 gold、隐藏测试、期望、run_refs 所列日志与账本、历史记录（refs.json 所列）以及同仓其它题的公开包；没有读独立复核原文。本记录不提供给解题模型",
+    "v1": {
+      "problem_localization": {"value": "yes", "note": "无门槛"},
+      "capability_comparison": {"value": "conditional", "condition": "预登记事后审计与计分口径：对每个得 1 的补丁跑公开命令 check_mode1_invert_canonical，原始 reward 与审计结果分列；或改用 R-c 验收后的版本。环境与开发条件已实测，不再是条件", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/pillow_4bc6/pcheck_canon_D1.json", "runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/devcheck.log"]},
+      "training_candidate": {"value": "no", "condition": "当前版本有未处理的 S1。R-c 验收（gold 1、noop 0、D1 0、W1 0、A1 1）并经 Codex 复核后重评；届时正面覆盖证据为：核心断言、noop / gold、第 2、3 步结果", "evidence_refs": ["runs/r2e_lifecycle_20260929/inv/pillow_4bc6/ledger_D1.jsonl"]},
+      "heldout_candidate": {"value": "no", "condition": "同训练候选；另有 X1。修订后的版本只能作标明版本的自建题，并按仓库划分", "evidence_refs": ["runs/r2e_static_prep_20260924/cross_task_gold_scan.json"]}
+    }
+  },
+  "costs": {
+    "container_wall_seconds": null,
+    "agent_tokens": null,
+    "human_decisions": 0,
+    "source_refs": [
+      "新机正式复验 phases 合计约 89 s / 次（可信准备约 82 s）：runs/r2e_lifecycle_20260929/env_verify/ledger_l1_{noop,gold}.jsonl:11",
+      "候选评分 phases 合计 70–76 s / 次：runs/r2e_lifecycle_20260929/inv/pillow_4bc6/ledger_{D1,A1,W1,A2}.jsonl",
+      "devcheck 求解段 solve_seconds 19.261：runs/r2e_lifecycle_20260929/devcheck_rev/unrev/pillow__4bc6483564ae1a254911e98280b9a501f047a2e0/orig/attempt.json",
+      "私有行为检查每次约 2 s：runs/r2e_lifecycle_20260929/inv/pillow_4bc6/pcheck_canon_*.json"
+    ]
+  }
+}

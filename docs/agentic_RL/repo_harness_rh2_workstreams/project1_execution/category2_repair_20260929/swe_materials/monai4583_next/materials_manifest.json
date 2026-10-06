@@ -1,0 +1,504 @@
+{
+  "schema": "monai4583_next_materials.v1",
+  "as_of": "2026-09-30",
+  "status": "materials_prepared_static_only_not_registered_not_executed",
+  "instance_id": "Project-MONAI__MONAI-4583",
+  "base_commit": "9c4710199b80178ad11f7dd74925eee3ae921863",
+  "base_tree": "43bb8d82537f723fa907dca32e8edb9cb538b7a9",
+  "source_bindings": {
+    "public": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+      "line": 13,
+      "canonical_json_digest": "sha256:c1d76edfb73f1a0a2a1c91765952b43f5d1f82b964ab4851eccea17c3494e164"
+    },
+    "grading": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+      "line": 13,
+      "canonical_json_digest": "sha256:56f52f4bebe7bd2db4c31cf46976e3267c0bd1ec019b63bf85f9a5489a5d2f36"
+    },
+    "validation": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+      "line": 13,
+      "canonical_json_digest": "sha256:f5c67cf6660f5d877442c564a40b05f8a8b4d7a07abb3e5669c1e7f88d26a7bd"
+    },
+    "environment": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/environment_packages_v0.jsonl",
+      "line": 13,
+      "canonical_json_digest": "sha256:d6331978e6d3f91414d3667203851ccf67ae8b630fb2a7a6da8bb94d42161bd6"
+    }
+  },
+  "source_environment_package_digest": "sha256:d6331978e6d3f91414d3667203851ccf67ae8b630fb2a7a6da8bb94d42161bd6",
+  "image_manifest_digest": "sha256:79bf18ecd969a2e68a113b6d29b3d9e77ed977e37bd02666f17eef51930824d5",
+  "historical_image_config_id": "sha256:8305e1f5f6f13226ef30941433ed794fc294acc62fef85a28bc82131c6f6e0c4",
+  "proposal": {
+    "revision_id_candidate": "monai4583-sparse-3d-cpu-v1",
+    "operation_needed": "窄新增F2P完整有效test_patch操作；当前append_p2p不能消费",
+    "extra_fail_to_pass": [
+      "tests/test_box_transform.py::TestBoxTransform::test_sparse_3d_mask_preserves_foreground_labels_cpu"
+    ],
+    "extra_pass_to_pass": [],
+    "test_files": [
+      "tests/test_box_transform.py"
+    ],
+    "expected_vendor_command": "pytest -rA tests/test_box_transform.py",
+    "original_f2p_preserved": true,
+    "original_p2p_preserved": true,
+    "public_bundle_changed": false,
+    "counts": {
+      "original_f2p": 4,
+      "original_p2p": 5,
+      "added_f2p": 1,
+      "effective_f2p": 5,
+      "effective_p2p": 5,
+      "effective_total": 10
+    },
+    "effective_patch_applies_to": "immutable base",
+    "extra_patch_applies_to": "base plus original_test.patch",
+    "new_test_no_cuda_requirement": true
+  },
+  "frozen_source_assets": {
+    "source/original_public.json": {
+      "source": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl",
+      "source_line": 13,
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/source/original_public.json",
+      "sha256": "5b247d7a74704bd820958cf23b0685c627bfb9eb2ff2e152b69e8951e88f441e",
+      "bytes": 2193,
+      "canonical_json_digest": "sha256:c1d76edfb73f1a0a2a1c91765952b43f5d1f82b964ab4851eccea17c3494e164"
+    },
+    "source/original_grading.json": {
+      "source": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+      "source_line": 13,
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/source/original_grading.json",
+      "sha256": "d63ef9fb1c680920ed08221a8ccc322a65dbc636a83712aabf390c465546d627",
+      "bytes": 2503,
+      "canonical_json_digest": "sha256:56f52f4bebe7bd2db4c31cf46976e3267c0bd1ec019b63bf85f9a5489a5d2f36"
+    },
+    "source/original_validation.json": {
+      "source": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl",
+      "source_line": 13,
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/source/original_validation.json",
+      "sha256": "07fcfc1ab68f9c4bbf6860879ed2407ac7580f00320c97e9e51fe385ad25e828",
+      "bytes": 1236,
+      "canonical_json_digest": "sha256:f5c67cf6660f5d877442c564a40b05f8a8b4d7a07abb3e5669c1e7f88d26a7bd"
+    },
+    "source/original_environment.json": {
+      "source": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/environment_packages_v0.jsonl",
+      "source_line": 13,
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/source/original_environment.json",
+      "sha256": "a9649a96a1a8f9e018036cf6cd09817d12a0708cfdc1c171752f0869bfc42c4a",
+      "bytes": 1079,
+      "canonical_json_digest": "sha256:d6331978e6d3f91414d3667203851ccf67ae8b630fb2a7a6da8bb94d42161bd6"
+    },
+    "source/base/tests/test_box_transform.py": {
+      "source": "runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-4583/base/tests/test_box_transform.py",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/source/base/tests/test_box_transform.py",
+      "sha256": "f9e0cf78b5117f34d7151f859fce8e1700633d1f39fbba8fb89aadfdb0f88cfe",
+      "bytes": 14090
+    },
+    "source/base/monai/apps/detection/transforms/box_ops.py": {
+      "source": "runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-4583/base/monai/apps/detection/transforms/box_ops.py",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/source/base/monai/apps/detection/transforms/box_ops.py",
+      "sha256": "a439e2cf0de7ac19d715e0fefb5224e96e933d7001b4e554f4fbc5f6090c4f5c",
+      "bytes": 17725
+    },
+    "source/base/monai/utils/type_conversion.py": {
+      "source": "runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-4583/base/monai/utils/type_conversion.py",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/source/base/monai/utils/type_conversion.py",
+      "sha256": "65c04eddf45ab41f2e75aab51540af26a8baa964a7f54fb73f0afbae05fb1510",
+      "bytes": 15205
+    },
+    "source/base/monai/data/box_utils.py": {
+      "source": "runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-4583/base/monai/data/box_utils.py",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/source/base/monai/data/box_utils.py",
+      "sha256": "8b75aaa37107cdc7995025825c1ebf7bd4d12a1237828dd4e582d3231b608a82",
+      "bytes": 47920
+    },
+    "source/base/tests/utils.py": {
+      "source": "runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-4583/base/tests/utils.py",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/source/base/tests/utils.py",
+      "sha256": "0c75f42f53e7f95548739a165baa6074badca908006291eb0d017a770180a381",
+      "bytes": 27046
+    },
+    "source/base/requirements.txt": {
+      "source": "runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-4583/base/requirements.txt",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/source/base/requirements.txt",
+      "sha256": "aeb785a5135e69980ab6d641fe388b783977f853b12f114b6b85d5a4c4341eb1",
+      "bytes": 23
+    },
+    "source/base/requirements-min.txt": {
+      "source": "runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-4583/base/requirements-min.txt",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/source/base/requirements-min.txt",
+      "sha256": "8c129d8f930be887774cf9da9d8b5687d03c0c9ad567fb18f12102ca6d918b1f",
+      "bytes": 118
+    },
+    "source/base/requirements-dev.txt": {
+      "source": "runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-4583/base/requirements-dev.txt",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/source/base/requirements-dev.txt",
+      "sha256": "1699bfd2b777cf547fe425ab0f3791483fbac59f72ad9050ec978c3562278ea3",
+      "bytes": 897
+    },
+    "source/base/setup.py": {
+      "source": "runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-4583/base/setup.py",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/source/base/setup.py",
+      "sha256": "a2da0151692284a428ccfacd44136127fac80b933fd0f827e03973ed45e1a0f0",
+      "bytes": 5146
+    },
+    "source/user_prompt.txt": {
+      "source": "runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-4583/user_prompt.txt",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/source/user_prompt.txt",
+      "sha256": "ed188941d7db0de7576c50e0da594e3a1680985f15c94365b01076866a8d1688",
+      "bytes": 970
+    },
+    "source/base_identity.json": {
+      "source": "runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-4583/base_identity.json",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/source/base_identity.json",
+      "sha256": "2bb865acfb0909030f32858beb6a5517ba9d8b1e7498726b7697eb0dade203f2",
+      "bytes": 754
+    },
+    "source/public_bundle.json": {
+      "source": "runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-4583/public_bundle.json",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/source/public_bundle.json",
+      "sha256": "5b247d7a74704bd820958cf23b0685c627bfb9eb2ff2e152b69e8951e88f441e",
+      "bytes": 2193
+    },
+    "source/environment_brief.md": {
+      "source": "runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-4583/environment_brief.md",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/source/environment_brief.md",
+      "sha256": "4da5d37b1fbd7f6dc2c00b24c68cde9c367d018437b5b4350c4a3f3d48aa78c4",
+      "bytes": 1203
+    },
+    "controls/gold.patch": {
+      "source": "runs/swegym_cpu_preprobe_20260929/task_inputs_reserve6_v1/Project-MONAI__MONAI-4583/private/gold.patch",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/controls/gold.patch",
+      "sha256": "c1969e4884ce48981edd183d1458b54e8593628eb9fd9beb6602ba8f1f4f063b",
+      "bytes": 1009
+    },
+    "controls/degenerate_2d_only.patch": {
+      "source": "runs/swegym_cpu_preprobe_20260929/task_inputs_reserve6_v1/Project-MONAI__MONAI-4583/private/degenerate_2d_only.patch",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/controls/degenerate_2d_only.patch",
+      "sha256": "8c8e12c14e6b2d2698755ec2da71908896b8a25fdeb31c0c039f4447b0d2ef6c",
+      "bytes": 573
+    },
+    "environment/buildplan_cpu29.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/task_inputs_reserve6_v1/Project-MONAI__MONAI-4583/buildplan.json",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/environment/buildplan_cpu29.json",
+      "sha256": "b7ebab04dca40f6693ae3cc177c214edb3730236f85a289affc620cf22acc183",
+      "bytes": 1004
+    },
+    "environment/recovery_cpu29.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/task_inputs_reserve6_v1/Project-MONAI__MONAI-4583/recovery.json",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/environment/recovery_cpu29.json",
+      "sha256": "4465a14d4cd02d6ab9374f1b98659e889c9645ca918db39dffe759e21bc6a74d",
+      "bytes": 1139
+    },
+    "environment/public_commands_cpu29.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/task_inputs_reserve6_v1/Project-MONAI__MONAI-4583/public_commands.json",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/environment/public_commands_cpu29.json",
+      "sha256": "9a16f593890995782c5a5945e2f58a35ad99bcd83634665d7802be89c1071b4f",
+      "bytes": 5583
+    },
+    "history/behavior_commands_cpu29.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/task_inputs_reserve6_v1/Project-MONAI__MONAI-4583/private/behavior_commands.json",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/history/behavior_commands_cpu29.json",
+      "sha256": "2c1091928f800360f092e0c5707cb249e47d8a9047165ce46b827e235b4e239a",
+      "bytes": 4568
+    },
+    "environment/image_inspect_cpu29.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-4583/reserve6-v1/original_image.json",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/environment/image_inspect_cpu29.json",
+      "sha256": "f618340a24dd462eaee3685079d9d2ec55c3e6c26f18f9170218720ae3752658",
+      "bytes": 3912
+    },
+    "history/base_mask_3d_cpu29.out": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-4583/reserve6-v1/private_behavior/base_run/base/mask_3d.out",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/history/base_mask_3d_cpu29.out",
+      "sha256": "772e0b517aebf6c2e8d1301554de90a7a9ae8c9bab5d8e0398377e5afc79391d",
+      "bytes": 1360
+    },
+    "history/base_behavior_summary_cpu29.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-4583/reserve6-v1/private_behavior/base_run/summary.json",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/history/base_behavior_summary_cpu29.json",
+      "sha256": "fb501775f6a4560f2353361ff5369f4009f9a6ccb2548d0725fa5ae8d6bfdb04",
+      "bytes": 2636
+    },
+    "history/gold_mask_3d_cpu29.out": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-4583/reserve6-v1/private_behavior/gold_run/gold/mask_3d.out",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/history/gold_mask_3d_cpu29.out",
+      "sha256": "bd328c842101949cd96b6bbfa2b2040b1f87b35ea793f2600f54f46641cee430",
+      "bytes": 1235
+    },
+    "history/gold_behavior_summary_cpu29.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-4583/reserve6-v1/private_behavior/gold_run/summary.json",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/history/gold_behavior_summary_cpu29.json",
+      "sha256": "9167d016dcd1e9f890d928466d161195ea7e216c76fb88ad01ec7185adee12b4",
+      "bytes": 3264
+    },
+    "history/degenerate_mask_3d_cpu29.out": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-4583/reserve6-v1/private_behavior/degenerate_run/degenerate/mask_3d.out",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/history/degenerate_mask_3d_cpu29.out",
+      "sha256": "772e0b517aebf6c2e8d1301554de90a7a9ae8c9bab5d8e0398377e5afc79391d",
+      "bytes": 1360
+    },
+    "history/degenerate_behavior_summary_cpu29.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-4583/reserve6-v1/private_behavior/degenerate_run/summary.json",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/history/degenerate_behavior_summary_cpu29.json",
+      "sha256": "bf779f6252c216afd9676ebe34714ff94e56b63638fdd8f953644b2ee8ef1881",
+      "bytes": 3301
+    },
+    "history/private_behavior_summary_cpu29.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-4583/reserve6-v1/private_behavior/summary.json",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/history/private_behavior_summary_cpu29.json",
+      "sha256": "7ea21818bc5446b2c404d06547cb39107ac0d5416520633300b1eb049312a3a4",
+      "bytes": 8951
+    },
+    "history/cpu29_result.md": {
+      "source": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/Project-MONAI__MONAI-4583/result.md",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/history/cpu29_result.md",
+      "sha256": "0b97962796a8dbd304cd07a20ad8d59cc7a62ed4c50cda64459c93c8e0ef438c",
+      "bytes": 6111
+    },
+    "history/cpu29_evidence_audit.json": {
+      "source": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_cpu_preprobe_20260929/tasks/Project-MONAI__MONAI-4583/evidence_audit.json",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/history/cpu29_evidence_audit.json",
+      "sha256": "a5bb0bb90e1ef5e5c2f00048cda2814be8de4ff0ac0a1a840bdff80826d1158f",
+      "bytes": 23743
+    },
+    "history/public_static_read.md": {
+      "source": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-4583/public_read.md",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/history/public_static_read.md",
+      "sha256": "dca1b90eda6d233e3a5041cc5bb6df66efdd4c95f54885c87cf39b0e8c90081c",
+      "bytes": 9720
+    },
+    "history/noop/evallog_replay-cpu29-project-mon_34b4b1ea.diagnostics.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-4583/reserve6-v1/grade_noop/eval_logs/evallog_replay-cpu29-project-mon_34b4b1ea.diagnostics.json",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/history/noop/evallog_replay-cpu29-project-mon_34b4b1ea.diagnostics.json",
+      "sha256": "d64b6e33c61d7e15f47337761f254b06e67e8b194458bb7cea2e7a8d494f8aca",
+      "bytes": 2820
+    },
+    "history/noop/evallog_replay-cpu29-project-mon_34b4b1ea.eval.log": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-4583/reserve6-v1/grade_noop/eval_logs/evallog_replay-cpu29-project-mon_34b4b1ea.eval.log",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/history/noop/evallog_replay-cpu29-project-mon_34b4b1ea.eval.log",
+      "sha256": "d31c77b2a0806c03a6122e81cbe9ae215648cb98a58f854d4777e81e32660653",
+      "bytes": 65170
+    },
+    "history/noop/ledger.jsonl": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-4583/reserve6-v1/grade_noop/ledger.jsonl",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/history/noop/ledger.jsonl",
+      "sha256": "11eff519f11b19909644c3d06e43bf65510e9a550e88b7491ded0ceb9869cca8",
+      "bytes": 4561
+    },
+    "history/noop/driver_close_checked.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-4583/reserve6-v1/grade_noop/driver_close_checked.json",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/history/noop/driver_close_checked.json",
+      "sha256": "8a2913585199d7c2f87dccc5130907e5c6c1cd7fe6ef565164c26e73a6326703",
+      "bytes": 737
+    },
+    "history/gold/evallog_replay-cpu29-project-mon_c4dd58f4.diagnostics.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-4583/reserve6-v1/grade_gold/eval_logs/evallog_replay-cpu29-project-mon_c4dd58f4.diagnostics.json",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/history/gold/evallog_replay-cpu29-project-mon_c4dd58f4.diagnostics.json",
+      "sha256": "6fd4d874610fe656223528e7956930be1b01ffba65efbef2a2200ec20b1f85fa",
+      "bytes": 2820
+    },
+    "history/gold/evallog_replay-cpu29-project-mon_c4dd58f4.eval.log": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-4583/reserve6-v1/grade_gold/eval_logs/evallog_replay-cpu29-project-mon_c4dd58f4.eval.log",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/history/gold/evallog_replay-cpu29-project-mon_c4dd58f4.eval.log",
+      "sha256": "d107a88a970d3b75921932e3c3f6efd16e31a7113edfbcd1c7982ed0f8a36d58",
+      "bytes": 60369
+    },
+    "history/gold/ledger.jsonl": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-4583/reserve6-v1/grade_gold/ledger.jsonl",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/history/gold/ledger.jsonl",
+      "sha256": "ad61e8b761b097ad961b61075c7ae42dbec08b5cc465ae85677ef318dd74f6a8",
+      "bytes": 4748
+    },
+    "history/gold/driver_close_checked.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-4583/reserve6-v1/grade_gold/driver_close_checked.json",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/history/gold/driver_close_checked.json",
+      "sha256": "1a44789508c24535f2bd063e208a267b8d5fbebf88884be3c0a88a6906d93798",
+      "bytes": 737
+    },
+    "history/degenerate/evallog_replay-cpu29-project-mon_aab01198.diagnostics.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-4583/reserve6-v1/grade_degenerate/eval_logs/evallog_replay-cpu29-project-mon_aab01198.diagnostics.json",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/history/degenerate/evallog_replay-cpu29-project-mon_aab01198.diagnostics.json",
+      "sha256": "9d44dce9c979004843a2e1f368087cf8aaebe769b24b51dbe337320901ae3456",
+      "bytes": 2824
+    },
+    "history/degenerate/evallog_replay-cpu29-project-mon_aab01198.eval.log": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-4583/reserve6-v1/grade_degenerate/eval_logs/evallog_replay-cpu29-project-mon_aab01198.eval.log",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/history/degenerate/evallog_replay-cpu29-project-mon_aab01198.eval.log",
+      "sha256": "1b2324ce365c1fc120224111fcebef1ef3021b07515ee13a5b55f1584948eae0",
+      "bytes": 60059
+    },
+    "history/degenerate/ledger.jsonl": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-4583/reserve6-v1/grade_degenerate/ledger.jsonl",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/history/degenerate/ledger.jsonl",
+      "sha256": "61dd94c74ea9a1c97f096365098967b5f9c546076c38e869c1ad7be0c6fb8ace",
+      "bytes": 4788
+    },
+    "history/degenerate/driver_close_checked.json": {
+      "source": "runs/swegym_cpu_preprobe_20260929/remote/results/Project-MONAI__MONAI-4583/reserve6-v1/grade_degenerate/driver_close_checked.json",
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/history/degenerate/driver_close_checked.json",
+      "sha256": "6ebc45f62f4d2dd0e08ffe8b41634dd809f869a10e160260093eedcce4d97731",
+      "bytes": 743
+    },
+    "original_test.patch": {
+      "source": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl",
+      "source_line": 13,
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/original_test.patch",
+      "sha256": "e8fd6d4ba88a8ef9b5adcfd16fd6e7099244568d24bccbdf848298d2156fa306",
+      "bytes": 1453
+    }
+  },
+  "generated_assets": {
+    "extra_tests.patch": {
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/extra_tests.patch",
+      "sha256": "c700fa9798f3b5264f8f41ae5f0bb84c166753088a53a91cfd2f370f597cd30e",
+      "bytes": 2219
+    },
+    "effective_test.patch": {
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/effective_test.patch",
+      "sha256": "83e31b5c48df7940fb699768b39205cb41216fa5ead955979b83795d8a74233b",
+      "bytes": 3316
+    },
+    "references_candidate.json": {
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/references_candidate.json",
+      "sha256": "51a47a671db381d6e4bfca7c90eb545c9b91060384ae085620530a907a7d3549",
+      "bytes": 1791
+    },
+    "patch_commands.json": {
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/patch_commands.json",
+      "sha256": "5fdb78952151ede782072fd232f12e695ce20ca557e618fbd41de7386b7b9990",
+      "bytes": 4408
+    },
+    "static_checks.json": {
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/static_checks.json",
+      "sha256": "0bcf109a7bbb128eaf1f80840bbb1fd70d5f6209c5b47f05aa6d2364b5b13f9e",
+      "bytes": 1786
+    },
+    "environment_reuse.json": {
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/environment_reuse.json",
+      "sha256": "8303a4662fb65859e8060cb20b6aa83b123446703ba3bb92d5501eaebdb549da",
+      "bytes": 1483
+    },
+    "controls/noop.patch": {
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/controls/noop.patch",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "inspection/effective_test_box_transform.py": {
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/inspection/effective_test_box_transform.py",
+      "sha256": "4e2d30a66dd9903b0011b4664f6c85e2a6226f2b43d6d49dd2b3aec9e2e8d9b9",
+      "bytes": 16697
+    },
+    "inspection/original_patched_test_box_transform.py": {
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/inspection/original_patched_test_box_transform.py",
+      "sha256": "d07a2d48fcf38e8801fbaf58909daf9dca3de7c9210970e68c2f7db6dd7bdb05",
+      "bytes": 14861
+    },
+    "build_materials.py": {
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/build_materials.py",
+      "sha256": "8a723d1afa111cb774e626aa1b359b361b8042a397557f4e1b88b7e0ea4c02fd",
+      "bytes": 14262
+    },
+    "preparation_result.json": {
+      "path": "runs/category2_repair_20260929/swe_materials/monai4583_next/preparation_result.json",
+      "sha256": "ea7e748bbce22aa7adff59bc212128b5d2f2bdcc21e543d87acfa72fc06da210",
+      "bytes": 2866
+    }
+  },
+  "static_checks": {
+    "project_imported": false,
+    "project_test_executed": false,
+    "new_node_executed": false,
+    "git_apply_check_count": 5,
+    "every_apply_rc_zero": true,
+    "effective_equals_original_plus_extra": true,
+    "original_ast_unchanged_after_removing_new_method": true,
+    "new_method_unique_unparameterized": true,
+    "new_node": "tests/test_box_transform.py::TestBoxTransform::test_sparse_3d_mask_preserves_foreground_labels_cpu",
+    "new_partition": "F2P",
+    "controls_applied_source_sha256": {
+      "gold": "ad4fd4db54ee21ce6d2da4e5e707a91f2e3b8e16ca269eaa03b72d3b1460539a",
+      "degenerate_2d_only": "ff73733407f3f1d096331da2c90b289a98fe68b7bd28293f1c4cb9754db700ac"
+    },
+    "base_source_sha256": "a439e2cf0de7ac19d715e0fefb5224e96e933d7001b4e554f4fbc5f6090c4f5c",
+    "base_test_sha256": "f9e0cf78b5117f34d7151f859fce8e1700633d1f39fbba8fb89aadfdb0f88cfe",
+    "effective_test_sha256": "4e2d30a66dd9903b0011b4664f6c85e2a6226f2b43d6d49dd2b3aec9e2e8d9b9",
+    "coordinate_reasoning": {
+      "scope": "纯坐标手工静态推导，不是项目执行",
+      "foreground_points": [
+        [
+          0,
+          1,
+          0
+        ],
+        [
+          1,
+          0,
+          1
+        ]
+      ],
+      "minimum_corner": [
+        0,
+        0,
+        0
+      ],
+      "corner_is_foreground": false,
+      "per_channel_foreground_labels": [
+        0,
+        7
+      ],
+      "expected_boxes": [
+        [
+          0,
+          0,
+          0,
+          2,
+          2,
+          2
+        ],
+        [
+          0,
+          0,
+          0,
+          2,
+          2,
+          2
+        ]
+      ],
+      "base_and_2d_only_expected_labels": [
+        -1,
+        -1
+      ]
+    },
+    "expected_rewards_unverified": {
+      "noop": 0,
+      "gold": 1,
+      "degenerate_2d_only": 0
+    },
+    "expected_test_rc_unverified": {
+      "noop": 1,
+      "gold": 0,
+      "degenerate_2d_only": 1
+    }
+  },
+  "production_changed": false,
+  "cpu_or_collection_executed": false,
+  "author_document_files": {
+    "README.md": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/swe_materials/monai4583_next/README.md",
+      "sha256": "33f2109d99b0a3799a61d49e9eafd0f7e65768646b820e0dcf9395d5a0027964",
+      "bytes": 8603
+    },
+    "proposal.md": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/swe_materials/monai4583_next/proposal.md",
+      "sha256": "a0fed33f38e1cd9d38048472dedae6e2c574003c9558129996609030e558f5cb",
+      "bytes": 2288
+    },
+    "consumer_extension_plan.md": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/swe_materials/monai4583_next/consumer_extension_plan.md",
+      "sha256": "68054bd0e54aeda8297367e7d12d0d69292c16a69f1b00748384dbb0934fd077",
+      "bytes": 3414
+    }
+  }
+}

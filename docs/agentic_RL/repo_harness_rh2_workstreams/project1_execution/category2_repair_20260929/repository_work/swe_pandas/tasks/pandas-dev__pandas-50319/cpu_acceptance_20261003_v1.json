@@ -1,0 +1,860 @@
+{
+  "schema_id": "rh2.category2.pandas_owner_cpu_acceptance.v1",
+  "instance_id": "pandas-dev__pandas-50319",
+  "created_at": "2026-10-03T02:12:23.802024+00:00",
+  "status": "cpu_controls_and_required_independent_reviews_passed",
+  "release_id": "cat2-cpu-r2e089092-swe27-pandas-moto-20261003-v1",
+  "material_version": "pandas50319-dot-date-full-bindings-v1",
+  "receipt": {
+    "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/receipt_manifest.json",
+    "sha256": "sha256:ee180c751b3432bd336be3d2352ac7a99af19c3fc576feac5fbb0315e9f36e52"
+  },
+  "canonical_gold_input_supplement": {
+    "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_50319_canonical_gold_supplement_20261003_v1/receipt_manifest.json",
+    "sha256": "sha256:f948e05afeee332c67356e75bca61ef4b74176e1710266cb295d00dbce937e9c"
+  },
+  "job_status": {
+    "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/job/status.json",
+    "sha256": "sha256:a9a82b5eee798f980d6153da9b8a1472fbb6d28ba76ea36dd5b919532e0ab9c4"
+  },
+  "arms": {
+    "noop": {
+      "raw_ledger": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/noop/ledger.jsonl",
+        "sha256": "sha256:0a8e3a40dae0d84ba17f9cae034994798a5cfa15cbc15c82d824d862813ff910"
+      },
+      "raw_close": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/noop.stdout.log",
+        "sha256": "sha256:f775dc5f7ed3ec38c316d2120c8b39119bec2f42e9c4f32cca1411f820c37d79"
+      },
+      "diagnostics": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/noop/eval_logs/evallog_replay-pandas50319-forma_be62478a.diagnostics.json",
+        "sha256": "sha256:82244acd4ce71c0e7c35552656104ca1b03251ec65a0e23cbb273f293209ad96"
+      },
+      "eval_log": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/noop/eval_logs/evallog_replay-pandas50319-forma_be62478a.eval.log",
+        "sha256": "sha256:4143137e64c5249d3be7ec779c2baf5303c4f77bd0be3a4bbf77590a894b2de9"
+      },
+      "candidate_kind": "noop",
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 0,
+        "f2p_total": 2,
+        "failure_category": "tests_failed",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+pandas50319-dot-date-full-bindings-v1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": 0,
+        "p2p_total": 109,
+        "report_id": "rpt_grading_be62478a",
+        "reward": 0.0
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 678.967,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 6.006
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 6.006,
+        "segment_completed": true
+      },
+      "observations": {
+        "array_error": {
+          "message": "invalid literal for int() with base 10: ''",
+          "type": "ValueError"
+        },
+        "extension_file": "/testbed/pandas/_libs/tslibs/parsing.cpython-38-x86_64-linux-gnu.so",
+        "extension_mtime": 1790984998.0,
+        "extension_sha256": "127481b230a3c52c886aea1d01b8957e61b55ab106e315f93c4a8f399ecd425c",
+        "guess_results": [
+          {
+            "error": "ValueError",
+            "input": "27.03.2003 14:55:00.000",
+            "message": "invalid literal for int() with base 10: ''"
+          },
+          {
+            "error": "ValueError",
+            "input": "28.04.2004 16:07:08.123456",
+            "message": "invalid literal for int() with base 10: ''"
+          }
+        ],
+        "identity_ok": true,
+        "observed_at": 1790985118.2568774,
+        "pandas_file": "/testbed/pandas/__init__.py",
+        "pandas_version": "2.0.0.dev0+940.g1613f26ff0.dirty",
+        "python": "/opt/miniconda3/envs/testbed/bin/python",
+        "source_sha256": "5c8e81b9914bc6448b21a909cf13d3c2e7799e63e92d386042dd4262b6d048aa",
+        "uid": 54322
+      },
+      "phases_seconds": {
+        "delta_apply": 0.212117,
+        "grader_baseline_rebuild": 1.94803,
+        "grader_cleanup": 3.480074,
+        "grader_start_and_verify": 137.721031,
+        "grader_trusted_setup": 326.789438,
+        "parser_and_report": 6.606173,
+        "test": 689.753232
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "image_identity": "sha256:e645e4346df9200174e8b879ad8fb7a09f64f91c7375311e2569596d054ba21e",
+      "image_id_actual_raw": null,
+      "scripts_digest": "sha256:38c1676d0dc7faacf71684b51a62dfc386cfa31cd906964ab75e58ff792939c4",
+      "grading_materials_identity": "sha256:aec98b708135a7f293dc888a0a4cf70090584a6ea40fd1a32f0f087aac652979",
+      "physical_pytest": {
+        "unique_nodes": 115,
+        "passed": 113,
+        "failed": 2,
+        "skipped": 0
+      },
+      "qualification_read": {
+        "qualifications": 0,
+        "from": [],
+        "image_overlays": 0
+      },
+      "qualification_used": "absent",
+      "binding_member_statuses": {
+        "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y\\\\%m\\\\%d %H:%M:%S-True]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30 00:00:00-%Y-%m-%d %H:%M:%S]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30 00:00:00.000000-%Y-%m-%d %H:%M:%S.%f]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 00:00:00-%Y-%d-%m %H:%M:%S-True-None]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 00:00:00-%Y-%m-%d %H:%M:%S-False-None]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 0:0:0-%Y-%d-%m %H:%M:%S-True-None]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 0:0:0-%Y-%m-%d %H:%M:%S-False-None]": "PASSED"
+      }
+    },
+    "gold": {
+      "raw_ledger": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/gold/ledger.jsonl",
+        "sha256": "sha256:137eff363b4b7d4c5ab2a71e55c969427f9f213174ce1c5715ea4287d160ddd8"
+      },
+      "raw_close": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/gold.stdout.log",
+        "sha256": "sha256:9c4c2527a55a66cd75e5fb4b86982c741beb55f6205e7ed1fd181725594a3c6c"
+      },
+      "diagnostics": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/gold/eval_logs/evallog_replay-pandas50319-forma_a29b64e6.diagnostics.json",
+        "sha256": "sha256:ba995ca91b4a02083c522731e2c5b35f1d42ff06b5b70106a41256e802165494"
+      },
+      "eval_log": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/gold/eval_logs/evallog_replay-pandas50319-forma_a29b64e6.eval.log",
+        "sha256": "sha256:c6ab20ff511a334bdd9593388f92c6dfb00506b6bc23c152a25c8b542a8b135e"
+      },
+      "candidate_kind": "gold",
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 2,
+        "f2p_total": 2,
+        "failure_category": null,
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+pandas50319-dot-date-full-bindings-v1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "resolved",
+        "p2p_fail": 0,
+        "p2p_total": 109,
+        "report_id": "rpt_grading_a29b64e6",
+        "reward": 1.0
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 690.485,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 6.487
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 6.487,
+        "segment_completed": true
+      },
+      "observations": {
+        "array_iso": [
+          "2003-03-27T14:55:00",
+          "2004-04-28T16:07:08.123456"
+        ],
+        "extension_file": "/testbed/pandas/_libs/tslibs/parsing.cpython-38-x86_64-linux-gnu.so",
+        "extension_mtime": 1790986358.0,
+        "extension_sha256": "34853b35871461234ef14b2a9cfc83ca8a9090fbdbb5f831cdb7a3d6e42eb8ea",
+        "guess_results": [
+          {
+            "input": "27.03.2003 14:55:00.000",
+            "value": "%d.%m.%Y %H:%M:%S.%f"
+          },
+          {
+            "input": "28.04.2004 16:07:08.123456",
+            "value": "%d.%m.%Y %H:%M:%S.%f"
+          }
+        ],
+        "identity_ok": true,
+        "observed_at": 1790986486.7742205,
+        "pandas_file": "/testbed/pandas/__init__.py",
+        "pandas_version": "2.0.0.dev0+940.g1613f26ff0.dirty",
+        "python": "/opt/miniconda3/envs/testbed/bin/python",
+        "source_sha256": "ea2c0d7a5fbec68b265d43bade8a4d02bf4863368928a8be9e9bd77345aa3227",
+        "uid": 54322,
+        "warnings": []
+      },
+      "phases_seconds": {
+        "delta_apply": 0.417707,
+        "grader_baseline_rebuild": 1.991945,
+        "grader_cleanup": 3.925624,
+        "grader_start_and_verify": 159.915201,
+        "grader_trusted_setup": 311.483493,
+        "parser_and_report": 6.220813,
+        "test": 701.918346
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "image_identity": "sha256:e645e4346df9200174e8b879ad8fb7a09f64f91c7375311e2569596d054ba21e",
+      "image_id_actual_raw": null,
+      "scripts_digest": "sha256:38c1676d0dc7faacf71684b51a62dfc386cfa31cd906964ab75e58ff792939c4",
+      "grading_materials_identity": "sha256:aec98b708135a7f293dc888a0a4cf70090584a6ea40fd1a32f0f087aac652979",
+      "physical_pytest": {
+        "unique_nodes": 115,
+        "passed": 115,
+        "failed": 0,
+        "skipped": 0
+      },
+      "qualification_read": {
+        "qualifications": 1,
+        "from": [
+          "/work/rh2-category2-20261003/packages/swe_pandas/formal_checks/pandas50319-formal-r13-v3-7feee5549e/outputs/pandas50319-formal-r13-v3-2f897642547c/noop/ledger.jsonl"
+        ],
+        "image_overlays": 0
+      },
+      "qualification_used": "ok:ledger.jsonl:rpt_grading_be62478a",
+      "binding_member_statuses": {
+        "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y\\\\%m\\\\%d %H:%M:%S-True]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30 00:00:00-%Y-%m-%d %H:%M:%S]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30 00:00:00.000000-%Y-%m-%d %H:%M:%S.%f]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 00:00:00-%Y-%d-%m %H:%M:%S-True-None]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 00:00:00-%Y-%m-%d %H:%M:%S-False-None]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 0:0:0-%Y-%d-%m %H:%M:%S-True-None]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 0:0:0-%Y-%m-%d %H:%M:%S-False-None]": "PASSED"
+      }
+    },
+    "none_fallback": {
+      "raw_ledger": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/none_fallback/ledger.jsonl",
+        "sha256": "sha256:1782dba61a94c964bfa24ad0d73ef37783120f8602f6c40c1323684c92b91440"
+      },
+      "raw_close": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/none_fallback.stdout.log",
+        "sha256": "sha256:ac9851f7f7c2010e590dcf9e95401aec1906b2565f0bb6a015e8680d95520056"
+      },
+      "diagnostics": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/none_fallback/eval_logs/evallog_replay-pandas50319-forma_b741da82.diagnostics.json",
+        "sha256": "sha256:5e39d80ebbf7a813f26a39e2f506a8611aa31d4e5f76b0102f44270434d0c946"
+      },
+      "eval_log": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/none_fallback/eval_logs/evallog_replay-pandas50319-forma_b741da82.eval.log",
+        "sha256": "sha256:6c9f3992554de1fb33112ddbb607a6d4b32de604651fe6e534dbf91afe2af093"
+      },
+      "candidate_kind": "cc",
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 2,
+        "f2p_total": 2,
+        "failure_category": null,
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+pandas50319-dot-date-full-bindings-v1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "resolved",
+        "p2p_fail": 0,
+        "p2p_total": 109,
+        "report_id": "rpt_grading_b741da82",
+        "reward": 1.0
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 666.206,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 5.951
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 0,
+        "seconds": 5.951,
+        "segment_completed": true
+      },
+      "observations": {
+        "array_iso": [
+          "2003-03-27T14:55:00",
+          "2004-04-28T16:07:08.123456"
+        ],
+        "extension_file": "/testbed/pandas/_libs/tslibs/parsing.cpython-38-x86_64-linux-gnu.so",
+        "extension_mtime": 1790987662.0,
+        "extension_sha256": "f1a4317cf944fc215e6253ed723ba78e30acbddb3e5d574a2b0b784c326a1ad4",
+        "guess_results": [
+          {
+            "input": "27.03.2003 14:55:00.000",
+            "value": null
+          },
+          {
+            "input": "28.04.2004 16:07:08.123456",
+            "value": null
+          }
+        ],
+        "identity_ok": true,
+        "observed_at": 1790987776.3782048,
+        "pandas_file": "/testbed/pandas/__init__.py",
+        "pandas_version": "2.0.0.dev0+940.g1613f26ff0.dirty",
+        "python": "/opt/miniconda3/envs/testbed/bin/python",
+        "source_sha256": "54262be7b7f417a620f4f15e8703453bc703652a8e4001a0d1e8f8cca594a8ca",
+        "uid": 54322,
+        "warnings": [
+          "Could not infer format, so each element will be parsed individually by `dateutil`. To ensure parsing is consistent and as-expected, please specify a format."
+        ]
+      },
+      "phases_seconds": {
+        "delta_apply": 0.35833,
+        "grader_baseline_rebuild": 1.9124,
+        "grader_cleanup": 10.695593,
+        "grader_start_and_verify": 133.792848,
+        "grader_trusted_setup": 304.011155,
+        "parser_and_report": 5.07688,
+        "test": 677.188055
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "image_identity": "sha256:e645e4346df9200174e8b879ad8fb7a09f64f91c7375311e2569596d054ba21e",
+      "image_id_actual_raw": null,
+      "scripts_digest": "sha256:38c1676d0dc7faacf71684b51a62dfc386cfa31cd906964ab75e58ff792939c4",
+      "grading_materials_identity": "sha256:aec98b708135a7f293dc888a0a4cf70090584a6ea40fd1a32f0f087aac652979",
+      "physical_pytest": {
+        "unique_nodes": 115,
+        "passed": 115,
+        "failed": 0,
+        "skipped": 0
+      },
+      "qualification_read": {
+        "qualifications": 1,
+        "from": [
+          "/work/rh2-category2-20261003/packages/swe_pandas/formal_checks/pandas50319-formal-r13-v3-7feee5549e/outputs/pandas50319-formal-r13-v3-2f897642547c/noop/ledger.jsonl",
+          "/work/rh2-category2-20261003/packages/swe_pandas/formal_checks/pandas50319-formal-r13-v3-7feee5549e/outputs/pandas50319-formal-r13-v3-2f897642547c/gold/ledger.jsonl"
+        ],
+        "image_overlays": 0
+      },
+      "qualification_used": "ok:ledger.jsonl:rpt_grading_a29b64e6",
+      "binding_member_statuses": {
+        "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y\\\\%m\\\\%d %H:%M:%S-True]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30 00:00:00-%Y-%m-%d %H:%M:%S]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30 00:00:00.000000-%Y-%m-%d %H:%M:%S.%f]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 00:00:00-%Y-%d-%m %H:%M:%S-True-None]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 00:00:00-%Y-%m-%d %H:%M:%S-False-None]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 0:0:0-%Y-%d-%m %H:%M:%S-True-None]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 0:0:0-%Y-%m-%d %H:%M:%S-False-None]": "PASSED"
+      }
+    },
+    "constant_none": {
+      "raw_ledger": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/constant_none/ledger.jsonl",
+        "sha256": "sha256:25f62b034c59f73db265ae8b8aa06ed12098d76e03ac39e36d7ca97adb63353f"
+      },
+      "raw_close": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/constant_none.stdout.log",
+        "sha256": "sha256:89db054d753d722e1c8bbac3cdaaf0d9ba2adc967c500e189b223a811153a2cf"
+      },
+      "diagnostics": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/constant_none/eval_logs/evallog_replay-pandas50319-forma_2f25fc5f.diagnostics.json",
+        "sha256": "sha256:1ef0e4952529c17a55db08f0c2bd0a737653dfde87c78ed404e302eeb215d77c"
+      },
+      "eval_log": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/constant_none/eval_logs/evallog_replay-pandas50319-forma_2f25fc5f.eval.log",
+        "sha256": "sha256:0127accc80341daf7dc389609353ef06f61564eb850effd17d369f6041f8e642"
+      },
+      "candidate_kind": "cc",
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 2,
+        "f2p_total": 2,
+        "failure_category": "tests_failed",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+pandas50319-dot-date-full-bindings-v1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": 36,
+        "p2p_total": 109,
+        "report_id": "rpt_grading_2f25fc5f",
+        "reward": 0.0
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 661.1,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 5.944
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 5.944,
+        "segment_completed": true
+      },
+      "observations": {
+        "array_iso": [
+          "2003-03-27T14:55:00",
+          "2004-04-28T16:07:08.123456"
+        ],
+        "extension_file": "/testbed/pandas/_libs/tslibs/parsing.cpython-38-x86_64-linux-gnu.so",
+        "extension_mtime": 1790988959.0,
+        "extension_sha256": "eb297a39e9896c4c17e55944ccbdecfadd2fd09ded7db09ecbb8c17fb30eaf71",
+        "guess_results": [
+          {
+            "input": "27.03.2003 14:55:00.000",
+            "value": null
+          },
+          {
+            "input": "28.04.2004 16:07:08.123456",
+            "value": null
+          }
+        ],
+        "identity_ok": true,
+        "observed_at": 1790989086.4162385,
+        "pandas_file": "/testbed/pandas/__init__.py",
+        "pandas_version": "2.0.0.dev0+940.g1613f26ff0.dirty",
+        "python": "/opt/miniconda3/envs/testbed/bin/python",
+        "source_sha256": "baa06e68aa61f71f13cb044480c88011acec2160038d53178e7d5f4628fabaaa",
+        "uid": 54322,
+        "warnings": [
+          "Could not infer format, so each element will be parsed individually by `dateutil`. To ensure parsing is consistent and as-expected, please specify a format."
+        ]
+      },
+      "phases_seconds": {
+        "delta_apply": 0.418138,
+        "grader_baseline_rebuild": 1.818452,
+        "grader_cleanup": 3.589895,
+        "grader_start_and_verify": 150.389327,
+        "grader_trusted_setup": 311.579327,
+        "parser_and_report": 7.13173,
+        "test": 672.145265
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "image_identity": "sha256:e645e4346df9200174e8b879ad8fb7a09f64f91c7375311e2569596d054ba21e",
+      "image_id_actual_raw": null,
+      "scripts_digest": "sha256:38c1676d0dc7faacf71684b51a62dfc386cfa31cd906964ab75e58ff792939c4",
+      "grading_materials_identity": "sha256:aec98b708135a7f293dc888a0a4cf70090584a6ea40fd1a32f0f087aac652979",
+      "physical_pytest": {
+        "unique_nodes": 115,
+        "passed": 75,
+        "failed": 40,
+        "skipped": 0
+      },
+      "qualification_read": {
+        "qualifications": 1,
+        "from": [
+          "/work/rh2-category2-20261003/packages/swe_pandas/formal_checks/pandas50319-formal-r13-v3-7feee5549e/outputs/pandas50319-formal-r13-v3-2f897642547c/noop/ledger.jsonl",
+          "/work/rh2-category2-20261003/packages/swe_pandas/formal_checks/pandas50319-formal-r13-v3-7feee5549e/outputs/pandas50319-formal-r13-v3-2f897642547c/gold/ledger.jsonl"
+        ],
+        "image_overlays": 0
+      },
+      "qualification_used": "ok:ledger.jsonl:rpt_grading_a29b64e6",
+      "binding_member_statuses": {
+        "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y\\\\%m\\\\%d %H:%M:%S-True]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30 00:00:00-%Y-%m-%d %H:%M:%S]": "FAILED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30 00:00:00.000000-%Y-%m-%d %H:%M:%S.%f]": "FAILED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 00:00:00-%Y-%d-%m %H:%M:%S-True-None]": "FAILED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 00:00:00-%Y-%m-%d %H:%M:%S-False-None]": "FAILED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 0:0:0-%Y-%d-%m %H:%M:%S-True-None]": "FAILED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 0:0:0-%Y-%m-%d %H:%M:%S-False-None]": "FAILED"
+      }
+    },
+    "bad_format": {
+      "raw_ledger": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/bad_format/ledger.jsonl",
+        "sha256": "sha256:c2bab5bdb2250df916fef5486da92afd7da79011ed74e48be2fa93d183a8e2ba"
+      },
+      "raw_close": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/bad_format.stdout.log",
+        "sha256": "sha256:841b3b3e58daa9ff749cfabbdd24ade0058e548e0fe764ee9496a55dd9b9ad57"
+      },
+      "diagnostics": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/bad_format/eval_logs/evallog_replay-pandas50319-forma_d38f2296.diagnostics.json",
+        "sha256": "sha256:f5cb533a7ceb01481a8a2c18f139b6624afff3af185e357024902d11b4fdec7e"
+      },
+      "eval_log": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/bad_format/eval_logs/evallog_replay-pandas50319-forma_d38f2296.eval.log",
+        "sha256": "sha256:8d3ad826b87ed878768516417a6cf8e09f9b5cfe803094f18dfeda13289495c0"
+      },
+      "candidate_kind": "cc",
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 0,
+        "f2p_total": 2,
+        "failure_category": "tests_failed",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+pandas50319-dot-date-full-bindings-v1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": 0,
+        "p2p_total": 109,
+        "report_id": "rpt_grading_d38f2296",
+        "reward": 0.0
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 686.096,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 4.848
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 4.848,
+        "segment_completed": true
+      },
+      "observations": {
+        "array_error": {
+          "message": "time data \"27.03.2003 14:55:00.000\" at position 0 doesn't match format \"%Y-%m-%d\"",
+          "type": "ValueError"
+        },
+        "extension_file": "/testbed/pandas/_libs/tslibs/parsing.cpython-38-x86_64-linux-gnu.so",
+        "extension_mtime": 1790990277.0,
+        "extension_sha256": "8a5600a6da04b8aebe7a909a0efb7555570efdbf203bd35b51954e36421dcaf1",
+        "guess_results": [
+          {
+            "input": "27.03.2003 14:55:00.000",
+            "value": "%Y-%m-%d"
+          },
+          {
+            "input": "28.04.2004 16:07:08.123456",
+            "value": "%Y-%m-%d"
+          }
+        ],
+        "identity_ok": true,
+        "observed_at": 1790990397.17546,
+        "pandas_file": "/testbed/pandas/__init__.py",
+        "pandas_version": "2.0.0.dev0+940.g1613f26ff0.dirty",
+        "python": "/opt/miniconda3/envs/testbed/bin/python",
+        "source_sha256": "c9d69582dfb22ed35cc14530613cf7e51358c60f48be9376698af58ffe913476",
+        "uid": 54322
+      },
+      "phases_seconds": {
+        "delta_apply": 0.428897,
+        "grader_baseline_rebuild": 2.146645,
+        "grader_cleanup": 9.287737,
+        "grader_start_and_verify": 155.285011,
+        "grader_trusted_setup": 270.376912,
+        "parser_and_report": 5.407679,
+        "test": 695.898278
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "image_identity": "sha256:e645e4346df9200174e8b879ad8fb7a09f64f91c7375311e2569596d054ba21e",
+      "image_id_actual_raw": null,
+      "scripts_digest": "sha256:38c1676d0dc7faacf71684b51a62dfc386cfa31cd906964ab75e58ff792939c4",
+      "grading_materials_identity": "sha256:aec98b708135a7f293dc888a0a4cf70090584a6ea40fd1a32f0f087aac652979",
+      "physical_pytest": {
+        "unique_nodes": 115,
+        "passed": 113,
+        "failed": 2,
+        "skipped": 0
+      },
+      "qualification_read": {
+        "qualifications": 1,
+        "from": [
+          "/work/rh2-category2-20261003/packages/swe_pandas/formal_checks/pandas50319-formal-r13-v3-7feee5549e/outputs/pandas50319-formal-r13-v3-2f897642547c/noop/ledger.jsonl",
+          "/work/rh2-category2-20261003/packages/swe_pandas/formal_checks/pandas50319-formal-r13-v3-7feee5549e/outputs/pandas50319-formal-r13-v3-2f897642547c/gold/ledger.jsonl"
+        ],
+        "image_overlays": 0
+      },
+      "qualification_used": "ok:ledger.jsonl:rpt_grading_a29b64e6",
+      "binding_member_statuses": {
+        "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y\\\\%m\\\\%d %H:%M:%S-True]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30 00:00:00-%Y-%m-%d %H:%M:%S]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30 00:00:00.000000-%Y-%m-%d %H:%M:%S.%f]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 00:00:00-%Y-%d-%m %H:%M:%S-True-None]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 00:00:00-%Y-%m-%d %H:%M:%S-False-None]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 0:0:0-%Y-%d-%m %H:%M:%S-True-None]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 0:0:0-%Y-%m-%d %H:%M:%S-False-None]": "PASSED"
+      }
+    },
+    "reported_only_none": {
+      "raw_ledger": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/reported_only_none/ledger.jsonl",
+        "sha256": "sha256:75c448ee7b22f2c8cc52df31fe7997de70da246ae9e964a93ad3353ac0fed6e3"
+      },
+      "raw_close": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/reported_only_none.stdout.log",
+        "sha256": "sha256:5435b9129b6de564d012322eeb64e0e4b45e6af86bdf4e711ddbd53a2ef37a18"
+      },
+      "diagnostics": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/reported_only_none/eval_logs/evallog_replay-pandas50319-forma_ba9196b2.diagnostics.json",
+        "sha256": "sha256:baf5bc570a2ed76587be14bec0e7176f5ee915852a5ed6c3cfa16e1905323400"
+      },
+      "eval_log": {
+        "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/reported_only_none/eval_logs/evallog_replay-pandas50319-forma_ba9196b2.eval.log",
+        "sha256": "sha256:86bea26cfdb72f9dd970a8881dba8a887b261935e4ca5854fc90f634ed89cbcc"
+      },
+      "candidate_kind": "cc",
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "expected_match": null,
+        "expected_total": null,
+        "f2p_pass": 1,
+        "f2p_total": 2,
+        "failure_category": "tests_failed",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1+pandas50319-dot-date-full-bindings-v1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": 0,
+        "p2p_total": 109,
+        "report_id": "rpt_grading_ba9196b2",
+        "reward": 0.0
+      },
+      "install": {
+        "candidate_exec_exit_code": 0,
+        "candidate_segment_completed": true,
+        "install_failed_commands": [],
+        "install_rc_last_command": 0,
+        "install_seconds": 687.224,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 5.17
+      },
+      "test": {
+        "exec_exit_code": 0,
+        "rc": 1,
+        "seconds": 5.17,
+        "segment_completed": true
+      },
+      "observations": {
+        "array_iso": [
+          "2003-03-27T14:55:00",
+          "2004-04-28T16:07:08.123456"
+        ],
+        "extension_file": "/testbed/pandas/_libs/tslibs/parsing.cpython-38-x86_64-linux-gnu.so",
+        "extension_mtime": 1790991588.0,
+        "extension_sha256": "c7a43c72edfdc978e679d4ccf3cc3b7889e63810ec38d9b2202e105617170bee",
+        "guess_results": [
+          {
+            "input": "27.03.2003 14:55:00.000",
+            "value": null
+          },
+          {
+            "error": "ValueError",
+            "input": "28.04.2004 16:07:08.123456",
+            "message": "invalid literal for int() with base 10: ''"
+          }
+        ],
+        "identity_ok": true,
+        "observed_at": 1790991703.074745,
+        "pandas_file": "/testbed/pandas/__init__.py",
+        "pandas_version": "2.0.0.dev0+940.g1613f26ff0.dirty",
+        "python": "/opt/miniconda3/envs/testbed/bin/python",
+        "source_sha256": "019d0e80aa34cf59270138806ad8600d40779bd68d2b0480345386dce78c0fae",
+        "uid": 54322,
+        "warnings": [
+          "Could not infer format, so each element will be parsed individually by `dateutil`. To ensure parsing is consistent and as-expected, please specify a format."
+        ]
+      },
+      "phases_seconds": {
+        "delta_apply": 0.411155,
+        "grader_baseline_rebuild": 2.267492,
+        "grader_cleanup": 3.636735,
+        "grader_start_and_verify": 131.537773,
+        "grader_trusted_setup": 305.431307,
+        "parser_and_report": 4.695721,
+        "test": 697.148372
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "image_identity": "sha256:e645e4346df9200174e8b879ad8fb7a09f64f91c7375311e2569596d054ba21e",
+      "image_id_actual_raw": null,
+      "scripts_digest": "sha256:38c1676d0dc7faacf71684b51a62dfc386cfa31cd906964ab75e58ff792939c4",
+      "grading_materials_identity": "sha256:aec98b708135a7f293dc888a0a4cf70090584a6ea40fd1a32f0f087aac652979",
+      "physical_pytest": {
+        "unique_nodes": 115,
+        "passed": 114,
+        "failed": 1,
+        "skipped": 0
+      },
+      "qualification_read": {
+        "qualifications": 1,
+        "from": [
+          "/work/rh2-category2-20261003/packages/swe_pandas/formal_checks/pandas50319-formal-r13-v3-7feee5549e/outputs/pandas50319-formal-r13-v3-2f897642547c/noop/ledger.jsonl",
+          "/work/rh2-category2-20261003/packages/swe_pandas/formal_checks/pandas50319-formal-r13-v3-7feee5549e/outputs/pandas50319-formal-r13-v3-2f897642547c/gold/ledger.jsonl"
+        ],
+        "image_overlays": 0
+      },
+      "qualification_used": "ok:ledger.jsonl:rpt_grading_a29b64e6",
+      "binding_member_statuses": {
+        "pandas/tests/tslibs/test_parsing.py::test_is_iso_format[%Y\\\\%m\\\\%d %H:%M:%S-True]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30 00:00:00-%Y-%m-%d %H:%M:%S]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_with_parseable_formats[2011-12-30 00:00:00.000000-%Y-%m-%d %H:%M:%S.%f]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 00:00:00-%Y-%d-%m %H:%M:%S-True-None]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 00:00:00-%Y-%m-%d %H:%M:%S-False-None]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 0:0:0-%Y-%d-%m %H:%M:%S-True-None]": "PASSED",
+        "pandas/tests/tslibs/test_parsing.py::test_guess_datetime_format_no_padding[2011-1-1 0:0:0-%Y-%m-%d %H:%M:%S-False-None]": "PASSED"
+      }
+    }
+  },
+  "reference_scope": {
+    "revised_f2p": 2,
+    "source_p2p": 109,
+    "physical_p2p": 113,
+    "binding_groups": 3,
+    "binding_members": 7,
+    "source_reference_missing_all_arms": 0,
+    "binding_members_passed_noop_gold_none": 7
+  },
+  "final_residue_raw": {
+    "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_50319_final_residue_readback_20261003_v1.json",
+    "sha256": "sha256:4a78bbaa0df3d63b53657b521ccb43712f488c6c3ea739b8e11e5baa4ef7dd56"
+  },
+  "final_residue_transport": {
+    "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_50319_final_residue_transport_20261003_v1.json",
+    "sha256": "sha256:389646b5f01a753be70ec6f79e094fb8fca17a9722d400d660b328937d03f325"
+  },
+  "runtime_actual_image_evidence": {
+    "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_50319_last_arm_actual_image_20261003_v1.json",
+    "sha256": "sha256:264a1da0ea22edc473c12ba423f1e5571aaf919eeb3e90323d261fd94050e8b6"
+  },
+  "runtime_image_scope": "last reported_only_none arm directly inspected; six raw ordinary-source ledger actual IDs null preserved; no claim all six actual IDs were observed",
+  "qualification_source": {
+    "noop": {
+      "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/noop/ledger.jsonl",
+      "sha256": "sha256:0a8e3a40dae0d84ba17f9cae034994798a5cfa15cbc15c82d824d862813ff910"
+    },
+    "gold": {
+      "path": "runs/category2_repair_20260929/pandas_cpu_20261003/formal_r13_50319_received_whole_v1/gold/ledger.jsonl",
+      "sha256": "sha256:137eff363b4b7d4c5ab2a71e55c969427f9f213174ce1c5715ea4287d160ddd8"
+    },
+    "actual_consumption": "Gold used NoOp; later four controls used same-identity Gold. GPU must record its actual qualification loading."
+  },
+  "limits": [
+    "CPU controls and original public actor evidence; no real model attempt or training qualification",
+    "Natural close only; cooperative signal code does not prove hard-kill cleanup"
+  ],
+  "independent_reviews": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pandas/reviews/non_author_50319_formal_matrix_review_20261003.md",
+      "sha256": "sha256:6b796b30864a1daf7a282c7b510233afd9e4e35308f4594284d47092d4115ac0"
+    }
+  ]
+}

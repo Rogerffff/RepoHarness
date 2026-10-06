@@ -1,0 +1,424 @@
+{
+ "schema_id": "rh2.r2e_env_facts.v1",
+ "generated_at_utc": "2026-09-23T19:41:12Z",
+ "generator": {
+  "script": "rh2/scripts/r2e_env/collate_facts.py",
+  "sha256": "e21d4465331c7ed02c9ae9918894231324009cb9b220da5f6efd53809098d1fc"
+ },
+ "evidence_roots": [
+  "runs/r2e_rf_20260923",
+  "runs/r2e_env_repair_20260924/_rerun2"
+ ],
+ "m3_root": "runs/env_overnight_20260916/M3",
+ "identity": {
+  "task_id": "r2e_gym_subset::orange3__9b5494e26f407b75e79699c9d40be6df1d80a040",
+  "instance_id": "orange3__9b5494e26f407b75e79699c9d40be6df1d80a040",
+  "repo": "orange3",
+  "module": "Orange",
+  "base_commit": "43f086f0bacccd69e514788ae55e7f7df2285937",
+  "source_commit_hash": "9b5494e26f407b75e79699c9d40be6df1d80a040",
+  "base_image_ref": "namanjain12/orange3_final:9b5494e26f407b75e79699c9d40be6df1d80a040",
+  "base_image_manifest_digest": "sha256:a5aa510cf45da43f32775bd0cdbf1ac81ef5e621732ba30a12f120624e3358f9",
+  "derived_image_ref": "rh2-r2e-derived/orange3:9b5494e26f40-r2e_derive_v1",
+  "derived_image_id": "sha256:dd35c11cf6a7e199649cb5add7160f1681ba01ba00e087376c5a4594bdae7910",
+  "recipe_id": "r2e_derive_v1",
+  "recipe_sha256": "sha256:0da821a15fa389289f524c60d3a421bc940cce753e4ecf3d53560b7ab6b31df9",
+  "hidden_tests_tree_sha256": "sha256:9a87bfe6c587ddeae7aa9eb367413baa2a9a58481d90178c2a842dee45c5cbd6",
+  "run_tests_sh_sha256": "sha256:5dee57d9beda24a5401b433fa66b74f423c4ab79eb04046265b0f5447d3b1315",
+  "head_commit_m3": "43f086f0bacccd69e514788ae55e7f7df2285937",
+  "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe"
+ },
+ "source": {
+  "expected_total": 13,
+  "expected_status_counts": {
+   "PASSED": 9,
+   "FAILED": 4
+  },
+  "expected_non_passed": {
+   "TestLogisticRegressionLearner.test_LogisticRegression": "FAILED",
+   "TestLogisticRegressionLearner.test_coefficients": "FAILED",
+   "TestLogisticRegressionLearner.test_learner_scorer": "FAILED",
+   "TestLogisticRegressionLearner.test_learner_scorer_multiclass": "FAILED"
+  },
+  "hidden_test_files": [
+   "__init__.py",
+   "test_1.py"
+  ],
+  "runner_kind": "xvfb_pytest",
+  "runner_prefix": "QT_QPA_PLATFORM=minimal PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' xvfb-run --auto-servernum",
+  "run_tests_sh": "QT_QPA_PLATFORM=minimal PYTHONWARNINGS='ignore::UserWarning,ignore::SyntaxWarning' xvfb-run --auto-servernum .venv/bin/python -W ignore -m pytest -rA r2e_tests",
+  "problem_statement_chars": 593,
+  "problem_statement_has_code_block": true,
+  "public_prompt_chars": 696,
+  "public_hints_mention_conda": true
+ },
+ "environment": {
+  "python_version": "3.7.9",
+  "interpreter_source_path": "/root/.local/share/uv/python/cpython-3.7.9-linux-x86_64-gnu/bin/python3.7m",
+  "interpreter_derived_path": "/opt/py/cpython-3.7.9-linux-x86_64-gnu/bin/python3.7m",
+  "install_mode_m3": "path_entry",
+  "pth_line_m3": "/testbed",
+  "import_outside_testbed_ok_m3": true,
+  "import_path_grader": "/testbed/Orange/__init__.py",
+  "pkg_version_grader": "3.26.0.dev",
+  "dirty_tree_lines": [
+   "?? datasets",
+   "?? install.sh",
+   "?? run_tests.sh"
+  ],
+  "testbed_owner_derived": "root",
+  "metacopy": "N"
+ },
+ "derived_image": {
+  "ok": true,
+  "failures": [],
+  "checks_total": 20,
+  "checks_failed": [],
+  "build_seconds": 22.0,
+  "base_size_bytes": 3318451812,
+  "derived_size_bytes": 3692443686,
+  "built_at_utc": "2026-09-23T14:00:14.443668Z",
+  "preflight_stdout": [
+   "RH2_PREFLIGHT_INTERPRETER=ok",
+   "RH2_PREFLIGHT_HIDDEN_TESTS=ok",
+   "RH2_PREFLIGHT_GIT_HISTORY=ok"
+  ]
+ },
+ "rh2_runs": [
+  {
+   "run_id": "r2e-rf-all-gold",
+   "ledger": "ledger_r2e_all_gold.jsonl",
+   "kind": "gold",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T15:08:41.695830+00:00",
+   "stage_error": null,
+   "reward": 1.0,
+   "outcome": "resolved",
+   "failure_category": null,
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 13,
+   "expected_total": 13,
+   "num_parsed_tests": 13,
+   "resolution": "RESOLVED_FULL",
+   "mismatched": [],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 1,
+   "test_seconds": 2.69,
+   "setup_seconds": 82.929959,
+   "grader_seconds_total": 95.866,
+   "mem_peak_mb": 1238.266,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:dd35c11cf6a7e199649cb5add7160f1681ba01ba00e087376c5a4594bdae7910",
+   "import_path_grader": "/testbed/Orange/__init__.py",
+   "pkg_version_grader": "3.26.0.dev",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-o_f0536903.eval.log",
+   "diagnostics": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-o_f0536903.diagnostics.json",
+   "non_passed_reasons": {
+    "TestLogisticRegressionLearner.test_LogisticRegression": "FAILED",
+    "TestLogisticRegressionLearner.test_coefficients": "FAILED",
+    "TestLogisticRegressionLearner.test_learner_scorer": "FAILED",
+    "TestLogisticRegressionLearner.test_learner_scorer_multiclass": "FAILED"
+   },
+   "dirty_tree_lines": [
+    " M Orange/classification/logistic_regression.py",
+    "?? datasets",
+    "?? install.sh",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": [
+    "Orange/classification/logistic_regression.py"
+   ]
+  },
+  {
+   "run_id": "r2e-rf-all-noop",
+   "ledger": "ledger_r2e_all_noop.jsonl",
+   "kind": "noop",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T15:08:43.712967+00:00",
+   "stage_error": null,
+   "reward": 0.0,
+   "outcome": "unresolved",
+   "failure_category": "tests_failed",
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 11,
+   "expected_total": 13,
+   "num_parsed_tests": 13,
+   "resolution": "RESOLVED_NO",
+   "mismatched": [
+    "TestLogisticRegressionLearner.test_auto_solver",
+    "TestLogisticRegressionLearner.test_probability"
+   ],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 1,
+   "test_seconds": 3.262,
+   "setup_seconds": 82.969701,
+   "grader_seconds_total": 97.3,
+   "mem_peak_mb": 1300.68,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:dd35c11cf6a7e199649cb5add7160f1681ba01ba00e087376c5a4594bdae7910",
+   "import_path_grader": "/testbed/Orange/__init__.py",
+   "pkg_version_grader": "3.26.0.dev",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-o_fec8687a.eval.log",
+   "diagnostics": "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-o_fec8687a.diagnostics.json",
+   "non_passed_reasons": {
+    "TestLogisticRegressionLearner.test_LogisticRegression": "FAILED",
+    "TestLogisticRegressionLearner.test_auto_solver": "FAILED",
+    "TestLogisticRegressionLearner.test_coefficients": "FAILED",
+    "TestLogisticRegressionLearner.test_learner_scorer": "FAILED",
+    "TestLogisticRegressionLearner.test_learner_scorer_multiclass": "FAILED",
+    "TestLogisticRegressionLearner.test_probability": "FAILED"
+   },
+   "dirty_tree_lines": [
+    "?? datasets",
+    "?? install.sh",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": []
+  },
+  {
+   "run_id": "r2e-envrepair-rerun-noop",
+   "ledger": "ledger_noop.jsonl",
+   "kind": "noop",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T18:54:35.269021+00:00",
+   "stage_error": null,
+   "reward": 0.0,
+   "outcome": "unresolved",
+   "failure_category": "tests_failed",
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 11,
+   "expected_total": 13,
+   "num_parsed_tests": 13,
+   "resolution": "RESOLVED_NO",
+   "mismatched": [
+    "TestLogisticRegressionLearner.test_auto_solver",
+    "TestLogisticRegressionLearner.test_probability"
+   ],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 1,
+   "test_seconds": 3.19,
+   "setup_seconds": 87.114646,
+   "grader_seconds_total": 101.745,
+   "mem_peak_mb": 1232.406,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:dd35c11cf6a7e199649cb5add7160f1681ba01ba00e087376c5a4594bdae7910",
+   "import_path_grader": "/testbed/Orange/__init__.py",
+   "pkg_version_grader": "3.26.0.dev",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_6d1b4b0a.eval.log",
+   "diagnostics": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_6d1b4b0a.diagnostics.json",
+   "non_passed_reasons": {
+    "TestLogisticRegressionLearner.test_LogisticRegression": "FAILED",
+    "TestLogisticRegressionLearner.test_auto_solver": "FAILED",
+    "TestLogisticRegressionLearner.test_coefficients": "FAILED",
+    "TestLogisticRegressionLearner.test_learner_scorer": "FAILED",
+    "TestLogisticRegressionLearner.test_learner_scorer_multiclass": "FAILED",
+    "TestLogisticRegressionLearner.test_probability": "FAILED"
+   },
+   "dirty_tree_lines": [
+    "?? datasets",
+    "?? install.sh",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": []
+  },
+  {
+   "run_id": "r2e-envrepair-rerun-gold",
+   "ledger": "ledger_gold.jsonl",
+   "kind": "gold",
+   "attempt": 1,
+   "started_at_utc": "2026-09-23T18:54:38.510536+00:00",
+   "stage_error": null,
+   "reward": 1.0,
+   "outcome": "resolved",
+   "failure_category": null,
+   "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+   "expected_match": 13,
+   "expected_total": 13,
+   "num_parsed_tests": 13,
+   "resolution": "RESOLVED_FULL",
+   "mismatched": [],
+   "missing": [],
+   "unexpected": [],
+   "test_rc": 1,
+   "test_seconds": 2.87,
+   "setup_seconds": 87.007848,
+   "grader_seconds_total": 99.813,
+   "mem_peak_mb": 1232.348,
+   "policy": {
+    "cpus": 2.0,
+    "memory_bytes": 4294967296,
+    "tmpfs_bytes": 1073741824,
+    "pids_limit": 512,
+    "shm_bytes": 67108864
+   },
+   "image_id_actual": "sha256:dd35c11cf6a7e199649cb5add7160f1681ba01ba00e087376c5a4594bdae7910",
+   "import_path_grader": "/testbed/Orange/__init__.py",
+   "pkg_version_grader": "3.26.0.dev",
+   "runner_integrity_changed": false,
+   "cleanup_removed": true,
+   "log_partial": false,
+   "eval_log": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_bf7cd2ce.eval.log",
+   "diagnostics": "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_bf7cd2ce.diagnostics.json",
+   "non_passed_reasons": {
+    "TestLogisticRegressionLearner.test_LogisticRegression": "FAILED",
+    "TestLogisticRegressionLearner.test_coefficients": "FAILED",
+    "TestLogisticRegressionLearner.test_learner_scorer": "FAILED",
+    "TestLogisticRegressionLearner.test_learner_scorer_multiclass": "FAILED"
+   },
+   "dirty_tree_lines": [
+    " M Orange/classification/logistic_regression.py",
+    "?? datasets",
+    "?? install.sh",
+    "?? run_tests.sh"
+   ],
+   "gold_included_paths": [
+    "Orange/classification/logistic_regression.py"
+   ]
+  }
+ ],
+ "latest_default_profile": {
+  "noop": "r2e-rf-all-noop",
+  "gold": "r2e-rf-all-gold"
+ },
+ "reference": {
+  "m3_facts_available": true,
+  "reconcile": [
+   {
+    "kind": "noop",
+    "ledger": "ledger_r2e_all_noop_local.jsonl",
+    "agree": true,
+    "reward_equal": true,
+    "diff_sets_equal": true,
+    "observed_maps_equal": true,
+    "reference_ledger_consistent": null,
+    "reference_log_count": 2,
+    "notes": null,
+    "reference_prime_rewards": [
+     0.0,
+     0.0
+    ],
+    "ref": "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   },
+   {
+    "kind": "gold",
+    "ledger": "ledger_r2e_all_gold_local.jsonl",
+    "agree": true,
+    "reward_equal": true,
+    "diff_sets_equal": true,
+    "observed_maps_equal": true,
+    "reference_ledger_consistent": true,
+    "reference_log_count": 2,
+    "notes": null,
+    "reference_prime_rewards": [
+     1.0,
+     1.0
+    ],
+    "ref": "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   }
+  ]
+ },
+ "auto_checks": {
+  "R01_identity": {
+   "status": "pass",
+   "note": "派生镜像 21 项复核通过；覆盖表 / 隐藏测试树 / 入口脚本 / HEAD 与评分面一致",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/r2e_derived/orange3__9b5494e26f407b75e79699c9d40be6df1d80a040/facts.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R02_noop_shows_problem": {
+   "status": "pass",
+   "note": "noop 0 来自 2 个 mismatched 键（无 missing、无零解析）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-o_fec8687a.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R08_candidate_code_effective": {
+   "status": "pass",
+   "note": "导入 /testbed/Orange/__init__.py；gold 13/13",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-o_f0536903.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R12_resources": {
+   "status": "pass",
+   "note": "峰值 1238 MB / 限额 4 GiB = 0.302; setup 83s test 3s",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-o_f0536903.diagnostics.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R13_repeat_noop": {
+   "status": "pass",
+   "note": "noop 同条件 2 次 reward 与差异集合一致",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-o_fec8687a.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_6d1b4b0a.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R13_repeat_gold": {
+   "status": "pass",
+   "note": "gold 同条件 2 次 reward 与差异集合一致",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-o_f0536903.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_bf7cd2ce.eval.log"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R15_reference_parse": {
+   "status": "pass",
+   "note": "2 行 agree（reward、差异集合、观测映射逐键相同）",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   ],
+   "by": "collate_facts.py"
+  },
+  "R16_f2p_keys": {
+   "status": "pass",
+   "note": "目标键 2：['TestLogisticRegressionLearner.test_auto_solver', 'TestLogisticRegressionLearner.test_probability']",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-o_fec8687a.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-o_f0536903.eval.log"
+   ],
+   "by": "collate_facts.py"
+  }
+ },
+ "flags": [
+  "dirty_tree_gt2",
+  "expected_has_non_passed_keys",
+  "xvfb_pytest"
+ ]
+}

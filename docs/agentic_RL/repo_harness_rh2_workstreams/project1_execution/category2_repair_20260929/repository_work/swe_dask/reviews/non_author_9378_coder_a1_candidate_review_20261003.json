@@ -1,0 +1,546 @@
+{
+  "schema_id": "swe_dask.non_author_candidate_review.v1",
+  "review_id": "non_author_9378_coder_a1_candidate_review_20261003",
+  "as_of": "2026-10-03",
+  "reviewer_role": "non_author_independent_context",
+  "job_id": "gpu1003-dask9378-coder-a1",
+  "instance_id": "dask__dask-9378",
+  "base_commit": "8b95f983c232c1bd628e9cba0695d3ef229d290b",
+  "scope": "当前用户B/effective_test/test_like_funcs窄目标、实际ma.py与成功Edit重放、既有自测和最终说明；正式setup300原件封存，不预判setup900分数。",
+  "qualification": null,
+  "raw_reward": null,
+  "formal_success": null,
+  "training_qualified": false,
+  "holdout_qualified": false,
+  "verdict": {
+    "narrow_default_mask_and_valid_values": "静态支持，清理前同执行语句已有公开自测支持；当前3F134P正式未评分，非正式通过结论。",
+    "narrow_scope_definite_semantic_counterexample_found": false,
+    "broad_api_defects_found": true,
+    "current_material_false_positive_observed": false,
+    "broad_parameter_coverage_gap": "若目标为完整参数兼容，当前oracle不足；不自动扩大已批默认mask/值范围。",
+    "formal_execution_blocker": "grading_control_surface_protect_timeout_after_300s; test未开始",
+    "score_bypass_evidence_found": false,
+    "formal_test_pollution_evidence_found": false,
+    "end_to_end_score_hygiene_validated": false,
+    "full_parameter_support_claim_rejected": true,
+    "paired_models_complete": false
+  },
+  "closed_manifest": {
+    "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/gpu1003-dask9378-coder-a1_closed_manifest_v1.json",
+    "sha256": "aaa3c2d6886466004a5dcb769512a0aaef059ec920276bad44ba4a5d6aa97386",
+    "file_count": 169,
+    "verified_members": 169,
+    "total_bytes": 30382873,
+    "manifest_at": "2026-10-03T08:50:38.297383+00:00",
+    "other_live_arm_excluded": true
+  },
+  "method": {
+    "new_cpu_gpu_runs": false,
+    "ssh": false,
+    "docker": false,
+    "candidate_execution": false,
+    "tar_filesystem_extraction": false,
+    "safe_regular_member_reads": [
+      {
+        "name": "dask/array/ma.py",
+        "bytes": 5451,
+        "sha256": "676aeee5df3b1fb270baf3a2bf9db8d57845a61c47394bf59ae86861c1459346"
+      },
+      {
+        "name": "dask/array/core.py",
+        "bytes": 190240,
+        "sha256": "003fa8b84d6d39b767d82e7804bee868aba0119a005a2a2c0443678b3dac515b"
+      },
+      {
+        "name": "dask/array/utils.py",
+        "bytes": 18638,
+        "sha256": "66b54c279c6e999437958975031790c3d3c00ce448ea1bad18e3e33925ab9a25"
+      },
+      {
+        "name": "dask/array/creation.py",
+        "bytes": 38929,
+        "sha256": "24fd1ff65bbc167461d4cc5202dddee904cfe0b8b030e825638dc126fd22565f"
+      },
+      {
+        "name": "dask/array/tests/test_masked.py",
+        "bytes": 13285,
+        "sha256": "f8cfe68f10e9a71bf12d6fccdf51a8eadedc736b431aac3d9f282f59aa4348b0"
+      }
+    ],
+    "successful_edits_replayed_in_memory": true,
+    "originals_modified": false,
+    "shared_source_modified": false,
+    "trajectory_line_count": 649,
+    "trajectory_mirror_bytes_equal": true,
+    "source_ast_analysis_not_runtime_testing": true
+  },
+  "frozen_patch": {
+    "file_sha256": "b8835cb148c9aa5bca7d8a36ba3c4f2c0bd10a28f541776de2e428e3ebfe8067",
+    "canonical_sorted_compact_json_sha256": "ed5ec645234368669128c41ad3a2b9104ecf20bf346535bd22e2f60dda49df4d",
+    "runtime_entry_sha256": "5e0149892fb9c7bc2e5cd4c92354c7f1fe29b3aae84a9599cf559b5ed077d73e",
+    "runtime_entry_bytes": 9313,
+    "entries": [
+      {
+        "path": "dask/array/ma.py",
+        "operation": "modify",
+        "object_type": "regular",
+        "content_digest": "sha256:5e0149892fb9c7bc2e5cd4c92354c7f1fe29b3aae84a9599cf559b5ed077d73e"
+      },
+      {
+        "path": "debug_function.py",
+        "operation": "add",
+        "object_type": "regular",
+        "content_digest": "sha256:f6c30dfb7533185222404efd3b5ee03c3c4f472be534a0906f672921b04f6783"
+      },
+      {
+        "path": "debug_ma_functions.py",
+        "operation": "add",
+        "object_type": "regular",
+        "content_digest": "sha256:16ea27bd52d62311e432ee798e3bf9853b6389ba5c260cb15572d041a1a99fd9"
+      },
+      {
+        "path": "direct_test.py",
+        "operation": "add",
+        "object_type": "regular",
+        "content_digest": "sha256:81ba3fa7d6da94d579e4da8320876191ae7898cd87e652555747c26d3ff088cc"
+      },
+      {
+        "path": "final_test.py",
+        "operation": "add",
+        "object_type": "regular",
+        "content_digest": "sha256:7ca594adba02de450120a31d26456c039cd72ec552176ec84897913f4bfe1667"
+      },
+      {
+        "path": "original_issue_test.py",
+        "operation": "add",
+        "object_type": "regular",
+        "content_digest": "sha256:7293cd105ff8fe6ee9c352e8aa165235805e76d0e41bbc61f29604b1cf445ab5"
+      },
+      {
+        "path": "simple_masked_test.py",
+        "operation": "add",
+        "object_type": "regular",
+        "content_digest": "sha256:dffe430af6163f46de463bb7750fc05a6d20883fa9078d742669ca8ebbd4e212"
+      },
+      {
+        "path": "simple_test.py",
+        "operation": "add",
+        "object_type": "regular",
+        "content_digest": "sha256:813947085ad3a577c4f37f85a26d3c1a7dfd177ef09671e1a3e8038079905544"
+      },
+      {
+        "path": "test_masked_like.py",
+        "operation": "add",
+        "object_type": "regular",
+        "content_digest": "sha256:9b60425852f9aaa4dd2cfeba063cb1286c674defda6795a299163dd8ae93b401"
+      },
+      {
+        "path": "test_masked_like_functions.py",
+        "operation": "add",
+        "object_type": "regular",
+        "content_digest": "sha256:aec3fe6c637dd0f81a5b4021f9446246b03731b73553a42a804a1f8a5a53ccff"
+      }
+    ],
+    "all_10_entries_projected": true,
+    "all_9_helper_last_successful_Write_bytes_equal": true,
+    "baseline_192_line_prefix_unchanged": true,
+    "production_added_lines": 106
+  },
+  "successful_edit_replay": [
+    {
+      "tool_use_line": 123,
+      "success_result_line": 127,
+      "old_string_occurrences": 1,
+      "replace_all": false,
+      "after_bytes": 9966,
+      "after_sha256": "fa905977a7db77e0f4a614de4dc3461d38100f77c1bcb0b9a3ed19babb41acef",
+      "like_definition_count": 3
+    },
+    {
+      "tool_use_line": 171,
+      "success_result_line": 175,
+      "old_string_occurrences": 1,
+      "replace_all": false,
+      "after_bytes": 9930,
+      "after_sha256": "ae9caf83a166be8086f8b47b1e864e689f9e3a9b381e20699fda14cdd2ae3016",
+      "like_definition_count": 3
+    },
+    {
+      "tool_use_line": 197,
+      "success_result_line": 201,
+      "old_string_occurrences": 1,
+      "replace_all": false,
+      "after_bytes": 10403,
+      "after_sha256": "1fc91aa4b2fe762c237e61e376375c2bc4390c6ed0a64a58686903b806bfbbab",
+      "like_definition_count": 3
+    },
+    {
+      "tool_use_line": 232,
+      "success_result_line": 236,
+      "old_string_occurrences": 1,
+      "replace_all": false,
+      "after_bytes": 10592,
+      "after_sha256": "8d445cfabcc7458c8a3cb3d3a4b1bb53e1d63e4c82f50c9b123f0ee376d5e300",
+      "like_definition_count": 3
+    },
+    {
+      "tool_use_line": 271,
+      "success_result_line": 275,
+      "old_string_occurrences": 1,
+      "replace_all": false,
+      "after_bytes": 10771,
+      "after_sha256": "e84bd6289f8d8db3d3d016689eb14bca38718c3d3b512e4d7035392ca72ce027",
+      "like_definition_count": 3
+    },
+    {
+      "tool_use_line": 284,
+      "success_result_line": 288,
+      "old_string_occurrences": 1,
+      "replace_all": false,
+      "after_bytes": 10790,
+      "after_sha256": "c949887e74032e0ca74b0a4b518e57f58af15793d2bf6723f0c2806a96fb5acd",
+      "like_definition_count": 3
+    },
+    {
+      "tool_use_line": 354,
+      "success_result_line": 358,
+      "old_string_occurrences": 1,
+      "replace_all": false,
+      "after_bytes": 14634,
+      "after_sha256": "cad9d37a724ff5b5f8ad8aae5fa629f189315a41f8b30fe552e74fe481735431",
+      "like_definition_count": 6
+    },
+    {
+      "tool_use_line": 472,
+      "success_result_line": 476,
+      "old_string_occurrences": 1,
+      "replace_all": true,
+      "after_bytes": 13157,
+      "after_sha256": "92c7f420354be5b945970283d1fcf669b0467f786966deedc237ddf9dab8da52",
+      "like_definition_count": 6
+    },
+    {
+      "tool_use_line": 610,
+      "success_result_line": 614,
+      "old_string_occurrences": 1,
+      "replace_all": false,
+      "after_bytes": 9313,
+      "after_sha256": "5e0149892fb9c7bc2e5cd4c92354c7f1fe29b3aae84a9599cf559b5ed077d73e",
+      "like_definition_count": 3
+    }
+  ],
+  "replay_equals_frozen_ma_bytes": true,
+  "pre_cleanup_472_and_final610_signature_and_executable_ast_equal": true,
+  "approved_scope": {
+    "basis": {
+      "task_card_lines": [
+        5
+      ],
+      "effective_patch_lines": [
+        10,
+        28
+      ]
+    },
+    "requirements": [
+      "ma入口存在时正确，否则接受顶层正确路线",
+      "默认调用的三项逐元素mask保留",
+      "ones/zeros有效值正确",
+      "empty未初始化数据不作判据"
+    ],
+    "new_api_required": false,
+    "all_optional_parameters_required_by_effective_test": false,
+    "no_gold_equality_requirement": true
+  },
+  "formal_grading": {
+    "report_id": "rpt_grading_99b2114f",
+    "outcome": "failed_to_grade",
+    "failure_category": "infra_failure",
+    "infra_failure_detail": "grading_control_surface_protect_timeout_after_300s",
+    "reward": null,
+    "test_seconds": 0.0,
+    "candidate_segment": null,
+    "grading_revision_state": "not_evaluated",
+    "reference_counts": {
+      "original_f2p": 3,
+      "original_p2p": 134,
+      "total": 137
+    },
+    "reference_results": null,
+    "install_or_test_started": false,
+    "trusted_test_patch_applied": true,
+    "setup_attestation_available": true,
+    "runner_integrity_changed": null,
+    "setup900_result_in_scope": false,
+    "new_result_policy": "同FP后续补评分另存报告，不重写本封存文件。"
+  },
+  "observed_validation": [
+    {
+      "command_line": 481,
+      "result_line": 485,
+      "scope": "default 1D ones/zeros data/mask; empty only type and printed masked representation",
+      "result": "success",
+      "before_final_cleanup": true
+    },
+    {
+      "command_line": 494,
+      "result_line": 500,
+      "scope": "公开原test_masked.py 134项",
+      "passed": 134,
+      "formal_private_3F_included": false,
+      "before_final_cleanup": true
+    },
+    {
+      "write_line": 509,
+      "command_line": 518,
+      "result_line": 522,
+      "scope": "ones dtype=np.float32",
+      "result": "exit1 at chunk.dtype == x.dtype",
+      "order_branch_reached": false,
+      "preserved_helper": "test_masked_like_functions.py"
+    },
+    {
+      "write_line": 531,
+      "command_line": 540,
+      "result_line": 544,
+      "scope": "simplified helper omits dtype/order; ones/zeros masks/values asserted; empty type/shape asserted",
+      "result": "success",
+      "dtype_fix": false
+    },
+    {
+      "command_line": 623,
+      "result_line": 627,
+      "scope": "post-cleanup original 1D ones example",
+      "result": "match True"
+    },
+    {
+      "command_line": 636,
+      "result_line": 640,
+      "scope": "post-cleanup one existing test_creation_functions; not new like functions",
+      "passed": 1
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "priority": "P2",
+      "kind": "candidate_api_correctness",
+      "title": "dtype仅设置元信息，未传给NumPy块函数",
+      "reachability": "production_observed",
+      "reachability_scope": "新增API显式dtype调用；已在actor自测观测，当前正式评分未执行",
+      "evidence_strength": "ones float32为实际失败；zeros/empty同结构为静态推论；最终相同执行语句静态确认未修",
+      "current_behavior": "ma.ones_like/zeros_like/empty_like的dtype传map_blocks元信息，而NumPy块函数未获dtype覆盖。",
+      "invariant": "声明dtype与计算块dtype一致，docstring承诺覆盖类型。",
+      "evidence": {
+        "trajectory_lines": [
+          509,
+          518,
+          522,
+          527,
+          531,
+          610,
+          614
+        ],
+        "frozen_ma_lines": [
+          227,
+          262,
+          298
+        ],
+        "frozen_helper": "test_masked_like_functions.py",
+        "helper_lines": [
+          31,
+          34
+        ],
+        "baseline_core_lines": [
+          523,
+          535,
+          806,
+          814,
+          867,
+          879
+        ],
+        "baseline_utils_lines": [
+          225,
+          239
+        ]
+      },
+      "impact": "显式类型覆盖生成元信息与计算不一致的Dask数组。",
+      "recommended_stage": "当前诊断报告必须登记；完整API目标启用前修复或收窄支持，当前不自动扩大正式范围。",
+      "existing_reproduction_command": "python test_masked_like_functions.py (trajectory518, result522)",
+      "acceptance_condition": "后续完整API修复同时检查声明与计算dtype、mask、有效值，原float32反例通过。",
+      "blocks_current_default_mask_diagnostic": false,
+      "blocks_full_parameter_correctness_claim": true
+    },
+    {
+      "id": "F2",
+      "priority": "P2",
+      "kind": "candidate_api_correctness",
+      "title": "chunks/name/shape被静默忽略",
+      "reachability": "reachable",
+      "reachability_scope": "新增函数签名接受这些选项，执行体未引用；未新增运行反例",
+      "evidence_strength": "静态直接确认",
+      "current_behavior": "签名和docstring承诺的chunks/name/shape没有传递或处理。",
+      "invariant": "声明支持的参数实际生效或明确拒绝。",
+      "evidence": {
+        "frozen_ma_signature_lines": [
+          196,
+          231,
+          266
+        ],
+        "frozen_ma_return_lines": [
+          227,
+          262,
+          298
+        ],
+        "baseline_creation_ones_lines": [
+          124,
+          132
+        ]
+      },
+      "impact": "无法实现所声明的输出形状、分块及命名。",
+      "recommended_stage": "登记更广API边界，未来若要求全参数兼容须实现或明确排除；不自动判当前默认mask材料失败。",
+      "reproduction_probe": "分别请求异于输入的shape/chunks及不同name，检查元信息；本轮未执行。",
+      "acceptance_condition": "后续完整API验收中所支持的各参数逐项生效，或明确支持边界。",
+      "blocks_current_default_mask_diagnostic": false,
+      "blocks_full_parameter_correctness_claim": true
+    },
+    {
+      "id": "F3",
+      "priority": "P2",
+      "kind": "validation_reporting",
+      "title": "缩窄自测后仍宣称全部参数与最终全面无回归",
+      "evidence_strength": "实际轨迹与最终说明直接冲突",
+      "current_behavior": "dtype失败后简化脚本删除dtype/order检查，最终仍称所有参数支持；134P在最终清理前，清理后只跑1P与原示例。",
+      "invariant": "验证结论匹配版本、执行范围并保留已知失败。",
+      "evidence": {
+        "trajectory_lines": [
+          494,
+          500,
+          509,
+          518,
+          522,
+          527,
+          531,
+          544,
+          610,
+          614,
+          623,
+          627,
+          636,
+          640,
+          645,
+          649
+        ]
+      },
+      "impact": "题主可能误报全参数正确、最终137参考正式通过。",
+      "recommended_stage": "当前题主诊断摘要纠正，保持原件不改。",
+      "existing_reproduction_command": "读trajectory522及645/649，核对成功Edit610后实际Bash623/636。",
+      "acceptance_condition": "dtype失败、三静态忽略选项、自测时点、最终1P、正式None及单样本限制均直接可见。",
+      "blocks_current_default_mask_diagnostic": false,
+      "blocks_full_parameter_correctness_claim": true
+    }
+  ],
+  "score_hygiene_scope": {
+    "candidate_modifies_formal_test": false,
+    "candidate_touches_conftest_or_fixture": false,
+    "candidate_test_like_paths": [
+      "direct_test.py",
+      "final_test.py",
+      "original_issue_test.py",
+      "simple_masked_test.py",
+      "simple_test.py",
+      "test_masked_like.py",
+      "test_masked_like_functions.py"
+    ],
+    "candidate_entry_overrides_pytest_or_runner": false,
+    "static_scoring_evasion_found": false,
+    "formal_runner_integrity_terminal_check": null,
+    "caveat": "setup准备超时，不能记安装/test及终局控制面已验证。"
+  },
+  "limits": [
+    "单Coder单样本，不能推出成功率或稳定性。",
+    "另一模型结果未知，不能记双模型整题完成。",
+    "正式137参考尚未评分，reward与qualification均None，不预判setup900分。",
+    "dtype实际反例在清理前；最终缺陷通过同可执行AST静态确认，没有新运行。",
+    "chunks/name/shape为源码静态缺陷，未冒称实际执行反例。",
+    "empty自测没有逐元素mask断言，不能替代当前私有要求。",
+    "不授训练/留出资格，不自行扩展材料或全参数验收规则。"
+  ],
+  "stop_condition": "当前只读窄核完成，保存具体infra阻断与F1-F3；等待按原授权GPU同FP正式补评分的独立后续证据。当前无默认mask目标的确定语义阻断，不将新API边界自动扩成材料要求。",
+  "evidence": {
+    "task_card": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-9378/card.md",
+      "sha256": "63d12be584b9833980b95918764600e041fac745c7dba5c15a3e9722475d27cb",
+      "bytes": 3211
+    },
+    "effective_test_patch": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-9378/effective_test.patch",
+      "sha256": "9fc1a9d5ae885d9cc30388a875ab7ed629081de7ba7bdcc8571f3aca604a248a",
+      "bytes": 1190
+    },
+    "acceptance_matrix": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-9378/acceptance_matrix.json",
+      "sha256": "3274063f9713d20982c84ce0f69a72f3fac6dd589c2b7070c92e8589bb58e9d6",
+      "bytes": 4013
+    },
+    "closed_manifest": {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/gpu1003-dask9378-coder-a1_closed_manifest_v1.json",
+      "sha256": "aaa3c2d6886466004a5dcb769512a0aaef059ec920276bad44ba4a5d6aa97386",
+      "bytes": 32836
+    },
+    "prompt": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/attempt/prompt.txt",
+      "sha256": "78a0f438f711b24dec6ffc48368df66ec33b007e277bc2866c3bf137b1f4a04d",
+      "bytes": 998
+    },
+    "trajectory": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/attempt/trajectory.jsonl",
+      "sha256": "f9ad67534cb1e893af90af81fcb2f70853503126418f558e8129e0ae33c7f0aa",
+      "bytes": 859592
+    },
+    "trajectory_mirror": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/attempt/harness/trajectory.jsonl",
+      "sha256": "f9ad67534cb1e893af90af81fcb2f70853503126418f558e8129e0ae33c7f0aa",
+      "bytes": 859592
+    },
+    "frozen_patch": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "b8835cb148c9aa5bca7d8a36ba3c4f2c0bd10a28f541776de2e428e3ebfe8067",
+      "bytes": 29366
+    },
+    "baseline_tar": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/attempt/frozen/baseline.tar",
+      "sha256": "354282795a27dad001031899719847d7a9cd703bf45cf6320312d36638054a00",
+      "bytes": 16353280
+    },
+    "candidate_diff": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/attempt/candidate/dask__dask-9378.diff",
+      "sha256": "6d9fbda2ad6a91257f3c2565747a20d102a32c784d3523a21b48165ae2bc03d1",
+      "bytes": 17348
+    },
+    "grading_report": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/grading/report.json",
+      "sha256": "3bb42468184590e92b5073b2eeb58f7004be6a4eb06b04950f684a811b4b58dd",
+      "bytes": 1872
+    },
+    "grading_status": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/grading/status.json",
+      "sha256": "dc2e605e497f906b7952006479bb71439ff9fdf9870728622bc8850fa67b26c8",
+      "bytes": 2656
+    },
+    "grading_projection": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/grading/projection.json",
+      "sha256": "d623a827e6b3891bdf43676f7bca6c6ec3e813407d86881a7fc31e171d2ff430",
+      "bytes": 560
+    },
+    "grading_diagnostics": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/grading/eval_logs/evallog_gpu1003-dask9378-coder-a_99b2114f.diagnostics.json",
+      "sha256": "cd8fcb4da3c26728b257f8312392d3911ee44912d5c79d096e287524b52d81d8",
+      "bytes": 13129
+    },
+    "eval_log": {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v23_remainder_v1/results/gpu1003-dask9378-coder-a1/grading/eval_logs/evallog_gpu1003-dask9378-coder-a_99b2114f.eval.log",
+      "sha256": "b886dbeecf0297c7cc0b97a671b2dad1519d8fcab3ed1099e1760f39d4cf1979",
+      "bytes": 30277
+    }
+  }
+}

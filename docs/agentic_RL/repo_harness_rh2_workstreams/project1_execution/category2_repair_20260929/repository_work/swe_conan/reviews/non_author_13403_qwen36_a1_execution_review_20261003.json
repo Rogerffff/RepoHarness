@@ -1,0 +1,301 @@
+{
+  "schema": "rh2.non_author_execution_review.v1",
+  "review_date": "2026-10-03",
+  "reviewer_role": "non_author_execution_transport_reviewer",
+  "job_id": "gpu1003-conan13403-qwen36-a1",
+  "request_id": "swe-conan13403-r12-briefv1-20261003-v1",
+  "decision": "execution_evidence_verified_with_scope_limits",
+  "blocking_findings": [],
+  "scope": "本地 Python stdlib 静态只读复算：原件完整性、固定输入、基线与原FP评分运输、公开首请求交付、HTTP/SSE/adapter/CC一致性、正式参考与退出、PID1终止、drain/清理和资源边界。候选语义、七维总验收、配对ACK和训练资格不在本报告范围。",
+  "execution_performed": {
+    "remote": false,
+    "docker": false,
+    "model": false,
+    "project_import_or_tests": false
+  },
+  "provenance": {
+    "snapshot_root": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-conan13403-qwen36-a1",
+    "result_root": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-conan13403-qwen36-a1/queue_qwen_next12_v1/results/gpu1003-conan13403-qwen36-a1",
+    "closed_manifest": {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-conan13403-qwen36-a1/qwen_next12_closed_v1/gpu1003-conan13403-qwen36-a1/closed_manifest.json",
+      "sha256": "f9aa51eee527e5637c5b4cce834195552cbddba2167d007097630250f6760d1e",
+      "verified_files": 160,
+      "verified_bytes": 14472896,
+      "all_sizes_sha256_match": true
+    },
+    "mechanical_receipt": {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/conan13403_qwen36_execution_receipt_v2/execution_receipt.json",
+      "sha256": "200a7ebcf61c9647dac5af5e5c72e0cd51affca2d7ef8dec7767e34304a8beca"
+    },
+    "pair_execution_receipt": {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/swe-conan13403-r12-briefv1-20261003-v1_pair_execution_receipt_v1.json",
+      "sha256": "da11eb09698c9ab49a97930189e5954c63d94a6041ee1171295bf8f2bea601a9"
+    },
+    "reused_coder_execution_review": {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/conan13403_coder_a1_execution_review_v1.json",
+      "sha256": "151decc3f1e8c9a8b771e37c662a9686ffc0f085845607e6c0762cc94e1d8409",
+      "scope": "已接受首Coder执行证据；本报告另核本臂及相同输入/基线/实际code8，未重做Coder全执行审查。"
+    }
+  },
+  "fixed_inputs": {
+    "owner_request_sha256": "bf8eb0004261dc97ebc7a0959b77e3c1b94c4b86a8d58a89469a23c3e4c2dacb",
+    "registered_request_sha256": "dd2cccf14c4f458558c96e70c97f775d1a132f90fdd87ca0973dd795daba0ec2",
+    "registered_input_sha256_verified": 64,
+    "fixed_target_material_input_sha256_verified": 43,
+    "owner_material_binding_leaves_matched": 43,
+    "fixed_inputs_manifest_sha256": "2f20d2710e4700274b463bd6471890991d8a71ee4b732134e2592e8c09c07231",
+    "prepared_manifest_sha256": "7905288b43fab17a3d0f0c2d8ff5e6e31d1177eb5c7b159050bdd14a51b4df25",
+    "host_grading_artifact_sha256": "24a3c7495c410914a8aa341113596b11b40139a368cac73a32d5335d0dd9043f",
+    "materials_identity": "sha256:0f73cdf9d521c865ffd7d7cb070f642581e7225b5d3bfd168832c72125b3a065",
+    "grading_revision": "conan13403-cloud-test-v4-gnu-v2",
+    "actual_actor_and_grader_image_id": "sha256:b40849e11f0b85cc14a243ede47148c2b9bd7f49a8898640879ad724dd7ff4ff",
+    "base_commit": "55163679ad1fa933f671ddf186e53b92bf39bbdb",
+    "coder_and_qwen_same_fixed_input_materials_image_budgets": true
+  },
+  "runtime_source": {
+    "coder_execution_snapshot": "code_v8",
+    "qwen_execution_snapshot": "code_v8",
+    "source_manifest_byte_identical": true,
+    "source_manifest_sha256": "09ddb8bfdeecd3ffaa38c1048a574161ef6fa6053b2855da50166e8e8677899d",
+    "code8_local_full_manifest_files_verified": 1045,
+    "entry_sha256": "bdf806bf8da1d5ebb4970887bfc3c7738eb3e57a75e1d07215d6d68b17e574c4",
+    "serial_dispatch_sha256": "cb435f7390d9aeba3bad51efabf808634668263e9dfbcffae96f50a4b8f90f10",
+    "coder_model_transport_snapshot": "code_v4",
+    "qwen_model_transport_snapshot": "code_v8",
+    "profile_difference_only": "network.model_proxy_upstream: Coder 172.17.0.1:18081 → Qwen 172.17.0.1:18082",
+    "coder_profile_digest": "sha256:4a6435bc16d26c517b34eb1a4e40e83cdeef3ef08e813a136e9ae06ed67e22b6",
+    "qwen_profile_digest": "sha256:c731fff97bcd8ed6be3f31ac2108980dc549f0e5a75403f9738b2b3b2537e500",
+    "preparation_budget_policy": null
+  },
+  "baseline": {
+    "canonical_digest": "sha256:025760d35c701c25f189a4303579d2e2b337d11c1af63855112075d899859077",
+    "regular_entries": 960,
+    "tar_bytes": 6584320,
+    "qwen_tar_sha256": "a1383162013c2c236ce2bc9ef8a6dd97c4090d519dc13fb7100f3b494947815f",
+    "coder_tar_sha256": "18bba5cec5e5dddc7ffddd66a672bb191aafdeccacaa7816d1465836dca93dd4",
+    "all_members_type_git_mode_content_verified": true,
+    "census_and_rebuild_byte_identical": true,
+    "census_sha256": "e588c13e8cd1dae182b21d9d57ffcf7693a1972c0388fc16976ad746f555954a",
+    "coder_qwen_manifest_census_rebuild_byte_identical": true,
+    "coder_qwen_all_tar_members_type_exact_mode_content_identical": true,
+    "tar_archive_byte_identity_claimed": false,
+    "public_bundle_canonical_digest": "sha256:0ed07332c3b10087f669e9345772ed5eddd316cab87621a95a1e38b38464374a",
+    "host_grading_canonical_digest": "sha256:0a8aeebe928ddc6062f3bd6d0e498a0b0a2e89983bf9be4dc6ae5de9e9e16222"
+  },
+  "frozen_patch": {
+    "canonical_digest": "sha256:8d9fb7fd1bb2d55907d473e392e93ce5d004eacdf6fcc033cb6bff32c5915f79",
+    "entries": [
+      {
+        "path": "conan/tools/gnu/autotools.py",
+        "operation": "modify",
+        "mode": "100644",
+        "bytes": 6235,
+        "content_sha256": "460bb9505e4fe35e74be9970e997a265fea31550cff9c39d93326d11d16b8a65",
+        "included": true
+      },
+      {
+        "path": "conans/test/unittests/tools/gnu/autotools_test.py",
+        "operation": "modify",
+        "mode": "100644",
+        "bytes": 2609,
+        "content_sha256": "813a19ed7a097029fdf4bdf8b5b856479fedbc854fbff023190bbbf5fd6e31a8",
+        "included": false
+      }
+    ],
+    "full_diff_bytes": 3687,
+    "full_diff_sha256": "c3aa89a94e8b40a614a420739d4f04b6c0f3a0b451c4d1f6c47441dee9f3f9ea",
+    "all_diff_hunks_reconstructed_equal_fp": true,
+    "projection_identity_and_all_paths_matched": true,
+    "applied_entry_set_digest": "sha256:1b0f7d9d383fe8a8b1f7f64863a05916fceda1a5132354ecbc282c8c5d9537f1"
+  },
+  "public_delivery": {
+    "problem_statement_sha256": "425518836e7247e71cd3071f572b65cafafbeb041912d41af64c8e9f0b9e1585",
+    "base_prompt_sha256": "222c816a5c59c66e0b73438842e15c9086b4507465ee5178a8575c25643f5497",
+    "brief_v1_sha256": "4deeac2d97519ad9c0dfd9d2e0ba15bb6b034e0a5736d96cf2e86bfa0f1b37c5",
+    "delivered_prompt_sha256": "88c598cd67a46643a39399f3460244f1bfc91ab15b9f066d34dfb32b3cfb1850",
+    "complete_issue_base_and_stripped_brief_present_in_first_api_request": true,
+    "coder_qwen_delivered_prompt_bytes_identical": true
+  },
+  "budget": {
+    "context_tokens": 196608,
+    "response_output_tokens": 65536,
+    "cc_turns": 240,
+    "solver_seconds": 10800,
+    "gateway_requests": 1024,
+    "first_byte_timeout_seconds": 1800,
+    "adapter_idle_seconds": 14400,
+    "grading_whole_seconds": 3600,
+    "grading_setup_seconds": 300,
+    "grading_apply_seconds": 120,
+    "grading_test_seconds": 1800,
+    "all_26_http_max_tokens": 65536,
+    "cc_modelUsage_maxOutputTokens": 32000,
+    "full_output_boundary_tested": false
+  },
+  "model_runtime": {
+    "repo": "Qwen/Qwen3.6-35B-A3B",
+    "revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+    "download_manifest_sha256": "32bd30f61860366b3783eabc9d75bee0cd28c474d9c07de8be8d9ae60a4552ab",
+    "chat_template_sha256": "e84f32a23fdda27689f868aa4a1a5621f41133e51a48d7f3efcbea2839574259",
+    "current_model_files_size_verified": 37,
+    "current_model_files_total_bytes": 71926788362,
+    "engine_id": "5a023c27c62bb2f37cf060429a59f96b726d1b404cf756bc8052564037bf3349",
+    "engine_pid": 999327,
+    "engine_started_at": "2026-10-03T13:24:03.233754906Z",
+    "adapter_id": "aff52a71c621b2520b42350259a2992a18c0ed40ea209906357d3c2a552fc36d",
+    "adapter_pid": 1000924,
+    "adapter_started_at": "2026-10-03T13:26:58.312905352Z",
+    "engine_adapter_before_after_inspect_byte_identical": true,
+    "engine_adapter_restart_counts": [
+      0,
+      0
+    ],
+    "model_and_code_mounts_read_only": true,
+    "sglang_version": "0.5.20",
+    "dtype": "bfloat16",
+    "tp_size": 1,
+    "max_running_requests": 1,
+    "context_length": 196608,
+    "max_req_input_len": 196602,
+    "allow_auto_truncate": false,
+    "sampling": {
+      "temperature": 1.0,
+      "top_p": 0.95,
+      "top_k": 20,
+      "max_new_tokens": 65536
+    },
+    "individual_weight_sha256_repeated": false,
+    "gpu_memory_weight_hash_attestation": false
+  },
+  "transport": {
+    "http_request_rows": 26,
+    "generation_sse_pairs": 26,
+    "count_tokens_rows": 0,
+    "adapter_turn_rows": 26,
+    "all_http_200_attempt1_stream_error_null": true,
+    "all_sse_start_stop_shapes_byte_count_model_usage_stop_matched": true,
+    "all_adapter_parsed_text_thinking_tool_arguments_equal_sse": true,
+    "sse_blocks": 63,
+    "cc_assistant_blocks": 63,
+    "exact_cc_blocks": 62,
+    "cc_default_normalizations": [
+      {
+        "request_seq": 9,
+        "block_ordinal": 22,
+        "tool": "Edit",
+        "change": "input.replace_all false added; first API Edit schema default false"
+      }
+    ],
+    "tool_calls": 26,
+    "tool_results": 26,
+    "tool_use_result_id_sets_equal": true,
+    "tool_types": {
+      "Bash": 12,
+      "Read": 8,
+      "Edit": 6
+    },
+    "tool_result_errors": 3,
+    "multi_tool_generation_seqs": {
+      "1": 2
+    },
+    "stop_reasons": {
+      "tool_use": 25,
+      "end_turn": 1
+    },
+    "input_tokens": 408214,
+    "output_tokens": 8058,
+    "cc_num_turns": 27,
+    "cc_version": "2.1.205",
+    "cc_subtype": "success",
+    "cc_stop_reason": "end_turn",
+    "trajectory_rows": 410,
+    "trajectory_bytes": 351383,
+    "trajectory_sha256": "319ff9c8954cb7969128b9a1d2247c160f8348f741762f329b85ceeb6dec4ac0",
+    "trajectory_harness_bytes_equal": true,
+    "stderr_bytes": 0,
+    "solve_seconds": 57.368
+  },
+  "grading_execution": {
+    "source": "original_frozen_patch",
+    "report_outcome": "resolved",
+    "raw_reward": 1.0,
+    "formal_f2p_success": [
+      "conans/test/unittests/tools/gnu/autotools_test.py::test_source_folder_works"
+    ],
+    "formal_f2p_total": 1,
+    "formal_p2p_total": 0,
+    "raw_parsed_tests": 1,
+    "reference_missing_skipped_unaccounted": [],
+    "install_rc": 0,
+    "test_rc": 0,
+    "candidate_exec_rc": 0,
+    "harness_rc": 0,
+    "original_dispatch_rc": 0,
+    "full_segments_complete": true,
+    "eval_log_bytes": 36752,
+    "eval_log_sha256": "d28ac963eb33e810397b8f34a1f9a0ec3b4e152c441c3a564a7f4a7da8909569",
+    "report_status_result_consistent": true,
+    "trusted_setup_apply_rc": 0,
+    "trusted_setup_restored_test_files": 1,
+    "candidate_prerequisite_verified": true,
+    "test_command": "pytest -n0 -rA conans/test/unittests/tools/gnu/autotools_test.py",
+    "runner_integrity_changed": false,
+    "formal_grade_is_semantic_acceptance_claim": false
+  },
+  "termination_cleanup": {
+    "registered_started_at": "2026-10-03T14:31:39.355721+00:00",
+    "registered_ended_at": "2026-10-03T14:34:42.056812+00:00",
+    "exact_pid1_unit": "rh2-gpu1003-conan13403-qwen36-a1-qwen-next12-v1.service",
+    "pid1_success_at": "2026-10-03T14:34:42.081002Z",
+    "raw_journal_sha256": "925c72e9d1c81a10a2b90f8ac34d16ee9fe2c36c2100bcf3fb1b85d11db01660",
+    "success_json_sha256": "c3704cb0ce73e49519ac5f915516348b34bc51abeb404bd21d561083cf41e655",
+    "retired_unit_not_found_default_rc_not_used_as_exit_proof": true,
+    "pre_drain_agent_residual": 0,
+    "quiescence_agent_residual": 0,
+    "double_read_workspace_stable": true,
+    "gateway_revoked": true,
+    "gateway_active_requests": 0,
+    "gateway_drained": true,
+    "attempt_cleanup_clean": true,
+    "grader_created_removed_totals": [
+      1,
+      1
+    ],
+    "grader_open_supply_failures_empty": true,
+    "regrades": 0,
+    "last_resource_sample_job_containers": []
+  },
+  "resource_limits": {
+    "samples": 14,
+    "first_sample": "2026-10-03T14:31:36.449721+00:00",
+    "last_sample": "2026-10-03T14:34:52.414178+00:00",
+    "max_sample_gap_seconds": 15.093062,
+    "actor_relay_grader_samples": [
+      6,
+      6,
+      6
+    ],
+    "sampled_memory_peak_bytes": {
+      "actor": 849715200,
+      "relay": 27766784,
+      "grader": 299503616
+    },
+    "sampled_pids_peak": {
+      "actor": 25,
+      "relay": 7,
+      "grader": 8
+    },
+    "sampled_oom_oomkill": 0,
+    "grader_diagnostics_peak_memory_mb": 320.645,
+    "monitor_gaps_unknown": true,
+    "continuous_full_run_tree_proof": false,
+    "engine_adapter_cgroup_or_whole_job_peak_proof": false
+  },
+  "limitations": [
+    "正式1F0P raw1仅作为执行报告事实，不代替issue修复语义或训练资格。",
+    "同输入/镜像/完整基线不等于两模型运输或profile完全相同；本题两臂执行code8，前两题的Coder code7→Qwen code8差异不可套用。",
+    "资源14切片无法证明连续完整运行树、全作业峰值或效率；grader诊断peak与切片peak测量窗口不同。",
+    "37模型文件数量/大小与下载manifest一致；未复算各权重SHA或GPU内权重身份。",
+    "预算已核声明、实际请求和服务读回，未实测满196608上下文或65536输出边界。"
+  ]
+}

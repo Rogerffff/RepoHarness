@@ -1,0 +1,23 @@
+[
+  {
+    "id": "identity_import",
+    "cmd": "id; pwd; git rev-parse HEAD; git status --porcelain; python - <<'PY'\nimport sys,dask,yaml,pytest\nprint('PYTHON',sys.executable,sys.version)\nprint('DASK',dask.__file__,dask.__version__)\nprint('PYYAML',yaml.__version__,'PYTEST',pytest.__version__)\nassert dask.__file__.startswith('/testbed/')\nPY",
+    "timeout_s": 60,
+    "expect": "zero",
+    "purpose": "原公开源码、非root身份及真实完整导入"
+  },
+  {
+    "id": "issue_public_import_scalar",
+    "cmd": "python - <<'PY'\nimport os,sys,tempfile,subprocess\nfrom pathlib import Path\nwith tempfile.TemporaryDirectory() as tmp:\n root=Path(tmp);home=root/'home';home.mkdir();conf=root/'bad.yaml';conf.write_text('a plain string\\n')\n env={**os.environ,'HOME':str(home),'DASK_ROOT_CONFIG':str(root/'empty_root'),'DASK_CONFIG':str(conf),'PYTHONDONTWRITEBYTECODE':'1'}\n proc=subprocess.run([sys.executable,'-c','import dask; print(dask.__file__)'],env=env,text=True,capture_output=True)\n print('CONFIG_PATH',conf);print('IMPORT_RC',proc.returncode);print(proc.stdout);print(proc.stderr)\n raise SystemExit(proc.returncode)\nPY",
+    "timeout_s": 60,
+    "expect": "nonzero",
+    "purpose": "原公开堆栈的str配置导致完整import dask失败；读实际异常，不应用私有材料"
+  },
+  {
+    "id": "public_config_regression",
+    "cmd": "python -m pytest -p no:cacheprovider -n0 -rA --color=no dask/tests/test_config.py",
+    "timeout_s": 600,
+    "expect": "zero",
+    "purpose": "原公开config模块，包含真实非root file/directory权限测试"
+  }
+]

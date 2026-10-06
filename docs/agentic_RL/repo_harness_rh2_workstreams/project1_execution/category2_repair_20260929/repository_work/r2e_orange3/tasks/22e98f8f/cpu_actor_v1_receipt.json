@@ -1,0 +1,113 @@
+{
+  "schema_id": "rh2.orange3.cpu_actor_receipt.v1",
+  "as_of": "2026-10-03",
+  "instance_id": "orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237",
+  "status": "statement_and_public_actor_verified_environment_recipe_alignment_pending",
+  "author_thread_id": "01a0fd63-ef54-7691-87db-e5124474f714",
+  "actual_model_inference": false,
+  "formal_grading_executed": false,
+  "release_id": "cat2-cpu-r2e064065-swe5-20261003-v1",
+  "release_manifest_sha256": "sha256:282021962a92b510f077385660ac56acedcd7fac1d97e63db3baa98e4dcc057f",
+  "build": {
+    "job": "orange22-derived-c-20261003-v2",
+    "returncode": 0,
+    "image_id": "sha256:29d37138a40c288ee45606e9b907c1d07d6cb3e8eff8023a079b659993e6cf50",
+    "recipe_id": "r2e_derive_v1",
+    "recipe_sha256": "sha256:0da821a15fa389289f524c60d3a421bc940cce753e4ecf3d53560b7ab6b31df9",
+    "facts": {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/cpu-c_20261003/orange22_derived/facts.json",
+      "sha256": "sha256:4cd1531fab90b6a9e246c2614564cdd427efae931c0f2e32e9a204e7aa0d7773"
+    },
+    "integrity_checks_all_passed": true,
+    "transport_note": "旧builder作业在第四版前启动；不声称已使用后来新增的检查容器限制/标签。"
+  },
+  "actor": {
+    "job": "orange22-actor-c-20261003-v1",
+    "attempt_id": "orange22-statement-c-20261003-v1",
+    "runtime": "runtime_cpu_v2/rh2/.venv/bin/python",
+    "returncode": 0,
+    "termination": "completed",
+    "image_id": "sha256:29d37138a40c288ee45606e9b907c1d07d6cb3e8eff8023a079b659993e6cf50",
+    "prompt_sha256": "sha256:cbb5bef04dc66cc97fcd41eee2fcf2e31cebcb2dd15517a7c1f6e16d01a10697",
+    "public_statement_sha256": "sha256:f8701d3a4322270fde2618cc7cfc094460c9a5f1ec874e400c5bfaeef9ec7199",
+    "public_hints_delivery": "spec.prompt中的题面已交付；来源public_hints没有随本次CPU prompt交付。GPU另交当前中性brief。",
+    "step_rcs": {
+      "r2e_preflight": "0",
+      "actor_identity_imports": "0",
+      "public_helper_test": "0",
+      "public_mapping_relation": "1"
+    },
+    "numeric_reproduction": "原始base失败，符合缺陷预期；不是基础设施错误或模型失败。",
+    "string_reproduction": "首数值断言后停止，未执行。",
+    "profile_digest": "sha256:22320e2e4afbdd8b16739b37fa4fdd66e0af07f30da6c3850e00e8cb595d4257",
+    "limits": {
+      "uid": 54321,
+      "gid": 54321,
+      "cpus": 2,
+      "memory_bytes": 4294967296,
+      "pids": 512
+    },
+    "cpu_check_budget": {
+      "wall_seconds": 1200,
+      "max_turns": 8,
+      "max_context_len": 32768,
+      "http_max_tokens": 4096
+    },
+    "candidate": {
+      "form": "frozen_patch_v1+verified_git_transport",
+      "export_ok": true,
+      "empty": true,
+      "frozen_export_ok": true,
+      "frozen_patch_digest": "sha256:584fdb78f06a087149d51d885eff765bcdb81ad812b4732903d6bcd3662e3ff2",
+      "baseline_manifest_digest": "sha256:f63ae9383ed7e7cce7ed21fff82310ad9258dfca0cb60a4c7156a8f0a10b1288",
+      "entry_count": 0,
+      "entries": [],
+      "files": [],
+      "excluded_pathset_changed": true,
+      "classification": {
+        "verdict": "projectable",
+        "reasons": []
+      },
+      "unsafe": false,
+      "export_segments": {
+        "post_census": 4.488875106999785,
+        "artifact_capture": 0.0016106769999169046
+      },
+      "post_omitted_cache": {
+        "dirs": 22,
+        "files": 140
+      }
+    },
+    "cleanup_ok": true,
+    "endpoint_stop_rcs": [
+      0,
+      0
+    ],
+    "residuals_clean": true,
+    "usage_note": "桩端点给出的tokens/cost是合成值，不是基座模型推理费用。"
+  },
+  "evidence": [
+    {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/cpu-c_20261003/orange22_actor/summary.json",
+      "sha256": "sha256:e7db8df11d6ebc2427177af3e4991fd791bfe19da48000768b72cef98d3486a2"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/cpu-c_20261003/orange22_actor/attempt/attempt.json",
+      "sha256": "sha256:a09a3698f68dd5dd432f36eb1739fa31dc9b313583a56bc0b78a237d623b193c"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/cpu-c_20261003/orange22_actor/attempt/trajectory.jsonl",
+      "sha256": "sha256:e571d8027b8c01820a2ba0d949ab7dc8649ad368e80731aeffbc36670f49f026"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/cpu-c_20261003/orange22_statement_actor_v1_audit.json",
+      "sha256": "sha256:66db9e4cbcc43ee204018bd5bc1e4af050832b557fcb8778faa2d87aa13a3265"
+    },
+    {
+      "path": "runs/category2_repair_20260929/repository_work/r2e_orange3/cpu-c_20261003/orange22_actor_capture.tgz",
+      "sha256": "sha256:f17f0660dfd2602957cc2b0481bac95d30e1fafba324f6e4f3b27027872480e6"
+    }
+  ],
+  "limitation": "本轮构建漏带历史已验sysconfig_v1；保留完整证据，不据此宣布最终GPU环境一致。新第五版+sysconfig配方准备中，不机械重跑不变评分矩阵。",
+  "independent_review": "旧独立公开阅读/隔离修订继续有效；本轮CPU原件由作者核查，未冒称非作者复跑。"
+}

@@ -1,0 +1,500 @@
+{
+ "task_id": "r2e_gym_subset::orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237",
+ "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0（material_revisions 为空；expected sha256:1a43a298548cd1f2a1f11fb7f55718cd81d34ad957b8e7eddca4863133ba50f7；hidden_tests_tree sha256:385348d36a508e4aa71cd9dcaa98748f0f384f9314ad59b9f6c8f3e2d130318d；run_tests_sh sha256:5dee57d9beda24a5401b433fa66b74f423c4ab79eb04046265b0f5447d3b1315）",
+ "source_adapter_ref": {
+  "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl（line_sha256 4e4dba55cb9b376b0beb1fcdcb02ce23547532c83b0715dce4ffc6ee8948f3c2）",
+  "grading_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl:23（line_sha256 daac3a031217bc7fc47591e451f43f033d1d35fe989c9f9484ae416a785dc801）",
+  "validation_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/validation_bundles_v0.jsonl:23（line_sha256 69c734f616cc6270ebb0f5c7b90f93064c3d8467e66cff9b095528101ebaff59）",
+  "grader_version": "r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+  "base_commit": "96fda39bb0dc45a6bd0116cfaf19047d12fcdac4",
+  "source_commit_hash": "22e98f8f4cccc25f0d0217f9f4251b66d49b4237"
+ },
+ "recipe_ref": {
+  "derived_image_recipe": "r2e_derive_v1（recipe_sha256 sha256:0da821a15fa389289f524c60d3a421bc940cce753e4ecf3d53560b7ab6b31df9）",
+  "env_recipe": null,
+  "resource_recipe": null,
+  "resources": "默认：2 CPU / 4 GiB / /tmp 1 GiB",
+  "derived_image_ids_observed": {
+   "grading_rf_all_and_rerun2": "sha256:24840fed892892d3a119a1c5cb203a5513f0da097e1764cae24054bb88c18309",
+   "grading_rf_reps": "sha256:a013522716b2e688131fe2400511350324adb86dae8f6784f40280bc3d4b7235",
+   "actor_devcheck_and_private_control": "sha256:50fd6e31e77ac64c02e0e4bab99af79b68ad879b09532278023aa1e802cf529a"
+  }
+ },
+ "code_snapshot_ref": {
+  "static_review": "只读审查：未运行项目代码，未开容器",
+  "grading_scripts_digest": "sha256:642a13545cc5d1260c72e904b7c62954cd256af15efbc4113164a664776f71c0（_rerun2 两行 ledger 的 scripts_digest）",
+  "actor_devcheck_layer": "attempt.json 的 r2e_layer 字段 experiments/r2e_actor_20260925/r2e_devcheck.py；Claude Code 2.1.205"
+ },
+ "facts_ref": [
+  {
+   "ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/facts.json",
+   "source": "环境轮机器汇总（collate_facts.py，09-23 生成）",
+   "note": "身份、派生镜像复核、6 次 RH2 运行摘要与独立参考对账"
+  },
+  {
+   "ref": "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl:23",
+   "role": "grader noop",
+   "condition": "派生镜像 24840fed…，rh2grader 54322，默认资源，material=current",
+   "result": "reward 0，22/23，mismatched=TestHelpers.test_unique_in_order_mapping"
+  },
+  {
+   "ref": "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl:23",
+   "role": "grader gold",
+   "condition": "派生镜像 24840fed…，material=current",
+   "result": "reward 1，23/23"
+  },
+  {
+   "ref": "runs/r2e_rf_20260923/remote/ledger_r2e_reps_noop.jsonl:4",
+   "role": "grader noop",
+   "condition": "派生镜像 a0135227…，material=current",
+   "result": "reward 0，22/23"
+  },
+  {
+   "ref": "runs/r2e_rf_20260923/remote/ledger_r2e_reps_gold.jsonl:4",
+   "role": "grader gold",
+   "condition": "派生镜像 a0135227…，material=current",
+   "result": "reward 1，23/23"
+  },
+  {
+   "ref": "runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl:23",
+   "role": "grader noop",
+   "condition": "派生镜像 24840fed…，material=current",
+   "result": "reward 0，22/23"
+  },
+  {
+   "ref": "runs/r2e_env_repair_20260924/_rerun2/ledger_gold.jsonl:23",
+   "role": "grader gold",
+   "condition": "派生镜像 24840fed…，material=current",
+   "result": "reward 1，23/23"
+  },
+  {
+   "ref": "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl:7,56",
+   "role": "独立 runner gold ×2",
+   "condition": "来源镜像，来源版材料（本题无修订，与当前材料相同）",
+   "result": "reward 1；测试段与 RH2 gold 逐行相同（耗时行除外）"
+  },
+  {
+   "ref": "runs/r2e_rf_20260923/reconcile_all/reconcile.json（本题 noop、gold 两条）",
+   "role": "独立参考对账",
+   "condition": "M3 ×2 与 09-09 旧探针 ×3，noop 与 gold 各 5 份",
+   "result": "observed_maps_equal=true；已直接核对 3 份 noop 参考，都在 test_1.py:94 以 [2, 0, 1] 失败"
+  },
+  {
+   "ref": "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/attempt.json",
+   "role": "actor 开发条件",
+   "condition": "正式任务面，真实 Claude Code 2.1.205，桩模型，agent 54321，派生镜像 50fd6e31…，2 CPU / 4 GiB",
+   "result": "6 条命令 rc 0；逐命令输出见 orig/captures/*.out"
+  },
+  {
+   "ref": "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/private_gold/private_control.json",
+   "role": "私有对照",
+   "condition": "同一派生镜像，root，不联网，应用 gold",
+   "result": "仓库函数对 [2, 3, 1] 与 ('b', 'c', 'a') 得 mapping [0, 1, 2]；公开测试整文件 23 passed / 3 skipped"
+  },
+  {
+   "ref": "runs/r2e_rf_20260923/remote/prepared_r2e/prompts.jsonl:23",
+   "role": "prepared 题面",
+   "result": "与公开包 user_prompt.txt 逐字节相同（1575 字符），含 Example Buggy Code"
+  }
+ ],
+ "checks": {
+  "1": {
+   "status": "pass",
+   "note": "base、gold、隐藏测试、expected、入口脚本与镜像对应同一版本：隐藏测试树与入口的 sha256 在 grading bundle、run_refs.json 和评分日志（RH2_SETUP_HIDDEN_TESTS_TREE、RH2_SETUP_ENTRY_SHA256）中一致；initial_diff 为 0 字节。题面代码块本身就是这次修复。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/grading_bundle.json",
+    "runs/r2e_static_prep_20260924/v2/private/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/run_refs.json",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_f5bf55c2.eval.log",
+    "runs/r2e_static_prep_20260924/v2/public/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/worktree_manifest.json"
+   ],
+   "by": "static_review_investigator"
+  },
+  "2": {
+   "status": "pass",
+   "note": "初态确有题述问题：base 对 [2, 3, 1] 返回 mapping [2, 0, 1]（actor 实测）；noop 在 r2e_tests/test_1.py:94 以同值失败（RH2 3 次，独立参考 5 份）。",
+   "evidence_refs": [
+    "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/captures/mcve_repo_function.out",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-o_a29ba791.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-reps-noop-_bdbfd895.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_f5bf55c2.eval.log",
+    "runs/env_overnight_20260916/M3/facts/22e98f8f4ccc/noop_x2/out1.txt"
+   ],
+   "by": "static_review_investigator"
+  },
+  "3": {
+   "status": "issue",
+   "note": "输入内容不准确：标为 Example Buggy Code 的函数体与 gold 逐字相同，按字面执行得到期望值，与 Actual Behavior 矛盾；输出按 list 格式书写，而 base 返回 ndarray。09-23 prepared 题面与 user_prompt.txt 逐字节相同；正式链路下的实际消息未捕获（按协调者说明，留到探针阶段）。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/public/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/user_prompt.txt",
+    "runs/r2e_static_prep_20260924/v2/private/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/gold.patch",
+    "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/captures/mcve_statement_code.out",
+    "runs/r2e_rf_20260923/remote/prepared_r2e/prompts.jsonl:23"
+   ],
+   "by": "static_review_investigator"
+  },
+  "4": {
+   "status": "pass",
+   "note": "合法修复只涉及 Orange/widgets/data/owcreateclass.py；grader 对 gold 的投影包含该路径；不需要额外排除规则。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/_rerun2/ledger_gold.jsonl:23",
+    "runs/r2e_static_prep_20260924/v2/private/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/gold.patch"
+   ],
+   "by": "static_review_investigator"
+  },
+  "5": {
+   "status": "issue",
+   "note": "同批 orange3 50f6a758、c3fb72ba、f5026689 的 base 工作树里，该函数已经是 gold 版本（含 docstring 的整段函数文本哈希相同），会影响数据划分。本批以外的跨来源重复未查。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/public/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/worktree/Orange/widgets/data/owcreateclass.py",
+    "runs/r2e_static_prep_20260924/v2/public/orange3__c3fb72ba464880e0354cf33f8b3d3773865c2bf6/worktree/Orange/widgets/data/owcreateclass.py",
+    "runs/r2e_static_prep_20260924/v2/public/orange3__f5026689551be7f0a43ad5f0d129e5bcfff7999c/worktree/Orange/widgets/data/owcreateclass.py"
+   ],
+   "by": "static_review_investigator"
+  },
+  "6": {
+   "status": "pass",
+   "note": "解释器为 /testbed/.venv/bin/python 3.7.9；numpy 1.17.5、pytest 7.4.4 已装；Cython 扩展 _valuecount 已构建；本题无需安装任何东西。",
+   "evidence_refs": [
+    "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/captures/env.out"
+   ],
+   "by": "static_review_investigator"
+  },
+  "7": {
+   "status": "pass",
+   "note": "widget 回归用例用到 Orange/datasets 下的 heart_disease、zoo、iris，agent 可读（整文件公开测试通过）；未跟踪的 datasets 软链与修复无关。",
+   "evidence_refs": [
+    "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/captures/test_widget_file.out",
+    "runs/r2e_env_repair_20260924/p3/dev_probe/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/agent_probe.log"
+   ],
+   "by": "static_review_investigator"
+  },
+  "8": {
+   "status": "pass",
+   "note": "评分以 rh2grader 54322 运行，候选补丁以 agent 54321 应用；actor 开发命令以 agent 54321 经正式启动路径执行。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/_rerun2/ledger_gold.jsonl:23",
+    "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/prelaunch.json"
+   ],
+   "by": "static_review_investigator"
+  },
+  "9": {
+   "status": "pass",
+   "note": "评分侧与 actor 侧都从 /testbed/Orange 导入；gold 的改动在私有对照中生效。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/_rerun2/ledger_gold.jsonl:23",
+    "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/captures/env.out",
+    "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/private_gold/private_control.json"
+   ],
+   "by": "static_review_investigator"
+  },
+  "10": {
+   "status": "pass",
+   "note": "agent 能跑相关公开测试（helper 用例 1 passed；整文件 23 passed / 3 skipped，1.42 s），也能运行自写复现。公开测试在 base 上通过、暴露不了 bug，需要自己写复现；不带 Qt 前缀导入 widget 模块没有测过。",
+   "evidence_refs": [
+    "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/captures/test_helper.out",
+    "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/captures/test_widget_file.out",
+    "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/captures/mcve_repo_function.out"
+   ],
+   "by": "static_review_investigator"
+  },
+  "11": {
+   "status": "pass",
+   "note": "各阶段都不需要网络；actor 侧外部 DNS 被拒绝，只通模型中继；grader 为 deny_all。",
+   "evidence_refs": [
+    "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/prelaunch.json",
+    "runs/r2e_env_repair_20260924/_rerun2/ledger_gold.jsonl:23"
+   ],
+   "by": "static_review_investigator"
+  },
+  "12": {
+   "status": "not_applicable",
+   "note": "相关测试不依赖外部服务。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/hidden_tests/test_1.py"
+   ],
+   "by": "static_review_investigator"
+  },
+  "13": {
+   "status": "pass",
+   "note": "grader 内存峰值 2139–2198 MB（上限 4 GiB），测试阶段 4.8–5.6 s。峰值主体是 chown 产生的页缓存，这一点是同仓推论（P3 memprobe 测的是其它 orange3 题）。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl:23",
+    "runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl:23",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/packages/p3/README.md"
+   ],
+   "by": "static_review_investigator"
+  },
+  "14": {
+   "status": "pass",
+   "note": "RH2 noop 3 次、gold 3 次逐键相同（跨两个派生镜像构建）；独立参考 noop 5 份、gold 5 份逐键一致。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-o_a29ba791.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-reps-noop-_bdbfd895.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_f5bf55c2.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-o_6a0d5a19.eval.log",
+    "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-reps-gold-_b84ef6c6.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_33ac9fd3.eval.log",
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.json"
+   ],
+   "by": "static_review_investigator"
+  },
+  "15": {
+   "status": "pass",
+   "note": "每次评分都用 fresh 容器（cleanup removed）；omitted_cache_count 的 baseline 与 post 相同；cached_variables 只在进程内生效。未做专门的并发对照。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl:23"
+   ],
+   "by": "static_review_investigator"
+  },
+  "16": {
+   "status": "unknown",
+   "note": "只验证了 grader 侧应用 gold 补丁（apply_user 为 agent/54321，投影包含 owcreateclass.py）；actor 真实工作区编辑后的冻结与投影在本题没有执行（DEVCHECK 没有改文件）。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/_rerun2/ledger_gold.jsonl:23",
+    "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/attempt.json"
+   ],
+   "by": "static_review_investigator"
+  },
+  "17": {
+   "status": "pass",
+   "note": "评分恢复 2 个隐藏文件和入口脚本（RH2_SETUP_RESTORED=2、RH2_SETUP_TEST_FILES=3），树摘要一致；工作树里没有 conftest.py，也没有 pytest 配置，搬到 r2e_tests/ 不会丢配置。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_33ac9fd3.eval.log"
+   ],
+   "by": "static_review_investigator"
+  },
+  "18": {
+   "status": "pass",
+   "note": "collected 26：23 个成键，另 3 个 SKIPPED（被导入的 WidgetTest 基类用例）；测试段完整，segment_completed=true。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_f5bf55c2.eval.log",
+    "runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl:23"
+   ],
+   "by": "static_review_investigator"
+  },
+  "19": {
+   "status": "pass",
+   "note": "解析出 23 键，keys_equal=true，段外解析 0 个；SKIPPED 不成键；只有一个隐藏测试文件，没有撞键。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl:23",
+    "runs/r2e_env_repair_20260924/_rerun2/ledger_gold.jsonl:23"
+   ],
+   "by": "static_review_investigator"
+  },
+  "20": {
+   "status": "pass",
+   "note": "noop 的 0 分来自目标键在题面原例（L94）处失败；gold 满分；没有安装失败，也没有零解析。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_f5bf55c2.eval.log"
+   ],
+   "by": "static_review_investigator"
+  },
+  "21": {
+   "status": "pass",
+   "note": "失败原因在日志中可见（AssertionError，x: array([2, 0, 1])）；没有基础设施失败。",
+   "evidence_refs": [
+    "runs/r2e_env_repair_20260924/_rerun2/eval_logs/evallog_replay-r2e-envrepair-rer_f5bf55c2.eval.log"
+   ],
+   "by": "static_review_investigator"
+  },
+  "22": {
+   "status": "pass",
+   "note": "M3 独立 runner（来源镜像）的 gold 2 次、noop 2 次与 RH2 逐键一致；09-09 旧探针的 noop 与 gold 各 3 份同样一致。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/reconcile_all/reconcile.json",
+    "runs/env_overnight_20260916/M3/gold_ledger/logs_r2e/orange3/22e98f8f4ccc/gold/a1/test_output.txt",
+    "runs/env_overnight_20260916/M3/facts/22e98f8f4ccc/noop_x2/out1.txt",
+    "runs/env_overnight_20260916/M3/facts/22e98f8f4ccc/noop_x2/out2.txt"
+   ],
+   "by": "static_review_investigator"
+  },
+  "23": {
+   "status": "issue",
+   "note": "题面自相矛盾：标为 buggy 的代码产生的是期望行为；输出格式与 base 不符。要求本身（原例、docstring、公开测试）充分且一致。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/public/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/user_prompt.txt",
+    "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/captures/mcve_statement_code.out"
+   ],
+   "by": "static_review_investigator"
+  },
+  "24": {
+   "status": "pass",
+   "note": "断言只用 np.testing.assert_equal，与返回类型无关；保留 np.unique、对排序置换取逆的替代解静态上能通过（未跑 CPU）。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/hidden_tests/test_1.py"
+   ],
+   "by": "static_review_investigator"
+  },
+  "25": {
+   "status": "pass",
+   "note": "自然的错误实现都会被拒：inv 在 L88 失败，idx[inv] 在 L91，p[p][inv] 在 L88，range(len(a)) 在 L85，只改调用方在 L94。widget 层的非对合类名顺序只在 helper 层覆盖（静态推断）。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/hidden_tests/test_1.py"
+   ],
+   "by": "static_review_investigator"
+  },
+  "26": {
+   "status": "pass",
+   "note": "唯一调用方 _create_variable 先 str()、tuple() 再使用；缓存键与 __eq__/__hash__ 不受返回类型影响；空输入由 test_add_remove_lines 覆盖（静态推断）。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/public/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/worktree/Orange/widgets/data/owcreateclass.py"
+   ],
+   "by": "static_review_investigator"
+  },
+  "27": {
+   "status": "pass",
+   "note": "gold 只改这一个函数，修好了原例（私有对照得 [0, 1, 2]），没有无关改动；返回类型从 ndarray 变成 list，不影响调用方。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/gold.patch",
+    "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/private_gold/private_control.json"
+   ],
+   "by": "static_review_investigator"
+  },
+  "28": {
+   "status": "not_applicable",
+   "note": "本轮没有新增断言或修订。",
+   "evidence_refs": [],
+   "by": "static_review_investigator"
+  },
+  "29": {
+   "status": "issue",
+   "note": "题面逐字给出了 gold，且这段内容已进入 prepared 题面；派生镜像内没有隐藏测试，也没有未来提交（DEVCHECK 预检 ok，git_sanitize 的 refs、remotes、reflog 都为 0）。",
+   "evidence_refs": [
+    "runs/r2e_rf_20260923/remote/prepared_r2e/prompts.jsonl:23",
+    "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/captures/r2e_preflight.out",
+    "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/attempt.json"
+   ],
+   "by": "static_review_investigator"
+  },
+  "30": {
+   "status": "pass",
+   "note": "网络只通模型中继，取不到上游修复。",
+   "evidence_refs": [
+    "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/prelaunch.json"
+   ],
+   "by": "static_review_investigator"
+  },
+  "31": {
+   "status": "not_checked",
+   "note": "共享机制没有审计，只核了适用性：隐藏测试导入仓库内可改的 Orange/widgets/tests/base.py，评分时不重置；根目录的 conftest 不会被清理。合法修法不需要碰这些路径。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/r2e_environment_card.md"
+   ],
+   "by": "static_review_investigator"
+  },
+  "32": {
+   "status": "pass",
+   "note": "目标断言检查的是函数的输出值，不匹配 gold 文本，也不只看文件是否存在。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/hidden_tests/test_1.py"
+   ],
+   "by": "static_review_investigator"
+  },
+  "37": {
+   "status": "not_applicable",
+   "note": "当前版本没有修订；如果采纳题面修订，属于公开规格纠错，应形成修订版。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/private/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/revisions.json"
+   ],
+   "by": "static_review_investigator"
+  },
+  "38": {
+   "status": "not_applicable",
+   "note": "没有修订需要复验。",
+   "evidence_refs": [],
+   "by": "static_review_investigator"
+  },
+  "39": {
+   "status": "not_applicable",
+   "note": "没有涉及本题的共享修复。",
+   "evidence_refs": [],
+   "by": "static_review_investigator"
+  }
+ },
+ "issues": [
+  {
+   "category": "statement_leaks_fix",
+   "scope": "task",
+   "summary": "题面中标为 Example Buggy Code 的 9 行函数体与 gold 新写的函数体逐字节相同；按字面执行输出期望的 [0, 1, 2]，与题面所说的实际输出 [2, 0, 1] 矛盾。照抄即得 23/23；buggy 的标注还可能误导解题者。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/public/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/user_prompt.txt",
+    "runs/r2e_static_prep_20260924/v2/private/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/gold.patch",
+    "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/captures/mcve_statement_code.out",
+    "runs/r2e_rf_20260923/remote/prepared_r2e/prompts.jsonl:23"
+   ],
+   "evidence_level": "静态逐字比对 + actor 实测（正式任务面）+ 私有对照",
+   "proposed_action": "需用户决定。建议修订公开题面：把该代码块换成仓库真实实现（owcreateclass.py L155–157），或直接删去；Actual Behavior 可改为 ndarray 的实际打印；隐藏测试与 expected 不动。修订后形成修订版，由新的公开读者重新阅读。若不修订：标注题面给修法，不用于能力测量或留出评测。",
+   "status": "open"
+  },
+  {
+   "category": "task_relation",
+   "scope": "batch",
+   "summary": "同批 orange3 50f6a758、c3fb72ba、f5026689 的初态已包含本题修复（函数文本与 gold 应用后相同）。",
+   "evidence_refs": [
+    "runs/r2e_static_prep_20260924/v2/public/orange3__50f6a758f1c66b8f4a18806714e3c2f4cefcab3e/worktree/Orange/widgets/data/owcreateclass.py",
+    "runs/r2e_static_prep_20260924/v2/public/orange3__c3fb72ba464880e0354cf33f8b3d3773865c2bf6/worktree/Orange/widgets/data/owcreateclass.py",
+    "runs/r2e_static_prep_20260924/v2/public/orange3__f5026689551be7f0a43ad5f0d129e5bcfff7999c/worktree/Orange/widgets/data/owcreateclass.py"
+   ],
+   "evidence_level": "静态（函数文本哈希比对）",
+   "proposed_action": "与这 3 题放在同一划分组；至少不要在它们用于训练时把本题作为留出评测。",
+   "status": "open"
+  },
+  {
+   "category": "actor_input_unverified",
+   "scope": "shared",
+   "summary": "正式链路下模型实际收到的消息没有被捕获：DEVCHECK 发给 Claude Code 的用户消息是桩文本。按协调者说明，正式 actor 已改用派生镜像，.venv 前缀和 R2E 提示措辞同步修改（待 A 线审查）。",
+   "evidence_refs": [
+    "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/stub/requests/messages_000.json"
+   ],
+   "evidence_level": "actor 实测（桩消息）+ 协调者说明",
+   "proposed_action": "在探针阶段捕获一次真实题面消息与提示。",
+   "status": "open"
+  },
+  {
+   "category": "pipeline_check_gap",
+   "scope": "batch",
+   "summary": "环境轮建议的自动检查（题面 Actual Behavior 的内容应出现在 noop 目标键的失败原因里）对本题会通过，抓不到代码块泄漏。",
+   "evidence_refs": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/known_issues.json"
+   ],
+   "evidence_level": "静态",
+   "proposed_action": "建议增加一项自动检查：把题面里的代码块与 gold 新增行做比对（精确比对，或规范化空白后比对）。",
+   "status": "proposed"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "单文件源码修复；没有证据需要额外路径规则。",
+  "evidence_refs": [
+   "runs/r2e_static_prep_20260924/v2/private/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/gold.patch"
+  ],
+  "applied_version": null
+ },
+ "revision_refs": [],
+ "disposition": {
+  "state": "needs_review",
+  "scope": "static_review",
+  "reason": "题面问题：Example Buggy Code 逐字等于 gold，既泄漏了修法，又与 Actual Behavior 矛盾；是否修订公开题面待用户决定。评分与测试侧在已读范围内未见问题：RH2 的 noop、gold 各 3 次，独立参考各 5 份，逐键一致；目标键直接测题面原例；断言与返回类型无关。当前题面下不列入 probe_candidates；修订后可作为静态候选进入 actor 验证。环境侧历史处置 environment_qualified 不变。",
+  "evidence_refs": [
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/analysis_before_history.md",
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/old_findings_delta.md",
+   "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_20260925/results/orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237/card.md"
+  ],
+  "reviewer": null
+ },
+ "usage": {
+  "intended_use": "development_diagnostic",
+  "exposure_notes": "主审读过 gold、隐藏测试、expected、全部评分日志、环境轮历史记录和 actor devcheck；本记录与草稿都不提供给解题模型。注意：题面本身已含 gold 函数体，任何读题者都会看到修法；同批 3 道 orange3 题的初态也含本题修复。"
+ },
+ "costs": {
+  "container_wall_seconds": null,
+  "agent_tokens": null,
+  "human_decisions": null,
+  "source_refs": [
+   "runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl:23",
+   "runs/r2e_env_repair_20260924/_rerun2/ledger_gold.jsonl:23",
+   "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/attempt.json"
+  ],
+  "note": "本轮静态审查没有运行容器；token 与费用没有工具观测。已有运行的耗时见 ledger 的 phases（grader_trusted_setup 131–172 s，测试阶段 4.8–5.6 s）和 DEVCHECK 的 solve_seconds 8.9 s。待用户决定的事项 1 项（是否修订题面）。"
+ }
+}

@@ -1,0 +1,133 @@
+{
+  "schema": "dask_actual_model_owner_analysis.v1",
+  "as_of": "2026-10-03T13:24:12.160077+08:00",
+  "owner_thread_id": "01a0fd62-996e-7953-8af9-856540ff3015",
+  "instance_id": "dask__dask-7656",
+  "revision_id": "dask7656-dataclass-argument-v1",
+  "request_id": "probe-swe-dask-7656-20261003-v1",
+  "request_sha256": "adb01532eeb93df7dab561a4f9a034cf023fce4ac3ce9c2571e66412ef133435",
+  "job_id": "gpu1003-dask7656-coder-a1",
+  "model": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+  "budget_version": "probe-wide-v1",
+  "actual_budget": {
+    "context_tokens": 196608,
+    "response_tokens": 65536,
+    "turns": 240,
+    "solve_seconds": 10800,
+    "generation_request_guard": 1024
+  },
+  "execution_review": {
+    "path": "runs/ordinary_gpu_probe_20261002/reviews/dask7656_coder_a1_execution_review_v1.json",
+    "sha256": "6d76e0aac1ba75c642f252a686dd6be1051290a95dc7a5ecd1335f9254f34307",
+    "bytes": 26464
+  },
+  "owner_original_checks": {
+    "path": "runs/category2_repair_20260929/swe_dask/model_analysis_20261003/dask7656_coder_a1_v1/originals_checks.json",
+    "sha256": "e1bdf41d1f7136b0744189f56a0166881d44ee1aa05030705124618447fd7d57",
+    "bytes": 13159
+  },
+  "candidate_independent_review": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_7656_coder_a1_candidate_review_20261003.json",
+    "sha256": "90fbcb6db3c4872e5ddaf1b468190a8d3041d39befae4b86993026737484bedd",
+    "bytes": 15555
+  },
+  "candidate_independent_review_md": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_7656_coder_a1_candidate_review_20261003.md",
+    "sha256": "5cf0b707e1e1797b1be2f183d34578b7e9e8e1eeb1a36cd27d0d74711db03aef",
+    "bytes": 11264
+  },
+  "scope_card_snapshot_before_current_entry_update": {
+    "path": "runs/category2_repair_20260929/swe_dask/model_analysis_20261003/dask7656_coder_a1_v1/task_card_before_owner_update.md",
+    "sha256": "debfa2938edc375c0284d97c6e1d251adac9eef7f5b75c201172a9315190c993",
+    "bytes": 3864
+  },
+  "execution": {
+    "status": "complete_scored",
+    "raw_reward": 1,
+    "formal_PASS": 49,
+    "formal_total": 49,
+    "raw_PASS": 50,
+    "raw_XFAIL": 2,
+    "termination": "completed",
+    "cleanup_verified": true
+  },
+  "candidate_semantics": {
+    "status": "passes_current_approved_task_goal_with_known_scope_limits",
+    "reason": "过滤未初始化的init=False字段，保留原类构造及递归unpack；当前测试实际检查dataclass类型、默认init=True字段、嵌套Delayed求值。没有常量答案或SimpleNamespace替换。",
+    "source_modify": "dask/delayed.py::unpack_collections",
+    "additional_behavior": "已存在的init=False字段仍作为kwargs传入构造器，引发TypeError；实际轨迹已见。原代码本就包含全部字段，静态比较未见本补丁引入这一错误；未新增base远端复现。",
+    "scope_basis": "当前card及有效补丁明确不新增post_init或已存在init=False字段状态恢复要求；普通探针按当前范围收口，不静默扩展评分。",
+    "patch_hygiene": "原FrozenPatch8项全部保留，含源码1项及辅助/README7项；5个test-like路径存在，未改正式测试/conftest。正式命令只运行dask/tests/test_delayed.py，不运行新增根目录helper。",
+    "new_material_defect_found": false,
+    "material_repair_required": false,
+    "qualification": null,
+    "automatic_training_reward_granted": false
+  },
+  "behavior_analysis": {
+    "localization": {
+      "first_relevant_source_tool_ordinal": 2,
+      "correct_root_cause_line": 32,
+      "first_reproduction_result_line": 75,
+      "first_source_edit_line": 84,
+      "assessment": "第1次搜索找到正确文件，第2次工具读到核心函数即指出无条件getattr；未误改其它源码。公开题面已给栈和hack，不能据此称独立发现算法。"
+    },
+    "correction": {
+      "successful": "debug脚本凭空使用Field.has_default导致L158错误，L167重写后L180执行成功。",
+      "not_completed": "L123/215/250/346均显示已存在init=False字段重建失败；L224第二次源码编辑仅提取局部列表、加注释，AST内联等价核实，无行为修复。L351以本题原例为收口范围。"
+    },
+    "tools": {
+      "positive": "先复现，再跑原例、已有dataclass及全delayed模块；正确读出被捕获异常，即使Bash未标is_error也没有称其通过。",
+      "issues": "33次工具中含长文件读取、base.py前200行低相关内容；原例脚本修后重复3次，dataclass单测/筛选/双测重叠。两次显式tool_result错误之外还存在被脚本捕获的失败，不用错误标记数代替全部失败观察。"
+    },
+    "parallel": {
+      "observed": "33个工具请求均单工具串行，没有实际并行重叠证据。",
+      "opportunity": "完成文件搜索后独立读取delayed.py与base.py可合并请求；不同只读探索可合并。修改同一源码及修前/修后测试依赖应串行。",
+      "runtime_support": "5种工具已广告，但本臂没有多工具运行验证；无法判断执行层并行支持，也不能据此断言模型不会并行。"
+    },
+    "verification": {
+      "positive": "公开原例修前失败、修后成功；模型本地全模块50PASS+2XFAIL，正式受信增强1F48P也实际通过。",
+      "limit": "原例脚本返回常量、其它探索脚本会catch并打印错误，不能单独证明完整参数语义。正式增强测试补足原类/默认值/嵌套求值依据；模型未在本地见到私有增强断言。",
+      "reporting_problem": "最终L399及README泛称向后兼容/所有init=False可用；比实际证据更宽，L386曾披露边界但最终答案没有保留。不能称完整通用dataclass修复或高质量验证闭环。"
+    },
+    "stability": "Coder同材料同预算只有1个完整样本；Qwen臂待执行，重复依全局首轮优先规则，不作稳定能力结论。"
+  },
+  "metrics": {
+    "input_tokens": 619235,
+    "output_tokens": 6698,
+    "input_token_scope": "逐HTTP响应提示token累加，包含重复上下文；非去重token或单次上下文。",
+    "HTTP_generations": 34,
+    "tool_calls": {
+      "Bash": 18,
+      "Read": 5,
+      "Write": 8,
+      "Edit": 2
+    },
+    "tools_total": 33,
+    "tool_result_errors": 2,
+    "max_per_response_prompt_tokens": 25837,
+    "solve_seconds": 62.669,
+    "CC_duration_seconds": 59.211,
+    "CC_API_duration_seconds": 53.487,
+    "grading_seconds": 387.646,
+    "grader_trusted_setup_seconds": 366.715025,
+    "grader_queue_seconds": 0.0,
+    "pre_dispatch_queue_seconds": null,
+    "advertised_tools": [
+      "Bash",
+      "Edit",
+      "NotebookEdit",
+      "Read",
+      "Write"
+    ],
+    "multi_tool_generation_observed": false,
+    "parallel_execution_support": "未做多工具请求运行验证，不能由串行样本推断支持或能力。",
+    "termination": "completed"
+  },
+  "remaining": [
+    "同一请求下Qwen/Qwen3.6-35B-A3B首轮及题主轨迹分析",
+    "依全局第二阶段条件组织重复；单样本不授稳定能力结论",
+    "正式训练typed actor接入及训练资格另按既有标准"
+  ],
+  "CPU_dependency": "本臂无新增CPU复修；7656源归档依赖已由GPU执行者释放。本仓7138源归档仍保留，整机退租由发布合并。",
+  "request_closure": "partial_first_model_only_request_remains_claimed_no_ack_or_resubmit"
+}

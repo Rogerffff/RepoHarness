@@ -1,0 +1,19 @@
+{
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "    def test_auto_solver(self):\n        # These defaults are valid as of sklearn v0.23.0\n        # lbfgs is default for l2 penalty\n        lr = LogisticRegressionLearner(penalty=\"l2\", solver=\"auto\")\n        skl_clf = lr._initialize_wrapped()\n        self.assertEqual(skl_clf.solver, \"lbfgs\")\n        self.assertEqual(skl_clf.penalty, \"l2\")\n\n        # lbfgs is default for no penalty\n        lr = LogisticRegressionLearner(penalty=None, solver=\"auto\")\n        skl_clf = lr._initialize_wrapped()\n        self.assertEqual(skl_clf.solver, \"lbfgs\")\n        self.assertEqual(skl_clf.penalty, None)\n\n        # liblinear is default for l2 penalty\n        lr = LogisticRegressionLearner(penalty=\"l1\", solver=\"auto\")\n        skl_clf = lr._initialize_wrapped()\n        self.assertEqual(skl_clf.solver, \"liblinear\")\n        self.assertEqual(skl_clf.penalty, \"l1\")\n",
+     "new": "    def test_auto_solver(self):\n        # Behaviour-level check: the learner has to use a solver that supports\n        # the requested penalty. Where and how the solver is chosen (constructor,\n        # a sentinel value, fitting time) is not prescribed.\n\n        # l1, the reported case: fitting works and the fitted model really uses\n        # l1, on the multiclass data of the report and on binary data\n        for data in (self.iris, self.heart_disease):\n            skl_clf = LogisticRegressionLearner(penalty=\"l1\")(data).skl_model\n            self.assertEqual(skl_clf.penalty, \"l1\")\n            # the scikit-learn 0.22 solvers that support l1\n            self.assertIn(skl_clf.solver, (\"liblinear\", \"saga\"))\n\n        # l2, the default penalty, is supported by the default solver lbfgs:\n        # the default model is unchanged\n        skl_clf = LogisticRegressionLearner()(self.zoo).skl_model\n        self.assertEqual(skl_clf.solver, \"lbfgs\")\n        self.assertEqual(skl_clf.penalty, \"l2\")\n\n        # no penalty is supported by lbfgs as well and keeps working\n        skl_clf = LogisticRegressionLearner(penalty=\"none\")(self.iris).skl_model\n        self.assertEqual(skl_clf.penalty, \"none\")\n"
+    }
+   ]
+  },
+  {
+   "kind": "hidden_test_file_add",
+   "target": "test_2.py",
+   "content": "# Test methods with long descriptive names can omit docstrings\n# pylint: disable=missing-docstring\n\nimport unittest\n\nfrom Orange.classification import LogisticRegressionLearner\n\n\nclass TestLogisticRegressionDefaultRepr(unittest.TestCase):\n    def test_default_learner_repr(self):\n        # Same check as the public Orange/tests/test_util.py\n        # (TestUtil.test_reprable, \"GH 2275\"): the default learner has an\n        # argument-free repr, also when repr is called repeatedly\n        logit = LogisticRegressionLearner()\n        for _ in range(2):\n            self.assertEqual(repr(logit), 'LogisticRegressionLearner()')\n"
+  }
+ ]
+}

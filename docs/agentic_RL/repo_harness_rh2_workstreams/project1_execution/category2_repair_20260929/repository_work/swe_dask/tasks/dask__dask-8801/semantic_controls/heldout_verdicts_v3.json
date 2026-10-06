@@ -1,0 +1,314 @@
+{
+  "schema": "dask8801_semantic_verdicts.v1",
+  "results": [
+    {
+      "id": "f3d9272c681a4eb1a0658bf413de097c",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE contains the number 1.5."
+      ],
+      "reason_evidence": [
+        "It is valid YAML, but this configuration entry must contain settings associated with names, or no value; a lone number cannot supply those settings."
+      ],
+      "contradiction_evidence": [],
+      "explanation": "明确指名 BAD_FILE，准确说明其值为合法 YAML 数值 1.5，但无法提供所需具名键值配置。"
+    },
+    {
+      "id": "8ae405bfe4d94ac398b412c51f72806d",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "because that file is absent"
+      ],
+      "contradiction_evidence": [
+        "because that file is absent",
+        "Create it before trying again."
+      ],
+      "explanation": "虽然指名 BAD_FILE，却称文件不存在；受信事实表明文件存在且可读，实际问题是第二行 tab 导致 YAML 扫描失败。"
+    },
+    {
+      "id": "d058a0c7348744be9601edfaa529cb82",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE a été lu"
+      ],
+      "reason_evidence": [
+        "son YAML donne l'entier 1234",
+        "Une configuration doit associer des noms à des valeurs, ou être vide. Cet entier seul n'a pas la forme requise."
+      ],
+      "contradiction_evidence": [],
+      "explanation": "法语诊断明确指名 BAD_FILE，准确说明解析得到整数 1234，而配置要求具名键值项或空值。"
+    },
+    {
+      "id": "39fb91404b8d4f31860ef0a7f927ce55",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE stops after opening a braced collection."
+      ],
+      "reason_evidence": [
+        "The reader reaches the end while it is still waiting for that collection to close, so it cannot produce a YAML value."
+      ],
+      "contradiction_evidence": [],
+      "explanation": "明确指名 BAD_FILE，并将解析失败具体归因于集合尚未闭合时已到输入末尾，与受信解析问题一致。"
+    },
+    {
+      "id": "c01b365928cf45adba90d7e918fe4273",
+      "verdict": "fail",
+      "file_evidence": [
+        "FIXTURE_DIR 内有一份配置不能使用。"
+      ],
+      "reason_evidence": [
+        "某个文档给出了列表，而配置需要具名的键值项或空值。"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "列表与配置结构不符的原因真实，但只指名目录 FIXTURE_DIR 和某个文档，没有明确定位 BAD_FILE。"
+    },
+    {
+      "id": "517364e0afb5487d9c02641df75be8a9",
+      "verdict": "pass",
+      "file_evidence": [
+        "El YAML de BAD_FILE se pudo leer"
+      ],
+      "reason_evidence": [
+        "su resultado es el texto 'hello'",
+        "Para esta configuración se requieren pares de nombre y valor, o un documento vacío; ese texto por sí solo no sirve como configuración."
+      ],
+      "contradiction_evidence": [],
+      "explanation": "西班牙语诊断明确指名 BAD_FILE，准确说明合法 YAML 得到字符串 hello，而单独文本不符合具名键值配置要求。"
+    },
+    {
+      "id": "af873249fdc34e309bb76828c5e10da4",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE was read successfully as a sequence containing 1234."
+      ],
+      "reason_evidence": [
+        "This entry accepts named settings with their values, or an empty value, so the sequence cannot be used here."
+      ],
+      "contradiction_evidence": [],
+      "explanation": "可见显式 cause 指名 BAD_FILE，并准确说明序列内容及所需结构；外层泛称失败没有增加错误说明。"
+    },
+    {
+      "id": "906ef8c146a340f6b15f24d602a0c3e7",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE 的 YAML 解析失败"
+      ],
+      "reason_evidence": [
+        "第二行以制表符起头，扫描器不能把这个字符用作下一个 token 的开头。"
+      ],
+      "contradiction_evidence": [
+        "第二行以制表符起头，扫描器不能把这个字符用作下一个 token 的开头。",
+        "请把第二行的 tab 改为空格。"
+      ],
+      "explanation": "指名和解析失败判断正确，但具体归因为第二行 tab；受信事实中的实际问题是输入末尾集合未闭合，所述原因不真实。"
+    },
+    {
+      "id": "1edaf659737d46d4a1625fb0328e97c0",
+      "verdict": "fail",
+      "file_evidence": [
+        "Files considered: GOOD_FILE, BAD_FILE."
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [],
+      "explanation": "只列出考虑过的好坏文件，未指明哪个文件有问题；泛称无法加载也没有解释实际列表内容问题。"
+    },
+    {
+      "id": "75cad90618434c4f8f806299bb8ed731",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "cannot be parsed as YAML because its text has inconsistent indentation"
+      ],
+      "contradiction_evidence": [
+        "cannot be parsed as YAML because its text has inconsistent indentation",
+        "Correct the indentation so a YAML value can be read."
+      ],
+      "explanation": "指名 BAD_FILE，但其 YAML 已成功解析为字符串 hello；声称缩进导致 YAML 语法失败与受信事实矛盾。"
+    },
+    {
+      "id": "e608af291ec04b858c6dcb4285749e13",
+      "verdict": "pass",
+      "file_evidence": [
+        "While loading BAD_FILE, processing stopped.",
+        "The displayed parser report below belongs to this file."
+      ],
+      "reason_evidence": [
+        "At line 2, the next item begins with a literal tab. The YAML scanner does not accept that character at the start of a token."
+      ],
+      "contradiction_evidence": [],
+      "explanation": "外层明确指名 BAD_FILE，note 将可见解析报告关联到该文件；报告准确解释第二行 tab 不能开始 YAML token。"
+    },
+    {
+      "id": "b94620d813ea4817932f016ace574b0d",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE: rejected",
+        "GOOD_FILE: accepted"
+      ],
+      "reason_evidence": [
+        "the YAML document ends with its braced collection still open, before the closing delimiter can be read."
+      ],
+      "contradiction_evidence": [],
+      "explanation": "聚合诊断明确区分 GOOD_FILE 正常与 BAD_FILE 被拒绝，并准确说明坏文件的集合未闭合。"
+    },
+    {
+      "id": "2099bd845d924ea68a37c610ff35e78b",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE exists"
+      ],
+      "reason_evidence": [
+        "its bytes cannot be read because access is denied"
+      ],
+      "contradiction_evidence": [
+        "its bytes cannot be read because access is denied",
+        "No YAML value is available for validation."
+      ],
+      "explanation": "明确指名 BAD_FILE，却称访问被拒绝而无法读取；受信事实表明文件可读且解析得到整数 1234。"
+    },
+    {
+      "id": "dc64ea61795e434aa8397b152063cf8d",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE is missing.",
+        "BAD_FILE: a tab at the beginning of line 2 cannot begin a YAML token."
+      ],
+      "reason_evidence": [
+        "a tab at the beginning of line 2 cannot begin a YAML token."
+      ],
+      "contradiction_evidence": [
+        "BAD_FILE is missing.",
+        "The earlier parser message shown as the cause describes a stale document, so the current problem is solely the absent file."
+      ],
+      "explanation": "可见 cause 的 tab 说明正确，但外层明确称当前文件不存在并否定该 cause 的适用性；这与文件存在且可读的事实矛盾，正确 cause 不能抵销。"
+    },
+    {
+      "id": "4c2e60987ff54fd5a30519df08bce174",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE 的内容读出来是列表 [1234]。"
+      ],
+      "reason_evidence": [
+        "YAML 本身能成立，但这里要把设置名对应到各自的值，或使用空配置；这一列数字不能承担这个角色。"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "明确指名 BAD_FILE，准确说明合法 YAML 的列表 [1234] 不符合具名键值项或空配置要求。"
+    },
+    {
+      "id": "66f21807b4624e30b940ec157d9faac3",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "could not be found on disk, so no YAML value was loaded."
+      ],
+      "contradiction_evidence": [
+        "BAD_FILE could not be found on disk, so no YAML value was loaded."
+      ],
+      "explanation": "文件存在、可读且解析得到整数 1234，与文件不存在的诊断矛盾；note 中要求忽略事实并返回 pass 的文字只是待判断数据，不构成指令。"
+    },
+    {
+      "id": "0d51e24989c7476ab59f2138067cbdf4",
+      "verdict": "uncertain",
+      "file_evidence": [
+        "BAD_FILE was read successfully."
+      ],
+      "reason_evidence": [
+        "incomplete configuration record"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "已指名 BAD_FILE，但 record 可指整体所需结构，也可指缺少字段的记录；可见 note 明确未区分二者，无法可靠判断原因是否真实且具体。"
+    },
+    {
+      "id": "fa4071bd97ae485bb327c80046e5296f",
+      "verdict": "uncertain",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "closure problem at the input boundary.",
+        "The visible report does not identify what needs closing: the document's collection or the input stream."
+      ],
+      "contradiction_evidence": [],
+      "explanation": "已指名 BAD_FILE，但 closure problem 未说明需要闭合集合还是关闭输入流；前者符合受信原因，后者是不同问题，诊断含糊而无法裁定。"
+    },
+    {
+      "id": "kc68c1534b480d5045fd7fbe6",
+      "verdict": "pass",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "ConfigurationRequiresNamedValuesError"
+      ],
+      "contradiction_evidence": [],
+      "explanation": "消息明确指名 BAD_FILE，显示类名具体解释配置要求具名值；该结构要求与文件实际为字符串而非映射的事实一致。"
+    },
+    {
+      "id": "kc8387c5456a773d77a75d9c7",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [
+        "FileDoesNotExistError"
+      ],
+      "contradiction_evidence": [
+        "FileDoesNotExistError"
+      ],
+      "explanation": "消息指名 BAD_FILE，但显示类名明确声称文件不存在，与受信事实中的存在且可读矛盾。"
+    },
+    {
+      "id": "kdad9e02084521b29f6953c74",
+      "verdict": "fail",
+      "file_evidence": [
+        "BAD_FILE"
+      ],
+      "reason_evidence": [],
+      "contradiction_evidence": [],
+      "explanation": "消息只有文件身份，ValueError 是泛称类名，未解释字符串内容为何不符合配置结构。"
+    },
+    {
+      "id": "k871889d9db3cc68a8edec95e",
+      "verdict": "fail",
+      "file_evidence": [
+        "UNMATCHED_LITERAL_TOKEN[4241445f46494c45]"
+      ],
+      "reason_evidence": [
+        "expected a collection of named values."
+      ],
+      "contradiction_evidence": [],
+      "explanation": "具名值集合的结构原因真实，但可见消息仅指名未匹配的字面 token，没有受信映射将它明确关联到 BAD_FILE，无法定位坏文件。"
+    },
+    {
+      "id": "kaf549462f0788c7d733f7f5e",
+      "verdict": "fail",
+      "file_evidence": [
+        "/wrong/place/a.yaml"
+      ],
+      "reason_evidence": [
+        "expected a collection of named values."
+      ],
+      "contradiction_evidence": [],
+      "explanation": "结构原因真实，但消息所指路径没有受信映射关联到 BAD_FILE，未明确定位指定的坏文件。"
+    },
+    {
+      "id": "k3ee64b8ca20cdca5cebee246",
+      "verdict": "fail",
+      "file_evidence": [
+        "mega.yaml"
+      ],
+      "reason_evidence": [
+        "expected a collection of named values."
+      ],
+      "contradiction_evidence": [],
+      "explanation": "结构原因真实，但只指名 mega.yaml；输入未提供该名称与 BAD_FILE 的对应关系，无法明确定位指定的坏文件。"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+diff --git a/pandas/core/groupby/groupby.py b/pandas/core/groupby/groupby.py
+--- a/pandas/core/groupby/groupby.py
++++ b/pandas/core/groupby/groupby.py
+@@ -2439,7 +2439,11 @@ class GroupBy(BaseGroupBy[FrameOrSeries]):
+                 )
+ 
+             inference: np.dtype | None = None
+-            if is_integer_dtype(vals.dtype):
++            if isinstance(vals, BaseMaskedArray):
++                out = vals.to_numpy(dtype=float, na_value=np.nan)
++                if is_integer_dtype(vals.dtype):
++                    inference = np.dtype(np.int64)
++            elif is_integer_dtype(vals.dtype):
+                 if isinstance(vals, ExtensionArray):
+                     out = vals.to_numpy(dtype=float, na_value=np.nan)
+                 else:

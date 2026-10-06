@@ -1,0 +1,434 @@
+{
+  "schema": "dask7305_non_author_qwen36_candidate_semantic_review.v1",
+  "as_of": "2026-10-04T01:33:55.660105+08:00",
+  "instance_id": "dask__dask-7305",
+  "job_id": "gpu1003-dask7305-qwen36-a1",
+  "revision_id": "dask7305-exact-ends-auto-v3",
+  "reviewer": {
+    "role": "非作者 Codex subagent，只读题级语义/轨迹核查",
+    "authoring_or_execution_participation": false,
+    "fresh_public_blind_review": false,
+    "private_materials_exposure": "本次读取私有测试、替代正对照、既有作者读回和非作者审查；不能当作未见答案的公开盲审。",
+    "authorization": "题主安排，coordination_workflow_20261003.md 三方职责及步骤③/⑥；本轮只写本报告两件。"
+  },
+  "scope": {
+    "performed": [
+      "读取冻结Qwen原件、实际FrozenPatch内容、公开首请求和全轨迹语义事件",
+      "在内存重放3次Edit并逐字核对最终FP；在内存将candidate diff应用于原baseline正文并比较",
+      "解析完整pytest日志的105个正式参考状态及失败断言",
+      "静态核对公开目标、修订测试、替代正对照和遗漏机制；复用适用的既有CPU独立核查"
+    ],
+    "not_performed": [
+      "模型调用或追加采样",
+      "CPU/控制矩阵/pytest/Dask源码执行",
+      "容器、SSH或远端操作",
+      "全148成员运输重验、code9/R25共享consumer及实际部署终审",
+      "修改冻结输入、共享源码、题卡、总账或发消息给其它线程"
+    ],
+    "parent_owned": "机械运输完整性、code9/R25实际绑定及当前阅读入口由题主独占核收。"
+  },
+  "conclusion": {
+    "semantic_verdict": "候选部分修复，但不满足公开精确端点目标；本次raw reward 0准确",
+    "material_or_grading_defect_found": false,
+    "candidate_false_rejection_found": false,
+    "new_task_blocker": null,
+    "training_qualification": null,
+    "whole_task_complete": false,
+    "requires_new_user_decision": false,
+    "automatic_repeat_or_new_sample_recommended": false,
+    "bounded_statement": "未发现本轮所核材料/评分的新缺陷。此结论不穷尽全部合理实现，不证明模型稳定能力，不重新授予GPU部署或训练资格。"
+  },
+  "candidate": {
+    "frozen_patch_digest": "sha256:aacd6753030cc9422a7f3e93cebfbf6a760c0a293fcb14e2e15a194e9189dede",
+    "baseline_manifest_digest": "sha256:ee9ff8a96c8c01bf8261cca50561bcf7f1db65aa3f2064d9e82e4faf3c1bec9d",
+    "entry_count": 1,
+    "path": "dask/dataframe/partitionquantiles.py",
+    "actual_content_sha256": "a204ac5c6c1a8691e1193105acb04d01e8ba0ca5e991bbd19ff8fd143d2ca690",
+    "actual_content_bytes": 19475,
+    "change": "仅在percentiles_summary的linear整数分支中先astype原dtype，再把摘要首尾设为data.min()/max()；process_val_weights和shuffle.py未改。",
+    "in_memory_checks": {
+      "edit_events": [
+        185,
+        401,
+        447
+      ],
+      "all_old_strings_found_once": true,
+      "three_Edit_replay_matches_FP": true,
+      "array_percentile_exactly_reverted": true,
+      "candidate_diff_applied_to_archived_baseline_matches_FP": true
+    }
+  },
+  "public_goal_and_acceptance": {
+    "actual_public_prompt": "原公开问题与复现实例；大整数minimum/maximum精确，并明确乱序输入末尾最小值的set_index行归属症状。",
+    "actual_prompt_sha256": "17fa4f73b0935467b461da018519009038bcd73c6e3e22938dffb014fd4bc752",
+    "actual_prompt_bytes": 2721,
+    "actual_delivery": "prepared prompt、solver_prompt、attempt prompt与首API user题目块按原字节相等；另有CC日期提醒，无新增私有引导。比较保留CRLF。旧public_hints不在实际题目块中。",
+    "tests": "v3固定patch SHA4c63d384...只检查精确端点、整数dtype、有序分界、完整行多重集合和分区区间；小整数内部具体分界已放宽；float原控制保留；auto仅传set_index。",
+    "dtype_basis": "公开报告提出无谓dtype转换症状；冻结base process_val_weights收尾cast到输入dtype，partition_quantiles沿用df._meta。当前dtype保护有既有代码依据；本候选dtype断言实际已过，拒绝发生在精确min断言。",
+    "alternative_acceptance": "测试不要求nearest、钉端点、某个内部分界值或gold源码。gold_full_auto是已独立核实的正确替代解；其历史CPU105项通过范围可复用。旧gold/full/exact/higher在auto公开路径仍有真缺陷，不因gold标签判正确。",
+    "CPU_reuse": "固定正式17行，只有gold_full_auto=1，其余16=0；未重跑或重新运输全矩阵；不把控制结果转为Qwen候选结果。",
+    "false_reject_analysis": "此次失败为原公开二值uint64的1输入/3输出分区最小值真实+1，不是内部分界精确值、dtype分歧、auto新要求或基础设施拒绝；没有发现实际正确候选被误拒。"
+  },
+  "actual_grading": {
+    "reward": 0.0,
+    "outcome": "unresolved",
+    "failure_category": "tests_failed",
+    "formal_references": {
+      "total": 105,
+      "unique": 105,
+      "f2p_failed": 1,
+      "f2p_passed": 0,
+      "p2p_passed": 104,
+      "p2p_failed": 0,
+      "missing": 0,
+      "skipped": 0
+    },
+    "full_module": {
+      "failed": 1,
+      "passed": 104,
+      "skipped": 3,
+      "warnings": 2,
+      "pytest_seconds": 14.69
+    },
+    "skips": "3个既有slow skip位于105正式参考外；不是新增跳过。",
+    "first_failure": {
+      "file": "dask/dataframe/tests/test_shuffle.py",
+      "caller_line": 668,
+      "assertion_line": 623,
+      "helper_call": "_assert_exact_int_divisions(issue, \"uint64\", 1, 3)",
+      "assertion": "assert got[0] == lo",
+      "actual": 612509347682975744,
+      "expected": 612509347682975743,
+      "eval_log_lines": [
+        1578,
+        1605
+      ]
+    },
+    "assertion_reach": {
+      "small_integer_and_float_controls": "已到达并通过；从顺序执行及后续失败位置判断。",
+      "first_large_uint_1_to_1": "该helper整体已通过，包括quantile端点、set_index端点/区间和行保留。",
+      "second_large_uint_1_to_3": "quantile dtype已通过，min失败；quantile max/排序以及本调用的set_index端点/区间/行量未到达。",
+      "remaining_large_cases_and_auto": "后六个helper调用未到达；不能称已在auto或跨2**63/相邻整数/全负int64断言失败。",
+      "separate_P2P": "test_set_index_interpolate_large_uint及全部104P逐参考通过，但不能代替未到达的F2P内部断言。"
+    },
+    "operational_boundary": "report无infra_failure；原日志有完整安装/测试结束，测试rc1是断言失败。全运输、镜像/recipe/资源实际绑定仍以题主机械核收为准。"
+  },
+  "failure_mechanism": {
+    "observed": "只钉每个输入分区percentiles_summary的端点，漏掉后处理的再次float64转换。",
+    "static_trace": [
+      "sample_percentiles对两行返回[0,50,100]（base 144-145）；linear摘要经候选修复保留精确首尾，中间仍为插值整数。",
+      "percentiles_to_weights将摘要转list（263），merge_and_compress_summaries合并唯一值（266-293）。",
+      "process_val_weights的np.array(vals)（320）和len(vals)<npartitions+1分支（337-343）继续存在；本例摘要3值但请求4个分界，调用np.interp。",
+      "np.interp将两端再转float64，最终rv.astype(dtype)（381-382）把最小值转回错误的612509347682975744。该数值由正式日志直接证实。"
+    ],
+    "additional_unreached_static_risks": [
+      "uint64跨2**63的list→np.array dtype推断风险仍在，未由本次实际运行到达。",
+      "shuffle.py整数auto的二次np.interp（506-510）仍在；本次F2P提前失败，不能把auto结果写为本候选实测。"
+    ],
+    "no_rerun": "以上是冻结源码静态分析及已有模型/评分日志证据，没有执行Dask探针。"
+  },
+  "model_trajectory_review": {
+    "responses": 39,
+    "CC_num_turns": 39,
+    "tools": {
+      "total": 38,
+      "Bash": 27,
+      "Read": 8,
+      "Edit": 3
+    },
+    "solve_seconds": 120.362,
+    "CC_reported_input_tokens": 1092050,
+    "CC_reported_output_tokens": 14782,
+    "localization": "初期猜测uint溢出，随后用实际int(float64)读回确认为精度损失；准确定位percentiles_summary→_percentile这一层，未完整追踪process_val_weights。",
+    "correction": "首次改array/_percentile导致test_quantile和test_dataframe_quantile失败；读取core.py发现calc_qs补0/100会触发整数转换，主动完整撤回首次改动，改到partitionquantiles。纠错有真实测试支持。",
+    "validation": "最终array percentiles 16 passed/1 unconditional skipped；两个dataframe quantile测试组各2 passed；quantile/repartition选择164 passed/109 slow skipped/348 deselected。实际选择没有test_shuffle模块，不能叫完整set_index回归。",
+    "bespoke_checks": "原字面1→1、小uint、近int64上界端点、少量多输入分区及小set_index例子真实打印通过；未覆盖1→3欠采样、输出分区数变化矩阵、auto或逐分区行区间/多重集合。",
+    "assertion_precision_limit": "若干uint64标量直接与Python int比较，未统一先int()，可能被NumPy数值提升掩盖差异；现有打印显示所测端点确实正确，不能把这些成功实例一概说成假通过。",
+    "ignored_warning": "首次实验看到int64摘要中间值为-9223372036854775808（trajectory225），模型231仅接受端点正确；未充分追踪中间值及后续摘要处理。",
+    "efficiency": "约两分钟完成、有主动回归纠错；27个Bash大多串行，多次重复float64演示和同类端点检查，仍缺关键分区增多的定向检查。可提升的是覆盖选择，不据此要求自动重采样。",
+    "final_explanation": "float64根因及为何不全局改_percentile的解释准确；“fix is complete”过度断言。最终没有披露未验证的欠采样/auto/行归属范围。"
+  },
+  "control_contamination": {
+    "first_request": "仅CC日期提醒和原题目块；四个私有marker未出现在首system中。",
+    "all_requests_checked": 39,
+    "private_markers_absent_from_all_request_bodies": [
+      "_assert_exact_int_divisions",
+      "gold_full_auto",
+      "dask7305-exact-ends-auto-v3",
+      "grading_materials_identity",
+      "effective_test.patch",
+      "host_grading_views"
+    ],
+    "observed_Read_paths": [
+      "dask/dataframe/partitionquantiles.py",
+      "dask/array/percentile.py",
+      "dask/array/tests/test_percentiles.py",
+      "dask/dataframe/tests/test_dataframe.py",
+      "dask/dataframe/core.py"
+    ],
+    "archived_public_test": "actor baseline test_shuffle.py SHA b019a81a...匹配公开base，无_assert_exact_int_divisions私有helper。",
+    "candidate_hygiene": "实际FP只修改生产partitionquantiles.py；array改动完整回退，无私有测试/常量写入或评分控制面修改。",
+    "limit": "未见本次材料泄漏证据；不证明预训练污染不存在，也不是公共安全边界的完整审计。"
+  },
+  "new_findings": [],
+  "model_result_observations": [
+    {
+      "id": "Q7305-1",
+      "kind": "模型候选不完整",
+      "reachability": "production_observed",
+      "current_behavior": "原问题二值uint64的1→3输出仍+1",
+      "invariant": "partition_quantiles端点必须等于真实minimum/maximum",
+      "evidence": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7305-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7305-qwen36-a1/grading/eval_logs/evallog_gpu1003-dask7305-qwen36-_85f0af94.eval.log:1578-1605；FP源码process_val_weights:337-343,381-382",
+      "impact": "本臂真实模型失败，raw0准确；不构成新题目缺陷",
+      "suggested_phase": "保留该首轮失败及遗漏步骤；不改分、不自动追加模型样本",
+      "file_and_lines": "FP dask/dataframe/partitionquantiles.py:337-343；有效test_shuffle.py:623/668",
+      "minimal_probe": "公开二值uint64输入、dd.from_pandas(...,npartitions=1,sort=False)、partition_quantiles(...,npartitions=3)，先int()比较端点；本轮没有执行",
+      "repair_acceptance": "若以后另有候选，应在合理精度路径保持端点并满足分区区间/行保留；现有材料已直接拒绝本候选，无本轮材料修订需求"
+    },
+    {
+      "id": "Q7305-2",
+      "kind": "模型验证/最终说明范围过大",
+      "reachability": "production_observed",
+      "current_behavior": "将局部成功实例和quantile/repartition选择称作修复完成",
+      "invariant": "完成声明必须受实际验证范围支持",
+      "evidence": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7305-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7305-qwen36-a1/attempt/trajectory.jsonl:529/533/547/551/601/605/615",
+      "impact": "掩盖未覆盖的1→3/auto/行归属，导致提前结束",
+      "suggested_phase": "记录定位和验证设计短板；不构成要求题主补模型解题或重采样的闸门",
+      "file_and_lines": "trajectory.jsonl:615；实际FP:417-425",
+      "minimal_probe": "对照工具命令中的测试选择和最终result声明；本次已静态完成",
+      "repair_acceptance": "说明应明确只有所测实例通过、剩余路径未验证；完整语义完成须有对应路径证据"
+    }
+  ],
+  "limits_and_stop_condition": [
+    "本轮足以核收Qwen首臂的题级失败机制和评分语义；共享运输/实际绑定由题主另核。",
+    "没有具体新材料/评分误拒反例，停止本轮语义追查；不以还能构造输入为由重复CPU矩阵或首轮模型。",
+    "Coder同FP CPU0与Qwen0分别是两个模型的首轮结果；共同不完整修法不等于题目坏、不能解或需要自动追加采样。",
+    "训练资格、稳定模型能力和整题收口均未授予；题主在实际双模型回执及机械核收后更新当前入口。"
+  ],
+  "read_source_inventory": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "de76dc6bab84209f40053433a68f82ff6feaf4708199473f1a67410f93d6d99c",
+      "bytes": 7626,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/collaboration-protocol.md",
+      "sha256": "4fb97787272c173c79f203548e488c781526fef4234427cddab8c77e378265ef",
+      "bytes": 18723,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/review-standards.md",
+      "sha256": "b56af8cf2805d50f109ed81c33a09bf8e9a10a52d3393741048556a85c0f2acd",
+      "bytes": 21690,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/task_screening_standard_v1_20260925.md",
+      "sha256": "8844f38f5ebc97fbcc548f9099f80e0614f8e865a7d840ce120dc86a001794c6",
+      "bytes": 39673,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/coordination_workflow_20261003.md",
+      "sha256": "00672909249942072b74c9bccb78617a9b4ab835a6ac64ba9a1190c35ac5fce3",
+      "bytes": 13024,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/preparation.md",
+      "sha256": "6978e36a3367ffc602695d750f1b23e3b5d6c8f3d3f768bdec7d9eab7ebd5edb",
+      "bytes": 7596,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7305/card.md",
+      "sha256": "4d3785012ab4f3913d08ffd128336e5c5c05ac4a63eda843848140c2e21f4a86",
+      "bytes": 7005,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7305/revision.json",
+      "sha256": "b65bf0af180aa373cc663b401d357dbe51d61036a8f065aabfd1ebde95108270",
+      "bytes": 20868,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7305/acceptance_matrix.json",
+      "sha256": "de3250c854bb6a5b335812070034eeb0261612344876cba6baca9d84241f1c88",
+      "bytes": 10395,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7305/formal_cpu_readback_r15_20261003.json",
+      "sha256": "547ecdfa3414096ac6800a923e81c21c1407b2be4f108d4aa404e2626c4c2418",
+      "bytes": 47817,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7305/probe_request.json",
+      "sha256": "a09cf3a752955ae9663357c483252892ee2ce40696b7fc75cbad647ec8cc219f",
+      "bytes": 16213,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7305/effective_test.patch",
+      "sha256": "4c63d384f1c62eaa019c12bc70ae8b0cab0d7595e719edcc1d5e878feb86c127",
+      "bytes": 4718,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7305/gold_full_auto.patch",
+      "sha256": "1a249962f60580a4340d6f92a45b414475c0eca86655715abb70229a366b5994",
+      "bytes": 3241,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_7305_formal_cpu_r15_review_20261003.md",
+      "sha256": "5e4dd2db226af3ca2e3de3557b46a36086a3c8f8f5f4413a6c11478eb6ec2368",
+      "bytes": 13248,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_cpu_and_7305_review_20261003.md",
+      "sha256": "3582939bce4a4733b98b699b561e6130f070a1d152fbe965fd263a26e8b8e31a",
+      "bytes": 16289,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7305-qwen36-a1/sync_receipt_v5.json",
+      "sha256": "6fd78cb7b248ec375c039a479051ee9f7b77f163cf8dc5572d5ea4d052c1e5a4",
+      "bytes": 103779,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/dask7305_qwen36_code9_execution_receipt_v1/execution_receipt.json",
+      "sha256": "2940881661ecff3e2da956fedd458e18e31186da7d258e0a1837057a93dc795f",
+      "bytes": 110631,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/probe-swe-dask-7305-20261003-v1_pair_execution_receipt_v1.json",
+      "sha256": "036f0969623d6c10c16b93e493e5e80e3ebe5471a4dbd27c58316fbf1842fd1b",
+      "bytes": 9990,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7305-qwen36-a1/prepared_dask_four_r25_code9_v1/dask7305/private/host_grading_views.jsonl",
+      "sha256": "eecfd9864893d0fa3251fa4ef2e5eeffcd6f427ad7c845864bfb504a8948b297",
+      "bytes": 24201,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7305-qwen36-a1/prepared_dask_four_r25_code9_v1/dask7305/prepared/prompts.jsonl",
+      "sha256": "b64791b853d7c41b6c9f149fa1be04340056b7f42ca69861486236f0546f190a",
+      "bytes": 3274,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7305-qwen36-a1/prepared_dask_four_r25_code9_v1/dask7305/prepared/rollout_task_views.jsonl",
+      "sha256": "4f40912b8a2115e60bdd033169ffc2c09e92b9b48c70b040525d6b6e34bfb155",
+      "bytes": 4399,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7305-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/dask4-r25-code9-v1/gpu1003-dask7305-qwen36-a1/requests.jsonl",
+      "sha256": "a8a611acda8f49d0de3c2ebca54741b861244b3ba20e411cf3c67edb032278f1",
+      "bytes": 3709264,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7305-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7305-qwen36-a1/result.json",
+      "sha256": "75fdf6f676f23076c19766ebc8fb82a77720573998662189a142ffe9991d0fdb",
+      "bytes": 2636,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7305-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7305-qwen36-a1/solver_prompt.txt",
+      "sha256": "17fa4f73b0935467b461da018519009038bcd73c6e3e22938dffb014fd4bc752",
+      "bytes": 2721,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7305-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7305-qwen36-a1/attempt/prompt.txt",
+      "sha256": "17fa4f73b0935467b461da018519009038bcd73c6e3e22938dffb014fd4bc752",
+      "bytes": 2721,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7305-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7305-qwen36-a1/attempt/attempt.json",
+      "sha256": "f56c6e648508a81c804c33617ba300de13905023ad80db0c73d7b92d2bcbfb81",
+      "bytes": 15955,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7305-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7305-qwen36-a1/attempt/trajectory.jsonl",
+      "sha256": "6fc65fde0f8bbef2e80956311ade4cdd72689a736f73dad350ed3c518b0f86c3",
+      "bytes": 477446,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7305-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7305-qwen36-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "d0df19cc03057d96f9029a6d8cb62a7d327a59e5579f86050c6bbe4874ba5c57",
+      "bytes": 26852,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7305-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7305-qwen36-a1/attempt/frozen/baseline.tar",
+      "sha256": "3005bb033edee6d7c62614cd33b0a93bd8b3b92bb1d998343ff5f4650f4909d0",
+      "bytes": 8949760,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7305-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7305-qwen36-a1/attempt/candidate/dask__dask-7305.diff",
+      "sha256": "dd1f82d21fd24c681d4cf82fa93f1364d7c545e18f0cdd670d8bb98e49854568",
+      "bytes": 1052,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7305-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7305-qwen36-a1/grading/report.json",
+      "sha256": "9db55f67d60bebfd002ea8b659d36c2e5c2fe46fa48b62d3e41319fefc8485d3",
+      "bytes": 1816,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7305-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7305-qwen36-a1/grading/status.json",
+      "sha256": "758bccfa367a7a1bfe121674f3f2fd580855fdddef55e705511a1b729143c93a",
+      "bytes": 2600,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7305-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7305-qwen36-a1/grading/eval_logs/evallog_gpu1003-dask7305-qwen36-_85f0af94.eval.log",
+      "sha256": "426ff77a1565deec6b8f68d5361ba5a177bee983d7fa52b6730e3ca259475b4d",
+      "bytes": 74359,
+      "read_scope": "全文或题级相关字段/片段；baseline.tar仅读取下列成员，未解包或执行"
+    }
+  ],
+  "read_archive_members": [
+    {
+      "archive_path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7305-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7305-qwen36-a1/attempt/frozen/baseline.tar",
+      "member": "dask/dataframe/partitionquantiles.py",
+      "sha256": "248afefc0a63a31b8ae1b2d9b89d24fecb587bb6cfbaca037885936df226f26b",
+      "bytes": 19108
+    },
+    {
+      "archive_path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7305-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7305-qwen36-a1/attempt/frozen/baseline.tar",
+      "member": "dask/dataframe/shuffle.py",
+      "sha256": "84bb142cbf0166c35f7325f4ff7ca146a719974814ab04a6af1870f56806b84d",
+      "bytes": 42446
+    },
+    {
+      "archive_path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7305-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7305-qwen36-a1/attempt/frozen/baseline.tar",
+      "member": "dask/array/percentile.py",
+      "sha256": "dfe457a7ddb5343036568873b3b84292d118924699e6437195bff24dd8e86191",
+      "bytes": 9298
+    },
+    {
+      "archive_path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask7305-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask7305-qwen36-a1/attempt/frozen/baseline.tar",
+      "member": "dask/dataframe/tests/test_shuffle.py",
+      "sha256": "b019a81adb92ddca708845b87866517551f7353739563f573707992da1d13b42",
+      "bytes": 37182
+    }
+  ]
+}

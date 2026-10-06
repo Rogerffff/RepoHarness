@@ -1,0 +1,63 @@
+{
+ "task_id": "python__mypy-10284",
+ "source": "SWE-Gym lite / python/mypy PR 10284",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "e46aa6df6126cf47bea97bf9f94d7cba093d0103",
+  "version": "0.820", "python_version": "3.9",
+  "eval_cmd": "pytest -n0 -rA -k",
+  "f2p": ["testTypeEqualsCheck", "testMultipleTypeEqualsCheck", "testTypeEqualsCheckUsingIs", "testTypeEqualsNarrowingUnionWithElse", "testTypeNotEqualsCheck", "testTypeNotEqualsCheckUsingIsNot", "testNarrowInElseCaseIfFinal", "testNarrowInIfCaseIfFinalUsingIsNot"],
+  "p2p": ["testTypeEqualsMultipleTypesShouldntNarrow"],
+  "test_patch_paths": ["test-data/unit/check-isinstance.test"],
+  "gold_paths": ["mypy/checker.py"],
+  "stage1": "gold=RESOLVED_FULL / empty=RESOLVED_NO，rc_install=0"
+ },
+ "public_view": {
+  "goal": "`if type(y) == MyType2:` 不做类型窄化，而 `isinstance(y, MyType2)` 会。要求 `type(x) == T` 也能窄化。",
+  "constraints": ["题面给出对照（isinstance 正常）与用户当前的 workaround（额外 assert isinstance）", "题面代码块未 import MyType/MyType2/MyType3，是示意代码不是可直接运行的复现"],
+  "unknowns_from_public_only": [
+   "只要求 `==`。`is` / `!=` / `is not` 要不要一并支持？题面未提（hints 里 JukkaL 说 'Typically the test is written using is instead of ==, but we could support both'，但 hints 不可见）",
+   "**else 分支能不能窄化**？题面完全没讨论。正确答案很微妙：`type(x) == T` 为假时 x 仍可能是 T 的子类，所以只有 T 被 @final 标注才能窄化 else 分支",
+   "链式比较 `type(x) == type(y) == int` 的语义？题面未提",
+   "多类型链 `type(x) == int == str` 应当完全不窄化？题面未提"
+  ],
+  "base_code_evidence": [
+   "e46aa6df6:mypy/checker.py:3954 附近只有 conditional_callable_type_map，没有 find_type_equals_check",
+   "e46aa6df6:mypy/checker.py:4193 附近的 ComparisonExpr 分支只处理 is/== 的字面量与 enum 窄化，没有 type(x) 调用的识别"
+  ]
+ },
+ "checks": {
+  "1": {"status": "pass", "evidence_refs": ["test_patch 目标 test-data/unit/check-isinstance.test 在 base 存在", "gold 目标 mypy/checker.py 存在，两处 hunk 上下文匹配"], "note": "无二进制/LFS/子模块。", "by": "L1_mypy_1"},
+  "2": {"status": "pass", "evidence_refs": ["base checker.py 无 find_type_equals_check，也无 type() 调用识别", "stage1 empty=RESOLVED_NO"], "note": "base 确含缺陷。", "by": "L1_mypy_1"},
+  "3": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["problem_statement 代码块未定义 MyType/MyType2/MyType3，也没 import", "hints_text 1856 字符，含 JukkaL 的 'Typically the test is written using `is` instead of `==`, but we could support both'"], "note": "题面是示意代码不是可跑复现，但语义清楚，影响有限。hints 里那句是 F2P 里 is/is not 变体的唯一依据，而 hints 不可见。", "by": "L1_mypy_1"},
+  "4": {"status": "pass", "evidence_refs": ["test_patch 只触碰 test-data/unit/check-isinstance.test"], "note": "无非测试源码。additional_exclusions 保持空。", "by": "L1_mypy_1"},
+  "17": {"status": "pass", "evidence_refs": ["同上；gold 只改 mypy/checker.py"], "note": "无覆盖风险。", "by": "L1_mypy_1"},
+  "5": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["dupidx.txt：check-isinstance.test 还被 python__mypy-9909 触碰，且两题 gold 都改 mypy/checker.py（9909 不在本包）"], "note": "同文件同模块不同缺陷，记录同族关系。", "by": "L1_mypy_1"},
+  "23": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["F2P 8 条覆盖 ==、is、!=、is not、链式 type(x)==type(y)==int，以及 @final 类的 else 分支窄化（testNarrowInElseCaseIfFinal / testNarrowInIfCaseIfFinalUsingIsNot）", "problem_statement 只谈 `type(y) == MyType2` 的 if 分支"], "note": "评分要求远超题面。最关键的是 **else 分支只在 T 为 @final 时才能窄化** 这条规则——它是类型安全的核心约束，题面一个字都没提；agent 若按直觉给 else 也窄化，testTypeEqualsNarrowingUnionWithElse 会挂；若 else 一律不窄化，两个 Final case 会挂。公开材料推不出这条。", "by": "L1_mypy_1"},
+  "24": {"status": "pass", "evidence_refs": ["8 条 F2P 全部只断言 reveal_type 的结果，不引用 gold 新增的 find_type_equals_check / combine_maps 等名字"], "note": "断言的是对外行为，不强制唯一实现。断言文本精确（mypy 通病）但有依据。", "by": "L1_mypy_1"},
+  "25": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["P2P 只有 1 条 testTypeEqualsMultipleTypesShouldntNarrow，而且是 test_patch 新增的（base 上 trivially 通过，因为 base 根本不窄化）"], "note": "gold 改的是 find_isinstance_check —— mypy 窄化的总入口，且新分支挂在 `if if_map == {} and else_map == {}` 之后。当前评分对既有窄化行为**零保护**：check-narrowing.test、check-isinstance.test 既有 case、check-enum.test 全都没进 P2P。一个把既有字面量/enum 窄化改坏但新特性做对的候选会拿满分。", "by": "L1_mypy_1"},
+  "26": {"status": "issue", "severity_hint": "P1", "evidence_refs": ["P2P 无任何既有 case"], "note": "见 proposed_regression_tests。", "by": "L1_mypy_1"},
+  "27": {"status": "pass", "evidence_refs": ["golden_patch 新增 find_type_equals_check（约 75 行）+ 在 ComparisonExpr 分支加 4 行调用"], "note": "gold 与本题对应、不依赖未交付改动。注意 gold 依赖 base 已有的 conditional_type_map_with_intersection 与 get_isinstance_type。", "by": "L1_mypy_1"},
+  "29": {"status": "pass", "evidence_refs": ["problem_statement 无链接、无修复代码"], "note": "无静态泄漏。", "by": "L1_mypy_1"},
+  "6": {"status": "pass", "evidence_refs": ["stage1 rc_install=0"], "note": "已有实跑证据。", "by": "L1_mypy_1"},
+  "7": {"status": "pass", "evidence_refs": ["用 fixtures/typing-medium.pyi、fixtures/primitives.pyi、fixtures/isinstance.pyi，均在仓库内"], "note": "无外部资产。", "by": "L1_mypy_1"},
+  "11": {"status": "pass", "evidence_refs": ["case 正文无 URL"], "note": "不需要网络。", "by": "L1_mypy_1"},
+  "18": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["kcheck_all.txt：testTypeEqualsCheck 子串命中 testTypeEqualsCheckUsingIs；testTypeNotEqualsCheck 子串命中 testTypeNotEqualsCheckUsingIsNot"], "note": "过选良性（被命中的两条本身也在 F2P）。", "by": "L1_mypy_1"},
+  "19": {"status": "issue", "severity_hint": "P3", "evidence_refs": ["test_patch 里 testTypeEqualsMultipleTypesShouldntNarrow 与 testTypeNotEqualsCheck 各写了**两个** [builtins ...] 段（typing-medium.pyi 与 primitives.pyi）", "e46aa6df6:mypy/test/data.py:69-75：两个 builtins 段都会往 files 里追加同一个目标路径 base_path/builtins.pyi"], "note": "后写的 primitives.pyi 覆盖前一个，作者注释里想要的 typing-medium.pyi 实际不生效。上游如此、测试仍过，属潜在脆弱点而非当前故障；如果将来 primitives.pyi 里少了某个符号，失败原因会很难定位。", "by": "L1_mypy_1"},
+  "20": {"status": "pass", "evidence_refs": ["stage1：empty=RESOLVED_NO、gold=RESOLVED_FULL，f2p_missing=0、p2p_missing=0"], "note": "分差来自目标行为。", "by": "L1_mypy_1"}
+ },
+ "issues": [
+  {"category": "requirement_underspecified", "severity": "P1", "evidence_refs": ["F2P 含 testNarrowInElseCaseIfFinal / testNarrowInIfCaseIfFinalUsingIsNot / testTypeEqualsNarrowingUnionWithElse", "problem_statement 未提 else 分支与 @final"], "proposed_action": "补题面：写清 (a) is/is not/!= 同样在范围内；(b) else 分支只有当被比较类型是 final 时才可窄化，并给出理由（非 final 类可能有子类）。否则本题实际考的是'猜出 upstream PR 的全部设计决定'。", "next_experiment": "只实现 `==` 的 if 分支窄化（题面字面要求），跑 8 条 F2P，统计通过数（预期 ≤3）。"},
+  {"category": "grading_coverage", "severity": "P1", "evidence_refs": ["P2P 只有 1 条且是新增用例；gold 改的是 find_isinstance_check 总入口"], "proposed_action": "补 P2P：check-isinstance.test 与 check-narrowing.test 的既有全部 case。", "next_experiment": "构造一个候选：正确实现 type(x)==T 窄化，但把既有 `if_map == {} and else_map == {}` 判定写成无条件覆盖，跑当前 F2P+P2P，预期满分；再用建议回归集确认能拦下。"},
+  {"category": "test_data_fragility", "severity": "P3", "evidence_refs": ["两个 case 各有重复的 [builtins ...] 段"], "proposed_action": "合并为单个 [builtins ...]；不影响当前判分，只是把隐式覆盖变显式。", "next_experiment": "无需实验，读 data.py:69-75 即可确认。"}
+ ],
+ "file_rules": {"additional_exclusions": [], "rationale": "test_patch 只触碰纯测试数据文件 test-data/unit/check-isinstance.test。", "evidence_refs": ["grading_bundles_v2_v0:python__mypy-10284 test_patch"]},
+ "proposed_regression_tests": [
+  {"id": "test-data/unit/check-isinstance.test 既有全部 case（base 上约 2573 行）", "reason": "gold 改的就是这个文件对应的窄化入口，同文件既有用例是最直接的回归。"},
+  {"id": "test-data/unit/check-narrowing.test", "reason": "find_isinstance_check 的 ComparisonExpr 分支同时服务字面量/enum/TypedDict 窄化，新分支挂在其后。"},
+  {"id": "test-data/unit/check-enum.test、check-literal.test", "reason": "`x == SomeEnum.A` 与 `x == 1` 的窄化走同一条 ComparisonExpr 路径。"},
+  {"id": "test-data/unit/check-unreachable-code.test", "reason": "窄化结果直接决定可达性分析；窄化改坏最容易在这里产生大面积差异。"}
+ ],
+ "disposition_hint": {"state": "needs_review", "reason": "gold 与测试本身质量不错（只断言对外行为、覆盖 8 个语义点），但题面只描述了其中一个点，@final/else 这条关键规则无从推断；P2P 对窄化总入口零保护。补题面 + 补 P2P 后可用，是否值得保留由用户定（也可以当成'高难度、要求需补全'的样本）。"},
+ "costs": {"minutes": 21}
+}

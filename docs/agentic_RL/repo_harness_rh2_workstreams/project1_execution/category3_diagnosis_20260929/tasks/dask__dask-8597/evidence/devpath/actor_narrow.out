@@ -1,0 +1,34 @@
+============================= test session starts ==============================
+platform linux -- Python 3.9.19, pytest-7.4.4, pluggy-1.5.0 -- /opt/miniconda3/envs/testbed/bin/python
+rootdir: /testbed
+configfile: setup.cfg
+plugins: rerunfailures-14.0, xdist-3.6.1, cov-5.0.0
+collecting ... collected 122 items / 118 deselected / 4 selected
+
+dask/array/tests/test_slicing.py::test_slicing_integer_no_warnings PASSED [ 25%]
+dask/array/tests/test_slicing.py::test_getitem_avoids_large_chunks PASSED [ 50%]
+dask/array/tests/test_slicing.py::test_getitem_avoids_large_chunks_missing[chunks0] PASSED [ 75%]
+dask/array/tests/test_slicing.py::test_getitem_avoids_large_chunks_missing[chunks1] XFAIL [100%]
+
+=============================== warnings summary ===============================
+dask/array/tests/test_slicing.py::test_slicing_integer_no_warnings
+dask/array/tests/test_slicing.py::test_getitem_avoids_large_chunks
+dask/array/tests/test_slicing.py::test_getitem_avoids_large_chunks
+  /opt/miniconda3/envs/testbed/lib/python3.9/site-packages/_pytest/python.py:194: PytestRemovedIn8Warning: Passing None has been deprecated.
+  See https://docs.pytest.org/en/latest/how-to/capture-warnings.html#additional-use-cases-of-warnings-in-tests for alternatives in common use cases.
+    result = testfunction(**testargs)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+==================================== PASSES ====================================
+============================= slowest 10 durations =============================
+1.34s call     dask/array/tests/test_slicing.py::test_getitem_avoids_large_chunks_missing[chunks0]
+0.12s call     dask/array/tests/test_slicing.py::test_getitem_avoids_large_chunks_missing[chunks1]
+0.02s call     dask/array/tests/test_slicing.py::test_getitem_avoids_large_chunks
+
+(7 durations < 0.005s hidden.  Use -vv to show these durations.)
+=========================== short test summary info ============================
+PASSED dask/array/tests/test_slicing.py::test_slicing_integer_no_warnings
+PASSED dask/array/tests/test_slicing.py::test_getitem_avoids_large_chunks
+PASSED dask/array/tests/test_slicing.py::test_getitem_avoids_large_chunks_missing[chunks0]
+XFAIL dask/array/tests/test_slicing.py::test_getitem_avoids_large_chunks_missing[chunks1] - https://github.com/dask/dask/issues/6586
+=========== 3 passed, 118 deselected, 1 xfailed, 3 warnings in 2.06s ===========

@@ -1,0 +1,255 @@
+{
+ "task_id": "python__mypy-16555",
+ "source": "SWE-Gym lite / python/mypy PR 16555（str enum + .format 误报）",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "5b1a231425ac807b7118aac6a68b633949412a36",
+  "version": "1.8",
+  "python_version": "3.12",
+  "eval_cmd": "pytest -rA -k",
+  "f2p": [
+   "...check-formatting.test::testNonStringEnumToFormatValue",
+   "...check-formatting.test::testStrEnumWithStringToFormatValue",
+   "...check-formatting.test::testEnumWithStringToFormatValue"
+  ],
+  "p2p": [],
+  "gold_paths": [
+   "mypy/checkexpr.py"
+  ],
+  "test_patch_paths": [
+   "test-data/unit/check-formatting.test"
+  ],
+  "runtime_evidence": "无（不在 stage1 样本、in_e2 空、无 DeepSeek 候选）"
+ },
+ "public_view": {
+  "goal": "`class Responses(str, Enum)` 的成员调用 .format(value=42) 被误报 'Not all arguments converted during string formatting'；要求不再误报。",
+  "constraints": [
+   "题面给完整最小复现与变通写法（.value.format(...)），无外链、无图片、无截断",
+   "题面只讲 `str, Enum` 一种情形"
+  ],
+  "unknowns_from_public_only": [
+   "根因是什么：题面没说 mypy 把**成员名**当成了字符串字面量（base 里 try_getting_literal 拿到的 LiteralType.value 是 'TEMPLATED' 这个名字，不是 'insert {value} here' 这个值）。这一步必须自己从代码里读出来",
+   "3.11 的 StrEnum 要不要一起处理——题面没提，**只在 hints 里出现**",
+   "普通（非 str）Enum 该怎么办——题面完全没提，而 F2P 有一整条 case 专测它"
+  ],
+  "base_code_evidence": [
+   "5b1a23142:mypy/checkexpr.py:633-640 check_str_format_call：`base_typ = try_getting_literal(self.chk.lookup_type(e.callee.expr))`，对 enum 实例拿到的 LiteralType 的 value 是成员名",
+   "5b1a23142:test-data/unit/check-formatting.test 在 base 有 40+ 个 case，无一涉及 enum"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "pass",
+   "evidence_refs": [
+    "test-data/unit/check-formatting.test 在 base 存在",
+    "gold 目标 mypy/checkexpr.py:633-640 在 base 逐行一致"
+   ],
+   "note": "无二进制/LFS/子模块；三条 F2P 都是新增 case。",
+   "by": "L1_mypy_2"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "5b1a23142:mypy/checkexpr.py:636 直接对 callee 表达式取字面量"
+   ],
+   "note": "静态确认 base 会把 enum 成员名当作格式串。",
+   "by": "L1_mypy_2"
+  },
+  "3": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "problem_statement 494 字符",
+    "raw hints_text 369 字符，内容是'3.11 的 StrEnum 也有同样问题'加一段复现"
+   ],
+   "note": "F2P 的三条里有一条（testStrEnumWithStringToFormatValue）直接对应 hints 的内容、题面没提；另一条（testNonStringEnumToFormatValue）题面与 hints 都没提。agent 只看题面会漏掉 2/3 的评分面。",
+   "by": "L1_mypy_2"
+  },
+  "4": {
+   "status": "pass",
+   "evidence_refs": [
+    "test_patch 只碰 test-data/unit/check-formatting.test"
+   ],
+   "note": "无非测试源码；gold 不碰测试样路径。",
+   "by": "L1_mypy_2"
+  },
+  "17": {
+   "status": "issue",
+   "severity_hint": "P1",
+   "evidence_refs": [
+    "同 file_rules"
+   ],
+   "note": "仓库级。",
+   "by": "L1_mypy_2"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "40 题里 gold 改 mypy/checkexpr.py 的还有 16963 与 9629，改的函数不同（TypedDict 构造 / **kwargs 校验）"
+   ],
+   "note": "无重复。",
+   "by": "L1_mypy_2"
+  },
+  "23": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "F2P 3 条里有 2 条（StrEnum、非 str Enum）在题面中无任何依据"
+   ],
+   "note": "题面只覆盖 1/3 的评分面。好的一面：三条 case 的断言都是标准诊断文本，不涉及生造字符串。",
+   "by": "L1_mypy_2"
+  },
+  "24": {
+   "status": "pass",
+   "evidence_refs": [
+    "F2P 断言全是既有的格式化诊断文本（'Cannot find replacement for positional format specifier 0' 等）"
+   ],
+   "note": "不强制唯一实现：只要把 enum 成员解析到其值类型即可，走 checkexpr 还是 typeops 都行。",
+   "by": "L1_mypy_2"
+  },
+  "25": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "F2P=3、P2P=0（grading_bundles_v2_v0:python__mypy-16555）",
+    "base check-formatting.test 的 40+ 个既有 case 一条都没进 P2P"
+   ],
+   "note": "F2P 本身有正反两侧（既要求 TEMPLATED.format(42) 不报错，也要求 NORMAL.format(42) 仍报 'Not all arguments converted'），所以'整体关掉 str-format 检查'这类假修复会被挡住——这是本包少见的。剩下的风险在别处：把 try_getting_literal 的结果一律丢弃（只影响非 enum 的字面量格式串检查）不会被任何 P2P 发现。",
+   "by": "L1_mypy_2"
+  },
+  "26": {
+   "status": "issue",
+   "evidence_refs": [
+    "P2P=0"
+   ],
+   "note": "见 proposed_regression_tests。",
+   "by": "L1_mypy_2"
+  },
+  "27": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "golden_patch 里 `if isinstance(value_type, Type):` —— value_type 的静态类型已经是 `Type | None`，这句实际是给 mypy 自举用的 None 过滤，写法别扭",
+    "gold 依赖 Instance/LiteralType/get_proper_type，均在 base 的 checkexpr.py 已 import"
+   ],
+   "note": "gold 正确、完整、不依赖未交付改动；唯一瑕疵是那句 isinstance 判断读起来像误写。它同时修好了题面没提的'非 str Enum 误把成员名当格式串'，属于 gold 覆盖面大于题面。",
+   "by": "L1_mypy_2"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 无 PR/commit 链接、无修复代码"
+   ],
+   "note": "题面无泄漏；hints 只补了 StrEnum 情形，不给修法。",
+   "by": "L1_mypy_2"
+  },
+  "6": {
+   "status": "not_checked",
+   "evidence_refs": [],
+   "note": "未实跑安装。",
+   "by": "L1_mypy_2"
+  },
+  "7": {
+   "status": "pass",
+   "evidence_refs": [
+    "三条 case 只用 [builtins fixtures/primitives.pyi]，在仓库内；StrEnum 由随仓库分发的 typeshed 提供"
+   ],
+   "note": "无外部权重/数据依赖。",
+   "by": "L1_mypy_2"
+  },
+  "11": {
+   "status": "pass",
+   "evidence_refs": [
+    "case 正文无网络调用"
+   ],
+   "note": "纯离线。",
+   "by": "L1_mypy_2"
+  },
+  "18": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "eval_cmd 'pytest -rA -k' 缺 -n0；5b1a23142:pyproject.toml addopts = \"-nauto --strict-markers --strict-config\"；test-requirements.in 含 pytest-xdist>=1.34.0"
+   ],
+   "note": "本题（连同 16905/16963/16966/17071）会在 xdist 全核并行下评分。kscan 显示三条 selector 无子串过选。",
+   "by": "L1_mypy_2"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "nodeid 4 段；5b1a23142:mypy/test/data.py 含 DataFileCollector"
+   ],
+   "note": "形状一致。",
+   "by": "L1_mypy_2"
+  }
+ },
+ "issues": [
+  {
+   "category": "grading_coverage",
+   "severity": "P2",
+   "evidence_refs": [
+    "P2P=0；check-formatting.test 40+ 既有 case 未入 P2P"
+   ],
+   "proposed_action": "补 P2P：check-formatting.test 全文件（尤其 testFormatCallSpecialCases 与所有 str.format 字面量用例）。",
+   "next_experiment": "gold 上整文件跑 check-formatting.test 取基线通过集。"
+  },
+  {
+   "category": "requirement_underspecified",
+   "severity": "P2",
+   "evidence_refs": [
+    "F2P 的 StrEnum 与非 str Enum 两条在题面无依据"
+   ],
+   "proposed_action": "把 hints 里的 StrEnum 情形并入题面；非 str Enum 那条要么写进题面，要么移出 F2P。",
+   "next_experiment": "只实现题面字面要求（str, Enum）后跑三条 F2P，统计通过数（预期 1~2）。"
+  },
+  {
+   "category": "eval_cmd_parallelism",
+   "severity": "P2",
+   "evidence_refs": [
+    "grading_bundles_v2_v0 的 eval_cmd 为 'pytest -rA -k'（无 -n0）",
+    "base pyproject.toml [tool.pytest.ini_options] addopts = \"-nauto --strict-markers --strict-config\"（逐题 git show 核对，见 summary.md 仓库级第 2 条）",
+    "test-requirements.in 含 pytest>=7.4.0 与 pytest-xdist>=1.34.0，所以 -nauto 会真的生效"
+   ],
+   "proposed_action": "本题会在 pytest-xdist 全核并行下评分，与其余 34 道 mypy 题的执行模式不同（输出交织、worker 崩溃归因、内存占用都不一样）。建议统一补 -n0，或明确记录这 6 题走并行口径。",
+   "next_experiment": "同机对比 `pytest -rA -k <expr>` 与 `pytest -n0 -rA -k <expr>` 在 gold 上的逐 case 状态、墙钟耗时与峰值内存。"
+  },
+  {
+   "category": "file_boundary",
+   "severity": "P1",
+   "evidence_refs": [
+    "rh2/src/repoharness2/grading/manager.py:656/672/581"
+   ],
+   "proposed_action": "建议把 mypy/test/* 与 test-data/* 纳入 hygiene 保护（40 题 gold 均不触碰）。",
+   "next_experiment": "构造只改 mypy/test/helpers.py::assert_string_arrays_equal 的候选 patch 走一次评分，确认当前会判满分。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只触碰 test-data/unit/ 下的 .test 数据文件，gold 只碰 mypy/ 源码，两者无交集，按第四组 B 默认保持空。仓库级建议（需用户裁定、对 40 题统一生效）：把 'mypy/test/*' 与 'test-data/*' 加入 hygiene.test_globs——40 题 gold 无一触碰这两处（已对 validation_bundles 全量核对），而当前 agent 改 mypy/test/helpers.py、mypy/test/data.py 或 test-data/unit/fixtures/*.pyi 既不被 eval 的 git checkout 还原，也不被判 rejected_test_tampering。副作用：agent 在 test-data/ 下建临时文件会让整份提交作废，需一并决定。",
+  "evidence_refs": [
+   "rh2/src/repoharness2/grading/manager.py:656、:672、:581",
+   "rh2/src/repoharness2/contracts/grading.py:118-121"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "mypy/test/testcheck.py::TypeCheckSuite::check-formatting.test 全文件",
+   "reason": "gold 改的是 check_str_format_call 的入口，所有 .format 字面量检查都经过它。"
+  },
+  {
+   "id": "check-enum.test 里涉及成员值类型的 case",
+   "reason": "gold 新增了 typ.type.names[...].type 的查表路径，enum 语义变化会在这里暴露。"
+  },
+  {
+   "id": "新增：成员值不是字面量（如 TEMPLATED = some_func()）的 str enum",
+   "reason": "gold 的查表在值类型不是 LiteralType 时的兜底路径无护栏。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "gold 干净、F2P 正反两侧都有、断言用标准诊断文本；缺陷是 P2P=0 与题面只覆盖 1/3 评分面，但都不阻碍先跑探针。注意它属于 eval_cmd 缺 -n0 的 6 题之一。"
+ },
+ "costs": {
+  "minutes": 26
+ }
+}

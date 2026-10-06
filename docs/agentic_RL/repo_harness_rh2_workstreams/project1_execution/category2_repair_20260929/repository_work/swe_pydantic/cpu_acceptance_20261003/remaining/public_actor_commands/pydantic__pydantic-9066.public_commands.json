@@ -1,0 +1,23 @@
+[
+  {
+    "id": "public_identity",
+    "cmd": "python - <<'PY'\nimport sys,os,json,hashlib,importlib,pathlib\nimport pydantic,pydantic_core\nprint('RH2_SYS_EXECUTABLE=' + sys.executable)\nprint('RH2_CONDA=' + str(os.environ.get('CONDA_DEFAULT_ENV')))\nprint('PY_CHECK',json.dumps(dict(uid=os.getuid(),python=sys.executable,version=sys.version,pydantic_file=pydantic.__file__,core=pydantic_core.__version__)))\nassert os.getuid()==54321\nassert sys.version_info[:2]==(3,8)\nassert sys.executable=='/opt/miniconda3/envs/testbed/bin/python'\nassert pydantic.__file__=='/testbed/pydantic/__init__.py'\nassert pydantic_core.__version__=='2.16.3'\nexpected={'pydantic/json_schema.py': 'f5b675891b23ab3ce275db9d30f9a871bb01691bd0f4ce60912e14c71950f16e'}\nfor rel,sha in expected.items():\n    p=pathlib.Path('/testbed')/rel\n    assert hashlib.sha256(p.read_bytes()).hexdigest()==sha\n    assert os.access(p,os.W_OK)\nfor name in ['pydantic.json_schema']:\n    assert importlib.import_module(name).__file__=='/testbed/'+name.replace('.','/')+'.py'\nPY",
+    "timeout_s": 90,
+    "expect": "zero",
+    "purpose": "记录实际公开actor UID/Python/core与源码导入及可写性"
+  },
+  {
+    "id": "public_goal",
+    "cmd": "python - <<'PY'\nfrom ipaddress import IPv4Address\nfrom pydantic import BaseModel\nfrom pydantic.networks import IPvAnyAddress\nclass IpModel(BaseModel):\n    ip:IPvAnyAddress=IPv4Address('127.0.0.1')\nactual=IpModel.model_json_schema()\nprint('PUBLIC_ORIGINAL_RESULT',actual)\ntarget_equals=actual['properties']['ip'].get('default')=='127.0.0.1'\nprint('TARGET_EQUALS',target_equals)\nassert target_equals, 'PUBLIC_ORIGINAL_TARGET_REPRODUCED'\nPY",
+    "timeout_s": 90,
+    "expect": "nonzero",
+    "purpose": "只复现原公开问题示例，不带私有新增断言"
+  },
+  {
+    "id": "public_existing",
+    "cmd": "python -m pytest -q tests/test_json_schema.py::test_ipv4address_type tests/test_json_schema.py::test_ipv6address_type",
+    "timeout_s": 180,
+    "expect": "zero",
+    "purpose": "已存在公开测试的小范围开发路径"
+  }
+]

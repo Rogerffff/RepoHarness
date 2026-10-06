@@ -1,0 +1,277 @@
+{
+  "schema_id": "rh2.ordinary_gpu_probe.owner_request.v1",
+  "request_id": "swe-dvc6954-behavior-r14-v1-20261003",
+  "status": "cpu_acceptance_complete_pending_executor_review",
+  "package_id": "swe_dvc",
+  "package_path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc",
+  "owner_thread_id": "01a0fd62-ca8f-7173-a3fd-0e3795c646bd",
+  "owner_thread_title": "SWE | DVC 题目修订",
+  "tasks": [
+    {
+      "task_id": "swe_gym_lite::iterative__dvc-6954",
+      "instance_id": "iterative__dvc-6954",
+      "purpose": "观察两款基座对合法Python负参数（整数/浮点/容器）的解析、run/repro lock记录和改值重跑的根因定位、修法与评分一致性。",
+      "allowed_uses": [
+        "版本固定的普通基座质量诊断"
+      ],
+      "limits": [
+        "正式grader保留实际UID54322预检原始exec诊断与资源policy，未另存实际HostConfig；不把policy当配置强制生效证明。",
+        "复用R5公开actor仅限相同公开payload、solver prompt、执行代码与派生镜像；R14新prepared已核公开face及prompt字符串字节，prompts.jsonl metadata environment digest更新，整文件并非相同。",
+        "公开actor原始pytest -q计数parser为空；11通过来自完整capture。未另存collect-only完整逐节点基线或apply后整个test_show.py字节，8GiB writable-layer quota未证明强制生效。",
+        "R14三份正式日志严格解码新增test_python.py完整1624B/56行并与effective patch逐字节相等，关闭此前新文件未入git diff的证据缺口；旧原版正式reward仍未知。",
+        "普通基座诊断范围；没有新R14 actor、模型结果、typed actor接入或训练资格结论。",
+        "首轮每模型一次，不据此推断稳定能力；截断/infra/评分缺席不算能力失败，未完成模型保持待接续。",
+        "只请求版本固定的普通基座诊断；模型结果及候选语义由题主复核，不授予训练或留出资格。"
+      ],
+      "source_binding": {
+        "release_id": "cat2-cpu-r2e089092-swe34-dvc-pyd-20261003-v1",
+        "local_release_dir": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe34_dvc_pyd_v1",
+        "external_manifest": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe34_dvc_pyd_v1/manifest.json",
+        "external_manifest_sha256": "sha256:51b833975be2c3354be45b731552235a33070315f0039c8e6f54987de95f6ca8",
+        "producer_manifest": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe34_dvc_pyd_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest_swe34_dvc_pyd_combined_20261003_v1/ingest_manifest_swe_revision_v1.json",
+          "sha256": "sha256:c4ede5293762eb209eab8551f9fa9a02e8df6f850bd2cd1ce56914bb10ea9e92"
+        },
+        "registry": {
+          "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe34_dvc_pyd_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/revisions/dvc_three_behavior_v1/material_revisions.json",
+          "sha256": "sha256:815811717d21fa259b354eaf85a1598241d66d85b5af547d9208b2835c4edace"
+        },
+        "material_revision_ids": [
+          "dvc6954-behavior-v1-draft"
+        ],
+        "material_bundle_files": {
+          "public_bundles_v0.jsonl": {
+            "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe34_dvc_pyd_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest_swe34_dvc_pyd_combined_20261003_v1/public_bundles_v0.jsonl",
+            "sha256": "sha256:f6f338ef3ba0f927d8957c37c5fdb781cce42cef023cd4a9d002edf52ca01e78"
+          },
+          "environment_packages_v0.jsonl": {
+            "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe34_dvc_pyd_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest_swe34_dvc_pyd_combined_20261003_v1/environment_packages_v0.jsonl",
+            "sha256": "sha256:d7a965ee126a4c1728e9d8c463ecd4c07584b76fd6d11f0278e3589aa463abe1"
+          },
+          "grading_bundles_v2_v0.jsonl": {
+            "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe34_dvc_pyd_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest_swe34_dvc_pyd_combined_20261003_v1/grading_bundles_v2_v0.jsonl",
+            "sha256": "sha256:71bfeaabfa74d9473c81508ff7454afcbeaf2f2f1902b74104062ac949d1bb3a"
+          },
+          "validation_bundles_v0.jsonl": {
+            "path": "runs/category2_repair_20260929/releases_20261003/r2e_089_092_swe34_dvc_pyd_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest_swe34_dvc_pyd_combined_20261003_v1/validation_bundles_v0.jsonl",
+            "sha256": "sha256:196fdf81e1142c431d7b60dee5082db6ccfd3ba8b65f88f686bb12b2020ad961"
+          }
+        },
+        "base_commit": "28dd39a1a0d710585ff21bf66199208b1b83cbde",
+        "public_bundle_digest": "sha256:9186b41928accff7f5b576f240163c6c87c013cc9cfb219fa8a42571b3d526fb",
+        "environment_package_digest": "sha256:c8cde31e2160b7caa94884d54e45a48f2527a744e2bb1ecb3789f502ebc6e311",
+        "grading_bundle_digest": "sha256:b52115d1d2cfc212db95f2a2bafe71c7e8c2c7d1f9a6a3a6d020130d20e7025e",
+        "grading_materials_identity": "sha256:77a22ff0a47782cb689525fc0ac48a7b2828bf931b17c887ea0d42683e067bfa",
+        "problem_statement_sha256": "sha256:8bdefbf0d354af44abd512469a37c9c9173e8d4cbff4e3e100ea9efbf610b44f",
+        "public_statement_revision": "unchanged",
+        "effective_test_patch": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-6954/effective_test.patch",
+          "sha256": "sha256:52c6a71bba1b1ca9f067d9846006dc5f2af9ecb0dde107f8a4ee75519c0b33fc"
+        },
+        "reference_partitions": {
+          "f2p": 3,
+          "p2p": 12,
+          "total": 15
+        },
+        "reference_bindings_sha256": "sha256:ed7a90aa3f1733095ac93d8da7b41a1735f6060982d75a3183c00e1f4a658ccb",
+        "reference_binding_version": "reference-bindings-v1",
+        "test_command": "pytest -rA tests/func/params/test_show.py tests/unit/utils/serialize/test_python.py",
+        "publication_support_receipt": {
+          "path": "runs/category2_repair_20260929/publication_cpu_takeover_20261003/r14/dvc6954_publication_receipt.json",
+          "sha256": "sha256:2ac314f6751bc0e9150d1ef101d5361cc88906fb5fcb577517f112ed227b4668"
+        },
+        "runtime_requirements": [
+          "R14 DVC typed revision/full test patch, exact reference bindings, fixed offline install and candidate UID54322 wheel-byte prerequisite must be consumed before revised install",
+          "R14 grader exact-image registration, grading image manifest None for local ID, reject unrelated overlay; retain approved code4 exact actor.image_override diagnostic path with actual GPU image inspection",
+          "6954 new file absent in immutable base must be proved, removed before trusted apply, exact effective SHA and full base64 captured after apply",
+          "new GPU prepared summary must be frozen against compatible producer/registry/code; never rebind historical FrozenPatch or baseline",
+          "no private grading bundles, candidate controls, owner cards or release parent mounted to solver"
+        ]
+      },
+      "image": {
+        "source_ref_by_digest": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-6954@sha256:1cf3894f41768d84c21d9d9ba02cf59b886bfc391f15f3f7f0c8e3eb972bcb09",
+        "recipe_id": "dvc6954-public-e13-image-v1",
+        "recipe": {
+          "path": "runs/category2_repair_20260929/repository_work/swe_dvc/gpu_assets/dvc6954_gpu_context_v1/context/Dockerfile",
+          "sha256": "sha256:10fd2f82a47d1eae9d8627486aeeb1e6d704f2c7bfa0441b418e68f2ed8511f1"
+        },
+        "build_context": "runs/category2_repair_20260929/repository_work/swe_dvc/gpu_assets/dvc6954_gpu_context_v1/context",
+        "build_arguments": {
+          "BASE_IMAGE": "xingyaoww/sweb.eval.x86_64.iterative_s_dvc-6954@sha256:1cf3894f41768d84c21d9d9ba02cf59b886bfc391f15f3f7f0c8e3eb972bcb09"
+        },
+        "wheel_assets": [
+          {
+            "path": "runs/category2_repair_20260929/repository_work/swe_dvc/gpu_assets/dvc6954_gpu_context_v1/context/wheels/packaging-24.1-py3-none-any.whl",
+            "sha256": "sha256:5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124",
+            "bytes": 53985,
+            "source": "CPU exact public build-context wheel; fixed SHA and reviewed source"
+          },
+          {
+            "path": "runs/category2_repair_20260929/repository_work/swe_dvc/gpu_assets/dvc6954_gpu_context_v1/context/wheels/pygit2-1.14.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+            "sha256": "sha256:230493d43945e10365070d349da206d39cc885ae8c52fdeca93942f36661dd93",
+            "bytes": 5070378,
+            "source": "CPU exact public build-context wheel; fixed SHA and reviewed source"
+          },
+          {
+            "path": "runs/category2_repair_20260929/repository_work/swe_dvc/gpu_assets/dvc6954_gpu_context_v1/context/wheels/setuptools-75.1.0-py3-none-any.whl",
+            "sha256": "sha256:35ab7fd3bcd95e6b7fd704e4a1539513edad446c097797f2985e0e4b960772f2",
+            "bytes": 1248506,
+            "source": "CPU exact public build-context wheel; fixed SHA and reviewed source"
+          },
+          {
+            "path": "runs/category2_repair_20260929/repository_work/swe_dvc/gpu_assets/dvc6954_gpu_context_v1/context/wheels/setuptools_scm-8.1.0-py3-none-any.whl",
+            "sha256": "sha256:897a3226a6fd4a6eb2f068745e49733261a21f70b1bb28fce0339feb978d9af3",
+            "bytes": 43666,
+            "source": "CPU exact public build-context wheel; fixed SHA and reviewed source"
+          },
+          {
+            "path": "runs/category2_repair_20260929/repository_work/swe_dvc/gpu_assets/dvc6954_gpu_context_v1/context/wheels/tomli-2.0.1-py3-none-any.whl",
+            "sha256": "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc",
+            "bytes": 12757,
+            "source": "CPU exact public build-context wheel; fixed SHA and reviewed source"
+          },
+          {
+            "path": "runs/category2_repair_20260929/repository_work/swe_dvc/gpu_assets/dvc6954_gpu_context_v1/context/wheels/typing_extensions-4.12.2-py3-none-any.whl",
+            "sha256": "sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d",
+            "bytes": 37438,
+            "source": "CPU exact public build-context wheel; fixed SHA and reviewed source"
+          },
+          {
+            "path": "runs/category2_repair_20260929/repository_work/swe_dvc/gpu_assets/dvc6954_gpu_context_v1/context/wheels/wheel-0.37.0-py2.py3-none-any.whl",
+            "sha256": "sha256:21014b2bd93c6d0034b6ba5d35e4eb284340e09d63c59aef6fc14b0f346146fd",
+            "bytes": 35161,
+            "source": "CPU exact public build-context wheel; fixed SHA and reviewed source"
+          }
+        ],
+        "cpu_derived_image_id": "sha256:083832998996245f4f49eaab3f5f9314fe9fe23bafda7fc9641ae8cec6803c30",
+        "gpu_actual_image_id": null,
+        "cpu_preparation": {
+          "path": "runs/category2_repair_20260929/repository_work/swe_dvc/gpu_assets/dvc6954_gpu_context_v1/image.json",
+          "sha256": "sha256:cf16b586bafa2d51e26a1180276bfe55a7ea69b192945eab9e15dba324832323"
+        },
+        "context_archive": {
+          "path": "runs/category2_repair_20260929/repository_work/swe_dvc/gpu_assets/dvc6954_gpu_context_v1.tar.gz",
+          "sha256": "sha256:f96dcc332e7a944b37faffe3c51e5e5f2316e33a505fdabb669b71db431c58df"
+        },
+        "gpu_binding_policy": "Executor builds/verifies actual image from digest+fixed public context; CPU ID remains historical evidence. No private test/candidate in actor or image."
+      },
+      "installation_recipe": {
+        "recipe_id": "dvc6954-e13-v1",
+        "asset_sha256": "sha256:86bf3ff0cc0b2d90922cf031ba93b84f30dafa38b39e00ad678956bb286b47d4",
+        "parent_recipe_sha256": "sha256:69e908237138e6733ff36a487b486aedab432ab27bbe7da858549c6ee6b5d295",
+        "dependency_image_asset_sha256": "sha256:cf16b586bafa2d51e26a1180276bfe55a7ea69b192945eab9e15dba324832323",
+        "dependency_dockerfile_sha256": "sha256:10fd2f82a47d1eae9d8627486aeeb1e6d704f2c7bfa0441b418e68f2ed8511f1",
+        "source_image_manifest_digest": "sha256:1cf3894f41768d84c21d9d9ba02cf59b886bfc391f15f3f7f0c8e3eb972bcb09",
+        "prepared_grader_image_id": "sha256:083832998996245f4f49eaab3f5f9314fe9fe23bafda7fc9641ae8cec6803c30",
+        "original_install": "python -m pip install --upgrade pip wheel GitPython; python -m pip install \"cython<3.0.0\" && python -m pip install --no-build-isolation pyyaml==5.4.1; python -m pip install git+https://github.com/iterative/mock-ssh-server.git || true; python -m pip install -r tests/requirements.txt || true; python -m pip install -r test-requirements.txt || true; python -m pip install -e \".[tests,dev,all_remotes,all,testing]\"; python -m pip install \"numpy<=1.20\"; python -m pip install \"pytest<8\";",
+        "revised_install": "rh2_recipe_install() {\n  python -m pip install --no-deps pygit2==1.14.1 || return $?\n  python -m pip install -e '.[all,tests]'\n  local install_rc=$?\n  python -I -c 'import importlib.metadata as m,json; print(\"RH2_DVC_DEPS=\"+json.dumps({x:m.version(x) for x in ['\"'\"'dvc'\"'\"']}))'\n  return \"$install_rc\"\n}\nrh2_recipe_install",
+        "revised_install_sha256": "sha256:15eda615f3de5331a9a997182257a9e7874baa963de5de447360a598ec6a8f28",
+        "wheels": {
+          "packaging-24.1-py3-none-any.whl": "sha256:5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124",
+          "pygit2-1.14.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl": "sha256:230493d43945e10365070d349da206d39cc885ae8c52fdeca93942f36661dd93",
+          "setuptools-75.1.0-py3-none-any.whl": "sha256:35ab7fd3bcd95e6b7fd704e4a1539513edad446c097797f2985e0e4b960772f2",
+          "setuptools_scm-8.1.0-py3-none-any.whl": "sha256:897a3226a6fd4a6eb2f068745e49733261a21f70b1bb28fce0339feb978d9af3",
+          "tomli-2.0.1-py3-none-any.whl": "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc",
+          "typing_extensions-4.12.2-py3-none-any.whl": "sha256:04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d",
+          "wheel-0.37.0-py2.py3-none-any.whl": "sha256:21014b2bd93c6d0034b6ba5d35e4eb284340e09d63c59aef6fc14b0f346146fd"
+        }
+      },
+      "public_delivery": {
+        "mode": "brief"
+      },
+      "public_development_brief": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-6954/public_development.md",
+        "sha256": "sha256:08c2eb10117973633bfb40431753064bbbf7efe1886b8db34ab350cd42c8b1da",
+        "visibility": "original issue and neutral environment/public test commands only"
+      },
+      "cpu_acceptance": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-6954/cpu_acceptance_r14_v1.json",
+        "sha256": "sha256:d571b158001501f0084b8b1d0ce2959c65e6d84e88ec36906f48d27ab13f81e7",
+        "formal_matrix": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-6954/formal_matrix_r14_v1.json",
+          "sha256": "sha256:3c7fb8eb75db7c19b20c564be09f152d28fe26af520791c6af3512969b2980a0"
+        },
+        "actor": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/tasks/iterative__dvc-6954/public_actor_r5_v1.json",
+          "sha256": "sha256:70cfe83bf4a7426d46826ba07fc5e8c8700a8ced4c67d8857c741987dc741c75"
+        },
+        "raw_evidence_archives": [
+          {
+            "path": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal6954_r14_noop001_v1.tar.gz",
+            "sha256": "sha256:28c5978dcd0b12344537a3dfb91e084887432be6f59d3fde87f4c1f9fb7e8531"
+          },
+          {
+            "path": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal6954_r14_gold001_v1.tar.gz",
+            "sha256": "sha256:b89f1c7bf00b61f9547c77b78e2e5da4968c60122b85652ba7ea7ab0eeacc105"
+          },
+          {
+            "path": "runs/category2_repair_20260929/repository_work/swe_dvc/formal_evidence/formal6954_r14_negative_int_only_233645_v1.tar.gz",
+            "sha256": "sha256:8f2c78ef785dfad51717eb758b61fa83ae517ddfc0b55ddb70f150ab0474fe4f"
+          },
+          "runs/category2_repair_20260929/repository_work/swe_dvc/public_actor_evidence/public6954_r5_actor003_v1.tar.gz"
+        ],
+        "formal_positive": "gold reward1, all actual nodes passed",
+        "formal_negative": "all other fixed controls reward0 from behavior test failures; no missing/skip/infra",
+        "actor_base": "Historical R5 real CC2.1.205 controlled stub4 commands rc0; 11 public baseline tests and non-root profile independently verified; exact public payload/prompt unchanged in R14 new prepared",
+        "cleanup": "candidate/grader labels empty and runtime cleanup complete; historical public actor/relay/stub complete",
+        "independent_reviews": [
+          {
+            "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/reviews/non_author_public_actor_r14_reuse_review_20261003.md",
+            "sha256": "sha256:24276eef103c12df70f261a9b05a56c33a251a98a480300555582a3b561f9c97"
+          },
+          {
+            "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dvc/reviews/non_author_formal6954_r14_runtime_review_20261003.md",
+            "sha256": "sha256:49c29e00522a4fbf357ae50325d1579547c69b87ae99e21e64e9a0804b8e6406"
+          }
+        ]
+      },
+      "validated_cpu_profile": {
+        "cpu": 2,
+        "memory_bytes": 4294967296,
+        "grader_uid": 54322,
+        "actor_uid": 54321,
+        "pids_limit": 512,
+        "network": "deny_all",
+        "scope": "grader ledger/runtime policy plus actual UID preflight; historical actor actual image/NanoCPU/memory inspect; no after-removal grader HostConfig inspect"
+      },
+      "validated_replay_budgets": {
+        "candidate_stage_seconds": 900,
+        "grading_deadline_seconds": 3600,
+        "cleanup_seconds": 120,
+        "image_pull_seconds": 1800
+      },
+      "historical_model_evidence": {
+        "review": {
+          "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym40_status_20260929/reviews/dvc_conan_dask.json",
+          "sha256": "sha256:ad9b2ff8b5e69032ab7eef4079fe205ac232c16c35bb001c68e917bb8e1d9285"
+        },
+        "scope": "09-22 fixed-budget historical samples include 2 valid Coder and 2 valid Qwen3.6 successes; subsequent behavior readback supports negative int/float/nested and lock/repro",
+        "reuse_policy": "Retain valid historical evidence within its original material/budget conditions; do not mix it into current R14/probe-wide-v1 denominators or silently rebind old artifacts. Avoid duplicate execution of an already valid current request/job."
+      }
+    }
+  ],
+  "model_budget": {
+    "decision_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/ordinary_probe_20260929/gpu_coordination_decisions_20261002.md",
+    "budget_id": "probe-wide-v1",
+    "attempts_per_model": 1,
+    "models": [
+      "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+      "Qwen/Qwen3.6-35B-A3B"
+    ],
+    "dtype": "BF16",
+    "additional_samples": "not_requested"
+  },
+  "executor_resolves": [
+    "GPU自行核并冻结兼容R14 DVC消费者的code/material/new prepared；复用有效发布，受影响窄验证；共享缺口直接走关联publish",
+    "digest+fixed context所有wheel与实际GPU image ID；CPU ID不冒填GPU身份",
+    "原CRLF公开issue与固定中性brief逐字交付；private控制与评分材料host-only",
+    "probe-wide-v1实际生效预算、两模型驻留与单卡排队；不另加未授权墙钟上限"
+  ],
+  "receipt_requirements": [
+    "两模型各job ID、actual code/material/image/profile/model/budget/配置与SHA",
+    "完整轨迹、实际公开首请求、原actor baseline及原FrozenPatch工件；diff仅审阅附件",
+    "原评分、逐参考状态、完整安装/测试日志、usage/time/终止层级和异常",
+    "两层完整清理、未执行部分及原因；通过官方线程工具回告登记owner"
+  ],
+  "result_owner_policy": "成功/失败/异常均由本题主继续分析公开目标、候选语义、定位/工具/实际并行/验证/效率/结束原因及评分一致性；提交或执行回执不表示处理完工。"
+}

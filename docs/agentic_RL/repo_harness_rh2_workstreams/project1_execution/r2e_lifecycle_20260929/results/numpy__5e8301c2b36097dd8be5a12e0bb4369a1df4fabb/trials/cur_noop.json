@@ -1,0 +1,134 @@
+{
+ "task": "numpy__5e8301c2b36097dd8be5a12e0bb4369a1df4fabb",
+ "image": "sha256:df792ef10616bb4d8f173695b0d4ac7c6c19107dd799be778ed13f5083a6e867",
+ "recipe_id": "r2e_derive_v1+sysconfig_v1",
+ "patch": "none",
+ "edits": null,
+ "expected": "current",
+ "kind": "trial_not_formal_grading",
+ "test_seconds": 5.3,
+ "markers": true,
+ "observed": {
+  "TestEinSum.test_collapse": "PASSED",
+  "TestEinSum.test_complex": "PASSED",
+  "TestEinSum.test_edge_cases": "PASSED",
+  "TestEinSum.test_einsum_all_contig_non_contig_output": "PASSED",
+  "TestEinSum.test_einsum_broadcast": "PASSED",
+  "TestEinSum.test_einsum_errors": "PASSED",
+  "TestEinSum.test_einsum_fixed_collapsingbug": "PASSED",
+  "TestEinSum.test_einsum_fixedstridebug": "PASSED",
+  "TestEinSum.test_einsum_misc": "PASSED",
+  "TestEinSum.test_einsum_sums_cfloat128": "FAILED",
+  "TestEinSum.test_einsum_sums_cfloat64": "FAILED",
+  "TestEinSum.test_einsum_sums_clongdouble": "FAILED",
+  "TestEinSum.test_einsum_sums_float16": "FAILED",
+  "TestEinSum.test_einsum_sums_float32": "FAILED",
+  "TestEinSum.test_einsum_sums_float64": "FAILED",
+  "TestEinSum.test_einsum_sums_int16": "FAILED",
+  "TestEinSum.test_einsum_sums_int32": "FAILED",
+  "TestEinSum.test_einsum_sums_int64": "FAILED",
+  "TestEinSum.test_einsum_sums_int8": "FAILED",
+  "TestEinSum.test_einsum_sums_longdouble": "FAILED",
+  "TestEinSum.test_einsum_sums_uint16": "FAILED",
+  "TestEinSum.test_einsum_sums_uint32": "FAILED",
+  "TestEinSum.test_einsum_sums_uint64": "FAILED",
+  "TestEinSum.test_einsum_sums_uint8": "FAILED",
+  "TestEinSum.test_einsum_views": "PASSED",
+  "TestEinSum.test_expand": "PASSED",
+  "TestEinSum.test_hadamard_like_products": "PASSED",
+  "TestEinSum.test_index_transformations": "PASSED",
+  "TestEinSum.test_inner_product": "PASSED",
+  "TestEinSum.test_random_cases": "PASSED",
+  "TestEinSum.test_small_boolean_arrays": "PASSED",
+  "TestEinSumPath.test_edge_paths": "PASSED",
+  "TestEinSumPath.test_long_paths": "PASSED",
+  "TestEinSumPath.test_memory_contraints": "PASSED",
+  "TestEinSumPath.test_path_type_input": "PASSED"
+ },
+ "n_observed": 35,
+ "log_tail": ". The resulting tensor is added to the end\n        of the contraction and the remaining contraction ``(0, 1)`` is then\n        completed.\n    \n        >>> a = np.random.rand(2, 2)\n        >>> b = np.random.rand(2, 5)\n        >>> c = np.random.rand(5, 2)\n        >>> path_info = np.einsum_path('ij,jk,kl->il', a, b, c, optimize='greedy')\n        >>> print(path_info[0])\n        ['einsum_path', (1, 2), (0, 1)]\n        >>> print(path_info[1])\n          Complete contraction:  ij,jk,kl->il\n                 Naive scaling:  4\n             Optimized scaling:  3\n              Naive FLOP count:  1.600e+02\n          Optimized FLOP count:  5.600e+01\n           Theoretical speedup:  2.857\n          Largest intermediate:  4.000e+00 elements\n        -------------------------------------------------------------------------\n        scaling                  current                                remaining\n        -------------------------------------------------------------------------\n           3                   kl,jk->jl                                ij,jl->il\n           3                   jl,ij->il                                   il->il\n    \n    \n        A more complex index transformation example.\n    \n        >>> I = np.random.rand(10, 10, 10, 10)\n        >>> C = np.random.rand(10, 10)\n        >>> path_info = np.einsum_path('ea,fb,abcd,gc,hd->efgh', C, C, I, C, C,\n                                       optimize='greedy')\n    \n        >>> print(path_info[0])\n        ['einsum_path', (0, 2), (0, 3), (0, 2), (0, 1)]\n        >>> print(path_info[1])\n          Complete contraction:  ea,fb,abcd,gc,hd->efgh\n                 Naive scaling:  8\n             Optimized scaling:  5\n              Naive FLOP count:  8.000e+08\n          Optimized FLOP count:  8.000e+05\n           Theoretical speedup:  1000.000\n          Largest intermediate:  1.000e+04 elements\n        --------------------------------------------------------------------------\n        scaling                  current                                remaining\n        --------------------------------------------------------------------------\n           5               abcd,ea->bcde                      fb,gc,hd,bcde->efgh\n           5               bcde,fb->cdef                         gc,hd,cdef->efgh\n           5               cdef,gc->defg                            hd,defg->efgh\n           5               defg,hd->efgh                               efgh->efgh\n        \"\"\"\n    \n        # Make sure all keywords are valid\n        valid_contract_kwargs = ['optimize', 'einsum_call']\n        unknown_kwargs = [k for (k, v) in kwargs.items() if k\n                          not in valid_contract_kwargs]\n        if len(unknown_kwargs):\n            raise TypeError(\"Did not understand the following kwargs:\"\n                            \" %s\" % unknown_kwargs)\n    \n        # Figure out what the path really is\n        path_type = kwargs.pop('optimize', True)\n        if path_type is True:\n            path_type = 'greedy'\n        if path_type is None:\n            path_type = False\n    \n        memory_limit = None\n    \n        # No optimization or a named path algorithm\n        if (path_type is False) or isinstance(path_type, basestring):\n            pass\n    \n        # Given an explicit path\n        elif len(path_type) and (path_type[0] == 'einsum_path'):\n            pass\n    \n        # Path tuple with memory limit\n        elif ((len(path_type) == 2) and isinstance(path_type[0], basestring) and\n                isinstance(path_type[1], (int, float))):\n            memory_limit = int(path_type[1])\n            path_type = path_type[0]\n    \n        else:\n            raise TypeError(\"Did not understand the path: %s\" % str(path_type))\n    \n        # Hidden option, only einsum should call this\n        einsum_call_arg = kwargs.pop(\"einsum_call\", False)\n    \n        # Python side parsing\n        input_subscripts, output_subscript, operands = _parse_einsum_input(operands)\n        subscripts = input_subscripts + '->' + output_subscript\n    \n        # Build a few useful list and sets\n        input_list = input_subscripts.split(',')\n        input_sets = [set(x) for x in input_list]\n        output_set = set(output_subscript)\n        indices = set(input_subscripts.replace(',', ''))\n    \n        # Get length of each unique dimension and ensure all dimensions are correct\n        dimension_dict = {}\n        for tnum, term in enumerate(input_list):\n            sh = operands[tnum].shape\n            if len(sh) != len(term):\n                raise ValueError(\"Einstein sum subscript %s does not contain the \"\n                                 \"correct number of indices for operand %d.\"\n                                 % (input_subscripts[tnum], tnum))\n            for cnum, char in enumerate(term):\n                dim = sh[cnum]\n                if char in dimension_dict.keys():\n                    if dimension_dict[char] != dim:\n                        raise ValueError(\"Size of label '%s' for operand %d does \"\n                                         \"not match previous terms.\"\n>                                        % (char, tnum))\nE                       ValueError: Size of label 't' for operand 1 does not match previous terms.\n\nnumpy/core/einsumfunc.py:712: ValueError\n==================================== PASSES ====================================\n=========================== short test summary info ============================\nPASSED r2e_tests/test_1.py::TestEinSum::test_einsum_errors\nPASSED r2e_tests/test_1.py::TestEinSum::test_einsum_views\nPASSED r2e_tests/test_1.py::TestEinSum::test_einsum_misc\nPASSED r2e_tests/test_1.py::TestEinSum::test_einsum_broadcast\nPASSED r2e_tests/test_1.py::TestEinSum::test_einsum_fixedstridebug\nPASSED r2e_tests/test_1.py::TestEinSum::test_einsum_fixed_collapsingbug\nPASSED r2e_tests/test_1.py::TestEinSum::test_einsum_all_contig_non_contig_output\nPASSED r2e_tests/test_1.py::TestEinSum::test_small_boolean_arrays\nPASSED r2e_tests/test_1.py::TestEinSum::test_hadamard_like_products\nPASSED r2e_tests/test_1.py::TestEinSum::test_index_transformations\nPASSED r2e_tests/test_1.py::TestEinSum::test_complex\nPASSED r2e_tests/test_1.py::TestEinSum::test_collapse\nPASSED r2e_tests/test_1.py::TestEinSum::test_expand\nPASSED r2e_tests/test_1.py::TestEinSum::test_edge_cases\nPASSED r2e_tests/test_1.py::TestEinSum::test_inner_product\nPASSED r2e_tests/test_1.py::TestEinSum::test_random_cases\nPASSED r2e_tests/test_1.py::TestEinSumPath::test_memory_contraints\nPASSED r2e_tests/test_1.py::TestEinSumPath::test_long_paths\nPASSED r2e_tests/test_1.py::TestEinSumPath::test_edge_paths\nPASSED r2e_tests/test_1.py::TestEinSumPath::test_path_type_input\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_int8 - ValueError: S...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_uint8 - ValueError: ...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_int16 - ValueError: ...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_uint16 - ValueError:...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_int32 - ValueError: ...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_uint32 - ValueError:...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_int64 - ValueError: ...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_uint64 - ValueError:...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_float16 - ValueError...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_float32 - ValueError...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_float64 - ValueError...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_longdouble - ValueEr...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_cfloat64 - ValueErro...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_cfloat128 - ValueErr...\nFAILED r2e_tests/test_1.py::TestEinSum::test_einsum_sums_clongdouble - ValueE...\n======================== 15 failed, 20 passed in 4.32s =========================\n>>>>> End Test Output\nRH2_TEST_RC=1\n",
+ "stderr_tail": "",
+ "expected_n": 35,
+ "missing": [],
+ "extra": [],
+ "status_diff": [
+  [
+   "TestEinSum.test_einsum_sums_cfloat128",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_cfloat64",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_clongdouble",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_float16",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_float32",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_float64",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_int16",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_int32",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_int64",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_int8",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_longdouble",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_uint16",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_uint32",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_uint64",
+   "PASSED",
+   "FAILED"
+  ],
+  [
+   "TestEinSum.test_einsum_sums_uint8",
+   "PASSED",
+   "FAILED"
+  ]
+ ],
+ "match": false,
+ "verdict": "mismatch",
+ "seconds": 39.5
+}

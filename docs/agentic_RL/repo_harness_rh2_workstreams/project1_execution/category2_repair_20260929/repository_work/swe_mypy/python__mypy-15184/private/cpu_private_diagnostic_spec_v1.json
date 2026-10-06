@@ -1,0 +1,58 @@
+{
+  "image": "sha256:76b5b2646a9eb134e6349ee8e214bb84eb6030c34a234e167351acdec5dd8c54",
+  "python_prefix": "/opt/miniconda3/envs/testbed",
+  "cpus": 2,
+  "memory": "4g",
+  "files": {
+    "gold.patch": "/work/rh2-category2-20261003/packages/swe_mypy/input_v1/original/python__mypy-15184/private/gold.patch",
+    "bad.patch": "/work/rh2-category2-20261003/packages/swe_mypy/input_v1/proposals/python__mypy-15184/private/gold_but_always_reject_assert_type.patch",
+    "top_only.patch": "/work/rh2-category2-20261003/packages/swe_mypy/private_calibration_v1/qualify_top_level_only.patch",
+    "a.py": "/work/rh2-category2-20261003/packages/swe_mypy/private_calibration_v1/a.py",
+    "b.py": "/work/rh2-category2-20261003/packages/swe_mypy/private_calibration_v1/b.py",
+    "t_generic.py": "/work/rh2-category2-20261003/packages/swe_mypy/private_calibration_v1/t_generic.py",
+    "t_nominal.py": "/work/rh2-category2-20261003/packages/swe_mypy/private_calibration_v1/t_nominal.py"
+  },
+  "variants": {
+    "base": [],
+    "gold": [
+      "git apply --check /in/gold.patch",
+      "git apply /in/gold.patch"
+    ],
+    "bad": [
+      "git apply --check /in/bad.patch",
+      "git apply /in/bad.patch"
+    ],
+    "top_only": [
+      "git apply --check /in/top_only.patch",
+      "git apply /in/top_only.patch"
+    ]
+  },
+  "commands": [
+    {
+      "id": "identity",
+      "cmd": "set -e\nexport PYTHONPATH=/testbed\npython - <<'PY'\nimport sys,pathlib,mypy.messages,mypy.checkexpr\nprint('PYTHON='+sys.executable)\nfor m in (mypy.messages,mypy.checkexpr):\n print(m.__name__+'='+str(m.__file__))\n assert pathlib.Path(m.__file__).resolve().is_relative_to('/testbed')\nPY\ngit rev-parse HEAD",
+      "timeout_s": 120
+    },
+    {
+      "id": "nominal",
+      "cmd": "set -e\nD=$(mktemp -d /tmp/mypy-private.XXXX)\ncp /in/a.py /in/b.py \"$D/\"\ncp /in/t_nominal.py \"$D/t.py\"\ncd \"$D\"\nPYTHONPATH=/testbed python -m mypy --cache-dir=\"$D/cache\" t.py",
+      "timeout_s": 300
+    },
+    {
+      "id": "generic",
+      "cmd": "set -e\nD=$(mktemp -d /tmp/mypy-private.XXXX)\ncp /in/a.py /in/b.py \"$D/\"\ncp /in/t_generic.py \"$D/t.py\"\ncd \"$D\"\nPYTHONPATH=/testbed python -m mypy --cache-dir=\"$D/cache\" t.py",
+      "timeout_s": 300
+    },
+    {
+      "id": "collect",
+      "cmd": "PYTHONPATH=/testbed python -m pytest --collect-only -q --color=no -p no:cacheprovider mypy/test/testcheck.py -k 'testAssertType'",
+      "timeout_s": 300
+    },
+    {
+      "id": "case",
+      "cmd": "PYTHONPATH=/testbed python -m pytest -n0 -rA --color=no -p no:cacheprovider mypy/test/testcheck.py -k 'testAssertType'",
+      "timeout_s": 300
+    }
+  ],
+  "scope": "冻结private_behavior入口的私有root诊断；不是actor资格、新修订正式评分或探针"
+}

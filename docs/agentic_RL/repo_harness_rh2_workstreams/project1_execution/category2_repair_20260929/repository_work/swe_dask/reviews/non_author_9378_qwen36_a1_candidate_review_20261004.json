@@ -1,0 +1,662 @@
+{
+  "schema": "dask9378_qwen36_a1_non_author_candidate_review.v1",
+  "as_of": "2026-10-03T17:49:52.108284+00:00",
+  "reviewer_role": "非作者候选语义/轨迹只读核查",
+  "job_id": "gpu1003-dask9378-qwen36-a1",
+  "request_id": "probe-swe-dask-9378-20261003-v1",
+  "revision_id": "dask9378-mask-route-b-v1",
+  "base_commit": "8b95f983c232c1bd628e9cba0695d3ef229d290b",
+  "scope": "只读封存FP、baseline成员、完整轨迹及正式评分原件，复用未变B范围与已封存Coder/CPU结论；不负责全163原件运输、R25/code9机器绑定、总账或ack。",
+  "conclusion": "accept_approved_user_B_default_mask_and_valid_values_with_original_137_reference_score_confirmed",
+  "current_B_semantic_blocker_found": false,
+  "scoring_contamination_found": false,
+  "stable_capability_known": false,
+  "training_qualification": null,
+  "new_model_calls": 0,
+  "new_model_samples": 0,
+  "new_CPU_or_model_runs": 0,
+  "source_or_originals_modified": false,
+  "approved_scope": {
+    "basis": [
+      "handover_to_category2_20260930.md:241-243",
+      "card.md:5",
+      "effective_test.patch:10-28"
+    ],
+    "rule": "有da.ma入口时必须正确；缺失时接受正确顶层路线。三项逐元素mask，ones/zeros有效值；empty未初始化值不作判据。",
+    "not_new_targets": [
+      "dtype全面支持",
+      "order/chunks/name/shape可选参数支持",
+      "原顶层入口也必须修复"
+    ],
+    "stale_declarations": "revision/acceptance的早期pending和draft字段是准备期材料，不否定另存正式CPU/GPU实际回执；父线程维护当前状态。"
+  },
+  "identity": {
+    "FP_canonical_sha256": "7f8f4df42646b599d31d4cd6b27bf6bc5d30637f6199fdaec2838400de916c86",
+    "FP_entries": [
+      {
+        "path": "dask/array/ma.py",
+        "operation": "modify",
+        "bytes": 6541,
+        "content_sha256": "3e4d82eb2441e903e92c0c3580b6278dae3091b5bc92748d387a6e0a6c5f559c"
+      },
+      {
+        "path": "dask/array/tests/test_masked.py",
+        "operation": "modify",
+        "bytes": 15401,
+        "content_sha256": "2e53b5b4fe4b0c4d7bb31a1509db6b67f1748da1778087d3a81f22c86033a078"
+      }
+    ],
+    "baseline_canonical_sha256": "0a68c9ecdaed99f151d4602e501d833268db1a0a9aa672957c7ca7d7e0825d94",
+    "baseline_selected_members": [
+      {
+        "archive": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask9378-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask9378-qwen36-a1/attempt/frozen/baseline.tar",
+        "member": "dask/array/ma.py",
+        "bytes": 5451,
+        "sha256": "676aeee5df3b1fb270baf3a2bf9db8d57845a61c47394bf59ae86861c1459346"
+      },
+      {
+        "archive": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask9378-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask9378-qwen36-a1/attempt/frozen/baseline.tar",
+        "member": "dask/array/tests/test_masked.py",
+        "bytes": 13285,
+        "sha256": "f8cfe68f10e9a71bf12d6fccdf51a8eadedc736b431aac3d9f282f59aa4348b0"
+      },
+      {
+        "archive": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask9378-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask9378-qwen36-a1/attempt/frozen/baseline.tar",
+        "member": "dask/array/core.py",
+        "bytes": 190240,
+        "sha256": "003fa8b84d6d39b767d82e7804bee868aba0119a005a2a2c0443678b3dac515b"
+      },
+      {
+        "archive": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask9378-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask9378-qwen36-a1/attempt/frozen/baseline.tar",
+        "member": "dask/array/utils.py",
+        "bytes": 18638,
+        "sha256": "66b54c279c6e999437958975031790c3d3c00ce448ea1bad18e3e33925ab9a25"
+      }
+    ],
+    "trajectory_lines": 732,
+    "trajectory_equals_harness_copy": true,
+    "successful_Edit_replay": [
+      {
+        "call_line": 170,
+        "return_line": 174,
+        "path": "dask/array/ma.py"
+      },
+      {
+        "call_line": 248,
+        "return_line": 252,
+        "path": "dask/array/ma.py"
+      },
+      {
+        "call_line": 276,
+        "return_line": 280,
+        "path": "dask/array/ma.py"
+      },
+      {
+        "call_line": 444,
+        "return_line": 448,
+        "path": "dask/array/ma.py"
+      },
+      {
+        "call_line": 518,
+        "return_line": 522,
+        "path": "dask/array/tests/test_masked.py"
+      },
+      {
+        "call_line": 560,
+        "return_line": 564,
+        "path": "dask/array/tests/test_masked.py"
+      },
+      {
+        "call_line": 602,
+        "return_line": 606,
+        "path": "dask/array/tests/test_masked.py"
+      },
+      {
+        "call_line": 630,
+        "return_line": 634,
+        "path": "dask/array/tests/test_masked.py"
+      }
+    ],
+    "all_replayed_bytes_equal_FP": true
+  },
+  "implementation": {
+    "observed_final": "ma.py:195-237追加三个dtype wrapper及(a,dtype=None)三函数；默认asanyarray后map_blocks(np.ma.<like>,dtype=a.dtype)。显式dtype通过dtype_arg转给NumPy，同时设置Dask元信息。",
+    "B_result": "正式test_like_funcs三项真实通过，三项逐元素mask与ones/zeros有效值符合B。源代码没有测试名、评分输出、环境分支特判。",
+    "known_boundaries": [
+      {
+        "boundary": "dtype",
+        "status": "本Qwen候选在实际自测中发现且修正初版metadata/computed dtype不一致；不能继承Coder dtype实败给Qwen。",
+        "evidence": "L206/L220初版不一致；L444最终改法；L462 computed float64；L648/L664三函数float/float32/int32自测通过。",
+        "limits": "显式dtype支持有静态及有限真实自测，不是扩大后的正式参数矩阵；empty值比较无效另列F1。"
+      },
+      {
+        "boundary": "order/chunks/name/shape",
+        "status": "Qwen三个最终签名仅(a,dtype=None)，这些关键字不支持；不是Coder接受后静默忽略的同一缺陷。",
+        "evidence": "FP解码ma.py:200,215,230",
+        "limits": "默认输出shape/chunks沿原输入，有B正式检查和map_blocks静态依据；未执行可选参数反例，不声称全参数支持。"
+      },
+      {
+        "boundary": "顶层da.<like>",
+        "status": "未改creation.py，原顶层实现仍在baseline；属于B允许路线选择。",
+        "evidence": "FP两条路径与projection；最终L728明确新增ma接口。",
+        "limits": "原顶层失败的当前候选现状是源码不变的静态推断，未另跑。"
+      }
+    ]
+  },
+  "public_delivery": {
+    "observed": "prepared spec.prompt、solver_prompt、attempt/prompt和first actual gateway user文本字节一致；gateway实际model_sent为Qwen3.6-35B-A3B。",
+    "prompt_sha256": "78a0f438f711b24dec6ffc48368df66ec33b007e277bc2866c3bf137b1f4a04d",
+    "prompt_bytes": 998,
+    "hints": "prepared rollout view保留旧public_hints，但全49个actual gateway body均无不改测试、NON-TEST或预激活说明关键句；cc_home归档无CLAUDE.md。",
+    "scope_clarification_ref": "runs/category2_repair_20260929/swe_dask/model_analysis_20261003/dask7656_qwen36_a1_v1/public_hint_scope_GPU_clarification_v1.json",
+    "interpretation": "复用GPU已明确的unchanged范围：保持prepared spec.prompt，不表示追加全部旧hints；不是新缺陷、待对齐、违令或重跑依据。",
+    "private_material_leak_evidence_found": false,
+    "private_evidence_basis": "初始用户文本仅题面、系统上下文无effective测试；模型初始Read得到原134项文件，最终追加7自写项名字与私有3F不同；全FP/工具路径未见读取私有评分材料。此为实际观察范围，非抽象全链安全证明。"
+  },
+  "scoring_projection": {
+    "original_FP_has_model_test_edit": true,
+    "model_test_change": "仅追加7个自写测试，不改原134项；FP保留测试作为轨迹产物。",
+    "included_entry_paths": [
+      "dask/array/ma.py"
+    ],
+    "excluded_entry_paths": [
+      "dask/array/tests/test_masked.py"
+    ],
+    "actual_grade_evidence": [
+      "eval.log:215仅ma.py dirty",
+      "eval.log:638-690打印最终生产补丁",
+      "eval.log:692-703恢复base测试并核base SHA后应用B测试",
+      "eval.log:986收集137项，没有候选7项",
+      "diagnostics runner_integrity_changed=false，protected test完整"
+    ],
+    "misleading_field_note": "report.patch_hygiene.test_files_modified=false指评分投影，不能说原FP未改测试。"
+  },
+  "formal_result": {
+    "raw_reward": 1.0,
+    "outcome": "resolved",
+    "f2p_pass_total": [
+      3,
+      3
+    ],
+    "p2p_pass_total": [
+      134,
+      134
+    ],
+    "p2p_fail_total": [
+      0,
+      134
+    ],
+    "reference_count": 137,
+    "readback_method": "原eval Start/End片段内逐项PASSED列表和summary PASSED列表各137唯一ID，与实际host grading及revision参考集合精确相等，不把双输出相加。",
+    "exact_reference_set_equal": true,
+    "missing": [],
+    "extra": [],
+    "skipped": [],
+    "unaccounted": [],
+    "test_patch_matches_effective_bytes": true,
+    "test_patch_sha256": "9fc1a9d5ae885d9cc30388a875ab7ed629081de7ba7bdcc8571f3aca604a248a",
+    "actual_log_lines": {
+      "start": 978,
+      "collect": 986,
+      "three_F": [
+        1122,
+        1123,
+        1124
+      ],
+      "summary": "1139-1275",
+      "final_summary": 1276,
+      "end": 1278
+    },
+    "observed_runtime": {
+      "candidate_exec_exit_code": 0,
+      "candidate_segment_completed": true,
+      "install_failed_commands": [],
+      "install_rc_last_command": 0,
+      "install_seconds": 1.0,
+      "install_skipped": false,
+      "log_partial": false,
+      "markers_seen": [
+        "RH2_INSTALL_RC",
+        "RH2_TEST_RC",
+        "RH2_TS_INSTALL_END",
+        "RH2_TS_INSTALL_START",
+        "RH2_TS_TEST_END",
+        "RH2_TS_TEST_START"
+      ],
+      "test_rc": 0,
+      "test_seconds": 5.302
+    },
+    "install_seconds": 1.0,
+    "test_seconds_marker_interval": 5.302,
+    "pytest_reported_seconds": 4.32,
+    "limits": "本次只核候选语义与实际分/测试投影；CPU矩阵和完整机器资源身份不重验，不能由resolved推断训练资格。"
+  },
+  "trajectory_analysis": {
+    "localization": [
+      {
+        "lines": [
+          49,
+          91,
+          105,
+          119,
+          152,
+          156
+        ],
+        "observation": "读取ma/creation/原masked测试/导出并实际复现顶层三种丢mask；选新增ma路线符合题面建议和B。"
+      }
+    ],
+    "correction": [
+      {
+        "lines": [
+          202,
+          206,
+          216,
+          220
+        ],
+        "observation": "主动检查computed dtype，发现初版只改Dask元信息。"
+      },
+      {
+        "lines": [
+          248,
+          276,
+          290,
+          294,
+          304,
+          318,
+          322,
+          332,
+          336,
+          346,
+          350,
+          374,
+          388,
+          402,
+          406,
+          416,
+          420,
+          444,
+          462
+        ],
+        "observation": "dtype wrapper初稿重复传a造成实错；几轮重复小脚本后读map_blocks，再去掉多余数组参数，最终computed float64相符。"
+      },
+      {
+        "lines": [
+          518,
+          536,
+          546,
+          550,
+          560,
+          578,
+          588,
+          592,
+          602,
+          620,
+          630,
+          648
+        ],
+        "observation": "自写测试把NumPy mask结果当Dask导致两次AttributeError，分别修正；普通数组类型oracle先错用np.<like>，随后改用np.ma.<like>，与新增ma接口一致。"
+      }
+    ],
+    "actual_self_tests": [
+      {
+        "lines": [
+          574,
+          578
+        ],
+        "result": "三项默认mask自测通过，二维(2,2)，单chunk。"
+      },
+      {
+        "lines": [
+          644,
+          648
+        ],
+        "result": "三项dtype测试及普通数组测试4 passed in0.31s；empty值oracle缺陷保留。"
+      },
+      {
+        "lines": [
+          658,
+          664
+        ],
+        "result": "最终Edit后完整141 passed in4.39s：134原项+7自写项，非私有3F。"
+      },
+      {
+        "lines": [
+          678,
+          682,
+          714,
+          718
+        ],
+        "result": "最终ma三函数原样例打印mask；末次NumPy标签误用Dask函数，见F2。"
+      }
+    ],
+    "final_report": "L728如实列新增ma三入口及dtype wrapper，不声称支持所有可选参数；issue fixed仅按当前B路线理解。",
+    "tool_counts": {
+      "Bash": 33,
+      "Read": 10,
+      "Edit": 8
+    },
+    "tool_call_total": 51,
+    "tool_return_total": 51,
+    "tool_result_error_lines": [
+      294,
+      322,
+      336,
+      350,
+      406,
+      536,
+      592,
+      620
+    ],
+    "model_response_count": 49,
+    "CC_num_turns": 52,
+    "parallel_observed_tool_call_lines": [
+      [
+        11,
+        15
+      ],
+      [
+        30,
+        34
+      ],
+      [
+        133,
+        137
+      ]
+    ],
+    "parallel_limits": "三次响应各给两项独立工具，结果均返回；此证据只表明本臂小组多工具运行，不证明训练链并发吞吐或更多并行规模。",
+    "efficiency": "比把所有工具称串行更准确；仍可更早读绑定Array.map_blocks方法，减少重复传a的四轮失败探针。独立文件读取可批量；单样本不推稳定能力。"
+  },
+  "metrics": {
+    "solve_seconds": 112.663,
+    "CC_duration_seconds": 109.128,
+    "CC_API_seconds": 85.34,
+    "input_token_sum": 1346685,
+    "output_token_sum": 13027,
+    "max_request_prompt_tokens": 55372,
+    "max_request_output_tokens": 976,
+    "finish_reasons": [
+      "stop"
+    ],
+    "actual_gateway_max_tokens": [
+      65536
+    ],
+    "CC_modelUsage_maxOutputTokens_advisory": 32000,
+    "actual_truncation_observed": false,
+    "grading_total_seconds": 406.519,
+    "grading_trusted_setup_seconds": 383.92093,
+    "queue_wait_unknown": "不把report.queue_wait_seconds=0解释为整条派发前没有排队。"
+  },
+  "findings": [
+    {
+      "id": "Q9378-F1",
+      "priority": "P2",
+      "current_material_blocker": false,
+      "reachability": "test_only",
+      "disposition": "no_fix_accept_residual_risk",
+      "current_behavior": "候选自写三组测试都包含empty_like；比较了两个独立未初始化输出的有效数据。",
+      "invariant": "empty_like的未初始化有效值不承诺相等；通过记录不能证明这个值oracle有效。",
+      "evidence": [
+        "FrozenPatch解码test_masked.py:450,475,491",
+        "trajectory.jsonl:L578、L648、L664实际通过；有效test.patch:最后两行明确排除empty值"
+      ],
+      "impact": "这些自测可能偶然通过或在别的内存状态下失败；不能把141 passed推广为稳健完整API验证。正式projection排除该文件，不影响本次137正式分。",
+      "phase": "只记录候选验证局限；本次B验收不要求改题、重跑或阻断；若复用模型测试则先修oracle。",
+      "file_and_lines": {
+        "frozen_entry": "dask/array/tests/test_masked.py",
+        "lines": [
+          450,
+          475,
+          491
+        ]
+      },
+      "minimal_probe": "静态读取三处assert_eq及其参数化列表即可确认；本轮未执行探针。",
+      "fix_acceptance": "复用测试时，对empty仅核逐元素mask及承诺的类型/shape/dtype；ones/zeros继续核有效值。"
+    },
+    {
+      "id": "Q9378-F2",
+      "priority": "P2",
+      "current_material_blocker": false,
+      "reachability": "test_only",
+      "disposition": "no_fix_accept_residual_risk",
+      "current_behavior": "末尾两次自测称复现原题精确示例，实际把da.ones_like换为da.ma.ones_like；最后脚本的np.ones_like标签也打印了da.ma.ones_like。",
+      "invariant": "验证说明须反映实际调用路径，不能把新增ma路线称为修复原顶层调用。",
+      "evidence": [
+        "trajectory.jsonl:L674/L678/L682、L710/L714/L718",
+        "FrozenPatch只有ma.py与test_masked.py，无creation.py改动",
+        "最终说明L728列出新增ma函数及该路线示例"
+      ],
+      "impact": "脚本标签过宽，但最终交付描述已明确新增ma入口；用户B允许这条路线，不构成错误候选获1或新增默认mask阻断。",
+      "phase": "报告澄清，禁止宣称原顶层调用也修复；不因标签问题重跑。",
+      "file_and_lines": {
+        "artifact": "attempt/trajectory.jsonl",
+        "lines": [
+          674,
+          678,
+          710,
+          714,
+          718,
+          728
+        ]
+      },
+      "minimal_probe": "读取L714的打印表达式并比对FP路径即可确认；原顶层返回的现状仅静态推断，未重跑。",
+      "fix_acceptance": "后续说明称新增ma路线的示例；NumPy比较标签实际调用NumPy；只有测试顶层入口后才能声称顶层已修。"
+    }
+  ],
+  "Coder_CPU_context_reused": "Coder原GPU infra None与同FP CPU raw1是已封存不同证据；本审查不改历史，不复跑、不合并为新模型样本。Qwen是已计划缺失模型臂的首轮，本次审查零新增样本。",
+  "applicability": "A/E/F/G/J/N适用于候选行为、oracle、授权边界、实际入口、说明及依赖观察；B只守住样本与资格边界；并发/恢复/租约T0/训练消费不在本次题级语义范围，父线程负责机器运输。",
+  "stop_condition": "当前B默认mask/有效值、实际137参考及测试排除已核清，无新增B阻断；停止本次只读审查。F1/F2与可选API边界只登记，不扩大oracle、不追加有效样本、不触发重跑或训练资格。",
+  "read_evidence_records": [
+    {
+      "path": "AGENTS.md",
+      "bytes": 7626,
+      "sha256": "de76dc6bab84209f40053433a68f82ff6feaf4708199473f1a67410f93d6d99c"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/collaboration-protocol.md",
+      "bytes": 18723,
+      "sha256": "4fb97787272c173c79f203548e488c781526fef4234427cddab8c77e378265ef"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/review-standards.md",
+      "bytes": 21690,
+      "sha256": "b56af8cf2805d50f109ed81c33a09bf8e9a10a52d3393741048556a85c0f2acd"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/coordination_workflow_20261003.md",
+      "bytes": 13024,
+      "sha256": "00672909249942072b74c9bccb78617a9b4ab835a6ac64ba9a1190c35ac5fce3"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category3_diagnosis_20260929/handover_to_category2_20260930.md",
+      "bytes": 33481,
+      "sha256": "3cd22f346e3f790adda1df1dc3ea7a7a4b96ad7d4f25a470bafa5c74cd2924c1"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/preparation.md",
+      "bytes": 5107,
+      "sha256": "67b4918064955b1815843d47fb10f780eaa24fa67ac5700a1335cc996ad517fd"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_9378_coder_a1_candidate_review_20261003.md",
+      "bytes": 13481,
+      "sha256": "a257d33f45913e1b063200cbf9d1e94da0228afcb6ef622f54574d01a540fb57"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-9378/card.md",
+      "bytes": 4623,
+      "sha256": "bfec51e3fe0b884e58d1fb1315d8a3405da1941c72043b0a2fadc3365718c173"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-9378/revision.json",
+      "bytes": 22285,
+      "sha256": "2020dc58319e23c27b289cd68b6b7e147b6de736015876e2f16ea53ed8dbf9d5"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-9378/acceptance_matrix.json",
+      "bytes": 4013,
+      "sha256": "3274063f9713d20982c84ce0f69a72f3fac6dd589c2b7070c92e8589bb58e9d6"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-9378/effective_test.patch",
+      "bytes": 1190,
+      "sha256": "9fc1a9d5ae885d9cc30388a875ab7ed629081de7ba7bdcc8571f3aca604a248a"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-9378/effective_test.py",
+      "bytes": 14129,
+      "sha256": "c834df1a5aeb1596ff637ab7bcf79f9001d8b5d347023ca1a60f74d1ec3190e9"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-9378/model_probe_coder_a1_analysis_20261003.md",
+      "bytes": 4817,
+      "sha256": "40d5252b1412370c8b8087a937caf5339db05b8ba7999efe8cdbef6f02c7d697"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-9378/model_probe_coder_a1_analysis_20261003.json",
+      "bytes": 12630,
+      "sha256": "497ef57f68c54f4719e746552c7a488868adc87649a2457b830c732cc2aa0784"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-9378/coder_original_FP_CPU_recovery_readback_20261003.md",
+      "bytes": 1164,
+      "sha256": "601f754e21d47f9be09d4a3ebae940827569b39ccb3c329cf313300ee5755ae8"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-9378/coder_original_FP_CPU_recovery_readback_20261003.json",
+      "bytes": 11374,
+      "sha256": "9f66f1825bf292c5b0d670f95f13fb0562b048a5c41ec79f7c36878028c5fca5"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-9378/cpu_readback_20261003.md",
+      "bytes": 4442,
+      "sha256": "d6941e8f144d16c1225e64fce9d3553d5bf7c90132478342d1254c4331276d74"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask9378-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask9378-qwen36-a1/attempt/frozen/frozen_patch.json",
+      "bytes": 30372,
+      "sha256": "ad3ff8b6a98652b65364cdd10489c41d091d2a8e9c35cb5d9b97644d3e833085"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask9378-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask9378-qwen36-a1/attempt/frozen/baseline.tar",
+      "bytes": 16353280,
+      "sha256": "c77fad523ac7a39d7544e8048aa30569db5e94e579cfc927794d6ba61302cfec"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask9378-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask9378-qwen36-a1/attempt/frozen/baseline_manifest.json",
+      "bytes": 110627,
+      "sha256": "a120be76370418beb159adf6b147998c1109988a66182b7bab3ee020529c0f8c"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask9378-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask9378-qwen36-a1/attempt/frozen/classification.json",
+      "bytes": 93,
+      "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask9378-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask9378-qwen36-a1/attempt/candidate/dask__dask-9378.diff",
+      "bytes": 4083,
+      "sha256": "04c4288ea9d762c03e393a89c5f82f3f61e5ada1b34b16845265b64d13a2a056"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask9378-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask9378-qwen36-a1/attempt/trajectory.jsonl",
+      "bytes": 622672,
+      "sha256": "403400542a3cdd169209429e709a26dbf53a7b3b5f73f7e893e668f978373d9c"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask9378-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask9378-qwen36-a1/attempt/harness/trajectory.jsonl",
+      "bytes": 622672,
+      "sha256": "403400542a3cdd169209429e709a26dbf53a7b3b5f73f7e893e668f978373d9c"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask9378-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask9378-qwen36-a1/attempt/attempt.json",
+      "bytes": 16227,
+      "sha256": "bc09953feefc2c3939fcb1e41af73330b4a61003f79ada2b628a969228597a08"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask9378-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask9378-qwen36-a1/attempt/prompt.txt",
+      "bytes": 998,
+      "sha256": "78a0f438f711b24dec6ffc48368df66ec33b007e277bc2866c3bf137b1f4a04d"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask9378-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask9378-qwen36-a1/attempt/cc_home.tgz",
+      "bytes": 55073,
+      "sha256": "5f99ad27b79aa7379b045204e2dce92eb979b90e4a482f2fad38b747d4c13c9a"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask9378-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask9378-qwen36-a1/solver_prompt.txt",
+      "bytes": 998,
+      "sha256": "78a0f438f711b24dec6ffc48368df66ec33b007e277bc2866c3bf137b1f4a04d"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask9378-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask9378-qwen36-a1/grading/projection.json",
+      "bytes": 320,
+      "sha256": "8097749db6029364e16660781301b132271f322fd52be632ffc5bfb96a98599b"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask9378-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask9378-qwen36-a1/grading/status.json",
+      "bytes": 2584,
+      "sha256": "3c017f5795a25409e097246c010cfa18d2085147923ec4f86ea582205ec000d7"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask9378-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask9378-qwen36-a1/grading/report.json",
+      "bytes": 1800,
+      "sha256": "491bbad9ddd6d72a0e5f4915d7f95122c092297364729bfeaaa48bc35c1c3817"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask9378-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask9378-qwen36-a1/grading/eval_logs/evallog_gpu1003-dask9378-qwen36-_e96b67c1.eval.log",
+      "bytes": 60888,
+      "sha256": "27289c9be2567fcb064ef98fba624fdd2460aa992782fe181edf8a67af05ffb6"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask9378-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask9378-qwen36-a1/grading/eval_logs/evallog_gpu1003-dask9378-qwen36-_e96b67c1.diagnostics.json",
+      "bytes": 24051,
+      "sha256": "0a7de46113fb8a6568a60916bb394b08b03260e57c4a906c53ed136dc4cf6b9c"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask9378-qwen36-a1/queue_qwen_dask4_r25_code9_v1/results/gpu1003-dask9378-qwen36-a1/result.json",
+      "bytes": 2620,
+      "sha256": "ebf4b5770209c046efc11eca536cf10c631c42d3c63ef50525ff0319cac226e5"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask9378-qwen36-a1/prepared_dask_four_r25_code9_v1/dask9378/prepared/prompts.jsonl",
+      "bytes": 1425,
+      "sha256": "43c8b44267abf58581c44c54a8001ad46a68432a7264bc12b6cfb27981efcf8f"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask9378-qwen36-a1/prepared_dask_four_r25_code9_v1/dask9378/prepared/rollout_task_views.jsonl",
+      "bytes": 2550,
+      "sha256": "3c561bb6019712ce3b1b9d6bb268e3506d9cd8e476a5efaca914422c6714927d"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask9378-qwen36-a1/prepared_dask_four_r25_code9_v1/dask9378/private/host_grading_views.jsonl",
+      "bytes": 21481,
+      "sha256": "018185dd213e190809d28ae83687518cf6b40a2bda3fd3ef5c843fea3a7e1f85"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask9378-qwen36-a1/services_qwen_code8_v1/qwen36/gateway/dask4-r25-code9-v1/gpu1003-dask9378-qwen36-a1/requests.jsonl",
+      "bytes": 4491433,
+      "sha256": "e199be1c36b19f98d805100adfec2c1eaa96abdbf7cf40d1631b93592d740699"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/closed_snapshots/gpu1003-dask9378-qwen36-a1/services_qwen_code8_v1/qwen36/adapter/gpu1003-dask9378-qwen36-a1.turns.jsonl",
+      "bytes": 107177,
+      "sha256": "7c9cb120a5e259945c3a0b14ff7d74c42b57ffd7b258cec55b95bbdb8790986f"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/probe-swe-dask-9378-20261003-v1_pair_execution_receipt_v1.json",
+      "bytes": 9689,
+      "sha256": "13f14e792f61d114000ab28939e4f8b67775bb075f43607c3a5df43a481a33c8"
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/model_analysis_20261003/dask7656_qwen36_a1_v1/public_hint_scope_GPU_clarification_v1.json",
+      "bytes": 1374,
+      "sha256": "f331fc7787c5998589735263755d28624727885ca0f008ff41f09c83dc4a3b90"
+    }
+  ],
+  "read_evidence_record_count": 41,
+  "read_evidence_bytes": 22738286,
+  "all_closed_originals_163_transport_reverified_by_this_review": false,
+  "write_scope": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_9378_qwen36_a1_candidate_review_20261004.json",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_9378_qwen36_a1_candidate_review_20261004.md"
+  ]
+}

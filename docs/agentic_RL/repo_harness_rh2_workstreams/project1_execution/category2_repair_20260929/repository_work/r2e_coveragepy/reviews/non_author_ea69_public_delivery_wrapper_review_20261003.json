@@ -1,0 +1,72 @@
+{
+  "schema_id": "coveragepy.ea69.public_delivery_wrapper.non_author_static_review.v1",
+  "review_date": "2026-10-03",
+  "reviewer": "non_author_static_reviewer",
+  "fresh_public_reader": false,
+  "scope": [
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/public_notes_cpu_solve.py",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/public_preserve_cpu_e2e.py",
+    "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/scenarios/public_preserve_delivery_v3.json"
+  ],
+  "status": "passed_static_after_empty_candidate_guard_fix",
+  "executed": false,
+  "method": "仅本地读源、AST/syntax、JSON及SHA对拍；无动态import、项目测试、SSH/Docker/模型。",
+  "evidence": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/public_notes_cpu_solve.py",
+      "sha256": "sha256:96353a9700fb99b515056edac2c213667db0bb46e4b768aab6e9ed6fc41d7463"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/public_preserve_cpu_e2e.py",
+      "sha256": "sha256:9302124d5ad280e4041c1f4fba4516db0284d4907ba62e735b371bc002bdd19f"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/scenarios/public_preserve_delivery_v3.json",
+      "sha256": "sha256:418cc4e5bdd3c56ecb2beea98c6768d64b79300657cec3da22f80fec4b2b54cd"
+    },
+    {
+      "path": "rh2/experiments/r2e_lifecycle_20260929/r2e_probe_e2e.py",
+      "sha256": "sha256:a5b23b49f126b76a1512a3a6f184bb7e16276c4e9cf137dc7cdc46d3af4ee4fc"
+    },
+    {
+      "path": "rh2/experiments/r2e_lifecycle_20260929/r2e_solve_attempt.py",
+      "sha256": "sha256:10a71cca67af24c9ab5a6de09cb1845751c643632559842bb61dbce6ebc01d5a"
+    },
+    {
+      "path": "rh2/experiments/base_probe_20260922/solve_attempt.py",
+      "sha256": "sha256:00ca849909150de02769f297374a9bbfacf2746347c425474775d9c3e22a04f9"
+    },
+    {
+      "path": "rh2/experiments/ordinary_gpu_probe_20261002/entry.py",
+      "sha256": "sha256:a1efff44dc2cbedfc81d93b2da8d84a92f6c9c88b15c2a10bf96db2026a4e82c"
+    }
+  ],
+  "findings": [],
+  "passed_checks": {
+    "prompt_formula": "与ordinary_gpu entry.public_prompt同一拼接常量和notes.strip；仅dataclasses.replace(prompt)，其他RolloutTaskSpec字段未改。",
+    "identity": "release manifest SHA、notes/statement SHA、精确EA task_id、statement全文包含于父prompt；不假用不存在的instance_id。",
+    "inheritance": "PublicNotesAttempt替换已加载r2e_solve模块R2EAttempt；module.main/_amain全局查此类，super.solve沿sa.Attempt调用真实ClaudeCodeDriver。",
+    "imports": "新Python子进程先插固定release rh2/src；父入口插固定base_probe及ordinary_probe目录，模块解析与frozen_transport/result_validity/roundtrip依赖可达。",
+    "environment": "E2E.base_env复制os.environ，保留COVERAGE_PUBLIC_*传给solve子进程，SLIME_AGENT_CC_PLATFORM_TARBALL按参数设置；wrapper未改变容器agent_env/env_injections或正式profile。",
+    "namespace": "父E2E使用的全部21个Namespace字段均提供；无缺字段。",
+    "ports": "只硬编码已分配18210/18211，绕过的是父CLI旧18190–18199限制，未放开任意端口；不新增批准流程。",
+    "grade_and_cleanup": "no_grade=false、controls空、regrade空；通过空条件才进入父正式noop、roundtrip与residuals。原attempt清理和父finally停止endpoints保持。",
+    "scenario": "仅预检与原已验compat命令；代码体逐字节包含既有public_filewrite_compat_v1.py；仅本进程替身参数转发，不解题或改源码/测试。",
+    "budget": "scenario wall1200/context32768/output4096；stub生成3步含末文本，父入口max_turns=len(steps)+3=6，cap12；grade5400、默认setup300/candidate900。",
+    "empty_candidate_scope": "当前wrapper显式校验原导出摘要与原FrozenPatch entries；不改候选或其empty字段。不符抛错阻止grade；缺失/畸形FP同样抛错而非继续评分。父finally仍停止endpoints。"
+  },
+  "limits": [
+    "新statement正式发布尚未完成，不能确认未来release路径/manifest成员或新prepared实际身份。",
+    "静态语法与接线核查不证明实际import、CC首请求、预检、空FP、49键评分、往返或清理成功。",
+    "现有guard使用assert，正式运行不得用python -O/PYTHONOPTIMIZE；本审查未发起任何作业。",
+    "2槽/prepare1是外部已分配资源约束，wrapper没有调度器；应由原分配入口单次运行，不复制资源规则。",
+    "真实CPU完成后须本题非作者独立核原件；本报告不能替代该回执，也不授训练资格。"
+  ],
+  "resolved_findings": [
+    {
+      "id": "empty_candidate_guard_missing",
+      "status": "resolved_in_reviewed_bytes",
+      "implementation": "EmptyPublicDelivery仅覆写solve：先原super().solve收口，再核candidate export_ok/empty均为True、entry_count为0、entries为空及原FrozenPatch.entries为空；记录wrapper/frozen SHA，失败写stop_reason/save/raise，父main finally停endpoints且不进入grade。未改导出、评分、往返或清理。"
+    }
+  ]
+}

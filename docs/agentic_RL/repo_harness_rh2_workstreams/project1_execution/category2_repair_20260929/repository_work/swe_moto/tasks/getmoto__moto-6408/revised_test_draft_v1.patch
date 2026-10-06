@@ -1,0 +1,80 @@
+diff --git a/tests/test_ecr/test_ecr_boto3.py b/tests/test_ecr/test_ecr_boto3.py
+--- a/tests/test_ecr/test_ecr_boto3.py
++++ b/tests/test_ecr/test_ecr_boto3.py
+@@ -579,6 +579,76 @@
+     images = client.describe_images(repositoryName=repo_name)["imageDetails"]
+ 
+     images.should.have.length_of(1)
++
++
++@mock_ecr
++def test_multiple_tags__ensure_tags_exist_only_on_one_image():
++    repo_name = "testrepo"
++    tag_to_move = "mock-tag"
++    image_manifests = {
++        "image_001": json.dumps(_create_image_manifest()),
++        "image_002": json.dumps(_create_image_manifest()),
++    }
++
++    client = boto3.client("ecr", "us-east-1")
++    client.create_repository(repositoryName=repo_name)
++
++    # Create image with unique tag
++    for name, manifest in image_manifests.items():
++        client.put_image(
++            repositoryName=repo_name,
++            imageTag=name,
++            imageManifest=manifest,
++        )
++
++    # Tag first image with shared tag
++    client.put_image(
++        repositoryName=repo_name,
++        imageTag=tag_to_move,
++        imageManifest=image_manifests["image_001"],
++    )["image"]["imageId"]["imageDigest"]
++
++    # Image can be found
++    initial_image, *_ = client.batch_get_image(
++        repositoryName=repo_name,
++        imageIds=[{"imageTag": tag_to_move}],
++    )["images"]
++    assert initial_image["imageManifest"] == image_manifests["image_001"]
++
++    # Tag second image with shared tag
++    client.put_image(
++        repositoryName=repo_name,
++        imageTag=tag_to_move,
++        imageManifest=image_manifests["image_002"],
++    )["image"]["imageId"]["imageDigest"]
++
++    # We should find the second image now - the shared tag should be removed from the first image
++    new_image, *_ = client.batch_get_image(
++        repositoryName=repo_name,
++        imageIds=[{"imageTag": tag_to_move}],
++    )["images"]
++    assert new_image["imageManifest"] == image_manifests["image_002"]
++
++    # 查询迁移标签只能返回目标镜像，不能靠第一项顺序掩盖重复归属。
++    moved = client.batch_get_image(repositoryName=repo_name, imageIds=[{"imageTag": tag_to_move}])
++    assert moved["failures"] == []
++    assert len(moved["images"]) == 1
++    assert moved["images"][0]["imageManifest"] == image_manifests["image_002"]
++
++    # 两侧原有标签与镜像均保留，迁移标签只属于目标。
++    details = client.describe_images(repositoryName=repo_name)["imageDetails"]
++    assert len(details) == 2
++    by_digest = {image["imageDigest"]: image for image in details}
++    assert len(by_digest) == 2
++    expected = {
++        initial_image["imageId"]["imageDigest"]: {"image_001"},
++        new_image["imageId"]["imageDigest"]: {"image_002", tag_to_move},
++    }
++    assert set(by_digest) == set(expected)
++    for digest, tags in expected.items():
++        actual = by_digest[digest]["imageTags"]
++        assert len(actual) == len(tags)
++        assert set(actual) == tags
+ 
+ 
+ @mock_ecr

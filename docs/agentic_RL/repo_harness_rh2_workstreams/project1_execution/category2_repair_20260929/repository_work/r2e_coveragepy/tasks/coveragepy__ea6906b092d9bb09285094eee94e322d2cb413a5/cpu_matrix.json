@@ -1,0 +1,66 @@
+{
+  "schema": "coveragepy.cpu_matrix.v1",
+  "instance_id": "coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5",
+  "status": "planned_not_executed",
+  "formal_entry": "冻结材料后复用 RH2 正式 R2E grading manager；不得用本文件或私有脚本替代正式评分",
+  "resources": "使用正式 profile 和远端全机队列名额，不另复制资源数值",
+  "rows": [
+    {
+      "candidate": "noop",
+      "patch": null,
+      "expected_reward": 0,
+      "purpose": "未修复基线",
+      "execution_status": "not_run"
+    },
+    {
+      "candidate": "safe_append",
+      "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/candidates/safe_append.patch",
+      "expected_reward": 1,
+      "purpose": "本轮新增待核正对照，保留用户内容；第二份同时覆盖 encoding 参数误拒",
+      "execution_status": "not_run"
+    },
+    {
+      "candidate": "safe_append_encoding",
+      "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_coveragepy/tasks/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/candidates/safe_append_encoding.patch",
+      "expected_reward": 1,
+      "purpose": "本轮新增待核正对照，保留用户内容；第二份同时覆盖 encoding 参数误拒",
+      "execution_status": "not_run"
+    },
+    {
+      "candidate": "gold",
+      "patch": "runs/r2e_static_prep_20260924/v3/private/coveragepy__ea6906b092d9bb09285094eee94e322d2cb413a5/gold.patch",
+      "expected_reward": 0,
+      "purpose": "在已要求的保留范围下，gold 覆盖用户内容，不能作正对照",
+      "execution_status": "not_run"
+    },
+    {
+      "candidate": "CA",
+      "patch": "runs/r2e_actor_20260925/grader_cands/coveragepy_ea69_CA_only_if_dir_was_empty.patch",
+      "expected_reward": 0,
+      "purpose": "仅新/空目录写入，已有规则不覆盖，但不能保证本轮既有目录报告忽略要求",
+      "execution_status": "not_run"
+    },
+    {
+      "candidate": "CB",
+      "patch": "runs/r2e_actor_20260925/grader_cands/coveragepy_ea69_CB_empty_gitignore.patch",
+      "expected_reward": 0,
+      "purpose": "空产物",
+      "execution_status": "not_run"
+    },
+    {
+      "candidate": "CC",
+      "patch": "runs/r2e_actor_20260925/grader_cands/coveragepy_ea69_CC_gold_with_encoding.patch",
+      "expected_reward": 0,
+      "purpose": "encoding 写法本身合理；gold 类覆盖行为仍须拒绝",
+      "execution_status": "not_run"
+    },
+    {
+      "candidate": "RE",
+      "patch": "runs/r2e_actor_20260925/grader_cands/coveragepy_ea69_RE_gitignore_before_data_check.patch",
+      "expected_reward": 0,
+      "purpose": "无数据时提前创建目录",
+      "execution_status": "not_run"
+    }
+  ],
+  "scope_review_required": "保留既有内容沿用当前 inventory 要求；旧公开读者曾认为覆盖策略未规定。独立核查须确认范围依据，不能仅以 gold 不通过反向放宽。"
+}

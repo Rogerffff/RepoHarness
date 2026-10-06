@@ -1,0 +1,114 @@
+{
+  "schema_id": "conan.owner.pair_analysis.v1",
+  "as_of": "2026-10-03T07:13:39.286414+00:00",
+  "request_id": "swe-conan13230-r11-briefv2-20261003-v1",
+  "scope": "two first model attempts complete owner scoped analysis; no stability or training qualification",
+  "receipt": {
+    "path": "runs/ordinary_gpu_probe_20261002/receipts/swe-conan13230-r11-briefv2-20261003-v1_two_model_v1.json",
+    "sha256": "sha256:a148a1864a603426c72a25609ad2432969871ce243709cdcde35ca541ece5f3e"
+  },
+  "receipt_readback": {
+    "path": "runs/category2_repair_20260929/conan_cpu_20261003/probe_analysis_13230_coder_a1_20261003_v1/pair_receipt_readback.json",
+    "sha256": "sha256:7a760c7c6665ced1073b83db2bea1cd81cfbcf46d4c9cde1d8086990d4ccd05f"
+  },
+  "owner_analysis": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-13230/probe_pair_analysis_20261003.md",
+    "sha256": "sha256:d6d721d09e4e4a763e5aa35cd8151965c5924d2e816b307b01f8debd85f1b462"
+  },
+  "first_arm_analyses": {
+    "qwen36": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-13230/probe_qwen36_a1_analysis_20261003.json",
+      "sha256": "sha256:16e32a4229856ce8a4eec17e82eddd8f3a5da4c1fad1862c29302c946a6cf875"
+    },
+    "coder": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-13230/probe_coder_a1_analysis_20261003.json",
+      "sha256": "sha256:85b68342ecb4428f72e053ccbbb66403219209b6bf0a7b2961b6902646b6af80"
+    }
+  },
+  "semantic_reviews": {
+    "qwen36": {
+      "status": "completed_no_blocking_finding",
+      "report": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_13230_qwen36_a1_semantic_review_20261003.md",
+        "sha256": "sha256:73ec750397d8db7461e2a6338eba58cef1d228b9b5611de1a734decee25a0b81"
+      },
+      "reviewer_role": "non_author_semantic_falsifier",
+      "model": "gpt-6.1-sol",
+      "reasoning_effort": "high",
+      "scope": "source root-cause fix, all candidate changes, target branches, official-test exclusion and model public verification; not GPU execution acceptance"
+    },
+    "coder": {
+      "status": "completed_no_task_material_blocker",
+      "report": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_13230_coder_a1_semantic_review_20261003.md",
+        "sha256": "sha256:0648b1c34c0c4372c7520af48aea7de904f3df491487db36af2568b946645aa2"
+      },
+      "scope": "focused complete candidate, actual projection, host/Apple semantics, 37 actual references and model verification; no CPU/GPU rerun"
+    }
+  },
+  "execution_reviews": {
+    "coder": {
+      "status": "execution_complete_valid_raw1_owner_semantics_pending",
+      "report": {
+        "path": "runs/ordinary_gpu_probe_20261002/reviews/conan13230_coder_a1_execution_review_v1.json",
+        "sha256": "sha256:e757a65bf924ce2342959c28732cc3f2dbf32557ed4d55974d00108122286660"
+      },
+      "scope": "first-arm execution/transport, installation, exact references and cleanup; candidate semantics separately reviewed"
+    },
+    "qwen36": {
+      "status": "execution_evidence_checked_with_warnings",
+      "report": {
+        "path": "runs/ordinary_gpu_probe_20261002/reviews/conan13230_qwen36_a1_execution_non_author_review_v1.json",
+        "sha256": "sha256:88e6d421a1b4d9d98781ff284f05d200aaa7a13b8ebec9b0f8200383feb8ed68"
+      },
+      "scope": "first-arm execution/transport, installation, exact references and cleanup; candidate semantics separately reviewed"
+    }
+  },
+  "both_reference_scores": {
+    "qwen36": {
+      "reward": 1,
+      "f2p_passed": 3,
+      "p2p_passed": 34,
+      "total": 37
+    },
+    "coder": {
+      "reward": 1,
+      "f2p_passed": 3,
+      "p2p_passed": 34,
+      "total": 37
+    }
+  },
+  "production_semantics": "both fix target OS condition while preserving surrounding public semantics",
+  "candidate_findings": {
+    "coder": [
+      {
+        "id": "P2-1",
+        "priority": "P2",
+        "finding": "native mock has no behavioral assertion; declared unit/native coverage exceeds actual scope",
+        "disposition": "no_fix_accept_residual_risk"
+      },
+      {
+        "id": "P2-2",
+        "priority": "P2",
+        "finding": "print-only reproducer, functional autoreconf rc127 with truncated output and Apple skips do not prove compilation; final summary omits these limits",
+        "disposition": "no_fix_accept_residual_risk"
+      }
+    ]
+  },
+  "task_material_findings": [],
+  "same_material_image_full_baseline_public_prompt_references_budgets": true,
+  "runtime_versions": {
+    "qwen36": "code5",
+    "coder": "code7"
+  },
+  "entire_runtime_same": false,
+  "same_critical_transport_files": 4,
+  "different_shared_members_disclosed": 7,
+  "owner_request_closeout": "two_model_owner_analysis_complete_terminal_receipt_verified",
+  "prior_first_arm_snapshot_bytes_preserved": true,
+  "CPU_or_model_rerun_required": false,
+  "ordinary_additional_samples": "deferred_coverage_first",
+  "paired_request_closed": true,
+  "pending_models": [],
+  "training_eligibility": "not_established"
+}

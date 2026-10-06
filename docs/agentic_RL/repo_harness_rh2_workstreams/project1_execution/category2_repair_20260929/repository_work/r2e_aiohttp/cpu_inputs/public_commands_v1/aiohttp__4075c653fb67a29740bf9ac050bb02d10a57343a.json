@@ -1,0 +1,30 @@
+[
+  {
+    "id": "public_environment",
+    "timeout_s": 120,
+    "expect": "any",
+    "purpose": "核对公开工作区中的解释器、源码导入和运行身份",
+    "cmd": "PYTHONDONTWRITEBYTECODE=1 python - <<'RH2_AIO_PUBLIC'\nimport json,os,sys,aiohttp\nprint(json.dumps({'uid':os.getuid(),'gid':os.getgid(),'python':sys.version,'executable':sys.executable,'aiohttp':aiohttp.__version__,'source':aiohttp.__file__,'virtual_env':os.environ.get('VIRTUAL_ENV')},sort_keys=True))\nprint('RH2_SYS_EXECUTABLE='+sys.executable)\ntry:\n    fd = os.open('/rh2/bash_env', os.O_WRONLY | os.O_APPEND)\nexcept PermissionError:\n    print('RH2_BASHENV_WRITE=DENIED')\nexcept OSError as exc:\n    print('RH2_BASHENV_WRITE=ERROR', repr(exc))\nelse:\n    os.close(fd)\n    print('RH2_BASHENV_WRITE=WRITABLE')\nRH2_AIO_PUBLIC\n"
+  },
+  {
+    "id": "invalid_header_example",
+    "timeout_s": 120,
+    "expect": "any",
+    "purpose": "运行最终题面的解析器示例并核对公开约定异常",
+    "cmd": "PYTHONDONTWRITEBYTECODE=1 python - <<'RH2_AIO_PUBLIC'\nimport asyncio\nfrom unittest import mock\nfrom aiohttp import http_parser, http_exceptions\n\ndef test_invalid_header(parser):\n    invalid_header = \"\\xffoo: bar\"\n    request = f\"POST / HTTP/1.1\\r\\n{invalid_header}\\r\\n\\r\\n\".encode()\n    parser.feed_data(request)\n\ndef test_malformed_status_line(parser):\n    malformed_status = b\"GET\\n/path\\x0cHTTP/1.1\\r\\n\\r\\n\"\n    parser.feed_data(malformed_status)\n\nloop = asyncio.new_event_loop()\ntry:\n    parser = http_parser.HttpRequestParserPy(mock.Mock(), loop, 2**16)\n    try:\n        test_invalid_header(parser)\n    except http_exceptions.BadHttpMessage as exc:\n        print(type(exc).__name__, ascii(str(exc)))\n    else:\n        raise AssertionError('the example returned without BadHttpMessage')\nfinally:\n    loop.close()\nRH2_AIO_PUBLIC\n"
+  },
+  {
+    "id": "invalid_status_example",
+    "timeout_s": 120,
+    "expect": "any",
+    "purpose": "运行最终题面的解析器示例并核对公开约定异常",
+    "cmd": "PYTHONDONTWRITEBYTECODE=1 python - <<'RH2_AIO_PUBLIC'\nimport asyncio\nfrom unittest import mock\nfrom aiohttp import http_parser, http_exceptions\n\ndef test_invalid_header(parser):\n    invalid_header = \"\\xffoo: bar\"\n    request = f\"POST / HTTP/1.1\\r\\n{invalid_header}\\r\\n\\r\\n\".encode()\n    parser.feed_data(request)\n\ndef test_malformed_status_line(parser):\n    malformed_status = b\"GET\\n/path\\x0cHTTP/1.1\\r\\n\\r\\n\"\n    parser.feed_data(malformed_status)\n\nloop = asyncio.new_event_loop()\ntry:\n    parser = http_parser.HttpRequestParserPy(mock.Mock(), loop, 2**16)\n    try:\n        test_malformed_status_line(parser)\n    except http_exceptions.BadStatusLine as exc:\n        print(type(exc).__name__, ascii(str(exc)))\n    else:\n        raise AssertionError('the example returned without BadStatusLine')\nfinally:\n    loop.close()\nRH2_AIO_PUBLIC\n"
+  },
+  {
+    "id": "public_http_parser_tests",
+    "timeout_s": 600,
+    "expect": "any",
+    "purpose": "运行对应公开解析器测试；记录实际扩展路径及各测试状态",
+    "cmd": "cd /testbed && if PYTHONDONTWRITEBYTECODE=1 python -c \"import aiohttp._http_parser\" 2>/dev/null; then echo 'C parser importable: py-parser and c-parser params both run'; else echo 'C parser not importable: exporting AIOHTTP_NO_EXTENSIONS=1 so the three C-only tests are skipped'; export AIOHTTP_NO_EXTENSIONS=1; fi; PYTHONDONTWRITEBYTECODE=1 python -m pytest -p no:cacheprovider -o addopts=\"\" -m \"not dev_mode\" -q -rfEs tests/test_http_parser.py"
+  }
+]

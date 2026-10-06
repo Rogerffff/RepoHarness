@@ -1,0 +1,60 @@
+{
+  "schema": "category2_orange3_preparation.v1",
+  "as_of": "2026-10-03",
+  "instance_id": "orange3__9b5494e26f407b75e79699c9d40be6df1d80a040",
+  "status": "draft_not_published_not_cpu_accepted",
+  "parent_registry": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v11.json",
+    "sha256": "sha256:03acd34d7421bcf9c379612d0b8a5ce3d4292fdee0ee67327661eae5169d5c33"
+  },
+  "parent_material_revisions": [
+    "r2e-mr-020"
+  ],
+  "parent_test": {
+    "source": {
+      "path": "runs/r2e_static_prep_20260924/v3/private/orange3__9b5494e26f407b75e79699c9d40be6df1d80a040/hidden_tests/test_1.py",
+      "sha256": "sha256:99459c0d733eb09bcd58548935857702b15920646a51610722362a948709cb9b"
+    },
+    "effective_sha256": "sha256:99459c0d733eb09bcd58548935857702b15920646a51610722362a948709cb9b"
+  },
+  "operation_from_source": {
+    "kind": "hidden_test_text_replace",
+    "target": "test_1.py",
+    "edits": [
+      {
+        "old": "    def test_auto_solver(self):\n        # These defaults are valid as of sklearn v0.23.0\n        # lbfgs is default for l2 penalty\n        lr = LogisticRegressionLearner(penalty=\"l2\", solver=\"auto\")\n        skl_clf = lr._initialize_wrapped()\n        self.assertEqual(skl_clf.solver, \"lbfgs\")\n        self.assertEqual(skl_clf.penalty, \"l2\")\n\n        # lbfgs is default for no penalty\n        lr = LogisticRegressionLearner(penalty=None, solver=\"auto\")\n        skl_clf = lr._initialize_wrapped()\n        self.assertEqual(skl_clf.solver, \"lbfgs\")\n        self.assertEqual(skl_clf.penalty, None)\n\n        # liblinear is default for l2 penalty\n        lr = LogisticRegressionLearner(penalty=\"l1\", solver=\"auto\")\n        skl_clf = lr._initialize_wrapped()\n        self.assertEqual(skl_clf.solver, \"liblinear\")\n        self.assertEqual(skl_clf.penalty, \"l1\")\n",
+        "new": "    def test_auto_solver(self):\n        # Behaviour-level check: the learner has to use a solver that supports\n        # the requested penalty. Where and how the solver is chosen (constructor,\n        # a sentinel value, fitting time) is not prescribed.\n\n        # l1, the reported case: fitting works and the fitted model really uses\n        # l1, on the multiclass data of the report and on binary data\n        for data in (self.iris, self.heart_disease):\n            skl_clf = LogisticRegressionLearner(penalty=\"l1\")(data).skl_model\n            self.assertEqual(skl_clf.penalty, \"l1\")\n            # the scikit-learn 0.22 solvers that support l1\n            self.assertIn(skl_clf.solver, (\"liblinear\", \"saga\"))\n\n        # l2, the default penalty, is supported by the default solver lbfgs:\n        # the default model is unchanged\n        skl_clf = LogisticRegressionLearner()(self.zoo).skl_model\n        self.assertEqual(skl_clf.solver, \"lbfgs\")\n        self.assertEqual(skl_clf.penalty, \"l2\")\n        # the default learner keeps an argument-free repr, also when repr is\n        # called repeatedly (same check as the public Orange/tests/test_util.py,\n        # TestUtil.test_reprable, \"GH 2275\")\n        logit = LogisticRegressionLearner()\n        for _ in range(2):\n            self.assertEqual(repr(logit), 'LogisticRegressionLearner()')\n\n        # no penalty is supported by lbfgs as well and keeps working\n        skl_clf = LogisticRegressionLearner(penalty=\"none\")(self.iris).skl_model\n        self.assertEqual(skl_clf.penalty, \"none\")\n\n        # The public default is multi_class=\"auto\" with lbfgs. On multiclass\n        # data, this preserves the explicitly requested multinomial model.\n        # Compare two observable probability predictions, not gold constants.\n        default_model = LogisticRegressionLearner()(self.iris)\n        multinomial_model = LogisticRegressionLearner(\n            multi_class=\"multinomial\")(self.iris)\n        np.testing.assert_allclose(\n            default_model(self.iris, Model.Probs),\n            multinomial_model(self.iris, Model.Probs),\n            rtol=1e-5, atol=1e-7)\n"
+      }
+    ],
+    "sha256_before": "sha256:99459c0d733eb09bcd58548935857702b15920646a51610722362a948709cb9b",
+    "sha256_after": "sha256:b2bd45b7c11b63c19fa147e0fcc485aa5b80b540a460f36163a4d7331f6f87df",
+    "revised_file": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_orange3/tasks/9b5494e2/files/r2e_tests/test_1.py",
+    "expected_change": null
+  },
+  "revision_id": null,
+  "expected": {
+    "sha256": "sha256:cd034086c160e69a531b6d1d74dc5b00734a672e364575c273877515518ff240",
+    "key_count": 13,
+    "non_passed": {
+      "TestLogisticRegressionLearner.test_learner_scorer": "FAILED",
+      "TestLogisticRegressionLearner.test_learner_scorer_multiclass": "FAILED"
+    },
+    "changed": false
+  },
+  "changed_method": "TestLogisticRegressionLearner.test_auto_solver",
+  "local_checks": {
+    "python37_ast": true,
+    "other_methods_ast_equal": 14,
+    "source_replacement_matches_full_file": true
+  },
+  "independent_revision_review": "pending",
+  "formal_cpu_acceptance": "pending",
+  "public_revision": "none",
+  "publication_dependency": {
+    "keep_revision": "r2e-mr-020",
+    "required_environment": "r2e_derive_v1+env_v2 / scipy==1.5.4",
+    "approved_final_composite_digest": null,
+    "required_action": "最终材料会改变配方摘要；由维护者核验并登记，不能绕过旧环境批准集合。",
+    "multinomial_relation_on_base_gold": "pending_cpu"
+  }
+}

@@ -1,0 +1,75 @@
+diff --git a/dvc/repo/reproduce.py b/dvc/repo/reproduce.py
+index 0c3321010..aa274a5be 100644
+--- a/dvc/repo/reproduce.py
++++ b/dvc/repo/reproduce.py
+@@ -220,6 +220,10 @@ def _reproduce_stages(  # noqa: C901
+ 
+             break
+         except Exception as exc:  # noqa: BLE001
++            if kwargs.get("pull"):
++                logger.warning("failed to reproduce '%s': %s", stage.addressing, exc)
++                result.append(stage)
++                continue
+             raise ReproductionError(stage.addressing) from exc
+ 
+     if on_unchanged is not None:
+diff --git a/dvc/stage/__init__.py b/dvc/stage/__init__.py
+index d98285949..ef0bd3573 100644
+--- a/dvc/stage/__init__.py
++++ b/dvc/stage/__init__.py
+@@ -581,6 +581,8 @@ class Stage(params.StageParams):
+             args = ("outputs", "frozen ") if self.frozen else ("data sources", "")
+             logger.info("Verifying %s in %s%s", *args, self)
+             if not dry:
++                if kwargs.get("pull"):
++                    self._pull_missing_outputs(jobs=kwargs.get("jobs"))
+                 self._check_missing_outputs()
+ 
+         if not dry:
+@@ -614,6 +616,16 @@ class Stage(params.StageParams):
+     def _check_missing_outputs(self) -> None:
+         check_missing_outputs(self)
+ 
++    def _pull_missing_outputs(self, jobs=None) -> None:
++        """Download and checkout outputs that are missing from the workspace."""
++        missing = [out for out in self.outs if out.use_cache and not out.exists]
++        for out in missing:
++            logger.info("Pulling missing output '%s' of %s", out, self)
++            for odb, objs in out.get_used_objs().items():
++                if objs:
++                    self.repo.cloud.pull(objs, jobs=jobs, odb=odb)
++            out.checkout(allow_missing=True)
++
+     def filter_outs(self, fs_path) -> Iterable["Output"]:
+         def _func(o):
+             return o.fs.path.isin_or_eq(fs_path, o.fs_path)
+diff --git a/dvc/stage/cache.py b/dvc/stage/cache.py
+index 332059b0d..35393cbc9 100644
+--- a/dvc/stage/cache.py
++++ b/dvc/stage/cache.py
+@@ -193,6 +193,8 @@ class StageCache:
+             if not dry:
+                 stage.save_deps()
+             cache = self._load(stage)
++            if not cache and pull and not dry:
++                cache = self._pull_and_load(stage)
+             if not cache:
+                 raise RunCacheNotFoundError(stage)
+ 
+@@ -212,6 +214,16 @@ class StageCache:
+         if not dry:
+             cached_stage.checkout()
+ 
++    def _pull_and_load(self, stage):
++        from dvc.config import NoRemoteError
++
++        try:
++            self.pull(None)
++        except (NoRemoteError, RunCacheNotSupported) as exc:
++            logger.debug("Unable to pull run-cache for %s: %s", stage, exc)
++            return None
++        return self._load(stage)
++
+     def transfer(self, from_odb, to_odb):
+         from dvc.fs import HTTPFileSystem, LocalFileSystem
+         from dvc.fs.callbacks import Callback

@@ -1,0 +1,35 @@
+diff --git a/tests/test_rds/test_rds_clusters.py b/tests/test_rds/test_rds_clusters.py
+--- a/tests/test_rds/test_rds_clusters.py
++++ b/tests/test_rds/test_rds_clusters.py
+@@ -250,18 +250,29 @@
+         MasterUserPassword="hunter2_",
+     )
+ 
+-    client.create_db_cluster(
++    cluster_arn = client.create_db_cluster(
+         DBClusterIdentifier="cluster-id2",
+         Engine="aurora",
+         MasterUsername="root",
+         MasterUserPassword="hunter2_",
+-    )
++    )["DBCluster"]["DBClusterArn"]
+ 
+     client.describe_db_clusters()["DBClusters"].should.have.length_of(2)
+ 
+     client.describe_db_clusters(DBClusterIdentifier="cluster-id2")[
+         "DBClusters"
+     ].should.have.length_of(1)
++
++    clusters = client.describe_db_clusters(DBClusterIdentifier=cluster_arn)["DBClusters"]
++    assert len(clusters) == 1
++    assert clusters[0]["DBClusterIdentifier"] == "cluster-id2"
++    assert clusters[0]["DBClusterArn"] == cluster_arn
++
++    # 名称与 ARN 必须定位到同一对象，不比较会随状态变化的整份响应。
++    clusters_by_name = client.describe_db_clusters(DBClusterIdentifier="cluster-id2")["DBClusters"]
++    assert len(clusters_by_name) == 1
++    assert clusters_by_name[0]["DBClusterIdentifier"] == "cluster-id2"
++    assert clusters_by_name[0]["DBClusterArn"] == cluster_arn
+ 
+ 
+ @mock_rds

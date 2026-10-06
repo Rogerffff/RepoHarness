@@ -1,0 +1,266 @@
+{
+  "schema_id": "rh2.category2.owner_probe_request.v1",
+  "source": "r2e_gym_subset",
+  "owner_thread_id": "01a0fd63-99aa-7af0-94bb-591d3c151b17",
+  "owner_host_id": "local",
+  "package_id": "r2e_aiohttp",
+  "package_path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp",
+  "purpose": "在补齐变量与真实写出/线上终止块复现后，检查基座能否抑制中间空数据而保留完整压缩载荷、flush与合法末尾零终止块；保留两模型实际成败及候选语义。",
+  "permitted_use": "探索性题目质量与基座能力诊断；结果回原题主继续语义审计，不直接授予训练/留出资格。",
+  "receipt_to_owner": {
+    "thread_id": "01a0fd63-99aa-7af0-94bb-591d3c151b17",
+    "host_id": "local",
+    "include": [
+      "actual_code_material_image_and_model_versions",
+      "actual_prompt",
+      "complete_trajectory",
+      "original_frozen_candidate_and_baseline",
+      "raw_grading_per_reference_full_logs",
+      "termination_and_usage",
+      "inner_outer_cleanup_and_all_anomalies"
+    ],
+    "owner_next_action": "审公开要求→真实候选→原评分；必要时修题或环境并申请新版本，不直接以reward结案。"
+  },
+  "request_id": "aiohttp6183-r085-probe-wide-v1-20261003",
+  "created_at": "2026-10-02T19:04:44.935887+00:00",
+  "status": "submitted_for_executor_validation",
+  "instance_id": "aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2",
+  "task_id": "r2e_gym_subset::aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2",
+  "model_and_budget": {
+    "authority": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/ordinary_probe_20260929/gpu_coordination_decisions_20261002.md",
+      "sha256": "sha256:440e3be6dfb30b88ddb5bb227f183c104561f8ec198dbef69687c6092ff4f5e2"
+    },
+    "config_id": "probe-wide-v1",
+    "attempts_per_configured_model": 1,
+    "additional_sampling_requested": false
+  },
+  "public_solver_inputs": {
+    "allowlist_only": true,
+    "statement": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/materials/61833518/problem_statement.txt",
+      "sha256": "sha256:ab73a3ec70cb08e3fd6846b8ceead6552ea82082d6f837fd9118787a0e4f004d"
+    },
+    "statement_text_sha256": "sha256:ab73a3ec70cb08e3fd6846b8ceead6552ea82082d6f837fd9118787a0e4f004d",
+    "neutral_development_brief": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/public/6183_development_brief.md",
+      "sha256": "sha256:f1636164b5669015333ba0281f73dc696c8ac803c0b914246fb1a083b01b233e"
+    },
+    "delivery_requirement": "执行者实际首条模型CC请求须同时包含完整R085题面和已审中性说明（入口按strip交付brief）；只交这两项及原公开工作树，整个工作包、review、隐藏和候选不得进入solver。"
+  },
+  "executor_only_materials": {
+    "cpu_fixed_release": {
+      "id": "cat2-cpu-r2e080087-swe8-git-20261003-v1",
+      "manifest": {
+        "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/manifest.json",
+        "sha256": "sha256:ab0a3a13fd65e0ea4cd60541ea3b37b01196170477e25832df246f33ea208828"
+      },
+      "registry": {
+        "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/material_revisions_v18.json",
+        "sha256": "sha256:4e379ab64f382897be6531030041f59798ac697f8f6d84f015eda4876a27d179"
+      },
+      "pins": {
+        "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/t1_input_pins_r2e_v19.json",
+        "sha256": "sha256:34528bd130cb003d8c1d5aa4cfb275a1390e9ec138c406adc0a6bcc740a63e1b"
+      },
+      "locally_verified_members": 855
+    },
+    "binding": {
+      "statement_sha256": "sha256:ab73a3ec70cb08e3fd6846b8ceead6552ea82082d6f837fd9118787a0e4f004d",
+      "prepared_public_bundle_digest": "sha256:9587eedfc18ddba5f8f27d3467d4e3af893e8b947f55fb034130ecad6c839139",
+      "prepared_environment_package_digest": "sha256:af82b4f6ac0918b991c3395fed54092c8ed88e564d4465f16e3e648f4fab4520",
+      "prepared_grading_bundle_digest": "sha256:96ed02c47f57a658b7cba6e22c28792102d425b10f91b27944c1d0692d9ce7ce",
+      "hidden_tree_sha256": "sha256:23b524a89a3137272d0d4bda1c4f1d9e3a3e9e0851f462c061d2fd988dac85af",
+      "expected_sha256": "sha256:3390e85fe2f0807791b3def432def784f6da255b28b8d9e63c9af052218ace3f",
+      "run_tests_sha256": "sha256:8285765fcf1a4ec23ca55ad4781a064d121b58266ef5c5e22c681f6ece616aaf",
+      "revisions": [
+        "r2e-mr-044",
+        "r2e-mr-045",
+        "r2e-mr-085"
+      ],
+      "expected_keys": 49,
+      "expected_statuses": {
+        "PASSED": 49
+      },
+      "score_materials_unchanged_from_v5": true
+    },
+    "ingest_files": [
+      {
+        "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/public_bundles_v0.jsonl",
+        "sha256": "sha256:424e59624f57f244e004bfccfeb8ba5164b534d853bcebdbf64419da35ff505e"
+      },
+      {
+        "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/environment_packages_v0.jsonl",
+        "sha256": "sha256:f9d28466e73e2f49f7bcce0f38e2cee0baa79fc381c6e1a99fb3e688c953720b"
+      },
+      {
+        "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl",
+        "sha256": "sha256:00f7f6667a9793b62eba635b92f2e3c3eb22de284af2d37f7c9ff7baf2b2925b"
+      }
+    ],
+    "revised_scoring_files": [
+      {
+        "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/r2e_tests/test_1.py",
+        "sha256": "sha256:89702c7cfc631e25064909832a8a7e344675c0937c64b48dc032a259f58f1eba"
+      },
+      {
+        "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/revisions/files/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/expected_output.json",
+        "sha256": "sha256:3390e85fe2f0807791b3def432def784f6da255b28b8d9e63c9af052218ace3f"
+      }
+    ],
+    "prepared_manifest": {
+      "path": "runs/category2_repair_20260929/r2e_aiohttp/cpu-b/revised_prepare_r6_v1/final_artifacts/prepared/prepared_manifest.json",
+      "sha256": "sha256:7db8f9747ac0c02505d03a3ffe6b93acd1b288966d515f88597aae2ea64a89e2"
+    },
+    "prepared_summary": {
+      "path": "runs/category2_repair_20260929/r2e_aiohttp/cpu-b/revised_prepare_r6_v1/final_artifacts/prepared/replay_summary.json",
+      "sha256": "sha256:63fe5db32d8235f20b899b0062f340089a964d9631131f7bd415a5d7fe751235"
+    },
+    "host_grading_view": {
+      "path": "runs/category2_repair_20260929/r2e_aiohttp/cpu-b/revised_prepare_r6_v1/final_artifacts/private/host_grading_views.jsonl",
+      "sha256": "sha256:c931bc1f1949afde4e6cf3d4696883616e277f485d1c83a60a2f65f3fd8e6d58"
+    },
+    "separation": "该区、CPU正负对照和独立报告仅供受信执行者核绑定与评分，不进solver上下文/挂载。"
+  },
+  "environment": {
+    "base_commit": "ff3dec422bd18b5e9078b5f29be1c9a6a1373f5a",
+    "source_image_by_digest": "namanjain12/aiohttp_final@sha256:67aefa179aab4b224a367b97446b72c033d9884ad10dcda09f7165a0e4b4e65b",
+    "cpu_evidence_host": "cpu-b",
+    "cpu_actual_derived_image_id": "sha256:28682e5ad429ad323e4903845b86a71d5ffdc5325aa085fab5f925733cf91523",
+    "gpu_actual_derived_image_id": null,
+    "recipe_id": "r2e_derive_v1+material_v2+sysconfig_v1",
+    "recipe_sha256": "sha256:70ceace9f6ab1e015cd3fa26ea20bb9180125711597c569acff70e30adf68c7a",
+    "recipe_scripts": [
+      {
+        "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/rh2/scripts/r2e_derive/recipe_v1.sh",
+        "sha256": "sha256:0da821a15fa389289f524c60d3a421bc940cce753e4ecf3d53560b7ab6b31df9"
+      },
+      {
+        "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/rh2/scripts/r2e_derive/material_v2.sh",
+        "sha256": "sha256:0d259ae34ca823ca3fcb29c46e09f6e5d0b149690a5336ec491a14b94a769a3d"
+      },
+      {
+        "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/rh2/scripts/r2e_derive/sysconfig_v1.sh",
+        "sha256": "sha256:63ab3356e80bb6d9bccb682060c2769c03fc68a7b8273ece632eb5628347cc33"
+      }
+    ],
+    "env_pins": [],
+    "env_pins_reference": {
+      "path": "runs/category2_repair_20260929/releases_20261003/r2e_080_087_swe8_git_candidate_v1/repo/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/recipes/env_pins_v2.json",
+      "sha256": "sha256:389f93e40435e39efda8a23a26c0f097db2140cdaea179784c4b6f17da810af8"
+    },
+    "install_recipe": "固定source镜像已有安装不变，派生仅按hidden材料和sysconfig迁移；不添加依赖安装。",
+    "build_facts": {
+      "path": "runs/category2_repair_20260929/r2e_aiohttp/cpu-b/baseline_derived_v1/final_artifacts/aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2/facts.json",
+      "sha256": "sha256:592fb90ac15b1d0e7c8f3df893b36d6aea8e6728620003370fc79045fd8fad55"
+    },
+    "new_build_entry": "统一执行者用已验builder/代码快照，保持固定source/recipe/hidden/entry；CPU image仅作为证据，GPU重新填写实际ID。"
+  },
+  "cpu_acceptance": {
+    "owner_readbacks": [
+      {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/results6183_public_development_20261003.json",
+        "sha256": "sha256:f5def4bb0117b3a4dae5d51bc723787322bf3166cd67ae34b4bf81f1670bd744"
+      },
+      {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/results6183_v5_log_readback_20261003.json",
+        "sha256": "sha256:fddc79cb2d6cf1ad59cff95570d0542fbc130012d67b76dabfbbe1313283f899"
+      },
+      {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/results6183_r085_delivery_20261003.json",
+        "sha256": "sha256:bfc91b798ab32e259b5d292ff8236644e17184891a0ef209cca1bcbebf90ba06"
+      },
+      {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/results_preparation_r6_20261003.json",
+        "sha256": "sha256:7fa7afedc2c25805b2326a7b4187da16ae012e6d0e57098e8a4743e24c6e8302"
+      }
+    ],
+    "current_card": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/6183_current_card.md",
+      "mutable_navigation_only": true
+    },
+    "non_author_result_review": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/reviews/6183_r085_cpu_coordinator_review_20261003.md",
+      "sha256": "sha256:5f8f34fff674fc4aa64b0bc49c606b7dd287058e900faa1e1ec8b0961874b336"
+    },
+    "non_author_detail_reviews": [
+      {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/reviews/non_author_6183_r085_execution_trace_20261003.md",
+        "sha256": "sha256:5878405d650c80f75588f8b47e26e2751b37d3e1cfe48a362dc3348286a102d8"
+      },
+      {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/reviews/non_author_6183_r085_falsifier_20261003.md",
+        "sha256": "sha256:69db159f80e89252b8f3ccf6d7f85ca53048f4327f9df48c99fa4f12417632d4"
+      }
+    ],
+    "public_actor_adapter_review": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/reviews/non_author_public_actor_wrapper_review_20261003.md",
+      "sha256": "sha256:c7c5dbd6b79b10073bbaf62116a9256dea8556e67a515f3225f60b46d7b8999b"
+    },
+    "neutral_brief_review": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/reviews/non_author_public_briefs_review_20261003.md",
+      "sha256": "sha256:38c535726fc3972744ff561ab5b59b1db59ecc7a8c5a6db8d02f61396ab3375a"
+    },
+    "original_evidence_receipts": [
+      {
+        "path": "runs/category2_repair_20260929/r2e_aiohttp/cpu-b/public_actor6183_draftdev_r4_v1/final_artifacts/download_receipt.json",
+        "sha256": "sha256:5aca3f0466fb395fd6810aba312d0bbaca07546263e57441199a7e313f509e3b"
+      },
+      {
+        "path": "runs/category2_repair_20260929/r2e_aiohttp/cpu-b/revised_prepare_r6_v1/final_artifacts/download_receipt.json",
+        "sha256": "sha256:eddf9a565b8e0e90602d75040c1dcb3817a04e5a98df0843a5cc156e6ffe93ee"
+      },
+      {
+        "path": "runs/category2_repair_20260929/r2e_aiohttp/cpu-b/r6_acceptance_v1/delivery_artifacts_v1/download_receipt.json",
+        "sha256": "sha256:f98a1901f64a250c1a415b5ccc0c6146e4ef5fa4c57172f7577d577dc0ae93f2"
+      }
+    ],
+    "public_actor": "当前CPU-b image上的真实CC Bash：base定长空write/chunked提前终止均rc1；gold两段rc0、完整解压及合法末尾零块；公开protocol各47 passed，UID54321/Python3.9.21，生命周期残留0。",
+    "actual_public_delivery_proof": {
+      "path": "runs/category2_repair_20260929/r2e_aiohttp/cpu-b/r6_acceptance_v1/delivery_artifacts_v1/delivery6183_proof.json",
+      "sha256": "sha256:c503dc541588c44c2c1203bb7bb1222d08c36410242b387e9b00c1587518ee7b"
+    },
+    "actual_first_request": {
+      "path": "runs/category2_repair_20260929/r2e_aiohttp/cpu-b/r6_acceptance_v1/delivery_artifacts_v1/delivery6183/stub/requests/messages_000.json",
+      "sha256": "sha256:b4e01dc4acc9424cec21f3d3bdb8a5d65af832aa50f0d4db3bbe1980df224f37"
+    },
+    "neutral_brief_actual_cpu_delivery": false,
+    "grading": {
+      "version": "formal_v5",
+      "results": {
+        "gold": 1,
+        "noop": 0,
+        "AP1": 0,
+        "AP1m": 0,
+        "AP2": 1,
+        "A1": 1
+      },
+      "main_positive": "gold",
+      "candidate_label_correction": {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/correction6183_v5_candidate_labels_20261003.json",
+        "sha256": "sha256:7b7e6815f31e139f04a5efc1103d1227e55a05515b0cbf79035e586893f3ba6e"
+      },
+      "correct_mapping": "s3=AP2, patch0548e104256c9f358b312c24e5b319d99b19c78cbaafac85ae708fd11c1db08e; s4=A1, patch5b38357b44e604a5823d436f030f871490b84e7c471c279a40a4636fdb5232e7",
+      "new_cpu_grading_executed": false,
+      "old_scoring_image_id": "sha256:b93c5d43ab2871f0b39ccccd2f53b9517b6e0560a7085579e4ab5bc076397be6",
+      "reuse_basis": "隐藏044/expected045/入口/固定base和recipe不变，新派生源码与依赖完整性及当前image公开base/gold行为支持条件复用；新CPU imageID不同，不记六方已在新image重跑。"
+    },
+    "non_author_scope": "当前R085首请求/身份/生命周期、开发原件、旧六方完整log与语义及复用条件；已完成执行追踪与反证核查，无新GPU前置闸门。",
+    "fresh_public_review": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/r2e_aiohttp/materials/61833518/public_reader_review_20261003.md",
+      "sha256": "sha256:515c50204afa4465e1e1d430b0c20f3d29daa6665f8128582dece154641a51b4"
+    }
+  },
+  "execution_requirements": [
+    "采用统一已验原FrozenPatch直评入口，diff仅作审阅；保留实际代码、材料、image、模型、配置与原基线。",
+    "实际GPU首请求同时核完整085題面与中性brief，CPU stub只送题面，不代填brief交付。",
+    "expected为49个PASSED；正常终止零块应保留，HTTP/1.1压缩完整载荷/定长与chunked都属于当前公开目标。",
+    "只由统一执行者操作GPU和队列；题主请求不填写实际GPU镜像ID或队列状态。"
+  ],
+  "limitations": [
+    "没有本题真实基座成绩；CPU公开控制与脚本桩不计为模型求解。",
+    "旧评分6行条件复用，新CPU镜像未重跑六方；新GPU实际绑定须由执行者核。",
+    "HTTP/1.0、gzip和全仓旧client/server兼容没有在本轮扩大。",
+    "仅探索性题目质量与基座能力诊断，无训练/留出资格；aiohttp同仓整体划分。"
+  ]
+}

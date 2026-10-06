@@ -1,0 +1,199 @@
+{
+ "task_id": "conan-io__conan-12397",
+ "source": "swe_gym_lite",
+ "task_revision": "upstream",
+ "materials_refs": {
+  "base_commit": "883eff8961d6e0d96652f78e3d7d3884479e769e",
+  "version": "1.54",
+  "image": "xingyaoww/sweb.eval.x86_64.conan-io_s_conan-12397:latest",
+  "stage1_logs": "runs/env_probe_stage1_20260910/ledger/logs/stage1_offline_20260910/conan-io__conan-12397/{gold,empty}/offline/a1/",
+  "pkg_scans": "runs/env_overnight_20260916/L1_conan/{prescan2,envscan,collide}.json"
+ },
+ "public_view": {
+  "目标行为": "题面：MesonToolchain 把 -stdlib=<lib> 加进了编译参数但没加进链接参数，clang+libc++ 下链接报 undefined reference to std::__1::...。题面的 Notes 一节直接点明 This error occurs because -stdlib=<lib> is added to the compiler but not the link args，Workaround 一节给出 tc.cpp_link_args += [\"-stdlib=libc++\"]。相关代码：conan/tools/meson/toolchain.py::_context 里 if self.libcxx: self.cpp_args.append(self.libcxx)。",
+  "约束": "只改非测试源码；不能影响 c_args/c_link_args（C 没有 stdlib 概念）。",
+  "公开材料无法确定的点": [
+   "-stdlib 应该插在 cpp_link_args 的哪个位置（题面没说；F2P 要求追加在用户自定义 flag 之后）。",
+   "gcc + libstdc++11 的 -D_GLIBCXX_USE_CXX11_ABI 是否也要同步进 link args（gold 没做）。"
+  ]
+ },
+ "checks": {
+  "1": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "grading.test_patch 除了新增 F2P 的断言，还改写了既有测试 test_extra_flags_via_conf 的 profile（compiler.libcxx=libstdc++11 -> libstdc++）与期望（cpp_args 多了 -D_GLIBCXX_USE_CXX11_ABI=0）",
+    "该测试同时出现在 pass_to_pass 里"
+   ],
+   "note": "材料对应同一 PR，但要注意 P2P 里的 test_extra_flags_via_conf 是被本次 test_patch 改写过的测试，不是未受影响的既有测试。任何假设 P2P = 未被 test_patch 触碰 的分析都会出错。无二进制/LFS/子模块。",
+   "by": "L1_conan"
+  },
+  "2": {
+   "status": "pass",
+   "evidence_refs": [
+    "git show 883eff89:conan/tools/meson/toolchain.py L317-320 只有 self.cpp_args.append(self.libcxx)",
+    "stage1 empty：F2P FAILED"
+   ],
+   "note": "base 确含题面所述缺陷。",
+   "by": "L1_conan"
+  },
+  "3": {
+   "status": "pass",
+   "evidence_refs": [
+    "problem_statement 1092 字符，含复现命令、报错、Notes、Workaround",
+    "raw.hints_text 137 字符：Related to #12156 | I think it just needs the library flag added to cpp_link_args"
+   ],
+   "note": "题面完整；hints 的信息题面已有。",
+   "by": "L1_conan"
+  },
+  "4_17": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan2.json: test_patch 只碰 conans/test/integration/toolchains/meson/test_mesontoolchain.py"
+   ],
+   "note": "纯测试文件；gold 不碰测试路径。",
+   "by": "L1_conan"
+  },
+  "5": {
+   "status": "pass",
+   "evidence_refs": [
+    "本包内无其它 meson 题"
+   ],
+   "note": "无同族题。",
+   "by": "L1_conan"
+  },
+  "23": {
+   "status": "pass",
+   "evidence_refs": [
+    "题面 Notes 与 Workaround 两节直接给出要改什么"
+   ],
+   "note": "这是本包里题面与判分目标最一致的一题：公开材料足以推出 F2P。",
+   "by": "L1_conan"
+  },
+  "24": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "F2P 断言 cpp_link_args = ['-isysroot', '/other/sdk/path', '-arch', 'myarch', '-otherminversion=10.7', '-stdlib=libc++'] 逐字符相等，-stdlib 必须在最后"
+   ],
+   "note": "顺序约束没有公开依据，但与同一断言里 cpp_args 的既有形态一致（base 下 cpp_args 就是把 libcxx 追加在用户 flag 之后），求解者可以照抄。判为轻微。",
+   "by": "L1_conan"
+  },
+  "25": {
+   "status": "issue",
+   "severity_hint": "P3",
+   "evidence_refs": [
+    "F2P 只检查生成的 cross 文件文本"
+   ],
+   "note": "只在 apple/cross 分支加 -stdlib 的半截修复也能过（F2P 的用例正是 apple cross 场景），native 场景没有独立的 F2P 覆盖；不过 P2P 的 test_extra_flags_via_conf 是 native 场景，能挡住把 -stdlib 无条件塞进 c_link_args 的错误实现。",
+   "by": "L1_conan"
+  },
+  "26": {
+   "status": "pass",
+   "evidence_refs": [
+    "该测试文件在 base 只有 3 个测试（stage1 status_map n=3），F2P 1 + P2P 2 已是全量"
+   ],
+   "note": "同文件已全覆盖；跨文件扩展见 proposed_regression_tests。",
+   "by": "L1_conan"
+  },
+  "27": {
+   "status": "pass",
+   "evidence_refs": [
+    "golden_patch 1 行新增"
+   ],
+   "note": "gold 最小、与题对应、不依赖未交付改动。",
+   "by": "L1_conan"
+  },
+  "29": {
+   "status": "pass",
+   "evidence_refs": [
+    "scripts/leak.py: 1 行 gold 新增，0 命中题面"
+   ],
+   "note": "题面 Workaround 给的是用户侧绕过写法，不是 gold 代码本身；不算泄漏，但确实把修法说得很透。",
+   "by": "L1_conan"
+  },
+  "6_7_11": {
+   "status": "pass",
+   "evidence_refs": [
+    "envscan.json: 该文件无 @pytest.mark.tool；3 处 skipif 都是 sys.version_info.major == 2，在 py3.10 下不触发",
+    "stage1 gold 3/3 PASSED、0 SKIPPED"
+   ],
+   "note": "不需要 meson/ninja 可执行文件（只比对生成的 ini 文本）；不访问 conancenter。",
+   "by": "L1_conan"
+  },
+  "19": {
+   "status": "pass",
+   "evidence_refs": [
+    "scripts/collide.py 无输出"
+   ],
+   "note": "3 个参考 ID 无参数化。",
+   "by": "L1_conan"
+  },
+  "20": {
+   "status": "pass",
+   "evidence_refs": [
+    "prescan2.json: gold 3/3 PASSED；empty 2 PASSED + 1 FAILED"
+   ],
+   "note": "分差来自目标行为。",
+   "by": "L1_conan"
+  },
+  "31": {
+   "status": "issue",
+   "severity_hint": "P2",
+   "evidence_refs": [
+    "conans/test/.gitignore 第 1 行就是 conftest_user.py（1.51/1.54/1.60/2.0/2.1 五个 base 一致）",
+    "conans/test/conftest.py 用 from conans.test.conftest_user import tools_locations（1.x）/ tools_locations + default_profiles（2.x）并 merge 覆盖默认值",
+    "scripts 补扫：本题目标测试文件里无模块级 pytestmark、无 pytest.mark.tool、无 pytest.skip(、无 sys.exit/os._exit、无 conftest_user 引用"
+   ],
+   "note": "发现一个仓库级控制面：候选可以在 /testbed 新建 conans/test/conftest_user.py，它被官方 conftest 无条件 import 并 merge，而且它在 conans/test/.gitignore 里、也不在 test_patch 路径内，所以既不会被 git checkout <base> -- <path> 恢复，也不会被不带 -x 的 git clean 删掉；文件里的任意代码会在 pytest 收集阶段执行。本题是 conan 1.x：tools.py 不消费 default_profiles，可改的只有 tools_locations（把工具标记从 fail 变成 skip）。 本题用 TestClient 跑集成测试，受 default_profiles 影响面更大。 本题的 F2P/P2P 本身没有可被跳过或提前退出的入口（见上条补扫）。按第四组 B，未发现依据前不新增排除清单，只记录观测。",
+   "by": "L1_conan"
+  }
+ },
+ "issues": [
+  {
+   "category": "p2p_includes_rewritten_test",
+   "severity": "P3",
+   "evidence_refs": [
+    "grading.test_patch 第二、三个 hunk",
+    "grading.pass_to_pass 含 test_extra_flags_via_conf"
+   ],
+   "proposed_action": "在筛查工具里区分 P2P 中被 test_patch 改写过的条目，避免把它当作未受影响的既有行为。",
+   "next_experiment": "对 216 题统一统计：P2P 里有多少条的测试函数被同一个 test_patch 改写过（按 hunk 上下文函数名匹配）。"
+  },
+  {
+   "category": "control_surface_conftest_user",
+   "severity": "P2",
+   "evidence_refs": [
+    "conans/test/.gitignore:1",
+    "conans/test/conftest.py 的 conftest_user import 段",
+    "conans/test/utils/tools.py 的 from conans.test.conftest import default_profiles（仅 2.x）"
+   ],
+   "proposed_action": "仓库级处置，见 repo_level_findings.md §10：建议在 conan 的评分配方里，在可信 setup 阶段删除 /testbed/conans/test/conftest_user.py（或对整个 conans/test/ 做 git clean -xfd 后再 checkout），而不是逐题加 additional_exclusions。",
+   "next_experiment": "在 conan 镜像里写一个 conftest_user.py（例如 tools_locations={'cmake':{'disabled':True}} 或 2.x 下改 default_profiles['Linux'] 的 compiler），跑本题官方 eval，确认它是否改变逐 ID 结果；同时确认 RH2 的恢复步骤之后该文件是否仍在。"
+  }
+ ],
+ "file_rules": {
+  "additional_exclusions": [],
+  "rationale": "test_patch 只碰纯测试文件；gold 不碰测试路径。",
+  "evidence_refs": [
+   "runs/env_overnight_20260916/L1_conan/prescan2.json"
+  ]
+ },
+ "proposed_regression_tests": [
+  {
+   "id": "conans/test/unittests/tools/meson/test_meson.py",
+   "reason": "MesonToolchain 的单测入口，覆盖 _context 之外的生成路径。"
+  },
+  {
+   "id": "conans/test/functional/toolchains/meson/test_meson.py",
+   "reason": "沿调用者的真实构建验证；注意它依赖 meson/ninja 工具链，conan conftest 对缺工具是 pytest.fail 而非 skip（见 repo_level_findings.md），只能当诊断项。"
+  }
+ ],
+ "disposition_hint": {
+  "state": "ready_for_probe",
+  "reason": "题面直接说明修法、gold 最小、无网络无工具链依赖、参考 ID 干净、gold/no-op 分差正确；唯一杂音是 P2P 里含被 test_patch 改写的测试。"
+ },
+ "costs": {
+  "minutes": 18
+ }
+}

@@ -1,0 +1,556 @@
+{
+  "schema": "non_author_dask_thread_budget_applicability_review.v1",
+  "as_of": "2026-10-03",
+  "author_role": "non-author independent subagent",
+  "scope": "read-only fixed source, effective tests, identity and historical CPU manifests; no execution",
+  "execution_performed": false,
+  "new_scores": null,
+  "training_qualification_granted": false,
+  "tasks": [
+    {
+      "instance_id": "dask__dask-7138",
+      "base_commit": "9bb586a6b8fac1983b7cea3ab399719f93dbbb29",
+      "base_tree": "33b5ace27a7633ff37736635567b2b8f6fd93a9a",
+      "revision_id": "dask7138-array-keyword-v1",
+      "fixed_test_command": "pytest -n0 -rA  --color=no dask/array/tests/test_routines.py",
+      "module": "dask/array/tests/test_routines.py",
+      "reference_partition_counts": {
+        "added_p2p": 1,
+        "original_f2p": 1,
+        "original_p2p": 468
+      },
+      "reference_total": 470,
+      "cpu_ledger_resource_facts": null,
+      "baseline_manifest": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-formal-cpu-c-20261003-v1/remote/run/noop/artifacts/swe_gym_lite--dask__dask-7138/a1-a9f37168/baseline_manifest.json",
+      "verified_baseline_source_entries": [
+        {
+          "path": "conftest.py",
+          "sha256": "888aa2ec3a8ee16e61156caede9c9a8131092ec925aff3af9fb4980feb5f46f2",
+          "matches_manifest": true
+        },
+        {
+          "path": "dask/system.py",
+          "sha256": "fb9ff8c2f9d6dcdafc3c764c089103d08e313f91443c86bfcb3c87f51e808b95",
+          "matches_manifest": true
+        },
+        {
+          "path": "dask/threaded.py",
+          "sha256": "ab4c4ab03099689d8ace6f890c206771284b7b5c0a0219e0c616bda0b9f058cd",
+          "matches_manifest": true
+        },
+        {
+          "path": "dask/config.py",
+          "sha256": "9dd183cc4bd5fe8075fabb0d18baa17d22f4ed066f23c05cc9ac82be353a0152",
+          "matches_manifest": true
+        },
+        {
+          "path": "dask/array/tests/test_routines.py",
+          "sha256": "95c7703b381fa8f5b71e71afbc68620f9be2ccf0bedfc95eafcae7b5f51c9927",
+          "matches_manifest": true
+        },
+        {
+          "path": "dask/array/core.py",
+          "sha256": "f878bbed7a48d419eaf72a1596ed31f210d9d1f55c624e5834d952accbdf3330",
+          "matches_manifest": true
+        },
+        {
+          "path": "dask/array/utils.py",
+          "sha256": "fe792dc08c702d14f6bcaccada247aa9ea9608a8416eb6fb2f2e1722538d8ec0",
+          "matches_manifest": true
+        }
+      ],
+      "conftest_inventory": [
+        "conftest.py"
+      ],
+      "classification": "default_threaded_reachable_no_same_spawn_mechanism_evidence"
+    },
+    {
+      "instance_id": "dask__dask-9378",
+      "base_commit": "8b95f983c232c1bd628e9cba0695d3ef229d290b",
+      "base_tree": "a02ee8d54b64ca1004fa5b477edd7671d22cf85d",
+      "revision_id": "dask9378-mask-route-b-v1",
+      "fixed_test_command": "pytest -n0 -rA  --color=no dask/array/tests/test_masked.py",
+      "module": "dask/array/tests/test_masked.py",
+      "reference_partition_counts": {
+        "original_f2p": 3,
+        "original_p2p": 134
+      },
+      "reference_total": 137,
+      "cpu_ledger_resource_facts": null,
+      "baseline_manifest": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-formal-cpu-c-20261003-v2/remote/run/noop/artifacts/swe_gym_lite--dask__dask-9378/a1-f270f2f7/baseline_manifest.json",
+      "verified_baseline_source_entries": [
+        {
+          "path": "conftest.py",
+          "sha256": "7377b1eb6821ad93b02e541153547e32ae24641a0dff8477682730d9e0460d8b",
+          "matches_manifest": true
+        },
+        {
+          "path": "dask/system.py",
+          "sha256": "fb9ff8c2f9d6dcdafc3c764c089103d08e313f91443c86bfcb3c87f51e808b95",
+          "matches_manifest": true
+        },
+        {
+          "path": "dask/threaded.py",
+          "sha256": "2afada4c1807701f316b95f3742326430c5c966ba5d539588c7a12f41fea18f9",
+          "matches_manifest": true
+        },
+        {
+          "path": "dask/config.py",
+          "sha256": "213848692d527a475db673b50b3a10545e534d6223f7f8c80d7c0f45c304e7e3",
+          "matches_manifest": true
+        },
+        {
+          "path": "dask/array/tests/test_masked.py",
+          "sha256": "f8cfe68f10e9a71bf12d6fccdf51a8eadedc736b431aac3d9f282f59aa4348b0",
+          "matches_manifest": true
+        },
+        {
+          "path": "dask/array/core.py",
+          "sha256": "003fa8b84d6d39b767d82e7804bee868aba0119a005a2a2c0443678b3dac515b",
+          "matches_manifest": true
+        },
+        {
+          "path": "dask/array/utils.py",
+          "sha256": "66b54c279c6e999437958975031790c3d3c00ce448ea1bad18e3e33925ab9a25",
+          "matches_manifest": true
+        }
+      ],
+      "conftest_inventory": [
+        "conftest.py"
+      ],
+      "classification": "default_threaded_reachable_no_same_spawn_mechanism_evidence"
+    },
+    {
+      "instance_id": "dask__dask-8801",
+      "base_commit": "9634da11a5a6e5eb64cf941d2088aabffe504adb",
+      "base_tree": "fa22846a524358a55a33cf843364aef2e02c2111",
+      "revision_id": "dask8801-behavior-semantic-v7-compat1",
+      "fixed_test_command": "pytest -n0 -rA  --color=no dask/tests/test_config.py",
+      "module": "dask/tests/test_config.py",
+      "reference_partition_counts": {
+        "added_p2p": 2,
+        "original_f2p": 2,
+        "original_p2p": 41
+      },
+      "reference_total": 45,
+      "cpu_ledger_resource_facts": null,
+      "baseline_manifest": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask8801-formal-cpu-c-20261003-v2/remote/run/noop/artifacts/swe_gym_lite--dask__dask-8801/a1-e817c33c/baseline_manifest.json",
+      "verified_baseline_source_entries": [
+        {
+          "path": "conftest.py",
+          "sha256": "7377b1eb6821ad93b02e541153547e32ae24641a0dff8477682730d9e0460d8b",
+          "matches_manifest": true
+        },
+        {
+          "path": "dask/system.py",
+          "sha256": "fb9ff8c2f9d6dcdafc3c764c089103d08e313f91443c86bfcb3c87f51e808b95",
+          "matches_manifest": true
+        },
+        {
+          "path": "dask/threaded.py",
+          "sha256": "32f0fe3ac358f82502c191aeaa5efbc8e981e1acbdc8b847f4b4aac14d1225dd",
+          "matches_manifest": true
+        },
+        {
+          "path": "dask/config.py",
+          "sha256": "689e71ce770ee620c1e1c9ddaa72d12c1639c93d5d9c1c12f0be0e99c2d631ee",
+          "matches_manifest": true
+        },
+        {
+          "path": "dask/tests/test_config.py",
+          "sha256": "98fd91b0186eaf7a64c7b76e2ba299bd00d1d7be1edf354e1642208b824f4391",
+          "matches_manifest": true
+        }
+      ],
+      "conftest_inventory": [
+        "conftest.py"
+      ],
+      "classification": "serial_subprocess_no_default_process_pool_evidence_ambient_dask_env_conflict"
+    }
+  ],
+  "decision": {
+    "7138": "default threaded reachable; no same default process/BLAS fanout evidence; future five-key budget defensive only",
+    "9378": "default threaded reachable; normal assert_eq sync; no in-flight env change or automatic 7305 recovery",
+    "8801": "no default Dask process pool evidence; serial import subprocess; avoid DASK_NUM_WORKERS absent concrete need because fixed ambient collect assertion conflicts"
+  },
+  "future_array_budget_suggestion": {
+    "status": "suggestion_not_necessary_repair_proven",
+    "env": {
+      "DASK_NUM_WORKERS": "2",
+      "OPENBLAS_NUM_THREADS": "1",
+      "OMP_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1"
+    },
+    "apply_before_first_import": true,
+    "inflight_change": false
+  },
+  "limitations": [
+    "static exported base is not actual actor worktree",
+    "all three selected CPU ledgers resource_facts=null",
+    "no field runtime CPU visibility, BLAS backend, process/thread census or env confirmation for these three",
+    "8801 ambient DASK key conflict proven for inspected source path; runtime failure unobserved and external plugin/startup env handling unknown",
+    "fixed-module absence of process calls does not guarantee future candidates or indirect external code never spawn",
+    "no new score, no new model arm, no training admission"
+  ],
+  "sources": [
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/dask__dask-7138/base_identity.json",
+      "sha256": "c9c2ed6bfd239147e9fb6d2d3516bfd23b398f2163b114f906a5b738576046ef",
+      "bytes": 797,
+      "line_count": 23
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-formal-cpu-c-20261003-v1/remote/run/noop/artifacts/swe_gym_lite--dask__dask-7138/a1-a9f37168/baseline_manifest.json",
+      "sha256": "2d7f702bc5001e378a018e9b907ccc95a512adafcc827e8b00bfffdb0e55974b",
+      "bytes": 99708,
+      "line_count": 3000
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask7138-formal-cpu-c-20261003-v1/remote/run/noop/ledger.jsonl",
+      "sha256": "21a045eb7f05a2e10c1c75feba88b3b12cc93ecb1b58f8abb41af41704ec9b14",
+      "bytes": 76950,
+      "line_count": 1
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7138/revision.json",
+      "sha256": "fb29e9e0f0a6457d974256b95678b753f9c700e7051c5fb3d8c2dfec61b767cc",
+      "bytes": 77633,
+      "line_count": 1012
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7138/effective_test.py",
+      "sha256": "70c4e3bbadcdda5e78b624b7c51c49976485a1110f0952558c5c41b0f7231fae",
+      "bytes": 56898,
+      "line_count": 1918
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-7138/effective_test.patch",
+      "sha256": "2f3c5c539816149a06b6c460b5d79d6b3223f452cd5862bcdbac41faf76bc44a",
+      "bytes": 1426,
+      "line_count": 42
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/dask__dask-7138/base/conftest.py",
+      "sha256": "888aa2ec3a8ee16e61156caede9c9a8131092ec925aff3af9fb4980feb5f46f2",
+      "bytes": 992,
+      "line_count": 36,
+      "reviewed_line_ranges": [
+        [
+          1,
+          36
+        ]
+      ]
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/dask__dask-7138/base/dask/system.py",
+      "sha256": "fb9ff8c2f9d6dcdafc3c764c089103d08e313f91443c86bfcb3c87f51e808b95",
+      "bytes": 1458,
+      "line_count": 53,
+      "reviewed_line_ranges": [
+        [
+          22,
+          53
+        ]
+      ]
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/dask__dask-7138/base/dask/threaded.py",
+      "sha256": "ab4c4ab03099689d8ace6f890c206771284b7b5c0a0219e0c616bda0b9f058cd",
+      "bytes": 2538,
+      "line_count": 96,
+      "reviewed_line_ranges": [
+        [
+          56,
+          77
+        ]
+      ]
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/dask__dask-7138/base/dask/config.py",
+      "sha256": "9dd183cc4bd5fe8075fabb0d18baa17d22f4ed066f23c05cc9ac82be353a0152",
+      "bytes": 17957,
+      "line_count": 648,
+      "reviewed_line_ranges": [
+        [
+          171,
+          205
+        ],
+        [
+          396,
+          402
+        ],
+        [
+          647,
+          647
+        ]
+      ]
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/dask__dask-7138/base/dask/array/tests/test_routines.py",
+      "sha256": "95c7703b381fa8f5b71e71afbc68620f9be2ccf0bedfc95eafcae7b5f51c9927",
+      "bytes": 55889,
+      "line_count": 1886
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/dask__dask-7138/base/dask/array/core.py",
+      "sha256": "f878bbed7a48d419eaf72a1596ed31f210d9d1f55c624e5834d952accbdf3330",
+      "bytes": 165387,
+      "line_count": 5121,
+      "reviewed_line_ranges": [
+        [
+          1171,
+          1174
+        ]
+      ]
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/dask__dask-7138/base/dask/array/utils.py",
+      "sha256": "fe792dc08c702d14f6bcaccada247aa9ea9608a8416eb6fb2f2e1722538d8ec0",
+      "bytes": 14778,
+      "line_count": 459,
+      "reviewed_line_ranges": [
+        [
+          223,
+          261
+        ]
+      ]
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/dask__dask-9378/base_identity.json",
+      "sha256": "d3ba570ff0fe0ced37e563ae8158fe93e5f7c2bafa1664fb7ed79c132e9d72dd",
+      "bytes": 742,
+      "line_count": 21
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-formal-cpu-c-20261003-v2/remote/run/noop/artifacts/swe_gym_lite--dask__dask-9378/a1-f270f2f7/baseline_manifest.json",
+      "sha256": "a4885fdeb12addefcd864dedd855674c7ce16134c191bdf74f8a46729cae6378",
+      "bytes": 110627,
+      "line_count": 3322
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask9378-formal-cpu-c-20261003-v2/remote/run/noop/ledger.jsonl",
+      "sha256": "4a31f91fd971a9f875fe131c258b2842a70c7587724db855caaac8c5b5d0106a",
+      "bytes": 24078,
+      "line_count": 1
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-9378/revision.json",
+      "sha256": "2020dc58319e23c27b289cd68b6b7e147b6de736015876e2f16ea53ed8dbf9d5",
+      "bytes": 22285,
+      "line_count": 345
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-9378/effective_test.py",
+      "sha256": "c834df1a5aeb1596ff637ab7bcf79f9001d8b5d347023ca1a60f74d1ec3190e9",
+      "bytes": 14129,
+      "line_count": 450
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-9378/effective_test.patch",
+      "sha256": "9fc1a9d5ae885d9cc30388a875ab7ed629081de7ba7bdcc8571f3aca604a248a",
+      "bytes": 1190,
+      "line_count": 28
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/dask__dask-9378/base/conftest.py",
+      "sha256": "7377b1eb6821ad93b02e541153547e32ae24641a0dff8477682730d9e0460d8b",
+      "bytes": 1726,
+      "line_count": 70,
+      "reviewed_line_ranges": [
+        [
+          1,
+          70
+        ]
+      ]
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/dask__dask-9378/base/dask/system.py",
+      "sha256": "fb9ff8c2f9d6dcdafc3c764c089103d08e313f91443c86bfcb3c87f51e808b95",
+      "bytes": 1458,
+      "line_count": 53,
+      "reviewed_line_ranges": [
+        [
+          22,
+          53
+        ]
+      ]
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/dask__dask-9378/base/dask/threaded.py",
+      "sha256": "2afada4c1807701f316b95f3742326430c5c966ba5d539588c7a12f41fea18f9",
+      "bytes": 2993,
+      "line_count": 109,
+      "reviewed_line_ranges": [
+        [
+          68,
+          94
+        ]
+      ]
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/dask__dask-9378/base/dask/config.py",
+      "sha256": "213848692d527a475db673b50b3a10545e534d6223f7f8c80d7c0f45c304e7e3",
+      "bytes": 20415,
+      "line_count": 719,
+      "reviewed_line_ranges": [
+        [
+          206,
+          239
+        ],
+        [
+          449,
+          455
+        ],
+        [
+          718,
+          718
+        ]
+      ]
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/dask__dask-9378/base/dask/array/tests/test_masked.py",
+      "sha256": "f8cfe68f10e9a71bf12d6fccdf51a8eadedc736b431aac3d9f282f59aa4348b0",
+      "bytes": 13285,
+      "line_count": 429
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/dask__dask-9378/base/dask/array/core.py",
+      "sha256": "003fa8b84d6d39b767d82e7804bee868aba0119a005a2a2c0443678b3dac515b",
+      "bytes": 190240,
+      "line_count": 5804,
+      "reviewed_line_ranges": [
+        [
+          91,
+          91
+        ],
+        [
+          1413,
+          1416
+        ]
+      ]
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/dask__dask-9378/base/dask/array/utils.py",
+      "sha256": "66b54c279c6e999437958975031790c3d3c00ce448ea1bad18e3e33925ab9a25",
+      "bytes": 18638,
+      "line_count": 573,
+      "reviewed_line_ranges": [
+        [
+          243,
+          264
+        ],
+        [
+          282,
+          318
+        ]
+      ]
+    },
+    {
+      "path": "runs/swegym_quality_batch01_20260921/public/dask__dask-8801/base_identity.json",
+      "sha256": "682b643db7118abb83aea3becbbc177740631c61b035fed6fe8c15d3b70182d5",
+      "bytes": 351,
+      "line_count": 12
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask8801-formal-cpu-c-20261003-v2/remote/run/noop/artifacts/swe_gym_lite--dask__dask-8801/a1-e817c33c/baseline_manifest.json",
+      "sha256": "cb05ed7a3446dc7b1ab652ed167acf8c776ed90a04d64cf05deb44bb05b2cf0f",
+      "bytes": 108793,
+      "line_count": 3266
+    },
+    {
+      "path": "runs/category2_repair_20260929/swe_dask/cpu_diagnostics/dask8801-formal-cpu-c-20261003-v2/remote/run/noop/ledger.jsonl",
+      "sha256": "cb07a380cc74f1579064d2136f68337ddd1f3dc814e71accb798baa9835a7f60",
+      "bytes": 11697,
+      "line_count": 1
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/revision.json",
+      "sha256": "fddedb82581076d5b7277693fb3bef44aa73c0a5216e3c243e3ee0133167b87e",
+      "bytes": 14119,
+      "line_count": 228
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/effective_test.py",
+      "sha256": "8257cf66bb3a65181f165cd9ef040b828a0084cf1ca76e9181d6968053a332e7",
+      "bytes": 28768,
+      "line_count": 764
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/effective_test.patch",
+      "sha256": "a0d2794fb43dc920f7dbc00078975b9334a3040d873aa56971256f04f3dd360c",
+      "bytes": 13552,
+      "line_count": 235
+    },
+    {
+      "path": "runs/swegym_quality_batch01_20260921/public/dask__dask-8801/base/conftest.py",
+      "sha256": "7377b1eb6821ad93b02e541153547e32ae24641a0dff8477682730d9e0460d8b",
+      "bytes": 1726,
+      "line_count": 70,
+      "reviewed_line_ranges": [
+        [
+          1,
+          70
+        ]
+      ]
+    },
+    {
+      "path": "runs/swegym_quality_batch01_20260921/public/dask__dask-8801/base/dask/system.py",
+      "sha256": "fb9ff8c2f9d6dcdafc3c764c089103d08e313f91443c86bfcb3c87f51e808b95",
+      "bytes": 1458,
+      "line_count": 53,
+      "reviewed_line_ranges": [
+        [
+          22,
+          53
+        ]
+      ]
+    },
+    {
+      "path": "runs/swegym_quality_batch01_20260921/public/dask__dask-8801/base/dask/threaded.py",
+      "sha256": "32f0fe3ac358f82502c191aeaa5efbc8e981e1acbdc8b847f4b4aac14d1225dd",
+      "bytes": 2850,
+      "line_count": 101,
+      "reviewed_line_ranges": [
+        [
+          68,
+          94
+        ]
+      ]
+    },
+    {
+      "path": "runs/swegym_quality_batch01_20260921/public/dask__dask-8801/base/dask/config.py",
+      "sha256": "689e71ce770ee620c1e1c9ddaa72d12c1639c93d5d9c1c12f0be0e99c2d631ee",
+      "bytes": 19772,
+      "line_count": 702,
+      "reviewed_line_ranges": [
+        [
+          191,
+          224
+        ],
+        [
+          412,
+          438
+        ]
+      ]
+    },
+    {
+      "path": "runs/swegym_quality_batch01_20260921/public/dask__dask-8801/base/dask/tests/test_config.py",
+      "sha256": "98fd91b0186eaf7a64c7b76e2ba299bd00d1d7be1edf354e1642208b824f4391",
+      "bytes": 15827,
+      "line_count": 547
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/reviews/non_author_7305_grader_thread_budget_review_20261003.md",
+      "sha256": "b9fc7f1b82d8ee6203f5020c9d46b7a1bea384eb283dc22a0d549566bb02689c",
+      "bytes": 10923,
+      "line_count": 88
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/migration_20261003/dask7305_thread_runtime_readback_0835_v2.json",
+      "sha256": "f85a3fbb41df8bc200e2ada0e94b1b5824001cc7a6efbb96bb63681d31b2e7d5",
+      "bytes": 9791,
+      "line_count": 242
+    }
+  ]
+}

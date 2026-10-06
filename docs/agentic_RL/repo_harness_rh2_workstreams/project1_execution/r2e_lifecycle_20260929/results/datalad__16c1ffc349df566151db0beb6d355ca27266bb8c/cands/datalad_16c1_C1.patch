@@ -1,0 +1,39 @@
+diff --git a/datalad/interface/utils.py b/datalad/interface/utils.py
+index 7c35619..49cc4b8 100644
+--- a/datalad/interface/utils.py
++++ b/datalad/interface/utils.py
+@@ -991,6 +991,22 @@ def eval_results(func):
+             incomplete_results = []
+             # inspect and render
+             result_filter = common_params['result_filter']
++            # filters that accept **kwargs additionally get the keyword
++            # arguments of the API call; all other filters (Constraints,
++            # plain one-argument callables) keep being called with the
++            # result only
++            _result_filter = result_filter
++            if result_filter:
++                try:
++                    _filter_takes_kwargs = any(
++                        p.kind == inspect.Parameter.VAR_KEYWORD
++                        for p in inspect.signature(result_filter).parameters.values())
++                except (TypeError, ValueError):
++                    # no introspectable signature (e.g. some builtins)
++                    _filter_takes_kwargs = False
++                if _filter_takes_kwargs:
++                    def _result_filter(res):
++                        return result_filter(res, **_kwargs)
+             result_renderer = common_params['result_renderer']
+             result_xfm = common_params['result_xfm']
+             if result_xfm in known_result_xfms:
+@@ -1025,9 +1041,9 @@ def eval_results(func):
+                         # first fail -> that's it
+                         # raise will happen after the loop
+                         break
+-                if result_filter:
++                if _result_filter:
+                     try:
+-                        if not result_filter(res):
++                        if not _result_filter(res):
+                             raise ValueError('excluded by filter')
+                     except ValueError as e:
+                         lgr.debug('not reporting result (%s)', exc_str(e))

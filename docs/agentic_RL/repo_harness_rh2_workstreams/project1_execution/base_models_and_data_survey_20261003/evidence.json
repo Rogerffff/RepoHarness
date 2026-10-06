@@ -1,0 +1,2304 @@
+{
+  "schema_version": "1.0",
+  "title": "两确切模型继续训练与 coding-agent 数据调查",
+  "research_date": "2026-10-03",
+  "timezone": "Asia/Singapore",
+  "created_at_utc": "2026-10-03T06:26:04.175966+00:00",
+  "status": "研究与建议；未执行、未采纳为项目决定",
+  "scope": {
+    "target_models": [
+      "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+      "Qwen/Qwen3.6-35B-A3B"
+    ],
+    "gpu_experiments": 0,
+    "cpu_environment_experiments": 0,
+    "full_dataset_downloads": 0,
+    "container_pulls": 0,
+    "new_training_runs": 0,
+    "gated_terms_accepted": false,
+    "other_threads_messaged": false,
+    "shared_code_or_ledgers_modified": false,
+    "committed": false
+  },
+  "evidence_layers": {
+    "author_report": "作者论文/模型卡/项目结果；不等于我方复现",
+    "code_inspected": "只读实现与示例；不保证与结果逐项绑定",
+    "asset_metadata_or_sample": "可定位文件/标签/少量行；不等于训练准入",
+    "existing_project_measurement": "历史快照；raw reward 与语义正确分开"
+  },
+  "checkpoints": [
+    {
+      "id": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+      "observed_revision": "b2cff646eb4bb1d68355c01b18ae02e7cf42d120",
+      "last_modified": "2025-12-03T08:05:17.000Z",
+      "source_ids": [
+        "coder_meta",
+        "coder_card"
+      ],
+      "stage": "已后训练发布物；非原始预训练 base",
+      "is_author_training_revision_verified": false,
+      "license_declared": "apache-2.0",
+      "total_parameters_billion": 30.5,
+      "active_parameters_billion": 3.3,
+      "native_context_tokens": 262144,
+      "thinking": "non-thinking only"
+    },
+    {
+      "id": "Qwen/Qwen3.6-35B-A3B",
+      "observed_revision": "995ad96eacd98c81ed38be0c5b274b04031597b0",
+      "last_modified": "2026-04-24T02:53:42.000Z",
+      "source_ids": [
+        "qwen36_meta",
+        "qwen36_card"
+      ],
+      "stage": "已后训练发布物；非原始预训练 base",
+      "is_author_training_revision_verified": false,
+      "license_declared": "apache-2.0",
+      "total_parameters_billion": 35,
+      "active_parameters_billion": 3,
+      "native_context_tokens": 262144,
+      "thinking": "训练/评测需明确配置；ROSS 开启 thinking"
+    }
+  ],
+  "training_examples": [
+    {
+      "id": "uni_coder_r2e",
+      "initial_checkpoint": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+      "exact_target_checkpoint": true,
+      "training_data": {
+        "name": "R2E-Gym",
+        "exact_count": null,
+        "manifest_located": false
+      },
+      "stages": [
+        "GSPO RL"
+      ],
+      "results": {
+        "metric": "task validation metric；表格未逐行明确名称；不可用非 Coder 代表曲线补全",
+        "base_percent": 46.2,
+        "trained_percent": 52.0,
+        "delta_pp": 5.8
+      },
+      "source_ids": [
+        "uni_bench",
+        "uni_rl-training.md"
+      ],
+      "evidence_layer": "作者报告",
+      "independently_reproduced_in_this_survey": false,
+      "harness": {
+        "mode": "Fully Async",
+        "max_turns": 100,
+        "context_label": "128K",
+        "exact_run_harness_pin": null
+      },
+      "budget": {
+        "exact_historical_gpu_count": null,
+        "gpu_hours": null
+      },
+      "limits": [
+        "当前 quickstart 预算不绑定历史 R2E 结果。",
+        "没有定位该训练结果的完整 manifest、方差或发布权重。"
+      ]
+    },
+    {
+      "id": "uni_coder_rebench",
+      "initial_checkpoint": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+      "exact_target_checkpoint": true,
+      "training_data": {
+        "name": "SWE-reBench",
+        "current_quickstart_dataset": "dyyyyyyyy/swe-rebench-filtered-1150",
+        "current_dataset_rows": 1150,
+        "historical_result_manifest_binding_verified": false
+      },
+      "stages": [
+        "GSPO RL"
+      ],
+      "results": {
+        "metric": "task validation metric；当前 quickstart 用 SWE-bench Verified",
+        "base_percent": 47.4,
+        "trained_percent": 54.2,
+        "delta_pp": 6.8
+      },
+      "source_ids": [
+        "uni_bench",
+        "uni_rl-training.md",
+        "uni_train_qwen3_moe.sh",
+        "uni_1150_meta",
+        "uni_1150_info"
+      ],
+      "evidence_layer": "作者报告",
+      "independently_reproduced_in_this_survey": false,
+      "harness": {
+        "mode": "Colocate Async",
+        "max_turns": 200,
+        "context_label": "128K",
+        "public_recipes": [
+          "ReAct",
+          "Claude Code"
+        ],
+        "table_result_proven_to_use_claude_code": false
+      },
+      "current_example_budget": {
+        "nodes": 8,
+        "gpus_per_node": 8,
+        "prompts": 64,
+        "rollouts_per_prompt": 8,
+        "epochs": 10,
+        "learning_rate": 1e-06,
+        "historical_result_binding_verified": false
+      },
+      "limits": [
+        "文档 GSPO 覆盖与脚本默认值应区分。",
+        "不要把 1150 与 Prime V2 子集合并。"
+      ]
+    },
+    {
+      "id": "rtmc_coder",
+      "initial_checkpoint": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+      "exact_target_checkpoint": true,
+      "training_data": {
+        "name": "R2E-Gym",
+        "author_count_label": "8.1K",
+        "no_swe_bench_overlap": "作者声称，未取得精确清单复核"
+      },
+      "stages": [
+        "GRPO ablation",
+        "GRPO + Step Reward",
+        "Rollout-Tree MC"
+      ],
+      "results": {
+        "benchmark": "SWE-bench Verified",
+        "n_tasks": 500,
+        "metric_author_name": "pass@1",
+        "actual_aggregation": "majority vote over 3 runs; best checkpoint per method",
+        "baseline": {
+          "resolved": 234,
+          "percent": 46.8
+        },
+        "grpo": {
+          "resolved": 245,
+          "percent": 49.0
+        },
+        "step_reward": {
+          "resolved": 252,
+          "percent": 50.4
+        },
+        "rtmc": {
+          "resolved": 261,
+          "percent": 52.2
+        }
+      },
+      "source_ids": [
+        "rtmc"
+      ],
+      "evidence_layer": "作者报告",
+      "independently_reproduced_in_this_survey": false,
+      "harness": {
+        "agent": "SWE-agent style",
+        "sandbox": "ROCK",
+        "tools": "R2E-Gym",
+        "trainer": "ROLL"
+      },
+      "budget": {
+        "gpus": 32,
+        "prompts": 8,
+        "rollouts_per_prompt": 8,
+        "learning_rate": 1e-07,
+        "warmup_steps": 20,
+        "gpu_hours": null
+      },
+      "limits": [
+        "不同于普通单次 pass@1。",
+        "未定位完整运行配方、任务清单或作者复现日志。"
+      ]
+    },
+    {
+      "id": "nemo_coder_swegym",
+      "initial_checkpoint": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+      "exact_target_checkpoint": true,
+      "training_data": {
+        "name": "SWE-Gym/SWE-Gym",
+        "declared_rows": 2438
+      },
+      "stages": [
+        "GRPO label in validation plot"
+      ],
+      "results": {
+        "validation_benchmark": "SWE-bench Verified",
+        "metric": "validation/total_reward/mean",
+        "graph_only": true,
+        "approx_step0": 0.17,
+        "approx_step30": 0.28,
+        "train_profile": {
+          "accuracy_printed": 0.1,
+          "resolved": 276,
+          "total": 2401,
+          "computed_fraction": 0.1149521032902957,
+          "average_turns": 88,
+          "inconsistency_unresolved": true
+        }
+      },
+      "source_ids": [
+        "nemo_readme_pinned",
+        "nemo_chart",
+        "nemo_git"
+      ],
+      "evidence_layer": "作者报告",
+      "independently_reproduced_in_this_survey": false,
+      "harness": {
+        "agent": "mini-SWE-agent",
+        "trainer": "NeMo RL/Gym"
+      },
+      "budget": {
+        "nodes": 16,
+        "prompts_per_step": 32,
+        "rollouts_per_step_as_written": 16,
+        "per_prompt_interpretation_verified": false,
+        "gpu_hours": null
+      },
+      "limits": [
+        "曲线读图是近似值，不是精确 pass@1 报表。",
+        "276/2401 与 0.10 不一致；2401 与 2438 的差异未解释。"
+      ]
+    },
+    {
+      "id": "kat_dev_qwen36",
+      "initial_checkpoint": "Qwen/Qwen3.6-35B-A3B",
+      "exact_target_checkpoint": true,
+      "training_data": {
+        "sft_examples": 127000,
+        "rl_task_count": null,
+        "manifest_located": false
+      },
+      "stages": [
+        "SFT",
+        "RL"
+      ],
+      "results": {
+        "metric": "in-house pass@1, once per evaluation set except obvious errors",
+        "SWE-bench Verified": {
+          "base": 64.4,
+          "trained": 69.4,
+          "delta_pp": 5.0
+        },
+        "SWE-bench Multilingual": {
+          "base": 57.0,
+          "trained": 63.0,
+          "delta_pp": 6.0
+        },
+        "SWE-bench Pro": {
+          "base": 40.63,
+          "trained": 45.96,
+          "delta_pp": 5.33
+        }
+      },
+      "source_ids": [
+        "kat_card_pinned",
+        "kat_meta",
+        "kat_paper",
+        "kat_datasets"
+      ],
+      "evidence_layer": "作者报告",
+      "independently_reproduced_in_this_survey": false,
+      "harness": {
+        "agent": "claude_code@2.1.195",
+        "temperature": 1.0,
+        "top_p": 0.95,
+        "context_label": "256K"
+      },
+      "budget": {
+        "rl_epochs": 10,
+        "gpus": null,
+        "gpu_hours": null
+      },
+      "released_model": {
+        "id": "Kwaipilot/KAT-Coder-V2.5-Dev",
+        "revision": "7be56fe773e72b6f5ca93c1ae45d828ddb893922"
+      },
+      "limits": [
+        "仅能归为 SFT+RL 总收益，未分离阶段贡献。",
+        "KAT-V2.5 论文的全部配方不一定逐项适用于 Dev。",
+        "127K SFT 及 RL 原始任务未在已查作者发布中找到。"
+      ]
+    },
+    {
+      "id": "pact_qwen36",
+      "initial_checkpoint": "Qwen/Qwen3.6-35B-A3B",
+      "exact_target_checkpoint": true,
+      "training_data": {
+        "name": "GAIR/OpenSWE",
+        "exact_task_count": null,
+        "manifest_located": false
+      },
+      "stages": [
+        "RL algorithm comparison"
+      ],
+      "results": {
+        "benchmark": "SWE-bench Verified",
+        "metric": "pass@1",
+        "base": 60.8,
+        "grpo": 65.4,
+        "ppo_lambda1": 65.0,
+        "sao": 63.6,
+        "pact": 67.4,
+        "pact_delta_pp": 6.6
+      },
+      "source_ids": [
+        "pact"
+      ],
+      "evidence_layer": "作者报告",
+      "independently_reproduced_in_this_survey": false,
+      "harness": {
+        "agent": "Codex",
+        "environment": "Harbor",
+        "trainer": "Dressage built on slime",
+        "context_label": "128K",
+        "max_generation_per_turn_label": "64K"
+      },
+      "budget": {
+        "prompts": 64,
+        "rollouts_per_prompt": 8,
+        "trajectories_per_round": 512,
+        "optimization_batch_size": 128,
+        "actor_lr": 1e-06,
+        "critic_lr": 5e-06,
+        "total_steps": null,
+        "gpus": null,
+        "gpu_hours": null
+      },
+      "limits": [
+        "数学实验 3200 题不是 coding 训练数量。",
+        "与 ROSS 同团队，不是独立团队复现。",
+        "完整任务清单、评测重复数和运行 pins 未定位。"
+      ]
+    },
+    {
+      "id": "ross_qwen36",
+      "initial_checkpoint": "Qwen/Qwen3.6-35B-A3B",
+      "exact_target_checkpoint": true,
+      "training_data": {
+        "name": "filtered OpenSWE",
+        "author_count": 4048,
+        "filters": [
+          "exposed .git histories or reward-hacking artifacts",
+          "low quality"
+        ],
+        "manifest_located": false
+      },
+      "stages": [
+        "upstream agentic RL",
+        "positive-rollout or selective-span SFT"
+      ],
+      "results": {
+        "benchmark": "SWE-bench Verified",
+        "metric": "resolved-issue rate",
+        "base": 60.8,
+        "upstream_rl": 64.2,
+        "positive_rollout_sft": 65.2,
+        "ross": 68.4,
+        "rl_delta_pp": 3.4,
+        "ross_over_rl_delta_pp": 4.2,
+        "combined_delta_pp": 7.6
+      },
+      "source_ids": [
+        "ross"
+      ],
+      "evidence_layer": "作者报告",
+      "independently_reproduced_in_this_survey": false,
+      "harness": {
+        "agent": "Codex CLI",
+        "environment": "Harbor",
+        "thinking": true,
+        "fixed_across_four_policies": [
+          "scaffold",
+          "environment",
+          "tools",
+          "execution budgets"
+        ]
+      },
+      "budget": {
+        "sft_start_upstream_iteration": 29,
+        "sft_gpus": 64,
+        "sft_nodes": 8,
+        "sft_epochs": 8,
+        "sft_sequence_limit": 65536,
+        "upstream_rl_gpu_hours": null
+      },
+      "limits": [
+        "64 GPU/8 epochs 是后续 SFT，不是上游 RL 总预算。",
+        "4.2pp 不是新增 RL 收益。",
+        "精确 4048 IDs、数值评测预算与重复数未定位。"
+      ]
+    },
+    {
+      "id": "slime_example_qwen36",
+      "initial_checkpoint": "Qwen/Qwen3.6-35B-A3B",
+      "exact_target_checkpoint": true,
+      "training_data": {
+        "name": "user-provided PROMPT_DATA swe_train.jsonl",
+        "downloadable_task_manifest_located": false
+      },
+      "stages": [
+        "GRPO recipe"
+      ],
+      "results": {
+        "before_after_quantitative_result": null
+      },
+      "source_ids": [
+        "slime_git",
+        "slime_coding",
+        "slime_launch"
+      ],
+      "evidence_layer": "作者报告",
+      "independently_reproduced_in_this_survey": false,
+      "harness": {
+        "agent": "Claude Code",
+        "engine": "SGLang",
+        "trainer": "Megatron/Ray",
+        "separate_grader": true
+      },
+      "evidence_kind_override": "代码可核，无训练效果证据",
+      "limits": [
+        "需要调用者准备任务与环境服务。",
+        "不证明 RH2 兼容或收益。"
+      ]
+    },
+    {
+      "id": "agentica_deepswe",
+      "initial_checkpoint": "Qwen/Qwen3-32B",
+      "exact_target_checkpoint": false,
+      "training_data": {
+        "name": "R2E subset excluding SWE Verified repos",
+        "author_count_label": "4.5K"
+      },
+      "stages": [
+        "pure RL GRPO++"
+      ],
+      "results": {
+        "benchmark": "SWE-bench Verified",
+        "base_pass1_approx_percent": 23,
+        "trained_pass1_percent": 42.2,
+        "pass1_averaged_runs": 16,
+        "pass16_percent": 71.0,
+        "test_time_selection_percent": 59.0
+      },
+      "source_ids": [
+        "deepswe_blog"
+      ],
+      "evidence_layer": "作者报告",
+      "independently_reproduced_in_this_survey": false,
+      "harness": {
+        "trainer": "rLLM",
+        "tools": "R2E-Gym"
+      },
+      "budget": {
+        "gpus": 64,
+        "gpu_type": "H100",
+        "days": 6,
+        "steps": 200
+      },
+      "limits": [
+        "Dense Qwen3-32B，不是 Coder 30B 或 Qwen3.6。"
+      ]
+    },
+    {
+      "id": "swesmith_sft",
+      "initial_checkpoint": "Qwen/Qwen2.5-Coder-32B-Instruct",
+      "exact_target_checkpoint": false,
+      "training_data": {
+        "successful_expert_trajectories": 5016,
+        "expert": "claude-3-7-sonnet-20250219"
+      },
+      "stages": [
+        "rejection-sampled SFT"
+      ],
+      "results": {
+        "benchmark": "SWE-bench Verified",
+        "base": 6.8,
+        "trained": 40.2,
+        "single_attempt": true
+      },
+      "source_ids": [
+        "smith_paper"
+      ],
+      "evidence_layer": "作者报告",
+      "independently_reproduced_in_this_survey": false,
+      "harness": {
+        "agent": "SWE-agent",
+        "max_steps": 75,
+        "student_temperature": 0
+      },
+      "budget": {
+        "gpu_type": "H100 80G",
+        "gpus_range": [
+          2,
+          8
+        ],
+        "max_epochs": 3,
+        "context_tokens": 32768,
+        "lr": 5e-05
+      },
+      "limits": [
+        "非目标模型；不是 RL 增益。"
+      ]
+    },
+    {
+      "id": "mimo_9b_distill",
+      "initial_checkpoint": "Qwen/Qwen3.5-9B",
+      "exact_target_checkpoint": false,
+      "training_data": {
+        "weighted_total_tokens_b": 77.4,
+        "loss_tokens_b": 27.2,
+        "code_total_tokens_b": 23.2,
+        "code_loss_tokens_b": 7.3
+      },
+      "stages": [
+        "MiMo-generated data SFT"
+      ],
+      "results": {
+        "metric": "avg@3",
+        "SWE Verified": {
+          "base": 60.0,
+          "sft": 61.1
+        },
+        "SWE Pro": {
+          "base": 32.0,
+          "sft": 44.6
+        }
+      },
+      "source_ids": [
+        "mimo9_card"
+      ],
+      "evidence_layer": "作者报告",
+      "independently_reproduced_in_this_survey": false,
+      "limits": [
+        "公开 checkpoint 为 SFT 起点，不是后续 RL 结果。",
+        "公开 2698 环境不等于完整 SFT mixture。"
+      ]
+    },
+    {
+      "id": "codemidas_mimo",
+      "initial_checkpoint": "MiMo-V2.5",
+      "exact_target_checkpoint": false,
+      "training_data": {
+        "tasks": 5545,
+        "repositories": 3185,
+        "languages": 23,
+        "public_full_task_assets_located": false
+      },
+      "stages": [
+        "GRPO"
+      ],
+      "results": {
+        "benchmark": "Datacurve DeepSWE",
+        "base": 10.0,
+        "trained": 21.7
+      },
+      "source_ids": [
+        "codemidas"
+      ],
+      "evidence_layer": "作者报告",
+      "independently_reproduced_in_this_survey": false,
+      "budget": {
+        "prompts": 32,
+        "rollouts_per_prompt": 32,
+        "max_turns": 500,
+        "max_prompt_tokens": 8192,
+        "max_response_tokens": 516096,
+        "lr": 5e-06,
+        "gpu_hours": null
+      },
+      "limits": [
+        "不是两个目标模型。",
+        "未证实与 MiMo-V2.6-RL-oss code 的任务对应关系。"
+      ]
+    }
+  ],
+  "data_families": [
+    {
+      "id": "r2e",
+      "name": "R2E-Gym",
+      "role": "RL 环境",
+      "pools": [
+        {
+          "id": "R2E-Gym/R2E-Gym-V1",
+          "revision": "903d405799ac435061c41e72260c81ca5100f964",
+          "last_modified": "2026-07-23T22:28:00.000Z",
+          "declared_license": "apache-2.0",
+          "gated": "not_returned",
+          "rows": 8101,
+          "source_ids": [
+            "r2ev1_meta"
+          ],
+          "full_downloaded": false
+        },
+        {
+          "id": "R2E-Gym/R2E-Gym-Subset",
+          "revision": "2e8108ff942f24fcb5686badfaf7f9a8808566d5",
+          "last_modified": "2026-07-23T22:28:07.000Z",
+          "declared_license": "apache-2.0",
+          "gated": false,
+          "rows": 4578,
+          "source_ids": [
+            "r2e_meta"
+          ],
+          "full_downloaded": false
+        }
+      ],
+      "languages": "Python",
+      "construction": "真实 commit/变更，生成问题与测试",
+      "environment": "docker_image 与既有 R2E runtime",
+      "reference": "commit/parsed_commit_content/expected_output_json，非标准 patch schema",
+      "grading": "测试输出比对；需 RH2 有效对照审计",
+      "integration_cost_estimate": "新增接线低，题级维护中",
+      "difficulty_evidence": [
+        "uni_coder_r2e",
+        "rtmc_coder",
+        "local_snapshot_20261003"
+      ],
+      "overlap_risk": "与现有 R2E 同源；按 repo/commit/patch/task fingerprint 去重，并按仓库保留"
+    },
+    {
+      "id": "swegym",
+      "name": "SWE-Gym Full/Lite",
+      "role": "RL 环境/SFT 轨迹生成",
+      "pools": [
+        {
+          "id": "SWE-Gym/SWE-Gym",
+          "revision": "bb94ed9e39bbeb96a7fcbfb533b80f25a7fd59cb",
+          "last_modified": "2025-05-10T03:27:03.000Z",
+          "declared_license": "mit",
+          "gated": false,
+          "rows": 2438,
+          "source_ids": [
+            "swegym_meta"
+          ],
+          "full_downloaded": false
+        },
+        {
+          "id": "SWE-Gym/SWE-Gym-Lite",
+          "revision": "f70b1a29ab120eb0a0ee7a1deb029825e735b2b0",
+          "last_modified": "2024-12-23T07:52:43.000Z",
+          "declared_license": null,
+          "gated": false,
+          "rows": 230,
+          "source_ids": [
+            "swegym_lite_meta"
+          ],
+          "full_downloaded": false
+        }
+      ],
+      "languages": "Python, 11 repos per official documentation",
+      "construction": "人类 issue/PR",
+      "environment": "现有 Docker/Singularity 构建执行体系",
+      "reference": "gold patch + test_patch + base_commit",
+      "grading": "F2P/P2P",
+      "integration_cost_estimate": "新增接线低，旧环境修订中高",
+      "difficulty_evidence": [
+        "nemo_coder_swegym",
+        "local_snapshot_20261003"
+      ],
+      "overlap_risk": "Lite 与 Full 包含；跨源 PR/commit 重复；同仓版本相关"
+    },
+    {
+      "id": "swe_rebench",
+      "name": "SWE-reBench 两个独立发布分支",
+      "role": "RL 环境候选",
+      "pools": [
+        {
+          "id": "dyyyyyyyy/swe-rebench-filtered-1150",
+          "revision": "99114f8cc02053edb4f1e6c8f191663080ec5a89",
+          "last_modified": "2026-07-22T08:38:37.000Z",
+          "declared_license": "apache-2.0",
+          "gated": "not_returned",
+          "rows": 1150,
+          "source_ids": [
+            "uni_1150_meta"
+          ],
+          "full_downloaded": false
+        },
+        {
+          "id": "PrimeIntellect/SWE-rebench-V2-Filtered-Verified",
+          "revision": "6a0d56b425a893b018616587cdb71aa499c5fc99",
+          "last_modified": "2026-10-02T20:23:42.000Z",
+          "declared_license": "cc-by-4.0",
+          "gated": false,
+          "rows": 6272,
+          "source_ids": [
+            "prime_meta"
+          ],
+          "full_downloaded": false
+        }
+      ],
+      "languages": "上游 V2 17 语言；本轮未统计 Prime 筛选后实际语言数",
+      "construction": "PR mining + filtering",
+      "environment": "Uni recipe；Prime image_name 已转 registry，实际运输未测",
+      "reference": "Prime gold patch/test_patch/base_commit/install_config",
+      "grading": "F2P/P2P；Prime 公开 gold/no-edit/flaky/always-fail 复核文件",
+      "integration_cost_estimate": "中，受 registry 运输影响",
+      "difficulty_evidence": [
+        "uni_coder_rebench"
+      ],
+      "overlap_risk": "1150 不等于 V2；多版本及其他 PR 数据需去重",
+      "source_ids": [
+        "prime_card_pinned"
+      ]
+    },
+    {
+      "id": "swesmith",
+      "name": "SWE-smith 分语言资产",
+      "role": "RL 环境/SFT 数据构造",
+      "pools": [
+        {
+          "id": "SWE-bench/SWE-smith-py",
+          "revision": "77cab9055d42ab4a5c25c89a8f937096db13558e",
+          "last_modified": "2025-12-18T21:00:02.000Z",
+          "declared_license": "mit",
+          "gated": "not_returned",
+          "rows": 50908,
+          "source_ids": [
+            "smith_py_meta"
+          ],
+          "full_downloaded": false
+        },
+        {
+          "id": "SWE-bench/SWE-smith-go",
+          "revision": "d2f6ecc2cf8ae1af00fc790801bbacfa2913e015",
+          "last_modified": "2025-12-18T20:58:26.000Z",
+          "declared_license": "mit",
+          "gated": "not_returned",
+          "rows": 8212,
+          "source_ids": [
+            "smith_go_meta"
+          ],
+          "full_downloaded": false
+        },
+        {
+          "id": "SWE-bench/SWE-smith-ts",
+          "revision": "c243d86f112d01b8507d311af912668aa1d74449",
+          "last_modified": "2026-02-28T07:07:51.000Z",
+          "declared_license": null,
+          "gated": "not_returned",
+          "rows": 5032,
+          "source_ids": [
+            "smith_ts_meta"
+          ],
+          "full_downloaded": false
+        }
+      ],
+      "historical_paper_tasks": 50137,
+      "historical_paper_repositories": 128,
+      "construction": "程序变异、LM 修改/重写、PR mirror、组合 bug",
+      "environment": "同仓复用镜像",
+      "reference": "dataset.patch 为 bug injection；gold 为健康状态或其反向修复",
+      "grading": "F2P/P2P；作者提供 gold sanity entry",
+      "integration_cost_estimate": "中，同仓复用摊薄成本",
+      "difficulty_evidence": [
+        "swesmith_sft"
+      ],
+      "overlap_risk": "同 repo/base/bug family 需分组，不能随机按行切分",
+      "source_ids": [
+        "smith_paper",
+        "smith_harness_docs",
+        "smith_languages"
+      ]
+    },
+    {
+      "id": "mimo_code",
+      "name": "MiMo-V2.6-RL-oss code",
+      "role": "公开 RL 环境候选；非 SFT 轨迹全集",
+      "pools": [
+        {
+          "id": "XiaomiMiMo/MiMo-V2.6-RL-oss",
+          "config": "code",
+          "split": "train",
+          "revision": "639865fd3374018d6cb29b9fb82dd531406fcf5f",
+          "last_modified": "2026-09-26T01:40:41.000Z",
+          "rows": 2698,
+          "declared_license": "apache-2.0",
+          "gated": false,
+          "full_downloaded": false,
+          "source_ids": [
+            "mimo_datasets",
+            "mimo_card",
+            "mimo_info",
+            "mimo_root"
+          ]
+        }
+      ],
+      "construction": "公开 code 样本未提供统一构造分类与原仓库身份",
+      "environment": "镜像 alias 需 image-mapping 转成 Docker Hub 地址",
+      "reference": "6/6 sampled rows 缺显式 repo/base_commit/gold patch",
+      "grading": "test_patch + test_command；mimoagent 当前环境执行",
+      "integration_cost_estimate": "中高：身份、正对照、隔离评分需核",
+      "difficulty_evidence": [],
+      "overlap_risk": "缺原仓库/commit 字段阻碍可靠去重；须查镜像历史和测试泄漏"
+    },
+    {
+      "id": "openswe",
+      "name": "OpenSWE / daVinci-Env",
+      "role": "有条件可获得的 RL 环境和 SFT 轨迹",
+      "pools": [
+        {
+          "id": "GAIR/OpenSWE",
+          "revision": "a8db93af5335df2c8baac0cd1ff367e4d475d3d7",
+          "last_modified": "2026-03-17T09:51:46.000Z",
+          "declared_license": "other",
+          "gated": "auto",
+          "rows": null,
+          "source_ids": [
+            "openswe_meta"
+          ],
+          "full_downloaded": false
+        }
+      ],
+      "author_counts": {
+        "environments": 45320,
+        "repositories_label": "12.8K",
+        "filtered_environments_label": "about 9K",
+        "trajectories_label": "about 13K"
+      },
+      "languages": "Python",
+      "construction": "PR environment synthesis and quality/difficulty filtering",
+      "environment": "Dockerfiles/evaluation scripts；不同仓库按再分发权限区分",
+      "reference": "本轮因 gated 原始文件 401 未逐行检查",
+      "grading": "作者 task verifier，ROSS 再剔除历史泄漏",
+      "integration_cost_estimate": "中高：访问、分发和环境核查",
+      "difficulty_evidence": [
+        "pact_qwen36",
+        "ross_qwen36"
+      ],
+      "overlap_risk": "论文声明过滤 SWE-rebench/SWE Verified 实例，未用完整 IDs 独立复核",
+      "source_ids": [
+        "openswe_paper"
+      ],
+      "access_terms_accepted_this_survey": false
+    },
+    {
+      "id": "datacurve_deepswe",
+      "name": "Datacurve DeepSWE",
+      "role": "仅 held-out 评测，不进 RL 池",
+      "pools": [
+        {
+          "id": "datacurve/deep-swe",
+          "revision": "6d6f134460c137e24c6bb7e1e69954116ea9dbb3",
+          "last_modified": "2026-06-02T19:31:16.000Z",
+          "declared_license": null,
+          "gated": "auto",
+          "rows": null,
+          "source_ids": [
+            "datacurve_meta"
+          ],
+          "full_downloaded": false
+        }
+      ],
+      "author_tasks": 113,
+      "languages": [
+        "TypeScript",
+        "Go",
+        "Python",
+        "JavaScript",
+        "Rust"
+      ],
+      "construction": "原创长程工程任务",
+      "environment": "Harbor task format; v1.1 separate grader",
+      "reference": "solution directory; full gated content not fetched",
+      "grading": "补丁捕获/commit 规则需要适配，不能假定工作区全部改动都被评分",
+      "integration_cost_estimate": "中，长程单题预算较高",
+      "difficulty_evidence": [
+        "codemidas_mimo"
+      ],
+      "overlap_risk": "训练或按保留集表现反复调参会破坏评测用途",
+      "source_ids": [
+        "datacurve_readme"
+      ],
+      "access_terms_accepted_this_survey": false
+    },
+    {
+      "id": "codemidas_method",
+      "name": "CodeMidas",
+      "role": "方法候选；不计现成可用任务",
+      "pools": [],
+      "author_tasks": 5545,
+      "author_repositories": 3185,
+      "author_languages": 23,
+      "full_dataset_manifest_located": false,
+      "declared_dataset_license": null,
+      "construction": "移除现有功能，生成规格和测试，以原实现和替代解复核",
+      "environment": "论文描述，统一公开镜像集合未定位",
+      "reference": "原实现/替代实现；公开任务级资产未定位",
+      "grading": "no-op/reference、多解和稳定性检查",
+      "integration_cost_estimate": "高，需要独立数据工程",
+      "difficulty_evidence": [
+        "codemidas_mimo"
+      ],
+      "overlap_risk": "与 MiMo 公开 2698 不存在已验证任务映射",
+      "source_ids": [
+        "codemidas"
+      ]
+    }
+  ],
+  "asset_checks": {
+    "mimo_code": {
+      "selection": "deterministic positions 0,1,1348,1349,2696,2697; not random difficulty sample",
+      "sample_count": 6,
+      "viewer_revision_binding_verified": false,
+      "concurrent_hf_revision": "639865fd3374018d6cb29b9fb82dd531406fcf5f",
+      "code_rows_reported": 2698,
+      "code_parquet": {
+        "bytes": 13314620,
+        "lfs_sha256": "e15733cf2451cfbc5492a4120f7f8cfddbad818aa9f0b324c79888dd1fece161",
+        "downloaded": false
+      },
+      "image_mapping": {
+        "entries": 3764,
+        "unique_aliases": 3764,
+        "counts_by_kind": {
+          "arvo": 1000,
+          "code": 2698,
+          "general": 65,
+          "webdev": 1
+        },
+        "source_id": "mimo_mapping",
+        "all_code_rows_crosschecked_against_mapping": false
+      },
+      "samples": [
+        {
+          "row_idx": 0,
+          "instance_id": "format-code-task-001457",
+          "keys": [
+            "cwd",
+            "dataset_type",
+            "docker_image",
+            "instance_id",
+            "problem_statement",
+            "test_command",
+            "test_patch",
+            "verifier_timeout_sec"
+          ],
+          "cwd": "/testbed",
+          "verifier_timeout_sec": 1800,
+          "dataset_image": "format-code-task-001457:latest",
+          "mapped_image": "docker.io/xiaomimimo/mimo-v2.6-rl-oss:format-code-task-001457",
+          "explicit_gold_patch_present": false,
+          "explicit_repo_present": false,
+          "explicit_base_commit_present": false,
+          "test_patch_nonempty": true,
+          "test_command_nonempty": true,
+          "docker_tag_status": "active",
+          "docker_digest": "sha256:3942cb66755b5427a79db3e9623630995a92eb2c592159b01d5bc717c947059b",
+          "image_full_size_bytes": 469722354,
+          "platforms": [
+            {
+              "os": "linux",
+              "architecture": "amd64",
+              "digest": "sha256:3942cb66755b5427a79db3e9623630995a92eb2c592159b01d5bc717c947059b"
+            }
+          ],
+          "source_ids": [
+            "mimo_row0",
+            "docker_format-code-task-001457"
+          ],
+          "image_pulled": false,
+          "task_executed": false
+        },
+        {
+          "row_idx": 1,
+          "instance_id": "format-code-task-001240",
+          "keys": [
+            "cwd",
+            "dataset_type",
+            "docker_image",
+            "instance_id",
+            "problem_statement",
+            "test_command",
+            "test_patch",
+            "verifier_timeout_sec"
+          ],
+          "cwd": "/workspace/repo",
+          "verifier_timeout_sec": 1800,
+          "dataset_image": "format-code-task-001240:latest",
+          "mapped_image": "docker.io/xiaomimimo/mimo-v2.6-rl-oss:format-code-task-001240",
+          "explicit_gold_patch_present": false,
+          "explicit_repo_present": false,
+          "explicit_base_commit_present": false,
+          "test_patch_nonempty": true,
+          "test_command_nonempty": true,
+          "docker_tag_status": "active",
+          "docker_digest": "sha256:c8ebafe12c227ab947f77c03292831a43f3e791c91810728934d10bff3d91a03",
+          "image_full_size_bytes": 1711078943,
+          "platforms": [
+            {
+              "os": "linux",
+              "architecture": "amd64",
+              "digest": "sha256:c8ebafe12c227ab947f77c03292831a43f3e791c91810728934d10bff3d91a03"
+            }
+          ],
+          "source_ids": [
+            "mimo_row0",
+            "docker_format-code-task-001240"
+          ],
+          "image_pulled": false,
+          "task_executed": false
+        },
+        {
+          "row_idx": 1348,
+          "instance_id": "format-code-task-000448",
+          "keys": [
+            "cwd",
+            "dataset_type",
+            "docker_image",
+            "instance_id",
+            "problem_statement",
+            "test_command",
+            "test_patch",
+            "verifier_timeout_sec"
+          ],
+          "cwd": "/testbed",
+          "verifier_timeout_sec": 1800,
+          "dataset_image": "format-code-task-000448:latest",
+          "mapped_image": "docker.io/xiaomimimo/mimo-v2.6-rl-oss:format-code-task-000448",
+          "explicit_gold_patch_present": false,
+          "explicit_repo_present": false,
+          "explicit_base_commit_present": false,
+          "test_patch_nonempty": true,
+          "test_command_nonempty": true,
+          "docker_tag_status": "active",
+          "docker_digest": "sha256:ebfdf272414497eb1eb65109541720927b440781812e4f3b61337660482a0bb2",
+          "image_full_size_bytes": 1441727183,
+          "platforms": [
+            {
+              "os": "linux",
+              "architecture": "amd64",
+              "digest": "sha256:ebfdf272414497eb1eb65109541720927b440781812e4f3b61337660482a0bb2"
+            }
+          ],
+          "source_ids": [
+            "mimo_code_rows",
+            "docker_format-code-task-000448"
+          ],
+          "image_pulled": false,
+          "task_executed": false
+        },
+        {
+          "row_idx": 1349,
+          "instance_id": "format-code-task-000804",
+          "keys": [
+            "cwd",
+            "dataset_type",
+            "docker_image",
+            "instance_id",
+            "problem_statement",
+            "test_command",
+            "test_patch",
+            "verifier_timeout_sec"
+          ],
+          "cwd": "/testbed",
+          "verifier_timeout_sec": 1800,
+          "dataset_image": "format-code-task-000804:latest",
+          "mapped_image": "docker.io/xiaomimimo/mimo-v2.6-rl-oss:format-code-task-000804",
+          "explicit_gold_patch_present": false,
+          "explicit_repo_present": false,
+          "explicit_base_commit_present": false,
+          "test_patch_nonempty": true,
+          "test_command_nonempty": true,
+          "docker_tag_status": "active",
+          "docker_digest": "sha256:4fd99819fe72b33a0e0247c2963ad22216baaa5da6ace2d51a31c3fe780a7281",
+          "image_full_size_bytes": 3422311274,
+          "platforms": [
+            {
+              "os": "linux",
+              "architecture": "amd64",
+              "digest": "sha256:4fd99819fe72b33a0e0247c2963ad22216baaa5da6ace2d51a31c3fe780a7281"
+            }
+          ],
+          "source_ids": [
+            "mimo_code_rows",
+            "docker_format-code-task-000804"
+          ],
+          "image_pulled": false,
+          "task_executed": false
+        },
+        {
+          "row_idx": 2696,
+          "instance_id": "format-code-task-000578",
+          "keys": [
+            "cwd",
+            "dataset_type",
+            "docker_image",
+            "instance_id",
+            "problem_statement",
+            "test_command",
+            "test_patch",
+            "verifier_timeout_sec"
+          ],
+          "cwd": "/testbed",
+          "verifier_timeout_sec": 1800,
+          "dataset_image": "format-code-task-000578:latest",
+          "mapped_image": "docker.io/xiaomimimo/mimo-v2.6-rl-oss:format-code-task-000578",
+          "explicit_gold_patch_present": false,
+          "explicit_repo_present": false,
+          "explicit_base_commit_present": false,
+          "test_patch_nonempty": true,
+          "test_command_nonempty": true,
+          "docker_tag_status": "active",
+          "docker_digest": "sha256:2271de202b950d5f897769e750f81d0d22a97a68865a7e8b8c7713b1eb63e06b",
+          "image_full_size_bytes": 3226312744,
+          "platforms": [
+            {
+              "os": "linux",
+              "architecture": "amd64",
+              "digest": "sha256:2271de202b950d5f897769e750f81d0d22a97a68865a7e8b8c7713b1eb63e06b"
+            }
+          ],
+          "source_ids": [
+            "mimo_code_end",
+            "docker_format-code-task-000578"
+          ],
+          "image_pulled": false,
+          "task_executed": false
+        },
+        {
+          "row_idx": 2697,
+          "instance_id": "format-code-task-000193",
+          "keys": [
+            "cwd",
+            "dataset_type",
+            "docker_image",
+            "instance_id",
+            "problem_statement",
+            "test_command",
+            "test_patch",
+            "verifier_timeout_sec"
+          ],
+          "cwd": "/testbed",
+          "verifier_timeout_sec": 1800,
+          "dataset_image": "format-code-task-000193:latest",
+          "mapped_image": "docker.io/xiaomimimo/mimo-v2.6-rl-oss:format-code-task-000193",
+          "explicit_gold_patch_present": false,
+          "explicit_repo_present": false,
+          "explicit_base_commit_present": false,
+          "test_patch_nonempty": true,
+          "test_command_nonempty": true,
+          "docker_tag_status": "active",
+          "docker_digest": "sha256:617c2e22bfbf34176a2903b7906302840e40d37630ef5be5c3d1e80bbc1c0f4c",
+          "image_full_size_bytes": 3082969621,
+          "platforms": [
+            {
+              "os": "linux",
+              "architecture": "amd64",
+              "digest": "sha256:617c2e22bfbf34176a2903b7906302840e40d37630ef5be5c3d1e80bbc1c0f4c"
+            }
+          ],
+          "source_ids": [
+            "mimo_code_end",
+            "docker_format-code-task-000193"
+          ],
+          "image_pulled": false,
+          "task_executed": false
+        }
+      ],
+      "limits": [
+        "没有拉取镜像或执行任务。",
+        "六个标签可查不等于全量镜像可拉。",
+        "六行缺参考字段不证明所有任务无参考，只证明当前抽查不足以建立有效正对照。",
+        "没有证明 code tasks 等于 CodeMidas。"
+      ]
+    }
+  },
+  "existing_project_evidence": {
+    "id": "local_snapshot_20261003",
+    "path": "runs/category2_repair_20260929/overnight_watch_20261003/difficulty_analysis_20261003/analysis_summary.json",
+    "sha256": "bbdc37f60995be8d261bc1c5f6e297b80ef6a5e23503f6f143bbec9a9e9eb390",
+    "snapshot_time_sgt": "2026-10-03T13:32:23.771446+08:00",
+    "scope": "固定历史快照，不代表读取时实时队列；本轮未新增实验",
+    "pool": {
+      "total": 52,
+      "swe": 34,
+      "r2e": 18,
+      "covered": 28,
+      "untried": 24
+    },
+    "attempts": 39,
+    "models": {
+      "qwen36": {
+        "attempt_count": 26,
+        "raw_reward_1": 22,
+        "raw_reward_0": 4,
+        "raw_reward_null": 0,
+        "raw_positive_fraction_all_attempts": 0.8461538461538461,
+        "median_solve_seconds": 61.9755,
+        "paired_tasks": 11,
+        "paired_raw_reward_1": 9,
+        "source_breakdown": {
+          "r2e": {
+            "attempt_count": 17,
+            "raw_reward_1": 13,
+            "raw_reward_0": 4,
+            "raw_reward_null": 0
+          },
+          "swe": {
+            "attempt_count": 9,
+            "raw_reward_1": 9,
+            "raw_reward_0": 0,
+            "raw_reward_null": 0
+          }
+        }
+      },
+      "coder": {
+        "attempt_count": 13,
+        "raw_reward_1": 7,
+        "raw_reward_0": 4,
+        "raw_reward_null": 2,
+        "raw_positive_fraction_all_attempts": 0.5384615384615384,
+        "median_solve_seconds": 70.64,
+        "paired_tasks": 11,
+        "paired_raw_reward_1": 5,
+        "source_breakdown": {
+          "r2e": {
+            "attempt_count": 11,
+            "raw_reward_1": 5,
+            "raw_reward_0": 4,
+            "raw_reward_null": 2
+          },
+          "swe": {
+            "attempt_count": 2,
+            "raw_reward_1": 2,
+            "raw_reward_0": 0,
+            "raw_reward_null": 0
+          }
+        }
+      }
+    },
+    "paired_rows": [
+      {
+        "task": "pillow__2d01f7d02243d1b9cd3f2a3c3587d87703e00f96",
+        "package": "r2e_pillow",
+        "qwen36_raw_reward": 0.0,
+        "coder_raw_reward": 0.0
+      },
+      {
+        "task": "aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a",
+        "package": "r2e_aiohttp",
+        "qwen36_raw_reward": 1.0,
+        "coder_raw_reward": 1.0
+      },
+      {
+        "task": "coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9",
+        "package": "r2e_coveragepy",
+        "qwen36_raw_reward": 1.0,
+        "coder_raw_reward": 1.0
+      },
+      {
+        "task": "orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237",
+        "package": "r2e_orange3",
+        "qwen36_raw_reward": 1.0,
+        "coder_raw_reward": 1.0
+      },
+      {
+        "task": "numpy__d805e9b66228e68a0eb14d901cd350159c49af18",
+        "package": "r2e_numpy",
+        "qwen36_raw_reward": 0.0,
+        "coder_raw_reward": 0.0
+      },
+      {
+        "task": "pillow__3a61c9e95e5c0a2da5736956e2dbafa57a9ede07",
+        "package": "r2e_pillow",
+        "qwen36_raw_reward": 1.0,
+        "coder_raw_reward": 0.0
+      },
+      {
+        "task": "pillow__a682ceaf47abbe28dc70c6bd4aab06f8f3f4ac90",
+        "package": "r2e_pillow",
+        "qwen36_raw_reward": 1.0,
+        "coder_raw_reward": 0.0
+      },
+      {
+        "task": "aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2",
+        "package": "r2e_aiohttp",
+        "qwen36_raw_reward": 1.0,
+        "coder_raw_reward": null
+      },
+      {
+        "task": "aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52",
+        "package": "r2e_aiohttp",
+        "qwen36_raw_reward": 1.0,
+        "coder_raw_reward": 1.0
+      },
+      {
+        "task": "aiohttp__240da100151933883d7dea0528d45877df025b92",
+        "package": "r2e_aiohttp",
+        "qwen36_raw_reward": 1.0,
+        "coder_raw_reward": null
+      },
+      {
+        "task": "coveragepy__016af5f6352d69206ac8f7537c2b18828767bcae",
+        "package": "r2e_coveragepy",
+        "qwen36_raw_reward": 1.0,
+        "coder_raw_reward": 1.0
+      }
+    ],
+    "limits": [
+      "39 solver attempts completed without observed budget truncation; not 39 valid formal grades or semantic successes.",
+      "Two Coder null grades are diagnosed final-candidate SyntaxErrors after model reverted compatibility edits. Retain null, do not silently exclude them.",
+      "All 11 paired tasks are R2E from 5 repositories; no paired SWE task in this snapshot. Readiness-based sampling is not random.",
+      "Qwen raw1 Moto6114 has a real existing-Neptune regression confirmed with exact original source on new37-reference CPU diagnostics (reward0); distinct physical attempt, not rewriting old GPU result.",
+      "Qwen raw1 Pydantic6283 has PrivateAttr regression evidence and v2 CPU control rejection; original GPU FrozenPatch has NOT yet been actually regraded under v2.",
+      "Coder raw1 aio1c1 cancelled-main cleanup regression remains under bounded counterexample validation; no final semantic pass claim.",
+      "Old coverageEA69 input omitted a public requirement; old raw0 is not a clean difficulty estimate.",
+      "Some materials have changed since original attempts; covered28 means ever attempted, not current-version accepted28.",
+      "Global semantic accuracy is not computed before all verdicts/versions are reconciled.",
+      "Single sample per task/model does not measure stable per-task success or post-training learning gains.",
+      "Solve_seconds include model/tool orchestration; not pure GPU compute or environment/queue duration."
+    ],
+    "semantic_accuracy_computed": false,
+    "attempt_snapshot_at_utc": "2026-10-03T05:32:23.771446+00:00"
+  },
+  "local_sources_consulted": [
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/base_model_probe_design_20260921.md",
+      "sha256": "b9577bf6bee9c9d736a209a66e8d18981cdef7b7c7def459bf8a06fa0bce4eda",
+      "role": "既有导航、精读或背景；外部当前事实另核一手来源"
+    },
+    {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/remaining_workflow_20261002.md",
+      "sha256": "821653cf7d0828f311c7b44dfc071f40c50aaa96724f17a589e8f43f8251dcae",
+      "role": "既有导航、精读或背景；外部当前事实另核一手来源"
+    },
+    {
+      "path": "docs/harness_improve/external_paper_references/reading_notes/README.md",
+      "sha256": "659246628937442fcaa8ecbab17bf8cbc2e7ee910f477ff86576a6f7c8af4c7b",
+      "role": "既有导航、精读或背景；外部当前事实另核一手来源"
+    },
+    {
+      "path": "docs/harness_improve/external_paper_references/reading_notes/SOURCE_CATALOG.md",
+      "sha256": "cc57e1e014faeb2c6d780a270d1e2e2a788a26a16f23b1522ea51af0fb60e130",
+      "role": "既有导航、精读或背景；外部当前事实另核一手来源"
+    },
+    {
+      "path": "docs/harness_improve/external_paper_references/reading_notes/O03_r2e_gym.md",
+      "sha256": "ed4e0b629e11e9492a6592026366644e19d79af8e94bcbe38b922051a638bdfe",
+      "role": "既有导航、精读或背景；外部当前事实另核一手来源"
+    },
+    {
+      "path": "docs/harness_improve/external_paper_references/reading_notes/E5_swe_smith.md",
+      "sha256": "df3f6d361e085f576c1705bc6bfa0529353bc8ac03dd5aa46d19571d0eb08179",
+      "role": "既有导航、精读或背景；外部当前事实另核一手来源"
+    },
+    {
+      "path": "docs/harness_improve/external_paper_references/reading_notes/O11_swe_rebench_v2.md",
+      "sha256": "47d2d81f27a99d8e224737dda9fa2d7226005dcc85a684cb396015b9a4a039b1",
+      "role": "既有导航、精读或背景；外部当前事实另核一手来源"
+    },
+    {
+      "path": "docs/harness_improve/external_paper_references/reading_notes/R3_qwen3_coder_next.md",
+      "sha256": "8ff8886b4a22c46d48b5914f3797e99982622b66fbf6cf9bdd4b158bafe11ec7",
+      "role": "既有导航、精读或背景；外部当前事实另核一手来源"
+    },
+    {
+      "path": "docs/harness_improve/external_paper_references/reading_notes/mimo_v2_6_technical_report.md",
+      "sha256": "c0ac53cbc6b36fc7c380d475f432927a949614904c6727c4dbf9c9bd93976d8a",
+      "role": "既有导航、精读或背景；外部当前事实另核一手来源"
+    },
+    {
+      "path": "docs/harness_improve/external_paper_references/reading_notes/mimoagent_execution_and_training_assets_20260923.md",
+      "sha256": "87a7a269bf75665e3253bb1cd69a77079d66edc9f8d23372df6076a7562a442b",
+      "role": "既有导航、精读或背景；外部当前事实另核一手来源"
+    }
+  ],
+  "recommendations": {
+    "status": "proposed_not_applied",
+    "coder_priority": [
+      "r2e",
+      "swe_rebench:uni1150",
+      "swegym:full",
+      "mimo_code",
+      "swesmith"
+    ],
+    "qwen36_priority": [
+      "mimo_code",
+      "swe_rebench:prime_v2",
+      "openswe:conditional_access",
+      "swesmith",
+      "r2e:validated_harder_subset"
+    ],
+    "pilot": {
+      "sources": [
+        "r2e",
+        "swe_rebench",
+        "mimo_code",
+        "swesmith"
+      ],
+      "tasks_per_source": 6,
+      "total_tasks": 24,
+      "models": 2,
+      "initial_attempts_per_model_task": 2,
+      "initial_rollouts": 96,
+      "preselected_repeat_tasks": 8,
+      "extra_attempts_per_model_repeat_task": 2,
+      "additional_rollouts": 32,
+      "total_rollout_ceiling": 128,
+      "proposed_context_tokens": 131072,
+      "proposed_cumulative_generation_tokens": 65536,
+      "proposed_max_model_requests": 100,
+      "proposed_solve_minutes": 30,
+      "budget_implementation_verified": false,
+      "existing_validated_config_preferred": true,
+      "not_training_gain_experiment": true,
+      "not_authorized_or_started_by_this_report": true
+    },
+    "existing52": "关闭已知计分缺陷和异常归因；保留 Coder 区分题与可靠易题；减少无新增问题的重复；不修改既有队列或责任。"
+  },
+  "unresolved": [
+    "精确训练 IDs/历史权重 revision/完整 run binding",
+    "多数外部结果的重复数、方差、GPU-hours",
+    "MiMo 任务身份、有效参考和独立 grader 等价性",
+    "Prime registry 运输或重建可行性",
+    "OpenSWE 访问和逐资产条款",
+    "两个目标在新增来源上的难度与训练泛化收益"
+  ],
+  "arxiv_version_checks": [
+    {
+      "arxiv_id": "2604.11037",
+      "abs_url": "https://arxiv.org/abs/2604.11037",
+      "observed_versions": [
+        "/abs/2604.11037v1"
+      ],
+      "response_sha256": "df91efc27b50b5238585ccb5648ad8c4d3599aac3101b354be80b40be43277f5"
+    },
+    {
+      "arxiv_id": "2609.35954",
+      "abs_url": "https://arxiv.org/abs/2609.35954",
+      "observed_versions": [
+        "/abs/2609.35954v1"
+      ],
+      "response_sha256": "1bd569267ec4a39473437babde6f066af1e6d3c684cc66b2b550a2029c8e0cc4"
+    },
+    {
+      "arxiv_id": "2609.26355",
+      "abs_url": "https://arxiv.org/abs/2609.26355",
+      "observed_versions": [
+        "/abs/2609.26355v1"
+      ],
+      "response_sha256": "446e68db34240bc97c278590c12a298a042c097456e3326283679c4c71e2eb63"
+    },
+    {
+      "arxiv_id": "2607.05471",
+      "abs_url": "https://arxiv.org/abs/2607.05471",
+      "observed_versions": [
+        "/abs/2607.05471v1"
+      ],
+      "response_sha256": "6299bf4ea58e7e009f7cca4dd47999764b4a856236087689e2def3ac9e3c74e2"
+    },
+    {
+      "arxiv_id": "2504.21798",
+      "abs_url": "https://arxiv.org/abs/2504.21798",
+      "observed_versions": [
+        "/abs/2504.21798v2",
+        "/abs/2504.21798v1"
+      ],
+      "response_sha256": "18084969476db85b1b26960e04be463287c51cc582df90f8476679faa29a73b2"
+    },
+    {
+      "arxiv_id": "2603.13023",
+      "abs_url": "https://arxiv.org/abs/2603.13023",
+      "observed_versions": [
+        "/abs/2603.13023v2",
+        "/abs/2603.13023v1"
+      ],
+      "response_sha256": "6662fd370f391e9b012d80bd675ba0f56e925dbb07ff0b496a309bc01f490d78"
+    },
+    {
+      "arxiv_id": "2609.22068",
+      "abs_url": "https://arxiv.org/abs/2609.22068",
+      "observed_versions": [
+        "/abs/2609.22068v1"
+      ],
+      "response_sha256": "15d02873b562f288a605e76af9613f69f5e14049f4cd586999f53706a1d79ad7"
+    },
+    {
+      "arxiv_id": "2603.00729",
+      "abs_url": "https://arxiv.org/abs/2603.00729",
+      "observed_versions": [
+        "/abs/2603.00729v1"
+      ],
+      "response_sha256": "99c0b7a999ed81bdd2bf311f4d5246d5f62073697f710f5c836d269786f30e02"
+    },
+    {
+      "arxiv_id": "2602.23866",
+      "abs_url": "https://arxiv.org/abs/2602.23866",
+      "observed_versions": [
+        "/abs/2602.23866v2",
+        "/abs/2602.23866v1"
+      ],
+      "response_sha256": "8bbd76e19cdd1626096a22d67ee80eb0572ab67c894d489cbd54e6c30cb39106"
+    }
+  ],
+  "sources": [
+    {
+      "id": "coder_meta",
+      "url": "https://huggingface.co/api/models/Qwen/Qwen3-Coder-30B-A3B-Instruct",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 18788,
+      "response_sha256": "b0cd8dfad525a8e7967eb8a42683bb06dcae63e44f9b32507b60985ab328be68",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "HF API 元数据；没有下载完整权重或数据文件。"
+    },
+    {
+      "id": "coder_card",
+      "url": "https://huggingface.co/Qwen/Qwen3-Coder-30B-A3B-Instruct/raw/b2cff646eb4bb1d68355c01b18ae02e7cf42d120/README.md",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 5425,
+      "response_sha256": "98e8f0e00f2d6c7f1743fc4ef2b6297dcc57bec73d71f36588aed984370ac3f3",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "qwen36_meta",
+      "url": "https://huggingface.co/api/models/Qwen/Qwen3.6-35B-A3B",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 21637,
+      "response_sha256": "557d8de7c998143e23094abf94dd82c5cd8141ffe1502480baae2848c4bf04c2",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "HF API 元数据；没有下载完整权重或数据文件。"
+    },
+    {
+      "id": "qwen36_card",
+      "url": "https://huggingface.co/Qwen/Qwen3.6-35B-A3B/raw/995ad96eacd98c81ed38be0c5b274b04031597b0/README.md",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 64550,
+      "response_sha256": "c4ddaa065649ff6352648f64747a16eda31726f3e34add94ce04abb461c77b75",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "uni_tree",
+      "url": "https://api.github.com/repos/verl-project/uni-agent/git/trees/main?recursive=1",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 111635,
+      "response_sha256": "e5074dcbfaf1e52b04d6fbbace5d51dfe8d28385a8a4643a217cd7b1ffff9a5c",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "uni_bench",
+      "url": "https://raw.githubusercontent.com/verl-project/uni-agent/00b20d72d35816a3d66e6137c424a5b60e92d062/docs/source/benchmark/rl-training.md",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 2721,
+      "response_sha256": "ea9ec9fdc4111605f55108376a2ed0cba024b19ee96f1e8f046ed9d7c899cf39",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "uni_rl-training.md",
+      "url": "https://raw.githubusercontent.com/verl-project/uni-agent/00b20d72d35816a3d66e6137c424a5b60e92d062/docs/source/quickstart/rl-training.md",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 10599,
+      "response_sha256": "7480783e77abca3719068c28f38422e8f654a92f928e4b3b5a1ae674eaa77933",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "uni_train_qwen3_moe.sh",
+      "url": "https://raw.githubusercontent.com/verl-project/uni-agent/00b20d72d35816a3d66e6137c424a5b60e92d062/examples/quickstart/training/train_qwen3_moe.sh",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 15921,
+      "response_sha256": "cd67e82d2958bd1197a4736c76508e99b7b87da885a13946e089beee92c82293",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "uni_task_config_react.yaml",
+      "url": "https://raw.githubusercontent.com/verl-project/uni-agent/00b20d72d35816a3d66e6137c424a5b60e92d062/examples/quickstart/training/task_config_react.yaml",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 10197,
+      "response_sha256": "ba69582914d731bf1e9be069783c99a801fc9e0308bc61d933fa54c2adb4b860",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "uni_task_config_claude_code.yaml",
+      "url": "https://raw.githubusercontent.com/verl-project/uni-agent/00b20d72d35816a3d66e6137c424a5b60e92d062/examples/quickstart/training/task_config_claude_code.yaml",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 1420,
+      "response_sha256": "c066246fa0025a41b66608057880581c4643d877db6fcbb40bd9aa38a3ddc916",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "uni_1150_meta",
+      "url": "https://huggingface.co/api/datasets/dyyyyyyyy/swe-rebench-filtered-1150?expand=sha&expand=lastModified&expand=cardData",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 204,
+      "response_sha256": "3c6d4a9965e36018287bd7c517090e2920ca90842941d34114737cb5b1828637",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "HF API 元数据；没有下载完整权重或数据文件。"
+    },
+    {
+      "id": "uni_1150_info",
+      "url": "https://datasets-server.huggingface.co/info?dataset=dyyyyyyyy/swe-rebench-filtered-1150",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 1477,
+      "response_sha256": "6f6ba852364573724b0de091e21ece3172e0b6914657bdef7429a9c30f312b13",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "HF viewer 当前响应；未返回不可变仓库 revision，不能伪称 commit-bound。"
+    },
+    {
+      "id": "rtmc",
+      "url": "https://arxiv.org/html/2604.11037v1",
+      "access_date": "2026-10-03",
+      "read_method": "作者论文：核研究设置、数据、结果表和有关附录；没有复现。",
+      "response_bytes": 301195,
+      "response_sha256": "08ebff998aa1df720ceb71531836b86939710051531dc6442176ce8da64ef803",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "nemo_readme_pinned",
+      "url": "https://raw.githubusercontent.com/NVIDIA-NeMo/Gym/3ef478df1ee163134d32a3f291f0a9e5981d0e52/responses_api_agents/mini_swe_agent/README.md",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 7591,
+      "response_sha256": "43dacb68b46cd7961026e7cfb097d5cba7eb11e922917374c7163e1f9e2d7780",
+      "retrieved_at_utc": "2026-10-03T06:19:50.649800+00:00",
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "nemo_git",
+      "url": "https://api.github.com/repos/NVIDIA-NeMo/Gym/commits/main",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 43330,
+      "response_sha256": "81e4f0b19f08df21f73ae550ee7bd4eca17d5dcfe2f9c464a2792cb33cdd015e",
+      "retrieved_at_utc": null,
+      "version": "3ef478df1ee163134d32a3f291f0a9e5981d0e52",
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "nemo_chart",
+      "url": "https://raw.githubusercontent.com/NVIDIA-NeMo/Gym/main/responses_api_agents/mini_swe_agent/assets/miniswe_qwen_coder.png",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 193707,
+      "response_sha256": "b61f926b55a625099f41f31995f434dcb02c821d0236daffb2bdce9937547def",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "kat_meta",
+      "url": "https://huggingface.co/api/models/Kwaipilot/KAT-Coder-V2.5-Dev",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 18939,
+      "response_sha256": "dd3a12f435b1a627e15a851cc07e3bed3baae62738712fa568afd4d61717378a",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "HF API 元数据；没有下载完整权重或数据文件。"
+    },
+    {
+      "id": "kat_card_pinned",
+      "url": "https://huggingface.co/Kwaipilot/KAT-Coder-V2.5-Dev/raw/7be56fe773e72b6f5ca93c1ae45d828ddb893922/README.md",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 27244,
+      "response_sha256": "e9b49bdc7b5f00a5a1f985143eb43148304a0a20cf0f3e4e935bd8d369897561",
+      "retrieved_at_utc": "2026-10-03T06:19:50.721812+00:00",
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "kat_paper",
+      "url": "https://arxiv.org/html/2607.05471v1",
+      "access_date": "2026-10-03",
+      "read_method": "作者论文：核研究设置、数据、结果表和有关附录；没有复现。",
+      "response_bytes": 232727,
+      "response_sha256": "1d83c724470bb9ca48952055f9f34c500ed80613006683d723e918a6418fb1c3",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "kat_datasets",
+      "url": "https://huggingface.co/api/datasets?author=Kwaipilot&limit=100",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 1154,
+      "response_sha256": "95a0bb82d6c2abf2d78aaa34c3d58f79e2094cd2237a11bc561e3f5b8d5feed1",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "pact",
+      "url": "https://arxiv.org/html/2609.26355v1",
+      "access_date": "2026-10-03",
+      "read_method": "作者论文：核研究设置、数据、结果表和有关附录；没有复现。",
+      "response_bytes": 854747,
+      "response_sha256": "4390af24c0088dca5ca09bdf42a77ffa89f0dd9133742935626caaf7d4bb23d1",
+      "retrieved_at_utc": "2026-10-03T06:19:50.361790+00:00",
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "ross",
+      "url": "https://arxiv.org/html/2609.35954v1",
+      "access_date": "2026-10-03",
+      "read_method": "作者论文：核研究设置、数据、结果表和有关附录；没有复现。",
+      "response_bytes": 495561,
+      "response_sha256": "41f7fbc1db0198d21bf3536dcba643342e7388d36a40960cb4917dc979dff9b5",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "slime_git",
+      "url": "https://api.github.com/repos/THUDM/slime/commits/main",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 11550,
+      "response_sha256": "58f07f3480aea8f7277a9618f2d9c51e2bb5f023fc3c4b59d6a89ded5ee64e60",
+      "retrieved_at_utc": null,
+      "version": "8c17b676cb57af1d17ee4402e91e9209af84b60b",
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "slime_coding",
+      "url": "https://raw.githubusercontent.com/THUDM/slime/main/examples/coding_agent_rl/README.md",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 12470,
+      "response_sha256": "646fd38afdcda441e853d378651171bb7657de0d1873deda2e152c0d93ef8e9f",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "slime_launch",
+      "url": "https://raw.githubusercontent.com/THUDM/slime/main/examples/coding_agent_rl/run_qwen36_35b_a3b_swe_8nodes.sh",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 10967,
+      "response_sha256": "43b352b9c84d71aaf4c85f3a47aa993cc9232d1de7620e2a14bfd14f038cd5f1",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "deepswe_blog",
+      "url": "https://www.together.ai/blog/deepswe",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 637028,
+      "response_sha256": "d8160ca44d2ba7032ed560dce09afacb319e6ca8b78ce47ff9c700fe65fb104a",
+      "retrieved_at_utc": "2026-10-03T06:19:51.115006+00:00",
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "smith_paper",
+      "url": "https://arxiv.org/html/2504.21798v2",
+      "access_date": "2026-10-03",
+      "read_method": "作者论文：核研究设置、数据、结果表和有关附录；没有复现。",
+      "response_bytes": 616805,
+      "response_sha256": "06f1e52b88992f091cae0aacaaca09ad6945b977fbda1e32d935bf13b5c3d4bb",
+      "retrieved_at_utc": "2026-10-03T06:19:50.362276+00:00",
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "smith_harness_docs",
+      "url": "https://swesmith.com/guides/harnesses/",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 41511,
+      "response_sha256": "2520c0577ea7b06700953c68cd27d3f4d27472c4b3740180db777fc7d123aac3",
+      "retrieved_at_utc": "2026-10-03T06:19:50.362796+00:00",
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "smith_readme",
+      "url": "https://raw.githubusercontent.com/SWE-bench/SWE-smith/main/README.md",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 5217,
+      "response_sha256": "058ccfb4465b3d067ac53eae9db43d55dfdaf180fcae438880901e3b192584b7",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "smith_card",
+      "url": "https://huggingface.co/datasets/SWE-bench/SWE-smith/raw/main/README.md",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 1821,
+      "response_sha256": "fb6e25bf688afc41e30c918a9c938b4dac01d2de01cdaa7b1c6a4ffe1dfff11e",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "smith_py_meta",
+      "url": "https://huggingface.co/api/datasets/SWE-bench/SWE-smith-py?expand=sha&expand=lastModified&expand=cardData",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 840,
+      "response_sha256": "3f57d91be676be42533b82e95e72628feca8213cb5e8f9e7e53c82321edee221",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "HF API 元数据；没有下载完整权重或数据文件。"
+    },
+    {
+      "id": "smith_go_meta",
+      "url": "https://huggingface.co/api/datasets/SWE-bench/SWE-smith-go?expand=sha&expand=lastModified&expand=cardData",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 835,
+      "response_sha256": "9a05c980b8be690f9b967e618801b045adebe8168bda6314c24c2c21fd0704a2",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "HF API 元数据；没有下载完整权重或数据文件。"
+    },
+    {
+      "id": "smith_ts_meta",
+      "url": "https://huggingface.co/api/datasets/SWE-bench/SWE-smith-ts?expand=sha&expand=lastModified&expand=cardData",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 680,
+      "response_sha256": "e064bcab81566ebc58e2e9a3c1aba8c17939ab5f7a621c91746c5fdab5db4394",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "HF API 元数据；没有下载完整权重或数据文件。"
+    },
+    {
+      "id": "smith_languages",
+      "url": "https://huggingface.co/api/datasets?author=SWE-bench&search=SWE-smith&limit=100",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 7428,
+      "response_sha256": "88a90d097242bdebcc123afb4ee2b3c48c795b2831d9ca417c61966c1406e962",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "mimo9_card",
+      "url": "https://huggingface.co/XiaomiMiMo/MiMo-V2.6-Distill-Qwen-9B/raw/main/README.md",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 3030,
+      "response_sha256": "09f915ac8116db54ca78586cfdf9ddb14209cba1ca23561a202f38039eac95ca",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "codemidas",
+      "url": "https://arxiv.org/html/2609.22068v1",
+      "access_date": "2026-10-03",
+      "read_method": "作者论文：核研究设置、数据、结果表和有关附录；没有复现。",
+      "response_bytes": 186491,
+      "response_sha256": "e5f2a1cd7e7a0ca7c68008f01027bee160729dfbe20a668547d410645296551d",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "r2e_meta",
+      "url": "https://huggingface.co/api/datasets/R2E-Gym/R2E-Gym-Subset?expand=sha&expand=lastModified&expand=gated&expand=cardData",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 1309,
+      "response_sha256": "de8fbfbc73e3a78ed948cd07d0fdb96277b92e96f22d026cbe2eb56b62e36926",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "HF API 元数据；没有下载完整权重或数据文件。"
+    },
+    {
+      "id": "r2ev1_meta",
+      "url": "https://huggingface.co/api/datasets/R2E-Gym/R2E-Gym-V1?expand=sha&expand=lastModified&expand=cardData",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 1292,
+      "response_sha256": "1a7dca51f7d633795494b7da655fb137bad3fd0515fc6d7791e26078fa0e9af3",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "HF API 元数据；没有下载完整权重或数据文件。"
+    },
+    {
+      "id": "r2e_list",
+      "url": "https://huggingface.co/api/datasets?author=R2E-Gym&limit=100",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 5335,
+      "response_sha256": "98d30b013c146d90bdda93a78d6292a7307149c408958d01cfad5b16992ddf44",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "swegym_meta",
+      "url": "https://huggingface.co/api/datasets/SWE-Gym/SWE-Gym?expand=sha&expand=lastModified&expand=gated&expand=cardData",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 868,
+      "response_sha256": "ec6bb710591ceae91d987f75d8b8353871cc68b854a3731ac10f49a5f34664dc",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "HF API 元数据；没有下载完整权重或数据文件。"
+    },
+    {
+      "id": "swegym_lite_meta",
+      "url": "https://huggingface.co/api/datasets/SWE-Gym/SWE-Gym-Lite?expand=sha&expand=lastModified&expand=gated&expand=cardData",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 850,
+      "response_sha256": "9e9ecbe49cfa35126697702b49707fbc08fd4ec7a5b5404ab5290c02adb5c9d9",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "HF API 元数据；没有下载完整权重或数据文件。"
+    },
+    {
+      "id": "prime_meta",
+      "url": "https://huggingface.co/api/datasets/PrimeIntellect/SWE-rebench-V2-Filtered-Verified?expand=sha&expand=lastModified&expand=gated&expand=cardData",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 3388,
+      "response_sha256": "0b0bc31788767908426c7944f29b6fedcd86ec7455e4d8c27baa7d07df023bc9",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "HF API 元数据；没有下载完整权重或数据文件。"
+    },
+    {
+      "id": "prime_card_pinned",
+      "url": "https://huggingface.co/datasets/PrimeIntellect/SWE-rebench-V2-Filtered-Verified/raw/6a0d56b425a893b018616587cdb71aa499c5fc99/README.md",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 24627,
+      "response_sha256": "9edb1bf7ccc8a1cef8c00433b3ed2e3131cb8d3b211fca61204a78ab263c7371",
+      "retrieved_at_utc": "2026-10-03T06:19:51.114552+00:00",
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "mimo_datasets",
+      "url": "https://huggingface.co/api/datasets?author=XiaomiMiMo&limit=100",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 3226,
+      "response_sha256": "f0ac48c02590f787fdc19e7695996bda4511ac2ec896dad7bfcf28a5634a4715",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "mimo_card",
+      "url": "https://huggingface.co/datasets/XiaomiMiMo/MiMo-V2.6-RL-oss/raw/main/README.md",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 790,
+      "response_sha256": "a7a6216652a80d91a9dbbc558a406bb3344abdc462e850707477c8a7fb8b3ba9",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "mimo_root",
+      "url": "https://huggingface.co/api/datasets/XiaomiMiMo/MiMo-V2.6-RL-oss/tree/639865fd3374018d6cb29b9fb82dd531406fcf5f",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 1575,
+      "response_sha256": "f1ae108cf5af649528155c5887e8d04f06dd1de452fda95d221e844077c142da",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "HF API 元数据；没有下载完整权重或数据文件。"
+    },
+    {
+      "id": "mimo_info",
+      "url": "https://datasets-server.huggingface.co/info?dataset=XiaomiMiMo/MiMo-V2.6-RL-oss&config=code",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 955,
+      "response_sha256": "0f4f6951a5657c2ee55d0bb4b3e30e2ca9f641981a7af32df744663e7a73d5c4",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "HF viewer 当前响应；未返回不可变仓库 revision，不能伪称 commit-bound。"
+    },
+    {
+      "id": "mimo_splits",
+      "url": "https://datasets-server.huggingface.co/splits?dataset=XiaomiMiMo/MiMo-V2.6-RL-oss",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 414,
+      "response_sha256": "4fa5adf0b26830e2363d05589ab43b3591d1d0c07d10dac1725658b99ddb2b1a",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "HF viewer 当前响应；未返回不可变仓库 revision，不能伪称 commit-bound。"
+    },
+    {
+      "id": "mimo_mapping",
+      "url": "https://huggingface.co/datasets/XiaomiMiMo/MiMo-V2.6-RL-oss/resolve/639865fd3374018d6cb29b9fb82dd531406fcf5f/image-mapping.jsonl",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 495593,
+      "response_sha256": "704ad2716d746430a805b9b1ac7c6725aea2117fd8e4823ebe9d339d0313ad58",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "mimo_row0",
+      "url": "https://datasets-server.huggingface.co/rows?dataset=XiaomiMiMo/MiMo-V2.6-RL-oss&config=code&split=train&offset=0&length=2",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 24558,
+      "response_sha256": "09ad6cdd197b42b027d9e27c3991ba11972362e8c3d3be3580e7b363154fae29",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "HF viewer 当前响应；未返回不可变仓库 revision，不能伪称 commit-bound。"
+    },
+    {
+      "id": "mimo_code_rows",
+      "url": "https://datasets-server.huggingface.co/rows?dataset=XiaomiMiMo/MiMo-V2.6-RL-oss&config=code&split=train&offset=1348&length=2",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 14639,
+      "response_sha256": "9a844338ad84f76d7dba31991a925c8bf3001f528ab8708f93978f77e8abdb7e",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "HF viewer 当前响应；未返回不可变仓库 revision，不能伪称 commit-bound。"
+    },
+    {
+      "id": "mimo_code_end",
+      "url": "https://datasets-server.huggingface.co/rows?dataset=XiaomiMiMo/MiMo-V2.6-RL-oss&config=code&split=train&offset=2696&length=2",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 11976,
+      "response_sha256": "a19903c384ab00cbf8cc3d635884df44c83ecac61241ea4d401d5389aa9d2cb8",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "HF viewer 当前响应；未返回不可变仓库 revision，不能伪称 commit-bound。"
+    },
+    {
+      "id": "mimo_code_pinned",
+      "url": "https://raw.githubusercontent.com/XiaomiMiMo/mimoagent/467f0a19016f0ac4d63b8d17a1f0da9ba07f232c/src/mimoagent/environments/datasets/opensource_code.py",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 11504,
+      "response_sha256": "4bc0908161203eae5a7acf25e4f8a119d63b5114690b4c45f60126f2c53be44e",
+      "retrieved_at_utc": "2026-10-03T06:19:50.692466+00:00",
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "mimo_git",
+      "url": "https://api.github.com/repos/XiaomiMiMo/mimoagent/commits/mimo-oss",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 1164145,
+      "response_sha256": "f6e03152c317a1c8bee17342b576f4761899e64b8a6fd9bd39cc336d090fa5ee",
+      "retrieved_at_utc": null,
+      "version": "467f0a19016f0ac4d63b8d17a1f0da9ba07f232c",
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "mimo_docker",
+      "url": "https://hub.docker.com/v2/repositories/xiaomimimo/mimo-v2.6-rl-oss/tags?page_size=2",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 1821,
+      "response_sha256": "b9edccfb913ca88e6df73f17f6426a0ff367dd5ea5898de36932fd1e0a0bf39b",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "Docker Hub 标签/仓库元数据；没有拉取镜像。"
+    },
+    {
+      "id": "openswe_meta",
+      "url": "https://huggingface.co/api/datasets/GAIR/OpenSWE?expand=sha&expand=lastModified&expand=gated&expand=cardData",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 1411,
+      "response_sha256": "bfda504571ca02438a7ab7b06c1a4097aad1e242b69431fdee2caadc36c2e7a1",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "HF API 元数据；没有下载完整权重或数据文件。"
+    },
+    {
+      "id": "openswe_paper",
+      "url": "https://arxiv.org/html/2603.13023v2",
+      "access_date": "2026-10-03",
+      "read_method": "作者论文：核研究设置、数据、结果表和有关附录；没有复现。",
+      "response_bytes": 221087,
+      "response_sha256": "08aa31afcc9b6dbecd199bca9c24411984d8e11b82fb50ce9cc9adcd8d362b49",
+      "retrieved_at_utc": "2026-10-03T06:19:50.362591+00:00",
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "datacurve_meta",
+      "url": "https://huggingface.co/api/datasets/datacurve/deep-swe?expand=sha&expand=lastModified&expand=gated&expand=cardData",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 668,
+      "response_sha256": "aa7c6ca1ac4df54e2fbafae98223c65e7295cc960d1fb8e7e97b43daa2f12b21",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "HF API 元数据；没有下载完整权重或数据文件。"
+    },
+    {
+      "id": "datacurve_readme",
+      "url": "https://raw.githubusercontent.com/datacurve-ai/deep-swe/main/README.md",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 3637,
+      "response_sha256": "87ac640023163ef48aa6c59b2e1806d34b68c4e1c3cf7d61597236c8c159f95f",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "只证明所读响应；链接指向的训练/容器没有在本轮运行。"
+    },
+    {
+      "id": "docker_format-code-task-001457",
+      "url": "https://hub.docker.com/v2/repositories/xiaomimimo/mimo-v2.6-rl-oss/tags/format-code-task-001457",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 837,
+      "response_sha256": "973618a630f992c9fe922e6bcdbfb5088d5e125f5c1cb532eb00f38fd3f3ef3b",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "Docker Hub 标签/仓库元数据；没有拉取镜像。"
+    },
+    {
+      "id": "docker_format-code-task-001240",
+      "url": "https://hub.docker.com/v2/repositories/xiaomimimo/mimo-v2.6-rl-oss/tags/format-code-task-001240",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 839,
+      "response_sha256": "b92f32aff6e82a2b98c1545e042f72adfae6cca5f2020d61ce72ee0efd6f7c66",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "Docker Hub 标签/仓库元数据；没有拉取镜像。"
+    },
+    {
+      "id": "docker_format-code-task-000448",
+      "url": "https://hub.docker.com/v2/repositories/xiaomimimo/mimo-v2.6-rl-oss/tags/format-code-task-000448",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 838,
+      "response_sha256": "abcdbf6c8a3a69fc322e5370de70fcdc97104ba2e061fc46dcc638f71ee5e636",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "Docker Hub 标签/仓库元数据；没有拉取镜像。"
+    },
+    {
+      "id": "docker_format-code-task-000804",
+      "url": "https://hub.docker.com/v2/repositories/xiaomimimo/mimo-v2.6-rl-oss/tags/format-code-task-000804",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 839,
+      "response_sha256": "0befd7cfd6e765feba95847133f79323536d0126a095d76356cc6ef36b50144d",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "Docker Hub 标签/仓库元数据；没有拉取镜像。"
+    },
+    {
+      "id": "docker_format-code-task-000578",
+      "url": "https://hub.docker.com/v2/repositories/xiaomimimo/mimo-v2.6-rl-oss/tags/format-code-task-000578",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 838,
+      "response_sha256": "5095c67a51daade30749fb7129e80df205bab0443669c8480e51616a4c8b0d6c",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "Docker Hub 标签/仓库元数据；没有拉取镜像。"
+    },
+    {
+      "id": "docker_format-code-task-000193",
+      "url": "https://hub.docker.com/v2/repositories/xiaomimimo/mimo-v2.6-rl-oss/tags/format-code-task-000193",
+      "access_date": "2026-10-03",
+      "read_method": "只读 HTTP；正文或元数据，未执行远端代码",
+      "response_bytes": 839,
+      "response_sha256": "337020f7956fb917591bd83b8382675e21a72d3a263767739a8ebcdf9a4a0d14",
+      "retrieved_at_utc": null,
+      "version": null,
+      "scope": "Docker Hub 标签/仓库元数据；没有拉取镜像。"
+    }
+  ],
+  "failed_or_incomplete_fetches": [
+    {
+      "id": "mimo_meta",
+      "url": null,
+      "error": "Unterminated string starting at: line 1 column 1933462 (char 1933461)",
+      "interpretation": "有界读取在 2,000,000 bytes 截断，JSON 不完整，未用作事实来源。改用作者列表、目录和 viewer 的小响应。此失败记录未保存 URL。"
+    },
+    {
+      "id": "mimo_readme_latest",
+      "url": "https://raw.githubusercontent.com/XiaomiMiMo/MiMo-V2.6/main/README.md",
+      "error": "HTTP Error 404: Not Found",
+      "interpretation": "未取得内容；不能把访问错误推断为资产不存在。"
+    },
+    {
+      "id": "openswe_card",
+      "url": "https://huggingface.co/datasets/GAIR/OpenSWE/raw/main/README.md",
+      "error": "HTTP Error 401: Unauthorized",
+      "interpretation": "未取得内容；不能把访问错误推断为资产不存在。"
+    },
+    {
+      "id": "datacurve_card",
+      "url": "https://huggingface.co/datasets/datacurve/deep-swe/raw/main/README.md",
+      "error": "HTTP Error 401: Unauthorized",
+      "interpretation": "未取得内容；不能把访问错误推断为资产不存在。"
+    },
+    {
+      "id": "r2e_full_meta",
+      "url": "https://huggingface.co/api/datasets/R2E-Gym/R2E-Gym-Full?expand=sha&expand=lastModified&expand=cardData",
+      "error": "HTTP Error 401: Unauthorized",
+      "interpretation": "未取得内容；不能把访问错误推断为资产不存在。"
+    }
+  ],
+  "self_check": {
+    "author_self_check": true,
+    "independent_review": false,
+    "runtime_reproduction": false,
+    "third_party_full_text_copied_into_deliverables": false,
+    "note": "仅保存短摘要、事实、URL 与响应哈希；原论文/样本内容未复制入交付目录。",
+    "artifact_validation": {
+      "json_parses": true,
+      "source_ids_resolve": true,
+      "local_markdown_links_resolve": true,
+      "new_directory_file_count": 2,
+      "exact_target_effect_entries": 7,
+      "exact_target_code_only_entries": 1,
+      "data_families": 8,
+      "mimo_sample_count": 6,
+      "private_machine_paths_or_secret_patterns_found": false
+    }
+  }
+}

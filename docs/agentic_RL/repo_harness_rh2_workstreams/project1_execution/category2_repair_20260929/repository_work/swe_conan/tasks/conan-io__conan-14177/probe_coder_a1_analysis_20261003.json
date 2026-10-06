@@ -1,0 +1,183 @@
+{
+  "schema_id": "conan.owner.model_analysis.v1",
+  "as_of": "2026-10-03T06:19:28.086024+00:00",
+  "request_id": "swe-conan14177-r11-briefv2-20261003-v1",
+  "job_id": "gpu1003-conan14177-coder-a1",
+  "model": "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+  "sample": 1,
+  "material_version": "conan14177-cloud-test-v2-regroup-v1+brief-v2",
+  "budget_version": "probe-wide-v1",
+  "raw_score": {
+    "reward": 1,
+    "f2p": {
+      "passed": 2,
+      "total": 2
+    },
+    "p2p": {
+      "passed": 11,
+      "total": 11
+    }
+  },
+  "semantic_verdict": "correct_opt_in_filename_logging_preserving_original_patch_calls_default_metadata_and_version_semantics",
+  "candidate_findings": [
+    {
+      "priority": "P2",
+      "id": "C14177-A1-S1",
+      "finding": "demo claimed two filenames but actual output only first attempt and missing-file exception",
+      "disposition": "accepted_non_blocking_validation_statement_finding"
+    }
+  ],
+  "task_material_findings": [],
+  "semantic_independent_review": {
+    "status": "completed_no_task_material_blocker",
+    "report": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_14177_coder_a1_semantic_review_20261003.md",
+      "sha256": "sha256:abf8a8222eb42d64943e2ebec9a744f87ff62e2b0409da9be423f29def6f1f4b"
+    },
+    "scope": "non-author focused complete candidate semantics, actual projection, exact references and model validation; no CPU/GPU rerun"
+  },
+  "execution_independent_review": {
+    "status": "accepted_execution_complete_install_test_references_and_two_layer_cleanup",
+    "report": {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/conan14177_coder_a1_execution_review_v1.json",
+      "sha256": "sha256:07240bbef092bb44cbdf597c1e841573fd13832e403152df7f01a1499dd17369"
+    },
+    "scope": "completed first Coder arm execution/transport and cleanup only"
+  },
+  "owner_analysis": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-14177/probe_coder_a1_analysis_20261003.md",
+    "sha256": "sha256:7dd6eb58d262dea00686bbc6da56cb9759b3d7d07d90f2a4bfdabba61b9a5f60"
+  },
+  "owner_readback": {
+    "path": "runs/category2_repair_20260929/conan_cpu_20261003/probe_analysis_14177_coder_a1_20261003_v1/owner_readback.json",
+    "sha256": "sha256:0e7ac8d435f56b71a5c525ffcd930018cb2aa2e6dfb1318a46af674b4c23017d"
+  },
+  "trajectory": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v19/results/gpu1003-conan14177-coder-a1/attempt/trajectory.jsonl",
+    "sha256": "7bc19535e00b24b3db9ba8774b4e62448f98aaabd85cb00bcada2d04f4247d05",
+    "bytes": 282444
+  },
+  "complete_candidate": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v19/results/gpu1003-conan14177-coder-a1/attempt/candidate/conan-io__conan-14177.diff",
+    "sha256": "5e90bae63e77d0583063207bfdd940e5af98f194379488bbcb40918683b1f617",
+    "bytes": 4986
+  },
+  "frozen_patch": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v19/results/gpu1003-conan14177-coder-a1/attempt/frozen/frozen_patch.json",
+    "sha256": "1b674f71ff00a7cd6fe0db5d5528b532acb648ab81b8ebdca19ea8b6f67137c9",
+    "bytes": 23811
+  },
+  "scoring_projection": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v19/results/gpu1003-conan14177-coder-a1/grading/projection.json",
+    "sha256": "4e550422d124d565e6d9b5037cfce77a762b31c21339ea5595857090788c0aeb",
+    "bytes": 365
+  },
+  "dimensions": {
+    "method": {
+      "heading": "方法",
+      "analysis": "最终实现 `apply_conandata_patches(conanfile, verbose=False)`；True时按entry顺序输出原`it[\"patch_file\"]`，然后调用原`patch()`。省略／False不新增Applying行，但原type／description及无补丁提示仍可输出，不能说默认绝无日志。文件名日志在实际应用前打印，表示尝试；异常仍向外传播，不单凭Applying证明成功。\n\n保留版本字典筛选、列表输入、拷贝后pop、不改变conandata、base_path／strip／fuzz及额外kwargs。`patch()`、PatchLogHandler和export helper AST与原base相等；单描述／类型日志未替换为文件名。True时为patch_string加一条说明，原字符串应用不变，公开要求没有规定字符串文件名。位置／关键字True均符合公开调用方式。两个可信multiple节点独立核默认、文件顺序、metadata、版本、输入不变和记录型应用调用；这些调用证据不是两份真实补丁文件的磁盘修改实验。"
+    },
+    "localization": {
+      "heading": "定位",
+      "analysis": "首工具搜索patch路径；工具2读对生产源码，随后读公开exports、unit和functional测试。首次相关源码读取距第一模型请求 **2.071秒**；正确目标文字行71在5工具后、第六响应完成 **9.920秒**，是该响应完成上界，不是首次形成判断的精确时刻。\n\n定位方向正确，但初版在`entry.pop(\"patch_file\")`之后仍读entry同名键；默认13公开测与一个functional通过都没有覆盖True缺陷。新增True测试暴露KeyError后，行140改读保留的原`it`，才使新文件名测试通过。正确目标与首个正确实现分别记录，不把早期默认PASS视为新功能完成。"
+    },
+    "tools": {
+      "heading": "工具与纠错",
+      "analysis": "22次实际工具：**Bash12、Read5、Edit4、Write1**。原轨迹保留两次pytest非零：行131为两个新verbose例KeyError，行170为修正生产后另一个新例的输出断言错误。后者在True下仍要求只存在旧description整行，忽略新增的两条文件名；行192移除的是模型刚写的这一个错误新例，保留原13测试和新的两文件名例。题主核最终完整diff／原函数AST，没有删旧回归或弱化生产行为来换PASS。\n\nDemo未创建输入文件，两次调用都在首文件失败，异常由脚本捕获，故行261工具正常退出。`is_error=false`只说明命令正常收尾；不代表补丁成功或两文件均被执行。行266模型却贴出第二条未观察到的日志并称输出完全匹配。这个P2归验证陈述，生产代码和可信节点另有依据；保留原轨迹，不改写观察。"
+    },
+    "parallel": {
+      "heading": "并行",
+      "analysis": "23响应前22各一个工具，最后结束，无实际工具重叠。生产源码定位后，公开exports／unit／functional的只读检查可以独立进行；本次未并行。CC／adapter多工具并发支持未独立建立，不能从串行样本判并行能力。测试共用工作树、客户端配置和缓存，不把同时运行这些pytest直接列为安全机会；编辑后的验证及纠错有真实顺序依赖。"
+    },
+    "verification": {
+      "heading": "验证",
+      "analysis": "| 轨迹行 | 实际结果与范围 |\n| --- | --- |\n| 88→92、101→105 | 已编辑初版后原unit13P、单functional1P；未覆盖True，非修改前失败复现 |\n| 127→131、153→157 | 两新例2F／13P暴露KeyError；修正后新文件名例1P |\n| 166→170、192、205→209 | 错误新增断言1F／14P；删除该新例后最终unit14P、0.16秒 |\n| 218→222 | 公开目录`-k patches`实际62 collected／48 deselected／14P、0.20秒；与上项重复，其他模块先收集后筛选 |\n| 231→235 | 三个functional patch flow全部P、1.06秒；包含先前一个例 |\n| 257→261 | Demo只输出首Applying及预期缺文件异常；无成功断言，不验证第二文件或实际应用 |\n| 270→274、283→287 | 联合unit＋functional17P、1.07秒，同14＋3不叠加；testbed Python和source导入身份确认 |\n| 可信grader | 固定2F／11P全部P；新增公开unit不贡献分数，单描述节点仍参与 |\n\n最终14unit＋3functional通过有原件支持；“all tests passing”只在这些选择范围成立，不能扩成全仓。两个文件日志有mock新例及独立可信节点支持，真实True两文件磁盘应用没有由demo建立。没有修改前失败复现，重复13／14／17结果不累计成更多独立覆盖。当前证据足以判本候选语义，无须为错误demo陈述重跑旧CPU或扩模型采样。"
+    },
+    "efficiency": {
+      "heading": "效率",
+      "analysis": "求解 **55.135秒**，harness52.307秒；CC51.682秒／API44.056秒，差7.626秒不是纯工具时间。23回合累计输入 **347,827**／输出 **5,736 tokens**，最大单请求输入22,717；CC、gateway和adapter读回一致。首次搜索、两轮新例纠错有实际作用；重复同选择unit、冗余缺输入demo与长重复总结可以减少，不据单样本比较一般能力。\n\nGit清理15.259秒、可信初始化7.625秒等环境准备单列；评分总93.305秒、测试2.075秒、评分reset16.179秒／prep0.328秒／队列0秒，不混入求解耗时。23实际gateway请求输出预算均65536，CC32000为元数据，不冒称实际限制降低；声明196608上下文／240回合／3小时未触及，不能证明极限容量。CC费用1.882535美元是内置估算，非本地GPU账单。"
+    },
+    "termination_and_stability": {
+      "heading": "结束与稳定性",
+      "analysis": "原件为`completed/success/end_turn`、harness0，23gateway响应HTTP200且无stream error、截断或拒绝；actor、grader和gateway收尾闭合。执行采样不推断全程峰值、容量或利用率。仅一次Coder，有效raw1支持本次生产候选，不建立稳定成功率或训练资格。Qwen3.6首次与整项回执尚缺，不能核销成对请求。"
+    }
+  },
+  "metrics": {
+    "model_turns": 23,
+    "tool_calls": 22,
+    "tool_counts": {
+      "Bash": 12,
+      "Read": 5,
+      "Edit": 4,
+      "Write": 1
+    },
+    "reported_tool_errors": 2,
+    "error_rows": [
+      131,
+      170
+    ],
+    "cumulative_input_tokens": 347827,
+    "cumulative_output_tokens": 5736,
+    "largest_request_input_tokens": 22717,
+    "solve_seconds": 55.135,
+    "harness_exec_seconds": 52.307,
+    "cc_duration_seconds": 51.682,
+    "cc_api_duration_seconds": 44.056,
+    "cc_non_api_residual_seconds_not_pure_tool_time": 7.626,
+    "first_relevant_source_read_since_first_request_seconds": 2.0706498622894287,
+    "initial_correct_root_location_response_completion_since_first_request_seconds": 9.91972541809082,
+    "diagnosis_response_trajectory_row": 71,
+    "environment_preparation_stage_seconds": {
+      "image_ready": 1.032,
+      "network_and_container": 1.239,
+      "git_sanitize": 15.259,
+      "trusted_init": 7.625,
+      "baseline_census": 0.154,
+      "quiescence": 0.393
+    },
+    "grading_timing": {
+      "schema_id": "rh2.grading_timing_record.v1",
+      "record_id": "timing_36d7440a",
+      "trajectory_id": "gpu1003-conan14177-coder-a1",
+      "task_id": "swe_gym_lite::conan-io__conan-14177",
+      "image_pull_seconds": 0.0,
+      "env_reset_seconds": 16.179,
+      "prep_seconds": 0.328,
+      "test_seconds": 2.075,
+      "total_grading_seconds": 93.305,
+      "queue_wait_seconds": 0.0,
+      "container_peak_memory_mb": 329.051,
+      "queue_depth_at_enqueue": null,
+      "backpressure_triggered": false
+    },
+    "cc_cost_usd_builtin_estimate_not_compute_bill": 1.882535
+  },
+  "reference_states": {
+    "conans/test/unittests/tools/files/test_patches.py::test_apply_in_build_from_patch_in_source": "PASSED",
+    "conans/test/unittests/tools/files/test_patches.py::test_base_path": "PASSED",
+    "conans/test/unittests/tools/files/test_patches.py::test_multiple_no_version": "PASSED",
+    "conans/test/unittests/tools/files/test_patches.py::test_multiple_with_version": "PASSED",
+    "conans/test/unittests/tools/files/test_patches.py::test_single_apply_fail": "PASSED",
+    "conans/test/unittests/tools/files/test_patches.py::test_single_no_patchset": "PASSED",
+    "conans/test/unittests/tools/files/test_patches.py::test_single_patch_arguments": "PASSED",
+    "conans/test/unittests/tools/files/test_patches.py::test_single_patch_description": "PASSED",
+    "conans/test/unittests/tools/files/test_patches.py::test_single_patch_extra_fields": "PASSED",
+    "conans/test/unittests/tools/files/test_patches.py::test_single_patch_file": "PASSED",
+    "conans/test/unittests/tools/files/test_patches.py::test_single_patch_file_from_forced_build": "PASSED",
+    "conans/test/unittests/tools/files/test_patches.py::test_single_patch_string": "PASSED",
+    "conans/test/unittests/tools/files/test_patches.py::test_single_patch_type": "PASSED"
+  },
+  "non_reference_platform_skips": [],
+  "actual_gateway_output_limits": [
+    65536
+  ],
+  "candidate_repair_required_for_success": false,
+  "task_material_changes_required": false,
+  "CPU_or_model_rerun_required": false,
+  "ordinary_additional_samples": "deferred_coverage_first",
+  "paired_request_closed": false,
+  "pending_models": [
+    "Qwen/Qwen3.6-35B-A3B"
+  ],
+  "training_eligibility": "not_established"
+}

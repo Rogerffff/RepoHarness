@@ -1,0 +1,119 @@
+{
+  "instance_id": "conan-io__conan-15422",
+  "old_record_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/records/conan-io__conan-15422.json",
+  "environment": {
+    "status": "verified_original_baseline_outside_repair_scope",
+    "recipe": "full216/baseline01 原始对照；无已知环境修复需求",
+    "status_ref": "runs/env_recipe_repair_20260919/scope_reconciliation_20260920.json#outside_repair_ids",
+    "analysis_ref": "runs/full216_rh2_diagnostic_20260919/analysis_final_1011/coverage_216.json#conan-io__conan-15422",
+    "scope": "原始 noop 有目标失败且安装审计无失败；gold 完整命令退出 0，不等于题目质量或稳定性认证。",
+    "existing_observations": {
+      "noop": {
+        "reward": 0.0,
+        "test_rc": 1,
+        "log": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w02-1/eval_logs/evallog_replay-f216-baseline01-w_434a958a.eval.log",
+        "sha256": "24800e3c13ca9842c442d6e21457a70fec4992477951dbcd908637352147fe0e"
+      },
+      "gold": {
+        "reward": 1.0,
+        "test_rc": 0,
+        "log": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w02-1/eval_logs/evallog_replay-f216-baseline01-w_e40da522.eval.log",
+        "sha256": "a0aa7082c33b1b3e99c7b1287a7767575d8ccd5c2e498c2f5fa8cdf6f3a3c089"
+      }
+    }
+  },
+  "requirements": "生成的 CMakePresets.json 的 buildPresets 应包含可用的 jobs 值，让后续 cmake --build --preset 支持并行。数值应沿仓库现有 tools.build:jobs 配置和 build_jobs 默认 CPU 机制，而不是硬编码题面示例的 16。",
+  "public_sufficiency": "充分：题面给出 before/after JSON；基线 CMake 已使用 build_jobs 生成构建并行度，函数文档明确配置优先、CPU 检测兜底，能从可见仓库推出来源和默认值。",
+  "test_assessment": "F2P 只检查 tools.build:jobs=42 的第一个 build preset，未锁实现方式；40 个 P2P 覆盖较广，但没有默认 jobs 或第二个配置值的语义断言。原始归档中非参考平台 skip 不影响本题参考集合，不应当作该题失效。",
+  "old_claim_reviews": [
+    {
+      "old_claim": "checks.23：题面没有说明 jobs 来源，只有示例值 16。",
+      "status": "refuted",
+      "assessment": "不能只看题面逐字提及；CMake 的 _cmake_cmd_line_args 已调用 build_jobs，而 build_jobs 明确配置优先和默认 CPU 语义。42 测试是这一既有配置约定的实例。",
+      "evidence": [
+        "public.problem_statement",
+        "base:conan/tools/cmake/cmake.py:11-19",
+        "base:conan/tools/build/cpu.py:8-28"
+      ]
+    },
+    {
+      "old_claim": "checks.25：仅显式 42 覆盖，默认行为和硬编码错误未被区分。",
+      "status": "confirmed",
+      "assessment": "F2P 的确只有一组显式配置；其它 P2P 对 buildPresets 检查名称、个数及 configuration，没有 jobs 默认 oracle。具体错误候选的满分尚未实跑。",
+      "evidence": [
+        "grading.test_patch",
+        "base:conans/test/integration/toolchains/cmake/test_cmaketoolchain.py:531-652"
+      ]
+    },
+    {
+      "old_claim": "gold_introduces_host_dependent_output：CPU 数变化说明 gold 新增稳定性风险，需再做资源实验。",
+      "status": "refuted",
+      "assessment": "默认值随可用 CPU 变化是 build_jobs 已有公开行为，不等于结果不稳定或 oracle 脆弱；本 F2P 显式 jobs=42，P2P 不比较默认 jobs。没有证据要求重复资源实验才能进行本轮模型探针。",
+      "evidence": [
+        "base:conan/tools/build/cpu.py:8-28",
+        "grading.test_patch"
+      ]
+    },
+    {
+      "old_claim": "near_duplicate_with_14296：同源码/测试文件意味着训练一定提前泄漏评测信息，必须同侧。",
+      "status": "unresolved",
+      "assessment": "同族线索成立，但同文件可以包含不同需求；正式去重应比较需求、修改和可见测试重叠，不能把公共基线测试的重合直接等同答案泄漏。本轮未作划分决定。",
+      "evidence": [
+        "old_record#checks.5",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/CODEX_REVIEW_20260916.md#3"
+      ]
+    },
+    {
+      "old_claim": "checks.19：SKIPPED 摘要产生 [1] 假键，但不在本题参考中，暂无判分影响。",
+      "status": "confirmed",
+      "assessment": "这是旧来源 parser 的观测噪声，原始基线/金补丁参考结果仍为 0/1；不能从该假键推导本题环境待修。",
+      "evidence": [
+        "old_record#checks.19",
+        "environment.existing_observations",
+        "runs/env_recipe_repair_20260919/scope_reconciliation_20260920.json#outside_repair_ids"
+      ]
+    },
+    {
+      "old_claim": "checks.31 / control_surface_conftest_user：候选新增配置可进入测试控制面。",
+      "status": "unresolved",
+      "assessment": "旧仓库线索与本轮题意审查分开；没有执行新的篡改反例，也未据此给本题降级。可信边界的现实风险应沿统一评分链审查，不能把安装/参考键已验误写成安全已验。",
+      "evidence": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/CODEX_REVIEW_20260916.md#2",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_conan/records/conan-io__conan-15422.json#checks.31"
+      ]
+    }
+  ],
+  "recommendation": "probe_candidate",
+  "recommendation_scope": "本轮模型探针/反例调查建议，不是训练准入、剔题或修改正式题包决定。",
+  "next_action": [
+    "优先模型探针；人工检查候选是否复用 build_jobs 或等价配置/默认逻辑，并只写 buildPresets。",
+    "最小错误修复对照（未运行）：仅当显式 tools.build:jobs 存在时才写 jobs；该补丁预计通过官方 F2P，却仍不能解决用户不传 conf 的默认并行问题。独立诊断用无 conf 且固定 CPU helper=3、显式 conf=7 两组生成物，并检查多配置的每个 build preset；不用重跑已完成资源实验。"
+  ],
+  "evidence_level": {
+    "task_quality": "static",
+    "environment": "existing_run",
+    "new_counterexamples": "not_run",
+    "local_verification": "16 份所引用既有评分日志的 SHA256 与当前归档一致；未新增 Docker/远端/模型运行。"
+  },
+  "unknowns": [
+    "未执行 conditional-jobs 或硬编码 42 反例；没有新增跨机器稳定性证明。",
+    "14296 与本题触碰同一生成器/测试文件，足以登记同族线索，但不足以单凭文件重合证明答案泄漏或决定必须绑分组。"
+  ],
+  "materials": {
+    "base_commit": "f08b9924712cf0c2f27b93cbb5206d56d0d824d8",
+    "source_repository": "runs/env_overnight_20260916/repos/conan（只用 git show 读取精确 base）",
+    "public_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/public_bundles_v0.jsonl:38",
+    "test_patch_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/grading_bundles_v2_v0.jsonl:38",
+    "gold_reference_bundle": "docs/agentic_RL/repo_harness_rh2_workstreams/s2/ingest/validation_bundles_v0.jsonl:38",
+    "reference_counts": {
+      "f2p": 1,
+      "p2p": 40
+    },
+    "base_source_refs": [
+      "conan/tools/cmake/presets.py:85-104,176-199",
+      "conan/tools/build/cpu.py:8-28,31-54",
+      "conan/tools/cmake/cmake.py:11-19",
+      "conans/test/integration/toolchains/cmake/test_cmaketoolchain.py:531-652,1209-1216"
+    ]
+  }
+}

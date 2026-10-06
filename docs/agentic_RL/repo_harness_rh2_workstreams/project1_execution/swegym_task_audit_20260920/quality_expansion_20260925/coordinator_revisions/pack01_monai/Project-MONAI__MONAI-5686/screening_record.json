@@ -1,0 +1,785 @@
+{
+  "task_id": "swe_gym_lite::Project-MONAI__MONAI-5686",
+  "task_revision": "upstream",
+  "source_adapter_ref": {
+    "source": "swe_gym_lite",
+    "grading_bundle": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-5686/grading.json",
+    "schema_id": "rh2.private_grading_bundle.v2",
+    "spec_vendor_id": "swegym_constants_242429c1",
+    "historical_grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+    "adapter_implementation_independently_reviewed": false
+  },
+  "recipe_ref": {
+    "locators": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-5686/environment_record.json",
+    "source_image_tag": "xingyaoww/sweb.eval.x86_64.project-monai_s_monai-5686:latest",
+    "expected_source_manifest_digest": "sha256:d3524dd2cbd2dcf1fb0cdc492b11cb143ed7a9b0269a711ec19425b1d4756269",
+    "per_run_recipe_originals": [
+      {
+        "candidate_kind": "noop",
+        "paths": []
+      },
+      {
+        "candidate_kind": "gold",
+        "paths": []
+      }
+    ],
+    "scope": "历史原条件；不是当前actor环境资格"
+  },
+  "code_snapshot_ref": {
+    "base_commit": "25130db17751bb709e841b9727f34936a84f9093",
+    "base_identity": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-5686/base_identity.json",
+    "actual_actor_worktree": "unknown",
+    "actual_actor_messages": "unknown",
+    "sealed_analysis": "/Users/roger/Desktop/claude-code-verl-stage0h/docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/swegym_task_audit_20260920/quality_expansion_20260925/results/Project-MONAI__MONAI-5686/analysis_before_history.md",
+    "sealed_analysis_sha256": "fe1224ecb0ad89c6695635d2520ad5ef5aebfd3d42fe34421dfe98570b6644b3",
+    "gold_patch": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-5686/gold.patch",
+    "test_patch": "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-5686/test.patch",
+    "source_code_read_scope": "详见analysis_before_history.md实际阅读范围；未执行项目"
+  },
+  "facts_ref": [
+    {
+      "role": "noop",
+      "evidence_level": "historical_real_rh2",
+      "ledger_path": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-1/ledger.jsonl",
+      "line": 3,
+      "line_sha256": "3e371ac388b3f3715619607ec56c91274332eab76f6d3d370b613e9d4007009a",
+      "log_path": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-1/eval_logs/evallog_replay-f216-baseline01-w_8270b8b1.eval.log",
+      "log_sha256": "1952528ad44611a0f18f886d2883b69b4d4a18c734a173272fea94681f8602e8",
+      "condition": {
+        "run_id": "f216-baseline01-w06-1",
+        "source": "swe_gym_lite",
+        "schema_id": "rh2.replay_grade_ledger.v1",
+        "started_at_utc": "2026-09-18T21:07:37.867626+00:00",
+        "image_ref": "xingyaoww/sweb.eval.x86_64.project-monai_s_monai-5686:latest",
+        "image_digest_expected": "sha256:d3524dd2cbd2dcf1fb0cdc492b11cb143ed7a9b0269a711ec19425b1d4756269",
+        "image_id_actual": null,
+        "image_identity": "sha256:d3524dd2cbd2dcf1fb0cdc492b11cb143ed7a9b0269a711ec19425b1d4756269",
+        "image_local_build": false,
+        "derived_image_recipe": null,
+        "scripts_digest": "sha256:538e47decf626343d421e958d14f877ac651f42182f009dff533c16cf843f13c",
+        "baseline_policy_version": "baseline_policy_v2",
+        "policy": {
+          "candidate_writable_prefixes": [
+            "/opt/miniconda3/envs/testbed"
+          ],
+          "cpus": 2.0,
+          "grader_profile_digest": "sha256:1bb8e0cf80ce48b15401fdf79d18f4f4c08a5f01001d8b0756311c58de25c19a",
+          "memory_bytes": 4294967296,
+          "network": "deny_all",
+          "pids_limit": 512,
+          "profile_id": "rh2.grader_sandbox_profile.v1",
+          "shm_bytes": 67108864,
+          "tmpfs_bytes": 1073741824,
+          "uid": 54322,
+          "user": "rh2grader"
+        },
+        "budgets": {
+          "candidate_stage_seconds": 900.0,
+          "cleanup_seconds": 120.0,
+          "grading_deadline_seconds": 3600.0,
+          "image_pull_seconds": 1800.0
+        },
+        "resource": {
+          "mem_peak_mb": 1001.273,
+          "mem_peak_unavailable_or_zero": false
+        },
+        "resource_facts": null,
+        "reference": null
+      },
+      "actual_test_selection": {
+        "command": "pytest -rA tests/test_ssim_loss.py",
+        "expected_f2p": [
+          "tests/test_ssim_loss.py::TestSSIMLoss::test_grad_1",
+          "tests/test_ssim_loss.py::TestSSIMLoss::test_grad_0"
+        ],
+        "expected_p2p": [
+          "tests/test_ssim_loss.py::TestSSIMLoss::test3d_2",
+          "tests/test_ssim_loss.py::TestSSIMLoss::test3d_1",
+          "tests/test_ssim_loss.py::TestSSIMLoss::test3d_3",
+          "tests/test_ssim_loss.py::TestSSIMLoss::test2d_2",
+          "tests/test_ssim_loss.py::TestSSIMLoss::test2d_1",
+          "tests/test_ssim_loss.py::TestSSIMLoss::test3d_0",
+          "tests/test_ssim_loss.py::TestSSIMLoss::test2d_3",
+          "tests/test_ssim_loss.py::TestSSIMLoss::test2d_0"
+        ]
+      },
+      "install": {
+        "install_rc_last_command": 0,
+        "install_seconds": 9.036,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 1,
+        "test_seconds": 13.018
+      },
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "f2p_pass": 0,
+        "f2p_total": 2,
+        "failure_category": "tests_failed",
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "unresolved",
+        "p2p_fail": 0,
+        "p2p_total": 8,
+        "report_id": "rpt_grading_8270b8b1",
+        "reward": 0.0
+      },
+      "parser": {
+        "apply_ok": true,
+        "num_parsed_outside_segment": 0,
+        "num_parsed_tests": 10,
+        "parser_source": "swegym_parsers@242429c1",
+        "reference_missing": [],
+        "reference_skipped": [],
+        "resolution": "RESOLVED_NO"
+      },
+      "projection": {
+        "frozen_patch_digest": "sha256:d0d118186715af50561d4b34158e724b5e95f63e1cca984a4d2657008b6908d0",
+        "ignored_paths": [],
+        "included_paths": [],
+        "unsupported_shape_reasons": []
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "actor_equivalence": false
+    },
+    {
+      "role": "gold",
+      "evidence_level": "historical_real_rh2",
+      "ledger_path": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-1/ledger.jsonl",
+      "line": 4,
+      "line_sha256": "10d76e2fbef83290281cda88f5c3fe7269e12516f2d0e789decfbf12a85c62f6",
+      "log_path": "runs/full216_rh2_diagnostic_20260919/remote/replay/baseline01/workers/w06-1/eval_logs/evallog_replay-f216-baseline01-w_2d0e37bb.eval.log",
+      "log_sha256": "292e0e3e3f30d71bc72bbb22106b03797998669ae90ce2ab43692ef41f4c47bd",
+      "condition": {
+        "run_id": "f216-baseline01-w06-1",
+        "source": "swe_gym_lite",
+        "schema_id": "rh2.replay_grade_ledger.v1",
+        "started_at_utc": "2026-09-18T21:08:39.188488+00:00",
+        "image_ref": "xingyaoww/sweb.eval.x86_64.project-monai_s_monai-5686:latest",
+        "image_digest_expected": "sha256:d3524dd2cbd2dcf1fb0cdc492b11cb143ed7a9b0269a711ec19425b1d4756269",
+        "image_id_actual": null,
+        "image_identity": "sha256:d3524dd2cbd2dcf1fb0cdc492b11cb143ed7a9b0269a711ec19425b1d4756269",
+        "image_local_build": false,
+        "derived_image_recipe": null,
+        "scripts_digest": "sha256:538e47decf626343d421e958d14f877ac651f42182f009dff533c16cf843f13c",
+        "baseline_policy_version": "baseline_policy_v2",
+        "policy": {
+          "candidate_writable_prefixes": [
+            "/opt/miniconda3/envs/testbed"
+          ],
+          "cpus": 2.0,
+          "grader_profile_digest": "sha256:1bb8e0cf80ce48b15401fdf79d18f4f4c08a5f01001d8b0756311c58de25c19a",
+          "memory_bytes": 4294967296,
+          "network": "deny_all",
+          "pids_limit": 512,
+          "profile_id": "rh2.grader_sandbox_profile.v1",
+          "shm_bytes": 67108864,
+          "tmpfs_bytes": 1073741824,
+          "uid": 54322,
+          "user": "rh2grader"
+        },
+        "budgets": {
+          "candidate_stage_seconds": 900.0,
+          "cleanup_seconds": 120.0,
+          "grading_deadline_seconds": 3600.0,
+          "image_pull_seconds": 1800.0
+        },
+        "resource": {
+          "mem_peak_mb": 542.176,
+          "mem_peak_unavailable_or_zero": false
+        },
+        "resource_facts": null,
+        "reference": null
+      },
+      "actual_test_selection": {
+        "command": "pytest -rA tests/test_ssim_loss.py",
+        "expected_f2p": [
+          "tests/test_ssim_loss.py::TestSSIMLoss::test_grad_1",
+          "tests/test_ssim_loss.py::TestSSIMLoss::test_grad_0"
+        ],
+        "expected_p2p": [
+          "tests/test_ssim_loss.py::TestSSIMLoss::test3d_2",
+          "tests/test_ssim_loss.py::TestSSIMLoss::test3d_1",
+          "tests/test_ssim_loss.py::TestSSIMLoss::test3d_3",
+          "tests/test_ssim_loss.py::TestSSIMLoss::test2d_2",
+          "tests/test_ssim_loss.py::TestSSIMLoss::test2d_1",
+          "tests/test_ssim_loss.py::TestSSIMLoss::test3d_0",
+          "tests/test_ssim_loss.py::TestSSIMLoss::test2d_3",
+          "tests/test_ssim_loss.py::TestSSIMLoss::test2d_0"
+        ]
+      },
+      "install": {
+        "install_rc_last_command": 0,
+        "install_seconds": 7.914,
+        "install_skipped": false,
+        "log_partial": false,
+        "markers_seen": [
+          "RH2_INSTALL_RC",
+          "RH2_TEST_RC",
+          "RH2_TS_INSTALL_END",
+          "RH2_TS_INSTALL_START",
+          "RH2_TS_TEST_END",
+          "RH2_TS_TEST_START"
+        ],
+        "test_rc": 0,
+        "test_seconds": 9.657
+      },
+      "report": {
+        "execution_failure_evidence": [],
+        "execution_failure_stage": null,
+        "f2p_pass": 2,
+        "f2p_total": 2,
+        "failure_category": null,
+        "grader_version": "swebench-4.1.0+swegym_parsers@242429c1",
+        "grading_semantics": "swe_f2p_p2p",
+        "infra_failure_detail": null,
+        "outcome": "resolved",
+        "p2p_fail": 0,
+        "p2p_total": 8,
+        "report_id": "rpt_grading_2d0e37bb",
+        "reward": 1.0
+      },
+      "parser": {
+        "apply_ok": true,
+        "num_parsed_outside_segment": 0,
+        "num_parsed_tests": 10,
+        "parser_source": "swegym_parsers@242429c1",
+        "reference_missing": [],
+        "reference_skipped": [],
+        "resolution": "RESOLVED_FULL"
+      },
+      "projection": {
+        "frozen_patch_digest": "sha256:2974bc4088942f9fae4d3d0b894118260a8d014a1f601179d5aaa992f6ad2ef2",
+        "ignored_paths": [],
+        "included_paths": [
+          "monai/losses/ssim_loss.py"
+        ],
+        "unsupported_shape_reasons": []
+      },
+      "cleanup": {
+        "detail": "",
+        "removed": true,
+        "steps": [
+          "rm:ok"
+        ]
+      },
+      "actor_equivalence": false
+    }
+  ],
+  "checks": {
+    "1": {
+      "status": "pass",
+      "note": "限本题P/V的base、patch、expected与所列历史stage/projection/log身份；不证明实际actor交付版本。",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-5686/base_identity.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-5686/grading.json",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-5686/run_refs.json"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "2": {
+      "status": "pass",
+      "note": "base源码存在目标缺陷；选中历史no-op在对应目标断言失败，未见安装失败冒充目标失败。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "3": {
+      "status": "unknown",
+      "note": "实际actor user/system消息和工具呈现未捕获；计划题面完整性不能替代实际输入证据。",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-5686/environment_brief.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "4": {
+      "status": "pass",
+      "note": "限历史benign gold：non-test源码成功投影且未被可信测试恢复删除；actual actor写权限未验。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "5": {
+      "status": "unknown",
+      "note": "旧记录的跨题关联只作未核实线索；本轮不读其它题/索引、不认证重复或训练留出关系。",
+      "evidence_refs": [
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "6": {
+      "status": "unknown",
+      "note": "原日志证明指定grader条件安装/目标测试完成；完整依赖重建和当前actor恢复未验，末安装命令RC不是各步RC。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "7": {
+      "status": "unknown",
+      "note": "核心公开复现使用合成输入，无外部权重/数据要求；actor依赖、临时目录/资产位置权限未取得。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "8": {
+      "status": "unknown",
+      "note": "历史rh2grader UID54322运行不等于实际actor用户/权限下开发成功。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "9": {
+      "status": "pass",
+      "note": "限历史gold：候选输入hash、stage、projection、实际源码diff和/testbed/monai导入观测吻合。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "10": {
+      "status": "unknown",
+      "note": "实际actor解释器激活、源码导入、窄测试/API开发入口未实测；公开命令仅提案。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "11": {
+      "status": "unknown",
+      "note": "核心公开流程不需运行期外部服务；历史grader deny_all完成。actor准备/安装网络与批准供应路径仍未知。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "12": {
+      "status": "not_applicable",
+      "note": "已读目标复现及实际选定测试没有外部服务依赖；不概括全仓。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "13": {
+      "status": "unknown",
+      "note": "历史资源/耗时仅见本题运行条件；实际actor资源与期限未核验，未推断单位。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "14": {
+      "status": "unknown",
+      "note": "没有同状态重复评分证据；单次no-op/gold不是重复性证明。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "15": {
+      "status": "unknown",
+      "note": "本轮未运行重置/缓存/并发实验；历史清理removed=true仅证明那次清理记录。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "16": {
+      "status": "pass",
+      "note": "限历史gold：候选字节hash与V/gold.patch相同，投影路径和实际diff吻合；未全面审计任意候选形状。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "17": {
+      "status": "pass",
+      "note": "限选中历史运行：一个测试文件恢复/补丁成功，attestation与日志一致，源码未误删；完整防对抗边界未审。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "18": {
+      "status": "pass",
+      "note": "实际整模块选择器与逐个F2P/P2P状态已核，参考missing/skip为空；仅指定CPU历史条件。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "19": {
+      "status": "pass",
+      "note": "限这些运行：解析测试身份与实际日志/expected一致，num_parsed_outside_segment=0；未独立复审parser全部代码。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "20": {
+      "status": "pass",
+      "note": "所列no-op/gold分差来自目标失败/通过；不将总分解释为未测公开需求也实现。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "21": {
+      "status": "pass",
+      "note": "目标失败、其它测试状态、安装末RC和test RC分开记录；未用reward隐藏执行事实。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "23": {
+      "status": "pass",
+      "note": "已读公开材料可推出隐藏检查要求；遗漏公开目标归25，不把eval/flag等有依据断言误记为隐藏规格冲突。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "24": {
+      "status": "pass",
+      "note": "新增/修改测试不检查gold实现形式；只在已读断言范围未发现强制唯一实现，未执行所有合理替代解。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "25": {
+      "status": "issue",
+      "note": "仅flag不保证真实SSIM梯度；全部B1C1，B>1/C>1/3D梯度未测，可漏过部分或假梯度修复。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "26": {
+      "status": "unknown",
+      "note": "未证gold新增回归；覆盖不足、旧环境失败、base既有缺陷都不能替代新增回归证据。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "27": {
+      "status": "issue",
+      "note": "gold在C>1内部递归再次走metric.detach，留下公开C5用法缺陷；静态完整调用链，未运行多通道。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "28": {
+      "status": "pass",
+      "note": "开发提案不自动成为评分：不强制复制形式/函数身份，不把所有梯度非零或全仓全绿当新要求。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "29": {
+      "status": "unknown",
+      "note": "实际actor可见工作树/历史/工具材料未取得。授权审查者按流程见到私有gold/test不算actor泄漏，暴露记usage；此编号修正采纳协调者封存后提醒。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "30": {
+      "status": "unknown",
+      "note": "未验证实际actor网络/工具可取得答案的渠道。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "31": {
+      "status": "unknown",
+      "note": "保护attestation和runner hash只支持历史benign运行；未完整审计候选控制面攻击。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "32": {
+      "status": "unknown",
+      "note": "已识别的弱验收归25；未完整验证所有捷径或对抗评分机制。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "33": {
+      "status": "unknown",
+      "note": "未取得真实Claude Code从公开输入到交付的完整运行。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "34": {
+      "status": "unknown",
+      "note": "没有本轮真实模型求解失败，不作能力/环境归因。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "35": {
+      "status": "unknown",
+      "note": "未审真实solver通过解；gold历史满分只覆盖现有参考。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "36": {
+      "status": "unknown",
+      "note": "未运行模型或训练，不批准当前基座/阶段适配。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "38": {
+      "status": "unknown",
+      "note": "当前actor干净条件下独立复验尚未进行。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "39": {
+      "status": "not_checked",
+      "note": "本轮未跨题验证共享改动影响。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "40": {
+      "status": "pass",
+      "note": "本包初稿全封存后才按明确release读各自旧记录，未扩读其它题/旧聚合/reviewer；独立review仍待完成。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    },
+    "37": {
+      "status": "not_checked",
+      "note": "本轮不改题/环境；未发现需要据本轮事实声明的新增环境修订。",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "old_findings_delta.md"
+      ],
+      "evidence_level": "static_review_and_selected_historical_rh2"
+    }
+  },
+  "issues": [
+    {
+      "id": "gradient_connectivity_gap",
+      "checks": [
+        "25"
+      ],
+      "status": "open",
+      "severity": "P2",
+      "category": "acceptance_coverage",
+      "claim": "requires_grad flag及常量前向数值无法证明真实SSIM输入导数；B>1/C>1/3D梯度缺少验收。",
+      "evidence_level": "static_inference",
+      "evidence_refs": [
+        "analysis_before_history.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-5686/test.patch",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-5686/base/tests/test_ssim_loss.py"
+      ],
+      "not_claimed": "无本轮mutant运行，未将覆盖缺口标成26回归。"
+    },
+    {
+      "id": "gold_multichannel_incomplete",
+      "checks": [
+        "27"
+      ],
+      "status": "open",
+      "severity": "P2",
+      "category": "reference_incompleteness",
+      "claim": "公开C5用法下gold仍在SSIMMetric多通道递归中detach，不能保留对y的梯度。",
+      "evidence_level": "static_call_chain",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-5686/base/monai/losses/ssim_loss.py:69",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-5686/base/monai/metrics/regression.py:329",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-5686/base/monai/metrics/metric.py:69",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-5686/gold.patch"
+      ],
+      "not_claimed": "这是base bug残留，不是gold新增回归；私有helper调用本身不构成缺陷。"
+    },
+    {
+      "id": "device_parameter_scope",
+      "checks": [
+        "14",
+        "19"
+      ],
+      "status": "recorded_limitation",
+      "severity": "P3",
+      "category": "execution_condition",
+      "claim": "CPU两个梯度参数语义重复；CUDA只追加新项，既有ID含义不变，未证明评分失配。",
+      "evidence_level": "static_parameter_order_and_historical_cpu_logs",
+      "evidence_refs": [
+        "old_findings_delta.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-5686/test.patch"
+      ]
+    },
+    {
+      "id": "actual_actor_evidence_gap",
+      "checks": [
+        "3",
+        "6",
+        "7",
+        "8",
+        "10",
+        "13",
+        "29",
+        "33"
+      ],
+      "status": "unknown",
+      "severity": null,
+      "category": "evidence_gap",
+      "claim": "实际actor消息、初态与开发环境未捕获；历史grader运行不足以证明solver可开发。",
+      "evidence_level": "explicit_missing_evidence",
+      "evidence_refs": [
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-5686/environment_brief.md",
+        "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-5686/environment_record.json"
+      ]
+    },
+    {
+      "id": "historical_family_lead_unverified",
+      "checks": [
+        "5"
+      ],
+      "status": "unverified",
+      "severity": null,
+      "category": "unverified_historical_lead",
+      "claim": "旧5908后题包含本题gold/test的同族说法；未在本轮跨题查证，不据此认证划分。",
+      "evidence_level": "historical_claim_only",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_monai_2/records/Project-MONAI__MONAI-5686.json"
+      ],
+      "follow_links_read": false
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": [],
+    "rationale": "隐藏补丁仅恢复对应tests文件，gold仅改非测试源码；无证据支持额外排除。限所查历史路径，不保证任意攻击形状。",
+    "evidence_refs": [
+      "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-5686/test.patch",
+      "/Users/roger/Desktop/claude-code-verl-stage0h/runs/swegym_quality_expansion_20260925/private/Project-MONAI__MONAI-5686/gold.patch",
+      "analysis_before_history.md"
+    ]
+  },
+  "revision_refs": [],
+  "disposition": {
+    "state": "needs_review",
+    "scope": "static_review",
+    "reason": "梯度正确性验收不足，且gold留下公开多通道残留；另有actor证据缺口。",
+    "independent_review": "pending",
+    "reviewer_findings": null,
+    "formal_training_or_evaluation_approval": false,
+    "unique_priority_next_step": {
+      "action": "在隔离私有CPU对照中以公开B1C1/B1C5图像、y需要梯度和固定无梯度data_range检查gold的loss flag、backward、y.grad及前向值。",
+      "purpose": "确认静态推导的多通道detachment残留，为参考/验收修订提供有区分力的运行证据。",
+      "kind": "targeted_private_cpu_proposal",
+      "executed": false,
+      "cpu_experiment_recommended": true
+    }
+  },
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "solver_eligible": false,
+    "exposure": {
+      "reviewer_saw_gold": true,
+      "reviewer_saw_hidden_tests": true,
+      "reviewer_saw_historical_noop_gold": true,
+      "reviewer_saw_old_quality_record": true,
+      "old_quality_scope": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/env_overnight_20260916/L1_monai_2/records/Project-MONAI__MONAI-5686.json"
+      ],
+      "other_task_records_read": false,
+      "reviewer_outputs_read": false,
+      "actual_actor_exposure": "unknown"
+    },
+    "private_review_exposure_is_not_actor_leak": true,
+    "isolation_note": "本记录及gold/test/旧记录属于授权私有审查，不进入独立solver工作区。",
+    "history_release": {
+      "explicit_root_release_received": true,
+      "all_package_initial_drafts_sealed_before_release": true,
+      "source_record_sha256": "6bc79ad28feaf47b8132b9c5817d0b4b995ede80869b8395da33d5fbd8524e0d",
+      "source_hash_verified": true
+    },
+    "post_seal_coordinator_note": "check29修正来自协调者阅读封存初稿后的提醒：审查者暴露放usage，actual actor未知则29 unknown；未改初稿，非reviewer结论。"
+  },
+  "costs": {
+    "tokens": null,
+    "usd": null,
+    "wall_seconds": null,
+    "cpu_seconds": null,
+    "model_runs": null,
+    "note": "本轮只静态文本/JSON/hash检查；成本无工具观测，历史耗时只保存在facts_ref，不迁移为当前费用。"
+  }
+}

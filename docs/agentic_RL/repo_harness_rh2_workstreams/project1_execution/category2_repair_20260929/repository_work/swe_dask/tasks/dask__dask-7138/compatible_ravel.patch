@@ -1,0 +1,12 @@
+diff --git a/dask/array/routines.py b/dask/array/routines.py
+--- a/dask/array/routines.py
++++ b/dask/array/routines.py
+@@ -1195,7 +1195,7 @@
+ 
+ @derived_from(np)
+ def ravel(array):
+-    return array.reshape((-1,))
++    return asanyarray(array).reshape((-1,))
+ 
+ 
+ @derived_from(np)

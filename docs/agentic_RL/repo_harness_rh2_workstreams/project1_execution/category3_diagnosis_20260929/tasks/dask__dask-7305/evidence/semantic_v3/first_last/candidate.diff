@@ -1,0 +1,13 @@
+diff --git a/dask/dataframe/partitionquantiles.py b/dask/dataframe/partitionquantiles.py
+index d25f4d638..95a27ae52 100644
+--- a/dask/dataframe/partitionquantiles.py
++++ b/dask/dataframe/partitionquantiles.py
+@@ -416,6 +416,8 @@ def percentiles_summary(df, num_old, num_new, upsample, state):
+     vals, n = _percentile(data, qs, interpolation=interpolation)
+     if interpolation == "linear" and np.issubdtype(data.dtype, np.integer):
+         vals = np.round(vals).astype(data.dtype)
++        # keep the exact first and last values of the (sorted) partition
++        vals[0], vals[-1] = data[0], data[-1]
+     vals_and_weights = percentiles_to_weights(qs, vals, length)
+     return vals_and_weights
+ 

@@ -1,0 +1,50 @@
+{
+  "schema": "rh2.non_author_execution_scope_correction.v1",
+  "reviewed_on": "2026-10-03",
+  "task_id": "swe_gym_lite::python__mypy-10174",
+  "status": "specific_runtime_equality_scope_corrected",
+  "corrects_report": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_mypy/reviews/non_author_10174_new_GPU_regrade_execution_20261003.md",
+    "sha256": "2db7113ffcbd89ec61157fce3886a4a68505bdc1e4b9f1db0fcdb116a244a65d",
+    "original_file_unchanged": true,
+    "affected_statement": "manager SHA仍为178353…，与旧已核消费链相同"
+  },
+  "finding": "原报告的manager字节相同陈述范围过宽。独立重算证实code_v8只与code_v5/v7的manager相同，不与本题旧GPU及CPU r16所用code_v4/R6 manager相同。",
+  "independently_recomputed_manager_files": [
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v4/rh2/src/repoharness2/grading/manager.py",
+      "sha256": "b6b10f98bf0e1a7bbe4774ac705ece6bb2746da2b1ac4f20394673293f24bbb0",
+      "bytes": 222141
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v5/rh2/src/repoharness2/grading/manager.py",
+      "sha256": "1783533e1e3b66a57fcaa5a599a1da4f8e4e886318e24f040c6df91f294c1c1e",
+      "bytes": 225647
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v7/rh2/src/repoharness2/grading/manager.py",
+      "sha256": "1783533e1e3b66a57fcaa5a599a1da4f8e4e886318e24f040c6df91f294c1c1e",
+      "bytes": 225647
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/frozen_code_v8/rh2/src/repoharness2/grading/manager.py",
+      "sha256": "1783533e1e3b66a57fcaa5a599a1da4f8e4e886318e24f040c6df91f294c1c1e",
+      "bytes": 225647
+    }
+  ],
+  "replacement_scope": "本次code_v8 manager与code_v5/v7逐字相同；与本题旧GPU及CPU r16的code_v4/R6 manager存在版本差异，不以manager字节一致性论证新旧消费行为等价。",
+  "task_specific_evidence_unaffected": {
+    "basis": "本题保持脚本、材料和4参考的结论来自新GPU实际diagnostics、固定输入与原件对账，不依赖manager新旧SHA相同。此次只重读相应diagnostics字段，未执行项目代码。",
+    "current_GPU_diagnostics": "runs/ordinary_gpu_probe_20261002/remote/mypy10174_original_fp_newimage_regrade_v1/eval_logs/evallog_gpu1003-mypy10174-qwen36_62794c38.diagnostics.json",
+    "existing_CPU_r16_diagnostics": "runs/category2_repair_20260929/repository_work/swe_mypy/cpu_a_round1/mypy10174-gpu-original-regrade-r16-20261003T003832Z-5650b3/attempt/eval_logs/evallog_mypy10174-gpu-original-r_218c88d8.diagnostics.json",
+    "scripts_digest_both": "sha256:f111e77dbc1a70b7d469cdb656034aa59c701e9ead3b2ef31e7fa0bd3a45d4ed",
+    "materials_identity_both": "sha256:dca86b80c83f2e2e9c4eee8c4375952adef834008ad4cb7006ac60abeca58065",
+    "reference_partitions_exactly_equal": true,
+    "formal_reference_count": 4,
+    "manager_runtime_equivalence_not_claimed": true
+  },
+  "old_report_or_raw_or_requests_modified": false,
+  "SSH_CPU_model_test_container_or_project_code_execution": false,
+  "scope": "仅纠正一个manager字节相同范围；不扩全runtime差异审查、不重复执行，不修改旧CPU或GPU事实。",
+  "stop": "四个manager SHA与本题实际字段对账已核，停止。"
+}

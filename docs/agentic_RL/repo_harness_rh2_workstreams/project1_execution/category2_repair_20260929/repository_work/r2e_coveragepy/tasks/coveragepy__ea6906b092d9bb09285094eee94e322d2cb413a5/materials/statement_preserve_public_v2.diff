@@ -1,0 +1,11 @@
+--- statement_original_public.txt
++++ statement_preserve_public_v2.txt
+@@ -21,7 +21,7 @@
+ However, without a `.gitignore` file, adding the `htmlcov` directory to a Git repository will track all these static files, which are meant to be generated and should not be version-controlled.
+ 
+ **Expected Behavior:**
+-The HTML output directory should contain a `.gitignore` file that ignores all its contents, preventing Git from tracking the generated static files.
++The HTML output directory should contain a `.gitignore` file that ignores all its contents, preventing Git from tracking the generated static files. If the output directory already contains a `.gitignore` file with user-provided content, preserve that content while ensuring that all generated HTML report files are ignored by Git. This must remain true when the report is generated again.
+ 
+ **Actual Behavior:**
+ The HTML output directory lacks a `.gitignore` file, causing all static files to be tracked by Git when the directory is included in the repository.

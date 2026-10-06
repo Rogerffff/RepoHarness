@@ -1,0 +1,4255 @@
+{
+  "schema": "rh2.model_semantics_preliminary_audit.v1",
+  "date": "2026-10-03",
+  "status": "preliminary",
+  "attempt_id": "gpu1003-pydantic5662-qwen36-a1",
+  "task_id": "swe_gym_lite::pydantic__pydantic-5662",
+  "configured_solver": "qwen36",
+  "reported_model_aliases": [
+    "slime-actor"
+  ],
+  "private_context_exposure": true,
+  "fresh_public_reader": false,
+  "project_tests_or_new_models_run": false,
+  "raw_reward_preserved": 1.0,
+  "raw_outcome_preserved": "resolved",
+  "task_completion_accepted": false,
+  "semantic_regressions_found": [],
+  "environment_blocker": {
+    "id": "ENV_INSTALL_RC1",
+    "status": "production_observed",
+    "install_rc": 1,
+    "test_rc": 0,
+    "eval_log_lines": [
+      2871,
+      2883,
+      2903,
+      3094
+    ],
+    "cause": "公开hatchling wheel读取Permission denied",
+    "mode_0600_source": "父线程转述GPU执行者，未独立远端stat",
+    "action": "GPU正确权限环境对完整原FP窄regrade；原分和旧工件不回写"
+  },
+  "trajectory": {
+    "lines": 283,
+    "bytes": 177981,
+    "sha256": "3712a9e1934853c5a44baf737d2830f2cf25a1261fc29f18037684189c79352e",
+    "harness_copy_byte_equal": true,
+    "assistant_content_events": 45,
+    "stream_events": 186,
+    "unique_assistant_messages": 17,
+    "model_requests": 17,
+    "cc_num_turns": 17,
+    "tool_calls": 16,
+    "tool_batches": 16,
+    "tool_name_counts": {
+      "Bash": 11,
+      "Read": 4,
+      "Edit": 1
+    },
+    "tool_result_errors": 1,
+    "cc_home_member": ".claude/projects/-testbed/07dcd41b-a829-436f-bfbb-821d3b292186.jsonl",
+    "cc_home_session_bytes": 99462,
+    "cc_home_session_sha256": "151de8d69b4c94feabcc482d386ab1e47569af4a776ec90ae1b3bace044ef392",
+    "cc_home_content_matches": true,
+    "prompt_raw_bytes_match": true,
+    "tool_journal": [
+      {
+        "ordinal": 1,
+        "trajectory_line": 15,
+        "message_id": "msg_3162b6d48983385bfbce7cd0",
+        "type": "tool_use",
+        "id": "toolu_9fd1ed7a8b313555",
+        "name": "Bash",
+        "input": {
+          "command": "find /testbed -type f -name \"*.py\" | xargs grep -l \"def __eq__\" | head -20"
+        },
+        "result_line": 19,
+        "returned_at": "2026-10-02T23:24:18.376Z",
+        "is_error": false,
+        "tool_batch_ordinal": 1,
+        "issued_at": "2026-10-02T23:24:18.197Z"
+      },
+      {
+        "ordinal": 2,
+        "trajectory_line": 29,
+        "message_id": "msg_d1d75f866f265e67f5850c1c",
+        "type": "tool_use",
+        "id": "toolu_299edc7689031501",
+        "name": "Bash",
+        "input": {
+          "command": "grep -n \"def __eq__\" /testbed/pydantic/main.py"
+        },
+        "result_line": 33,
+        "returned_at": "2026-10-02T23:24:18.872Z",
+        "is_error": false,
+        "tool_batch_ordinal": 2,
+        "issued_at": "2026-10-02T23:24:18.839Z"
+      },
+      {
+        "ordinal": 3,
+        "trajectory_line": 43,
+        "message_id": "msg_93f0c0ffb149ffbf4382266e",
+        "type": "tool_use",
+        "id": "toolu_6d089708ba3489ce",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/pydantic/main.py",
+          "offset": 535,
+          "limit": 25
+        },
+        "result_line": 47,
+        "returned_at": "2026-10-02T23:24:19.413Z",
+        "is_error": false,
+        "tool_batch_ordinal": 3,
+        "issued_at": "2026-10-02T23:24:19.404Z"
+      },
+      {
+        "ordinal": 4,
+        "trajectory_line": 57,
+        "message_id": "msg_f976b5973169394a11a55c94",
+        "type": "tool_use",
+        "id": "toolu_ba778a5e5c295c99",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/pydantic/main.py",
+          "limit": 10,
+          "offset": 555
+        },
+        "result_line": 61,
+        "returned_at": "2026-10-02T23:24:20.261Z",
+        "is_error": false,
+        "tool_batch_ordinal": 4,
+        "issued_at": "2026-10-02T23:24:20.256Z"
+      },
+      {
+        "ordinal": 5,
+        "trajectory_line": 75,
+        "message_id": "msg_dfd053021e5788bec9dde5a4",
+        "type": "tool_use",
+        "id": "toolu_96a9d9f4dd0b265e",
+        "name": "Bash",
+        "input": {
+          "command": "python -c \"\nfrom unittest.mock import ANY\nfrom pydantic import BaseModel\n\nclass MyModel(BaseModel):\n    foo: str\n\nprint('Testing: MyModel(foo=\\\"bar\\\") == ANY')\nresult = MyModel(foo='bar') == ANY\nprint(f'Result: {result}')\nprint(f'Expected: True (so pytest can use this in assertions)')\n\""
+        },
+        "result_line": 79,
+        "returned_at": "2026-10-02T23:24:21.482Z",
+        "is_error": false,
+        "tool_batch_ordinal": 5,
+        "issued_at": "2026-10-02T23:24:21.286Z"
+      },
+      {
+        "ordinal": 6,
+        "trajectory_line": 93,
+        "message_id": "msg_a675bb93a3d447a09f9f7ef2",
+        "type": "tool_use",
+        "id": "toolu_aa131bfd0037dcee",
+        "name": "Edit",
+        "input": {
+          "replace_all": false,
+          "file_path": "/testbed/pydantic/main.py",
+          "old_string": "    def __eq__(self, other: Any) -> bool:\n        if not isinstance(other, BaseModel):\n            return False",
+          "new_string": "    def __eq__(self, other: Any) -> bool:\n        if not isinstance(other, BaseModel):\n            return NotImplemented"
+        },
+        "result_line": 97,
+        "returned_at": "2026-10-02T23:24:22.446Z",
+        "is_error": false,
+        "tool_batch_ordinal": 6,
+        "issued_at": "2026-10-02T23:24:22.421Z"
+      },
+      {
+        "ordinal": 7,
+        "trajectory_line": 111,
+        "message_id": "msg_9427ca678e86db1344904180",
+        "type": "tool_use",
+        "id": "toolu_125624b6586b82f7",
+        "name": "Bash",
+        "input": {
+          "command": "python -c \"\nfrom unittest.mock import ANY\nfrom pydantic import BaseModel\n\nclass MyModel(BaseModel):\n    foo: str\n\nprint('Testing: MyModel(foo=\\\"bar\\\") == ANY')\nresult = MyModel(foo='bar') == ANY\nprint(f'Result: {result}')\nprint(f'Expected: True')\nassert result == True, 'FAILED: BaseModel should equal ANY'\nprint('SUCCESS!')\n\n# Also test that equality with other BaseModel instances still works\nprint()\nprint('Testing: BaseModel equality still works')\nm1 = MyModel(foo='bar')\nm2 = MyModel(foo='bar')\nm3 = MyModel(foo='baz')\nprint(f'Model(foo=\\\"bar\\\") == Model(foo=\\\"bar\\\"): {m1 == m2}')\nprint(f'Model(foo=\\\"bar\\\") == Model(foo=\\\"baz\\\"): {m1 == m3}')\nassert m1 == m2, 'Equal models should be equal'\nassert m1 != m3, 'Different models should not be equal'\nprint('SUCCESS!')\n\n# Test that equality with non-BaseModel still returns False (when the other side also doesn't match)\nprint()\nprint('Testing: BaseModel == other non-BaseModel types')\nprint(f'Model(foo=\\\"bar\\\") == \\\"bar\\\": {MyModel(foo=\\\"bar\\\") == \\\"bar\\\"}')\nprint(f'Model(foo=\\\"bar\\\") == 123: {MyModel(foo=\\\"bar\\\") == 123}')\nprint(f'Model(foo=\\\"bar\\\") == None: {MyModel(foo=\\\"bar\\\") == None}')\nassert MyModel(foo='bar') == 'bar' == False\nassert MyModel(foo='bar') == 123 == False\nassert MyModel(foo='bar') == None == False\nprint('SUCCESS!')\n\""
+        },
+        "result_line": 115,
+        "returned_at": "2026-10-02T23:24:25.196Z",
+        "is_error": true,
+        "tool_batch_ordinal": 7,
+        "issued_at": "2026-10-02T23:24:25.029Z"
+      },
+      {
+        "ordinal": 8,
+        "trajectory_line": 129,
+        "message_id": "msg_b49132ae164b5e393f19a8bb",
+        "type": "tool_use",
+        "id": "toolu_fcdb1a2fed3e756f",
+        "name": "Bash",
+        "input": {
+          "command": "python -c \"\nfrom unittest.mock import ANY\nfrom pydantic import BaseModel\n\nclass MyModel(BaseModel):\n    foo: str\n\nprint('Testing: MyModel(foo=\\\"bar\\\") == ANY')\nresult = MyModel(foo='bar') == ANY\nprint(f'Result: {result}')\nassert result is True, 'FAILED: BaseModel should equal ANY'\nprint('SUCCESS!')\n\n# Also test that equality with other BaseModel instances still works\nprint()\nprint('Testing: BaseModel equality still works')\nm1 = MyModel(foo='bar')\nm2 = MyModel(foo='bar')\nm3 = MyModel(foo='baz')\nprint(f'Model(foo=\\\"bar\\\") == Model(foo=\\\"bar\\\"): {m1 == m2}')\nprint(f'Model(foo=\\\"bar\\\") == Model(foo=\\\"baz\\\"): {m1 == m3}')\nassert m1 == m2, 'Equal models should be equal'\nassert m1 != m3, 'Different models should not be equal'\nprint('SUCCESS!')\n\n# Test that equality with non-BaseModel still returns False (when the other side also doesn't match)\nprint()\nprint('Testing: BaseModel == other non-BaseModel types')\nprint(f'Model(foo=\\\"bar\\\") == \\\"bar\\\": {MyModel(foo=\\\"bar\\\") == \\\"bar\\\"}')\nprint(f'Model(foo=\\\"bar\\\") == 123: {MyModel(foo=\\\"bar\\\") == 123}')\nprint(f'Model(foo=\\\"bar\\\") == None: {MyModel(foo=\\\"bar\\\") == None}')\nassert (MyModel(foo='bar') == 'bar') is False\nassert (MyModel(foo='bar') == 123) is False\nassert (MyModel(foo='bar') == None) is False\nprint('SUCCESS!')\nprint()\nprint('All tests passed!')\n\""
+        },
+        "result_line": 133,
+        "returned_at": "2026-10-02T23:24:28.183Z",
+        "is_error": false,
+        "tool_batch_ordinal": 8,
+        "issued_at": "2026-10-02T23:24:28.008Z"
+      },
+      {
+        "ordinal": 9,
+        "trajectory_line": 147,
+        "message_id": "msg_484a711cdddb200025fc74f0",
+        "type": "tool_use",
+        "id": "toolu_3670bf6527204f73",
+        "name": "Bash",
+        "input": {
+          "command": "grep -rn \"__eq__\\|== ANY\\|equality\" /testbed/tests/ --include=\"*.py\" | grep -v \".pyc\" | head -30"
+        },
+        "result_line": 151,
+        "returned_at": "2026-10-02T23:24:28.990Z",
+        "is_error": false,
+        "tool_batch_ordinal": 9,
+        "issued_at": "2026-10-02T23:24:28.955Z"
+      },
+      {
+        "ordinal": 10,
+        "trajectory_line": 161,
+        "message_id": "msg_4a9f41eca4c490d47e29a99a",
+        "type": "tool_use",
+        "id": "toolu_3d8085ce95f5371e",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/tests/test_main.py",
+          "offset": 1940,
+          "limit": 100
+        },
+        "result_line": 165,
+        "returned_at": "2026-10-02T23:24:29.577Z",
+        "is_error": false,
+        "tool_batch_ordinal": 10,
+        "issued_at": "2026-10-02T23:24:29.570Z"
+      },
+      {
+        "ordinal": 11,
+        "trajectory_line": 179,
+        "message_id": "msg_15b6a81c84e9d97bcf4b135c",
+        "type": "tool_use",
+        "id": "toolu_d23d4a7965fb5ad0",
+        "name": "Bash",
+        "input": {
+          "command": "python -m pytest tests/test_main.py -k \"equality\" -v 2>&1 | head -60"
+        },
+        "result_line": 183,
+        "returned_at": "2026-10-02T23:24:31.664Z",
+        "is_error": false,
+        "tool_batch_ordinal": 11,
+        "issued_at": "2026-10-02T23:24:30.239Z"
+      },
+      {
+        "ordinal": 12,
+        "trajectory_line": 197,
+        "message_id": "msg_8397731aa15c89be1e61356d",
+        "type": "tool_use",
+        "id": "toolu_81dd08be2386274d",
+        "name": "Bash",
+        "input": {
+          "command": "grep -B5 -A15 \"def __eq__\" /testbed/tests/test_edge_cases.py"
+        },
+        "result_line": 201,
+        "returned_at": "2026-10-02T23:24:32.370Z",
+        "is_error": false,
+        "tool_batch_ordinal": 12,
+        "issued_at": "2026-10-02T23:24:32.355Z"
+      },
+      {
+        "ordinal": 13,
+        "trajectory_line": 211,
+        "message_id": "msg_83e13fc186b747a9c2805028",
+        "type": "tool_use",
+        "id": "toolu_51d4755b9debc01d",
+        "name": "Bash",
+        "input": {
+          "command": "python -m pytest tests/test_edge_cases.py::test_arbitrary_types_allowed_custom_eq -v"
+        },
+        "result_line": 215,
+        "returned_at": "2026-10-02T23:24:34.208Z",
+        "is_error": false,
+        "tool_batch_ordinal": 13,
+        "issued_at": "2026-10-02T23:24:32.907Z"
+      },
+      {
+        "ordinal": 14,
+        "trajectory_line": 229,
+        "message_id": "msg_3c22d02e490dc76c94162f20",
+        "type": "tool_use",
+        "id": "toolu_087832a835a35942",
+        "name": "Bash",
+        "input": {
+          "command": "python -c \"\nfrom unittest.mock import ANY\nfrom pydantic import BaseModel\n\nclass MyModel(BaseModel):\n    foo: str\n\nm = MyModel(foo='bar')\n\nprint('Testing reverse comparison: ANY == MyModel(foo=\\\"bar\\\")')\nresult = ANY == m\nprint(f'Result: {result}')\nassert result is True\nprint('SUCCESS!')\n\""
+        },
+        "result_line": 233,
+        "returned_at": "2026-10-02T23:24:35.285Z",
+        "is_error": false,
+        "tool_batch_ordinal": 14,
+        "issued_at": "2026-10-02T23:24:35.133Z"
+      },
+      {
+        "ordinal": 15,
+        "trajectory_line": 247,
+        "message_id": "msg_09a753b58f0250e76cc535ed",
+        "type": "tool_use",
+        "id": "toolu_e6ca918211d309a5",
+        "name": "Bash",
+        "input": {
+          "command": "python -m pytest tests/test_main.py tests/test_edge_cases.py -v --tb=short 2>&1 | tail -40"
+        },
+        "result_line": 251,
+        "returned_at": "2026-10-02T23:24:37.971Z",
+        "is_error": false,
+        "tool_batch_ordinal": 15,
+        "issued_at": "2026-10-02T23:24:35.900Z"
+      },
+      {
+        "ordinal": 16,
+        "trajectory_line": 265,
+        "message_id": "msg_94330ab8176b139f3fe16d95",
+        "type": "tool_use",
+        "id": "toolu_92248b9ab3b67500",
+        "name": "Read",
+        "input": {
+          "file_path": "/testbed/pydantic/main.py",
+          "offset": 538,
+          "limit": 25
+        },
+        "result_line": 269,
+        "returned_at": "2026-10-02T23:24:38.636Z",
+        "is_error": false,
+        "tool_batch_ordinal": 16,
+        "issued_at": "2026-10-02T23:24:38.629Z"
+      }
+    ]
+  },
+  "localization": {
+    "public_prompt_supplies_root_cause_and_proposed_fix": true,
+    "first_correct_explanation_trajectory_line": 7,
+    "first_correct_explanation_at": "2026-10-02T23:24:18.129Z",
+    "first_correct_explanation_before_tools": true,
+    "source_location_call": 2,
+    "source_confirmation_call": 3,
+    "source_confirmation_at": "2026-10-02T23:24:19.413Z",
+    "full_method_read_completed_call": 4,
+    "original_reproduction_call": 5,
+    "original_reproduction_at": "2026-10-02T23:24:21.482Z",
+    "only_edit_call": 6,
+    "edit_return_at": "2026-10-02T23:24:22.446Z",
+    "correction": {
+      "call": 7,
+      "cause": "自写链式比较断言语义错误，非候选／依赖失败",
+      "model_called_syntax_issue": true,
+      "corrected_call": 8,
+      "corrected_return_at": "2026-10-02T23:24:28.183Z"
+    }
+  },
+  "candidate": {
+    "fp_canonical_digest": "sha256:f1423fd9c9d4e6f276a1f961a8150977bda6de0a17f1b565810b59c52740ab13",
+    "fp_file_sha256": "6972666639556abcfa223a9c99d1308310811ccb6d2de7033c9cc6a5eed81850",
+    "baseline_canonical_digest": "sha256:6e536f26f49bbafcb23e40467ec53cd3f377e4de232764df71f8212edec24b89",
+    "paths": [
+      ".hypothesis/unicode_data/12.1.0/charmap.json.gz",
+      "pydantic/main.py"
+    ],
+    "decoded_entries": [
+      {
+        "path": ".hypothesis/unicode_data/12.1.0/charmap.json.gz",
+        "operation": "add",
+        "bytes": 20688,
+        "content_digest": "sha256:484249e786d81a67779bafe7d1091f8c178e0b81e84bce32fba4e62f4a610f49",
+        "content_digest_verified": true
+      },
+      {
+        "path": "pydantic/main.py",
+        "operation": "modify",
+        "bytes": 47068,
+        "content_digest": "sha256:b39b55c58251bc1718b1f409340fc283296f0b2c8d3d436db3860dabf044db62",
+        "content_digest_verified": true
+      }
+    ],
+    "diff_sha256": "e351cb9a636cdd80b74b9b28341d8110a7c72ce80e6266cd2438a85c006afcfb",
+    "source_change_exact_one_return_value": true,
+    "rest_source_byte_unchanged": true,
+    "source_memory_apply_equals_fp": true,
+    "binary_forward_literal_equals_fp": true,
+    "binary_reverse_literal_empty": true,
+    "test_or_grader_modified": false,
+    "hardcoded_any_or_value_branch": false,
+    "candidate_model_semantics": "对非BaseModel返回NotImplemented，标准反向比较委托；模型分支完全未变",
+    "stdlib_mechanism_replay": {
+      "project_imports": false,
+      "source": "抽取原／候选__eq__ AST，显式小型类元数据替身",
+      "base": {
+        "matcher_true": false,
+        "matcher_false": false,
+        "matcher_notimplemented": false,
+        "matcher_sees_original": [
+          false,
+          false,
+          false
+        ]
+      },
+      "candidate": {
+        "matcher_true": true,
+        "matcher_false": false,
+        "matcher_notimplemented": false,
+        "matcher_sees_original": [
+          true,
+          true,
+          true
+        ],
+        "dict_equality": false,
+        "object_equality": false
+      },
+      "real_pydantic_cpu_run": false
+    }
+  },
+  "unicode_cache": {
+    "path": ".hypothesis/unicode_data/12.1.0/charmap.json.gz",
+    "baseline_absent": true,
+    "compressed_bytes": 20688,
+    "compressed_sha256": "484249e786d81a67779bafe7d1091f8c178e0b81e84bce32fba4e62f4a610f49",
+    "uncompressed_bytes": 57457,
+    "uncompressed_sha256": "566696ce2ddb47de5c65dbf3dd3396d475de9044d02ca1dd7ddd0808f5ff3c39",
+    "json_type": "list of [category, intervals]",
+    "category_count": 30,
+    "category_interval_counts": {
+      "Cc": 2,
+      "Cf": 20,
+      "Cn": 666,
+      "Co": 3,
+      "Cs": 1,
+      "Ll": 642,
+      "Lm": 60,
+      "Lo": 476,
+      "Lt": 10,
+      "Lu": 636,
+      "Mc": 168,
+      "Me": 5,
+      "Mn": 318,
+      "Nd": 59,
+      "Nl": 12,
+      "No": 70,
+      "Pc": 6,
+      "Pd": 17,
+      "Pe": 72,
+      "Pf": 10,
+      "Pi": 11,
+      "Po": 179,
+      "Ps": 75,
+      "Sc": 21,
+      "Sk": 29,
+      "Sm": 64,
+      "So": 180,
+      "Zl": 1,
+      "Zp": 1,
+      "Zs": 7
+    },
+    "interval_count": 3821,
+    "total_codepoints": 1114112,
+    "range_min": 0,
+    "range_max": 1114111,
+    "sorted_disjoint_complete_partition_verified": true,
+    "gzip_mtime": 1,
+    "git_blob_sha1": "17c5f4398afbc4c4da023a7df1e9edbc99595a14",
+    "binary_literals": [
+      {
+        "bytes": 20688,
+        "sha256": "484249e786d81a67779bafe7d1091f8c178e0b81e84bce32fba4e62f4a610f49"
+      },
+      {
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "public_gitignore_ignores_hypothesis": true,
+    "hypothesis_plugin_observed": "6.74.0",
+    "purpose": "Hypothesis Unicode分类缓存，由路径／结构／测试插件推断，未目击具体写入工具",
+    "malicious_or_executable_payload_observed": false,
+    "exact_unicode_12_1_classification_table_verified": false,
+    "actual_hypothesis_load_executed": false,
+    "original_fp_kept_complete": true
+  },
+  "baseline_member_checks": [
+    {
+      "path": ".github/FUNDING.yml",
+      "bytes": 21,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:3708f4fd832aecb913f0dedcaa25eb50e17c0ac988007fd4966cb7b4a334ba25",
+      "expected_content_digest": "sha256:3708f4fd832aecb913f0dedcaa25eb50e17c0ac988007fd4966cb7b4a334ba25",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/bug-v1.yml",
+      "bytes": 3780,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:b91cc4df4abeab58c7f84f7d9d41844cc5c783371c02a872d96e17d618937dc9",
+      "expected_content_digest": "sha256:b91cc4df4abeab58c7f84f7d9d41844cc5c783371c02a872d96e17d618937dc9",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/bug-v2.yml",
+      "bytes": 1686,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:e48e3cd422abbe8fcab7b7d1da7e777ca603a8ed88cd70fd742b6bff3a222856",
+      "expected_content_digest": "sha256:e48e3cd422abbe8fcab7b7d1da7e777ca603a8ed88cd70fd742b6bff3a222856",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/config.yml",
+      "bytes": 231,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:1eac487c82a6bcce80707e8c2d212f75db807e4c1543c87a5e4a883174e2bca9",
+      "expected_content_digest": "sha256:1eac487c82a6bcce80707e8c2d212f75db807e4c1543c87a5e4a883174e2bca9",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/feature_request.yml",
+      "bytes": 2895,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:2839feab0747267b2c219bd57e72976158803cf3b5484f28a01d6bd5a9e2f5c9",
+      "expected_content_digest": "sha256:2839feab0747267b2c219bd57e72976158803cf3b5484f28a01d6bd5a9e2f5c9",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": ".github/PULL_REQUEST_TEMPLATE.md",
+      "bytes": 1175,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:fbc63314aaefabaa1ebb861c7e2ff6db652633f4bc30e6daae136f75248a7a2c",
+      "expected_content_digest": "sha256:fbc63314aaefabaa1ebb861c7e2ff6db652633f4bc30e6daae136f75248a7a2c",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": ".github/SECURITY.md",
+      "bytes": 685,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:da573cf6fe2cc2fd5f52c6cece2166230f8b7fe8b677d7aaa188dbf48ecc2d5e",
+      "expected_content_digest": "sha256:da573cf6fe2cc2fd5f52c6cece2166230f8b7fe8b677d7aaa188dbf48ecc2d5e",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": ".github/dependabot.yml",
+      "bytes": 106,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:66dd066d2e1383b411fdc8bc8c37897d56b43c86e0cdfc34348661dc8b55a101",
+      "expected_content_digest": "sha256:66dd066d2e1383b411fdc8bc8c37897d56b43c86e0cdfc34348661dc8b55a101",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": ".github/workflows/cherry-pick.yml",
+      "bytes": 770,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:f38d05ab8f48ff0a728d9afc4ac6429af3ae3697ebc61f34b06ef0111fe06e56",
+      "expected_content_digest": "sha256:f38d05ab8f48ff0a728d9afc4ac6429af3ae3697ebc61f34b06ef0111fe06e56",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "bytes": 9914,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:ef6e429ebf838cb76d7a1ea2e9a88f7f69654b7e3f8395b8689efc91c15a2813",
+      "expected_content_digest": "sha256:ef6e429ebf838cb76d7a1ea2e9a88f7f69654b7e3f8395b8689efc91c15a2813",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": ".github/workflows/dependencies-check.yml",
+      "bytes": 1151,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:0f9cfea687e2c732453e48c38dbb741536884aae8da4e2939ef8d8d7c42fa74a",
+      "expected_content_digest": "sha256:0f9cfea687e2c732453e48c38dbb741536884aae8da4e2939ef8d8d7c42fa74a",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": ".github/workflows/upload-previews.yml",
+      "bytes": 1047,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:33e4906e94973d25925b8d94cd1bd52c9af78485541efe0eaf29d0f78258d76a",
+      "expected_content_digest": "sha256:33e4906e94973d25925b8d94cd1bd52c9af78485541efe0eaf29d0f78258d76a",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 607,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:ef94ef8231f0a40b20bc921abc0b6ed4110ab026822934aa5001e0bc52a79988",
+      "expected_content_digest": "sha256:ef94ef8231f0a40b20bc921abc0b6ed4110ab026822934aa5001e0bc52a79988",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": ".pre-commit-config.yaml",
+      "bytes": 668,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:715212b2cad5a76c65c60e521f5fca9a7951173432fc54d764f3e10ec33f4e8c",
+      "expected_content_digest": "sha256:715212b2cad5a76c65c60e521f5fca9a7951173432fc54d764f3e10ec33f4e8c",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "HISTORY.md",
+      "bytes": 79396,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:9a510270804bb63db84857c31958b74aa9307852ce24c0cb24d4d93bd065eb14",
+      "expected_content_digest": "sha256:9a510270804bb63db84857c31958b74aa9307852ce24c0cb24d4d93bd065eb14",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 1110,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:f72b9425e837e0cf59b335f6a37e6eb916bcf02544d756168d136139627e3483",
+      "expected_content_digest": "sha256:f72b9425e837e0cf59b335f6a37e6eb916bcf02544d756168d136139627e3483",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "Makefile",
+      "bytes": 3151,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:4696de49b6c96574272ae61148ab6e95dc1ae90c74c4426ab5c75ae018e7e4f1",
+      "expected_content_digest": "sha256:4696de49b6c96574272ae61148ab6e95dc1ae90c74c4426ab5c75ae018e7e4f1",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "README.md",
+      "bytes": 2755,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:f8be1751f0e9160a6e428d2c40ed4ba6da5741cac7b66bbe0a328351ebbc2dec",
+      "expected_content_digest": "sha256:f8be1751f0e9160a6e428d2c40ed4ba6da5741cac7b66bbe0a328351ebbc2dec",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "build-docs.sh",
+      "bytes": 419,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:968de8a3b3f27a1c67714f21d7dfa7cc4610194fca94dd240a51b7203022a37c",
+      "expected_content_digest": "sha256:968de8a3b3f27a1c67714f21d7dfa7cc4610194fca94dd240a51b7203022a37c",
+      "declared_git_mode": "100755",
+      "archive_mode_octal": "0o755",
+      "executable_flag_match": true
+    },
+    {
+      "path": "changes/4672-florianfischer91.md",
+      "bytes": 36,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:b2890a21a7288874c117a61a8dbbad318eead962a18970abcd437e263ba86ef5",
+      "expected_content_digest": "sha256:b2890a21a7288874c117a61a8dbbad318eead962a18970abcd437e263ba86ef5",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "changes/4689-morian.md",
+      "bytes": 96,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:51b87821eb65e4d6d96bff0fe825b541d924c1f86b5c2213f712d585786e94df",
+      "expected_content_digest": "sha256:51b87821eb65e4d6d96bff0fe825b541d924c1f86b5c2213f712d585786e94df",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "changes/4767-samuelcolvin.md",
+      "bytes": 44,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:ec886ebdb582aa8ce4dd58fbc70ffd9b6ab92cd286b510636eeb45d5ce8964d0",
+      "expected_content_digest": "sha256:ec886ebdb582aa8ce4dd58fbc70ffd9b6ab92cd286b510636eeb45d5ce8964d0",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "changes/4781-Bobronium.md",
+      "bytes": 92,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:b68de0cda9e2d85c32b4c8c05fcccc9dcb37dd6a9ccc70f3032e1a5957949085",
+      "expected_content_digest": "sha256:b68de0cda9e2d85c32b4c8c05fcccc9dcb37dd6a9ccc70f3032e1a5957949085",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "changes/4869-tiwilliam.md",
+      "bytes": 64,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:dfb97ddc34f83e0f221ef167b953d6caf12bae75473a260e68a798616597d8b5",
+      "expected_content_digest": "sha256:dfb97ddc34f83e0f221ef167b953d6caf12bae75473a260e68a798616597d8b5",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "changes/4990-yezz123.md",
+      "bytes": 55,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:1d2e3af1b0d792c2ffaea5b3e32bd5f6f620ea6eda63c30cb0ad61de4ce622d6",
+      "expected_content_digest": "sha256:1d2e3af1b0d792c2ffaea5b3e32bd5f6f620ea6eda63c30cb0ad61de4ce622d6",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "changes/5007-cdce8p.md",
+      "bytes": 47,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:fa789c9a9e56ec90efb7d9d7c122ed37ed0cbc37d9f49800ce958adbf8a85908",
+      "expected_content_digest": "sha256:fa789c9a9e56ec90efb7d9d7c122ed37ed0cbc37d9f49800ce958adbf8a85908",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "changes/5077-cdce8p.md",
+      "bytes": 27,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:85942c3142811bbef49908a765f6a44ffb10867820f5c36eee28f5f68d5c5b5e",
+      "expected_content_digest": "sha256:85942c3142811bbef49908a765f6a44ffb10867820f5c36eee28f5f68d5c5b5e",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "changes/5120-cdce8p.md",
+      "bytes": 61,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:094a31c2496c65ad2f5d2c68f40c860804b19157a7a5d16cfb10812d25bf816f",
+      "expected_content_digest": "sha256:094a31c2496c65ad2f5d2c68f40c860804b19157a7a5d16cfb10812d25bf816f",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "changes/5167-cdce8p.md",
+      "bytes": 95,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:ce7ed90a76d63a1d0523d86add1383319f2c0d104b1dbb595e80215be4aaeb2c",
+      "expected_content_digest": "sha256:ce7ed90a76d63a1d0523d86add1383319f2c0d104b1dbb595e80215be4aaeb2c",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "changes/988-samuelcolvin.md",
+      "bytes": 313,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:1b33bcf3e79fa4045f71d1ac62f07e7065f7035ddd90c794c835fa4eb9689da9",
+      "expected_content_digest": "sha256:1b33bcf3e79fa4045f71d1ac62f07e7065f7035ddd90c794c835fa4eb9689da9",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "changes/README.md",
+      "bytes": 383,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:010899db1a91a5928d6051ff6353ad6c0eb07620708f84908a004e1ddc9099e6",
+      "expected_content_digest": "sha256:010899db1a91a5928d6051ff6353ad6c0eb07620708f84908a004e1ddc9099e6",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "changes/make_history.py",
+      "bytes": 1627,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:9c837a88c83104cb8dc481717a99d674f926859ac8fac7b0a05d3aac0ceafa4d",
+      "expected_content_digest": "sha256:9c837a88c83104cb8dc481717a99d674f926859ac8fac7b0a05d3aac0ceafa4d",
+      "declared_git_mode": "100755",
+      "archive_mode_octal": "0o755",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/api/analyzed_type.md",
+      "bytes": 27,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:c56a4984a6317b306b697a0f79ac70669b299181c01cff4abd73e31c1a4e248c",
+      "expected_content_digest": "sha256:c56a4984a6317b306b697a0f79ac70669b299181c01cff4abd73e31c1a4e248c",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/api/color.md",
+      "bytes": 19,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:35598739f1fd22f0fcb2ed09014e906002860b14772e191e4acc9623b54560d6",
+      "expected_content_digest": "sha256:35598739f1fd22f0fcb2ed09014e906002860b14772e191e4acc9623b54560d6",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/api/config.md",
+      "bytes": 20,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:13e0855f6332f0f8dabec2d925ca15b78daf89835b4d1375d9a9c24ea10fffd5",
+      "expected_content_digest": "sha256:13e0855f6332f0f8dabec2d925ca15b78daf89835b4d1375d9a9c24ea10fffd5",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/api/dataclasses.md",
+      "bytes": 25,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:f5b36aca073eb993fad651f3376c75f28530a358448d896ede4bf3c9094e0483",
+      "expected_content_digest": "sha256:f5b36aca073eb993fad651f3376c75f28530a358448d896ede4bf3c9094e0483",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/api/decorators.md",
+      "bytes": 24,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:48c6241b34ea72abe8fe39703c4f7d15a2f43d97e0ad328f0839d0e7b9f4caf7",
+      "expected_content_digest": "sha256:48c6241b34ea72abe8fe39703c4f7d15a2f43d97e0ad328f0839d0e7b9f4caf7",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/api/errors.md",
+      "bytes": 20,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:96f41e4a4e4d873184508784e7a3bb6e165b22b5edfc2d2bcc3152e325ce6051",
+      "expected_content_digest": "sha256:96f41e4a4e4d873184508784e7a3bb6e165b22b5edfc2d2bcc3152e325ce6051",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/api/fields.md",
+      "bytes": 20,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:e7696210edc5a0b74812d3f37e6548f605b8253c9c96a19e8df1132396031cb8",
+      "expected_content_digest": "sha256:e7696210edc5a0b74812d3f37e6548f605b8253c9c96a19e8df1132396031cb8",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/api/json_schema.md",
+      "bytes": 25,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:ba40934a820aadd9e842af74efe558f53af880f782f8b3fa53d8d50789b6889d",
+      "expected_content_digest": "sha256:ba40934a820aadd9e842af74efe558f53af880f782f8b3fa53d8d50789b6889d",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/api/main.md",
+      "bytes": 18,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:9b66201c11460e477896a32d3ca7b74836bd19f0053b92e5368ea010c7eb29b0",
+      "expected_content_digest": "sha256:9b66201c11460e477896a32d3ca7b74836bd19f0053b92e5368ea010c7eb29b0",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/api/mypy.md",
+      "bytes": 18,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:e4fab8752113baf8dc73c4c469d7ecff26d31cfd3860e75fa76191e82ef579d3",
+      "expected_content_digest": "sha256:e4fab8752113baf8dc73c4c469d7ecff26d31cfd3860e75fa76191e82ef579d3",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/api/networks.md",
+      "bytes": 22,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:d3ae7a040e35abb47fd564a391ad01c1fd7338718fee3c77c400e97408c77db0",
+      "expected_content_digest": "sha256:d3ae7a040e35abb47fd564a391ad01c1fd7338718fee3c77c400e97408c77db0",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/api/types.md",
+      "bytes": 19,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:747b1e2750bedb956edc4d4ac880c11d6ffcd9e3a281751374f101a60596fad5",
+      "expected_content_digest": "sha256:747b1e2750bedb956edc4d4ac880c11d6ffcd9e3a281751374f101a60596fad5",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/api/validate_call.md",
+      "bytes": 27,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:dd7934af1856a506226e1acdf52a39c8965d22d3349de2da592ca1799f5b7e93",
+      "expected_content_digest": "sha256:dd7934af1856a506226e1acdf52a39c8965d22d3349de2da592ca1799f5b7e93",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/api/version.md",
+      "bytes": 21,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:a9012c0eab135d7864b7f1e9563bb8945d5380a162bde02856e5e39d61c7547e",
+      "expected_content_digest": "sha256:a9012c0eab135d7864b7f1e9563bb8945d5380a162bde02856e5e39d61c7547e",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/blog/pydantic-v2-alpha.md",
+      "bytes": 11718,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:ebad952e4f3b742e5121291b43ca84d1b86293bf90f104175716661c53ec8f1c",
+      "expected_content_digest": "sha256:ebad952e4f3b742e5121291b43ca84d1b86293bf90f104175716661c53ec8f1c",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/blog/pydantic-v2.md",
+      "bytes": 52380,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:5130178ef964ccbeb8b93e6b6587d29333b37bdbb0be595db4de20a29c96b88f",
+      "expected_content_digest": "sha256:5130178ef964ccbeb8b93e6b6587d29333b37bdbb0be595db4de20a29c96b88f",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/contributing.md",
+      "bytes": 3055,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:0c7a71bbad0202a0322d33c3562063886bc21d7382f0089917eb77f3a30a4354",
+      "expected_content_digest": "sha256:0c7a71bbad0202a0322d33c3562063886bc21d7382f0089917eb77f3a30a4354",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/extra/redirects.js",
+      "bytes": 5189,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:945e8b1b0d723dba665294347de9e0c93b8775e141422b6e1e153f7909e4df30",
+      "expected_content_digest": "sha256:945e8b1b0d723dba665294347de9e0c93b8775e141422b6e1e153f7909e4df30",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/extra/terminal.css",
+      "bytes": 531,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:121e79e5804267776dc2ba5df2dad111195fb45a653dc536211628a20e627238",
+      "expected_content_digest": "sha256:121e79e5804267776dc2ba5df2dad111195fb45a653dc536211628a20e627238",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/extra/tweaks.css",
+      "bytes": 542,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:007ad2541a82cc9a17f6deab3bf344ded8df7babcce8b7d818050b1794203abe",
+      "expected_content_digest": "sha256:007ad2541a82cc9a17f6deab3bf344ded8df7babcce8b7d818050b1794203abe",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/favicon.png",
+      "bytes": 891,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:18d85dc5c524e6d356b3d694c12709ffb789551c35e1de9826be072ac6f1391c",
+      "expected_content_digest": "sha256:18d85dc5c524e6d356b3d694c12709ffb789551c35e1de9826be072ac6f1391c",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/img/rich_pydantic.png",
+      "bytes": 29432,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:d81275c5d79ea846e8a2ab58d38b962f5f1b7b438f00b2baa5484152db18ee3b",
+      "expected_content_digest": "sha256:d81275c5d79ea846e8a2ab58d38b962f5f1b7b438f00b2baa5484152db18ee3b",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/img/samuelcolvin.jpg",
+      "bytes": 35372,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:2ba9ab34e2b0ff5a9e5227b0621b40f6c3a208272325d7cd807396b45489d9c2",
+      "expected_content_digest": "sha256:2ba9ab34e2b0ff5a9e5227b0621b40f6c3a208272325d7cd807396b45489d9c2",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/img/terrencedorsey.jpg",
+      "bytes": 67084,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:7c6372c60d64e077593fe147c547fca1c01817442874919133add894e4dbd15c",
+      "expected_content_digest": "sha256:7c6372c60d64e077593fe147c547fca1c01817442874919133add894e4dbd15c",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/img/vs_code_01.png",
+      "bytes": 22703,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:cb6cf54d2dba6386c38d7c8dac86815fc7cdd85256c80d22ac13d322e67130bf",
+      "expected_content_digest": "sha256:cb6cf54d2dba6386c38d7c8dac86815fc7cdd85256c80d22ac13d322e67130bf",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/img/vs_code_02.png",
+      "bytes": 24981,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:0beb0740adfcd4cbfd87d0aa2b1767c1ecab0daba71b7f831e6011c47c4c7c10",
+      "expected_content_digest": "sha256:0beb0740adfcd4cbfd87d0aa2b1767c1ecab0daba71b7f831e6011c47c4c7c10",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/img/vs_code_03.png",
+      "bytes": 27477,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:817a696958e1123100a37f0c9b0834af5b34bfc826d49d1aed85456d04e76c77",
+      "expected_content_digest": "sha256:817a696958e1123100a37f0c9b0834af5b34bfc826d49d1aed85456d04e76c77",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/img/vs_code_04.png",
+      "bytes": 33602,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:57a01dd0ee9efaa528a000416013491ff0d604e479e25806cc18cbb39df0e538",
+      "expected_content_digest": "sha256:57a01dd0ee9efaa528a000416013491ff0d604e479e25806cc18cbb39df0e538",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/img/vs_code_05.png",
+      "bytes": 19852,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:f8390dc0b0deb5cff6e6e15d581a482d1939ef74f52ac1e0ab2a00a43adf65a7",
+      "expected_content_digest": "sha256:f8390dc0b0deb5cff6e6e15d581a482d1939ef74f52ac1e0ab2a00a43adf65a7",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/img/vs_code_06.png",
+      "bytes": 38451,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:d9eb3158d06c3b1347147262e1622e061289ade6c7e2050ec077daa9d3cbe4cb",
+      "expected_content_digest": "sha256:d9eb3158d06c3b1347147262e1622e061289ade6c7e2050ec077daa9d3cbe4cb",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/img/vs_code_07.png",
+      "bytes": 42534,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:a35b525d07d721ccea2575ebf8e04e081bbef0d6d068db681073b1be323cc2f5",
+      "expected_content_digest": "sha256:a35b525d07d721ccea2575ebf8e04e081bbef0d6d068db681073b1be323cc2f5",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/img/vs_code_08.png",
+      "bytes": 33393,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:00da12d7fb88fb6acdb60696ae83589b6c879cf4554e3b1d79f063e0665f1897",
+      "expected_content_digest": "sha256:00da12d7fb88fb6acdb60696ae83589b6c879cf4554e3b1d79f063e0665f1897",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/index.md",
+      "bytes": 8991,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:6fb3582a65d241e96aadaa7c4d89072e606fbbc1080b95dcb428b1506d8a8955",
+      "expected_content_digest": "sha256:6fb3582a65d241e96aadaa7c4d89072e606fbbc1080b95dcb428b1506d8a8955",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/install.md",
+      "bytes": 1120,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:9a5fec24070a63cee5dc361c41e9a007c9c10b321c851668d445c5015479fe8c",
+      "expected_content_digest": "sha256:9a5fec24070a63cee5dc361c41e9a007c9c10b321c851668d445c5015479fe8c",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/integrations/datamodel_code_generator.md",
+      "bytes": 2424,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:2ab74332e0cd377e2f9f6434bb773686e1c81a732afbd88e081fe022b9592a98",
+      "expected_content_digest": "sha256:2ab74332e0cd377e2f9f6434bb773686e1c81a732afbd88e081fe022b9592a98",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/integrations/devtools.md",
+      "bytes": 1324,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:855ad2778c3bffe78f04b182952e3ad8576b5145bee050b04f3fd0813fa68032",
+      "expected_content_digest": "sha256:855ad2778c3bffe78f04b182952e3ad8576b5145bee050b04f3fd0813fa68032",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/integrations/hypothesis.md",
+      "bytes": 2408,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:34e6908e3393d4de20331b282e3a2f4f66276e0249d4938a34f67e52dfbcd3b4",
+      "expected_content_digest": "sha256:34e6908e3393d4de20331b282e3a2f4f66276e0249d4938a34f67e52dfbcd3b4",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/integrations/mypy.md",
+      "bytes": 6918,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:37d446f7c25331e63f3d8392c8c4a1883c9bd8a39d34c887013a8056d59a8e4e",
+      "expected_content_digest": "sha256:37d446f7c25331e63f3d8392c8c4a1883c9bd8a39d34c887013a8056d59a8e4e",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/integrations/pycharm.md",
+      "bytes": 940,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:715c8eac9c08a7c3e1fd0d573f5c80f826185d4a840f22076dbab0565e628771",
+      "expected_content_digest": "sha256:715c8eac9c08a7c3e1fd0d573f5c80f826185d4a840f22076dbab0565e628771",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/integrations/rich.md",
+      "bytes": 360,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:345e1a0d93f81421e52ef3b1f6f343c5f8e2b4a10ce514685c9f4b81ddd72432",
+      "expected_content_digest": "sha256:345e1a0d93f81421e52ef3b1f6f343c5f8e2b4a10ce514685c9f4b81ddd72432",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/integrations/visual_studio_code.md",
+      "bytes": 11666,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:d77f7eda0e01da711e8c386b7e249ea34ef0c0352c0c72204327f0084134fee9",
+      "expected_content_digest": "sha256:d77f7eda0e01da711e8c386b7e249ea34ef0c0352c0c72204327f0084134fee9",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/logo-white.svg",
+      "bytes": 602,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:d130dbfa3d21176a741af4ea85943d6f938632c693bbddd5ac1a21248a5cf87f",
+      "expected_content_digest": "sha256:d130dbfa3d21176a741af4ea85943d6f938632c693bbddd5ac1a21248a5cf87f",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/migration.md",
+      "bytes": 11025,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:c0c00142a8ac4bf4c1c303db9c703de275635bdb20c22d2bb5bb631a3ee85bc3",
+      "expected_content_digest": "sha256:c0c00142a8ac4bf4c1c303db9c703de275635bdb20c22d2bb5bb631a3ee85bc3",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/plugins/conversion_table.py",
+      "bytes": 20861,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:2b8d1ad77f44fdbead044e01368c97cd3b04e68d2fecf80ebe8d6c641675a072",
+      "expected_content_digest": "sha256:2b8d1ad77f44fdbead044e01368c97cd3b04e68d2fecf80ebe8d6c641675a072",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/plugins/devtools_output.html",
+      "bytes": 3541,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:00f69d24566f26f29263c85b21c9f9d05b00bdf2bc84726437ec49e7ef1ecce4",
+      "expected_content_digest": "sha256:00f69d24566f26f29263c85b21c9f9d05b00bdf2bc84726437ec49e7ef1ecce4",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/plugins/main.py",
+      "bytes": 8426,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:aadbd55f223723563a724b1d2cda8767fd8649c58829d799a24b1192ac73c156",
+      "expected_content_digest": "sha256:aadbd55f223723563a724b1d2cda8767fd8649c58829d799a24b1192ac73c156",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/plugins/schema_mappings.toml",
+      "bytes": 12806,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:4cba3638b52c5509893b294e1919648cca94b178f5facd4be5494d64c9ac1575",
+      "expected_content_digest": "sha256:4cba3638b52c5509893b294e1919648cca94b178f5facd4be5494d64c9ac1575",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/sponsor_logos/aws.png",
+      "bytes": 73765,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:df9ca4c021fd58f71508ae1028ce5c563d56fdd50e587cb9532242663e6f2b50",
+      "expected_content_digest": "sha256:df9ca4c021fd58f71508ae1028ce5c563d56fdd50e587cb9532242663e6f2b50",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/sponsor_logos/exoflare.png",
+      "bytes": 19190,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:016cce674e1b5c53c14042f08646b47d5ccdd0345d4a5811ba0a276a84674748",
+      "expected_content_digest": "sha256:016cce674e1b5c53c14042f08646b47d5ccdd0345d4a5811ba0a276a84674748",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/sponsor_logos/explosion_ai.png",
+      "bytes": 33109,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:1bea14140cd3c376e780d8a5b3485190162403d12f3fa15a5ac3d7d3df354555",
+      "expected_content_digest": "sha256:1bea14140cd3c376e780d8a5b3485190162403d12f3fa15a5ac3d7d3df354555",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/sponsor_logos/fastapi.png",
+      "bytes": 14381,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:1be30fd403208d7c3a14db46ef278cd9f7d276651abdc07132d5c23d167694ec",
+      "expected_content_digest": "sha256:1be30fd403208d7c3a14db46ef278cd9f7d276651abdc07132d5c23d167694ec",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/sponsor_logos/jina-ai.png",
+      "bytes": 10412,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:e17b1760695f9ca1c3ce777b8c6fbd0d2c090db790fed8be6e2e9f320974dbb1",
+      "expected_content_digest": "sha256:e17b1760695f9ca1c3ce777b8c6fbd0d2c090db790fed8be6e2e9f320974dbb1",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/sponsor_logos/robusta.png",
+      "bytes": 23227,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:bfe4e0d325ba3fdff83dfca6721fa46dd9191c7d817da9ef7e25ec7dc21dd786",
+      "expected_content_digest": "sha256:bfe4e0d325ba3fdff83dfca6721fa46dd9191c7d817da9ef7e25ec7dc21dd786",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/sponsor_logos/salesforce.png",
+      "bytes": 21472,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:235467ca66ed04e068670d0446e3ceaf57e08e93b3f37e32b141ebd396008ada",
+      "expected_content_digest": "sha256:235467ca66ed04e068670d0446e3ceaf57e08e93b3f37e32b141ebd396008ada",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/sponsor_logos/sendcloud.png",
+      "bytes": 17042,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:2a90baf7a2c61181b8e1ec4066f6a430d3560708b715affab26a94c97934d198",
+      "expected_content_digest": "sha256:2a90baf7a2c61181b8e1ec4066f6a430d3560708b715affab26a94c97934d198",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/sponsor_logos/tutorcruncher.png",
+      "bytes": 12614,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:6c391ea6bef06801f6789f03cf4e7048b0f5b502c36fdd2ac3cbcc9446e45015",
+      "expected_content_digest": "sha256:6c391ea6bef06801f6789f03cf4e7048b0f5b502c36fdd2ac3cbcc9446e45015",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/theme/announce.html",
+      "bytes": 300,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:cc499b9fe3bc186aed99b17d5827c64e88b932baa4ad3f912c6a4742b54165f2",
+      "expected_content_digest": "sha256:cc499b9fe3bc186aed99b17d5827c64e88b932baa4ad3f912c6a4742b54165f2",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/theme/main.html",
+      "bytes": 267,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:acc6640a6778076b270b42ce0cb1a058fc7b3d6d741ca2203a8044502dcccbb4",
+      "expected_content_digest": "sha256:acc6640a6778076b270b42ce0cb1a058fc7b3d6d741ca2203a8044502dcccbb4",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/computed_fields.md",
+      "bytes": 2186,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:8bd4652030707139f5459e2dd65889ba2a863036a67ea93124602edb87279595",
+      "expected_content_digest": "sha256:8bd4652030707139f5459e2dd65889ba2a863036a67ea93124602edb87279595",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/conversion_table.md",
+      "bytes": 23,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:ef59635db4619591b89fe36ea01831a2150c6047a1532370884b5ec9393d1337",
+      "expected_content_digest": "sha256:ef59635db4619591b89fe36ea01831a2150c6047a1532370884b5ec9393d1337",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/dataclasses.md",
+      "bytes": 9860,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:932452e43371187632e9d8b35446be5aac0341683953df103b9c3ba57ee8a8da",
+      "expected_content_digest": "sha256:932452e43371187632e9d8b35446be5aac0341683953df103b9c3ba57ee8a8da",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/errors.md",
+      "bytes": 4791,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:cb8ab676e9d18e7b515ba7b6616f3d803648c7316b1b50ca7fc61fb22cc55fba",
+      "expected_content_digest": "sha256:cb8ab676e9d18e7b515ba7b6616f3d803648c7316b1b50ca7fc61fb22cc55fba",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/exporting_models.md",
+      "bytes": 15384,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:0f3ccd3fa3aa8ca3603a704081d4f3bed50afc745e76530d71d6442fa063b69c",
+      "expected_content_digest": "sha256:0f3ccd3fa3aa8ca3603a704081d4f3bed50afc745e76530d71d6442fa063b69c",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/model_config.md",
+      "bytes": 10719,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:7f03c5757128761a639c1cde2f0f17f2020504249bf3969fc78ccd6fdea5bfce",
+      "expected_content_digest": "sha256:7f03c5757128761a639c1cde2f0f17f2020504249bf3969fc78ccd6fdea5bfce",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/models.md",
+      "bytes": 44026,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:d4204d48576b1b0b0febadb9f893952a5f292dbf6c6a670eeb0c635393cb8335",
+      "expected_content_digest": "sha256:d4204d48576b1b0b0febadb9f893952a5f292dbf6c6a670eeb0c635393cb8335",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/postponed_annotations.md",
+      "bytes": 3597,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:5d9894ea8e8a58084228ab290c8355742f40ff93e184a862aa3832b8b3b99795",
+      "expected_content_digest": "sha256:5d9894ea8e8a58084228ab290c8355742f40ff93e184a862aa3832b8b3b99795",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/schema.md",
+      "bytes": 23472,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:464dd4d49e6b7ece9203ebfc6cc062a9ce094089c960624db4e90998b06cc88e",
+      "expected_content_digest": "sha256:464dd4d49e6b7ece9203ebfc6cc062a9ce094089c960624db4e90998b06cc88e",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/types/booleans.md",
+      "bytes": 1409,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:1281fe40da840c979231cc7e6b44f168a77af43026ffc9c5db2f1f9e236b4633",
+      "expected_content_digest": "sha256:1281fe40da840c979231cc7e6b44f168a77af43026ffc9c5db2f1f9e236b4633",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/types/bytesize.md",
+      "bytes": 1493,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:70f4075134dfb50665c03393a6dbb019fe803eccf83c2b802f8f23ef2b50f717",
+      "expected_content_digest": "sha256:70f4075134dfb50665c03393a6dbb019fe803eccf83c2b802f8f23ef2b50f717",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/types/callables.md",
+      "bytes": 557,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:d5f29f20f4e82ef81f122321b21716a52b03170500ec2b2e1910e04e02fa2297",
+      "expected_content_digest": "sha256:d5f29f20f4e82ef81f122321b21716a52b03170500ec2b2e1910e04e02fa2297",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/types/color_types.md",
+      "bytes": 3002,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:8e73c65337d942abe3d4b215b5cea208b9de96d0c03c13ca3589757d0a5e611a",
+      "expected_content_digest": "sha256:8e73c65337d942abe3d4b215b5cea208b9de96d0c03c13ca3589757d0a5e611a",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/types/custom.md",
+      "bytes": 9956,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:29613a552e90b7e41a8eb5399c5956e93877814b13046b919936d15b5c49a891",
+      "expected_content_digest": "sha256:29613a552e90b7e41a8eb5399c5956e93877814b13046b919936d15b5c49a891",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/types/datetime.md",
+      "bytes": 2618,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:84d6ac9349e046b64a083153c968f6ac757a7f42343b679778e7de9f344b5749",
+      "expected_content_digest": "sha256:84d6ac9349e046b64a083153c968f6ac757a7f42343b679778e7de9f344b5749",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/types/dicts_mapping.md",
+      "bytes": 883,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:8ceb2e43512de59e6190b6c54059bfb55ae6813f9f160a2d274367a14c0c4d8b",
+      "expected_content_digest": "sha256:8ceb2e43512de59e6190b6c54059bfb55ae6813f9f160a2d274367a14c0c4d8b",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/types/enums.md",
+      "bytes": 1181,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:d80cd723ba2b101a35ca3fd6188727708faf21b74cc8e3352b9dc1ad6cd034bb",
+      "expected_content_digest": "sha256:d80cd723ba2b101a35ca3fd6188727708faf21b74cc8e3352b9dc1ad6cd034bb",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/types/file_types.md",
+      "bytes": 139,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:46fd65a32995e4951ba004fbdd57b50994f91da688814c195e05507fc39bec8b",
+      "expected_content_digest": "sha256:46fd65a32995e4951ba004fbdd57b50994f91da688814c195e05507fc39bec8b",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/types/json.md",
+      "bytes": 1618,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:83cd58cb9dc19b0e9a3bd6eebbedc7b7200a2525b64901e84b2985980e22e37b",
+      "expected_content_digest": "sha256:83cd58cb9dc19b0e9a3bd6eebbedc7b7200a2525b64901e84b2985980e22e37b",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/types/list_types.md",
+      "bytes": 2178,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:b2d041e703ab0746eccb16ae1e879d40613e9aa8fbd498a0203771c94ee78190",
+      "expected_content_digest": "sha256:b2d041e703ab0746eccb16ae1e879d40613e9aa8fbd498a0203771c94ee78190",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/types/number_types.md",
+      "bytes": 5624,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:52ff8c99f520a5c74356c68fa59ce89c7541f7232681308033588aa5f1bdb445",
+      "expected_content_digest": "sha256:52ff8c99f520a5c74356c68fa59ce89c7541f7232681308033588aa5f1bdb445",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/types/payment_cards.md",
+      "bytes": 1357,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:10e2f7ce44b4a60fb3e6fd3879923bbe87a320c5f923d0accc69757f38170edf",
+      "expected_content_digest": "sha256:10e2f7ce44b4a60fb3e6fd3879923bbe87a320c5f923d0accc69757f38170edf",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/types/secrets.md",
+      "bytes": 1855,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:b100ace16b9da6bfd73e7be298e06e42ec4ac255242c9da655672c3cd4c5b226",
+      "expected_content_digest": "sha256:b100ace16b9da6bfd73e7be298e06e42ec4ac255242c9da655672c3cd4c5b226",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/types/sequence_iterable.md",
+      "bytes": 4786,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:651a2e27a8ed1ed33c72946331669bd37486d582df805fba0d785eaedbf464ff",
+      "expected_content_digest": "sha256:651a2e27a8ed1ed33c72946331669bd37486d582df805fba0d785eaedbf464ff",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/types/set_types.md",
+      "bytes": 1670,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:18979a80a5d631cbd50e7f28689192d328027e44dda6103e7586028c923270dc",
+      "expected_content_digest": "sha256:18979a80a5d631cbd50e7f28689192d328027e44dda6103e7586028c923270dc",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/types/standard_types.md",
+      "bytes": 20795,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:b7bc22bc94a4c838a06a8cc4f1c78c69e9b0e419abf1bb432b6a61dc495447ee",
+      "expected_content_digest": "sha256:b7bc22bc94a4c838a06a8cc4f1c78c69e9b0e419abf1bb432b6a61dc495447ee",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/types/string_types.md",
+      "bytes": 5617,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:478ca7e13ba2e7a6dd3db561e82aa4a99f51f1ef75ad6619a04e0776c4cbe183",
+      "expected_content_digest": "sha256:478ca7e13ba2e7a6dd3db561e82aa4a99f51f1ef75ad6619a04e0776c4cbe183",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/types/types.md",
+      "bytes": 2514,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:d0833c39f4c29605cc4a06306d4575c9f18a884a1a3232f07e40a620318994f6",
+      "expected_content_digest": "sha256:d0833c39f4c29605cc4a06306d4575c9f18a884a1a3232f07e40a620318994f6",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/types/types_fields.md",
+      "bytes": 2578,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:15aa973c70c03f13c3ff8d8806b5d871b126ed0452e3bad47522728f010f9f65",
+      "expected_content_digest": "sha256:15aa973c70c03f13c3ff8d8806b5d871b126ed0452e3bad47522728f010f9f65",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/types/typevars.md",
+      "bytes": 1933,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:bf28eb422d3e874fd77df896d97bfc9caa73cf699017c143ef9b6e1b8907c341",
+      "expected_content_digest": "sha256:bf28eb422d3e874fd77df896d97bfc9caa73cf699017c143ef9b6e1b8907c341",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/types/unions.md",
+      "bytes": 7071,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:13524c9949af0c42a7772dcd7c2ed5442bdbe76f17be712e08c60207f5775484",
+      "expected_content_digest": "sha256:13524c9949af0c42a7772dcd7c2ed5442bdbe76f17be712e08c60207f5775484",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/types/urls.md",
+      "bytes": 7329,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:6f1b2aba8b4e14bc7ca65b98020d16bd410f227d7eb883870552686e5a316d75",
+      "expected_content_digest": "sha256:6f1b2aba8b4e14bc7ca65b98020d16bd410f227d7eb883870552686e5a316d75",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/types/uuids.md",
+      "bytes": 387,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:09e3925b7b1ede1f4815a029554a45f2538e136d8d79d28c852b2cee7c8ea862",
+      "expected_content_digest": "sha256:09e3925b7b1ede1f4815a029554a45f2538e136d8d79d28c852b2cee7c8ea862",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/validation_decorator.md",
+      "bytes": 12379,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:dec9091ae62677aa4288cc18eccfbea731faac2e12687b4e91f66fcebc9069f9",
+      "expected_content_digest": "sha256:dec9091ae62677aa4288cc18eccfbea731faac2e12687b4e91f66fcebc9069f9",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/validation_errors.md",
+      "bytes": 2014,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:b400f6ddc95e9819d0f0133d4d3092ba7fb2b9825317d196e951bedb1bad827a",
+      "expected_content_digest": "sha256:b400f6ddc95e9819d0f0133d4d3092ba7fb2b9825317d196e951bedb1bad827a",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "docs/usage/validators.md",
+      "bytes": 11951,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:d2fd7d07be5a6a8d109ce885f4a8cefc39d6bf972ed7be130da09a8561efab82",
+      "expected_content_digest": "sha256:d2fd7d07be5a6a8d109ce885f4a8cefc39d6bf972ed7be130da09a8561efab82",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "mkdocs.yml",
+      "bytes": 4883,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:b1aef2acdf97a49d8e605b0f29abb81803253aa68d636a459cc1f6a4c2153eda",
+      "expected_content_digest": "sha256:b1aef2acdf97a49d8e605b0f29abb81803253aa68d636a459cc1f6a4c2153eda",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pdm.lock",
+      "bytes": 133142,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:088817a9011bc6197b62591ecc8be81eaae810cc142cd21c7358024754742ea0",
+      "expected_content_digest": "sha256:088817a9011bc6197b62591ecc8be81eaae810cc142cd21c7358024754742ea0",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/__init__.py",
+      "bytes": 3097,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:e21bafaa6e9581130e6bace73589a61531c988fde00eff155211a6ed228c3783",
+      "expected_content_digest": "sha256:e21bafaa6e9581130e6bace73589a61531c988fde00eff155211a6ed228c3783",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/_hypothesis_plugin.py",
+      "bytes": 14414,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:a1c372c476650501d8a15d75df52d3ae0bd0ecfedfa16a07184dff7025aa5d87",
+      "expected_content_digest": "sha256:a1c372c476650501d8a15d75df52d3ae0bd0ecfedfa16a07184dff7025aa5d87",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/_internal/__init__.py",
+      "bytes": 0,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "expected_content_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/_internal/_config.py",
+      "bytes": 8402,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:85b6284b9bde7fc4092c750d32c2995e973705f2910a99e2ccd9d3bd7eab781d",
+      "expected_content_digest": "sha256:85b6284b9bde7fc4092c750d32c2995e973705f2910a99e2ccd9d3bd7eab781d",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/_internal/_core_metadata.py",
+      "bytes": 3947,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:3799a9f7427f3ac1272254086174b52a3d219ef61b40d055324caf4ee8e3ebd7",
+      "expected_content_digest": "sha256:3799a9f7427f3ac1272254086174b52a3d219ef61b40d055324caf4ee8e3ebd7",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/_internal/_core_utils.py",
+      "bytes": 16191,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:4e81bd756f307b01b47d2eaa147f09ddc4167a39c0775d7e48c94830d82799ee",
+      "expected_content_digest": "sha256:4e81bd756f307b01b47d2eaa147f09ddc4167a39c0775d7e48c94830d82799ee",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/_internal/_dataclasses.py",
+      "bytes": 5448,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:6ce4d2300662121cbc4d6280a04cafbdeb9733aaee18eb8adc6282d92b2c92a3",
+      "expected_content_digest": "sha256:6ce4d2300662121cbc4d6280a04cafbdeb9733aaee18eb8adc6282d92b2c92a3",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/_internal/_decorators.py",
+      "bytes": 19880,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:92b6b2c70a570dc4e3b91614b4d5b3930e76c77d234db25e6fa8f987dc336a67",
+      "expected_content_digest": "sha256:92b6b2c70a570dc4e3b91614b4d5b3930e76c77d234db25e6fa8f987dc336a67",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/_internal/_decorators_v1.py",
+      "bytes": 4551,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:4fe0ffaa81aab21cf59815798b1fe8682bca74bba83acb1bb6c19f3f23ee42f6",
+      "expected_content_digest": "sha256:4fe0ffaa81aab21cf59815798b1fe8682bca74bba83acb1bb6c19f3f23ee42f6",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/_internal/_discriminated_union.py",
+      "bytes": 21314,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:8c1895c7d10c65127bb4963d96b6b604c5bfa273a4b7396dbe8145680c9de89c",
+      "expected_content_digest": "sha256:8c1895c7d10c65127bb4963d96b6b604c5bfa273a4b7396dbe8145680c9de89c",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/_internal/_fields.py",
+      "bytes": 9358,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:ced942f74539c64bc36ad681b24ca5cd733cd34dba97ce0dcc247d0eb14a3481",
+      "expected_content_digest": "sha256:ced942f74539c64bc36ad681b24ca5cd733cd34dba97ce0dcc247d0eb14a3481",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/_internal/_forward_ref.py",
+      "bytes": 2467,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:666696e68615dd9e357e0a6fa715e4fe99dcd694d469fc3b67f26d45d20ad797",
+      "expected_content_digest": "sha256:666696e68615dd9e357e0a6fa715e4fe99dcd694d469fc3b67f26d45d20ad797",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/_internal/_generate_schema.py",
+      "bytes": 62050,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:727bc1005eb2feea98d35da0608b5406c300291fe342bdca38ef421a95477f9d",
+      "expected_content_digest": "sha256:727bc1005eb2feea98d35da0608b5406c300291fe342bdca38ef421a95477f9d",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/_internal/_generics.py",
+      "bytes": 20565,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:eb46d04f3561a9f0ba3820d26fa09ea2f02a601de5f9524574712114756847b9",
+      "expected_content_digest": "sha256:eb46d04f3561a9f0ba3820d26fa09ea2f02a601de5f9524574712114756847b9",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/_internal/_internal_dataclass.py",
+      "bytes": 467,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:d4489ccc184e819ea2c59899a1cea9ae371a6f44e734cb367bebfa7f78698a65",
+      "expected_content_digest": "sha256:d4489ccc184e819ea2c59899a1cea9ae371a6f44e734cb367bebfa7f78698a65",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/_internal/_model_construction.py",
+      "bytes": 12661,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:02809d30b3f763b2f5faed3e5492c735922fb0c5e3b8d50bc8d9cfb59e45b535",
+      "expected_content_digest": "sha256:02809d30b3f763b2f5faed3e5492c735922fb0c5e3b8d50bc8d9cfb59e45b535",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/_internal/_repr.py",
+      "bytes": 4235,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:21796769a10ee5a6a5659a5643f0fed6f51b86b383b177da32623e4b601cbad1",
+      "expected_content_digest": "sha256:21796769a10ee5a6a5659a5643f0fed6f51b86b383b177da32623e4b601cbad1",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/_internal/_schema_generation_shared.py",
+      "bytes": 6660,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:2720f721165fea7a4090dea96ac090f942923f0c4f518bdc77f5d52d9329a31f",
+      "expected_content_digest": "sha256:2720f721165fea7a4090dea96ac090f942923f0c4f518bdc77f5d52d9329a31f",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/_internal/_serializers.py",
+      "bytes": 870,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:c33e35a9337c844c03590f113732aa4cf7f735724ff999b64f6e9c79a3b1b2cb",
+      "expected_content_digest": "sha256:c33e35a9337c844c03590f113732aa4cf7f735724ff999b64f6e9c79a3b1b2cb",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/_internal/_std_types_schema.py",
+      "bytes": 18293,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:0d58503a996e2fbaa8c55679e6838a3b533628ebd3a5a610b10fdda9592b4ac9",
+      "expected_content_digest": "sha256:0d58503a996e2fbaa8c55679e6838a3b533628ebd3a5a610b10fdda9592b4ac9",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/_internal/_typing_extra.py",
+      "bytes": 17278,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:4ee2bbe3704b264ae6854946e33677c41489d7ecabaad3e4392b4ea8afe17959",
+      "expected_content_digest": "sha256:4ee2bbe3704b264ae6854946e33677c41489d7ecabaad3e4392b4ea8afe17959",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/_internal/_utils.py",
+      "bytes": 12699,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:1ded020aaa2df0820be28d249fb11b00c56f6255f695dfa2bc66ceeeadbc14f0",
+      "expected_content_digest": "sha256:1ded020aaa2df0820be28d249fb11b00c56f6255f695dfa2bc66ceeeadbc14f0",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/_internal/_validate_call.py",
+      "bytes": 2986,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:6b6dd8b5a294d3609acc497eddb53e1247732647f424491db36c38fb084ecffc",
+      "expected_content_digest": "sha256:6b6dd8b5a294d3609acc497eddb53e1247732647f424491db36c38fb084ecffc",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/_internal/_validators.py",
+      "bytes": 16130,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:03db60ca9f66efd6bfa9112487e9146b4fc1554916de10dd406609811d8ef415",
+      "expected_content_digest": "sha256:03db60ca9f66efd6bfa9112487e9146b4fc1554916de10dd406609811d8ef415",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/_migration.py",
+      "bytes": 10338,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:52fc5e35de8ea049514e101c617c3c9435fb5cf26a33e8813eab178e54220ef5",
+      "expected_content_digest": "sha256:52fc5e35de8ea049514e101c617c3c9435fb5cf26a33e8813eab178e54220ef5",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/analyzed_type.py",
+      "bytes": 12585,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:b799004cfb7e3dc1f6fc961b047153664bc5c042c483fdb92de43ba386956837",
+      "expected_content_digest": "sha256:b799004cfb7e3dc1f6fc961b047153664bc5c042c483fdb92de43ba386956837",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/annotated.py",
+      "bytes": 149,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:10bd2e4648a699d1e1a62b8e7b85e81cb931ca9f188605fe52b05a715d9d7294",
+      "expected_content_digest": "sha256:10bd2e4648a699d1e1a62b8e7b85e81cb931ca9f188605fe52b05a715d9d7294",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/annotated_arguments.py",
+      "bytes": 4095,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:cbc43d251264e55928ffdbea152b2d183602e1241933f8f3894c545035bf9093",
+      "expected_content_digest": "sha256:cbc43d251264e55928ffdbea152b2d183602e1241933f8f3894c545035bf9093",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/class_validators.py",
+      "bytes": 85,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:2f856ba4b8621d4c0222e997ba176225ad3851b870c00556b5dcdc4a6c56e9da",
+      "expected_content_digest": "sha256:2f856ba4b8621d4c0222e997ba176225ad3851b870c00556b5dcdc4a6c56e9da",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/color.py",
+      "bytes": 21440,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:edc0fd63946527673f95b586d67d66bbae452485a3626980eef7c61e6a0d3074",
+      "expected_content_digest": "sha256:edc0fd63946527673f95b586d67d66bbae452485a3626980eef7c61e6a0d3074",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/config.py",
+      "bytes": 4471,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:f095a0976b84c553638bf1dd6fce23f9d231ed92036b8846dde77f621ae5a368",
+      "expected_content_digest": "sha256:f095a0976b84c553638bf1dd6fce23f9d231ed92036b8846dde77f621ae5a368",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/dataclasses.py",
+      "bytes": 7592,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:3975c313eb0ac8bdb70f43118aeda44deb34cd79254c3a7e258e85f981ceb557",
+      "expected_content_digest": "sha256:3975c313eb0ac8bdb70f43118aeda44deb34cd79254c3a7e258e85f981ceb557",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/datetime_parse.py",
+      "bytes": 85,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:2f856ba4b8621d4c0222e997ba176225ad3851b870c00556b5dcdc4a6c56e9da",
+      "expected_content_digest": "sha256:2f856ba4b8621d4c0222e997ba176225ad3851b870c00556b5dcdc4a6c56e9da",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/decorator.py",
+      "bytes": 85,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:2f856ba4b8621d4c0222e997ba176225ad3851b870c00556b5dcdc4a6c56e9da",
+      "expected_content_digest": "sha256:2f856ba4b8621d4c0222e997ba176225ad3851b870c00556b5dcdc4a6c56e9da",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/decorators.py",
+      "bytes": 21294,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:9194bcad1171e0851ecefc880e9abac39cadd46fa574326d2c871450920c98a1",
+      "expected_content_digest": "sha256:9194bcad1171e0851ecefc880e9abac39cadd46fa574326d2c871450920c98a1",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/deprecated/__init__.py",
+      "bytes": 0,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "expected_content_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/deprecated/config.py",
+      "bytes": 1506,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:241bb536fa51d1d13ff2c16955ca4da9005f67a6ad594e2ca827c283c588700a",
+      "expected_content_digest": "sha256:241bb536fa51d1d13ff2c16955ca4da9005f67a6ad594e2ca827c283c588700a",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/deprecated/copy_internals.py",
+      "bytes": 7339,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:3123e6c39cab30cb3b466f53f8f22c7bbc85b65447c1da2ec135a8d7121d0c60",
+      "expected_content_digest": "sha256:3123e6c39cab30cb3b466f53f8f22c7bbc85b65447c1da2ec135a8d7121d0c60",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/deprecated/decorator.py",
+      "bytes": 10557,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:21c84584788c530f2be70840d3c197322d0970f0674f12e36de28ef443a147fd",
+      "expected_content_digest": "sha256:21c84584788c530f2be70840d3c197322d0970f0674f12e36de28ef443a147fd",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/deprecated/json.py",
+      "bytes": 4100,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:680ef54adf150640f46c6968797eda0f07d156bd5da025ec69589d2b664f518d",
+      "expected_content_digest": "sha256:680ef54adf150640f46c6968797eda0f07d156bd5da025ec69589d2b664f518d",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/deprecated/parse.py",
+      "bytes": 2143,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:0ca3f6797cdccd8aa652568336f7c67f7a326eadf3041124c8b8ed10c4ec6026",
+      "expected_content_digest": "sha256:0ca3f6797cdccd8aa652568336f7c67f7a326eadf3041124c8b8ed10c4ec6026",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/deprecated/tools.py",
+      "bytes": 2895,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:c377648f048f4ed82fb7c3ad3e73ffefe0cf78f73014d23f3b5a811c99bd5c25",
+      "expected_content_digest": "sha256:c377648f048f4ed82fb7c3ad3e73ffefe0cf78f73014d23f3b5a811c99bd5c25",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/env_settings.py",
+      "bytes": 85,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:2f856ba4b8621d4c0222e997ba176225ad3851b870c00556b5dcdc4a6c56e9da",
+      "expected_content_digest": "sha256:2f856ba4b8621d4c0222e997ba176225ad3851b870c00556b5dcdc4a6c56e9da",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/error_wrappers.py",
+      "bytes": 85,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:2f856ba4b8621d4c0222e997ba176225ad3851b870c00556b5dcdc4a6c56e9da",
+      "expected_content_digest": "sha256:2f856ba4b8621d4c0222e997ba176225ad3851b870c00556b5dcdc4a6c56e9da",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/errors.py",
+      "bytes": 4586,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:a865206b55afcffc98e44d84ff427cd622737cee647dc8fd56c68d86e68acfa9",
+      "expected_content_digest": "sha256:a865206b55afcffc98e44d84ff427cd622737cee647dc8fd56c68d86e68acfa9",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/fields.py",
+      "bytes": 33208,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:bc7820f46727cd1a09b3b855945d384765258801563d98d86c03b99cab1e1405",
+      "expected_content_digest": "sha256:bc7820f46727cd1a09b3b855945d384765258801563d98d86c03b99cab1e1405",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/generics.py",
+      "bytes": 85,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:2f856ba4b8621d4c0222e997ba176225ad3851b870c00556b5dcdc4a6c56e9da",
+      "expected_content_digest": "sha256:2f856ba4b8621d4c0222e997ba176225ad3851b870c00556b5dcdc4a6c56e9da",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/json.py",
+      "bytes": 85,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:2f856ba4b8621d4c0222e997ba176225ad3851b870c00556b5dcdc4a6c56e9da",
+      "expected_content_digest": "sha256:2f856ba4b8621d4c0222e997ba176225ad3851b870c00556b5dcdc4a6c56e9da",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/json_schema.py",
+      "bytes": 55446,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:d37d050232b119dc4a38aa6544c289e60a661821b9e6d1e3f4950e22980c975b",
+      "expected_content_digest": "sha256:d37d050232b119dc4a38aa6544c289e60a661821b9e6d1e3f4950e22980c975b",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/main.py",
+      "bytes": 47059,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:cf537426448d1e9a768c2e6debccfd7b3dcec718b22df0ccfaf8ca1d47f69e4e",
+      "expected_content_digest": "sha256:cf537426448d1e9a768c2e6debccfd7b3dcec718b22df0ccfaf8ca1d47f69e4e",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/mypy.py",
+      "bytes": 38033,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:fa76112ef780961094a854682a40100cba068b8242d2c7f971e688c921bb3df7",
+      "expected_content_digest": "sha256:fa76112ef780961094a854682a40100cba068b8242d2c7f971e688c921bb3df7",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/networks.py",
+      "bytes": 10501,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:6ad33cdd460abfac32b5e303f4288505208b018795725b6c6ac3832ce3539b21",
+      "expected_content_digest": "sha256:6ad33cdd460abfac32b5e303f4288505208b018795725b6c6ac3832ce3539b21",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/parse.py",
+      "bytes": 85,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:2f856ba4b8621d4c0222e997ba176225ad3851b870c00556b5dcdc4a6c56e9da",
+      "expected_content_digest": "sha256:2f856ba4b8621d4c0222e997ba176225ad3851b870c00556b5dcdc4a6c56e9da",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/py.typed",
+      "bytes": 0,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "expected_content_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/schema.py",
+      "bytes": 85,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:2f856ba4b8621d4c0222e997ba176225ad3851b870c00556b5dcdc4a6c56e9da",
+      "expected_content_digest": "sha256:2f856ba4b8621d4c0222e997ba176225ad3851b870c00556b5dcdc4a6c56e9da",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/tools.py",
+      "bytes": 85,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:2f856ba4b8621d4c0222e997ba176225ad3851b870c00556b5dcdc4a6c56e9da",
+      "expected_content_digest": "sha256:2f856ba4b8621d4c0222e997ba176225ad3851b870c00556b5dcdc4a6c56e9da",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/types.py",
+      "bytes": 28543,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:877ea2ced6acb6dc4563998cce5dcf32374f6a23d76ece05fbb2c8484aed77e3",
+      "expected_content_digest": "sha256:877ea2ced6acb6dc4563998cce5dcf32374f6a23d76ece05fbb2c8484aed77e3",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/typing.py",
+      "bytes": 85,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:2f856ba4b8621d4c0222e997ba176225ad3851b870c00556b5dcdc4a6c56e9da",
+      "expected_content_digest": "sha256:2f856ba4b8621d4c0222e997ba176225ad3851b870c00556b5dcdc4a6c56e9da",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/utils.py",
+      "bytes": 85,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:2f856ba4b8621d4c0222e997ba176225ad3851b870c00556b5dcdc4a6c56e9da",
+      "expected_content_digest": "sha256:2f856ba4b8621d4c0222e997ba176225ad3851b870c00556b5dcdc4a6c56e9da",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/validate_call.py",
+      "bytes": 1098,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:3efcbb4edb7db4325d735bfa299bff2376ffa5a89acece2878c437545db3b300",
+      "expected_content_digest": "sha256:3efcbb4edb7db4325d735bfa299bff2376ffa5a89acece2878c437545db3b300",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/validators.py",
+      "bytes": 85,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:2f856ba4b8621d4c0222e997ba176225ad3851b870c00556b5dcdc4a6c56e9da",
+      "expected_content_digest": "sha256:2f856ba4b8621d4c0222e997ba176225ad3851b870c00556b5dcdc4a6c56e9da",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pydantic/version.py",
+      "bytes": 922,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:4720a9735149fffccb0ffa10ef11f0bb9a7713ef8ea6e03cbc3956378b163cb8",
+      "expected_content_digest": "sha256:4720a9735149fffccb0ffa10ef11f0bb9a7713ef8ea6e03cbc3956378b163cb8",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "pyproject.toml",
+      "bytes": 5644,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:48dc9ac0bae28293af5319c57ec68d94fd7ddf2f7e848779a250734e1a2287b3",
+      "expected_content_digest": "sha256:48dc9ac0bae28293af5319c57ec68d94fd7ddf2f7e848779a250734e1a2287b3",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/__init__.py",
+      "bytes": 0,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "expected_content_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/conftest.py",
+      "bytes": 2604,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:3a827f290ef0aefc08e27ed98f26efb3cb8700f0c2db708da05e96879a9bd988",
+      "expected_content_digest": "sha256:3a827f290ef0aefc08e27ed98f26efb3cb8700f0c2db708da05e96879a9bd988",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/__init__.py",
+      "bytes": 0,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "expected_content_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/configs/mypy-default.ini",
+      "bytes": 316,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:431297fe01b1a374d59da114c9d59b36a661b1b34b7241b54780a91b444261a0",
+      "expected_content_digest": "sha256:431297fe01b1a374d59da114c9d59b36a661b1b34b7241b54780a91b444261a0",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/configs/mypy-plugin-strict-no-any.ini",
+      "bytes": 559,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:b33c9714140ab323662ccef5a79b9a4a4ca0a1a3a23338ea8a01a5b96f48bd4b",
+      "expected_content_digest": "sha256:b33c9714140ab323662ccef5a79b9a4a4ca0a1a3a23338ea8a01a5b96f48bd4b",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/configs/mypy-plugin-strict.ini",
+      "bytes": 389,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:00ad830399bb9d4cb102b3aa1c7b8dca94722d41b9615fda1ec3b2920a14bf6e",
+      "expected_content_digest": "sha256:00ad830399bb9d4cb102b3aa1c7b8dca94722d41b9615fda1ec3b2920a14bf6e",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/configs/mypy-plugin.ini",
+      "bytes": 341,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:40beacc882e2fabaf0c0aa7d3922f16236c6c9f914ef23b5d3ec2c66003e31d0",
+      "expected_content_digest": "sha256:40beacc882e2fabaf0c0aa7d3922f16236c6c9f914ef23b5d3ec2c66003e31d0",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/configs/pyproject-default.toml",
+      "bytes": 599,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:c342d8c998749eab8b09901d90a1e5e3134df02d9bea0a039335174e33030d1d",
+      "expected_content_digest": "sha256:c342d8c998749eab8b09901d90a1e5e3134df02d9bea0a039335174e33030d1d",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/configs/pyproject-plugin-bad-param.toml",
+      "bytes": 728,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:c3124b4d9e9cb3582456dde2cca05fb643fcaf50d3c0339b8ebb657e338fcf77",
+      "expected_content_digest": "sha256:c3124b4d9e9cb3582456dde2cca05fb643fcaf50d3c0339b8ebb657e338fcf77",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/configs/pyproject-plugin-strict.toml",
+      "bytes": 735,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:3dd32d065bfcc71d7c0edfc9f3f2d07420fcdfbe5b3bfaee4a12ab8bce94d233",
+      "expected_content_digest": "sha256:3dd32d065bfcc71d7c0edfc9f3f2d07420fcdfbe5b3bfaee4a12ab8bce94d233",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/configs/pyproject-plugin.toml",
+      "bytes": 633,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:229f9dde5637bc1fcc67cd999a1bd96b8f8755c8f9d5580397a8f1c5d56ff864",
+      "expected_content_digest": "sha256:229f9dde5637bc1fcc67cd999a1bd96b8f8755c8f9d5580397a8f1c5d56ff864",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/modules/computed_fields.py",
+      "bytes": 651,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:c246c2866886972a411e7bcccf50ae374aa2681aa9713c05d402151cff8b26e5",
+      "expected_content_digest": "sha256:c246c2866886972a411e7bcccf50ae374aa2681aa9713c05d402151cff8b26e5",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/modules/custom_constructor.py",
+      "bytes": 259,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:dd6ea27e1cccf6c472ca7276542b492f067a5640b0dd99a5f65ed2385906d3d0",
+      "expected_content_digest": "sha256:dd6ea27e1cccf6c472ca7276542b492f067a5640b0dd99a5f65ed2385906d3d0",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/modules/dataclass_no_any.py",
+      "bytes": 149,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:55ae7e35bd84059d2745a8f642a3a25dfd5c5f30919b69beb7b67bb4817b7931",
+      "expected_content_digest": "sha256:55ae7e35bd84059d2745a8f642a3a25dfd5c5f30919b69beb7b67bb4817b7931",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/modules/fail1.py",
+      "bytes": 502,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:ec9dda3c8f81cdded6b67c0632d45664ee7c50379d7c3edb85b6df042c28a990",
+      "expected_content_digest": "sha256:ec9dda3c8f81cdded6b67c0632d45664ee7c50379d7c3edb85b6df042c28a990",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/modules/fail2.py",
+      "bytes": 376,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:fd2cd06be48e7524874fe822e761c4098ab51e9717aa1923dd9b59db9a59915f",
+      "expected_content_digest": "sha256:fd2cd06be48e7524874fe822e761c4098ab51e9717aa1923dd9b59db9a59915f",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/modules/fail3.py",
+      "bytes": 439,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:2a1e069a3072d6d05d2138ef69be8d4c29354913e08b0ad37efd5aa740705956",
+      "expected_content_digest": "sha256:2a1e069a3072d6d05d2138ef69be8d4c29354913e08b0ad37efd5aa740705956",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/modules/fail4.py",
+      "bytes": 852,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:8853e11abf08ce9c58b59fee6fa332ef10abd3270adee7aa9ff87b688ca66739",
+      "expected_content_digest": "sha256:8853e11abf08ce9c58b59fee6fa332ef10abd3270adee7aa9ff87b688ca66739",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/modules/fail_defaults.py",
+      "bytes": 462,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:49b8f57831395b0e84895ad54e011464760fa4b3f32505a79dba9eb08dec1c22",
+      "expected_content_digest": "sha256:49b8f57831395b0e84895ad54e011464760fa4b3f32505a79dba9eb08dec1c22",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/modules/plugin_default_factory.py",
+      "bytes": 568,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:10fc17bb9fa3d58ad51a5b2b1921896468b9f29b5ae7d26ec4a05e99b7e7c448",
+      "expected_content_digest": "sha256:10fc17bb9fa3d58ad51a5b2b1921896468b9f29b5ae7d26ec4a05e99b7e7c448",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/modules/plugin_fail.py",
+      "bytes": 5822,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:773462a8aba841e37cb05733cf83f689482ac631f6d5e007b8325f796c477ef4",
+      "expected_content_digest": "sha256:773462a8aba841e37cb05733cf83f689482ac631f6d5e007b8325f796c477ef4",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/modules/plugin_fail_baseConfig.py",
+      "bytes": 5840,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:f0f35ff4b9ae50b1d56476d3f578570d0610123b2755e0542131e4bb89bb47a6",
+      "expected_content_digest": "sha256:f0f35ff4b9ae50b1d56476d3f578570d0610123b2755e0542131e4bb89bb47a6",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/modules/plugin_success.py",
+      "bytes": 5611,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:0870b47a4f66f135b57802f445b9a81f2fa3c05373757419300e16dda89ab373",
+      "expected_content_digest": "sha256:0870b47a4f66f135b57802f445b9a81f2fa3c05373757419300e16dda89ab373",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/modules/plugin_success_baseConfig.py",
+      "bytes": 4533,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:6b7fa27df5745387a8d1d63c2ec10a6090df2678b34abcd4b993d95787d26a6f",
+      "expected_content_digest": "sha256:6b7fa27df5745387a8d1d63c2ec10a6090df2678b34abcd4b993d95787d26a6f",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/modules/success.py",
+      "bytes": 7553,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:e880d5e9bfdb3ebb9612eb36a31f620b9d49b302da750056fc83e4a482d8b86d",
+      "expected_content_digest": "sha256:e880d5e9bfdb3ebb9612eb36a31f620b9d49b302da750056fc83e4a482d8b86d",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/outputs/latest/computed_fields.txt",
+      "bytes": 285,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:7a91f5938801c253653f0d3d61b7d492c9f62fb9cb836697e47f557b2190f67f",
+      "expected_content_digest": "sha256:7a91f5938801c253653f0d3d61b7d492c9f62fb9cb836697e47f557b2190f67f",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/outputs/latest/custom_constructor.txt",
+      "bytes": 102,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:5ef4ab68de5fe778305a1dce4f593f21e127481bfb2deac23d52179b609af7b4",
+      "expected_content_digest": "sha256:5ef4ab68de5fe778305a1dce4f593f21e127481bfb2deac23d52179b609af7b4",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/outputs/latest/fail1.txt",
+      "bytes": 386,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:84b502ab3f9dffe78e39f8422f086b49918730e237a592d70be8f296b513d092",
+      "expected_content_digest": "sha256:84b502ab3f9dffe78e39f8422f086b49918730e237a592d70be8f296b513d092",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/outputs/latest/fail2.txt",
+      "bytes": 223,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:f22809802ae7585d3445234d2f003a6cd1f8131a03a66ab4a63fda74565c85b7",
+      "expected_content_digest": "sha256:f22809802ae7585d3445234d2f003a6cd1f8131a03a66ab4a63fda74565c85b7",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/outputs/latest/fail3.txt",
+      "bytes": 100,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:6b1ce01f9a699b2dbb9c32a91670bdf3fc5048e28d51db2e8fb13fd76bca44d7",
+      "expected_content_digest": "sha256:6b1ce01f9a699b2dbb9c32a91670bdf3fc5048e28d51db2e8fb13fd76bca44d7",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/outputs/latest/fail4.txt",
+      "bytes": 2582,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:e043df646f7bf8825c5b8d94ea384f2c327aa45d2efdcf7185c52cea6a62fcde",
+      "expected_content_digest": "sha256:e043df646f7bf8825c5b8d94ea384f2c327aa45d2efdcf7185c52cea6a62fcde",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/outputs/latest/fail_defaults.txt",
+      "bytes": 335,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:3f1d5888339da7afb31381b069ac86813a542f77f93d1da6f46f6bec7d983f57",
+      "expected_content_digest": "sha256:3f1d5888339da7afb31381b069ac86813a542f77f93d1da6f46f6bec7d983f57",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/outputs/latest/plugin-fail-baseConfig.txt",
+      "bytes": 3310,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:b203996fdd8bf86e80192227db6404d664d0c850301391af48902b12a706d471",
+      "expected_content_digest": "sha256:b203996fdd8bf86e80192227db6404d664d0c850301391af48902b12a706d471",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/outputs/latest/plugin-fail-strict-baseConfig.txt",
+      "bytes": 4645,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:53587f0106c00eb86e673ecceea686d820757f73eacf5720525a1ef64533dc73",
+      "expected_content_digest": "sha256:53587f0106c00eb86e673ecceea686d820757f73eacf5720525a1ef64533dc73",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/outputs/latest/plugin-fail-strict.txt",
+      "bytes": 4874,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:f945880461faadfeb48eacdfdb941d9797273270c98a55eecbfc710fdc19526d",
+      "expected_content_digest": "sha256:f945880461faadfeb48eacdfdb941d9797273270c98a55eecbfc710fdc19526d",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/outputs/latest/plugin-fail.txt",
+      "bytes": 3539,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:c195457d8c9a218705907cdfca837b4e3aa4a1783dc6e714720b2983e3ede112",
+      "expected_content_digest": "sha256:c195457d8c9a218705907cdfca837b4e3aa4a1783dc6e714720b2983e3ede112",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/outputs/latest/plugin-success-strict-baseConfig.txt",
+      "bytes": 140,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:4fbbf5b6e312e8ea9e1fc928f2a5245cbefe3a768b6bcdac176a8d8db7775bee",
+      "expected_content_digest": "sha256:4fbbf5b6e312e8ea9e1fc928f2a5245cbefe3a768b6bcdac176a8d8db7775bee",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/outputs/latest/plugin-success-strict.txt",
+      "bytes": 140,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:2993033a591cd9e37df3100939a417032f114f4a52b242c4081931c654e4f310",
+      "expected_content_digest": "sha256:2993033a591cd9e37df3100939a417032f114f4a52b242c4081931c654e4f310",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/outputs/latest/plugin_default_factory.txt",
+      "bytes": 240,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:1efebb2ba691a600d210d41bc9709e0a2650d5412d2499b0547ed6430d8ad1c5",
+      "expected_content_digest": "sha256:1efebb2ba691a600d210d41bc9709e0a2650d5412d2499b0547ed6430d8ad1c5",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/outputs/latest/plugin_success.txt",
+      "bytes": 482,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:e912827588680ea55f02c19c1dff985dfc74c3a51ebad7242aef03cf640465d8",
+      "expected_content_digest": "sha256:e912827588680ea55f02c19c1dff985dfc74c3a51ebad7242aef03cf640465d8",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/outputs/latest/plugin_success_baseConfig.txt",
+      "bytes": 440,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:deb44d2eaed21dc0bb6e797a467101d6c7d231b4f69f813a5f062b16cc6f11f1",
+      "expected_content_digest": "sha256:deb44d2eaed21dc0bb6e797a467101d6c7d231b4f69f813a5f062b16cc6f11f1",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/outputs/v1.0.1/fail1.txt",
+      "bytes": 146,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:8b1f92452c79efdd59482da799df351b0c2ec1ada4c6205fdd85c0a1940d9d89",
+      "expected_content_digest": "sha256:8b1f92452c79efdd59482da799df351b0c2ec1ada4c6205fdd85c0a1940d9d89",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/outputs/v1.0.1/fail2.txt",
+      "bytes": 61,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:e40bf8327547620e215699669dbff0f9c629f62a208847b25961e1dffc101a8d",
+      "expected_content_digest": "sha256:e40bf8327547620e215699669dbff0f9c629f62a208847b25961e1dffc101a8d",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/outputs/v1.0.1/plugin_success.txt",
+      "bytes": 429,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:59f8d9d5a326bd0b5171275f1f0959b260bfd877e636ee4517b94b939f319e87",
+      "expected_content_digest": "sha256:59f8d9d5a326bd0b5171275f1f0959b260bfd877e636ee4517b94b939f319e87",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/outputs/v1.0.1/plugin_success_baseConfig.txt",
+      "bytes": 235,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:5fb0c2a86c831d3fd0625f7ee61d51477f00604b12c5b5b6f65818a948fd7a11",
+      "expected_content_digest": "sha256:5fb0c2a86c831d3fd0625f7ee61d51477f00604b12c5b5b6f65818a948fd7a11",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/mypy/test_mypy.py",
+      "bytes": 10802,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:63e0cb5145220944d1bc034cf040ce3fbed5fc23f383b674fc12f335226c4b73",
+      "expected_content_digest": "sha256:63e0cb5145220944d1bc034cf040ce3fbed5fc23f383b674fc12f335226c4b73",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/pyright/pyproject.toml",
+      "bytes": 103,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:6061d8e4224e0749ba4daebe8fef49655450e675496f427bfb062073334dec62",
+      "expected_content_digest": "sha256:6061d8e4224e0749ba4daebe8fef49655450e675496f427bfb062073334dec62",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/pyright/pyright_example.py",
+      "bytes": 1066,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:980225cf0eb207899e4193a3a8f3ee91ee0261d8ecce82ff2b0b4366931185a3",
+      "expected_content_digest": "sha256:980225cf0eb207899e4193a3a8f3ee91ee0261d8ecce82ff2b0b4366931185a3",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_abc.py",
+      "bytes": 1162,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:721c87a430cc2480e852e07afb764587874d47087804828e34b0fb581852fd12",
+      "expected_content_digest": "sha256:721c87a430cc2480e852e07afb764587874d47087804828e34b0fb581852fd12",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_aliases.py",
+      "bytes": 14115,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:58dc6406af5d8561141a2b5b5ef9e31560e02e800d82b1ce2a225503fa8e9d72",
+      "expected_content_digest": "sha256:58dc6406af5d8561141a2b5b5ef9e31560e02e800d82b1ce2a225503fa8e9d72",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_annotated.py",
+      "bytes": 8683,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:d77fcd0f97c0fd844d95c3562cc71e0bbf19e8a3c4a3323398ae115549c1852e",
+      "expected_content_digest": "sha256:d77fcd0f97c0fd844d95c3562cc71e0bbf19e8a3c4a3323398ae115549c1852e",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_assert_in_validators.py",
+      "bytes": 897,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:37da8353313b3c0bd5236ffe8086cc402725f34a2e85fa27c58a2d148863d9c5",
+      "expected_content_digest": "sha256:37da8353313b3c0bd5236ffe8086cc402725f34a2e85fa27c58a2d148863d9c5",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_callable.py",
+      "bytes": 802,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:68e47f8d3460a9b607c85b73595f78a9a3ca77e6df8ea601fd8f9b28a14ceb23",
+      "expected_content_digest": "sha256:68e47f8d3460a9b607c85b73595f78a9a3ca77e6df8ea601fd8f9b28a14ceb23",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_color.py",
+      "bytes": 7571,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:f3b6977db7d020a9ab2ccb9acf0166c3a2fed461f90143fa94f4a24f8326f9f4",
+      "expected_content_digest": "sha256:f3b6977db7d020a9ab2ccb9acf0166c3a2fed461f90143fa94f4a24f8326f9f4",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_computed_fields.py",
+      "bytes": 13553,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:e0154f33d1b50d660d4bc9d3c95a9cace2a0db1f79e9e4c8f17d5ba60a823d76",
+      "expected_content_digest": "sha256:e0154f33d1b50d660d4bc9d3c95a9cace2a0db1f79e9e4c8f17d5ba60a823d76",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_config.py",
+      "bytes": 17810,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:36ae6da88cbba8e70d4c7dd6fe0bd37303fd15635068ecd5d03065ca1705f468",
+      "expected_content_digest": "sha256:36ae6da88cbba8e70d4c7dd6fe0bd37303fd15635068ecd5d03065ca1705f468",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_construction.py",
+      "bytes": 12890,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:dabc320db4228024444ab13fa2d466b182facb8e1d8c9b415b705e375cc874fc",
+      "expected_content_digest": "sha256:dabc320db4228024444ab13fa2d466b182facb8e1d8c9b415b705e375cc874fc",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_create_model.py",
+      "bytes": 9471,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:94948ed97f803231a2b832bb6ffbae162bf47a81d481d0253f5f4d0373bd930f",
+      "expected_content_digest": "sha256:94948ed97f803231a2b832bb6ffbae162bf47a81d481d0253f5f4d0373bd930f",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_dataclasses.py",
+      "bytes": 50203,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:e9a7cd14e1693d0a41f286082e4529099dc08611ad6cac8ce1e07cec840089d4",
+      "expected_content_digest": "sha256:e9a7cd14e1693d0a41f286082e4529099dc08611ad6cac8ce1e07cec840089d4",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_datetime.py",
+      "bytes": 18542,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:ed32758dbe05a78140ce539a9df8dcfe993cf43e52ea93d3cd66460040c8f4cb",
+      "expected_content_digest": "sha256:ed32758dbe05a78140ce539a9df8dcfe993cf43e52ea93d3cd66460040c8f4cb",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_deprecated.py",
+      "bytes": 21201,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:55f42a123d70419450ad117f4e327d7abcbff4fc15b75a19e2179e5b6bb410ad",
+      "expected_content_digest": "sha256:55f42a123d70419450ad117f4e327d7abcbff4fc15b75a19e2179e5b6bb410ad",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_deprecated_validate_arguments.py",
+      "bytes": 12032,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:3785cb01f0ac18dd936eaf5cd6e7a1396b2d9589bc062815890f9771f1f4031d",
+      "expected_content_digest": "sha256:3785cb01f0ac18dd936eaf5cd6e7a1396b2d9589bc062815890f9771f1f4031d",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_discriminated_union.py",
+      "bytes": 40302,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:21014e63f8be5ef2822a4fc8fa32c9980e6b0ffa35c2dde9d091f865041c1f9f",
+      "expected_content_digest": "sha256:21014e63f8be5ef2822a4fc8fa32c9980e6b0ffa35c2dde9d091f865041c1f9f",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_docs.py",
+      "bytes": 6336,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:7306c0719bfed8d962468b21e5c297bc791da721efee68f7f52c015daa7c0b01",
+      "expected_content_digest": "sha256:7306c0719bfed8d962468b21e5c297bc791da721efee68f7f52c015daa7c0b01",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_edge_cases.py",
+      "bytes": 75199,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:4f8c835b31bad282a7fd2b7acefac53d428d6aeffa7151051e0d79a3f04215e7",
+      "expected_content_digest": "sha256:4f8c835b31bad282a7fd2b7acefac53d428d6aeffa7151051e0d79a3f04215e7",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_errors.py",
+      "bytes": 498,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:14f2456641a93fc8fa9c6572de4871b5d2730a8e9a0437e338519699f0839180",
+      "expected_content_digest": "sha256:14f2456641a93fc8fa9c6572de4871b5d2730a8e9a0437e338519699f0839180",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_fastapi.sh",
+      "bytes": 258,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:b6feec3e35654b25948e8229b4eec618604e42b0b7adc511b532f976230f8bb3",
+      "expected_content_digest": "sha256:b6feec3e35654b25948e8229b4eec618604e42b0b7adc511b532f976230f8bb3",
+      "declared_git_mode": "100755",
+      "archive_mode_octal": "0o755",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_fastapi_json_schema.py",
+      "bytes": 5019,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:ae11595b9a017f7682fea2f36425a3a8ee833cc84064c0adce2704303da6126e",
+      "expected_content_digest": "sha256:ae11595b9a017f7682fea2f36425a3a8ee833cc84064c0adce2704303da6126e",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_forward_ref.py",
+      "bytes": 27893,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:78d873cb2d17dc50e9edc28a9687b938fbeb39f4722c73a7802521ae2287a969",
+      "expected_content_digest": "sha256:78d873cb2d17dc50e9edc28a9687b938fbeb39f4722c73a7802521ae2287a969",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_generics.py",
+      "bytes": 65249,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:0668c2b5c92696dfdd930bf0e26d61bc4e9c6a7c4d5306d2a7173941e8a390e4",
+      "expected_content_digest": "sha256:0668c2b5c92696dfdd930bf0e26d61bc4e9c6a7c4d5306d2a7173941e8a390e4",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_hypothesis_plugin.py",
+      "bytes": 4532,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:1b9c716388b7054022f2990e0284de8f48458a142cf8ffe8407533d95ff535bd",
+      "expected_content_digest": "sha256:1b9c716388b7054022f2990e0284de8f48458a142cf8ffe8407533d95ff535bd",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_json.py",
+      "bytes": 11139,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:6f561a6214b27851e9f57005a2db8ce5cb2ad3c16460ff058ad0332b201c2353",
+      "expected_content_digest": "sha256:6f561a6214b27851e9f57005a2db8ce5cb2ad3c16460ff058ad0332b201c2353",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_json_schema.py",
+      "bytes": 113058,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:5c00698f7b541ca99f18c87d163b03049a093dfacf8c47e52d780f5607a5931c",
+      "expected_content_digest": "sha256:5c00698f7b541ca99f18c87d163b03049a093dfacf8c47e52d780f5607a5931c",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_main.py",
+      "bytes": 62428,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:3e1144167645a600fd0b3575340a6c41a5a9e5a4da81ff3febb6603cf41814b9",
+      "expected_content_digest": "sha256:3e1144167645a600fd0b3575340a6c41a5a9e5a4da81ff3febb6603cf41814b9",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_migration.py",
+      "bytes": 906,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:0edbf387f42ee878908a364903eb4af2cc693d1cd0cee13fc6440cb68999bb2a",
+      "expected_content_digest": "sha256:0edbf387f42ee878908a364903eb4af2cc693d1cd0cee13fc6440cb68999bb2a",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_model_signature.py",
+      "bytes": 5631,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:ea3b48ad8e16d752fcfed662c48113b0772ae9dc447a22f73039f88148c127f4",
+      "expected_content_digest": "sha256:ea3b48ad8e16d752fcfed662c48113b0772ae9dc447a22f73039f88148c127f4",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_model_validator.py",
+      "bytes": 2624,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:b56a8270b7eca8d3b54f4c2fa031810af3298f2b0e22f4c7c10afcf6f2ea65af",
+      "expected_content_digest": "sha256:b56a8270b7eca8d3b54f4c2fa031810af3298f2b0e22f4c7c10afcf6f2ea65af",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_networks.py",
+      "bytes": 27311,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:7d30bbddf33f46f0e0a1cbc4f5ef159176a48332669b65ed06a11a7d2dc95440",
+      "expected_content_digest": "sha256:7d30bbddf33f46f0e0a1cbc4f5ef159176a48332669b65ed06a11a7d2dc95440",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_networks_ipaddress.py",
+      "bytes": 15512,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:13ffd231b66f7de6a0f4c46ea8c726a637afed5fd9d55aa57a7593a84afbe566",
+      "expected_content_digest": "sha256:13ffd231b66f7de6a0f4c46ea8c726a637afed5fd9d55aa57a7593a84afbe566",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_parse.py",
+      "bytes": 7004,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:20ae9654c317661fe005127f35a4c49bf6a436e706d77c724344f643edaba7c4",
+      "expected_content_digest": "sha256:20ae9654c317661fe005127f35a4c49bf6a436e706d77c724344f643edaba7c4",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_private_attributes.py",
+      "bytes": 8952,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:e3a0fc6aa29587159d7c7e8265641685e24f1e14c4a2ae5af8af65e0d0a3beeb",
+      "expected_content_digest": "sha256:e3a0fc6aa29587159d7c7e8265641685e24f1e14c4a2ae5af8af65e0d0a3beeb",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_rich_repr.py",
+      "bytes": 793,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:30c882a91b2bd1c320856eb6e923a50d75178ea097db6ea2c8490b6a76c2859d",
+      "expected_content_digest": "sha256:30c882a91b2bd1c320856eb6e923a50d75178ea097db6ea2c8490b6a76c2859d",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_serialize.py",
+      "bytes": 23744,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:85835d4c8a4bbf4b91524d847179d7038d10d72c01d8952422f69ad88bc470b0",
+      "expected_content_digest": "sha256:85835d4c8a4bbf4b91524d847179d7038d10d72c01d8952422f69ad88bc470b0",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_strict.py",
+      "bytes": 3127,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:7bdca69cd14f018f929539298213f3acf0c8e98f00a0244e909144f544480601",
+      "expected_content_digest": "sha256:7bdca69cd14f018f929539298213f3acf0c8e98f00a0244e909144f544480601",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_structural_pattern_matching.py",
+      "bytes": 666,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:1dbb20b5a5e6491c578d7723b1b12a0c5d20305e9694412d932e64a121c5d7f3",
+      "expected_content_digest": "sha256:1dbb20b5a5e6491c578d7723b1b12a0c5d20305e9694412d932e64a121c5d7f3",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_tools.py",
+      "bytes": 2630,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:19872887cd979f4f9a1c62122ef62da2cb9dfe2d8ad6e958d7f91d8c134228cf",
+      "expected_content_digest": "sha256:19872887cd979f4f9a1c62122ef62da2cb9dfe2d8ad6e958d7f91d8c134228cf",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_types.py",
+      "bytes": 132110,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:e8eaf94f627e9c41aaeef7aead9726672dabd4d39068809c62423eaf6b1e91b4",
+      "expected_content_digest": "sha256:e8eaf94f627e9c41aaeef7aead9726672dabd4d39068809c62423eaf6b1e91b4",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_types_namedtuple.py",
+      "bytes": 4229,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:6e9da106a4825a0c3d09666d56ddc1fda06f8d741088a6b03932918789a13fd8",
+      "expected_content_digest": "sha256:6e9da106a4825a0c3d09666d56ddc1fda06f8d741088a6b03932918789a13fd8",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_types_payment_card_number.py",
+      "bytes": 5009,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:b88fd7894c3aabe9aaae44f766deb6ef56e3eb22c4fc032d1eb5a4946886e89e",
+      "expected_content_digest": "sha256:b88fd7894c3aabe9aaae44f766deb6ef56e3eb22c4fc032d1eb5a4946886e89e",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_types_typeddict.py",
+      "bytes": 19688,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:93a38104fd585429a08ef42b0e55401e8aa9fdbd7cd332cfddcb9404e9185b14",
+      "expected_content_digest": "sha256:93a38104fd585429a08ef42b0e55401e8aa9fdbd7cd332cfddcb9404e9185b14",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_typing.py",
+      "bytes": 1907,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:e4a9f60dbcf507a2b687efeecbc22e1b86186504e7fa5f583941798523a3f68f",
+      "expected_content_digest": "sha256:e4a9f60dbcf507a2b687efeecbc22e1b86186504e7fa5f583941798523a3f68f",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_utils.py",
+      "bytes": 14575,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:04d94e20bf3ae08336412013d51e98e8163d22d688bc5da3e8cc963f5f3f42c3",
+      "expected_content_digest": "sha256:04d94e20bf3ae08336412013d51e98e8163d22d688bc5da3e8cc963f5f3f42c3",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_validate_call.py",
+      "bytes": 17697,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:1801bbf3adc0c7fcbbae1a3e5282a8e7c66c94a4597d80a8fef5bfb98ebd0d36",
+      "expected_content_digest": "sha256:1801bbf3adc0c7fcbbae1a3e5282a8e7c66c94a4597d80a8fef5bfb98ebd0d36",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_validator.py",
+      "bytes": 7170,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:7f078c65b78e113ea4ab2ddeba479e0d7a499be973319be2d710a7fa3947ede4",
+      "expected_content_digest": "sha256:7f078c65b78e113ea4ab2ddeba479e0d7a499be973319be2d710a7fa3947ede4",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_validators.py",
+      "bytes": 67992,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:82e989e3e8ecc80a8a796ab745497a1db3d8be0814c51d2f940f3b183bd208a2",
+      "expected_content_digest": "sha256:82e989e3e8ecc80a8a796ab745497a1db3d8be0814c51d2f940f3b183bd208a2",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_validators_dataclass.py",
+      "bytes": 4622,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:927a23df9e689f555ec8c1d9c770b771b24c2a515f118a51cafa886a764465f0",
+      "expected_content_digest": "sha256:927a23df9e689f555ec8c1d9c770b771b24c2a515f118a51cafa886a764465f0",
+      "declared_git_mode": "100755",
+      "archive_mode_octal": "0o755",
+      "executable_flag_match": true
+    },
+    {
+      "path": "tests/test_version.py",
+      "bytes": 539,
+      "object_type": "regular",
+      "actual_content_digest": "sha256:96c55cae01a742abec3267333b3c727ed918fdeac3ff24eeeea31f5680cb10dc",
+      "expected_content_digest": "sha256:96c55cae01a742abec3267333b3c727ed918fdeac3ff24eeeea31f5680cb10dc",
+      "declared_git_mode": "100644",
+      "archive_mode_octal": "0o644",
+      "executable_flag_match": true
+    }
+  ],
+  "baseline_member_count": 288,
+  "baseline_member_set_exact": true,
+  "baseline_manifest_file_sha256": "1ca3204e4fa99f84d38c616a0a7f627cfea0693c4a308f2d1abd0beead4e21c8",
+  "baseline_archive_file_sha256": "4b580273024e81a52e5258f4a2c9db12b96b2cb9e2724072d5437a01b99ebbdd",
+  "baseline_main_matches_public": true,
+  "baseline_main_sha256": "cf537426448d1e9a768c2e6debccfd7b3dcec718b22df0ccfaf8ca1d47f69e4e",
+  "baseline_census_matches_grader_rebuild": true,
+  "raw_tests": {
+    "formal_reference_count": 129,
+    "original_f2p": 1,
+    "added_f2p": 1,
+    "p2p": 127,
+    "reference_states": {
+      "tests/test_main.py::test_equality_delegation": "PASSED",
+      "tests/test_main.py::test_equality_delegation_nonexample": "PASSED",
+      "tests/test_main.py::test_allow_extra_from_attributes[forbid]": "PASSED",
+      "tests/test_main.py::test_field_order_is_preserved_with_extra": "PASSED",
+      "tests/test_main.py::test_type_type_subclass_validation_success": "PASSED",
+      "tests/test_main.py::test_frozen_field": "PASSED",
+      "tests/test_main.py::test_default_factory_field": "PASSED",
+      "tests/test_main.py::test_pydantic_init_subclass": "PASSED",
+      "tests/test_main.py::test_validate_json_context": "PASSED",
+      "tests/test_main.py::test_enum_values": "PASSED",
+      "tests/test_main.py::test_comparing": "PASSED",
+      "tests/test_main.py::test_arbitrary_type_allowed_validation_success": "PASSED",
+      "tests/test_main.py::test_field_by_default_is_not_final": "PASSED",
+      "tests/test_main.py::test_any": "PASSED",
+      "tests/test_main.py::test_model_rebuild_localns": "PASSED",
+      "tests/test_main.py::test_model_equality_generics": "PASSED",
+      "tests/test_main.py::test_type_type_validation_fails[OtherClass]": "PASSED",
+      "tests/test_main.py::test_post_init_not_called_without_override": "PASSED",
+      "tests/test_main.py::test_validate_python_context": "PASSED",
+      "tests/test_main.py::test_mapping_retains_type_defaultdict": "PASSED",
+      "tests/test_main.py::test_exclude_defaults": "PASSED",
+      "tests/test_main.py::test_fields_set": "PASSED",
+      "tests/test_main.py::test_mutability": "PASSED",
+      "tests/test_main.py::test_bare_type_type_validation_fails[type]": "PASSED",
+      "tests/test_main.py::test_typing_coercion_counter": "PASSED",
+      "tests/test_main.py::test_nullable_strings_fails": "PASSED",
+      "tests/test_main.py::test_bare_type_type_validation_success[bare_type1]": "PASSED",
+      "tests/test_main.py::test_frozen_with_hashable_fields_are_hashable": "PASSED",
+      "tests/test_main.py::test_final_field_decl_without_default_val[field-with-arg]": "PASSED",
+      "tests/test_main.py::test_success": "PASSED",
+      "tests/test_main.py::test_typing_coercion_defaultdict": "PASSED",
+      "tests/test_main.py::test_final_field_reassignment": "PASSED",
+      "tests/test_main.py::test_post_init_call_signatures[False]": "PASSED",
+      "tests/test_main.py::test_model_equality_dump": "PASSED",
+      "tests/test_main.py::test_hash_function_give_different_result_for_different_object": "PASSED",
+      "tests/test_main.py::test_validating_assignment_fail": "PASSED",
+      "tests/test_main.py::test_model_validate_strict": "PASSED",
+      "tests/test_main.py::test_allow_extra_from_attributes[ignore]": "PASSED",
+      "tests/test_main.py::test_type_type_validation_fails[1]": "PASSED",
+      "tests/test_main.py::test_with_declared_hash": "PASSED",
+      "tests/test_main.py::test_untyped_fields_error": "PASSED",
+      "tests/test_main.py::test_default_factory_called_once_2": "PASSED",
+      "tests/test_main.py::test_final_field_decl_without_default_val[none-no-arg]": "PASSED",
+      "tests/test_main.py::test_set_attr": "PASSED",
+      "tests/test_main.py::test_revalidate_instances_sub_instances": "PASSED",
+      "tests/test_main.py::test_default_factory_parse": "PASSED",
+      "tests/test_main.py::test_exclude_unset_dict": "PASSED",
+      "tests/test_main.py::test_typing_counter_value_validation": "PASSED",
+      "tests/test_main.py::test_class_kwargs_config": "PASSED",
+      "tests/test_main.py::test_dict_exclude_unset_populated_by_alias_with_extra": "PASSED",
+      "tests/test_main.py::test_frozen_model": "PASSED",
+      "tests/test_main.py::test_ultra_simple_missing": "PASSED",
+      "tests/test_main.py::test_parent_sub_model_fails": "PASSED",
+      "tests/test_main.py::test_revalidate_instances_always_list_of_model_instance": "PASSED",
+      "tests/test_main.py::test_required": "PASSED",
+      "tests/test_main.py::test_not_frozen_are_not_hashable": "PASSED",
+      "tests/test_main.py::test_bare_type_type_validation_success[type]": "PASSED",
+      "tests/test_main.py::test_type_type_validation_success": "PASSED",
+      "tests/test_main.py::test_dict_with_extra_keys": "PASSED",
+      "tests/test_main.py::test_custom_init_subclass_params": "PASSED",
+      "tests/test_main.py::test_recursive_cycle_with_repeated_field": "PASSED",
+      "tests/test_main.py::test_nullable_strings_success": "PASSED",
+      "tests/test_main.py::test_bare_type_type_validation_fails[bare_type1]": "PASSED",
+      "tests/test_main.py::test_enum_raw": "PASSED",
+      "tests/test_main.py::test_model_equality_fields_set": "PASSED",
+      "tests/test_main.py::test_final_field_decl_without_default_val[field-no-arg]": "PASSED",
+      "tests/test_main.py::test_revalidate_instances_never": "PASSED",
+      "tests/test_main.py::test_assign_extra_no_validate": "PASSED",
+      "tests/test_main.py::test_ultra_simple_failed": "PASSED",
+      "tests/test_main.py::test_assign_extra_validate": "PASSED",
+      "tests/test_main.py::test_untyped_fields_warning": "PASSED",
+      "tests/test_main.py::test_mapping_retains_type_fallback_error": "PASSED",
+      "tests/test_main.py::test_typing_coercion_dict": "PASSED",
+      "tests/test_main.py::test_model_equality_private_attrs": "PASSED",
+      "tests/test_main.py::test_dir_fields": "PASSED",
+      "tests/test_main.py::test_field_order": "PASSED",
+      "tests/test_main.py::test_final_field_decl_with_default_val[with-arg]": "PASSED",
+      "tests/test_main.py::test_class_kwargs_config_and_attr_conflict": "PASSED",
+      "tests/test_main.py::test_model_equality": "PASSED",
+      "tests/test_main.py::test_recursive_model": "PASSED",
+      "tests/test_main.py::test_repr_field": "PASSED",
+      "tests/test_main.py::test_set_attr_invalid": "PASSED",
+      "tests/test_main.py::test_arbitrary_types_not_allowed": "PASSED",
+      "tests/test_main.py::test_mapping_retains_type_subclass": "PASSED",
+      "tests/test_main.py::test_class_kwargs_custom_config": "PASSED",
+      "tests/test_main.py::test_forbidden_extra_success": "PASSED",
+      "tests/test_main.py::test_model_validate_with_context": "PASSED",
+      "tests/test_main.py::test_not_required": "PASSED",
+      "tests/test_main.py::test_extra_allowed": "PASSED",
+      "tests/test_main.py::test_default_factory_validate_children": "PASSED",
+      "tests/test_main.py::test_default_factory": "PASSED",
+      "tests/test_main.py::test_allow_extra_repr": "PASSED",
+      "tests/test_main.py::test_frozen_with_unhashable_fields_are_not_hashable": "PASSED",
+      "tests/test_main.py::test_model_validate_json_strict": "PASSED",
+      "tests/test_main.py::test_revalidate_instances_always": "PASSED",
+      "tests/test_main.py::test_population_by_field_name": "PASSED",
+      "tests/test_main.py::test_two_defaults": "PASSED",
+      "tests/test_main.py::test_post_init": "PASSED",
+      "tests/test_main.py::test_post_init_call_signatures[True]": "PASSED",
+      "tests/test_main.py::test_allow_extra_from_attributes[allow]": "PASSED",
+      "tests/test_main.py::test_value_field_name_shadows_attribute": "PASSED",
+      "tests/test_main.py::test_dict_exclude_unset_populated_by_alias": "PASSED",
+      "tests/test_main.py::test_default_copy": "PASSED",
+      "tests/test_main.py::test_validating_assignment_pass": "PASSED",
+      "tests/test_main.py::test_base_config_type_hinting": "PASSED",
+      "tests/test_main.py::test_deeper_recursive_model": "PASSED",
+      "tests/test_main.py::test_class_var": "PASSED",
+      "tests/test_main.py::test_inherited_model_field_copy": "PASSED",
+      "tests/test_main.py::test_parent_sub_model": "PASSED",
+      "tests/test_main.py::test_arbitrary_type_allowed_validation_fails": "PASSED",
+      "tests/test_main.py::test_field_exclude": "PASSED",
+      "tests/test_main.py::test_final_field_decl_with_default_val[no-arg]": "PASSED",
+      "tests/test_main.py::test_model_iteration": "PASSED",
+      "tests/test_main.py::test_extra_ignored": "PASSED",
+      "tests/test_main.py::test_default_factory_called_once": "PASSED",
+      "tests/test_main.py::test_annotated_final": "PASSED",
+      "tests/test_main.py::test_forbidden_extra_fails": "PASSED",
+      "tests/test_main.py::test_model_equality_type": "PASSED",
+      "tests/test_main.py::test_annotation_field_name_shadows_attribute": "PASSED",
+      "tests/test_main.py::test_exclude_unset_recursive": "PASSED",
+      "tests/test_main.py::test_reuse_same_field": "PASSED",
+      "tests/test_main.py::test_literal_enum_values": "PASSED",
+      "tests/test_main.py::test_dict_subclasses_bare": "PASSED",
+      "tests/test_main.py::test_set_tuple_values": "PASSED",
+      "tests/test_main.py::test_final_field_decl_without_default_val[none-with-arg]": "PASSED",
+      "tests/test_main.py::test_ignored_types": "PASSED",
+      "tests/test_main.py::test_dict_subclasses_typed": "PASSED",
+      "tests/test_main.py::test_allow_extra": "PASSED",
+      "tests/test_main.py::test_ultra_simple_repr": "PASSED"
+    },
+    "all_node_count": 169,
+    "all_node_states": {
+      "tests/test_main.py::test_success": "PASSED",
+      "tests/test_main.py::test_ultra_simple_missing": "PASSED",
+      "tests/test_main.py::test_ultra_simple_failed": "PASSED",
+      "tests/test_main.py::test_ultra_simple_repr": "PASSED",
+      "tests/test_main.py::test_default_factory_field": "PASSED",
+      "tests/test_main.py::test_comparing": "PASSED",
+      "tests/test_main.py::test_nullable_strings_success": "PASSED",
+      "tests/test_main.py::test_nullable_strings_fails": "PASSED",
+      "tests/test_main.py::test_parent_sub_model": "PASSED",
+      "tests/test_main.py::test_parent_sub_model_fails": "PASSED",
+      "tests/test_main.py::test_not_required": "PASSED",
+      "tests/test_main.py::test_allow_extra": "PASSED",
+      "tests/test_main.py::test_allow_extra_from_attributes[ignore]": "PASSED",
+      "tests/test_main.py::test_allow_extra_from_attributes[forbid]": "PASSED",
+      "tests/test_main.py::test_allow_extra_from_attributes[allow]": "PASSED",
+      "tests/test_main.py::test_allow_extra_repr": "PASSED",
+      "tests/test_main.py::test_forbidden_extra_success": "PASSED",
+      "tests/test_main.py::test_forbidden_extra_fails": "PASSED",
+      "tests/test_main.py::test_assign_extra_no_validate": "PASSED",
+      "tests/test_main.py::test_assign_extra_validate": "PASSED",
+      "tests/test_main.py::test_extra_allowed": "PASSED",
+      "tests/test_main.py::test_extra_ignored": "PASSED",
+      "tests/test_main.py::test_field_order_is_preserved_with_extra": "PASSED",
+      "tests/test_main.py::test_set_attr": "PASSED",
+      "tests/test_main.py::test_set_attr_invalid": "PASSED",
+      "tests/test_main.py::test_any": "PASSED",
+      "tests/test_main.py::test_population_by_field_name": "PASSED",
+      "tests/test_main.py::test_field_order": "PASSED",
+      "tests/test_main.py::test_required": "PASSED",
+      "tests/test_main.py::test_mutability": "PASSED",
+      "tests/test_main.py::test_frozen_model": "PASSED",
+      "tests/test_main.py::test_not_frozen_are_not_hashable": "PASSED",
+      "tests/test_main.py::test_with_declared_hash": "PASSED",
+      "tests/test_main.py::test_frozen_with_hashable_fields_are_hashable": "PASSED",
+      "tests/test_main.py::test_frozen_with_unhashable_fields_are_not_hashable": "PASSED",
+      "tests/test_main.py::test_hash_function_give_different_result_for_different_object": "PASSED",
+      "tests/test_main.py::test_validating_assignment_pass": "PASSED",
+      "tests/test_main.py::test_validating_assignment_fail": "PASSED",
+      "tests/test_main.py::test_enum_values": "PASSED",
+      "tests/test_main.py::test_literal_enum_values": "PASSED",
+      "tests/test_main.py::test_enum_raw": "PASSED",
+      "tests/test_main.py::test_set_tuple_values": "PASSED",
+      "tests/test_main.py::test_default_copy": "PASSED",
+      "tests/test_main.py::test_arbitrary_type_allowed_validation_success": "PASSED",
+      "tests/test_main.py::test_arbitrary_type_allowed_validation_fails": "PASSED",
+      "tests/test_main.py::test_arbitrary_types_not_allowed": "PASSED",
+      "tests/test_main.py::test_type_type_validation_success": "PASSED",
+      "tests/test_main.py::test_type_type_subclass_validation_success": "PASSED",
+      "tests/test_main.py::test_type_type_validation_fails[OtherClass]": "PASSED",
+      "tests/test_main.py::test_type_type_validation_fails[1]": "PASSED",
+      "tests/test_main.py::test_bare_type_type_validation_success[type]": "PASSED",
+      "tests/test_main.py::test_bare_type_type_validation_success[bare_type1]": "PASSED",
+      "tests/test_main.py::test_bare_type_type_validation_fails[type]": "PASSED",
+      "tests/test_main.py::test_bare_type_type_validation_fails[bare_type1]": "PASSED",
+      "tests/test_main.py::test_annotation_field_name_shadows_attribute": "PASSED",
+      "tests/test_main.py::test_value_field_name_shadows_attribute": "PASSED",
+      "tests/test_main.py::test_class_var": "PASSED",
+      "tests/test_main.py::test_fields_set": "PASSED",
+      "tests/test_main.py::test_exclude_unset_dict": "PASSED",
+      "tests/test_main.py::test_exclude_unset_recursive": "PASSED",
+      "tests/test_main.py::test_dict_exclude_unset_populated_by_alias": "PASSED",
+      "tests/test_main.py::test_dict_exclude_unset_populated_by_alias_with_extra": "PASSED",
+      "tests/test_main.py::test_exclude_defaults": "PASSED",
+      "tests/test_main.py::test_dir_fields": "PASSED",
+      "tests/test_main.py::test_dict_with_extra_keys": "PASSED",
+      "tests/test_main.py::test_ignored_types": "PASSED",
+      "tests/test_main.py::test_model_iteration": "PASSED",
+      "tests/test_main.py::test_model_export_nested_list[exclude nothing]": "PASSED",
+      "tests/test_main.py::test_model_export_nested_list[excluding fields of indexed list items]": "PASSED",
+      "tests/test_main.py::test_model_export_nested_list[Trying to exclude string keys on list field should be ignored (1)]": "PASSED",
+      "tests/test_main.py::test_model_export_nested_list[Trying to exclude string keys on list field should be ignored (2)]": "PASSED",
+      "tests/test_main.py::test_model_export_nested_list[value as int should be an error]": "PASSED",
+      "tests/test_main.py::test_model_export_nested_list[excluding int in dict should have no effect]": "PASSED",
+      "tests/test_main.py::test_model_export_nested_list[using \"__all__\" to exclude specific nested field]": "PASSED",
+      "tests/test_main.py::test_model_export_nested_list[using \"__all__\" to exclude specific nested field in combination with more specific exclude]": "PASSED",
+      "tests/test_main.py::test_model_export_nested_list[using \"__all__\" to exclude all list items]": "PASSED",
+      "tests/test_main.py::test_model_export_nested_list[using \"__all__\" and other items should get merged together, still excluding all list items]": "PASSED",
+      "tests/test_main.py::test_model_export_nested_list[negative indexes are ignored]": "PASSED",
+      "tests/test_main.py::test_model_export_dict_exclusion[excluding first item from list field using index]": "PASSED",
+      "tests/test_main.py::test_model_export_dict_exclusion[using \"__all__\" to exclude all list items]": "PASSED",
+      "tests/test_main.py::test_model_export_dict_exclusion[exclude single dict key from all list items]": "PASSED",
+      "tests/test_main.py::test_field_exclude": "PASSED",
+      "tests/test_main.py::test_revalidate_instances_never": "PASSED",
+      "tests/test_main.py::test_revalidate_instances_sub_instances": "PASSED",
+      "tests/test_main.py::test_revalidate_instances_always": "PASSED",
+      "tests/test_main.py::test_revalidate_instances_always_list_of_model_instance": "PASSED",
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[None-expected0-kinds0]": "SKIPPED",
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[None-expected0-kinds1]": "SKIPPED",
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[None-expected0-kinds2]": "SKIPPED",
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[None-expected0-kinds3]": "SKIPPED",
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[None-expected0-kinds4]": "SKIPPED",
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[None-expected0-kinds5]": "SKIPPED",
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[None-expected0-kinds6]": "SKIPPED",
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude1-expected1-kinds0]": "SKIPPED",
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude1-expected1-kinds1]": "SKIPPED",
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude1-expected1-kinds2]": "SKIPPED",
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude1-expected1-kinds3]": "SKIPPED",
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude1-expected1-kinds4]": "SKIPPED",
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude1-expected1-kinds5]": "SKIPPED",
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude1-expected1-kinds6]": "SKIPPED",
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude2-expected2-kinds0]": "SKIPPED",
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude2-expected2-kinds1]": "SKIPPED",
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude2-expected2-kinds2]": "SKIPPED",
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude2-expected2-kinds3]": "SKIPPED",
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude2-expected2-kinds4]": "SKIPPED",
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude2-expected2-kinds5]": "SKIPPED",
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude2-expected2-kinds6]": "SKIPPED",
+      "tests/test_main.py::test_model_export_exclusion_inheritance": "SKIPPED",
+      "tests/test_main.py::test_model_export_with_true_instead_of_ellipsis": "SKIPPED",
+      "tests/test_main.py::test_model_export_inclusion": "SKIPPED",
+      "tests/test_main.py::test_model_export_inclusion_inheritance": "SKIPPED",
+      "tests/test_main.py::test_untyped_fields_warning": "PASSED",
+      "tests/test_main.py::test_untyped_fields_error": "PASSED",
+      "tests/test_main.py::test_custom_init_subclass_params": "PASSED",
+      "tests/test_main.py::test_recursive_model": "PASSED",
+      "tests/test_main.py::test_recursive_cycle_with_repeated_field": "PASSED",
+      "tests/test_main.py::test_two_defaults": "PASSED",
+      "tests/test_main.py::test_default_factory": "PASSED",
+      "tests/test_main.py::test_default_factory_called_once": "PASSED",
+      "tests/test_main.py::test_default_factory_called_once_2": "PASSED",
+      "tests/test_main.py::test_default_factory_validate_children": "PASSED",
+      "tests/test_main.py::test_default_factory_parse": "PASSED",
+      "tests/test_main.py::test_reuse_same_field": "PASSED",
+      "tests/test_main.py::test_base_config_type_hinting": "PASSED",
+      "tests/test_main.py::test_frozen_field": "PASSED",
+      "tests/test_main.py::test_repr_field": "PASSED",
+      "tests/test_main.py::test_inherited_model_field_copy": "PASSED",
+      "tests/test_main.py::test_mapping_retains_type_subclass": "PASSED",
+      "tests/test_main.py::test_mapping_retains_type_defaultdict": "PASSED",
+      "tests/test_main.py::test_mapping_retains_type_fallback_error": "PASSED",
+      "tests/test_main.py::test_typing_coercion_dict": "PASSED",
+      "tests/test_main.py::test_dict_subclasses_bare": "PASSED",
+      "tests/test_main.py::test_dict_subclasses_typed": "PASSED",
+      "tests/test_main.py::test_typing_coercion_defaultdict": "PASSED",
+      "tests/test_main.py::test_typing_coercion_counter": "PASSED",
+      "tests/test_main.py::test_typing_counter_value_validation": "PASSED",
+      "tests/test_main.py::test_class_kwargs_config": "PASSED",
+      "tests/test_main.py::test_class_kwargs_config_and_attr_conflict": "PASSED",
+      "tests/test_main.py::test_class_kwargs_custom_config": "PASSED",
+      "tests/test_main.py::test_new_union_origin": "SKIPPED",
+      "tests/test_main.py::test_final_field_decl_without_default_val[none-no-arg]": "PASSED",
+      "tests/test_main.py::test_final_field_decl_without_default_val[none-with-arg]": "PASSED",
+      "tests/test_main.py::test_final_field_decl_without_default_val[field-no-arg]": "PASSED",
+      "tests/test_main.py::test_final_field_decl_without_default_val[field-with-arg]": "PASSED",
+      "tests/test_main.py::test_final_field_decl_with_default_val[no-arg]": "PASSED",
+      "tests/test_main.py::test_final_field_decl_with_default_val[with-arg]": "PASSED",
+      "tests/test_main.py::test_final_field_reassignment": "PASSED",
+      "tests/test_main.py::test_field_by_default_is_not_final": "PASSED",
+      "tests/test_main.py::test_annotated_final": "PASSED",
+      "tests/test_main.py::test_post_init": "PASSED",
+      "tests/test_main.py::test_post_init_call_signatures[True]": "PASSED",
+      "tests/test_main.py::test_post_init_call_signatures[False]": "PASSED",
+      "tests/test_main.py::test_post_init_not_called_without_override": "PASSED",
+      "tests/test_main.py::test_deeper_recursive_model": "PASSED",
+      "tests/test_main.py::test_model_rebuild_localns": "PASSED",
+      "tests/test_main.py::test_model_equality": "PASSED",
+      "tests/test_main.py::test_model_equality_type": "PASSED",
+      "tests/test_main.py::test_model_equality_dump": "PASSED",
+      "tests/test_main.py::test_model_equality_fields_set": "PASSED",
+      "tests/test_main.py::test_model_equality_private_attrs": "PASSED",
+      "tests/test_main.py::test_model_equality_generics": "PASSED",
+      "tests/test_main.py::test_model_validate_strict": "PASSED",
+      "tests/test_main.py::test_model_validate_json_strict": "PASSED",
+      "tests/test_main.py::test_validate_python_context": "PASSED",
+      "tests/test_main.py::test_validate_json_context": "PASSED",
+      "tests/test_main.py::test_pydantic_init_subclass": "PASSED",
+      "tests/test_main.py::test_model_validate_with_context": "PASSED",
+      "tests/test_main.py::test_equality_delegation": "PASSED",
+      "tests/test_main.py::test_equality_delegation_nonexample": "PASSED"
+    },
+    "all_node_line_numbers": {
+      "tests/test_main.py::test_success": 2917,
+      "tests/test_main.py::test_ultra_simple_missing": 2918,
+      "tests/test_main.py::test_ultra_simple_failed": 2919,
+      "tests/test_main.py::test_ultra_simple_repr": 2920,
+      "tests/test_main.py::test_default_factory_field": 2921,
+      "tests/test_main.py::test_comparing": 2922,
+      "tests/test_main.py::test_nullable_strings_success": 2923,
+      "tests/test_main.py::test_nullable_strings_fails": 2924,
+      "tests/test_main.py::test_parent_sub_model": 2925,
+      "tests/test_main.py::test_parent_sub_model_fails": 2926,
+      "tests/test_main.py::test_not_required": 2927,
+      "tests/test_main.py::test_allow_extra": 2928,
+      "tests/test_main.py::test_allow_extra_from_attributes[ignore]": 2929,
+      "tests/test_main.py::test_allow_extra_from_attributes[forbid]": 2930,
+      "tests/test_main.py::test_allow_extra_from_attributes[allow]": 2931,
+      "tests/test_main.py::test_allow_extra_repr": 2932,
+      "tests/test_main.py::test_forbidden_extra_success": 2933,
+      "tests/test_main.py::test_forbidden_extra_fails": 2934,
+      "tests/test_main.py::test_assign_extra_no_validate": 2935,
+      "tests/test_main.py::test_assign_extra_validate": 2936,
+      "tests/test_main.py::test_extra_allowed": 2937,
+      "tests/test_main.py::test_extra_ignored": 2938,
+      "tests/test_main.py::test_field_order_is_preserved_with_extra": 2939,
+      "tests/test_main.py::test_set_attr": 2940,
+      "tests/test_main.py::test_set_attr_invalid": 2941,
+      "tests/test_main.py::test_any": 2942,
+      "tests/test_main.py::test_population_by_field_name": 2943,
+      "tests/test_main.py::test_field_order": 2944,
+      "tests/test_main.py::test_required": 2945,
+      "tests/test_main.py::test_mutability": 2946,
+      "tests/test_main.py::test_frozen_model": 2947,
+      "tests/test_main.py::test_not_frozen_are_not_hashable": 2948,
+      "tests/test_main.py::test_with_declared_hash": 2949,
+      "tests/test_main.py::test_frozen_with_hashable_fields_are_hashable": 2950,
+      "tests/test_main.py::test_frozen_with_unhashable_fields_are_not_hashable": 2951,
+      "tests/test_main.py::test_hash_function_give_different_result_for_different_object": 2952,
+      "tests/test_main.py::test_validating_assignment_pass": 2953,
+      "tests/test_main.py::test_validating_assignment_fail": 2954,
+      "tests/test_main.py::test_enum_values": 2955,
+      "tests/test_main.py::test_literal_enum_values": 2956,
+      "tests/test_main.py::test_enum_raw": 2957,
+      "tests/test_main.py::test_set_tuple_values": 2958,
+      "tests/test_main.py::test_default_copy": 2959,
+      "tests/test_main.py::test_arbitrary_type_allowed_validation_success": 2960,
+      "tests/test_main.py::test_arbitrary_type_allowed_validation_fails": 2961,
+      "tests/test_main.py::test_arbitrary_types_not_allowed": 2962,
+      "tests/test_main.py::test_type_type_validation_success": 2963,
+      "tests/test_main.py::test_type_type_subclass_validation_success": 2964,
+      "tests/test_main.py::test_type_type_validation_fails[OtherClass]": 2965,
+      "tests/test_main.py::test_type_type_validation_fails[1]": 2966,
+      "tests/test_main.py::test_bare_type_type_validation_success[type]": 2967,
+      "tests/test_main.py::test_bare_type_type_validation_success[bare_type1]": 2968,
+      "tests/test_main.py::test_bare_type_type_validation_fails[type]": 2969,
+      "tests/test_main.py::test_bare_type_type_validation_fails[bare_type1]": 2970,
+      "tests/test_main.py::test_annotation_field_name_shadows_attribute": 2971,
+      "tests/test_main.py::test_value_field_name_shadows_attribute": 2972,
+      "tests/test_main.py::test_class_var": 2973,
+      "tests/test_main.py::test_fields_set": 2974,
+      "tests/test_main.py::test_exclude_unset_dict": 2975,
+      "tests/test_main.py::test_exclude_unset_recursive": 2976,
+      "tests/test_main.py::test_dict_exclude_unset_populated_by_alias": 2977,
+      "tests/test_main.py::test_dict_exclude_unset_populated_by_alias_with_extra": 2978,
+      "tests/test_main.py::test_exclude_defaults": 2979,
+      "tests/test_main.py::test_dir_fields": 2980,
+      "tests/test_main.py::test_dict_with_extra_keys": 2981,
+      "tests/test_main.py::test_ignored_types": 2982,
+      "tests/test_main.py::test_model_iteration": 2983,
+      "tests/test_main.py::test_model_export_nested_list[exclude nothing]": 2984,
+      "tests/test_main.py::test_model_export_nested_list[excluding fields of indexed list items]": 2985,
+      "tests/test_main.py::test_model_export_nested_list[Trying to exclude string keys on list field should be ignored (1)]": 2986,
+      "tests/test_main.py::test_model_export_nested_list[Trying to exclude string keys on list field should be ignored (2)]": 2987,
+      "tests/test_main.py::test_model_export_nested_list[value as int should be an error]": 2988,
+      "tests/test_main.py::test_model_export_nested_list[excluding int in dict should have no effect]": 2989,
+      "tests/test_main.py::test_model_export_nested_list[using \"__all__\" to exclude specific nested field]": 2990,
+      "tests/test_main.py::test_model_export_nested_list[using \"__all__\" to exclude specific nested field in combination with more specific exclude]": 2991,
+      "tests/test_main.py::test_model_export_nested_list[using \"__all__\" to exclude all list items]": 2992,
+      "tests/test_main.py::test_model_export_nested_list[using \"__all__\" and other items should get merged together, still excluding all list items]": 2993,
+      "tests/test_main.py::test_model_export_nested_list[negative indexes are ignored]": 2994,
+      "tests/test_main.py::test_model_export_dict_exclusion[excluding first item from list field using index]": 2995,
+      "tests/test_main.py::test_model_export_dict_exclusion[using \"__all__\" to exclude all list items]": 2996,
+      "tests/test_main.py::test_model_export_dict_exclusion[exclude single dict key from all list items]": 2997,
+      "tests/test_main.py::test_field_exclude": 2998,
+      "tests/test_main.py::test_revalidate_instances_never": 2999,
+      "tests/test_main.py::test_revalidate_instances_sub_instances": 3000,
+      "tests/test_main.py::test_revalidate_instances_always": 3001,
+      "tests/test_main.py::test_revalidate_instances_always_list_of_model_instance": 3002,
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[None-expected0-kinds0]": 3003,
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[None-expected0-kinds1]": 3004,
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[None-expected0-kinds2]": 3005,
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[None-expected0-kinds3]": 3006,
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[None-expected0-kinds4]": 3007,
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[None-expected0-kinds5]": 3008,
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[None-expected0-kinds6]": 3009,
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude1-expected1-kinds0]": 3010,
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude1-expected1-kinds1]": 3011,
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude1-expected1-kinds2]": 3012,
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude1-expected1-kinds3]": 3013,
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude1-expected1-kinds4]": 3014,
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude1-expected1-kinds5]": 3015,
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude1-expected1-kinds6]": 3016,
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude2-expected2-kinds0]": 3017,
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude2-expected2-kinds1]": 3018,
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude2-expected2-kinds2]": 3019,
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude2-expected2-kinds3]": 3020,
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude2-expected2-kinds4]": 3021,
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude2-expected2-kinds5]": 3022,
+      "tests/test_main.py::test_model_export_exclusion_with_fields_and_config[exclude2-expected2-kinds6]": 3023,
+      "tests/test_main.py::test_model_export_exclusion_inheritance": 3024,
+      "tests/test_main.py::test_model_export_with_true_instead_of_ellipsis": 3025,
+      "tests/test_main.py::test_model_export_inclusion": 3026,
+      "tests/test_main.py::test_model_export_inclusion_inheritance": 3027,
+      "tests/test_main.py::test_untyped_fields_warning": 3028,
+      "tests/test_main.py::test_untyped_fields_error": 3029,
+      "tests/test_main.py::test_custom_init_subclass_params": 3030,
+      "tests/test_main.py::test_recursive_model": 3031,
+      "tests/test_main.py::test_recursive_cycle_with_repeated_field": 3032,
+      "tests/test_main.py::test_two_defaults": 3033,
+      "tests/test_main.py::test_default_factory": 3034,
+      "tests/test_main.py::test_default_factory_called_once": 3035,
+      "tests/test_main.py::test_default_factory_called_once_2": 3036,
+      "tests/test_main.py::test_default_factory_validate_children": 3037,
+      "tests/test_main.py::test_default_factory_parse": 3038,
+      "tests/test_main.py::test_reuse_same_field": 3039,
+      "tests/test_main.py::test_base_config_type_hinting": 3040,
+      "tests/test_main.py::test_frozen_field": 3041,
+      "tests/test_main.py::test_repr_field": 3042,
+      "tests/test_main.py::test_inherited_model_field_copy": 3043,
+      "tests/test_main.py::test_mapping_retains_type_subclass": 3044,
+      "tests/test_main.py::test_mapping_retains_type_defaultdict": 3045,
+      "tests/test_main.py::test_mapping_retains_type_fallback_error": 3046,
+      "tests/test_main.py::test_typing_coercion_dict": 3047,
+      "tests/test_main.py::test_dict_subclasses_bare": 3048,
+      "tests/test_main.py::test_dict_subclasses_typed": 3049,
+      "tests/test_main.py::test_typing_coercion_defaultdict": 3050,
+      "tests/test_main.py::test_typing_coercion_counter": 3051,
+      "tests/test_main.py::test_typing_counter_value_validation": 3052,
+      "tests/test_main.py::test_class_kwargs_config": 3053,
+      "tests/test_main.py::test_class_kwargs_config_and_attr_conflict": 3054,
+      "tests/test_main.py::test_class_kwargs_custom_config": 3055,
+      "tests/test_main.py::test_new_union_origin": 3056,
+      "tests/test_main.py::test_final_field_decl_without_default_val[none-no-arg]": 3057,
+      "tests/test_main.py::test_final_field_decl_without_default_val[none-with-arg]": 3058,
+      "tests/test_main.py::test_final_field_decl_without_default_val[field-no-arg]": 3059,
+      "tests/test_main.py::test_final_field_decl_without_default_val[field-with-arg]": 3060,
+      "tests/test_main.py::test_final_field_decl_with_default_val[no-arg]": 3061,
+      "tests/test_main.py::test_final_field_decl_with_default_val[with-arg]": 3062,
+      "tests/test_main.py::test_final_field_reassignment": 3063,
+      "tests/test_main.py::test_field_by_default_is_not_final": 3064,
+      "tests/test_main.py::test_annotated_final": 3065,
+      "tests/test_main.py::test_post_init": 3066,
+      "tests/test_main.py::test_post_init_call_signatures[True]": 3067,
+      "tests/test_main.py::test_post_init_call_signatures[False]": 3068,
+      "tests/test_main.py::test_post_init_not_called_without_override": 3069,
+      "tests/test_main.py::test_deeper_recursive_model": 3070,
+      "tests/test_main.py::test_model_rebuild_localns": 3071,
+      "tests/test_main.py::test_model_equality": 3072,
+      "tests/test_main.py::test_model_equality_type": 3073,
+      "tests/test_main.py::test_model_equality_dump": 3074,
+      "tests/test_main.py::test_model_equality_fields_set": 3075,
+      "tests/test_main.py::test_model_equality_private_attrs": 3076,
+      "tests/test_main.py::test_model_equality_generics": 3077,
+      "tests/test_main.py::test_model_validate_strict": 3078,
+      "tests/test_main.py::test_model_validate_json_strict": 3079,
+      "tests/test_main.py::test_validate_python_context": 3080,
+      "tests/test_main.py::test_validate_json_context": 3081,
+      "tests/test_main.py::test_pydantic_init_subclass": 3082,
+      "tests/test_main.py::test_model_validate_with_context": 3083,
+      "tests/test_main.py::test_equality_delegation": 3084,
+      "tests/test_main.py::test_equality_delegation_nonexample": 3085
+    },
+    "all_status_counts": {
+      "PASSED": 143,
+      "SKIPPED": 26
+    },
+    "valid_install_environment_acceptance": false,
+    "known_production_parser_nonreference_whitespace_gap_preserved": true
+  },
+  "model_validation": {
+    "corrected_example_and_boundaries": true,
+    "equality_filter": {
+      "passed": 6
+    },
+    "custom_eq_field_test": {
+      "passed": 1,
+      "covers_general_basemodel_delegation": false
+    },
+    "broad_public_tests": {
+      "passed": 283,
+      "skipped": 30,
+      "xfailed": 9,
+      "total": 322
+    },
+    "pipeline_status_not_pytest_status": true,
+    "durable_test_added": false,
+    "ordinary_matcher_false_notimplemented_identity_checked_by_model": false,
+    "reverse_any_left_already_independent_of_fix": true,
+    "final_claim_scope_overstated": "终述未保留39个skip/xfail，不能当成322全通过或有效环境验收"
+  },
+  "usage": {
+    "source": "17 message_delta累加，与CC终态一致；未重新tokenize",
+    "input_tokens": 124937,
+    "output_tokens": 3051,
+    "total_tokens": 127988,
+    "cache_read_input_tokens": 0,
+    "cache_creation_input_tokens": 0,
+    "per_message": [
+      {
+        "message_id": "msg_3162b6d48983385bfbce7cd0",
+        "line": 17,
+        "input_tokens": 4277,
+        "output_tokens": 201
+      },
+      {
+        "message_id": "msg_d1d75f866f265e67f5850c1c",
+        "line": 31,
+        "input_tokens": 4542,
+        "output_tokens": 68
+      },
+      {
+        "message_id": "msg_93f0c0ffb149ffbf4382266e",
+        "line": 45,
+        "input_tokens": 4643,
+        "output_tokens": 82
+      },
+      {
+        "message_id": "msg_f976b5973169394a11a55c94",
+        "line": 59,
+        "input_tokens": 5053,
+        "output_tokens": 132
+      },
+      {
+        "message_id": "msg_dfd053021e5788bec9dde5a4",
+        "line": 77,
+        "input_tokens": 5319,
+        "output_tokens": 167
+      },
+      {
+        "message_id": "msg_a675bb93a3d447a09f9f7ef2",
+        "line": 95,
+        "input_tokens": 5528,
+        "output_tokens": 153
+      },
+      {
+        "message_id": "msg_9427ca678e86db1344904180",
+        "line": 113,
+        "input_tokens": 5740,
+        "output_tokens": 439
+      },
+      {
+        "message_id": "msg_b49132ae164b5e393f19a8bb",
+        "line": 131,
+        "input_tokens": 6328,
+        "output_tokens": 492
+      },
+      {
+        "message_id": "msg_484a711cdddb200025fc74f0",
+        "line": 149,
+        "input_tokens": 6941,
+        "output_tokens": 118
+      },
+      {
+        "message_id": "msg_4a9f41eca4c490d47e29a99a",
+        "line": 163,
+        "input_tokens": 7487,
+        "output_tokens": 82
+      },
+      {
+        "message_id": "msg_15b6a81c84e9d97bcf4b135c",
+        "line": 181,
+        "input_tokens": 8762,
+        "output_tokens": 93
+      },
+      {
+        "message_id": "msg_8397731aa15c89be1e61356d",
+        "line": 199,
+        "input_tokens": 9185,
+        "output_tokens": 101
+      },
+      {
+        "message_id": "msg_83e13fc186b747a9c2805028",
+        "line": 213,
+        "input_tokens": 9440,
+        "output_tokens": 79
+      },
+      {
+        "message_id": "msg_3c22d02e490dc76c94162f20",
+        "line": 231,
+        "input_tokens": 9729,
+        "output_tokens": 145
+      },
+      {
+        "message_id": "msg_09a753b58f0250e76cc535ed",
+        "line": 249,
+        "input_tokens": 9908,
+        "output_tokens": 92
+      },
+      {
+        "message_id": "msg_94330ab8176b139f3fe16d95",
+        "line": 267,
+        "input_tokens": 10821,
+        "output_tokens": 93
+      },
+      {
+        "message_id": "msg_14726bdc9c5cf17dfc48943b",
+        "line": 281,
+        "input_tokens": 11234,
+        "output_tokens": 514
+      }
+    ],
+    "phase_totals": [
+      {
+        "messages": [
+          1,
+          5
+        ],
+        "input_tokens": 23834,
+        "output_tokens": 650
+      },
+      {
+        "messages": [
+          6,
+          6
+        ],
+        "input_tokens": 5528,
+        "output_tokens": 153
+      },
+      {
+        "messages": [
+          7,
+          16
+        ],
+        "input_tokens": 84341,
+        "output_tokens": 1734
+      },
+      {
+        "messages": [
+          17,
+          17
+        ],
+        "input_tokens": 11234,
+        "output_tokens": 514
+      }
+    ],
+    "cc_reported_cost_usd": 0.7009599999999999,
+    "actual_gpu_cost_known": false
+  },
+  "timings": {
+    "solve_seconds_reported": 30.606,
+    "cc_seconds": 24.826,
+    "cc_api_seconds": 19.074,
+    "cc_session_prompt_to_last_text_seconds": 24.799,
+    "attempt_start": "2026-10-02T23:23:52.042433+00:00",
+    "attempt_end": "2026-10-02T23:24:48.811758+00:00",
+    "attempt_wall_seconds": 56.769325,
+    "segments_seconds": {
+      "before_env_facts": 13.536535,
+      "env_facts_to_prompt": 11.283032,
+      "prompt_to_first_correct_explanation": 1.267,
+      "first_explanation_to_original_repro": 3.353,
+      "original_repro_to_edit_return": 0.964,
+      "edit_to_last_tool_result": 16.19,
+      "last_tool_to_last_text": 3.025,
+      "last_text_to_attempt_finish": 7.150758
+    },
+    "grading_total_seconds": 190.533,
+    "grader_trusted_setup_seconds": 178.710577,
+    "grading_test_seconds": 2.477,
+    "candidate_install_marker_seconds": 0.584468865,
+    "candidate_test_marker_seconds": 1.334552212,
+    "pytest_own_seconds": 0.54,
+    "nested_boundaries_do_not_sum": true
+  },
+  "parallelism": {
+    "observed_parallel_calls": false,
+    "each_tool_issued_after_previous_return": true,
+    "subagent_call_observed": false,
+    "tool_interface": [
+      "Bash",
+      "Edit",
+      "NotebookEdit",
+      "Read",
+      "Write"
+    ],
+    "same_entry_6283_multiple_tools_support_reused_from": "6283_qwen36_a1_preliminary.md",
+    "opportunities": [
+      "合并调用3与4连续源码读取，减少一次工具往返",
+      "候选冻结后例子验证与公开回归位置检索相互独立，可同message发出"
+    ],
+    "dependent_work": [
+      "先看错误再设计纠错",
+      "修改后才能做修复验证"
+    ],
+    "pytest_parallel_isolation_verified": false,
+    "service_parallel_generation_verified": false,
+    "savings_estimated": false
+  },
+  "model_identity": {
+    "checkpoint_identity_verified": false,
+    "service_readback": {
+      "config_only": true,
+      "adapter_idle_drop_seconds_declared": 14400,
+      "runtime_request_and_sglang_readback_verified": false,
+      "adapter_ttl_observed_in_runtime_config": null
+    },
+    "actual_checkpoint_runtime_proof": "pending"
+  },
+  "pending": [
+    "正确权限环境完整原FP窄regrade",
+    "实际checkpoint和服务参数身份",
+    "第二模型",
+    "重复臂",
+    "题主最终题目和用途结论"
+  ],
+  "evidence_files": [
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/attempt/attempt.json",
+      "bytes": 16262,
+      "sha256": "4d168e6607bc917f59a4ccdd1e9468aafdfb40ae84481f23695a7ce77cf7954e"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/attempt/bringup_artifacts/cc_version_observed.json",
+      "bytes": 60,
+      "sha256": "c2b9bcf966c47d9a00227877026cb90b76afed482fd0df4e0ac12caab786bacb"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/attempt/candidate/pydantic__pydantic-5662.diff",
+      "bytes": 27307,
+      "sha256": "e351cb9a636cdd80b74b9b28341d8110a7c72ce80e6266cd2438a85c006afcfb"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/attempt/cc_home.tgz",
+      "bytes": 14279,
+      "sha256": "8d0c8a36bd0cc447ae878c1545723a8f73cbc0e063581c8cb51e34a71de6f6f9"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/attempt/facts/activation_check.json",
+      "bytes": 509,
+      "sha256": "e8fc9d60691fb1bd0dc2b720d1fbb19729137bb4160a18eddcdb877b0103c4fd"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/attempt/facts/agent_env_facts.txt",
+      "bytes": 1174,
+      "sha256": "8b4e87ac17fae195c5bdf65c1cd5d4014d2bebac9dbf1d99be6ca3165eda88a0"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/attempt/facts/materialize_probe.txt",
+      "bytes": 165,
+      "sha256": "ded911560f1c215caf80c2effc249511d1edff20574f2a5c875e8427ad21ea4e"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/attempt/facts/pip_freeze_after.txt",
+      "bytes": 1665,
+      "sha256": "3ee23a680ece5dc794eb6e3f4afef8a285d26c6e1464e615635f1884c0fade75"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/attempt/facts/pip_freeze_before.txt",
+      "bytes": 1665,
+      "sha256": "3ee23a680ece5dc794eb6e3f4afef8a285d26c6e1464e615635f1884c0fade75"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/attempt/facts/prelaunch.json",
+      "bytes": 2310,
+      "sha256": "d8884b6fe3e9bd1927e6fd7a6539e1e4d77619e2404b84a4bc1854b89ee2d0d4"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/attempt/frozen/baseline.tar",
+      "bytes": 3450880,
+      "sha256": "4b580273024e81a52e5258f4a2c9db12b96b2cb9e2724072d5437a01b99ebbdd"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/attempt/frozen/baseline_census.txt",
+      "bytes": 32222,
+      "sha256": "a026ea435361252acdd88303ec4e9aeb39f7cd30f48d519fc845dd077899d13e"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/attempt/frozen/baseline_manifest.json",
+      "bytes": 67380,
+      "sha256": "1ca3204e4fa99f84d38c616a0a7f627cfea0693c4a308f2d1abd0beead4e21c8"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/attempt/frozen/classification.json",
+      "bytes": 93,
+      "sha256": "e6066d8a334cbb39aa4926d23b065fbc2e05d6fdc7fba2846d6846584bb4ffb6"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/attempt/frozen/frozen_patch.json",
+      "bytes": 91485,
+      "sha256": "6972666639556abcfa223a9c99d1308310811ccb6d2de7033c9cc6a5eed81850"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/attempt/harness/stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/attempt/harness/trajectory.jsonl",
+      "bytes": 177981,
+      "sha256": "3712a9e1934853c5a44baf737d2830f2cf25a1261fc29f18037684189c79352e"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/attempt/prompt.txt",
+      "bytes": 4029,
+      "sha256": "efb9c73f098306cc7b12e3608e71cad76ee72073a063bb71118d8f4c57a26e32"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/attempt/trajectory.jsonl",
+      "bytes": 177981,
+      "sha256": "3712a9e1934853c5a44baf737d2830f2cf25a1261fc29f18037684189c79352e"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/gateway_audit.json",
+      "bytes": 399,
+      "sha256": "affe357510497433cfb45cc11ecbcc6d04957d5ff62700722ec008b656eb9e4b"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/grading/baseline_rebuild_census.txt",
+      "bytes": 32222,
+      "sha256": "a026ea435361252acdd88303ec4e9aeb39f7cd30f48d519fc845dd077899d13e"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/grading/eval_logs/evallog_gpu1003-pydantic5662-qwe_9c9945a0.diagnostics.json",
+      "bytes": 20417,
+      "sha256": "da674c5a2cedcee56df8ce7a848bfae579adf56ebe49e040beb0b5c35cdabff2"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/grading/eval_logs/evallog_gpu1003-pydantic5662-qwe_9c9945a0.eval.log",
+      "bytes": 356462,
+      "sha256": "271858411b95e9db51d23080735e05240ab85eb2b3be14ae36ff6cee90c83f6b"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/grading/projection.json",
+      "bytes": 383,
+      "sha256": "061a4eb64ea816ec253771da5fc5dc812a7c8495b4648c891e57c9f71808f4e8"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/grading/report.json",
+      "bytes": 1818,
+      "sha256": "6d6cccaf75388870a2a0fe2b57a7470d239c4249d7b3004c22ff3d8ae87ece8e"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/grading/status.json",
+      "bytes": 2602,
+      "sha256": "85732a0c2e4e3955ec5c3307310d362093bfd55a41f58b6e599f7e696caf0acb"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/input_check.json",
+      "bytes": 12084,
+      "sha256": "9b11cfdd4ce9d811aa01660b0ade18e09f943b6d7c9301bc7bab52061f8f2ca5"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/result.json",
+      "bytes": 2638,
+      "sha256": "f65fafd69e02a35c08d3e4dab0c94cb5099c19bbc89cbc3ff2ffb13f64304699"
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v12/results/gpu1003-pydantic5662-qwen36-a1/solver_prompt.txt",
+      "bytes": 4029,
+      "sha256": "efb9c73f098306cc7b12e3608e71cad76ee72073a063bb71118d8f4c57a26e32"
+    }
+  ],
+  "public_source_files": [
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-5662/base/pydantic/main.py",
+      "sha256": "cf537426448d1e9a768c2e6debccfd7b3dcec718b22df0ccfaf8ca1d47f69e4e"
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-5662/base/tests/test_main.py",
+      "sha256": "3e1144167645a600fd0b3575340a6c41a5a9e5a4da81ff3febb6603cf41814b9"
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-5662/base/tests/test_edge_cases.py",
+      "sha256": "4f8c835b31bad282a7fd2b7acefac53d428d6aeffa7151051e0d79a3f04215e7"
+    },
+    {
+      "path": "runs/swegym_quality_expansion_20260925/public/pydantic__pydantic-5662/base/.gitignore",
+      "sha256": "ef94ef8231f0a40b20bc921abc0b6ed4110ab026822934aa5001e0bc52a79988"
+    }
+  ],
+  "report": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_pydantic/model_audits_20261003/5662_qwen36_a1_preliminary.md",
+    "bytes": 18505,
+    "sha256": "e01982fcfa2df35072d05f5302fa1b6b29b17ec85493de2c59649442c033749e"
+  }
+}

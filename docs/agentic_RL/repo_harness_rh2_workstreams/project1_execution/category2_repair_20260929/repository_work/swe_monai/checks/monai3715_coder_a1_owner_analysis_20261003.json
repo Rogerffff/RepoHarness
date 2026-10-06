@@ -1,0 +1,285 @@
+{
+  "schema": "monai.probe_first_attempt_owner_analysis.v1",
+  "as_of": "2026-10-03",
+  "task_id": "swe_gym_lite::Project-MONAI__MONAI-3715",
+  "request_id": "swe-monai3715-string-modes-r5-20261003-v1",
+  "job_id": "gpu1003-monai3715-coder-a1",
+  "model": "Qwen3-Coder-30B-A3B-Instruct",
+  "runtime": "code_v7",
+  "status": "coder_first_attempt_owner_semantics_analyzed",
+  "raw_reward": 1,
+  "candidate_semantics": "单文件用局部mode_enum比较归一化结果，保留train/eval上下文、枚举兼容和非法输入拒绝；等于固定base上的一次实际Edit",
+  "candidate_content_digest": "sha256:c79a94bda2811d26a3431ef3584fd2f01eb4b71917b49f1291d0e2641732d34b",
+  "frozen_patch_digest": "sha256:04cb190e572c360ce07a7778d505a4aa99e7e15d707afe23832999d970f362e4",
+  "baseline_manifest_digest": "sha256:8b9dce40cf01c128757fe7c97323fb8357b75b74e4ed7e6c6b44195307520b1c",
+  "material_revision_id": "monai3715-string-modes-forward-cpu-v1",
+  "grading_materials_identity": "sha256:a88992c71eed8c4b9ac3482294a198ba253b1467e6963e1078cd98f9c48abd03",
+  "actual_actor_image_id": "sha256:6cbdf6b5eefbe27e97db5839aa8586584cc57f20759fb6c408690fddc8202e38",
+  "formal_refs_all_passed": [
+    "tests/test_prepare_batch_default.py::TestPrepareBatchDefault::test_evaluator_string_modes_forward_and_restore_cpu",
+    "tests/test_prepare_batch_default.py::TestPrepareBatchDefault::test_content",
+    "tests/test_prepare_batch_default.py::TestPrepareBatchDefault::test_empty_data"
+  ],
+  "formal_install_test_complete": true,
+  "trajectory_event_count": 62,
+  "first_precise_localization_event_line": 45,
+  "first_edit_event_line": 49,
+  "patch_revisions": 1,
+  "pre_edit_failure_reproduction": false,
+  "post_edit_model_self_tests": false,
+  "calls": [
+    {
+      "event_line": 10,
+      "id": "toolu_e02c75f5156a82f7",
+      "tool": "Read",
+      "input": {
+        "file_path": "/testbed/monai/engines/evaluator.py"
+      },
+      "result_event_line": 14,
+      "is_error": false,
+      "result_sha256": "a2f6cef533dfe3686b3e5a521a860767b0a131376570997c7cc2db3063fe7cc1"
+    },
+    {
+      "event_line": 23,
+      "id": "toolu_2c0156e05dc5ac25",
+      "tool": "Read",
+      "input": {
+        "file_path": "/testbed/monai/utils/enums.py"
+      },
+      "result_event_line": 27,
+      "is_error": false,
+      "result_sha256": "5d6544ef9bdefa585da0703cbe7e8ed324a18bf119d98486f6dba9b109a6a778"
+    },
+    {
+      "event_line": 36,
+      "id": "toolu_e7bfeb26c3da1868",
+      "tool": "Read",
+      "input": {
+        "file_path": "/testbed/monai/utils/module.py"
+      },
+      "result_event_line": 40,
+      "is_error": false,
+      "result_sha256": "8b2f48e8224fbc88780b47eca20be9fdc09c5cd938fc69f8f6dabc7d0f33109c"
+    },
+    {
+      "event_line": 49,
+      "id": "toolu_95b5975832e17408",
+      "tool": "Edit",
+      "input": {
+        "replace_all": false,
+        "file_path": "/testbed/monai/engines/evaluator.py",
+        "old_string": "        self.mode = look_up_option(mode, ForwardMode)\n        if mode == ForwardMode.EVAL:\n            self.mode = eval_mode\n        elif mode == ForwardMode.TRAIN:\n            self.mode = train_mode\n        else:\n            raise ValueError(f\"unsupported mode: {mode}, should be 'eval' or 'train'.\")",
+        "new_string": "        mode_enum = look_up_option(mode, ForwardMode)\n        if mode_enum == ForwardMode.EVAL:\n            self.mode = eval_mode\n        elif mode_enum == ForwardMode.TRAIN:\n            self.mode = train_mode\n        else:\n            raise ValueError(f\"unsupported mode: {mode}, should be 'eval' or 'train'.\")"
+      },
+      "result_event_line": 53,
+      "is_error": false,
+      "result_sha256": "47b578b636cec339033a663731394761e6fd850ecf11a483e8381b81e42620e9"
+    }
+  ],
+  "tool_format_errors_observed": 0,
+  "diagnostic_wording_limit": "事件45误称原mode被overwrite，实际赋值self.mode；随后和最终说明正确区分原参数与转换结果，补丁不受影响。",
+  "metrics": {
+    "CC_turns": 5,
+    "tool_calls": 4,
+    "model_requests": 5,
+    "input_tokens_sum": 62060,
+    "output_tokens_sum": 957,
+    "max_single_input_tokens": 18638,
+    "max_single_output_tokens": 454,
+    "CC_duration_seconds": 8.29,
+    "CC_API_seconds": 8.178,
+    "entry_solve_seconds": 11.687,
+    "grading_total_seconds": 554.02,
+    "trusted_setup_seconds": 513.712495,
+    "candidate_install_seconds": 17.42,
+    "candidate_test_seconds": 9.351
+  },
+  "parallel_conclusion": "每轮单一tool_use且串行；无并行尝试，不判断并行能力或执行器支持。",
+  "verification_conclusion": "模型没有执行失败复现、修后测试或Saliency前向；正式评分新增节点实测16种模式/初始状态组合的非空forward、梯度及状态恢复，不能冒称为模型自测。",
+  "budget": {
+    "actual_HTTP_max_tokens": [
+      65536
+    ],
+    "context_limit": 196608,
+    "turns_limit": 240,
+    "solve_seconds_limit": 10800,
+    "CC_display_maxOutputTokens": 32000,
+    "display_mismatch_retained": true,
+    "length_truncation_observed": false
+  },
+  "two_model_comparison": {
+    "same_owner_request_SHA": "sha256:6a348f0a92f54a054eacf3e51d22cb14f769fb8d7d13f11d279a1889c0b14d67",
+    "same_material_image_baseline_prompt_reference_budgets": true,
+    "same_inputs_fields": [
+      "task_id",
+      "budget",
+      "assignment",
+      "baseline_policy",
+      "prepared_manifest_sha256",
+      "host_grading_artifact_sha256",
+      "grading_materials_identity",
+      "grading_revision",
+      "grading_budgets",
+      "public_delivery"
+    ],
+    "same_grading_scripts_digest": "sha256:1db4935fb130e3d87fb17e05c555772354eaf2dc6358992b4fdb67d73785f6e2",
+    "qwen_runtime": "code_v4",
+    "qwen_source_manifest_SHA": "sha256:e3a33fd824021b75c9ed32fe7a82800f4158bfcf5d5a9d0ca8a8329380716469",
+    "coder_runtime": "code_v7",
+    "coder_source_manifest_SHA": "be705a777484c70af2afe9a34b6dd288bd85c2b1f536c6d57bd59aecb4eb0352",
+    "same_critical_transport": [
+      {
+        "path": "rh2/experiments/ordinary_gpu_probe_20261002/entry.py",
+        "sha256": "a1efff44dc2cbedfc81d93b2da8d84a92f6c9c88b15c2a10bf96db2026a4e82c"
+      },
+      {
+        "path": "rh2/experiments/r2e_lifecycle_20260929/r2e_solve_attempt.py",
+        "sha256": "10a71cca67af24c9ab5a6de09cb1845751c643632559842bb61dbce6ebc01d5a"
+      },
+      {
+        "path": "rh2/experiments/base_probe_20260922/solve_attempt.py",
+        "sha256": "00ca849909150de02769f297374a9bbfacf2746347c425474775d9c3e22a04f9"
+      },
+      {
+        "path": "rh2/experiments/ordinary_probe_20260929/frozen_transport.py",
+        "sha256": "11c3baf1cbd4f8b9191f7825b20fcad14670f9d2309df7850754fd6e45bd3d8a"
+      }
+    ],
+    "different_shared_members": [
+      {
+        "path": "rh2/src/repoharness2/adapters/slime/prepared_task_face.py",
+        "code4_sha256": "22b854ff239c0809d3063211817bcb45153c3a1638babca093e5e1ee35a3e1e2",
+        "code7_sha256": "2120533bb29ff3fb24df202c436fc48489da123feadf3a9e5abaed63daf304c6"
+      },
+      {
+        "path": "rh2/src/repoharness2/adapters/slime/replay_grade.py",
+        "code4_sha256": "3bd574eed3da9372b8640eac48d5da0b1141375c21b6e492de822d494443ef66",
+        "code7_sha256": "7cb03bfd1a6ddcb4238f54d2a19d30d4e3e93a56ad630b81e8fb05ac031160fb"
+      },
+      {
+        "path": "rh2/src/repoharness2/envpack/bundles_v2.py",
+        "code4_sha256": "c4e0cf33f26fc6dcbee70b904d6bc3bad7834833fd93580a938a78ef947b419c",
+        "code7_sha256": "2b4823633832294a539a682341727430e163c9f4749ade3b62dd09f5e8309b74"
+      },
+      {
+        "path": "rh2/src/repoharness2/envpack/environment_overlay.py",
+        "code4_sha256": "69b519f5163114c037e32f90cb1a470f5d3444627fc86ef1da808f4efc6823a4",
+        "code7_sha256": "d3ebe16b99339264a9a6264359d0198d183ac43e982e6a4074c69f00f68f84bc"
+      },
+      {
+        "path": "rh2/src/repoharness2/envpack/spec_vendor.py",
+        "code4_sha256": "12d95baa184a524167624ac5d36124628991fe7bd24ad555e56773eb4307b06e",
+        "code7_sha256": "6662f4d896cbc034fbc01a43722a1a32f8675744b24037cad885cf047e36bcd4"
+      },
+      {
+        "path": "rh2/src/repoharness2/envpack/swe_material_revisions.py",
+        "code4_sha256": "7b2bd896e2143d459c10632a74af4df2642469d8974a83ecaad4c2513b11cedb",
+        "code7_sha256": "33499ff25067ed7e60f93e1261f77090a1449c3a13b24d4b1534ae9e74763c63"
+      },
+      {
+        "path": "rh2/src/repoharness2/grading/manager.py",
+        "code4_sha256": "b6b10f98bf0e1a7bbe4774ac705ece6bb2746da2b1ac4f20394673293f24bbb0",
+        "code7_sha256": "1783533e1e3b66a57fcaa5a599a1da4f8e4e886318e24f040c6df91f294c1c1e"
+      },
+      {
+        "path": "rh2/src/repoharness2/grading/material_revision.py",
+        "code4_sha256": "070f8f3f15f0e6b9725f78b3b48c189d4cd56b8fc0de0f6ab6210d3113bc29dd",
+        "code7_sha256": "55211aa5341353b932422a899c9d60a9e91439b37e50e93df5c2e8270b5eceda"
+      }
+    ],
+    "limit": "完整runtime不同；明确复用本题冻结材料/实际image/完整baseline/3参考/公开prompt及预算，不称同棵代码或同FP。"
+  },
+  "new_task_environment_blocker_found": false,
+  "training_or_holdout_qualified": false,
+  "next_action": "非作者语义窄核后完成两模型首次诊断；按14:01现行覆盖优先策略暂缓普通追加，不重跑已完成尝试。",
+  "limits": [
+    "复用GPU非作者运输/完整912基线/122成员核查，本次另核题主16原件及实际candidate，不假装重做全现场审计。",
+    "各模型单次成功不能估计稳定解决率、证明训练饱和或升格训练资格；env_qualification=absent。",
+    "两次runtime不同（code4/code7）；相同题级材料、prompt、image、baseline、3参考和预算，不能称整棵代码相同。",
+    "累计多轮输入不是上下文占用；CC估算费用不当额外API账单；长上下文压缩和训练消费未触发。",
+    "grader4GiB生命周期高水位及有限42样本不证明测试最低内存、连续峰值或全程无OOM；setup单点观察不能解释全部准备原因。",
+    "GPU回执在发送前冻结，其not_sent/request_returned标记是生成时状态；行政回传以最新board returned及notice为准，原件不改。"
+  ],
+  "evidence": [
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v21/results/gpu1003-monai3715-coder-a1/attempt/harness/trajectory.jsonl",
+      "sha256": "2dad6c1ea12f4d2ee88af9c368233a4aa3a385ac8088c0c0ae489176be0f2216",
+      "bytes": 155861
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v21/results/gpu1003-monai3715-coder-a1/attempt/attempt.json",
+      "sha256": "2c2be8cf5755d0ea84536b1b81ac6a0c6a4ad13b70e5ba669cee72e109d34841",
+      "bytes": 15906
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v21/results/gpu1003-monai3715-coder-a1/attempt/frozen/frozen_patch.json",
+      "sha256": "1341735811427626f8265e28c889cc9711699168be0992de35d0dbbc0acb8e9c",
+      "bytes": 30132
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v21/results/gpu1003-monai3715-coder-a1/attempt/frozen/baseline_manifest.json",
+      "sha256": "e3d21631865b66151fa8db939ece7fbdf4e7156d793c81c1a9876f55b8325dff",
+      "bytes": 213194
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v21/results/gpu1003-monai3715-coder-a1/attempt/frozen/baseline.tar",
+      "sha256": "1daeebc659138e3bea1e1bd94e269e4290a3edd9ca3609aff94444ef25d2735f",
+      "bytes": 21657600
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v21/results/gpu1003-monai3715-coder-a1/attempt/candidate/Project-MONAI__MONAI-3715.diff",
+      "sha256": "c7e0b3b86ef5927230c8b38c8c25832b2ba7cef569138fe81b17ea4bdf28ff31",
+      "bytes": 820
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v21/results/gpu1003-monai3715-coder-a1/solver_prompt.txt",
+      "sha256": "d10a8af37019d8bf5fdf98bb9225042511eab4d8abd444c07dbaa2e3f6863e79",
+      "bytes": 860
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v21/results/gpu1003-monai3715-coder-a1/grading/eval_logs/evallog_gpu1003-monai3715-coder-_e686ad62.diagnostics.json",
+      "sha256": "009a6f003c923d2593a2d87c7fbcfcda53898cbb547ad40b55fe08ccfe056c94",
+      "bytes": 5683
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v21/results/gpu1003-monai3715-coder-a1/grading/eval_logs/evallog_gpu1003-monai3715-coder-_e686ad62.eval.log",
+      "sha256": "5a5aa9e0daa9f7a14688d005a88ce39e09eedad99569b8b34901ea6161d9f4b4",
+      "bytes": 66269
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v21/results/gpu1003-monai3715-coder-a1/result.json",
+      "sha256": "1dad497889835de8e2340165c712f99dbf9ceda0dbcc05ae46daf7cb6a51c008",
+      "bytes": 2648
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v21/results/gpu1003-monai3715-coder-a1/grading/projection.json",
+      "sha256": "b4f1a9edb616e60241ec35f5f4e94edf734cea24163ee3909b04dc673e65f941",
+      "bytes": 330
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/reviews/monai3715_coder_a1_execution_review_v1.json",
+      "sha256": "7570d703cca68cfc43dc8687eea59739705e300b8e0c80b2e691a134c15b7ebd",
+      "bytes": 31419
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/receipts/swe-monai3715-string-modes-r5-20261003-v1_two_model_v1.json",
+      "sha256": "36740efe35e1d98af4c9efcc90e00e3c9582194feb3795d875f59ae94070e832",
+      "bytes": 13512
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v19/coder/gateway/gpu1003-monai3715-coder-a1/usage.json",
+      "sha256": "d613ab171401b19b3590a2b111cdb6aa0b994c558cb08bae0ea67fbdca49405b",
+      "bytes": 86
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v19/coder/gateway/gpu1003-monai3715-coder-a1/requests.jsonl",
+      "sha256": "c9b0ddafd10b4f0dcac1e3cfa5d5104e4984d7b94de70ac6d30679e865f7d0a9",
+      "bytes": 243425
+    },
+    {
+      "path": "runs/ordinary_gpu_probe_20261002/remote/services_v19/coder/gateway/gpu1003-monai3715-coder-a1/responses.jsonl",
+      "sha256": "7165ee76e14a86910c73f01f1d1aacf769b68440686fdda19db015c83a8ed9d1",
+      "bytes": 1555
+    }
+  ]
+}

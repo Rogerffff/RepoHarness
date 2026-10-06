@@ -1,0 +1,42 @@
+diff --git a/tests/test_main.py b/tests/test_main.py
+--- a/tests/test_main.py
++++ b/tests/test_main.py
+@@ -2203,3 +2203,38 @@
+     assert OuterModel.model_validate({'inner': {'x': 2}}, context={'multiplier': 1}).inner.x == 2
+     assert OuterModel.model_validate({'inner': {'x': 2}}, context={'multiplier': 2}).inner.x == 4
+     assert OuterModel.model_validate({'inner': {'x': 2}}, context={'multiplier': 3}).inner.x == 6
++
++
++def test_equality_delegation():
++    from unittest.mock import ANY
++
++    from pydantic import BaseModel
++
++    class MyModel(BaseModel):
++        foo: str
++
++    assert MyModel(foo='bar') == ANY
++
++
++def test_equality_delegation_nonexample():
++    class Model(BaseModel):
++        value: str
++
++    model = Model(value='ordinary-matcher')
++
++    class Matcher:
++        def __init__(self, answer):
++            self.answer = answer
++            self.seen = None
++
++        def __eq__(self, other):
++            self.seen = other
++            return self.answer
++
++    for answer in (True, False, NotImplemented):
++        matcher = Matcher(answer)
++        assert (model == matcher) is (answer is True)
++        assert matcher.seen is model
++
++    assert model != {'value': 'ordinary-matcher'}
++    assert model != object()

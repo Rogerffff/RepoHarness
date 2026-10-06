@@ -1,0 +1,169 @@
+[gpu-spike] == preflight（mode=dry-run, R3=on, forward 旋钮=efficiency）==
+integration base 校验通过：HEAD^{tree}=4eeaa1b42d02d4d82ba77556d55c0c616c508220,工作树干净
+rh2 patch digest 校验通过：d58ef1bde23939f2148f3606334a8c73b02453e8b5883936227b00167bd2908f
+语义 patch digest 校验通过：19 个（表：rh2_patches_f2, rh2_patches_focus, rh2_patches_g1, rh2_patches_i13, rh2_patches_i21, rh2_patches_i22, rh2_patches_pin, rh2_patches_prerental, rh2_patches_shutdown, rh2_patches_spans, rh2_patches_spans_strict, rh2_patches_w10, rh2_patches_w4, rh2_patches_w5b）
+reference/miles pin 校验通过：f2b7c79298a53c53861514d099f7def73bd29f4a
+C5 前置校验全部通过（--checks-only：未跑 pytest 双 lane，不构成 lane 资格）
+[gpu-spike] HF checkpoint config 拓扑核对通过（qwen3_moe/48层/topk8/128专家/vocab151936）
+[gpu-spike] CC 平台 tarball 校验通过：<stubs>/cc.tgz（含 package/claude）
+[gpu-spike] R3=on：canonicalize 硬拒面已移除（P0-3 判据通过）
+[gpu-spike] 预注册 prompt 数据校验通过：<repo>/rh2/experiments/miles_gpu_spike/data/gpu_spike_prompts.jsonl
+[gpu-spike] REF_LOAD tracker 校验通过：<stubs>/ref_load/latest_checkpointed_iteration.txt = 1
+[gpu-spike] miles tree digest（manifest 钉死）：dee678ce295364ac29454d1e9e3778aedc092a2a5a7b1d8e336cec5653c94885
+[gpu-spike] E5 forward 档位（由最终参数推导）：profile=efficiency extra_logprob_forward=False use_rollout_logprobs=True get_mismatch_metrics=False skip_actor_forward_only=False
+[gpu-spike] preflight 全部通过
+[gpu-spike] == dry-run：完整启动命令（不提交）==
+ray job submit --address=http://127.0.0.1:8265 \
+  --runtime-env-json='{
+  "env_vars": {
+    "PYTHONPATH": "<repo>/reference/miles-rh2-integration:<stubs>/megatron:<repo>/rh2/src:<repo>/rh2/experiments:<stubs>/renderers",
+    "MILES_RH2_EVENT_DIR": "<stubs>/runs/e5-probe-run/evidence/events",
+    "MILES_RH2_RUN_ID": "e5-probe-run",
+    "RH2_EXPECTED_MILES_TREE_DIGEST": "dee678ce295364ac29454d1e9e3778aedc092a2a5a7b1d8e336cec5653c94885",
+    "PYTHONUNBUFFERED": "1",
+    "CUDA_DEVICE_MAX_CONNECTIONS": "1",
+    "NCCL_NVLS_ENABLE": "0",
+    "PATH": "<stubs>/dockercli:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+    "ADAPTER_PUBLIC_HOST": "172.17.0.1",
+    "ADAPTER_PORT": "18001",
+    "RH2_MODEL_ID": "Qwen/Qwen3-30B-A3B",
+    "RH2_EXECUTION_MODE": "s1_compat",
+    "RH2_REQUIRE_REAL_WEIGHT_VERSIONS": "1",
+    "RH2_REJECT_NONZERO_HARNESS_EXIT": "1",
+    "RH2_EXPECT_MOE_ROUTING": "1",
+    "RH2_MOE_NUM_LAYERS": "48",
+    "RH2_MOE_ROUTER_TOPK": "8",
+    "RH2_BRINGUP_ARTIFACT_DIR": "<stubs>/runs/e5-probe-run/artifacts",
+    "RH2_BRINGUP_HARNESS": "claude_code",
+    "SWE_AGENT_TIME_BUDGET_SEC": "600",
+    "RH2_MAX_TURNS_PER_SID": "25",
+    "SLIME_AGENT_CC_PLATFORM_TARBALL": "<stubs>/cc.tgz",
+    "SLIME_AGENT_CC_EXTRA_ARGS": "--disallowedTools Task WebFetch WebSearch"
+  }
+}' \
+  -- python3 <repo>/reference/miles-rh2-integration/train_async.py \
+  --disable-bias-linear --qk-layernorm --group-query-attention --num-attention-heads 32 --num-query-groups 4 --kv-channels 128 --num-layers 48 --hidden-size 2048 --ffn-hidden-size 6144 --normalization RMSNorm --position-embedding-type rope --norm-epsilon 1e-6 --rotary-percent 1.0 --swiglu --untie-embeddings-and-output-weights --vocab-size 151936 --rotary-base 1000000 --moe-ffn-hidden-size 768 --moe-router-score-function softmax --moe-token-dispatcher-type alltoall --moe-router-topk 8 --moe-layer-freq '[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]' --num-experts 128 --moe-grouped-gemm --moe-token-drop-policy probs --moe-router-dtype fp32 --moe-permute-fusion --moe-aux-loss-coeff 0 \
+  --hf-checkpoint
+  <stubs>/hf
+  --ref-load
+  <stubs>/ref_load
+  --load
+  <stubs>/runs/e5-probe-run/ckpt
+  --save
+  <stubs>/runs/e5-probe-run/ckpt
+  --save-interval
+  1
+  --prompt-data
+  <repo>/rh2/experiments/miles_gpu_spike/data/gpu_spike_prompts.jsonl
+  --input-key
+  prompt
+  --label-key
+  label
+  --metadata-key
+  metadata
+  --num-rollout
+  3
+  --rollout-batch-size
+  8
+  --n-samples-per-prompt
+  8
+  --rollout-max-response-len
+  8192
+  --rollout-max-context-len
+  32768
+  --rollout-temperature
+  1
+  --rollout-top-p
+  0.8
+  --rollout-top-k
+  151936
+  --global-batch-size
+  32
+  --custom-config-path
+  <repo>/rh2/experiments/miles_gpu_spike/custom_config.yaml
+  --custom-generate-function-path
+  repoharness2.adapters.miles.generate_fn.Rh2MilesGenerateFn
+  --dynamic-sampling-filter-path
+  miles.rollout.filter_hub.dynamic_sampling_filters.check_reward_nonzero_std
+  --save-debug-rollout-data
+  <stubs>/runs/e5-probe-run/rollout_dumps/rollout_{rollout_id}.pt
+  --eval-interval
+  3
+  --eval-prompt-data
+  smoke
+  <repo>/rh2/experiments/miles_gpu_spike/data/eval_smoke_prompts.jsonl
+  --n-samples-per-eval-prompt
+  1
+  --loss-type
+  custom_loss
+  --custom-loss-function-path
+  repoharness2.adapters.miles.faithful_dis_loss.faithful_dis_loss_function
+  --kl-coef
+  0.0
+  --entropy-coef
+  0.0
+  --use-rollout-routing-replay
+  --use-rollout-logprobs
+  --optimizer
+  adam
+  --lr
+  1e-6
+  --lr-decay-style
+  constant
+  --weight-decay
+  0.1
+  --adam-beta1
+  0.9
+  --adam-beta2
+  0.98
+  --tensor-model-parallel-size
+  1
+  --sequence-parallel
+  --pipeline-model-parallel-size
+  3
+  --context-parallel-size
+  1
+  --expert-model-parallel-size
+  2
+  --expert-tensor-parallel-size
+  1
+  --recompute-granularity
+  full
+  --recompute-method
+  uniform
+  --recompute-num-layers
+  1
+  --use-dynamic-batch-size
+  --max-tokens-per-gpu
+  16384
+  --use-miles-router
+  --rollout-num-gpus-per-engine
+  2
+  --sglang-mem-fraction-static
+  0.7
+  --sglang-max-running-requests
+  512
+  --fully-async
+  --actor-num-nodes
+  1
+  --actor-num-gpus-per-node
+  6
+  --rollout-num-gpus
+  2
+  --update-weight-transfer-mode
+  broadcast
+  --moe-token-dispatcher-type
+  alltoall
+  --attention-dropout
+  0.0
+  --hidden-dropout
+  0.0
+  --accumulate-allreduce-grads-in-fp32
+  --attention-softmax-in-fp32
+  --attention-backend
+  flash
+  --bf16
+[gpu-spike] （model args 共 49 个 token，经 eval 解析后按数组传给进程）
+[gpu-spike] 拓扑：6 train + 2 rollout（TP1/PP3/CP1/EP2；engine 数=1，per-engine=2 卡 ⇒ sglang TP2；router=miles）
+[gpu-spike] forward_profile 证据块（run 模式写入 run_manifest.json）：{"args": {"advantage_estimator": "grpo", "compute_advantages_and_returns": true, "custom_loss_function_path": "repoharness2.adapters.miles.faithful_dis_loss.faithful_dis_loss_function", "custom_megatron_before_log_prob_hook_path": null, "custom_tis_function_path": null, "dump_details": null, "get_mismatch_metrics": false, "keep_old_actor": false, "kl_coef": 0.0, "kl_loss_coef": 0.0, "log_correct_samples": false, "loss_type": "custom_loss", "normalize_advantages": false, "rollout_data_postprocess_path": null, "save_debug_train_data": null, "skip_actor_forward_only": false, "use_critic": false, "use_indexer_replay": false, "use_kl_loss": false, "use_opd": false, "use_rollout_entropy": false, "use_rollout_indexer_replay": false, "use_rollout_logprobs": true, "use_rollout_routing_replay": true, "use_routing_replay": true, "use_tis": false}, "extra_logprob_forward": false, "forward_condition": "compute_advantages_and_returns and not skip_actor_forward_only and (not use_rollout_logprobs or get_mismatch_metrics)", "input_reasons": [], "profile": "efficiency", "rollout_replay": {"indexer": false, "routing": true}, "schema_id": "rh2.forward_profile.v1", "source": "final_args_tokens", "switches": {"get_mismatch_metrics": false, "skip_actor_forward_only": false, "use_rollout_logprobs": true}, "unavailable_observations": ["rh2_event:logprob_compare", "rh2_event:replay_consume{phase=logprob_forward}", "miles_metric:rollout/log_probs", "miles_metric:perf/log_probs_time", "miles_metric:perf/log_probs_tflops"], "unsupported_reasons": []}
+[gpu-spike] run 模式训练结束后将自动执行 post-run 闭环（identity 核对/checkpoint 存读删/shutdown 探针/collect/judge），退出码逐步记录在 <stubs>/runs/e5-probe-run/evidence/postrun_status.json

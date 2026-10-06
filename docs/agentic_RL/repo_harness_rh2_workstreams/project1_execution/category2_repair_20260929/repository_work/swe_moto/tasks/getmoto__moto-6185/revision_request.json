@@ -1,0 +1,152 @@
+{
+  "schema": "moto.revision_request.draft.v1",
+  "as_of": "2026-10-03",
+  "status": "prepared_not_published",
+  "instance_id": "getmoto__moto-6185",
+  "owner": {
+    "thread_id": "01a0fd61-fbf9-7d83-860e-c6627bcd3d7f",
+    "thread_title": "SWE | Moto 题目修订",
+    "host_id": "local"
+  },
+  "shared_maintainer_thread_id": "01a08bd3-b639-7c71-a1ee-f3f4d05b3a0e",
+  "formal_revision_activated": false,
+  "cpu_validation": "not_run",
+  "solver_visibility": "private_only",
+  "proposed_revision_id": "moto6185-nested-s-v3",
+  "requested_capability": "采用既有 v3，修嵌套 S 漏测并保留真实类型校验",
+  "base_commit": "dc460a325839bc6797084a54afc297a2c9d87e63",
+  "source_grading": {
+    "path": "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/grading.json",
+    "sha256": "bcb27e16295ed149f3b5e43c41e30738b6453ee140b23f4115256822525e2036",
+    "bytes": 5498
+  },
+  "parent_grading_digest": "sha256:8b4ae329a238752ef2d78511fbba59448fafe83c0054d6ebb9d8e695604ab17a",
+  "source_public": {
+    "path": "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/public_bundle.json",
+    "sha256": "805cce4840d0c1625c699445a037bc828a9287d0a4a1775aa1a33520a4c14c5a",
+    "bytes": 3809
+  },
+  "source_public_digest": "sha256:2a2ae08fcef35f245257572088bc8f79d3eb0827f8025f358e93764c085e5a15",
+  "public_change": false,
+  "original_test_patch": {
+    "path": "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/test.patch",
+    "sha256": "506b3670e0f825d6f622a180c5187e76fcbcb6584afe5088058ec84e5127fc52",
+    "bytes": 1318
+  },
+  "effective_test_patch": {
+    "path": "rh2/experiments/category3_cloud_20260929/moto6185/revised_test_v3.patch",
+    "sha256": "fc65a52722f47a6d458465d2e4a529caa057c2f238453d1659efdfef42bc332d",
+    "bytes": 4425
+  },
+  "source_base_identity": {
+    "path": "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/base_identity.json",
+    "sha256": "c4c56cd5e0718c6a0c845b5e9f67d5dc8239f7d5c9340ce1caa43d20afe21dbc",
+    "bytes": 799
+  },
+  "base_test_file": {
+    "path": "runs/swegym_quality_batch03_20260921_v1/public/getmoto__moto-6185/base/tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py",
+    "sha256": "c352657163863c0748ce59b1469a29e0fc9447eaf7628cd53371e008b0cd1c75",
+    "bytes": 39637
+  },
+  "test_file_exists_in_base": true,
+  "original_fail_to_pass": [
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_put_item__string_as_integer_value"
+  ],
+  "original_pass_to_pass": [
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_query_gsi_with_wrong_key_attribute_names_throws_exception",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_primary_key",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_creating_table_with_0_local_indexes",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_expression_with_trailing_comma",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_hash_key_can_only_use_equals_operations[<]",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_gsi_key_cannot_be_empty",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_creating_table_with_0_global_indexes",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_empty_expressionattributenames_with_empty_projection",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_create_table_with_missing_attributes",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_hash_key_can_only_use_equals_operations[<=]",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_batch_put_item_with_empty_value",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_batch_get_item_non_existing_table",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_hash_key_can_only_use_equals_operations[>=]",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_empty_expressionattributenames",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_create_table_with_redundant_and_missing_attributes",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_put_item_wrong_datatype",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_query_begins_with_without_brackets",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_put_item_wrong_attribute_type",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_hash_key_cannot_use_begins_with_operations",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_transact_write_items_multiple_operations_fail",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_item_range_key_set",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_multiple_transactions_on_same_item",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_batch_write_item_non_existing_table",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_query_table_with_wrong_key_attribute_names_throws_exception",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_item_with_duplicate_expressions[set",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_list_append_errors_for_unknown_attribute_value",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_create_table_with_redundant_attributes",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_item_non_existent_table",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_hash_key_can_only_use_equals_operations[>]",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_put_item_empty_set",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_primary_key_with_sortkey",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_empty_expressionattributenames_with_projection",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_transact_write_items_with_empty_gsi_key",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_transact_write_items__too_many_transactions"
+  ],
+  "proposed_fail_to_pass": [
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_put_item__string_as_integer_value"
+  ],
+  "proposed_pass_to_pass": [
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_query_gsi_with_wrong_key_attribute_names_throws_exception",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_primary_key",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_creating_table_with_0_local_indexes",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_expression_with_trailing_comma",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_hash_key_can_only_use_equals_operations[<]",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_gsi_key_cannot_be_empty",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_creating_table_with_0_global_indexes",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_empty_expressionattributenames_with_empty_projection",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_create_table_with_missing_attributes",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_hash_key_can_only_use_equals_operations[<=]",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_batch_put_item_with_empty_value",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_batch_get_item_non_existing_table",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_hash_key_can_only_use_equals_operations[>=]",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_empty_expressionattributenames",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_create_table_with_redundant_and_missing_attributes",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_put_item_wrong_datatype",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_query_begins_with_without_brackets",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_put_item_wrong_attribute_type",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_hash_key_cannot_use_begins_with_operations",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_transact_write_items_multiple_operations_fail",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_item_range_key_set",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_multiple_transactions_on_same_item",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_batch_write_item_non_existing_table",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_query_table_with_wrong_key_attribute_names_throws_exception",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_item_with_duplicate_expressions[set",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_list_append_errors_for_unknown_attribute_value",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_create_table_with_redundant_attributes",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_item_non_existent_table",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_hash_key_can_only_use_equals_operations[>]",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_put_item_empty_set",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_update_primary_key_with_sortkey",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_empty_expressionattributenames_with_projection",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_transact_write_items_with_empty_gsi_key",
+    "tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py::test_transact_write_items__too_many_transactions"
+  ],
+  "added_fail_to_pass": [],
+  "added_pass_to_pass": [],
+  "source_test_command": "pytest -n0 -rA tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py",
+  "proposed_test_command": "pytest -n0 -rA tests/test_dynamodb/exceptions/test_dynamodb_exceptions.py",
+  "selection_derivation": "spec_vendor.py derive_test_command 的当前源码路径；未执行新版正式消费",
+  "changed_functions": [
+    "test_put_item__string_as_integer_value"
+  ],
+  "added_functions": [],
+  "identity_note": "canonical digest 按源模型导出的完整 JSON 重算；由发布者在实际模型消费时再核",
+  "independent_review": "reuse_cloud_review_stop_condition",
+  "release_remaining": [
+    "受限登记与材料身份／恢复／保护接入",
+    "冻结的实际命令／安装／镜像／配方",
+    "CPU正式评分与相应actor验证"
+  ],
+  "node_identity_remaining": "历史36执行节点／35解析键；须核参数节点及参考绑定",
+  "source_refs": {
+    "path": "runs/swegym_quality_batch03_20260921_v1/private/getmoto__moto-6185/source_refs.json",
+    "sha256": "cfb328194eb2112d66c746f1552a3531f56cb3dc3d585a1a01b42609510e06d0",
+    "bytes": 961
+  }
+}

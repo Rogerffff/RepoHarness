@@ -1,0 +1,814 @@
+{
+  "scope": "Read-only reconstruction of saved CPU/Claude Code stub evidence; not a new actor, Docker, Qwen adapter, or grader execution.",
+  "task_count": 8,
+  "commands_including_preflight": 47,
+  "rows": [
+    {
+      "task_id": "r2e_gym_subset::aiohttp__618335186f22834c0d8daabcf53ccf44d42488a2",
+      "evidence_dir": "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig",
+      "overlay_image": "sha256:0bf7bf28a3380ed5a626028fa02e4df860f5533fc660d42be293f8e4afc5e2ec",
+      "recipe_id": "r2e_derive_v1",
+      "actual_image": "sha256:0bf7bf28a3380ed5a626028fa02e4df860f5533fc660d42be293f8e4afc5e2ec",
+      "all_image_observations_match": true,
+      "head_is_public_base": true,
+      "prelaunch_ok": true,
+      "uid": "54321",
+      "activation_write": "DENIED",
+      "activation_ok": true,
+      "activation_facts": {
+        "ACT_EXPECTED_PREFIX": "/testbed/.venv",
+        "ACT_PYTHON": "/testbed/.venv/bin/python",
+        "ACT_SYS_EXECUTABLE": "/testbed/.venv/bin/python",
+        "ACT_SYS_PREFIX": "/testbed/.venv",
+        "ACT_CONDA_DEFAULT_ENV": "",
+        "ACT_VIRTUAL_ENV": "/testbed/.venv",
+        "RH2_ACTIVATION_PROBE_OK": "1"
+      },
+      "cpus": 2.0,
+      "memory_bytes": 4294967296,
+      "r2e_preflight_raw": [
+        "RH2_PREFLIGHT_INTERPRETER=ok",
+        "RH2_PREFLIGHT_HIDDEN_TESTS=ok",
+        "RH2_PREFLIGHT_GIT_HISTORY=ok"
+      ],
+      "cc_versions": [
+        "2.1.205"
+      ],
+      "cc_exit_code": 0,
+      "cc_result_types": [
+        "success"
+      ],
+      "bash_tool_count": 6,
+      "command_count_including_preflight": 6,
+      "all_command_captures_exist": true,
+      "missing_or_timeout_commands": [],
+      "message_start_count": 7,
+      "stub_message_count": 7,
+      "author_checks_false": [],
+      "cleanup_record_has_no_residue": true,
+      "raw_has_agent_uid": true,
+      "raw_has_declared_interpreter": true,
+      "commands": [
+        {
+          "id": "r2e_preflight",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": null
+        },
+        {
+          "id": "env",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": null
+        },
+        {
+          "id": "mcve_c2_writes",
+          "rc": 1,
+          "status": "nonzero",
+          "pytest": null
+        },
+        {
+          "id": "mcve_c3_chunked",
+          "rc": 1,
+          "status": "nonzero",
+          "pytest": null
+        },
+        {
+          "id": "test_http_protocol",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": {
+            "passed": 47,
+            "warning": 61
+          }
+        },
+        {
+          "id": "test_wsgi_web_response",
+          "rc": 1,
+          "status": "nonzero",
+          "pytest": {
+            "failed": 3,
+            "passed": 68,
+            "warning": 89
+          }
+        }
+      ],
+      "source_sha256": {
+        "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/attempt.json": "caae43287869118ec3ba4da658430a5c63c3d975f13d5f30025c9c65d4d2ccf3",
+        "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/prelaunch.json": "1557960baa44e678c9423f17b664afc657a92497398bab5ac81da4f1062331e1",
+        "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/activation_check.json": "989e50590b219ea501daad9e52560fb68bd4fb0ae38d3096b54f3c19e7af5ca0",
+        "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/harness/trajectory.jsonl": "0be822d00dea3ac78c9320cea08924d4c8344506efc0487c21f86fb6ffdb0d1f",
+        "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/captures/env.out": "aa337ec4223a20a390d5dfcd471b5608b1f11878ad433a8e55a594c147430be4",
+        "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/captures/mcve_c2_writes.out": "ae165f522a5d965de8464f195454da62f64a4df9156edc1c7a394774fe2b053c",
+        "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/captures/mcve_c3_chunked.out": "f489a7a060ee249a2165b4870cf10cd943bc697eda01a7a2ef0fd9791105d936",
+        "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/captures/r2e_preflight.out": "ab7f0af4e93e5fbdfc5597e13408e657fff25f705d0ddcc5c06aa6b49297c742",
+        "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/captures/test_http_protocol.out": "1b439d3108762c0dcf6920b1349035130c152d2f6503e3876879dabb6e880e62",
+        "runs/r2e_actor_20260925/devcheck/aiohttp__618335186f22834c0d8daabcf53ccf4/orig/captures/test_wsgi_web_response.out": "4defae8820d8e784dc6f7eb24f1588a93299c4a7fbcf073f87c9aa21d01d8312"
+      }
+    },
+    {
+      "task_id": "r2e_gym_subset::coveragepy__5dbbe1430c16fe15b553e6909be8be5f2b9b71b9",
+      "evidence_dir": "runs/r2e_actor_20260925/devcheck/coveragepy__5dbbe1430c16fe15b553e6909be8/orig",
+      "overlay_image": "sha256:2f20d51e508d310c7b63075a7d7a9bcdd9bfe718bb64c1f98def49bc22f1c478",
+      "recipe_id": "r2e_derive_v1",
+      "actual_image": "sha256:2f20d51e508d310c7b63075a7d7a9bcdd9bfe718bb64c1f98def49bc22f1c478",
+      "all_image_observations_match": true,
+      "head_is_public_base": true,
+      "prelaunch_ok": true,
+      "uid": "54321",
+      "activation_write": "DENIED",
+      "activation_ok": true,
+      "activation_facts": {
+        "ACT_EXPECTED_PREFIX": "/testbed/.venv",
+        "ACT_PYTHON": "/testbed/.venv/bin/python",
+        "ACT_SYS_EXECUTABLE": "/testbed/.venv/bin/python",
+        "ACT_SYS_PREFIX": "/testbed/.venv",
+        "ACT_CONDA_DEFAULT_ENV": "",
+        "ACT_VIRTUAL_ENV": "/testbed/.venv",
+        "RH2_ACTIVATION_PROBE_OK": "1"
+      },
+      "cpus": 2.0,
+      "memory_bytes": 4294967296,
+      "r2e_preflight_raw": [
+        "RH2_PREFLIGHT_INTERPRETER=ok",
+        "RH2_PREFLIGHT_HIDDEN_TESTS=ok",
+        "RH2_PREFLIGHT_GIT_HISTORY=ok"
+      ],
+      "cc_versions": [
+        "2.1.205"
+      ],
+      "cc_exit_code": 0,
+      "cc_result_types": [
+        "success"
+      ],
+      "bash_tool_count": 5,
+      "command_count_including_preflight": 5,
+      "all_command_captures_exist": true,
+      "missing_or_timeout_commands": [],
+      "message_start_count": 6,
+      "stub_message_count": 6,
+      "author_checks_false": [],
+      "cleanup_record_has_no_residue": true,
+      "raw_has_agent_uid": true,
+      "raw_has_declared_interpreter": true,
+      "commands": [
+        {
+          "id": "r2e_preflight",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": null
+        },
+        {
+          "id": "env",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": null
+        },
+        {
+          "id": "mcve_statement",
+          "rc": 1,
+          "status": "nonzero",
+          "pytest": null
+        },
+        {
+          "id": "mcve_statement_pythonpath",
+          "rc": 1,
+          "status": "nonzero",
+          "pytest": null
+        },
+        {
+          "id": "test_warn",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": null
+        }
+      ],
+      "source_sha256": {
+        "runs/r2e_actor_20260925/devcheck/coveragepy__5dbbe1430c16fe15b553e6909be8/orig/attempt.json": "09543972da793ce2f3f1cf5bdc9ff31af6df7b220acaca49698ff02b6cfdace9",
+        "runs/r2e_actor_20260925/devcheck/coveragepy__5dbbe1430c16fe15b553e6909be8/orig/prelaunch.json": "c8d4401c5d44899785549493c42517b31304945df9196b808cc09e5d73e8a872",
+        "runs/r2e_actor_20260925/devcheck/coveragepy__5dbbe1430c16fe15b553e6909be8/orig/activation_check.json": "faa5bfc9514d1cf4678d3cebc7c55335bf02acfe71ed8319922a0eb5e7f9c636",
+        "runs/r2e_actor_20260925/devcheck/coveragepy__5dbbe1430c16fe15b553e6909be8/orig/harness/trajectory.jsonl": "de328c071275c39ecb14572c4433990c31cd81ee95a615f3f7c369ec351c52ce",
+        "runs/r2e_actor_20260925/devcheck/coveragepy__5dbbe1430c16fe15b553e6909be8/orig/captures/env.out": "6fc06e5b91f30f848f4b84e790aa504092e88f5c0babe7e48f941bf416da58d2",
+        "runs/r2e_actor_20260925/devcheck/coveragepy__5dbbe1430c16fe15b553e6909be8/orig/captures/mcve_statement.out": "9c8fcb765533359dc6f9411fa8a9f2858fb2dd26ffebee9c02f740d04b4c6819",
+        "runs/r2e_actor_20260925/devcheck/coveragepy__5dbbe1430c16fe15b553e6909be8/orig/captures/mcve_statement_pythonpath.out": "c43628d4f15a73beb4cf9532b2049bfdf0b4e12542f0bdf6cefca22614fb69f5",
+        "runs/r2e_actor_20260925/devcheck/coveragepy__5dbbe1430c16fe15b553e6909be8/orig/captures/r2e_preflight.out": "ab7f0af4e93e5fbdfc5597e13408e657fff25f705d0ddcc5c06aa6b49297c742",
+        "runs/r2e_actor_20260925/devcheck/coveragepy__5dbbe1430c16fe15b553e6909be8/orig/captures/test_warn.out": "7c9f3a0941b00545c3bdcfc98212b2b9eba2ee8db825dc2d38db63bb23a36f3f"
+      }
+    },
+    {
+      "task_id": "r2e_gym_subset::numpy__18b7cd9df7a4d960550b18faa14d5473e7d5c3d9",
+      "evidence_dir": "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig",
+      "overlay_image": "sha256:065c0cc83bc5bae72141811c1550f82ed11d9c97c03e165dff84f814a0a48d92",
+      "recipe_id": "r2e_derive_v1",
+      "actual_image": "sha256:065c0cc83bc5bae72141811c1550f82ed11d9c97c03e165dff84f814a0a48d92",
+      "all_image_observations_match": true,
+      "head_is_public_base": true,
+      "prelaunch_ok": true,
+      "uid": "54321",
+      "activation_write": "DENIED",
+      "activation_ok": true,
+      "activation_facts": {
+        "ACT_EXPECTED_PREFIX": "/testbed/.venv",
+        "ACT_PYTHON": "/testbed/.venv/bin/python",
+        "ACT_SYS_EXECUTABLE": "/testbed/.venv/bin/python",
+        "ACT_SYS_PREFIX": "/testbed/.venv",
+        "ACT_CONDA_DEFAULT_ENV": "",
+        "ACT_VIRTUAL_ENV": "/testbed/.venv",
+        "RH2_ACTIVATION_PROBE_OK": "1"
+      },
+      "cpus": 2.0,
+      "memory_bytes": 4294967296,
+      "r2e_preflight_raw": [
+        "RH2_PREFLIGHT_INTERPRETER=ok",
+        "RH2_PREFLIGHT_HIDDEN_TESTS=ok",
+        "RH2_PREFLIGHT_GIT_HISTORY=ok"
+      ],
+      "cc_versions": [
+        "2.1.205"
+      ],
+      "cc_exit_code": 0,
+      "cc_result_types": [
+        "success"
+      ],
+      "bash_tool_count": 6,
+      "command_count_including_preflight": 6,
+      "all_command_captures_exist": true,
+      "missing_or_timeout_commands": [],
+      "message_start_count": 7,
+      "stub_message_count": 7,
+      "author_checks_false": [],
+      "cleanup_record_has_no_residue": true,
+      "raw_has_agent_uid": true,
+      "raw_has_declared_interpreter": true,
+      "commands": [
+        {
+          "id": "r2e_preflight",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": null
+        },
+        {
+          "id": "env",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": null
+        },
+        {
+          "id": "mcve_statement",
+          "rc": 1,
+          "status": "nonzero",
+          "pytest": null
+        },
+        {
+          "id": "mcve_other_entries",
+          "rc": 1,
+          "status": "nonzero",
+          "pytest": null
+        },
+        {
+          "id": "test_regression_poly",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": {
+            "passed": 9,
+            "deselected": 18
+          }
+        },
+        {
+          "id": "test_polynomial",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": {
+            "passed": 10,
+            "warning": 1
+          }
+        }
+      ],
+      "source_sha256": {
+        "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/attempt.json": "77b860837cefdbefc911c92848c5082dcfad8b58213e3a20ec6d554678ac051b",
+        "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/prelaunch.json": "aee839a0712af0caec7c6fac0d32f72dab25d4ff882244a1331f46084dfe01f3",
+        "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/activation_check.json": "db1f9199074f1d97408a4ec0dedc4d847fd3b3905540420f3bc81b50a0769c41",
+        "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/harness/trajectory.jsonl": "3ac99ddbdcdd0b8a02df9a56bc6938739a144840cef4cb8c3e7dd9fcc9ce72a8",
+        "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/captures/env.out": "30d9d60cbdf67e966ea03d5cc3c6c0676b8ff5ec97c9c21fe9a1187665102e51",
+        "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/captures/mcve_other_entries.out": "1268d810f35426f54b021e51408c8398a9a3dd5dcad6c7963e43d27c170bca41",
+        "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/captures/mcve_statement.out": "c8ddcf3968a2f0b6e367ee274d313d8e0a0899cb3dbb884002a838960e87e864",
+        "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/captures/r2e_preflight.out": "ab7f0af4e93e5fbdfc5597e13408e657fff25f705d0ddcc5c06aa6b49297c742",
+        "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/captures/test_polynomial.out": "d45e2a52d85a7e7089ca2a8112073d7121cd0e42b45c42ef4a8f5785cd6d03f3",
+        "runs/r2e_actor_20260925/devcheck/numpy__18b7cd9df7a4d960550b18faa14d5473e/orig/captures/test_regression_poly.out": "1a9005e7838d3cca210cad0be1b8dd203fb49b1a61711bc4be528daa44a389a0"
+      }
+    },
+    {
+      "task_id": "r2e_gym_subset::orange3__22e98f8f4cccc25f0d0217f9f4251b66d49b4237",
+      "evidence_dir": "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig",
+      "overlay_image": "sha256:50fd6e31e77ac64c02e0e4bab99af79b68ad879b09532278023aa1e802cf529a",
+      "recipe_id": "r2e_derive_v1",
+      "actual_image": "sha256:50fd6e31e77ac64c02e0e4bab99af79b68ad879b09532278023aa1e802cf529a",
+      "all_image_observations_match": true,
+      "head_is_public_base": true,
+      "prelaunch_ok": true,
+      "uid": "54321",
+      "activation_write": "DENIED",
+      "activation_ok": true,
+      "activation_facts": {
+        "ACT_EXPECTED_PREFIX": "/testbed/.venv",
+        "ACT_PYTHON": "/testbed/.venv/bin/python",
+        "ACT_SYS_EXECUTABLE": "/testbed/.venv/bin/python",
+        "ACT_SYS_PREFIX": "/testbed/.venv",
+        "ACT_CONDA_DEFAULT_ENV": "",
+        "ACT_VIRTUAL_ENV": "/testbed/.venv",
+        "RH2_ACTIVATION_PROBE_OK": "1"
+      },
+      "cpus": 2.0,
+      "memory_bytes": 4294967296,
+      "r2e_preflight_raw": [
+        "RH2_PREFLIGHT_INTERPRETER=ok",
+        "RH2_PREFLIGHT_HIDDEN_TESTS=ok",
+        "RH2_PREFLIGHT_GIT_HISTORY=ok"
+      ],
+      "cc_versions": [
+        "2.1.205"
+      ],
+      "cc_exit_code": 0,
+      "cc_result_types": [
+        "success"
+      ],
+      "bash_tool_count": 6,
+      "command_count_including_preflight": 6,
+      "all_command_captures_exist": true,
+      "missing_or_timeout_commands": [],
+      "message_start_count": 7,
+      "stub_message_count": 7,
+      "author_checks_false": [],
+      "cleanup_record_has_no_residue": true,
+      "raw_has_agent_uid": true,
+      "raw_has_declared_interpreter": true,
+      "commands": [
+        {
+          "id": "r2e_preflight",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": null
+        },
+        {
+          "id": "env",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": null
+        },
+        {
+          "id": "mcve_repo_function",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": null
+        },
+        {
+          "id": "mcve_statement_code",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": null
+        },
+        {
+          "id": "test_helper",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": {
+            "passed": 1,
+            "deselected": 25,
+            "warning": 1
+          }
+        },
+        {
+          "id": "test_widget_file",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": {
+            "passed": 23,
+            "skipped": 3,
+            "warning": 1
+          }
+        }
+      ],
+      "source_sha256": {
+        "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/attempt.json": "21c09ca77e66406a864c54ae5672ca781425435f60de4fb685ed168b171f642d",
+        "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/prelaunch.json": "4828f6338da4c041f65ff218d379c7d422067179c9eeb91f201b0eae28ac9678",
+        "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/activation_check.json": "130f1fc5849bd02ef87559e1db0ef271bef2f0f8f654cc99d84d3bd1550a5ca9",
+        "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/harness/trajectory.jsonl": "c92e60a07c2eac139abce77acafc6e0633d9cdebc23dba45abe82b2e0bcbf5e3",
+        "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/captures/env.out": "920b5abca2690a1f320cbca90a049eabe3f46b626f7ec27b806d55690c4eddde",
+        "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/captures/mcve_repo_function.out": "94803c704f6a5d089aaa57f0b1186b9d6ec95e9c62085b5c5d50c41bb176a77b",
+        "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/captures/mcve_statement_code.out": "8f08c810ff8bc9a852f2d219cfcba5204c83e3ffb24a33af80db97a35b2709a8",
+        "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/captures/r2e_preflight.out": "ab7f0af4e93e5fbdfc5597e13408e657fff25f705d0ddcc5c06aa6b49297c742",
+        "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/captures/test_helper.out": "ca2800597f6594805e401e2491c3afdd8b6c8a33bf976e1f2628e08f31a640bc",
+        "runs/r2e_actor_20260925/devcheck/orange3__22e98f8f4cccc25f0d0217f9f4251b6/orig/captures/test_widget_file.out": "5aa5995e634367a3c5ebbb57f28ee8972245f7e6a5cb0caf761fd08bd430b104"
+      }
+    },
+    {
+      "task_id": "r2e_gym_subset::orange3__9b5494e26f407b75e79699c9d40be6df1d80a040",
+      "evidence_dir": "runs/r2e_actor_20260925/devcheck/orange3__9b5494e26f407b75e79699c9d40be6d/orig",
+      "overlay_image": "sha256:f27e31c68aad8c6be86466780c58f62430059adee6a5082aebe141d9dde6036b",
+      "recipe_id": "r2e_derive_v1+env_v2",
+      "actual_image": "sha256:f27e31c68aad8c6be86466780c58f62430059adee6a5082aebe141d9dde6036b",
+      "all_image_observations_match": true,
+      "head_is_public_base": true,
+      "prelaunch_ok": true,
+      "uid": "54321",
+      "activation_write": "DENIED",
+      "activation_ok": true,
+      "activation_facts": {
+        "ACT_EXPECTED_PREFIX": "/testbed/.venv",
+        "ACT_PYTHON": "/testbed/.venv/bin/python",
+        "ACT_SYS_EXECUTABLE": "/testbed/.venv/bin/python",
+        "ACT_SYS_PREFIX": "/testbed/.venv",
+        "ACT_CONDA_DEFAULT_ENV": "",
+        "ACT_VIRTUAL_ENV": "/testbed/.venv",
+        "RH2_ACTIVATION_PROBE_OK": "1"
+      },
+      "cpus": 2.0,
+      "memory_bytes": 4294967296,
+      "r2e_preflight_raw": [
+        "RH2_PREFLIGHT_INTERPRETER=ok",
+        "RH2_PREFLIGHT_HIDDEN_TESTS=ok",
+        "RH2_PREFLIGHT_GIT_HISTORY=ok"
+      ],
+      "cc_versions": [
+        "2.1.205"
+      ],
+      "cc_exit_code": 0,
+      "cc_result_types": [
+        "success"
+      ],
+      "bash_tool_count": 6,
+      "command_count_including_preflight": 6,
+      "all_command_captures_exist": true,
+      "missing_or_timeout_commands": [],
+      "message_start_count": 7,
+      "stub_message_count": 7,
+      "author_checks_false": [],
+      "cleanup_record_has_no_residue": true,
+      "raw_has_agent_uid": true,
+      "raw_has_declared_interpreter": true,
+      "commands": [
+        {
+          "id": "r2e_preflight",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": null
+        },
+        {
+          "id": "env",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": null
+        },
+        {
+          "id": "mcve_statement",
+          "rc": 1,
+          "status": "nonzero",
+          "pytest": null
+        },
+        {
+          "id": "test_lr",
+          "rc": 1,
+          "status": "nonzero",
+          "pytest": {
+            "failed": 3,
+            "passed": 9,
+            "skipped": 1,
+            "warning": 6
+          }
+        },
+        {
+          "id": "test_regress",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": {
+            "passed": 5,
+            "warning": 3
+          }
+        },
+        {
+          "id": "test_widget",
+          "rc": 1,
+          "status": "nonzero",
+          "pytest": {
+            "failed": 3,
+            "passed": 21,
+            "skipped": 3,
+            "warning": 53
+          }
+        }
+      ],
+      "source_sha256": {
+        "runs/r2e_actor_20260925/devcheck/orange3__9b5494e26f407b75e79699c9d40be6d/orig/attempt.json": "f63ea14b559d19fa894af52ff90f55c5b2bfbd5cd710f08e8bbff74d638f5ca2",
+        "runs/r2e_actor_20260925/devcheck/orange3__9b5494e26f407b75e79699c9d40be6d/orig/prelaunch.json": "930a3ea6ac716250e55f88fcc321ff84a7d7ff965ebccb22e23dea932da9e47d",
+        "runs/r2e_actor_20260925/devcheck/orange3__9b5494e26f407b75e79699c9d40be6d/orig/activation_check.json": "671d0ef8e9e921fcea5ceb49c4bc445f85b8aa8717b0c3c251e99836e8a51812",
+        "runs/r2e_actor_20260925/devcheck/orange3__9b5494e26f407b75e79699c9d40be6d/orig/harness/trajectory.jsonl": "7fff7be7a56942adcd9d3851baf4d96a0851f60e1a39cdd47ed19f2a4ed757a7",
+        "runs/r2e_actor_20260925/devcheck/orange3__9b5494e26f407b75e79699c9d40be6d/orig/captures/env.out": "a8e11213899fd4a1a95c493c99c7ddf124e0456cd9a294dce1e093b20a720fbc",
+        "runs/r2e_actor_20260925/devcheck/orange3__9b5494e26f407b75e79699c9d40be6d/orig/captures/mcve_statement.out": "f6a244fe32ca0c577b2a0db75567bf6594b840b0b7561a3c5814c135db569d8c",
+        "runs/r2e_actor_20260925/devcheck/orange3__9b5494e26f407b75e79699c9d40be6d/orig/captures/r2e_preflight.out": "ab7f0af4e93e5fbdfc5597e13408e657fff25f705d0ddcc5c06aa6b49297c742",
+        "runs/r2e_actor_20260925/devcheck/orange3__9b5494e26f407b75e79699c9d40be6d/orig/captures/test_lr.out": "1870e0bf294f4b2969ab6deecb312fdb55215298596fe6f115e9099735664826",
+        "runs/r2e_actor_20260925/devcheck/orange3__9b5494e26f407b75e79699c9d40be6d/orig/captures/test_regress.out": "8aed9f6eac57098110bfc2bd4def0cfcc1def72a1c8897b0c22591c9c2e0cfe0",
+        "runs/r2e_actor_20260925/devcheck/orange3__9b5494e26f407b75e79699c9d40be6d/orig/captures/test_widget.out": "a38c22f314b62b13f632eef3458c50c905b2de11af82ca3f1010afe82037ddf9"
+      }
+    },
+    {
+      "task_id": "r2e_gym_subset::pandas__32dd55cb8331c36df6b485eb042c7d2d2a808db0",
+      "evidence_dir": "runs/r2e_actor_20260925/devcheck/pandas__32dd55cb8331c36df6b485eb042c7d2d/orig",
+      "overlay_image": "sha256:3d40959d5f081a4d9434b356e229b1cbc2a53a0d07b50186a91ef56a6e53aa64",
+      "recipe_id": "r2e_derive_v1+material_v2",
+      "actual_image": "sha256:3d40959d5f081a4d9434b356e229b1cbc2a53a0d07b50186a91ef56a6e53aa64",
+      "all_image_observations_match": true,
+      "head_is_public_base": true,
+      "prelaunch_ok": true,
+      "uid": "54321",
+      "activation_write": "DENIED",
+      "activation_ok": true,
+      "activation_facts": {
+        "ACT_EXPECTED_PREFIX": "/testbed/.venv",
+        "ACT_PYTHON": "/testbed/.venv/bin/python",
+        "ACT_SYS_EXECUTABLE": "/testbed/.venv/bin/python",
+        "ACT_SYS_PREFIX": "/testbed/.venv",
+        "ACT_CONDA_DEFAULT_ENV": "",
+        "ACT_VIRTUAL_ENV": "/testbed/.venv",
+        "RH2_ACTIVATION_PROBE_OK": "1"
+      },
+      "cpus": 2.0,
+      "memory_bytes": 4294967296,
+      "r2e_preflight_raw": [
+        "RH2_PREFLIGHT_INTERPRETER=ok",
+        "RH2_PREFLIGHT_HIDDEN_TESTS=ok",
+        "RH2_PREFLIGHT_GIT_HISTORY=ok"
+      ],
+      "cc_versions": [
+        "2.1.205"
+      ],
+      "cc_exit_code": 0,
+      "cc_result_types": [
+        "success"
+      ],
+      "bash_tool_count": 6,
+      "command_count_including_preflight": 6,
+      "all_command_captures_exist": true,
+      "missing_or_timeout_commands": [],
+      "message_start_count": 7,
+      "stub_message_count": 7,
+      "author_checks_false": [
+        "bashenv_denied_for_agent"
+      ],
+      "cleanup_record_has_no_residue": true,
+      "raw_has_agent_uid": true,
+      "raw_has_declared_interpreter": true,
+      "commands": [
+        {
+          "id": "r2e_preflight",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": null
+        },
+        {
+          "id": "env",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": null
+        },
+        {
+          "id": "mcve_statement",
+          "rc": 1,
+          "status": "nonzero",
+          "pytest": null
+        },
+        {
+          "id": "mcve_sum",
+          "rc": 1,
+          "status": "nonzero",
+          "pytest": null
+        },
+        {
+          "id": "test_analytics",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": null
+        },
+        {
+          "id": "test_integer_function",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": null
+        }
+      ],
+      "source_sha256": {
+        "runs/r2e_actor_20260925/devcheck/pandas__32dd55cb8331c36df6b485eb042c7d2d/orig/attempt.json": "8b3fe7870fe869d87148207d3eda2be1de6cb31bfa092f204f99352c608b28d7",
+        "runs/r2e_actor_20260925/devcheck/pandas__32dd55cb8331c36df6b485eb042c7d2d/orig/prelaunch.json": "1f0cd3ee8baed5191b67b1cc0d7da89214cd1c54964f858d5786db01cb16c060",
+        "runs/r2e_actor_20260925/devcheck/pandas__32dd55cb8331c36df6b485eb042c7d2d/orig/activation_check.json": "45faddba28a1b25f374f2b24b03f4551f885fba3ee7b2a27005685a2d1f7dafd",
+        "runs/r2e_actor_20260925/devcheck/pandas__32dd55cb8331c36df6b485eb042c7d2d/orig/harness/trajectory.jsonl": "aa8191a695eee97b1dcbfa71c3d75d734dddd8b3e6a34988f05f2a29bceecac8",
+        "runs/r2e_actor_20260925/devcheck/pandas__32dd55cb8331c36df6b485eb042c7d2d/orig/captures/env.out": "0b3fc6a58b0513fbeb8ca6ae30bf254faddba6b5831a51828ee2efb5ff4174d9",
+        "runs/r2e_actor_20260925/devcheck/pandas__32dd55cb8331c36df6b485eb042c7d2d/orig/captures/mcve_statement.out": "4e360f0dc2dba8fa2d2f87531923be02653169f26871f6a24698d356cbdc1c1b",
+        "runs/r2e_actor_20260925/devcheck/pandas__32dd55cb8331c36df6b485eb042c7d2d/orig/captures/mcve_sum.out": "0a8e26dbdb7ddcd315177f41cd0fc13985f7722a16d37c2e33b5d22af0809d55",
+        "runs/r2e_actor_20260925/devcheck/pandas__32dd55cb8331c36df6b485eb042c7d2d/orig/captures/r2e_preflight.out": "ab7f0af4e93e5fbdfc5597e13408e657fff25f705d0ddcc5c06aa6b49297c742",
+        "runs/r2e_actor_20260925/devcheck/pandas__32dd55cb8331c36df6b485eb042c7d2d/orig/captures/test_analytics.out": "b12e59ca09797112729e7f27ae545822156b02daee9284af6dfb87c3f04859f7",
+        "runs/r2e_actor_20260925/devcheck/pandas__32dd55cb8331c36df6b485eb042c7d2d/orig/captures/test_integer_function.out": "57bdbecbc038f2d540473e01a83648d53066827d19b84c7d6399d9458d3994e6"
+      }
+    },
+    {
+      "task_id": "r2e_gym_subset::pillow__2b061b68dbbf4fb590ab532b6fdffea8ee063ae8",
+      "evidence_dir": "runs/r2e_actor_20260925/devcheck/pillow__2b061b68dbbf4fb590ab532b6fdffea8/orig",
+      "overlay_image": "sha256:777947b94199404d200eb0d6ce0c2dd3eea73b438c2965f518ae64dafb10a2e1",
+      "recipe_id": "r2e_derive_v1",
+      "actual_image": "sha256:777947b94199404d200eb0d6ce0c2dd3eea73b438c2965f518ae64dafb10a2e1",
+      "all_image_observations_match": true,
+      "head_is_public_base": true,
+      "prelaunch_ok": true,
+      "uid": "54321",
+      "activation_write": "DENIED",
+      "activation_ok": true,
+      "activation_facts": {
+        "ACT_EXPECTED_PREFIX": "/testbed/.venv",
+        "ACT_PYTHON": "/testbed/.venv/bin/python",
+        "ACT_SYS_EXECUTABLE": "/testbed/.venv/bin/python",
+        "ACT_SYS_PREFIX": "/testbed/.venv",
+        "ACT_CONDA_DEFAULT_ENV": "",
+        "ACT_VIRTUAL_ENV": "/testbed/.venv",
+        "RH2_ACTIVATION_PROBE_OK": "1"
+      },
+      "cpus": 2.0,
+      "memory_bytes": 4294967296,
+      "r2e_preflight_raw": [
+        "RH2_PREFLIGHT_INTERPRETER=ok",
+        "RH2_PREFLIGHT_HIDDEN_TESTS=ok",
+        "RH2_PREFLIGHT_GIT_HISTORY=ok"
+      ],
+      "cc_versions": [
+        "2.1.205"
+      ],
+      "cc_exit_code": 0,
+      "cc_result_types": [
+        "success"
+      ],
+      "bash_tool_count": 7,
+      "command_count_including_preflight": 7,
+      "all_command_captures_exist": true,
+      "missing_or_timeout_commands": [],
+      "message_start_count": 8,
+      "stub_message_count": 8,
+      "author_checks_false": [],
+      "cleanup_record_has_no_residue": true,
+      "raw_has_agent_uid": true,
+      "raw_has_declared_interpreter": true,
+      "commands": [
+        {
+          "id": "r2e_preflight",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": null
+        },
+        {
+          "id": "env",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": null
+        },
+        {
+          "id": "mcve_statement",
+          "rc": 1,
+          "status": "nonzero",
+          "pytest": null
+        },
+        {
+          "id": "mcve_formats_jpeg",
+          "rc": 1,
+          "status": "nonzero",
+          "pytest": null
+        },
+        {
+          "id": "test_warns_none",
+          "rc": 1,
+          "status": "nonzero",
+          "pytest": {
+            "failed": 2,
+            "deselected": 52
+          }
+        },
+        {
+          "id": "test_image",
+          "rc": 1,
+          "status": "nonzero",
+          "pytest": {
+            "failed": 2,
+            "passed": 52
+          }
+        },
+        {
+          "id": "viewers",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": null
+        }
+      ],
+      "source_sha256": {
+        "runs/r2e_actor_20260925/devcheck/pillow__2b061b68dbbf4fb590ab532b6fdffea8/orig/attempt.json": "1a8473011003c973b05b480d26eb8753d4df030f11e9740e3a2ee5bdfeb101c1",
+        "runs/r2e_actor_20260925/devcheck/pillow__2b061b68dbbf4fb590ab532b6fdffea8/orig/prelaunch.json": "d0fc35bb79b64359e4f2bd09074d2713d2942e37d6d3caa35f4075099e3fd290",
+        "runs/r2e_actor_20260925/devcheck/pillow__2b061b68dbbf4fb590ab532b6fdffea8/orig/activation_check.json": "c2e14532e84c86fe316d92922acbca2d3e8f158c6ce8f322bb37eb9864f18c3c",
+        "runs/r2e_actor_20260925/devcheck/pillow__2b061b68dbbf4fb590ab532b6fdffea8/orig/harness/trajectory.jsonl": "d7514f813166a175bbe398ffafbc14e72f0aed477c79b9b835bf0a46abac4834",
+        "runs/r2e_actor_20260925/devcheck/pillow__2b061b68dbbf4fb590ab532b6fdffea8/orig/captures/env.out": "73b734c8fe7082dbe9e558fbfa149b2cebf8b97399ce80c04a5dac856ca8876e",
+        "runs/r2e_actor_20260925/devcheck/pillow__2b061b68dbbf4fb590ab532b6fdffea8/orig/captures/mcve_formats_jpeg.out": "517a5eb9323a050b3854a83e0c929aa2045ca302377e7e9b7153746a7eac5203",
+        "runs/r2e_actor_20260925/devcheck/pillow__2b061b68dbbf4fb590ab532b6fdffea8/orig/captures/mcve_statement.out": "2e3540ee1841de6c5c1e5f5bf4bd1bcf9b0255591943f28fc9b9eac374e995b4",
+        "runs/r2e_actor_20260925/devcheck/pillow__2b061b68dbbf4fb590ab532b6fdffea8/orig/captures/r2e_preflight.out": "ab7f0af4e93e5fbdfc5597e13408e657fff25f705d0ddcc5c06aa6b49297c742",
+        "runs/r2e_actor_20260925/devcheck/pillow__2b061b68dbbf4fb590ab532b6fdffea8/orig/captures/test_image.out": "cf33f418d2fea49497b966f24c3ae148cfb44531f57e8fc72e058973fe51d9b1",
+        "runs/r2e_actor_20260925/devcheck/pillow__2b061b68dbbf4fb590ab532b6fdffea8/orig/captures/test_warns_none.out": "758c5e3d88e6b5e4859c43312a2e8e102a5549592aea2efac3e6dd958701ff90",
+        "runs/r2e_actor_20260925/devcheck/pillow__2b061b68dbbf4fb590ab532b6fdffea8/orig/captures/viewers.out": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+      }
+    },
+    {
+      "task_id": "r2e_gym_subset::scrapy__9a15fcf89a151811de8ac783419df0512c863d5e",
+      "evidence_dir": "runs/r2e_actor_20260925/devcheck/scrapy__9a15fcf89a151811de8ac783419df051/orig",
+      "overlay_image": "sha256:677aa2b89a745a8d4ff9e3e70a72879e5cb864fd95c8a1f9466295c181ddfa71",
+      "recipe_id": "r2e_derive_v1",
+      "actual_image": "sha256:677aa2b89a745a8d4ff9e3e70a72879e5cb864fd95c8a1f9466295c181ddfa71",
+      "all_image_observations_match": true,
+      "head_is_public_base": true,
+      "prelaunch_ok": true,
+      "uid": "54321",
+      "activation_write": "DENIED",
+      "activation_ok": true,
+      "activation_facts": {
+        "ACT_EXPECTED_PREFIX": "/testbed/.venv",
+        "ACT_PYTHON": "/testbed/.venv/bin/python",
+        "ACT_SYS_EXECUTABLE": "/testbed/.venv/bin/python",
+        "ACT_SYS_PREFIX": "/testbed/.venv",
+        "ACT_CONDA_DEFAULT_ENV": "",
+        "ACT_VIRTUAL_ENV": "/testbed/.venv",
+        "RH2_ACTIVATION_PROBE_OK": "1"
+      },
+      "cpus": 2.0,
+      "memory_bytes": 4294967296,
+      "r2e_preflight_raw": [
+        "RH2_PREFLIGHT_INTERPRETER=ok",
+        "RH2_PREFLIGHT_HIDDEN_TESTS=ok",
+        "RH2_PREFLIGHT_GIT_HISTORY=ok"
+      ],
+      "cc_versions": [
+        "2.1.205"
+      ],
+      "cc_exit_code": 0,
+      "cc_result_types": [
+        "success"
+      ],
+      "bash_tool_count": 5,
+      "command_count_including_preflight": 5,
+      "all_command_captures_exist": true,
+      "missing_or_timeout_commands": [],
+      "message_start_count": 6,
+      "stub_message_count": 6,
+      "author_checks_false": [],
+      "cleanup_record_has_no_residue": true,
+      "raw_has_agent_uid": true,
+      "raw_has_declared_interpreter": true,
+      "commands": [
+        {
+          "id": "r2e_preflight",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": null
+        },
+        {
+          "id": "env",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": null
+        },
+        {
+          "id": "mcve_statement",
+          "rc": 0,
+          "status": "rc0",
+          "pytest": null
+        },
+        {
+          "id": "mcve_assert",
+          "rc": 1,
+          "status": "nonzero",
+          "pytest": null
+        },
+        {
+          "id": "test_responsetypes",
+          "rc": 1,
+          "status": "nonzero",
+          "pytest": {
+            "failed": 2,
+            "passed": 5,
+            "warning": 3
+          }
+        }
+      ],
+      "source_sha256": {
+        "runs/r2e_actor_20260925/devcheck/scrapy__9a15fcf89a151811de8ac783419df051/orig/attempt.json": "ec9445fd7ec046cc04dc40d52d43599f349b9d559cd54b9d3070cc310b46dd34",
+        "runs/r2e_actor_20260925/devcheck/scrapy__9a15fcf89a151811de8ac783419df051/orig/prelaunch.json": "b7e28365e06a7249db42f9ff3e48e86468c9302e17f7c60dd914b1c133352d35",
+        "runs/r2e_actor_20260925/devcheck/scrapy__9a15fcf89a151811de8ac783419df051/orig/activation_check.json": "b4e84cb39012df597eb3ad99ec02a5718fb09df54e618713087d8b9de7612d0e",
+        "runs/r2e_actor_20260925/devcheck/scrapy__9a15fcf89a151811de8ac783419df051/orig/harness/trajectory.jsonl": "38ba2ac27fd914cd0dd65f046f41516e1e1dd6cf0346620fd19c9da68753229b",
+        "runs/r2e_actor_20260925/devcheck/scrapy__9a15fcf89a151811de8ac783419df051/orig/captures/env.out": "4aad9f23302cfc96cc67ea92a631aa1b3a3645ebe6811c83f518bc7b267d06b6",
+        "runs/r2e_actor_20260925/devcheck/scrapy__9a15fcf89a151811de8ac783419df051/orig/captures/mcve_assert.out": "732289c179a685f6ebf5ccf6ec06058b0abcdd219179f8e9b47bd5440fc59947",
+        "runs/r2e_actor_20260925/devcheck/scrapy__9a15fcf89a151811de8ac783419df051/orig/captures/mcve_statement.out": "17857c668488175439ebbea8e1d1b2de8e543f3d54ffa9d3dc154606401bfd58",
+        "runs/r2e_actor_20260925/devcheck/scrapy__9a15fcf89a151811de8ac783419df051/orig/captures/r2e_preflight.out": "ab7f0af4e93e5fbdfc5597e13408e657fff25f705d0ddcc5c06aa6b49297c742",
+        "runs/r2e_actor_20260925/devcheck/scrapy__9a15fcf89a151811de8ac783419df051/orig/captures/test_responsetypes.out": "ca487c579853ee155e1cb6013afbaebb748174dd5691aae53c8f15d381ced897"
+      }
+    }
+  ]
+}

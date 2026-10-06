@@ -1,0 +1,60 @@
+diff --git a/dask/config.py b/dask/config.py
+index 282ef73a6..ac6cb4ec5 100644
+--- a/dask/config.py
++++ b/dask/config.py
+@@ -179,11 +179,11 @@ def collect_yaml(paths: Sequence[str] = paths) -> list[dict]:
+     for path in file_paths:
+         try:
+             with open(path) as f:
+-                data = yaml.safe_load(f.read()) or {}
+-                configs.append(data)
+-        except OSError:
+-            # Ignore permission errors
+-            pass
++                data = yaml.safe_load(f.read())
++        except (OSError, yaml.YAMLError):
++            continue
++        if isinstance(data, dict):
++            configs.append(data)
+ 
+     return configs
+ 
+@@ -698,5 +698,38 @@ def _initialize() -> None:
+     update_defaults(_defaults)
+ 
+ 
++def _check_config_files(paths: Sequence[str] = paths) -> None:
++    """Fail early at import time if a config file cannot be used."""
++    for search_path in paths:
++        if os.path.isdir(search_path):
++            try:
++                names = sorted(os.listdir(search_path))
++            except OSError:
++                continue
++            files = [
++                os.path.join(search_path, n)
++                for n in names
++                if os.path.splitext(n)[1].lower() in (".json", ".yaml", ".yml")
++            ]
++        elif os.path.exists(search_path):
++            files = [search_path]
++        else:
++            continue
++        for fn in files:
++            try:
++                with open(fn) as f:
++                    data = yaml.safe_load(f.read())
++            except OSError:
++                continue
++            except yaml.YAMLError as exc:
++                raise ValueError(f"Could not parse Dask config file {fn}: {exc}") from exc
++            if data is not None and not isinstance(data, dict):
++                raise ValueError(
++                    f"Dask config file {fn} must contain a mapping at the top level, "
++                    f"got {type(data).__name__}"
++                )
++
++
++_check_config_files()
+ refresh()
+ _initialize()

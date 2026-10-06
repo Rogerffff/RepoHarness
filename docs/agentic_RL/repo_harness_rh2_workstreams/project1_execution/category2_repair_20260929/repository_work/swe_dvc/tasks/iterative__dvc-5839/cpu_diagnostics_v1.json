@@ -1,0 +1,112 @@
+{
+  "format": "swe_dvc_private_diagnostic.v1",
+  "as_of": "2026-10-03",
+  "instance_id": "iterative__dvc-5839",
+  "kind": "private_pytest_diagnostic",
+  "formal_grading": false,
+  "qualifies_for_probe": false,
+  "image_id": "sha256:35e6260d03d9e4792df404b498ca7800a3a633eb678e27fbed9246c0fe580147",
+  "base_id": "sha256:72d057b24145afd4f0e88b1c1972780e22ba275b380ef9ece3b722980fcf1e0d",
+  "pip_check_rc": 0,
+  "image_plan_sha256": "sha256:8014933a03cae8d2f80181589b1c2382c929e125fc7c7d02c5edb5da229285b3",
+  "effective_test_patch_sha256": "sha256:1acc81a67bca0511b78f515d0d777a00ceeca3725b7907ee741764d1e623540f",
+  "source_commit": "daf07451f8e8f3e76a791c696b0ea175e8ed3ac1",
+  "results": [
+    {
+      "version": "original",
+      "candidate": "noop",
+      "pytest_rc": 1,
+      "total_executed": 22,
+      "missing_references": [],
+      "f2p": {
+        "tests/unit/command/test_metrics.py::test_metrics_show": "FAILED"
+      },
+      "p2p_counts": {
+        "PASSED": 21
+      },
+      "cleanup_removed": true
+    },
+    {
+      "version": "original",
+      "candidate": "gold",
+      "pytest_rc": 0,
+      "total_executed": 22,
+      "missing_references": [],
+      "f2p": {
+        "tests/unit/command/test_metrics.py::test_metrics_show": "PASSED"
+      },
+      "p2p_counts": {
+        "PASSED": 21
+      },
+      "cleanup_removed": true
+    },
+    {
+      "version": "original",
+      "candidate": "hardcoded_precision8",
+      "pytest_rc": 0,
+      "total_executed": 22,
+      "missing_references": [],
+      "f2p": {
+        "tests/unit/command/test_metrics.py::test_metrics_show": "PASSED"
+      },
+      "p2p_counts": {
+        "PASSED": 21
+      },
+      "cleanup_removed": true
+    },
+    {
+      "version": "effective",
+      "candidate": "noop",
+      "pytest_rc": 1,
+      "total_executed": 23,
+      "missing_references": [],
+      "f2p": {
+        "tests/unit/command/test_metrics.py::test_metrics_show": "FAILED",
+        "tests/unit/command/test_metrics.py::test_metrics_show_precision_real_values": "FAILED"
+      },
+      "p2p_counts": {
+        "PASSED": 21
+      },
+      "cleanup_removed": true
+    },
+    {
+      "version": "effective",
+      "candidate": "gold",
+      "pytest_rc": 0,
+      "total_executed": 23,
+      "missing_references": [],
+      "f2p": {
+        "tests/unit/command/test_metrics.py::test_metrics_show": "PASSED",
+        "tests/unit/command/test_metrics.py::test_metrics_show_precision_real_values": "PASSED"
+      },
+      "p2p_counts": {
+        "PASSED": 21
+      },
+      "cleanup_removed": true
+    },
+    {
+      "version": "effective",
+      "candidate": "hardcoded_precision8",
+      "pytest_rc": 1,
+      "total_executed": 23,
+      "missing_references": [],
+      "f2p": {
+        "tests/unit/command/test_metrics.py::test_metrics_show": "PASSED",
+        "tests/unit/command/test_metrics.py::test_metrics_show_precision_real_values": "FAILED"
+      },
+      "p2p_counts": {
+        "PASSED": 21
+      },
+      "cleanup_removed": true
+    }
+  ],
+  "raw_evidence_root": "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc5839-diagnostic-v1-001",
+  "raw_summary_sha256": "sha256:d40c28e14bf45ce13322bb53ce951761177a79f4f7d9f7f88453fd17e0326118",
+  "remaining": [
+    "共用正式版本发布",
+    "正式评分/逐参考/安装与资格验收",
+    "actor入口运输核对",
+    "非作者核查",
+    "模型探针"
+  ]
+}

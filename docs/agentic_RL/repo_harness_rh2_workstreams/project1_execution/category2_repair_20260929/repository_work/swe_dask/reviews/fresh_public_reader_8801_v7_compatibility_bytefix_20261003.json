@@ -1,0 +1,87 @@
+{
+  "schema_id": "rh2.fresh_public_reader_bytefix_review.v1",
+  "instance_id": "dask__dask-8801",
+  "review_version": "v7_compatibility_bytefix",
+  "review_date": "2026-10-03",
+  "review_role": "non_author_public_reader",
+  "prior_three_report_sets_preserved": true,
+  "scope": {
+    "mode": "two_public_inputs_only",
+    "assessment": "original_prefix_and_public_text_increment_only",
+    "read_method": "read_bytes",
+    "inputs": [
+      {
+        "path": "runs/swegym_quality_batch01_20260921/public/dask__dask-8801/public_bundle.json",
+        "sha256": "f1c4cfedac80c87186a38f2eaec23e5c47b9ed3cd5f4493dfd0ab5b9b473fec1",
+        "hash_basis": "actual_file_bytes"
+      },
+      {
+        "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_dask/tasks/dask__dask-8801/effective_statement.txt",
+        "sha256": "0b3ffb734d5e9f1eac09848d407b0f040913075359563f7717d5f3efb1ce166c",
+        "hash_basis": "actual_file_bytes",
+        "matches_expected_sha256": true
+      }
+    ],
+    "excluded_material_not_read": [
+      "private",
+      "history",
+      "decisions",
+      "source_code",
+      "patches",
+      "candidate_code",
+      "tests",
+      "reviews",
+      "semantic_controls",
+      "parent_thread_history",
+      "other_project_files"
+    ],
+    "operations_performed": [
+      "read_two_public_inputs_as_bytes",
+      "compute_actual_input_sha256",
+      "compare_original_prefix_bytes",
+      "compare_appended_bytes_with_previously_read_public_text",
+      "write_only_requested_bytefix_md_and_json"
+    ],
+    "tests_executed": false,
+    "cpu_experiments_executed": false,
+    "ssh_used": false,
+    "network_used": false,
+    "additional_model_api_used": false
+  },
+  "byte_comparison": {
+    "original_problem_statement_utf8_bytes": 7784,
+    "original_problem_statement_is_exact_utf8_prefix": true,
+    "original_crlf_count": 162,
+    "effective_prefix_crlf_count": 162,
+    "prior_original_prefix_line_endings_note_closed": true,
+    "appended_bytes_identical_to_previously_reviewed_public_text": true,
+    "appended_sha256": "810917e37b83c1176e41d3f4eec062def066a132e6afb7f2c487b56dbe1e5285",
+    "appended_comparison_basis": "literal_public_text_actually_read_by_this_reviewer_in_previous_round",
+    "old_inputs_or_reviews_reopened": false
+  },
+  "public_text_increment_verdict": {
+    "summary": "原前缀 CRLF 已恢复且逐字节相等；补充逐字节未变，公开可理解性结论保持。",
+    "original_prefix_preserved_byte_for_byte": true,
+    "behavioral_supplement_changed": false,
+    "three_behavior_groups_remain_clear": true,
+    "new_contradiction_identified": false,
+    "implementation_prescribed": false,
+    "new_solver_fields_required": false,
+    "open_public_blockers": []
+  },
+  "unchanged_public_behavior_summary": [
+    "空 YAML、仅注释、解析为 null 的文档和空映射必须有效且不贡献配置项。",
+    "其他假值非映射允许不贡献配置项或真实诊断失败，不得添加配置项或给出无关、虚假失败原因。",
+    "可读无效 YAML 和兼容情形之外的非映射必须失败并真实说明内容问题；不可读文件仍忽略。"
+  ],
+  "claims_not_made": {
+    "actual_prompt_delivery_verified": false,
+    "implementation_correctness_verified": false,
+    "hidden_validation_alignment_verified": false,
+    "full_tests_verified": false,
+    "runtime_pass_verified": false,
+    "authorization_necessity_determined": false,
+    "cpu_eligibility_determined": false,
+    "formal_eligibility_granted": false
+  }
+}

@@ -1,0 +1,362 @@
+{
+ "instance_id": "aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a",
+ "template": "R-c",
+ "revision_round": 1,
+ "user_decision_needed": false,
+ "items": [
+  {
+   "id": "R-c-1",
+   "fixes": "I1（T2c：R1 的唯一核心断言只用题面示例 ÿ）+ I3（T2b：退化候选 DG1 当前材料正式评分 1.0，会接受西里尔字母字段名）",
+   "new_keys": [
+    "test_bad_headers[py-parser-pyloop-nonascii-mid-name]"
+   ],
+   "assertion": "HT':182-185 在 test_bad_headers 参数表加 pytest.param(\"f\\N{CYRILLIC SMALL LETTER O}o: bar\", id=\"nonascii-mid-name\")；断言沿用 HT':190-191 的 pytest.raises(BadHttpMessage)",
+   "public_basis": "PUB/user_prompt.txt:4、:22（字段名含无效字符应被拒，示例 ÿ 只是一个实例）；W/aiohttp/http_parser.py:59-65（RFC 9110 tchar / token 注释，全为 ASCII）；W/docs/client_advanced.rst:108-110（RFC 7230 §3.2 头字段名）"
+  },
+  {
+   "id": "R-c-2",
+   "fixes": "I2（T2c：R2 的唯一核心断言只用题面示例那一行）+ I3（DG1 会把 VT 分隔的请求行当成 GET /path 接受）",
+   "new_keys": [
+    "test_http_request_bad_status_line_other_whitespace[py-parser-pyloop-ff-separator]",
+    "test_http_request_bad_status_line_other_whitespace[py-parser-pyloop-vt-separator]"
+   ],
+   "assertion": "HT':693-705 新增 test_http_request_bad_status_line_other_whitespace：GET /path\\x0cHTTP/1.1（FF 单独作分隔）与 GET\\x0b/path HTTP/1.1（VT 作分隔）都要 pytest.raises(BadStatusLine)",
+   "public_basis": "PUB/user_prompt.txt:4、:7、:23（题面把示例里的 LF、FF 判为 improper whitespace and control characters；VT 与 FF 同属空白类控制字符）；W/aiohttp/http_parser.py:639（lax 只用于响应解析器，请求解析按设计严格）；W/aiohttp/_http_parser.pyx:574-586 与 :651-655（作参照的 C 解析器只对响应设宽松标志）",
+   "scope_note_M1": "为保持最小修订，只收 FF 单独分隔和 VT 两例；HTAB 同理可收，但不必须。不以“RFC 允许宽松处理 HTAB”为理由：RFC 9112 同一句也允许宽松处理 VT、FF、裸 CR，区分不开"
+  },
+  {
+   "id": "R-c-3",
+   "fixes": "I4（v1 §4 第 4 步 S1）：gold 把请求目标里夹 LF / FF / CR / TAB 的请求行从 base 的 BadStatusLine 改成接受（私有矩阵 pcheck_matrix_{none,gold}.json 的 target_* 行）",
+   "new_keys": [
+    "test_http_request_ctl_in_target_rejected[py-parser-pyloop-lf-in-target]",
+    "test_http_request_ctl_in_target_rejected[py-parser-pyloop-ff-in-target]"
+   ],
+   "assertion": "HT':797-808 新增 test_http_request_ctl_in_target_rejected：GET /pa\\nth HTTP/1.1 与 GET /pa\\x0cth HTTP/1.1 都要 pytest.raises(BadHttpMessage)（父类：BadStatusLine 与 C 解析器映射的 InvalidURLError 都算对）",
+   "public_basis": "PUB/user_prompt.txt:23（because the status line contains improper whitespace and control characters；LF、FF 就是示例字符）；base 旧行为：两例 base 都抛 BadStatusLine（runs/r2e_lifecycle_20260929/inv/aiohttp_4075/pcheck_matrix_none.json）；W/aiohttp/http_parser.py:208-210 与 W/tests/test_http_parser.py:165-168、:176-177（仓库把裸 CR / LF 当必拒的走私输入）；W/aiohttp/_http_parser.pyx:829-834（HPE_INVALID_URL → InvalidURLError，故断言父类 BadHttpMessage）",
+   "boundary_M2": "I4 升 S1、I7 只登记 T3 的分界：I4 的输入是 base 原本拒绝、gold 放行的回归，字符正是题面示例的 LF / FF，位置是请求目标任意处，也是请求拆分的典型载荷，不属边缘输入；I7（目标里的 \\x01、版本号点位的 FF、字段名里的 /）base 与 gold 都接受，不是修复引入的回归，且输入窄而罕见：\\x01 不是空白类字符，版本号里的 FF 只在恰好替代版本点号这一个位置能过（VERSRE 的 . 未转义；HTTP/1.1\\x0c、HTTP\\x0c/1.1 都被拒），/ 是 ASCII 标点、与题面的非 ASCII 示例不同类。两条标准指向同一结论，不是按“是否旧缺口”挑选"
+  }
+ ],
+ "revisions": [
+  {
+   "kind": "hidden_test_text_replace",
+   "target": "test_1.py",
+   "edits": [
+    {
+     "old": "        \"\\xffoo: bar\",\n    ),\n)\ndef test_bad_headers(parser: Any, hdr: str) -> None:\n",
+     "new": "        \"\\xffoo: bar\",\n        pytest.param(  # non-ASCII (Cyrillic o, UTF-8 d0 be) inside the field name\n            \"f\\N{CYRILLIC SMALL LETTER O}o: bar\",\n            id=\"nonascii-mid-name\",\n        ),\n    ),\n)\ndef test_bad_headers(parser: Any, hdr: str) -> None:\n"
+    },
+    {
+     "old": "def test_http_request_bad_status_line_whitespace(parser: Any) -> None:\n    text = b\"GET\\n/path\\fHTTP/1.1\\r\\n\\r\\n\"\n    with pytest.raises(http_exceptions.BadStatusLine):\n        parser.feed_data(text)\n",
+     "new": "def test_http_request_bad_status_line_whitespace(parser: Any) -> None:\n    text = b\"GET\\n/path\\fHTTP/1.1\\r\\n\\r\\n\"\n    with pytest.raises(http_exceptions.BadStatusLine):\n        parser.feed_data(text)\n\n\n@pytest.mark.parametrize(\n    \"line\",\n    (\n        b\"GET /path\\x0cHTTP/1.1\",  # FF alone as a separator\n        b\"GET\\x0b/path HTTP/1.1\",  # VT as a separator\n    ),\n    ids=(\"ff-separator\", \"vt-separator\"),\n)\ndef test_http_request_bad_status_line_other_whitespace(\n    parser: Any, line: bytes\n) -> None:\n    with pytest.raises(http_exceptions.BadStatusLine):\n        parser.feed_data(line + b\"\\r\\n\\r\\n\")\n"
+    },
+    {
+     "old": "def test_http_request_parser_bad_nonascii_uri(parser: Any) -> None:\n    with pytest.raises(http_exceptions.InvalidURLError):\n        parser.feed_data(b\"GET \\xff HTTP/1.1\\r\\n\\r\\n\")\n",
+     "new": "def test_http_request_parser_bad_nonascii_uri(parser: Any) -> None:\n    with pytest.raises(http_exceptions.InvalidURLError):\n        parser.feed_data(b\"GET \\xff HTTP/1.1\\r\\n\\r\\n\")\n\n\n@pytest.mark.parametrize(\n    \"line\",\n    (\n        b\"GET /pa\\nth HTTP/1.1\",  # LF inside the request-target\n        b\"GET /pa\\x0cth HTTP/1.1\",  # FF inside the request-target\n    ),\n    ids=(\"lf-in-target\", \"ff-in-target\"),\n)\ndef test_http_request_ctl_in_target_rejected(parser: Any, line: bytes) -> None:\n    # BadStatusLine (issue wording) or InvalidURLError (C-parser mapping) both ok\n    with pytest.raises(http_exceptions.BadHttpMessage):\n        parser.feed_data(line + b\"\\r\\n\\r\\n\")\n"
+    }
+   ]
+  }
+ ],
+ "expected_after": {
+  "test_parse_headers[py-parser-pyloop]": "PASSED",
+  "test_cve_2023_37276[py-parser-pyloop]": "PASSED",
+  "test_bad_headers[py-parser-pyloop-Content-Length: -5]": "PASSED",
+  "test_bad_headers[py-parser-pyloop-Content-Length: +256]": "PASSED",
+  "test_bad_headers[py-parser-pyloop-Foo: abc\\rdef]": "PASSED",
+  "test_bad_headers[py-parser-pyloop-Bar: abc\\ndef]": "PASSED",
+  "test_bad_headers[py-parser-pyloop-Baz: abc\\x00def]": "PASSED",
+  "test_bad_headers[py-parser-pyloop-Foo : bar]": "PASSED",
+  "test_bad_headers[py-parser-pyloop-Foo\\t: bar]": "PASSED",
+  "test_bad_headers[py-parser-pyloop-\\xffoo: bar]": "PASSED",
+  "test_bad_headers[py-parser-pyloop-nonascii-mid-name]": "PASSED",
+  "test_unpaired_surrogate_in_header_py[pyloop]": "PASSED",
+  "test_content_length_transfer_encoding[py-parser-pyloop]": "PASSED",
+  "test_bad_chunked_py[pyloop]": "PASSED",
+  "test_whitespace_before_header[py-parser-pyloop]": "PASSED",
+  "test_parse_headers_longline[py-parser-pyloop]": "PASSED",
+  "test_parse[py-parser-pyloop]": "PASSED",
+  "test_parse_body[py-parser-pyloop]": "PASSED",
+  "test_parse_body_with_CRLF[py-parser-pyloop]": "PASSED",
+  "test_parse_delayed[py-parser-pyloop]": "PASSED",
+  "test_headers_multi_feed[py-parser-pyloop]": "PASSED",
+  "test_headers_split_field[py-parser-pyloop]": "PASSED",
+  "test_parse_headers_multi[py-parser-pyloop]": "PASSED",
+  "test_conn_default_1_0[py-parser-pyloop]": "PASSED",
+  "test_conn_default_1_1[py-parser-pyloop]": "PASSED",
+  "test_conn_close[py-parser-pyloop]": "PASSED",
+  "test_conn_close_1_0[py-parser-pyloop]": "PASSED",
+  "test_conn_keep_alive_1_0[py-parser-pyloop]": "PASSED",
+  "test_conn_keep_alive_1_1[py-parser-pyloop]": "PASSED",
+  "test_conn_other_1_0[py-parser-pyloop]": "PASSED",
+  "test_conn_other_1_1[py-parser-pyloop]": "PASSED",
+  "test_request_chunked[py-parser-pyloop]": "PASSED",
+  "test_request_te_chunked_with_content_length[py-parser-pyloop]": "PASSED",
+  "test_request_te_chunked123[py-parser-pyloop]": "PASSED",
+  "test_conn_upgrade[py-parser-pyloop]": "PASSED",
+  "test_compression_empty[py-parser-pyloop]": "PASSED",
+  "test_compression_deflate[py-parser-pyloop]": "PASSED",
+  "test_compression_gzip[py-parser-pyloop]": "PASSED",
+  "test_compression_brotli[py-parser-pyloop]": "PASSED",
+  "test_compression_unknown[py-parser-pyloop]": "PASSED",
+  "test_url_connect[py-parser-pyloop]": "PASSED",
+  "test_headers_connect[py-parser-pyloop]": "PASSED",
+  "test_url_absolute[py-parser-pyloop]": "PASSED",
+  "test_headers_old_websocket_key1[py-parser-pyloop]": "PASSED",
+  "test_headers_content_length_err_1[py-parser-pyloop]": "PASSED",
+  "test_headers_content_length_err_2[py-parser-pyloop]": "PASSED",
+  "test_invalid_header[py-parser-pyloop]": "PASSED",
+  "test_invalid_name[py-parser-pyloop]": "PASSED",
+  "test_max_header_field_size[py-parser-pyloop-40960]": "PASSED",
+  "test_max_header_field_size[py-parser-pyloop-8191]": "PASSED",
+  "test_max_header_field_size_under_limit[py-parser-pyloop]": "PASSED",
+  "test_max_header_value_size[py-parser-pyloop-40960]": "PASSED",
+  "test_max_header_value_size[py-parser-pyloop-8191]": "PASSED",
+  "test_max_header_value_size_under_limit[py-parser-pyloop]": "PASSED",
+  "test_max_header_value_size_continuation[py-parser-pyloop-40965]": "PASSED",
+  "test_max_header_value_size_continuation[py-parser-pyloop-8191]": "PASSED",
+  "test_max_header_value_size_continuation_under_limit[py-parser-pyloop]": "PASSED",
+  "test_http_request_parser[py-parser-pyloop]": "PASSED",
+  "test_http_request_bad_status_line[py-parser-pyloop]": "PASSED",
+  "test_http_request_bad_status_line_whitespace[py-parser-pyloop]": "PASSED",
+  "test_http_request_bad_status_line_other_whitespace[py-parser-pyloop-ff-separator]": "PASSED",
+  "test_http_request_bad_status_line_other_whitespace[py-parser-pyloop-vt-separator]": "PASSED",
+  "test_http_request_upgrade[py-parser-pyloop]": "PASSED",
+  "test_http_request_parser_utf8[py-parser-pyloop]": "PASSED",
+  "test_http_request_parser_non_utf8[py-parser-pyloop]": "PASSED",
+  "test_http_request_parser_two_slashes[py-parser-pyloop]": "PASSED",
+  "test_http_request_parser_bad_method[py-parser-pyloop]": "PASSED",
+  "test_http_request_parser_bad_version[py-parser-pyloop]": "PASSED",
+  "test_http_request_parser_bad_version_number[py-parser-pyloop]": "PASSED",
+  "test_http_request_parser_bad_ascii_uri[py-parser-pyloop]": "PASSED",
+  "test_http_request_parser_bad_nonascii_uri[py-parser-pyloop]": "PASSED",
+  "test_http_request_ctl_in_target_rejected[py-parser-pyloop-lf-in-target]": "PASSED",
+  "test_http_request_ctl_in_target_rejected[py-parser-pyloop-ff-in-target]": "PASSED",
+  "test_http_request_max_status_line[py-parser-pyloop-40965]": "PASSED",
+  "test_http_request_max_status_line[py-parser-pyloop-8191]": "PASSED",
+  "test_http_request_max_status_line_under_limit[py-parser-pyloop]": "PASSED",
+  "test_http_response_parser_utf8[py-parser-pyloop]": "PASSED",
+  "test_http_response_parser_bad_status_line_too_long[py-parser-pyloop-40962]": "PASSED",
+  "test_http_response_parser_bad_status_line_too_long[py-parser-pyloop-8191]": "PASSED",
+  "test_http_response_parser_status_line_under_limit[py-parser-pyloop]": "PASSED",
+  "test_http_response_parser_bad_version[py-parser-pyloop]": "PASSED",
+  "test_http_response_parser_bad_version_number[py-parser-pyloop]": "PASSED",
+  "test_http_response_parser_no_reason[py-parser-pyloop]": "PASSED",
+  "test_http_response_parser_lenient_headers[py-parser-pyloop]": "PASSED",
+  "test_http_response_parser_bad_crlf[py-parser-pyloop]": "PASSED",
+  "test_http_response_parser_bad_chunked_lax[py-parser-pyloop]": "PASSED",
+  "test_http_response_parser_bad[py-parser-pyloop]": "PASSED",
+  "test_http_response_parser_code_under_100[py-parser-pyloop]": "PASSED",
+  "test_http_response_parser_code_above_999[py-parser-pyloop]": "PASSED",
+  "test_http_response_parser_code_not_int[py-parser-pyloop]": "PASSED",
+  "test_http_request_chunked_payload[py-parser-pyloop]": "PASSED",
+  "test_http_request_chunked_payload_and_next_message[py-parser-pyloop]": "PASSED",
+  "test_http_request_chunked_payload_chunks[py-parser-pyloop]": "PASSED",
+  "test_parse_chunked_payload_chunk_extension[py-parser-pyloop]": "PASSED",
+  "test_parse_payload_response_without_body[py-parser-pyloop]": "PASSED",
+  "test_parse_length_payload[py-parser-pyloop]": "PASSED",
+  "test_parse_no_length_payload[py-parser-pyloop]": "PASSED",
+  "test_partial_url[py-parser-pyloop]": "PASSED",
+  "test_parse_uri_percent_encoded[py-parser-pyloop-/path%23frag-/path#frag-query0-]": "PASSED",
+  "test_parse_uri_percent_encoded[py-parser-pyloop-/path%2523frag-/path%23frag-query1-]": "PASSED",
+  "test_parse_uri_percent_encoded[py-parser-pyloop-/path?key=value%23frag-/path-query2-]": "PASSED",
+  "test_parse_uri_percent_encoded[py-parser-pyloop-/path?key=value%2523frag-/path-query3-]": "PASSED",
+  "test_parse_uri_percent_encoded[py-parser-pyloop-/path#frag%20-/path-query4-frag ]": "PASSED",
+  "test_parse_uri_percent_encoded[py-parser-pyloop-/path#frag%2520-/path-query5-frag%20]": "PASSED",
+  "test_parse_uri_utf8[py-parser-pyloop]": "PASSED",
+  "test_parse_uri_utf8_percent_encoded[py-parser-pyloop]": "PASSED",
+  "TestParsePayload.test_parse_eof_payload": "PASSED",
+  "TestParsePayload.test_parse_no_body": "PASSED",
+  "TestParsePayload.test_parse_length_payload_eof": "PASSED",
+  "TestParsePayload.test_parse_chunked_payload_size_error": "PASSED",
+  "TestParsePayload.test_parse_chunked_payload_split_end": "PASSED",
+  "TestParsePayload.test_parse_chunked_payload_split_end2": "PASSED",
+  "TestParsePayload.test_parse_chunked_payload_split_end_trailers": "PASSED",
+  "TestParsePayload.test_parse_chunked_payload_split_end_trailers2": "PASSED",
+  "TestParsePayload.test_parse_chunked_payload_split_end_trailers3": "PASSED",
+  "TestParsePayload.test_parse_chunked_payload_split_end_trailers4": "PASSED",
+  "TestParsePayload.test_http_payload_parser_length": "PASSED",
+  "TestParsePayload.test_http_payload_parser_deflate": "PASSED",
+  "TestParsePayload.test_http_payload_parser_deflate_no_hdrs": "PASSED",
+  "TestParsePayload.test_http_payload_parser_deflate_light": "PASSED",
+  "TestParsePayload.test_http_payload_parser_deflate_split": "PASSED",
+  "TestParsePayload.test_http_payload_parser_deflate_split_err": "PASSED",
+  "TestParsePayload.test_http_payload_parser_length_zero": "PASSED",
+  "TestParsePayload.test_http_payload_brotli": "PASSED",
+  "TestDeflateBuffer.test_feed_data": "PASSED",
+  "TestDeflateBuffer.test_feed_data_err": "PASSED",
+  "TestDeflateBuffer.test_feed_eof": "PASSED",
+  "TestDeflateBuffer.test_feed_eof_err_deflate": "PASSED",
+  "TestDeflateBuffer.test_feed_eof_no_err_gzip": "PASSED",
+  "TestDeflateBuffer.test_feed_eof_no_err_brotli": "PASSED",
+  "TestDeflateBuffer.test_empty_body": "PASSED",
+  "test_c_parser_loaded": "FAILED",
+  "test_invalid_character[pyloop]": "FAILED",
+  "test_invalid_linebreak[pyloop]": "FAILED"
+ },
+ "expected_change": {
+  "added": [
+   "test_bad_headers[py-parser-pyloop-nonascii-mid-name]",
+   "test_http_request_bad_status_line_other_whitespace[py-parser-pyloop-ff-separator]",
+   "test_http_request_bad_status_line_other_whitespace[py-parser-pyloop-vt-separator]",
+   "test_http_request_ctl_in_target_rejected[py-parser-pyloop-lf-in-target]",
+   "test_http_request_ctl_in_target_rejected[py-parser-pyloop-ff-in-target]"
+  ],
+  "changed": [],
+  "removed": [],
+  "note": "父版本 129 键逐键不变（126 PASSED、3 FAILED 死键）；新增 5 键全为 PASSED，按收集顺序插在各自锚点键之后，合计 134 键。期望由输入与公开语义推出，不是照抄 gold 输出：gold 在 R-c #3 两键上恰恰是 FAILED"
+ },
+ "positive_control": "cands/aiohttp_4075_ALT2.patch",
+ "positive_control_name": "ALT2",
+ "positive_control_basis": "D4（v1 §5、§9）+ 复核 M3：gold 在有公开依据的 R-c #3 上失败。ALT2 = gold 原样 + 请求行 C0 控制字符 / DEL 检查（card.md 附录 F），与 gold 只差这一处，最能说明修订要求的正是 gold 缺的那一点。当前材料正式评分 1.0（129/129）；公开测试私有对照无回归（agent 身份）；修订版试跑 134/134",
+ "positive_control_secondary": "cands/aiohttp_4075_ALT1.patch",
+ "positive_control_secondary_name": "ALT1",
+ "positive_control_secondary_basis": "第二正对照（M3）：字段名 RFC token 白名单 + 同样的请求行检查，比 gold 更严（card.md 附录 H），用来验证更严的修复不被误拒。当前材料正式评分 1.0；公开测试私有对照无回归；修订版试跑 134/134",
+ "gold_expected_after": 0,
+ "gold_status": {
+  "expected_score_after": 0,
+  "expected_fail_keys": [
+   "test_http_request_ctl_in_target_rejected[py-parser-pyloop-lf-in-target]",
+   "test_http_request_ctl_in_target_rejected[py-parser-pyloop-ff-in-target]"
+  ],
+  "reason": "按设计为 0（I4，D4）：gold 只把请求行改成按单个 SP 切分，请求目标里夹的 LF / FF 原样进入 URL.build(..., encoded=True)，不再报错；这两个输入 base 原本就拒绝，题面按“含不当空白与控制字符”要求拒绝。gold 通过 R-c #1、#2 的 3 个新键。按 D4 以 ALT2 作主正对照、ALT1 作第二正对照，不为保 gold 放宽断言",
+  "trial": "trials/rev_gold.json",
+  "before": "当前材料：正式评分 1（runs/r2e_lifecycle_20260929/env_verify/ledger_gold.jsonl:4，129/129）；试跑 1（trials/env_gold_current.json）",
+  "upstream_note": "上游到 3.11.0.dev0 仍是 gold 写法（同仓 aiohttp__22a12cc2 公开工作树 aiohttp/http_parser.py:575-579），修订后上游同款修复判 0；本题只能作“标明版本的自建题”"
+ },
+ "env_reverify_positive_control": {
+  "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/cands/aiohttp_4075_ALT2.patch",
+  "sha256": "sha256:f3c6056416e15fa36521dd196f66315cee5cc2197a555d4f8087fcc4304c20c2"
+ },
+ "env_reverify_positive_control_fallback": {
+  "patch": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_lifecycle_20260929/results/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/cands/aiohttp_4075_ALT1.patch",
+  "sha256": "sha256:d3a4b23c79944783ad9abe1fd0d0b26c1fcc5e7e30d62da56605b2211d91f3f8"
+ },
+ "env_reverify_note": "M4：修订生效后，批量环境复验里本题的正对照从 gold 换成存档的 ALT2（备选 ALT1），并在修订元数据里注明“gold 按设计为 0（I4）”；否则按“gold 都是 1”复验时会把本题误报为环境回归。协调者副本 runs/r2e_lifecycle_20260929/inv/aiohttp_4075/aiohttp_4075_ALT2.patch 与存档摘要相同",
+ "acceptance": {
+  "ALT2": {
+   "expected_score": 1,
+   "expected_fail_keys": [],
+   "expected_fail_assertion": null,
+   "trial": "trials/rev_ALT2.json",
+   "trial_verdict": "match：134 键与期望逐键一致（3 个死键仍 FAILED）",
+   "patch": "cands/aiohttp_4075_ALT2.patch",
+   "role": "主正对照（D4 替代正对照，M3）"
+  },
+  "ALT1": {
+   "expected_score": 1,
+   "expected_fail_keys": [],
+   "expected_fail_assertion": null,
+   "trial": "trials/rev_ALT1.json",
+   "trial_verdict": "match：134 键与期望逐键一致",
+   "patch": "cands/aiohttp_4075_ALT1.patch",
+   "role": "第二正对照（D4，M3；比 gold 更严）"
+  },
+  "gold": {
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "test_http_request_ctl_in_target_rejected[py-parser-pyloop-lf-in-target]",
+    "test_http_request_ctl_in_target_rejected[py-parser-pyloop-ff-in-target]"
+   ],
+   "expected_fail_assertion": "HT':808（Failed: DID NOT RAISE BadHttpMessage；gold 接受目标里的 LF、FF）",
+   "trial": "trials/rev_gold.json",
+   "trial_verdict": "mismatch：134 键齐全、无 missing / extra；status_diff 恰为 R-c #3 两键（期望 PASSED、观测 FAILED），R-c #1、#2 三键 PASSED",
+   "patch": "runs/r2e_static_prep_20260924/v3/private/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/gold.patch",
+   "role": "原 gold，按设计为 0（I4、D4）",
+   "reason": "见 gold_status.reason"
+  },
+  "noop": {
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "test_bad_headers[py-parser-pyloop-\\xffoo: bar]",
+    "test_bad_headers[py-parser-pyloop-nonascii-mid-name]",
+    "test_http_request_bad_status_line_whitespace[py-parser-pyloop]",
+    "test_http_request_bad_status_line_other_whitespace[py-parser-pyloop-ff-separator]",
+    "test_http_request_bad_status_line_other_whitespace[py-parser-pyloop-vt-separator]"
+   ],
+   "expected_fail_assertion": "HT':191（\\xffoo 与 nonascii-mid-name 两参数）、HT':690（原例请求行）、HT':705（ff-separator、vt-separator）；都是 DID NOT RAISE。R-c #3 两键 PASSED（base 抛 BadStatusLine）",
+   "trial": "trials/rev_noop.json",
+   "trial_verdict": "mismatch：134 键齐全；status_diff 恰为这 5 键",
+   "patch": "none"
+  },
+  "DG1": {
+   "expected_score": 0,
+   "expected_fail_keys": [
+    "test_bad_headers[py-parser-pyloop-nonascii-mid-name]",
+    "test_http_request_bad_status_line_other_whitespace[py-parser-pyloop-vt-separator]"
+   ],
+   "expected_fail_assertion": "HT':191（nonascii-mid-name）、HT':705（vt-separator）；DID NOT RAISE",
+   "trial": "trials/rev_DG1.json",
+   "trial_verdict": "mismatch：134 键齐全；status_diff 恰为这 2 键",
+   "patch": "cands/aiohttp_4075_DG1.patch",
+   "role": "第 3 步退化候选（I3 的触发反例），修订后应为 0"
+  },
+  "ALT3": {
+   "expected_score": 1,
+   "expected_fail_keys": [],
+   "expected_fail_assertion": null,
+   "trial": "trials/rev_ALT3.json",
+   "trial_verdict": "match：134 键与期望逐键一致",
+   "patch": "cands/aiohttp_4075_ALT3.patch",
+   "role": "过严性证据，不是正对照（协调者建议；复核 review.md §4 的“最小变体”）：gold + 请求行出现 [\\t\\n\\x0b\\x0c\\r] 即抛 BadStatusLine。接受字段名里的 / 与目标里的 \\x01；版本号点位的 FF 它仍拒绝（标准库模拟，与 review.md §4 的说法不同，见 revision_plan.md §5.4）"
+  },
+  "ALT4": {
+   "expected_score": 1,
+   "expected_fail_keys": [],
+   "expected_fail_assertion": null,
+   "trial": "trials/rev_ALT4.json",
+   "trial_verdict": "match：134 键与期望逐键一致",
+   "patch": "cands/aiohttp_4075_ALT4.patch",
+   "role": "过严性证据，不是正对照（本轮新增，补 ALT3 覆盖不到的版本号 FF）：gold + 按 SP 切分后请求目标含 [\\t\\n\\x0b\\x0c\\r] 即抛 BadStatusLine。接受字段名里的 /、目标里的 \\x01、版本号点位的 FF（标准库模拟）"
+  }
+ },
+ "dead_keys": {
+  "keys": [
+   "test_c_parser_loaded",
+   "test_invalid_character[pyloop]",
+   "test_invalid_linebreak[pyloop]"
+  ],
+  "expected": "FAILED（T5：C 扩展不可用，修订不改）",
+  "m5_check": "runs/r2e_lifecycle_20260929/inv/aiohttp_4075/pcheck_cext_agent.json（agent 身份、一次性容器，脚本 cands/pcheck_cext.sh）：/testbed/vendor/llhttp 为空目录；没有 aiohttp/*.so；有 /usr/bin/gcc 与预生成的 aiohttp/_http_parser.c；aiohttp.http_parser.HttpRequestParserC 为 None",
+  "m5_inference": "推断（未实际尝试构建）：aiohttp._http_parser 扩展需要 vendor/llhttp/build/c/llhttp.c、src/native/*.c 与 build/ 下的头文件（W/setup.py:29-42），取得它们要拉 GitHub 子模块再 npm 构建（W/.gitmodules:1-4、W/vendor/README.rst:7-21），解题环境不联网，所以离线构建不出 C 扩展，三个死键不受修订影响；事后审计里“构建了 .so”一条按理论风险保留"
+ },
+ "residual_not_covered": [
+  "请求目标里的 CR、TAB：与 LF / FF 同类、base 也拒绝，但本轮按 card.md 附录 G 只收题面两个字符；“gold 切分 + 只显式拒 \\n、\\x0c”这类示例拟合写法能在修订版得 1 而仍放行它们（静态推断，现无此候选）。探针事后审计 card.md §7 第 2 条保留 target_cr、target_tab 两行",
+  "HTAB 作请求行分隔：M1，同理可收、本轮不收；gold、ALT1–ALT4 都拒绝，DG1 已被 VT 键拦下",
+  "I7（T3）：目标里的 \\x01、版本号点位的 FF、字段名里的 /、空字段名的 IndexError，只登记"
+ ],
+ "paths_note": "cands/、trials/ 相对本题目录；runs/、docs/ 开头的路径相对仓库根；PUB = runs/r2e_static_prep_20260924/v3/public/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a，W = PUB/worktree；HT' = 修订后的 r2e_tests/test_1.py（1452 行）。acceptance 只含修订版试跑；当前材料上的对照见 revision_plan.md §5.1。试跑结果只保留 stdout 末 8000 字符，看不到回溯，失败断言行按 revision_plan.md §5.3 推定，正式评分时用完整 eval log 核对",
+ "candidate_patch_sha256": {
+  "gold": "sha256:f99fe9252adaf4d68e4c3988836676c55710867429f4d73e00ed5e5712cb46b8",
+  "ALT1": "sha256:d3a4b23c79944783ad9abe1fd0d0b26c1fcc5e7e30d62da56605b2211d91f3f8",
+  "ALT2": "sha256:f3c6056416e15fa36521dd196f66315cee5cc2197a555d4f8087fcc4304c20c2",
+  "ALT3": "sha256:653546cb292aa16835ff0ec6948d736f370b430558869d24c8caa705520850b4",
+  "ALT4": "sha256:0ef49961d4e1c9615c2ce13788349b3e1cc5a0accf9f2295023de27dc49e3e4c",
+  "DG1": "sha256:f2d8d6f05190ec590ab594ccd626603fc11dcf172b1170510b7475316998b042"
+ },
+ "parent_material": {
+  "hidden_test_file": "runs/r2e_static_prep_20260924/v3/private/aiohttp__4075c653fb67a29740bf9ac050bb02d10a57343a/hidden_tests/test_1.py",
+  "hidden_test_file_sha256": "sha256:e9652674b956c4bb4668415c1724069b5b1a38aa5baea626a2466777fdc039aa",
+  "hidden_test_file_lines": 1419,
+  "hidden_tests_tree_sha256": "sha256:eb81f695920fd6afc55d70a55a6e96720d54e011aa6d1eb0e6b0243757ffe805",
+  "expected_output_sha256": "sha256:79a761b437b1af932ed7ca3efa83c14de20bffc0340246a9c3d6430aa482c92c",
+  "expected_n": 129,
+  "material_revisions": [],
+  "formal_material_row": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/ingest/grading_bundles_r2e_v0.jsonl:4"
+ },
+ "revised_test_file_sha256": "sha256:81cb7bedc667ec12a6b6a0f8e04ba140b004560baabc5d3d1325c22833be586c",
+ "revised_test_file_lines": 1452,
+ "equivalent_diff": {
+  "source": "card.md 附录 C、D（两份 diff 以任意顺序叠加，结果相同）",
+  "note": "本文件 revisions 按试跑工具的算法应用后，与 card.md 附录 C+D 应用后的 test_1.py 逐字节相同"
+ },
+ "trial_image": {
+  "image_id": "sha256:f483bab46f9e13f3ebb6897143e4cdd548c47380a8221f969be72957543dddea",
+  "recipe_id": "r2e_derive_v1+sysconfig_v1",
+  "note": "与 runs/r2e_lifecycle_20260929/env_verify/ledger_{noop,gold}.jsonl:4、inv/aiohttp_4075/ledger_{DG1,ALT1,ALT2}.jsonl:1 的 image_id_actual 相同"
+ },
+ "trial_draft_sha256": {
+  "draft.json": "sha256:b76b555f5e24e052992f146ab94839390039b12da424ae4406a40e8332e39792",
+  "expected_after.json": "sha256:3bf2e4fe2928d8fb793f3135df0af3020b5d38980cec08e5330845a43be40ecf",
+  "note": "draft.json = {\"revisions\": 本文件的 revisions}（json indent=1）；expected_after.json = 本文件 expected_after（json indent=4）；两份副本在 trials/，远端副本在 /work/r2e/trials/lc_aiohttp_4075/4075c653/"
+ },
+ "trial_time": "2026-09-29 07:06–07:17（本机 +08）；9 次试跑，同一时间最多 2 个"
+}

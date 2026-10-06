@@ -1,0 +1,437 @@
+{
+  "task_id": "r2e_gym_subset::aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52",
+  "instance_id": "aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52",
+  "task_revision": "r2e_gym_subset_e8b9fcbc/expected_v0（无材料修订；expected sha256:a7341a36e1da6740bc37e591b636e69425528aa5fa420a24553c34d3eb29c489；hidden_tests_tree sha256:a46a77523f2b17f6be9c27dafef2b7017dadb8d708b511841cfc66cc4c97c883；gold sha256:926c9558d4b56b6a8049e2daf1d4789042469bacee4a652a7f763696186b6b03）",
+  "source_adapter_ref": "s2_r2e ingest v0：public_bundles_v0.jsonl（line_sha256 33b7cb73…）、grading_bundles_r2e_v0.jsonl line 1（line_sha256 d04f0d02…）、validation_bundles_v0.jsonl line 1（line_sha256 4385d16c…）；source_revision e8b9fcbce43eaca0dc2c0d4798ee6f3e965f590a，source_commit 1c1c0ea353041c8814a6131c3a92978dc2373e52，base 87342c791dfd4c916877ba3dffafb9345bb0491f",
+  "recipe_ref": {
+    "derived_image": "r2e_derive_v1",
+    "resources": "default（2 CPU / 4 GiB / /tmp 1 GiB / pids 512）",
+    "image_ids_observed": [
+      "sha256:ba4b1812c539cf0ac6aeef5a2eeaca61ee0789118316cf91136dfc6ca49ce9c2（R-f、环境轮中央复跑）",
+      "sha256:39f42dc8c40dc902e217103df2ea8470d48052c549fd6ddb3c8530effaabd4de（时序键加跑）",
+      "sha256:bd9b7c27b811980f21f5e18e32a4d4b1c45299c06c6bb6ec2cc0bfefa3b481f6（devcheck 与私有 gold 对照；无隐藏测试评分记录）"
+    ],
+    "note": "三张都是同一配方、同一来源 digest sha256:3a2a7377… 的本地构建"
+  },
+  "code_snapshot_ref": "静态材料 runs/r2e_static_prep_20260924/v3/{public,private}/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/；评分 grader_version r2e-gym-subset@e8b9fcbc+parser:prime-envs@c4d04dfe",
+  "facts_ref": {
+    "environment_facts": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/facts.json（历史环境审查，collate_facts.py 生成）",
+    "run_refs": "runs/r2e_static_prep_20260924/v3/private/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/run_refs.json",
+    "devcheck": "runs/r2e_actor_20260925/devcheck/aiohttp__1c1c0ea353041c8814a6131c3a92978/",
+    "source_host_record": "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl（本题行 execution_result_content）",
+    "cross_task_scan": "runs/r2e_static_prep_20260924/cross_task_gold_scan.json（pairs[0]）"
+  },
+  "checks": {
+    "1": {
+      "status": "pass",
+      "evidence_level": "当前执行证据",
+      "note": "gold、隐藏测试树、run_tests.sh、expected 的 sha256 与 grading/validation bundle 一致，也与 eval 日志的 RH2_SETUP_HIDDEN_TESTS_TREE / RH2_SETUP_ENTRY_SHA256 一致；devcheck GIT_HEAD=87342c79 等于 base；M3 gold_meta 记录来源提交改了 aiohttp/web.py、CHANGES/6807.bugfix.rst、tests/test_run_app.py，gold 只保留 web.py",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/v3/private/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/grading_bundle.json",
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-a_dcbb1d7a.eval.log",
+        "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl:9"
+      ]
+    },
+    "2": {
+      "status": "pass",
+      "evidence_level": "当前执行证据",
+      "note": "noop 7 次都是 55/56，只错目标键，失败在 test_1.py:923 assert not m.called（call_exception_handler 被调用）；此前 pytest.raises 已通过，即既抛出又报告，与题面一致。devcheck 以 agent 身份运行题面示例：1 条 asyncio ERROR 记录、1 次处理器调用、stderr 上 2 个 traceback",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-noop-a_745bf9bf.eval.log",
+        "runs/r2e_t0_batch2_20260924/replay_b2/ledger_watch1c1c_noop.jsonl:1-5",
+        "runs/r2e_actor_20260925/devcheck/aiohttp__1c1c0ea353041c8814a6131c3a92978/orig/captures/pr1_1_cmd.out"
+      ]
+    },
+    "3": {
+      "status": "unknown",
+      "evidence_level": "静态",
+      "note": "静态渲染的 user_prompt.txt 完整（代码块、错误文本齐全），v3 public_hints 是 R2E 措辞；devcheck 用的是桩提示，没有捕获模型实际收到的题面消息",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/v3/public/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/user_prompt.txt",
+        "runs/r2e_actor_20260925/devcheck/aiohttp__1c1c0ea353041c8814a6131c3a92978/orig/stub/requests/messages_000.json"
+      ]
+    },
+    "4": {
+      "status": "pass",
+      "evidence_level": "静态 + 评分侧执行",
+      "note": "合法修复只涉及非测试源码 aiohttp/web.py；grader 删掉 r2e_tests 后放入隐藏测试，不覆盖源码；不需要额外排除规则",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-a_dcbb1d7a.eval.log"
+      ]
+    },
+    "5": {
+      "status": "issue",
+      "evidence_level": "静态核对（公开包逐字比对）",
+      "note": "aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac（base 354153e9，3.11.0.dev0）的公开工作树逐字包含本题 gold（aiohttp/web.py:9, 517-530）、目标测试（tests/test_run_app.py:909-923）与 changelog（CHANGES.rst:190-194，#6807）。反方向不成立。这不是本题缺陷，但划分时要同组或登记为包含关系",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/cross_task_gold_scan.json",
+        "runs/r2e_static_prep_20260924/v3/public/aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac/worktree/aiohttp/web.py",
+        "runs/r2e_static_prep_20260924/v3/public/aiohttp__22a12cc2e2ef289d9e96fd87dfc17272177e52ac/worktree/tests/test_run_app.py"
+      ]
+    },
+    "6": {
+      "status": "pass",
+      "evidence_level": "镜像层面实测",
+      "note": "agent 身份：python 为 /testbed/.venv/bin/python 3.9.21；pytest 8.3.2 + cov/mock/asyncio 插件；pip 23.2.1 可用但无网络；本题不需要新依赖",
+      "evidence_refs": [
+        "runs/r2e_actor_20260925/devcheck/aiohttp__1c1c0ea353041c8814a6131c3a92978/orig/captures/env.out"
+      ]
+    },
+    "7": {
+      "status": "not_applicable",
+      "note": "不需要资产或数据文件"
+    },
+    "8": {
+      "status": "pass",
+      "evidence_level": "镜像层面实测 + 评分侧执行",
+      "note": "agent uid 54321 跑通了复现与公开测试；隐藏测试由评分用户 54322 执行",
+      "evidence_refs": [
+        "runs/r2e_actor_20260925/devcheck/aiohttp__1c1c0ea353041c8814a6131c3a92978/orig/prelaunch.json",
+        "runs/r2e_t0_batch2_20260924/replay_b2/ledger_watch1c1c_gold.jsonl:1-5"
+      ]
+    },
+    "9": {
+      "status": "pass",
+      "evidence_level": "当前执行证据",
+      "note": "从 /testbed/aiohttp 导入；gold 让目标键由失败转为通过",
+      "evidence_refs": [
+        "runs/r2e_actor_20260925/devcheck/aiohttp__1c1c0ea353041c8814a6131c3a92978/orig/captures/env.out",
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-a_dcbb1d7a.eval.log"
+      ]
+    },
+    "10": {
+      "status": "pass",
+      "evidence_level": "镜像层面实测",
+      "note": "公开读者建议的命令全部按预测输出：复现 E1/E2/E3 在 base 下为 1/1/2，gold 后为 0/0/1（gold 为 root 私有容器）；窄测 4 passed，2.2 s；tests/test_run_app.py 全文件 55 passed，26.9 s。/testbed 外导入与裸 pytest 本次未复测，沿用历史探针",
+      "evidence_refs": [
+        "runs/r2e_actor_20260925/devcheck/aiohttp__1c1c0ea353041c8814a6131c3a92978/orig/captures/pr4_5_pytest.out",
+        "runs/r2e_actor_20260925/devcheck/aiohttp__1c1c0ea353041c8814a6131c3a92978/private_gold/private_control.json"
+      ]
+    },
+    "11": {
+      "status": "pass",
+      "evidence_level": "镜像层面实测",
+      "note": "解题不需要外网（外部 DNS 与直连均 DENIED）；隐藏与公开测试需要回环（TestShutdown 真实端口、test_sigint/test_sigterm 子进程），actor 与 grader 都具备。历史 R10 说\"测试不需要网络\"，措辞不准确",
+      "evidence_refs": [
+        "runs/r2e_actor_20260925/devcheck/aiohttp__1c1c0ea353041c8814a6131c3a92978/orig/prelaunch.json"
+      ]
+    },
+    "12": {
+      "status": "not_applicable",
+      "note": "只用本机回环上的服务端与客户端，没有外部服务"
+    },
+    "13": {
+      "status": "pass",
+      "evidence_level": "历史真实 RH2",
+      "note": "测试段 27–32 s，内存峰值约 0.5 GB / 4 GiB。TestShutdown 中有一个启动竞态键，见 issues[timing_race_shutdown_key]",
+      "evidence_refs": [
+        "runs/r2e_t0_batch2_20260924/replay_b2/ledger_watch1c1c_gold.jsonl:1-5"
+      ]
+    },
+    "14": {
+      "status": "pass",
+      "evidence_level": "历史真实 RH2",
+      "note": "当前条件下 7 次 noop、7 次 gold 的键集合与状态完全一致，各键耗时差不超过 0.01 s；与独立 runner 对账 10/10 agree。已知残余：来源宿主机上时序键两次失败，属 watch 项，不影响本项当前结论",
+      "evidence_refs": [
+        "runs/r2e_t0_batch2_20260924/reconcile/reconcile.json",
+        "runs/r2e_env_repair_20260924/_rerun2/ledger_noop.jsonl:1",
+        "runs/r2e_env_repair_20260924/_rerun2/ledger_gold.jsonl:1"
+      ]
+    },
+    "15": {
+      "status": "not_checked",
+      "note": "每次评分都用新容器；并发评分下的表现（尤其 TestShutdown 的端口与时序）没有测过"
+    },
+    "16": {
+      "status": "unknown",
+      "evidence_level": "静态",
+      "note": "非 gold 候选经正式冻结 / 投影的交付没有证据（gold 由 grader 以 git_apply 应用）；已知跑测试不会改变 git status",
+      "evidence_refs": [
+        "runs/r2e_actor_20260925/devcheck/aiohttp__1c1c0ea353041c8814a6131c3a92978/orig/post_run_facts_root.txt"
+      ]
+    },
+    "17": {
+      "status": "pass",
+      "evidence_level": "评分侧执行",
+      "note": "隐藏测试恢复到新目录 r2e_tests（RH2_SETUP_RESTORED=3），与源码不重叠",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/eval_logs_r2e/evallog_replay-r2e-rf-all-gold-a_dcbb1d7a.eval.log"
+      ]
+    },
+    "18": {
+      "status": "pass",
+      "evidence_level": "评分侧执行",
+      "note": "收集到 56 项，short test summary 完整，segment_completed 为 true",
+      "evidence_refs": [
+        "runs/r2e_t0_batch2_20260924/replay_b2/ledger_watch1c1c_noop.jsonl:1-5"
+      ]
+    },
+    "19": {
+      "status": "pass",
+      "evidence_level": "评分侧执行",
+      "note": "只有一个测试文件，56 个键各不相同；当前环境下没有 SKIPPED 或 XFAIL；M3 的 status_map 与期望逐键相等。环境敏感的跳过条件（IPv6、抽象套接字）见 issues[env_sensitive_keys]",
+      "evidence_refs": [
+        "runs/env_overnight_20260916/M3/gold_ledger/logs_r2e/aiohttp/1c1c0ea35304/gold/a1/status_map.json"
+      ]
+    },
+    "20": {
+      "status": "pass",
+      "evidence_level": "当前执行证据",
+      "note": "noop 与 gold 唯一的差异键就是目标键，失败原因是\"异常处理器被调用\"，对应题面描述的重复报告",
+      "evidence_refs": [
+        "runs/r2e_rf_20260923/remote/ledger_r2e_all_noop.jsonl:1",
+        "runs/r2e_rf_20260923/remote/ledger_r2e_all_gold.jsonl:1"
+      ]
+    },
+    "21": {
+      "status": "pass",
+      "evidence_level": "评分侧执行",
+      "note": "无 execution_failure；noop 的 failure_category 为 tests_failed"
+    },
+    "22": {
+      "status": "pass",
+      "evidence_level": "历史独立 runner",
+      "note": "M3 在来源镜像上跑 gold 两次都是 56 passed；RH2 与独立 runner 对账一致",
+      "evidence_refs": [
+        "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl:9",
+        "runs/env_overnight_20260916/M3/gold_ledger/r2e_gold_m3.jsonl:60"
+      ]
+    },
+    "23": {
+      "status": "pass",
+      "evidence_level": "静态",
+      "note": "题面示例就是目标测试，公开材料足以定位 web.py:522。示例以外的失败路径属合理推知；Ctrl+C 之后 cleanup 抛错怎么处理，题面没说（有歧义，gold 选择抛出）"
+    },
+    "24": {
+      "status": "pass",
+      "evidence_level": "静态推断（待 C1 实跑）",
+      "note": "没有 helper 名、调用顺序或精确字符串约束。\"call_exception_handler 未被调用\"的观测有公开依据（asyncio 的报告通道；公开测试 826-856 也用处理器观测）。只压日志、仍调用处理器的写法（C6）会被拒，这是口径更严，不算缺陷"
+    },
+    "25": {
+      "status": "pass",
+      "evidence_level": "静态",
+      "note": "按题面字面，示例路径已被断言。示例以外的失败路径（create_server 失败）只执行、不断言，只修示例路径的候选也能过；但题面本身只说 application context，所以不记为漏测"
+    },
+    "26": {
+      "status": "issue",
+      "evidence_level": "静态推断（待 C3 实跑）",
+      "note": "旧行为（Ctrl+C 之后 cleanup 抛错会被报告）没有键保护：候选 C3 把这类异常静默吞掉，推断仍得 1。gold 把它改成抛出，同样无键约束",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/v3/public/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/worktree/aiohttp/web.py",
+        "runs/r2e_static_prep_20260924/v3/public/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/worktree/aiohttp/web_app.py"
+      ]
+    },
+    "27": {
+      "status": "pass",
+      "evidence_level": "当前执行证据 + 静态",
+      "note": "gold 修好了原例（私有对照 0/0/1），也修好了 create_server 失败路径（gold 日志中该捕获 ERROR 消失），保留后台任务报告与关停顺序，没有无关改动。行为变化：Ctrl+C 之后 cleanup 的异常由\"报告\"改为\"抛出\"，符合题面宽读",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/v3/private/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/gold.patch",
+        "runs/r2e_actor_20260925/devcheck/aiohttp__1c1c0ea353041c8814a6131c3a92978/private_gold/private_control.json"
+      ]
+    },
+    "28": {
+      "status": "not_applicable",
+      "note": "未引入新检查或修订"
+    },
+    "29": {
+      "status": "pass",
+      "evidence_level": "镜像层面实测 + 静态",
+      "note": "GIT_REMOTES、GIT_REFLOG、GIT_REFS 都是 0，HEAD 无子提交，隐藏测试不可读；工作树中没有本修复的 changelog。run_tests.sh 只暴露了目录名 r2e_tests",
+      "evidence_refs": [
+        "runs/r2e_actor_20260925/devcheck/aiohttp__1c1c0ea353041c8814a6131c3a92978/orig/prelaunch.json",
+        "runs/r2e_actor_20260925/devcheck/aiohttp__1c1c0ea353041c8814a6131c3a92978/orig/captures/r2e_preflight.out"
+      ]
+    },
+    "30": {
+      "status": "pass",
+      "evidence_level": "镜像层面实测",
+      "note": "外部 DNS 与直连均为 DENIED，只能访问 relay；还没有真实求解轨迹",
+      "evidence_refs": [
+        "runs/r2e_actor_20260925/devcheck/aiohttp__1c1c0ea353041c8814a6131c3a92978/orig/prelaunch.json"
+      ]
+    },
+    "31": {
+      "status": "not_checked",
+      "note": "隐藏测试用到包内的 aiohttp/test_utils.py 与 aiohttp/pytest_plugin.py，候选可以修改，评分时不重置（R2E 共性）；没有做本题专门的反例"
+    },
+    "32": {
+      "status": "pass",
+      "evidence_level": "静态",
+      "note": "目标测试真实执行 run_app，并同时检查\"抛出\"与\"未报告\"，不是文本匹配"
+    },
+    "33": {
+      "status": "not_checked",
+      "note": "需要真实模型"
+    },
+    "34": {
+      "status": "not_checked",
+      "note": "需要真实模型"
+    },
+    "35": {
+      "status": "not_checked",
+      "note": "需要真实模型"
+    },
+    "36": {
+      "status": "not_checked",
+      "note": "需要目标基座求解"
+    },
+    "37": {
+      "status": "not_applicable",
+      "note": "无材料修订"
+    }
+  },
+  "issues": [
+    {
+      "id": "untested_regression_silent_drop",
+      "category": "test_coverage",
+      "checklist": [
+        26
+      ],
+      "severity": "minor",
+      "status": "open",
+      "evidence_level": "静态推断，待 CPU 实跑",
+      "summary": "Ctrl+C 之后 cleanup 抛出的异常：base 会报告，gold 会抛出，56 键都不检查。候选 C3（把主任务取消改成 gather(return_exceptions=True)，或 suppress(BaseException)）会静默吞掉这类异常，推断仍得 1",
+      "proposed_action": "正式评分实跑 C3（预期 1），配诊断脚本确认错误被丢失；如需堵住，另提材料修订：加一个二选一断言（被抛出或被报告），让 gold 与 C1 都能通过，需用户决定与独立复核",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/v3/public/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/worktree/aiohttp/web.py",
+        "runs/r2e_static_prep_20260924/v3/private/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/hidden_tests/test_1.py"
+      ]
+    },
+    {
+      "id": "timing_race_shutdown_key",
+      "category": "stability",
+      "checklist": [
+        13,
+        14
+      ],
+      "severity": "low",
+      "status": "watch",
+      "evidence_level": "来源原始记录 + 历史真实 RH2",
+      "summary": "TestShutdown.test_shutdown_handler_cancellation_suppressed 的首个请求没有预热，也不重试（隐藏 test_1.py:1217-1227），与 site.start() 竞态。来源宿主机上新旧提交两次都因 Connect call failed 而 FAILED；RH2 14/14、M3 2/2、devcheck 2/2 通过。一旦翻转，所有候选（含 gold）都判 0",
+      "proposed_action": "不阻塞使用。探针与训练期间单独统计该键；若在 RH2 中出现翻转，按环境抖动归因，再考虑材料修订（补上与其它 TestShutdown 用例相同的等待 / 重试），需用户决定。历史把该族记为已关闭，本审查建议改为 watch",
+      "evidence_refs": [
+        "docs/agentic_RL/repo_harness_rh2_workstreams/s2_r2e/raw/r2e_gym_subset_48_e8b9fcbc.jsonl",
+        "runs/r2e_t0_batch2_20260924/reconcile/reconcile.json",
+        "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/known_issues.json"
+      ]
+    },
+    {
+      "id": "cross_task_containment_22a12cc2",
+      "category": "task_relationship",
+      "checklist": [
+        5
+      ],
+      "severity": "info",
+      "status": "open",
+      "evidence_level": "静态核对",
+      "summary": "本题 gold、目标测试与 changelog 逐字出现在 aiohttp__22a12cc2 的公开工作树中",
+      "proposed_action": "划分时同组处理，或登记为包含关系；单独解本题时不构成泄漏",
+      "evidence_refs": [
+        "runs/r2e_static_prep_20260924/cross_task_gold_scan.json"
+      ]
+    },
+    {
+      "id": "env_sensitive_keys",
+      "category": "environment",
+      "checklist": [
+        13,
+        19
+      ],
+      "severity": "info",
+      "status": "open",
+      "evidence_level": "静态 + 当前执行证据",
+      "summary": "test_run_app_preexisting_inet6_socket 需要能绑定 ::1，test_run_app_abstract_linux_socket 需要抽象 Unix 套接字，两者在当前 grader 与 actor 容器中都通过；换沙箱配置会让键变成 FAILED 或 SKIPPED，所有候选都判 0",
+      "proposed_action": "更换评分沙箱配置时复跑 gold"
+    },
+    {
+      "id": "actor_unverified",
+      "category": "actor_conditions",
+      "checklist": [
+        3,
+        16
+      ],
+      "severity": "info",
+      "status": "open",
+      "evidence_level": "未知",
+      "summary": "没有捕获模型实际收到的题面消息；非 gold 候选的正式交付没有证据；gold 未在 agent 身份下运行",
+      "proposed_action": "actor 待验"
+    }
+  ],
+  "file_rules": {
+    "additional_exclusions": []
+  },
+  "revision_refs": [],
+  "disposition": {
+    "scope": "static_review",
+    "state": "needs_review",
+    "reason": "静态候选，待 actor 验证；不属于题意或测试争议。次要漏测（C3）、时序 watch 项与跨题包含已登记，不阻塞开发诊断使用",
+    "next_step": "用正式评分实跑 C1（预期 1）、C3（预期 1，并配诊断脚本）、C5（预期 0）",
+    "prior_environment_disposition": "environment_qualified（r2e_env_repair_20260924，环境层面结论，不等于题目质量验收）",
+    "reviewer": null
+  },
+  "candidates_for_cpu": [
+    {
+      "id": "C1",
+      "role": "合理替代",
+      "patch": "aiohttp/web.py run_app()：把 finally 下的 _cancel_tasks({main_task}, loop) 改成 if not main_task.done(): _cancel_tasks({main_task}, loop)",
+      "expected_reward": 1,
+      "expected_keys_differ_from_gold": []
+    },
+    {
+      "id": "C3",
+      "role": "可能蒙混（静默吞掉 Ctrl+C 之后 cleanup 抛出的异常）",
+      "patch": "aiohttp/web.py run_app()：把 finally 下的 _cancel_tasks({main_task}, loop) 换成 main_task.cancel() 与 loop.run_until_complete(asyncio.gather(main_task, return_exceptions=True))",
+      "expected_reward": 1,
+      "expected_keys_differ_from_gold": [],
+      "diagnostic": "cleanup_ctx 在 yield 之后 raise RuntimeError；run_app(app, print=stopper(loop), loop=loop)，装 mock 异常处理器。预期：base 与 C1 调用处理器 1 次；gold 抛出该异常；C3 两者都没有"
+    },
+    {
+      "id": "C5",
+      "role": "常见错误（不再先单独取消主任务）",
+      "patch": "aiohttp/web.py run_app()：删掉 finally 下的 _cancel_tasks({main_task}, loop) 这一行",
+      "expected_reward": 0,
+      "expected_keys_differ_from_gold": [
+        "TestShutdown 的多数键，至少 TestShutdown.test_shutdown_wait_for_handler（目标键仍 PASSED）"
+      ]
+    },
+    {
+      "id": "C6",
+      "role": "可选，口径校准",
+      "patch": "aiohttp/web.py run_app()：主任务已带异常结束时，临时 loop.set_exception_handler(lambda l, c: None) 包住 _cancel_tasks({main_task}, loop)，之后恢复原处理器",
+      "expected_reward": 0,
+      "expected_keys_differ_from_gold": [
+        "test_run_app_raises_exception[pyloop]"
+      ]
+    }
+  ],
+  "usage": {
+    "intended_use": "development_diagnostic",
+    "reviewer_exposure": "审查者看过 gold、隐藏测试、期望映射、评分日志、devcheck 私有 gold 对照、来源宿主机执行记录与历史环境审查记录",
+    "provide_to_solver": false,
+    "note": "不是正式训练或评测批准"
+  },
+  "costs": {
+    "review_tokens": null,
+    "review_usd": null,
+    "cpu_seconds": null,
+    "note": "本轮只做静态阅读，没有执行命令，也没有工具观测到的 token 或费用"
+  },
+  "reviewed_by": "R2E 私有主审（Claude，静态）",
+  "reviewed_at": "2026-09-25",
+  "order_note": "先保存 analysis_before_history.md，再读历史引用，然后写 old_findings_delta.md、card.md 与本文件",
+  "artifacts": {
+    "public_read": "public_read.md",
+    "analysis_before_history": "analysis_before_history.md",
+    "old_findings_delta": "old_findings_delta.md",
+    "card": "card.md"
+  },
+  "prior_record_ref": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_env_repair_20260924/tasks/aiohttp__1c1c0ea353041c8814a6131c3a92978dc2373e52/screening_record.json",
+  "coordinator_notes": [
+    {
+      "date": "2026-09-25",
+      "by": "Claude B（协调者）",
+      "note": "本记录写于候选实跑之前，'待实跑''预期'为当时推断。实跑结果见 docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/r2e_static_review_batch2_20260925/grader_candidates.md，主审与复核的对照见同目录 results/<instance_id>/review.md，批次结论见 README.md §3。协调者未改动本记录的其它字段。"
+    }
+  ]
+}

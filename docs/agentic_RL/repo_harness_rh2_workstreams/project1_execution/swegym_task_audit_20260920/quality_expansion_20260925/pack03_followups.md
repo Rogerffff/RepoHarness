@@ -1,0 +1,25 @@
+# Dask 定向后续提案（未执行或派发）
+
+本文件仅为任务一静态审查的证据需求。实际环境、运行和探针接线由任务二Claude B安排；这些私有质量结论不应加入独立solver上下文。
+
+## 6626：公开两种set_index顺序
+
+在实际actor正式入口保存消息、初态、准备阶段与各命令RC、解释器及Dask源码来源，再运行题面两条路径。验证col1已知空categories及计算结果一致、col2的A类别保留、索引与数据内容对应。公开读者的内存例子可作为提案入口。现有compat-v1日志已覆盖旧pytest/sparse失败，不先重复安装或旧grader对照；不能把导出无wheels解释为镜像缺资产。
+
+CategoricalIndex空类别路径是相邻既有边界；若仅审题面Series目标，不以未修全部Index行为判新增回归。runner digest在兼容安装后变化的字节来源尚未完全核对，保留该限制，不宣称全面完整性已证。
+
+## 7656：公开Entry参数路径
+
+在实际actor入口运行题面的Entry→delayed函数→compute，检查缺失非初始化字段不阻断、other_field默认值保留，并用公开旧嵌套例检查Delayed字段被求值。公开hack是合法来源线索，本题不用于声称无提示独立定位能力。无需SQL服务或外部数据。
+
+已经赋值的init=False字段、post_init重建和base.compute的另一遍历入口分别保留边界。不要以gold使用hasattr就预设它会保留所有已有状态：它仍把字段交给构造器；也不能预设只取init字段一定丢post_init派生值。上述范围若需另验，先确认任务目标，不能把旧报告的预期当正确oracle。
+
+## 9378：一项私有mask断言诊断
+
+在与目标版本相符的私有副本中，针对ones_like/zeros_like保留Dask惰性包装、MaskedArray类型、shape、dtype及正确常量值，仅让输出mask错误地全False；empty_like保持参考行为。此为诊断变体提案，不改本批原件、正式题面或评分。
+
+同时观察现有test_like_funcs的ones/zeros节点和独立显式getmaskarray逐位比较。静态预期：前者可能因masked_equal=True忽略掩码差异，而后者明确失败。保存精确环境/源码身份、诊断差分hash、命令、每个节点与显式断言的结果；运行前预期和实际结果分列。只执行窄节点时，仅能报告这些断言的判别力，不能称为完整RH2得分或全部P2P通过。无需为这一问题先跑全仓。
+
+默认gold按块保留mask的设计合理；诊断目的在于验收强度，不能把弱测试当成gold已错。empty_like不应强求特定随机内存值。可选dtype的元数据消费机制另记为接口边界；实际NumPy签名、派生docstring及支持承诺未核，不据**kwargs或自动文档机制认定所有参数应兼容，也不为此额外排本次CPU。
+
+私有诊断不能认证actual actor开发资格；后者仍须正式actor公开入口与身份/初态/环境证据。任何含gold/隐藏断言的材料仅供私有审查。

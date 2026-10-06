@@ -1,0 +1,44 @@
+[
+  {
+    "id": "import_version",
+    "timeout_s": 60,
+    "expect": "zero",
+    "purpose": "确认在 /testbed 下能从源码树导入 aiohttp，并看解释器版本。预计依次打印 3.9.21、0.9.1dev、/testbed/aiohttp/__init__.py；修复前后相同。",
+    "cmd": "python -B -c \"import sys, aiohttp; print(sys.version.split()[0]); print(aiohttp.__version__); print(aiohttp.__file__)\""
+  },
+  {
+    "id": "literal_example_probe",
+    "timeout_s": 60,
+    "expect": "any",
+    "purpose": "核对题面示例本身能否原样运行（public_read.md §3.3），不用于判断修复。预计第一行是顶层导入失败：ImportError: cannot import name 'ClientRequest' from 'aiohttp'。改从 aiohttp.client 导入后，用真实事件循环直接调 _create_connection，预计抛 TypeError（cannot 'yield from' a coroutine object in a non-coroutine generator）；环境不同时也可能是 ProxyConnectionError。req.path 仍为 '/path'，修复前后输出相同。",
+    "cmd": "python -B -u -c '\nimport asyncio\ntry:\n    from aiohttp import ProxyConnector, ClientRequest\n    print(\"literal import from aiohttp: OK\")\nexcept ImportError as exc:\n    print(\"literal import from aiohttp: ImportError:\", exc)\nfrom aiohttp import ProxyConnector\nfrom aiohttp.client import ClientRequest\nloop = asyncio.new_event_loop()\nconnector = ProxyConnector(\"http://proxy.example.com\", loop=loop)\nreq = ClientRequest(\"GET\", \"http://localhost:1234/path\")\ntry:\n    loop.run_until_complete(connector._create_connection(req))\n    print(\"literal body finished, req.path =\", repr(req.path))\nexcept Exception as exc:\n    print(\"literal body raised\", type(exc).__name__, \"|\", exc, \"| req.path =\", repr(req.path))\n'"
+  },
+  {
+    "id": "repro_port_mocked",
+    "timeout_s": 60,
+    "expect": "nonzero",
+    "purpose": "核心复现，能区分修复前后。像公开测试一样 mock 掉代理连接（loop.create_connection 返回已完成的 Future），分别经公开方法 connect() 和题面使用的 _create_connection() 各走一遍。先打印三条参考 info 行（无端口、显式 :80、带 userinfo 和查询串；:80 那条随实现不同，只看不判），再断言无端口 URL 仍为 http://www.python.org/、题面 URL 为 http://localhost:1234/path。base 上预计两条 issue case 都是 'http://localhost/path'，以 AssertionError 退出码 1 结束；修复后应打印 OK 并以 0 退出。",
+    "cmd": "python -B -c '\nimport asyncio\nfrom unittest import mock\nimport aiohttp\nfrom aiohttp.client import ClientRequest\nloop = asyncio.new_event_loop()\nloop_mock = mock.Mock()\ndone = asyncio.Future(loop=loop)\ndone.set_result((mock.Mock(), mock.Mock()))\nloop_mock.create_connection.return_value = done\nconnector = aiohttp.ProxyConnector(\"http://proxy.example.com\", loop=loop_mock)\ndef via(url, public=True):\n    req = ClientRequest(\"GET\", url)\n    coro = connector.connect(req) if public else connector._create_connection(req)\n    loop.run_until_complete(coro)\n    return req.path\nfor url in (\"http://www.python.org\", \"http://localhost:80/path\", \"http://user:pass@localhost:1234/path?a=1\"):\n    print(\"info:\", url, \"->\", repr(via(url)))\ngot_connect = via(\"http://localhost:1234/path\")\ngot_create = via(\"http://localhost:1234/path\", public=False)\nprint(\"issue case via connect():\", repr(got_connect))\nprint(\"issue case via _create_connection():\", repr(got_create))\nassert via(\"http://www.python.org\") == \"http://www.python.org/\", \"no-port URL changed\"\nassert got_connect == \"http://localhost:1234/path\", got_connect\nassert got_create == \"http://localhost:1234/path\", got_create\nprint(\"OK: port kept in proxied request path\")\n'"
+  },
+  {
+    "id": "public_proxy_tests",
+    "timeout_s": 180,
+    "expect": "zero",
+    "purpose": "跑相关公开测试 tests/test_connector.py::ProxyConnectorTests（13 个用例，全部用 mock，不联网）。它们约束了无端口 URL 的改写结果、失败时不改请求、认证头迁移和 CONNECT 行为。预计修复前后都是 13 passed；修复后若有失败，说明破坏了旧行为。",
+    "cmd": "python -B -m pytest -p no:cacheprovider -q tests/test_connector.py::ProxyConnectorTests"
+  },
+  {
+    "id": "public_connector_file",
+    "timeout_s": 300,
+    "expect": "any",
+    "purpose": "整个 tests/test_connector.py 跑一遍，看 base 上已有的、与本题无关的失败。预计集中在走真实 socket 的 HttpClientConnectorTests（test_tcp_connector、test_unix_connector），原因是 Python 3.9 兼容问题（静态推断）；其余应通过。修复后失败集合不应变大。",
+    "cmd": "python -B -m pytest -p no:cacheprovider -q -rfE tests/test_connector.py"
+  },
+  {
+    "id": "public_client_file_collect",
+    "timeout_s": 120,
+    "expect": "nonzero",
+    "purpose": "确认 tests/test_client.py（含 ClientRequest 的 host/port/Host 头测试）在本环境能否收集。预计在收集阶段因 SyntaxError 中断（第 647 行 asyncio.async 在 3.7+ 是关键字错误），退出码 2；修复前后相同，意味着这些测试只能读、不能跑。",
+    "cmd": "python -B -m pytest -p no:cacheprovider -q tests/test_client.py"
+  }
+]

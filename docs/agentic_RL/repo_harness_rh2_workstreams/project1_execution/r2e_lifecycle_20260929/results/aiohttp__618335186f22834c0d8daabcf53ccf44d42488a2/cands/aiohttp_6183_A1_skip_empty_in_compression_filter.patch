@@ -1,0 +1,13 @@
+--- a/aiohttp/protocol.py
++++ b/aiohttp/protocol.py
+@@ -795,7 +795,9 @@
+                 chunk = yield EOF_MARKER
+ 
+             else:
+-                yield zcomp.compress(chunk)
++                data = zcomp.compress(chunk)
++                if data:
++                    yield data
+                 chunk = yield EOL_MARKER
+ 
+ 

@@ -1,0 +1,292 @@
+{
+  "format": "swe_dvc_private_diagnostic.v1",
+  "as_of": "2026-10-03",
+  "instance_id": "iterative__dvc-9395",
+  "revision_id": "dvc9395-behavior-v2-draft",
+  "kind": "private_pytest_diagnostic",
+  "formal_grading": false,
+  "qualifies_for_probe": false,
+  "image_id": "sha256:c093861f62b8071b3c1e5b3142abd5843888421364e69dd728cb80856f621b60",
+  "effective_test_patch_sha256": "sha256:964c80ef786b71091fcc722d8b3fdcd8afe8ba7e3f5fb511d6cb9661a25c2777",
+  "results": [
+    {
+      "version": "original",
+      "candidate": "noop",
+      "pytest_rc": 1,
+      "total_executed": 30,
+      "missing_references": [],
+      "f2p": {
+        "tests/func/test_run_cache.py::test_restore_pull": "FAILED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source": "FAILED"
+      },
+      "p2p_counts": {
+        "PASSED": 27
+      },
+      "failed_nodes": [
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_import",
+        "tests/func/test_run_cache.py::test_restore_pull"
+      ],
+      "extra_failures": [
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_import"
+      ],
+      "cleanup_removed": true
+    },
+    {
+      "version": "original",
+      "candidate": "gold",
+      "pytest_rc": 0,
+      "total_executed": 30,
+      "missing_references": [],
+      "f2p": {
+        "tests/func/test_run_cache.py::test_restore_pull": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source": "PASSED"
+      },
+      "p2p_counts": {
+        "PASSED": 27
+      },
+      "failed_nodes": [],
+      "extra_failures": [],
+      "cleanup_removed": true
+    },
+    {
+      "version": "original",
+      "candidate": "c3_frozenfix",
+      "pytest_rc": 1,
+      "total_executed": 30,
+      "missing_references": [],
+      "f2p": {
+        "tests/func/test_run_cache.py::test_restore_pull": "FAILED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source": "PASSED"
+      },
+      "p2p_counts": {
+        "PASSED": 27
+      },
+      "failed_nodes": [
+        "tests/func/test_run_cache.py::test_restore_pull"
+      ],
+      "extra_failures": [],
+      "cleanup_removed": true
+    },
+    {
+      "version": "original",
+      "candidate": "c3_missing_only",
+      "pytest_rc": 1,
+      "total_executed": 30,
+      "missing_references": [],
+      "f2p": {
+        "tests/func/test_run_cache.py::test_restore_pull": "FAILED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source": "PASSED"
+      },
+      "p2p_counts": {
+        "PASSED": 27
+      },
+      "failed_nodes": [
+        "tests/func/test_run_cache.py::test_restore_pull"
+      ],
+      "extra_failures": [],
+      "cleanup_removed": true
+    },
+    {
+      "version": "original",
+      "candidate": "up351_port",
+      "pytest_rc": 1,
+      "total_executed": 30,
+      "missing_references": [],
+      "f2p": {
+        "tests/func/test_run_cache.py::test_restore_pull": "FAILED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source": "PASSED"
+      },
+      "p2p_counts": {
+        "PASSED": 27
+      },
+      "failed_nodes": [
+        "tests/func/test_run_cache.py::test_restore_pull"
+      ],
+      "extra_failures": [],
+      "cleanup_removed": true
+    },
+    {
+      "version": "original",
+      "candidate": "w_swallow3",
+      "pytest_rc": 0,
+      "total_executed": 30,
+      "missing_references": [],
+      "f2p": {
+        "tests/func/test_run_cache.py::test_restore_pull": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source": "PASSED"
+      },
+      "p2p_counts": {
+        "PASSED": 27
+      },
+      "failed_nodes": [],
+      "extra_failures": [],
+      "cleanup_removed": true
+    },
+    {
+      "version": "effective",
+      "candidate": "noop",
+      "pytest_rc": 1,
+      "total_executed": 41,
+      "missing_references": [],
+      "f2p": {
+        "tests/func/test_run_cache.py::test_restore_pull": "FAILED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream": "FAILED"
+      },
+      "p2p_counts": {
+        "PASSED": 37
+      },
+      "failed_nodes": [
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_import",
+        "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream",
+        "tests/func/test_run_cache.py::test_restore_pull"
+      ],
+      "extra_failures": [
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_import"
+      ],
+      "cleanup_removed": true
+    },
+    {
+      "version": "effective",
+      "candidate": "gold",
+      "pytest_rc": 1,
+      "total_executed": 41,
+      "missing_references": [],
+      "f2p": {
+        "tests/func/test_run_cache.py::test_restore_pull": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream": "PASSED"
+      },
+      "p2p_counts": {
+        "FAILED": 10,
+        "PASSED": 27
+      },
+      "failed_nodes": [
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source",
+        "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[source]",
+        "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[output]",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[normal]",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[dry]",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_preserves_modified_source",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_still_errors_for_missing_source",
+        "tests/func/test_repro_multistage.py::test_pull_no_run_cache_does_not_download_runs",
+        "tests/func/test_repro_multistage.py::test_pull_existing_output_without_hash_can_run",
+        "tests/func/test_repro_multistage.py::test_pull_changed_dependency_can_recompute",
+        "tests/func/test_repro_multistage.py::test_pull_restores_from_http_with_local_run_cache"
+      ],
+      "extra_failures": [],
+      "cleanup_removed": true
+    },
+    {
+      "version": "effective",
+      "candidate": "c3_frozenfix",
+      "pytest_rc": 0,
+      "total_executed": 41,
+      "missing_references": [],
+      "f2p": {
+        "tests/func/test_run_cache.py::test_restore_pull": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream": "PASSED"
+      },
+      "p2p_counts": {
+        "PASSED": 37
+      },
+      "failed_nodes": [],
+      "extra_failures": [],
+      "cleanup_removed": true
+    },
+    {
+      "version": "effective",
+      "candidate": "c3_missing_only",
+      "pytest_rc": 1,
+      "total_executed": 41,
+      "missing_references": [],
+      "f2p": {
+        "tests/func/test_run_cache.py::test_restore_pull": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream": "FAILED"
+      },
+      "p2p_counts": {
+        "PASSED": 37
+      },
+      "failed_nodes": [
+        "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream"
+      ],
+      "extra_failures": [],
+      "cleanup_removed": true
+    },
+    {
+      "version": "effective",
+      "candidate": "up351_port",
+      "pytest_rc": 1,
+      "total_executed": 41,
+      "missing_references": [],
+      "f2p": {
+        "tests/func/test_run_cache.py::test_restore_pull": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source": "PASSED",
+        "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream": "PASSED"
+      },
+      "p2p_counts": {
+        "FAILED": 6,
+        "PASSED": 31
+      },
+      "failed_nodes": [
+        "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[source]",
+        "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[output]",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[normal]",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[dry]",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_preserves_modified_source",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_still_errors_for_missing_source"
+      ],
+      "extra_failures": [],
+      "cleanup_removed": true
+    },
+    {
+      "version": "effective",
+      "candidate": "w_swallow3",
+      "pytest_rc": 1,
+      "total_executed": 41,
+      "missing_references": [],
+      "f2p": {
+        "tests/func/test_run_cache.py::test_restore_pull": "PASSED",
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source": "FAILED",
+        "tests/func/test_repro_multistage.py::test_pull_recovers_frozen_stage_for_downstream": "PASSED"
+      },
+      "p2p_counts": {
+        "FAILED": 10,
+        "PASSED": 27
+      },
+      "failed_nodes": [
+        "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source",
+        "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[source]",
+        "tests/func/test_repro_multistage.py::test_pull_dry_preserves_workspace_and_cache[output]",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[normal]",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_when_nothing_missing[dry]",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_preserves_modified_source",
+        "tests/func/test_repro_multistage.py::test_pull_without_remote_still_errors_for_missing_source",
+        "tests/func/test_repro_multistage.py::test_pull_no_run_cache_does_not_download_runs",
+        "tests/func/test_repro_multistage.py::test_pull_existing_output_without_hash_can_run",
+        "tests/func/test_repro_multistage.py::test_pull_changed_dependency_can_recompute",
+        "tests/func/test_repro_multistage.py::test_pull_restores_from_http_with_local_run_cache"
+      ],
+      "extra_failures": [],
+      "cleanup_removed": true
+    }
+  ],
+  "raw_evidence_roots": [
+    "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v1-004",
+    "runs/category2_repair_20260929/repository_work/swe_dvc/cpu_evidence/dvc9395-diagnostic-v2-002"
+  ],
+  "raw_current_summary_sha256": "sha256:6ededc1ef069ea23ef7ba8b04291a7e2771e35eefd828aa762bc4f6813c97b3c",
+  "reuse_scope": "只复用v1诊断的original六行；原测试、候选、依赖未变。旧effective正对照被Repo.odb访问错误拒绝，不能复用为v2结果。",
+  "correction": "三处缓存访问使用精确base支持的Repo.cache.local.path，无目标/参考/候选改动",
+  "remaining": [
+    "共用正式版本发布",
+    "原已知误奖及新版正式评分/资格",
+    "actor交付",
+    "非作者运行结果核查",
+    "模型探针"
+  ]
+}

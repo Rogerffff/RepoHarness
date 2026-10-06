@@ -1,0 +1,36 @@
+{
+  "schema": "monai.public_asset_recovery_candidate.v1",
+  "instance_id": "Project-MONAI__MONAI-6975",
+  "base_commit": "392c5c1b860c0f0cfd0aa14e9d4b342c8b5ef5e7",
+  "status": "conditional_offline_candidate_not_deployed",
+  "activation_condition": "仅当真实actor确认原题NIfTI路径缺失时使用；静态导出/下载归档不替代此证据",
+  "official_config_url": "https://raw.githubusercontent.com/Project-MONAI/MONAI/392c5c1b860c0f0cfd0aa14e9d4b342c8b5ef5e7/tests/testing_data/data_config.json",
+  "official_asset_url": "https://github.com/Project-MONAI/MONAI-extra-test-data/releases/download/0.8.1/avg152T1_LR_nifti.nii.gz",
+  "base_data_config": {
+    "path": "runs/swegym_quality_expansion_20260925/public/Project-MONAI__MONAI-6975/base/tests/testing_data/data_config.json",
+    "sha256": "8bbb4ef59ac546183eb7764ca4cd6d0ddb1416fef59a81273ca9235490fda5ad",
+    "bytes": 7914
+  },
+  "asset_archive": {
+    "path": "runs/category2_repair_20260929/repository_work/swe_monai/public_asset_6975_v1/ref_avg152T1_LR.nii.gz",
+    "sha256": "c01a50caa7a563158ecda43d93a1466bfc8aa939bc16b06452ac1089c54661c8",
+    "bytes": 531671
+  },
+  "archive_receipt": {
+    "path": "runs/category2_repair_20260929/repository_work/swe_monai/public_asset_6975_v1/archive_receipt.json",
+    "sha256": "761ff87fe816540aedf9f5d581a27c620927578917f5ce382a446ead85814942",
+    "bytes": 1368
+  },
+  "expected_actor_path": "/testbed/tests/testing_data/ref_avg152T1_LR.nii.gz",
+  "target_image_scope": "copy-only公开数据资产；保留固定源镜像、base源码、Python/依赖/原测试/原vendor安装与原题面",
+  "publication_condition": "实际缺失及修复验证后另建环境材料版本和请求；不可将本文件当现有v1发布输入或GPU准入",
+  "required_validation": [
+    "实际镜像层前缀和唯一COPY路径",
+    "新actual image ID、Dockerfile/asset SHA及原来源manifest",
+    "UID54321下文件可读且SHA为官方配置值",
+    "原公开LoadImaged/RandAffined直调及Dataset可执行",
+    "新材料正式64参考0/1/0、完整退出与清理、非作者核查"
+  ],
+  "deployed": false,
+  "cpu_or_gpu_acceptance_proven": false
+}

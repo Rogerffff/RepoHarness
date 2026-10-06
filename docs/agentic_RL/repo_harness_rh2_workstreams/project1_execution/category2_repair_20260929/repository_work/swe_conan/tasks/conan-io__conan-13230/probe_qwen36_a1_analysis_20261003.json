@@ -1,0 +1,146 @@
+{
+  "schema_id": "conan.owner.model_analysis.v1",
+  "as_of": "2026-10-03T01:13:03.946912+00:00",
+  "request_id": "swe-conan13230-r11-briefv2-20261003-v1",
+  "job_id": "gpu1003-conan13230-qwen36-a1",
+  "model": "Qwen/Qwen3.6-35B-A3B",
+  "sample": 1,
+  "material_version": "conan13230-private-test-v1",
+  "budget_version": "probe-wide-v1",
+  "raw_score": {
+    "reward": 1,
+    "f2p": {
+      "passed": 3,
+      "total": 3
+    },
+    "p2p": {
+      "passed": 34,
+      "total": 34
+    }
+  },
+  "semantic_verdict": "correct_root_cause_fix_in_public_configuration_generation_scope_non_author_reviewed",
+  "semantic_independent_review": {
+    "status": "completed_no_blocking_finding",
+    "report": {
+      "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/reviews/non_author_13230_qwen36_a1_semantic_review_20261003.md",
+      "sha256": "sha256:73ec750397d8db7461e2a6338eba58cef1d228b9b5611de1a734decee25a0b81"
+    },
+    "reviewer_role": "non_author_semantic_falsifier",
+    "model": "gpt-6.1-sol",
+    "reasoning_effort": "high",
+    "scope": "source root-cause fix, all candidate changes, target branches, official-test exclusion and model public verification; not GPU execution acceptance"
+  },
+  "execution_independent_review": "pending_gpu_owner",
+  "owner_analysis": {
+    "path": "docs/agentic_RL/repo_harness_rh2_workstreams/project1_execution/category2_repair_20260929/repository_work/swe_conan/tasks/conan-io__conan-13230/probe_qwen36_a1_analysis_20261003.md",
+    "sha256": "sha256:16ae7f4b2011aeccb9abbda45f654d8bf31b8efe92ebee0e5360c53f5571bb23"
+  },
+  "owner_readback": {
+    "path": "runs/category2_repair_20260929/conan_cpu_20261003/probe_analysis_13230_qwen36_a1_20261003_v1/owner_readback.json",
+    "sha256": "sha256:c06ac509ba48e4d9c6cf8e4a3939db3baf1c1347bede8ba881655bab2e1672e2"
+  },
+  "trajectory": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v13/results/gpu1003-conan13230-qwen36-a1/attempt/trajectory.jsonl",
+    "sha256": "9e43c50e1832e93e60dbc4de6faf3547c774203f9461a1e72824d8b907597b87",
+    "bytes": 330367
+  },
+  "complete_candidate": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v13/results/gpu1003-conan13230-qwen36-a1/attempt/candidate/conan-io__conan-13230.diff",
+    "sha256": "85325a0a47f614632585154892c31b62d8fc349865495722973131bc8ca71adb",
+    "bytes": 2396
+  },
+  "frozen_patch": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v13/results/gpu1003-conan13230-qwen36-a1/attempt/frozen/frozen_patch.json",
+    "sha256": "6ea8e0289d24603603581baf8d3f8a27774e13bcb0af44c75012c2b2c2169448",
+    "bytes": 43696
+  },
+  "scoring_projection": {
+    "path": "runs/ordinary_gpu_probe_20261002/remote/queue_v13/results/gpu1003-conan13230-qwen36-a1/grading/projection.json",
+    "sha256": "d472dddd5518666462711a3e9e915eafaace4a1bc28ee2c13b626998fa285789",
+    "bytes": 345
+  },
+  "dimensions": {
+    "method": "correct target-OS guard; before/after reproduction; no bypass found; Apple branches preserved within source-generation scope",
+    "localization": "tool1 finds relevant source; tool2 reads it at 1.658 seconds; correct diagnosis after four tools, response completion upper bound14.012 seconds",
+    "tools": "22 calls Bash15/Read5/Edit2; two recovered setup failures despite reported is_error count0; deliberate recipe exceptions interpreted correctly",
+    "parallel": "actual requests serial; helper/test independent read opportunity existed; execution-layer parallel support not established; capability undetermined",
+    "verification": "public before/after configuration, module34 then35, separate15unit and5integration passes; private37 allpassed; no fullcompile/link claim",
+    "efficiency": "39.548seconds solve,23turns,521816cumulativeinput/5007output; largest input33193; preparation/queue/grading separate; no comparative/general conclusion",
+    "termination_and_stability": "completed/end_turn; no truncation; one sample only; Coder and GPU execution review pending; stability undetermined"
+  },
+  "metrics": {
+    "model_turns": 23,
+    "tool_calls": 22,
+    "tool_counts": {
+      "Bash": 15,
+      "Read": 5,
+      "Edit": 2
+    },
+    "reported_tool_errors": 0,
+    "recovered_setup_command_failures": [
+      {
+        "tool_index": 7,
+        "row": 107,
+        "reason": "changed cwd without source import path; ModuleNotFoundError: conans"
+      },
+      {
+        "tool_index": 10,
+        "row": 149,
+        "reason": "default build profile not yet written"
+      }
+    ],
+    "deliberate_exception_observations_not_setup_errors": [
+      177,
+      213
+    ],
+    "cumulative_input_tokens": 521816,
+    "cumulative_output_tokens": 5007,
+    "largest_request_input_tokens": 33193,
+    "solve_seconds": 39.548,
+    "harness_exec_seconds": 36.702,
+    "cc_duration_seconds": 36.084,
+    "cc_api_duration_seconds": 32.978,
+    "cc_non_api_residual_seconds_not_pure_tool_time": 3.106,
+    "first_model_request_epoch": 1790987071.6371615,
+    "first_relevant_search_result_epoch": 1790987072.859,
+    "first_relevant_source_read_result_epoch": 1790987073.295,
+    "correct_diagnosis_response_completion_epoch": 1790987085.6487253,
+    "correct_diagnosis_response_completion_since_first_request_seconds": 14.011563777923584,
+    "first_relevant_source_read_since_first_request_seconds": 1.6578385829925537,
+    "environment_preparation_stage_seconds": {
+      "image_ready": 0.019,
+      "network_and_container": 1.176,
+      "git_sanitize": 15.518,
+      "trusted_init": 7.967,
+      "baseline_census": 0.176,
+      "quiescence": 0.379
+    },
+    "grading_timing": {
+      "schema_id": "rh2.grading_timing_record.v1",
+      "record_id": "timing_96f3e645",
+      "trajectory_id": "gpu1003-conan13230-qwen36-a1",
+      "task_id": "swe_gym_lite::conan-io__conan-13230",
+      "image_pull_seconds": 0.0,
+      "env_reset_seconds": 15.96,
+      "prep_seconds": 0.265,
+      "test_seconds": 1.97,
+      "total_grading_seconds": 91.619,
+      "queue_wait_seconds": 0.0,
+      "container_peak_memory_mb": 318.512,
+      "queue_depth_at_enqueue": null,
+      "backpressure_triggered": false
+    },
+    "cc_cost_usd_is_builtin_estimate_not_local_compute_bill": 2.7342549999999997
+  },
+  "same_budget_actual_gateway_output_limits": [
+    65536
+  ],
+  "changes_required": [],
+  "cpu_rerun_required_for_this_arm": false,
+  "model_rerun_required_for_this_arm": false,
+  "paired_request_closed": false,
+  "pending_models": [
+    "Qwen/Qwen3-Coder-30B-A3B-Instruct"
+  ],
+  "training_eligibility": "not_established"
+}

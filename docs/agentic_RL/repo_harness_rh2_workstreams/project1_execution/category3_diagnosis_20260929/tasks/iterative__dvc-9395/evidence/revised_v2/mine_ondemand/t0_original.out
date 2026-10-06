@@ -1,0 +1,3132 @@
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/pytest_benchmark/logger.py:46: PytestBenchmarkWarning: Benchmarks are automatically disabled because xdist plugin is active.Benchmarks cannot be performed reliably in a parallelized environment.
+  warner(PytestBenchmarkWarning(text))
+============================= test session starts ==============================
+platform linux -- Python 3.9.19, pytest-7.4.4, pluggy-1.5.0
+benchmark: 4.0.0 (defaults: timer=time.perf_counter disable_gc=False min_rounds=5 min_time=0.000005 max_time=1.0 calibration_precision=10 warmup=False warmup_iterations=100000)
+rootdir: /testbed
+configfile: pyproject.toml
+plugins: dvc-2.56.1.dev27+gc75a5583b, shutil-1.7.0, xdist-3.6.1, flaky-3.8.1, mock-3.14.0, anyio-4.6.0, hydra-core-1.3.2, benchmark-4.0.0, virtualenv-1.7.0, test-utils-0.1.0, timeout-2.3.1, lazy-fixture-0.6.3, cov-5.0.0, docker-1.0.1
+collected 30 items
+
+tests/func/test_run_cache.py .........F                                  [ 33%]
+tests/func/test_repro_multistage.py ..................F.                 [100%]
+
+=================================== FAILURES ===================================
+______________________________ test_restore_pull _______________________________
+
+tmp_dir = PosixTmpDir('/tmp/pytest-of-root/pytest-0/test_restore_pull0')
+dvc = Repo: '/tmp/pytest-of-root/pytest-0/test_restore_pull0'
+run_copy = <function run_copy.<locals>.run_copy at 0x7f1694359790>
+mocker = <pytest_mock.plugin.MockerFixture object at 0x7f169424b430>
+local_remote = PosixTmpDir('/tmp/pytest-of-root/pytest-0/local-cloud1')
+
+    def test_restore_pull(tmp_dir, dvc, run_copy, mocker, local_remote):
+        import dvc.output as dvc_output
+    
+        tmp_dir.gen("foo", "foo")
+        stage = run_copy("foo", "bar", name="copy-foo-bar")
+    
+        dvc.push(run_cache=True)
+    
+        mock_restore = mocker.spy(dvc.stage_cache, "restore")
+        mock_run = mocker.patch("dvc.stage.run.cmd_run")
+        mock_checkout = mocker.spy(dvc_output, "checkout")
+    
+        # removing any information that `dvc` could use to re-generate from
+        (tmp_dir / "bar").unlink()
+        (tmp_dir / LOCK_FILE).unlink()
+        remove(stage.outs[0].cache_path)
+    
+        # removing local run cache
+        remove(dvc.stage_cache.cache_dir)
+    
+        (stage,) = dvc.reproduce("copy-foo-bar", pull=True)
+    
+        mock_restore.assert_called_once_with(stage, pull=True, dry=False)
+        mock_run.assert_not_called()
+>       assert mock_checkout.call_count == 3
+E       assert 2 == 3
+E        +  where 2 = <function checkout at 0x7f16942d2160>.call_count
+
+/testbed/tests/func/test_run_cache.py:185: AssertionError
+---------------------------- Captured stdout setup -----------------------------
+2026-09-29 10:27:28,994 DEBUG: Writing '/tmp/pytest-of-root/pytest-0/test_restore_pull0/.dvc/config'.
+------------------------------ Captured log setup ------------------------------
+DEBUG    dvc.config:config.py:206 Writing '/tmp/pytest-of-root/pytest-0/test_restore_pull0/.dvc/config'.
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:29,001 DEBUG: Removing output 'bar' of stage: 'copy-foo-bar'.
+2026-09-29 10:27:29,005 DEBUG: {'foo': 'modified'}
+Running stage 'copy-foo-bar':
+> python copy.py foo bar
+2026-09-29 10:27:29,054 DEBUG: Computed stage: 'copy-foo-bar' md5: '70ca98c843923748b6045ffc4559be1c'
+Creating 'dvc.yaml'
+Adding stage 'copy-foo-bar' in 'dvc.yaml'
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+2026-09-29 10:27:29,101 DEBUG: Removing '/tmp/pytest-of-root/pytest-0/test_restore_pull0/.dvc/cache/ac/bd18db4cc2f85cedef654fccc4a4d8'
+2026-09-29 10:27:29,102 DEBUG: Removing '/tmp/pytest-of-root/pytest-0/test_restore_pull0/.dvc/cache/runs'
+2026-09-29 10:27:29,102 DEBUG: Assuming 'copy-foo-bar' to be a stage inside 'dvc.yaml'
+2026-09-29 10:27:29,104 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:29,107 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:29,111 DEBUG: Dependency 'copy.py' of stage: 'copy-foo-bar' changed because it is 'modified'.
+2026-09-29 10:27:29,111 DEBUG: stage: 'copy-foo-bar' changed.
+2026-09-29 10:27:29,113 DEBUG: Removing output 'bar' of stage: 'copy-foo-bar'.
+2026-09-29 10:27:29,115 DEBUG: {'copy.py': 'modified'}
+Stage 'copy-foo-bar' is cached - skipping run, checking out outputs
+2026-09-29 10:27:29,137 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:29,139 DEBUG: Computed stage: 'copy-foo-bar' md5: '262f10a31f4b218b7b450b3511c2413f'
+2026-09-29 10:27:29,148 DEBUG: stage: 'copy-foo-bar' was reproduced
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0.00/? [00:00<?,        ?B/s]
+  0% |          |0.00/232 [00:00<?,        ?B/s]
+                                                
+
+!
+  0% |          |0.00/? [00:00<?,        ?B/s]
+                                              
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+
+!
+
+  0%|          |/tmp/pytest-of-root/pytest-0/test_r0.00/? [00:00<?,        ?B/s]
+
+  0%|          |/tmp/pytest-of-root/pytest-0/tes0.00/3.00 [00:00<?,        ?B/s]
+
+                                                                                
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0.00/? [00:00<?,        ?B/s]
+  0% |          |0.00/232 [00:00<?,        ?B/s]
+                                                
+
+!
+  0% |          |0.00/? [00:00<?,        ?B/s]
+                                              
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+
+!
+
+  0%|          |/tmp/pytest-of-root/pytest-0/local-0.00/? [00:00<?,        ?B/s]
+
+  0%|          |/tmp/pytest-of-root/pytest-0/loc0.00/3.00 [00:00<?,        ?B/s]
+
+                                                                                
+                                                       
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+------------------------------ Captured log call -------------------------------
+DEBUG    dvc.stage:__init__.py:387 Removing output 'bar' of stage: 'copy-foo-bar'.
+DEBUG    dvc.output:output.py:615 {'foo': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-foo-bar':
+INFO     dvc.stage.run:run.py:71 > python copy.py foo bar
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-foo-bar' md5: '70ca98c843923748b6045ffc4559be1c'
+INFO     dvc.dvcfile:dvcfile.py:277 Creating 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'copy-foo-bar' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+DEBUG    dvc.utils.fs:fs.py:63 Removing '/tmp/pytest-of-root/pytest-0/test_restore_pull0/.dvc/cache/ac/bd18db4cc2f85cedef654fccc4a4d8'
+DEBUG    dvc.utils.fs:fs.py:63 Removing '/tmp/pytest-of-root/pytest-0/test_restore_pull0/.dvc/cache/runs'
+DEBUG    dvc.repo.stage:stage.py:218 Assuming 'copy-foo-bar' to be a stage inside 'dvc.yaml'
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:336 Dependency 'copy.py' of stage: 'copy-foo-bar' changed because it is 'modified'.
+DEBUG    dvc.stage:__init__.py:376 stage: 'copy-foo-bar' changed.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'bar' of stage: 'copy-foo-bar'.
+DEBUG    dvc.output:output.py:615 {'copy.py': 'modified'}
+INFO     dvc.stage.cache:cache.py:210 Stage 'copy-foo-bar' is cached - skipping run, checking out outputs
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-foo-bar' md5: '262f10a31f4b218b7b450b3511c2413f'
+DEBUG    dvc.stage:__init__.py:440 stage: 'copy-foo-bar' was reproduced
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+________________________ test_repro_pulls_mising_import ________________________
+
+graph = <networkx.classes.digraph.DiGraph object at 0x7f168ecceb50>
+stages = [Stage: 'copy-foo'], downstream = False, single_item = False
+on_unchanged = None, kwargs = {'interactive': False, 'pull': True}
+steps = [Stage: 'foo.dvc', Stage: 'copy-foo'], force_downstream = False
+result = [], unchanged = [], ret = [], checkpoint_func = None, i = 0
+
+    def _reproduce_stages(  # noqa: C901
+        graph,
+        stages,
+        downstream=False,
+        single_item=False,
+        on_unchanged=None,
+        **kwargs,
+    ):
+        r"""Derive the evaluation of the given node for the given graph.
+    
+        When you _reproduce a stage_, you want to _evaluate the descendants_
+        to know if it make sense to _recompute_ it. A post-ordered search
+        will give us an order list of the nodes we want.
+    
+        For example, let's say that we have the following pipeline:
+    
+                                   E
+                                  / \
+                                 D   F
+                                / \   \
+                               B   C   G
+                                \ /
+                                 A
+    
+        The derived evaluation of D would be: [A, B, C, D]
+    
+        In case that `downstream` option is specified, the desired effect
+        is to derive the evaluation starting from the given stage up to the
+        ancestors. However, the `networkx.ancestors` returns a set, without
+        any guarantee of any order, so we are going to reverse the graph and
+        use a reverse post-ordered search using the given stage as a starting
+        point.
+    
+                       E                                   A
+                      / \                                 / \
+                     D   F                               B   C   G
+                    / \   \        --- reverse -->        \ /   /
+                   B   C   G                               D   F
+                    \ /                                     \ /
+                     A                                       E
+    
+        The derived evaluation of _downstream_ B would be: [B, D, E]
+        """
+        steps = _get_steps(graph, stages, downstream, single_item)
+    
+        force_downstream = kwargs.pop("force_downstream", False)
+        result = []
+        unchanged: List["Stage"] = []
+        # `ret` is used to add a cosmetic newline.
+        ret: List["Stage"] = []
+        checkpoint_func = kwargs.pop("checkpoint_func", None)
+    
+        for i, stage in enumerate(steps):
+            if ret:
+                logger.info("")
+    
+            if checkpoint_func:
+                kwargs["checkpoint_func"] = partial(
+                    _repro_callback, checkpoint_func, unchanged
+                )
+    
+            try:
+>               ret = _reproduce_stage(stage, **kwargs)
+
+/testbed/dvc/repo/reproduce.py:193: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/testbed/dvc/repo/reproduce.py:41: in _reproduce_stage
+    stage = stage.reproduce(**kwargs)
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/funcy/decorators.py:47: in wrapper
+    return deco(call, *dargs, **dkwargs)
+/testbed/dvc/stage/decorators.py:43: in rwlocked
+    return call()
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/funcy/decorators.py:68: in __call__
+    return self._func(*self._args, **self._kwargs)
+/testbed/dvc/stage/__init__.py:438: in reproduce
+    self.run(**kwargs)
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/funcy/decorators.py:47: in wrapper
+    return deco(call, *dargs, **dkwargs)
+/testbed/dvc/stage/decorators.py:43: in rwlocked
+    return call()
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/funcy/decorators.py:68: in __call__
+    return self._func(*self._args, **self._kwargs)
+/testbed/dvc/stage/__init__.py:586: in run
+    self._check_missing_outputs()
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/funcy/decorators.py:47: in wrapper
+    return deco(call, *dargs, **dkwargs)
+/testbed/dvc/stage/decorators.py:43: in rwlocked
+    return call()
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/funcy/decorators.py:68: in __call__
+    return self._func(*self._args, **self._kwargs)
+/testbed/dvc/stage/__init__.py:617: in _check_missing_outputs
+    check_missing_outputs(self)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+stage = Stage: 'foo.dvc'
+
+    def check_missing_outputs(stage):
+        paths = [str(out) for out in stage.outs if not out.exists]
+        if paths:
+>           raise MissingDataSource(paths)
+E           dvc.stage.exceptions.MissingDataSource: missing data 'source': foo
+
+/testbed/dvc/stage/utils.py:143: MissingDataSource
+
+The above exception was the direct cause of the following exception:
+
+tmp_dir = PosixTmpDir('/tmp/pytest-of-root/pytest-0/test_repro_pulls_mising_import0')
+dvc = Repo: '/tmp/pytest-of-root/pytest-0/test_repro_pulls_mising_import0'
+mocker = <pytest_mock.plugin.MockerFixture object at 0x7f168edffac0>
+erepo_dir = PosixTmpDir('/tmp/pytest-of-root/pytest-0/erepo1')
+local_remote = PosixTmpDir('/tmp/pytest-of-root/pytest-0/local-cloud3')
+
+    def test_repro_pulls_mising_import(tmp_dir, dvc, mocker, erepo_dir, local_remote):
+        with erepo_dir.chdir():
+            erepo_dir.dvc_gen("foo", "foo", commit="first")
+    
+        foo_import = dvc.imp(os.fspath(erepo_dir), "foo")
+    
+        dvc.push()
+    
+        dvc.stage.add(name="copy-foo", cmd="cp foo bar", deps=["foo"], outs=["bar"])
+        remove("foo")
+        remove(foo_import.outs[0].cache_path)
+    
+>       assert dvc.reproduce(pull=True)
+
+/testbed/tests/func/test_repro_multistage.py:427: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/testbed/dvc/repo/__init__.py:65: in wrapper
+    return f(repo, *args, **kwargs)
+/testbed/dvc/repo/scm_context.py:151: in run
+    return method(repo, *args, **kw)
+/testbed/dvc/repo/reproduce.py:128: in reproduce
+    return _reproduce_stages(self.index.graph, list(stages), **kwargs)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+graph = <networkx.classes.digraph.DiGraph object at 0x7f168ecceb50>
+stages = [Stage: 'copy-foo'], downstream = False, single_item = False
+on_unchanged = None, kwargs = {'interactive': False, 'pull': True}
+steps = [Stage: 'foo.dvc', Stage: 'copy-foo'], force_downstream = False
+result = [], unchanged = [], ret = [], checkpoint_func = None, i = 0
+
+    def _reproduce_stages(  # noqa: C901
+        graph,
+        stages,
+        downstream=False,
+        single_item=False,
+        on_unchanged=None,
+        **kwargs,
+    ):
+        r"""Derive the evaluation of the given node for the given graph.
+    
+        When you _reproduce a stage_, you want to _evaluate the descendants_
+        to know if it make sense to _recompute_ it. A post-ordered search
+        will give us an order list of the nodes we want.
+    
+        For example, let's say that we have the following pipeline:
+    
+                                   E
+                                  / \
+                                 D   F
+                                / \   \
+                               B   C   G
+                                \ /
+                                 A
+    
+        The derived evaluation of D would be: [A, B, C, D]
+    
+        In case that `downstream` option is specified, the desired effect
+        is to derive the evaluation starting from the given stage up to the
+        ancestors. However, the `networkx.ancestors` returns a set, without
+        any guarantee of any order, so we are going to reverse the graph and
+        use a reverse post-ordered search using the given stage as a starting
+        point.
+    
+                       E                                   A
+                      / \                                 / \
+                     D   F                               B   C   G
+                    / \   \        --- reverse -->        \ /   /
+                   B   C   G                               D   F
+                    \ /                                     \ /
+                     A                                       E
+    
+        The derived evaluation of _downstream_ B would be: [B, D, E]
+        """
+        steps = _get_steps(graph, stages, downstream, single_item)
+    
+        force_downstream = kwargs.pop("force_downstream", False)
+        result = []
+        unchanged: List["Stage"] = []
+        # `ret` is used to add a cosmetic newline.
+        ret: List["Stage"] = []
+        checkpoint_func = kwargs.pop("checkpoint_func", None)
+    
+        for i, stage in enumerate(steps):
+            if ret:
+                logger.info("")
+    
+            if checkpoint_func:
+                kwargs["checkpoint_func"] = partial(
+                    _repro_callback, checkpoint_func, unchanged
+                )
+    
+            try:
+                ret = _reproduce_stage(stage, **kwargs)
+    
+                if len(ret) == 0:
+                    unchanged.extend([stage])
+                elif force_downstream:
+                    # NOTE: we are walking our pipeline from the top to the
+                    # bottom. If one stage is changed, it will be reproduced,
+                    # which tells us that we should force reproducing all of
+                    # the other stages down below, even if their direct
+                    # dependencies didn't change.
+                    kwargs["force"] = True
+    
+                if ret:
+                    result.extend(ret)
+            except CheckpointKilledError:
+                result.append(stage)
+                logger.warning(
+                    (
+                        "Checkpoint stage '%s' was interrupted remaining stages in"
+                        " pipeline will not be reproduced."
+                    ),
+                    stage.addressing,
+                )
+                logger.warning(
+                    "skipped stages '%s'",
+                    ", ".join(s.addressing for s in steps[i + 1 :]),
+                )
+    
+                break
+            except Exception as exc:  # noqa: BLE001
+>               raise ReproductionError(stage.addressing) from exc
+E               dvc.exceptions.ReproductionError: failed to reproduce 'foo.dvc'
+
+/testbed/dvc/repo/reproduce.py:223: ReproductionError
+---------------------------- Captured stdout setup -----------------------------
+2026-09-29 10:27:33,195 DEBUG: Writing '/tmp/pytest-of-root/pytest-0/test_repro_pulls_mising_import0/.dvc/config'.
+------------------------------ Captured log setup ------------------------------
+DEBUG    dvc.config:config.py:206 Writing '/tmp/pytest-of-root/pytest-0/test_repro_pulls_mising_import0/.dvc/config'.
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:33,204 DEBUG: Added '/tmp/pytest-of-root/pytest-0/erepo1/foo' to gitignore file.
+2026-09-29 10:27:33,206 DEBUG: Computed stage: 'foo.dvc' md5: 'None'
+2026-09-29 10:27:33,215 DEBUG: Saving information to 'foo.dvc'.
+
+To track the changes with git, run:
+
+	git add foo.dvc .gitignore
+
+To enable auto staging, run:
+
+	dvc config core.autostage true
+2026-09-29 10:27:33,253 DEBUG: Removing output 'foo' of stage: 'foo.dvc'.
+Importing 'foo (/tmp/pytest-of-root/pytest-0/erepo1)' -> 'foo'
+2026-09-29 10:27:33,255 DEBUG: Computed stage: 'foo.dvc' md5: 'b6d368dbaa6dc5042eeeb28e73e06327'
+2026-09-29 10:27:33,255 DEBUG: 'md5' of stage: 'foo.dvc' changed.
+2026-09-29 10:27:33,304 DEBUG: Computed stage: 'foo.dvc' md5: '87e53bdc92578acaacaa670f4e1772b3'
+2026-09-29 10:27:33,313 DEBUG: Saving information to 'foo.dvc'.
+Creating 'dvc.yaml'
+Adding stage 'copy-foo' in 'dvc.yaml'
+2026-09-29 10:27:33,331 DEBUG: Removing 'foo'
+2026-09-29 10:27:33,331 DEBUG: Removing '/tmp/pytest-of-root/pytest-0/test_repro_pulls_mising_import0/.dvc/cache/ac/bd18db4cc2f85cedef654fccc4a4d8'
+2026-09-29 10:27:33,334 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:33,336 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:33,341 DEBUG: Computed stage: 'foo.dvc' md5: '87e53bdc92578acaacaa670f4e1772b3'
+2026-09-29 10:27:33,342 DEBUG: Output 'foo' of stage: 'foo.dvc' changed because it is 'not in cache'.
+2026-09-29 10:27:33,343 DEBUG: stage: 'foo.dvc' changed.
+Verifying outputs in frozen stage: 'foo.dvc'
+Pulling missing output 'foo' of stage: 'foo.dvc'
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+Collecting targets          |0.00 [00:00,     ?file/s]
+                                                      
+
+!
+  0% Adding...|          |0/1 [00:00<?,     ?file/s]
+Adding...                                           
+
+!
+
+  0% |          |0/? [00:00<?,    ?files/s]
+
+                                           
+
+!
+
+  0%|          |Transferring                          0/? [00:00<?,     ?file/s]
+
+  0%|          |Transferring                          0/1 [00:00<?,     ?file/s]
+
+                                                                                
+100% Adding...|██████████|1/1 [00:00, 67.95file/s]
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% Downloading foo|          |0/? [00:00<?,    ?files/s]
+  0% Downloading foo|          |0/1 [00:00<?,    ?files/s]
+
+!
+
+  0%|          |foo                                0.00/? [00:00<?,        ?B/s]
+
+  0%|          |foo                             0.00/3.00 [00:00<?,        ?B/s]
+
+                                                                                
+                                                          
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+------------------------------ Captured log call -------------------------------
+DEBUG    dvc.repo.scm_context:scm_context.py:82 Added '/tmp/pytest-of-root/pytest-0/erepo1/foo' to gitignore file.
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'foo.dvc' md5: 'None'
+DEBUG    dvc.dvcfile:dvcfile.py:214 Saving information to 'foo.dvc'.
+INFO     dvc.repo.scm_context:scm_context.py:131 
+To track the changes with git, run:
+
+	git add foo.dvc .gitignore
+INFO     dvc.repo.scm_context:scm_context.py:132 
+To enable auto staging, run:
+
+	dvc config core.autostage true
+DEBUG    dvc.stage:__init__.py:387 Removing output 'foo' of stage: 'foo.dvc'.
+INFO     dvc.stage.imports:imports.py:49 Importing 'foo (/tmp/pytest-of-root/pytest-0/erepo1)' -> 'foo'
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'foo.dvc' md5: 'b6d368dbaa6dc5042eeeb28e73e06327'
+DEBUG    dvc.stage:__init__.py:363 'md5' of stage: 'foo.dvc' changed.
+DEBUG    fsspec.memoryfs:memory.py:150 info: /
+DEBUG    fsspec.memoryfs:memory.py:279 open file /.N3QzeAC8hhEXejhzEs4Yz5.tmp
+DEBUG    fsspec.memoryfs:memory.py:150 info: memory://.N3QzeAC8hhEXejhzEs4Yz5.tmp
+DEBUG    fsspec.memoryfs:memory.py:150 info: /
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'foo.dvc' md5: '87e53bdc92578acaacaa670f4e1772b3'
+DEBUG    dvc.dvcfile:dvcfile.py:214 Saving information to 'foo.dvc'.
+INFO     dvc.dvcfile:dvcfile.py:277 Creating 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'copy-foo' in 'dvc.yaml'
+DEBUG    dvc.utils.fs:fs.py:63 Removing 'foo'
+DEBUG    dvc.utils.fs:fs.py:63 Removing '/tmp/pytest-of-root/pytest-0/test_repro_pulls_mising_import0/.dvc/cache/ac/bd18db4cc2f85cedef654fccc4a4d8'
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'foo.dvc' md5: '87e53bdc92578acaacaa670f4e1772b3'
+DEBUG    dvc.stage:__init__.py:350 Output 'foo' of stage: 'foo.dvc' changed because it is 'not in cache'.
+DEBUG    dvc.stage:__init__.py:376 stage: 'foo.dvc' changed.
+INFO     dvc.stage:__init__.py:582 Verifying outputs in frozen stage: 'foo.dvc'
+INFO     dvc.stage:__init__.py:623 Pulling missing output 'foo' of stage: 'foo.dvc'
+==================================== PASSES ====================================
+________________________________ test_push_pull ________________________________
+---------------------------- Captured stdout setup -----------------------------
+2026-09-29 10:27:27,224 DEBUG: Writing '/tmp/pytest-of-root/pytest-0/dvc-test-cachemaster0/.dvc/config'.
+2026-09-29 10:27:27,303 DEBUG: Removing '/var/tmp/dvc/repo/7c03bf646337f13255edce199a98006a'
+2026-09-29 10:27:27,324 DEBUG: Staging files: {'/tmp/pytest-of-root/pytest-0/dvc-test-cachemaster0/.dvcignore', '/tmp/pytest-of-root/pytest-0/dvc-test-cachemaster0/.dvc/config'}
+Initialized DVC repository.
+
+2026-09-29 10:27:27,375 DEBUG: Added '/tmp/pytest-of-root/pytest-0/dvc-test-cachemaster1/.dvc/config.local' to gitignore file.
+2026-09-29 10:27:27,376 DEBUG: Added '/tmp/pytest-of-root/pytest-0/dvc-test-cachemaster1/.dvc/tmp' to gitignore file.
+2026-09-29 10:27:27,376 DEBUG: Added '/tmp/pytest-of-root/pytest-0/dvc-test-cachemaster1/.dvc/cache' to gitignore file.
+2026-09-29 10:27:27,376 DEBUG: Removing '/var/tmp/dvc/repo/ec7f19bba891bbb9c067f510d42cc980'
+2026-09-29 10:27:27,395 DEBUG: Staging files: {'/tmp/pytest-of-root/pytest-0/dvc-test-cachemaster1/.dvc/.gitignore', '/tmp/pytest-of-root/pytest-0/dvc-test-cachemaster1/.dvcignore', '/tmp/pytest-of-root/pytest-0/dvc-test-cachemaster1/.dvc/config'}
+Initialized DVC repository.
+
+You can now commit the changes to git.
+
+2026-09-29 10:27:27,453 DEBUG: Writing '/tmp/pytest-of-root/pytest-0/test_push_pull0/.dvc/config'.
+------------------------------ Captured log setup ------------------------------
+DEBUG    dvc.config:config.py:206 Writing '/tmp/pytest-of-root/pytest-0/dvc-test-cachemaster0/.dvc/config'.
+DEBUG    dvc.utils.fs:fs.py:63 Removing '/var/tmp/dvc/repo/7c03bf646337f13255edce199a98006a'
+DEBUG    dvc.repo.scm_context:scm_context.py:68 Staging files: {'/tmp/pytest-of-root/pytest-0/dvc-test-cachemaster0/.dvcignore', '/tmp/pytest-of-root/pytest-0/dvc-test-cachemaster0/.dvc/config'}
+INFO     dvc.repo.init:init.py:96 Initialized DVC repository.
+
+DEBUG    dvc.repo.scm_context:scm_context.py:82 Added '/tmp/pytest-of-root/pytest-0/dvc-test-cachemaster1/.dvc/config.local' to gitignore file.
+DEBUG    dvc.repo.scm_context:scm_context.py:82 Added '/tmp/pytest-of-root/pytest-0/dvc-test-cachemaster1/.dvc/tmp' to gitignore file.
+DEBUG    dvc.repo.scm_context:scm_context.py:82 Added '/tmp/pytest-of-root/pytest-0/dvc-test-cachemaster1/.dvc/cache' to gitignore file.
+DEBUG    dvc.utils.fs:fs.py:63 Removing '/var/tmp/dvc/repo/ec7f19bba891bbb9c067f510d42cc980'
+DEBUG    dvc.repo.scm_context:scm_context.py:68 Staging files: {'/tmp/pytest-of-root/pytest-0/dvc-test-cachemaster1/.dvc/.gitignore', '/tmp/pytest-of-root/pytest-0/dvc-test-cachemaster1/.dvcignore', '/tmp/pytest-of-root/pytest-0/dvc-test-cachemaster1/.dvc/config'}
+INFO     dvc.repo.init:init.py:96 Initialized DVC repository.
+
+INFO     dvc.repo.init:init.py:98 You can now commit the changes to git.
+
+DEBUG    dvc.config:config.py:206 Writing '/tmp/pytest-of-root/pytest-0/test_push_pull0/.dvc/config'.
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:27,626 DEBUG: Removing output 'bar' of stage: 'copy-foo-bar'.
+2026-09-29 10:27:27,631 DEBUG: {'foo': 'modified'}
+Running stage 'copy-foo-bar':
+> python copy.py foo bar
+2026-09-29 10:27:27,680 DEBUG: Computed stage: 'copy-foo-bar' md5: '70ca98c843923748b6045ffc4559be1c'
+Creating 'dvc.yaml'
+Adding stage 'copy-foo-bar' in 'dvc.yaml'
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+2026-09-29 10:27:27,798 DEBUG: Writing '/tmp/pytest-of-root/pytest-0/erepo0/.dvc/config'.
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0.00/? [00:00<?,        ?B/s]
+  0% |          |0.00/232 [00:00<?,        ?B/s]
+                                                
+
+!
+  0% |          |0.00/? [00:00<?,        ?B/s]
+                                              
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+
+!
+
+  0%|          |/tmp/pytest-of-root/pytest-0/test_p0.00/? [00:00<?,        ?B/s]
+
+  0%|          |/tmp/pytest-of-root/pytest-0/tes0.00/3.00 [00:00<?,        ?B/s]
+
+                                                                                
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0.00/? [00:00<?,        ?B/s]
+  0% |          |0.00/232 [00:00<?,        ?B/s]
+                                                
+
+!
+  0% |          |0.00/? [00:00<?,        ?B/s]
+                                              
+------------------------------ Captured log call -------------------------------
+DEBUG    dvc.stage:__init__.py:387 Removing output 'bar' of stage: 'copy-foo-bar'.
+DEBUG    dvc.output:output.py:615 {'foo': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-foo-bar':
+INFO     dvc.stage.run:run.py:71 > python copy.py foo bar
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-foo-bar' md5: '70ca98c843923748b6045ffc4559be1c'
+INFO     dvc.dvcfile:dvcfile.py:277 Creating 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'copy-foo-bar' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+DEBUG    dvc.config:config.py:206 Writing '/tmp/pytest-of-root/pytest-0/erepo0/.dvc/config'.
+DEBUG    fsspec.memoryfs:memory.py:150 info: /
+DEBUG    fsspec.memoryfs:memory.py:279 open file /.nf6u6DfvXvTzwWyEtXLD66.tmp
+DEBUG    fsspec.memoryfs:memory.py:150 info: memory://.nf6u6DfvXvTzwWyEtXLD66.tmp
+DEBUG    fsspec.memoryfs:memory.py:150 info: /
+_________________________________ test_restore _________________________________
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:27,882 DEBUG: Removing output 'bar' of stage: 'copy-foo-bar'.
+2026-09-29 10:27:27,885 DEBUG: {'foo': 'modified'}
+Running stage 'copy-foo-bar':
+> python copy.py foo bar
+2026-09-29 10:27:27,945 DEBUG: Computed stage: 'copy-foo-bar' md5: '70ca98c843923748b6045ffc4559be1c'
+Creating 'dvc.yaml'
+Adding stage 'copy-foo-bar' in 'dvc.yaml'
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+2026-09-29 10:27:27,968 DEBUG: Assuming 'copy-foo-bar' to be a stage inside 'dvc.yaml'
+2026-09-29 10:27:27,971 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:27,975 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:27,980 DEBUG: Dependency 'copy.py' of stage: 'copy-foo-bar' changed because it is 'modified'.
+2026-09-29 10:27:27,981 DEBUG: stage: 'copy-foo-bar' changed.
+2026-09-29 10:27:27,984 DEBUG: Removing output 'bar' of stage: 'copy-foo-bar'.
+2026-09-29 10:27:27,986 DEBUG: {'copy.py': 'modified'}
+Stage 'copy-foo-bar' is cached - skipping run, checking out outputs
+2026-09-29 10:27:27,998 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:27,999 DEBUG: Computed stage: 'copy-foo-bar' md5: '262f10a31f4b218b7b450b3511c2413f'
+2026-09-29 10:27:28,009 DEBUG: stage: 'copy-foo-bar' was reproduced
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+------------------------------ Captured log call -------------------------------
+DEBUG    dvc.stage:__init__.py:387 Removing output 'bar' of stage: 'copy-foo-bar'.
+DEBUG    dvc.output:output.py:615 {'foo': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-foo-bar':
+INFO     dvc.stage.run:run.py:71 > python copy.py foo bar
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-foo-bar' md5: '70ca98c843923748b6045ffc4559be1c'
+INFO     dvc.dvcfile:dvcfile.py:277 Creating 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'copy-foo-bar' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+DEBUG    dvc.repo.stage:stage.py:218 Assuming 'copy-foo-bar' to be a stage inside 'dvc.yaml'
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:336 Dependency 'copy.py' of stage: 'copy-foo-bar' changed because it is 'modified'.
+DEBUG    dvc.stage:__init__.py:376 stage: 'copy-foo-bar' changed.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'bar' of stage: 'copy-foo-bar'.
+DEBUG    dvc.output:output.py:615 {'copy.py': 'modified'}
+INFO     dvc.stage.cache:cache.py:210 Stage 'copy-foo-bar' is cached - skipping run, checking out outputs
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-foo-bar' md5: '262f10a31f4b218b7b450b3511c2413f'
+DEBUG    dvc.stage:__init__.py:440 stage: 'copy-foo-bar' was reproduced
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+__________________________________ test_save ___________________________________
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:28,041 DEBUG: Removing output 'bar' of stage: 'copy-foo-bar'.
+2026-09-29 10:27:28,045 DEBUG: {'foo': 'modified'}
+Running stage 'copy-foo-bar':
+> python copy.py foo bar
+2026-09-29 10:27:28,094 DEBUG: Computed stage: 'copy-foo-bar' md5: '70ca98c843923748b6045ffc4559be1c'
+Creating 'dvc.yaml'
+Adding stage 'copy-foo-bar' in 'dvc.yaml'
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+------------------------------ Captured log call -------------------------------
+DEBUG    dvc.stage:__init__.py:387 Removing output 'bar' of stage: 'copy-foo-bar'.
+DEBUG    dvc.output:output.py:615 {'foo': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-foo-bar':
+INFO     dvc.stage.run:run.py:71 > python copy.py foo bar
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-foo-bar' md5: '70ca98c843923748b6045ffc4559be1c'
+INFO     dvc.dvcfile:dvcfile.py:277 Creating 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'copy-foo-bar' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+_____________________ test_do_not_save_on_no_exec_and_dry ______________________
+----------------------------- Captured stdout call -----------------------------
+Creating 'dvc.yaml'
+Adding stage 'copy-foo-bar' in 'dvc.yaml'
+2026-09-29 10:27:28,150 DEBUG: Assuming 'copy-foo-bar' to be a stage inside 'dvc.yaml'
+2026-09-29 10:27:28,152 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:28,155 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:28,159 DEBUG: Dependency 'copy.py' of stage: 'copy-foo-bar' changed because it is 'modified'.
+2026-09-29 10:27:28,159 DEBUG: stage: 'copy-foo-bar' changed.
+2026-09-29 10:27:28,161 DEBUG: {'copy.py': 'modified'}
+Running stage 'copy-foo-bar':
+> python copy.py foo bar
+2026-09-29 10:27:28,163 DEBUG: stage: 'copy-foo-bar' was reproduced
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+------------------------------ Captured log call -------------------------------
+INFO     dvc.dvcfile:dvcfile.py:277 Creating 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'copy-foo-bar' in 'dvc.yaml'
+DEBUG    dvc.repo.stage:stage.py:218 Assuming 'copy-foo-bar' to be a stage inside 'dvc.yaml'
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:336 Dependency 'copy.py' of stage: 'copy-foo-bar' changed because it is 'modified'.
+DEBUG    dvc.stage:__init__.py:376 stage: 'copy-foo-bar' changed.
+DEBUG    dvc.output:output.py:615 {'copy.py': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-foo-bar':
+INFO     dvc.stage.run:run.py:71 > python copy.py foo bar
+DEBUG    dvc.stage:__init__.py:440 stage: 'copy-foo-bar' was reproduced
+________ test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True] ________
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:28,197 DEBUG: Removing output 'bar' of stage: 'copy-foo-bar'.
+2026-09-29 10:27:28,198 DEBUG: Removing output 'goo' of stage: 'copy-foo-bar'.
+2026-09-29 10:27:28,202 DEBUG: {'foo': 'modified'}
+Running stage 'copy-foo-bar':
+> cp foo bar && cp foo goo
+2026-09-29 10:27:28,223 DEBUG: Output 'bar' doesn't use cache. Skipping saving.
+2026-09-29 10:27:28,226 DEBUG: Computed stage: 'copy-foo-bar' md5: '3c4b8193dccd8af1cca523bcbc0b30f2'
+Creating 'dvc.yaml'
+Adding stage 'copy-foo-bar' in 'dvc.yaml'
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+------------------------------ Captured log call -------------------------------
+DEBUG    dvc.stage:__init__.py:387 Removing output 'bar' of stage: 'copy-foo-bar'.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'goo' of stage: 'copy-foo-bar'.
+DEBUG    dvc.output:output.py:615 {'foo': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-foo-bar':
+INFO     dvc.stage.run:run.py:71 > cp foo bar && cp foo goo
+DEBUG    dvc.output:output.py:690 Output 'bar' doesn't use cache. Skipping saving.
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-foo-bar' md5: '3c4b8193dccd8af1cca523bcbc0b30f2'
+INFO     dvc.dvcfile:dvcfile.py:277 Creating 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'copy-foo-bar' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+_________ test_outs_no_cache_deactivate_run_cache[plots_no_cache-True] _________
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:28,284 DEBUG: Removing output 'bar' of stage: 'copy-foo-bar'.
+2026-09-29 10:27:28,284 DEBUG: Removing output 'goo' of stage: 'copy-foo-bar'.
+2026-09-29 10:27:28,288 DEBUG: {'foo': 'modified'}
+Running stage 'copy-foo-bar':
+> cp foo bar && cp foo goo
+2026-09-29 10:27:28,306 DEBUG: Output 'bar' doesn't use cache. Skipping saving.
+2026-09-29 10:27:28,308 DEBUG: Computed stage: 'copy-foo-bar' md5: 'c0e21e0a1b016c3c0e7f5ea3c3d6a6bd'
+Creating 'dvc.yaml'
+Adding stage 'copy-foo-bar' in 'dvc.yaml'
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+------------------------------ Captured log call -------------------------------
+DEBUG    dvc.stage:__init__.py:387 Removing output 'bar' of stage: 'copy-foo-bar'.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'goo' of stage: 'copy-foo-bar'.
+DEBUG    dvc.output:output.py:615 {'foo': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-foo-bar':
+INFO     dvc.stage.run:run.py:71 > cp foo bar && cp foo goo
+DEBUG    dvc.output:output.py:690 Output 'bar' doesn't use cache. Skipping saving.
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-foo-bar' md5: 'c0e21e0a1b016c3c0e7f5ea3c3d6a6bd'
+INFO     dvc.dvcfile:dvcfile.py:277 Creating 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'copy-foo-bar' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+_________ test_outs_no_cache_deactivate_run_cache[outs_no_cache-False] _________
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:28,360 DEBUG: Removing output 'bar' of stage: 'copy-foo-bar'.
+2026-09-29 10:27:28,361 DEBUG: Removing output 'goo' of stage: 'copy-foo-bar'.
+2026-09-29 10:27:28,364 DEBUG: {'foo': 'modified'}
+Running stage 'copy-foo-bar':
+> cp foo bar && cp foo goo
+2026-09-29 10:27:28,382 DEBUG: Output 'bar' doesn't use cache. Skipping saving.
+2026-09-29 10:27:28,384 DEBUG: Computed stage: 'copy-foo-bar' md5: '3c4b8193dccd8af1cca523bcbc0b30f2'
+Creating 'dvc.yaml'
+Adding stage 'copy-foo-bar' in 'dvc.yaml'
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+------------------------------ Captured log call -------------------------------
+DEBUG    dvc.stage:__init__.py:387 Removing output 'bar' of stage: 'copy-foo-bar'.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'goo' of stage: 'copy-foo-bar'.
+DEBUG    dvc.output:output.py:615 {'foo': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-foo-bar':
+INFO     dvc.stage.run:run.py:71 > cp foo bar && cp foo goo
+DEBUG    dvc.output:output.py:690 Output 'bar' doesn't use cache. Skipping saving.
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-foo-bar' md5: '3c4b8193dccd8af1cca523bcbc0b30f2'
+INFO     dvc.dvcfile:dvcfile.py:277 Creating 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'copy-foo-bar' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+_________________ test_memory_for_multiple_runs_of_same_stage __________________
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:28,427 DEBUG: Removing output 'bar' of stage: 'copy-foo-bar'.
+2026-09-29 10:27:28,431 DEBUG: {'foo': 'modified'}
+Running stage 'copy-foo-bar':
+> python copy.py foo bar
+2026-09-29 10:27:28,476 DEBUG: Computed stage: 'copy-foo-bar' md5: '70ca98c843923748b6045ffc4559be1c'
+Creating 'dvc.yaml'
+Adding stage 'copy-foo-bar' in 'dvc.yaml'
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+2026-09-29 10:27:28,505 DEBUG: Removing output 'bar' of stage: 'copy-foo-bar'.
+2026-09-29 10:27:28,509 DEBUG: {'foo': 'modified'}
+Running stage 'copy-foo-bar':
+> python copy.py foo bar
+2026-09-29 10:27:28,558 DEBUG: Computed stage: 'copy-foo-bar' md5: '256874d90bebb8ef1521783b57f26bf7'
+Modifying stage 'copy-foo-bar' in 'dvc.yaml'
+Updating lock file 'dvc.lock'
+2026-09-29 10:27:28,585 DEBUG: Assuming 'copy-foo-bar' to be a stage inside 'dvc.yaml'
+2026-09-29 10:27:28,588 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:28,590 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:28,594 DEBUG: Dependency 'copy.py' of stage: 'copy-foo-bar' changed because it is 'modified'.
+2026-09-29 10:27:28,595 DEBUG: stage: 'copy-foo-bar' changed.
+2026-09-29 10:27:28,596 DEBUG: Removing output 'bar' of stage: 'copy-foo-bar'.
+2026-09-29 10:27:28,598 DEBUG: {'copy.py': 'modified'}
+Stage 'copy-foo-bar' is cached - skipping run, checking out outputs
+2026-09-29 10:27:28,609 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:28,610 DEBUG: Computed stage: 'copy-foo-bar' md5: '4b686780310c3a70c2c1bfe89d02375f'
+2026-09-29 10:27:28,619 DEBUG: stage: 'copy-foo-bar' was reproduced
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+2026-09-29 10:27:28,624 DEBUG: Assuming 'copy-foo-bar' to be a stage inside 'dvc.yaml'
+2026-09-29 10:27:28,626 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:28,629 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:28,632 DEBUG: Dependency 'copy.py' of stage: 'copy-foo-bar' changed because it is 'modified'.
+2026-09-29 10:27:28,633 DEBUG: stage: 'copy-foo-bar' changed.
+2026-09-29 10:27:28,634 DEBUG: Removing output 'bar' of stage: 'copy-foo-bar'.
+2026-09-29 10:27:28,637 DEBUG: {'copy.py': 'modified'}
+Stage 'copy-foo-bar' is cached - skipping run, checking out outputs
+2026-09-29 10:27:28,648 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:28,650 DEBUG: Computed stage: 'copy-foo-bar' md5: '262f10a31f4b218b7b450b3511c2413f'
+2026-09-29 10:27:28,659 DEBUG: stage: 'copy-foo-bar' was reproduced
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+------------------------------ Captured log call -------------------------------
+DEBUG    dvc.stage:__init__.py:387 Removing output 'bar' of stage: 'copy-foo-bar'.
+DEBUG    dvc.output:output.py:615 {'foo': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-foo-bar':
+INFO     dvc.stage.run:run.py:71 > python copy.py foo bar
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-foo-bar' md5: '70ca98c843923748b6045ffc4559be1c'
+INFO     dvc.dvcfile:dvcfile.py:277 Creating 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'copy-foo-bar' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+DEBUG    dvc.stage:__init__.py:387 Removing output 'bar' of stage: 'copy-foo-bar'.
+DEBUG    dvc.output:output.py:615 {'foo': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-foo-bar':
+INFO     dvc.stage.run:run.py:71 > python copy.py foo bar
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-foo-bar' md5: '256874d90bebb8ef1521783b57f26bf7'
+INFO     dvc.dvcfile:dvcfile.py:282 Modifying stage 'copy-foo-bar' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+DEBUG    dvc.repo.stage:stage.py:218 Assuming 'copy-foo-bar' to be a stage inside 'dvc.yaml'
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:336 Dependency 'copy.py' of stage: 'copy-foo-bar' changed because it is 'modified'.
+DEBUG    dvc.stage:__init__.py:376 stage: 'copy-foo-bar' changed.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'bar' of stage: 'copy-foo-bar'.
+DEBUG    dvc.output:output.py:615 {'copy.py': 'modified'}
+INFO     dvc.stage.cache:cache.py:210 Stage 'copy-foo-bar' is cached - skipping run, checking out outputs
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-foo-bar' md5: '4b686780310c3a70c2c1bfe89d02375f'
+DEBUG    dvc.stage:__init__.py:440 stage: 'copy-foo-bar' was reproduced
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+DEBUG    dvc.repo.stage:stage.py:218 Assuming 'copy-foo-bar' to be a stage inside 'dvc.yaml'
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:336 Dependency 'copy.py' of stage: 'copy-foo-bar' changed because it is 'modified'.
+DEBUG    dvc.stage:__init__.py:376 stage: 'copy-foo-bar' changed.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'bar' of stage: 'copy-foo-bar'.
+DEBUG    dvc.output:output.py:615 {'copy.py': 'modified'}
+INFO     dvc.stage.cache:cache.py:210 Stage 'copy-foo-bar' is cached - skipping run, checking out outputs
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-foo-bar' md5: '262f10a31f4b218b7b450b3511c2413f'
+DEBUG    dvc.stage:__init__.py:440 stage: 'copy-foo-bar' was reproduced
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+_____________________ test_memory_runs_of_multiple_stages ______________________
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:28,691 DEBUG: Removing output 'foo.bak' of stage: 'backup-foo'.
+2026-09-29 10:27:28,698 DEBUG: {'foo': 'modified'}
+Running stage 'backup-foo':
+> python copy.py foo foo.bak
+2026-09-29 10:27:28,746 DEBUG: Computed stage: 'backup-foo' md5: 'c5d440ee4d6488e4f9da47e3ad264d15'
+Creating 'dvc.yaml'
+Adding stage 'backup-foo' in 'dvc.yaml'
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+2026-09-29 10:27:28,775 DEBUG: Removing output 'bar.bak' of stage: 'backup-bar'.
+2026-09-29 10:27:28,779 DEBUG: {'bar': 'modified'}
+Running stage 'backup-bar':
+> python copy.py bar bar.bak
+2026-09-29 10:27:28,836 DEBUG: Computed stage: 'backup-bar' md5: 'c8b1bdc5d724bf334efa56b4742d51d7'
+Adding stage 'backup-bar' in 'dvc.yaml'
+Updating lock file 'dvc.lock'
+2026-09-29 10:27:28,864 DEBUG: Assuming 'backup-foo' to be a stage inside 'dvc.yaml'
+2026-09-29 10:27:28,867 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:28,870 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:28,875 DEBUG: Dependency 'copy.py' of stage: 'backup-foo' changed because it is 'modified'.
+2026-09-29 10:27:28,877 DEBUG: stage: 'backup-foo' changed.
+2026-09-29 10:27:28,879 DEBUG: Removing output 'foo.bak' of stage: 'backup-foo'.
+2026-09-29 10:27:28,890 DEBUG: {'copy.py': 'modified'}
+Stage 'backup-foo' is cached - skipping run, checking out outputs
+2026-09-29 10:27:28,902 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:28,903 DEBUG: Computed stage: 'backup-foo' md5: '0fbbdfc18f7cc6275995e53f2fb07482'
+2026-09-29 10:27:28,912 DEBUG: stage: 'backup-foo' was reproduced
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+2026-09-29 10:27:28,917 DEBUG: Assuming 'backup-bar' to be a stage inside 'dvc.yaml'
+2026-09-29 10:27:28,920 DEBUG: Lockfile 'dvc.lock' needs to be updated.
+2026-09-29 10:27:28,928 DEBUG: Dependency 'bar' of stage: 'backup-bar' changed because it is 'modified'.
+2026-09-29 10:27:28,929 DEBUG: stage: 'backup-bar' changed.
+2026-09-29 10:27:28,930 DEBUG: Removing output 'bar.bak' of stage: 'backup-bar'.
+2026-09-29 10:27:28,932 DEBUG: {'bar': 'modified'}
+Stage 'backup-bar' is cached - skipping run, checking out outputs
+2026-09-29 10:27:28,946 DEBUG: Computed stage: 'backup-bar' md5: 'c8b1bdc5d724bf334efa56b4742d51d7'
+2026-09-29 10:27:28,956 DEBUG: stage: 'backup-bar' was reproduced
+Updating lock file 'dvc.lock'
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+------------------------------ Captured log call -------------------------------
+DEBUG    dvc.stage:__init__.py:387 Removing output 'foo.bak' of stage: 'backup-foo'.
+DEBUG    dvc.output:output.py:615 {'foo': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'backup-foo':
+INFO     dvc.stage.run:run.py:71 > python copy.py foo foo.bak
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'backup-foo' md5: 'c5d440ee4d6488e4f9da47e3ad264d15'
+INFO     dvc.dvcfile:dvcfile.py:277 Creating 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'backup-foo' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+DEBUG    dvc.stage:__init__.py:387 Removing output 'bar.bak' of stage: 'backup-bar'.
+DEBUG    dvc.output:output.py:615 {'bar': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'backup-bar':
+INFO     dvc.stage.run:run.py:71 > python copy.py bar bar.bak
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'backup-bar' md5: 'c8b1bdc5d724bf334efa56b4742d51d7'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'backup-bar' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+DEBUG    dvc.repo.stage:stage.py:218 Assuming 'backup-foo' to be a stage inside 'dvc.yaml'
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:336 Dependency 'copy.py' of stage: 'backup-foo' changed because it is 'modified'.
+DEBUG    dvc.stage:__init__.py:376 stage: 'backup-foo' changed.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'foo.bak' of stage: 'backup-foo'.
+DEBUG    dvc.output:output.py:615 {'copy.py': 'modified'}
+INFO     dvc.stage.cache:cache.py:210 Stage 'backup-foo' is cached - skipping run, checking out outputs
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'backup-foo' md5: '0fbbdfc18f7cc6275995e53f2fb07482'
+DEBUG    dvc.stage:__init__.py:440 stage: 'backup-foo' was reproduced
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+DEBUG    dvc.repo.stage:stage.py:218 Assuming 'backup-bar' to be a stage inside 'dvc.yaml'
+DEBUG    dvc.stage.loader:loader.py:132 Lockfile 'dvc.lock' needs to be updated.
+DEBUG    dvc.stage:__init__.py:336 Dependency 'bar' of stage: 'backup-bar' changed because it is 'modified'.
+DEBUG    dvc.stage:__init__.py:376 stage: 'backup-bar' changed.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'bar.bak' of stage: 'backup-bar'.
+DEBUG    dvc.output:output.py:615 {'bar': 'modified'}
+INFO     dvc.stage.cache:cache.py:210 Stage 'backup-bar' is cached - skipping run, checking out outputs
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'backup-bar' md5: 'c8b1bdc5d724bf334efa56b4742d51d7'
+DEBUG    dvc.stage:__init__.py:440 stage: 'backup-bar' was reproduced
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+_________________________ test_non_existing_stage_name _________________________
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:29,248 DEBUG: Removing output 'file2' of stage: 'copy-file1-file2'.
+2026-09-29 10:27:29,252 DEBUG: {'file1': 'modified'}
+Running stage 'copy-file1-file2':
+> python copy.py file1 file2
+2026-09-29 10:27:29,300 DEBUG: Computed stage: 'copy-file1-file2' md5: '3d0c602c6c6da9ac3388d3327be1c894'
+Creating 'dvc.yaml'
+Adding stage 'copy-file1-file2' in 'dvc.yaml'
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+2026-09-29 10:27:29,553 ERROR: failed to freeze ':copy-file1-file3' - Stage 'copy-file1-file3' not found inside 'dvc.yaml' file
+Traceback (most recent call last):
+  File "/testbed/dvc/stage/loader.py", line 139, in __getitem__
+    resolved_data = self.resolver.resolve_one(name)
+  File "/testbed/dvc/parsing/__init__.py", line 173, in resolve_one
+    raise EntryNotFound(f"Could not find '{name}'")
+dvc.parsing.EntryNotFound: Could not find 'copy-file1-file3'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/testbed/dvc/commands/freeze.py", line 17, in _run
+    func(target)
+  File "/testbed/dvc/repo/freeze.py", line 19, in freeze
+    return _set(repo, target, True)
+  File "/testbed/dvc/repo/__init__.py", line 65, in wrapper
+    return f(repo, *args, **kwargs)
+  File "/testbed/dvc/repo/freeze.py", line 11, in _set
+    stage = repo.stage.get_target(target)
+  File "/testbed/dvc/repo/stage.py", line 209, in get_target
+    return self.load_one(path=path, name=name)
+  File "/testbed/dvc/repo/stage.py", line 293, in load_one
+    return stages[name]
+  File "/testbed/dvc/stage/loader.py", line 141, in __getitem__
+    raise StageNotFound(self.dvcfile, name)  # noqa: B904
+dvc.stage.exceptions.StageNotFound: Stage 'copy-file1-file3' not found inside 'dvc.yaml' file
+
+------------------------------ Captured log call -------------------------------
+DEBUG    dvc.stage:__init__.py:387 Removing output 'file2' of stage: 'copy-file1-file2'.
+DEBUG    dvc.output:output.py:615 {'file1': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-file1-file2':
+INFO     dvc.stage.run:run.py:71 > python copy.py file1 file2
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-file1-file2' md5: '3d0c602c6c6da9ac3388d3327be1c894'
+INFO     dvc.dvcfile:dvcfile.py:277 Creating 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'copy-file1-file2' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+ERROR    dvc.commands.freeze:freeze.py:19 failed to freeze ':copy-file1-file3'
+Traceback (most recent call last):
+  File "/testbed/dvc/stage/loader.py", line 139, in __getitem__
+    resolved_data = self.resolver.resolve_one(name)
+  File "/testbed/dvc/parsing/__init__.py", line 173, in resolve_one
+    raise EntryNotFound(f"Could not find '{name}'")
+dvc.parsing.EntryNotFound: Could not find 'copy-file1-file3'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/testbed/dvc/commands/freeze.py", line 17, in _run
+    func(target)
+  File "/testbed/dvc/repo/freeze.py", line 19, in freeze
+    return _set(repo, target, True)
+  File "/testbed/dvc/repo/__init__.py", line 65, in wrapper
+    return f(repo, *args, **kwargs)
+  File "/testbed/dvc/repo/freeze.py", line 11, in _set
+    stage = repo.stage.get_target(target)
+  File "/testbed/dvc/repo/stage.py", line 209, in get_target
+    return self.load_one(path=path, name=name)
+  File "/testbed/dvc/repo/stage.py", line 293, in load_one
+    return stages[name]
+  File "/testbed/dvc/stage/loader.py", line 141, in __getitem__
+    raise StageNotFound(self.dvcfile, name)  # noqa: B904
+dvc.stage.exceptions.StageNotFound: Stage 'copy-file1-file3' not found inside 'dvc.yaml' file
+______________________________ test_repro_frozen _______________________________
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:29,617 DEBUG: Computed stage: 'data.dvc' md5: 'None'
+2026-09-29 10:27:29,626 DEBUG: Saving information to 'data.dvc'.
+2026-09-29 10:27:29,633 DEBUG: Removing output 'stage0' of stage: 'copy-data-stage0'.
+2026-09-29 10:27:29,636 DEBUG: {'data': 'modified'}
+Running stage 'copy-data-stage0':
+> python copy.py data stage0
+2026-09-29 10:27:29,688 DEBUG: Computed stage: 'copy-data-stage0' md5: 'cf389d933f2ef42cd9559f89f08c44ff'
+Creating 'dvc.yaml'
+Adding stage 'copy-data-stage0' in 'dvc.yaml'
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+2026-09-29 10:27:29,720 DEBUG: Removing output 'stage1' of stage: 'copy-data-stage1'.
+2026-09-29 10:27:29,723 DEBUG: {'stage0': 'modified'}
+Running stage 'copy-data-stage1':
+> python copy.py stage0 stage1
+2026-09-29 10:27:29,800 DEBUG: Computed stage: 'copy-data-stage1' md5: 'd5eca85dab192ffeed27232e741d1a5f'
+Adding stage 'copy-data-stage1' in 'dvc.yaml'
+Updating lock file 'dvc.lock'
+2026-09-29 10:27:29,838 DEBUG: Removing output 'stage2' of stage: 'copy-data-stage2'.
+2026-09-29 10:27:29,840 DEBUG: {'stage1': 'modified'}
+Running stage 'copy-data-stage2':
+> python copy.py stage1 stage2
+2026-09-29 10:27:29,899 DEBUG: Computed stage: 'copy-data-stage2' md5: 'f6d187166a64e42cc6fb82430ff7cd94'
+Adding stage 'copy-data-stage2' in 'dvc.yaml'
+Updating lock file 'dvc.lock'
+2026-09-29 10:27:29,931 DEBUG: Assuming 'copy-data-stage1' to be a stage inside 'dvc.yaml'
+Modifying stage 'copy-data-stage1' in 'dvc.yaml'
+Stage 'copy-data-stage1' didn't change, skipping
+2026-09-29 10:27:29,967 DEBUG: Computed stage: 'data.dvc' md5: 'None'
+2026-09-29 10:27:29,970 DEBUG: Output 'data' of stage: 'data.dvc' changed because it is 'modified'.
+2026-09-29 10:27:29,971 DEBUG: stage: 'data.dvc' changed.
+Verifying data sources in stage: 'data.dvc'
+2026-09-29 10:27:29,975 DEBUG: Computed stage: 'data.dvc' md5: 'None'
+2026-09-29 10:27:29,984 DEBUG: stage: 'data.dvc' was reproduced
+2026-09-29 10:27:29,985 DEBUG: Saving information to 'data.dvc'.
+
+2026-09-29 10:27:29,990 DEBUG: Dependency 'data' of stage: 'copy-data-stage0' changed because it is 'modified'.
+2026-09-29 10:27:29,991 DEBUG: stage: 'copy-data-stage0' changed.
+2026-09-29 10:27:29,992 DEBUG: Removing output 'stage0' of stage: 'copy-data-stage0'.
+2026-09-29 10:27:29,994 DEBUG: {}
+2026-09-29 10:27:29,994 DEBUG: {'data': 'modified'}
+Running stage 'copy-data-stage0':
+> python copy.py data stage0
+2026-09-29 10:27:30,049 DEBUG: Computed stage: 'copy-data-stage0' md5: '478883a99aff8a51b8835f4b599b832e'
+2026-09-29 10:27:30,062 DEBUG: stage: 'copy-data-stage0' was reproduced
+Updating lock file 'dvc.lock'
+
+Stage 'copy-data-stage2' didn't change, skipping
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+Collecting targets          |0.00 [00:00,     ?file/s]
+                                                      
+
+!
+  0% Adding...|          |0/1 [00:00<?,     ?file/s]
+Adding...                                           
+
+!
+
+  0% |          |0/? [00:00<?,    ?files/s]
+
+                                           
+
+!
+
+  0%|          |Transferring                          0/? [00:00<?,     ?file/s]
+
+  0%|          |Transferring                          0/1 [00:00<?,     ?file/s]
+
+                                                                                
+100% Adding...|██████████|1/1 [00:00, 75.48file/s]
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+2026-09-29 10:27:29,961 WARNING: stage: 'copy-data-stage1' is frozen. Its dependencies are not going to be reproduced.
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+------------------------------ Captured log call -------------------------------
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'data.dvc' md5: 'None'
+DEBUG    dvc.dvcfile:dvcfile.py:214 Saving information to 'data.dvc'.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'stage0' of stage: 'copy-data-stage0'.
+DEBUG    dvc.output:output.py:615 {'data': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-data-stage0':
+INFO     dvc.stage.run:run.py:71 > python copy.py data stage0
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-data-stage0' md5: 'cf389d933f2ef42cd9559f89f08c44ff'
+INFO     dvc.dvcfile:dvcfile.py:277 Creating 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'copy-data-stage0' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+DEBUG    dvc.stage:__init__.py:387 Removing output 'stage1' of stage: 'copy-data-stage1'.
+DEBUG    dvc.output:output.py:615 {'stage0': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-data-stage1':
+INFO     dvc.stage.run:run.py:71 > python copy.py stage0 stage1
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-data-stage1' md5: 'd5eca85dab192ffeed27232e741d1a5f'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'copy-data-stage1' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+DEBUG    dvc.stage:__init__.py:387 Removing output 'stage2' of stage: 'copy-data-stage2'.
+DEBUG    dvc.output:output.py:615 {'stage1': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-data-stage2':
+INFO     dvc.stage.run:run.py:71 > python copy.py stage1 stage2
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-data-stage2' md5: 'f6d187166a64e42cc6fb82430ff7cd94'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'copy-data-stage2' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+DEBUG    dvc.repo.stage:stage.py:218 Assuming 'copy-data-stage1' to be a stage inside 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:282 Modifying stage 'copy-data-stage1' in 'dvc.yaml'
+WARNING  dvc.repo.reproduce:reproduce.py:36 stage: 'copy-data-stage1' is frozen. Its dependencies are not going to be reproduced.
+INFO     dvc.stage:__init__.py:428 Stage 'copy-data-stage1' didn't change, skipping
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'data.dvc' md5: 'None'
+DEBUG    dvc.stage:__init__.py:350 Output 'data' of stage: 'data.dvc' changed because it is 'modified'.
+DEBUG    dvc.stage:__init__.py:376 stage: 'data.dvc' changed.
+INFO     dvc.stage:__init__.py:582 Verifying data sources in stage: 'data.dvc'
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'data.dvc' md5: 'None'
+DEBUG    dvc.stage:__init__.py:440 stage: 'data.dvc' was reproduced
+DEBUG    dvc.dvcfile:dvcfile.py:214 Saving information to 'data.dvc'.
+INFO     dvc.repo.reproduce:reproduce.py:185 
+DEBUG    dvc.stage:__init__.py:336 Dependency 'data' of stage: 'copy-data-stage0' changed because it is 'modified'.
+DEBUG    dvc.stage:__init__.py:376 stage: 'copy-data-stage0' changed.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'stage0' of stage: 'copy-data-stage0'.
+DEBUG    dvc.output:output.py:615 {}
+DEBUG    dvc.output:output.py:615 {'data': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-data-stage0':
+INFO     dvc.stage.run:run.py:71 > python copy.py data stage0
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-data-stage0' md5: '478883a99aff8a51b8835f4b599b832e'
+DEBUG    dvc.stage:__init__.py:440 stage: 'copy-data-stage0' was reproduced
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+INFO     dvc.repo.reproduce:reproduce.py:185 
+INFO     dvc.stage:__init__.py:428 Stage 'copy-data-stage2' didn't change, skipping
+_______________________________ test_downstream ________________________________
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:30,123 DEBUG: Removing output 'A' of stage: 'A-gen'.
+Running stage 'A-gen':
+> echo A>A
+2026-09-29 10:27:30,135 DEBUG: Computed stage: 'A-gen' md5: '97b88b2bc9c31c08558669caa193cdca'
+Creating 'dvc.yaml'
+Adding stage 'A-gen' in 'dvc.yaml'
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+2026-09-29 10:27:30,165 DEBUG: Removing output 'B' of stage: 'B-gen'.
+2026-09-29 10:27:30,167 DEBUG: {'A': 'modified'}
+Running stage 'B-gen':
+> echo B>B
+2026-09-29 10:27:30,182 DEBUG: Computed stage: 'B-gen' md5: '77f7d8810ec00a8bb3b9c061060b00e3'
+Adding stage 'B-gen' in 'dvc.yaml'
+Updating lock file 'dvc.lock'
+2026-09-29 10:27:30,216 DEBUG: Removing output 'C' of stage: 'C.dvc'.
+2026-09-29 10:27:30,217 DEBUG: Computed stage: 'C.dvc' md5: 'af372743ea62ab7fcc3532b0461a1e95'
+2026-09-29 10:27:30,218 DEBUG: 'md5' of stage: 'C.dvc' changed.
+Running stage 'C.dvc':
+> echo C>C
+2026-09-29 10:27:30,230 DEBUG: Computed stage: 'C.dvc' md5: '502c5db14522e7acadb2c623d3486cd0'
+2026-09-29 10:27:30,241 DEBUG: Saving information to 'C.dvc'.
+2026-09-29 10:27:30,266 DEBUG: Removing output 'D' of stage: 'D-gen'.
+2026-09-29 10:27:30,268 DEBUG: {'B': 'modified'}
+Running stage 'D-gen':
+> echo D>D
+2026-09-29 10:27:30,285 DEBUG: Computed stage: 'D-gen' md5: 'f5bc016b9a63023168f400d65af8f810'
+Adding stage 'D-gen' in 'dvc.yaml'
+Updating lock file 'dvc.lock'
+2026-09-29 10:27:30,326 DEBUG: Removing output 'G' of stage: 'G.dvc'.
+Running stage 'G.dvc':
+> echo G>G
+2026-09-29 10:27:30,340 DEBUG: Computed stage: 'G.dvc' md5: '1f439f21ccb4773d04cbaa584849c0e3'
+2026-09-29 10:27:30,347 DEBUG: Saving information to 'G.dvc'.
+2026-09-29 10:27:30,379 DEBUG: Removing output 'F' of stage: 'F-gen'.
+2026-09-29 10:27:30,382 DEBUG: {'G': 'modified'}
+Running stage 'F-gen':
+> echo F>F
+2026-09-29 10:27:30,400 DEBUG: Computed stage: 'F-gen' md5: '5570251f0798d6263916385798f3de95'
+Adding stage 'F-gen' in 'dvc.yaml'
+Updating lock file 'dvc.lock'
+2026-09-29 10:27:30,459 DEBUG: Removing output 'E' of stage: 'E.dvc'.
+2026-09-29 10:27:30,461 DEBUG: Computed stage: 'E.dvc' md5: 'b772c46f44a99db404d5050accdf4484'
+2026-09-29 10:27:30,461 DEBUG: 'md5' of stage: 'E.dvc' changed.
+Running stage 'E.dvc':
+> echo E>E
+2026-09-29 10:27:30,477 DEBUG: Computed stage: 'E.dvc' md5: '2bfb8f6d61681b9550306b605a60b5fa'
+2026-09-29 10:27:30,492 DEBUG: Saving information to 'E.dvc'.
+2026-09-29 10:27:30,519 DEBUG: Removing output 'B' of stage: 'B-gen'.
+Running stage 'B-gen':
+> echo B>B
+2026-09-29 10:27:30,542 DEBUG: Computed stage: 'B-gen' md5: '77f7d8810ec00a8bb3b9c061060b00e3'
+2026-09-29 10:27:30,551 DEBUG: stage: 'B-gen' was reproduced
+
+2026-09-29 10:27:30,567 DEBUG: Removing output 'D' of stage: 'D-gen'.
+Running stage 'D-gen':
+> echo D>D
+2026-09-29 10:27:30,590 DEBUG: Computed stage: 'D-gen' md5: 'f5bc016b9a63023168f400d65af8f810'
+2026-09-29 10:27:30,600 DEBUG: stage: 'D-gen' was reproduced
+
+2026-09-29 10:27:30,619 DEBUG: Removing output 'E' of stage: 'E.dvc'.
+Running stage 'E.dvc':
+> echo E>E
+2026-09-29 10:27:30,638 DEBUG: Computed stage: 'E.dvc' md5: '2bfb8f6d61681b9550306b605a60b5fa'
+2026-09-29 10:27:30,649 DEBUG: stage: 'E.dvc' was reproduced
+2026-09-29 10:27:30,649 DEBUG: Saving information to 'E.dvc'.
+2026-09-29 10:27:30,675 DEBUG: Removing output 'A' of stage: 'A-gen'.
+Running stage 'A-gen':
+> echo A>A
+2026-09-29 10:27:30,696 DEBUG: Computed stage: 'A-gen' md5: '97b88b2bc9c31c08558669caa193cdca'
+2026-09-29 10:27:30,704 DEBUG: stage: 'A-gen' was reproduced
+
+2026-09-29 10:27:30,721 DEBUG: Removing output 'B' of stage: 'B-gen'.
+Running stage 'B-gen':
+> echo B>B
+2026-09-29 10:27:30,745 DEBUG: Computed stage: 'B-gen' md5: '77f7d8810ec00a8bb3b9c061060b00e3'
+2026-09-29 10:27:30,756 DEBUG: stage: 'B-gen' was reproduced
+
+2026-09-29 10:27:30,771 DEBUG: Removing output 'C' of stage: 'C.dvc'.
+Running stage 'C.dvc':
+> echo C>C
+2026-09-29 10:27:30,789 DEBUG: Computed stage: 'C.dvc' md5: '502c5db14522e7acadb2c623d3486cd0'
+2026-09-29 10:27:30,799 DEBUG: stage: 'C.dvc' was reproduced
+2026-09-29 10:27:30,800 DEBUG: Saving information to 'C.dvc'.
+
+2026-09-29 10:27:30,807 DEBUG: Removing output 'D' of stage: 'D-gen'.
+Running stage 'D-gen':
+> echo D>D
+2026-09-29 10:27:30,832 DEBUG: Computed stage: 'D-gen' md5: 'f5bc016b9a63023168f400d65af8f810'
+2026-09-29 10:27:30,842 DEBUG: stage: 'D-gen' was reproduced
+
+2026-09-29 10:27:30,858 DEBUG: Removing output 'E' of stage: 'E.dvc'.
+Running stage 'E.dvc':
+> echo E>E
+2026-09-29 10:27:30,880 DEBUG: Computed stage: 'E.dvc' md5: '2bfb8f6d61681b9550306b605a60b5fa'
+2026-09-29 10:27:30,890 DEBUG: stage: 'E.dvc' was reproduced
+2026-09-29 10:27:30,890 DEBUG: Saving information to 'E.dvc'.
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+------------------------------ Captured log call -------------------------------
+DEBUG    dvc.stage:__init__.py:387 Removing output 'A' of stage: 'A-gen'.
+INFO     dvc.stage.run:run.py:120 Running stage 'A-gen':
+INFO     dvc.stage.run:run.py:71 > echo A>A
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'A-gen' md5: '97b88b2bc9c31c08558669caa193cdca'
+INFO     dvc.dvcfile:dvcfile.py:277 Creating 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'A-gen' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+DEBUG    dvc.stage:__init__.py:387 Removing output 'B' of stage: 'B-gen'.
+DEBUG    dvc.output:output.py:615 {'A': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'B-gen':
+INFO     dvc.stage.run:run.py:71 > echo B>B
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'B-gen' md5: '77f7d8810ec00a8bb3b9c061060b00e3'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'B-gen' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+DEBUG    dvc.stage:__init__.py:387 Removing output 'C' of stage: 'C.dvc'.
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'C.dvc' md5: 'af372743ea62ab7fcc3532b0461a1e95'
+DEBUG    dvc.stage:__init__.py:363 'md5' of stage: 'C.dvc' changed.
+INFO     dvc.stage.run:run.py:120 Running stage 'C.dvc':
+INFO     dvc.stage.run:run.py:71 > echo C>C
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'C.dvc' md5: '502c5db14522e7acadb2c623d3486cd0'
+DEBUG    dvc.dvcfile:dvcfile.py:214 Saving information to 'C.dvc'.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'D' of stage: 'D-gen'.
+DEBUG    dvc.output:output.py:615 {'B': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'D-gen':
+INFO     dvc.stage.run:run.py:71 > echo D>D
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'D-gen' md5: 'f5bc016b9a63023168f400d65af8f810'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'D-gen' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+DEBUG    dvc.stage:__init__.py:387 Removing output 'G' of stage: 'G.dvc'.
+INFO     dvc.stage.run:run.py:120 Running stage 'G.dvc':
+INFO     dvc.stage.run:run.py:71 > echo G>G
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'G.dvc' md5: '1f439f21ccb4773d04cbaa584849c0e3'
+DEBUG    dvc.dvcfile:dvcfile.py:214 Saving information to 'G.dvc'.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'F' of stage: 'F-gen'.
+DEBUG    dvc.output:output.py:615 {'G': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'F-gen':
+INFO     dvc.stage.run:run.py:71 > echo F>F
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'F-gen' md5: '5570251f0798d6263916385798f3de95'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'F-gen' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+DEBUG    dvc.stage:__init__.py:387 Removing output 'E' of stage: 'E.dvc'.
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'E.dvc' md5: 'b772c46f44a99db404d5050accdf4484'
+DEBUG    dvc.stage:__init__.py:363 'md5' of stage: 'E.dvc' changed.
+INFO     dvc.stage.run:run.py:120 Running stage 'E.dvc':
+INFO     dvc.stage.run:run.py:71 > echo E>E
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'E.dvc' md5: '2bfb8f6d61681b9550306b605a60b5fa'
+DEBUG    dvc.dvcfile:dvcfile.py:214 Saving information to 'E.dvc'.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'B' of stage: 'B-gen'.
+INFO     dvc.stage.run:run.py:120 Running stage 'B-gen':
+INFO     dvc.stage.run:run.py:71 > echo B>B
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'B-gen' md5: '77f7d8810ec00a8bb3b9c061060b00e3'
+DEBUG    dvc.stage:__init__.py:440 stage: 'B-gen' was reproduced
+INFO     dvc.repo.reproduce:reproduce.py:185 
+DEBUG    dvc.stage:__init__.py:387 Removing output 'D' of stage: 'D-gen'.
+INFO     dvc.stage.run:run.py:120 Running stage 'D-gen':
+INFO     dvc.stage.run:run.py:71 > echo D>D
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'D-gen' md5: 'f5bc016b9a63023168f400d65af8f810'
+DEBUG    dvc.stage:__init__.py:440 stage: 'D-gen' was reproduced
+INFO     dvc.repo.reproduce:reproduce.py:185 
+DEBUG    dvc.stage:__init__.py:387 Removing output 'E' of stage: 'E.dvc'.
+INFO     dvc.stage.run:run.py:120 Running stage 'E.dvc':
+INFO     dvc.stage.run:run.py:71 > echo E>E
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'E.dvc' md5: '2bfb8f6d61681b9550306b605a60b5fa'
+DEBUG    dvc.stage:__init__.py:440 stage: 'E.dvc' was reproduced
+DEBUG    dvc.dvcfile:dvcfile.py:214 Saving information to 'E.dvc'.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'A' of stage: 'A-gen'.
+INFO     dvc.stage.run:run.py:120 Running stage 'A-gen':
+INFO     dvc.stage.run:run.py:71 > echo A>A
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'A-gen' md5: '97b88b2bc9c31c08558669caa193cdca'
+DEBUG    dvc.stage:__init__.py:440 stage: 'A-gen' was reproduced
+INFO     dvc.repo.reproduce:reproduce.py:185 
+DEBUG    dvc.stage:__init__.py:387 Removing output 'B' of stage: 'B-gen'.
+INFO     dvc.stage.run:run.py:120 Running stage 'B-gen':
+INFO     dvc.stage.run:run.py:71 > echo B>B
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'B-gen' md5: '77f7d8810ec00a8bb3b9c061060b00e3'
+DEBUG    dvc.stage:__init__.py:440 stage: 'B-gen' was reproduced
+INFO     dvc.repo.reproduce:reproduce.py:185 
+DEBUG    dvc.stage:__init__.py:387 Removing output 'C' of stage: 'C.dvc'.
+INFO     dvc.stage.run:run.py:120 Running stage 'C.dvc':
+INFO     dvc.stage.run:run.py:71 > echo C>C
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'C.dvc' md5: '502c5db14522e7acadb2c623d3486cd0'
+DEBUG    dvc.stage:__init__.py:440 stage: 'C.dvc' was reproduced
+DEBUG    dvc.dvcfile:dvcfile.py:214 Saving information to 'C.dvc'.
+INFO     dvc.repo.reproduce:reproduce.py:185 
+DEBUG    dvc.stage:__init__.py:387 Removing output 'D' of stage: 'D-gen'.
+INFO     dvc.stage.run:run.py:120 Running stage 'D-gen':
+INFO     dvc.stage.run:run.py:71 > echo D>D
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'D-gen' md5: 'f5bc016b9a63023168f400d65af8f810'
+DEBUG    dvc.stage:__init__.py:440 stage: 'D-gen' was reproduced
+INFO     dvc.repo.reproduce:reproduce.py:185 
+DEBUG    dvc.stage:__init__.py:387 Removing output 'E' of stage: 'E.dvc'.
+INFO     dvc.stage.run:run.py:120 Running stage 'E.dvc':
+INFO     dvc.stage.run:run.py:71 > echo E>E
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'E.dvc' md5: '2bfb8f6d61681b9550306b605a60b5fa'
+DEBUG    dvc.stage:__init__.py:440 stage: 'E.dvc' was reproduced
+DEBUG    dvc.dvcfile:dvcfile.py:214 Saving information to 'E.dvc'.
+_________________________ test_repro_when_cmd_changes __________________________
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:30,928 DEBUG: Removing output 'bar' of stage: 'copy-file'.
+2026-09-29 10:27:30,932 DEBUG: {'foo': 'modified'}
+Running stage 'copy-file':
+> python copy.py foo bar
+2026-09-29 10:27:30,983 DEBUG: Computed stage: 'copy-file' md5: '70ca98c843923748b6045ffc4559be1c'
+Creating 'dvc.yaml'
+Adding stage 'copy-file' in 'dvc.yaml'
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+2026-09-29 10:27:31,004 DEBUG: Assuming 'copy-file' to be a stage inside 'dvc.yaml'
+Stage 'copy-file' didn't change, skipping
+Modifying stage 'copy-file' in 'dvc.yaml'
+2026-09-29 10:27:31,023 DEBUG: Checking if stage 'copy-file' is in 'dvc.yaml'
+2026-09-29 10:27:31,030 DEBUG: Assuming 'copy-file' to be a stage inside 'dvc.yaml'
+2026-09-29 10:27:31,042 DEBUG: 'cmd' of stage: 'copy-file' has changed.
+2026-09-29 10:27:31,042 DEBUG: stage: 'copy-file' changed.
+2026-09-29 10:27:31,044 DEBUG: Removing output 'bar' of stage: 'copy-file'.
+2026-09-29 10:27:31,047 DEBUG: 'cmd' of stage: 'copy-file' has changed.
+Running stage 'copy-file':
+> python  copy.py  foo  bar
+2026-09-29 10:27:31,105 DEBUG: Computed stage: 'copy-file' md5: '05923ec2ea1d8e2fff8163370bf1cd14'
+2026-09-29 10:27:31,184 DEBUG: stage: 'copy-file' was reproduced
+Updating lock file 'dvc.lock'
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+------------------------------ Captured log call -------------------------------
+DEBUG    dvc.stage:__init__.py:387 Removing output 'bar' of stage: 'copy-file'.
+DEBUG    dvc.output:output.py:615 {'foo': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-file':
+INFO     dvc.stage.run:run.py:71 > python copy.py foo bar
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-file' md5: '70ca98c843923748b6045ffc4559be1c'
+INFO     dvc.dvcfile:dvcfile.py:277 Creating 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'copy-file' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+DEBUG    dvc.repo.stage:stage.py:218 Assuming 'copy-file' to be a stage inside 'dvc.yaml'
+INFO     dvc.stage:__init__.py:428 Stage 'copy-file' didn't change, skipping
+INFO     dvc.dvcfile:dvcfile.py:282 Modifying stage 'copy-file' in 'dvc.yaml'
+DEBUG    dvc.repo.stage:stage.py:80 Checking if stage 'copy-file' is in 'dvc.yaml'
+DEBUG    dvc.repo.stage:stage.py:218 Assuming 'copy-file' to be a stage inside 'dvc.yaml'
+DEBUG    dvc.stage:__init__.py:812 'cmd' of stage: 'copy-file' has changed.
+DEBUG    dvc.stage:__init__.py:376 stage: 'copy-file' changed.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'bar' of stage: 'copy-file'.
+DEBUG    dvc.stage:__init__.py:812 'cmd' of stage: 'copy-file' has changed.
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-file':
+INFO     dvc.stage.run:run.py:71 > python  copy.py  foo  bar
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-file' md5: '05923ec2ea1d8e2fff8163370bf1cd14'
+DEBUG    dvc.stage:__init__.py:440 stage: 'copy-file' was reproduced
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+_________________ test_repro_when_new_deps_is_added_in_dvcfile _________________
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:31,225 DEBUG: Removing output 'foobar' of stage: 'copy-file'.
+2026-09-29 10:27:31,228 DEBUG: {'foo': 'modified'}
+Running stage 'copy-file':
+> python copy.py foo foobar
+2026-09-29 10:27:31,277 DEBUG: Computed stage: 'copy-file' md5: '9810619183969963c9dd8d21df75b4b0'
+Creating 'dvc.yaml'
+Adding stage 'copy-file' in 'dvc.yaml'
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+Stage 'copy-file' didn't change, skipping
+2026-09-29 10:27:31,335 DEBUG: Dependency 'copy.py' of stage: 'copy-file' changed because it is 'modified'.
+2026-09-29 10:27:31,336 DEBUG: stage: 'copy-file' changed.
+2026-09-29 10:27:31,338 DEBUG: Removing output 'foobar' of stage: 'copy-file'.
+2026-09-29 10:27:31,341 DEBUG: {}
+2026-09-29 10:27:31,341 DEBUG: {'copy.py': 'modified'}
+Running stage 'copy-file':
+> python copy.py foo foobar
+2026-09-29 10:27:31,407 DEBUG: Computed stage: 'copy-file' md5: '01c4aa3c2e71476bffa93d8c266d5109'
+2026-09-29 10:27:31,423 DEBUG: stage: 'copy-file' was reproduced
+Updating lock file 'dvc.lock'
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+------------------------------ Captured log call -------------------------------
+DEBUG    dvc.stage:__init__.py:387 Removing output 'foobar' of stage: 'copy-file'.
+DEBUG    dvc.output:output.py:615 {'foo': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-file':
+INFO     dvc.stage.run:run.py:71 > python copy.py foo foobar
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-file' md5: '9810619183969963c9dd8d21df75b4b0'
+INFO     dvc.dvcfile:dvcfile.py:277 Creating 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'copy-file' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+INFO     dvc.stage:__init__.py:428 Stage 'copy-file' didn't change, skipping
+DEBUG    dvc.stage:__init__.py:336 Dependency 'copy.py' of stage: 'copy-file' changed because it is 'modified'.
+DEBUG    dvc.stage:__init__.py:376 stage: 'copy-file' changed.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'foobar' of stage: 'copy-file'.
+DEBUG    dvc.output:output.py:615 {}
+DEBUG    dvc.output:output.py:615 {'copy.py': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-file':
+INFO     dvc.stage.run:run.py:71 > python copy.py foo foobar
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-file' md5: '01c4aa3c2e71476bffa93d8c266d5109'
+DEBUG    dvc.stage:__init__.py:440 stage: 'copy-file' was reproduced
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+_________________ test_repro_when_new_outs_is_added_in_dvcfile _________________
+----------------------------- Captured stdout call -----------------------------
+Running stage 'copy-file':
+> python copy.py foo foobar
+2026-09-29 10:27:31,540 DEBUG: Computed stage: 'copy-file' md5: '6e5baffa744f84c908d745d9871a2964'
+Creating 'dvc.yaml'
+Adding stage 'copy-file' in 'dvc.yaml'
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+Stage 'copy-file' didn't change, skipping
+2026-09-29 10:27:31,585 DEBUG: Output 'foobar' of stage: 'copy-file' changed because it is 'modified'.
+2026-09-29 10:27:31,586 DEBUG: stage: 'copy-file' changed.
+2026-09-29 10:27:31,588 DEBUG: Removing output 'foobar' of stage: 'copy-file'.
+2026-09-29 10:27:31,590 DEBUG: {}
+Running stage 'copy-file':
+> python copy.py foo foobar
+2026-09-29 10:27:31,642 DEBUG: Computed stage: 'copy-file' md5: '9810619183969963c9dd8d21df75b4b0'
+2026-09-29 10:27:31,656 DEBUG: stage: 'copy-file' was reproduced
+Updating lock file 'dvc.lock'
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+------------------------------ Captured log call -------------------------------
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-file':
+INFO     dvc.stage.run:run.py:71 > python copy.py foo foobar
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-file' md5: '6e5baffa744f84c908d745d9871a2964'
+INFO     dvc.dvcfile:dvcfile.py:277 Creating 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'copy-file' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+INFO     dvc.stage:__init__.py:428 Stage 'copy-file' didn't change, skipping
+DEBUG    dvc.stage:__init__.py:350 Output 'foobar' of stage: 'copy-file' changed because it is 'modified'.
+DEBUG    dvc.stage:__init__.py:376 stage: 'copy-file' changed.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'foobar' of stage: 'copy-file'.
+DEBUG    dvc.output:output.py:615 {}
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-file':
+INFO     dvc.stage.run:run.py:71 > python copy.py foo foobar
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-file' md5: '9810619183969963c9dd8d21df75b4b0'
+DEBUG    dvc.stage:__init__.py:440 stage: 'copy-file' was reproduced
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+______________________ test_repro_when_new_deps_is_moved _______________________
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:31,694 DEBUG: Removing output 'foobar' of stage: 'copy-file'.
+2026-09-29 10:27:31,697 DEBUG: {'foo': 'modified'}
+Running stage 'copy-file':
+> python copy.py foo foobar
+2026-09-29 10:27:31,747 DEBUG: Computed stage: 'copy-file' md5: '9810619183969963c9dd8d21df75b4b0'
+Creating 'dvc.yaml'
+Adding stage 'copy-file' in 'dvc.yaml'
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+Stage 'copy-file' didn't change, skipping
+2026-09-29 10:27:31,798 DEBUG: Dependency 'bar' of stage: 'copy-file' changed because it is 'modified'.
+2026-09-29 10:27:31,799 DEBUG: stage: 'copy-file' changed.
+2026-09-29 10:27:31,800 DEBUG: Removing output 'foobar' of stage: 'copy-file'.
+2026-09-29 10:27:31,802 DEBUG: {'bar': 'modified'}
+Running stage 'copy-file':
+> python copy.py foo foobar
+2026-09-29 10:27:31,853 DEBUG: Computed stage: 'copy-file' md5: '0d3cda7241489cd00754ef272d1550b8'
+2026-09-29 10:27:31,865 DEBUG: stage: 'copy-file' was reproduced
+Updating lock file 'dvc.lock'
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+------------------------------ Captured log call -------------------------------
+DEBUG    dvc.stage:__init__.py:387 Removing output 'foobar' of stage: 'copy-file'.
+DEBUG    dvc.output:output.py:615 {'foo': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-file':
+INFO     dvc.stage.run:run.py:71 > python copy.py foo foobar
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-file' md5: '9810619183969963c9dd8d21df75b4b0'
+INFO     dvc.dvcfile:dvcfile.py:277 Creating 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'copy-file' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+INFO     dvc.stage:__init__.py:428 Stage 'copy-file' didn't change, skipping
+DEBUG    dvc.stage:__init__.py:336 Dependency 'bar' of stage: 'copy-file' changed because it is 'modified'.
+DEBUG    dvc.stage:__init__.py:376 stage: 'copy-file' changed.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'foobar' of stage: 'copy-file'.
+DEBUG    dvc.output:output.py:615 {'bar': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-file':
+INFO     dvc.stage.run:run.py:71 > python copy.py foo foobar
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-file' md5: '0d3cda7241489cd00754ef272d1550b8'
+DEBUG    dvc.stage:__init__.py:440 stage: 'copy-file' was reproduced
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+______________ test_repro_when_new_out_overlaps_others_stage_outs ______________
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:31,909 DEBUG: Computed stage: 'dir.dvc' md5: 'None'
+2026-09-29 10:27:31,923 DEBUG: Saving information to 'dir.dvc'.
+2026-09-29 10:27:31,930 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:31,932 DEBUG: Lockfile for 'dvc.yaml' not found
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+Collecting targets          |0.00 [00:00,     ?file/s]
+                                                      
+
+!
+  0% Adding...|          |0/1 [00:00<?,     ?file/s]
+Adding...                                           
+
+!
+
+Building data objects from dir          |0.00 [00:00,      ?obj/s]
+
+                                                                  
+
+!
+
+Building data objects from dir          |0.00 [00:00,      ?obj/s]
+
+                                                                  
+
+!
+
+  0% |          |0/? [00:00<?,    ?files/s]
+
+                                           
+
+!
+
+  0%|          |Transferring                          0/? [00:00<?,     ?file/s]
+
+  0%|          |Transferring                          0/1 [00:00<?,     ?file/s]
+
+100%|██████████|Transferring                    1/1 [00:00<00:00, 1012.38file/s]
+
+
+!
+
+
+  0%|          |memory://.X5dDst8hcXNrv8fFdYjvUU.tm0.00/? [00:00<?,        ?B/s]
+
+
+  0%|          |memory://.X5dDst8hcXNrv8fFdYjvUU0.00/65.0 [00:00<?,        ?B/s]
+
+
+                                                                                
+
+                                                                                
+
+!
+
+Building data objects from dir          |0.00 [00:00,      ?obj/s]
+
+                                                                  
+100% Adding...|██████████|1/1 [00:00, 52.03file/s]
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+------------------------------ Captured log call -------------------------------
+DEBUG    fsspec.memoryfs:memory.py:150 info: /
+DEBUG    fsspec.memoryfs:memory.py:279 open file /.AT6zHJbpE2JhMQnwxjFhns.tmp
+DEBUG    fsspec.memoryfs:memory.py:150 info: memory://.AT6zHJbpE2JhMQnwxjFhns.tmp
+DEBUG    fsspec.memoryfs:memory.py:150 info: /
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'dir.dvc' md5: 'None'
+DEBUG    fsspec.memoryfs:memory.py:150 info: /
+DEBUG    fsspec.memoryfs:memory.py:279 open file /.X5dDst8hcXNrv8fFdYjvUU.tmp
+DEBUG    fsspec.memoryfs:memory.py:150 info: memory://.X5dDst8hcXNrv8fFdYjvUU.tmp
+DEBUG    fsspec.memoryfs:memory.py:150 info: /
+DEBUG    fsspec.memoryfs:memory.py:150 info: /
+DEBUG    fsspec.memoryfs:memory.py:150 info: /
+DEBUG    fsspec.memoryfs:memory.py:150 info: /
+DEBUG    fsspec.memoryfs:memory.py:150 info: memory://.X5dDst8hcXNrv8fFdYjvUU.tmp
+DEBUG    fsspec.memoryfs:memory.py:150 info: /
+DEBUG    fsspec.memoryfs:memory.py:150 info: /
+DEBUG    fsspec.memoryfs:memory.py:279 open file /.V4TuTWNGPi2e9yzUMBifQw.tmp
+DEBUG    fsspec.memoryfs:memory.py:150 info: memory://.V4TuTWNGPi2e9yzUMBifQw.tmp
+DEBUG    fsspec.memoryfs:memory.py:150 info: /
+DEBUG    dvc.dvcfile:dvcfile.py:214 Saving information to 'dir.dvc'.
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+________________ test_repro_when_new_deps_added_does_not_exist _________________
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:31,963 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:31,966 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:31,971 DEBUG: Dependency 'foo' of stage: 'run-copy' changed because it is 'modified'.
+2026-09-29 10:27:31,972 DEBUG: stage: 'run-copy' changed.
+2026-09-29 10:27:31,973 DEBUG: Removing output 'foobar' of stage: 'run-copy'.
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+------------------------------ Captured log call -------------------------------
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:336 Dependency 'foo' of stage: 'run-copy' changed because it is 'modified'.
+DEBUG    dvc.stage:__init__.py:376 stage: 'run-copy' changed.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'foobar' of stage: 'run-copy'.
+________________ test_repro_when_new_outs_added_does_not_exist _________________
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:32,006 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:32,009 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:32,014 DEBUG: Dependency 'foo' of stage: 'run-copy' changed because it is 'modified'.
+2026-09-29 10:27:32,015 DEBUG: stage: 'run-copy' changed.
+2026-09-29 10:27:32,016 DEBUG: Removing output 'foobar' of stage: 'run-copy'.
+2026-09-29 10:27:32,017 DEBUG: Removing output 'bar' of stage: 'run-copy'.
+2026-09-29 10:27:32,018 DEBUG: {'foo': 'modified'}
+Running stage 'run-copy':
+> python copy.py foo foobar
+2026-09-29 10:27:32,078 DEBUG: Lockfile for 'dvc.yaml' not found
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+------------------------------ Captured log call -------------------------------
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:336 Dependency 'foo' of stage: 'run-copy' changed because it is 'modified'.
+DEBUG    dvc.stage:__init__.py:376 stage: 'run-copy' changed.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'foobar' of stage: 'run-copy'.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'bar' of stage: 'run-copy'.
+DEBUG    dvc.output:output.py:615 {'foo': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'run-copy':
+INFO     dvc.stage.run:run.py:71 > python copy.py foo foobar
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+____________________ test_repro_when_lockfile_gets_deleted _____________________
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:32,115 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:32,118 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:32,123 DEBUG: Dependency 'foo' of stage: 'run-copy' changed because it is 'modified'.
+2026-09-29 10:27:32,123 DEBUG: stage: 'run-copy' changed.
+2026-09-29 10:27:32,125 DEBUG: Removing output 'foobar' of stage: 'run-copy'.
+2026-09-29 10:27:32,126 DEBUG: {'foo': 'modified'}
+Running stage 'run-copy':
+> python copy.py foo foobar
+2026-09-29 10:27:32,184 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:32,188 DEBUG: Computed stage: 'run-copy' md5: '9810619183969963c9dd8d21df75b4b0'
+2026-09-29 10:27:32,201 DEBUG: stage: 'run-copy' was reproduced
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+Stage 'run-copy' didn't change, skipping
+2026-09-29 10:27:32,220 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:32,222 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:32,225 DEBUG: Dependency 'foo' of stage: 'run-copy' changed because it is 'modified'.
+2026-09-29 10:27:32,226 DEBUG: stage: 'run-copy' changed.
+2026-09-29 10:27:32,227 DEBUG: Removing output 'foobar' of stage: 'run-copy'.
+2026-09-29 10:27:32,228 DEBUG: {'foo': 'modified'}
+Stage 'run-copy' is cached - skipping run, checking out outputs
+2026-09-29 10:27:32,239 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:32,241 DEBUG: Computed stage: 'run-copy' md5: '9810619183969963c9dd8d21df75b4b0'
+2026-09-29 10:27:32,249 DEBUG: stage: 'run-copy' was reproduced
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+------------------------------ Captured log call -------------------------------
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:336 Dependency 'foo' of stage: 'run-copy' changed because it is 'modified'.
+DEBUG    dvc.stage:__init__.py:376 stage: 'run-copy' changed.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'foobar' of stage: 'run-copy'.
+DEBUG    dvc.output:output.py:615 {'foo': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'run-copy':
+INFO     dvc.stage.run:run.py:71 > python copy.py foo foobar
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'run-copy' md5: '9810619183969963c9dd8d21df75b4b0'
+DEBUG    dvc.stage:__init__.py:440 stage: 'run-copy' was reproduced
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+INFO     dvc.stage:__init__.py:428 Stage 'run-copy' didn't change, skipping
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:336 Dependency 'foo' of stage: 'run-copy' changed because it is 'modified'.
+DEBUG    dvc.stage:__init__.py:376 stage: 'run-copy' changed.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'foobar' of stage: 'run-copy'.
+DEBUG    dvc.output:output.py:615 {'foo': 'modified'}
+INFO     dvc.stage.cache:cache.py:210 Stage 'run-copy' is cached - skipping run, checking out outputs
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'run-copy' md5: '9810619183969963c9dd8d21df75b4b0'
+DEBUG    dvc.stage:__init__.py:440 stage: 'run-copy' was reproduced
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+___________________________ test_cyclic_graph_error ____________________________
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:32,281 DEBUG: Removing output 'bar' of stage: 'copy-foo-bar'.
+2026-09-29 10:27:32,285 DEBUG: {'foo': 'modified'}
+Running stage 'copy-foo-bar':
+> python copy.py foo bar
+2026-09-29 10:27:32,345 DEBUG: Computed stage: 'copy-foo-bar' md5: '70ca98c843923748b6045ffc4559be1c'
+Creating 'dvc.yaml'
+Adding stage 'copy-foo-bar' in 'dvc.yaml'
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+2026-09-29 10:27:32,375 DEBUG: Removing output 'baz' of stage: 'copy-bar-baz'.
+2026-09-29 10:27:32,378 DEBUG: {'bar': 'modified'}
+Running stage 'copy-bar-baz':
+> python copy.py bar baz
+2026-09-29 10:27:32,439 DEBUG: Computed stage: 'copy-bar-baz' md5: 'ae90d22af97b4b280f4d29736623d51b'
+Adding stage 'copy-bar-baz' in 'dvc.yaml'
+Updating lock file 'dvc.lock'
+2026-09-29 10:27:32,475 DEBUG: Removing output 'foobar' of stage: 'copy-baz-foobar'.
+2026-09-29 10:27:32,478 DEBUG: {'baz': 'modified'}
+Running stage 'copy-baz-foobar':
+> python copy.py baz foobar
+2026-09-29 10:27:32,529 DEBUG: Computed stage: 'copy-baz-foobar' md5: '084ae8faae9a4421637e43b6241732b7'
+Adding stage 'copy-baz-foobar' in 'dvc.yaml'
+Updating lock file 'dvc.lock'
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+------------------------------ Captured log call -------------------------------
+DEBUG    dvc.stage:__init__.py:387 Removing output 'bar' of stage: 'copy-foo-bar'.
+DEBUG    dvc.output:output.py:615 {'foo': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-foo-bar':
+INFO     dvc.stage.run:run.py:71 > python copy.py foo bar
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-foo-bar' md5: '70ca98c843923748b6045ffc4559be1c'
+INFO     dvc.dvcfile:dvcfile.py:277 Creating 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'copy-foo-bar' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+DEBUG    dvc.stage:__init__.py:387 Removing output 'baz' of stage: 'copy-bar-baz'.
+DEBUG    dvc.output:output.py:615 {'bar': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-bar-baz':
+INFO     dvc.stage.run:run.py:71 > python copy.py bar baz
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-bar-baz' md5: 'ae90d22af97b4b280f4d29736623d51b'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'copy-bar-baz' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+DEBUG    dvc.stage:__init__.py:387 Removing output 'foobar' of stage: 'copy-baz-foobar'.
+DEBUG    dvc.output:output.py:615 {'baz': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-baz-foobar':
+INFO     dvc.stage.run:run.py:71 > python copy.py baz foobar
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-baz-foobar' md5: '084ae8faae9a4421637e43b6241732b7'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'copy-baz-foobar' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+__________________________ test_repro_multiple_params __________________________
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:32,628 DEBUG: Removing output 'bar' of stage: 'read_params'.
+2026-09-29 10:27:32,634 DEBUG: {'foo': 'modified'}
+Running stage 'read_params':
+> cat params2.yaml params.yaml > bar
+2026-09-29 10:27:32,656 DEBUG: Computed stage: 'read_params' md5: 'df9af791e6f805e6f7b572fc23a8cb5b'
+Creating 'dvc.yaml'
+Adding stage 'read_params' in 'dvc.yaml'
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+2026-09-29 10:27:32,684 DEBUG: Assuming 'read_params' to be a stage inside 'dvc.yaml'
+Stage 'read_params' didn't change, skipping
+2026-09-29 10:27:32,702 DEBUG: Assuming 'read_params' to be a stage inside 'dvc.yaml'
+2026-09-29 10:27:32,714 DEBUG: Dependency 'params.yaml' of stage: 'read_params' changed because it is '{'answer': 'modified'}'.
+2026-09-29 10:27:32,715 DEBUG: stage: 'read_params' changed.
+2026-09-29 10:27:32,716 DEBUG: Removing output 'bar' of stage: 'read_params'.
+2026-09-29 10:27:32,719 DEBUG: {}
+2026-09-29 10:27:32,720 DEBUG: defaultdict(<class 'dict'>, {'params.yaml': {'answer': 'modified'}})
+Running stage 'read_params':
+> cat params2.yaml params.yaml > bar
+2026-09-29 10:27:32,749 DEBUG: Computed stage: 'read_params' md5: 'c81d801d604029032999e7e55470fbf3'
+2026-09-29 10:27:32,766 DEBUG: stage: 'read_params' was reproduced
+Updating lock file 'dvc.lock'
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+------------------------------ Captured log call -------------------------------
+DEBUG    dvc.stage:__init__.py:387 Removing output 'bar' of stage: 'read_params'.
+DEBUG    dvc.output:output.py:615 {'foo': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'read_params':
+INFO     dvc.stage.run:run.py:71 > cat params2.yaml params.yaml > bar
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'read_params' md5: 'df9af791e6f805e6f7b572fc23a8cb5b'
+INFO     dvc.dvcfile:dvcfile.py:277 Creating 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'read_params' in 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+DEBUG    dvc.repo.stage:stage.py:218 Assuming 'read_params' to be a stage inside 'dvc.yaml'
+INFO     dvc.stage:__init__.py:428 Stage 'read_params' didn't change, skipping
+DEBUG    dvc.repo.stage:stage.py:218 Assuming 'read_params' to be a stage inside 'dvc.yaml'
+DEBUG    dvc.stage:__init__.py:336 Dependency 'params.yaml' of stage: 'read_params' changed because it is '{'answer': 'modified'}'.
+DEBUG    dvc.stage:__init__.py:376 stage: 'read_params' changed.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'bar' of stage: 'read_params'.
+DEBUG    dvc.output:output.py:615 {}
+DEBUG    dvc.output:output.py:615 defaultdict(<class 'dict'>, {'params.yaml': {'answer': 'modified'}})
+INFO     dvc.stage.run:run.py:120 Running stage 'read_params':
+INFO     dvc.stage.run:run.py:71 > cat params2.yaml params.yaml > bar
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'read_params' md5: 'c81d801d604029032999e7e55470fbf3'
+DEBUG    dvc.stage:__init__.py:440 stage: 'read_params' was reproduced
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+__________________ test_repro_list_of_commands_in_order[True] __________________
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:32,805 DEBUG: Assuming 'multi' to be a stage inside 'dvc.yaml'
+2026-09-29 10:27:32,807 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:32,809 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:32,811 DEBUG: stage: 'multi' changed.
+Running stage 'multi':
+> echo foo>foo
+> echo bar>bar
+2026-09-29 10:27:32,830 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:32,830 DEBUG: Computed stage: 'multi' md5: 'c82f4f770e13fa257240904f9444ac71'
+2026-09-29 10:27:32,831 DEBUG: stage: 'multi' was reproduced
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+------------------------------ Captured log call -------------------------------
+DEBUG    dvc.repo.stage:stage.py:218 Assuming 'multi' to be a stage inside 'dvc.yaml'
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:376 stage: 'multi' changed.
+INFO     dvc.stage.run:run.py:120 Running stage 'multi':
+INFO     dvc.stage.run:run.py:71 > echo foo>foo
+INFO     dvc.stage.run:run.py:71 > echo bar>bar
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'multi' md5: 'c82f4f770e13fa257240904f9444ac71'
+DEBUG    dvc.stage:__init__.py:440 stage: 'multi' was reproduced
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+_________________ test_repro_list_of_commands_in_order[False] __________________
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:32,860 DEBUG: Assuming 'multi' to be a stage inside 'dvc.yaml'
+2026-09-29 10:27:32,863 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:32,864 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:32,866 DEBUG: stage: 'multi' changed.
+Running stage 'multi':
+> echo foo>foo
+> echo bar>bar
+2026-09-29 10:27:32,882 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:32,883 DEBUG: Computed stage: 'multi' md5: 'c82f4f770e13fa257240904f9444ac71'
+2026-09-29 10:27:32,884 DEBUG: stage: 'multi' was reproduced
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+------------------------------ Captured log call -------------------------------
+DEBUG    dvc.repo.stage:stage.py:218 Assuming 'multi' to be a stage inside 'dvc.yaml'
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:376 stage: 'multi' changed.
+INFO     dvc.stage.run:run.py:120 Running stage 'multi':
+INFO     dvc.stage.run:run.py:71 > echo foo>foo
+INFO     dvc.stage.run:run.py:71 > echo bar>bar
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'multi' md5: 'c82f4f770e13fa257240904f9444ac71'
+DEBUG    dvc.stage:__init__.py:440 stage: 'multi' was reproduced
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+_______ test_repro_list_of_commands_raise_and_stops_after_failure[True] ________
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:32,915 DEBUG: Assuming 'multi' to be a stage inside 'dvc.yaml'
+2026-09-29 10:27:32,917 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:32,919 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:32,921 DEBUG: stage: 'multi' changed.
+Running stage 'multi':
+> echo foo>foo
+> failed_command
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+/bin/sh: 1: failed_command: not found
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+------------------------------ Captured log call -------------------------------
+DEBUG    dvc.repo.stage:stage.py:218 Assuming 'multi' to be a stage inside 'dvc.yaml'
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:376 stage: 'multi' changed.
+INFO     dvc.stage.run:run.py:120 Running stage 'multi':
+INFO     dvc.stage.run:run.py:71 > echo foo>foo
+INFO     dvc.stage.run:run.py:71 > failed_command
+_______ test_repro_list_of_commands_raise_and_stops_after_failure[False] _______
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:32,962 DEBUG: Assuming 'multi' to be a stage inside 'dvc.yaml'
+2026-09-29 10:27:32,964 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:32,966 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:32,968 DEBUG: stage: 'multi' changed.
+Running stage 'multi':
+> echo foo>foo
+> failed_command
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+/bin/sh: 1: failed_command: not found
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+------------------------------ Captured log call -------------------------------
+DEBUG    dvc.repo.stage:stage.py:218 Assuming 'multi' to be a stage inside 'dvc.yaml'
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:376 stage: 'multi' changed.
+INFO     dvc.stage.run:run.py:120 Running stage 'multi':
+INFO     dvc.stage.run:run.py:71 > echo foo>foo
+INFO     dvc.stage.run:run.py:71 > failed_command
+_____________________ test_repro_pulls_mising_data_source ______________________
+---------------------------- Captured stdout setup -----------------------------
+2026-09-29 10:27:33,010 DEBUG: Writing '/tmp/pytest-of-root/pytest-0/test_repro_pulls_mising_data_s0/.dvc/config'.
+------------------------------ Captured log setup ------------------------------
+DEBUG    dvc.config:config.py:206 Writing '/tmp/pytest-of-root/pytest-0/test_repro_pulls_mising_data_s0/.dvc/config'.
+----------------------------- Captured stdout call -----------------------------
+2026-09-29 10:27:33,019 DEBUG: Computed stage: 'foo.dvc' md5: 'None'
+2026-09-29 10:27:33,028 DEBUG: Saving information to 'foo.dvc'.
+Creating 'dvc.yaml'
+Adding stage 'copy-foo' in 'dvc.yaml'
+2026-09-29 10:27:33,059 DEBUG: Removing 'foo'
+2026-09-29 10:27:33,059 DEBUG: Removing '/tmp/pytest-of-root/pytest-0/test_repro_pulls_mising_data_s0/.dvc/cache/ac/bd18db4cc2f85cedef654fccc4a4d8'
+2026-09-29 10:27:33,061 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:33,064 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:33,067 DEBUG: Computed stage: 'foo.dvc' md5: 'None'
+2026-09-29 10:27:33,069 DEBUG: Output 'foo' of stage: 'foo.dvc' changed because it is 'not in cache'.
+2026-09-29 10:27:33,069 DEBUG: stage: 'foo.dvc' changed.
+Verifying data sources in stage: 'foo.dvc'
+Pulling missing output 'foo' of stage: 'foo.dvc'
+2026-09-29 10:27:33,085 DEBUG: Computed stage: 'foo.dvc' md5: 'None'
+2026-09-29 10:27:33,092 DEBUG: stage: 'foo.dvc' was reproduced
+2026-09-29 10:27:33,092 DEBUG: Saving information to 'foo.dvc'.
+
+2026-09-29 10:27:33,097 DEBUG: Dependency 'foo' of stage: 'copy-foo' changed because it is 'modified'.
+2026-09-29 10:27:33,098 DEBUG: stage: 'copy-foo' changed.
+2026-09-29 10:27:33,099 DEBUG: Removing output 'bar' of stage: 'copy-foo'.
+2026-09-29 10:27:33,101 DEBUG: {'foo': 'modified'}
+Running stage 'copy-foo':
+> cp foo bar
+2026-09-29 10:27:33,119 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:33,122 DEBUG: Computed stage: 'copy-foo' md5: '7e1896c80d970b1a77f5d4377a8e52f0'
+2026-09-29 10:27:33,133 DEBUG: stage: 'copy-foo' was reproduced
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+Collecting targets          |0.00 [00:00,     ?file/s]
+                                                      
+
+!
+  0% Adding...|          |0/1 [00:00<?,     ?file/s]
+Adding...                                           
+
+!
+
+  0% |          |0/? [00:00<?,    ?files/s]
+
+                                           
+
+!
+
+  0%|          |Transferring                          0/? [00:00<?,     ?file/s]
+
+  0%|          |Transferring                          0/1 [00:00<?,     ?file/s]
+
+                                                                                
+100% Adding...|██████████|1/1 [00:00, 76.08file/s]
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+
+!
+
+  0%|          |/tmp/pytest-of-root/pytest-0/test_r0.00/? [00:00<?,        ?B/s]
+
+  0%|          |/tmp/pytest-of-root/pytest-0/tes0.00/3.00 [00:00<?,        ?B/s]
+
+                                                                                
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+
+!
+
+  0%|          |/tmp/pytest-of-root/pytest-0/local-0.00/? [00:00<?,        ?B/s]
+
+  0%|          |/tmp/pytest-of-root/pytest-0/loc0.00/3.00 [00:00<?,        ?B/s]
+
+                                                                                
+                                                       
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+------------------------------ Captured log call -------------------------------
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'foo.dvc' md5: 'None'
+DEBUG    dvc.dvcfile:dvcfile.py:214 Saving information to 'foo.dvc'.
+INFO     dvc.dvcfile:dvcfile.py:277 Creating 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'copy-foo' in 'dvc.yaml'
+DEBUG    dvc.utils.fs:fs.py:63 Removing 'foo'
+DEBUG    dvc.utils.fs:fs.py:63 Removing '/tmp/pytest-of-root/pytest-0/test_repro_pulls_mising_data_s0/.dvc/cache/ac/bd18db4cc2f85cedef654fccc4a4d8'
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'foo.dvc' md5: 'None'
+DEBUG    dvc.stage:__init__.py:350 Output 'foo' of stage: 'foo.dvc' changed because it is 'not in cache'.
+DEBUG    dvc.stage:__init__.py:376 stage: 'foo.dvc' changed.
+INFO     dvc.stage:__init__.py:582 Verifying data sources in stage: 'foo.dvc'
+INFO     dvc.stage:__init__.py:623 Pulling missing output 'foo' of stage: 'foo.dvc'
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'foo.dvc' md5: 'None'
+DEBUG    dvc.stage:__init__.py:440 stage: 'foo.dvc' was reproduced
+DEBUG    dvc.dvcfile:dvcfile.py:214 Saving information to 'foo.dvc'.
+INFO     dvc.repo.reproduce:reproduce.py:185 
+DEBUG    dvc.stage:__init__.py:336 Dependency 'foo' of stage: 'copy-foo' changed because it is 'modified'.
+DEBUG    dvc.stage:__init__.py:376 stage: 'copy-foo' changed.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'bar' of stage: 'copy-foo'.
+DEBUG    dvc.output:output.py:615 {'foo': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-foo':
+INFO     dvc.stage.run:run.py:71 > cp foo bar
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-foo' md5: '7e1896c80d970b1a77f5d4377a8e52f0'
+DEBUG    dvc.stage:__init__.py:440 stage: 'copy-foo' was reproduced
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+______________________ test_repro_pulls_intermediate_out _______________________
+---------------------------- Captured stdout setup -----------------------------
+2026-09-29 10:27:33,481 DEBUG: Writing '/tmp/pytest-of-root/pytest-0/test_repro_pulls_intermediate_0/.dvc/config'.
+------------------------------ Captured log setup ------------------------------
+DEBUG    dvc.config:config.py:206 Writing '/tmp/pytest-of-root/pytest-0/test_repro_pulls_intermediate_0/.dvc/config'.
+----------------------------- Captured stdout call -----------------------------
+Creating 'dvc.yaml'
+Adding stage 'create-foo' in 'dvc.yaml'
+2026-09-29 10:27:33,494 DEBUG: Lockfile for 'dvc.yaml' not found
+Adding stage 'copy-foo' in 'dvc.yaml'
+2026-09-29 10:27:33,501 DEBUG: Assuming 'create-foo' to be a stage inside 'dvc.yaml'
+2026-09-29 10:27:33,503 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:33,506 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:33,512 DEBUG: Dependency 'fixed' of stage: 'create-foo' changed because it is 'modified'.
+2026-09-29 10:27:33,512 DEBUG: stage: 'create-foo' changed.
+2026-09-29 10:27:33,514 DEBUG: Removing output 'foo' of stage: 'create-foo'.
+2026-09-29 10:27:33,515 DEBUG: {'fixed': 'modified'}
+Running stage 'create-foo':
+> echo foo > foo
+2026-09-29 10:27:33,531 DEBUG: Lockfile for 'dvc.yaml' not found
+2026-09-29 10:27:33,534 DEBUG: Computed stage: 'create-foo' md5: '53510fc5784eb877e861971387d1aa5d'
+2026-09-29 10:27:33,547 DEBUG: stage: 'create-foo' was reproduced
+Generating lock file 'dvc.lock'
+Updating lock file 'dvc.lock'
+2026-09-29 10:27:33,574 DEBUG: Removing 'foo'
+2026-09-29 10:27:33,574 DEBUG: Removing '/tmp/pytest-of-root/pytest-0/test_repro_pulls_intermediate_0/.dvc/cache/d3/b07384d113edec49eaa6238ad5ff00'
+2026-09-29 10:27:33,589 DEBUG: Output 'foo' of stage: 'create-foo' changed because it is 'not in cache'.
+2026-09-29 10:27:33,590 DEBUG: stage: 'create-foo' changed.
+2026-09-29 10:27:33,591 DEBUG: Removing output 'foo' of stage: 'create-foo'.
+2026-09-29 10:27:33,593 DEBUG: {}
+Stage 'create-foo' is cached - skipping run, checking out outputs
+2026-09-29 10:27:33,615 DEBUG: Computed stage: 'create-foo' md5: '53510fc5784eb877e861971387d1aa5d'
+2026-09-29 10:27:33,625 DEBUG: stage: 'create-foo' was reproduced
+
+2026-09-29 10:27:33,633 DEBUG: Dependency 'foo' of stage: 'copy-foo' changed because it is 'modified'.
+2026-09-29 10:27:33,634 DEBUG: stage: 'copy-foo' changed.
+2026-09-29 10:27:33,635 DEBUG: Removing output 'bar' of stage: 'copy-foo'.
+2026-09-29 10:27:33,637 DEBUG: {'foo': 'modified'}
+Running stage 'copy-foo':
+> cp foo bar
+2026-09-29 10:27:33,677 DEBUG: Computed stage: 'copy-foo' md5: '3d8174f6dd6fdb6b07a1419d4b73fcc6'
+2026-09-29 10:27:33,700 DEBUG: stage: 'copy-foo' was reproduced
+Updating lock file 'dvc.lock'
+----------------------------- Captured stderr call -----------------------------
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+2026-09-29 10:27:33,563 WARNING: Output 'bar'(stage: 'copy-foo') is missing version info. Cache for it will not be collected. Use `dvc repro` to get your pipeline up to date.
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+
+!
+
+  0%|          |/tmp/pytest-of-root/pytest-0/test_r0.00/? [00:00<?,        ?B/s]
+
+  0%|          |/tmp/pytest-of-root/pytest-0/tes0.00/4.00 [00:00<?,        ?B/s]
+
+                                                                                
+                                                       
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+  0% Transferring|          |0/? [00:00<?,     ?file/s]
+  0% Transferring|          |0/1 [00:00<?,     ?file/s]
+
+!
+
+  0%|          |/tmp/pytest-of-root/pytest-0/local-0.00/? [00:00<?,        ?B/s]
+
+  0%|          |/tmp/pytest-of-root/pytest-0/loc0.00/4.00 [00:00<?,        ?B/s]
+
+                                                                                
+                                                       
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+
+!
+If DVC froze, see `hardlink_lock` in <https://man.dvc.org/config#core>
+                                                                      
+
+!
+  0% |          |0/? [00:00<?,    ?files/s]
+                                           
+------------------------------ Captured log call -------------------------------
+INFO     dvc.dvcfile:dvcfile.py:277 Creating 'dvc.yaml'
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'create-foo' in 'dvc.yaml'
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+INFO     dvc.dvcfile:dvcfile.py:282 Adding stage 'copy-foo' in 'dvc.yaml'
+DEBUG    dvc.repo.stage:stage.py:218 Assuming 'create-foo' to be a stage inside 'dvc.yaml'
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:336 Dependency 'fixed' of stage: 'create-foo' changed because it is 'modified'.
+DEBUG    dvc.stage:__init__.py:376 stage: 'create-foo' changed.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'foo' of stage: 'create-foo'.
+DEBUG    dvc.output:output.py:615 {'fixed': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'create-foo':
+INFO     dvc.stage.run:run.py:71 > echo foo > foo
+DEBUG    dvc.stage.loader:loader.py:51 Lockfile for 'dvc.yaml' not found
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'create-foo' md5: '53510fc5784eb877e861971387d1aa5d'
+DEBUG    dvc.stage:__init__.py:440 stage: 'create-foo' was reproduced
+INFO     dvc.dvcfile:dvcfile.py:420 Generating lock file 'dvc.lock'
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+WARNING  dvc.output:output.py:1100 Output 'bar'(stage: 'copy-foo') is missing version info. Cache for it will not be collected. Use `dvc repro` to get your pipeline up to date.
+DEBUG    dvc.utils.fs:fs.py:63 Removing 'foo'
+DEBUG    dvc.utils.fs:fs.py:63 Removing '/tmp/pytest-of-root/pytest-0/test_repro_pulls_intermediate_0/.dvc/cache/d3/b07384d113edec49eaa6238ad5ff00'
+DEBUG    dvc.stage:__init__.py:350 Output 'foo' of stage: 'create-foo' changed because it is 'not in cache'.
+DEBUG    dvc.stage:__init__.py:376 stage: 'create-foo' changed.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'foo' of stage: 'create-foo'.
+DEBUG    dvc.output:output.py:615 {}
+INFO     dvc.stage.cache:cache.py:210 Stage 'create-foo' is cached - skipping run, checking out outputs
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'create-foo' md5: '53510fc5784eb877e861971387d1aa5d'
+DEBUG    dvc.stage:__init__.py:440 stage: 'create-foo' was reproduced
+INFO     dvc.repo.reproduce:reproduce.py:185 
+DEBUG    dvc.stage:__init__.py:336 Dependency 'foo' of stage: 'copy-foo' changed because it is 'modified'.
+DEBUG    dvc.stage:__init__.py:376 stage: 'copy-foo' changed.
+DEBUG    dvc.stage:__init__.py:387 Removing output 'bar' of stage: 'copy-foo'.
+DEBUG    dvc.output:output.py:615 {'foo': 'modified'}
+INFO     dvc.stage.run:run.py:120 Running stage 'copy-foo':
+INFO     dvc.stage.run:run.py:71 > cp foo bar
+DEBUG    dvc.stage:__init__.py:475 Computed stage: 'copy-foo' md5: '3d8174f6dd6fdb6b07a1419d4b73fcc6'
+DEBUG    dvc.stage:__init__.py:440 stage: 'copy-foo' was reproduced
+INFO     dvc.dvcfile:dvcfile.py:427 Updating lock file 'dvc.lock'
+=========================== short test summary info ============================
+PASSED tests/func/test_run_cache.py::test_push_pull
+PASSED tests/func/test_run_cache.py::test_restore
+PASSED tests/func/test_run_cache.py::test_save
+PASSED tests/func/test_run_cache.py::test_do_not_save_on_no_exec_and_dry
+PASSED tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[metrics_no_cache-True]
+PASSED tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[plots_no_cache-True]
+PASSED tests/func/test_run_cache.py::test_outs_no_cache_deactivate_run_cache[outs_no_cache-False]
+PASSED tests/func/test_run_cache.py::test_memory_for_multiple_runs_of_same_stage
+PASSED tests/func/test_run_cache.py::test_memory_runs_of_multiple_stages
+PASSED tests/func/test_repro_multistage.py::test_non_existing_stage_name
+PASSED tests/func/test_repro_multistage.py::test_repro_frozen
+PASSED tests/func/test_repro_multistage.py::test_downstream
+PASSED tests/func/test_repro_multistage.py::test_repro_when_cmd_changes
+PASSED tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_added_in_dvcfile
+PASSED tests/func/test_repro_multistage.py::test_repro_when_new_outs_is_added_in_dvcfile
+PASSED tests/func/test_repro_multistage.py::test_repro_when_new_deps_is_moved
+PASSED tests/func/test_repro_multistage.py::test_repro_when_new_out_overlaps_others_stage_outs
+PASSED tests/func/test_repro_multistage.py::test_repro_when_new_deps_added_does_not_exist
+PASSED tests/func/test_repro_multistage.py::test_repro_when_new_outs_added_does_not_exist
+PASSED tests/func/test_repro_multistage.py::test_repro_when_lockfile_gets_deleted
+PASSED tests/func/test_repro_multistage.py::test_cyclic_graph_error
+PASSED tests/func/test_repro_multistage.py::test_repro_multiple_params
+PASSED tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[True]
+PASSED tests/func/test_repro_multistage.py::test_repro_list_of_commands_in_order[False]
+PASSED tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[True]
+PASSED tests/func/test_repro_multistage.py::test_repro_list_of_commands_raise_and_stops_after_failure[False]
+PASSED tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source
+PASSED tests/func/test_repro_multistage.py::test_repro_pulls_intermediate_out
+FAILED tests/func/test_run_cache.py::test_restore_pull - assert 2 == 3
+FAILED tests/func/test_repro_multistage.py::test_repro_pulls_mising_import - ...
+========================= 2 failed, 28 passed in 6.96s =========================
+=====GRADE
+{"reward": 0, "f2p": {"tests/func/test_run_cache.py::test_restore_pull": "FAILED", "tests/func/test_repro_multistage.py::test_repro_pulls_mising_data_source": "PASSED"}, "p2p_total": 27, "p2p_not_passed": {}}
